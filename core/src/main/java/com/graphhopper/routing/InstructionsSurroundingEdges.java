@@ -20,20 +20,35 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This class maintains the surrounding edges for a single turn instruction.
- * <p>
- * There a different sets of edges.
- * The previous edge is the edge we are comming from.
+ * This class handles the surrounding edges for a single turn instruction.
+ *
+ * There are different sets of edges.
+ * The previous edge is the edge we are coming from.
  * The current edge is the edge we turn on.
  * The reachable edges are all edges we could turn on, without the prev edge and the current edge.
  * The surrounding edges are all edges surrounding the turn, without the prev edge and the current edge.
+ *
+ * Here is an example:
+ *
+ * A --> B --> C
+ *       ^
+ *       |
+ *       X
+ *
+ * For the route from A->B->C and baseNode=B, adjacentNode=C:
+ * - the previous edge is A->B
+ * - the current edge is B->C
+ * - the reachable edges are B->C => return value of {@link #nrOfPossibleTurns()} is 1
+ * - the surrounding edges are B->X and B->C => return values of {@link #nrOfSurroundingEdges()} is 2
  *
  * @author Robin Boldt
  */
@@ -81,7 +96,7 @@ class InstructionsSurroundingEdges {
     }
 
     /**
-     * Calculates the Number of possible turns, including the current turn.
+     * Calculates the number of possible turns, including the current turn.
      * If there is only one turn possible, e.g. continue straight on the road is a turn,
      * the method will return 1.
      */
@@ -90,8 +105,7 @@ class InstructionsSurroundingEdges {
     }
 
     /**
-     * Calculates the Number of surrounding edges, including the current turn.
-     * This includes oneways in the wrong direction that are no possible turn.
+     * Calculates the number of surrounding edges, including oneways in the wrong direction and the current turn.
      */
     public int nrOfSurroundingEdges() {
         return 1 + surroundingEdges.size();
