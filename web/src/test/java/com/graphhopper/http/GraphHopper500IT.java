@@ -18,6 +18,7 @@
 package com.graphhopper.http;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
@@ -49,6 +50,7 @@ import java.io.File;
  */
 public class GraphHopper500IT extends BaseServletTester {
     private static final String DIR = "./target/andorra-gh/";
+    CmdArgs args;
 
     @AfterClass
     public static void cleanUp() {
@@ -58,14 +60,19 @@ public class GraphHopper500IT extends BaseServletTester {
 
     @Before
     public void setUp() {
-        CmdArgs args = new CmdArgs().
+        args = new CmdArgs().
                 put("config", "../config-example.properties").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.location", DIR);
 
-        setUpGuice(new AbstractModule() {
+        setUpJetty(args);
+    }
+
+    @Override
+    public void setUpGuice(Module... modules) {
+        super.setUpGuice(new AbstractModule() {
             @Override
             protected void configure() {
                 binder().requireExplicitBindings();
@@ -156,8 +163,6 @@ public class GraphHopper500IT extends BaseServletTester {
                 install(new GraphHopperServletModule(args));
             }
         });
-
-        setUpJetty(args);
     }
 
 

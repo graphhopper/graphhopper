@@ -69,6 +69,8 @@ public class BaseServletTester {
      * This method will start jetty with andorra area loaded as OSM.
      */
     public void setUpJetty(CmdArgs args) {
+        if (injector != null)
+            throw new UnsupportedOperationException("Do not call guice before");
         bootJetty(args, 3);
     }
 
