@@ -90,7 +90,7 @@ class MultiCriteriaLabelSetting {
             super(0, 0);
             this.to = to;
             targetLabels = new HashSet<>();
-            Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0, 0.0, null, 0, false,null);
+            Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0, 0.0, null, 0, 0,false,null);
             fromMap.put(from, label);
             fromHeap.add(label);
             if (to == from) {
@@ -130,7 +130,12 @@ class MultiCriteriaLabelSetting {
                     int nWalkDistanceConstraintViolations = Math.min(1, label.nWalkDistanceConstraintViolations + (
                             isTryingToReEnterPtAfterTransferWalking ? 1 : (label.walkDistanceOnCurrentLeg <= maxWalkDistancePerLeg && walkDistanceOnCurrentLeg > maxWalkDistancePerLeg ? 1 : 0)));
                     Set<Label> sptEntries = fromMap.get(edge.getAdjNode());
-                    Label nEdge = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, nWalkDistanceConstraintViolations, walkDistanceOnCurrentLeg, firstPtDepartureTime, walkTime, label.impossible || explorer.isBlocked(edge), label);
+                    boolean impossible = label.impossible || explorer.isBlocked(edge) || edgeType == GtfsStorage.EdgeType.BOARD && label.residualDelay > 0;
+                    long residualDelay = Math.max(0, label.residualDelay - explorer.calcTravelTimeMillis(edge, label.currentTime));
+                    if (edgeType == GtfsStorage.EdgeType.ALIGHT) {
+                        residualDelay = explorer.getDelayFromAlightEdge(edge);
+                    }
+                    Label nEdge = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, nWalkDistanceConstraintViolations, walkDistanceOnCurrentLeg, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
                     if (isNotDominatedByAnyOf(nEdge, sptEntries) && isNotDominatedByAnyOf(nEdge, targetLabels)) {
                         removeDominated(nEdge, sptEntries);
                         if (to == edge.getAdjNode()) {
