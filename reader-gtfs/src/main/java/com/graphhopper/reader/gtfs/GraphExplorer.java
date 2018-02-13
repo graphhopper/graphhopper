@@ -193,9 +193,6 @@ final class GraphExplorer {
             if (edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL && !reverse) {
                 return false;
             }
-            if (edgeType == GtfsStorage.EdgeType.WAIT && reverse) {
-                return false;
-            }
             if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK && !reverse) {
                 if (secondsOnTrafficDay(edgeIterator, label.currentTime) > flagEncoder.getTime(edgeIterator.getFlags())) {
                     return false;
