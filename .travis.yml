@@ -28,6 +28,10 @@ install: true
 before_install:
   - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
   - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
+  
+# avoid increase of memory via travis https://github.com/travis-ci/travis-ci/issues/8408
+before_script:
+  - _JAVA_OPTIONS=
 
 script:
   - mvn clean test verify checkstyle:check findbugs:check forbiddenapis:check -B
