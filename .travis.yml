@@ -44,7 +44,7 @@ after_success:
         travis_wait mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
     elif [ "$TRAVIS_JDK_VERSION" == "openjdk8" ]; then
         echo "release to maven central";
-        travis_wait mvn -P release --settings core/files/settings.xml -DskipTests=true -Drevision=0.10.alpha$TRAVIS_BUILD_NUMBER -B deploy;
+        mvn -P release --settings core/files/settings.xml -DskipTests=true -Drevision=0.10.alpha$TRAVIS_BUILD_NUMBER -B deploy;
     else
         echo "Not deploying artifacts for $TRAVIS_BRANCH";
     fi
