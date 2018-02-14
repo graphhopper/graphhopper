@@ -132,10 +132,22 @@ class MultiCriteriaLabelSetting {
                     int nWalkDistanceConstraintViolations = Math.min(1, label.nWalkDistanceConstraintViolations + (
                             isTryingToReEnterPtAfterTransferWalking ? 1 : (label.walkDistanceOnCurrentLeg <= maxWalkDistancePerLeg && walkDistanceOnCurrentLeg > maxWalkDistancePerLeg ? 1 : 0)));
                     Set<Label> sptEntries = fromMap.get(edge.getAdjNode());
-                    boolean impossible = label.impossible || explorer.isBlocked(edge) || edgeType == GtfsStorage.EdgeType.BOARD && label.residualDelay > 0;
-                    long residualDelay = Math.max(0, label.residualDelay - explorer.calcTravelTimeMillis(edge, label.currentTime));
-                    if (edgeType == GtfsStorage.EdgeType.ALIGHT) {
-                        residualDelay = explorer.getDelayFromAlightEdge(edge);
+                    boolean impossible = label.impossible
+                            || explorer.isBlocked(edge)
+                            || (!reverse) && edgeType == GtfsStorage.EdgeType.BOARD && label.residualDelay > 0
+                            || reverse && edgeType == GtfsStorage.EdgeType.ALIGHT && label.residualDelay < explorer.getDelayFromAlightEdge(edge);
+                    long residualDelay;
+                    if (!reverse) {
+                        residualDelay = Math.max(0, label.residualDelay - explorer.calcTravelTimeMillis(edge, label.currentTime));
+                        if (edgeType == GtfsStorage.EdgeType.ALIGHT) {
+                            residualDelay = explorer.getDelayFromAlightEdge(edge);
+                        }
+                    } else {
+                        if (edgeType == GtfsStorage.EdgeType.WAIT || edgeType == GtfsStorage.EdgeType.TRANSFER) {
+                            residualDelay = label.residualDelay + explorer.calcTravelTimeMillis(edge, label.currentTime);
+                        } else {
+                            residualDelay = 0;
+                        }
                     }
                     Label nEdge = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, nWalkDistanceConstraintViolations, walkDistanceOnCurrentLeg, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
                     if (isNotDominatedByAnyOf(nEdge, sptEntries) && isNotDominatedByAnyOf(nEdge, targetLabels)) {

@@ -456,7 +456,7 @@ public class RealtimeIT {
         assertEquals("Five minutes late", 300, Duration.between(delayedStop.plannedArrivalTime.toInstant(), delayedStop.predictedArrivalTime.toInstant()).getSeconds());
     }
 
-    @Test @Ignore
+    @Test
     public void testMissedTransferBecauseOfDelayBackwards() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
@@ -466,7 +466,7 @@ public class RealtimeIT {
         );
 
         // I want to be there at 7:20
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,7,20).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,8,20).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.ARRIVE_BY, true);
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
@@ -476,7 +476,7 @@ public class RealtimeIT {
         feedMessageBuilder.addEntityBuilder()
                 .setId("1")
                 .getTripUpdateBuilder()
-                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("07:00:00"))
                 .addStopTimeUpdateBuilder()
                 .setStopSequence(5)
                 .setScheduleRelationship(SCHEDULED)
@@ -485,13 +485,12 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(2, response.getAll().size());
 
-        assertEquals("The 6:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
+        assertEquals("The 7:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
 
         PathWrapper impossibleAlternative = response.getAll().get(1);
         assertTrue(impossibleAlternative.isImpossible());
         Trip.Stop delayedStop = ((Trip.PtLeg) impossibleAlternative.getLegs().get(1)).stops.get(2);
         assertEquals("Five minutes late", 300, Duration.between(delayedStop.plannedArrivalTime.toInstant(), delayedStop.predictedArrivalTime.toInstant()).getSeconds());
-
     }
 
 
