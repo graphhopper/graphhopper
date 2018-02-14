@@ -25,8 +25,8 @@ jdk:
 install: true
 
 # store them into travis via https://dracoblue.net/dev/uploading-snapshots-and-releases-to-maven-central-with-travis/
-# gpg -a --export-secret-keys your@email.org | base64 | tr -d '\n'
-# gpg --export-ownertrust | base64 | tr -d '\n'
+# gpg -a --export-secret-keys your@email.org | base64 -w 0
+# gpg --export-ownertrust | base64 -w 0
 before_install:
   - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
   - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
@@ -42,10 +42,9 @@ after_success:
   # deploy snapshot artifacts to sonatype and if tagged deploy the release to maven central
   - if [ "$TRAVIS_JDK_VERSION" == "oraclejdk8" ] &&
        [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-        travis_wait mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
-    elif [ "$TRAVIS_JDK_VERSION" == "oraclejdk8" ]; then
-        echo "Release of $GH_VERSION"
-        travis_wait mvn -P release --settings core/files/settings.xml -DskipTests=true -Drevision=$GH_VERSION -B deploy;
+        mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
+    elif [ "$TRAVIS_JDK_VERSION" == "oraclejdk8" ] && [ "$TRAVIS_TAG" != "" ] ; then
+        mvn -P release --settings core/files/settings.xml -DskipTests=true -Drevision=$TRAVIS_TAG -B deploy;
     else
         echo "Not deploying artifacts for $TRAVIS_BRANCH";
     fi
