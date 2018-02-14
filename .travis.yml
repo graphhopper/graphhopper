@@ -25,6 +25,9 @@ jdk:
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
 
+# store them into travis via https://dracoblue.net/dev/uploading-snapshots-and-releases-to-maven-central-with-travis/
+# gpg -a --export-secret-keys your@email.org | base64 | tr -d '\n'
+# gpg --export-ownertrust | base64 | tr -d '\n'
 before_install:
   - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
   - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
@@ -58,5 +61,6 @@ deploy:
   script: "mvn --settings core/files/settings.xml -DskipTests=true -Drevision=$GH_VERSION -B deploy"
   skip_cleanup: true
   on:
+    all_branches: true
     # branch: master
     # tags: true
