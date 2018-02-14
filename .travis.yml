@@ -39,10 +39,12 @@ script:
   - mvn clean test verify checkstyle:check findbugs:check forbiddenapis:check -B
 
 after_success:
-  # deploy snapshot artifacts to maven central
+  # deploy snapshot artifacts to sonatype and if tagged deploy the release to maven central
   - if [ "$TRAVIS_JDK_VERSION" == "oraclejdk8" ] &&
        [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
          travis_wait mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
+    elif [ "$TRAVIS_JDK_VERSION" == "oraclejdk8" ]
+         travis_wait mvn -P release --settings core/files/settings.xml -DskipTests=true -Drevision=$GH_VERSION -B deploy
     else
         echo "Not deploying snapshot artifact for $TRAVIS_BRANCH";
     fi
@@ -54,12 +56,3 @@ notifications:
 cache:
   directories:
   - $HOME/.m2
-
-deploy:
-  provider: script
-  script: "mvn -P release --settings core/files/settings.xml -DskipTests=true -Drevision=$GH_VERSION -B deploy"
-  skip_cleanup: true
-  on:
-    all_branches: true
-    # branch: master
-    # tags: true
