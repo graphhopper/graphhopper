@@ -43,7 +43,7 @@ after_success:
   - if [ "$TRAVIS_JDK_VERSION" == "oraclejdk8" ] &&
        [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
         mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
-    elif [ "$TRAVIS_JDK_VERSION" == "oraclejdk8" ] && [ "$TRAVIS_TAG" != "" ] ; then
+    elif [ "$TRAVIS_JDK_VERSION" == "oraclejdk8" ]; then
         mvn -P release --settings core/files/settings.xml -DskipTests=true -Drevision=$TRAVIS_TAG -B deploy;
     else
         echo "Not deploying artifacts for $TRAVIS_BRANCH";
