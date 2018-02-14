@@ -57,7 +57,7 @@ cache:
 
 deploy:
   provider: script
-  script: "mvn --settings core/files/settings.xml -DskipTests=true -Drevision=$GH_VERSION -B deploy"
+  script: "mvn -P release --settings core/files/settings.xml -DskipTests=true -Drevision=$GH_VERSION -B deploy"
   skip_cleanup: true
   on:
     all_branches: true
