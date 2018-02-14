@@ -45,6 +45,9 @@ before_install:
 
 install: true
 
+# Undo `_JAVA_OPTIONS` environment variable; see https://github.com/travis-ci/travis-ci/issues/8408
+before_script:
+  - _JAVA_OPTIONS=
 script:
   - mvn clean test verify checkstyle:check findbugs:check forbiddenapis:check -B
 
