@@ -43,7 +43,7 @@ after_success:
   - if [ "$TRAVIS_JDK_VERSION" == "oraclejdk8" ] &&
        [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
          travis_wait mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
-    elif [ "$TRAVIS_JDK_VERSION" == "oraclejdk8" ]
+    elif [ "$TRAVIS_JDK_VERSION" == "oraclejdk8" ]; then
          travis_wait mvn -P release --settings core/files/settings.xml -DskipTests=true -Drevision=$GH_VERSION -B deploy
     else
         echo "Not deploying snapshot artifact for $TRAVIS_BRANCH";
