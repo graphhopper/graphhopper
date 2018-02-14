@@ -3,7 +3,6 @@ sudo: false
 
 env:
   global:
-    - GH_VERSION=0.9.$TRAVIS_BUILD_NUMBER
     - GPG_EXECUTABLE=gpg
     # TODO move this into the travis settings
     - secure: "j6a61/qnfFcSjx5XxmxO2hqBOwtVx5HWrD1+4Atl7WG/pRKz9+jSga1Y7oDAFb2SIl8S65kDmPQB/vC8aHxUDj/Wizjxnxn1FhPqoe9yO6Ztft+984FKFyvj7s6tsBJKcehGec+chTOwZQpH4oI4rU6IlepDHnGLHiOd0Iviryg="

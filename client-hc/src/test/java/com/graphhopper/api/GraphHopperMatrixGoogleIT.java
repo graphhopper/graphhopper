@@ -10,12 +10,14 @@ import static org.junit.Assert.assertEquals;
  */
 public class GraphHopperMatrixGoogleIT {
 
+    private static String GOOGK = "AIzaSyD82yk4uSmNcruqtue1lFTyuWAtEiLiJbs";
     protected GraphHopperMatrixWeb ghMatrix;
 
     @Before
     public void setUp() {
-        // skip setKey as it is the graphhopper key
         ghMatrix = createMatrixWeb();
+        String key = System.getProperty("google.key", GOOGK);
+        ghMatrix.setKey(key);
     }
 
     GraphHopperMatrixWeb createMatrixWeb() {
