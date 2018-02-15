@@ -74,11 +74,12 @@ class Label {
     final Long departureTime;
     final long walkTime;
 
+    final long residualDelay;
     final boolean impossible;
 
     final Label parent;
 
-    Label(long currentTime, int edgeId, int adjNode, int nTransfers, int nWalkDistanceConstraintViolations, double walkDistance, Long departureTime, long walkTime, boolean impossible, Label parent) {
+    Label(long currentTime, int edgeId, int adjNode, int nTransfers, int nWalkDistanceConstraintViolations, double walkDistance, Long departureTime, long walkTime, long residualDelay, boolean impossible, Label parent) {
         this.currentTime = currentTime;
         this.edge = edgeId;
         this.adjNode = adjNode;
@@ -87,6 +88,7 @@ class Label {
         this.walkDistanceOnCurrentLeg = walkDistance;
         this.departureTime = departureTime;
         this.walkTime = walkTime;
+        this.residualDelay = residualDelay;
         this.impossible = impossible;
         this.parent = parent;
     }
