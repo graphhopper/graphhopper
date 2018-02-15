@@ -125,8 +125,8 @@ final class GraphExplorer {
         return realtimeFeed.isBlocked(edge.getEdge());
     }
 
-    public long getDelayFromAlightEdge(EdgeIteratorState edge) {
-        return realtimeFeed.getDelayForAlightEdge(edge);
+    public long getDelayFromAlightEdge(EdgeIteratorState edge, long instant) {
+        return realtimeFeed.getDelayForAlightEdge(edge, Instant.ofEpochMilli(instant));
     }
 
     private long waitingTime(EdgeIteratorState edge, long earliestStartTime) {

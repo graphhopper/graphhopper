@@ -201,16 +201,16 @@ class TripFromLabel {
         private final GtfsRealtime.TripDescriptor tripDescriptor;
         private final List<Trip.Stop> stops = new ArrayList<>();
         private final GTFSFeed gtfsFeed;
+        private Instant boardTime;
         private Instant arrivalTimeFromHopEdge;
         private Optional<Instant> updatedArrival;
         private StopTime stopTime = null;
-        private final GtfsReader.TripWithStopTimes tripUpdate;
+        private GtfsReader.TripWithStopTimes tripUpdate;
         private int stopSequence = 0;
 
         StopsFromBoardHopDwellEdges(String feedId, GtfsRealtime.TripDescriptor tripDescriptor) {
             this.tripDescriptor = tripDescriptor;
             this.gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
-            this.tripUpdate = realtimeFeed.getTripUpdate(tripDescriptor).orElse(null);
             if (this.tripUpdate != null) {
                 validateTripUpdate(this.tripUpdate);
             }
@@ -221,6 +221,8 @@ class TripFromLabel {
                 case BOARD: {
                     stopSequence = gtfsStorage.getStopSequences().get(t.edge.edgeIteratorState.getEdge());
                     stopTime = gtfsFeed.stop_times.get(new Fun.Tuple2<>(tripDescriptor.getTripId(), stopSequence));
+                    boardTime = Instant.ofEpochMilli(t.label.currentTime);
+                    tripUpdate = realtimeFeed.getTripUpdate(tripDescriptor, t, boardTime).orElse(null);
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
                     Optional<Instant> updatedDeparture = getDepartureDelay(stopSequence).map(delay -> plannedDeparture.plus(delay, SECONDS));
                     Stop stop = gtfsFeed.stops.get(stopTime.stop_id);

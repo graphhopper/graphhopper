@@ -135,12 +135,12 @@ class MultiCriteriaLabelSetting {
                     boolean impossible = label.impossible
                             || explorer.isBlocked(edge)
                             || (!reverse) && edgeType == GtfsStorage.EdgeType.BOARD && label.residualDelay > 0
-                            || reverse && edgeType == GtfsStorage.EdgeType.ALIGHT && label.residualDelay < explorer.getDelayFromAlightEdge(edge);
+                            || reverse && edgeType == GtfsStorage.EdgeType.ALIGHT && label.residualDelay < explorer.getDelayFromAlightEdge(edge, label.currentTime);
                     long residualDelay;
                     if (!reverse) {
                         residualDelay = Math.max(0, label.residualDelay - explorer.calcTravelTimeMillis(edge, label.currentTime));
                         if (edgeType == GtfsStorage.EdgeType.ALIGHT) {
-                            residualDelay = explorer.getDelayFromAlightEdge(edge);
+                            residualDelay = explorer.getDelayFromAlightEdge(edge, label.currentTime);
                         }
                     } else {
                         if (edgeType == GtfsStorage.EdgeType.WAIT || edgeType == GtfsStorage.EdgeType.TRANSFER) {

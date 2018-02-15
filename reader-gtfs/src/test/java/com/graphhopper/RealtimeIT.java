@@ -255,11 +255,7 @@ public class RealtimeIT {
 
         // The 6:00 departure of my line is going to be "late" by 0 minutes
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
-                .setGtfsRealtimeVersion("1")
-                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
-
-
+        feedMessageBuilder.setHeader(header());
         feedMessageBuilder.addEntityBuilder()
                 .setId("1")
                 .getTripUpdateBuilder()
@@ -298,11 +294,7 @@ public class RealtimeIT {
 
         // The 6:00 departure of my line is going to be late by 3 minutes
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
-                .setGtfsRealtimeVersion("1")
-                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
-
-
+        feedMessageBuilder.setHeader(header());
         feedMessageBuilder.addEntityBuilder()
                 .setId("1")
                 .getTripUpdateBuilder()
@@ -336,9 +328,7 @@ public class RealtimeIT {
 
         // The 6:00 departure of my line is going to be "late" by 0 minutes
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
-                .setGtfsRealtimeVersion("1")
-                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
+        feedMessageBuilder.setHeader(header());
 
 
         feedMessageBuilder.addEntityBuilder()
@@ -373,7 +363,7 @@ public class RealtimeIT {
         // My line does not stop at Bullfrog today. If this was a real transfer, I would not be
         // able to change lines there. But it is not a real transfer, so I can go on as planned.
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
+        feedMessageBuilder.setHeader(header());
         feedMessageBuilder.addEntityBuilder()
                 .setId("1")
                 .getTripUpdateBuilder()
@@ -435,7 +425,7 @@ public class RealtimeIT {
 
         // But the 6:00 departure of my line is going to be 5 minutes late at my transfer stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
+        feedMessageBuilder.setHeader(header());
         feedMessageBuilder.addEntityBuilder()
                 .setId("1")
                 .getTripUpdateBuilder()
@@ -472,7 +462,7 @@ public class RealtimeIT {
 
         // But the 6:00 departure of my line is going to skip my transfer stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
+        feedMessageBuilder.setHeader(header());
         feedMessageBuilder.addEntityBuilder()
                 .setId("1")
                 .getTripUpdateBuilder()
@@ -482,7 +472,8 @@ public class RealtimeIT {
                 .setScheduleRelationship(SCHEDULED)
                 .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(300).build());
 
-        GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
+        GraphHopperGtfs graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
+        GHResponse response = graphHopper.route(ghRequest);
         assertEquals(2, response.getAll().size());
 
         assertEquals("The 7:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
@@ -491,6 +482,21 @@ public class RealtimeIT {
         assertTrue(impossibleAlternative.isImpossible());
         Trip.Stop delayedStop = ((Trip.PtLeg) impossibleAlternative.getLegs().get(1)).stops.get(2);
         assertEquals("Five minutes late", 300, Duration.between(delayedStop.plannedArrivalTime.toInstant(), delayedStop.predictedArrivalTime.toInstant()).getSeconds());
+
+        // But when I ask about tomorrow, it works as planned
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,2,8,20).atZone(zoneId).toInstant());
+        response = graphHopper.route(ghRequest);
+        assertEquals(1, response.getAll().size());
+
+        Trip.Stop notDelayedStop = ((Trip.PtLeg) response.getBest().getLegs().get(1)).stops.get(2);
+        assertNull("Not late", notDelayedStop.predictedArrivalTime);
+
+    }
+
+    public GtfsRealtime.FeedHeader.Builder header() {
+        return GtfsRealtime.FeedHeader.newBuilder()
+                .setGtfsRealtimeVersion("1")
+                .setTimestamp(LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant().toEpochMilli() / 1000);
     }
 
 

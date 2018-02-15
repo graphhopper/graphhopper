@@ -300,8 +300,8 @@ public class RealtimeFeed {
         return additionalEdges;
     }
 
-    public Optional<GtfsReader.TripWithStopTimes> getTripUpdate(GtfsRealtime.TripDescriptor tripDescriptor) {
-        if (feedMessage == null) {
+    public Optional<GtfsReader.TripWithStopTimes> getTripUpdate(GtfsRealtime.TripDescriptor tripDescriptor, Label.Transition boardEdge, Instant boardTime) {
+        if (feedMessage == null || !isThisRealtimeUpdateAboutThisLineRun(boardEdge.edge.edgeIteratorState, boardTime)) {
             return Optional.empty();
         } else {
             return feedMessage.getEntityList().stream()
@@ -405,7 +405,27 @@ public class RealtimeFeed {
     }
 
 
-    public long getDelayForAlightEdge(EdgeIteratorState edge) {
-        return delaysForAlightEdges.getOrDefault(edge.getEdge(), 0);
+    public long getDelayForAlightEdge(EdgeIteratorState edge, Instant now) {
+        if (isThisRealtimeUpdateAboutThisLineRun(edge, now)) {
+            return delaysForAlightEdges.getOrDefault(edge.getEdge(), 0);
+        } else {
+            return 0;
+        }
+    }
+
+    boolean isThisRealtimeUpdateAboutThisLineRun(EdgeIteratorState edge, Instant now) {
+        if (feedMessage == null || Duration.between(feedTimestampOrNow(), now).toHours() > 24) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private Instant feedTimestampOrNow() {
+        if (feedMessage.getHeader().hasTimestamp()) {
+            return Instant.ofEpochSecond(feedMessage.getHeader().getTimestamp());
+        } else {
+            return Instant.now();
+        }
     }
 }
