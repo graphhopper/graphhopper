@@ -53,12 +53,11 @@ script:
 
 after_success:
   # deploy snapshot artifacts to sonatype and if tagged deploy the release to maven central
-  - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] &&
-       [ "$TRAVIS_BRANCH" == "android_test" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+  - if [ "$TRAVIS_BRANCH" == "android_test" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
         cd android/app && mvn deploy --settings ../../core/files/settings.xml -DskipTests=true -B;
-    elif [ "$TRAVIS_JDK_VERSION" == "openjdk8" ]; then
+    elif [ "$TRAVIS_TAG" != "" ]; then
         echo "release to maven central";
-        cd android/app && mvn -P release --settings ../../core/files/settings.xml -DskipTests=true -Drevision=0.10.$TRAVIS_BUILD_NUMBER -B deploy;
+        cd android/app && mvn -P release --settings ../../core/files/settings.xml -DskipTests=true -Drevision=$TRAVIS_TAG -B deploy;
     else
         echo "Not deploying artifacts for $TRAVIS_BRANCH";
     fi
