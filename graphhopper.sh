@@ -188,7 +188,7 @@ else
 fi
 
 GRAPH=$DATADIR/$NAME-gh
-VERSION=$(grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
+VERSION=$(grep '<revision' pom.xml | cut -d'>' -f2 | cut -d'<' -f1)
 JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
 
 LINK=$(echo $NAME | tr '_' '/')
