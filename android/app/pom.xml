@@ -90,6 +90,12 @@
             <groupId>org.mapsforge</groupId>            
             <artifactId>vtm-jts</artifactId>
             <version>${vtm.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>com.vividsolutions</groupId>
+                <artifactId>jts</artifactId>
+              </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mapsforge</groupId>            
