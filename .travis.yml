@@ -1,4 +1,21 @@
-language: java
+language: android
+android:
+  components:
+    # Uncomment the lines below if you want to
+    # use the latest revision of Android SDK Tools
+    # - tools
+    # - platform-tools
+
+    # The BuildTools version used by your project
+    - build-tools-27.0.3
+
+    # The SDK version used to compile your project
+    - android-27
+
+    # Additional components
+    - extra-google-m2repository
+    - extra-android-m2repository
+    
 sudo: false
 
 env:
@@ -13,8 +30,6 @@ group: edge
 
 jdk:
   - oraclejdk8
-  - oraclejdk9
-  - openjdk8
 
 # matrix:
 #   allow_failures:
@@ -35,16 +50,16 @@ before_script:
   - _JAVA_OPTIONS=
 
 script:
-  - mvn clean test verify checkstyle:check findbugs:check forbiddenapis:check -B
+  - cd android/app && mvn clean test verify checkstyle:check findbugs:check forbiddenapis:check -B
 
 after_success:
   # deploy snapshot artifacts to sonatype and if tagged deploy the release to maven central
   - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] &&
-       [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-        travis_wait mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
+       [ "$TRAVIS_BRANCH" == "android_test" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+        cd android/app && mvn deploy --settings ../../core/files/settings.xml -DskipTests=true -B;
     elif [ "$TRAVIS_JDK_VERSION" == "openjdk8" ]; then
         echo "release to maven central";
-        mvn -P release --settings core/files/settings.xml -DskipTests=true -Drevision=0.10.alpha$TRAVIS_BUILD_NUMBER -B deploy;
+        cd android/app && mvn -P release --settings ../../core/files/settings.xml -DskipTests=true -Drevision=0.10.$TRAVIS_BUILD_NUMBER -B deploy;
     else
         echo "Not deploying artifacts for $TRAVIS_BRANCH";
     fi
