@@ -205,7 +205,7 @@ class TripFromLabel {
         private Instant arrivalTimeFromHopEdge;
         private Optional<Instant> updatedArrival;
         private StopTime stopTime = null;
-        private GtfsReader.TripWithStopTimes tripUpdate;
+        private GtfsReader.TripWithStopTimes tripUpdate = null;
         private int stopSequence = 0;
 
         StopsFromBoardHopDwellEdges(String feedId, GtfsRealtime.TripDescriptor tripDescriptor) {
