@@ -38,7 +38,8 @@ before_script:
 before_script:
   - _JAVA_OPTIONS=
 script:
-  - mvn clean test verify checkstyle:check findbugs:check forbiddenapis:check -B
+  # separate due to #1288
+  - mvn clean test verify -B && mvn checkstyle:check findbugs:check forbiddenapis:check -B
 
 after_success:
   # deploy snapshot artifacts to sonatype and if tagged deploy the release to maven central
