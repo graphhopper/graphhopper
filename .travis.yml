@@ -49,15 +49,15 @@ before_script:
   - _JAVA_OPTIONS=
 
 script:
-  - cd android/app && mvn clean test verify checkstyle:check forbiddenapis:check -B
+  - mvn -P include-android -pl android/app clean test verify checkstyle:check forbiddenapis:check -B
 
 after_success:
   # deploy snapshot artifacts to sonatype and if tagged deploy the release to maven central
   - if [ "$TRAVIS_BRANCH" == "android_test" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-        cd android/app && mvn deploy --settings ../../core/files/settings.xml -DskipTests=true -B;
+        mvn -P include-android -pl android/app deploy --settings core/files/settings.xml -DskipTests=true -B;
     elif [ "$TRAVIS_TAG" != "" ]; then
         echo "release to maven central";
-        cd android/app && mvn -P release --settings ../../core/files/settings.xml -DskipTests=true -Drevision=$TRAVIS_TAG -B deploy;
+        mvn -P release -P include-android -pl android/app --settings core/files/settings.xml -DskipTests=true -Drevision=$TRAVIS_TAG -B deploy;
     else
         echo "Not deploying artifacts for $TRAVIS_BRANCH";
     fi
