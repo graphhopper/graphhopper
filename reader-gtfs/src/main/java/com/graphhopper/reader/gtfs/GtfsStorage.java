@@ -36,7 +36,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.zip.ZipFile;
 
-public class GtfsStorage implements GraphExtension {
+public class GtfsStorage implements GraphExtension, GtfsStorageI {
 
 	public static class Validity implements Serializable {
 		final BitSet validity;
@@ -243,7 +243,8 @@ public class GtfsStorage implements GraphExtension {
 		return 0;
 	}
 
-    Map<Validity, Integer> getOperatingDayPatterns() {
+    @Override
+	public Map<Validity, Integer> getOperatingDayPatterns() {
         return operatingDayPatterns;
     }
 
@@ -255,35 +256,42 @@ public class GtfsStorage implements GraphExtension {
 		return readableTimeZones;
 	}
 
-	Map<FeedIdWithTimezone, Integer> getWritableTimeZones() {
+	@Override
+	public Map<FeedIdWithTimezone, Integer> getWritableTimeZones() {
 		return timeZones;
 	}
 
-	Map<Integer, byte[]> getTripDescriptors() {
+	@Override
+	public Map<Integer, byte[]> getTripDescriptors() {
 		return tripDescriptors;
 	}
 
-	Map<Integer, Integer> getStopSequences() {
+	@Override
+	public Map<Integer, Integer> getStopSequences() {
 		return stopSequences;
 	}
 
-	Map<GtfsRealtime.TripDescriptor, int[]> getBoardEdgesForTrip() {
+	@Override
+	public Map<GtfsRealtime.TripDescriptor, int[]> getBoardEdgesForTrip() {
 		return boardEdgesForTrip;
 	}
 
-	Map<GtfsRealtime.TripDescriptor, int[]> getAlightEdgesForTrip() {
+	@Override
+	public Map<GtfsRealtime.TripDescriptor, int[]> getAlightEdgesForTrip() {
 		return leaveEdgesForTrip;
 	}
 
-	Map<String, Fare> getFares() {
+	@Override
+	public Map<String, Fare> getFares() {
 		return fares;
 	}
 
-	Map<String, GTFSFeed> getGtfsFeeds() {
+	public Map<String, GTFSFeed> getGtfsFeeds() {
 		return Collections.unmodifiableMap(gtfsFeeds);
 	}
 
-	Map<String, Integer> getStationNodes() {
+	@Override
+	public Map<String, Integer> getStationNodes() {
 		return stationNodes;
 	}
 

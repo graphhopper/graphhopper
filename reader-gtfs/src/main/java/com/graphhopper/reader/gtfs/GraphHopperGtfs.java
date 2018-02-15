@@ -66,7 +66,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         }
 
         public GraphHopperGtfs createWithoutRealtimeFeed() {
-            return new GraphHopperGtfs(flagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty());
+            return new GraphHopperGtfs(flagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
         }
     }
 
@@ -343,7 +343,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 walkNetworkIndex = new EmptyLocationIndex();
             }
             for (int i = 0; i < id; i++) {
-                new GtfsReader("gtfs_" + i, graphHopperStorage, ptFlagEncoder, walkNetworkIndex).readGraph();
+                new GtfsReader("gtfs_" + i, graphHopperStorage, gtfsStorage, ptFlagEncoder, walkNetworkIndex).readGraph();
             }
             graphHopperStorage.flush();
             return graphHopperStorage;
