@@ -28,13 +28,13 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
+import static java.lang.System.nanoTime;
 
 public class EdgeBasedNodeContractor extends AbstractNodeContractor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
     // todo: modify code such that logging does not alter performance 
+    private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
     private final TurnWeighting turnWeighting;
     private final TraversalMode traversalMode;
     private int[] hierarchyDepths;
@@ -47,7 +47,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private EdgeExplorer loopAvoidanceInEdgeExplorer;
     private EdgeExplorer loopAvoidanceOutEdgeExplorer;
     private WitnessSearchStrategy witnessSearchStrategy;
-    //todo: replace with different handler implementations
+    //todo: replace dryMode flag with different handler implementations
     private boolean dryMode;
     private int numEdges;
     private int numPrevEdges;
@@ -116,7 +116,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public long contractNode(int node) {
         dryMode = false;
-        long start = System.nanoTime();
+        long start = nanoTime();
         long result = findShortcuts(node);
         CHEdgeIterator iter = allCHExplorer.setBaseNode(node);
         while (iter.next()) {
@@ -124,7 +124,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 continue;
             hierarchyDepths[iter.getAdjNode()] = Math.max(hierarchyDepths[iter.getAdjNode()], hierarchyDepths[node] + 1);
         }
-        stats().calcTime += System.nanoTime() - start;
+        stats().calcTime += nanoTime() - start;
         return result;
     }
 
@@ -179,6 +179,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     stats().shortcutsNeeded++;
                     addShortcuts(entry);
                 } else {
+                    // todo: here not necessarily a witness path has been found, for example for u-turns (initial-entry
+                    // = outgoing edge) we also end up here
                     stats().numWitnessesFound++;
                 }
             }
@@ -273,7 +275,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         }
 
         // this shortcut is new --> add it
-        LOGGER.trace("Adding shortcut from {} to {}, weight: {}, firstOrigEdge: {}, lastOrigEdge: {}",
+        LOGGER.debug("Adding shortcut from {} to {}, weight: {}, firstOrigEdge: {}, lastOrigEdge: {}",
                 from, adjNode, edgeTo.weight, edgeFrom.getParent().incEdge, edgeTo.incEdge);
         CHEdgeIteratorState shortcut = prepareGraph.shortcut(from, adjNode);
         long direction = PrepareEncoder.getScFwdDir();

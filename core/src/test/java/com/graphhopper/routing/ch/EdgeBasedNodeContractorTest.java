@@ -654,11 +654,58 @@ public class EdgeBasedNodeContractorTest {
         }
     }
 
+    @Test
+    public void testContractNode_witnessPathsAreFound() {
+        //         2 ----- 7 - 10 
+        //       / |       |
+        // 0 - 1   3 - 4   |
+        //     |   |      /     
+        //     5 - 9 ---- 
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(2, 3, 5, false);
+        graph.edge(3, 4, 1, false);
+        graph.edge(1, 5, 1, false);
+        graph.edge(5, 9, 1, false);
+        graph.edge(9, 3, 1, false);
+        graph.edge(2, 7, 6, false);
+        graph.edge(9, 7, 1, false);
+        graph.edge(7, 10, 1, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(2);
+        checkShortcuts();
+    }
+
+    @Test
+    public void testContractNode_noUnnecessaryShortcut_witnessPathOfEqualWeight() {
+        // 0 -> 1 -> 5
+        //      |    |
+        //      2 -> 3 -> 4 -> 5
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(1, 5, 1, false);
+        EdgeIteratorState e2to3 = graph.edge(2, 3, 1, false);
+        EdgeIteratorState e3to4 = graph.edge(3, 4, 1, false);
+        graph.edge(4, 5, 1, false);
+        graph.edge(0, 5, 1, false);
+        EdgeIteratorState e5to3 = graph.edge(5, 3, 1, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(3, 2);
+        // when contracting node 2 there is a witness (1-5-3-4) and no shortcut from 1 to 4 should be introduced.
+        // what might be tricky here is that both the original path and the witness path have equal weight!
+        checkShortcuts(
+                createShortcut(2, 4, e2to3, e3to4, 2),
+                createShortcut(5, 4, e5to3, e3to4, 2)
+        );
+    }
+    
     private void contractNodes(int... nodes) {
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
-        for (int node : nodes) {
-            nodeContractor.contractNode(node);
-            chGraph.setLevel(node, node);
+        for (int i = 0; i < nodes.length; ++i) {
+            nodeContractor.contractNode(nodes[i]);
+            chGraph.setLevel(nodes[i], i);
         }
     }
 
