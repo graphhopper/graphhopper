@@ -28,10 +28,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import org.junit.Before;
 import org.junit.Rule;
@@ -606,8 +603,9 @@ public class CHTurnCostTest {
 
     private RoutingAlgorithmFactory prepareCH(List<Integer> contractionOrder) {
         LOGGER.debug("Calculating CH with contraction order {}", contractionOrder);
-        EdgeBasedPrepareContractionHierarchies ch = new EdgeBasedPrepareContractionHierarchies(graph, chGraph, weighting)
-                .usingContractionOrder(contractionOrder);
+        ManualPrepareContractionHierarchies ch = new ManualPrepareContractionHierarchies(
+                new RAMDirectory(""), graph, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR)
+                .setContractionOrder(contractionOrder);
         ch.doWork();
         return ch;
     }

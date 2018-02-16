@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Random;
 
+import static com.graphhopper.util.Helper.nf;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 
@@ -51,16 +52,16 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
  * @author Peter Karich
  */
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
     private final Directory dir;
     private final PreparationWeighting prepareWeighting;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
     private final GraphHopperStorage ghStorage;
-    private final CHGraphImpl prepareGraph;
+    protected final CHGraphImpl prepareGraph;
     private final Random rand = new Random(123);
     private final StopWatch allSW = new StopWatch();
-    private NodeContractor nodeContractor;
+    protected NodeContractor nodeContractor;
     private CHEdgeExplorer vehicleAllExplorer;
     private CHEdgeExplorer vehicleAllTmpExplorer;
     private int maxLevel;
@@ -71,12 +72,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int periodicUpdatesPercentage = 20;
     private int lastNodesLazyUpdatePercentage = 10;
     private int neighborUpdatePercentage = 20;
-    private double nodesContractedPercentage = 100;
-    private double logMessagesPercentage = 20;
+    protected double nodesContractedPercentage = 100;
+    protected double logMessagesPercentage = 20;
     private double dijkstraTime;
     private double periodTime;
     private double lazyTime;
     private double neighborTime;
+    private int initSize;
 
     public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph,
                                          Weighting weighting, TraversalMode traversalMode) {
@@ -164,6 +166,26 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     public void doSpecificWork() {
         allSW.start();
         initFromGraph();
+        runGraphContraction();
+
+        logger.info("took:" + (int) allSW.stop().getSeconds() + "s "
+                + ", new shortcuts: " + nf(nodeContractor.getAddedShortcutsCount())
+                + ", " + prepareWeighting
+                + ", dijkstras:" + nf(nodeContractor.getDijkstraCount())
+                + ", " + getTimesAsString()
+                + ", meanDegree:" + (long) meanDegree
+                + ", initSize:" + nf(initSize)
+                + ", periodic:" + periodicUpdatesPercentage
+                + ", lazy:" + lastNodesLazyUpdatePercentage
+                + ", neighbor:" + neighborUpdatePercentage
+                + ", " + Helper.getMemInfo());
+
+        int edgeCount = ghStorage.getAllEdges().getMaxId();
+        logger.info("graph now - num edges: {}, num nodes: {}, num shortcuts: {}",
+                nf(edgeCount), nf(ghStorage.getNodes()), nf(prepareGraph.getAllEdges().getMaxId() - edgeCount));
+    }
+
+    protected void runGraphContraction() {
         if (!prepareNodes())
             return;
         contractNodes();
@@ -257,10 +279,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // no witness path can be found. this is not really what we want, but changing it requires re-optimizing the
         // graph contraction parameters, because it affects the node contraction order.
         meanDegree = prepareGraph.getAllEdges().getMaxId() / prepareGraph.getNodes();
+        initSize = sortedNodes.getSize();
         int level = 1;
         long counter = 0;
-        int initSize = sortedNodes.getSize();
-        long logSize = Math.round(Math.max(10, sortedNodes.getSize() / 100 * logMessagesPercentage));
+        long logSize = Math.round(Math.max(10, initSize / 100 * logMessagesPercentage));
         if (logMessagesPercentage == 0)
             logSize = Integer.MAX_VALUE;
 
@@ -390,18 +412,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // Preparation works only once so we can release temporary data.
         // The preparation object itself has to be intact to create the algorithm.
         close();
-
-        logger.info("took:" + (int) allSW.stop().getSeconds() + "s "
-                + ", new shortcuts: " + Helper.nf(nodeContractor.getAddedShortcutsCount())
-                + ", " + prepareWeighting
-                + ", dijkstras:" + Helper.nf(nodeContractor.getDijkstraCount())
-                + ", " + getTimesAsString()
-                + ", meanDegree:" + (long) meanDegree
-                + ", initSize:" + Helper.nf(initSize)
-                + ", periodic:" + periodicUpdatesPercentage
-                + ", lazy:" + lastNodesLazyUpdatePercentage
-                + ", neighbor:" + neighborUpdatePercentage
-                + ", " + Helper.getMemInfo());
     }
 
     public void close() {
@@ -484,8 +494,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     private void logStats(long counter, int updateCounter) {
         logger.info(String.format("%10s, updates: %2d, nodes: %10s, shortcuts: %10s, dijkstras: %10s, %s, meanDegree: %2d, %s, %s",
-                Helper.nf(counter), updateCounter, Helper.nf(sortedNodes.getSize()),
-                Helper.nf(nodeContractor.getAddedShortcutsCount()), Helper.nf(nodeContractor.getDijkstraCount()),
+                nf(counter), updateCounter, nf(sortedNodes.getSize()),
+                nf(nodeContractor.getAddedShortcutsCount()), nf(nodeContractor.getDijkstraCount()),
                 getTimesAsString(), (long) meanDegree, nodeContractor.getPrepareAlgoMemoryUsage(),
                 Helper.getMemInfo()));
     }

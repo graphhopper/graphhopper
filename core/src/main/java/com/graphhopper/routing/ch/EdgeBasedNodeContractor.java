@@ -129,6 +129,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private int findShortcuts(int node) {
+        // todo: for osm data where there are only a very few turn restrictions (no left turn etc.) the graph
+        // contraction should be much faster if we exploit that there are no turn costs on most nodes
         LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}", node, dryMode ? "counted" : "added");
         stats().nodes++;
         CHEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
