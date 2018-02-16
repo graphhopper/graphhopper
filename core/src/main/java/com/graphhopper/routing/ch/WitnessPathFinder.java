@@ -76,6 +76,7 @@ public class WitnessPathFinder {
     }
 
     public void findTarget(int targetEdge, int targetNode) {
+        boolean targetDiscoveredByShortcut = false;
         int targetKey = getEdgeKey(targetEdge, targetNode);
         if (settledEntries.get(targetKey)) {
             return;
@@ -112,9 +113,12 @@ public class WitnessPathFinder {
                 WitnessSearchEntry entry = chEntries.get(traversalId);
                 if (entry == null) {
                     entry = createEntry(iter, currEdge, weight);
-                    if (currEdge.possibleShortcut && iter.getBaseNode() == currEdge.adjNode && iter.getBaseNode() == iter.getAdjNode()) {
+                    if (currEdge.possibleShortcut && iter.getBaseNode() == iter.getAdjNode()) { 
                         entry.possibleShortcut = true;
                         numPossibleShortcuts++;
+                    }
+                    if (currEdge.possibleShortcut && iter.getLastOrigEdge() == targetEdge && iter.getAdjNode() == targetNode) {
+                        targetDiscoveredByShortcut = true;
                     }
                     chEntries.put(traversalId, entry);
                     priorityQueue.add(entry);
@@ -132,7 +136,7 @@ public class WitnessPathFinder {
             }
             settledEntries.set(getEdgeKey(currEdge.incEdge, currEdge.adjNode));
             numOrigEdgesSettled++;
-            if (numPossibleShortcuts < 1) {
+            if (numPossibleShortcuts < 1 && !targetDiscoveredByShortcut) {
                 break;
             }
         }
