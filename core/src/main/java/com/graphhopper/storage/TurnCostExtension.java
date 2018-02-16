@@ -107,18 +107,43 @@ public class TurnCostExtension implements GraphExtension {
     }
 
     /**
-     * This method adds a new entry which is a turn restriction or cost information via the
-     * turnFlags.
+     * Add a new entry which is a turn restriction or cost information via the turnFlags.
+     *
+     * The methods to read turn cost information will ignore the entry written by this
+     * method if another entry of the same turn has been written already.
      */
     public void addTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags) {
-        // no need to store turn information
-        if (turnFlags == EMPTY_FLAGS)
-            return;
+        setAndMergeTurnInfo(fromEdge, viaNode, toEdge, turnFlags, false, false);
+    }
 
+    /**
+     * Add a new turn cost entry.
+     *
+     * See TurnFlagsReadWriteTest for usage examples.
+     *
+     * @param fromEdge edge ID
+     * @param viaNode node ID
+     * @param toEdge edge ID
+     * @param turnFlags flags to be written
+     * @param checkExistingEntries If true, existing entries of the same turn will be overwritten.
+     * Otherwise the new flag will just be written without checking existing entries.
+     * @param mergeBitwiseOr Only relevant if checkExistingEntries is set to true. Don't overwrite
+     * existing entries with the new flag but do a bitwise OR of the old and new flags and write
+     * this merged flag.
+     */
+    public void setAndMergeTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags,
+            boolean checkExistingEntries, boolean mergeBitwiseOr) {
+        // no need to store turn information
+        if (turnFlags == EMPTY_FLAGS) {
+            return;
+        }
         // append
         int newEntryIndex = turnCostsCount;
-        turnCostsCount++;
         ensureTurnCostIndex(newEntryIndex);
+        boolean oldEntryFound = false;
+        long existingFlags = turnFlags;
+        long newFlags = turnFlags;
+        int next = NO_TURN_ENTRY;
 
         // determine if we already have an cost entry for this node
         int previousEntryIndex = nodeAccess.getAdditionalNodeField(viaNode);
@@ -127,24 +152,45 @@ public class TurnCostExtension implements GraphExtension {
             nodeAccess.setAdditionalNodeField(viaNode, newEntryIndex);
         } else {
             int i = 0;
-            int tmp = previousEntryIndex;
-            while ((tmp = turnCosts.getInt((long) tmp * turnCostsEntryBytes + TC_NEXT)) != NO_TURN_ENTRY) {
-                previousEntryIndex = tmp;
+            next = turnCosts.getInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT);
+            while (true) {
+                long costsIdx = (long) previousEntryIndex * turnCostsEntryBytes;
+                if (checkExistingEntries && fromEdge == turnCosts.getInt(costsIdx + TC_FROM)
+                    && toEdge == turnCosts.getInt(costsIdx + TC_TO)) {
+                    // there is already an entry for this turn
+                    oldEntryFound = true;
+                    existingFlags = turnCosts.getInt(costsIdx + TC_FLAGS);
+                    break;
+                } else if (next == NO_TURN_ENTRY) {
+                    break;
+                }
+                previousEntryIndex = next;
                 // search for the last added cost entry
                 if (i++ > 1000) {
                     throw new IllegalStateException("Something unexpected happened. A node probably will not have 1000+ relations.");
                 }
+                // get index of next turn cost entry
+                next = turnCosts.getInt((long) next * turnCostsEntryBytes + TC_NEXT);
             }
-            // set next-pointer to this new cost entry
-            turnCosts.setInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT, newEntryIndex);
+            if (!oldEntryFound || !checkExistingEntries) {
+                // set next-pointer to this new cost entry
+                turnCosts.setInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT,
+                        newEntryIndex);
+            } else if (mergeBitwiseOr) {
+                newFlags = existingFlags | newFlags;
+            }
         }
-        // add entry
-        long costsBase = (long) newEntryIndex * turnCostsEntryBytes;
+        long costsBase; // where to (over)write
+        if (!oldEntryFound) {
+            costsBase = (long) newEntryIndex * turnCostsEntryBytes;
+            turnCostsCount++;
+        } else {
+            costsBase = (long) previousEntryIndex * turnCostsEntryBytes;
+        }
         turnCosts.setInt(costsBase + TC_FROM, fromEdge);
         turnCosts.setInt(costsBase + TC_TO, toEdge);
-        turnCosts.setInt(costsBase + TC_FLAGS, (int) turnFlags);
-        // next-pointer is NO_TURN_ENTRY
-        turnCosts.setInt(costsBase + TC_NEXT, NO_TURN_ENTRY);
+        turnCosts.setInt(costsBase + TC_FLAGS, (int) newFlags);
+        turnCosts.setInt(costsBase + TC_NEXT, next);
     }
 
     /**
@@ -232,3 +278,4 @@ public class TurnCostExtension implements GraphExtension {
         return "turn_cost";
     }
 }
+
