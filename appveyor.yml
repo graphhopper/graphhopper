@@ -21,8 +21,10 @@ install:
   - cmd: SET JAVA_OPTS=-Xmx1g
   - cmd: mvn --version
   - cmd: java -version
+-build_script:
+  - mvn clean package -DskipTest -B
 test_script:
-  - mvn clean test verify -B && mvn checkstyle:check findbugs:check forbiddenapis:check -B
+  - mvn test verify -B && mvn checkstyle:check findbugs:check forbiddenapis:check -B
 cache:
   - C:\maven\
   - C:\Users\appveyor\.m2
