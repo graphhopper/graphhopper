@@ -27,6 +27,7 @@ import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.ManualPrepareContractionHierarchies;
+import com.graphhopper.routing.ch.WitnessPathFinder;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
@@ -66,8 +67,8 @@ public class CHMeasurement {
     private double nodesContractedPercentage;
 
     public static void main(String[] args) {
-//        testPerformanceAutomaticNodeOrdering();
-        new CHMeasurement().testPerformanceFixedNodeOrdering();
+        testPerformanceAutomaticNodeOrdering(args);
+//        new CHMeasurement().testPerformanceFixedNodeOrdering();
     }
 
     /**
@@ -206,8 +207,12 @@ public class CHMeasurement {
      * contraction order determines how many and which shortcuts will be introduced) and the resulting query speed.
      * The queries are compared with a normal AStar search for comparison and to ensure correctness.
      */
-    private static void testPerformanceAutomaticNodeOrdering() {
-        String osmFile = "bremen-latest.osm.pbf";
+    private static void testPerformanceAutomaticNodeOrdering(String[] args) {
+        String osmFile = "berlin-latest.osm.pbf";
+        if (args.length == 2) {
+            osmFile = args[0];
+            WitnessPathFinder.maxOrigEdgesPerInitialEntry = Integer.valueOf(args[1]);
+        }
         final GraphHopper graphHopper = new GraphHopperOSM();
         CmdArgs cmdArgs = new CmdArgs();
         cmdArgs.put("datareader.file", osmFile);
