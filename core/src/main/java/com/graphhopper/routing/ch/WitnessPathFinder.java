@@ -38,6 +38,7 @@ public class WitnessPathFinder {
     private final CHGraph graph;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
+    private final int maxLevel;
     private final EdgeExplorer outEdgeExplorer;
     private IntObjectMap<WitnessSearchEntry> chEntries;
     private BitSet settledEntries;
@@ -47,13 +48,14 @@ public class WitnessPathFinder {
     private int numPossibleShortcuts;
     private boolean targetDiscoveredByShortcut;
 
-    public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode) {
+    public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, int maxLevel) {
         if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
             throw new IllegalArgumentException("Traversal mode " + traversalMode + "not supported");
         }
         this.graph = graph;
         this.weighting = weighting;
         this.traversalMode = traversalMode;
+        this.maxLevel = maxLevel;
         this.outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(weighting.getFlagEncoder(), false, true));
         initCollections();
     }
@@ -100,7 +102,7 @@ public class WitnessPathFinder {
             EdgeIterator iter = outEdgeExplorer.setBaseNode(currEdge.adjNode);
             while (iter.next()) {
                 if ((!traversalMode.hasUTurnSupport() && iter.getFirstOrigEdge() == currEdge.incEdge) ||
-                        graph.getLevel(iter.getAdjNode()) < graph.getLevel(iter.getBaseNode())) {
+                        isContracted(iter.getAdjNode())) {
                     continue;
                 }
                 double weight = weighting.calcWeight(iter, false, currEdge.incEdge) + currEdge.weight;
@@ -192,5 +194,9 @@ public class WitnessPathFinder {
         // todo: this is similar to some code in DijkstraBidirectionEdgeCHNoSOD and should be cleaned up, see comments there
         EdgeIteratorState eis = graph.getEdgeIteratorState(edge, adjNode);
         return GHUtility.createEdgeKey(eis.getBaseNode(), eis.getAdjNode(), eis.getEdge(), false);
+    }
+
+    private boolean isContracted(int node) {
+        return graph.getLevel(node) != maxLevel;
     }
 }

@@ -39,7 +39,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private final TraversalMode traversalMode;
     private int[] hierarchyDepths;
     private WitnessPathFinder witnessPathFinder;
-    private CHEdgeExplorer toNodeInEdgeExplorer;
     private CHEdgeExplorer scExplorer;
     private CHEdgeExplorer allCHExplorer;
     private EdgeExplorer fromNodeOrigInEdgeExplorer;
@@ -50,6 +49,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private WitnessSearchStrategy witnessSearchStrategy;
     //todo: replace dryMode flag with different handler implementations
     private boolean dryMode;
+    private int maxLevel;
     private int numEdges;
     private int numPrevEdges;
     private int numOrigEdges;
@@ -69,14 +69,14 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public void initFromGraph() {
         super.initFromGraph();
-        witnessPathFinder = new WitnessPathFinder(prepareGraph, turnWeighting, traversalMode);
+        maxLevel = prepareGraph.getNodes() + 1;
+        witnessPathFinder = new WitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel);
         DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
         DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
         inEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
         outEdgeExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
         scExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
         allCHExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, true));
-        toNodeInEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
         fromNodeOrigInEdgeExplorer = ghStorage.createEdgeExplorer(inEdgeFilter);
         toNodeOrigOutEdgeExplorer = ghStorage.createEdgeExplorer(outEdgeFilter);
         toNodeOrigInEdgeExplorer = ghStorage.createEdgeExplorer(inEdgeFilter);
@@ -309,8 +309,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private boolean isContracted(int node) {
-        int level = prepareGraph.getLevel(node);
-        return level < maxLevel;
+        return prepareGraph.getLevel(node) != maxLevel;
     }
 
     /**

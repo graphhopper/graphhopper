@@ -129,7 +129,7 @@ public class CHMeasurement {
                     LOGGER.error("Dijkstra and CH yielded different weight for path from {} to {}, {}", p, q,
                             getWeightDifferenceString(dijkstraWeight, chWeight));
                 } else if (errorCount == maxErrorLogCount) {
-                    LOGGER.error("... more errors (not shown), {} / {} queries completed", i, iterations);
+                    LOGGER.error("... more errors (not shown), {} / {} queries completed until maximum error log count reached", i, iterations);
                 }
             }
         }
