@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-android</artifactId>
-    <version>0.10-SNAPSHOT</version>
+    <version>${revision}</version>
     <name>GraphHopper Android</name>
     <packaging>apk</packaging>
     <organization>
@@ -15,8 +15,8 @@
     <parent>
         <relativePath>../..</relativePath>
         <groupId>com.graphhopper</groupId>
-        <artifactId>graphhopper-parent</artifactId>
-        <version>0.10-SNAPSHOT</version>
+        <artifactId>graphhopper-parent</artifactId>    	
+        <version>${revision}</version>
     </parent>
     <properties>
         <vtm.version>0.9.2</vtm.version>
@@ -104,6 +104,12 @@
             <groupId>org.mapsforge</groupId>
             <artifactId>vtm-jts</artifactId>
             <version>${vtm.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>com.vividsolutions</groupId>
+                <artifactId>jts</artifactId>
+              </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mapsforge</groupId>

@@ -20,6 +20,7 @@ package com.graphhopper.reader.gtfs;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntIntHashMap;
+import com.carrotsearch.hppc.IntLongHashMap;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Agency;
 import com.conveyal.gtfs.model.StopTime;
@@ -62,21 +63,23 @@ import static java.time.temporal.ChronoUnit.DAYS;
 public class RealtimeFeed {
     private static final Logger logger = LoggerFactory.getLogger(RealtimeFeed.class);
     private final IntHashSet blockedEdges;
+    private final IntLongHashMap delaysForAlightEdges;
     private final List<VirtualEdgeIteratorState> additionalEdges;
     private final GtfsRealtime.FeedMessage feedMessage;
     private final GTFSFeed staticFeed;
     private final Agency agency;
 
-    private RealtimeFeed(GTFSFeed feed, Agency agency, GtfsRealtime.FeedMessage feedMessage, IntHashSet blockedEdges, List<VirtualEdgeIteratorState> additionalEdges) {
+    private RealtimeFeed(GTFSFeed feed, Agency agency, GtfsRealtime.FeedMessage feedMessage, IntHashSet blockedEdges, IntLongHashMap delaysForAlightEdges, List<VirtualEdgeIteratorState> additionalEdges) {
         this.staticFeed = feed;
         this.agency = agency;
         this.feedMessage = feedMessage;
         this.blockedEdges = blockedEdges;
+        this.delaysForAlightEdges = delaysForAlightEdges;
         this.additionalEdges = additionalEdges;
     }
 
     public static RealtimeFeed empty() {
-        return new RealtimeFeed(null, null, null, new IntHashSet(), Collections.emptyList());
+        return new RealtimeFeed(null, null, null, new IntHashSet(), new IntLongHashMap(), Collections.emptyList());
     }
 
     public static RealtimeFeed fromProtobuf(Graph graph, GtfsStorage staticGtfs, PtFlagEncoder encoder, GtfsRealtime.FeedMessage feedMessage) {
@@ -85,6 +88,7 @@ public class RealtimeFeed {
         // TODO: Require configuration of feed and agency this realtime feed is for.
         Agency agency = feed.agency.values().iterator().next(); // Realtime feeds are always specific to an agency.
         final IntHashSet blockedEdges = new IntHashSet();
+        final IntLongHashMap delaysForAlightEdges = new IntLongHashMap();
         feedMessage.getEntityList().stream()
             .filter(GtfsRealtime.FeedEntity::hasTripUpdate)
             .map(GtfsRealtime.FeedEntity::getTripUpdate)
@@ -102,7 +106,14 @@ public class RealtimeFeed {
                             blockedEdges.add(boardEdges[skippedStopSequenceNumber]);
                             blockedEdges.add(leaveEdges[skippedStopSequenceNumber]);
                         });
+                GtfsReader.TripWithStopTimes tripWithStopTimes = toTripWithStopTimes(feed, agency, tripUpdate);
+                tripWithStopTimes.stopTimes.forEach(stopTime -> {
+                    final StopTime originalStopTime = feed.stop_times.get(new Fun.Tuple2(tripUpdate.getTrip().getTripId(), stopTime.stop_sequence));
+                    int delay = stopTime.arrival_time - originalStopTime.arrival_time;
+                    delaysForAlightEdges.put(leaveEdges[stopTime.stop_sequence-1], delay * 1000);
+                });
             });
+
         final List<VirtualEdgeIteratorState> additionalEdges = new ArrayList<>();
         final Graph overlayGraph = new Graph() {
             int nNodes = 0;
@@ -278,7 +289,7 @@ public class RealtimeFeed {
                 .forEach(trip -> gtfsReader.addTrips(ZoneId.of(agency.agency_timezone), Collections.singletonList(trip), 0));
         gtfsReader.wireUpStops();
         gtfsReader.connectStopsToStationNodes();
-        return new RealtimeFeed(feed, agency, feedMessage, blockedEdges, additionalEdges);
+        return new RealtimeFeed(feed, agency, feedMessage, blockedEdges, delaysForAlightEdges, additionalEdges);
     }
 
     boolean isBlocked(int edgeId) {
@@ -289,8 +300,8 @@ public class RealtimeFeed {
         return additionalEdges;
     }
 
-    public Optional<GtfsReader.TripWithStopTimes> getTripUpdate(GtfsRealtime.TripDescriptor tripDescriptor) {
-        if (feedMessage == null) {
+    public Optional<GtfsReader.TripWithStopTimes> getTripUpdate(GtfsRealtime.TripDescriptor tripDescriptor, Label.Transition boardEdge, Instant boardTime) {
+        if (feedMessage == null || !isThisRealtimeUpdateAboutThisLineRun(boardEdge.edge.edgeIteratorState, boardTime)) {
             return Optional.empty();
         } else {
             return feedMessage.getEntityList().stream()
@@ -394,4 +405,27 @@ public class RealtimeFeed {
     }
 
 
+    public long getDelayForAlightEdge(EdgeIteratorState edge, Instant now) {
+        if (isThisRealtimeUpdateAboutThisLineRun(edge, now)) {
+            return delaysForAlightEdges.getOrDefault(edge.getEdge(), 0);
+        } else {
+            return 0;
+        }
+    }
+
+    boolean isThisRealtimeUpdateAboutThisLineRun(EdgeIteratorState edge, Instant now) {
+        if (feedMessage == null || Duration.between(feedTimestampOrNow(), now).toHours() > 24) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private Instant feedTimestampOrNow() {
+        if (feedMessage.getHeader().hasTimestamp()) {
+            return Instant.ofEpochSecond(feedMessage.getHeader().getTimestamp());
+        } else {
+            return Instant.now();
+        }
+    }
 }

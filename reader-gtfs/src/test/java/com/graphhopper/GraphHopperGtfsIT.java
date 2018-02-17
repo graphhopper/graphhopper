@@ -18,6 +18,7 @@
 
 package com.graphhopper;
 
+import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
@@ -259,6 +260,25 @@ public class GraphHopperGtfsIT {
     }
 
     @Test
+    public void testRoute5Arrival() {
+        final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
+        final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,8,10).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.ARRIVE_BY, true);
+        GHResponse route = graphHopper.route(ghRequest);
+
+        assertFalse(route.hasErrors());
+        assertFalse(route.getAll().isEmpty());
+        assertEquals("Using expected route", "STBA", (((Trip.PtLeg) route.getBest().getLegs().get(0)).trip_id));
+        assertEquals("Using expected route", "AB1", (((Trip.PtLeg) route.getBest().getLegs().get(1)).trip_id));
+        assertEquals("Paid expected fare", 250, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue()); // Two legs, no transfers allowed. Need two 'p' tickets costing 125 cents each.
+    }
+
+    @Test
     public void testRoute6() {
         final double FROM_LAT = 36.7, FROM_LON = -116.5; // HASNOROUTES stop
         final double TO_LAT = 36.914894, TO_LON = -116.76821; // NADAV stop
@@ -406,5 +426,27 @@ public class GraphHopperGtfsIT {
         GHResponse route = graphHopper.route(ghRequest);
         Assert.assertTrue(route.getAll().isEmpty());
     }
+
+    @Test
+    public void testTransferByArrival() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+
+        // I want to be there at 7:20
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,7,20).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.ARRIVE_BY, true);
+
+        GHResponse response = graphHopper.route(ghRequest);
+
+        Trip.PtLeg lastLeg = ((Trip.PtLeg) response.getBest().getLegs().get(response.getBest().getLegs().size()-1));
+        Trip.Stop lastStop = lastLeg.stops.get(lastLeg.stops.size()-1);
+        assertEquals("Arrive at 7:20", LocalDateTime.parse("2007-01-01T07:20:00").atZone(zoneId).toInstant(), lastStop.plannedArrivalTime.toInstant());
+    }
+
+
 
 }
