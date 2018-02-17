@@ -175,12 +175,15 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 witnessPathFinder.findTarget(targetEdge, toNode);
                 dijkstraSW.stop();
 
-                CHEntry entry = witnessPathFinder.getFoundEntry(targetEdge, toNode);
-                LOGGER.trace("Witness path search to outgoing edge yielded entry {}", entry);
-                if (witnessSearchStrategy.shortcutRequired(node, toNode, incomingEdges, outgoingEdges, witnessPathFinder, entry)) {
+                CHEntry originalPath = witnessPathFinder.getFoundEntry(targetEdge, toNode);
+                if (originalPath == null) {
+                    continue;
+                }
+                LOGGER.trace("Witness path search to outgoing edge yielded entry {}", originalPath);
+                if (witnessSearchStrategy.shortcutRequired(node, toNode, incomingEdges, outgoingEdges, witnessPathFinder, originalPath)) {
                     // todo: note that we do not count loop-helper shortcuts here, but there are not that many usually
                     stats().shortcutsNeeded++;
-                    addShortcuts(entry);
+                    addShortcuts(originalPath);
                 } else {
                     // todo: here not necessarily a witness path has been found, for example for u-turns (initial-entry
                     // = outgoing edge) we also end up here
@@ -523,7 +526,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         continue;
                     }
                     CHEntry potentialWitness = witnessPathFinder.getFoundEntryNoParents(origInIterLastOrigEdge, toNode);
-                    if (potentialWitness == null || potentialWitness.weight == Double.POSITIVE_INFINITY) {
+                    if (potentialWitness == null) {
                         // we did not find any witness path leading to this edge -> no witness
                         continue;
                     }

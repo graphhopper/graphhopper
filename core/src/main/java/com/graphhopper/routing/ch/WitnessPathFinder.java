@@ -68,8 +68,7 @@ public class WitnessPathFinder {
 
     public CHEntry getFoundEntry(int origEdge, int adjNode) {
         int edgeKey = getEdgeKey(origEdge, adjNode);
-        CHEntry entry = chEntries.get(edgeKey);
-        return entry != null ? entry : new CHEntry(origEdge, origEdge, adjNode, Double.POSITIVE_INFINITY);
+        return chEntries.get(edgeKey);
     }
 
     public CHEntry getFoundEntryNoParents(int edge, int adjNode) {
@@ -84,12 +83,12 @@ public class WitnessPathFinder {
         }
 
         while (!priorityQueue.isEmpty()) {
-            WitnessSearchEntry currEdge = priorityQueue.poll();
+            WitnessSearchEntry currEdge = priorityQueue.peek();
             if (currEdge.incEdge == targetEdge && currEdge.adjNode == targetNode) {
-                // put the entry back for future searches
-                priorityQueue.add(currEdge);
                 break;
             }
+
+            currEdge = priorityQueue.poll();
 
             if (currEdge.possibleShortcut) {
                 numPossibleShortcuts--;
