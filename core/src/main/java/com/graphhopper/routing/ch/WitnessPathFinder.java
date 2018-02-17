@@ -45,8 +45,7 @@ public class WitnessPathFinder {
     private PriorityQueue<WitnessSearchEntry> priorityQueue;
     private int maxOrigEdgesSettled;
     private int numOrigEdgesSettled;
-    private int numPossibleShortcuts;
-    private boolean targetDiscoveredByShortcut;
+    private int numOnOrigPath;
 
     public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, int maxLevel) {
         if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
@@ -76,7 +75,7 @@ public class WitnessPathFinder {
     }
 
     public void findTarget(int targetEdge, int targetNode) {
-        targetDiscoveredByShortcut = false;
+        boolean targetDiscoveredByOrigPath = false;
         int targetKey = getEdgeKey(targetEdge, targetNode);
         if (settledEntries.get(targetKey)) {
             return;
@@ -90,11 +89,11 @@ public class WitnessPathFinder {
 
             currEdge = priorityQueue.poll();
 
-            if (currEdge.possibleShortcut) {
-                numPossibleShortcuts--;
+            if (currEdge.onOrigPath) {
+                numOnOrigPath--;
             }
 
-            if (numOrigEdgesSettled > maxOrigEdgesSettled && !currEdge.possibleShortcut) {
+            if (numOrigEdgesSettled > maxOrigEdgesSettled && !currEdge.onOrigPath) {
                 continue;
             }
 
@@ -109,24 +108,28 @@ public class WitnessPathFinder {
                     continue;
                 }
 
-                boolean possibleShortcut = currEdge.possibleShortcut && iter.getBaseNode() == iter.getAdjNode();
+                boolean possibleShortcut = currEdge.onOrigPath && iter.getBaseNode() == iter.getAdjNode();
                 int traversalId = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
                 WitnessSearchEntry entry = chEntries.get(traversalId);
                 if (entry == null) {
                     entry = createEntry(iter, currEdge, weight, possibleShortcut);
-                    updateTargetDiscoveredByShortcutFlag(targetEdge, targetNode, currEdge, iter);
+                    if (targetDiscoveredByOrigPath(targetEdge, targetNode, currEdge, iter)) {
+                        targetDiscoveredByOrigPath = true;
+                    }
                     chEntries.put(traversalId, entry);
                     priorityQueue.add(entry);
                 } else if (entry.weight > weight) {
                     priorityQueue.remove(entry);
                     updateEntry(entry, iter, weight, currEdge, possibleShortcut);
-                    updateTargetDiscoveredByShortcutFlag(targetEdge, targetNode, currEdge, iter);
+                    if (targetDiscoveredByOrigPath(targetEdge, targetNode, currEdge, iter)) {
+                        targetDiscoveredByOrigPath = true;
+                    }
                     priorityQueue.add(entry);
                 }
             }
             settledEntries.set(getEdgeKey(currEdge.incEdge, currEdge.adjNode));
             numOrigEdgesSettled++;
-            if (numPossibleShortcuts < 1 && !targetDiscoveredByShortcut) {
+            if (numOnOrigPath < 1 && !targetDiscoveredByOrigPath) {
                 break;
             }
         }
@@ -134,14 +137,14 @@ public class WitnessPathFinder {
 
     private void initEntries(IntObjectMap<WitnessSearchEntry> initialEntries) {
         for (IntObjectCursor<WitnessSearchEntry> e : initialEntries) {
-            if (e.value.possibleShortcut) {
-                numPossibleShortcuts++;
+            if (e.value.onOrigPath) {
+                numOnOrigPath++;
             }
             chEntries.put(e.key, e.value);
             priorityQueue.add(e.value);
         }
-        if (numPossibleShortcuts != 1) {
-            throw new IllegalStateException("There should be exactly one initial entry with possibleShortcut = true, but given: " + numPossibleShortcuts);
+        if (numOnOrigPath != 1) {
+            throw new IllegalStateException("There should be exactly one initial entry with onOrigPath = true, but given: " + numOnOrigPath);
         }
     }
 
@@ -149,8 +152,8 @@ public class WitnessPathFinder {
         WitnessSearchEntry entry = new WitnessSearchEntry(iter.getEdge(), iter.getLastOrigEdge(), iter.getAdjNode(), weight);
         entry.parent = parent;
         if (possibleShortcut) {
-            entry.possibleShortcut = true;
-            numPossibleShortcuts++;
+            entry.onOrigPath = true;
+            numOnOrigPath++;
         }
         return entry;
     }
@@ -161,23 +164,21 @@ public class WitnessPathFinder {
         entry.weight = weight;
         entry.parent = parent;
         if (possibleShortcut) {
-            if (!entry.possibleShortcut) {
-                numPossibleShortcuts++;
+            if (!entry.onOrigPath) {
+                numOnOrigPath++;
             }
-            entry.possibleShortcut = true;
+            entry.onOrigPath = true;
         }
     }
 
-    private void updateTargetDiscoveredByShortcutFlag(int targetEdge, int targetNode, WitnessSearchEntry currEdge, EdgeIteratorState iter) {
-        if (currEdge.possibleShortcut && iter.getLastOrigEdge() == targetEdge && iter.getAdjNode() == targetNode) {
-            targetDiscoveredByShortcut = true;
-        }
+    private boolean targetDiscoveredByOrigPath(int targetEdge, int targetNode, WitnessSearchEntry currEdge, EdgeIteratorState iter) {
+        return currEdge.onOrigPath && iter.getLastOrigEdge() == targetEdge && iter.getAdjNode() == targetNode;
     }
 
     private void reset() {
         maxOrigEdgesSettled = Integer.MAX_VALUE;
         numOrigEdgesSettled = 0;
-        numPossibleShortcuts = 0;
+        numOnOrigPath = 0;
         initCollections();
     }
 

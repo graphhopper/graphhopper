@@ -136,11 +136,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         // contraction should be much faster if we exploit that there are no turn costs on most nodes
         LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}", node, dryMode ? "counted" : "added");
         stats().nodes++;
-        CHEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
-        numEdges = 0;
-        numPrevEdges = 0;
-        numOrigEdges = 0;
-        numPrevOrigEdges = 0;
+        EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
+        resetEdgeCounters();
         int degree = 0;
         while (incomingEdges.next()) {
             int fromNode = incomingEdges.getAdjNode();
@@ -315,6 +312,13 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         return prepareGraph.getLevel(node) != maxLevel;
     }
 
+    private void resetEdgeCounters() {
+        numEdges = 0;
+        numPrevEdges = 0;
+        numOrigEdges = 0;
+        numPrevOrigEdges = 0;
+    }
+    
     /**
      * Checks if the path leading to the given shortest path entry consists only of the incoming edge, the outgoing edge
      * and an arbitrary number of loops at the node.
@@ -361,7 +365,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         if (currEntry == null) {
             LOGGER.trace("Adding/Updating initial entry {}", entry);
             initialEntries.put(edgeKey, entry);
-            if (entry.possibleShortcut) {
+            if (entry.onOrigPath) {
                 return 1;
             }
         } else {
@@ -369,10 +373,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             // the lowest weight
             if (entry.weight < currEntry.weight) {
                 int difference = 0;
-                if (currEntry.possibleShortcut) {
+                if (currEntry.onOrigPath) {
                     difference--;
                 }
-                if (entry.possibleShortcut) {
+                if (entry.onOrigPath) {
                     difference++;
                 }
                 initialEntries.put(edgeKey, entry);
@@ -417,7 +421,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         public IntObjectMap<WitnessSearchEntry> getInitialEntries(int fromNode, EdgeIteratorState incomingEdge) {
             final int firstOrigEdge = incomingEdge.getFirstOrigEdge();
             IntObjectMap<WitnessSearchEntry> initialEntries = new IntObjectHashMap<>();
-            int shortcutPossibles = 0;
+            int numOnOrigPath = 0;
             EdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
             while (outIter.next()) {
                 if (isContracted(outIter.getAdjNode()))
@@ -435,13 +439,13 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight);
                 entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0);
                 if (outIter.getEdge() == incomingEdge.getEdge()) {
-                    entry.possibleShortcut = true;
+                    entry.onOrigPath = true;
                     // we want to give other paths the precedence in case the path weights would be equal
                     entry.weight += 1.e-12;
                 }
-                shortcutPossibles += insertOrUpdateInitial(initialEntries, entry);
+                numOnOrigPath += insertOrUpdateInitial(initialEntries, entry);
             }
-            return shortcutPossibles > 0 ? initialEntries : new IntObjectHashMap<WitnessSearchEntry>();
+            return numOnOrigPath > 0 ? initialEntries : new IntObjectHashMap<WitnessSearchEntry>();
         }
 
         /**
@@ -565,7 +569,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 double weight = turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
                 WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight);
                 entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, incomingEdge.getFirstOrigEdge(), fromNode, 0);
-                entry.possibleShortcut = (outIter.getEdge() == incomingEdge.getEdge());
+                entry.onOrigPath = (outIter.getEdge() == incomingEdge.getEdge());
                 shortcutPossibles += insertOrUpdateInitial(initialEntries, entry);
             }
             return shortcutPossibles > 0 ? initialEntries : new IntObjectHashMap<WitnessSearchEntry>();
@@ -589,7 +593,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             WitnessSearchEntry entry = new WitnessSearchEntry(incomingEdge.getEdge(), incomingEdge.getLastOrigEdge(),
                     incomingEdge.getBaseNode(), weight);
             entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, incomingEdge.getFirstOrigEdge(), fromNode, 0);
-            entry.possibleShortcut = true;
+            entry.onOrigPath = true;
             initialEntries.put(getEdgeKey(entry.incEdge, entry.adjNode), entry);
             return initialEntries;
         }

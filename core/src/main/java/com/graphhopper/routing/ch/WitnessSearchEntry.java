@@ -19,7 +19,7 @@ package com.graphhopper.routing.ch;
 
 class WitnessSearchEntry extends CHEntry {
     // todo: explain what this is needed for
-    boolean possibleShortcut;
+    boolean onOrigPath;
 
     public WitnessSearchEntry(int edge, int incEdge, int adjNode, double weight) {
         super(edge, incEdge, adjNode, weight);
