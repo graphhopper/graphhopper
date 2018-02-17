@@ -725,7 +725,6 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    @Ignore("this test shows that the turn replacement algo introduces an unnecessary shortcut due to a wrong implementation")
     public void testContractNode_noUnnecessaryShortcut_differentWitnessesForDifferentOutEdges() {
         //         /--> 2 ---\
         //        /           \
@@ -744,8 +743,8 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(3);
 
-        // we do not need a shortcut here! we can only access node 1 from node 0 and at node 5 we can either go to 
-        // node 2,4 or 6. to get to node 6 we can either take the northern witness via 2 or the southern one via 4.
+        // We do not need a shortcut here! we can only access node 1 from node 0 and at node 5 we can either go to 
+        // node 2,4 or 6. To get to node 6 we can either take the northern witness via 2 or the southern one via 4.
         // to get to node 2 we need to take the witness via node 4 and vice versa. the interesting part here is that
         // we use a different witness depending on the target edge and even more that the witness paths itself yield
         // outgoing edges that need to be witnessed because edges 2->5 and 4->5 are bidirectional like the majority

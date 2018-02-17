@@ -399,9 +399,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     /**
-     * Turn-replacement algorithm described in 'Efficient Routing in Road Networks with Turn Costs' by R. Geisberger
-     * and C. Vetter. This strategy is most efficient in deciding which shortcuts will not be required, but also needs
-     * to run the most checks.
+     * Modified version of the turn-replacement algorithm described in 
+     * 'Efficient Routing in Road Networks with Turn Costs' by R. Geisberger and C. Vetter.
+     * This strategy is most efficient in deciding which shortcuts will not be required, but also needs to run the most
+     * checks.
      * <p>
      * The basic idea is to not check for witnesses for all in/out edge pairs of the from/to nodes, but instead assume
      * the worst case with regards to turn costs at the from/to nodes and check if there is a witness path going from
@@ -482,40 +483,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             return outTurnReplacementDifference;
         }
 
-        /**
-         * in turn replacement difference:
-         * itrd(baseInEdge, altInEdge) := max[outEdge](turnCost(altInEdge, outEdge) - turnCost(baseInEdge, outEdge))
-         *
-         * @param w          node at which turn replacement difference is calculated
-         * @param baseInEdge baseline incoming original edge, last edge of the original path
-         * @param altInEdge  alternative incoming original edge, candidate for a witness path
-         * @return in turn replacement difference, negative infinity if no outEdge can be reached from the given
-         * baseInEdge, positive infinity if there is an outEdge that can be reached from baseInEdge, but not from the
-         * altInEdge
-         */
-        double calcInTurnReplacementDifference(int w, int baseInEdge, int altInEdge) {
-            double inTurnReplacementDifference = Double.NEGATIVE_INFINITY;
-            EdgeIterator origOutIter = toNodeOrigOutEdgeExplorer.setBaseNode(w);
-            while (origOutIter.next()) {
-                final double turnCost = getTurnCost(baseInEdge, w, origOutIter.getEdge());
-                if (Double.isInfinite(turnCost)) {
-                    // we cannot reach this edge from the original path so we can act as if this edge does not exist
-                    // for example this happens frequently when the base-in-edge is bidirectional
-                    continue;
-                }
-                final double alternativeTurnCost = getTurnCost(altInEdge, w, origOutIter.getFirstOrigEdge());
-                if (Double.isInfinite(alternativeTurnCost)) {
-                    // there is at least one out-edge that we can not reach using this witness path so it does not serve
-                    // as a witness. this will be frequently the end of the witness path itself in case the in-edge is
-                    // bidirectional.
-                    return Double.POSITIVE_INFINITY;
-                }
-                inTurnReplacementDifference = Math.max(inTurnReplacementDifference, alternativeTurnCost - turnCost);
-            }
-            assert inTurnReplacementDifference != Double.NEGATIVE_INFINITY : "we should have already checked if there is any reachable out edge";
-            return inTurnReplacementDifference;
-        }
-
         @Override
         public boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdges,
                                         EdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, CHEntry entry) {
@@ -523,52 +490,55 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     && !alternativeWitnessExistsOrNotNeeded(outgoingEdges, toNode, witnessPathFinder, entry);
         }
 
+        /**
+         * Checks for witness paths for a given original path
+         * <p>
+         * This is a replacement for the incoming turn replacement difference calculation described in the above mentioned
+         * paper. The latter does not allow finding a witness if different witness paths are required for different
+         * outgoing edges and thus prevents finding some shortcuts, especially because most edges in road networks
+         * are bidirectional,
+         * see: EdgeBasedNodeContractorTest#testContractNode_noUnnecessaryShortcut_differentWitnessesForDifferentOutEdges
+         */
         private boolean alternativeWitnessExistsOrNotNeeded(
-                EdgeIteratorState outgoingEdge, int toNode, WitnessPathFinder witnessPathFinder, CHEntry chEntry) {
-            if (!witnessNeeded(outgoingEdge, toNode)) {
-                return true;
-            }
-            
-            boolean foundWitness = false;
-            EdgeIterator inIter = toNodeOrigInEdgeExplorer.setBaseNode(toNode);
-            while (!foundWitness && inIter.next()) {
-                if (inIter.getLastOrigEdge() == outgoingEdge.getLastOrigEdge()) {
-                    // we already know that the best path leading to this edge is the original path -> this may not
-                    // serve as a witness
+                EdgeIteratorState outgoingEdge, int toNode, WitnessPathFinder witnessPathFinder, CHEntry originalPath) {
+            EdgeIterator origOutIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
+            final int originalPathLastOrigEdge = outgoingEdge.getLastOrigEdge();
+            while (origOutIter.next()) {
+                final int origOutIterFirstOrigEdge = origOutIter.getFirstOrigEdge();
+                final double turnCost = getTurnCost(originalPathLastOrigEdge, toNode, origOutIterFirstOrigEdge);
+                if (Double.isInfinite(turnCost)) {
+                    // this outgoing edge is not accessible from the original path and we do not need to find a 
+                    // witness for it
                     continue;
                 }
-                CHEntry potentialWitness = witnessPathFinder.getFoundEntryNoParents(inIter.getLastOrigEdge(), toNode);
-                if (potentialWitness == null || potentialWitness.weight == Double.POSITIVE_INFINITY) {
-                    // we did not find any witness path leading to this edge -> we did not find a witness
-                    continue;
+                boolean foundWitness = false;
+                EdgeIterator origInIter = toNodeOrigInEdgeExplorer.setBaseNode(toNode);
+                while (origInIter.next()) {
+                    final int origInIterLastOrigEdge = origInIter.getLastOrigEdge();
+                    if (origInIterLastOrigEdge == originalPathLastOrigEdge) {
+                        // we already know that the best path leading to this edge is the original path -> this may not
+                        // serve as a witness
+                        continue;
+                    }
+                    CHEntry potentialWitness = witnessPathFinder.getFoundEntryNoParents(origInIterLastOrigEdge, toNode);
+                    if (potentialWitness == null || potentialWitness.weight == Double.POSITIVE_INFINITY) {
+                        // we did not find any witness path leading to this edge -> no witness
+                        continue;
+                    }
+                    double alternativeTurnCost = getTurnCost(origInIterLastOrigEdge, toNode, origOutIterFirstOrigEdge);
+                    final double tolerance = 1.e-12;
+                    if (potentialWitness.weight + alternativeTurnCost - tolerance < originalPath.weight + turnCost) {
+                        foundWitness = true;
+                    }
                 }
-                double inTurnReplacementDifference = calcInTurnReplacementDifference(toNode, outgoingEdge.getLastOrigEdge(), inIter.getLastOrigEdge());
-                if (inTurnReplacementDifference == Double.POSITIVE_INFINITY) {
-                    // we can not reach all required outgoing edges from this witness, this path will not serve
-                    // as a witness
-                    continue;
-                }
-                final double tolerance = 1.e-12;
-                if (inTurnReplacementDifference + potentialWitness.weight < chEntry.weight + tolerance) {
-                    foundWitness = true;
+                if (!foundWitness) {
+                    return false;
                 }
             }
-            if (foundWitness) {
-                LOGGER.trace("Found witness path -> no shortcut");
-            }
-            return foundWitness;
+            // we have checked that for each outgoing original edge that is accessible from the original path there
+            // is a witness --> we do not need a shortcut
+            return true;
         }
-    }
-
-    private boolean witnessNeeded(EdgeIteratorState outgoingEdge, int toNode) {
-        EdgeIterator origOutIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
-        while (origOutIter.next()) {
-            final double turnCost = getTurnCost(outgoingEdge.getLastOrigEdge(), toNode, origOutIter.getEdge());
-            if (!Double.isInfinite(turnCost)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
