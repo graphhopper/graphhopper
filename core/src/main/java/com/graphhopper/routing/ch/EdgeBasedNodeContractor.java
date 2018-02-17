@@ -468,9 +468,13 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 if (Double.isInfinite(alternativeTurnCost)) {
                     // there is at least one in-edge from which we cannot reach the given alt-out-edge, i.e. the turn 
                     // replacement difference will be infinite.
+
                     // note: this almost always happens because typically every out-edge is also an in-edge
                     // and u-turns are usually forbidden. this is why the turn replacement algorithm fails to find 
                     // a witness if a different witness path would be required for different in-edges
+
+                    // note2: if altOutEdge = baseOutEdge we do not end up here because of the previous check and we
+                    // always get an initial entry for the original path (as it should be). 
                     return Double.POSITIVE_INFINITY;
                 }
                 outTurnReplacementDifference = Math.max(outTurnReplacementDifference, alternativeTurnCost - turnCost);

@@ -14,6 +14,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -721,6 +722,65 @@ public class EdgeBasedNodeContractorTest {
                 createShortcut(2, 4, e2to3, e3to4, 2),
                 createShortcut(5, 4, e5to3, e3to4, 2)
         );
+    }
+
+    @Test
+    @Ignore("this test shows that the turn replacement algo introduces an unnecessary shortcut due to a wrong implementation")
+    public void testContractNode_noUnnecessaryShortcut_differentWitnessesForDifferentOutEdges() {
+        //         /--> 2 ---\
+        //        /           \
+        // 0 --> 1 ---> 3 ---> 5 --> 6 
+        //        \           /
+        //         \--> 4 ---/   
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(1, 3, 1, false);
+        graph.edge(1, 4, 1, false);
+        graph.edge(2, 5, 1, true); // bidirectional
+        graph.edge(3, 5, 1, false);
+        graph.edge(4, 5, 1, true); // bidirectional
+        graph.edge(5, 6, 1, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(3);
+
+        // we do not need a shortcut here! we can only access node 1 from node 0 and at node 5 we can either go to 
+        // node 2,4 or 6. to get to node 6 we can either take the northern witness via 2 or the southern one via 4.
+        // to get to node 2 we need to take the witness via node 4 and vice versa. the interesting part here is that
+        // we use a different witness depending on the target edge and even more that the witness paths itself yield
+        // outgoing edges that need to be witnessed because edges 2->5 and 4->5 are bidirectional like the majority
+        // of edges in road networks.
+        checkShortcuts();
+    }
+
+    @Test
+    @Ignore("This test showcases an unnecessary used by the turn replacement algorithm, aggressive search should pass")
+    public void testContractNode_noUnnecessaryShortcut_differentInitialEntriesForDifferentInEdges() {
+        //         /--- 2 ->-\
+        //        /           \
+        // 0 --> 1 ---> 3 ---> 5 --> 6 
+        //        \           /
+        //         \--- 4 ->-/   
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, true); // bidirectional
+        graph.edge(1, 3, 1, false);
+        graph.edge(1, 4, 1, true); // bidirectional
+        graph.edge(2, 5, 1, false);
+        graph.edge(3, 5, 1, false);
+        graph.edge(4, 5, 1, false);
+        graph.edge(5, 6, 1, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(3);
+
+        // We do not need a shortcut here! node 1 can be reached from nodes 0, 2 and 4 and from the target node 5 we can
+        // only reach node 6. so coming into node 1 from node 0 we can either go north or south via nodes 2/4 to reach
+        // the edge 5->6. If we come from node 2 we can take the southern witness via 4 and vice versa.
+        // 
+        // This is an example of an unnecessary shortcut introduced by the turn replacement algorithm, because the 
+        // out turn replacement difference for the potential witnesses would be infinite at node 1. 
+        // Note that this happens basically whenever there is a bidirectional edge (and u-turns are forbidden) !
+        checkShortcuts();
     }
 
     @Test
