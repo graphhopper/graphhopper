@@ -18,39 +18,34 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntObjectMap;
+import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntObjectHashMap;
-import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
-import com.graphhopper.util.CHEdgeExplorer;
-import com.graphhopper.util.CHEdgeIterator;
-import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
 import java.util.BitSet;
-import java.util.List;
 import java.util.PriorityQueue;
 
-/**
- * Dummy implementation that probably needs to be replaced by something more efficient / use similar approach
- * as in {@link DijkstraOneToMany}.
- */
 public class WitnessPathFinder {
-    private IntObjectMap<WitnessSearchEntry> chEntries;
-    private BitSet settledEntries;
-    private PriorityQueue<WitnessSearchEntry> priorityQueue;
+    public static int maxOrigEdgesPerInitialEntry = 5;
     private final CHGraph graph;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
-    private CHEdgeExplorer outEdgeExplorer;
-    // todo: find good value here or adjust dynamically, if this is set too low important witnesses wont be found
-    // and the number of shortcuts explodes, if it is too high the dijkstra searches take too long
+    private final EdgeExplorer outEdgeExplorer;
+    private IntObjectMap<WitnessSearchEntry> chEntries;
+    private BitSet settledEntries;
+    private PriorityQueue<WitnessSearchEntry> priorityQueue;
     private int maxOrigEdgesSettled;
     private int numOrigEdgesSettled;
     private int numPossibleShortcuts;
+    private boolean targetDiscoveredByShortcut;
 
     public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode) {
         if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
@@ -59,24 +54,28 @@ public class WitnessPathFinder {
         this.graph = graph;
         this.weighting = weighting;
         this.traversalMode = traversalMode;
-        outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(weighting.getFlagEncoder(), false, true));
-        reset();
+        this.outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(weighting.getFlagEncoder(), false, true));
+        initCollections();
     }
 
-    public void setInitialEntries(List<WitnessSearchEntry> initialEntries) {
+    public void setInitialEntries(IntObjectMap<WitnessSearchEntry> initialEntries) {
         reset();
         initEntries(initialEntries);
-        maxOrigEdgesSettled = initialEntries.size() * 5;
+        maxOrigEdgesSettled = initialEntries.size() * maxOrigEdgesPerInitialEntry;
     }
 
-    public CHEntry getFoundEntry(int edge, int adjNode) {
-        int edgeKey = getEdgeKey(edge, adjNode);
+    public CHEntry getFoundEntry(int origEdge, int adjNode) {
+        int edgeKey = getEdgeKey(origEdge, adjNode);
         CHEntry entry = chEntries.get(edgeKey);
-        return entry != null ? entry : new CHEntry(edge, edge, adjNode, Double.POSITIVE_INFINITY);
+        return entry != null ? entry : new CHEntry(origEdge, origEdge, adjNode, Double.POSITIVE_INFINITY);
+    }
+
+    public CHEntry getFoundEntryNoParents(int edge, int adjNode) {
+        return getFoundEntry(edge, adjNode);
     }
 
     public void findTarget(int targetEdge, int targetNode) {
-        boolean targetDiscoveredByShortcut = false;
+        targetDiscoveredByShortcut = false;
         int targetKey = getEdgeKey(targetEdge, targetNode);
         if (settledEntries.get(targetKey)) {
             return;
@@ -98,7 +97,7 @@ public class WitnessPathFinder {
                 continue;
             }
 
-            CHEdgeIterator iter = outEdgeExplorer.setBaseNode(currEdge.adjNode);
+            EdgeIterator iter = outEdgeExplorer.setBaseNode(currEdge.adjNode);
             while (iter.next()) {
                 if ((!traversalMode.hasUTurnSupport() && iter.getFirstOrigEdge() == currEdge.incEdge) ||
                         graph.getLevel(iter.getAdjNode()) < graph.getLevel(iter.getBaseNode())) {
@@ -109,28 +108,18 @@ public class WitnessPathFinder {
                     continue;
                 }
 
+                boolean possibleShortcut = currEdge.possibleShortcut && iter.getBaseNode() == iter.getAdjNode();
                 int traversalId = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
                 WitnessSearchEntry entry = chEntries.get(traversalId);
                 if (entry == null) {
-                    entry = createEntry(iter, currEdge, weight);
-                    if (currEdge.possibleShortcut && iter.getBaseNode() == iter.getAdjNode()) { 
-                        entry.possibleShortcut = true;
-                        numPossibleShortcuts++;
-                    }
-                    if (currEdge.possibleShortcut && iter.getLastOrigEdge() == targetEdge && iter.getAdjNode() == targetNode) {
-                        targetDiscoveredByShortcut = true;
-                    }
+                    entry = createEntry(iter, currEdge, weight, possibleShortcut);
+                    updateTargetDiscoveredByShortcutFlag(targetEdge, targetNode, currEdge, iter);
                     chEntries.put(traversalId, entry);
                     priorityQueue.add(entry);
                 } else if (entry.weight > weight) {
                     priorityQueue.remove(entry);
-                    updateEntry(entry, iter, weight, currEdge);
-                    if (currEdge.possibleShortcut && iter.getBaseNode() == currEdge.adjNode && iter.getBaseNode() == iter.getAdjNode()) {
-                        if (!entry.possibleShortcut) {
-                            numPossibleShortcuts++;
-                        }
-                        entry.possibleShortcut = true;
-                    }
+                    updateEntry(entry, iter, weight, currEdge, possibleShortcut);
+                    updateTargetDiscoveredByShortcutFlag(targetEdge, targetNode, currEdge, iter);
                     priorityQueue.add(entry);
                 }
             }
@@ -142,57 +131,66 @@ public class WitnessPathFinder {
         }
     }
 
-    private int getEdgeKey(int edge, int adjNode) {
-        // todo: this is similar to some code in EdgeBasedNodeContractor and should be cleaned up, see comments there
-        CHEdgeIteratorState eis = graph.getEdgeIteratorState(edge, adjNode);
-        return GHUtility.createEdgeKey(eis.getBaseNode(), eis.getAdjNode(), eis.getEdge(), false);
-    }
-
-    private void initEntries(List<WitnessSearchEntry> initialEntries) {
-        for (WitnessSearchEntry entry : initialEntries) {
-            if (entry.possibleShortcut) {
+    private void initEntries(IntObjectMap<WitnessSearchEntry> initialEntries) {
+        for (IntObjectCursor<WitnessSearchEntry> e : initialEntries) {
+            if (e.value.possibleShortcut) {
                 numPossibleShortcuts++;
             }
-            int traversalId = getEdgeKey(entry.incEdge, entry.adjNode);
-            chEntries.put(traversalId, entry);
+            chEntries.put(e.key, e.value);
+            priorityQueue.add(e.value);
         }
         if (numPossibleShortcuts != 1) {
             throw new IllegalStateException("There should be exactly one initial entry with possibleShortcut = true, but given: " + numPossibleShortcuts);
         }
-        priorityQueue.addAll(initialEntries);
-        // todo: we do not remove/update duplicates anywhere, this is ok, because we take the initial entries from
-        // the priority queue (and not chEntries, which would be wrong) and always get the one with the lowest
-        // weight first. this can make problems if we change the algorithm though!
-        // right now duplicates are not removed, because it seems costly
-        if (priorityQueue.size() != chEntries.size()) {
-//            throw new IllegalStateException("There are duplicate initial entries");
-        }
     }
-    
-    private WitnessSearchEntry createEntry(CHEdgeIterator iter, CHEntry parent, double weight) {
+
+    private WitnessSearchEntry createEntry(EdgeIteratorState iter, CHEntry parent, double weight, boolean possibleShortcut) {
         WitnessSearchEntry entry = new WitnessSearchEntry(iter.getEdge(), iter.getLastOrigEdge(), iter.getAdjNode(), weight);
         entry.parent = parent;
+        if (possibleShortcut) {
+            entry.possibleShortcut = true;
+            numPossibleShortcuts++;
+        }
         return entry;
     }
 
-    private void updateEntry(CHEntry entry, CHEdgeIterator iter, double weight, CHEntry parent) {
+    private void updateEntry(WitnessSearchEntry entry, EdgeIteratorState iter, double weight, CHEntry parent, boolean possibleShortcut) {
         entry.edge = iter.getEdge();
         entry.incEdge = iter.getLastOrigEdge();
         entry.weight = weight;
         entry.parent = parent;
+        if (possibleShortcut) {
+            if (!entry.possibleShortcut) {
+                numPossibleShortcuts++;
+            }
+            entry.possibleShortcut = true;
+        }
+    }
+
+    private void updateTargetDiscoveredByShortcutFlag(int targetEdge, int targetNode, WitnessSearchEntry currEdge, EdgeIteratorState iter) {
+        if (currEdge.possibleShortcut && iter.getLastOrigEdge() == targetEdge && iter.getAdjNode() == targetNode) {
+            targetDiscoveredByShortcut = true;
+        }
     }
 
     private void reset() {
-        int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
-        initCollections(size);
+        maxOrigEdgesSettled = Integer.MAX_VALUE;
         numOrigEdgesSettled = 0;
         numPossibleShortcuts = 0;
+        initCollections();
     }
 
-    private void initCollections(int size) {
+    private void initCollections() {
+        // todo: tune initial collection sizes
+        int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
         priorityQueue = new PriorityQueue<>(size);
         chEntries = new GHIntObjectHashMap<>(size);
         settledEntries = new GHBitSetImpl(size);
     }
 
+    private int getEdgeKey(int edge, int adjNode) {
+        // todo: this is similar to some code in DijkstraBidirectionEdgeCHNoSOD and should be cleaned up, see comments there
+        EdgeIteratorState eis = graph.getEdgeIteratorState(edge, adjNode);
+        return GHUtility.createEdgeKey(eis.getBaseNode(), eis.getAdjNode(), eis.getEdge(), false);
+    }
 }

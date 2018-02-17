@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Random;
 
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
-import static java.lang.System.err;
 import static java.lang.System.nanoTime;
 
 /**
@@ -67,8 +66,8 @@ public class CHMeasurement {
     private double nodesContractedPercentage;
 
     public static void main(String[] args) {
-//        testGraphContractionPerformance();
-        new CHMeasurement().testNodeContractionPerformance();
+//        testPerformanceAutomaticNodeOrdering();
+        new CHMeasurement().testPerformanceFixedNodeOrdering();
     }
 
     /**
@@ -78,7 +77,7 @@ public class CHMeasurement {
      * an automatic/heuristic node contraction order makes it hard to separate the performance implications of a changed
      * contraction order and a changed contraction algorithm.
      */
-    private void testNodeContractionPerformance() {
+    private void testPerformanceFixedNodeOrdering() {
         osmFile = "bremen-latest.osm.pbf";
         maxTurnCost = 100;
         seed = 123;
@@ -207,7 +206,7 @@ public class CHMeasurement {
      * contraction order determines how many and which shortcuts will be introduced) and the resulting query speed.
      * The queries are compared with a normal AStar search for comparison and to ensure correctness.
      */
-    private static void testGraphContractionPerformance() {
+    private static void testPerformanceAutomaticNodeOrdering() {
         String osmFile = "bremen-latest.osm.pbf";
         final GraphHopper graphHopper = new GraphHopperOSM();
         CmdArgs cmdArgs = new CmdArgs();
