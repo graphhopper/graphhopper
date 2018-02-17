@@ -1,63 +1,55 @@
 language: java
 sudo: false
-matrix:
-  fast_finish: true
-  include:
-    - jdk: oraclejdk8
-      # Java 9 needs to be manually installed/upgraded
-      # see: https://github.com/travis-ci/travis-ci/issues/2968#issuecomment-149164058      
-    - jdk: oraclejdk9
-      env: JVM=latest
-      sudo: required
-      dist: trusty
-      group: edge
 
 env:
   global:
-    - BASEURL=https://www-eu.apache.org/dist/maven/maven-3/VERSION/binaries/apache-maven-VERSION-bin.zip
-    - FILE=apache-maven-VERSION-bin.zip
-    - DIR=apache-maven-VERSION
-    - VERSION=3.3.9
+    - GPG_EXECUTABLE=gpg
+    # TODO move this into the travis settings
     - secure: "j6a61/qnfFcSjx5XxmxO2hqBOwtVx5HWrD1+4Atl7WG/pRKz9+jSga1Y7oDAFb2SIl8S65kDmPQB/vC8aHxUDj/Wizjxnxn1FhPqoe9yO6Ztft+984FKFyvj7s6tsBJKcehGec+chTOwZQpH4oI4rU6IlepDHnGLHiOd0Iviryg="
     - secure: "GiFr+v2lTQk/sTQB7CYjju1/mupS8LSJupmizLqY454utiZkabDMBOZQnF9ukpy7WhveB9hKQyEKf9iP2w7HSYEjgvogT26vZ5f2MeLnR4SWvqEtf/WBvvh+W+k/rb2f6YgitkB4Jlxn2izemBEDuKplGJphzGW41lf8XZ2IxVI="
 
+dist: trusty
+group: edge
+
 jdk:
   - oraclejdk8
+  - oraclejdk9
+  - openjdk8
 
-before_install:
-   # update maven
-   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-         wget --no-check-certificate $(echo -n $BASEURL | sed -e 's#VERSION#'$VERSION'#g');
-         unzip -qq $(echo -n $FILE | sed -e 's#VERSION#'$VERSION'#');
-         export M2_HOME=$PWD/$(echo -n $DIR | sed -e 's#VERSION#'$VERSION'#');
-         export PATH=$M2_HOME/bin:$PATH;
-     fi
-   # update java 9
-   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$JVM" == "latest" ]; then
-         sudo apt-get update -qq;
-         sudo /bin/echo -e oracle-java9-installer shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections;
-         sudo apt-get -o Dpkg::Options::="--force-confnew" install -y oracle-java9-installer oracle-java9-set-default oracle-java9-unlimited-jce-policy;
-         sudo update-java-alternatives -s java-9-oracle;
-     fi
-#   - if [ "$TRAVIS_JDK_VERSION" == oraclejdk9 ]; then
-#         sudo rm /etc/mavenrc;
-#     fi
-
+# matrix:
+#   allow_failures:
+#    - jdk: oraclejdk9
+    
+# avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
+
+# store them into travis via https://dracoblue.net/dev/uploading-snapshots-and-releases-to-maven-central-with-travis/
+# gpg -a --export-secret-keys your@email.org | base64 -w 0
+# gpg --export-ownertrust | base64 -w 0
+before_install:
+  - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
+  - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
+  
+# avoid increase of memory via travis https://github.com/travis-ci/travis-ci/issues/8408
+before_script:
+  - _JAVA_OPTIONS=
 
 # Undo `_JAVA_OPTIONS` environment variable; see https://github.com/travis-ci/travis-ci/issues/8408
 before_script:
   - _JAVA_OPTIONS=
 script:
-  - mvn clean test verify checkstyle:check findbugs:check forbiddenapis:check -B
+  # separate due to #1288
+  - mvn clean test verify -B && mvn checkstyle:check findbugs:check forbiddenapis:check -B
 
 after_success:
-  # deploy snapshot artifacts to maven central
-  - if [ "$TRAVIS_JDK_VERSION" == "oraclejdk8" ] &&
-       [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-         travis_wait mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
+  # deploy snapshot artifacts to sonatype and if tagged deploy the release to maven central
+  - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+        mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
+    elif [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_TAG" != "" ]; then
+        echo "release to maven central";
+        mvn -P release --settings core/files/settings.xml -DskipTests=true -Drevision=$TRAVIS_TAG -B deploy;
     else
-        echo "Not deploying snapshot artifact for $TRAVIS_BRANCH";
+        echo "Not deploying artifacts for $TRAVIS_BRANCH";
     fi
 
 notifications:
@@ -67,4 +59,3 @@ notifications:
 cache:
   directories:
   - $HOME/.m2
-

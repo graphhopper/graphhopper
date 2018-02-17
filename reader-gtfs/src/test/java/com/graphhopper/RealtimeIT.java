@@ -30,7 +30,6 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -185,7 +184,7 @@ public class RealtimeIT {
         assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(1)).stops.get(2).departureCancelled);
     }
 
-    @Test @Ignore //Pending feature
+    @Test
     public void testExtraTrip() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
@@ -235,6 +234,10 @@ public class RealtimeIT {
         assertEquals(1, response.getAll().size());
 
         assertEquals("Luckily, there is an extra service directly from my stop to the airport, at 6:45, taking 30 minutes", time(0, 31), response.getBest().getTime(), 0.1);
+
+        PathWrapper solution = response.getAll().get(0);
+        Trip.PtLeg ptLeg = ((Trip.PtLeg) solution.getLegs().stream().filter(leg -> leg instanceof Trip.PtLeg).findFirst().get());
+        assertEquals("EXTRA", ptLeg.trip_id);
     }
 
     @Test

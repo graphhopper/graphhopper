@@ -108,7 +108,7 @@ class TripFromLabel {
                             .map(leg -> (Trip.PtLeg) leg)
                             .map(ptLeg -> {
                                 final GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(ptLeg.feed_id);
-                                return new com.graphhopper.gtfs.fare.Trip.Segment(gtfsFeed.trips.get(ptLeg.trip_id).route_id,
+                                return new com.graphhopper.gtfs.fare.Trip.Segment(ptLeg.route_id,
                                         Duration.between(firstPtDepartureTime, GtfsHelper.localDateTimeFromDate(ptLeg.getDepartureTime())).getSeconds(),
                                         gtfsFeed.stops.get(ptLeg.stops.get(0).stop_id).zone_id, gtfsFeed.stops.get(ptLeg.stops.get(ptLeg.stops.size() - 1).stop_id).zone_id,
                                         ptLeg.stops.stream().map(s -> gtfsFeed.stops.get(s.stop_id).zone_id).collect(Collectors.toSet()));
@@ -205,7 +205,7 @@ class TripFromLabel {
         private Instant arrivalTimeFromHopEdge;
         private Optional<Instant> updatedArrival;
         private StopTime stopTime = null;
-        private GtfsReader.TripWithStopTimes tripUpdate;
+        private GtfsReader.TripWithStopTimes tripUpdate = null;
         private int stopSequence = 0;
 
         StopsFromBoardHopDwellEdges(String feedId, GtfsRealtime.TripDescriptor tripDescriptor) {
@@ -219,9 +219,9 @@ class TripFromLabel {
         void next(Label.Transition t) {
             switch (t.edge.edgeType) {
                 case BOARD: {
-                    stopSequence = gtfsStorage.getStopSequences().get(t.edge.edgeIteratorState.getEdge());
-                    stopTime = gtfsFeed.stop_times.get(new Fun.Tuple2<>(tripDescriptor.getTripId(), stopSequence));
                     boardTime = Instant.ofEpochMilli(t.label.currentTime);
+                    stopSequence = realtimeFeed.getStopSequence(t.edge.edgeIteratorState.getEdge());
+                    stopTime = realtimeFeed.getStopTime(tripDescriptor, t, boardTime, stopSequence);
                     tripUpdate = realtimeFeed.getTripUpdate(tripDescriptor, t, boardTime).orElse(null);
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
                     Optional<Instant> updatedDeparture = getDepartureDelay(stopSequence).map(delay -> plannedDeparture.plus(delay, SECONDS));
@@ -233,8 +233,8 @@ class TripFromLabel {
                     break;
                 }
                 case HOP: {
-                    stopSequence = gtfsStorage.getStopSequences().get(t.edge.edgeIteratorState.getEdge());
-                    stopTime = gtfsFeed.stop_times.get(new Fun.Tuple2<>(tripDescriptor.getTripId(), stopSequence));
+                    stopSequence = realtimeFeed.getStopSequence(t.edge.edgeIteratorState.getEdge());
+                    stopTime = realtimeFeed.getStopTime(tripDescriptor, t, boardTime, stopSequence);
                     arrivalTimeFromHopEdge = Instant.ofEpochMilli(t.label.currentTime);
                     updatedArrival = getArrivalDelay(stopSequence).map(delay -> arrivalTimeFromHopEdge.plus(delay, SECONDS));
                     break;
@@ -347,7 +347,7 @@ class TripFromLabel {
                     Geometry lineString = lineStringFromEdges(partition);
                     GtfsRealtime.TripDescriptor tripDescriptor;
                     try {
-                        tripDescriptor = GtfsRealtime.TripDescriptor.parseFrom(gtfsStorage.getTripDescriptors().get(partition.get(0).edge.edgeIteratorState.getEdge()));
+                        tripDescriptor = GtfsRealtime.TripDescriptor.parseFrom(realtimeFeed.getTripDescriptor(partition.get(0).edge.edgeIteratorState.getEdge()));
                     } catch (InvalidProtocolBufferException e) {
                         throw new RuntimeException(e);
                     }
@@ -358,11 +358,10 @@ class TripFromLabel {
                     stopsFromBoardHopDwellEdges.finish();
                     List<Trip.Stop> stops = stopsFromBoardHopDwellEdges.stops;
 
-                    com.conveyal.gtfs.model.Trip trip = gtfsFeed.trips.get(tripDescriptor.getTripId());
                     result.add(new Trip.PtLeg(
                             feedIdWithTimezone.feedId, partition.get(0).edge.nTransfers == 0,
                             tripDescriptor.getTripId(),
-                            trip.route_id,
+                            tripDescriptor.getRouteId(),
                             edges(partition).map(edgeLabel -> edgeLabel.edgeIteratorState).collect(Collectors.toList()),
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.distance).sum(),

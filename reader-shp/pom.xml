@@ -5,7 +5,7 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-reader-shp</artifactId>
-    <version>0.10-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>jar</packaging>
     <name>GraphHopper Reader for Shapefile Data</name>
 	
@@ -16,7 +16,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.10-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <dependencies>
