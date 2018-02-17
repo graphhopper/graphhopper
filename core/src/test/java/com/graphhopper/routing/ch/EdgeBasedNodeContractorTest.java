@@ -86,7 +86,7 @@ public class EdgeBasedNodeContractorTest {
         graph.freeze();
         setMaxLevelOnAllNodes();
         addRestriction(1, 6, 3);
-        contractNodes(0, 1, 2, 3, 4, 5, 6);
+        contractAllNodesInOrder();
         checkShortcuts(
                 // from contracting node 0: need a shortcut because of turn restriction
                 createShortcut(6, 3, e6to0, e0to3, 9),
@@ -111,7 +111,7 @@ public class EdgeBasedNodeContractorTest {
         graph.freeze();
 
         setMaxLevelOnAllNodes();
-        contractNodes(0, 1, 2, 3, 4);
+        contractAllNodesInOrder();
         checkShortcuts(
                 // from contraction of node 0
                 createShortcut(4, 2, e0to4, e0to2, 8),
@@ -145,7 +145,7 @@ public class EdgeBasedNodeContractorTest {
         addTurnCost(4, 3, 6, 4);
         setMaxLevelOnAllNodes();
 
-        contractNodes(0, 1, 2, 3, 4, 5, 6);
+        contractAllNodesInOrder();
         checkShortcuts(
                 // from contraction of node 3
                 createShortcut(4, 6, e3to4, e3to6, 6),
@@ -212,12 +212,14 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(4, 1, 1, false);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        contractNodes(0, 1);
+        EdgeBasedNodeContractor nodeContractor = createNodeContractor();
+        contractNode(nodeContractor, 0, 0);
+        contractNode(nodeContractor, 1, 1);
         // no shortcuts so far
         checkShortcuts();
         // contracting node 2 should yield a shortcut to preserve the shortest path from (1->2) to (3->4). note that
         // it does not matter that nodes 0 and 1 have lower level and are contracted already!
-        contractNodes(2);
+        contractNode(nodeContractor, 2, 2);
         checkShortcuts(createShortcut(3, 4, e3to2, e2to4, 8));
     }
 
@@ -230,7 +232,7 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(3, 4, 1, false);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        contractNodes(0, 1, 2, 3, 4);
+        contractAllNodesInOrder();
         // for each contraction the node levels are such that no shortcuts are introduced
         checkShortcuts();
     }
@@ -680,7 +682,7 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testContractNode_noUnnecessaryShortcut_witnessPathOfEqualWeight() {
         // 0 -> 1 -> 5
-        //      |    |
+        //      v    v 
         //      2 -> 3 -> 4 -> 5
         graph.edge(0, 1, 1, false);
         graph.edge(1, 2, 1, false);
@@ -688,7 +690,6 @@ public class EdgeBasedNodeContractorTest {
         EdgeIteratorState e2to3 = graph.edge(2, 3, 1, false);
         EdgeIteratorState e3to4 = graph.edge(3, 4, 1, false);
         graph.edge(4, 5, 1, false);
-        graph.edge(0, 5, 1, false);
         EdgeIteratorState e5to3 = graph.edge(5, 3, 1, false);
         graph.freeze();
         setMaxLevelOnAllNodes();
@@ -700,7 +701,64 @@ public class EdgeBasedNodeContractorTest {
                 createShortcut(5, 4, e5to3, e3to4, 2)
         );
     }
-    
+
+    @Test
+    public void testContractNode_bidirectional_edge_at_fromNode() {
+        int nodeToContract = 2;
+        // we might come from (5->1) so we still need a way back to (3->4) -> we need a shortcut
+        Shortcut expectedShortcuts = createShortcut(1, 3, 1, 2, 1, 2, 2);
+        runTestWithBidirectionalEdgeAtFromNode(nodeToContract, false, expectedShortcuts);
+    }
+
+    @Test
+    public void testContractNode_bidirectional_edge_at_fromNode_is() {
+        int nodeToContract = 2;
+        // we might come from (5->1) so we still need a way back to (3->4) -> we need a shortcut
+        Shortcut expectedShortcuts = createShortcut(1, 3, 1, 2, 1, 2, 2);
+        runTestWithBidirectionalEdgeAtFromNode(nodeToContract, true, expectedShortcuts);
+    }
+
+    @Test
+    public void testContractNode_bidirectional_edge_at_fromNode_going_to_node() {
+        int nodeToContract = 5;
+        // wherever we come from we can always go via node 2 -> no shortcut needed
+        Shortcut[] expectedShortcuts = new Shortcut[0];
+        runTestWithBidirectionalEdgeAtFromNode(nodeToContract, false, expectedShortcuts);
+    }
+
+    private void runTestWithBidirectionalEdgeAtFromNode(int nodeToContract, boolean edge1to2bidirectional, Shortcut... expectedShortcuts) {
+        // 0 -> 1 <-> 5
+        //      v     v 
+        //      2 --> 3 -> 4
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, edge1to2bidirectional);
+        graph.edge(2, 3, 1, false);
+        graph.edge(3, 4, 1, false);
+        graph.edge(1, 5, 1, true);
+        graph.edge(5, 3, 1, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(nodeToContract);
+        checkShortcuts(expectedShortcuts);
+    }
+
+    private void contractNode(NodeContractor nodeContractor, int node, int level) {
+        nodeContractor.contractNode(node);
+        chGraph.setLevel(node, level);
+    }
+
+    private void contractAllNodesInOrder() {
+        EdgeBasedNodeContractor nodeContractor = createNodeContractor();
+        for (int node = 0; node < graph.getNodes(); ++node) {
+            nodeContractor.contractNode(node);
+            chGraph.setLevel(node, node);
+        }
+    }
+
+    /**
+     * contracts the given nodes and sets the node levels in order.
+     * this method may only be called once per test !
+     */
     private void contractNodes(int... nodes) {
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
         for (int i = 0; i < nodes.length; ++i) {
