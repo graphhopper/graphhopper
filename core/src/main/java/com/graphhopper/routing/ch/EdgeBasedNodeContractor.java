@@ -532,14 +532,14 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             boolean foundWitness = false;
             EdgeIterator inIter = toNodeOrigInEdgeExplorer.setBaseNode(toNode);
             while (!foundWitness && inIter.next()) {
-                CHEntry altCHEntry = witnessPathFinder.getFoundEntryNoParents(inIter.getLastOrigEdge(), toNode);
-                if (altCHEntry == null || altCHEntry.weight == Double.POSITIVE_INFINITY) {
-                    // we did not find any witness path leading to this edge -> we did not find a witness
+                if (inIter.getLastOrigEdge() == outgoingEdge.getLastOrigEdge()) {
+                    // we already know that the best path leading to this edge is the original path -> this may not
+                    // serve as a witness
                     continue;
                 }
-                if (altCHEntry.incEdge == chEntry.incEdge) {
-                    // we already know that the best path leading to this edge is the original path -> this will not
-                    // serve as a witness
+                CHEntry potentialWitness = witnessPathFinder.getFoundEntryNoParents(inIter.getLastOrigEdge(), toNode);
+                if (potentialWitness == null || potentialWitness.weight == Double.POSITIVE_INFINITY) {
+                    // we did not find any witness path leading to this edge -> we did not find a witness
                     continue;
                 }
                 double inTurnReplacementDifference = calcInTurnReplacementDifference(toNode, outgoingEdge.getLastOrigEdge(), inIter.getLastOrigEdge());
@@ -549,7 +549,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     continue;
                 }
                 final double tolerance = 1.e-12;
-                if (inTurnReplacementDifference + altCHEntry.weight < chEntry.weight + tolerance) {
+                if (inTurnReplacementDifference + potentialWitness.weight < chEntry.weight + tolerance) {
                     foundWitness = true;
                 }
             }
