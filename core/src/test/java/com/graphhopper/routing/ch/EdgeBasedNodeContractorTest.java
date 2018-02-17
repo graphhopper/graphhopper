@@ -1,5 +1,7 @@
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.Repeat;
+import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -11,6 +13,8 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -29,17 +33,31 @@ import static org.junit.Assert.fail;
  */
 public class EdgeBasedNodeContractorTest {
     private final int maxCost = 10;
-    private final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost);
-    private final EncodingManager encodingManager = new EncodingManager(encoder);
-    private final Weighting weighting = new ShortestWeighting(encoder);
-    private final PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
-    private final TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
-    private final TurnWeighting turnWeighting = new TurnWeighting(weighting, turnCostExtension);
-    private final TurnWeighting chTurnWeighting = new TurnWeighting(preparationWeighting, turnCostExtension);
-    private final CHGraph chGraph = graph.getGraph(CHGraph.class);
     // todo: u-turn support ? so far tests etc. focus on case without u-turns
     private final TraversalMode traversalMode = TraversalMode.EDGE_BASED_2DIR;
+    private CHGraph chGraph;
+    private CarFlagEncoder encoder;
+    private GraphHopperStorage graph;
+    private TurnCostExtension turnCostExtension;
+    private TurnWeighting turnWeighting;
+    private TurnWeighting chTurnWeighting;
+
+    @Rule
+    public RepeatRule repeatRule = new RepeatRule();
+
+    @Before
+    public void setup() {
+        // its important to use @Before when using Repeat Rule!
+        encoder = new CarFlagEncoder(5, 5, maxCost);
+        EncodingManager encodingManager = new EncodingManager(encoder);
+        Weighting weighting = new ShortestWeighting(encoder);
+        PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
+        graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
+        turnCostExtension = (TurnCostExtension) graph.getExtension();
+        turnWeighting = new TurnWeighting(weighting, turnCostExtension);
+        chTurnWeighting = new TurnWeighting(preparationWeighting, turnCostExtension);
+        chGraph = graph.getGraph(CHGraph.class);
+    }
 
     @Test
     public void testContractNodes_simpleLoop() {
@@ -680,7 +698,10 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
+    @Repeat(times = 10)
     public void testContractNode_noUnnecessaryShortcut_witnessPathOfEqualWeight() {
+        // this test runs repeatedly because it might pass/fail by incidence (because path lengths are equal)
+        
         // 0 -> 1 -> 5
         //      v    v 
         //      2 -> 3 -> 4 -> 5

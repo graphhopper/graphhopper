@@ -431,7 +431,11 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 double weight = outTurnReplacementDifference + turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
                 WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight);
                 entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0);
-                entry.possibleShortcut = (outIter.getEdge() == incomingEdge.getEdge());
+                if (outIter.getEdge() == incomingEdge.getEdge()) {
+                    entry.possibleShortcut = true;
+                    // we want to give other paths the precedence in case the path weights would be equal
+                    entry.weight += 1.e-12;
+                }
                 shortcutPossibles += insertOrUpdateInitial(initialEntries, entry);
             }
             return shortcutPossibles > 0 ? initialEntries : new IntObjectHashMap<WitnessSearchEntry>();
