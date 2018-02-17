@@ -497,6 +497,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
          * outgoing edges and thus prevents finding some shortcuts, especially because most edges in road networks
          * are bidirectional,
          * see: EdgeBasedNodeContractorTest#testContractNode_noUnnecessaryShortcut_differentWitnessesForDifferentOutEdges
+         *
+         * todo: the same should be possible by running a second search backwards from the target node, this time using
+         * the worst case cost at the target node and then checking each edge at the from node separately
          */
         private boolean alternativeWitnessExistsOrNotNeeded(
                 EdgeIteratorState outgoingEdge, int toNode, WitnessPathFinder witnessPathFinder, CHEntry originalPath) {
