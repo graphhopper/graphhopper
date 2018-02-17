@@ -379,7 +379,7 @@ public class MainActivity extends Activity {
         logUser("loading graph (" + Constants.VERSION + ") ... ");
         new GHAsyncTask<Void, Void, Path>() {
             protected Path saveDoInBackground(Void... v) throws Exception {
-                GraphHopper tmpHopp = new GraphHopper(new AndroidJsonFactory().create()).forMobile();
+                GraphHopper tmpHopp = new GraphHopper().forMobile();
                 tmpHopp.load(new File(mapsFolder, currentArea).getAbsolutePath() + "-gh");
                 log("found graph " + tmpHopp.getGraphHopperStorage().toString() + ", nodes:" + tmpHopp.getGraphHopperStorage().getNodes());
                 hopper = tmpHopp;
