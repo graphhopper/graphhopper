@@ -25,6 +25,9 @@ import com.graphhopper.storage.StorableProperties;
 
 import java.util.Map;
 
+// Used to mock GtfsStorage for GtfsReader, to reuse it for realtime updates.
+// GtfsReader basically emits things to be added as a stream of events.
+// TODO: Make that explicit
 public interface GtfsStorageI {
     Map<String, Fare> getFares();
 
