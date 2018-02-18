@@ -121,7 +121,7 @@ class GtfsReader {
     private final GtfsStorageI gtfsStorage;
 
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
-    private final Transfers transfers;
+    private Transfers transfers;
     private final NodeAccess nodeAccess;
     private final String id;
     private int i;
@@ -140,7 +140,6 @@ class GtfsReader {
         this.walkNetworkIndex = walkNetworkIndex;
         this.encoder = encoder;
         this.feed = this.gtfsStorage.getGtfsFeeds().get(id);
-        this.transfers = new Transfers(feed);
         this.i = graph.getNodes();
         this.startDate = feed.calculateStats().getStartDate();
         this.endDate = feed.calculateStats().getEndDate();
@@ -148,6 +147,7 @@ class GtfsReader {
 
     void readGraph() {
         gtfsStorage.getFares().putAll(feed.fares);
+        this.transfers = new Transfers(feed);
         buildPtNetwork();
         connectStopsToStreetNetwork();
         connectStopsToStationNodes();
@@ -341,6 +341,9 @@ class GtfsReader {
                     false);
             boardEdge.setName(getRouteName(feed, trip.trip));
             setEdgeType(boardEdge, GtfsStorage.EdgeType.BOARD);
+            while (boardEdges.size() < stopTime.stop_sequence) {
+                boardEdges.add(-1); // Padding, so that index == stop_sequence
+            }
             boardEdges.add(boardEdge.getEdge());
             gtfsStorage.getStopSequences().put(boardEdge.getEdge(), stopTime.stop_sequence);
             gtfsStorage.getTripDescriptors().put(boardEdge.getEdge(), tripDescriptor.toByteArray());
@@ -354,6 +357,9 @@ class GtfsReader {
                     false);
             alightEdge.setName(getRouteName(feed, trip.trip));
             setEdgeType(alightEdge, GtfsStorage.EdgeType.ALIGHT);
+            while (alightEdges.size() < stopTime.stop_sequence) {
+                alightEdges.add(-1);
+            }
             alightEdges.add(alightEdge.getEdge());
             gtfsStorage.getStopSequences().put(alightEdge.getEdge(), stopTime.stop_sequence);
             gtfsStorage.getTripDescriptors().put(alightEdge.getEdge(), tripDescriptor.toByteArray());
@@ -374,8 +380,8 @@ class GtfsReader {
             }
             prev = stopTime;
         }
-        gtfsStorage.getBoardEdgesForTrip().put(tripDescriptor, boardEdges.toArray());
-        gtfsStorage.getAlightEdgesForTrip().put(tripDescriptor, alightEdges.toArray());
+        gtfsStorage.getBoardEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor.getTripId(), tripDescriptor.getStartTime()), boardEdges.toArray());
+        gtfsStorage.getAlightEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor.getTripId(), tripDescriptor.getStartTime()), alightEdges.toArray());
         arrivalNodes.add(arrivalNode);
     }
 
@@ -437,13 +443,15 @@ class GtfsReader {
             edge.setName(toStop.stop_name);
             edge.setFlags(encoder.setTime(edge.getFlags(), rolloverTime));
         }
-        final Optional<Transfer> withinStationTransfer = transfers.getTransfersToStop(toStop, toRouteId).stream().filter(t -> t.from_stop_id.equals(toStop.stop_id)).findAny();
-        if (!withinStationTransfer.isPresent()) {
-            insertInboundTransfers(toStop.stop_id, null, 0, timeNodes);
+        if (transfers != null) {
+            final Optional<Transfer> withinStationTransfer = transfers.getTransfersToStop(toStop, toRouteId).stream().filter(t -> t.from_stop_id.equals(toStop.stop_id)).findAny();
+            if (!withinStationTransfer.isPresent()) {
+                insertInboundTransfers(toStop.stop_id, null, 0, timeNodes);
+            }
+            transfers.getTransfersToStop(toStop, toRouteId).forEach(transfer -> {
+                insertInboundTransfers(transfer.from_stop_id, transfer.from_route_id, transfer.min_transfer_time, timeNodes);
+            });
         }
-        transfers.getTransfersToStop(toStop, toRouteId).forEach(transfer -> {
-            insertInboundTransfers(transfer.from_stop_id, transfer.from_route_id, transfer.min_transfer_time, timeNodes);
-        });
     }
 
     private void insertInboundBlockTransfers(List<Integer> arrivalNodes, GtfsRealtime.TripDescriptor tripDescriptor, int departureNode, StopTime stopTime, Stop stop, int validityId) {

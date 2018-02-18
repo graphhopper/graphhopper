@@ -387,7 +387,7 @@ public class RealtimeIT {
         feedMessageBuilder.addEntityBuilder()
                 .setId("1")
                 .getTripUpdateBuilder()
-                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("AB1").setStartTime("00:00:00"))
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("AB1"))
                 .addStopTimeUpdateBuilder()
                 .setStopSequence(2)
                 .setScheduleRelationship(SKIPPED);
