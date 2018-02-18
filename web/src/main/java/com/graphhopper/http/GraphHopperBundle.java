@@ -160,7 +160,7 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
                 configuration.has("datareader.file") ? Arrays.asList(configuration.get("datareader.file", "").split(",")) : Collections.emptyList());
         final TranslationMap translationMap = GraphHopperGtfs.createTranslationMap();
         final LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(ghDirectory, graphHopperStorage, ptFlagEncoder);
-        final GraphHopperAPI graphHopper = new GraphHopperGtfs(ptFlagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty());
+        final GraphHopperAPI graphHopper = new GraphHopperGtfs(ptFlagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
         environment.jersey().register(new AbstractBinder() {
             @Override
             protected void configure() {

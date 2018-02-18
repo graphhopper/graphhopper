@@ -84,36 +84,35 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <!-- this is an old version but 2.6 fails with java 9
-                see: https://stackoverflow.com/questions/36583118/is-maven-ready-for-jdk9-->
-                <version>2.4.1</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.codehaus.plexus</groupId>
-                        <artifactId>plexus-archiver</artifactId>
-                        <version>2.4.4</version>
-                    </dependency>
-                </dependencies>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.3</version>
                 <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.graphhopper.http.GraphHopperApplication</mainClass>
-                        </manifest>
-                    </archive>
-                    <descriptors>
-                        <descriptor>src/main/assembly/jar.xml</descriptor>
-                        <!-- this is defined to be executed afterwards -->
-                        <descriptor>src/main/assembly/zip.xml</descriptor>
-                    </descriptors>
+                    <createDependencyReducedPom>true</createDependencyReducedPom>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>make-assembly</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>single</goal>
+                            <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.graphhopper.http.GraphHopperApplication</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
