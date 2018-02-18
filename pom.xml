@@ -143,7 +143,7 @@
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>2.17</version>
                 <configuration>
-                    <configLocation>core/files/checkstyle.xml</configLocation>
+                    <configLocation>${user.dir}/core/files/checkstyle.xml</configLocation>
                     <failsOnError>true</failsOnError>
                     <consoleOutput>true</consoleOutput>
                     <linkXRef>false</linkXRef>
