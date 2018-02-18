@@ -122,7 +122,7 @@ public class RealtimeFeed {
                 tripWithStopTimes.stopTimes.forEach(stopTime -> {
                     final StopTime originalStopTime = feed.stop_times.get(new Fun.Tuple2(tripUpdate.getTrip().getTripId(), stopTime.stop_sequence));
                     int delay = stopTime.arrival_time - originalStopTime.arrival_time;
-                    if (stopTime.stop_sequence > leaveEdges.length) {
+                    if (stopTime.stop_sequence > leaveEdges.length-1) {
                         logger.warn("Stop sequence number too high {} vs {}",stopTime.stop_sequence, leaveEdges.length);
                         return;
                     }
@@ -391,7 +391,7 @@ public class RealtimeFeed {
     }
 
     public GtfsRealtime.TripDescriptor normalize(GtfsRealtime.TripDescriptor tripDescriptor) {
-        return GtfsRealtime.TripDescriptor.newBuilder(tripDescriptor).clearRouteId().build();
+        return GtfsRealtime.TripDescriptor.newBuilder(tripDescriptor).clearRouteId().clearStartTime().build();
     }
 
     public static GtfsReader.TripWithStopTimes toTripWithStopTimes(GTFSFeed feed, Agency agency, GtfsRealtime.TripUpdate tripUpdate) {

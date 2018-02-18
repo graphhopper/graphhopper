@@ -33,6 +33,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -495,6 +496,40 @@ public class RealtimeIT {
         assertNull("Not late", notDelayedStop.predictedArrivalTime);
 
     }
+
+    @Test
+    public void testDelayAtEnd() {
+        final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
+        final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
+
+        final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
+        feedMessageBuilder.setHeader(header());
+        feedMessageBuilder.addEntityBuilder()
+                .setId("1")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("AB1"))
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(2)
+                .setScheduleRelationship(SCHEDULED)
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(300).build());
+
+        GraphHopperGtfs graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
+        GHResponse route = graphHopper.route(ghRequest);
+
+        assertFalse(route.hasErrors());
+        assertFalse(route.getAll().isEmpty());
+        assertEquals("Expected travel time == scheduled travel time", time(8, 10), route.getBest().getTime(), 0.1);
+        assertEquals("Using expected route", "STBA", (((Trip.PtLeg) route.getBest().getLegs().get(1)).trip_id));
+        assertEquals("Using expected route", "AB1", (((Trip.PtLeg) route.getBest().getLegs().get(2)).trip_id));
+        assertEquals("Delay at destination", LocalTime.parse("08:15"), LocalTime.from(((Trip.PtLeg) route.getBest().getLegs().get(2)).stops.get(1).predictedArrivalTime.toInstant().atZone(zoneId)));
+        assertEquals("Paid expected fare", 250, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue()); // Two legs, no transfers allowed. Need two 'p' tickets costing 125 cents each.
+    }
+
 
     public GtfsRealtime.FeedHeader.Builder header() {
         return GtfsRealtime.FeedHeader.newBuilder()
