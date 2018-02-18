@@ -449,7 +449,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     shortcuts.getInt(chEdgeAccess.toPointer(i) + S_ORIG_LAST));
         }
         if (shortcutCount > printMax) {
-            System.out.printf(" ... %d more shortcut edges", shortcutCount - printMax);
+            System.out.printf(" ... %d more shortcut edges\n", shortcutCount - printMax);
         }
     }
 

@@ -753,7 +753,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    @Ignore("This test showcases an unnecessary used by the turn replacement algorithm, aggressive search should pass")
+    @Ignore("This test showcases an unnecessary shortcut that is introduced by the turn replacement algorithm, aggressive search should pass")
     public void testContractNode_noUnnecessaryShortcut_differentInitialEntriesForDifferentInEdges() {
         //         /--- 2 ->-\
         //        /           \

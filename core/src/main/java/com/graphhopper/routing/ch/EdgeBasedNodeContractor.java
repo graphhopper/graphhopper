@@ -37,6 +37,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
     private final TurnWeighting turnWeighting;
     private final TraversalMode traversalMode;
+    private final ShortcutHandler addingShortcutHandler = new AddingShortcutHandler();
+    private final ShortcutHandler countingShortcutHandler = new CountingShortcutHandler();
+    private ShortcutHandler activeShortcutHandler;
     private int[] hierarchyDepths;
     private WitnessPathFinder witnessPathFinder;
     private CHEdgeExplorer scExplorer;
@@ -47,15 +50,11 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private EdgeExplorer loopAvoidanceInEdgeExplorer;
     private EdgeExplorer loopAvoidanceOutEdgeExplorer;
     private WitnessSearchStrategy witnessSearchStrategy;
-    //todo: replace dryMode flag with different handler implementations
-    private boolean dryMode;
     private int maxLevel;
     private int numEdges;
     private int numPrevEdges;
     private int numOrigEdges;
     private int numPrevOrigEdges;
-    private Stats calcPrioStats = new Stats();
-    private Stats contractStats = new Stats();
     private FlagEncoder encoder;
 
     public EdgeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, TurnWeighting turnWeighting, TraversalMode traversalMode) {
@@ -98,9 +97,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
     @Override
     public int calculatePriority(int node) {
-        dryMode = true;
+        activeShortcutHandler = countingShortcutHandler;
         long start = nanoTime();
-        findShortcuts(node);
+        findAndHandleShortcuts(node);
         stats().calcTime += (nanoTime() - start);
         CHEdgeIterator iter = allCHExplorer.setBaseNode(node);
         while (iter.next()) {
@@ -118,9 +117,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
     @Override
     public long contractNode(int node) {
-        dryMode = false;
+        activeShortcutHandler = addingShortcutHandler;
         long start = nanoTime();
-        long result = findShortcuts(node);
+        long result = findAndHandleShortcuts(node);
         CHEdgeIterator iter = allCHExplorer.setBaseNode(node);
         while (iter.next()) {
             if (isContracted(iter.getAdjNode()) || iter.getAdjNode() == node)
@@ -131,14 +130,14 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         return result;
     }
 
-    private int findShortcuts(int node) {
+    private int findAndHandleShortcuts(int node) {
         // todo: for osm data where there are only a very few turn restrictions (no left turn etc.) the graph
         // contraction should be much faster if we exploit that there are no turn costs on most nodes
-        LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}", node, dryMode ? "counted" : "added");
+        LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}ed", node, addingShortcutHandler.getAction());
         stats().nodes++;
-        EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         resetEdgeCounters();
         int degree = 0;
+        EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         while (incomingEdges.next()) {
             int fromNode = incomingEdges.getAdjNode();
             if (isContracted(fromNode))
@@ -180,7 +179,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 if (witnessSearchStrategy.shortcutRequired(node, toNode, incomingEdges, outgoingEdges, witnessPathFinder, originalPath)) {
                     // todo: note that we do not count loop-helper shortcuts here, but there are not that many usually
                     stats().shortcutsNeeded++;
-                    addShortcuts(originalPath);
+                    handleShortcuts(originalPath);
                 } else {
                     // todo: here not necessarily a witness path has been found, for example for u-turns (initial-entry
                     // = outgoing edge) we also end up here
@@ -194,13 +193,13 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public String getPrepareAlgoMemoryUsage() {
         // todo: this method is currently misused to print some statistics for performance analysis
-        String result = String.format("stats(calc): %s, stats(contract): %s", calcPrioStats, contractStats);
-        calcPrioStats = new Stats();
-        contractStats = new Stats();
+        String result = String.format("stats(calc): %s, stats(contract): %s", countingShortcutHandler.getStats(), addingShortcutHandler.getStats());
+        countingShortcutHandler.resetStats();
+        addingShortcutHandler.resetStats();
         return result;
     }
 
-    private void addShortcuts(CHEntry chEntry) {
+    private void handleShortcuts(CHEntry chEntry) {
         LOGGER.trace("Adding shortcuts for target entry {}", chEntry);
         CHEntry root = chEntry.getParent();
         while (root.parent.edge != EdgeIterator.NO_EDGE) {
@@ -210,16 +209,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 // here we misuse root.parent.incEdge as first orig edge of the potential shortcut
                 loopShortcutNecessary(
                         chEntry.adjNode, root.getParent().incEdge, chEntry.incEdge, chEntry.weight)) {
-            handleShortcut(root, chEntry);
-        }
-    }
-
-    private void handleShortcut(CHEntry edgeFrom, CHEntry edgeTo) {
-        if (dryMode) {
-            numEdges++;
-            numOrigEdges += getOrigEdgeCount(edgeFrom.edge) + getOrigEdgeCount(edgeTo.edge);
-        } else {
-            addShortcut(edgeFrom, edgeTo);
+            activeShortcutHandler.handleShortcut(root, chEntry);
         }
     }
 
@@ -318,7 +308,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         numOrigEdges = 0;
         numPrevOrigEdges = 0;
     }
-    
+
     /**
      * Checks if the path leading to the given shortest path entry consists only of the incoming edge, the outgoing edge
      * and an arbitrary number of loops at the node.
@@ -359,7 +349,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     /**
      * @return the difference of possible shortcuts induced by the update/insert
      */
-    private int insertOrUpdateInitial(IntObjectMap<WitnessSearchEntry> initialEntries, WitnessSearchEntry entry) {
+    private int insertOrUpdateInitialEntry(IntObjectMap<WitnessSearchEntry> initialEntries, WitnessSearchEntry entry) {
         int edgeKey = getEdgeKey(entry.incEdge, entry.adjNode);
         WitnessSearchEntry currEntry = initialEntries.get(edgeKey);
         if (currEntry == null) {
@@ -394,7 +384,66 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private Stats stats() {
-        return dryMode ? calcPrioStats : contractStats;
+        return activeShortcutHandler.getStats();
+    }
+
+    private interface ShortcutHandler {
+        void handleShortcut(CHEntry edgeFrom, CHEntry edgeTo);
+
+        Stats getStats();
+
+        void resetStats();
+
+        String getAction();
+    }
+
+    private class AddingShortcutHandler implements ShortcutHandler {
+        private Stats stats = new Stats();
+
+        @Override
+        public void handleShortcut(CHEntry edgeFrom, CHEntry edgeTo) {
+            addShortcut(edgeFrom, edgeTo);
+        }
+
+        @Override
+        public Stats getStats() {
+            return stats;
+        }
+
+        @Override
+        public void resetStats() {
+            stats = new Stats();
+        }
+
+        @Override
+        public String getAction() {
+            return "add";
+        }
+    }
+
+    private class CountingShortcutHandler implements ShortcutHandler {
+        private Stats stats = new Stats();
+
+        @Override
+        public void handleShortcut(CHEntry edgeFrom, CHEntry edgeTo) {
+            numEdges++;
+            numOrigEdges += getOrigEdgeCount(edgeFrom.edge) + getOrigEdgeCount(edgeTo.edge);
+        }
+
+        @Override
+        public Stats getStats() {
+            return stats;
+        }
+
+        @Override
+        public void resetStats() {
+            stats = new Stats();
+        }
+
+        @Override
+        public String getAction() {
+            return "count";
+        }
     }
 
     private interface WitnessSearchStrategy {
@@ -405,7 +454,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     /**
-     * Modified version of the turn-replacement algorithm described in 
+     * Modified version of the turn-replacement algorithm described in
      * 'Efficient Routing in Road Networks with Turn Costs' by R. Geisberger and C. Vetter.
      * This strategy is most efficient in deciding which shortcuts will not be required, but also needs to run the most
      * checks.
@@ -431,8 +480,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     // we do not need an initial entry for this out-edge because it will never yield a witness
                     continue;
                 } else if (outTurnReplacementDifference == Double.NEGATIVE_INFINITY) {
-                    // we cannot reach the out-edge from any in-edge 
-                    // -> we do not need to find a witness path for this in-edge
+                    // we cannot reach the original path from any in-edge 
+                    // -> we do not need to find a witness
                     return new IntObjectHashMap<>();
                 }
                 double weight = outTurnReplacementDifference + turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
@@ -440,10 +489,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0);
                 if (outIter.getEdge() == incomingEdge.getEdge()) {
                     entry.onOrigPath = true;
-                    // we want to give other paths the precedence in case the path weights would be equal
+                    // we want to give witness paths the precedence in case the path weights would be equal
                     entry.weight += 1.e-12;
                 }
-                numOnOrigPath += insertOrUpdateInitial(initialEntries, entry);
+                numOnOrigPath += insertOrUpdateInitialEntry(initialEntries, entry);
             }
             return numOnOrigPath > 0 ? initialEntries : new IntObjectHashMap<WitnessSearchEntry>();
         }
@@ -504,7 +553,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
          * outgoing edges and thus prevents finding some shortcuts, especially because most edges in road networks
          * are bidirectional,
          * see: EdgeBasedNodeContractorTest#testContractNode_noUnnecessaryShortcut_differentWitnessesForDifferentOutEdges
-         *
+         * <p>
          * todo: the same should be possible by running a second search backwards from the target node, this time using
          * the worst case cost at the target node and then checking each edge at the from node separately
          */
@@ -559,7 +608,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         @Override
         public IntObjectMap<WitnessSearchEntry> getInitialEntries(int fromNode, EdgeIteratorState incomingEdge) {
             IntObjectMap<WitnessSearchEntry> initialEntries = new IntObjectHashMap<>();
-            int shortcutPossibles = 0;
+            int numOnOrigPath = 0;
             EdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
             while (outIter.next()) {
                 if (outIter.getFirstOrigEdge() != incomingEdge.getFirstOrigEdge())
@@ -570,54 +619,14 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight);
                 entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, incomingEdge.getFirstOrigEdge(), fromNode, 0);
                 entry.onOrigPath = (outIter.getEdge() == incomingEdge.getEdge());
-                shortcutPossibles += insertOrUpdateInitial(initialEntries, entry);
+                numOnOrigPath += insertOrUpdateInitialEntry(initialEntries, entry);
             }
-            return shortcutPossibles > 0 ? initialEntries : new IntObjectHashMap<WitnessSearchEntry>();
+            return numOnOrigPath > 0 ? initialEntries : new IntObjectHashMap<WitnessSearchEntry>();
         }
 
         @Override
         public boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdges, EdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, CHEntry entry) {
             return bestPathIsValidAndRequiresNode(entry, node, incomingEdges, outgoingEdges);
-        }
-    }
-
-    /**
-     * Never finds any witnesses and will always lead to a shortcut as long as the two edges under question were
-     * connected with finite weight before the node contraction.
-     */
-    private class TrivialSearch implements WitnessSearchStrategy {
-        @Override
-        public IntObjectMap<WitnessSearchEntry> getInitialEntries(int fromNode, EdgeIteratorState incomingEdge) {
-            IntObjectMap<WitnessSearchEntry> initialEntries = new IntObjectHashMap<>();
-            double weight = turnWeighting.calcWeight(incomingEdge, false, EdgeIterator.NO_EDGE);
-            WitnessSearchEntry entry = new WitnessSearchEntry(incomingEdge.getEdge(), incomingEdge.getLastOrigEdge(),
-                    incomingEdge.getBaseNode(), weight);
-            entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, incomingEdge.getFirstOrigEdge(), fromNode, 0);
-            entry.onOrigPath = true;
-            initialEntries.put(getEdgeKey(entry.incEdge, entry.adjNode), entry);
-            return initialEntries;
-        }
-
-        @Override
-        public boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdges,
-                                        EdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, CHEntry entry) {
-            return bestPathIsValidAndRequiresNode(entry, node, incomingEdges, outgoingEdges);
-        }
-    }
-
-    /**
-     * Never leads to a shortcut, using this strategy will lead to queries equivalent to normal Dijkstra.
-     */
-    private class NoSearch implements WitnessSearchStrategy {
-        @Override
-        public IntObjectMap<WitnessSearchEntry> getInitialEntries(int fromNode, EdgeIteratorState incomingEdge) {
-            return new IntObjectHashMap<>();
-        }
-
-        @Override
-        public boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdges,
-                                        EdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, CHEntry entry) {
-            return false;
         }
     }
 
