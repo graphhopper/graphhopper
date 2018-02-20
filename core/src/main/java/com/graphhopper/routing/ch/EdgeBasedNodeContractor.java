@@ -19,6 +19,8 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
+import com.carrotsearch.hppc.LongHashSet;
+import com.carrotsearch.hppc.LongSet;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
@@ -145,7 +147,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         resetEdgeCounters();
         int degree = 0;
         // todo: replace with something more efficient ? e.g. two ints in a long
-        Set<InOutPair> witnessedPairs = new HashSet<>();
+        LongSet witnessedPairs = new LongHashSet(16);
         SimpleSearch simpleSearch = new SimpleSearch();
         EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         while (incomingEdges.next()) {
@@ -185,7 +187,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     // in this case it might happen that we miss an important shortcut, however this problem is not
                     // specific to the algorithm here ??
                     // maybe we really should not relax edges that are not on the orig path that lead to the node ?
-                    witnessedPairs.add(new InOutPair(incomingEdges.getEdge(), outgoingEdges.getEdge()));
+                    witnessedPairs.add(twoIntsInLong(incomingEdges.getEdge(), outgoingEdges.getEdge()));
                 }
             }
         }
@@ -199,7 +201,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
             EdgeIterator origInIter = fromNodeOrigInEdgeExplorer.setBaseNode(fromNode);
             while (origInIter.next()) {
-                IntObjectMap<WitnessSearchEntry> initialEntries = getInitialEntriesAggressive(fromNode, incomingEdges, origInIter);
+                IntObjectMap<WitnessSearchEntry> initialEntries = getInitialEntriesAggressive(fromNode, node, incomingEdges, origInIter);
                 if (initialEntries.isEmpty()) {
                     continue;
                 }
@@ -211,7 +213,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     if (isContracted(toNode) || toNode == node) {
                         continue;
                     }
-                    if (witnessedPairs.contains(new InOutPair(incomingEdges.getEdge(), outgoingEdges.getEdge()))) {
+                    if (witnessedPairs.contains(twoIntsInLong(incomingEdges.getEdge(), outgoingEdges.getEdge()))) {
                         continue;
                     }
                     int targetEdge = outgoingEdges.getLastOrigEdge();
@@ -241,6 +243,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                                 // this is probably wrong. there can be a witness that starts at the from node but not
                                 // with the original first edge of the original path, but ends with the last original
                                 // edge of the original path. in this case we would miss a shortcut by continueing here!
+                                // however we have to make sure we do not count the original path as witness here!
                                 continue;
                             }
                             if (!traversalMode.hasUTurnSupport() && inIter.getLastOrigEdge() == toNodeOrigOutIter.getFirstOrigEdge()) {
@@ -269,12 +272,15 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         return degree;
     }
 
-    private IntObjectMap<WitnessSearchEntry> getInitialEntriesAggressive(int fromNode, EdgeIteratorState origPath, EdgeIteratorState origSourceEdge) {
+    private IntObjectMap<WitnessSearchEntry> getInitialEntriesAggressive(int fromNode, int node, EdgeIteratorState origPath, EdgeIteratorState origSourceEdge) {
         IntObjectMap<WitnessSearchEntry> initialEntries = new IntObjectHashMap<>();
         int numOnOrigPath = 0;
         EdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
         while (outIter.next()) {
             if (isContracted(outIter.getAdjNode())) {
+                continue;
+            }
+            if (outIter.getAdjNode() == node && outIter.getEdge() != origPath.getEdge()) {
                 continue;
             }
             if (!traversalMode.hasUTurnSupport() && origSourceEdge.getLastOrigEdge() == outIter.getFirstOrigEdge()) {
@@ -799,28 +805,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         }
     }
 
-    private static class InOutPair {
-        int inEdge;
-        int outEdge;
-
-        public InOutPair(int inEdge, int outEdge) {
-            this.inEdge = inEdge;
-            this.outEdge = outEdge;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            InOutPair inOutPair = (InOutPair) o;
-            return inEdge == inOutPair.inEdge &&
-                    outEdge == inOutPair.outEdge;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(inEdge, outEdge);
-        }
+    public static long twoIntsInLong(int p, int q) {
+        return (((long) p << 32) | (q & 0xFFFFFFFFL));
     }
 
     private static class Stats {
