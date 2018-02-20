@@ -177,11 +177,11 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 int targetEdge = outgoingEdges.getLastOrigEdge();
                 witnessPathFinder.findTarget(targetEdge, toNode);
 
-                CHEntry path = witnessPathFinder.getFoundEntry(targetEdge, toNode);
-                if (path == null) {
+                CHEntry originalPath = witnessPathFinder.getFoundEntry(targetEdge, toNode);
+                if (originalPath == null) {
                     continue;
                 }
-                if (!simpleSearch.shortcutRequired(node, toNode, incomingEdges, outgoingEdges, witnessPathFinder, path)) {
+                if (!simpleSearch.shortcutRequired(node, toNode, incomingEdges, outgoingEdges, witnessPathFinder, originalPath)) {
                     // todo:
                     // this seems problematic: what if there are two incoming edges of same weight that 'witness' each 
                     // other, but both use the node to be contracted ?
@@ -222,46 +222,49 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     }
                     int targetEdge = outgoingEdges.getLastOrigEdge();
                     witnessPathFinder.findTarget(targetEdge, toNode);
-                    CHEntry path = witnessPathFinder.getFoundEntry(targetEdge, toNode);
-                    if (path == null) {
+                    CHEntry originalPath = witnessPathFinder.getFoundEntry(targetEdge, toNode);
+                    if (originalPath == null) {
                         continue;
                     }
-                    if (!bestPathIsValidAndRequiresNode(path, node, incomingEdges, outgoingEdges)) {
+                    if (!bestPathIsValidAndRequiresNode(originalPath, node, incomingEdges, outgoingEdges)) {
                         continue;
                     }
 
                     EdgeIterator toNodeOrigOutIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
                     while (toNodeOrigOutIter.next()) {
-                        if (!traversalMode.hasUTurnSupport() && outgoingEdges.getLastOrigEdge() == toNodeOrigOutIter.getFirstOrigEdge()) {
+                        int origOutIterFirstOrigEdge = toNodeOrigOutIter.getFirstOrigEdge();
+                        if (illegalUTurn(origOutIterFirstOrigEdge, targetEdge)) {
                             continue;
                         }
-                        double turnWeight = turnWeighting.calcTurnWeight(outgoingEdges.getLastOrigEdge(), toNode, toNodeOrigOutIter.getFirstOrigEdge());
-                        if (Double.isInfinite(turnWeight)) {
+                        double origPathOutTurnWeight = turnWeighting.calcTurnWeight(targetEdge, toNode, origOutIterFirstOrigEdge);
+                        if (Double.isInfinite(origPathOutTurnWeight)) {
                             continue;
                         }
                         boolean witnessFound = false;
                         EdgeIterator inIter = toNodeOrigInEdgeExplorer.setBaseNode(toNode);
                         while (inIter.next()) {
-                            if (inIter.getLastOrigEdge() == targetEdge) {
+                            int origInIterLastOrigEdge = inIter.getLastOrigEdge();
+                            if (origInIterLastOrigEdge == targetEdge) {
                                 continue;
                             }
-                            if (!traversalMode.hasUTurnSupport() && inIter.getLastOrigEdge() == toNodeOrigOutIter.getFirstOrigEdge()) {
+                            if (illegalUTurn(origOutIterFirstOrigEdge, origInIterLastOrigEdge)) {
                                 continue;
                             }
-                            CHEntry potentialWitness = witnessPathFinder.getFoundEntryNoParents(inIter.getLastOrigEdge(), toNode);
+                            CHEntry potentialWitness = witnessPathFinder.getFoundEntryNoParents(origInIterLastOrigEdge, toNode);
                             if (potentialWitness == null || Double.isInfinite(potentialWitness.weight)) {
                                 continue;
                             }
-                            double witnessWeight = potentialWitness.weight + turnWeighting.calcTurnWeight(inIter.getLastOrigEdge(), toNode, toNodeOrigOutIter.getFirstOrigEdge());
-                            if (witnessWeight <= path.weight + turnWeight) {
+                            double witnessWeight = potentialWitness.weight + turnWeighting.calcTurnWeight(origInIterLastOrigEdge, toNode, origOutIterFirstOrigEdge);
+                            final double tolerance = 1.e-12;
+                            if (witnessWeight - tolerance < originalPath.weight + origPathOutTurnWeight) {
                                 witnessFound = true;
                                 break;
                             }
                         }
                         if (!witnessFound) {
                             double initialTurnCost = getTurnCost(origInIter.getLastOrigEdge(), fromNode, incomingEdges.getFirstOrigEdge());
-                            path.weight -= initialTurnCost;
-                            handleShortcuts(path);
+                            originalPath.weight -= initialTurnCost;
+                            handleShortcuts(originalPath);
                             break;
                         }
                     }
@@ -278,10 +281,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             if (isContracted(outIter.getAdjNode())) {
                 continue;
             }
-            if (outIter.getAdjNode() == node && outIter.getEdge() != origPath.getEdge()) {
-                continue;
-            }
-            if (!traversalMode.hasUTurnSupport() && origSourceEdge.getLastOrigEdge() == outIter.getFirstOrigEdge()) {
+            if (illegalUTurn(outIter.getFirstOrigEdge(), origSourceEdge.getLastOrigEdge())) {
                 continue;
             }
             double weight = turnWeighting.calcWeight(outIter, false, origSourceEdge.getLastOrigEdge());
@@ -337,15 +337,15 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 witnessPathFinder.findTarget(targetEdge, toNode);
                 dijkstraSW.stop();
 
-                CHEntry path = witnessPathFinder.getFoundEntry(targetEdge, toNode);
-                if (path == null) {
+                CHEntry originalPath = witnessPathFinder.getFoundEntry(targetEdge, toNode);
+                if (originalPath == null) {
                     continue;
                 }
-                LOGGER.trace("Witness path search to outgoing edge yielded {}", path);
-                if (witnessSearchStrategy.shortcutRequired(node, toNode, incomingEdges, outgoingEdges, witnessPathFinder, path)) {
+                LOGGER.trace("Witness path search to outgoing edge yielded {}", originalPath);
+                if (witnessSearchStrategy.shortcutRequired(node, toNode, incomingEdges, outgoingEdges, witnessPathFinder, originalPath)) {
                     // todo: note that we do not count loop-helper shortcuts here, but there are not that many usually
                     stats().shortcutsNeeded++;
-                    handleShortcuts(path);
+                    handleShortcuts(originalPath);
                 } else {
                     // todo: here not necessarily a witness path has been found, for example for u-turns (initial-entry
                     // = outgoing edge) we also end up here
@@ -454,7 +454,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private double getTurnCost(int inEdge, int node, int outEdge) {
-        if (!traversalMode.hasUTurnSupport() && inEdge == outEdge) {
+        if (illegalUTurn(outEdge, inEdge)) {
             return Double.POSITIVE_INFINITY;
         }
         double turnCost = turnWeighting.calcTurnWeight(inEdge, node, outEdge);
@@ -543,6 +543,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         return 0;
     }
 
+    private boolean illegalUTurn(int inEdge, int outEdge) {
+        return !traversalMode.hasUTurnSupport() && outEdge == inEdge;
+    }
+    
     private int getEdgeKey(int edge, int adjNode) {
         // todo: this is similar to some code in DijkstraBidirectionEdgeCHNoSOD and should be cleaned up, see comments there
         CHEdgeIteratorState eis = prepareGraph.getEdgeIteratorState(edge, adjNode);
@@ -712,10 +716,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         }
 
         @Override
-        public boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdges,
-                                        EdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, CHEntry entry) {
-            return bestPathIsValidAndRequiresNode(entry, node, incomingEdges, outgoingEdges)
-                    && !alternativeWitnessExistsOrNotNeeded(outgoingEdges, toNode, witnessPathFinder, entry);
+        public boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdge,
+                                        EdgeIteratorState outgoingEdge, WitnessPathFinder witnessPathFinder, CHEntry originalPath) {
+            return bestPathIsValidAndRequiresNode(originalPath, node, incomingEdge, outgoingEdge)
+                    && !alternativeWitnessExistsOrNotNeeded(outgoingEdge, toNode, witnessPathFinder, originalPath);
         }
 
         /**
