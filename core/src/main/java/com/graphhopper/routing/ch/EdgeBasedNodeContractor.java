@@ -32,10 +32,6 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-
 import static java.lang.System.nanoTime;
 
 public class EdgeBasedNodeContractor extends AbstractNodeContractor {
@@ -43,6 +39,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
     private final TurnWeighting turnWeighting;
     private final TraversalMode traversalMode;
+    private final SimpleSearch simpleSearch = new SimpleSearch();
     private final ShortcutHandler addingShortcutHandler = new AddingShortcutHandler();
     private final ShortcutHandler countingShortcutHandler = new CountingShortcutHandler();
     private ShortcutHandler activeShortcutHandler;
@@ -145,9 +142,14 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}ed", node, addingShortcutHandler.getAction());
         stats().nodes++;
         resetEdgeCounters();
-        int degree = 0;
         LongSet witnessedPairs = new LongHashSet(16);
-        SimpleSearch simpleSearch = new SimpleSearch();
+        int degree = runQuickWitnessSearch(node, witnessedPairs);
+        runExhaustiveWitnessSearch(node, witnessedPairs);
+        return degree;
+    }
+
+    private int runQuickWitnessSearch(int node, LongSet witnessedPairs) {
+        int degree = 0;
         EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         while (incomingEdges.next()) {
             int fromNode = incomingEdges.getAdjNode();
@@ -190,8 +192,11 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 }
             }
         }
+        return degree;
+    }
 
-        incomingEdges = inEdgeExplorer.setBaseNode(node);
+    private void runExhaustiveWitnessSearch(int node, LongSet witnessedPairs) {
+        EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         while (incomingEdges.next()) {
             int fromNode = incomingEdges.getAdjNode();
             if (isContracted(fromNode) || fromNode == node) {
@@ -263,7 +268,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 }
             }
         }
-        return degree;
     }
 
     private IntObjectMap<WitnessSearchEntry> getInitialEntriesAggressive(int fromNode, int node, EdgeIteratorState origPath, EdgeIteratorState origSourceEdge) {
