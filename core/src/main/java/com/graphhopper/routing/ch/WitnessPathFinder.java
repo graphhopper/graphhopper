@@ -43,6 +43,7 @@ public class WitnessPathFinder {
     private IntObjectMap<WitnessSearchEntry> chEntries;
     private BitSet settledEntries;
     private PriorityQueue<WitnessSearchEntry> priorityQueue;
+    private int avoidNode = Integer.MAX_VALUE;
     private int maxOrigEdgesSettled;
     private int numOrigEdgesSettled;
     private int numOnOrigPath;
@@ -99,6 +100,10 @@ public class WitnessPathFinder {
 
             EdgeIterator iter = outEdgeExplorer.setBaseNode(currEdge.adjNode);
             while (iter.next()) {
+                // increases number of shortcuts and not sure if needed
+//                if (!currEdge.onOrigPath && iter.getAdjNode() == avoidNode) {
+//                    continue;
+//                }
                 if ((!traversalMode.hasUTurnSupport() && iter.getFirstOrigEdge() == currEdge.incEdge) ||
                         isContracted(iter.getAdjNode())) {
                     continue;
@@ -139,6 +144,7 @@ public class WitnessPathFinder {
         for (IntObjectCursor<WitnessSearchEntry> e : initialEntries) {
             if (e.value.onOrigPath) {
                 numOnOrigPath++;
+                avoidNode = e.value.adjNode;
             }
             chEntries.put(e.key, e.value);
             priorityQueue.add(e.value);
@@ -179,6 +185,7 @@ public class WitnessPathFinder {
         maxOrigEdgesSettled = Integer.MAX_VALUE;
         numOrigEdgesSettled = 0;
         numOnOrigPath = 0;
+        avoidNode = Integer.MAX_VALUE;
         initCollections();
     }
 

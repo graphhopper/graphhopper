@@ -322,7 +322,7 @@ public class EdgeBasedNodeContractorTest {
         addTurnCost(e2to4, e3to2, 2, 4);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        createNodeContractor().contractNode(2);
+        contractNodes(2);
         checkShortcuts(
                 // note that for now we add a shortcut for each direction. using fwd/bwd flags would be more efficient,
                 // but requires a more sophisticated way to determine the 'first' and 'last' original edges at various
@@ -343,7 +343,7 @@ public class EdgeBasedNodeContractorTest {
         addTurnCost(e2to4, e2to3, 2, 7);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        createNodeContractor().contractNode(2);
+        contractNodes(2);
         checkShortcuts(
                 createShortcut(3, 4, e2to3, e2to4, 12),
                 createShortcut(4, 3, e2to4, e2to3, 15)
