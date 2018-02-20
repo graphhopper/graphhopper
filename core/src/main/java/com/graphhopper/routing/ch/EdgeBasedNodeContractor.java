@@ -146,7 +146,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         stats().nodes++;
         resetEdgeCounters();
         int degree = 0;
-        // todo: replace with something more efficient ? e.g. two ints in a long
         LongSet witnessedPairs = new LongHashSet(16);
         SimpleSearch simpleSearch = new SimpleSearch();
         EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
@@ -184,8 +183,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     // todo:
                     // this seems problematic: what if there are two incoming edges of same weight that 'witness' each 
                     // other, but both use the node to be contracted ?
-                    // in this case it might happen that we miss an important shortcut, however this problem is not
-                    // specific to the algorithm here ??
+                    // in this case it might happen that we miss a required shortcut, however this problem is not
+                    // specific to the aggressive search ?
                     // maybe we really should not relax edges that are not on the orig path that lead to the node ?
                     witnessedPairs.add(twoIntsInLong(incomingEdges.getEdge(), outgoingEdges.getEdge()));
                 }
@@ -239,11 +238,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         EdgeIterator inIter = toNodeOrigInEdgeExplorer.setBaseNode(toNode);
                         while (inIter.next()) {
                             if (inIter.getLastOrigEdge() == targetEdge) {
-                                // todo:
-                                // this is probably wrong. there can be a witness that starts at the from node but not
-                                // with the original first edge of the original path, but ends with the last original
-                                // edge of the original path. in this case we would miss a shortcut by continueing here!
-                                // however we have to make sure we do not count the original path as witness here!
                                 continue;
                             }
                             if (!traversalMode.hasUTurnSupport() && inIter.getLastOrigEdge() == toNodeOrigOutIter.getFirstOrigEdge()) {
