@@ -30,6 +30,10 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
 import static java.lang.System.nanoTime;
 
 public class EdgeBasedNodeContractor extends AbstractNodeContractor {
@@ -131,6 +135,164 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private int findAndHandleShortcuts(int node) {
+//        return findAndHandleShortcutsClassic(node);
+        return findAndHandleShortcutsAggressive(node);
+    }
+
+    private int findAndHandleShortcutsAggressive(int node) {
+        LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}ed", node, addingShortcutHandler.getAction());
+        stats().nodes++;
+        resetEdgeCounters();
+        int degree = 0;
+        // todo: replace with something more efficient ? e.g. two ints in a long
+        Set<InOutPair> witnessedPairs = new HashSet<>();
+        SimpleSearch simpleSearch = new SimpleSearch();
+        EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
+        while (incomingEdges.next()) {
+            int fromNode = incomingEdges.getAdjNode();
+            if (isContracted(fromNode))
+                continue;
+
+            degree++;
+
+            if (fromNode == node) {
+                continue;
+            }
+
+            IntObjectMap<WitnessSearchEntry> initialEntries = simpleSearch.getInitialEntries(fromNode, incomingEdges);
+            witnessPathFinder.setInitialEntries(initialEntries);
+            if (initialEntries.isEmpty()) {
+                continue;
+            }
+
+            EdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
+            while (outgoingEdges.next()) {
+                int toNode = outgoingEdges.getAdjNode();
+                if (isContracted(toNode) || toNode == node) {
+                    continue;
+                }
+                int targetEdge = outgoingEdges.getLastOrigEdge();
+                witnessPathFinder.findTarget(targetEdge, toNode);
+
+                CHEntry path = witnessPathFinder.getFoundEntry(targetEdge, toNode);
+                if (path == null) {
+                    continue;
+                }
+                if (!simpleSearch.shortcutRequired(node, toNode, incomingEdges, outgoingEdges, witnessPathFinder, path)) {
+                    // todo:
+                    // this seems problematic: what if there are two incoming edges of same weight that 'witness' each 
+                    // other, but both use the node to be contracted ?
+                    // in this case it might happen that we miss an important shortcut, however this problem is not
+                    // specific to the algorithm here ??
+                    // maybe we really should not relax edges that are not on the orig path that lead to the node ?
+                    witnessedPairs.add(new InOutPair(incomingEdges.getEdge(), outgoingEdges.getEdge()));
+                }
+            }
+        }
+
+        incomingEdges = inEdgeExplorer.setBaseNode(node);
+        while (incomingEdges.next()) {
+            int fromNode = incomingEdges.getAdjNode();
+            if (isContracted(fromNode) || fromNode == node) {
+                continue;
+            }
+
+            EdgeIterator origInIter = fromNodeOrigInEdgeExplorer.setBaseNode(fromNode);
+            while (origInIter.next()) {
+                IntObjectMap<WitnessSearchEntry> initialEntries = getInitialEntriesAggressive(fromNode, incomingEdges, origInIter);
+                if (initialEntries.isEmpty()) {
+                    continue;
+                }
+                witnessPathFinder.setInitialEntries(initialEntries);
+
+                EdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
+                while (outgoingEdges.next()) {
+                    int toNode = outgoingEdges.getAdjNode();
+                    if (isContracted(toNode) || toNode == node) {
+                        continue;
+                    }
+                    if (witnessedPairs.contains(new InOutPair(incomingEdges.getEdge(), outgoingEdges.getEdge()))) {
+                        continue;
+                    }
+                    int targetEdge = outgoingEdges.getLastOrigEdge();
+                    witnessPathFinder.findTarget(targetEdge, toNode);
+                    CHEntry path = witnessPathFinder.getFoundEntry(targetEdge, toNode);
+                    if (path == null) {
+                        continue;
+                    }
+                    if (!bestPathIsValidAndRequiresNode(path, node, incomingEdges, outgoingEdges)) {
+                        continue;
+                    }
+
+                    EdgeIterator toNodeOrigOutIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
+                    while (toNodeOrigOutIter.next()) {
+                        if (!traversalMode.hasUTurnSupport() && outgoingEdges.getLastOrigEdge() == toNodeOrigOutIter.getFirstOrigEdge()) {
+                            continue;
+                        }
+                        double turnWeight = turnWeighting.calcTurnWeight(outgoingEdges.getLastOrigEdge(), toNode, toNodeOrigOutIter.getFirstOrigEdge());
+                        if (Double.isInfinite(turnWeight)) {
+                            continue;
+                        }
+                        boolean witnessFound = false;
+                        EdgeIterator inIter = toNodeOrigInEdgeExplorer.setBaseNode(toNode);
+                        while (inIter.next()) {
+                            if (inIter.getLastOrigEdge() == targetEdge) {
+                                // todo:
+                                // this is probably wrong. there can be a witness that starts at the from node but not
+                                // with the original first edge of the original path, but ends with the last original
+                                // edge of the original path. in this case we would miss a shortcut by continueing here!
+                                continue;
+                            }
+                            if (!traversalMode.hasUTurnSupport() && inIter.getLastOrigEdge() == toNodeOrigOutIter.getFirstOrigEdge()) {
+                                continue;
+                            }
+                            CHEntry potentialWitness = witnessPathFinder.getFoundEntryNoParents(inIter.getLastOrigEdge(), toNode);
+                            if (potentialWitness == null || Double.isInfinite(potentialWitness.weight)) {
+                                continue;
+                            }
+                            double witnessWeight = potentialWitness.weight + turnWeighting.calcTurnWeight(inIter.getLastOrigEdge(), toNode, toNodeOrigOutIter.getFirstOrigEdge());
+                            if (witnessWeight <= path.weight + turnWeight) {
+                                witnessFound = true;
+                                break;
+                            }
+                        }
+                        if (!witnessFound) {
+                            double initialTurnCost = getTurnCost(origInIter.getLastOrigEdge(), fromNode, incomingEdges.getFirstOrigEdge());
+                            path.weight -= initialTurnCost;
+                            handleShortcuts(path);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return degree;
+    }
+
+    private IntObjectMap<WitnessSearchEntry> getInitialEntriesAggressive(int fromNode, EdgeIteratorState origPath, EdgeIteratorState origSourceEdge) {
+        IntObjectMap<WitnessSearchEntry> initialEntries = new IntObjectHashMap<>();
+        int numOnOrigPath = 0;
+        EdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
+        while (outIter.next()) {
+            if (isContracted(outIter.getAdjNode())) {
+                continue;
+            }
+            if (!traversalMode.hasUTurnSupport() && origSourceEdge.getLastOrigEdge() == outIter.getFirstOrigEdge()) {
+                continue;
+            }
+            double weight = turnWeighting.calcWeight(outIter, false, origSourceEdge.getLastOrigEdge());
+            if (Double.isInfinite(weight)) {
+                continue;
+            }
+            WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight);
+            entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0);
+            entry.onOrigPath = (outIter.getEdge() == origPath.getEdge());
+            numOnOrigPath += insertOrUpdateInitialEntry(initialEntries, entry);
+        }
+        return numOnOrigPath > 0 ? initialEntries : new IntObjectHashMap<WitnessSearchEntry>();
+    }
+
+    private int findAndHandleShortcutsClassic(int node) {
         // todo: for osm data where there are only a very few turn restrictions (no left turn etc.) the graph
         // contraction should be much faster if we exploit that there are no turn costs on most nodes
         LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}ed", node, addingShortcutHandler.getAction());
@@ -171,15 +333,15 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 witnessPathFinder.findTarget(targetEdge, toNode);
                 dijkstraSW.stop();
 
-                CHEntry originalPath = witnessPathFinder.getFoundEntry(targetEdge, toNode);
-                if (originalPath == null) {
+                CHEntry path = witnessPathFinder.getFoundEntry(targetEdge, toNode);
+                if (path == null) {
                     continue;
                 }
-                LOGGER.trace("Witness path search to outgoing edge yielded entry {}", originalPath);
-                if (witnessSearchStrategy.shortcutRequired(node, toNode, incomingEdges, outgoingEdges, witnessPathFinder, originalPath)) {
+                LOGGER.trace("Witness path search to outgoing edge yielded {}", path);
+                if (witnessSearchStrategy.shortcutRequired(node, toNode, incomingEdges, outgoingEdges, witnessPathFinder, path)) {
                     // todo: note that we do not count loop-helper shortcuts here, but there are not that many usually
                     stats().shortcutsNeeded++;
-                    handleShortcuts(originalPath);
+                    handleShortcuts(path);
                 } else {
                     // todo: here not necessarily a witness path has been found, for example for u-turns (initial-entry
                     // = outgoing edge) we also end up here
@@ -634,6 +796,30 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         @Override
         public boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdges, EdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, CHEntry entry) {
             return bestPathIsValidAndRequiresNode(entry, node, incomingEdges, outgoingEdges);
+        }
+    }
+
+    private static class InOutPair {
+        int inEdge;
+        int outEdge;
+
+        public InOutPair(int inEdge, int outEdge) {
+            this.inEdge = inEdge;
+            this.outEdge = outEdge;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            InOutPair inOutPair = (InOutPair) o;
+            return inEdge == inOutPair.inEdge &&
+                    outEdge == inOutPair.outEdge;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(inEdge, outEdge);
         }
     }
 
