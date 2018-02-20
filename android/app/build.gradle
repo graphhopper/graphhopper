@@ -40,12 +40,7 @@ dependencies {
        exclude group: 'com.google.protobuf', module: 'protobuf-java'
        exclude group: 'org.openstreetmap.osmosis', module: 'osmosis-osm-binary'
        exclude group: 'org.apache.xmlgraphics', module: 'xmlgraphics-commons'
-       exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
-       exclude group: 'com.bedatadriven', module: 'jackson-datatype-jts'
     }
-
-    implementation 'com.google.code.gson:gson:2.8.2'
-
     implementation 'org.mapsforge:vtm:0.9.2'
     implementation 'org.mapsforge:vtm-android:0.9.2'
     implementation 'org.mapsforge:vtm-android:0.9.2:natives-armeabi'
