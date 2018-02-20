@@ -490,7 +490,14 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 if (outIter.getEdge() == incomingEdge.getEdge()) {
                     entry.onOrigPath = true;
                     // we want to give witness paths the precedence in case the path weights would be equal
-                    entry.weight += 1.e-12;
+//                    entry.weight += 1.e-12;
+                    // todo: apparently this can lead to strong deviations from dijkstra for example like this:
+                    // --> disable for now, but do not really understand what is wrong about this
+                    // bremen:
+//                    Using seed 1470048333179
+//                    error: found different points for query from 53.1663,8.6648 to 53.0915,8.8717, route weight: 1331.03 vs. 1196.64 (diff = 134.3840)
+//                    error: found different points for query from 53.0691,8.8913 to 53.1019,8.8923, route weight: 547.67 vs. 547.70 (diff = -0.0349)
+//                    error: found different points for query from 53.0794,8.7360 to 53.0579,8.9676, route weight: 1837.07 vs. 1599.81 (diff = 237.2532)
                 }
                 numOnOrigPath += insertOrUpdateInitialEntry(initialEntries, entry);
             }
