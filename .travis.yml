@@ -4,6 +4,10 @@ sudo: false
 env:
   global:
     - GPG_EXECUTABLE=gpg
+    - BASEURL=https://www-eu.apache.org/dist/maven/maven-3/VERSION/binaries/apache-maven-VERSION-bin.zip
+    - FILE=apache-maven-VERSION-bin.zip
+    - DIR=apache-maven-VERSION
+    - VERSION=3.3.9
     # TODO move this into the travis settings
     - secure: "j6a61/qnfFcSjx5XxmxO2hqBOwtVx5HWrD1+4Atl7WG/pRKz9+jSga1Y7oDAFb2SIl8S65kDmPQB/vC8aHxUDj/Wizjxnxn1FhPqoe9yO6Ztft+984FKFyvj7s6tsBJKcehGec+chTOwZQpH4oI4rU6IlepDHnGLHiOd0Iviryg="
     - secure: "GiFr+v2lTQk/sTQB7CYjju1/mupS8LSJupmizLqY454utiZkabDMBOZQnF9ukpy7WhveB9hKQyEKf9iP2w7HSYEjgvogT26vZ5f2MeLnR4SWvqEtf/WBvvh+W+k/rb2f6YgitkB4Jlxn2izemBEDuKplGJphzGW41lf8XZ2IxVI="
@@ -29,6 +33,13 @@ install: true
 before_install:
   - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
   - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
+  # update maven
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+        wget -q --no-check-certificate $(echo -n $BASEURL | sed -e 's#VERSION#'$VERSION'#g');
+        unzip -qq $(echo -n $FILE | sed -e 's#VERSION#'$VERSION'#');
+        export M2_HOME=$PWD/$(echo -n $DIR | sed -e 's#VERSION#'$VERSION'#');
+        export PATH=$M2_HOME/bin:$PATH;
+    fi
   
 # avoid increase of memory via travis https://github.com/travis-ci/travis-ci/issues/8408
 before_script:
@@ -38,7 +49,7 @@ before_script:
 before_script:
   - _JAVA_OPTIONS=
 script:
-  - "mvn clean test verify checkstyle:check findbugs:check forbiddenapis:check -B"
+  - "mvn --version && mvn clean test verify checkstyle:check findbugs:check forbiddenapis:check -B"
 
 after_success:
   # deploy snapshot artifacts to sonatype and if tagged deploy the release to maven central
