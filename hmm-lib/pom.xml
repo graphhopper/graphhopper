@@ -20,7 +20,7 @@
     <groupId>com.graphhopper.external</groupId>
     <artifactId>hmm-lib</artifactId>
     <!-- SNAPSHOT is necessary otherwise it says: Deployment failed: repository element was not specified in the POM inside distributionManagement element-->
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>jar</packaging>
   
     <name>hmm-lib</name>
@@ -30,7 +30,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-map-matching-parent</artifactId>    	
-        <version>0.10-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <developers>

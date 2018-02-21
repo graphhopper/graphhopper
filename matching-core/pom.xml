@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-map-matching-core</artifactId>
-    <version>0.10-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>jar</packaging>
     <properties>
         <slf4j.version>1.7.7</slf4j.version>
@@ -14,14 +14,14 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-map-matching-parent</artifactId>    	
-        <version>0.10-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
     
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-reader-osm</artifactId>
-	    <version>${project.parent.version}</version>
+	    <version>${gh.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -42,7 +42,7 @@
         <dependency>
             <groupId>com.graphhopper.external</groupId>
             <artifactId>hmm-lib</artifactId>
-            <version>1.0.0</version>
+            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
