@@ -210,10 +210,13 @@ public class CHMeasurement {
      */
     private static void testPerformanceAutomaticNodeOrdering(String[] args) {
         String osmFile = "berlin-latest.osm.pbf";
-        if (args.length == 3) {
+        if (args.length == 6) {
             osmFile = args[0];
             WitnessPathFinder.maxOrigEdgesPerInitialEntry = Integer.valueOf(args[1]);
             EdgeBasedNodeContractor.aggressiveSearch = Boolean.valueOf(args[2]);
+            EdgeBasedNodeContractor.edgeDifferenceWeight = Integer.valueOf(args[3]);
+            EdgeBasedNodeContractor.originalEdgeDifferenceWeight = Integer.valueOf(args[4]);
+            EdgeBasedNodeContractor.hierarchyDepthWeight = Integer.valueOf(args[5]);
         }
         final GraphHopper graphHopper = new GraphHopperOSM();
         CmdArgs cmdArgs = new CmdArgs();
