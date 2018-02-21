@@ -17,7 +17,6 @@
  */
 package com.graphhopper.util.exceptions;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -27,23 +26,8 @@ import java.util.Map;
  */
 public class ConnectionNotFoundException extends PathNotFoundException {
 
-    public static final String DIFFERENT_SUBNETWORKS = "different_subnetworks";
-
     public ConnectionNotFoundException(String var1, Map<String, Object> details) {
         super(var1, details);
-    }
-
-    /**
-     * You can add a reason for this exception, to add more details why this happened.
-     * The reason will be put to the details map with the key "reason". If there was a value set for reason it will
-     * be overwritten.
-     */
-    public ConnectionNotFoundException(String var1, Map<String, Object> details, String reason) {
-        super(var1, details);
-
-        if (details == null) {
-            details = new HashMap<>();
-        }
-        details.put("reason", reason);
+        details.put("reason", "different_subnetworks");
     }
 }
