@@ -25,7 +25,7 @@ import java.util.Map;
  * @author Robin Boldt
  */
 public class PathNotFoundException extends DetailedIllegalArgumentException {
-    public PathNotFoundException(String var1, Map<String, Object> details) {
-        super(var1, details);
+    public PathNotFoundException(String message, Map<String, Object> details) {
+        super(message, details);
     }
 }

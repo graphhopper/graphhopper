@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util.exceptions;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -26,8 +27,12 @@ import java.util.Map;
  */
 public class ConnectionNotFoundException extends PathNotFoundException {
 
-    public ConnectionNotFoundException(String var1, Map<String, Object> details) {
-        super(var1, details);
+    public ConnectionNotFoundException(String message) {
+        this(message, new HashMap<String, Object>(2));
+    }
+
+    public ConnectionNotFoundException(String message, Map<String, Object> details) {
+        super(message, details);
         details.put("reason", "different_subnetworks");
     }
 }

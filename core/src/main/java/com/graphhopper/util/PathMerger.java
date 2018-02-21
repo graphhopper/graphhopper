@@ -142,7 +142,7 @@ public class PathMerger {
         }
 
         if (!allFound) {
-            altRsp.addError(new ConnectionNotFoundException("Connection between locations not found", Collections.<String, Object>emptyMap()));
+            altRsp.addError(new ConnectionNotFoundException("Connection between locations not found"));
         }
 
         altRsp.setDescription(description).
