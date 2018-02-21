@@ -32,6 +32,7 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.graphhopper.util.Helper.nf;
 import static java.lang.System.nanoTime;
 
 public class EdgeBasedNodeContractor extends AbstractNodeContractor {
@@ -221,6 +222,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     if (isContracted(toNode) || toNode == node) {
                         continue;
                     }
+                    stats().shortcutsChecked++;
                     if (witnessedPairs.contains(twoIntsInLong(incomingEdges.getEdge(), outgoingEdges.getEdge()))) {
                         continue;
                     }
@@ -347,13 +349,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 }
                 LOGGER.trace("Witness path search to outgoing edge yielded {}", originalPath);
                 if (witnessSearchStrategy.shortcutRequired(node, toNode, incomingEdges, outgoingEdges, witnessPathFinder, originalPath)) {
-                    // todo: note that we do not count loop-helper shortcuts here, but there are not that many usually
-                    stats().shortcutsNeeded++;
                     handleShortcuts(originalPath);
-                } else {
-                    // todo: here not necessarily a witness path has been found, for example for u-turns (initial-entry
-                    // = outgoing edge) we also end up here
-                    stats().numWitnessesFound++;
                 }
             }
         }
@@ -375,12 +371,16 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         while (root.parent.edge != EdgeIterator.NO_EDGE) {
             root = root.getParent();
         }
-        if (root.parent.adjNode != chEntry.adjNode ||
-                // here we misuse root.parent.incEdge as first orig edge of the potential shortcut
-                loopShortcutNecessary(
+        if (root.parent.adjNode == chEntry.adjNode &&
+                //here we misuse root.parent.incEdge as first orig edge of the potential shortcut
+                !loopShortcutNecessary(
                         chEntry.adjNode, root.getParent().incEdge, chEntry.incEdge, chEntry.weight)) {
-            activeShortcutHandler.handleShortcut(root, chEntry);
+            stats().loopsAvoided++;
+            return;
         }
+        // todo: note that we do not count loop-helper shortcuts here, but there are not that many usually
+        stats().shortcutsNeeded++;
+        activeShortcutHandler.handleShortcut(root, chEntry);
     }
 
     private boolean loopShortcutNecessary(int node, int firstOrigEdge, int lastOrigEdge, double loopWeight) {
@@ -819,13 +819,14 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         int nodes;
         long shortcutsChecked;
         long shortcutsNeeded;
-        long numWitnessesFound;
+        long loopsAvoided;
         long calcTime;
 
         @Override
         public String toString() {
-            return String.format("runtime: %7.2f, nodes: %10s, scChecked: %10s, scNeeded: %10s, witnessesFound: %10s",
-                    calcTime * 1.e-9, Helper.nf(nodes), Helper.nf(shortcutsChecked), Helper.nf(shortcutsNeeded), Helper.nf(numWitnessesFound));
+            return String.format("runtime: %7.2f, nodes: %10s, scChecked: %10s, scNeeded: %10s, scNotNeeded: %10s, loopsAvoided: %10s",
+                    calcTime * 1.e-9, nf(nodes), nf(shortcutsChecked), nf(shortcutsNeeded),
+                    nf(shortcutsChecked - shortcutsNeeded), nf(loopsAvoided));
         }
     }
 }
