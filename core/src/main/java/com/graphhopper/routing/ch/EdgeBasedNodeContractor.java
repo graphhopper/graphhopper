@@ -38,7 +38,7 @@ import static java.lang.System.nanoTime;
 public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     // todo: modify code such that logging does not alter performance 
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
-    public static boolean aggressiveSearch = false;
+    public static boolean aggressiveSearch = true;
     public static int edgeDifferenceWeight = 8;
     public static int originalEdgeDifferenceWeight = 4;
     public static int hierarchyDepthWeight = 1;
