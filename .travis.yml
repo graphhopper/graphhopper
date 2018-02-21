@@ -35,7 +35,7 @@ before_install:
   - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
   # update maven
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-        wget --no-check-certificate $(echo -n $BASEURL | sed -e 's#VERSION#'$VERSION'#g');
+        wget -q --no-check-certificate $(echo -n $BASEURL | sed -e 's#VERSION#'$VERSION'#g');
         unzip -qq $(echo -n $FILE | sed -e 's#VERSION#'$VERSION'#');
         export M2_HOME=$PWD/$(echo -n $DIR | sed -e 's#VERSION#'$VERSION'#');
         export PATH=$M2_HOME/bin:$PATH;
