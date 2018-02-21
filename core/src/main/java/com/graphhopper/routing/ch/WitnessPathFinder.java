@@ -34,7 +34,7 @@ import java.util.BitSet;
 import java.util.PriorityQueue;
 
 public class WitnessPathFinder {
-    public static int maxOrigEdgesPerInitialEntry = 5;
+    public static int maxOrigEdgesPerInitialEntry = 100;
     private final CHGraph graph;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
@@ -100,7 +100,7 @@ public class WitnessPathFinder {
 
             EdgeIterator iter = outEdgeExplorer.setBaseNode(currEdge.adjNode);
             while (iter.next()) {
-                // increases number of shortcuts and not sure if needed
+                // todo: increases number of shortcuts and not sure if needed
 //                if (!currEdge.onOrigPath && iter.getAdjNode() == avoidNode) {
 //                    continue;
 //                }

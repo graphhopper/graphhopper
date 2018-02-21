@@ -110,8 +110,22 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         while (iter.next()) {
             if (isContracted(iter.getAdjNode()))
                 continue;
-            numPrevEdges++;
-            numPrevOrigEdges += getOrigEdgeCount(iter.getEdge());
+            if (iter.isForward(encoder)) {
+                numPrevEdges++;
+            }
+            if (iter.isBackward(encoder)) {
+                numPrevEdges++;
+            }
+            if (!iter.isShortcut()) {
+                if (iter.isForward(encoder)) {
+                    numPrevOrigEdges++;
+                }
+                if (iter.isBackward(encoder)) {
+                    numPrevOrigEdges++;
+                }
+            } else {
+                numPrevOrigEdges += getOrigEdgeCount(iter.getEdge());
+            }
         }
         // todo: optimize
         // the more shortcuts need to be introduced the later we want to contract this node
