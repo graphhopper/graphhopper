@@ -37,6 +37,7 @@ import static java.lang.System.nanoTime;
 public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     // todo: modify code such that logging does not alter performance 
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
+    public static boolean aggressiveSearch = false;
     private final TurnWeighting turnWeighting;
     private final TraversalMode traversalMode;
     private final SimpleSearch simpleSearch = new SimpleSearch();
@@ -134,8 +135,11 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private int findAndHandleShortcuts(int node) {
-//        return findAndHandleShortcutsClassic(node);
-        return findAndHandleShortcutsAggressive(node);
+        if (aggressiveSearch) {
+            return findAndHandleShortcutsAggressive(node);
+        } else {
+            return findAndHandleShortcutsClassic(node);
+        }
     }
 
     private int findAndHandleShortcutsAggressive(int node) {
@@ -546,7 +550,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private boolean illegalUTurn(int inEdge, int outEdge) {
         return !traversalMode.hasUTurnSupport() && outEdge == inEdge;
     }
-    
+
     private int getEdgeKey(int edge, int adjNode) {
         // todo: this is similar to some code in DijkstraBidirectionEdgeCHNoSOD and should be cleaned up, see comments there
         CHEdgeIteratorState eis = prepareGraph.getEdgeIteratorState(edge, adjNode);

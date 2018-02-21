@@ -26,6 +26,7 @@ import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
+import com.graphhopper.routing.ch.EdgeBasedNodeContractor;
 import com.graphhopper.routing.ch.ManualPrepareContractionHierarchies;
 import com.graphhopper.routing.ch.WitnessPathFinder;
 import com.graphhopper.routing.util.*;
@@ -209,9 +210,10 @@ public class CHMeasurement {
      */
     private static void testPerformanceAutomaticNodeOrdering(String[] args) {
         String osmFile = "berlin-latest.osm.pbf";
-        if (args.length == 2) {
+        if (args.length == 3) {
             osmFile = args[0];
             WitnessPathFinder.maxOrigEdgesPerInitialEntry = Integer.valueOf(args[1]);
+            EdgeBasedNodeContractor.aggressiveSearch = Boolean.valueOf(args[2]);
         }
         final GraphHopper graphHopper = new GraphHopperOSM();
         CmdArgs cmdArgs = new CmdArgs();
@@ -243,7 +245,7 @@ public class CHMeasurement {
         sw.stop();
         LOGGER.info("Import and preparation took {}s", sw.getTime() / 1000);
 
-        long seed = nanoTime();
+        long seed = 456;
         LOGGER.info("Using seed {}", seed);
         Graph g = graphHopper.getGraphHopperStorage();
         final int numNodes = g.getNodes();
