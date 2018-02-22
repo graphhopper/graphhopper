@@ -103,16 +103,16 @@ public class MapBasedWitnessPathFinder extends WitnessPathFinder {
                 }
 
                 boolean onOrigPath = currEdge.onOrigPath && iter.getBaseNode() == iter.getAdjNode();
-                int traversalId = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
-                WitnessSearchEntry entry = chEntries.get(traversalId);
+                int key = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
+                WitnessSearchEntry entry = chEntries.get(key);
                 if (entry == null) {
                     entry = createEntry(iter, currEdge, weight, onOrigPath);
                     if (targetDiscoveredByOrigPath(targetEdge, targetNode, currEdge, iter)) {
                         targetDiscoveredByOrigPath = true;
                     }
-                    chEntries.put(traversalId, entry);
+                    chEntries.put(key, entry);
                     priorityQueue.add(entry);
-                } else if (entry.weight > weight) {
+                } else if (weight < entry.weight) {
                     priorityQueue.remove(entry);
                     updateEntry(entry, iter, weight, currEdge, onOrigPath);
                     if (targetDiscoveredByOrigPath(targetEdge, targetNode, currEdge, iter)) {
@@ -134,22 +134,22 @@ public class MapBasedWitnessPathFinder extends WitnessPathFinder {
         initCollections();
     }
 
-    private WitnessSearchEntry createEntry(EdgeIteratorState iter, CHEntry parent, double weight, boolean possibleShortcut) {
+    private WitnessSearchEntry createEntry(EdgeIteratorState iter, CHEntry parent, double weight, boolean onOrigPath) {
         WitnessSearchEntry entry = new WitnessSearchEntry(iter.getEdge(), iter.getLastOrigEdge(), iter.getAdjNode(), weight);
         entry.parent = parent;
-        if (possibleShortcut) {
+        if (onOrigPath) {
             entry.onOrigPath = true;
             numOnOrigPath++;
         }
         return entry;
     }
 
-    private void updateEntry(WitnessSearchEntry entry, EdgeIteratorState iter, double weight, CHEntry parent, boolean possibleShortcut) {
+    private void updateEntry(WitnessSearchEntry entry, EdgeIteratorState iter, double weight, CHEntry parent, boolean onOrigPath) {
         entry.edge = iter.getEdge();
         entry.incEdge = iter.getLastOrigEdge();
         entry.weight = weight;
         entry.parent = parent;
-        if (possibleShortcut) {
+        if (onOrigPath) {
             if (!entry.onOrigPath) {
                 numOnOrigPath++;
             }

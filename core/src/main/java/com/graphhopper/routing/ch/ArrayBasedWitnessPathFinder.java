@@ -20,7 +20,7 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
     private int[] incEdges;
     private int[] parents;
     private int[] adjNodes;
-    private boolean[] onOripPaths;
+    private boolean[] onOrigPaths;
 
     private List<WitnessSearchEntry> rootParents;
     private IntDoubleBinaryHeap heap;
@@ -42,6 +42,7 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
                 numOnOrigPath++;
                 avoidNode = e.value.adjNode;
             }
+            // we use descending negative keys for the parents, so we can retrieve them later
             setInitEntry(e.key, e.value, --parentId);
             changedEdges.add(e.key);
             heap.insert_(e.value.weight, e.key);
@@ -92,45 +93,40 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
             }
             heap.poll_element();
 
-            if (onOripPaths[currKey]) {
+            if (onOrigPaths[currKey]) {
                 numOnOrigPath--;
             }
 
-            if (numOrigEdgesSettled > maxOrigEdgesSettled && !onOripPaths[currKey]) {
+            if (numOrigEdgesSettled > maxOrigEdgesSettled && !onOrigPaths[currKey]) {
                 continue;
             }
 
             EdgeIterator iter = outEdgeExplorer.setBaseNode(adjNodes[currKey]);
             while (iter.next()) {
                 if ((!traversalMode.hasUTurnSupport() && iter.getFirstOrigEdge() == incEdges[currKey]) ||
-                        graph.getLevel(iter.getAdjNode()) < graph.getLevel(iter.getBaseNode()))
+                        isContracted(iter.getAdjNode())) {
                     continue;
+                }
                 double weight = weighting.calcWeight(iter, false, incEdges[currKey]) + weights[currKey];
                 if (Double.isInfinite(weight)) {
                     continue;
                 }
 
-                int adjKey = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
-                if (edges[adjKey] == -1) {
-                    setEntry(adjKey, iter, weight, currKey);
-                    if (onOripPaths[currKey] && iter.getBaseNode() == iter.getAdjNode()) {
-                        onOripPaths[adjKey] = true;
-                        numOnOrigPath++;
-                    }
-                    if (onOripPaths[currKey] && iter.getLastOrigEdge() == targetEdge && iter.getAdjNode() == targetNode) {
+                boolean onOrigPath = onOrigPaths[currKey] && iter.getBaseNode() == iter.getAdjNode();
+                int key = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
+                if (edges[key] == -1) {
+                    setEntry(key, iter, weight, currKey, onOrigPath);
+                    if (targetDiscoveredByOrigPath(targetEdge, targetNode, currKey, iter)) {
                         targetDiscoveredByOrigPath = true;
                     }
-                    changedEdges.add(adjKey);
-                    heap.insert_(weight, adjKey);
-                } else if (weight < weights[adjKey]) {
-                    updateEntry(currKey, iter, weight, adjKey);
-                    if (onOripPaths[currKey] && iter.getBaseNode() == iter.getAdjNode()) {
-                        if (!onOripPaths[adjKey]) {
-                            numOnOrigPath++;
-                        }
-                        onOripPaths[adjKey] = true;
+                    changedEdges.add(key);
+                    heap.insert_(weight, key);
+                } else if (weight < weights[key]) {
+                    updateEntry(currKey, iter, weight, key, onOrigPath);
+                    if (targetDiscoveredByOrigPath(targetEdge, targetNode, currKey, iter)) {
+                        targetDiscoveredByOrigPath = true;
                     }
-                    heap.update_(weight, adjKey);
+                    heap.update_(weight, key);
                 }
             }
             numOrigEdgesSettled++;
@@ -147,21 +143,31 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
         weights[key] = entry.weight;
         parents[key] = parentId;
         rootParents.add(entry.getParent());
-        onOripPaths[key] = entry.onOrigPath;
+        onOrigPaths[key] = entry.onOrigPath;
     }
 
-    private void setEntry(int index, EdgeIteratorState iter, double weight, int parent) {
-        edges[index] = iter.getEdge();
-        incEdges[index] = iter.getLastOrigEdge();
-        adjNodes[index] = iter.getAdjNode();
-        weights[index] = weight;
-        parents[index] = parent;
+    private void setEntry(int key, EdgeIteratorState iter, double weight, int parent, boolean onOrigPath) {
+        edges[key] = iter.getEdge();
+        incEdges[key] = iter.getLastOrigEdge();
+        adjNodes[key] = iter.getAdjNode();
+        weights[key] = weight;
+        parents[key] = parent;
+        if (onOrigPath) {
+            onOrigPaths[key] = true;
+            numOnOrigPath++;
+        }
     }
 
-    private void updateEntry(int index, EdgeIteratorState iter, double weight, int adjKey) {
-        edges[adjKey] = iter.getEdge();
-        weights[adjKey] = weight;
-        parents[adjKey] = index;
+    private void updateEntry(int currKey, EdgeIteratorState iter, double weight, int key, boolean onOrigPath) {
+        edges[key] = iter.getEdge();
+        weights[key] = weight;
+        parents[key] = currKey;
+        if (onOrigPath) {
+            if (!onOrigPaths[key]) {
+                numOnOrigPath++;
+            }
+            onOrigPaths[key] = true;
+        }
     }
 
     @Override
@@ -179,10 +185,10 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
         Arrays.fill(weights, Double.POSITIVE_INFINITY);
 
         edges = new int[numEntries];
-        Arrays.fill(edges, -1);
+        Arrays.fill(edges, EdgeIterator.NO_EDGE);
 
         incEdges = new int[numEntries];
-        Arrays.fill(incEdges, -1);
+        Arrays.fill(incEdges, EdgeIterator.NO_EDGE);
 
         parents = new int[numEntries];
         Arrays.fill(parents, -1);
@@ -190,20 +196,25 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
         adjNodes = new int[numEntries];
         Arrays.fill(adjNodes, -1);
 
-        onOripPaths = new boolean[numEntries];
-        Arrays.fill(onOripPaths, false);
+        onOrigPaths = new boolean[numEntries];
+        Arrays.fill(onOrigPaths, false);
     }
 
     private void resetEntry(int key) {
         weights[key] = Double.POSITIVE_INFINITY;
-        edges[key] = -1;
-        incEdges[key] = -1;
+        edges[key] = EdgeIterator.NO_EDGE;
+        incEdges[key] = EdgeIterator.NO_EDGE;
         parents[key] = -1;
         adjNodes[key] = -1;
-        onOripPaths[key] = false;
+        onOrigPaths[key] = false;
+    }
+
+    private boolean targetDiscoveredByOrigPath(int targetEdge, int targetNode, int currKey, EdgeIteratorState iter) {
+        return onOrigPaths[currKey] && iter.getLastOrigEdge() == targetEdge && iter.getAdjNode() == targetNode;
     }
 
     private void initCollections() {
+        // todo: so far these initial capacities are purely guessed
         rootParents = new ArrayList<>(10);
         changedEdges = new IntArrayList(1000);
         heap = new IntDoubleBinaryHeap(1000);
