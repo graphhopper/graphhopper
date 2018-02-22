@@ -210,13 +210,21 @@ public class CHMeasurement {
      */
     private static void testPerformanceAutomaticNodeOrdering(String[] args) {
         String osmFile = "berlin-latest.osm.pbf";
-        if (args.length == 6) {
+        int periodicUpdates = 20;
+        int lazyUpdates = 10;
+        int neighborUpdates = 4;
+        int contractedNodes = 100;
+        if (args.length == 10) {
             osmFile = args[0];
             WitnessPathFinder.maxOrigEdgesPerInitialEntry = Integer.valueOf(args[1]);
             EdgeBasedNodeContractor.aggressiveSearch = Boolean.valueOf(args[2]);
             EdgeBasedNodeContractor.edgeDifferenceWeight = Integer.valueOf(args[3]);
             EdgeBasedNodeContractor.originalEdgeDifferenceWeight = Integer.valueOf(args[4]);
             EdgeBasedNodeContractor.hierarchyDepthWeight = Integer.valueOf(args[5]);
+            periodicUpdates = Integer.valueOf(args[6]);
+            lazyUpdates = Integer.valueOf(args[7]);
+            neighborUpdates = Integer.valueOf(args[8]);
+            contractedNodes = Integer.valueOf(args[9]);
         }
         final GraphHopper graphHopper = new GraphHopperOSM();
         CmdArgs cmdArgs = new CmdArgs();
@@ -232,10 +240,10 @@ public class CHMeasurement {
         }
         CHAlgoFactoryDecorator decorator = graphHopper.getCHFactoryDecorator();
         decorator.setDisablingAllowed(true);
-        decorator.setPreparationPeriodicUpdates(20); // default: 20
-        decorator.setPreparationLazyUpdates(100);     // default: 10
-        decorator.setPreparationNeighborUpdates(4); // default: 20
-        decorator.setPreparationContractedNodes(100);// default: 100
+        decorator.setPreparationPeriodicUpdates(periodicUpdates); // default: 20
+        decorator.setPreparationLazyUpdates(lazyUpdates);     // default: 10
+        decorator.setPreparationNeighborUpdates(neighborUpdates); // default: 20
+        decorator.setPreparationContractedNodes(contractedNodes);// default: 100
         decorator.setPreparationLogMessages(20); // default: 20
         graphHopper.init(cmdArgs);
 
