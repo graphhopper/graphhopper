@@ -18,7 +18,7 @@
 package com.graphhopper.http;
 
 import com.google.inject.servlet.ServletModule;
-import com.graphhopper.reach.algorithm.RasterHullBuilder;
+import com.graphhopper.isochrone.algorithm.RasterHullBuilder;
 
 import javax.inject.Singleton;
 

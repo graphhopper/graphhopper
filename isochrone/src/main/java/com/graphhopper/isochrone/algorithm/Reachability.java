@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reach.algorithm;
+package com.graphhopper.isochrone.algorithm;
 
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
@@ -32,8 +32,8 @@ import com.graphhopper.util.EdgeIterator;
 
 import java.util.*;
 
-import static com.graphhopper.reach.algorithm.Reachability.ExploreType.DISTANCE;
-import static com.graphhopper.reach.algorithm.Reachability.ExploreType.TIME;
+import static com.graphhopper.isochrone.algorithm.Reachability.ExploreType.DISTANCE;
+import static com.graphhopper.isochrone.algorithm.Reachability.ExploreType.TIME;
 
 /**
  * @author Peter Karich

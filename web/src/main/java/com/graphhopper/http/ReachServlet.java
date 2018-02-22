@@ -19,8 +19,8 @@ package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.reach.algorithm.RasterHullBuilder;
-import com.graphhopper.reach.algorithm.Reachability;
+import com.graphhopper.isochrone.algorithm.RasterHullBuilder;
+import com.graphhopper.isochrone.algorithm.Reachability;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;

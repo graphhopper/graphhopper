@@ -1,4 +1,4 @@
-package com.graphhopper.reach.algorithm;
+package com.graphhopper.isochrone.algorithm;
 
 import java.util.ArrayList;
 import java.util.List;

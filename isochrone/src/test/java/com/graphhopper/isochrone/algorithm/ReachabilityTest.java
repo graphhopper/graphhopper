@@ -1,4 +1,4 @@
-package com.graphhopper.reach.algorithm;
+package com.graphhopper.isochrone.algorithm;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
