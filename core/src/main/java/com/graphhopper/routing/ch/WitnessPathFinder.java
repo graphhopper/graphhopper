@@ -27,7 +27,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
 public abstract class WitnessPathFinder {
-    public static int maxOrigEdgesPerInitialEntry = 100;
+    public static int maxOrigEdgesPerInitialEntry = 7;
     protected final CHGraph graph;
     protected final Weighting weighting;
     protected final TraversalMode traversalMode;
