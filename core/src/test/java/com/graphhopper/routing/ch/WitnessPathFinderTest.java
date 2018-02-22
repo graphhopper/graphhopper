@@ -54,7 +54,7 @@ public class WitnessPathFinderTest {
         for (int i = 0; i < maxLevel; ++i) {
             chGraph.setLevel(i, maxLevel);
         }
-        WitnessPathFinder witnessPathFinder = new WitnessPathFinder(chGraph, weighting, TraversalMode.EDGE_BASED_2DIR, maxLevel);
+        WitnessPathFinder witnessPathFinder = new MapBasedWitnessPathFinder(chGraph, weighting, TraversalMode.EDGE_BASED_2DIR, maxLevel);
         witnessPathFinder.setInitialEntries(initialEntries);
         witnessPathFinder.findTarget(1, 2);
         witnessPathFinder.findTarget(2, 3);

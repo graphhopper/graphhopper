@@ -77,7 +77,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     public void initFromGraph() {
         super.initFromGraph();
         maxLevel = prepareGraph.getNodes() + 1;
-        witnessPathFinder = new WitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel);
+        witnessPathFinder = new MapBasedWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel);
         DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
         DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
         inEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
