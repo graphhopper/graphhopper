@@ -647,8 +647,7 @@ public class OSMReaderTest {
     public void testReadEleFromDataProvider() {
         GraphHopper hopper = new GraphHopperFacade("test-osm5.xml");
         // get N10E046.hgt.zip
-        ElevationProvider provider = new SRTMProvider();
-        provider.setCacheDir(new File(GraphHopperIT.DIR));
+        ElevationProvider provider = new SRTMProvider(GraphHopperIT.DIR);
         hopper.setElevationProvider(provider);
         hopper.importOrLoad();
 

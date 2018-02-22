@@ -1,4 +1,4 @@
-Submit a new issue only if you are sure it is a missing feature or a bug. Otherwise, [discuss the topic](http://graphhopper.com/#developers) first. 
+Submit a new issue only if you are sure it is a missing feature or a bug. Otherwise, [discuss the topic](https://discuss.graphhopper.com/c/graphhopper) first. 
 For new translations or fixes to existing translations,
 please refer to [this documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/core/translations.md).
 

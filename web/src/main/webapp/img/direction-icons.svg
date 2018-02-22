@@ -17,7 +17,7 @@
    inkscape:export-filename="/home/peterk/Dokumente/quell/graphstuff/graphhopper/web/src/main/webapp/img/right.png"
    inkscape:export-xdpi="134.39999"
    inkscape:export-ydpi="134.39999"
-   sodipodi:docname="left.svg">
+   sodipodi:docname="direction-icons.svg">
   <defs
      id="defs4">
     <marker
@@ -151,17 +151,22 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8"
-     inkscape:cx="107.42943"
-     inkscape:cy="956.50972"
+     inkscape:zoom="3.959798"
+     inkscape:cx="93.18453"
+     inkscape:cy="865.72483"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1920"
-     inkscape:window-height="1025"
+     inkscape:window-height="1026"
      inkscape:window-x="0"
      inkscape:window-y="0"
-     inkscape:window-maximized="1" />
+     inkscape:window-maximized="1"
+     showguides="false">
+    <inkscape:grid
+       type="xygrid"
+       id="grid4267" />
+  </sodipodi:namedview>
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -170,7 +175,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -417,5 +422,78 @@
        d="m 143.94012,187.53763 c 0.29079,-21.60561 -2.82368,-24.68941 11.81123,-45.19825 l 5.53521,4.22349 c -13.38965,18.0529 -10.73771,18.20147 -11.07454,40.96696 z"
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:medium;line-height:normal;font-family:Sans;-inkscape-font-specification:Sans;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;baseline-shift:baseline;text-anchor:start;display:inline;overflow:visible;visibility:visible;fill:none;fill-opacity:1;stroke:#454545;stroke-width:1.50225437;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker:none;enable-background:accumulate"
        sodipodi:nodetypes="ccccc" />
+    <rect
+       style="fill:none;fill-opacity:1;stroke:none;stroke-width:0.101;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect4276-8"
+       width="57.85714"
+       height="61.42857"
+       x="-41.42857"
+       y="147.00507"
+       inkscape:export-filename="/home/peter/Documents/quell/graphhopper/web/src/main/webapp/img/transfer_to.png"
+       inkscape:export-xdpi="70"
+       inkscape:export-ydpi="70"
+       transform="scale(-1,1)" />
+    <g
+       transform="matrix(0.78731598,-0.92691482,0.67619035,1.0792447,-42.098387,193.41103)"
+       id="g3928-3-3-9"
+       style="fill:#454545;fill-opacity:1"
+       inkscape:export-filename="/home/peter/Documents/quell/graphhopper/web/src/main/webapp/img/transfer_to.png"
+       inkscape:export-xdpi="70"
+       inkscape:export-ydpi="70">
+      <path
+         style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:medium;line-height:normal;font-family:Sans;-inkscape-font-specification:Sans;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;baseline-shift:baseline;text-anchor:start;display:inline;overflow:visible;visibility:visible;fill:#454545;fill-opacity:1;stroke:none;stroke-width:7.5;marker:none;enable-background:accumulate"
+         d="m 28.203018,20.77195 7.293457,6.468549 c 7.457643,-8.437252 12.94311,-16.87947 23.754619,-7.772992 10.778001,9.421424 -2.818211,21.92169 -10.062438,29.93397 4.051938,3.490253 3.635639,3.118539 7.573918,6.485115 C 65.717897,45.690879 82.708133,31.075913 63.552159,14.451975 47.244178,0.29958263 37.572444,9.8599329 28.203018,20.77195 Z"
+         id="path2985-5-8-6-7"
+         inkscape:connector-curvature="0"
+         inkscape:export-filename="/home/peterk/Dokumente/quell/graphstuff/graphhopper/web/src/main/webapp/img/right.png"
+         inkscape:export-xdpi="140.92999"
+         inkscape:export-ydpi="140.92999"
+         sodipodi:nodetypes="cccccsc" />
+      <path
+         d="M 46.825302,26.816113 24.813116,31.774239 26.984505,9.577043 c 7.112389,10.242898 8.641167,11.555897 19.840797,17.23907 z"
+         style="fill:#454545;fill-opacity:1;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         id="path3934-8-7-7"
+         inkscape:connector-curvature="0"
+         inkscape:export-filename="/home/peterk/Dokumente/quell/graphstuff/graphhopper/web/src/main/webapp/img/right.png"
+         inkscape:export-xdpi="140.92999"
+         inkscape:export-ydpi="140.92999"
+         sodipodi:nodetypes="cccc" />
+    </g>
+    <rect
+       style="fill:none;fill-opacity:1;stroke:none;stroke-width:0.101;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect4276-8-5"
+       width="57.85714"
+       height="61.42857"
+       x="57.94455"
+       y="171.8571"
+       inkscape:export-filename="/home/peter/Documents/quell/graphhopper/web/src/main/webapp/img/transfer_to.png"
+       inkscape:export-xdpi="70"
+       inkscape:export-ydpi="70" />
+    <g
+       transform="matrix(-0.78731598,-0.92691482,-0.67619035,1.0792447,141.47151,218.26305)"
+       id="g3928-3-3-9-2"
+       style="fill:#454545;fill-opacity:1"
+       inkscape:export-filename="/home/peter/Documents/quell/graphhopper/web/src/main/webapp/img/transfer_to.png"
+       inkscape:export-xdpi="70"
+       inkscape:export-ydpi="70">
+      <path
+         style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:medium;line-height:normal;font-family:Sans;-inkscape-font-specification:Sans;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;baseline-shift:baseline;text-anchor:start;display:inline;overflow:visible;visibility:visible;fill:#454545;fill-opacity:1;stroke:none;stroke-width:7.5;marker:none;enable-background:accumulate"
+         d="m 28.203018,20.77195 7.293457,6.468549 c 7.457643,-8.437252 12.94311,-16.87947 23.754619,-7.772992 10.778001,9.421424 -2.818211,21.92169 -10.062438,29.93397 4.051938,3.490253 3.635639,3.118539 7.573918,6.485115 C 65.717897,45.690879 82.708133,31.075913 63.552159,14.451975 47.244178,0.29958263 37.572444,9.8599329 28.203018,20.77195 Z"
+         id="path2985-5-8-6-7-6"
+         inkscape:connector-curvature="0"
+         inkscape:export-filename="/home/peterk/Dokumente/quell/graphstuff/graphhopper/web/src/main/webapp/img/right.png"
+         inkscape:export-xdpi="140.92999"
+         inkscape:export-ydpi="140.92999"
+         sodipodi:nodetypes="cccccsc" />
+      <path
+         d="M 46.825302,26.816113 24.813116,31.774239 26.984505,9.577043 c 7.112389,10.242898 8.641167,11.555897 19.840797,17.23907 z"
+         style="fill:#454545;fill-opacity:1;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         id="path3934-8-7-7-5"
+         inkscape:connector-curvature="0"
+         inkscape:export-filename="/home/peterk/Dokumente/quell/graphstuff/graphhopper/web/src/main/webapp/img/right.png"
+         inkscape:export-xdpi="140.92999"
+         inkscape:export-ydpi="140.92999"
+         sodipodi:nodetypes="cccc" />
+    </g>
   </g>
 </svg>

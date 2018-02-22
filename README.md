@@ -158,6 +158,7 @@ Here is a list of the more detailed features including a link to the documentati
  * Memory efficient data structures, algorithms and [the low and high level API](./docs/core/low-level-api.md) is tuned towards ease of use and efficiency
  * Provides a simple [web API](./docs/web/api-doc.md) including JavaScript and Java clients
  * Multiple weightings (fastest/shortest/...) and pre-built routing profiles: car, bike, racingbike, mountain bike, foot, motorcycle, ...
+ * Support for public transit routing and [GTFS support](./reader-gtfs/README.md).
  * Offers turn instructions in more than 35 languages, contribute or improve [here](./docs/core/translations.md)
  * Displays and takes into account [elevation data](./docs/core/elevation.md) (per default disabled)
  * Can apply [real time changes to edge weights](https://graphhopper.com/blog/2015/04/08/visualize-and-handle-traffic-information-with-graphhopper-in-real-time-for-cologne-germany-koln/) (flexible and hybrid mode only)
