@@ -81,6 +81,9 @@ public class CHMeasurement {
      */
     private void testPerformanceFixedNodeOrdering() {
         osmFile = "bremen-latest.osm.pbf";
+        EdgeBasedNodeContractor.aggressiveSearch = true;
+        EdgeBasedNodeContractor.arrayBasedWitnessPathFinder = true;
+        WitnessPathFinder.maxOrigEdgesPerInitialEntry = 5;
         maxTurnCost = 100;
         seed = 123;
         pNodeHasTurnCosts = 0.3;
@@ -211,7 +214,7 @@ public class CHMeasurement {
     private static void testPerformanceAutomaticNodeOrdering(String[] args) {
         String osmFile = "berlin-latest.osm.pbf";
         int periodicUpdates = 20;
-        int lazyUpdates = 10;
+        int lazyUpdates = 100;
         int neighborUpdates = 4;
         int contractedNodes = 100;
         if (args.length == 10) {
