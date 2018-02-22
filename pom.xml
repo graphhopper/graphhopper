@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>0.10-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>pom</packaging>
     <url>https://www.graphhopper.com</url>
     <inceptionYear>2012</inceptionYear>
@@ -20,6 +20,7 @@
         <commons-compress.version>1.12</commons-compress.version>
         <jackson.version>2.8.4</jackson.version>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <revision>0.10-SNAPSHOT</revision>
 
         <org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>4</org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>
         <org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>4</org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>
@@ -71,9 +72,6 @@
         <url>https://github.com/graphhopper/graphhopper/issues</url>
     </issueManagement>
 
-    <prerequisites>
-        <maven>3.2</maven>
-    </prerequisites>
     <modules>
         <module>core</module>
         <module>reader-osm</module>
@@ -143,7 +141,7 @@
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>2.17</version>
                 <configuration>
-                    <configLocation>checkstyle.xml</configLocation>
+                    <configLocation>${user.dir}/core/files/checkstyle.xml</configLocation>
                     <failsOnError>true</failsOnError>
                     <consoleOutput>true</consoleOutput>
                     <linkXRef>false</linkXRef>
@@ -157,7 +155,7 @@
                 <configuration>
                     <maxRank>4</maxRank>
                     <failOnError>true</failOnError>
-                    <excludeFilterFile>findbugs-exclude.xml</excludeFilterFile>
+                    <excludeFilterFile>core/files/findbugs-exclude.xml</excludeFilterFile>
                 </configuration>
             </plugin>
             <plugin>
@@ -205,6 +203,18 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <plugin>
+	      <groupId>com.hbakkum.maven.plugins</groupId>
+	      <artifactId>resolve-parent-version-maven-plugin</artifactId>
+	      <version>0.7</version>
+	      <executions>
+	        <execution>
+	          <goals>
+	            <goal>resolve-parent-version</goal>
+	          </goals>
+	        </execution>
+  	      </executions>
+	    </plugin>
         </plugins>
     </build>
 
@@ -269,6 +279,9 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>2.10.4</version>
+                        <configuration>
+                          <quiet>true</quiet>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
