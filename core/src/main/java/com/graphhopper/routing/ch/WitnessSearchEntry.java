@@ -24,4 +24,14 @@ class WitnessSearchEntry extends CHEntry {
     public WitnessSearchEntry(int edge, int incEdge, int adjNode, double weight) {
         super(edge, incEdge, adjNode, weight);
     }
+
+    public WitnessSearchEntry getParent() {
+        // todo: can we get rid of this cast ?
+        return (WitnessSearchEntry) super.parent;
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + ", onOrigPath: " + onOrigPath;
+    }
 }

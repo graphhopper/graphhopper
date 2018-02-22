@@ -39,6 +39,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     // todo: modify code such that logging does not alter performance 
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
     public static boolean aggressiveSearch = true;
+    public static boolean arrayBasedWitnessPathFinder = true;
     public static int edgeDifferenceWeight = 8;
     public static int originalEdgeDifferenceWeight = 4;
     public static int hierarchyDepthWeight = 1;
@@ -77,7 +78,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     public void initFromGraph() {
         super.initFromGraph();
         maxLevel = prepareGraph.getNodes() + 1;
-        witnessPathFinder = new MapBasedWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel);
+        witnessPathFinder = arrayBasedWitnessPathFinder ?
+                new ArrayBasedWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel) :
+                new MapBasedWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel);
         DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
         DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
         inEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);

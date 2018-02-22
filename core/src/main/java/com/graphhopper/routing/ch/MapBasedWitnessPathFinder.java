@@ -102,11 +102,11 @@ public class MapBasedWitnessPathFinder extends WitnessPathFinder {
                     continue;
                 }
 
-                boolean possibleShortcut = currEdge.onOrigPath && iter.getBaseNode() == iter.getAdjNode();
+                boolean onOrigPath = currEdge.onOrigPath && iter.getBaseNode() == iter.getAdjNode();
                 int traversalId = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
                 WitnessSearchEntry entry = chEntries.get(traversalId);
                 if (entry == null) {
-                    entry = createEntry(iter, currEdge, weight, possibleShortcut);
+                    entry = createEntry(iter, currEdge, weight, onOrigPath);
                     if (targetDiscoveredByOrigPath(targetEdge, targetNode, currEdge, iter)) {
                         targetDiscoveredByOrigPath = true;
                     }
@@ -114,7 +114,7 @@ public class MapBasedWitnessPathFinder extends WitnessPathFinder {
                     priorityQueue.add(entry);
                 } else if (entry.weight > weight) {
                     priorityQueue.remove(entry);
-                    updateEntry(entry, iter, weight, currEdge, possibleShortcut);
+                    updateEntry(entry, iter, weight, currEdge, onOrigPath);
                     if (targetDiscoveredByOrigPath(targetEdge, targetNode, currEdge, iter)) {
                         targetDiscoveredByOrigPath = true;
                     }
