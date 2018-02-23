@@ -754,8 +754,10 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    @Ignore("This test showcases an unnecessary shortcut that is introduced by the turn replacement algorithm, aggressive search should pass")
     public void testContractNode_noUnnecessaryShortcut_differentInitialEntriesForDifferentInEdges() {
+        // this test shows a (quite realistic) example where the aggressive search finds a witness where the turn
+        // replacement search does not. this test will fail with turn replacement search enabled
+        
         //         /--- 2 ->-\
         //        /           \
         // 0 --> 1 ---> 3 ---> 5 --> 6 
