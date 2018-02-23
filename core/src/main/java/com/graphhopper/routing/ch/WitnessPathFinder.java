@@ -31,6 +31,9 @@ import java.util.Arrays;
 public abstract class WitnessPathFinder {
     // determines how many non-onOrigPath edges may get settled
     public static double maxSettledEdgesScale = 2.0;
+    // for very dense graph a higher initial value is probably appropriate, the initial value does not play a big role
+    // because this parameter will be adjusted automatically during the graph contraction
+    public static int initialMaxSettledEdges = 10;
     protected final CHGraph graph;
     protected final Weighting weighting;
     protected final TraversalMode traversalMode;
@@ -38,7 +41,7 @@ public abstract class WitnessPathFinder {
     protected final EdgeExplorer outEdgeExplorer;
     protected int numOnOrigPath;
     protected int avoidNode = Integer.MAX_VALUE;
-    protected int maxSettledEdges;
+    protected int maxSettledEdges = initialMaxSettledEdges;
     protected int numSettledEdges;
     // parameters used to dynamically adjust maximum number of settled edges
     private long resetCount = 0;
@@ -128,10 +131,10 @@ public abstract class WitnessPathFinder {
         public String toString() {
             return String.format("settled edges stats: %s, limit: %d %%, settled: %d, max: %d, initial entries: %d",
                     Arrays.toString(settledEdgesStats),
-                    ((totalNumSettledEdges * 10_000) / totalMaxSettledEdges) / 100,
-                    totalNumSettledEdges / totalNumResets,
-                    totalMaxSettledEdges / totalNumResets,
-                    totalNumInitialEntries / totalNumResets);
+                    totalNumSettledEdges == 0 ? 0 : ((totalNumSettledEdges * 10_000) / totalMaxSettledEdges) / 100,
+                    totalNumSettledEdges == 0 ? 0 : totalNumSettledEdges / totalNumResets,
+                    totalMaxSettledEdges == 0 ? 0 : totalMaxSettledEdges / totalNumResets,
+                    totalNumInitialEntries == 0 ? 0 : totalNumInitialEntries / totalNumResets);
         }
 
         void reset() {
