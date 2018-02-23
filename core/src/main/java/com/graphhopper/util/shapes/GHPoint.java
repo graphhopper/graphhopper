@@ -35,6 +35,10 @@ public class GHPoint {
         this.lon = lon;
     }
 
+    public static GHPoint create(Point point) {
+        return new GHPoint(point.getY(), point.getX());
+    }
+
     public static GHPoint parse(String str) {
         return parse(str, false);
     }
@@ -103,9 +107,5 @@ public class GHPoint {
      */
     public Double[] toGeoJson() {
         return new Double[]{lon, lat};
-    }
-
-    public static GHPoint from(Point point) {
-        return new GHPoint(point.getY(), point.getX());
     }
 }

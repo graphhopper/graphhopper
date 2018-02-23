@@ -103,7 +103,7 @@ public class GraphEdgeIdFinder {
      */
     public void fillEdgeIDs(GHIntHashSet edgeIds, Geometry geometry, EdgeFilter filter) {
         if (geometry instanceof Point) {
-            GHPoint point = GHPoint.from((Point) geometry);
+            GHPoint point = GHPoint.create((Point) geometry);
             findClosestEdgeToPoint(edgeIds, point, filter);
         } else if (geometry instanceof LineString) {
             PointList pl = PointList.from((LineString) geometry);

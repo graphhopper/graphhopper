@@ -52,6 +52,10 @@ public class GraphHopperWebIT {
         PathWrapper alt = res.getBest();
         isBetween(200, 250, alt.getPoints().size());
         isBetween(11000, 12000, alt.getDistance());
+        isBetween(310, 320, alt.getAscend());
+        isBetween(235, 245, alt.getDescend());
+        isBetween(1000, 1500, alt.getRouteWeight());
+
 
         // change vehicle
         res = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180).
@@ -59,6 +63,32 @@ public class GraphHopperWebIT {
         alt = res.getBest();
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
         isBetween(9000, 9500, alt.getDistance());
+    }
+
+    @Test
+    public void testAlternativeRoute() {
+        // https://graphhopper.com/maps/?point=52.044124%2C10.378346&point=52.043847%2C10.381994&algorithm=alternative_route&ch.disable=true
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(52.044124,10.378346)).
+                addPoint(new GHPoint(52.043847,10.381994));
+        req.setAlgorithm("alternative_route");
+        req.getHints().put("instructions", true);
+        req.getHints().put("calc_points", true);
+        req.getHints().put("ch.disable", true);
+        GHResponse res = gh.route(req);
+        assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
+        List<PathWrapper> paths = res.getAll();
+        assertEquals(2, paths.size());
+
+        PathWrapper path = paths.get(0);
+        isBetween(5, 20, path.getPoints().size());
+        isBetween(400, 500, path.getDistance());
+        assertEquals("Wiesenstraße", path.getDescription().get(0));
+
+        path = paths.get(1);
+        isBetween(3, 15, path.getPoints().size());
+        isBetween(350, 450, path.getDistance());
+        assertEquals("Schlopweg", path.getDescription().get(0));
     }
 
     @Test
