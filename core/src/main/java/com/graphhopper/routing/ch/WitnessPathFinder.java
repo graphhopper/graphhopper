@@ -26,8 +26,11 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
+import java.util.Arrays;
+
 public abstract class WitnessPathFinder {
-    public static int maxOrigEdgesPerInitialEntry = 7;
+    // determines how many non-onOrigPath edges may get settled
+    public static double maxSettledEdgesScale = 2.0;
     protected final CHGraph graph;
     protected final Weighting weighting;
     protected final TraversalMode traversalMode;
@@ -35,8 +38,12 @@ public abstract class WitnessPathFinder {
     protected final EdgeExplorer outEdgeExplorer;
     protected int numOnOrigPath;
     protected int avoidNode = Integer.MAX_VALUE;
-    protected int maxOrigEdgesSettled;
-    protected int numOrigEdgesSettled;
+    protected int maxSettledEdges;
+    protected int numSettledEdges;
+    // parameters used to dynamically adjust maximum number of settled edges
+    private long resetCount = 0;
+    private long settledEdgesCount = 0;
+    private Stats stats = new Stats();
 
     public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, int maxLevel) {
         if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
@@ -52,10 +59,10 @@ public abstract class WitnessPathFinder {
     public void setInitialEntries(IntObjectMap<WitnessSearchEntry> initialEntries) {
         reset();
         initEntries(initialEntries);
+        stats.onInitEntries(initialEntries.size());
         if (numOnOrigPath != 1) {
             throw new IllegalStateException("There should be exactly one initial entry with onOrigPath = true, but given: " + numOnOrigPath);
         }
-        maxOrigEdgesSettled = initialEntries.size() * maxOrigEdgesPerInitialEntry;
     }
 
     protected abstract void initEntries(IntObjectMap<WitnessSearchEntry> initialEntries);
@@ -66,12 +73,33 @@ public abstract class WitnessPathFinder {
 
     public abstract void findTarget(int targetEdge, int targetNode);
 
+    public String getStatusString() {
+        return stats.toString();
+    }
+
+    public void resetStats() {
+        stats.reset();
+    }
+
     private void reset() {
-        numOrigEdgesSettled = 0;
+        resetCount++;
+        readjustMaxSettledEdges();
+        stats.onReset(numSettledEdges, maxSettledEdges);
+
+        numSettledEdges = 0;
         numOnOrigPath = 0;
-        maxOrigEdgesSettled = Integer.MAX_VALUE;
         avoidNode = Integer.MAX_VALUE;
         doReset();
+    }
+
+    private void readjustMaxSettledEdges() {
+        // we use the number of settled edges in the last batch to dynamically adjust the maximum of settled edges
+        settledEdgesCount += numSettledEdges;
+        if (resetCount % 1000 == 0) {
+            maxSettledEdges = (int) (maxSettledEdgesScale * settledEdgesCount / resetCount);
+            resetCount = 0;
+            settledEdgesCount = 0;
+        }
     }
 
     protected abstract void doReset();
@@ -86,5 +114,48 @@ public abstract class WitnessPathFinder {
 
     protected boolean isContracted(int node) {
         return graph.getLevel(node) != maxLevel;
+    }
+
+    private static class Stats {
+        // helps to analyze how many edges get settled during a search typically, can be reused when stable
+        private final long[] settledEdgesStats = new long[20];
+        private long totalNumResets;
+        private long totalNumInitialEntries;
+        private long totalNumSettledEdges;
+        private long totalMaxSettledEdges;
+
+        @Override
+        public String toString() {
+            return String.format("settled edges stats: %s, limit: %d %%, settled: %d, max: %d, initial entries: %d",
+                    Arrays.toString(settledEdgesStats),
+                    ((totalNumSettledEdges * 10_000) / totalMaxSettledEdges) / 100,
+                    totalNumSettledEdges / totalNumResets,
+                    totalMaxSettledEdges / totalNumResets,
+                    totalNumInitialEntries / totalNumResets);
+        }
+
+        void reset() {
+            Arrays.fill(settledEdgesStats, 0);
+            totalNumResets = 0;
+            totalNumInitialEntries = 0;
+            totalNumSettledEdges = 0;
+            totalMaxSettledEdges = 0;
+        }
+
+        public void onInitEntries(int numInitialEntries) {
+            totalNumInitialEntries += numInitialEntries;
+        }
+
+        public void onReset(int numSettledEdges, int maxSettledEdges) {
+            int bucket = numSettledEdges / 10;
+            if (bucket >= settledEdgesStats.length) {
+                bucket = settledEdgesStats.length - 1;
+            }
+
+            settledEdgesStats[bucket]++;
+            totalNumResets++;
+            totalNumSettledEdges += numSettledEdges;
+            totalMaxSettledEdges += maxSettledEdges;
+        }
     }
 }

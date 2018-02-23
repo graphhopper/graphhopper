@@ -83,7 +83,7 @@ public class CHMeasurement {
         osmFile = "bremen-latest.osm.pbf";
         EdgeBasedNodeContractor.aggressiveSearch = true;
         EdgeBasedNodeContractor.arrayBasedWitnessPathFinder = true;
-        WitnessPathFinder.maxOrigEdgesPerInitialEntry = 5;
+        WitnessPathFinder.maxSettledEdgesScale = 2.0;
         maxTurnCost = 100;
         seed = 123;
         pNodeHasTurnCosts = 0.3;
@@ -219,7 +219,7 @@ public class CHMeasurement {
         int contractedNodes = 100;
         if (args.length == 10) {
             osmFile = args[0];
-            WitnessPathFinder.maxOrigEdgesPerInitialEntry = Integer.valueOf(args[1]);
+            WitnessPathFinder.maxSettledEdgesScale = Double.valueOf(args[1]);
             EdgeBasedNodeContractor.aggressiveSearch = Boolean.valueOf(args[2]);
             EdgeBasedNodeContractor.edgeDifferenceWeight = Integer.valueOf(args[3]);
             EdgeBasedNodeContractor.originalEdgeDifferenceWeight = Integer.valueOf(args[4]);

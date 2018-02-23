@@ -97,7 +97,7 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
                 numOnOrigPath--;
             }
 
-            if (numOrigEdgesSettled > maxOrigEdgesSettled && !onOrigPaths[currKey]) {
+            if (numSettledEdges > maxSettledEdges && !onOrigPaths[currKey]) {
                 continue;
             }
 
@@ -129,7 +129,7 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
                     heap.update_(weight, key);
                 }
             }
-            numOrigEdgesSettled++;
+            numSettledEdges++;
             if (numOnOrigPath < 1 && !targetDiscoveredByOrigPath) {
                 break;
             }

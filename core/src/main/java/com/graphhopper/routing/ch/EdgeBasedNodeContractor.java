@@ -378,9 +378,11 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public String getPrepareAlgoMemoryUsage() {
         // todo: this method is currently misused to print some statistics for performance analysis
-        String result = String.format("stats(calc): %s, stats(contract): %s", countingShortcutHandler.getStats(), addingShortcutHandler.getStats());
+        String result = String.format("stats(calc): %s, stats(contract): %s, %s",
+                countingShortcutHandler.getStats(), addingShortcutHandler.getStats(), witnessPathFinder.getStatusString()); 
         countingShortcutHandler.resetStats();
         addingShortcutHandler.resetStats();
+        witnessPathFinder.resetStats();
         return result;
     }
 

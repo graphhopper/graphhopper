@@ -83,7 +83,7 @@ public class MapBasedWitnessPathFinder extends WitnessPathFinder {
                 numOnOrigPath--;
             }
 
-            if (numOrigEdgesSettled > maxOrigEdgesSettled && !currEdge.onOrigPath) {
+            if (numSettledEdges > maxSettledEdges && !currEdge.onOrigPath) {
                 continue;
             }
 
@@ -122,7 +122,7 @@ public class MapBasedWitnessPathFinder extends WitnessPathFinder {
                 }
             }
             settledEntries.set(getEdgeKey(currEdge.incEdge, currEdge.adjNode));
-            numOrigEdgesSettled++;
+            numSettledEdges++;
             if (numOnOrigPath < 1 && !targetDiscoveredByOrigPath) {
                 break;
             }
