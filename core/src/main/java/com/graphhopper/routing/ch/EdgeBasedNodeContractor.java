@@ -209,9 +209,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     continue;
                 }
                 if (!simpleSearch.shortcutRequired(node, toNode, outgoingEdges, witnessPathFinder, originalPath)) {
-                    // todo:
-                    // what if there are two incoming edges of same weight that 'witness' each other, but both use the
-                    // node to be contracted ? do we potentially miss a required shortcut ?
                     witnessedPairs.add(twoIntsInLong(incomingEdges.getEdge(), outgoingEdges.getEdge()));
                 }
             }
