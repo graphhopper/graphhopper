@@ -20,7 +20,7 @@
         <commons-compress.version>1.12</commons-compress.version>
         <jackson.version>2.8.4</jackson.version>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <revision>0.10-SNAPSHOT</revision>
+        <revision>0.11-SNAPSHOT</revision>
 
         <org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>4</org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>
         <org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>4</org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>
