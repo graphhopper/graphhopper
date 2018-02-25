@@ -283,7 +283,45 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    public void testContractNode_duplicateOutgoingEdges() {
+    public void testContractNode_duplicateOutgoingEdges_differentWeight() {
+        // duplicate edges with different weight occur frequently, because there might be different ways between
+        // the tower nodes
+
+        // 0 -> 1 -> 2 -> 3 -> 4
+        //            \->/
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(2, 3, 2, false);
+        graph.edge(2, 3, 1, false);
+        graph.edge(3, 4, 1, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(2);
+        // there should be only one shortcut
+        checkShortcuts(
+                createShortcut(1, 3, 1, 3, 1, 3, 2)
+        );
+    }
+
+    @Test
+    public void testContractNode_duplicateIncomingEdges_differentWeight() {
+        // 0 -> 1 -> 2 -> 3 -> 4
+        //       \->/
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 2, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(2, 3, 1, false);
+        graph.edge(3, 4, 1, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(2);
+        checkShortcuts(
+                createShortcut(1, 3, 2, 3, 2, 3, 2)
+        );
+    }
+
+    @Test
+    public void testContractNode_duplicateOutgoingEdges_sameWeight() {
         // there might be duplicates of edges with the same weight, for example here:
         // http://www.openstreetmap.org/#map=19/51.93569/10.5781
         // http://www.openstreetmap.org/way/446299649
@@ -302,7 +340,7 @@ public class EdgeBasedNodeContractorTest {
         // todo: we could prevent one of the two shortcuts, because once the first one is inserted it is a witness
         // for the other one, but right now this does not work because we do not re-run the witness search after
         // inserting the first shortcut. a better solution would probably be a clean-up after parsing the osm data where
-        // duplicate edges get removed.
+        // duplicate edges get removed. However, there should not be too many such duplicates
         checkShortcuts(
                 createShortcut(1, 3, 1, 2, 1, 2, 2),
                 createShortcut(1, 3, 1, 3, 1, 3, 2)
@@ -311,7 +349,7 @@ public class EdgeBasedNodeContractorTest {
 
     @Test
     @Repeat(times = 10)
-    public void testContractNode_duplicateIncomingEdges() {
+    public void testContractNode_duplicateIncomingEdges_sameWeight() {
         // 0 -> 1 -> 2 -> 3 -> 4
         //       \->/
         graph.edge(0, 1, 1, false);
@@ -731,7 +769,7 @@ public class EdgeBasedNodeContractorTest {
     @Ignore("not sure how to fix this yet")
     @Repeat(times = 10)
     public void testContractNode_noUnnecessaryShortcut_witnessPathOfEqualWeight() {
-        // this test runs repeatedly because it might pass/fail by incidence (because path lengths are equal)
+        // this test runs repeatedly because it might pass/fail by chance (because path lengths are equal)
 
         // 0 -> 1 -> 5
         //      v    v 

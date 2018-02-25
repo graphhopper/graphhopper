@@ -65,6 +65,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private int numOrigEdges;
     private int numPrevOrigEdges;
     private FlagEncoder encoder;
+    private int duplicateOutEdges;
+    private int duplicateInEdges;
 
     public EdgeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, TurnWeighting turnWeighting, TraversalMode traversalMode) {
         super(dir, ghStorage, prepareGraph, turnWeighting);
@@ -233,7 +235,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 }
                 witnessPathFinder.setInitialEntries(initialEntries);
 
-                EdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
+                CHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
                 while (outgoingEdges.next()) {
                     int toNode = outgoingEdges.getAdjNode();
                     if (isContracted(toNode) || toNode == node) {
@@ -252,7 +254,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     if (!bestPathIsValidAndRequiresNode(originalPath, outgoingEdges)) {
                         continue;
                     }
-
+                    final double targetEdgeWeight = turnWeighting.calcWeight(outgoingEdges, true, EdgeIterator.NO_EDGE);
                     EdgeIterator toNodeOrigOutIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
                     while (toNodeOrigOutIter.next()) {
                         int origOutIterFirstOrigEdge = toNodeOrigOutIter.getFirstOrigEdge();
@@ -274,7 +276,12 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                                 continue;
                             }
                             // we need to protect against duplicate outgoing edges that sometimes occur in osm data
-                            if (inIter.getAdjNode() == node) {
+                            // and can potentially witness each other
+                            CHEdgeIteratorState inEdge = prepareGraph.getEdgeIteratorState(inIter.getLastOrigEdge(), toNode);
+                            if (inIter.getAdjNode() == node && !outgoingEdges.isShortcut() &&
+                                    Math.abs(turnWeighting.calcWeight(inEdge, false, EdgeIterator.NO_EDGE)
+                                            - targetEdgeWeight) < 1.e-6) {
+                                duplicateOutEdges++;
                                 continue;
                             }
                             CHEntry potentialWitness = witnessPathFinder.getFoundEntryNoParents(origInIterLastOrigEdge, toNode);
@@ -303,6 +310,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private IntObjectMap<WitnessSearchEntry> getInitialEntriesAggressive(int fromNode, int node, EdgeIteratorState origPath, EdgeIteratorState origSourceEdge) {
         IntObjectMap<WitnessSearchEntry> initialEntries = new IntObjectHashMap<>();
         int numOnOrigPath = 0;
+        final double origPathWeight = turnWeighting.calcWeight(origPath, false, EdgeIterator.NO_EDGE);
         CHEdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
         while (outIter.next()) {
             if (isContracted(outIter.getAdjNode())) {
@@ -311,16 +319,22 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             if (illegalUTurn(outIter.getFirstOrigEdge(), origSourceEdge.getLastOrigEdge())) {
                 continue;
             }
-            double weight = turnWeighting.calcWeight(outIter, false, origSourceEdge.getLastOrigEdge());
-            if (Double.isInfinite(weight)) {
+            double turnWeight = turnWeighting.calcTurnWeight(origSourceEdge.getLastOrigEdge(), fromNode, outIter.getFirstOrigEdge());
+            if (Double.isInfinite(turnWeight)) {
                 continue;
             }
+            double weight = turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
             boolean onOrigPath = (outIter.getEdge() == origPath.getEdge());
             // we need to protect against duplicate edges that sometimes occur in osm data
-            if (!onOrigPath && !outIter.isShortcut() && outIter.getAdjNode() == node) {
+            // todo: performance: can we stop here when we know there is a cheaper alternative than the original path
+            // (first & last orig edges must be equal not only nodes!)
+            if (!onOrigPath && !outIter.isShortcut() && outIter.getAdjNode() == node &&
+                    Math.abs(origPathWeight - weight) < 1.e-6) {
+                duplicateInEdges++;
                 continue;
             }
-            WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight, onOrigPath);
+            WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(),
+                    outIter.getAdjNode(), turnWeight + weight, onOrigPath);
             entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0, false);
             numOnOrigPath += insertOrUpdateInitialEntry(initialEntries, entry);
         }
@@ -389,6 +403,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         countingShortcutHandler.resetStats();
         addingShortcutHandler.resetStats();
         witnessPathFinder.resetStats();
+        result += String.format(", duplicate edges: %d, %d", duplicateInEdges, duplicateOutEdges);
         return result;
     }
 
@@ -530,14 +545,14 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private int insertOrUpdateInitialEntry(IntObjectMap<WitnessSearchEntry> initialEntries, WitnessSearchEntry entry) {
         int edgeKey = getEdgeKey(entry.incEdge, entry.adjNode);
         int index = initialEntries.indexOf(edgeKey);
-        WitnessSearchEntry currEntry = initialEntries.indexGet(index);
-        if (currEntry == null) {
+        if (index < 0) {
             LOGGER.trace("Adding/Updating initial entry {}", entry);
-            initialEntries.indexReplace(index, entry);
+            initialEntries.indexInsert(index, edgeKey, entry);
             if (entry.onOrigPath) {
                 return 1;
             }
         } else {
+            WitnessSearchEntry currEntry = initialEntries.indexGet(index);
             // there may be entries with the same adjNode and last original edge, but we only need the one with
             // the lowest weight
             if (entry.weight < currEntry.weight) {
@@ -769,6 +784,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 while (origInIter.next()) {
                     final int origInIterLastOrigEdge = origInIter.getLastOrigEdge();
                     // the original path or any duplicate outgoing edges cannot serve as a witness
+                    // todo: need to protect against duplicate edges here without introducing unnecessary shortcuts
                     if (origInIterLastOrigEdge == originalPathLastOrigEdge || origInIter.getAdjNode() == node) {
                         continue;
                     }
