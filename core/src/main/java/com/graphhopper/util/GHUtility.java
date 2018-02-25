@@ -126,6 +126,16 @@ public class GHUtility {
         }
     }
 
+    public static void printGraphForUnitTest(Graph g, FlagEncoder encoder) {
+        AllEdgesIterator iter = g.getAllEdges();
+        while (iter.next()) {
+            System.out.printf("graph.edge(%d, %d, %f, %b);\n",
+                    iter.isBackward(encoder) ? iter.getAdjNode() : iter.getBaseNode(),
+                    iter.isBackward(encoder) ? iter.getBaseNode() : iter.getAdjNode(),
+                    iter.getDistance(), iter.isForward(encoder) && iter.isBackward(encoder));
+        }
+    }
+
     public static void printInfo(final Graph g, int startNode, final int counts, final EdgeFilter filter) {
         new BreadthFirstSearch() {
             int counter = 0;

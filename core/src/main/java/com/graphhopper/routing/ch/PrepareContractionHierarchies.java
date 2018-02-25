@@ -280,6 +280,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // graph contraction parameters, because it affects the node contraction order.
         meanDegree = prepareGraph.getAllEdges().getMaxId() / prepareGraph.getNodes();
         initSize = sortedNodes.getSize();
+        // todo: why do we start counting levels with 1 ??
         int level = 1;
         long counter = 0;
         long logSize = Math.round(Math.max(10, initSize / 100 * logMessagesPercentage));

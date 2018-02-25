@@ -166,7 +166,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private int findAndHandleShortcutsAggressive(int node) {
-        LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}ed", node, addingShortcutHandler.getAction());
+        LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}ed", node, activeShortcutHandler.getAction());
         stats().nodes++;
         resetEdgeCounters();
         LongSet witnessedPairs = new LongHashSet(16);
@@ -324,7 +324,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private int findAndHandleShortcutsClassic(int node) {
         // todo: for osm data where there are only a very few turn restrictions (no left turn etc.) the graph
         // contraction should be much faster if we exploit that there are no turn costs on most nodes
-        LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}ed", node, addingShortcutHandler.getAction());
+        LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}ed", node, activeShortcutHandler.getAction());
         stats().nodes++;
         resetEdgeCounters();
         int degree = 0;
@@ -379,7 +379,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     public String getPrepareAlgoMemoryUsage() {
         // todo: this method is currently misused to print some statistics for performance analysis
         String result = String.format("stats(calc): %s, stats(contract): %s, %s",
-                countingShortcutHandler.getStats(), addingShortcutHandler.getStats(), witnessPathFinder.getStatusString()); 
+                countingShortcutHandler.getStats(), addingShortcutHandler.getStats(), witnessPathFinder.getStatusString());
         countingShortcutHandler.resetStats();
         addingShortcutHandler.resetStats();
         witnessPathFinder.resetStats();
