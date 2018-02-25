@@ -171,6 +171,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         resetEdgeCounters();
         LongSet witnessedPairs = new LongHashSet(16);
         int degree = runQuickWitnessSearch(node, witnessedPairs);
+        // todo: performance: does it help to stop here in case all pairs have been witnessed already ?
         runExhaustiveWitnessSearch(node, witnessedPairs);
         return degree;
     }
@@ -528,10 +529,11 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
      */
     private int insertOrUpdateInitialEntry(IntObjectMap<WitnessSearchEntry> initialEntries, WitnessSearchEntry entry) {
         int edgeKey = getEdgeKey(entry.incEdge, entry.adjNode);
-        WitnessSearchEntry currEntry = initialEntries.get(edgeKey);
+        int index = initialEntries.indexOf(edgeKey);
+        WitnessSearchEntry currEntry = initialEntries.indexGet(index);
         if (currEntry == null) {
             LOGGER.trace("Adding/Updating initial entry {}", entry);
-            initialEntries.put(edgeKey, entry);
+            initialEntries.indexReplace(index, entry);
             if (entry.onOrigPath) {
                 return 1;
             }
@@ -546,7 +548,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 if (entry.onOrigPath) {
                     difference++;
                 }
-                initialEntries.put(edgeKey, entry);
+                initialEntries.indexReplace(index, entry);
                 LOGGER.trace("Adding/Updating initial entry {}", entry);
                 return difference;
             }
