@@ -208,7 +208,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 if (originalPath == null) {
                     continue;
                 }
-                if (!simpleSearch.shortcutRequired(node, toNode, incomingEdges, outgoingEdges, witnessPathFinder, originalPath)) {
+                if (!simpleSearch.shortcutRequired(node, toNode, outgoingEdges, witnessPathFinder, originalPath)) {
                     // todo:
                     // what if there are two incoming edges of same weight that 'witness' each other, but both use the
                     // node to be contracted ? do we potentially miss a required shortcut ?
@@ -251,7 +251,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     if (originalPath == null) {
                         continue;
                     }
-                    if (!bestPathIsValidAndRequiresNode(originalPath, node, incomingEdges, outgoingEdges)) {
+                    if (!bestPathIsValidAndRequiresNode(originalPath, outgoingEdges)) {
                         continue;
                     }
 
@@ -375,7 +375,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     continue;
                 }
                 LOGGER.trace("Witness path search to outgoing edge yielded {}", originalPath);
-                if (witnessSearchStrategy.shortcutRequired(node, toNode, incomingEdges, outgoingEdges, witnessPathFinder, originalPath)) {
+                if (witnessSearchStrategy.shortcutRequired(node, toNode, outgoingEdges, witnessPathFinder, originalPath)) {
                     handleShortcuts(originalPath);
                 }
             }
@@ -513,7 +513,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
      * and an arbitrary number of loops at the node.
      */
     private static boolean bestPathIsValidAndRequiresNode(
-            WitnessSearchEntry bestPath, int node, EdgeIteratorState incomingEdge, EdgeIteratorState outgoingEdge) {
+            WitnessSearchEntry bestPath, EdgeIteratorState outgoingEdge) {
         if (Double.isInfinite(bestPath.weight)) {
             LOGGER.trace("Target edge could not be reached even via node to be contracted -> no shortcut");
             return false;
@@ -523,34 +523,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             LOGGER.trace("Found a witness path using alternative target edge -> no shortcut");
             return false;
         }
-        boolean onlyLoopsAndIntroEdge = onlyLoopsAndIntroEdge(bestPath, node, incomingEdge, outgoingEdge);
-        // todo: remove when it seems safe
-        if (onlyLoopsAndIntroEdge != bestPath.getParent().onOrigPath) {
-            System.out.println("There is something wrong");
-        }
-        return onlyLoopsAndIntroEdge;
-    }
-
-    private static boolean onlyLoopsAndIntroEdge(WitnessSearchEntry bestPath, int node, EdgeIteratorState incomingEdge, EdgeIteratorState outgoingEdge) {
-        // skip all edges as long as they represent loops at the given node
-        WitnessSearchEntry parent = bestPath.getParent();
-        int loops = -1;
-        while (parent != null && parent.adjNode == node) {
-            loops++;
-            bestPath = parent;
-            parent = bestPath.getParent();
-        }
-
-        if (loops < 1 && incomingEdge.getLastOrigEdge() == outgoingEdge.getFirstOrigEdge()) {
-            LOGGER.trace("U-turn at node to be contracted -> no shortcut");
-            return false;
-        }
-
-        boolean bestPathUsesNodeToBeContracted = bestPath.edge == incomingEdge.getEdge() && parent != null && parent.edge == EdgeIterator.NO_EDGE;
-        if (!bestPathUsesNodeToBeContracted) {
-            LOGGER.trace("Found a witness path -> no shortcut");
-        }
-        return bestPathUsesNodeToBeContracted;
+        return bestPath.getParent().onOrigPath;
     }
 
     /**
@@ -660,8 +633,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private interface WitnessSearchStrategy {
         IntObjectMap<WitnessSearchEntry> getInitialEntries(int fromNode, EdgeIteratorState incomingEdge);
 
-        boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdges,
-                                 EdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, WitnessSearchEntry entry);
+        boolean shortcutRequired(int node, int toNode, EdgeIteratorState outgoingEdge,
+                                 WitnessPathFinder witnessPathFinder, WitnessSearchEntry entry);
     }
 
     /**
@@ -762,9 +735,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         }
 
         @Override
-        public boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdge,
+        public boolean shortcutRequired(int node, int toNode,
                                         EdgeIteratorState outgoingEdge, WitnessPathFinder witnessPathFinder, WitnessSearchEntry originalPath) {
-            return bestPathIsValidAndRequiresNode(originalPath, node, incomingEdge, outgoingEdge)
+            return bestPathIsValidAndRequiresNode(originalPath, outgoingEdge)
                     && !alternativeWitnessExistsOrNotNeeded(node, outgoingEdge, toNode, witnessPathFinder, originalPath);
         }
 
@@ -847,8 +820,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         }
 
         @Override
-        public boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdges, EdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, WitnessSearchEntry entry) {
-            return bestPathIsValidAndRequiresNode(entry, node, incomingEdges, outgoingEdges);
+        public boolean shortcutRequired(int node, int toNode, EdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, WitnessSearchEntry entry) {
+            return bestPathIsValidAndRequiresNode(entry, outgoingEdges);
         }
     }
 
