@@ -63,6 +63,13 @@ public class GraphicsWrapper {
         return scaleY;
     }
 
+    public void plotText(Graphics2D g2, double lat, double lon, String text, int size) {
+        Font oldFont = g2.getFont();
+        g2.setFont(new Font("Arial", Font.PLAIN, 20));
+        plotText(g2, lat, lon, text);
+        g2.setFont(oldFont);
+    }
+
     public void plotText(Graphics2D g2, double lat, double lon, String text) {
         g2.drawString(text, (int) getX(lon) + 5, (int) getY(lat) + 5);
     }
@@ -94,6 +101,13 @@ public class GraphicsWrapper {
         }
     }
 
+    public void plotEdge(Graphics2D g2, int from, int to, Color color, int width) {
+        Color old = g2.getColor();
+        g2.setColor(color);
+        plotEdge(g2, na.getLat(from), na.getLon(from), na.getLat(to), na.getLon(to), width);
+        g2.setColor(old);
+    }
+    
     public void plotEdge(Graphics2D g2, double lat, double lon, double lat2, double lon2, float width) {
         g2.setStroke(new BasicStroke(width));
         g2.drawLine((int) getX(lon), (int) getY(lat), (int) getX(lon2), (int) getY(lat2));
@@ -129,7 +143,7 @@ public class GraphicsWrapper {
     }
 
     public void plotNode(Graphics2D g2, int loc, Color c, int size, String text) {
-        plotNode(g2, na, loc, c, size, "");
+        plotNode(g2, na, loc, c, size, text);
     }
 
     public void plotNode(Graphics2D g2, NodeAccess na, int loc, Color c, int size, String text) {
@@ -142,6 +156,7 @@ public class GraphicsWrapper {
         Color old = g2.getColor();
         g2.setColor(c);
         plot(g2, lat, lon, size);
+        plotText(g2, lat * 1.000001, lon * 1.000001, text, size);
         g2.setColor(old);
     }
 
