@@ -305,7 +305,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private IntObjectMap<WitnessSearchEntry> getInitialEntriesAggressive(int fromNode, int node, EdgeIteratorState origPath, EdgeIteratorState origSourceEdge) {
         IntObjectMap<WitnessSearchEntry> initialEntries = new IntObjectHashMap<>();
         int numOnOrigPath = 0;
-        EdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
+        CHEdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
         while (outIter.next()) {
             if (isContracted(outIter.getAdjNode())) {
                 continue;
@@ -317,9 +317,14 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             if (Double.isInfinite(weight)) {
                 continue;
             }
+            boolean onOrigPath = (outIter.getEdge() == origPath.getEdge());
+            // we need to protect against duplicate edges that sometimes occur in osm data
+            if (!onOrigPath && !outIter.isShortcut() && outIter.getAdjNode() == node) {
+                continue;
+            }
             WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight);
             entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0);
-            entry.onOrigPath = (outIter.getEdge() == origPath.getEdge());
+            entry.onOrigPath = onOrigPath;
             numOnOrigPath += insertOrUpdateInitialEntry(initialEntries, entry);
         }
         return numOnOrigPath > 0 ? initialEntries : new IntObjectHashMap<WitnessSearchEntry>();
@@ -670,10 +675,15 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             final int firstOrigEdge = incomingEdge.getFirstOrigEdge();
             IntObjectMap<WitnessSearchEntry> initialEntries = new IntObjectHashMap<>();
             int numOnOrigPath = 0;
-            EdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
+            CHEdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
             while (outIter.next()) {
                 if (isContracted(outIter.getAdjNode()))
                     continue;
+                boolean onOrigPath = outIter.getEdge() == incomingEdge.getEdge();
+                // we need to protect against duplicate incoming edges
+                if (!onOrigPath && !outIter.isShortcut() && outIter.getAdjNode() == incomingEdge.getBaseNode()) {
+                    continue;
+                }
                 double outTurnReplacementDifference = calcOutTurnReplacementDifference(fromNode, firstOrigEdge, outIter.getFirstOrigEdge());
                 if (outTurnReplacementDifference == Double.POSITIVE_INFINITY) {
                     // we do not need an initial entry for this out-edge because it will never yield a witness
@@ -686,7 +696,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 double weight = outTurnReplacementDifference + turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
                 WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight);
                 entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0);
-                if (outIter.getEdge() == incomingEdge.getEdge()) {
+                if (onOrigPath) {
                     entry.onOrigPath = true;
                     // we want to give witness paths the precedence in case the path weights would be equal
 //                    entry.weight += 1.e-12;
