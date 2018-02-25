@@ -283,6 +283,44 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
+    public void testContractNode_duplicateOutgoingEdges() {
+        // there might be duplicates of edges with the same weight, for example here:
+        // http://www.openstreetmap.org/#map=19/51.93569/10.5781
+        // http://www.openstreetmap.org/way/446299649
+        // this test makes sure that the necessary shortcuts are introduced nonetheless
+
+        // 0 -> 1 -> 2 -> 3 -> 4
+        //            \->/
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(2, 3, 1, false);
+        graph.edge(2, 3, 1, false);
+        graph.edge(3, 4, 1, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(2);
+        checkShortcuts(
+                createShortcut(1, 3, 1, 3, 1, 3, 2)
+        );
+    }
+
+    @Test
+    @Repeat(times = 10)
+    public void testContractNode_duplicateIncomingEdges_sameWeight() {
+        // 0 -> 1 -> 2 -> 3 -> 4
+        //       \->/
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(2, 3, 1, false);
+        graph.edge(3, 4, 1, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(2);
+        checkNumShortcuts(1);
+    }
+
+    @Test
     public void testContractNode_twoNormalEdges_withTurnCost() {
         // 0 --> 3 --> 2 --> 4 --> 1
         graph.edge(0, 3, 1, false);
@@ -307,7 +345,7 @@ public class EdgeBasedNodeContractorTest {
         addRestriction(3, 2, 4);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        createNodeContractor().contractNode(2);
+        contractNodes(2);
         checkShortcuts();
     }
 
@@ -356,20 +394,6 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(3, 2, 2, true);
         graph.edge(2, 1, 3, true);
         graph.edge(1, 4, 6, true);
-        graph.freeze();
-        setMaxLevelOnAllNodes();
-
-        contractNodes(1, 2);
-        // no shortcuts needed
-        checkShortcuts();
-    }
-
-    @Test
-    public void testContractNode_multiple_bidirectional_linear_analysis() {
-        // 3 -- 2 -- 1 -- 4
-        graph.edge(3, 2, 2, false);
-        graph.edge(2, 1, 3, false);
-        graph.edge(1, 4, 6, false);
         graph.freeze();
         setMaxLevelOnAllNodes();
 
@@ -703,7 +727,7 @@ public class EdgeBasedNodeContractorTest {
     @Repeat(times = 10)
     public void testContractNode_noUnnecessaryShortcut_witnessPathOfEqualWeight() {
         // this test runs repeatedly because it might pass/fail by incidence (because path lengths are equal)
-        
+
         // 0 -> 1 -> 5
         //      v    v 
         //      2 -> 3 -> 4 -> 5
@@ -757,7 +781,7 @@ public class EdgeBasedNodeContractorTest {
     public void testContractNode_noUnnecessaryShortcut_differentInitialEntriesForDifferentInEdges() {
         // this test shows a (quite realistic) example where the aggressive search finds a witness where the turn
         // replacement search does not. this test will fail with turn replacement search enabled
-        
+
         //         /--- 2 ->-\
         //        /           \
         // 0 --> 1 ---> 3 ---> 5 --> 6 
@@ -916,18 +940,26 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void checkShortcuts(Set<Shortcut> expected) {
+        assertEquals(expected, getCurrentShortcuts());
+    }
+
+    private void checkNumShortcuts(int expected) {
+        assertEquals(expected, getCurrentShortcuts().size());
+    }
+
+    private Set<Shortcut> getCurrentShortcuts() {
+        Set<Shortcut> shortcuts = new HashSet<>();
         AllCHEdgesIterator iter = chGraph.getAllEdges();
-        Set<Shortcut> given = new HashSet<>();
         while (iter.next()) {
             if (iter.isShortcut()) {
-                given.add(new Shortcut(
+                shortcuts.add(new Shortcut(
                         iter.getBaseNode(), iter.getAdjNode(),
                         iter.getFirstOrigEdge(), iter.getLastOrigEdge(), iter.getSkippedEdge1(), iter.getSkippedEdge2(), iter.getWeight(),
                         iter.isForward(encoder), iter.isBackward(encoder)
                 ));
             }
         }
-        assertEquals(expected, given);
+        return shortcuts;
     }
 
     private Set<Shortcut> setOf(Shortcut... shortcuts) {

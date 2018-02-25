@@ -196,6 +196,19 @@ public class CHTurnCostTest {
     }
 
     @Test
+    public void testFindPath_duplicateEdge() {
+        // 0 -> 1 -> 2 -> 3 -> 4
+        //            \->/
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(2, 3, 1, false);
+        graph.edge(2, 3, 1, false);
+        graph.edge(3, 4, 1, false);
+        List<Integer> contractionOrder = Arrays.asList(2, 3, 0, 4, 1);
+        compareCHWithDijkstra(100, contractionOrder);
+    }
+
+    @Test
     @Repeat(times = 10)
     public void testFindPath_randomContractionOrder_simpleLoop() {
         //      2
