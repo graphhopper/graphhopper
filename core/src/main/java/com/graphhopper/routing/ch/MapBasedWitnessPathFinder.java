@@ -53,13 +53,13 @@ public class MapBasedWitnessPathFinder extends WitnessPathFinder {
     }
 
     @Override
-    public CHEntry getFoundEntry(int origEdge, int adjNode) {
+    public WitnessSearchEntry getFoundEntry(int origEdge, int adjNode) {
         int edgeKey = getEdgeKey(origEdge, adjNode);
         return chEntries.get(edgeKey);
     }
 
     @Override
-    public CHEntry getFoundEntryNoParents(int edge, int adjNode) {
+    public WitnessSearchEntry getFoundEntryNoParents(int edge, int adjNode) {
         return getFoundEntry(edge, adjNode);
     }
 
@@ -135,10 +135,9 @@ public class MapBasedWitnessPathFinder extends WitnessPathFinder {
     }
 
     private WitnessSearchEntry createEntry(EdgeIteratorState iter, CHEntry parent, double weight, boolean onOrigPath) {
-        WitnessSearchEntry entry = new WitnessSearchEntry(iter.getEdge(), iter.getLastOrigEdge(), iter.getAdjNode(), weight);
+        WitnessSearchEntry entry = new WitnessSearchEntry(iter.getEdge(), iter.getLastOrigEdge(), iter.getAdjNode(), weight, onOrigPath);
         entry.parent = parent;
         if (onOrigPath) {
-            entry.onOrigPath = true;
             numOnOrigPath++;
         }
         return entry;
@@ -153,8 +152,12 @@ public class MapBasedWitnessPathFinder extends WitnessPathFinder {
             if (!entry.onOrigPath) {
                 numOnOrigPath++;
             }
-            entry.onOrigPath = true;
+        } else {
+            if (entry.onOrigPath) {
+                numOnOrigPath--;
+            }
         }
+        entry.onOrigPath = onOrigPath;
     }
 
     private boolean targetDiscoveredByOrigPath(int targetEdge, int targetNode, WitnessSearchEntry currEdge, EdgeIteratorState iter) {

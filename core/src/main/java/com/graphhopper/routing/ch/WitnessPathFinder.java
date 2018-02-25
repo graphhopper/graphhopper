@@ -70,9 +70,9 @@ public abstract class WitnessPathFinder {
 
     protected abstract void initEntries(IntObjectMap<WitnessSearchEntry> initialEntries);
 
-    public abstract CHEntry getFoundEntry(int edge, int adjNode);
+    public abstract WitnessSearchEntry getFoundEntry(int edge, int adjNode);
 
-    public abstract CHEntry getFoundEntryNoParents(int edge, int adjNode);
+    public abstract WitnessSearchEntry getFoundEntryNoParents(int edge, int adjNode);
 
     public abstract void findTarget(int targetEdge, int targetNode);
 

@@ -204,7 +204,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 int targetEdge = outgoingEdges.getLastOrigEdge();
                 witnessPathFinder.findTarget(targetEdge, toNode);
 
-                CHEntry originalPath = witnessPathFinder.getFoundEntry(targetEdge, toNode);
+                WitnessSearchEntry originalPath = witnessPathFinder.getFoundEntry(targetEdge, toNode);
                 if (originalPath == null) {
                     continue;
                 }
@@ -247,7 +247,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     }
                     int targetEdge = outgoingEdges.getLastOrigEdge();
                     witnessPathFinder.findTarget(targetEdge, toNode);
-                    CHEntry originalPath = witnessPathFinder.getFoundEntry(targetEdge, toNode);
+                    WitnessSearchEntry originalPath = witnessPathFinder.getFoundEntry(targetEdge, toNode);
                     if (originalPath == null) {
                         continue;
                     }
@@ -322,9 +322,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             if (!onOrigPath && !outIter.isShortcut() && outIter.getAdjNode() == node) {
                 continue;
             }
-            WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight);
-            entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0);
-            entry.onOrigPath = onOrigPath;
+            WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight, onOrigPath);
+            entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0, false);
             numOnOrigPath += insertOrUpdateInitialEntry(initialEntries, entry);
         }
         return numOnOrigPath > 0 ? initialEntries : new IntObjectHashMap<WitnessSearchEntry>();
@@ -371,7 +370,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 witnessPathFinder.findTarget(targetEdge, toNode);
                 dijkstraSW.stop();
 
-                CHEntry originalPath = witnessPathFinder.getFoundEntry(targetEdge, toNode);
+                WitnessSearchEntry originalPath = witnessPathFinder.getFoundEntry(targetEdge, toNode);
                 if (originalPath == null) {
                     continue;
                 }
@@ -514,24 +513,32 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
      * and an arbitrary number of loops at the node.
      */
     private static boolean bestPathIsValidAndRequiresNode(
-            CHEntry chEntry, int node, EdgeIteratorState incomingEdge, EdgeIteratorState outgoingEdge) {
-        if (Double.isInfinite(chEntry.weight)) {
+            WitnessSearchEntry bestPath, int node, EdgeIteratorState incomingEdge, EdgeIteratorState outgoingEdge) {
+        if (Double.isInfinite(bestPath.weight)) {
             LOGGER.trace("Target edge could not be reached even via node to be contracted -> no shortcut");
             return false;
         }
 
-        if (chEntry.edge != outgoingEdge.getEdge()) {
+        if (bestPath.edge != outgoingEdge.getEdge()) {
             LOGGER.trace("Found a witness path using alternative target edge -> no shortcut");
             return false;
         }
+        boolean onlyLoopsAndIntroEdge = onlyLoopsAndIntroEdge(bestPath, node, incomingEdge, outgoingEdge);
+        // todo: remove when it seems safe
+        if (onlyLoopsAndIntroEdge != bestPath.getParent().onOrigPath) {
+            System.out.println("There is something wrong");
+        }
+        return onlyLoopsAndIntroEdge;
+    }
 
+    private static boolean onlyLoopsAndIntroEdge(WitnessSearchEntry bestPath, int node, EdgeIteratorState incomingEdge, EdgeIteratorState outgoingEdge) {
         // skip all edges as long as they represent loops at the given node
-        CHEntry parent = chEntry.getParent();
+        WitnessSearchEntry parent = bestPath.getParent();
         int loops = -1;
         while (parent != null && parent.adjNode == node) {
             loops++;
-            chEntry = parent;
-            parent = chEntry.getParent();
+            bestPath = parent;
+            parent = bestPath.getParent();
         }
 
         if (loops < 1 && incomingEdge.getLastOrigEdge() == outgoingEdge.getFirstOrigEdge()) {
@@ -539,7 +546,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             return false;
         }
 
-        boolean bestPathUsesNodeToBeContracted = chEntry.edge == incomingEdge.getEdge() && parent != null && parent.edge == EdgeIterator.NO_EDGE;
+        boolean bestPathUsesNodeToBeContracted = bestPath.edge == incomingEdge.getEdge() && parent != null && parent.edge == EdgeIterator.NO_EDGE;
         if (!bestPathUsesNodeToBeContracted) {
             LOGGER.trace("Found a witness path -> no shortcut");
         }
@@ -654,7 +661,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         IntObjectMap<WitnessSearchEntry> getInitialEntries(int fromNode, EdgeIteratorState incomingEdge);
 
         boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdges,
-                                 EdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, CHEntry entry);
+                                 EdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, WitnessSearchEntry entry);
     }
 
     /**
@@ -694,10 +701,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     return new IntObjectHashMap<>();
                 }
                 double weight = outTurnReplacementDifference + turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
-                WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight);
-                entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0);
+                WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight, onOrigPath);
+                entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0, onOrigPath);
                 if (onOrigPath) {
-                    entry.onOrigPath = true;
                     // we want to give witness paths the precedence in case the path weights would be equal
 //                    entry.weight += 1.e-12;
                     // todo: apparently this can lead to strong deviations from dijkstra for example like this:
@@ -707,6 +713,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 //                    error: found different points for query from 53.0691,8.8913 to 53.1019,8.8923, route weight: 547.67 vs. 547.70 (diff = -0.0349)
 //                    error: found different points for query from 53.0794,8.7360 to 53.0579,8.9676, route weight: 1837.07 vs. 1599.81 (diff = 237.2532)
                     // --> disable for now, but do not really understand what is wrong about this
+                    // todo: maybe this is also related to duplicate edges ??
                 }
                 numOnOrigPath += insertOrUpdateInitialEntry(initialEntries, entry);
             }
@@ -756,7 +763,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
         @Override
         public boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdge,
-                                        EdgeIteratorState outgoingEdge, WitnessPathFinder witnessPathFinder, CHEntry originalPath) {
+                                        EdgeIteratorState outgoingEdge, WitnessPathFinder witnessPathFinder, WitnessSearchEntry originalPath) {
             return bestPathIsValidAndRequiresNode(originalPath, node, incomingEdge, outgoingEdge)
                     && !alternativeWitnessExistsOrNotNeeded(node, outgoingEdge, toNode, witnessPathFinder, originalPath);
         }
@@ -831,16 +838,16 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 if (isContracted(outIter.getAdjNode()))
                     continue;
                 double weight = turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
-                WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight);
-                entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, incomingEdge.getFirstOrigEdge(), fromNode, 0);
-                entry.onOrigPath = (outIter.getEdge() == incomingEdge.getEdge());
+                boolean onOrigPath = (outIter.getEdge() == incomingEdge.getEdge());
+                WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight, onOrigPath);
+                entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, incomingEdge.getFirstOrigEdge(), fromNode, 0, false);
                 numOnOrigPath += insertOrUpdateInitialEntry(initialEntries, entry);
             }
             return numOnOrigPath > 0 ? initialEntries : new IntObjectHashMap<WitnessSearchEntry>();
         }
 
         @Override
-        public boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdges, EdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, CHEntry entry) {
+        public boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdges, EdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, WitnessSearchEntry entry) {
             return bestPathIsValidAndRequiresNode(entry, node, incomingEdges, outgoingEdges);
         }
     }

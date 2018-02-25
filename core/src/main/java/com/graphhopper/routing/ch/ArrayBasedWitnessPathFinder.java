@@ -50,16 +50,16 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
     }
 
     @Override
-    public CHEntry getFoundEntry(int origEdge, int adjNode) {
+    public WitnessSearchEntry getFoundEntry(int origEdge, int adjNode) {
         int edgeKey = getEdgeKey(origEdge, adjNode);
         if (parents[edgeKey] == -1) {
-            return new CHEntry(origEdge, origEdge, adjNode, Double.POSITIVE_INFINITY);
+            return new WitnessSearchEntry(origEdge, origEdge, adjNode, Double.POSITIVE_INFINITY, false);
         }
-        CHEntry result = new CHEntry(edges[edgeKey], incEdges[edgeKey], adjNodes[edgeKey], weights[edgeKey]);
-        CHEntry entry = result;
+        WitnessSearchEntry result = getEntryForKey(edgeKey);
+        WitnessSearchEntry entry = result;
         while (parents[edgeKey] >= 0) {
             edgeKey = parents[edgeKey];
-            CHEntry parent = new CHEntry(edges[edgeKey], incEdges[edgeKey], adjNodes[edgeKey], weights[edgeKey]);
+            WitnessSearchEntry parent = getEntryForKey(edgeKey);
             entry.parent = parent;
             entry = parent;
         }
@@ -68,12 +68,12 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
     }
 
     @Override
-    public CHEntry getFoundEntryNoParents(int origEdge, int adjNode) {
+    public WitnessSearchEntry getFoundEntryNoParents(int origEdge, int adjNode) {
         int edgeKey = getEdgeKey(origEdge, adjNode);
         if (parents[edgeKey] == -1) {
             return null;
         } else {
-            return new CHEntry(edges[edgeKey], incEdges[edgeKey], adjNodes[edgeKey], weights[edgeKey]);
+            return getEntryForKey(edgeKey);
         }
     }
 
@@ -136,6 +136,10 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
         }
     }
 
+    private WitnessSearchEntry getEntryForKey(int edgeKey) {
+        return new WitnessSearchEntry(edges[edgeKey], incEdges[edgeKey], adjNodes[edgeKey], weights[edgeKey], onOrigPaths[edgeKey]);
+    }
+
     private void setInitEntry(int key, WitnessSearchEntry entry, int parentId) {
         edges[key] = entry.edge;
         incEdges[key] = entry.incEdge;
@@ -166,8 +170,12 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
             if (!onOrigPaths[key]) {
                 numOnOrigPath++;
             }
-            onOrigPaths[key] = true;
+        } else {
+            if (onOrigPaths[key]) {
+                numOnOrigPath--;
+            }
         }
+        onOrigPaths[key] = onOrigPath;
     }
 
     @Override

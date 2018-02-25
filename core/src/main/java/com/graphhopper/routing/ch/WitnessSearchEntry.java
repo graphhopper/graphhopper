@@ -21,8 +21,9 @@ class WitnessSearchEntry extends CHEntry {
     // todo: explain what this is needed for
     boolean onOrigPath;
 
-    public WitnessSearchEntry(int edge, int incEdge, int adjNode, double weight) {
+    public WitnessSearchEntry(int edge, int incEdge, int adjNode, double weight, boolean onOrigPath) {
         super(edge, incEdge, adjNode, weight);
+        this.onOrigPath = onOrigPath;
     }
 
     public WitnessSearchEntry getParent() {

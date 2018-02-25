@@ -45,7 +45,7 @@ public class WitnessPathFinderTest {
         graph.edge(1, 2, 1, false);
         graph.edge(1, 3, 2, false);
         graph.freeze();
-        WitnessSearchEntry entry = new WitnessSearchEntry(0, 0, 1, 8);
+        WitnessSearchEntry entry = new WitnessSearchEntry(0, 0, 1, 8, true);
         entry.onOrigPath = true;
         IntObjectMap<WitnessSearchEntry> initialEntries = new IntObjectHashMap<>();
         int edgeKey = getEdgeKey(entry.incEdge, entry.adjNode);
