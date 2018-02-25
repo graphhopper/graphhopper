@@ -299,14 +299,19 @@ public class EdgeBasedNodeContractorTest {
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2);
+        // todo: we could prevent one of the two shortcuts, because once the first one is inserted it is a witness
+        // for the other one, but right now this does not work because we do not re-run the witness search after
+        // inserting the first shortcut. a better solution would probably be a clean-up after parsing the osm data where
+        // duplicate edges get removed.
         checkShortcuts(
+                createShortcut(1, 3, 1, 2, 1, 2, 2),
                 createShortcut(1, 3, 1, 3, 1, 3, 2)
         );
     }
 
     @Test
     @Repeat(times = 10)
-    public void testContractNode_duplicateIncomingEdges_sameWeight() {
+    public void testContractNode_duplicateIncomingEdges() {
         // 0 -> 1 -> 2 -> 3 -> 4
         //       \->/
         graph.edge(0, 1, 1, false);

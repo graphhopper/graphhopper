@@ -275,6 +275,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                             if (illegalUTurn(origOutIterFirstOrigEdge, origInIterLastOrigEdge)) {
                                 continue;
                             }
+                            // we need to protect against duplicate outgoing edges that sometimes occur in osm data
+                            if (inIter.getAdjNode() == node) {
+                                continue;
+                            }
                             CHEntry potentialWitness = witnessPathFinder.getFoundEntryNoParents(origInIterLastOrigEdge, toNode);
                             if (potentialWitness == null || Double.isInfinite(potentialWitness.weight)) {
                                 continue;
@@ -744,7 +748,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         public boolean shortcutRequired(int node, int toNode, EdgeIteratorState incomingEdge,
                                         EdgeIteratorState outgoingEdge, WitnessPathFinder witnessPathFinder, CHEntry originalPath) {
             return bestPathIsValidAndRequiresNode(originalPath, node, incomingEdge, outgoingEdge)
-                    && !alternativeWitnessExistsOrNotNeeded(outgoingEdge, toNode, witnessPathFinder, originalPath);
+                    && !alternativeWitnessExistsOrNotNeeded(node, outgoingEdge, toNode, witnessPathFinder, originalPath);
         }
 
         /**
@@ -759,8 +763,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
          * todo: the same should be possible by running a second search backwards from the target node, this time using
          * the worst case cost at the target node and then checking each edge at the from node separately
          */
-        private boolean alternativeWitnessExistsOrNotNeeded(
-                EdgeIteratorState outgoingEdge, int toNode, WitnessPathFinder witnessPathFinder, CHEntry originalPath) {
+        private boolean alternativeWitnessExistsOrNotNeeded(int node,
+                                                            EdgeIteratorState outgoingEdge, int toNode, WitnessPathFinder witnessPathFinder, CHEntry originalPath) {
             EdgeIterator origOutIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
             final int originalPathLastOrigEdge = outgoingEdge.getLastOrigEdge();
             while (origOutIter.next()) {
@@ -775,9 +779,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 EdgeIterator origInIter = toNodeOrigInEdgeExplorer.setBaseNode(toNode);
                 while (origInIter.next()) {
                     final int origInIterLastOrigEdge = origInIter.getLastOrigEdge();
-                    if (origInIterLastOrigEdge == originalPathLastOrigEdge) {
-                        // we already know that the best path leading to this edge is the original path -> this may not
-                        // serve as a witness
+                    // the original path or any duplicate outgoing edges cannot serve as a witness
+                    if (origInIterLastOrigEdge == originalPathLastOrigEdge || origInIter.getAdjNode() == node) {
                         continue;
                     }
                     CHEntry potentialWitness = witnessPathFinder.getFoundEntryNoParents(origInIterLastOrigEdge, toNode);
