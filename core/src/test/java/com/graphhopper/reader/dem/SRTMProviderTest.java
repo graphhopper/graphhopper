@@ -25,6 +25,7 @@ import org.junit.Test;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
@@ -142,6 +143,14 @@ public class SRTMProviderTest {
         assertEquals(324, instance.getEle(42.1, 11.999999), precision);
         assertEquals("Eurasia/N42E012", instance.getFileName(42.1, 12.000001));
         assertEquals(324, instance.getEle(42.1, 12.000001), precision);
+    }
+
+    @Ignore
+    public void testDownloadIssue_1274() {
+        instance = new SRTMProvider();
+        // The file is incorrectly named on the sever: N55W061hgt.zip (it should be N55W061.hgt.zip)
+        assertEquals("North_America/N55W061", instance.getFileName(55.055,-60.541));
+        assertEquals(204, instance.getEle(55.055,-60.541), .1);
     }
 
 }
