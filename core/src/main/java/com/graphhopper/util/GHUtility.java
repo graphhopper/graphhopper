@@ -127,6 +127,10 @@ public class GHUtility {
     }
 
     public static void printGraphForUnitTest(Graph g, FlagEncoder encoder) {
+        NodeAccess na = g.getNodeAccess();
+        for (int node = 0; node < g.getNodes(); ++node) {
+            System.out.printf("na.setNode(%d, %f, %f);\n", node, na.getLat(node), na.getLon(node));
+        }
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next()) {
             System.out.printf("graph.edge(%d, %d, %f, %b);\n",

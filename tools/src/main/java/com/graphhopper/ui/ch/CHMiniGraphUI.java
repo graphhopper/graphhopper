@@ -1,17 +1,29 @@
 package com.graphhopper.ui.ch;
 
-import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.GraphHopper;
+import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.ui.GraphicsWrapper;
 import com.graphhopper.ui.LayeredPanel;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 
 public class CHMiniGraphUI {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHMiniGraphUI.class);
@@ -32,28 +44,47 @@ public class CHMiniGraphUI {
     }
 
     public CHMiniGraphUI() {
-        FlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager(encoder);
-        Weighting weighting = new FastestWeighting(encoder);
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
+//        FlagEncoder encoder = new CarFlagEncoder(5, 5, 10000);
+//        EncodingManager encodingManager = new EncodingManager(encoder);
+//        Weighting weighting = new FastestWeighting(encoder);
+//        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
+//        CHGraph chGraph = graph.getGraph(CHGraph.class);
+//        NodeAccess na = graph.getNodeAccess();
+//        
+//        na.setNode(0, 3, 4);
+//        graph.edge(2, 4, 3, true);
+//
+//        PrepareContractionHierarchies pch = new PrepareContractionHierarchies(
+//                new RAMDirectory(), graph, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR);
+//        pch.doWork();
+//
+//        RoutingAlgorithm algo = pch.createAlgo(chGraph, AlgorithmOptions.start().build());
+//        Path path = algo.calcPath(23, 22);
+//        System.out.println(path.calcNodes());
 
-        // setup graph here
-        graph.getNodeAccess().setNode(0, 50.000, 0.000);
-        graph.getNodeAccess().setNode(1, 50.001, 0.001);
-        graph.getNodeAccess().setNode(2, 50.002, 0.002);
-        graph.getNodeAccess().setNode(3, 50.003, 0.003);
-        graph.getNodeAccess().setNode(4, 50.004, 0.004);
 
-        graph.edge(0, 1, 1, false);
-        graph.edge(1, 2, 1, false);
-        graph.edge(1, 2, 1, false);
-        graph.edge(2, 3, 1, false);
-        graph.edge(3, 4, 1, false);
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile("kreisel.osm").
+                setGraphHopperLocation("ch-graph-ui-gh").
+                setCHEnabled(true).
+                setEncodingManager(new EncodingManager("car|turn_costs=true"));
+        tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        tmpHopper.importOrLoad();
+        GraphHopperStorage graph = tmpHopper.getGraphHopperStorage();
+        CHGraph chGraph = graph.getGraph(CHGraph.class);
+        FlagEncoder encoder = tmpHopper.getEncodingManager().getEncoder("car");
 
+        RoutingAlgorithmFactory algorithmFactory = tmpHopper.getAlgorithmFactory(new HintsMap("fastest").setVehicle("car").put(Parameters.Routing.EDGE_BASED, "true"));
+        RoutingAlgorithm algo = algorithmFactory.createAlgo(chGraph, AlgorithmOptions.start().build());
+        Path path = algo.calcPath(23, 22);
+        System.out.println(path.calcNodes());
+
+        GHUtility.printGraphForUnitTest(graph, encoder);
+        
         this.mg = new GraphicsWrapper(graph);
         mainPanel = new LayeredPanel();
         infoPanel = new InfoPanel();
-        roadLayer = new RoadLayer(graph, encoder, mg);
+        roadLayer = new RoadLayer(graph, chGraph, encoder, mg);
         mainPanel.addLayer(roadLayer);
     }
 
