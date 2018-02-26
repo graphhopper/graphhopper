@@ -442,12 +442,108 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(2, response.getAll().size());
 
-        assertEquals("The 6:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
+        assertEquals("The 6:44 bus will be late at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
 
         PathWrapper impossibleAlternative = response.getAll().get(1);
         assertTrue(impossibleAlternative.isImpossible());
         Trip.Stop delayedStop = ((Trip.PtLeg) impossibleAlternative.getLegs().get(1)).stops.get(2);
         assertEquals("Five minutes late", 300, Duration.between(delayedStop.plannedArrivalTime.toInstant(), delayedStop.predictedArrivalTime.toInstant()).getSeconds());
+    }
+
+    @Test
+    public void testMissedTransferButExtraTripOnFirstLeg() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+
+        // I want to go at 6:44
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
+
+        // But the 6:00 departure of my line is going to be 5 minutes late at my transfer stop :-(
+        final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
+        feedMessageBuilder.setHeader(header());
+        feedMessageBuilder.addEntityBuilder()
+                .setId("1")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(5)
+                .setScheduleRelationship(SCHEDULED)
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(300).build());
+
+        final GtfsRealtime.TripUpdate.Builder extraTripUpdate = feedMessageBuilder.addEntityBuilder()
+                .setId("2")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setScheduleRelationship(ADDED).setTripId("EXTRA").setRouteId("CITY").setStartTime("06:45:00"));
+        extraTripUpdate
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(1)
+                .setStopId("NADAV")
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45).atZone(zoneId).toEpochSecond()))
+                .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45).atZone(zoneId).toEpochSecond()));
+        extraTripUpdate
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(2)
+                .setStopId("STAGECOACH")
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,46).atZone(zoneId).toEpochSecond()))
+                .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,46).atZone(zoneId).toEpochSecond()));
+
+        GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
+//        assertEquals(2, response.getAll().size());
+
+        assertEquals("The 6:44 bus will be late at STAGECOACH, but I won't be late because there's an extra trip.", time(0, 36), response.getBest().getTime(), 0.1);
+    }
+
+    @Test
+    public void testMissedTransferButExtraTripOnSecondLeg() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+
+        // I want to go at 6:44
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
+
+        // But the 6:00 departure of my line is going to be 5 minutes late at my transfer stop :-(
+        final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
+        feedMessageBuilder.setHeader(header());
+        feedMessageBuilder.addEntityBuilder()
+                .setId("1")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(5)
+                .setScheduleRelationship(SCHEDULED)
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(300).build());
+
+        final GtfsRealtime.TripUpdate.Builder extraTripUpdate = feedMessageBuilder.addEntityBuilder()
+                .setId("2")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setScheduleRelationship(ADDED).setTripId("EXTRA").setRouteId("CITY").setStartTime("06:45:00"));
+        extraTripUpdate
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(1)
+                .setStopId("STAGECOACH")
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,15).atZone(zoneId).toEpochSecond()))
+                .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,15).atZone(zoneId).toEpochSecond()));
+        extraTripUpdate
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(2)
+                .setStopId("BEATTY_AIRPORT")
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,20).atZone(zoneId).toEpochSecond()))
+                .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,20).atZone(zoneId).toEpochSecond()));
+
+        GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
+//        assertEquals(2, response.getAll().size());
+
+        assertEquals("The 6:44 bus will be late at STAGECOACH, but I won't be late because there's an extra trip.", time(0, 36), response.getBest().getTime(), 0.1);
     }
 
     @Test
