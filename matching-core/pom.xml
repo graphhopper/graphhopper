@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-map-matching-core</artifactId>
-    <version>${revision}</version>
+    <version>0.11-SNAPSHOT</version>
     <packaging>jar</packaging>
     <properties>
         <slf4j.version>1.7.7</slf4j.version>
