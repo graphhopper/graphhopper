@@ -153,6 +153,7 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 			try {
 				GTFSFeed feed = new GTFSFeed(dir.getLocation() + "/" + gtfsFeedId);
 				this.gtfsFeeds.put(gtfsFeedId, feed);
+				this.transfers.put(gtfsFeedId, new Transfers(feed));
 			} catch (IOException | ExecutionException e) {
 				throw new RuntimeException(e);
 			}
