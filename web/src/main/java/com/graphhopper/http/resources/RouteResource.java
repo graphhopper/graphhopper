@@ -182,6 +182,8 @@ public class RouteResource {
         }
     }
 
+    // TODO: I think the only thing requiring this manual serialization is the rounding
+    // and the optional point-encoding. Find out how to do that properly with Jackson and then delete this.
     private Response jsonSuccessResponse(GHResponse ghRsp, boolean enableInstructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, float took) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         json.putPOJO("hints", ghRsp.getHints().toMap());
@@ -198,7 +200,6 @@ public class RouteResource {
             jsonPath.put("distance", Helper.round(ar.getDistance(), 3));
             jsonPath.put("weight", Helper.round6(ar.getRouteWeight()));
             jsonPath.put("time", ar.getTime());
-            jsonPath.put("transfers", ar.getNumChanges());
             if (!ar.getDescription().isEmpty()) {
                 jsonPath.putPOJO("description", ar.getDescription());
             }
@@ -211,15 +212,11 @@ public class RouteResource {
                 if (enableInstructions) {
                     jsonPath.putPOJO("instructions", ar.getInstructions());
                 }
-                jsonPath.putPOJO("legs", ar.getLegs());
                 jsonPath.putPOJO("details", ar.getPathDetails());
                 jsonPath.put("ascend", ar.getAscend());
                 jsonPath.put("descend", ar.getDescend());
             }
             jsonPath.putPOJO("snapped_waypoints", pointsEncoded ? WebHelper.encodePolyline(ar.getWaypoints(), enableElevation) : ar.getWaypoints().toLineString(enableElevation));
-            if (ar.getFare() != null) {
-                jsonPath.put("fare", NumberFormat.getCurrencyInstance(Locale.ROOT).format(ar.getFare()));
-            }
         }
         return Response.ok(json).build();
     }

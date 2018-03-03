@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -418,6 +419,11 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
                             Helper.round6(getLatitude(i)));
         }
         return gf.createLineString(coordinates);
+    }
+
+    @JsonValue
+    public LineString toLineString() {
+        return toLineString(false);
     }
 
     @Override

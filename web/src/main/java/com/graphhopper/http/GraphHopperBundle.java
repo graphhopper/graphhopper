@@ -160,12 +160,11 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
                 configuration.has("datareader.file") ? Arrays.asList(configuration.get("datareader.file", "").split(",")) : Collections.emptyList());
         final TranslationMap translationMap = GraphHopperGtfs.createTranslationMap();
         final LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(ghDirectory, graphHopperStorage, ptFlagEncoder);
-        final GraphHopperAPI graphHopper = new GraphHopperGtfs(ptFlagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
+        final GraphHopperGtfs graphHopper = new GraphHopperGtfs(ptFlagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
         environment.jersey().register(new AbstractBinder() {
             @Override
             protected void configure() {
                 bind(configuration).to(CmdArgs.class);
-                bind(graphHopper).to(GraphHopperAPI.class);
                 bind(false).to(Boolean.class).named("hasElevation");
                 bind(locationIndex).to(LocationIndex.class);
                 bind(translationMap).to(TranslationMap.class);
@@ -174,7 +173,7 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
             }
         });
         environment.jersey().register(NearestResource.class);
-        environment.jersey().register(RouteResource.class);
+        environment.jersey().register(graphHopper);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
         environment.lifecycle().manage(new Managed() {
