@@ -20,9 +20,18 @@ package com.graphhopper.http.cli;
 
 import com.graphhopper.http.GraphHopperManaged;
 import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.reader.gtfs.GraphHopperGtfs;
+import com.graphhopper.reader.gtfs.GtfsStorage;
+import com.graphhopper.reader.gtfs.PtFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.GHDirectory;
+import com.graphhopper.storage.GraphHopperStorage;
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfiguration> {
 
@@ -32,9 +41,22 @@ public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfigurat
 
     @Override
     protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace namespace, GraphHopperServerConfiguration configuration) throws Exception {
-        final GraphHopperManaged graphHopper = new GraphHopperManaged(configuration.graphhopper());
-        graphHopper.start();
-        graphHopper.stop();
+        if (configuration.graphhopper().has("gtfs.file")) {
+            final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
+            final GHDirectory ghDirectory = GraphHopperGtfs.createGHDirectory(configuration.graphhopper().get("graph.location", "target/tmp"));
+            final GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
+            final EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
+            final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, ptFlagEncoder, gtfsStorage,
+                    configuration.graphhopper().getBool("gtfs.createwalknetwork", false),
+                    configuration.graphhopper().has("gtfs.file") ? Arrays.asList(configuration.graphhopper().get("gtfs.file", "").split(",")) : Collections.emptyList(),
+                    configuration.graphhopper().has("datareader.file") ? Arrays.asList(configuration.graphhopper().get("datareader.file", "").split(",")) : Collections.emptyList());
+            graphHopperStorage.close();
+        } else {
+            final GraphHopperManaged graphHopper = new GraphHopperManaged(configuration.graphhopper());
+            graphHopper.start();
+            graphHopper.stop();
+        }
+
     }
 
 }
