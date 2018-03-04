@@ -52,6 +52,7 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -130,7 +131,7 @@ public class RealtimeFeed {
                 });
             });
 
-        final List<VirtualEdgeIteratorState> additionalEdges = new ArrayList<>();
+        final LinkedList<VirtualEdgeIteratorState> additionalEdges = new LinkedList<>();
         final Graph overlayGraph = new Graph() {
             int nNodes = 0;
             int firstEdge = graph.getAllEdges().getMaxId()+1;
@@ -237,8 +238,7 @@ public class RealtimeFeed {
 
                 newEdge.setReverseEdge(reverseNewEdge);
                 reverseNewEdge.setReverseEdge(newEdge);
-                additionalEdges.add(newEdge);
-//                additionalEdges.add(reverseNewEdge); //FIXME
+                additionalEdges.push(newEdge);
                 return newEdge;
             }
 
