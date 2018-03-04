@@ -33,6 +33,11 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
+import javax.ws.rs.BeanParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
@@ -44,7 +49,8 @@ import java.util.zip.ZipFile;
 
 import static com.graphhopper.util.Parameters.PT.PROFILE_QUERY;
 
-public final class GraphHopperGtfs implements GraphHopperAPI {
+@Path("route")
+public final class GraphHopperGtfs {
 
     public static class Factory {
         private final TranslationMap translationMap;
@@ -365,8 +371,9 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         throw new IllegalStateException("We are always loaded, or we wouldn't exist.");
     }
 
-    @Override
-    public GHResponse route(GHRequest request) {
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public GHResponse route(@ValidGHRequest @BeanParam GHRequest request) {
         return new RequestHandler(request).route();
     }
 

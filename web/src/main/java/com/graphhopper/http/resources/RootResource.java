@@ -16,10 +16,19 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.http;
+package com.graphhopper.http.resources;
 
-interface GraphHopperService extends AutoCloseable {
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 
-    void start();
+@Path("/")
+public class RootResource {
+
+    @GET
+    public Response redirectToWebapp() {
+        return Response.seeOther(UriBuilder.fromPath("webapp/").build()).build();
+    }
 
 }

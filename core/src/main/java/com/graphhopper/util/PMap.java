@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -151,6 +153,7 @@ public class PMap {
     /**
      * This method copies the underlying structure into a new Map object
      */
+    @JsonValue
     public Map<String, String> toMap() {
         return new HashMap<>(map);
     }

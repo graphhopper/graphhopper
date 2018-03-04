@@ -235,8 +235,8 @@ public class PointListTest {
         pl.add(1, 1, 1);
         pl.add(2, 2, 2);
 
-        assertEquals(3, pl.toGeoJson(true).size());
-        assertEquals(2, pl.shallowCopy(1, 3, false).toGeoJson(true).size());
+        assertEquals(3, pl.toLineString(true).getNumPoints());
+        assertEquals(2, pl.shallowCopy(1, 3, false).toLineString(true).getNumPoints());
     }
 
 
