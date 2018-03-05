@@ -21,6 +21,8 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
 
+import static com.graphhopper.util.Helper.toLowerCase;
+
 /**
  * @author Peter Karich
  */
@@ -91,7 +93,7 @@ public abstract class AbstractWeighting implements Weighting {
      * Replaces all characters which are not numbers, characters or underscores with underscores
      */
     public static String weightingToFileName(Weighting w) {
-        return w.toString().toLowerCase().replaceAll("\\|", "_");
+        return toLowerCase(w.toString()).replaceAll("\\|", "_");
     }
 
     @Override

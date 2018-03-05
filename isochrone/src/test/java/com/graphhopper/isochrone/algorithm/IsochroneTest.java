@@ -1,4 +1,4 @@
-package com.graphhopper.reach.algorithm;
+package com.graphhopper.isochrone.algorithm;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Peter Karich
  */
-public class ReachabilityTest {
+public class IsochroneTest {
 
     private final EncodingManager encodingManager = new EncodingManager("car");
     private final FlagEncoder carEncoder = encodingManager.getEncoder("car");
@@ -72,13 +72,13 @@ public class ReachabilityTest {
     public void testSearch() {
         initDirectedAndDiffSpeed(graph);
         PMap pMap = new PMap();
-        Reachability instance = new Reachability(graph, new FastestWeighting(carEncoder, pMap), false);
+        Isochrone instance = new Isochrone(graph, new FastestWeighting(carEncoder, pMap), false);
         // limit to certain seconds
         instance.setTimeLimit(60);
         List<Set<Integer>> res = instance.search(0, 5);
         assertEquals("[[0, 4], [6], [1, 7], [5], [2, 3]]", res.toString());
 
-        instance = new Reachability(graph, new FastestWeighting(carEncoder, pMap), false);
+        instance = new Isochrone(graph, new FastestWeighting(carEncoder, pMap), false);
         instance.setTimeLimit(30);
         res = instance.search(0, 5);
         assertEquals("[[0], [4], [], [6], [1, 7]]", res.toString());

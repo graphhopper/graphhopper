@@ -18,7 +18,7 @@
 package com.graphhopper.http;
 
 import com.google.inject.servlet.ServletModule;
-import com.graphhopper.reach.algorithm.RasterHullBuilder;
+import com.graphhopper.isochrone.algorithm.RasterHullBuilder;
 
 import javax.inject.Singleton;
 
@@ -33,7 +33,7 @@ public class IsochroneServletModule extends ServletModule {
     @Override
     protected void configureServlets() {
         bind(RasterHullBuilder.class).in(Singleton.class);
-        serve("/isochrone").with(ReachServlet.class);
-        bind(ReachServlet.class).in(Singleton.class);
+        serve("/isochrone").with(IsochroneServlet.class);
+        bind(IsochroneServlet.class).in(Singleton.class);
     }
 }

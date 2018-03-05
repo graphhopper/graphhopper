@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reach.algorithm;
+package com.graphhopper.isochrone.algorithm;
 
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
@@ -32,13 +32,13 @@ import com.graphhopper.util.EdgeIterator;
 
 import java.util.*;
 
-import static com.graphhopper.reach.algorithm.Reachability.ExploreType.DISTANCE;
-import static com.graphhopper.reach.algorithm.Reachability.ExploreType.TIME;
+import static com.graphhopper.isochrone.algorithm.Isochrone.ExploreType.DISTANCE;
+import static com.graphhopper.isochrone.algorithm.Isochrone.ExploreType.TIME;
 
 /**
  * @author Peter Karich
  */
-public class Reachability extends AbstractRoutingAlgorithm {
+public class Isochrone extends AbstractRoutingAlgorithm {
 
     enum ExploreType {TIME, DISTANCE}
 
@@ -69,7 +69,7 @@ public class Reachability extends AbstractRoutingAlgorithm {
     private ExploreType exploreType = TIME;
     private final boolean reverseFlow;
 
-    public Reachability(Graph g, Weighting weighting, boolean reverseFlow) {
+    public Isochrone(Graph g, Weighting weighting, boolean reverseFlow) {
         super(g, weighting, TraversalMode.NODE_BASED);
         initCollections(1000);
         this.reverseFlow = reverseFlow;

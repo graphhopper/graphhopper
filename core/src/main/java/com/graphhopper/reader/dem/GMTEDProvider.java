@@ -17,7 +17,6 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.storage.DataAccess;
 import com.graphhopper.util.Helper;
 import org.apache.xmlgraphics.image.codec.tiff.TIFFDecodeParam;
 import org.apache.xmlgraphics.image.codec.tiff.TIFFImageDecoder;
@@ -26,8 +25,9 @@ import org.apache.xmlgraphics.image.codec.util.SeekableStream;
 import java.awt.image.Raster;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
+
+import static com.graphhopper.util.Helper.*;
 
 /**
  * Elevation data from Global Multi-resolution Terrain Elevation Data 2010 (GMTED2010).
@@ -79,19 +79,19 @@ import java.io.InputStream;
  * @author Robin Boldt
  */
 public class GMTEDProvider extends AbstractTiffElevationProvider {
-    private static final int WIDTH = 14400;
-    private static final int HEIGHT = 9600;
-    // TODO is the precision correct?
-    private final double precision = 1e7;
-    private final int latDegree = 20;
-    private final int lonDegree = 30;
     // for alternatives see #346
     private final String FILE_NAME_END = "_20101117_gmted_mea075";
 
     public GMTEDProvider() {
+        this("");
+    }
+
+    public GMTEDProvider(String cacheDir) {
         super("https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/topo/downloads/GMTED/Global_tiles_GMTED/075darcsec/mea/",
-                "/tmp/gmted",
-                "GraphHopper GMTEDReader");
+                cacheDir.isEmpty() ? "/tmp/gmted" : cacheDir,
+                "GraphHopper GMTEDReader",
+                14400, 9600,
+                20, 30);
     }
 
     public static void main(String[] args) {
@@ -140,103 +140,67 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
     }
 
     @Override
-    public double getEle(double lat, double lon) {
-        // Return fast, if there is no data available
-        if (lat > 84 || lat < -70)
-            return 0;
-
-        lat = (int) (lat * precision) / precision;
-        lon = (int) (lon * precision) / precision;
-        String name = getFileName(lat, lon);
-        // To lowercase and remove the directory and file ending so it works with the DataAccess
-        HeightTile demProvider = cacheData.get(name);
-        if (demProvider == null) {
-            if (!cacheDir.exists())
-                cacheDir.mkdirs();
-
-            int minLat = getMinLatForTile(lat);
-            int minLon = getMinLonForTile(lon);
-            // less restrictive against boundary checking
-            demProvider = new HeightTile(minLat, minLon, WIDTH, HEIGHT, lonDegree * precision, lonDegree, latDegree);
-            demProvider.setCalcMean(calcMean);
-
-            cacheData.put(name, demProvider);
-            DataAccess heights = getDirectory().find(name + ".gh");
-            demProvider.setHeights(heights);
-            boolean loadExisting = false;
-            try {
-                loadExisting = heights.loadExisting();
-            } catch (Exception ex) {
-                logger.warn("cannot load " + name + ", error: " + ex.getMessage());
-            }
-
-            if (!loadExisting) {
-                String zippedURL = baseUrl + "/" + getDownloadURL(lat, lon);
-                File file = new File(cacheDir, new File(name + ".tif").getName());
-
-                try {
-                    downloadFile(file, zippedURL);
-                } catch (IOException e) {
-                    demProvider.setSeaLevel(true);
-                    // use small size on disc and in-memory
-                    heights.setSegmentSize(100).create(10).
-                            flush();
-                    return 0;
-                }
-
-                // short == 2 bytes
-                heights.create(2 * WIDTH * HEIGHT);
-
-                Raster raster;
-                SeekableStream ss = null;
-                try {
-                    InputStream is = new FileInputStream(file);
-                    ss = SeekableStream.wrapInputStream(is, true);
-                    TIFFImageDecoder imageDecoder = new TIFFImageDecoder(ss, new TIFFDecodeParam());
-                    raster = imageDecoder.decodeAsRaster();
-                } catch (Exception e) {
-                    throw new RuntimeException("Can't decode " + file.getName(), e);
-                } finally {
-                    if (ss != null)
-                        Helper.close(ss);
-                }
-
-                fillDataAccessWithElevationData(raster, heights, WIDTH);
-
-            } // loadExisting
+    Raster generateRasterFromFile(File file, String tifName) {
+        SeekableStream ss = null;
+        try {
+            InputStream is = new FileInputStream(file);
+            ss = SeekableStream.wrapInputStream(is, true);
+            TIFFImageDecoder imageDecoder = new TIFFImageDecoder(ss, new TIFFDecodeParam());
+            return imageDecoder.decodeAsRaster();
+        } catch (Exception e) {
+            throw new RuntimeException("Can't decode " + file.getName(), e);
+        } finally {
+            if (ss != null)
+                close(ss);
         }
-
-        if (demProvider.isSeaLevel())
-            return 0;
-
-        return demProvider.getHeight(lat, lon);
     }
 
     int getMinLatForTile(double lat) {
-        return (int) (Math.floor((90 + lat) / latDegree) * latDegree) - 90;
+        return (int) (Math.floor((90 + lat) / LAT_DEGREE) * LAT_DEGREE) - 90;
     }
 
     int getMinLonForTile(double lon) {
-        return (int) (Math.floor((180 + lon) / lonDegree) * lonDegree) - 180;
+        return (int) (Math.floor((180 + lon) / LON_DEGREE) * LON_DEGREE) - 180;
     }
 
-    // TODO it is a bit ugly that we have to duplicate the code with getDownloadURL, but since the DataAccess only allows lower case strings, but the files on the server are uppper cases, this creates too many issues
+    private String getLonString(int lonInt) {
+        lonInt = Math.abs(lonInt);
+        String lonString = lonInt < 100 ? "0" : "";
+        if (lonInt < 10)
+            lonString += "0";
+        lonString += lonInt;
+        return lonString;
+    }
+
+    private String getLatString(int latInt) {
+        latInt = Math.abs(latInt);
+        String latString = latInt < 10 ? "0" : "";
+        latString += latInt;
+        return latString;
+    }
+
+    @Override
+    boolean isOutsideSupportedArea(double lat, double lon) {
+        return lat > 84 || lat < -70;
+    }
+
     String getFileName(double lat, double lon) {
         int lonInt = getMinLonForTile(lon);
         int latInt = getMinLatForTile(lat);
-        String north = getNorthString(latInt);
-        String east = getEastString(lonInt);
-        String lonString = String.format("%03d", Math.abs(lonInt));
-        return (String.format("%02d", Math.abs(latInt)) + north + lonString + east + FILE_NAME_END).toLowerCase();
+        return toLowerCase(getLatString(latInt) + getNorthString(latInt) + getLonString(lonInt) + getEastString(lonInt) + FILE_NAME_END);
     }
 
     String getDownloadURL(double lat, double lon) {
         int lonInt = getMinLonForTile(lon);
         int latInt = getMinLatForTile(lat);
-        String north = getNorthString(latInt);
         String east = getEastString(lonInt);
-        String lonString = String.format("%03d", Math.abs(lonInt));
-        return east + lonString + "/" + String.format("%02d", Math.abs(latInt)) + north + lonString + east + FILE_NAME_END + ".tif";
+        String lonString = getLonString(lonInt);
+        return baseUrl + "/" + east + lonString + "/" + getLatString(latInt) + getNorthString(latInt) + lonString + east + FILE_NAME_END + ".tif";
+    }
+
+    @Override
+    String getFileNameOfLocalFile(double lat, double lon) {
+        return getFileName(lat, lon) + ".tif";
     }
 
     private String getNorthString(int lat) {

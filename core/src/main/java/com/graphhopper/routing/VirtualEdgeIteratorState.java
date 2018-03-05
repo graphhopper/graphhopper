@@ -200,6 +200,9 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     @Override
     public EdgeIteratorState detach(boolean reverse) {
         if (reverse) {
+            reverseEdge.setFlags(getFlags());
+            reverseEdge.setName(getName());
+            reverseEdge.setDistance(getDistance());
             return reverseEdge;
         } else {
             return this;

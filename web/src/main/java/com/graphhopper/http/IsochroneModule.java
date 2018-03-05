@@ -19,7 +19,7 @@ package com.graphhopper.http;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
-import com.graphhopper.reach.algorithm.RasterHullBuilder;
+import com.graphhopper.isochrone.algorithm.RasterHullBuilder;
 
 /**
  * @author Peter Karich

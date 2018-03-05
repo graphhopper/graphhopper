@@ -17,18 +17,12 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.IntLongMap;
-import com.carrotsearch.hppc.LongArrayList;
-import com.carrotsearch.hppc.LongIndexedContainer;
-import com.carrotsearch.hppc.LongLongMap;
-import com.carrotsearch.hppc.LongSet;
-import com.graphhopper.coll.GHIntLongHashMap;
-import com.graphhopper.coll.GHLongHashSet;
-import com.graphhopper.coll.GHLongIntBTree;
-import com.graphhopper.coll.GHLongLongHashMap;
+import com.carrotsearch.hppc.*;
+import com.graphhopper.coll.*;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.reader.osm.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -85,6 +79,7 @@ public class OSMReader implements DataReader {
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
     private final DistanceCalc3D distCalc3D = Helper.DIST_3D;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
+    private boolean smoothElevation = false;
     private final boolean exitOnlyPillarNodeException = true;
     private final Map<FlagEncoder, EdgeExplorer> outExplorerMap = new HashMap<FlagEncoder, EdgeExplorer>();
     private final Map<FlagEncoder, EdgeExplorer> inExplorerMap = new HashMap<FlagEncoder, EdgeExplorer>();
@@ -117,7 +112,7 @@ public class OSMReader implements DataReader {
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private File osmFile;
     private Date osmDataDate;
-    private boolean dontCreateStorage = false;
+    private boolean createStorage = true;
 
     public OSMReader(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
@@ -250,9 +245,9 @@ public class OSMReader implements DataReader {
     private void writeOsm2Graph(File osmFile) {
         int tmp = (int) Math.max(getNodeMap().getSize() / 50, 100);
         LOGGER.info("creating graph. Found nodes (pillar+tower):" + nf(getNodeMap().getSize()) + ", " + Helper.getMemInfo());
-        if (!dontCreateStorage) {
+        if (createStorage)
             ghStorage.create(tmp);
-        }
+
         long wayStart = -1;
         long relationStart = -1;
         long counter = 1;
@@ -681,6 +676,10 @@ public class OSMReader implements DataReader {
         if (pointList.getDimension() != nodeAccess.getDimension())
             throw new AssertionError("Dimension does not match for pointList vs. nodeAccess " + pointList.getDimension() + " <-> " + nodeAccess.getDimension());
 
+        // Smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
+        if (this.smoothElevation)
+            pointList = GraphElevationSmoothing.smoothElevation(pointList);
+
         double towerNodeDistance = 0;
         double prevLat = pointList.getLatitude(0);
         double prevLon = pointList.getLongitude(0);
@@ -883,6 +882,12 @@ public class OSMReader implements DataReader {
     }
 
     @Override
+    public DataReader setSmoothElevation(boolean smoothElevation) {
+        this.smoothElevation = smoothElevation;
+        return this;
+    }
+
+    @Override
     public OSMReader setWorkerThreads(int numOfWorkers) {
         this.workerThreads = numOfWorkers;
         return this;
@@ -919,8 +924,12 @@ public class OSMReader implements DataReader {
         return osmDataDate;
     }
 
-    public void setDontCreateStorage(boolean dontCreateStorage) {
-        this.dontCreateStorage = dontCreateStorage;
+    /**
+     * Per default the storage used in this OSMReader is uninitialized and created i.e. createStorage is true. Specify
+     * false if you call the create method outside of OSMReader.
+     */
+    public void setCreateStorage(boolean createStorage) {
+        this.createStorage = createStorage;
     }
 
     @Override

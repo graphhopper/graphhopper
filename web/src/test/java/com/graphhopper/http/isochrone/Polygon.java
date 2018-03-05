@@ -1,4 +1,4 @@
-package com.graphhopper.http.reach;
+package com.graphhopper.http.isochrone;
 
 import com.graphhopper.util.shapes.GHPoint;
 
