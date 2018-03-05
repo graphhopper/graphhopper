@@ -1,4 +1,4 @@
-package com.graphhopper.http.reach;
+package com.graphhopper.http.isochrone;
 
 import com.graphhopper.directions.api.client.ApiClient;
 import com.graphhopper.directions.api.client.api.IsochroneApi;
@@ -17,7 +17,7 @@ import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
-public class ReachServletTest extends BaseServletTester {
+public class IsochroneServletTest extends BaseServletTester {
     private static final String DIR = "./target/andorra-gh/";
 
     private IsochroneApi iso;

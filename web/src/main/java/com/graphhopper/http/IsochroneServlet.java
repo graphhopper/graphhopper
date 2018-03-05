@@ -20,7 +20,7 @@ package com.graphhopper.http;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.isochrone.algorithm.RasterHullBuilder;
-import com.graphhopper.isochrone.algorithm.Reachability;
+import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
@@ -42,7 +42,7 @@ import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 /**
  * @author Peter Karich
  */
-public class ReachServlet extends GHBaseServlet {
+public class IsochroneServlet extends GHBaseServlet {
 
     @Inject
     private GraphHopper hopper;
@@ -59,7 +59,7 @@ public class ReachServlet extends GHBaseServlet {
     @Override
     public void doGet(HttpServletRequest httpReq, HttpServletResponse httpRes) throws ServletException, IOException {
         try {
-            Map<String, Object> map = doReachCalc(httpReq, httpRes);
+            Map<String, Object> map = doIsochroneCalc(httpReq, httpRes);
             writeJson(httpReq, httpRes, objectMapper.getNodeFactory().pojoNode(map));
         } catch (Exception ex) {
             Map<String, Object> json = new HashMap<>();
@@ -75,7 +75,7 @@ public class ReachServlet extends GHBaseServlet {
             return t.getMessage();
     }
 
-    Map<String, Object> doReachCalc(HttpServletRequest hReq, HttpServletResponse hRes) throws IOException {
+    Map<String, Object> doIsochroneCalc(HttpServletRequest hReq, HttpServletResponse hRes) throws IOException {
         String vehicle = getParam(hReq, "vehicle", "car");
         int buckets = (int) getLongParam(hReq, "buckets", 1L);
         boolean reverseFlow = getBooleanParam(hReq, "reverse_flow", false);
@@ -110,7 +110,7 @@ public class ReachServlet extends GHBaseServlet {
         HintsMap hintsMap = new HintsMap();
         initHints(hintsMap, hReq.getParameterMap());
         Weighting weighting = hopper.createWeighting(hintsMap, encoder, graph);
-        Reachability reach = new Reachability(queryGraph, weighting, reverseFlow);
+        Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
         double distanceInMeter = getDoubleParam(hReq, "distance_limit", -1);
         if (distanceInMeter > 0) {
             double maxMeter = 50 * 1000;
@@ -119,7 +119,7 @@ public class ReachServlet extends GHBaseServlet {
             if (buckets > (distanceInMeter / 500))
                 throw new IllegalArgumentException("Specify buckets less than the number of explored kilometers");
 
-            reach.setDistanceLimit(distanceInMeter);
+            isochrone.setDistanceLimit(distanceInMeter);
         } else {
             long timeLimitInSeconds = getLongParam(hReq, "time_limit", 600L);
             long maxSeconds = 80 * 60;
@@ -128,12 +128,12 @@ public class ReachServlet extends GHBaseServlet {
             if (buckets > (timeLimitInSeconds / 60))
                 throw new IllegalArgumentException("Specify buckets less than the number of explored minutes");
 
-            reach.setTimeLimit(timeLimitInSeconds);
+            isochrone.setTimeLimit(timeLimitInSeconds);
         }
 
-        List<List<Double[]>> list = reach.searchGPS(qr.getClosestNode(), buckets);
-        if (reach.getVisitedNodes() > hopper.getMaxVisitedNodes() / 5) {
-            throw new IllegalArgumentException("Server side reset: too many junction nodes would have to explored (" + reach.getVisitedNodes() + "). Let us know if you need this increased.");
+        List<List<Double[]>> list = isochrone.searchGPS(qr.getClosestNode(), buckets);
+        if (isochrone.getVisitedNodes() > hopper.getMaxVisitedNodes() / 5) {
+            throw new IllegalArgumentException("Server side reset: too many junction nodes would have to explored (" + isochrone.getVisitedNodes() + "). Let us know if you need this increased.");
         }
 
         int counter = 0;
@@ -187,7 +187,7 @@ public class ReachServlet extends GHBaseServlet {
         map.put("copyrights", Arrays.asList("GraphHopper", "OpenStreetMap contributors"));
         hRes.setHeader("X-GH-Took", "" + sw.stop().getSeconds() * 1000);
 
-        logger.info("took: " + sw.getSeconds() + ", visited nodes:" + reach.getVisitedNodes() + ", " + hReq.getQueryString());
+        logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + hReq.getQueryString());
         return map;
     }
 }

@@ -33,7 +33,7 @@ public class IsochroneServletModule extends ServletModule {
     @Override
     protected void configureServlets() {
         bind(RasterHullBuilder.class).in(Singleton.class);
-        serve("/isochrone").with(ReachServlet.class);
-        bind(ReachServlet.class).in(Singleton.class);
+        serve("/isochrone").with(IsochroneServlet.class);
+        bind(IsochroneServlet.class).in(Singleton.class);
     }
 }
