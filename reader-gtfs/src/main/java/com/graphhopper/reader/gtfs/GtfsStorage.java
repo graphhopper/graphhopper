@@ -21,7 +21,6 @@ package com.graphhopper.reader.gtfs;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
 import com.conveyal.gtfs.model.FareRule;
-import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.gtfs.fare.FixedFareAttributeLoader;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -89,12 +88,16 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 	private Directory dir;
 	private Set<String> gtfsFeedIds;
 	private Map<String, GTFSFeed> gtfsFeeds = new HashMap<>();
+	private Map<String, Transfers> transfers = new HashMap<>();
 	private HTreeMap<Validity, Integer> operatingDayPatterns;
 	private Map<Integer, Validity> validities;
 	private Bind.MapWithModificationListener<FeedIdWithTimezone, Integer> timeZones;
 	private Map<Integer, FeedIdWithTimezone> readableTimeZones;
 	private Map<Integer, byte[]> tripDescriptors;
 	private Map<Integer, Integer> stopSequences;
+
+	private Map<Integer, String> routes;
+
 	private Map<String, Fare> fares;
 	private Map<String, int[]> boardEdgesForTrip;
 	private Map<String, int[]> leaveEdgesForTrip;
@@ -150,6 +153,7 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 			try {
 				GTFSFeed feed = new GTFSFeed(dir.getLocation() + "/" + gtfsFeedId);
 				this.gtfsFeeds.put(gtfsFeedId, feed);
+				this.transfers.put(gtfsFeedId, new Transfers(feed));
 			} catch (IOException | ExecutionException e) {
 				throw new RuntimeException(e);
 			}
@@ -170,7 +174,7 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 		return this;
 	}
 
-	private void init() {
+    private void init() {
 		this.gtfsFeedIds = data.getHashSet("gtfsFeeds");
 		this.operatingDayPatterns = data.getHashMap("validities");
 		Map<Integer, Validity> reverseOperatingDayPatterns = new HashMap<>();
@@ -192,6 +196,7 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 		this.boardEdgesForTrip = data.getHashMap("boardEdgesForTrip");
 		this.leaveEdgesForTrip = data.getHashMap("leaveEdgesForTrip");
 		this.stationNodes = data.getHashMap("stationNodes");
+		this.routes = data.getHashMap("routes");
 	}
 
 	void loadGtfsFromFile(String id, ZipFile zip) {
@@ -281,13 +286,23 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 		return leaveEdgesForTrip;
 	}
 
-	@Override
+    @Override
+    public Map<Integer, String> getRoutes() {
+        return routes;
+    }
+
+    @Override
 	public Map<String, Fare> getFares() {
 		return fares;
 	}
 
 	public Map<String, GTFSFeed> getGtfsFeeds() {
 		return Collections.unmodifiableMap(gtfsFeeds);
+	}
+
+	@Override
+	public Map<String, Transfers> getTransfers() {
+		return transfers;
 	}
 
 	@Override
