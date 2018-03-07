@@ -27,6 +27,9 @@ import com.graphhopper.util.PMap;
 public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
     @Override
     public FlagEncoder createFlagEncoder(String name, PMap configuration) {
+        if (name.equals(AVOID_TOLL_ROADS))
+            return new SupportTollRoadsFlagEncoder(configuration);
+
         if (name.equals(GENERIC))
             return new DataFlagEncoder(configuration);
 
