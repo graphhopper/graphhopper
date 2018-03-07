@@ -27,6 +27,7 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.Polygon;
 import com.graphhopper.util.shapes.Shape;
 import com.vividsolutions.jts.geom.*;
 
@@ -77,12 +78,20 @@ public class GraphEdgeIdFinder {
         if (shape.contains(qr.getSnappedPoint().lat, qr.getSnappedPoint().lon))
             edgeIds.add(qr.getClosestEdge().getEdge());
 
+        final boolean isPolygon = shape instanceof Polygon;
+
         BreadthFirstSearch bfs = new BreadthFirstSearch() {
             final NodeAccess na = graph.getNodeAccess();
             final Shape localShape = shape;
 
             @Override
             protected boolean goFurther(int nodeId) {
+                if (isPolygon) {
+                    BBox bbox = localShape.getBounds();
+                    double lat = na.getLatitude(nodeId);
+                    double lon = na.getLongitude(nodeId);
+                    return lat <= bbox.maxLat && lat >= bbox.minLat && lon <= bbox.maxLon && lon >= bbox.minLon;
+                }
                 return localShape.contains(na.getLatitude(nodeId), na.getLongitude(nodeId));
             }
 
@@ -136,7 +145,10 @@ public class GraphEdgeIdFinder {
             for (int i = 0; i < blockedCircularAreasArr.length; i++) {
                 String objectAsString = blockedCircularAreasArr[i];
                 String[] splittedObject = objectAsString.split(innerObjSep);
-                if (splittedObject.length == 4) {
+                if (splittedObject.length > 4) {
+                    final com.graphhopper.util.shapes.Polygon polygon = Polygon.parsePoints(objectAsString);
+                    findEdgesInShape(blockArea.blockedEdges, polygon, filter);
+                } else if (splittedObject.length == 4) {
                     final BBox bbox = BBox.parseTwoPoints(objectAsString);
                     if (bbox.calculateArea() > useEdgeIdsUntilAreaSize)
                         blockArea.add(bbox);
