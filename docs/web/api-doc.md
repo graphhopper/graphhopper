@@ -220,3 +220,24 @@ HTTP error code | Reason
 500             | Internal server error. It is strongly recommended to send us the message and the link to it, as it is very likely a bug in our system.
 501             | Only a special list of vehicles is supported
 400             | Something was wrong in your request
+
+## Isochrone
+
+In addition to routing, the URL path to obtain an isochrone is `/isochrone`.
+
+[http://localhost:8989/isochrone](http://localhost:8989/isochrone)
+
+All parameters are shown in the following table.
+
+Parameter                   | Default | Description
+:---------------------------|:--------|:-----------
+vehicle                     | car     | The vehicle for which the route should be calculated. Other vehicles are foot, bike, motorcycle, hike, ...
+buckets                     | 1       | For how many sub intervals an additional polygon should be calculated. (optional, default to 1)
+reverse_flow                | false   | If false the flow goes from point to the polygon, if true the flow goes from the polygon inside to the point. Example usage for false: *How many potential customer can be reached within 30min travel time from your store* vs. true: *How many customers can reach your store within 30min travel time.* (optional, default to false)
+point                       |         | Specify the start coordinate (required)
+result                      | polygon | Can be "pointlist" or "polygon".
+distance_limit              | -1      | Specify which distance the vehicle should travel. In meter. (optional, default to -1)
+time_limit                  | 600     | Specify which time the vehicle should travel. In seconds. (optional, default to 600)
+isochrone.raster_distance   | 0.75    | bigger raster distance => bigger raster => less points => stranger buffer results, but faster
+isochrone.buffer_distance   | 0.003   | bigger buffer distance => less holes, lower means less points!
+isochrone.quadrant_segments | 3       | precision of the 'circles'
