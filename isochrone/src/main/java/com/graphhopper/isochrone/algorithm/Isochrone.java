@@ -202,6 +202,9 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                 }
 
                 double tmpWeight = weighting.calcWeight(iter, reverseFlow, currEdge.edge) + currEdge.weight;
+                if (Double.isInfinite(tmpWeight))
+                    continue;
+                
                 double tmpDistance = iter.getDistance() + currEdge.distance;
                 long tmpTime = weighting.calcMillis(iter, reverseFlow, currEdge.edge) + currEdge.time;
                 int tmpNode = iter.getAdjNode();
