@@ -19,6 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.util.shapes.Polygon;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.BreadthFirstSearch;
@@ -27,7 +28,6 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.Polygon;
 import com.graphhopper.util.shapes.Shape;
 import com.vividsolutions.jts.geom.*;
 
@@ -101,7 +101,7 @@ public class GraphEdgeIdFinder {
                     edgeIds.add(edge.getEdge());
                     return true;
                 }
-                return false;
+                return isPolygon;
             }
         };
         bfs.start(graph.createEdgeExplorer(filter), qr.getClosestNode());
@@ -146,7 +146,7 @@ public class GraphEdgeIdFinder {
                 String objectAsString = blockedCircularAreasArr[i];
                 String[] splittedObject = objectAsString.split(innerObjSep);
                 if (splittedObject.length > 4) {
-                    final com.graphhopper.util.shapes.Polygon polygon = Polygon.parsePoints(objectAsString);
+                    final Polygon polygon = Polygon.parsePoints(objectAsString);
                     findEdgesInShape(blockArea.blockedEdges, polygon, filter);
                 } else if (splittedObject.length == 4) {
                     final BBox bbox = BBox.parseTwoPoints(objectAsString);

@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
+import com.graphhopper.util.shapes.Polygon;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

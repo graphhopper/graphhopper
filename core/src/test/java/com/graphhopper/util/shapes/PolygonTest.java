@@ -1,11 +1,13 @@
 package com.graphhopper.util.shapes;
 
-import com.graphhopper.routing.util.spatialrules.Polygon;
+import com.graphhopper.util.shapes.Polygon;
 import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
+/**
+ * @author Robin Boldt
+ */
 public class PolygonTest {
 
     @Test
@@ -16,7 +18,7 @@ public class PolygonTest {
          * |    |
          * |----|
          */
-        com.graphhopper.routing.util.spatialrules.Polygon square = new com.graphhopper.routing.util.spatialrules.Polygon(new double[]{0,0,20,20}, new double[]{0,20,20,0});
+        Polygon square = new Polygon(new double[]{0,0,20,20}, new double[]{0,20,20,0});
         assertTrue(square.contains(10,10));
         assertTrue(square.contains(16,10));
         assertFalse(square.contains(10,-20));
@@ -31,7 +33,7 @@ public class PolygonTest {
          *   --| |
          *  /----|
          */
-        com.graphhopper.routing.util.spatialrules.Polygon squareHole = new com.graphhopper.routing.util.spatialrules.Polygon(new double[]{0,0,20,20,15,15,5,5}, new double[]{0,20,20,0,5,15,15,5});
+        Polygon squareHole = new Polygon(new double[]{0,0,20,20,15,15,5,5}, new double[]{0,20,20,0,5,15,15,5});
         assertFalse(squareHole.contains(10,10));
         assertTrue(squareHole.contains(16,10));
         assertFalse(squareHole.contains(10,-20));
@@ -47,7 +49,7 @@ public class PolygonTest {
          * |    |
          * |----|
          */
-        square = new com.graphhopper.routing.util.spatialrules.Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1});
+        square = new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1});
 
         assertTrue(square.contains(1.5,1.5));
         assertFalse(square.contains(0.5,1.5));
@@ -64,4 +66,5 @@ public class PolygonTest {
         assertFalse(squareHole.contains(0.5,1.5));
 
     }
+
 }
