@@ -36,9 +36,8 @@ public class Polygon implements Shape {
     private double maxLon;
 
     private final double epsilon;
-    private static final double GROWN_FACTOR = 0.003;
 
-    public Polygon(double[] lat, double[] lon) {
+    public Polygon(double[] lat, double[] lon, double growFactor) {
         if (lat.length != lon.length) {
             throw new IllegalArgumentException("Points must be of equal length but was " + lat.length + " vs. " + lon.length);
         }
@@ -68,12 +67,16 @@ public class Polygon implements Shape {
             }
         }
 
-        minLat -= GROWN_FACTOR;
-        minLon -= GROWN_FACTOR;
-        maxLat += GROWN_FACTOR;
-        maxLon += GROWN_FACTOR;
+        minLat -= growFactor;
+        minLon -= growFactor;
+        maxLat += growFactor;
+        maxLon += growFactor;
 
         epsilon = (maxLat - minLat) / 10;
+    }
+
+    public Polygon(double[] lat, double[] lon) {
+        this(lat, lon, 0);
     }
 
     /**
@@ -98,7 +101,7 @@ public class Polygon implements Shape {
 
     @Override
     public boolean intersect(Shape o) {
-        return false;
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**
@@ -129,7 +132,7 @@ public class Polygon implements Shape {
 
     @Override
     public boolean contains(Shape s) {
-        return false;
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
@@ -144,7 +147,7 @@ public class Polygon implements Shape {
 
     @Override
     public double calculateArea() {
-        return 0;
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     private boolean edgesAreIntersecting(
@@ -222,7 +225,7 @@ public class Polygon implements Shape {
         return maxLon;
     }
 
-    public static Polygon parsePoints(String pointsStr) {
+    public static Polygon parsePoints(String pointsStr, double growFactor) {
         String[] arr = pointsStr.split(",");
 
         double[] lats = new double[arr.length /2];
@@ -236,6 +239,6 @@ public class Polygon implements Shape {
             }
         }
 
-        return new Polygon(lats, lons);
+        return new Polygon(lats, lons, growFactor);
     }
 }

@@ -146,7 +146,7 @@ public class GraphEdgeIdFinder {
                 String objectAsString = blockedCircularAreasArr[i];
                 String[] splittedObject = objectAsString.split(innerObjSep);
                 if (splittedObject.length > 4) {
-                    final Polygon polygon = Polygon.parsePoints(objectAsString);
+                    final Polygon polygon = Polygon.parsePoints(objectAsString, 0.003);
                     findEdgesInShape(blockArea.blockedEdges, polygon, filter);
                 } else if (splittedObject.length == 4) {
                     final BBox bbox = BBox.parseTwoPoints(objectAsString);
