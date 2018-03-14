@@ -18,7 +18,7 @@ function set_jar {
     local pattern="matching-$module/target/graphhopper-map-matching-*-dependencies.jar"
     if ! ls $pattern > /dev/null 2>&1; then
         mvn --projects hmm-lib -DskipTests=true install
-        mvn --projects matching-$module,matching-core -DskipTests=true install assembly:single
+        mvn --projects matching-$module -am -DskipTests=true package
     fi
     JAR=$(ls matching-$module/target/graphhopper-map-matching-*-dependencies.jar)
 }

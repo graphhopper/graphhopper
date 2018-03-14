@@ -13,7 +13,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-map-matching-parent</artifactId>    	
-        <version>${revision}</version>
+        <version>0.11-SNAPSHOT</version>
     </parent>
     
     <dependencies>
@@ -83,8 +83,7 @@
                 <executions>
                     <execution>
                         <id>make-assembly</id>
-                        <!-- bind to verify and not package to pass integration tests before creating assemblies -->
-                        <phase>integration-test</phase> 
+                        <phase>package</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>

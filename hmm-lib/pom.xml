@@ -30,7 +30,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-map-matching-parent</artifactId>    	
-        <version>${revision}</version>
+        <version>0.11-SNAPSHOT</version>
     </parent>
 
     <developers>
