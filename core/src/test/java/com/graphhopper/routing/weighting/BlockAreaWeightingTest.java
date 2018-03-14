@@ -10,6 +10,10 @@ import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.Circle;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -53,13 +57,22 @@ public class BlockAreaWeightingTest {
         BlockAreaWeighting instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
         assertEquals(94.35, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 0.01);
 
-        bArea.add(new Circle(0.01, 0.01, 100));
+        
+        GeometryFactory geomFact = new GeometryFactory();
+    	Geometry circle1 = geomFact.createPoint(new Coordinate(0.01, 0.01)).buffer(100);
+      	
+        bArea.add(circle1);
+        
+        
         assertEquals(Double.POSITIVE_INFINITY, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), .01);
 
         bArea = new GraphEdgeIdFinder.BlockArea(graph);
         instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
         // Do not match 1,1 of edge
-        bArea.add(new Circle(0.1, 0.1, 100));
+        
+        Geometry circle2 = geomFact.createPoint(new Coordinate(0.1, 0.1)).buffer(0.09);
+      	
+        bArea.add(circle2);
         assertEquals(94.35, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), .01);
     }
 
