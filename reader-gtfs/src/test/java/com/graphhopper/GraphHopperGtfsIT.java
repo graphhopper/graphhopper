@@ -26,6 +26,8 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.Parameters;
@@ -56,6 +58,7 @@ public class GraphHopperGtfsIT {
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopperStorage graphHopperStorage;
     private static LocationIndex locationIndex;
+    private static GtfsStorage gtfsStorage;
 
     @BeforeClass
     public static void init() {
@@ -63,7 +66,7 @@ public class GraphHopperGtfsIT {
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
         EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
-        GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
+        gtfsStorage = GraphHopperGtfs.createGtfsStorage();
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, false, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage, ptFlagEncoder);
         graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)

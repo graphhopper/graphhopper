@@ -52,6 +52,7 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -130,7 +131,7 @@ public class RealtimeFeed {
                 });
             });
 
-        final List<VirtualEdgeIteratorState> additionalEdges = new ArrayList<>();
+        final LinkedList<VirtualEdgeIteratorState> additionalEdges = new LinkedList<>();
         final Graph overlayGraph = new Graph() {
             int nNodes = 0;
             int firstEdge = graph.getAllEdges().getMaxId()+1;
@@ -204,7 +205,7 @@ public class RealtimeFeed {
             };
             @Override
             public Graph getBaseGraph() {
-                return null;
+                return graph;
             }
 
             @Override
@@ -237,8 +238,7 @@ public class RealtimeFeed {
 
                 newEdge.setReverseEdge(reverseNewEdge);
                 reverseNewEdge.setReverseEdge(newEdge);
-                additionalEdges.add(newEdge);
-//                additionalEdges.add(reverseNewEdge); //FIXME
+                additionalEdges.push(newEdge);
                 return newEdge;
             }
 
@@ -259,7 +259,7 @@ public class RealtimeFeed {
 
             @Override
             public EdgeExplorer createEdgeExplorer() {
-                return null;
+                return graph.createEdgeExplorer();
             }
 
             @Override
@@ -272,7 +272,7 @@ public class RealtimeFeed {
                 throw new RuntimeException();
             }
         };
-        Map<String, Integer> stationNodes = new HashMap<>();
+        Map<Integer, String> routes = new HashMap<>();
         Map<GtfsStorage.Validity, Integer> operatingDayPatterns = new HashMap<>();
         Map<Integer, byte[]> tripDescriptors = new HashMap<>();
         Map<Integer, Integer> stopSequences = new HashMap<>();
@@ -324,8 +324,18 @@ public class RealtimeFeed {
             }
 
             @Override
+            public Map<String, Transfers> getTransfers() {
+                return staticGtfs.getTransfers();
+            }
+
+            @Override
             public Map<String, Integer> getStationNodes() {
                 return staticGtfs.getStationNodes();
+            }
+
+            @Override
+            public Map<Integer, String> getRoutes() {
+                return routes;
             }
         };
         final GtfsReader gtfsReader = new GtfsReader(feedKey, overlayGraph, gtfsStorage, encoder, null);
@@ -360,7 +370,6 @@ public class RealtimeFeed {
                     gtfsReader.addTrip(ZoneId.of(agency.agency_timezone), 0, new ArrayList<>(), tripWithStopTimes, tripUpdate.getTrip());
                 });
         gtfsReader.wireUpStops();
-        gtfsReader.connectStopsToStationNodes();
         return new RealtimeFeed(staticGtfs, feed, agency, feedMessage, blockedEdges, delaysForAlightEdges, additionalEdges, tripDescriptors, stopSequences);
     }
 

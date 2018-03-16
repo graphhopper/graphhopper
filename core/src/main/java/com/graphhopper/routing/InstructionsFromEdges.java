@@ -313,11 +313,18 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             forceInstruction = true;
         }
 
-        InstructionsSurroundingEdges surroundingEdges = new InstructionsSurroundingEdges(prevEdge, edge, encoder, crossingExplorer, nodeAccess, prevNode, baseNode, adjNode);
-        int nrOfPossibleTurns = surroundingEdges.nrOfPossibleTurns();
+        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, encoder, crossingExplorer, nodeAccess, prevNode, baseNode, adjNode);
+        int nrOfPossibleTurns = outgoingEdges.nrOfAllowedOutgoingEdges();
 
         // there is no other turn possible
         if (nrOfPossibleTurns <= 1) {
+            if (Math.abs(sign) > 1 && outgoingEdges.nrOfAllOutgoingEdges() > 1) {
+                // This is an actual turn because |sign| > 1
+                // There could be some confusion, if we would not create a turn instruction, even though it is the only
+                // possible turn, also see #1048
+                // TODO if we see issue with this approach we could consider checking if the edge is a oneway
+                return sign;
+            }
             return returnForcedInstructionOrIgnore(forceInstruction, sign);
         }
 
@@ -327,7 +334,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                          * Don't show an instruction if the user is following a street, even though the street is
                          * bending. We should only do this, if following the street is the obvious choice.
                          */
-            if (InstructionsHelper.isNameSimilar(name, prevName) && surroundingEdges.surroundingStreetsAreSlowerByFactor(2)) {
+            if (InstructionsHelper.isNameSimilar(name, prevName) && outgoingEdges.outgoingEdgesAreSlowerByFactor(2)) {
                 return returnForcedInstructionOrIgnore(forceInstruction, sign);
             }
 
@@ -348,12 +355,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         long flag = edge.getFlags();
         long prevFlag = prevEdge.getFlags();
 
-        boolean surroundingStreetsAreSlower = surroundingEdges.surroundingStreetsAreSlowerByFactor(1);
+        boolean outgoingEdgesAreSlower = outgoingEdges.outgoingEdgesAreSlowerByFactor(1);
 
         // There is at least one other possibility to turn, and we are almost going straight
         // Check the other turns if one of them is also going almost straight
         // If not, we don't need a turn instruction
-        EdgeIteratorState otherContinue = surroundingEdges.getOtherContinue(prevLat, prevLon, prevOrientation);
+        EdgeIteratorState otherContinue = outgoingEdges.getOtherContinue(prevLat, prevLon, prevOrientation);
 
         // Signs provide too less detail, so we use the delta for a precise comparision
         double delta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, lat, lon, prevOrientation);
@@ -367,10 +374,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     || InstructionsHelper.isNameSimilar(otherContinue.getName(), prevName)
                     || prevFlag != flag
                     || prevFlag == otherContinue.getFlags()
-                    || !surroundingStreetsAreSlower) {
+                    || !outgoingEdgesAreSlower) {
                 GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(otherContinue, nodeAccess);
                 double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);
 
+                // This is required to avoid keep left/right on the motorway at off-ramps/motorway_links
                 if (Math.abs(delta) < .1 && Math.abs(otherDelta) > .15 && InstructionsHelper.isNameSimilar(name, prevName)) {
                     return Instruction.CONTINUE_ON_STREET;
                 }
@@ -385,9 +393,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             }
         }
 
-        if (!surroundingStreetsAreSlower) {
+        if (!outgoingEdgesAreSlower) {
             if (Math.abs(delta) > .4
-                    || surroundingEdges.isLeavingCurrentStreet(prevName, name)) {
+                    || outgoingEdges.isLeavingCurrentStreet(prevName, name)) {
                 // Leave the current road -> create instruction
                 return sign;
 
