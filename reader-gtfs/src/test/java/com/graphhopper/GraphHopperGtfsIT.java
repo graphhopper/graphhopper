@@ -31,6 +31,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.exceptions.PointNotFoundException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -426,8 +427,13 @@ public class GraphHopperGtfsIT {
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
-        GHResponse route = graphHopper.route(ghRequest);
-        Assert.assertTrue(route.getAll().isEmpty());
+        try {
+            GHResponse route = graphHopper.route(ghRequest);
+            Assert.assertTrue(route.getAll().isEmpty());
+        } catch (PointNotFoundException e) {
+            // This is also acceptable. Whether disconnected stops are required to be indexed or not
+            // may change.
+        }
     }
 
     @Test
