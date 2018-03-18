@@ -26,6 +26,8 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
+import com.graphhopper.http.health.GraphHopperHealthCheck;
+import com.graphhopper.http.health.GraphHopperStorageHealthCheck;
 import com.graphhopper.http.resources.*;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
@@ -187,6 +189,7 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
                 graphHopperStorage.close();
             }
         });
+        environment.healthChecks().register("graphhopper-storage", new GraphHopperStorageHealthCheck(graphHopperStorage));
     }
 
     private void runRegularGraphHopper(CmdArgs configuration, Environment environment) {
@@ -220,7 +223,7 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
         pathDetailModule.addSerializer(PathDetail.class, new PathDetailSerializer());
         pathDetailModule.addDeserializer(PathDetail.class, new PathDetailDeserializer());
         environment.getObjectMapper().registerModule(pathDetailModule);
-
+        environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopperManaged.getGraphHopper()));
     }
 
     public static class PathDetailSerializer extends JsonSerializer<PathDetail> {
