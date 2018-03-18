@@ -46,7 +46,7 @@ public class GraphHopperApplication extends Application<GraphHopperServerConfigu
     @Override
     public void initialize(Bootstrap<GraphHopperServerConfiguration> bootstrap) {
         bootstrap.addBundle(new GraphHopperBundle());
-        bootstrap.addBundle(new AssetsBundle("/assets", "/webapp/", "index.html"));
+        bootstrap.addBundle(new AssetsBundle("/assets", "/maps/", "index.html"));
         bootstrap.addCommand(new ImportCommand());
     }
 

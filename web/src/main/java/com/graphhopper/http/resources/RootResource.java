@@ -28,7 +28,7 @@ public class RootResource {
 
     @GET
     public Response redirectToWebapp() {
-        return Response.seeOther(UriBuilder.fromPath("webapp/").build()).build();
+        return Response.seeOther(UriBuilder.fromPath("maps/").build()).build();
     }
 
 }
