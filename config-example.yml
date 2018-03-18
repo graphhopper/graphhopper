@@ -135,3 +135,5 @@ server:
   applicationConnectors:
   - type: http
     port: 8989
+  requestLog:
+      appenders: []
