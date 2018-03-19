@@ -225,6 +225,11 @@ public class Polygon implements Shape {
         return maxLon;
     }
 
+    @Override
+    public String toString() {
+        return "polygon (" + lat.length + " points)";
+    }
+
     public static Polygon parsePoints(String pointsStr, double growFactor) {
         String[] arr = pointsStr.split(",");
 
