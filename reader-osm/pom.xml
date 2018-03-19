@@ -27,13 +27,6 @@
             <artifactId>osmosis-osm-binary</artifactId>
             <version>0.46</version>
         </dependency>
-        <!-- 
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>${commons-compress.version}</version>
-        </dependency>
-        -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>

@@ -30,6 +30,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -110,11 +111,49 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(2, response.getAll().size());
 
-        assertEquals("I have to wait half an hour for the next one (and ride 5 minutes)", time(0, 35), response.getBest().getTime(), 0.1);
+        PathWrapper possibleAlternative = response.getAll().get(0);
+        assertFalse(possibleAlternative.isImpossible());
+        assertFalse(((Trip.PtLeg) possibleAlternative.getLegs().get(1)).stops.get(0).departureCancelled);
+        assertEquals("I have to wait half an hour for the next one (and ride 5 minutes)", time(0, 35), possibleAlternative.getTime(), 0.1);
 
         PathWrapper impossibleAlternative = response.getAll().get(1);
         assertTrue(impossibleAlternative.isImpossible());
         assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(1)).stops.get(0).departureCancelled);
+    }
+
+    @Test
+    public void testHeavyDelayWhereWeShouldTakeOtherTripInstead() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+
+        // I want to go at 6:44
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
+
+        // But the 6:00 departure of my line is going to be super-late :-(
+        final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
+        feedMessageBuilder.addEntityBuilder()
+                .setId("1")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
+                .addStopTimeUpdateBuilder()
+                .setScheduleRelationship(SCHEDULED)
+                .setStopSequence(3)
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(3600).build());
+
+        GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
+        assertEquals(2, response.getAll().size());
+
+        assertEquals("It's better to wait half an hour for the next one (and ride 5 minutes)", time(0, 35), response.getBest().getTime(), 0.1);
+
+        PathWrapper impossibleAlternative = response.getAll().get(1);
+        assertEquals("The impossible alternative is my planned 5-minute-trip", time(0, 5), impossibleAlternative.getTime(), 0.1);
+        assertTrue(impossibleAlternative.isImpossible());
     }
 
     @Test
@@ -375,7 +414,7 @@ public class RealtimeIT {
         feedMessageBuilder.addEntityBuilder()
                 .setId("1")
                 .getTripUpdateBuilder()
-                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("AB1").setStartTime("00:00:00"))
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("AB1"))
                 .addStopTimeUpdateBuilder()
                 .setStopSequence(2)
                 .setScheduleRelationship(SKIPPED);
@@ -598,7 +637,7 @@ public class RealtimeIT {
     }
 
     @Test
-    public void testDelayAtEnd() {
+    public void testDelayAtEndForNonFrequencyBasedTrip() {
         final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
         final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
         GHRequest ghRequest = new GHRequest(
@@ -623,7 +662,7 @@ public class RealtimeIT {
 
         assertFalse(route.hasErrors());
         assertFalse(route.getAll().isEmpty());
-        assertEquals("Expected travel time == scheduled travel time", time(8, 10), route.getBest().getTime(), 0.1);
+        assertEquals("Travel time == predicted travel time", time(8, 15), route.getBest().getTime(), 0.1);
         assertEquals("Using expected route", "STBA", (((Trip.PtLeg) route.getBest().getLegs().get(1)).trip_id));
         assertEquals("Using expected route", "AB1", (((Trip.PtLeg) route.getBest().getLegs().get(2)).trip_id));
         assertEquals("Delay at destination", LocalTime.parse("08:15"), LocalTime.from(((Trip.PtLeg) route.getBest().getLegs().get(2)).stops.get(1).predictedArrivalTime.toInstant().atZone(zoneId)));

@@ -105,7 +105,7 @@ public class RealtimeFeed {
             .map(GtfsRealtime.FeedEntity::getTripUpdate)
             .filter(tripUpdate -> tripUpdate.getTrip().getScheduleRelationship() == GtfsRealtime.TripDescriptor.ScheduleRelationship.SCHEDULED)
             .forEach(tripUpdate -> {
-                String key = GtfsStorage.tripKey(tripUpdate.getTrip().getTripId(), tripUpdate.getTrip().hasStartTime() ? tripUpdate.getTrip().getStartTime() : "00:00:00");
+                String key = GtfsStorage.tripKey(tripUpdate.getTrip().getTripId(), tripUpdate.getTrip().getStartTime());
                 final int[] boardEdges = staticGtfs.getBoardEdgesForTrip().get(key);
                 final int[] leaveEdges = staticGtfs.getAlightEdgesForTrip().get(key);
                 if (boardEdges == null || leaveEdges == null) {
@@ -400,7 +400,7 @@ public class RealtimeFeed {
     }
 
     public GtfsRealtime.TripDescriptor normalize(GtfsRealtime.TripDescriptor tripDescriptor) {
-        return GtfsRealtime.TripDescriptor.newBuilder(tripDescriptor).clearRouteId().clearStartTime().build();
+        return GtfsRealtime.TripDescriptor.newBuilder(tripDescriptor).clearRouteId().build();
     }
 
     public static GtfsReader.TripWithStopTimes toTripWithStopTimes(GTFSFeed feed, Agency agency, GtfsRealtime.TripUpdate tripUpdate) {

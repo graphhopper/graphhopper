@@ -98,13 +98,6 @@ class GtfsReader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GtfsReader.class);
 
-    private static final Frequency SINGLE_FREQUENCY = new Frequency();
-    static {
-        SINGLE_FREQUENCY.start_time = 0;
-        SINGLE_FREQUENCY.end_time = 1;
-        SINGLE_FREQUENCY.headway_secs = 1;
-    }
-
     private final Graph graph;
     private final LocationIndex walkNetworkIndex;
     private final GtfsStorageI gtfsStorage;
@@ -188,9 +181,13 @@ class GtfsReader {
             }
             ZoneId zoneId = ZoneId.of(feed.agency.get(feed.routes.get(trips.iterator().next().trip.route_id).agency_id).agency_timezone);
             Collection<Frequency> frequencies = feed.getFrequencies(trips.iterator().next().trip.trip_id);
-            for (Frequency frequency : (frequencies.isEmpty() ? Collections.singletonList(SINGLE_FREQUENCY) : frequencies)) {
-                for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
-                    addTrips(zoneId, trips, time);
+            if (frequencies.isEmpty()) {
+                addTrips(zoneId, trips, 0, false);
+            } else {
+                for (Frequency frequency : frequencies) {
+                    for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
+                        addTrips(zoneId, trips, time, true);
+                    }
                 }
             }
         });
@@ -281,14 +278,16 @@ class GtfsReader {
         }
     }
 
-    private void addTrips(ZoneId zoneId, List<TripWithStopTimes> trips, int time) {
+    private void addTrips(ZoneId zoneId, List<TripWithStopTimes> trips, int time, boolean frequencyBased) {
         List<Integer> arrivalNodes = new ArrayList<>();
         for (TripWithStopTimes trip : trips) {
-            GtfsRealtime.TripDescriptor tripDescriptor = GtfsRealtime.TripDescriptor.newBuilder()
+            GtfsRealtime.TripDescriptor.Builder tripDescriptor = GtfsRealtime.TripDescriptor.newBuilder()
                     .setTripId(trip.trip.trip_id)
-                    .setRouteId(trip.trip.route_id)
-                    .setStartTime(convertToGtfsTime(time)).build();
-            addTrip(zoneId, time, arrivalNodes, trip, tripDescriptor);
+                    .setRouteId(trip.trip.route_id);
+            if (frequencyBased) {
+                tripDescriptor = tripDescriptor.setStartTime(convertToGtfsTime(time));
+            }
+            addTrip(zoneId, time, arrivalNodes, trip, tripDescriptor.build());
         }
     }
 

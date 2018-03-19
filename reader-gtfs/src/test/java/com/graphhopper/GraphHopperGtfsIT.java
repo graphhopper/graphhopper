@@ -18,7 +18,6 @@
 
 package com.graphhopper;
 
-import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
@@ -26,11 +25,10 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.exceptions.PointNotFoundException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -361,18 +359,8 @@ public class GraphHopperGtfsIT {
                 TO1_LAT, TO1_LON
         );
         request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,7,30).atZone(zoneId).toInstant());
-        request.getHints().put(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, Double.MAX_VALUE);
 
         GHResponse response = graphHopper.route(request);
-        assertEquals("Ignoring transfer rules (free walking): Will be there at 9.", time(1, 30), response.getBest().getTime());
-
-        request = new GHRequest(
-                FROM_LAT, FROM_LON,
-                TO1_LAT, TO1_LON
-        );
-        request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,7,30).atZone(zoneId).toInstant());
-
-        response = graphHopper.route(request);
         assertEquals("Transfer rule: 11 minutes. Will miss connection, and be there at 14.", time(6, 30), response.getBest().getTime());
 
         request = new GHRequest(
@@ -426,8 +414,13 @@ public class GraphHopperGtfsIT {
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
-        GHResponse route = graphHopper.route(ghRequest);
-        Assert.assertTrue(route.getAll().isEmpty());
+        try {
+            GHResponse route = graphHopper.route(ghRequest);
+            Assert.assertTrue(route.getAll().isEmpty());
+        } catch (PointNotFoundException e) {
+            // This is also acceptable. Whether disconnected stops are required to be indexed or not
+            // may change.
+        }
     }
 
     @Test
