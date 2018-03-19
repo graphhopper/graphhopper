@@ -323,8 +323,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     throw new RuntimeException(e);
                 }
             }
-            new PrepareRoutingSubnetworks(graphHopperStorage, Collections.singletonList(ptFlagEncoder)).doWork();
-
             int id = 0;
             for (String gtfsFile : gtfsFiles) {
                 try {
@@ -345,6 +343,10 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             for (int i = 0; i < id; i++) {
                 new GtfsReader("gtfs_" + i, graphHopperStorage, gtfsStorage, ptFlagEncoder, walkNetworkIndex).readGraph();
             }
+            // This currently needs to happen as the last step, since we cannot add new nodes after this step.
+            // This means that disconnected parts of the transit network are removed as well.
+            // If we don't want that, we need to think of something.
+            new PrepareRoutingSubnetworks(graphHopperStorage, Collections.singletonList(ptFlagEncoder)).doWork();
             graphHopperStorage.flush();
             return graphHopperStorage;
         }

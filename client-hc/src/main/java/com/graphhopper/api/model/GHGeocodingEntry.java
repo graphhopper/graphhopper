@@ -20,6 +20,7 @@ package com.graphhopper.api.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.graphhopper.util.shapes.BBox;
 
 /**
  * Contains the results of a geocoding request.
@@ -44,9 +45,12 @@ public class GHGeocodingEntry {
     private String street;
     private String houseNumber;
     private String postcode;
+    private String osmKey;
     private String osmValue;
 
-    public GHGeocodingEntry(Long osmId, String type, double lat, double lng, String name, String osmValue, String country, String city, String state, String street, String houseNumber, String postcode) {
+    private BBox extent;
+
+    public GHGeocodingEntry(Long osmId, String type, double lat, double lng, String name, String osmKey, String osmValue, String country, String city, String state, String street, String houseNumber, String postcode, BBox extent) {
         this.osmId = osmId;
         this.osmType = type;
         this.point = new Point(lat, lng);
@@ -57,7 +61,9 @@ public class GHGeocodingEntry {
         this.street = street;
         this.houseNumber = houseNumber;
         this.postcode = postcode;
+        this.osmKey = osmKey;
         this.osmValue = osmValue;
+        this.extent = extent;
     }
 
     public GHGeocodingEntry() {
@@ -163,6 +169,16 @@ public class GHGeocodingEntry {
         this.postcode = postcode;
     }
 
+    @JsonProperty("osm_key")
+    public String getOsmKey() {
+        return this.osmKey;
+    }
+
+    @JsonProperty("osm_key")
+    public void setOsmKey(String osmKey) {
+        this.osmKey = osmKey;
+    }
+
     @JsonProperty("osm_value")
     public String getOsmValue() {
         return osmValue;
@@ -171,6 +187,32 @@ public class GHGeocodingEntry {
     @JsonProperty("osm_value")
     public void setOsmValue(String osmValue) {
         this.osmValue = osmValue;
+    }
+
+    @JsonProperty
+    public Double[] getExtent() {
+        if (this.extent == null) {
+            // TODO should we return null instead?
+            return new Double[0];
+        }
+        return this.extent.toGeoJson().toArray(new Double[4]);
+    }
+
+    public BBox getExtendBBox(){
+        return this.extent;
+    }
+
+    @JsonProperty
+    public void setExtent(Double[] extent) {
+        if (extent == null || extent.length == 0) {
+            return;
+        }
+        if (extent.length == 4) {
+            // Extend is in Left, Top, Right, Bottom; which is very uncommon, Photon uses the same
+            this.extent = new BBox(extent[0], extent[2], extent[3], extent[1]);
+        } else {
+            throw new RuntimeException("Extent had an unexpected length: " + extent.length);
+        }
     }
 
     public class Point {

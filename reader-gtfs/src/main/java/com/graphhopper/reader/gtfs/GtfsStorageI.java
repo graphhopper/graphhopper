@@ -39,11 +39,15 @@ public interface GtfsStorageI {
 
     Map<Integer, Integer> getStopSequences();
 
-    Map<GtfsRealtime.TripDescriptor, int[]> getBoardEdgesForTrip();
+    Map<String, int[]> getBoardEdgesForTrip();
 
-    Map<GtfsRealtime.TripDescriptor, int[]> getAlightEdgesForTrip();
+    Map<String, int[]> getAlightEdgesForTrip();
 
     Map<String, GTFSFeed> getGtfsFeeds();
 
+    Map<String, Transfers> getTransfers();
+
     Map<String, Integer> getStationNodes();
+
+    Map<Integer, String> getRoutes();
 }

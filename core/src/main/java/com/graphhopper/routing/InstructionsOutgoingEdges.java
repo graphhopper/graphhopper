@@ -20,45 +20,62 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This class maintains the surrounding edges for a single turn instruction.
- * <p>
- * There a different sets of edges.
- * The previous edge is the edge we are comming from.
+ * This class handles the outgoing edges for a single turn instruction.
+ *
+ * There are different sets of edges.
+ * The previous edge is the edge we are coming from.
  * The current edge is the edge we turn on.
- * The reachable edges are all edges we could turn on, without the prev edge and the current edge.
- * The surrounding edges are all edges surrounding the turn, without the prev edge and the current edge.
+ * The allowedOutgoingEdges contains all edges that the current vehicle is allowed(*) to turn on to, excluding the prev edge and the current edge.
+ * The allOutgoingEdges contains all edges surrounding this turn instruction, without the prev edge and the current edge.
+ *
+ * (*): This might not consider turn restrictions, but only simple access values.
+ *
+ * Here is an example:
+ *
+ * A --> B --> C
+ *       ^
+ *       |
+ *       X
+ *
+ * For the route from A->B->C and baseNode=B, adjacentNode=C:
+ * - the previous edge is A->B
+ * - the current edge is B->C
+ * - the allowedOutgoingEdges are B->C => return value of {@link #nrOfAllowedOutgoingEdges()} is 1
+ * - the allOutgoingEdges are B->X and B->C => return values of {@link #nrOfAllOutgoingEdges()} is 2
  *
  * @author Robin Boldt
  */
-class InstructionsSurroundingEdges {
+class InstructionsOutgoingEdges {
 
     final EdgeIteratorState prevEdge;
     final EdgeIteratorState currentEdge;
 
-    // Streets that are alternative turns, excluding oneways in the wrong direction
-    final List<EdgeIteratorState> reachableEdges;
+    // Outgoing edges that we would be allowed to turn on
+    final List<EdgeIteratorState> allowedOutgoingEdges;
 
-    // All Streets surrounding the turn, including oneways in the wrong direction
-    final List<EdgeIteratorState> surroundingEdges;
+    // All outgoing edges, including oneways in the wrong direction
+    final List<EdgeIteratorState> allOutgoingEdges;
 
     final FlagEncoder encoder;
     final NodeAccess nodeAccess;
 
-    public InstructionsSurroundingEdges(EdgeIteratorState prevEdge,
-                                        EdgeIteratorState currentEdge,
-                                        FlagEncoder encoder,
-                                        EdgeExplorer crossingExplorer,
-                                        NodeAccess nodeAccess,
-                                        int prevNode,
-                                        int baseNode,
-                                        int adjNode) {
+    public InstructionsOutgoingEdges(EdgeIteratorState prevEdge,
+                                     EdgeIteratorState currentEdge,
+                                     FlagEncoder encoder,
+                                     EdgeExplorer crossingExplorer,
+                                     NodeAccess nodeAccess,
+                                     int prevNode,
+                                     int baseNode,
+                                     int adjNode) {
         this.prevEdge = prevEdge;
         this.currentEdge = currentEdge;
         this.encoder = encoder;
@@ -66,34 +83,42 @@ class InstructionsSurroundingEdges {
 
         EdgeIteratorState tmpEdge;
 
-        surroundingEdges = new ArrayList<>();
-        reachableEdges = new ArrayList<>();
+        allOutgoingEdges = new ArrayList<>();
+        allowedOutgoingEdges = new ArrayList<>();
         EdgeIterator edgeIter = crossingExplorer.setBaseNode(baseNode);
         while (edgeIter.next()) {
             if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
                 tmpEdge = edgeIter.detach(false);
-                surroundingEdges.add(tmpEdge);
+                allOutgoingEdges.add(tmpEdge);
                 if (encoder.isForward(tmpEdge.getFlags())) {
-                    reachableEdges.add(tmpEdge);
+                    allowedOutgoingEdges.add(tmpEdge);
                 }
             }
         }
     }
 
     /**
-     * Calculates the Number of possible turns, including the current turn.
-     * If there is only one turn possible, e.g. continue straight on the road is a turn,
-     * the method will return 1.
+     * This method calculates the number of allowed outgoing edges, which could be considered the number of possible
+     * roads one might take at the intersection. This excludes the road you are coming from and inaccessible roads.
      */
-    public int nrOfPossibleTurns() {
-        return 1 + reachableEdges.size();
+    public int nrOfAllowedOutgoingEdges() {
+        return 1 + allowedOutgoingEdges.size();
     }
 
     /**
-     * Checks if the surrounding streets are slower. If they are, this indicates, that we are staying
+     * This method calculates the number of all outgoing edges, which could be considered the number of roads you see
+     * at the intersection. This excludes the road your are coming from.
+     */
+    public int nrOfAllOutgoingEdges() {
+        return 1 + allOutgoingEdges.size();
+    }
+
+
+    /**
+     * Checks if the outgoing edges are slower by the provided factor. If they are, this indicates, that we are staying
      * on the prominent street that one would follow anyway.
      */
-    public boolean surroundingStreetsAreSlowerByFactor(double factor) {
+    public boolean outgoingEdgesAreSlowerByFactor(double factor) {
         double tmpSpeed = getSpeed(currentEdge);
         double pathSpeed = getSpeed(prevEdge);
 
@@ -104,7 +129,7 @@ class InstructionsSurroundingEdges {
 
         double maxSurroundingSpeed = -1;
 
-        for (EdgeIteratorState edge : surroundingEdges) {
+        for (EdgeIteratorState edge : allOutgoingEdges) {
             tmpSpeed = getSpeed(edge);
             if (tmpSpeed < 1) {
                 // This might happen for the DataFlagEncoder, might create unnecessary turn instructions
@@ -128,12 +153,13 @@ class InstructionsSurroundingEdges {
     }
 
     /**
-     * Returns an edge that is going into more or less straight compared to the prevEdge.
+     * Returns an edge that has more or less in the same orientation as the prevEdge, but is not the currentEdge.
+     * If there is one, this indicates that we might need an instruction to help finding the correct edge out of the different choices.
      * If there is none, return null.
      */
     public EdgeIteratorState getOtherContinue(double prevLat, double prevLon, double prevOrientation) {
         int tmpSign;
-        for (EdgeIteratorState edge : reachableEdges) {
+        for (EdgeIteratorState edge : allowedOutgoingEdges) {
             GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
             tmpSign = InstructionsHelper.calculateSign(prevLat, prevLon, point.getLat(), point.getLon(), prevOrientation);
             if (Math.abs(tmpSign) <= 1) {
@@ -155,7 +181,7 @@ class InstructionsSurroundingEdges {
 
         // If flags are changing, there might be a chance we find these flags on a different edge
         boolean checkFlag = currentEdge.getFlags() != prevEdge.getFlags();
-        for (EdgeIteratorState edge : reachableEdges) {
+        for (EdgeIteratorState edge : allowedOutgoingEdges) {
             String edgeName = edge.getName();
             long edgeFlag = edge.getFlags();
             // leave the current street || enter a different street

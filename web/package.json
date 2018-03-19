@@ -14,7 +14,9 @@
     "lint": "jshint src/main/webapp/js/"
   },
   "browserify": {
-    "transform": [ "browserify-swap" ]
+    "transform": [
+      "browserify-swap"
+    ]
   },
   "browserify-swap": {
     "production": {
@@ -29,7 +31,7 @@
     "leaflet": "1.0.3",
     "leaflet-contextmenu": "1.2.1",
     "leaflet-loading": "0.1.24",
-    "moment": "2.17.1",
+    "moment": "2.21.0",
     "uglifyify": "3.0.4",
     "flatpickr": "2.3.5"
   },
