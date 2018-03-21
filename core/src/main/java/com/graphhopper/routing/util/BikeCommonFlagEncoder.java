@@ -220,7 +220,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         averageSpeedEnc = new DecimalEncodedValue(prefix + "average_speed", speedBits, 0, speedFactor, speedTwoDirections);
         tpMap.put(averageSpeedEnc.getName(), TagParserFactory.Bike.createAverageSpeed(averageSpeedEnc));
 
-        priorityWayEnc = new DecimalEncodedValue(prefix + "priority", 3, 0, 1, false);
+        priorityWayEnc = new DecimalEncodedValue(prefix + "priority", 3, 0, (double) 1 / PriorityCode.BEST.getValue(), false);
 
         tpMap.put(priorityWayEnc.getName(), new TagParser() {
             @Override

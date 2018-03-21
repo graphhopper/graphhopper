@@ -284,7 +284,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (speed < speedFactor / 2) {
             averageSpeedEnc.setDecimal(false, ints, 0);
             accessEnc.setBool(false, ints, false);
-            // accessEnc.setBool(true, ints, false);
+            accessEnc.setBool(true, ints, false);
         }
 
         if (speed > getMaxSpeed())
