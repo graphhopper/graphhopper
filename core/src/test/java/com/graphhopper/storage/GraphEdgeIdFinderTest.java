@@ -27,6 +27,10 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.Shape;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -62,12 +66,12 @@ public class GraphEdgeIdFinderTest {
                 .prepareIndex();
 
         GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
-        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("0.01,0.005,1", new DefaultEdgeFilter(encoder), 1000 * 1000);
+        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("0.01,0.005,0.005", new DefaultEdgeFilter(encoder), 1000 * 1000);
 
         GHIntHashSet blockedEdges = new GHIntHashSet();
         blockedEdges.add(0);
         assertEquals(blockedEdges, blockArea.blockedEdges);
-        List<Shape> blockedShapes = new ArrayList<>();
+        List<Geometry> blockedShapes = new ArrayList<>();
         assertEquals(blockedShapes, blockArea.blockedShapes);
 
         // big area converts into shapes
@@ -75,7 +79,11 @@ public class GraphEdgeIdFinderTest {
         blockArea = graphFinder.parseBlockArea("0,0,1000", new DefaultEdgeFilter(encoder), 1000 * 1000);
         blockedEdges.clear();
         assertEquals(blockedEdges, blockArea.blockedEdges);
-        blockedShapes.add(new Circle(0, 0, 1000));
+        
+        GeometryFactory geomFact = new GeometryFactory();
+    	Geometry circle = geomFact.createPoint(new Coordinate(0, 0)).buffer(1000);
+      	
+        blockedShapes.add(circle);
         assertEquals(blockedShapes, blockArea.blockedShapes);
     }
 }

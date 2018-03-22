@@ -223,7 +223,7 @@ public class GraphEdgeIdFinder {
                     } else if (splittedObject.length == 3) {
                     	double lat = Double.parseDouble(splittedObject[0]);
                         double lon = Double.parseDouble(splittedObject[1]);
-                        int radius = Integer.parseInt(splittedObject[2]);
+                        double radius = Double.parseDouble(splittedObject[2]);
                         GeometryFactory geomFact = new GeometryFactory();
                     	Geometry circle = geomFact.createPoint(new Coordinate(lat, lon)).buffer(radius);
                       	
