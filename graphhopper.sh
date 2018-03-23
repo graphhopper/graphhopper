@@ -225,10 +225,13 @@ echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 if [ "$ACTION" = "web" ]; then
   export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
 
-  RC_BASE=./web/src/main/webapp
+  if [ $JETTY_PORT != "" ]; then
+    GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$JETTY_PORT"
+  fi
+
   if [ "$RUN_BACKGROUND" = "true" ]; then
     exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
-         -Dgraphhopper.jetty.resourcebase="$RC_BASE" -Dgraphhopper.jetty.port=$JETTY_PORT -Dgraphhopper.jetty.host=$JETTY_HOST \
+         -Dgraphhopper.jetty.resourcebase="$RC_BASE" -Dgraphhopper.jetty.host=$JETTY_HOST \
          $GH_WEB_OPTS \
          -jar "$JAR" server $CONFIG <&- &
     
@@ -239,7 +242,7 @@ if [ "$ACTION" = "web" ]; then
   else
     # TODO how to avoid duplicative command for foreground and background?
     exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
-         -Dgraphhopper.jetty.resourcebase="$RC_BASE" -Dgraphhopper.jetty.port=$JETTY_PORT -Dgraphhopper.jetty.host=$JETTY_HOST \
+         -Dgraphhopper.jetty.resourcebase="$RC_BASE" -Dgraphhopper.jetty.host=$JETTY_HOST \
          $GH_WEB_OPTS \
          -jar "$JAR" server $CONFIG
     # foreground => we never reach this here

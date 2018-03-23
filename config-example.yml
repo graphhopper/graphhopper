@@ -1,7 +1,7 @@
 graphhopper:
 
   # OpenStreetMap input file
-  datareader.file: core/files/monaco.osm.gz
+  # datareader.file: some.pbf
 
   ##### Vehicles #####
 
@@ -137,3 +137,6 @@ server:
     port: 8989
   requestLog:
       appenders: []
+  # For backward compatibility we remove the admin connectors that would be otherwise unprotected (IPFilter only works for server)
+  # To still enable admin connector remove the following:
+  adminConnectors: []
