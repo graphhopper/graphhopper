@@ -99,7 +99,9 @@ public class RealtimeIT {
 
         // But the 6:00 departure of my line is going to skip my departure stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
+                .setGtfsRealtimeVersion("1")
+                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
         feedMessageBuilder.addEntityBuilder()
                 .setId("1")
                 .getTripUpdateBuilder()
@@ -136,7 +138,9 @@ public class RealtimeIT {
 
         // But the 6:00 departure of my line is going to be super-late :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
+                .setGtfsRealtimeVersion("1")
+                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
         feedMessageBuilder.addEntityBuilder()
                 .setId("1")
                 .getTripUpdateBuilder()
@@ -157,6 +161,38 @@ public class RealtimeIT {
     }
 
     @Test
+    public void testCanUseDelayedTripWhenIAmLateToo() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+
+        // I want to go at 6:44
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,46).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
+
+        // But the 6:00 departure of my line is going to be super-late :-(
+        final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
+                .setGtfsRealtimeVersion("1")
+                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
+        feedMessageBuilder.addEntityBuilder()
+                .setId("1")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
+                .addStopTimeUpdateBuilder()
+                .setScheduleRelationship(SCHEDULED)
+                .setStopSequence(3)
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(120).build());
+
+        GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
+
+        assertEquals("I am two minutes late for my bus, but the bus is two minutes late, too, so I catch it!", time(0, 5), response.getBest().getTime(), 0.1);
+    }
+
+    @Test
     public void testSkipArrivalStop() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
@@ -171,7 +207,9 @@ public class RealtimeIT {
 
         // But the 6:00 departure of my line is going to skip my arrival stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
+                .setGtfsRealtimeVersion("1")
+                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
         feedMessageBuilder.addEntityBuilder()
                 .setId("1")
                 .getTripUpdateBuilder()
@@ -205,7 +243,9 @@ public class RealtimeIT {
 
         // But the 6:00 departure of my line is going to skip my transfer stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
+                .setGtfsRealtimeVersion("1")
+                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
         feedMessageBuilder.addEntityBuilder()
                 .setId("1")
                 .getTripUpdateBuilder()
@@ -427,7 +467,9 @@ public class RealtimeIT {
     @Test
     public void testBlockTripSkipsStop() {
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
+                .setGtfsRealtimeVersion("1")
+                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
         feedMessageBuilder.addEntityBuilder()
                 .setId("1")
                 .getTripUpdateBuilder()

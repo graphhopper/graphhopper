@@ -147,9 +147,14 @@ class MultiCriteriaLabelSetting {
                             || reverse && edgeType == GtfsStorage.EdgeType.ALIGHT && label.residualDelay < explorer.getDelayFromAlightEdge(edge, label.currentTime);
                     long residualDelay;
                     if (!reverse) {
-                        residualDelay = Math.max(0, label.residualDelay - explorer.calcTravelTimeMillis(edge, label.currentTime));
-                        if (edgeType == GtfsStorage.EdgeType.ALIGHT) {
-                            residualDelay = explorer.getDelayFromAlightEdge(edge, label.currentTime);
+                        if (edgeType == GtfsStorage.EdgeType.WAIT || edgeType == GtfsStorage.EdgeType.TRANSFER) {
+                            residualDelay = Math.max(0, label.residualDelay - explorer.calcTravelTimeMillis(edge, label.currentTime));
+                        } else if (edgeType == GtfsStorage.EdgeType.ALIGHT) {
+                            residualDelay = label.residualDelay + explorer.getDelayFromAlightEdge(edge, label.currentTime);
+                        } else if (edgeType == GtfsStorage.EdgeType.BOARD) {
+                            residualDelay = -explorer.getDelayFromBoardEdge(edge, label.currentTime);
+                        } else {
+                            residualDelay = label.residualDelay;
                         }
                     } else {
                         if (edgeType == GtfsStorage.EdgeType.WAIT || edgeType == GtfsStorage.EdgeType.TRANSFER) {

@@ -395,6 +395,40 @@ class GtfsReader {
         arrivalNodes.add(arrivalNode);
     }
 
+    int addDelayedBoardEdge(ZoneId zoneId, GtfsRealtime.TripDescriptor tripDescriptor, int stopSequence, int departureTime, int departureNode, BitSet validOnDay) {
+        Trip trip = feed.trips.get(tripDescriptor.getTripId());
+        final int departureTimelineNode = i++;
+        StopTime stopTime = feed.stop_times.get(new Fun.Tuple2(tripDescriptor.getTripId(), stopSequence));
+        Stop stop = feed.stops.get(stopTime.stop_id);
+        nodeAccess.setNode(departureTimelineNode, stop.stop_lat, stop.stop_lon);
+        nodeAccess.setAdditionalNodeField(departureTimelineNode, NodeType.INTERNAL_PT.ordinal());
+        times.put(departureTimelineNode, departureTime);
+        departureTimelineNodes.put(stopTime.stop_id, new TimelineNodeIdWithTripId(departureTimelineNode, tripDescriptor.getTripId(), trip.route_id));
+
+        int dayShift = departureTime / (24 * 60 * 60);
+        GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(validOnDay, dayShift), zoneId, startDate);
+        int validityId;
+        if (gtfsStorage.getOperatingDayPatterns().containsKey(validOn)) {
+            validityId = gtfsStorage.getOperatingDayPatterns().get(validOn);
+        } else {
+            validityId = gtfsStorage.getOperatingDayPatterns().size();
+            gtfsStorage.getOperatingDayPatterns().put(validOn, validityId);
+        }
+
+        EdgeIteratorState boardEdge = graph.edge(
+                departureTimelineNode,
+                departureNode,
+                0.0,
+                false);
+        boardEdge.setName(getRouteName(feed, trip));
+        setEdgeType(boardEdge, GtfsStorage.EdgeType.BOARD);
+        gtfsStorage.getStopSequences().put(boardEdge.getEdge(), stopSequence);
+        gtfsStorage.getTripDescriptors().put(boardEdge.getEdge(), tripDescriptor.toByteArray());
+        boardEdge.setFlags(encoder.setValidityId(boardEdge.getFlags(), validityId));
+        boardEdge.setFlags(encoder.setTransfers(boardEdge.getFlags(), 1));
+        return boardEdge.getEdge();
+    }
+
     private void wireUpAndAndConnectArrivalTimeline(Stop toStop, String routeId, int stopExitNode, NavigableSet<Fun.Tuple2<Integer, Integer>> timeNodes) {
         ZoneId zoneId = ZoneId.of(feed.agency.get(feed.routes.get(routeId).agency_id).agency_timezone);
         int time = 0;
