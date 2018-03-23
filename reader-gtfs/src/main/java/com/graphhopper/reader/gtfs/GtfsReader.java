@@ -52,6 +52,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
@@ -279,7 +280,7 @@ class GtfsReader {
     }
 
     private void addTrips(ZoneId zoneId, List<TripWithStopTimes> trips, int time, boolean frequencyBased) {
-        List<Integer> arrivalNodes = new ArrayList<>();
+        List<TripWithStopTimeAndArrivalNode> arrivalNodes = new ArrayList<>();
         for (TripWithStopTimes trip : trips) {
             GtfsRealtime.TripDescriptor.Builder tripDescriptor = GtfsRealtime.TripDescriptor.newBuilder()
                     .setTripId(trip.trip.trip_id)
@@ -291,7 +292,12 @@ class GtfsReader {
         }
     }
 
-    void addTrip(ZoneId zoneId, int time, List<Integer> arrivalNodes, GtfsReader.TripWithStopTimes trip, GtfsRealtime.TripDescriptor tripDescriptor) {
+    private static class TripWithStopTimeAndArrivalNode {
+        TripWithStopTimes tripWithStopTimes;
+        int arrivalNode;
+    }
+
+    void addTrip(ZoneId zoneId, int time, List<TripWithStopTimeAndArrivalNode> arrivalNodes, GtfsReader.TripWithStopTimes trip, GtfsRealtime.TripDescriptor tripDescriptor) {
         IntArrayList boardEdges = new IntArrayList();
         IntArrayList alightEdges = new IntArrayList();
         StopTime prev = null;
@@ -386,13 +392,16 @@ class GtfsReader {
             setEdgeType(dwellEdge, GtfsStorage.EdgeType.DWELL);
             dwellEdge.setFlags(encoder.setTime(dwellEdge.getFlags(), stopTime.departure_time - stopTime.arrival_time));
             if (prev == null) {
-                insertInboundBlockTransfers(arrivalNodes, tripDescriptor, departureNode, stopTime, stop, validityId);
+                insertInboundBlockTransfers(arrivalNodes, tripDescriptor, departureNode, stopTime, stop, validOn, zoneId);
             }
             prev = stopTime;
         }
         gtfsStorage.getBoardEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor.getTripId(), tripDescriptor.getStartTime()), boardEdges.toArray());
         gtfsStorage.getAlightEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor.getTripId(), tripDescriptor.getStartTime()), alightEdges.toArray());
-        arrivalNodes.add(arrivalNode);
+        TripWithStopTimeAndArrivalNode tripWithStopTimeAndArrivalNode = new TripWithStopTimeAndArrivalNode();
+        tripWithStopTimeAndArrivalNode.tripWithStopTimes = trip;
+        tripWithStopTimeAndArrivalNode.arrivalNode = arrivalNode;
+        arrivalNodes.add(tripWithStopTimeAndArrivalNode);
     }
 
     int addDelayedBoardEdge(ZoneId zoneId, GtfsRealtime.TripDescriptor tripDescriptor, int stopSequence, int departureTime, int departureNode, BitSet validOnDay) {
@@ -489,31 +498,45 @@ class GtfsReader {
         }
     }
 
-    private void insertInboundBlockTransfers(List<Integer> arrivalNodes, GtfsRealtime.TripDescriptor tripDescriptor, int departureNode, StopTime stopTime, Stop stop, int validityId) {
+    private void insertInboundBlockTransfers(List<TripWithStopTimeAndArrivalNode> arrivalNodes, GtfsRealtime.TripDescriptor tripDescriptor, int departureNode, StopTime stopTime, Stop stop, GtfsStorage.Validity validOn, ZoneId zoneId) {
+        BitSet accumulatorValidity = new BitSet(validOn.validity.size());
+        accumulatorValidity.or(validOn.validity);
         EdgeIteratorState edge;
-        for (int lastTripArrivalNode : arrivalNodes) {
-            int dwellTime = times.get(departureNode) - times.get(lastTripArrivalNode);
-            if (dwellTime >= 0) {
+        ListIterator<TripWithStopTimeAndArrivalNode> li = arrivalNodes.listIterator(arrivalNodes.size());
+        while(li.hasPrevious() && accumulatorValidity.cardinality() > 0) {
+            TripWithStopTimeAndArrivalNode lastTrip = li.previous();
+            int dwellTime = times.get(departureNode) - times.get(lastTrip.arrivalNode);
+            if (dwellTime >= 0 && accumulatorValidity.intersects(lastTrip.tripWithStopTimes.validOnDay)) {
+                BitSet blockTransferValidity = new BitSet(validOn.validity.size());
+                blockTransferValidity.or(validOn.validity);
+                blockTransferValidity.and(accumulatorValidity);
+                GtfsStorage.Validity blockTransferValidOn = new GtfsStorage.Validity(blockTransferValidity, zoneId, startDate);
+                int blockTransferValidityId;
+                if (gtfsStorage.getOperatingDayPatterns().containsKey(blockTransferValidOn)) {
+                    blockTransferValidityId = gtfsStorage.getOperatingDayPatterns().get(blockTransferValidOn);
+                } else {
+                    blockTransferValidityId = gtfsStorage.getOperatingDayPatterns().size();
+                    gtfsStorage.getOperatingDayPatterns().put(blockTransferValidOn, blockTransferValidityId);
+                }
                 nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
                 nodeAccess.setAdditionalNodeField(i-1, NodeType.INTERNAL_PT.ordinal());
-
                 edge = graph.edge(
-                        lastTripArrivalNode,
+                        lastTrip.arrivalNode,
                         i-1,
                         0.0,
                         false);
                 setEdgeType(edge, GtfsStorage.EdgeType.TRANSFER);
                 edge.setFlags(encoder.setTime(edge.getFlags(), dwellTime));
-
                 edge = graph.edge(
                         i-1,
                         departureNode,
                         0.0,
                         false);
                 setEdgeType(edge, GtfsStorage.EdgeType.BOARD);
-                edge.setFlags(encoder.setValidityId(edge.getFlags(), validityId));
+                edge.setFlags(encoder.setValidityId(edge.getFlags(), blockTransferValidityId));
                 gtfsStorage.getStopSequences().put(edge.getEdge(), stopTime.stop_sequence);
                 gtfsStorage.getTripDescriptors().put(edge.getEdge(), tripDescriptor.toByteArray());
+                accumulatorValidity.andNot(lastTrip.tripWithStopTimes.validOnDay);
             }
         }
     }

@@ -316,7 +316,9 @@ public class GraphHopperGtfsIT {
 
 
         GHResponse route = graphHopper.route(ghRequest);
-        Assert.assertTrue(route.getAll().isEmpty()); // No service on monday morning, and we cannot spend the night at stations yet
+        assertFalse(route.getAll().isEmpty());
+        // On Mondays, there is only a complicated evening trip.
+        assertEquals("Expected travel time == scheduled travel time", time(22, 0), route.getBest().getTime());
 
         ghRequest = new GHRequest(
                 FROM_LAT, FROM_LON,
@@ -346,6 +348,37 @@ public class GraphHopperGtfsIT {
         assertEquals("Two legs: pt, pt, but the two pt legs are in one vehicle, so...", 2, response.getBest().getLegs().size());
         assertEquals("...one boarding instruction", 1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_START_TRIP).count());
         assertEquals("...and one alighting instruction", 1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_END_TRIP).count());
+    }
+
+    @Test
+    public void testBlockWithComplicatedValidityIntersections() {
+        final double FROM_LAT = 36.868446, FROM_LON = -116.784582; // BEATTY_AIRPORT stop
+        final double TO_LAT = 36.641496, TO_LON = -116.40094; // AMV stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,18,0).atZone(zoneId).toInstant());
+        GHResponse response = graphHopper.route(ghRequest);
+        PathWrapper mondayTrip = response.getBest();
+        assertEquals("Monday trip has no transfers", 0, mondayTrip.getNumChanges());
+        assertEquals("Monday trip has 3 legs", 3, mondayTrip.getLegs().size());
+        assertEquals("FUNNY_BLOCK_AB1", (((Trip.PtLeg) mondayTrip.getLegs().get(0)).trip_id));
+        assertEquals("FUNNY_BLOCK_BFC1", (((Trip.PtLeg) mondayTrip.getLegs().get(1)).trip_id));
+        assertEquals("FUNNY_BLOCK_FCAMV1", (((Trip.PtLeg) mondayTrip.getLegs().get(2)).trip_id));
+
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,7,18,0).atZone(zoneId).toInstant());
+        response = graphHopper.route(ghRequest);
+        PathWrapper sundayTrip = response.getBest();
+        assertEquals("Sunday trip has no transfers", 0, sundayTrip.getNumChanges());
+        assertEquals("Sunday trip has 2 legs", 2, sundayTrip.getLegs().size());
+        assertEquals("FUNNY_BLOCK_AB1", (((Trip.PtLeg) sundayTrip.getLegs().get(0)).trip_id));
+        // On Sundays, the second trip of the block does not run. Here, it's okay if in the response
+        // it looks like we are teleporting -- this case is unlikely, but only revenue trips should be
+        // included in the response. The test case still demonstrates that these mechanics are working
+        // correctly, so I'm not sure we need a more realistic one. The more realistic case would
+        // have a _different_ revenue trip here in the middle instead of _none_.
+        assertEquals("FUNNY_BLOCK_FCAMV1", (((Trip.PtLeg) sundayTrip.getLegs().get(1)).trip_id));
     }
 
     @Test
