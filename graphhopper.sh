@@ -222,20 +222,20 @@ packageJar
 
 echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 
-if [ "$ACTION" = "web" ]; then
+if [[ "$ACTION" = "web" ]]; then
   export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
 
-  if [ $JETTY_PORT != "" ]; then
+  if [[ "$JETTY_PORT" != "" ]]; then
     GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$JETTY_PORT"
   fi
 
-  if [ "$RUN_BACKGROUND" = "true" ]; then
+  if [[ "$RUN_BACKGROUND" == "true" ]]; then
     exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
          -Dgraphhopper.jetty.resourcebase="$RC_BASE" -Dgraphhopper.jetty.host=$JETTY_HOST \
          $GH_WEB_OPTS \
          -jar "$JAR" server $CONFIG <&- &
     
-    if [ "$GH_PID_FILE" != "" ]; then
+    if [[ "$GH_PID_FILE" != "" ]]; then
        echo $! > $GH_PID_FILE
     fi
     exit $?
