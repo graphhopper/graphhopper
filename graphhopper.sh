@@ -17,9 +17,9 @@ echo "## using java $vers from $JAVA_HOME"
 
 function printBashUsage {
   echo "Usage:"
-  echo "-h | --help: display this message"
+  echo "-h | --help:   display this message"
   echo "-a | --action: must be one the following actions:"
-  echo "     --action import      creates the graph cache used for later faster starts"
+  echo "     --action import      creates the graph cache only, used for later faster starts"
   echo "     --action web         starts a local server for user access at localhost:8989 and API access at localhost:8989/route"
   echo "     --action build       creates the graphhopper web JAR"
   echo "     --action clean       removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)"
@@ -28,13 +28,13 @@ function printBashUsage {
   echo "-i | --input:       path to the input map file or name of the file to download"
   echo "-ig| --gtfs:        path to the input file for public transit routing (GTFS format)"
   echo "-o | --graph-cache: directory for graph cache output"
-  echo "-p | --profiles:    specify comma separated list of vehicle profiles"
+  echo "-p | --profiles:    specify a comma separated list of vehicle profiles"
   echo "-c | --config:      specify the application configuration"
-  echo "-host:              to which host the service should be bound"
+  echo "-host:              specify to which host the service should be bound"
   echo "-port:              start web server at specific port"
-  echo "-jar:               changes the jar file"
-  echo "-fd| --force-download: force the download of the data file if needed"
-  echo "-d | --run-background: run application in background"
+  echo "-jar:               specify the jar file (useful if you want to reuse this script for custom builds)"
+  echo "-fd| --force-download: force the download of the OSM data file if needed"
+  echo "-d | --run-background: run the application in background"
 }
 
 while [ ! -z $1 ]; do
@@ -42,7 +42,7 @@ while [ ! -z $1 ]; do
     -h|--help) printBashUsage
       exit 0;;
     -fd|--force-download) FORCE_DWN=1; shift 1;;
-    clean) ACTION=clean; shift 1;;
+    -clean|clean) ACTION=clean; shift 1;;
     -a|--action) ACTION=$2; shift 2;;
     -i|--input) FILE="$2"; shift 2;;
     -ig|--gtfs-input) GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.gtfs.file=$2"; shift 2;;
