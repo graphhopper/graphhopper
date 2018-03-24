@@ -50,7 +50,7 @@ while [ ! -z $1 ]; do
     -port) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$2"; shift 2;;
     -host) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].bindHost=$2"; shift 2;;
     -c|--config) CONFIG="$2"; shift 2;;
-    -d|--run-background) RUN_BACKGROUND=$2; shift 2;;
+    -d|--run-background) RUN_BACKGROUND=true; shift 1;;
     -o|--graph-cache) GRAPH="$2"; shift 2;;
     -jar) JAR="$2"; shift 2;;
     -*|--*) echo "Option unknown: $1"
