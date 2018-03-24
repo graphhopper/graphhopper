@@ -233,7 +233,6 @@ echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 if [[ "$ACTION" = "web" ]]; then
   export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
 
- echo $GH_WEB_OPTS
   if [[ "$RUN_BACKGROUND" == "true" ]]; then
     exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
                  $GH_WEB_OPTS -jar "$JAR" server $CONFIG <&- &
