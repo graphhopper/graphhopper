@@ -25,12 +25,16 @@ function printBashUsage {
   echo "     --action clean       removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)"
   echo "     --action measurement does performance analysis of the current source version via random routes (Measurement class)"
   echo "     --action torture     can be used to test real world routes via feeding graphhopper logs into a GraphHopper system (Torture class)"
-  echo "-d | --datareader.file: path to the map file or name of the file to download"
-  echo "-o | -gc | --graph-cache: directory for graph cache output"
-  echo "-c | --config: app configuration"
+  echo "-i | --input:       path to the input map file or name of the file to download"
+  echo "-ig| --gtfs:        path to the input file for public transit routing (GTFS format)"
+  echo "-o | --graph-cache: directory for graph cache output"
+  echo "-p | --profiles:    specify comma separated list of vehicle profiles"
+  echo "-c | --config:      specify the application configuration"
+  echo "-host:              to which host the service should be bound"
+  echo "-port:              start web server at specific port"
+  echo "-jar:               changes the jar file"
   echo "-fd| --force-download: force the download of the data file if needed"
-  echo "-rb| --run-background: run app in background"
-  echo "-jar: changes the jar file"
+  echo "-d | --run-background: run application in background"
 }
 
 while [ ! -z $1 ]; do
@@ -40,10 +44,14 @@ while [ ! -z $1 ]; do
     -fd|--force-download) FORCE_DWN=1; shift 1;;
     clean) ACTION=clean; shift 1;;
     -a|--action) ACTION=$2; shift 2;;
-    -f|--datareader.file) FILE="$2"; shift 2;;
+    -i|--input) FILE="$2"; shift 2;;
+    -ig|--gtfs-input) GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.gtfs.file=$2"; shift 2;;
+    -p|--vehicle-profiles) GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.graph.flag_encoders=$2"; shift 2;;
+    -port) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$2"; shift 2;;
+    -host) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].bindHost=$2"; shift 2;;
     -c|--config) CONFIG="$2"; shift 2;;
-    -rb|--run-background) RUN_BACKGROUND=$2; shift 2;;
-    -o|-gc|--graph-cache) GRAPH="$2"; shift 2;;
+    -d|--run-background) RUN_BACKGROUND=$2; shift 2;;
+    -o|--graph-cache) GRAPH="$2"; shift 2;;
     -jar) JAR="$2"; shift 2;;
     -*|--*) echo "Option unknown: $1"
         echo
@@ -225,15 +233,10 @@ echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 if [[ "$ACTION" = "web" ]]; then
   export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
 
-  if [[ "$JETTY_PORT" != "" ]]; then
-    GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$JETTY_PORT"
-  fi
-
+ echo $GH_WEB_OPTS
   if [[ "$RUN_BACKGROUND" == "true" ]]; then
     exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
-         -Dgraphhopper.jetty.resourcebase="$RC_BASE" -Dgraphhopper.jetty.host=$JETTY_HOST \
-         $GH_WEB_OPTS \
-         -jar "$JAR" server $CONFIG <&- &
+                 $GH_WEB_OPTS -jar "$JAR" server $CONFIG <&- &
     
     if [[ "$GH_PID_FILE" != "" ]]; then
        echo $! > $GH_PID_FILE
@@ -242,15 +245,13 @@ if [[ "$ACTION" = "web" ]]; then
   else
     # TODO how to avoid duplicative command for foreground and background?
     exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
-         -Dgraphhopper.jetty.resourcebase="$RC_BASE" -Dgraphhopper.jetty.host=$JETTY_HOST \
-         $GH_WEB_OPTS \
-         -jar "$JAR" server $CONFIG
+                 $GH_WEB_OPTS -jar "$JAR" server $CONFIG
     # foreground => we never reach this here
   fi
 
 elif [ "$ACTION" = "import" ]; then
- "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" $GH_IMPORT_OPTS \
-         -jar "$JAR" import $CONFIG
+ "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \ 
+         $GH_IMPORT_OPTS -jar "$JAR" import $CONFIG
 
 elif [ "$ACTION" = "torture" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $@
