@@ -28,15 +28,19 @@ function printBashUsage {
   echo "-i | --input:       path to the input map file or name of the file to download"
   echo "-ig| --gtfs:        path to the input file for public transit routing (GTFS format)"
   echo "-o | --graph-cache: directory for graph cache output"
-  echo "-p | --profiles:    specify a comma separated list of vehicle profiles"
-  echo "-c | --config:      specify the application configuration"
-  echo "-host:              specify to which host the service should be bound"
-  echo "-port:              start web server at specific port"
-  echo "-jar:               specify the jar file (useful if you want to reuse this script for custom builds)"
+  echo "-v | --profiles:    a comma separated list of vehicle profiles"
+  echo "-c | --config:      the application configuration"
+  echo "--host:        specify to which host the service should be bound"
+  echo "--port:        start web server at specific port"
   echo "-fd| --force-download: force the download of the OSM data file if needed"
   echo "-d | --run-background: run the application in background"
+  echo "-v | --version: print version"
+  echo "-jar:               specify the jar file (useful if you want to reuse this script for custom builds)"
 }
 
+VERSION=$(grep '<revision' pom.xml | cut -d'>' -f2 | cut -d'<' -f1)
+
+# one or two character parameters have one minus character'-' all longer parameters have two minus characters '--'
 while [ ! -z $1 ]; do
   case $1 in
     -h|--help) printBashUsage
@@ -45,15 +49,19 @@ while [ ! -z $1 ]; do
     -clean|clean) ACTION=clean; shift 1;;
     -a|--action) ACTION=$2; shift 2;;
     -i|--input) FILE="$2"; shift 2;;
-    -ig|--gtfs-input) GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.gtfs.file=$2"; shift 2;;
-    -p|--vehicle-profiles) GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.graph.flag_encoders=$2"; shift 2;;
-    -port) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$2"; shift 2;;
-    -host) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].bindHost=$2"; shift 2;;
+    -p|--profiles) GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.graph.flag_encoders=$2"; shift 2;;
+    --port) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$2"; shift 2;;
+    --host) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].bindHost=$2"; shift 2;;
     -c|--config) CONFIG="$2"; shift 2;;
     -d|--run-background) RUN_BACKGROUND=true; shift 1;;
     -o|--graph-cache) GRAPH="$2"; shift 2;;
-    -jar) JAR="$2"; shift 2;;
-    -*|--*) echo "Option unknown: $1"
+    --jar) JAR="$2"; shift 2;;
+    -v|--version) echo $VERSION
+    	exit 2;;
+    # forward parameter via replacing first two characters of the key with -Dgraphhopper.
+    --*)
+       GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.${1:2}=$2"; shift 2;;
+    -*) echo "Option unknown: $1"
         echo
         printBashUsage
 	exit 2;;
@@ -205,7 +213,6 @@ else
    OSM_FILE=
 fi
 
-VERSION=$(grep '<revision' pom.xml | cut -d'>' -f2 | cut -d'<' -f1)
 : "${JAR:=web/target/graphhopper-web-$VERSION.jar}"
 : "${GRAPH:=$DATADIR/$NAME-gh}"
 
