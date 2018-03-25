@@ -151,7 +151,7 @@ final class GraphExplorer {
         GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
         if (edgeType == GtfsStorage.EdgeType.BOARD || edgeType == GtfsStorage.EdgeType.ALIGHT) {
             final int validityId = flagEncoder.getValidityId(edge.getFlags());
-            final GtfsStorage.Validity validity = gtfsStorage.getValidities().get(validityId);
+            final GtfsStorage.Validity validity = realtimeFeed.getValidity(validityId);
             final int trafficDay = (int) ChronoUnit.DAYS.between(validity.start, Instant.ofEpochMilli(instant).atZone(validity.zoneId).toLocalDate());
             return trafficDay >= 0 && validity.validity.get(trafficDay);
         } else {

@@ -325,6 +325,50 @@ public class RealtimeIT {
     }
 
     @Test
+    public void testExtraTripWorksOnlyOnSpecifiedDay() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+
+        // I want to go at 6:45, but tomorrow
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,2,6,45).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
+        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
+
+        final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
+                .setGtfsRealtimeVersion("1")
+                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
+
+        // Today, there is an extra trip right at 6:45, but that doesn't concern me.
+        final GtfsRealtime.TripUpdate.Builder extraTripUpdate = feedMessageBuilder.addEntityBuilder()
+                .setId("2")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setScheduleRelationship(ADDED).setTripId("EXTRA").setRouteId("CITY").setStartTime("06:45:00"));
+        extraTripUpdate
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(1)
+                .setStopId("NADAV")
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45).atZone(zoneId).toEpochSecond()))
+                .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45).atZone(zoneId).toEpochSecond()));
+        extraTripUpdate
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(2)
+                .setStopId("BEATTY_AIRPORT")
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,15).atZone(zoneId).toEpochSecond()))
+                .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,15).atZone(zoneId).toEpochSecond()));
+
+
+        GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
+        assertEquals(1, response.getAll().size());
+
+        assertEquals("There is an extra trip at 6:45 tomorrow, but that doesn't concern me today.", time(1, 5), response.getBest().getTime(), 0.1);
+    }
+
+    @Test
     public void testZeroDelay() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop

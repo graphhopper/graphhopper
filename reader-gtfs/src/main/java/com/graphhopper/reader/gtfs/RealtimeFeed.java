@@ -77,9 +77,10 @@ public class RealtimeFeed {
     private final GtfsStorage staticGtfs;
     private final Map<Integer, byte[]> additionalTripDescriptors;
     private final Map<Integer, Integer> stopSequences;
+    private final Map<Integer, GtfsStorage.Validity> validities;
 
     private RealtimeFeed(GtfsStorage staticGtfs, GTFSFeed feed, Agency agency, GtfsRealtime.FeedMessage feedMessage, IntHashSet blockedEdges,
-                         IntLongHashMap delaysForBoardEdges, IntLongHashMap delaysForAlightEdges, List<VirtualEdgeIteratorState> additionalEdges, Map<Integer, byte[]> tripDescriptors, Map<Integer, Integer> stopSequences) {
+                         IntLongHashMap delaysForBoardEdges, IntLongHashMap delaysForAlightEdges, List<VirtualEdgeIteratorState> additionalEdges, Map<Integer, byte[]> tripDescriptors, Map<Integer, Integer> stopSequences, Map<GtfsStorage.Validity, Integer> operatingDayPatterns) {
         this.staticGtfs = staticGtfs;
         this.staticFeed = feed;
         this.agency = agency;
@@ -90,10 +91,15 @@ public class RealtimeFeed {
         this.additionalEdges = additionalEdges;
         this.additionalTripDescriptors = tripDescriptors;
         this.stopSequences = stopSequences;
+        Map<Integer, GtfsStorage.Validity> reverseOperatingDayPatterns = new HashMap<>();
+        for (Map.Entry<GtfsStorage.Validity, Integer> entry : operatingDayPatterns.entrySet()) {
+            reverseOperatingDayPatterns.put(entry.getValue(), entry.getKey());
+        }
+        this.validities = Collections.unmodifiableMap(reverseOperatingDayPatterns);
     }
 
     public static RealtimeFeed empty(GtfsStorage staticGtfs) {
-        return new RealtimeFeed(staticGtfs, staticGtfs.getGtfsFeeds().get("gtfs_0"), null, null, new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap());
+        return new RealtimeFeed(staticGtfs, staticGtfs.getGtfsFeeds().get("gtfs_0"), null, null, new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), staticGtfs.getOperatingDayPatterns());
     }
 
     public static RealtimeFeed fromProtobuf(Graph graph, GtfsStorage staticGtfs, PtFlagEncoder encoder, GtfsRealtime.FeedMessage feedMessage) {
@@ -246,7 +252,7 @@ public class RealtimeFeed {
             }
         };
         Map<Integer, String> routes = new HashMap<>();
-        Map<GtfsStorage.Validity, Integer> operatingDayPatterns = new HashMap<>();
+        Map<GtfsStorage.Validity, Integer> operatingDayPatterns = new HashMap<>(staticGtfs.getOperatingDayPatterns());
         Map<Integer, byte[]> tripDescriptors = new HashMap<>();
         Map<Integer, Integer> stopSequences = new HashMap<>();
         Map<String, int[]> boardEdgesForTrip = new HashMap<>();
@@ -380,7 +386,7 @@ public class RealtimeFeed {
                     gtfsReader.addTrip(ZoneId.of(agency.agency_timezone), 0, new ArrayList<>(), tripWithStopTimes, tripUpdate.getTrip());
                 });
         gtfsReader.wireUpStops();
-        return new RealtimeFeed(staticGtfs, feed, agency, feedMessage, blockedEdges, delaysForBoardEdges, delaysForAlightEdges, additionalEdges, tripDescriptors, stopSequences);
+        return new RealtimeFeed(staticGtfs, feed, agency, feedMessage, blockedEdges, delaysForBoardEdges, delaysForAlightEdges, additionalEdges, tripDescriptors, stopSequences, operatingDayPatterns);
     }
 
     boolean isBlocked(int edgeId) {
@@ -551,6 +557,10 @@ public class RealtimeFeed {
         } else {
             return stopTime;
         }
+    }
+
+    public GtfsStorage.Validity getValidity(int validityId) {
+        return validities.get(validityId);
     }
 
 }
