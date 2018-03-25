@@ -26,7 +26,6 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PointList;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -47,7 +46,6 @@ final class GraphExplorer {
     private final RealtimeFeed realtimeFeed;
     private final boolean reverse;
     private final PtTravelTimeWeighting weighting;
-    private final PointList extraNodes;
     private final List<EdgeIteratorState> extraEdges = new ArrayList<>();
     private final ArrayListMultimap<Integer, VirtualEdgeIteratorState> extraEdgesBySource = ArrayListMultimap.create();
     private final ArrayListMultimap<Integer, VirtualEdgeIteratorState> extraEdgesByDestination = ArrayListMultimap.create();
@@ -55,7 +53,7 @@ final class GraphExplorer {
     private final boolean walkOnly;
 
 
-    GraphExplorer(Graph graph, PtTravelTimeWeighting weighting, PtFlagEncoder flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, PointList extraNodes, List<VirtualEdgeIteratorState> extraEdges, boolean walkOnly) {
+    GraphExplorer(Graph graph, PtTravelTimeWeighting weighting, PtFlagEncoder flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, List<VirtualEdgeIteratorState> extraEdges, boolean walkOnly) {
         this.graph = graph;
         this.edgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, reverse, !reverse));
         this.flagEncoder = flagEncoder;
@@ -63,7 +61,6 @@ final class GraphExplorer {
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
         this.reverse = reverse;
-        this.extraNodes = extraNodes;
         this.extraEdges.addAll(extraEdges);
         for (VirtualEdgeIteratorState extraEdge : extraEdges) {
             if (extraEdge == null) {
@@ -200,12 +197,6 @@ final class GraphExplorer {
             if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK && !reverse) {
                 if (secondsOnTrafficDay(edgeIterator, label.currentTime) > flagEncoder.getTime(edgeIterator.getFlags())) {
                     return false;
-                } else {
-                    if (foundEnteredTimeExpandedNetworkEdge) {
-                        return false;
-                    } else {
-                        foundEnteredTimeExpandedNetworkEdge = true;
-                    }
                 }
             } else if (edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && reverse) {
                 if (secondsOnTrafficDay(edgeIterator, label.currentTime) < flagEncoder.getTime(edgeIterator.getFlags())) {

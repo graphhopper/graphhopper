@@ -251,7 +251,6 @@ public class RealtimeFeed {
                 throw new RuntimeException();
             }
         };
-        Map<Integer, String> routes = new HashMap<>();
         Map<GtfsStorage.Validity, Integer> operatingDayPatterns = new HashMap<>(staticGtfs.getOperatingDayPatterns());
         Map<Integer, byte[]> tripDescriptors = new HashMap<>();
         Map<Integer, Integer> stopSequences = new HashMap<>();
@@ -314,7 +313,7 @@ public class RealtimeFeed {
 
             @Override
             public Map<Integer, String> getRoutes() {
-                return routes;
+                return staticGtfs.getRoutes();
             }
         };
         final GtfsReader gtfsReader = new GtfsReader(feedKey, overlayGraph, gtfsStorage, encoder, null);
@@ -385,7 +384,7 @@ public class RealtimeFeed {
                     GtfsReader.TripWithStopTimes tripWithStopTimes = new GtfsReader.TripWithStopTimes(trip, stopTimes, validOnDay, Collections.emptySet(), Collections.emptySet());
                     gtfsReader.addTrip(ZoneId.of(agency.agency_timezone), 0, new ArrayList<>(), tripWithStopTimes, tripUpdate.getTrip());
                 });
-        gtfsReader.wireUpStops();
+        gtfsReader.wireUpAdditionalDepartures(ZoneId.of(agency.agency_timezone));
         return new RealtimeFeed(staticGtfs, feed, agency, feedMessage, blockedEdges, delaysForBoardEdges, delaysForAlightEdges, additionalEdges, tripDescriptors, stopSequences, operatingDayPatterns);
     }
 
