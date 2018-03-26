@@ -17,7 +17,9 @@ echo "## using java $vers from $JAVA_HOME"
 
 function printBashUsage {
   echo "Usage:"
-  echo "-h | --help:   display this message"
+  echo "-h | --help:    display this message"
+  echo "-v | --version: print version"
+  echo "-c | --config:  the application configuration"
   echo "-a | --action: must be one the following actions:"
   echo "     --action import      creates the graph cache only, used for later faster starts"
   echo "     --action web         starts a local server for user access at localhost:8989 and API access at localhost:8989/route"
@@ -29,13 +31,11 @@ function printBashUsage {
   echo "-ig| --gtfs:        path to the input file for public transit routing (GTFS format)"
   echo "-o | --graph-cache: directory for graph cache output"
   echo "-v | --profiles:    a comma separated list of vehicle profiles"
-  echo "-c | --config:      the application configuration"
-  echo "--host:        specify to which host the service should be bound"
-  echo "--port:        start web server at specific port"
+  echo "--host:             specify to which host the service should be bound"
+  echo "--port:             start web server at specific port"
+  echo "--jar:              specify the jar file (useful if you want to reuse this script for custom builds)"
   echo "-fd| --force-download: force the download of the OSM data file if needed"
-  echo "-d | --run-background: run the application in background"
-  echo "-v | --version: print version"
-  echo "-jar:               specify the jar file (useful if you want to reuse this script for custom builds)"
+  echo "-d | --run-background: run the application in background (detach)"
 }
 
 VERSION=$(grep '<revision' pom.xml | cut -d'>' -f2 | cut -d'<' -f1)
@@ -52,10 +52,10 @@ while [ ! -z $1 ]; do
     -p|--profiles) GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.graph.flag_encoders=$2"; shift 2;;
     --port) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$2"; shift 2;;
     --host) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].bindHost=$2"; shift 2;;
+    --jar) JAR="$2"; shift 2;;
     -c|--config) CONFIG="$2"; shift 2;;
     -d|--run-background) RUN_BACKGROUND=true; shift 1;;
     -o|--graph-cache) GRAPH="$2"; shift 2;;
-    --jar) JAR="$2"; shift 2;;
     -v|--version) echo $VERSION
     	exit 2;;
     # forward parameter via replacing first two characters of the key with -Dgraphhopper.
