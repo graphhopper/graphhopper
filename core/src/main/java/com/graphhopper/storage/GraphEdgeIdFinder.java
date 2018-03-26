@@ -194,8 +194,8 @@ public class GraphEdgeIdFinder {
                 	    	coords[j] =  new Coordinate(Double.parseDouble(coordXY[0]), Double.parseDouble(coordXY[1]));
                 	    }
                 	    Polygon geom = gf.createPolygon(gf.createLinearRing(coords), null);
-                	    
-                        if (geom.getArea() > useEdgeIdsUntilAreaSize)
+                	    double polygonArea = geom.getArea();
+                        if (polygonArea > useEdgeIdsUntilAreaSize)
                             blockArea.add(geom);
                         else
                             findEdgesInShape(blockArea.blockedEdges, geom, filter);
@@ -215,8 +215,8 @@ public class GraphEdgeIdFinder {
                 	        new Coordinate(Double.parseDouble(splittedObject[0]), Double.parseDouble(splittedObject[1])),
                 	    };
                 	    Polygon geom = gf.createPolygon(gf.createLinearRing(coords), null);
-                	    
-                	    if (geom.getArea() > useEdgeIdsUntilAreaSize)
+                	    double rectangleArea = geom.getArea();
+                	    if (rectangleArea > useEdgeIdsUntilAreaSize)
                             blockArea.add(geom);
                         else
                             findEdgesInShape(blockArea.blockedEdges, geom, filter);
@@ -226,8 +226,8 @@ public class GraphEdgeIdFinder {
                         double radius = Double.parseDouble(splittedObject[2]);
                         GeometryFactory geomFact = new GeometryFactory();
                     	Geometry circle = geomFact.createPoint(new Coordinate(lat, lon)).buffer(radius);
-                      	
-                        if (circle.getArea() > useEdgeIdsUntilAreaSize) {
+                    	double circleArea = circle.getArea();
+                        if (circleArea > useEdgeIdsUntilAreaSize) {
                             blockArea.add(circle);
                         } else {
                             findEdgesInShape(blockArea.blockedEdges, circle, filter);
