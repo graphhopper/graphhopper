@@ -17,25 +17,24 @@ echo "## using java $vers from $JAVA_HOME"
 
 function printBashUsage {
   echo "Usage:"
-  echo "-h | --help:    display this message"
-  echo "-v | --version: print version"
-  echo "-c | --config:  the application configuration"
-  echo "-a | --action: must be one the following actions:"
+  echo "-a | --action <action>    must be one the following actions:"
   echo "     --action import      creates the graph cache only, used for later faster starts"
   echo "     --action web         starts a local server for user access at localhost:8989 and API access at localhost:8989/route"
   echo "     --action build       creates the graphhopper web JAR"
   echo "     --action clean       removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)"
   echo "     --action measurement does performance analysis of the current source version via random routes (Measurement class)"
   echo "     --action torture     can be used to test real world routes via feeding graphhopper logs into a GraphHopper system (Torture class)"
-  echo "-i | --input:       path to the input map file or name of the file to download"
-  echo "-ig| --gtfs:        path to the input file for public transit routing (GTFS format)"
-  echo "-o | --graph-cache: directory for graph cache output"
-  echo "-v | --profiles:    a comma separated list of vehicle profiles"
-  echo "--host:             specify to which host the service should be bound"
-  echo "--port:             start web server at specific port"
-  echo "--jar:              specify the jar file (useful if you want to reuse this script for custom builds)"
-  echo "-fd| --force-download: force the download of the OSM data file if needed"
-  echo "-d | --run-background: run the application in background (detach)"
+  echo "-c | --config <config>    specify the application configuration"
+  echo "-d | --run-background     run the application in background (detach)"
+  echo "-fd| --force-download     force the download of the OSM data file if needed"
+  echo "-h | --help               display this message"
+  echo "--host <host>             specify to which host the service should be bound"
+  echo "-i | --input <file>       path to the input map file or name of the file to download"
+  echo "--jar <file>              specify the jar file (useful if you want to reuse this script for custom builds)"
+  echo "-o | --graph-cache <dir>  directory for graph cache output"
+  echo "-p | --profiles <string>  comma separated list of vehicle profiles"
+  echo "--port <port>             start web server at specific port"
+  echo "-v | --version            print version"
 }
 
 VERSION=$(grep '<revision' pom.xml | cut -d'>' -f2 | cut -d'<' -f1)
@@ -43,19 +42,18 @@ VERSION=$(grep '<revision' pom.xml | cut -d'>' -f2 | cut -d'<' -f1)
 # one or two character parameters have one minus character'-' all longer parameters have two minus characters '--'
 while [ ! -z $1 ]; do
   case $1 in
-    -h|--help) printBashUsage
-      exit 0;;
-    -fd|--force-download) FORCE_DWN=1; shift 1;;
-    -clean|clean) ACTION=clean; shift 1;;
     -a|--action) ACTION=$2; shift 2;;
-    -i|--input) FILE="$2"; shift 2;;
-    -p|--profiles) GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.graph.flag_encoders=$2"; shift 2;;
-    --port) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$2"; shift 2;;
-    --host) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].bindHost=$2"; shift 2;;
-    --jar) JAR="$2"; shift 2;;
     -c|--config) CONFIG="$2"; shift 2;;
     -d|--run-background) RUN_BACKGROUND=true; shift 1;;
+    -fd|--force-download) FORCE_DWN=1; shift 1;;
+    -h|--help) printBashUsage
+      exit 0;;
+    --host) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].bindHost=$2"; shift 2;;
+    -i|--input) FILE="$2"; shift 2;;
+    --jar) JAR="$2"; shift 2;;
     -o|--graph-cache) GRAPH="$2"; shift 2;;
+    -p|--profiles) GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.graph.flag_encoders=$2"; shift 2;;
+    --port) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$2"; shift 2;;
     -v|--version) echo $VERSION
     	exit 2;;
     # forward parameter via replacing first two characters of the key with -Dgraphhopper.
