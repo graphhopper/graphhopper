@@ -38,6 +38,7 @@ function printBashUsage {
 }
 
 VERSION=$(grep '<revision' pom.xml | cut -d'>' -f2 | cut -d'<' -f1)
+JAR=web/target/graphhopper-web-$VERSION.jar
 
 # one or two character parameters have one minus character'-' all longer parameters have two minus characters '--'
 while [ ! -z $1 ]; do
@@ -68,12 +69,11 @@ while [ ! -z $1 ]; do
   esac
 done
 
-if [ ! -z $REMAINING_ARGS ]; then
-  echo "Remaining arguments: ${REMAINING_ARGS[@]}"
+if [ -z $ACTION ]; then
+  ACTION=${REMAINING_ARGS[0]}
 fi
 
-if [ -z $ACTION ] || [ -z $FILE ]; then
-  ACTION=${REMAINING_ARGS[0]}
+if [ -z $FILE ]; then
   FILE=${REMAINING_ARGS[1]}
 fi
 
@@ -157,7 +157,7 @@ function packageJar {
   if [ ! -f "$JAR" ]; then
     echo "## building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
-    execMvn --projects tools -am -DskipTests=true package
+    execMvn --projects web -am -DskipTests=true package
   else
     echo "## existing jar found $JAR"
   fi
@@ -211,7 +211,6 @@ else
    OSM_FILE=
 fi
 
-: "${JAR:=web/target/graphhopper-web-$VERSION.jar}"
 : "${GRAPH:=$DATADIR/$NAME-gh}"
 
 LINK=$(echo $NAME | tr '_' '/')
@@ -265,7 +264,7 @@ elif [ "$ACTION" = "measurement" ]; then
        prepare.min_network_size=10000 prepare.min_oneway_network_size=10000"
 
  function startMeasurement {
-    execMvn --projects tools -am -DskipTests clean package
+    execMvn --projects web -am -DskipTests clean package
     COUNT=5000
     commit_info=$(git log -n 1 --pretty=oneline)
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
