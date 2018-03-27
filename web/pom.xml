@@ -6,14 +6,14 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-web</artifactId>
     <packaging>jar</packaging>
-    <version>${revision}</version>
+    <version>0.11-SNAPSHOT</version>
     <name>GraphHopper Web</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>${revision}</version>
+        <version>0.11-SNAPSHOT</version>
     </parent>
     <properties>
         <jetty.version>9.4.2.v20170220</jetty.version>
@@ -35,11 +35,13 @@
             <artifactId>graphhopper-reader-gtfs</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- required for JDK9 -->
         <dependency>
             <groupId>javax.xml.ws</groupId>
             <artifactId>jaxws-api</artifactId>
             <version>2.3.0</version>
         </dependency>
+        <!-- required for dropwizard -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>

@@ -38,8 +38,7 @@ before_script:
 before_script:
   - _JAVA_OPTIONS=
 script:
-  # separate due to #1288
-  - mvn clean test verify -B && mvn checkstyle:check findbugs:check forbiddenapis:check -B
+  - "mvn --version && mvn clean test verify checkstyle:check findbugs:check forbiddenapis:check -B"
 
 after_success:
   # deploy snapshot artifacts to sonatype and if tagged deploy the release to maven central
@@ -47,7 +46,8 @@ after_success:
         mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
     elif [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_TAG" != "" ]; then
         echo "release to maven central";
-        mvn -P release --settings core/files/settings.xml -DskipTests=true -Drevision=$TRAVIS_TAG -B deploy;
+        mvn versions:set -DnewVersion=$TRAVIS_TAG -DgenerateBackupPoms=false;
+        mvn deploy -P release --settings core/files/settings.xml -DskipTests=true -B;
     else
         echo "Not deploying artifacts for $TRAVIS_BRANCH";
     fi

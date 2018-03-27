@@ -125,8 +125,12 @@ final class GraphExplorer {
         return realtimeFeed.isBlocked(edge.getEdge());
     }
 
-    public long getDelayFromAlightEdge(EdgeIteratorState edge, long instant) {
-        return realtimeFeed.getDelayForAlightEdge(edge, Instant.ofEpochMilli(instant));
+    public long getDelayFromBoardEdge(EdgeIteratorState edge, long currentTime) {
+        return realtimeFeed.getDelayForBoardEdge(edge, Instant.ofEpochMilli(currentTime));
+    }
+
+    public long getDelayFromAlightEdge(EdgeIteratorState edge, long currentTime) {
+        return realtimeFeed.getDelayForAlightEdge(edge, Instant.ofEpochMilli(currentTime));
     }
 
     private long waitingTime(EdgeIteratorState edge, long earliestStartTime) {
@@ -147,7 +151,7 @@ final class GraphExplorer {
         GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
         if (edgeType == GtfsStorage.EdgeType.BOARD || edgeType == GtfsStorage.EdgeType.ALIGHT) {
             final int validityId = flagEncoder.getValidityId(edge.getFlags());
-            final GtfsStorage.Validity validity = gtfsStorage.getValidities().get(validityId);
+            final GtfsStorage.Validity validity = realtimeFeed.getValidity(validityId);
             final int trafficDay = (int) ChronoUnit.DAYS.between(validity.start, Instant.ofEpochMilli(instant).atZone(validity.zoneId).toLocalDate());
             return trafficDay >= 0 && validity.validity.get(trafficDay);
         } else {

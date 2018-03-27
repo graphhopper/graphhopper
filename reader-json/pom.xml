@@ -5,14 +5,14 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-reader-json</artifactId>
-    <version>${revision}</version>
+    <version>0.11-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>GraphHopper Reader JSON</name>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>${revision}</version>
+        <version>0.11-SNAPSHOT</version>
     </parent>
 
     <dependencies>
