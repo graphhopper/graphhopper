@@ -27,11 +27,11 @@ The web module provides a web API for other programming languages as well as sta
 
  * [Routing API](./web/api-doc.md): Documentation of the Web API to communicate with any GraphHopper server via http.
  * [Deployment Guide](./core/deploy.md): Details about deploying GraphHopper 
- * There are official API clients in [Java](https://github.com/graphhopper/directions-api-java-client/) and [JavaScript](https://github.com/graphhopper/directions-api-js-client).
+ * There are official API clients in [Java](https://github.com/graphhopper/graphhopper/tree/master/client-hc) and [JavaScript](https://github.com/graphhopper/directions-api-js-client).
 
 #### Configuration
 
-You can configure several aspects either programmatically or just via the [config.properties](../config-example.properties).
+You can configure several aspects either programmatically or just via a [configuration](../config-example.yml).
 
 The elevation configuration is separately documented [here](./core/elevation.md).
 
