@@ -23,11 +23,13 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -258,6 +260,26 @@ public class PrepareRoutingSubnetworksTest {
     }
 
     @Test
+    public void testAddEdgesAfterwards() {
+        GraphHopperStorage g = createDeadEndUnvisitedNetworkStorage(em);
+        assertEquals(11, g.getNodes());
+
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(carFlagEncoder)).
+                setMinOneWayNetworkSize(3);
+        int removed = instance.removeDeadEndUnvisitedNetworks(new PrepEdgeFilter(carFlagEncoder));
+
+        assertEquals(3, removed);
+        instance.markNodesRemovedIfUnreachable();
+        g.optimize();
+
+        assertEquals(8, g.getNodes());
+
+        assertTrue(isConsistent(g));
+        g.edge(7,8);
+        assertTrue(isConsistent(g));
+    }
+
+    @Test
     public void testTarjan() {
         GraphHopperStorage g = createSubnetworkTestStorage();
 
@@ -314,4 +336,39 @@ public class PrepareRoutingSubnetworksTest {
         List<IntArrayList> components = instance.findSubnetworks(new PrepEdgeFilter(carFlagEncoder));
         assertEquals(1, components.size());
     }
+
+    public static boolean isConsistent(GraphHopperStorage storage) {
+        EdgeExplorer edgeExplorer = storage.createEdgeExplorer();
+        int nNodes = storage.getNodes();
+        for(int i=0; i<nNodes; i++) {
+            if(!check(storage, edgeExplorer, i)) return false;
+        }
+        return true;
+    }
+
+    public static boolean check(GraphHopperStorage storage, EdgeExplorer edgeExplorer, int node) {
+        List<Integer> toNodes = new ArrayList<>();
+        List<Integer> edges = new ArrayList<>();
+        EdgeIterator edgeIterator = edgeExplorer.setBaseNode(node);
+        while(edgeIterator.next()) {
+            if (edgeIterator.getBaseNode() < 0 || edgeIterator.getAdjNode() < 0) {
+                return false;
+            }
+            toNodes.add(edgeIterator.getAdjNode());
+            edges.add(edgeIterator.getEdge());
+        }
+
+        for(int i=0;i<toNodes.size();i++) {
+            EdgeIteratorState edgeIteratorState = storage.getEdgeIteratorState(edges.get(i), toNodes.get(i));
+            if(edgeIteratorState == null) {
+                return false;
+            }
+            EdgeIteratorState edgeIteratorState2 = storage.getEdgeIteratorState(edges.get(i), node);
+            if(edgeIteratorState2 == null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

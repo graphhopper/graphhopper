@@ -305,37 +305,6 @@
             </modules>
         </profile>
 
-        <profile>
-            <id>jdk8</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties />
-            <modules>
-                <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518
-                Currently works for jdk8 only -->
-                <module>reader-shp</module>
-            </modules>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                    </plugin>
-                    <plugin>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>jdk9</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <jdk>9</jdk>
-            </activation>
-            <!-- 1. reader-shp does not work yet with jdk9. 2. See #852 and #701 for possible compiler options -->
-        </profile>
     </profiles>
 
 </project>
