@@ -6,12 +6,12 @@
     <artifactId>graphhopper-android</artifactId>
     <version>0.11-SNAPSHOT</version>
     <name>GraphHopper Android</name>
-    <packaging>apk</packaging>    
+    <packaging>apk</packaging>
     <organization>
         <name>GraphHopper</name>
         <url>http://graphhopper.com</url>
     </organization>
-    
+
     <parent>
         <relativePath>../..</relativePath>
         <groupId>com.graphhopper</groupId>
@@ -24,13 +24,13 @@
         instead use your IDE to set it up or specify android sdk via command line
         using -Dandroid.sdk.path=... or by setting environment variable ANDROID_HOME
         https://github.com/rgladwell/m2e-android/issues/52 -->
-    </properties>    
-    
-    <dependencies>        
+    </properties>
+
+    <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-core</artifactId>
-            <version>${project.parent.version}</version>            
+            <version>${project.parent.version}</version>
             <type>jar</type>
             <exclusions>
                 <exclusion>
@@ -38,48 +38,48 @@
                     <artifactId>xmlgraphics-commons</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>        
-          
+        </dependency>
+
         <!-- see scripts/maven-install-mapsforge.sh if downloading from
              maven central does not work (it should). 
              if we would use system dep it doesn't work (classnotfound). See also script for more infos.
-        -->          
+        -->
         <dependency>
-            <groupId>org.mapsforge</groupId>            
+            <groupId>org.mapsforge</groupId>
             <artifactId>vtm</artifactId>
             <version>${vtm.version}</version>
-        </dependency>    
+        </dependency>
         <dependency>
-            <groupId>org.mapsforge</groupId>            
+            <groupId>org.mapsforge</groupId>
             <artifactId>vtm-android</artifactId>
             <version>${vtm.version}</version>
         </dependency>
-        
+
         <dependency>
-            <groupId>org.mapsforge</groupId>            
+            <groupId>org.mapsforge</groupId>
             <artifactId>vtm-android</artifactId>
             <version>${vtm.version}</version>
             <classifier>natives-armeabi</classifier>
-        </dependency>  
-         <dependency>
-            <groupId>org.mapsforge</groupId>            
+        </dependency>
+        <dependency>
+            <groupId>org.mapsforge</groupId>
             <artifactId>vtm-android</artifactId>
             <version>${vtm.version}</version>
             <classifier>natives-armeabi-v7a</classifier>
-        </dependency>  
-         <dependency>
+        </dependency>
+        <dependency>
             <groupId>org.mapsforge</groupId>
             <artifactId>vtm-android</artifactId>
             <version>${vtm.version}</version>
             <classifier>natives-arm64-v8a</classifier>
         </dependency>
-         <dependency>
-            <groupId>org.mapsforge</groupId>            
+        <dependency>
+            <groupId>org.mapsforge</groupId>
             <artifactId>vtm-android</artifactId>
             <version>${vtm.version}</version>
             <classifier>natives-x86</classifier>
-        </dependency>        
-         <dependency>
+        </dependency>
+        <dependency>
             <groupId>org.mapsforge</groupId>
             <artifactId>vtm-android</artifactId>
             <version>${vtm.version}</version>
@@ -87,7 +87,7 @@
         </dependency>
 
         <dependency>
-            <groupId>org.mapsforge</groupId>            
+            <groupId>org.mapsforge</groupId>
             <artifactId>vtm-jts</artifactId>
             <version>${vtm.version}</version>
             <exclusions>
@@ -98,22 +98,22 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.mapsforge</groupId>            
+            <groupId>org.mapsforge</groupId>
             <artifactId>vtm-themes</artifactId>
             <version>${vtm.version}</version>
-        </dependency> 
+        </dependency>
         <dependency>
-            <groupId>com.caverock</groupId>            
+            <groupId>com.caverock</groupId>
             <artifactId>androidsvg</artifactId>
             <version>1.2.2-beta-1</version>
-        </dependency> 
-        
+        </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-android</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
-        
+
         <!-- Make sure this is above (!) the android dependencies -->
         <!--
         <dependency>
@@ -133,9 +133,9 @@
     </dependencies>
 
     <build>
-        <finalName>${project.artifactId}</finalName>        
-        
-        <plugins>     
+        <finalName>${project.artifactId}</finalName>
+
+        <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -145,7 +145,7 @@
                     <source>1.7</source>
                     <target>1.7</target>
                 </configuration>
-            </plugin>       
+            </plugin>
             <plugin>
                 <!-- See http://simpligility.github.io/android-maven-plugin/ -->
                 <groupId>com.simpligility.maven.plugins</groupId>
@@ -154,24 +154,24 @@
                 <extensions>true</extensions>
                 <configuration>
                     <sdk>
-                        <!-- platform or api level (api level 8 = platform 2.2) -->                        
+                        <!-- platform or api level (api level 8 = platform 2.2) -->
                         <platform>27</platform>
                     </sdk>
                     <deleteConflictingFiles>true</deleteConflictingFiles>
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>
-		    
+
                     <!--
                     bug in maven plugin I think
                     <extractDuplicates>true</extractDuplicates>
                     -->
-                </configuration>                
-            </plugin>            
+                </configuration>
+            </plugin>
         </plugins>
     </build>
-    
-    <repositories>        		
+
+    <repositories>
         <!-- Android is in maven central! To install android sdk in a continuos integration environment see http://stackoverflow.com/q/4681697/194609
         For mapsforge see scripts/maven-install-mapsforge.sh  -->
     </repositories>
-    
+
 </project>

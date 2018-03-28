@@ -2,7 +2,7 @@ package com.graphhopper.storage.change;
 
 import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonFactory;
-import com.graphhopper.json.JsonFeatureConverter;
+import com.graphhopper.json.geo.JsonFeatureConverter;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;

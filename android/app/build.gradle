@@ -41,7 +41,6 @@ dependencies {
        exclude group: 'org.openstreetmap.osmosis', module: 'osmosis-osm-binary'
        exclude group: 'org.apache.xmlgraphics', module: 'xmlgraphics-commons'
     }
-
     implementation 'org.mapsforge:vtm:0.9.2'
     implementation 'org.mapsforge:vtm-android:0.9.2'
     implementation 'org.mapsforge:vtm-android:0.9.2:natives-armeabi'

@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.spatialrules;
+package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.json.geo.JsonFeatureCollection;
@@ -35,7 +35,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class SpatialRuleLookupBuilderTest {
 
-    private static final String COUNTRIES_FILE = "../core/files/spatialrules/countries.geo.json";
+    private static final String COUNTRIES_FILE = "./files/spatialrules/countries.geo.json";
 
     @Test
     public void testIndex() throws FileNotFoundException {

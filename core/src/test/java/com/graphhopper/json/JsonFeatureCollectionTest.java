@@ -15,10 +15,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.json.geo;
+package com.graphhopper.json;
 
-import com.graphhopper.json.GHJson;
-import com.graphhopper.json.GHJsonFactory;
+import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.vividsolutions.jts.geom.LineString;

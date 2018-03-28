@@ -33,17 +33,6 @@ import java.util.List;
  */
 public class GraphHopperOSM extends GraphHopper {
 
-    private final JsonFeatureCollection landmarkSplittingFeatureCollection;
-
-    public GraphHopperOSM() {
-        this(null);
-    }
-
-    public GraphHopperOSM(JsonFeatureCollection landmarkSplittingFeatureCollection) {
-        super();
-        this.landmarkSplittingFeatureCollection = landmarkSplittingFeatureCollection;
-    }
-
     @Override
     protected DataReader createReader(GraphHopperStorage ghStorage) {
         return initDataReader(new OSMReader(ghStorage));
@@ -60,33 +49,5 @@ public class GraphHopperOSM extends GraphHopper {
     public GraphHopperOSM setOSMFile(String osmFileStr) {
         super.setDataReaderFile(osmFileStr);
         return this;
-    }
-
-    @Override
-    protected void loadOrPrepareLM() {
-        if (!getLMFactoryDecorator().isEnabled() || getLMFactoryDecorator().getPreparations().isEmpty())
-            return;
-
-        if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
-            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(landmarkSplittingFeatureCollection, "area", new SpatialRuleLookupBuilder.SpatialRuleFactory() {
-                @Override
-                public SpatialRule createSpatialRule(final String id, List<Polygon> polygons) {
-                    return new DefaultSpatialRule() {
-                        @Override
-                        public String getId() {
-                            return id;
-                        }
-                    }.setBorders(polygons);
-                }
-            });
-            for (PrepareLandmarks prep : getLMFactoryDecorator().getPreparations()) {
-                // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
-                if (ruleLookup != null && ruleLookup.size() > 0) {
-                    prep.setSpatialRuleLookup(ruleLookup);
-                }
-            }
-        }
-
-        super.loadOrPrepareLM();
     }
 }
