@@ -233,6 +233,8 @@ public class Polygon implements Shape {
     public static Polygon parsePoints(String pointsStr, double growFactor) {
         String[] arr = pointsStr.split(",");
 
+        if (arr.length % 2 == 1) throw new IllegalArgumentException("incorrect polygon specified");
+
         double[] lats = new double[arr.length /2];
         double[] lons = new double[arr.length /2];
 

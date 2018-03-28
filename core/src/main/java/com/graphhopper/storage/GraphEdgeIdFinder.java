@@ -86,22 +86,27 @@ public class GraphEdgeIdFinder {
 
             @Override
             protected boolean goFurther(int nodeId) {
-                if (isPolygon) {
-                    BBox bbox = localShape.getBounds();
-                    double lat = na.getLatitude(nodeId);
-                    double lon = na.getLongitude(nodeId);
-                    return lat <= bbox.maxLat && lat >= bbox.minLat && lon <= bbox.maxLon && lon >= bbox.minLon;
-                }
+                if (isPolygon) return isInsideBBox(nodeId);
+
                 return localShape.contains(na.getLatitude(nodeId), na.getLongitude(nodeId));
             }
 
             @Override
             protected boolean checkAdjacent(EdgeIteratorState edge) {
-                if (localShape.contains(na.getLatitude(edge.getAdjNode()), na.getLongitude(edge.getAdjNode()))) {
+                int adjNodeId = edge.getAdjNode();
+
+                if (localShape.contains(na.getLatitude(adjNodeId), na.getLongitude(adjNodeId))) {
                     edgeIds.add(edge.getEdge());
                     return true;
                 }
-                return isPolygon;
+                return isPolygon && isInsideBBox(adjNodeId);
+            }
+
+            private boolean isInsideBBox(int nodeId) {
+                BBox bbox = localShape.getBounds();
+                double lat = na.getLatitude(nodeId);
+                double lon = na.getLongitude(nodeId);
+                return lat <= bbox.maxLat && lat >= bbox.minLat && lon <= bbox.maxLon && lon >= bbox.minLon;
             }
         };
         bfs.start(graph.createEdgeExplorer(filter), qr.getClosestNode());
