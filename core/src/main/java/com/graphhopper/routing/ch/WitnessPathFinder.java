@@ -30,7 +30,7 @@ import java.util.Arrays;
 
 public abstract class WitnessPathFinder {
     // determines how many non-onOrigPath edges may get settled
-    public static double maxSettledEdgesScale = 2.0;
+    public static double maxSettledEdgesScale = 6.0;
     // for very dense graph a higher initial value is probably appropriate, the initial value does not play a big role
     // because this parameter will be adjusted automatically during the graph contraction
     public static int initialMaxSettledEdges = 10;
