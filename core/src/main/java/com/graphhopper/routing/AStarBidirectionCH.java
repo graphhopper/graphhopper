@@ -26,8 +26,8 @@ public class AStarBidirectionCH extends AStarBidirection {
     public AStarBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         super(graph, weighting, traversalMode);
         if (traversalMode.isEdgeBased()) {
-            throw new IllegalArgumentException("A-Star algorithm is not yet supported for edge based graph traversal," +
-                    " you need to use DijkstraBidirectionCH instead");
+            throw new IllegalArgumentException("Edge based graph traversal is not supported for this algorithm," +
+                    " you need to use AStarBidirectionEdgeCHNoSOD instead.");
         }
     }
 
@@ -37,7 +37,7 @@ public class AStarBidirectionCH extends AStarBidirection {
     }
 
     @Override
-    protected boolean finished() {
+    public boolean finished() {
         // we need to finish BOTH searches for CH!
         if (finishedFrom && finishedTo)
             return true;

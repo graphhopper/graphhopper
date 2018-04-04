@@ -42,33 +42,13 @@ public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
     }
 
     @Override
-    public boolean fillEdgesFrom() {
-        if (pqOpenSetFrom.isEmpty()) {
-            return false;
-        }
-        currFrom = pqOpenSetFrom.poll();
-        visitedCountFrom++;
-        if (entryIsStallable(currFrom, bestWeightMapFrom, inEdgeExplorer, false)) {
-            return true;
-        }
-        bestWeightMapOther = bestWeightMapTo;
-        fillEdges(currFrom, pqOpenSetFrom, bestWeightMapFrom, outEdgeExplorer, false);
-        return true;
+    protected boolean fromEntryCanBeSkipped() {
+        return entryIsStallable(currFrom, bestWeightMapFrom, inEdgeExplorer, false);
     }
 
     @Override
-    public boolean fillEdgesTo() {
-        if (pqOpenSetTo.isEmpty()) {
-            return false;
-        }
-        currTo = pqOpenSetTo.poll();
-        visitedCountTo++;
-        if (entryIsStallable(currTo, bestWeightMapTo, outEdgeExplorer, true)) {
-            return true;
-        }
-        bestWeightMapOther = bestWeightMapFrom;
-        fillEdges(currTo, pqOpenSetTo, bestWeightMapTo, inEdgeExplorer, true);
-        return true;
+    protected boolean toEntryCanBeSkipped() {
+        return entryIsStallable(currTo, bestWeightMapTo, outEdgeExplorer, true);
     }
 
     @Override

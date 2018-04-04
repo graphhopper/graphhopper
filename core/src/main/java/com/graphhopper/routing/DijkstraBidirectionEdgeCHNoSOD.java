@@ -32,167 +32,25 @@ import com.graphhopper.util.GHUtility;
 
 import java.util.Locale;
 
-public class DijkstraBidirectionEdgeCHNoSOD extends GenericDijkstraBidirection<CHEntry> {
-    private int from;
-    private int to;
-    private final EdgeExplorer innerInExplorer;
-    private final EdgeExplorer innerOutExplorer;
-
+public class DijkstraBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD<CHEntry> {
     public DijkstraBidirectionEdgeCHNoSOD(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         super(graph, weighting, traversalMode);
-        if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
-            // todo: properly test/implement u-turn mode and allow it here
-            throw new IllegalArgumentException(String.format(Locale.ROOT, "Traversal mode '%s' not supported by this algorithm, " +
-                    "for node based traversal use DijkstraBidirectionCH instead", traversalMode));
-        }
-        // we need extra edge explorers, because they get called inside a loop that already iterates over edges
-        innerInExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
-        innerOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
     }
 
     @Override
-    public void initFrom(int from, double weight) {
-        this.from = from;
-        currFrom = createStartEntry(from, weight);
-        pqOpenSetFrom.add(currFrom);
-        if (currTo != null && currTo.adjNode == from) {
-            // special case of identical start and end
-            setFinished();
-            return;
-        }
-        EdgeFilter filter = additionalEdgeFilter;
-        setEdgeFilter(EdgeFilter.ALL_EDGES);
-        fillEdgesFrom();
-        setEdgeFilter(filter);
-
-    }
-
-    @Override
-    public void initTo(int to, double weight) {
-        this.to = to;
-        currTo = createStartEntry(to, weight);
-        pqOpenSetTo.add(currTo);
-        if (currFrom != null && currFrom.adjNode == to) {
-            // special case of identical start and end
-            setFinished();
-            return;
-        }
-        EdgeFilter filter = additionalEdgeFilter;
-        setEdgeFilter(EdgeFilter.ALL_EDGES);
-        fillEdgesTo();
-        setEdgeFilter(filter);
-    }
-
-    private void setFinished() {
-        bestPath.sptEntry = currFrom;
-        bestPath.edgeTo = currTo;
-        bestPath.setWeight(0);
-        finishedFrom = true;
-        finishedTo = true;
-    }
-
-    @Override
-    public Path calcPath(int from, int to) {
-        this.from = from;
-        this.to = to;
-        return super.calcPath(from, to);
-    }
-
-    @Override
-    protected void initCollections(int size) {
-        super.initCollections(Math.min(size, 2000));
-    }
-
-    @Override
-    public boolean finished() {
-        // we need to finish BOTH searches for CH!
-        if (finishedFrom && finishedTo)
-            return true;
-
-        // changed also the final finish condition for CH
-        return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
-    }
-
-    @Override
-    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entryCurrent, int traversalId) {
-        boolean reverse = bestWeightMapFrom == bestWeightMapOther;
-        // special case where the fwd/bwd search runs directly into the opposite node, for example if the highest level
-        // node of the shortest path matches the source or target. in this case one of the searches does not contribute
-        // anything to the shortest path.
-        int oppositeNode = reverse ? from : to;
-        if (edgeState.getAdjNode() == oppositeNode) {
-            if (entryCurrent.weight < bestPath.getWeight()) {
-                bestPath.setSwitchToFrom(reverse);
-                bestPath.setSPTEntry(entryCurrent);
-                bestPath.setWeight(entryCurrent.weight);
-                bestPath.setSPTEntryTo(new SPTEntry(EdgeIterator.NO_EDGE, oppositeNode, 0));
-                return;
-            }
-        }
-
-        EdgeIterator iter = reverse ?
-                innerInExplorer.setBaseNode(edgeState.getAdjNode()) :
-                innerOutExplorer.setBaseNode(edgeState.getAdjNode());
-
-        while (iter.next()) {
-            final int edgeId = getOrigEdgeId(iter, !reverse);
-            final int prevOrNextOrigEdgeId = getOrigEdgeId(edgeState, reverse);
-            if (!traversalMode.hasUTurnSupport() && edgeId == prevOrNextOrigEdgeId) {
-                continue;
-            }
-            // we need the traversal id of the incoming edge, this is different to what traversalMode.createTraversalId
-            // would calculate. todo: can we get rid of 'knowing' how the traversal ids are calculated here ?
-            EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(edgeId, iter.getBaseNode());
-            int key = GHUtility.createEdgeKey(edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode(), edgeId, !reverse);
-            SPTEntry entryOther = bestWeightMapOther.get(key);
-            if (entryOther == null) {
-                continue;
-            }
-
-            // passing NO_EDGE yields the pure edge cost that needs to be subtracted to obtain the pure turn costs
-            double turnCostsAtBridgeNode = weighting.calcWeight(iter, reverse, prevOrNextOrigEdgeId)
-                    - weighting.calcWeight(iter, reverse, EdgeIterator.NO_EDGE);
-            double newWeight = entryCurrent.weight + entryOther.weight + turnCostsAtBridgeNode;
-            if (newWeight < bestPath.getWeight()) {
-                bestPath.setSwitchToFrom(reverse);
-                bestPath.setSPTEntry(entryCurrent);
-                bestPath.setWeight(newWeight);
-                bestPath.setSPTEntryTo(entryOther);
-            }
-        }
-    }
-
-    @Override
-    protected Path createAndInitPath() {
-        bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
-        return bestPath;
-    }
-
-    @Override
-    protected CHEntry createStartEntry(int node, double weight) {
+    protected CHEntry createStartEntry(int node, double weight, boolean reverse) {
         return new CHEntry(node, weight);
     }
 
     @Override
-    protected CHEntry createEntry(EdgeIteratorState edge, int edgeId, double weight, CHEntry parent) {
+    protected CHEntry createEntry(EdgeIteratorState edge, int edgeId, double weight, CHEntry parent, boolean reverse) {
         CHEntry entry = new CHEntry(edge.getEdge(), edgeId, edge.getAdjNode(), weight);
         entry.parent = parent;
         return entry;
     }
 
     @Override
-    protected int getOrigEdgeId(EdgeIteratorState edge, boolean reverse) {
-        return reverse ? edge.getFirstOrigEdge() : edge.getLastOrigEdge();
-    }
-
-    @Override
-    protected int getTraversalId(EdgeIteratorState edge, int origEdgeId, boolean reverse) {
-        EdgeIteratorState iterState = graph.getEdgeIteratorState(origEdgeId, edge.getAdjNode());
-        return traversalMode.createTraversalId(iterState, reverse);
-    }
-
-    @Override
-    protected void updateEntry(CHEntry entry, EdgeIteratorState edge, int edgeId, double weight, CHEntry parent) {
+    protected void updateEntry(CHEntry entry, EdgeIteratorState edge, int edgeId, double weight, CHEntry parent, boolean reverse) {
         entry.edge = edge.getEdge();
         entry.incEdge = edgeId;
         entry.weight = weight;
@@ -200,30 +58,8 @@ public class DijkstraBidirectionEdgeCHNoSOD extends GenericDijkstraBidirection<C
     }
 
     @Override
-    protected double calcWeight(EdgeIteratorState edge, CHEntry currEdge, boolean reverse) {
-        return weighting.calcWeight(edge, reverse, currEdge.incEdge) + currEdge.weight;
-    }
-
-    @Override
-    protected boolean accept(EdgeIteratorState edge, CHEntry currEdge, boolean reverse) {
-        int edgeId = getOrigEdgeId(edge, !reverse);
-        // todo: is it really enough to compare edge ids here ? what if there are two different edges between the 
-        // same nodes ?
-        if (!traversalMode.hasUTurnSupport() && edgeId == currEdge.incEdge)
-            return false;
-
-        return additionalEdgeFilter == null || additionalEdgeFilter.accept(edge);
-    }
-
-
-    @Override
     public String getName() {
         return "dijkstrabi|ch|edge_based|no_sod";
-    }
-
-    @Override
-    public String toString() {
-        return getName() + "|" + weighting;
     }
 
 }

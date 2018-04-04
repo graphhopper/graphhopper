@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static java.lang.System.nanoTime;
 
@@ -218,7 +219,9 @@ public class CHMeasurement {
         int lazyUpdates = 100;
         int neighborUpdates = 4;
         int contractedNodes = 100;
-        if (args.length == 10) {
+        WitnessPathFinder.sigmaFactor = 3.0;
+        int landmarks = 32;
+        if (args.length == 11) {
             osmFile = args[0];
             WitnessPathFinder.sigmaFactor = Double.valueOf(args[1]);
             EdgeBasedNodeContractor.aggressiveSearch = Boolean.valueOf(args[2]);
@@ -229,6 +232,7 @@ public class CHMeasurement {
             lazyUpdates = Integer.valueOf(args[7]);
             neighborUpdates = Integer.valueOf(args[8]);
             contractedNodes = Integer.valueOf(args[9]);
+            landmarks = Integer.valueOf(args[10]);
         }
         final GraphHopper graphHopper = new GraphHopperOSM();
         CmdArgs cmdArgs = new CmdArgs();
@@ -238,17 +242,26 @@ public class CHMeasurement {
         if (withTurnCosts) {
             cmdArgs.put("graph.flag_encoders", "car|turn_costs=true");
             cmdArgs.put("prepare.ch.weightings", "fastest");
+            if (landmarks > 0) {
+                cmdArgs.put("prepare.lm.weightings", "fastest");
+                cmdArgs.put("prepare.lm.landmarks", "32");
+            }
         } else {
             cmdArgs.put("graph.flag_encoders", "car");
             cmdArgs.put("prepare.ch.weightings", "no");
         }
-        CHAlgoFactoryDecorator decorator = graphHopper.getCHFactoryDecorator();
-        decorator.setDisablingAllowed(true);
-        decorator.setPreparationPeriodicUpdates(periodicUpdates); // default: 20
-        decorator.setPreparationLazyUpdates(lazyUpdates);     // default: 10
-        decorator.setPreparationNeighborUpdates(neighborUpdates); // default: 20
-        decorator.setPreparationContractedNodes(contractedNodes);// default: 100
-        decorator.setPreparationLogMessages(20); // default: 20
+        CHAlgoFactoryDecorator chDecorator = graphHopper.getCHFactoryDecorator();
+        chDecorator.setDisablingAllowed(true);
+        chDecorator.setPreparationPeriodicUpdates(periodicUpdates); // default: 20
+        chDecorator.setPreparationLazyUpdates(lazyUpdates);     // default: 10
+        chDecorator.setPreparationNeighborUpdates(neighborUpdates); // default: 20
+        chDecorator.setPreparationContractedNodes(contractedNodes);// default: 100
+        chDecorator.setPreparationLogMessages(20); // default: 20
+
+        LMAlgoFactoryDecorator lmDecorator = graphHopper.getLMFactoryDecorator();
+        lmDecorator.setEnabled(true);
+        lmDecorator.setDisablingAllowed(true);
+
         graphHopper.init(cmdArgs);
 
         // remove previous data
@@ -261,13 +274,26 @@ public class CHMeasurement {
         LOGGER.info("Import and preparation took {}s", sw.getTime() / 1000);
 
         long seed = 456;
-        LOGGER.info("Using seed {}", seed);
+        int iterations = 1_000;
+        runCompareTest(DIJKSTRA_BI, graphHopper, withTurnCosts, seed, iterations);
+        runCompareTest(ASTAR_BI, graphHopper, withTurnCosts, seed, iterations);
+
+        runPerformanceTest(DIJKSTRA_BI, graphHopper, withTurnCosts, seed, iterations);
+        runPerformanceTest(ASTAR_BI, graphHopper, withTurnCosts, seed, iterations);
+
+        if (landmarks > 0) {
+            runPerformanceTest("lm", graphHopper, withTurnCosts, seed, iterations);
+        }
+
+        graphHopper.close();
+    }
+
+    private static void runCompareTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts, long seed, final int iterations) {
+        LOGGER.info("Running compare test for {}, using seed {}", algo, seed);
         Graph g = graphHopper.getGraphHopperStorage();
         final int numNodes = g.getNodes();
         final NodeAccess nodeAccess = g.getNodeAccess();
         final Random random = new Random(seed);
-
-        final int iterations = 1_000;
 
         MiniPerfTest compareTest = new MiniPerfTest() {
             long chTime = 0;
@@ -283,6 +309,8 @@ public class CHMeasurement {
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
                 req.getHints().put(Parameters.Routing.EDGE_BASED, withTurnCosts);
                 req.getHints().put(Parameters.CH.DISABLE, false);
+                req.getHints().put(Parameters.Landmark.DISABLE, true);
+                req.setAlgorithm(algo);
                 long start = nanoTime();
                 GHResponse chRoute = graphHopper.route(req);
                 if (!warmup)
@@ -300,7 +328,7 @@ public class CHMeasurement {
                 }
 
                 if (!chRoute.getErrors().isEmpty() || !nonChRoute.getErrors().isEmpty()) {
-                    LOGGER.warn("there were errors: \n with CH: {} \n without CH: {}", chRoute.getErrors(), nonChRoute.getErrors());
+                    LOGGER.warn("there were errors for {}: \n with CH: {} \n without CH: {}", algo, chRoute.getErrors(), nonChRoute.getErrors());
                     return chRoute.getErrors().size();
                 }
 
@@ -309,15 +337,25 @@ public class CHMeasurement {
                     // are very similar, and the paths have minor differences (with ch the route weight seems to be smaller if different)
                     double chWeight = chRoute.getBest().getRouteWeight();
                     double nonCHWeight = nonChRoute.getBest().getRouteWeight();
-                    LOGGER.warn("error: found different points for query from {} to {}, {}",
+                    LOGGER.warn("error for {}: found different points for query from {} to {}, {}", algo,
                             req.getPoints().get(0).toShortString(), req.getPoints().get(1).toShortString(),
                             getWeightDifferenceString(chWeight, nonCHWeight));
                 }
                 return chRoute.getErrors().size();
             }
         };
+        compareTest.setIterations(iterations).start();
+    }
 
+    private static void runPerformanceTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts, long seed, final int iterations) {
+        Graph g = graphHopper.getGraphHopperStorage();
+        final int numNodes = g.getNodes();
+        final NodeAccess nodeAccess = g.getNodeAccess();
+        final Random random = new Random(seed);
+        final boolean lm = "lm".equals(algo);
 
+        LOGGER.info("Running performance test for {}, seed = {}", algo, seed);
+        final long[] numVisitedNodes = {0};
         MiniPerfTest performanceTest = new MiniPerfTest() {
             private long queryTime;
 
@@ -329,24 +367,28 @@ public class CHMeasurement {
                 }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
                 req.getHints().put(Parameters.Routing.EDGE_BASED, withTurnCosts);
+                req.getHints().put(Parameters.CH.DISABLE, lm);
+                req.getHints().put(Parameters.Landmark.DISABLE, !lm);
+                if (!lm) {
+                    req.setAlgorithm(algo);
+                } else {
+                    req.getHints().put(Parameters.Landmark.ACTIVE_COUNT, "8");
+                    req.setWeighting("fastest"); // why do we need this for lm, but not ch ?
+                }
                 long start = nanoTime();
                 GHResponse route = graphHopper.route(req);
+                numVisitedNodes[0] += route.getHints().getInt("visited_nodes.sum", 0);
                 if (!warmup)
                     queryTime += nanoTime() - start;
                 return getRealErrors(route).size();
             }
         };
-
-
-        compareTest.setIterations(iterations).start();
         performanceTest.setIterations(iterations).start();
         if (performanceTest.getDummySum() > 0.01 * iterations) {
             throw new IllegalStateException("too many errors, probably something is wrong");
         }
-        LOGGER.info("Average query time: {}ms", performanceTest.getMean());
-
-
-        graphHopper.close();
+        LOGGER.info("Average query time for {}: {}ms", algo, performanceTest.getMean());
+        LOGGER.info("Visited nodes for {}: {}", algo, Helper.nf(numVisitedNodes[0]));
     }
 
     private static String getWeightDifferenceString(double weight1, double weight2) {

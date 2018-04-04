@@ -1066,6 +1066,7 @@ public class GraphHopper implements GraphHopperAPI {
                         hints(hints).
                         build();
 
+                // do the actual route calculation !
                 altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
 
                 boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, enableInstructions);

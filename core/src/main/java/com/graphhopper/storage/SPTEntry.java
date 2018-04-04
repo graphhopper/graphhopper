@@ -50,6 +50,10 @@ public class SPTEntry implements Cloneable, Comparable<SPTEntry> {
         return weight;
     }
 
+    public SPTEntry getParent() {
+        return parent;
+    }
+
     @Override
     public SPTEntry clone() {
         return new SPTEntry(edge, adjNode, weight);

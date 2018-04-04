@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Random;
 
+import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED_2DIR;
 import static com.graphhopper.util.Helper.nf;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
@@ -193,35 +194,44 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     @Override
     public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
-        AbstractBidirAlgo algo;
+        AbstractBidirAlgo algo = doCreateAlgo(graph, opts);
+        algo.setEdgeFilter(new LevelEdgeFilter(prepareGraph));
+        algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+        return algo;
+    }
+
+    private AbstractBidirAlgo doCreateAlgo(Graph graph, AlgorithmOptions opts) {
         if (traversalMode.isEdgeBased()) {
-            if (!DIJKSTRA_BI.equals(opts.getAlgorithm())) {
-                throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for edge based " +
-                        "Contraction Hierarchies. Try with ch.disable=true or node based traversal");
-            }
-            // todo: implement A-Star and stall-on-demand for edge based, according to literature A-Star is more promising
-            // and can amortize costs better than in node-based case
-            algo = new DijkstraBidirectionEdgeCHNoSOD(graph, createTurnWeightingForEdgeBased(graph), TraversalMode.EDGE_BASED_2DIR);
-            algo.setEdgeFilter(new LevelEdgeFilter(prepareGraph));
-            return algo;
+            return createAlgoEdgeBased(graph, opts);
+        } else {
+            return createAlgoNodeBased(graph, opts);
         }
+    }
+
+    private AbstractBidirAlgo createAlgoEdgeBased(Graph graph, AlgorithmOptions opts) {
         if (ASTAR_BI.equals(opts.getAlgorithm())) {
-            AStarBidirection tmpAlgo = new AStarBidirectionCH(graph, prepareWeighting, traversalMode);
-            tmpAlgo.setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
-            algo = tmpAlgo;
+            return new AStarBidirectionEdgeCHNoSOD(graph, createTurnWeightingForEdgeBased(graph), EDGE_BASED_2DIR)
+                    .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
+        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
+            return new DijkstraBidirectionEdgeCHNoSOD(graph, createTurnWeightingForEdgeBased(graph), EDGE_BASED_2DIR);
+        } else {
+            throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for edge-based Contraction Hierarchies. Try with ch.disable=true");
+        }
+    }
+
+    private AbstractBidirAlgo createAlgoNodeBased(Graph graph, AlgorithmOptions opts) {
+        if (ASTAR_BI.equals(opts.getAlgorithm())) {
+            return new AStarBidirectionCH(graph, prepareWeighting, traversalMode)
+                    .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
             if (opts.getHints().getBool("stall_on_demand", true)) {
-                algo = new DijkstraBidirectionCH(graph, prepareWeighting, traversalMode);
+                return new DijkstraBidirectionCH(graph, prepareWeighting, traversalMode);
             } else {
-                algo = new DijkstraBidirectionCHNoSOD(graph, prepareWeighting, traversalMode);
+                return new DijkstraBidirectionCHNoSOD(graph, prepareWeighting, traversalMode);
             }
         } else {
-            throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies. Try with ch.disable=true");
+            throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for node-based Contraction Hierarchies. Try with ch.disable=true");
         }
-
-        algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
-        algo.setEdgeFilter(new LevelEdgeFilter(prepareGraph));
-        return algo;
     }
 
     public boolean isEdgeBased() {
@@ -475,7 +485,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         if (traversalMode.isEdgeBased()) {
             TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased(graph);
             // todo: shall we support TraversalMode.EDGE_BASED_2DIR_UTURN ?
-            return new EdgeBasedNodeContractor(dir, ghStorage, prepareGraph, chTurnWeighting, TraversalMode.EDGE_BASED_2DIR);
+            return new EdgeBasedNodeContractor(dir, ghStorage, prepareGraph, chTurnWeighting, EDGE_BASED_2DIR);
         } else {
             return new NodeBasedNodeContractor(dir, ghStorage, prepareGraph, weighting);
         }

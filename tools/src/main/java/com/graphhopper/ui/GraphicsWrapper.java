@@ -74,6 +74,13 @@ public class GraphicsWrapper {
         g2.drawString(text, (int) getX(lon) + 5, (int) getY(lat) + 5);
     }
 
+    public void plotDirectedEdge(Graphics2D g2, int from, int to, Color color, float width) {
+        Color old = g2.getColor();
+        g2.setColor(color);
+        plotDirectedEdge(g2, na.getLat(from), na.getLon(from), na.getLat(to), na.getLon(to), width);
+        g2.setColor(old);
+    }
+    
     public void plotDirectedEdge(Graphics2D g2, double lat, double lon, double lat2, double lon2, float width) {
 
         g2.setStroke(new BasicStroke(width));

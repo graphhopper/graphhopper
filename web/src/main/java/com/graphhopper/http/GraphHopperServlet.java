@@ -165,6 +165,7 @@ public class GraphHopperServlet extends GHBaseServlet {
             PathWrapper altRsp0 = ghRsp.getBest();
             logger.info(logStr + ", alternatives: " + alternatives
                     + ", distance0: " + altRsp0.getDistance()
+                    + ", weight0: " + altRsp0.getRouteWeight()
                     + ", time0: " + Math.round(altRsp0.getTime() / 60000f) + "min"
                     + ", points0: " + altRsp0.getPoints().getSize()
                     + ", debugInfo: " + ghRsp.getDebugInfo());

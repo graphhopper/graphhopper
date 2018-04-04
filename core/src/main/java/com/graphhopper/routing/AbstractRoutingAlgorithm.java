@@ -78,9 +78,6 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
     }
 
-    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry bestSPTEntry, int traversalId) {
-    }
-
     protected void checkAlreadyRun() {
         if (alreadyRun)
             throw new IllegalStateException("Create a new instance per call");
