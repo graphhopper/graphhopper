@@ -29,11 +29,12 @@ import com.graphhopper.util.GHUtility;
 import java.util.Arrays;
 
 public abstract class WitnessPathFinder {
-    // determines how many non-onOrigPath edges may get settled
-    public static double maxSettledEdgesScale = 6.0;
     // for very dense graph a higher initial value is probably appropriate, the initial value does not play a big role
     // because this parameter will be adjusted automatically during the graph contraction
     public static int initialMaxSettledEdges = 10;
+    // number of standard deviations above mean where distribution is truncated, for a normal distribution for
+    // example sigmaFactor = 2 means about 95% of all observations are included
+    public static double sigmaFactor = 3;
     protected final CHGraph graph;
     protected final Weighting weighting;
     protected final TraversalMode traversalMode;
@@ -43,10 +44,8 @@ public abstract class WitnessPathFinder {
     protected int avoidNode = Integer.MAX_VALUE;
     protected int maxSettledEdges = initialMaxSettledEdges;
     protected int numSettledEdges;
-    // parameters used to dynamically adjust maximum number of settled edges
-    private long resetCount = 0;
-    private long settledEdgesCount = 0;
-    private Stats stats = new Stats();
+    private final OnFlyStatisticsCalculator statisticsCalculator = new OnFlyStatisticsCalculator();
+    private final Stats stats = new Stats();
 
     public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, int maxLevel) {
         if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
@@ -85,10 +84,8 @@ public abstract class WitnessPathFinder {
     }
 
     private void reset() {
-        resetCount++;
         readjustMaxSettledEdges();
         stats.onReset(numSettledEdges, maxSettledEdges);
-
         numSettledEdges = 0;
         numOnOrigPath = 0;
         avoidNode = Integer.MAX_VALUE;
@@ -96,12 +93,13 @@ public abstract class WitnessPathFinder {
     }
 
     private void readjustMaxSettledEdges() {
-        // we use the number of settled edges in the last batch to dynamically adjust the maximum of settled edges
-        settledEdgesCount += numSettledEdges;
-        if (resetCount % 1000 == 0) {
-            maxSettledEdges = (int) (maxSettledEdgesScale * settledEdgesCount / resetCount);
-            resetCount = 0;
-            settledEdgesCount = 0;
+        // we use the statistics of settled edges of a batch of previous witness path searches to dynamically 
+        // approximate the number of settled edges in the next batch
+        statisticsCalculator.addObservation(numSettledEdges);
+        if (statisticsCalculator.getCount() == 10_000) {
+            maxSettledEdges = Math.max(initialMaxSettledEdges, (int) (statisticsCalculator.getMean() + sigmaFactor * Math.sqrt(statisticsCalculator.getVariance())));
+            stats.onStatCalcReset(statisticsCalculator);
+            statisticsCalculator.reset();
         }
     }
 
@@ -123,26 +121,41 @@ public abstract class WitnessPathFinder {
         // helps to analyze how many edges get settled during a search typically, can be reused when stable
         private final long[] settledEdgesStats = new long[20];
         private long totalNumResets;
+        private long totalNumStatCalcResets;
         private long totalNumInitialEntries;
         private long totalNumSettledEdges;
         private long totalMaxSettledEdges;
+        private long totalMeanSettledEdges;
+        private long totalStdDeviationSettledEdges;
 
         @Override
         public String toString() {
-            return String.format("settled edges stats: %s, limit: %d %%, settled: %d, max: %d, initial entries: %d",
-                    Arrays.toString(settledEdgesStats),
-                    totalNumSettledEdges == 0 ? 0 : ((totalNumSettledEdges * 10_000) / totalMaxSettledEdges) / 100,
-                    totalNumSettledEdges == 0 ? 0 : totalNumSettledEdges / totalNumResets,
-                    totalMaxSettledEdges == 0 ? 0 : totalMaxSettledEdges / totalNumResets,
-                    totalNumInitialEntries == 0 ? 0 : totalNumInitialEntries / totalNumResets);
+            return String.format("settled edges stats (since last reset) - " +
+                            " limit-exhaustion: %5.1f %%, (avg-settled: %5.1f, avg-max: %5.1f, avg-mean: %5.1f, avg-sigma: %5.1f, sigma-factor: %.1f)," +
+                            " avg-initial entries: %5.1f, settled edges distribution: %s",
+                    divideOrZero(totalNumSettledEdges, totalMaxSettledEdges) * 100,
+                    divideOrZero(totalNumSettledEdges, totalNumResets),
+                    divideOrZero(totalMaxSettledEdges, totalNumResets),
+                    divideOrZero(totalMeanSettledEdges, totalNumStatCalcResets),
+                    divideOrZero(totalStdDeviationSettledEdges, totalNumStatCalcResets),
+                    sigmaFactor,
+                    divideOrZero(totalNumInitialEntries, totalNumResets),
+                    Arrays.toString(settledEdgesStats));
+        }
+
+        private double divideOrZero(long a, long b) {
+            return b == 0 ? 0 : 1.0 * a / b;
         }
 
         void reset() {
             Arrays.fill(settledEdgesStats, 0);
             totalNumResets = 0;
+            totalNumStatCalcResets = 0;
             totalNumInitialEntries = 0;
             totalNumSettledEdges = 0;
             totalMaxSettledEdges = 0;
+            totalMeanSettledEdges = 0;
+            totalStdDeviationSettledEdges = 0;
         }
 
         public void onInitEntries(int numInitialEntries) {
@@ -159,6 +172,12 @@ public abstract class WitnessPathFinder {
             totalNumResets++;
             totalNumSettledEdges += numSettledEdges;
             totalMaxSettledEdges += maxSettledEdges;
+        }
+
+        public void onStatCalcReset(OnFlyStatisticsCalculator statisticsCalculator) {
+            totalNumStatCalcResets++;
+            totalMeanSettledEdges += statisticsCalculator.getMean();
+            totalStdDeviationSettledEdges += (long) Math.sqrt(statisticsCalculator.getVariance());
         }
     }
 }

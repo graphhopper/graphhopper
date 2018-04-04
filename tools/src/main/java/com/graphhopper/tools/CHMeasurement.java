@@ -29,6 +29,7 @@ import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.EdgeBasedNodeContractor;
 import com.graphhopper.routing.ch.ManualPrepareContractionHierarchies;
 import com.graphhopper.routing.ch.WitnessPathFinder;
+import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
@@ -83,7 +84,7 @@ public class CHMeasurement {
         osmFile = "bremen-latest.osm.pbf";
         EdgeBasedNodeContractor.aggressiveSearch = true;
         EdgeBasedNodeContractor.arrayBasedWitnessPathFinder = true;
-        WitnessPathFinder.maxSettledEdgesScale = 2.0;
+        WitnessPathFinder.sigmaFactor = 4.0;
         maxTurnCost = 100;
         seed = 123;
         pNodeHasTurnCosts = 0.3;
@@ -212,14 +213,14 @@ public class CHMeasurement {
      * The queries are compared with a normal AStar search for comparison and to ensure correctness.
      */
     private static void testPerformanceAutomaticNodeOrdering(String[] args) {
-        String osmFile = "berlin-latest.osm.pbf";
+        String osmFile = "unterfranken-latest.osm.pbf";
         int periodicUpdates = 20;
         int lazyUpdates = 100;
         int neighborUpdates = 4;
         int contractedNodes = 100;
         if (args.length == 10) {
             osmFile = args[0];
-            WitnessPathFinder.maxSettledEdgesScale = Double.valueOf(args[1]);
+            WitnessPathFinder.sigmaFactor = Double.valueOf(args[1]);
             EdgeBasedNodeContractor.aggressiveSearch = Boolean.valueOf(args[2]);
             EdgeBasedNodeContractor.edgeDifferenceWeight = Integer.valueOf(args[3]);
             EdgeBasedNodeContractor.originalEdgeDifferenceWeight = Integer.valueOf(args[4]);
