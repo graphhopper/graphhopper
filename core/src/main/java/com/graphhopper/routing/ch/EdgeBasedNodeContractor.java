@@ -109,7 +109,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     @Override
-    public int calculatePriority(int node) {
+    public float calculatePriority(int node) {
         activeShortcutHandler = countingShortcutHandler;
         long start = nanoTime();
         findAndHandleShortcuts(node);

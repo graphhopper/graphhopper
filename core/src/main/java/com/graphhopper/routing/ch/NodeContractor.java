@@ -27,7 +27,7 @@ public interface NodeContractor {
     /**
      * Calculates the priority of a node v without changing the graph. Lower (!!) priority nodes are contracted first.
      */
-    int calculatePriority(int node);
+    float calculatePriority(int node);
 
     /**
      * Adds the required shortcuts for the given node and returns the number of incoming edges to the given node

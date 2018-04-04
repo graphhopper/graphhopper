@@ -81,7 +81,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
      * a slowish or even endless loop.
      */
     @Override
-    public int calculatePriority(int node) {
+    public float calculatePriority(int node) {
         CalcShortcutsResult calcShortcutsResult = calcShortcutCount(node);
 
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
