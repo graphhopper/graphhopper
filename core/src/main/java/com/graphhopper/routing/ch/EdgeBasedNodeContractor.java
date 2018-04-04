@@ -40,9 +40,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
     public static boolean aggressiveSearch = true;
     public static boolean arrayBasedWitnessPathFinder = true;
-    public static int edgeDifferenceWeight = 8;
-    public static int originalEdgeDifferenceWeight = 4;
-    public static int hierarchyDepthWeight = 1;
+    public static float edgeDifferenceWeight = 1;
+    public static float originalEdgeDifferenceWeight = 3;
+    public static float hierarchyDepthWeight = 2;
     private final TurnWeighting turnWeighting;
     private final TraversalMode traversalMode;
     private final SimpleSearch simpleSearch = new SimpleSearch();
@@ -139,8 +139,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         // the more shortcuts need to be introduced the later we want to contract this node
         // the more edges will be removed when contracting this node the earlier we want to contract the node
         // right now we use edge differences instead of quotients
-        return edgeDifferenceWeight * (numEdges - numPrevEdges) +
-                originalEdgeDifferenceWeight * (numOrigEdges - numPrevOrigEdges) +
+        return edgeDifferenceWeight * (numEdges / (float) numPrevEdges) +
+                originalEdgeDifferenceWeight * (numOrigEdges / (float) numPrevOrigEdges) +
                 hierarchyDepthWeight * hierarchyDepths[node];
     }
 
