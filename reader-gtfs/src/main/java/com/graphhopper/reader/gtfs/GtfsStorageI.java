@@ -45,5 +45,9 @@ public interface GtfsStorageI {
 
     Map<String, GTFSFeed> getGtfsFeeds();
 
+    Map<String, Transfers> getTransfers();
+
     Map<String, Integer> getStationNodes();
+
+    Map<Integer, String> getRoutes();
 }

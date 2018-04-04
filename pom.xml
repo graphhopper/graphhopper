@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>${revision}</version>
+    <version>0.11-SNAPSHOT</version>
     <packaging>pom</packaging>
     <url>https://www.graphhopper.com</url>
     <inceptionYear>2012</inceptionYear>
@@ -20,7 +20,6 @@
         <commons-compress.version>1.12</commons-compress.version>
         <jackson.version>2.8.4</jackson.version>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <revision>0.10-SNAPSHOT</revision>
 
         <org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>4</org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>
         <org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>4</org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>
@@ -203,18 +202,6 @@
                     </excludes>
                 </configuration>
             </plugin>
-            <plugin>
-	      <groupId>com.hbakkum.maven.plugins</groupId>
-	      <artifactId>resolve-parent-version-maven-plugin</artifactId>
-	      <version>0.7</version>
-	      <executions>
-	        <execution>
-	          <goals>
-	            <goal>resolve-parent-version</goal>
-	          </goals>
-	        </execution>
-  	      </executions>
-	    </plugin>
         </plugins>
     </build>
 
@@ -318,37 +305,6 @@
             </modules>
         </profile>
 
-        <profile>
-            <id>jdk8</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties />
-            <modules>
-                <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518
-                Currently works for jdk8 only -->
-                <module>reader-shp</module>
-            </modules>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                    </plugin>
-                    <plugin>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>jdk9</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <jdk>9</jdk>
-            </activation>
-            <!-- 1. reader-shp does not work yet with jdk9. 2. See #852 and #701 for possible compiler options -->
-        </profile>
     </profiles>
 
 </project>

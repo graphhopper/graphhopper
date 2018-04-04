@@ -130,7 +130,23 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testUTurn() throws Exception {
+    public void withoutInstructions() {
+        GHRequest request = new GHRequest().setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr);
+        request.addPoint(new GHPoint(43.729584, 7.410965));
+        request.addPoint(new GHPoint(43.732499, 7.426758));
+        request.getHints().put("instructions", true);
+        GHResponse routeRsp = hopper.route(request);
+        int withInstructionsPoints = routeRsp.getBest().getPoints().size();
+
+        request.getHints().put("instructions", false);
+        routeRsp = hopper.route(request);
+
+        assertTrue("there should not be more points if instructions are disabled due to simplify but was " + withInstructionsPoints + " vs " + routeRsp.getBest().getPoints().size(),
+                withInstructionsPoints > routeRsp.getBest().getPoints().size());
+    }
+
+    @Test
+    public void testUTurn() {
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(DIR + "/monaco.osm.gz").
                 setCHEnabled(false).

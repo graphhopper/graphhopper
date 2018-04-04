@@ -17,16 +17,20 @@
  */
 package com.graphhopper.reader.gtfs;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.SetMultimap;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.PriorityQueue;
+import java.util.Spliterators;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -45,7 +49,7 @@ class MultiCriteriaLabelSetting {
     private long startTime;
     private final PtFlagEncoder flagEncoder;
     private final PtTravelTimeWeighting weighting;
-    private final SetMultimap<Integer, Label> fromMap;
+    private final Multimap<Integer, Label> fromMap;
     private final PriorityQueue<Label> fromHeap;
     private final int maxVisitedNodes;
     private final boolean reverse;
@@ -73,7 +77,7 @@ class MultiCriteriaLabelSetting {
                 .thenComparing(Comparator.comparingLong(l1 -> l1.nWalkDistanceConstraintViolations))
                 .thenComparing(Comparator.comparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0));
         fromHeap = new PriorityQueue<>(queueComparator);
-        fromMap = HashMultimap.create();
+        fromMap = ArrayListMultimap.create();
     }
 
     Stream<Label> calcLabels(int from, int to, Instant startTime) {
@@ -85,13 +89,15 @@ class MultiCriteriaLabelSetting {
 
     private class MultiCriteriaLabelSettingSpliterator extends Spliterators.AbstractSpliterator<Label> {
 
+        private final int from;
         private final int to;
-        private final Set<Label> targetLabels;
+        private final Collection<Label> targetLabels;
 
         MultiCriteriaLabelSettingSpliterator(int from, int to) {
             super(0, 0);
+            this.from = from;
             this.to = to;
-            targetLabels = new HashSet<>();
+            targetLabels = new ArrayList<>();
             Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0, 0.0, null, 0, 0,false,null);
             fromMap.put(from, label);
             fromHeap.add(label);
@@ -109,6 +115,9 @@ class MultiCriteriaLabelSetting {
                 action.accept(label);
                 explorer.exploreEdgesAround(label).forEach(edge -> {
                     GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
+                    if (edgeType == GtfsStorage.EdgeType.HIGHWAY && maxTransferDistancePerLeg <= 0.0) return;
+                    if (edgeType == GtfsStorage.EdgeType.ENTER_PT && ((reverse?edge.getAdjNode():edge.getBaseNode()) != (reverse?to:from)) && maxTransferDistancePerLeg <= 0.0) return;
+                    if (edgeType == GtfsStorage.EdgeType.EXIT_PT && ((reverse?edge.getBaseNode():edge.getAdjNode()) != (reverse?from:to)) && maxTransferDistancePerLeg <= 0.0) return;
                     long nextTime;
                     if (reverse) {
                         nextTime = label.currentTime - explorer.calcTravelTimeMillis(edge, label.currentTime);
@@ -131,16 +140,21 @@ class MultiCriteriaLabelSetting {
                     long walkTime = label.walkTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? nextTime - label.currentTime : 0);
                     int nWalkDistanceConstraintViolations = Math.min(1, label.nWalkDistanceConstraintViolations + (
                             isTryingToReEnterPtAfterTransferWalking ? 1 : (label.walkDistanceOnCurrentLeg <= maxWalkDistancePerLeg && walkDistanceOnCurrentLeg > maxWalkDistancePerLeg ? 1 : 0)));
-                    Set<Label> sptEntries = fromMap.get(edge.getAdjNode());
+                    Collection<Label> sptEntries = fromMap.get(edge.getAdjNode());
                     boolean impossible = label.impossible
                             || explorer.isBlocked(edge)
                             || (!reverse) && edgeType == GtfsStorage.EdgeType.BOARD && label.residualDelay > 0
                             || reverse && edgeType == GtfsStorage.EdgeType.ALIGHT && label.residualDelay < explorer.getDelayFromAlightEdge(edge, label.currentTime);
                     long residualDelay;
                     if (!reverse) {
-                        residualDelay = Math.max(0, label.residualDelay - explorer.calcTravelTimeMillis(edge, label.currentTime));
-                        if (edgeType == GtfsStorage.EdgeType.ALIGHT) {
-                            residualDelay = explorer.getDelayFromAlightEdge(edge, label.currentTime);
+                        if (edgeType == GtfsStorage.EdgeType.WAIT || edgeType == GtfsStorage.EdgeType.TRANSFER) {
+                            residualDelay = Math.max(0, label.residualDelay - explorer.calcTravelTimeMillis(edge, label.currentTime));
+                        } else if (edgeType == GtfsStorage.EdgeType.ALIGHT) {
+                            residualDelay = label.residualDelay + explorer.getDelayFromAlightEdge(edge, label.currentTime);
+                        } else if (edgeType == GtfsStorage.EdgeType.BOARD) {
+                            residualDelay = -explorer.getDelayFromBoardEdge(edge, label.currentTime);
+                        } else {
+                            residualDelay = label.residualDelay;
                         }
                     } else {
                         if (edgeType == GtfsStorage.EdgeType.WAIT || edgeType == GtfsStorage.EdgeType.TRANSFER) {
@@ -149,25 +163,38 @@ class MultiCriteriaLabelSetting {
                             residualDelay = 0;
                         }
                     }
-                    Label nEdge = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, nWalkDistanceConstraintViolations, walkDistanceOnCurrentLeg, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
-                    if (isNotDominatedByAnyOf(nEdge, sptEntries) && isNotDominatedByAnyOf(nEdge, targetLabels)) {
-                        removeDominated(nEdge, sptEntries);
-                        if (to == edge.getAdjNode()) {
-                            removeDominated(nEdge, targetLabels);
-                        }
-                        fromMap.put(edge.getAdjNode(), nEdge);
-                        if (to == edge.getAdjNode()) {
-                            targetLabels.add(nEdge);
-                        }
-                        fromHeap.add(nEdge);
+                    if (!reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && residualDelay > 0) {
+                        Label newImpossibleLabelForDelayedTrip = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, nWalkDistanceConstraintViolations, walkDistanceOnCurrentLeg, firstPtDepartureTime, walkTime, residualDelay, true, label);
+                        insertIfNotDominated(edge, sptEntries, newImpossibleLabelForDelayedTrip);
+                        nextTime += residualDelay;
+                        residualDelay = 0;
+                        Label newLabel = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, nWalkDistanceConstraintViolations, walkDistanceOnCurrentLeg, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
+                        insertIfNotDominated(edge, sptEntries, newLabel);
+                    } else {
+                        Label newLabel = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, nWalkDistanceConstraintViolations, walkDistanceOnCurrentLeg, firstPtDepartureTime, walkTime, residualDelay, impossible, label);
+                        insertIfNotDominated(edge, sptEntries, newLabel);
                     }
                 });
                 return true;
             }
         }
+
+        private void insertIfNotDominated(EdgeIteratorState edge, Collection<Label> sptEntries, Label nEdge) {
+            if (isNotDominatedByAnyOf(nEdge, sptEntries) && isNotDominatedByAnyOf(nEdge, targetLabels)) {
+                removeDominated(nEdge, sptEntries);
+                if (to == edge.getAdjNode()) {
+                    removeDominated(nEdge, targetLabels);
+                }
+                fromMap.put(edge.getAdjNode(), nEdge);
+                if (to == edge.getAdjNode()) {
+                    targetLabels.add(nEdge);
+                }
+                fromHeap.add(nEdge);
+            }
+        }
     }
 
-    private boolean isNotDominatedByAnyOf(Label me, Set<Label> sptEntries) {
+    private boolean isNotDominatedByAnyOf(Label me, Collection<Label> sptEntries) {
         if (me.nWalkDistanceConstraintViolations > 0) {
             return false;
         }
@@ -180,7 +207,7 @@ class MultiCriteriaLabelSetting {
     }
 
 
-    private void removeDominated(Label me, Set<Label> sptEntries) {
+    private void removeDominated(Label me, Collection<Label> sptEntries) {
         for (Iterator<Label> iterator = sptEntries.iterator(); iterator.hasNext();) {
             Label sptEntry = iterator.next();
             if (dominates(me, sptEntry)) {
