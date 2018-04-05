@@ -138,7 +138,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         // todo: optimize
         // the more shortcuts need to be introduced the later we want to contract this node
         // the more edges will be removed when contracting this node the earlier we want to contract the node
-        // right now we use edge differences instead of quotients
         return edgeDifferenceWeight * (numEdges / (float) numPrevEdges) +
                 originalEdgeDifferenceWeight * (numOrigEdges / (float) numPrevOrigEdges) +
                 hierarchyDepthWeight * hierarchyDepths[node];

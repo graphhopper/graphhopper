@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -220,8 +221,10 @@ public class CHMeasurement {
         int neighborUpdates = 4;
         int contractedNodes = 100;
         WitnessPathFinder.sigmaFactor = 3.0;
+        boolean cleanup = true;
         int landmarks = 32;
-        if (args.length == 11) {
+        if (args.length == 12) {
+            LOGGER.info("Running analysis with parameters {}", Arrays.toString(args));
             osmFile = args[0];
             WitnessPathFinder.sigmaFactor = Double.valueOf(args[1]);
             EdgeBasedNodeContractor.aggressiveSearch = Boolean.valueOf(args[2]);
@@ -233,6 +236,7 @@ public class CHMeasurement {
             neighborUpdates = Integer.valueOf(args[8]);
             contractedNodes = Integer.valueOf(args[9]);
             landmarks = Integer.valueOf(args[10]);
+            cleanup = Boolean.valueOf(args[11]);
         }
         final GraphHopper graphHopper = new GraphHopperOSM();
         CmdArgs cmdArgs = new CmdArgs();
@@ -265,7 +269,9 @@ public class CHMeasurement {
         graphHopper.init(cmdArgs);
 
         // remove previous data
-        graphHopper.clean();
+        if (cleanup) {
+            graphHopper.clean();
+        }
 
         StopWatch sw = new StopWatch();
         sw.start();
