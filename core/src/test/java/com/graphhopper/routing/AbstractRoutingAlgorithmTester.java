@@ -147,7 +147,11 @@ public abstract class AbstractRoutingAlgorithmTester {
     public void setUp() {
         carEncoder = encodingManager.getEncoder("car");
         footEncoder = encodingManager.getEncoder("foot");
-        defaultOpts = AlgorithmOptions.start().
+        defaultOpts = createAlgoOptions();
+    }
+
+    protected AlgorithmOptions createAlgoOptions() {
+        return AlgorithmOptions.start().
                 weighting(new ShortestWeighting(carEncoder)).build();
     }
 
