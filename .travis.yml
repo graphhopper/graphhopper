@@ -1,5 +1,6 @@
 language: java
 sudo: false
+dist: trusty
 
 env:
   global:
@@ -7,13 +8,6 @@ env:
     # TODO move this into the travis settings
     - secure: "j6a61/qnfFcSjx5XxmxO2hqBOwtVx5HWrD1+4Atl7WG/pRKz9+jSga1Y7oDAFb2SIl8S65kDmPQB/vC8aHxUDj/Wizjxnxn1FhPqoe9yO6Ztft+984FKFyvj7s6tsBJKcehGec+chTOwZQpH4oI4rU6IlepDHnGLHiOd0Iviryg="
     - secure: "GiFr+v2lTQk/sTQB7CYjju1/mupS8LSJupmizLqY454utiZkabDMBOZQnF9ukpy7WhveB9hKQyEKf9iP2w7HSYEjgvogT26vZ5f2MeLnR4SWvqEtf/WBvvh+W+k/rb2f6YgitkB4Jlxn2izemBEDuKplGJphzGW41lf8XZ2IxVI="
-
-dist: trusty
-group: edge
-
-#jdk:
-#  - oraclejdk8
-#  - openjdk8
 
 matrix:
   include:
