@@ -45,12 +45,12 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD<
 
     @Override
     protected boolean fwdSearchCanBeStopped() {
-        return getMinCurrPathWeight(currFrom.weight, currFrom.adjNode, false) > bestPath.getWeight();
+        return getMinCurrFromPathWeight() > bestPath.getWeight();
     }
 
     @Override
     protected boolean bwdSearchCanBeStopped() {
-        return getMinCurrPathWeight(currTo.weight, currTo.adjNode, true) > bestPath.getWeight();
+        return getMinCurrToPathWeight() > bestPath.getWeight();
     }
 
     @Override
@@ -93,12 +93,20 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD<
         return weightOfVisitedPath;
     }
 
-    private double getMinCurrPathWeight(double weight, int node, boolean reverse) {
+    private double getMinCurrFromPathWeight() {
         if (useHeuristicForNodeOrder) {
-            return weight;
+            return currFrom.weight;
         }
-        return weight + weightApprox.approximate(node, reverse);
+        return currFrom.weight + weightApprox.approximate(currFrom.adjNode, false);
     }
+
+    private double getMinCurrToPathWeight() {
+        if (useHeuristicForNodeOrder) {
+            return currTo.weight;
+        }
+        return currTo.weight + weightApprox.approximate(currTo.adjNode, true);
+    }
+
 
     @Override
     public String getName() {
