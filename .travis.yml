@@ -11,9 +11,9 @@ env:
 dist: trusty
 group: edge
 
-jdk:
-  - oraclejdk8
-  - openjdk8
+#jdk:
+#  - oraclejdk8
+#  - openjdk8
 
 matrix:
   include:
