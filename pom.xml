@@ -304,6 +304,17 @@
                 <module>android/app</module>
             </modules>
         </profile>
+	<profile>
+            <id>jdk10</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>10</jdk>
+            </activation>
+            <properties>
+              <maven.compiler.source>1.10</maven.compiler.source>
+              <maven.compiler.target>1.10</maven.compiler.target>
+            </properties>
+        </profile>
 
     </profiles>
 

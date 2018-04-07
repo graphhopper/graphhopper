@@ -13,12 +13,14 @@ group: edge
 
 jdk:
   - oraclejdk8
-  - oraclejdk9
   - openjdk8
 
-# matrix:
-#   allow_failures:
-#    - jdk: oraclejdk9
+matrix:
+  include:
+    - jdk: oraclejdk8
+    - jdk: openjdk8
+    - env: JDK='OpenJDK 10'
+      install: . ./install-jdk.sh -F 10
     
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
@@ -29,6 +31,7 @@ install: true
 before_install:
   - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
   - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
+  - 'wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh'
   
 # avoid increase of memory via travis https://github.com/travis-ci/travis-ci/issues/8408
 before_script:
