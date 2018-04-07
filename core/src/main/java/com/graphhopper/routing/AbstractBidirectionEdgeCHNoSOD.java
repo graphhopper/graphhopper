@@ -152,9 +152,9 @@ public abstract class AbstractBidirectionEdgeCHNoSOD<T extends CHEntry> extends 
             }
 
             double turnCostsAtBridgeNode = reverse ?
-                    // todo: maybe we should make this a bit cleaner (check weighting type at construction type etc.)
-                    ((TurnWeighting) weighting).calcTurnWeight(iter.getLastOrigEdge(), edgeState.getBaseNode(), prevOrNextOrigEdgeId) :
-                    ((TurnWeighting) weighting).calcTurnWeight(prevOrNextOrigEdgeId, edgeState.getBaseNode(), iter.getFirstOrigEdge());
+//                     todo: maybe we should make this a bit cleaner (check weighting type at construction time etc.)
+                    ((TurnWeighting) weighting).calcTurnWeight(iter.getLastOrigEdge(), iter.getBaseNode(), prevOrNextOrigEdgeId) :
+                    ((TurnWeighting) weighting).calcTurnWeight(prevOrNextOrigEdgeId, iter.getBaseNode(), iter.getFirstOrigEdge());
 
             double newWeight = entry.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath() + turnCostsAtBridgeNode;
             if (newWeight < bestPath.getWeight()) {
