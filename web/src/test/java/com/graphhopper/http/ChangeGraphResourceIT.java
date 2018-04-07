@@ -18,14 +18,16 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
+import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
-import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
 import java.io.File;
 
 import static org.junit.Assert.*;
@@ -33,35 +35,37 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class ChangeGraphServletIT extends BaseServletTester {
+public class ChangeGraphResourceIT {
     private static final String DIR = "./target/andorra-gh/";
 
-    @AfterClass
-    public static void cleanUp() {
-        Helper.removeDir(new File(DIR));
-        shutdownJetty(true);
-    }
+    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
-    @Before
-    public void setUp() {
-        CmdArgs args = new CmdArgs().
+    static {
+        config.graphhopper.merge(new CmdArgs().
                 put(Parameters.CH.PREPARE + "weightings", "no").
                 put("graph.flag_encoders", "car").
                 put("web.change_graph.enabled", "true").
                 put("graph.location", DIR).
-                put("datareader.file", "../core/files/andorra.osm.pbf");
-        setUpJetty(args);
+                put("datareader.file", "../core/files/andorra.osm.pbf"));
+    }
+
+    @ClassRule
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
+            GraphHopperApplication.class, config);
+
+
+    @AfterClass
+    public static void cleanUp() {
+        Helper.removeDir(new File(DIR));
     }
 
     @Test
     public void testBlockAccessViaPoint() throws Exception {
-        final ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode json = query("point=42.531453,1.518946&point=42.511178,1.54006", 200);
-        JsonNode infoJson = json.get("info");
-        assertFalse(infoJson.has("errors"));
-        JsonNode path = json.get("paths").get(0);
-        // System.out.println("\n\n1\n" + path);
-        double distance = path.get("distance").asDouble();
+        Response response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertFalse(json.get("info").has("errors"));
+        double distance = json.get("paths").get(0).get("distance").asDouble();
         assertTrue("distance wasn't correct:" + distance, distance > 3000);
         assertTrue("distance wasn't correct:" + distance, distance < 3500);
 
@@ -78,19 +82,19 @@ public class ChangeGraphServletIT extends BaseServletTester {
                 + "    \"vehicles\": [\"car\"],"
                 + "    \"access\": false"
                 + "  }}]}";
-        String res = post("/change", 200, geoJson);
-        JsonNode jsonObj = objectMapper.readTree(res);
-        assertEquals(1, jsonObj.get("updates").asInt());
+
+        response = app.client().target("http://localhost:8080/change").request().post(Entity.json(geoJson));
+        assertEquals(200, response.getStatus());
+        json = response.readEntity(JsonNode.class);
+        assertEquals(1, json.get("updates").asInt());
 
         // route around blocked road => longer
-        json = query("point=42.531453,1.518946&point=42.511178,1.54006", 200);
-        infoJson = json.get("info");
-        assertFalse(infoJson.has("errors"));
-        path = json.get("paths").get(0);
+        response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        json = response.readEntity(JsonNode.class);
+        assertFalse(json.get("info").has("errors"));
 
-        // System.out.println("\n\n2\n" + path);
-
-        distance = path.get("distance").asDouble();
+        distance = json.get("paths").get(0).get("distance").asDouble();
         assertTrue("distance wasn't correct:" + distance, distance > 5300);
         assertTrue("distance wasn't correct:" + distance, distance < 5800);
     }

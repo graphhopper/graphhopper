@@ -18,8 +18,10 @@
 
 package com.graphhopper.http;
 
-interface GraphHopperService extends AutoCloseable {
+import com.graphhopper.util.CmdArgs;
 
-    void start();
+public interface HasGraphHopperConfiguration {
+
+    CmdArgs graphhopper();
 
 }
