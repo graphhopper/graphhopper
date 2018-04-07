@@ -19,8 +19,8 @@ matrix:
   include:
     - jdk: oraclejdk8
     - jdk: openjdk8
-    - env: JDK='OpenJDK 10'
-      install: . ./install-jdk.sh -F 10
+    - env: JDK='Oracle JDK 10'
+      install: . ./install-jdk.sh -F 10 -L BCL
     
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
