@@ -41,7 +41,7 @@ before_script:
 before_script:
   - _JAVA_OPTIONS=
 script:
-  - "mvn --version && mvn clean test verify checkstyle:check findbugs:check forbiddenapis:check -B"
+  - "mvn --version && mvn clean test verify checkstyle:check findbugs:check -B"
 
 after_success:
   # deploy snapshot artifacts to sonatype and if tagged deploy the release to maven central
