@@ -14,7 +14,7 @@ Before the installation fetch the source, the OpenStreetMap data and the depende
 ```bash
 $ git clone git://github.com/graphhopper/graphhopper.git graphhopper
 $ cd graphhopper
-$ ./graphhopper.sh import your-area.pbf
+$ ./graphhopper.sh -a import -i your-area.pbf
 ```
 
 ## Android Studio
@@ -26,8 +26,8 @@ Please read [here](./android-studio-setup.md) for a detailed instruction.
 Download the [Android SDK](http://developer.android.com/sdk/installing/index.html?pkg=tools) and go to the Android SDK Manager and install the latest SDK.
 
 ### Maven or NetBeans
- 1. Download [Maven Android SDK Deployer](https://github.com/simpligility/maven-android-sdk-deployer) and execute `mvn install -P 5.1` - it uses [Android Maven Plugin](http://simpligility.github.io/android-maven-plugin/) under the hood where you need to set up ANDROID_HOME
- 2. Now do `./graphhopper.sh android`
+ 1. Download [Maven Android SDK Deployer](https://github.com/simpligility/maven-android-sdk-deployer) and execute `mvn install -P 5.1` - it uses [Android Maven Plugin](http://simpligility.github.io/android-maven-plugin/) under the hood where you need to set up `ANDROID_HOME`
+ 2. Now do `mvn -P include-android --projects android/app -am package android:deploy android:run`
 
 ### Gradle
 
@@ -43,7 +43,7 @@ $ gradle installDebug
 Now that you have a running Android app you need to copy the routing and maps data to the device. 
 
  1. [Download the raw openstreetmap file](http://download.geofabrik.de/openstreetmap/) - you'll need that for the next step to create the routing data
- 2. Execute `./graphhopper.sh import <your-osm-file>`. This creates the routing data
+ 2. Execute `./graphhopper.sh -a import -i <your-osm-file>`. This creates the routing data
  3. [Download a map](http://download.mapsforge.org/maps/) e.g. berlin.map
  4. Copy berlin.map into the created berlin-gh folder
  5. Optional Compression Step: Bundle a graphhopper zip file via `cd berlin-gh; zip -r berlin.ghz *`

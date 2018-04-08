@@ -120,7 +120,7 @@ public class GraphEdgeIdFinder {
             GHPoint point = GHPoint.create((Point) geometry);
             findClosestEdgeToPoint(edgeIds, point, filter);
         } else if (geometry instanceof LineString) {
-            PointList pl = PointList.from((LineString) geometry);
+            PointList pl = PointList.fromLineString((LineString) geometry);
             // TODO do map matching or routing
             int lastIdx = pl.size() - 1;
             if (pl.size() >= 2) {

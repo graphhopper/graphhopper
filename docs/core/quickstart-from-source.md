@@ -12,7 +12,7 @@ Now, before you proceed install git and jdk8, then do:
 ```bash
 $ git clone git://github.com/graphhopper/graphhopper.git
 $ cd graphhopper; git checkout master
-$ ./graphhopper.sh web europe_germany_berlin.pbf
+$ ./graphhopper.sh -a web -i europe_germany_berlin.pbf
 now go to http://localhost:8989/
 ```
 
@@ -24,8 +24,8 @@ now go to http://localhost:8989/
 For you favourite area do
 
 ```bash
-$ ./graphhopper.sh web europe_france.pbf
-$ ./graphhopper.sh web north-america_us_new-york.pbf
+$ ./graphhopper.sh -a web -i europe_france.pbf -o france-gh
+$ ./graphhopper.sh -a web -i north-america_us_new-york.pbf -o new-york-gh
 # the format follows the link structure at http://download.geofabrik.de
 ```
 
@@ -59,7 +59,7 @@ as those versions are not in maven central:
 
 ### JavaScript
 
-When you started GraphHopper via `./graphhopper.sh web <your_osm.pbf>` a web server is already
+When you started GraphHopper via `./graphhopper.sh -a web -i <your_osm.pbf>` a web server is already
 started and waiting for your commands. You can see this for the whole world at [GraphHopper Maps](https://graphhopper.com/maps/).
 
 If you want to change the JavaScript you have to setup the JavaScript environment - 
