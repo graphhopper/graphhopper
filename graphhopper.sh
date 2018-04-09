@@ -37,8 +37,7 @@ function printBashUsage {
   echo "-v | --version            print version"
 }
 
-VERSION=$(grep '<revision' pom.xml | cut -d'>' -f2 | cut -d'<' -f1)
-JAR=web/target/graphhopper-web-$VERSION.jar
+VERSION=$(grep "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
 
 # one or two character parameters have one minus character'-' all longer parameters have two minus characters '--'
 while [ ! -z $1 ]; do
@@ -211,10 +210,6 @@ else
    OSM_FILE=
 fi
 
-GRAPH=$DATADIR/$NAME-gh
-VERSION=$(grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
-JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
-
 LINK=$(echo $NAME | tr '_' '/')
 if [ "$FILE" == "-" ]; then
    LINK=
@@ -230,6 +225,8 @@ else
 fi
 
 : "${JAVA_OPTS:=-Xmx1000m -Xms1000m -server}"
+: "${JAR:=web/target/graphhopper-web-$VERSION.jar}"
+: "${GRAPH:=$DATADIR/$NAME-gh}"
 
 ensureOsm
 packageJar
