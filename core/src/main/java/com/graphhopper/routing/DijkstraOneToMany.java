@@ -34,6 +34,7 @@ import java.util.Arrays;
  * <p>
  *
  * @author Peter Karich
+ * @author kodonnell
  */
 public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     private static final int EMPTY_PARENT = -1;
@@ -51,6 +52,13 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
     public DijkstraOneToMany(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
+
+        // need to check for node based traversal, as the algorithm will actually run for any mode
+        // but only sensibly for node based.
+        if (tMode != TraversalMode.NODE_BASED) {
+            throw new IllegalArgumentException(
+                    "DijkstraOneToMany only supports node based traversal");
+        }
 
         parents = new int[graph.getNodes()];
         Arrays.fill(parents, EMPTY_PARENT);
