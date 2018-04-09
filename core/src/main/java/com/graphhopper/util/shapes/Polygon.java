@@ -15,9 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules;
-
-import com.graphhopper.util.shapes.GHPoint;
+package com.graphhopper.util.shapes;
 
 /**
  * This class represents a polygon that is defined by a set of points.
@@ -27,7 +25,7 @@ import com.graphhopper.util.shapes.GHPoint;
  *
  * @author Robin Boldt
  */
-public class Polygon {
+public class Polygon implements Shape {
 
     private final double[] lat;
     private final double[] lon;
@@ -39,7 +37,7 @@ public class Polygon {
 
     private final double epsilon;
 
-    public Polygon(double[] lat, double[] lon) {
+    public Polygon(double[] lat, double[] lon, double growFactor) {
         if (lat.length != lon.length) {
             throw new IllegalArgumentException("Points must be of equal length but was " + lat.length + " vs. " + lon.length);
         }
@@ -69,7 +67,16 @@ public class Polygon {
             }
         }
 
+        minLat -= growFactor;
+        minLon -= growFactor;
+        maxLat += growFactor;
+        maxLon += growFactor;
+
         epsilon = (maxLat - minLat) / 10;
+    }
+
+    public Polygon(double[] lat, double[] lon) {
+        this(lat, lon, 0);
     }
 
     /**
@@ -90,6 +97,11 @@ public class Polygon {
      */
     public boolean contains(GHPoint point) {
         return contains(point.lat, point.lon);
+    }
+
+    @Override
+    public boolean intersect(Shape o) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**
@@ -116,6 +128,26 @@ public class Polygon {
         }
         return inside;
 
+    }
+
+    @Override
+    public boolean contains(Shape s) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public BBox getBounds() {
+        return new BBox(minLon, maxLon, minLat, maxLat);
+    }
+
+    @Override
+    public GHPoint getCenter() {
+        return new GHPoint((maxLat + minLat) / 2, (maxLon + minLon) / 2);
+    }
+
+    @Override
+    public double calculateArea() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     private boolean edgesAreIntersecting(
@@ -191,5 +223,29 @@ public class Polygon {
 
     public double getMaxLon() {
         return maxLon;
+    }
+
+    @Override
+    public String toString() {
+        return "polygon (" + lat.length + " points)";
+    }
+
+    public static Polygon parsePoints(String pointsStr, double growFactor) {
+        String[] arr = pointsStr.split(",");
+
+        if (arr.length % 2 == 1) throw new IllegalArgumentException("incorrect polygon specified");
+
+        double[] lats = new double[arr.length /2];
+        double[] lons = new double[arr.length /2];
+
+        for (int j = 0; j < arr.length; j++) {
+            if (j % 2 == 0) {
+                lats[j / 2] = Double.parseDouble(arr[j]);
+            } else {
+                lons[(j - 1) / 2] = Double.parseDouble(arr[j]);
+            }
+        }
+
+        return new Polygon(lats, lons, growFactor);
     }
 }
