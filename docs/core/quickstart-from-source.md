@@ -33,10 +33,6 @@ $ ./graphhopper.sh -a web -i north-america_us_new-york.pbf -o new-york-gh
 
 Open the project in your IDE, first class IDEs are NetBeans and IntelliJ where no further setup is required.
 
-### Contribute
-
-See this [guide](https://github.com/graphhopper/graphhopper/blob/master/.github/CONTRIBUTING.md) on how to contribute.
-
 ### Java, Embedded Usage
 
 Have a look into the [Java API documentation](../index.md#developer) for further details e.g. how [GraphHopper can
@@ -63,12 +59,11 @@ as those versions are not in maven central:
 
 ### JavaScript
 
-When developing the UI for GraphHopper you need to enable serving files
-directly from local storage which you can do via `./graphhopper.sh -a webdebug -i <your_osm.pbf>`
+When you started GraphHopper via `./graphhopper.sh -a web -i <your_osm.pbf>` a web server is already
+started and waiting for your commands. You can see this for the whole world at [GraphHopper Maps](https://graphhopper.com/maps/).
 
-Open the browser at `localhost:8989` and you should see something like [GraphHopper Maps](https://graphhopper.com/maps/).
-
-To setup the JavaScript environment install the node package manager (npm):
+If you want to change the JavaScript you have to setup the JavaScript environment - 
+i.e. install the node package manager (npm):
 
 For linux do
 ```bash
@@ -91,9 +86,11 @@ npm test
 npm run bundle
 ```
 
+Finally start GraphHopper e.g. via the `./graphhopper.sh` script and open the browser at `localhost:8989`.
+
 There are more npm commands e.g. to change the main.js on the fly or create an uglified main.js for production:
 ```bash
-# For development just use watchify and all changes will be available on refresh:
+# For development just use watchify:
 npm run watch
 
 # bundle creates the main file
@@ -102,7 +99,7 @@ npm run bundle
 # create main.js for debugging
 npm run bundleDebug
 
-# create main.js for production and specify as CLI parameter `export NODE_ENV=development` which `options_*.js` file should be selected
+# create main.js for production and specify as CLI parameter `export NODE_ENV=development` which `options_*.js` should be selected
 npm run bundleProduction
 
 # Forcing consistent code style with jshint:
@@ -131,3 +128,7 @@ For smallish graph (e.g. size of Berlin) use a RAMDataAccess driven GraphStorage
 For larger ones use the ContractionHierarchies preparation class and MMapDataAccess to avoid OutOfMemoryErrors if you have only few RAM. 
 
 Raspberry Pi usage is also possible. Have a look into this [blog post](https://karussell.wordpress.com/2014/01/09/road-routing-on-raspberry-pi-with-graphhopper/).
+
+## Contribute
+
+See this [contributing guide](https://github.com/graphhopper/graphhopper/blob/master/.github/CONTRIBUTING.md) on how to contribute.
