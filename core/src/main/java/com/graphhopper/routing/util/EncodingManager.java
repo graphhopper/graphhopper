@@ -190,33 +190,33 @@ public class EncodingManager implements EncodedValueLookup {
 
         public Builder addBikeEncodedValues(){
             for(String parser : bikeEncodedValues){
-                for (EncodedValue ev : em.encodedValueList) {
-                    if (ev.getName() == parser) continue;
+                TagParser old = em.parsers.get(parser);
+                if (old == null)
                     // Add the parser if one with same name is not yet registered
                     add(TagParserFactory.createParser(parser));
-                }
+
             }
             return this;
         }
 
         public Builder addCarEncodedValues(){
             for(String parser : carEncodedValues){
-                for (EncodedValue ev : em.encodedValueList) {
-                    if (ev.getName() == parser) continue;
+                TagParser old = em.parsers.get(parser);
+                if (old == null)
                     // Add the parser if one with same name is not yet registered
                     add(TagParserFactory.createParser(parser));
-                }
+
             }
             return this;
         }
 
         public Builder addFootEncodedValues(){
             for(String parser : footEncodedValues){
-                for (EncodedValue ev : em.encodedValueList) {
-                    if (ev.getName() == parser) continue;
+                TagParser old = em.parsers.get(parser);
+                if (old == null)
                     // Add the parser if one with same name is not yet registered
                     add(TagParserFactory.createParser(parser));
-                }
+                
             }
             return this;
         }
