@@ -316,11 +316,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             for (Lane lane : lanes) {
                 if (lanes.size() == 1) {
                     lane.setValid(true);
-                } else if (sign < 0 && lane.getDirection() != "merge_to_left" && lane.getDirection().contains("left")) {
+                } else if (sign < 0 && !"merge_to_left".equals(lane.getDirection()) && lane.getDirection().contains("left")) {
                     lane.setValid(true);
                 } else if (sign == 0 && (lane.getDirectionCode() == CarFlagEncoder.NONE_LANE_CODE || lane.getDirection().contains("through"))) {
                     lane.setValid(true);
-                } else if (sign > 0 && lane.getDirection() != "merge_to_right" && lane.getDirection().contains("right")) {
+                } else if (sign > 0 && !"merge_to_right".equals(lane.getDirection()) && lane.getDirection().contains("right")) {
                     lane.setValid(true);
                 }
             }

@@ -510,7 +510,6 @@ public class CarFlagEncoderTest {
     @Test
     public void testTurnFlagEncoding_noCosts() {
         FlagEncoder tmpEnc = new CarFlagEncoder(8, 5, 0);
-        EncodingManager em = new EncodingManager(Arrays.asList(tmpEnc), 8);
 
         long flags_r0 = tmpEnc.getTurnFlags(true, 0);
         long flags_0 = tmpEnc.getTurnFlags(false, 0);
@@ -563,7 +562,7 @@ public class CarFlagEncoderTest {
     @Test
     public void testMaxValue() {
         CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
-        EncodingManager em = new EncodingManager(Arrays.asList(instance), 8);
+        new EncodingManager(Arrays.asList(instance), 8);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "60 mph");
