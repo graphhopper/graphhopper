@@ -71,55 +71,12 @@ public class TagParserFactory {
             case SURFACE: return new SurfaceParser();
             case CAR_MAX_SPEED: return new CarMaxSpeedParser();
             case ROAD_CLASS: return new RoadClassParser();
+            case ROAD_ENVIRONMENT: return new RoadEnvironmentParser();
+            case MAX_HEIGHT: return new MaxHeightParser();
             default: throw new IllegalArgumentException("Unsupported TagParser type " + parser);
         }
     }
 
-    public static TagParser createRoundabout(final BooleanEncodedValue ev) {
-        return new AbstractTagParser(ev) {
-            @Override
-            public void parse(IntsRef ints, ReaderWay way) {
-                if (way.hasTag("junction", "roundabout")) ev.setBool(false, ints, true);
-            }
-
-            @Override
-            public ReaderWayFilter getReadWayFilter() {
-                return ACCEPT_IF_HIGHWAY;
-            }
-
-        };
-    }
-
-    /**
-     * For OpenStreetMap this TagParser handles the highway tag and sets it to "ferry" if this is a ferry relation.
-     */
-    public static TagParser createRoadClass(final StringEncodedValue ev) {
-        return new AbstractTagParser(ev) {
-            @Override
-            public void parse(IntsRef ints, ReaderWay way) {
-                ev.setString(false, ints, way.getTag("highway"));
-            }
-
-            @Override
-            public ReaderWayFilter getReadWayFilter() {
-                return ACCEPT_IF_HIGHWAY;
-            }
-        };
-    }
-
-    public static TagParser createSurface(final StringEncodedValue ev) {
-        return new AbstractTagParser(ev) {
-            @Override
-            public void parse(IntsRef ints, ReaderWay way) {
-                ev.setString(false, ints, way.getTag("surface"));
-            }
-
-            @Override
-            public ReaderWayFilter getReadWayFilter() {
-                return ACCEPT_IF_HIGHWAY;
-            }
-        };
-    }
 
     public static TagParser createSpatialRuleId(final SpatialRuleLookup spatialRuleLookup, final IntEncodedValue spatialId) {
         return new AbstractTagParser(spatialId) {
@@ -142,31 +99,6 @@ public class TagParserFactory {
     /**
      * For OpenStreetMap this TagParser handles the road environment like if the transportation happens on a ferry or tunnel.
      */
-    public static TagParser createRoadEnvironment(final StringEncodedValue roadEnvEnc, final List<String> roadEnvOrder) {
-        if (roadEnvOrder.isEmpty())
-            throw new IllegalArgumentException("Road environment list mustn't be empty");
-
-        return new AbstractTagParser(roadEnvEnc) {
-            @Override
-            public ReaderWayFilter getReadWayFilter() {
-                return ACCEPT_IF_HIGHWAY;
-            }
-
-            @Override
-            public void parse(IntsRef ints, ReaderWay way) {
-                // TODO use roadEnvEnc.getDefault instead
-                String roadEnv = roadEnvOrder.get(0);
-                for (String tm : roadEnvOrder) {
-                    if (way.hasTag(tm)) {
-                        roadEnv = tm;
-                        break;
-                    }
-                }
-
-                roadEnvEnc.setString(false, ints, roadEnv);
-            }
-        };
-    }
 
     public static TagParser createMaxWeight(final DecimalEncodedValue ev, final ReaderWayFilter filter) {
         final List<String> weightTags = Arrays.asList("maxweight", "maxgcweight");
@@ -191,29 +123,6 @@ public class TagParserFactory {
         };
     }
 
-    public static TagParser createMaxHeight(final DecimalEncodedValue ev, final ReaderWayFilter filter) {
-        final List<String> heightTags = Arrays.asList("maxheight", "maxheight:physical");
-
-        return new AbstractTagParser(ev) {
-            @Override
-            public void parse(IntsRef ints, ReaderWay way) {
-                String value = way.getFirstPriorityTag(heightTags);
-                if (Helper.isEmpty(value)) return;
-
-                try {
-                    ev.setDecimal(false, ints, stringToMeter(value));
-                } catch (Throwable ex) {
-                    LOGGER.warn("Unable to extract height from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId(), ex);
-                    return;
-                }
-            }
-
-            @Override
-            public ReaderWayFilter getReadWayFilter() {
-                return filter;
-            }
-        };
-    }
 
     public static TagParser createMaxWidth(final DecimalEncodedValue ev, final ReaderWayFilter filter) {
         final List<String> widthTags = Arrays.asList("maxwidth", "maxwidth:physical");
