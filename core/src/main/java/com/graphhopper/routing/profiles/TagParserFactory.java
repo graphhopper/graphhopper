@@ -18,6 +18,7 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.tagparsers.*;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
@@ -31,7 +32,7 @@ import java.util.*;
 
 public class TagParserFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TagParserFactory.class);
+    public static final Logger LOGGER = LoggerFactory.getLogger(TagParserFactory.class);
     public static final ReaderWayFilter ACCEPT_IF_HIGHWAY = new ReaderWayFilter() {
         @Override
         public boolean accept(ReaderWay way) {
@@ -63,6 +64,16 @@ public class TagParserFactory {
     public static final String BIKE_AVERAGE_SPEED = "bike.average_speed";
     public static final String FOOT_ACCESS = "foot.access";
     public static final String FOOT_AVERAGE_SPEED = "foot.average_speed";
+
+    public static TagParser createParser(final String parser) {
+        switch(parser){
+            case ROUNDABOUT: return new RoundaboutParser();
+            case SURFACE: return new SurfaceParser();
+            case CAR_MAX_SPEED: return new CarMaxSpeedParser();
+            case ROAD_CLASS: return new RoadClassParser();
+            default: throw new IllegalArgumentException("Unsupported TagParser type " + parser);
+        }
+    }
 
     public static TagParser createRoundabout(final BooleanEncodedValue ev) {
         return new AbstractTagParser(ev) {

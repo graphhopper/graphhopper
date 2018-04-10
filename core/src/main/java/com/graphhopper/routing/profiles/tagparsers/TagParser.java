@@ -1,6 +1,8 @@
-package com.graphhopper.routing.profiles;
+package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.ReaderWayFilter;
 import com.graphhopper.storage.IntsRef;
 
 public interface TagParser {
