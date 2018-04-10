@@ -85,9 +85,9 @@ public class WrapperGraph implements Graph {
     public AllEdgesIterator getAllEdges() {
         return new AllEdgesIterator() {
             @Override
-            public int getMaxId() {
+            public int length() {
                 return IntStream.concat(
-                        IntStream.of(baseGraph.getAllEdges().getMaxId()),
+                        IntStream.of(baseGraph.getAllEdges().length()),
                         extraEdges.stream().mapToInt(VirtualEdgeIteratorState::getEdge))
                         .max().getAsInt();
             }
