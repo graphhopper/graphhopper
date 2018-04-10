@@ -74,6 +74,9 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         graph.edge(9, 11, 200, true);
         graph.edge(1, 2, 120, false);
 
+        assertEquals(4, graph.getAllEdges().length());
+        assertEquals(4, graph.getNodes());
+
         iter1.setName("named street1");
         iter2.setName("named street2");
 
@@ -218,7 +221,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     public void testIdentical() {
         GraphHopperStorage store = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension());
         assertEquals(store.getNodes(), store.getGraph(Graph.class).getNodes());
-        assertEquals(store.getAllEdges().getMaxId(), store.getGraph(Graph.class).getAllEdges().getMaxId());
+        assertEquals(store.getAllEdges().length(), store.getGraph(Graph.class).getAllEdges().length());
     }
 
     public void testAdditionalEdgeField() {

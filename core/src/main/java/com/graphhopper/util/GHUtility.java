@@ -18,8 +18,6 @@
 package com.graphhopper.util;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
-import com.carrotsearch.hppc.LongArrayList;
-import com.carrotsearch.hppc.LongIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
@@ -116,7 +114,7 @@ public class GHUtility {
     }
 
     public static void printEdgeInfo(final Graph g, FlagEncoder encoder) {
-        System.out.println("-- Graph n:" + g.getNodes() + " e:" + g.getAllEdges().getMaxId() + " ---");
+        System.out.println("-- Graph n:" + g.getNodes() + " e:" + g.getAllEdges().length() + " ---");
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next()) {
             String sc = "";
