@@ -113,7 +113,7 @@ public class RealtimeFeed {
         final LinkedList<VirtualEdgeIteratorState> additionalEdges = new LinkedList<>();
         final Graph overlayGraph = new Graph() {
             int nNodes = 0;
-            int firstEdge = graph.getAllEdges().length() + 1;
+            int firstEdge = graph.getAllEdges().length();
             final NodeAccess nodeAccess = new NodeAccess() {
                 IntIntHashMap additionalNodeFields = new IntIntHashMap();
 
