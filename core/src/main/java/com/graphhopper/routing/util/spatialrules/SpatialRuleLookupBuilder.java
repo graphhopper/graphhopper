@@ -3,6 +3,7 @@ package com.graphhopper.routing.util.spatialrules;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.Polygon;
 import com.vividsolutions.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -69,6 +69,6 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
                 .addToPoints(Arrays.asList(new GHPoint(52.557151, 13.515244), new GHPoint(52.454545, 13.295517)));
 
         MatrixResponse res = ghMatrix.route(ghmRequest);
-        assertEquals(2415, res.getTime(0, 1) / 1000, 20);
+        assertEquals(2437, res.getTime(0, 1) / 1000, 30);
     }
 }

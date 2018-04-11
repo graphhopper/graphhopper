@@ -251,6 +251,7 @@ public class RealtimeFeed {
                 throw new RuntimeException();
             }
         };
+
         Map<GtfsStorage.Validity, Integer> operatingDayPatterns = new HashMap<>(staticGtfs.getOperatingDayPatterns());
         Map<Integer, byte[]> tripDescriptors = new HashMap<>();
         Map<Integer, Integer> stopSequences = new HashMap<>();
