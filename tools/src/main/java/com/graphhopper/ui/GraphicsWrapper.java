@@ -65,7 +65,7 @@ public class GraphicsWrapper {
 
     public void plotText(Graphics2D g2, double lat, double lon, String text, int size) {
         Font oldFont = g2.getFont();
-        g2.setFont(new Font("Arial", Font.PLAIN, 20));
+        g2.setFont(new Font("Arial", Font.PLAIN, size));
         plotText(g2, lat, lon, text);
         g2.setFont(oldFont);
     }
