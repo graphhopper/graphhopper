@@ -48,6 +48,7 @@ public class PathWrapper {
     private final List<Trip.Leg> legs = new ArrayList<>();
     private Map<String, List<PathDetail>> pathDetails = new HashMap<>();
     private BigDecimal fare;
+    private boolean impossible = false;
 
     /**
      * @return the description of this route alternative to make it meaningful for the user e.g. it
@@ -197,24 +198,13 @@ public class PathWrapper {
     }
 
     /**
-     * Calculates the bounding box of this route response
+     * Calculates the 2D bounding box of this route
      */
-    public BBox calcRouteBBox(BBox _fallback) {
+    public BBox calcBBox2D() {
         check("calcRouteBBox");
-        BBox bounds = BBox.createInverse(_fallback.hasElevation());
-        int len = pointList.getSize();
-        if (len == 0)
-            return _fallback;
-
-        for (int i = 0; i < len; i++) {
-            double lat = pointList.getLatitude(i);
-            double lon = pointList.getLongitude(i);
-            if (bounds.hasElevation()) {
-                double ele = pointList.getEle(i);
-                bounds.update(lat, lon, ele);
-            } else {
-                bounds.update(lat, lon);
-            }
+        BBox bounds = BBox.createInverse(false);
+        for (int i = 0; i < pointList.getSize(); i++) {
+            bounds.update(pointList.getLatitude(i), pointList.getLongitude(i));
         }
         return bounds;
     }
@@ -313,5 +303,13 @@ public class PathWrapper {
 
     public BigDecimal getFare() {
         return fare;
+    }
+
+    public boolean isImpossible() {
+        return impossible;
+    }
+
+    public void setImpossible(boolean impossible) {
+        this.impossible = impossible;
     }
 }

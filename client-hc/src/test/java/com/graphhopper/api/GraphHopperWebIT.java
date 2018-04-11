@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -52,6 +53,10 @@ public class GraphHopperWebIT {
         PathWrapper alt = res.getBest();
         isBetween(200, 250, alt.getPoints().size());
         isBetween(11000, 12000, alt.getDistance());
+        isBetween(310, 320, alt.getAscend());
+        isBetween(235, 245, alt.getDescend());
+        isBetween(1000, 1500, alt.getRouteWeight());
+
 
         // change vehicle
         res = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180).
@@ -59,6 +64,32 @@ public class GraphHopperWebIT {
         alt = res.getBest();
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
         isBetween(9000, 9500, alt.getDistance());
+    }
+
+    @Test
+    public void testAlternativeRoute() {
+        // https://graphhopper.com/maps/?point=52.042989%2C10.373926&point=52.042289%2C10.384043&algorithm=alternative_route&ch.disable=true
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(52.042989, 10.373926)).
+                addPoint(new GHPoint(52.042289, 10.384043));
+        req.setAlgorithm("alternative_route");
+        req.getHints().put("instructions", true);
+        req.getHints().put("calc_points", true);
+        req.getHints().put("ch.disable", true);
+        GHResponse res = gh.route(req);
+        assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
+        List<PathWrapper> paths = res.getAll();
+        assertEquals(2, paths.size());
+
+        PathWrapper path = paths.get(0);
+        isBetween(5, 20, path.getPoints().size());
+        isBetween(1000, 1100, path.getDistance());
+        assertTrue("expected: " + path.getDescription().get(0), Arrays.asList("Wiesenstraße", "Hasenspringweg").contains(path.getDescription().get(0)));
+
+        path = paths.get(1);
+        isBetween(20, 30, path.getPoints().size());
+        isBetween(800, 900, path.getDistance());
+        assertTrue("expected: " + path.getDescription().get(0), Arrays.asList("Jacobistraße", "Ludwig-Gercke-Straße").contains(path.getDescription().get(0)));
     }
 
     @Test

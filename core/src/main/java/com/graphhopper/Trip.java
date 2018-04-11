@@ -40,21 +40,25 @@ public class Trip {
         public final Date arrivalTime;
         public final Date plannedArrivalTime;
         public final Date predictedArrivalTime;
+        public final boolean arrivalCancelled;
 
         public final Date departureTime;
         public final Date plannedDepartureTime;
         public final Date predictedDepartureTime;
+        public final boolean departureCancelled;
 
-        public Stop(String stop_id, String name, Point geometry, Date arrivalTime, Date plannedArrivalTime, Date predictedArrivalTime, Date departureTime, Date plannedDepartureTime, Date predictedDepartureTime) {
+        public Stop(String stop_id, String name, Point geometry, Date arrivalTime, Date plannedArrivalTime, Date predictedArrivalTime, boolean arrivalCancelled, Date departureTime, Date plannedDepartureTime, Date predictedDepartureTime, boolean departureCancelled) {
             this.stop_id = stop_id;
             this.stop_name = name;
             this.geometry = geometry;
             this.arrivalTime = arrivalTime;
             this.plannedArrivalTime = plannedArrivalTime;
             this.predictedArrivalTime = predictedArrivalTime;
+            this.arrivalCancelled = arrivalCancelled;
             this.departureTime = departureTime;
             this.plannedDepartureTime = plannedDepartureTime;
             this.predictedDepartureTime = predictedDepartureTime;
+            this.departureCancelled = departureCancelled;
         }
 
         @Override

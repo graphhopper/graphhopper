@@ -104,9 +104,9 @@ public class GraphHopperWeb implements GraphHopperAPI {
     }
 
     PathWrapper createPathWrapper(JsonNode path,
-                                          boolean tmpCalcPoints, boolean tmpInstructions,
-                                          boolean tmpElevation, boolean turnDescription,
-                                          boolean tmpCalcDetails) {
+                                  boolean tmpCalcPoints, boolean tmpInstructions,
+                                  boolean tmpElevation, boolean turnDescription,
+                                  boolean tmpCalcDetails) {
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.addErrors(readErrors(path));
         if (pathWrapper.hasErrors())
@@ -116,6 +116,28 @@ public class GraphHopperWeb implements GraphHopperAPI {
             String snappedPointStr = path.get("snapped_waypoints").asText();
             PointList snappedPoints = WebHelper.decodePolyline(snappedPointStr, 5, tmpElevation);
             pathWrapper.setWaypoints(snappedPoints);
+        }
+
+        if (path.has("ascend")) {
+            pathWrapper.setAscend(path.get("ascend").asDouble());
+        }
+        if (path.has("descend")) {
+            pathWrapper.setDescend(path.get("descend").asDouble());
+        }
+        if (path.has("weight")) {
+            pathWrapper.setRouteWeight(path.get("weight").asDouble());
+        }
+        if (path.has("description")) {
+            JsonNode descriptionNode = path.get("description");
+            if (descriptionNode.isArray()) {
+                List<String> description = new ArrayList<>(descriptionNode.size());
+                for (JsonNode descNode: descriptionNode) {
+                    description.add(descNode.asText());
+                }
+                pathWrapper.setDescription(description);
+            } else {
+                throw new IllegalStateException("Description has to be an array");
+            }
         }
 
         if (tmpCalcPoints) {
@@ -176,8 +198,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
                         instr = new FinishInstruction(text, instPL, 0);
                     } else {
                         instr = new Instruction(sign, text, ia, instPL);
-                        if(sign == Instruction.CONTINUE_ON_STREET){
-                            if(jsonObj.has("heading")){
+                        if (sign == Instruction.CONTINUE_ON_STREET) {
+                            if (jsonObj.has("heading")) {
                                 instr.setExtraInfo("heading", jsonObj.get("heading").asDouble());
                             }
                         }

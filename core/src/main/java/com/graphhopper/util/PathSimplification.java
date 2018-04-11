@@ -59,8 +59,17 @@ public class PathSimplification {
     }
 
     public PointList simplify() {
-        if (listsToSimplify.isEmpty() || pointList.size() <= 2)
+        if (pointList.size() <= 2) {
+            pointList.makeImmutable();
             return pointList;
+        }
+
+        // no constraints
+        if (listsToSimplify.isEmpty()) {
+            douglasPeucker.simplify(pointList, 0, pointList.size() - 1);
+            pointList.makeImmutable();
+            return pointList;
+        }
 
         // The offset of already included points
         int[] offsets = new int[listsToSimplify.size()];

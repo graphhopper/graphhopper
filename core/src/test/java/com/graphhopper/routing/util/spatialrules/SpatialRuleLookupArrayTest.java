@@ -1,6 +1,7 @@
 package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.Polygon;
 import org.junit.Assert;
 import org.junit.Test;
 
