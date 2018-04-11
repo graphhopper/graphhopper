@@ -165,7 +165,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         private void substitutePointWithVirtualNode(int index, boolean reverse, GHPoint ghPoint, ArrayList<QueryResult> allQueryResults) {
             final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, weighting, flagEncoder, gtfsStorage, realtimeFeed, reverse, extraEdges, true);
             int nextNodeId = graphWithExtraEdges.getNodes() + 2 + index; // FIXME: A number bigger than the number of nodes QueryGraph adds
-            int nextEdgeId = graphWithExtraEdges.getAllEdges().getMaxId() + 100; // FIXME: A number bigger than the number of edges QueryGraph adds
+            int nextEdgeId = graphWithExtraEdges.getAllEdges().length() + 100; // FIXME: A number bigger than the number of edges QueryGraph adds
 
             final List<Label> stationNodes = findStationNodes(graphExplorer, allQueryResults.get(index).getClosestNode(), reverse);
             for (Label stationNode : stationNodes) {

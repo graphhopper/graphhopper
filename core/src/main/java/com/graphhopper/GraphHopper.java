@@ -1219,7 +1219,7 @@ public class GraphHopper implements GraphHopperAPI {
         preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
         preparation.doWork();
         int currNodeCount = ghStorage.getNodes();
-        logger.info("edges: " + ghStorage.getAllEdges().getMaxId() + ", nodes " + currNodeCount
+        logger.info("edges: " + ghStorage.getAllEdges().length() + ", nodes " + currNodeCount
                 + ", there were " + preparation.getMaxSubnetworks()
                 + " subnetworks. removed them => " + (prevNodeCount - currNodeCount)
                 + " less nodes");

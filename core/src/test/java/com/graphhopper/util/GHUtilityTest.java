@@ -17,7 +17,6 @@
  */
 package com.graphhopper.util;
 
-import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -113,7 +112,7 @@ public class GHUtilityTest {
         CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate(new FastestWeighting(carEncoder));
         GHUtility.copyTo(g, lg);
 
-        assertEquals(g.getAllEdges().getMaxId(), lg.getAllEdges().getMaxId());
+        assertEquals(g.getAllEdges().length(), lg.getAllEdges().length());
     }
 
     @Test
