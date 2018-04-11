@@ -175,9 +175,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 + ", neighbor:" + neighborUpdatePercentage
                 + ", " + Helper.getMemInfo());
 
-        int edgeCount = ghStorage.getAllEdges().getMaxId();
+        int edgeCount = ghStorage.getAllEdges().length();
         logger.info("graph now - num edges: {}, num nodes: {}, num shortcuts: {}",
-                nf(edgeCount), nf(ghStorage.getNodes()), nf(prepareGraph.getAllEdges().getMaxId() - edgeCount));
+                nf(edgeCount), nf(ghStorage.getNodes()), nf(prepareGraph.getAllEdges().length() - edgeCount));
     }
 
     protected void runGraphContraction() {
@@ -257,7 +257,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // node priorities all shortcut searches are cancelled immediately and all possible shortcuts are counted because
         // no witness path can be found. this is not really what we want, but changing it requires re-optimizing the
         // graph contraction parameters, because it affects the node contraction order.
-        meanDegree = prepareGraph.getAllEdges().getMaxId() / prepareGraph.getNodes();
+        meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
         initSize = sortedNodes.getSize();
         // todo: why do we start counting levels with 1 ??
         int level = 1;

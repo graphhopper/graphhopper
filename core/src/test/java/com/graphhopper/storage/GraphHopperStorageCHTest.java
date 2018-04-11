@@ -309,8 +309,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         chGraph = getGraph(graph);
         assertEquals(10, chGraph.getNodes());
-        assertEquals(2, graph.getAllEdges().getMaxId());
-        assertEquals(3, chGraph.getAllEdges().getMaxId());
+        assertEquals(2, graph.getAllEdges().length());
+        assertEquals(3, chGraph.getAllEdges().length());
         assertEquals(1, GHUtility.count(chGraph.createEdgeExplorer().setBaseNode(2)));
 
         AllCHEdgesIterator iter = chGraph.getAllEdges();
