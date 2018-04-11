@@ -20,10 +20,12 @@ package com.graphhopper.http;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
-import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
+import javax.ws.rs.core.Response;
 import java.io.File;
 
 import static org.junit.Assert.*;
@@ -33,35 +35,38 @@ import static org.junit.Assert.*;
  *
  * @author Robin Boldt
  */
-public class GraphHopperDataflagEncoderSpatialRulesIT extends BaseServletTester {
+public class GraphHopperDataflagEncoderSpatialRulesIT {
     private static final String DIR = "./target/north-bayreuth-gh/";
 
-    @AfterClass
-    public static void cleanUp() {
-        Helper.removeDir(new File(DIR));
-        shutdownJetty(true);
-    }
+    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
-    @Before
-    public void setUp() {
-        CmdArgs args = new CmdArgs().
-                put("config", "../config-example.properties").
+    static {
+        config.graphhopper.merge(new CmdArgs().
                 put("graph.flag_encoders", "generic").
                 put("prepare.ch.weightings", "no").
                 put("spatial_rules.location", "../core/files/spatialrules/countries.geo.json").
                 put("spatial_rules.max_bbox", "11.4,11.7,49.9,50.1").
                 put("datareader.file", "../core/files/north-bayreuth.osm.gz").
-                put("graph.location", DIR);
-        setUpJetty(args);
+                put("graph.location", DIR));
+    }
+
+    @ClassRule
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
+            GraphHopperApplication.class, config);
+
+
+    @AfterClass
+    public static void cleanUp() {
+        Helper.removeDir(new File(DIR));
     }
 
     @Test
     public void testDetourToComplyWithSpatialRule() throws Exception {
-        JsonNode json = query("point=49.995933,11.54809&point=50.004871,11.517191&vehicle=generic", 200);
-        JsonNode infoJson = json.get("info");
-        assertFalse(infoJson.has("errors"));
-        JsonNode path = json.get("paths").get(0);
-        double distance = path.get("distance").asDouble();
+        final Response response = app.client().target("http://localhost:8080/route?" + "point=49.995933,11.54809&point=50.004871,11.517191&vehicle=generic").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertFalse(json.get("info").has("errors"));
+        double distance = json.get("paths").get(0).get("distance").asDouble();
         // Makes sure that SpatialRules are enforced. Without SpatialRules we take a shortcut trough the forest
         // so the route would be only 3.31km
         assertTrue("distance wasn't correct:" + distance, distance > 7000);

@@ -79,7 +79,7 @@ public class LMApproximator implements WeightApproximator {
         this.maxBaseNodes = maxBaseNodes;
         int idxVirtNode = maxBaseNodes;
         virtNodeMap = new GHIntObjectHashMap(graph.getNodes() - idxVirtNode, 0.5f);
-        // virtual nodes handling: calculate the minium weight for the virt. nodes, i.e. pick the correct neighbouring node
+        // virtual nodes handling: calculate the minimum weight for the virtual nodes, i.e. pick the correct neighbouring node
         if (graph instanceof QueryGraph) {
             QueryGraph qGraph = (QueryGraph) graph;
             // there are at least two virtual nodes (start & destination)

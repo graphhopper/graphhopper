@@ -17,6 +17,8 @@
  */
 package com.graphhopper.storage.change;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * This class describes the changes that were applied to the graph, currently only used in GraphHopper.changeGraph
  *
@@ -29,6 +31,7 @@ public class ChangeGraphResponse {
         this.updateCount = updateCount;
     }
 
+    @JsonProperty("updates")
     public long getUpdateCount() {
         return updateCount;
     }

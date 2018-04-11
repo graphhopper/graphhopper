@@ -66,6 +66,9 @@ public class ChangeGraphHelper {
      * @return number of successfully applied edge changes
      */
     public long applyChanges(EncodingManager em, Collection<JsonFeature> features) {
+        if (em == null)
+            throw new NullPointerException("EncodingManager cannot be null to change existing graph");
+
         long updates = 0;
         for (JsonFeature jsonFeature : features) {
             if (!jsonFeature.hasProperties())
