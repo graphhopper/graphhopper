@@ -220,7 +220,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
         };
 
-        maxLevel = prepareGraph.getNodes() + 1;
+        maxLevel = prepareGraph.getNodes();
         vehicleAllExplorer = prepareGraph.createEdgeExplorer(allFilter);
         vehicleAllTmpExplorer = prepareGraph.createEdgeExplorer(allFilter);
         calcPrioAllExplorer = prepareGraph.createEdgeExplorer(accessWithLevelFilter);
@@ -259,8 +259,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // graph contraction parameters, because it affects the node contraction order.
         meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
         initSize = sortedNodes.getSize();
-        // todo: why do we start counting levels with 1 ??
-        int level = 1;
+        int level = 0;
         long counter = 0;
         long logSize = Math.round(Math.max(10, initSize / 100d * logMessagesPercentage));
         if (logMessagesPercentage == 0)
@@ -388,7 +387,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         close();
     }
 
-    public void close() {
+    private void close() {
         nodeContractor.close();
         sortedNodes = null;
         oldPriorities = null;

@@ -69,7 +69,7 @@ class NodeContractor {
     void initFromGraph() {
         // todo: do we really need this method ? the problem is that ghStorage/prepareGraph can potentially be modified
         // between the constructor call and contractNode,calcShortcutCount etc. ...
-        maxLevel = prepareGraph.getNodes() + 1;
+        maxLevel = prepareGraph.getNodes();
         maxEdgesCount = ghStorage.getAllEdges().length();
         ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
