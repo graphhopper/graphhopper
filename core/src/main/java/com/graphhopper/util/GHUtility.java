@@ -26,6 +26,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
+import com.graphhopper.util.shapes.BBox;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -122,6 +123,38 @@ public class GHUtility {
             String bwdStr = iter.isBackward(encoder) ? "bwd" : "   ";
             System.out.println(prefix + " " + iter + " " + fwdStr + " " + bwdStr + " " + iter.getDistance());
         }
+    }
+
+    public static void printGraphForUnitTest(Graph g, FlagEncoder encoder) {
+        printGraphForUnitTest(g, encoder, new BBox(
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
+    }
+
+    public static void printGraphForUnitTest(Graph g, FlagEncoder encoder, BBox bBox) {
+        NodeAccess na = g.getNodeAccess();
+        for (int node = 0; node < g.getNodes(); ++node) {
+            if (bBox.contains(na.getLat(node), na.getLon(node))) {
+                System.out.printf("na.setNode(%d, %f, %f);\n", node, na.getLat(node), na.getLon(node));
+            }
+        }
+        AllEdgesIterator iter = g.getAllEdges();
+        while (iter.next()) {
+            if (bBox.contains(na.getLat(iter.getBaseNode()), na.getLon(iter.getBaseNode())) &&
+                    bBox.contains(na.getLat(iter.getAdjNode()), na.getLon(iter.getAdjNode()))) {
+                printUnitTestEdge(encoder, iter);
+            }
+        }
+    }
+
+    private static void printUnitTestEdge(FlagEncoder flagEncoder, EdgeIteratorState edge) {
+        boolean fwd = edge.isForward(flagEncoder);
+        boolean bwd = edge.isBackward(flagEncoder);
+        if (!fwd && !bwd) {
+            return;
+        }
+        int from = fwd ? edge.getBaseNode() : edge.getAdjNode();
+        int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
+        System.out.printf("graph.edge(%d, %d, %f, %s);\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false");
     }
 
     public static void printInfo(final Graph g, int startNode, final int counts, final EdgeFilter filter) {
