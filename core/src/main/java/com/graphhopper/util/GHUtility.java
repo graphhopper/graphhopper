@@ -134,7 +134,7 @@ public class GHUtility {
         NodeAccess na = g.getNodeAccess();
         for (int node = 0; node < g.getNodes(); ++node) {
             if (bBox.contains(na.getLat(node), na.getLon(node))) {
-                System.out.printf("na.setNode(%d, %f, %f);\n", node, na.getLat(node), na.getLon(node));
+                System.out.printf(Locale.ROOT, "na.setNode(%d, %f, %f);\n", node, na.getLat(node), na.getLon(node));
             }
         }
         AllEdgesIterator iter = g.getAllEdges();
