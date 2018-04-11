@@ -76,21 +76,21 @@ public class EncodingManager implements EncodedValueLookup {
      * thematically structured encoders. Double encoders will be added once only.
      */
 
-    public static String[] footEncodedValues = {
+    private static String[] footEncodedValues = {
             TagParserFactory.FOOT_ACCESS,
             TagParserFactory.FOOT_AVERAGE_SPEED,
             TagParserFactory.CAR_MAX_SPEED,
             TagParserFactory.ROAD_CLASS,
             TagParserFactory.ROAD_ENVIRONMENT
             };
-    public static String[] bikeEncodedValues = {
+    private static String[] bikeEncodedValues = {
             TagParserFactory.BIKE_ACCESS,
             TagParserFactory.BIKE_AVERAGE_SPEED,
             TagParserFactory.ROAD_CLASS,
             TagParserFactory.ROAD_ENVIRONMENT,
             TagParserFactory.CAR_MAX_SPEED
     };
-    public static String[] carEncodedValues = {
+    private static String[] carEncodedValues = {
             TagParserFactory.CAR_ACCESS,
             TagParserFactory.CAR_AVERAGE_SPEED,
             TagParserFactory.CAR_MAX_SPEED,
@@ -102,7 +102,7 @@ public class EncodingManager implements EncodedValueLookup {
             TagParserFactory.MAX_WIDTH,
             TagParserFactory.CURVATURE
     };
-    public static String[] globalEncodedValues = {
+    private static String[] globalEncodedValues = {
             TagParserFactory.ROUNDABOUT,
             TagParserFactory.ROAD_CLASS,
             TagParserFactory.ROAD_ENVIRONMENT,
@@ -190,33 +190,21 @@ public class EncodingManager implements EncodedValueLookup {
 
         public Builder addBikeEncodedValues(){
             for(String parser : bikeEncodedValues){
-                TagParser old = em.parsers.get(parser);
-                if (old == null)
-                    // Add the parser if one with same name is not yet registered
-                    add(TagParserFactory.createParser(parser));
-
+                add(TagParserFactory.createParser(parser));
             }
             return this;
         }
 
         public Builder addCarEncodedValues(){
             for(String parser : carEncodedValues){
-                TagParser old = em.parsers.get(parser);
-                if (old == null)
-                    // Add the parser if one with same name is not yet registered
-                    add(TagParserFactory.createParser(parser));
-
+                add(TagParserFactory.createParser(parser));
             }
             return this;
         }
 
         public Builder addFootEncodedValues(){
             for(String parser : footEncodedValues){
-                TagParser old = em.parsers.get(parser);
-                if (old == null)
-                    // Add the parser if one with same name is not yet registered
-                    add(TagParserFactory.createParser(parser));
-                
+                add(TagParserFactory.createParser(parser));
             }
             return this;
         }

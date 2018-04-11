@@ -18,34 +18,33 @@
 package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.ReaderWayFilter;
-import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Arrays;
-import java.util.List;
 
-
-public class RoadClassParser implements TagParser {
-    private StringEncodedValue ev;
-
-    List<String> roadClasses = Arrays.asList("_default", "footway", "path", "steps", "pedestrian", "living_street", "track",
-            "residential", "service", "trunk", "trunk_link", "motorway", "motorway_link", "motorroad",
-            "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
-            "cycleway", "unclassified", "road", "bridleway");
-
-    public RoadClassParser(){
-        this.ev = new StringEncodedValue(TagParserFactory.ROAD_CLASS, roadClasses, "_default");
+public class BikeAccessParser implements TagParser {
+    private BooleanEncodedValue ev;
+    private ReaderWayFilter acceptKnownRoadClasses = TagParserFactory.SPEEDMAPFILTER;
+    public BikeAccessParser(){
+        this.ev = new BooleanEncodedValue(TagParserFactory.BIKE_ACCESS, true);
     }
-
     public void parse(IntsRef ints, ReaderWay way) {
-        ev.setString(false, ints, way.getTag("highway"));
+        assert acceptKnownRoadClasses.accept(way);
+
+        if (way.hasTag("oneway", TagParserFactory.fwdOneways)
+                || way.hasTag("junction", "roundabout")) {
+            ev.setBool(false, ints, true);
+        } else {
+            ev.setBool(false, ints, true);
+            ev.setBool(true, ints, true);
+        }
     }
 
     public ReaderWayFilter getReadWayFilter() {
-        return TagParserFactory.ACCEPT_IF_HIGHWAY;
+        return acceptKnownRoadClasses;
     }
 
     public final EncodedValue getEncodedValue() {
@@ -59,5 +58,6 @@ public class RoadClassParser implements TagParser {
     public final String getName() {
         return ev.getName();
     }
+
 
 }

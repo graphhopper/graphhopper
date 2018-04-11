@@ -18,34 +18,37 @@
 package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.ReaderWayFilter;
-import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
 
 
-public class RoadClassParser implements TagParser {
-    private StringEncodedValue ev;
 
-    List<String> roadClasses = Arrays.asList("_default", "footway", "path", "steps", "pedestrian", "living_street", "track",
-            "residential", "service", "trunk", "trunk_link", "motorway", "motorway_link", "motorroad",
-            "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
-            "cycleway", "unclassified", "road", "bridleway");
-
-    public RoadClassParser(){
-        this.ev = new StringEncodedValue(TagParserFactory.ROAD_CLASS, roadClasses, "_default");
+public class CarAverageSpeedParser implements TagParser {
+    private DecimalEncodedValue ev;
+    private ReaderWayFilter acceptKnownRoadClasses = TagParserFactory.SPEEDMAPFILTER;
+    private Map<String, Double> speedMap = TagParserFactory.getSpeedMap();
+    public CarAverageSpeedParser(){
+        this.ev = new DecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED, 5, 0, 5, false);
     }
-
     public void parse(IntsRef ints, ReaderWay way) {
-        ev.setString(false, ints, way.getTag("highway"));
+        assert acceptKnownRoadClasses.accept(way);
+
+        double num = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
+        Double defaultSp = speedMap.get(way.getTag("highway"));
+        if (defaultSp == null)
+            throw new IllegalStateException("Illegal tag '" + way.getTag("highway") + "' should not happen as filtered before");
+
+        ev.setDecimal(false, ints, num < 0.01 ? defaultSp : num * 0.9);
     }
 
     public ReaderWayFilter getReadWayFilter() {
-        return TagParserFactory.ACCEPT_IF_HIGHWAY;
+        return acceptKnownRoadClasses;
     }
 
     public final EncodedValue getEncodedValue() {
@@ -59,5 +62,6 @@ public class RoadClassParser implements TagParser {
     public final String getName() {
         return ev.getName();
     }
+
 
 }

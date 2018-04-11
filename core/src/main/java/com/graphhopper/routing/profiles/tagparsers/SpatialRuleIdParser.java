@@ -18,31 +18,31 @@
 package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.ReaderWayFilter;
-import com.graphhopper.routing.profiles.StringEncodedValue;
-import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.Arrays;
-import java.util.List;
+import com.graphhopper.util.shapes.GHPoint;
 
 
-public class RoadClassParser implements TagParser {
-    private StringEncodedValue ev;
-
-    List<String> roadClasses = Arrays.asList("_default", "footway", "path", "steps", "pedestrian", "living_street", "track",
-            "residential", "service", "trunk", "trunk_link", "motorway", "motorway_link", "motorroad",
-            "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
-            "cycleway", "unclassified", "road", "bridleway");
-
-    public RoadClassParser(){
-        this.ev = new StringEncodedValue(TagParserFactory.ROAD_CLASS, roadClasses, "_default");
+public class SpatialRuleIdParser implements TagParser {
+    private IntEncodedValue ev;
+    public SpatialRuleIdParser(){
+        //TODO NOW Use correct SpatialRuleLookup
+//        int tmpMax = spatialRuleLookup.size() - 1;
+//        int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
+//        if (bits > 0)
+//            this.ev = new IntEncodedValue(TagParserFactory.SPATIAL_RULE_ID, bits, 0, false);
     }
 
     public void parse(IntsRef ints, ReaderWay way) {
-        ev.setString(false, ints, way.getTag("highway"));
+        GHPoint estimatedCenter = way.getTag("estimated_center", null);
+//        if (estimatedCenter != null) {
+//            SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);
+//            spatialId.setInt(false, ints, spatialRuleLookup.getSpatialId(rule));
+//        }
     }
+
 
     public ReaderWayFilter getReadWayFilter() {
         return TagParserFactory.ACCEPT_IF_HIGHWAY;
@@ -59,5 +59,6 @@ public class RoadClassParser implements TagParser {
     public final String getName() {
         return ev.getName();
     }
+
 
 }

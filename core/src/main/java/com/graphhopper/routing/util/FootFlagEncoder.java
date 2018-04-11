@@ -27,7 +27,7 @@ import com.graphhopper.util.PMap;
 
 import java.util.*;
 
-import static com.graphhopper.routing.profiles.TagParserFactory.Foot.*;
+//import static com.graphhopper.routing.profiles.TagParserFactory.Foot.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
@@ -135,7 +135,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         allowedSacScaleTags.add("demanding_mountain_hiking");
         allowedSacScaleTags.add("alpine_hiking");
 
-        maxPossibleSpeed = FERRY_SPEED;
+        maxPossibleSpeed = FOOT_FERRY_SPEED;
 
         init();
     }
@@ -306,7 +306,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             return ints;
 
         if (allowed.isFerry()) {
-            double ferrySpeed = getFerrySpeed(way, SLOW_SPEED, MEAN_SPEED, FERRY_SPEED);
+            double ferrySpeed = getFerrySpeed(way, FOOT_SLOW_SPEED, FOOT_MEAN_SPEED, FOOT_FERRY_SPEED);
             averageSpeedEnc.setDecimal(false, ints, ferrySpeed);
             accessEnc.setBool(false, ints, true);
             accessEnc.setBool(true, ints, true);

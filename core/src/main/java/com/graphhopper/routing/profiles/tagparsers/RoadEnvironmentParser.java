@@ -27,9 +27,6 @@ import com.graphhopper.storage.IntsRef;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.profiles.TagParserFactory.ACCEPT_IF_HIGHWAY;
-
-
 public class RoadEnvironmentParser implements TagParser {
     private StringEncodedValue ev;
 
@@ -56,7 +53,7 @@ public class RoadEnvironmentParser implements TagParser {
     }
 
     public ReaderWayFilter getReadWayFilter() {
-        return ACCEPT_IF_HIGHWAY;
+        return TagParserFactory.ACCEPT_IF_HIGHWAY;
     }
 
     public final EncodedValue getEncodedValue() {

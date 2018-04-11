@@ -24,9 +24,6 @@ import com.graphhopper.routing.profiles.ReaderWayFilter;
 import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.storage.IntsRef;
 
-import static com.graphhopper.routing.profiles.TagParserFactory.ACCEPT_IF_HIGHWAY;
-
-
 public class RoundaboutParser implements TagParser  {
     private BooleanEncodedValue ev;
     public RoundaboutParser(){
@@ -38,7 +35,7 @@ public class RoundaboutParser implements TagParser  {
     }
 
     public ReaderWayFilter getReadWayFilter() {
-        return ACCEPT_IF_HIGHWAY;
+        return TagParserFactory.ACCEPT_IF_HIGHWAY;
     }
 
     public final EncodedValue getEncodedValue() {

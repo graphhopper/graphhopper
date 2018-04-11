@@ -18,30 +18,35 @@
 package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.ReaderWayFilter;
-import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
 
 
-public class RoadClassParser implements TagParser {
-    private StringEncodedValue ev;
+public class FootAverageSpeedParser implements TagParser {
+    private DecimalEncodedValue ev;
+    private ReaderWayFilter acceptKnownRoadClasses = TagParserFactory.SPEEDMAPFILTER;
+    private Map<String, Double> speedMap = TagParserFactory.getSpeedMap();
 
-    List<String> roadClasses = Arrays.asList("_default", "footway", "path", "steps", "pedestrian", "living_street", "track",
-            "residential", "service", "trunk", "trunk_link", "motorway", "motorway_link", "motorroad",
-            "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
-            "cycleway", "unclassified", "road", "bridleway");
-
-    public RoadClassParser(){
-        this.ev = new StringEncodedValue(TagParserFactory.ROAD_CLASS, roadClasses, "_default");
+    public FootAverageSpeedParser(){
+        // TODO Are these the correct speedbit values?
+        this.ev = new DecimalEncodedValue(TagParserFactory.FOOT_AVERAGE_SPEED, 5, 0, 5, false);
     }
 
     public void parse(IntsRef ints, ReaderWay way) {
-        ev.setString(false, ints, way.getTag("highway"));
+        String sacScale = way.getTag("sac_scale");
+        if (sacScale != null) {
+            if ("hiking".equals(sacScale))
+                ev.setDecimal(false, ints, TagParserFactory.Foot.FOOT_MEAN_SPEED);
+            else
+                ev.setDecimal(false, ints, TagParserFactory.Foot.FOOT_SLOW_SPEED);
+        } else {
+            ev.setDecimal(false, ints, TagParserFactory.Foot.FOOT_MEAN_SPEED);
+        }
     }
 
     public ReaderWayFilter getReadWayFilter() {
@@ -59,5 +64,6 @@ public class RoadClassParser implements TagParser {
     public final String getName() {
         return ev.getName();
     }
+
 
 }

@@ -25,9 +25,6 @@ import com.graphhopper.util.Helper;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.profiles.TagParserFactory.ACCEPT_IF_HIGHWAY;
-
-
 public class MaxHeightParser implements TagParser {
     private DecimalEncodedValue ev;
 
@@ -51,7 +48,7 @@ public class MaxHeightParser implements TagParser {
     }
 
     public ReaderWayFilter getReadWayFilter() {
-        return ACCEPT_IF_HIGHWAY;
+        return TagParserFactory.ACCEPT_IF_HIGHWAY;
     }
 
     public final EncodedValue getEncodedValue() {

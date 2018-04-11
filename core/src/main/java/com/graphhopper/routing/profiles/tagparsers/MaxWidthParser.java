@@ -18,34 +18,42 @@
 package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.ReaderWayFilter;
-import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.Helper;
 
 import java.util.Arrays;
 import java.util.List;
 
 
-public class RoadClassParser implements TagParser {
-    private StringEncodedValue ev;
+public class MaxWidthParser implements TagParser {
+    private DecimalEncodedValue ev;
 
-    List<String> roadClasses = Arrays.asList("_default", "footway", "path", "steps", "pedestrian", "living_street", "track",
-            "residential", "service", "trunk", "trunk_link", "motorway", "motorway_link", "motorroad",
-            "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
-            "cycleway", "unclassified", "road", "bridleway");
+    final List<String> widthTags = Arrays.asList("maxwidth", "maxwidth:physical");
 
-    public RoadClassParser(){
-        this.ev = new StringEncodedValue(TagParserFactory.ROAD_CLASS, roadClasses, "_default");
+
+    //TODO: Add correct init values
+    public MaxWidthParser(){
+        this.ev = new DecimalEncodedValue(TagParserFactory.MAX_WIDTH, 6, 0, 0.1, false);
     }
 
     public void parse(IntsRef ints, ReaderWay way) {
-        ev.setString(false, ints, way.getTag("highway"));
+        String value = way.getFirstPriorityTag(widthTags);
+        if (Helper.isEmpty(value)) return;
+
+        try {
+            ev.setDecimal(false, ints, TagParserFactory.stringToMeter(value));
+        } catch (Throwable ex) {
+            TagParserFactory.LOGGER.warn("Unable to extract width from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId(), ex);
+            return;
+        }
     }
 
     public ReaderWayFilter getReadWayFilter() {
-        return TagParserFactory.ACCEPT_IF_HIGHWAY;
+        return TagParserFactory.SPEEDMAPFILTER;
     }
 
     public final EncodedValue getEncodedValue() {
