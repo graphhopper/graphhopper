@@ -181,9 +181,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 + ", neighbor:" + neighborUpdatePercentage
                 + ", " + Helper.getMemInfo());
 
-        int edgeCount = ghStorage.getAllEdges().getMaxId();
+        int edgeCount = ghStorage.getAllEdges().length();
         logger.info("graph now - num edges: {}, num nodes: {}, num shortcuts: {}",
-                nf(edgeCount), nf(ghStorage.getNodes()), nf(prepareGraph.getAllEdges().getMaxId() - edgeCount));
+                nf(edgeCount), nf(ghStorage.getNodes()), nf(prepareGraph.getAllEdges().length() - edgeCount));
     }
 
     protected void runGraphContraction() {
@@ -263,7 +263,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // some kind of check like this, to make the tests in AbstractAlgorithmTester work where the preparation
         // sometimes is started twice on the same graph. without this check the shortcuts remain from the first
         // preparation, but we reset the node levels, which leads to problems.
-        if (prepareGraph.getAllEdges().getMaxId() > ghStorage.getAllEdges().getMaxId()) {
+        if (prepareGraph.getAllEdges().length() > ghStorage.getAllEdges().length()) {
             return false;
         }
         int nodes = prepareGraph.getNodes();
@@ -288,7 +288,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // node priorities all shortcut searches are cancelled immediately and all possible shortcuts are counted because
         // no witness path can be found. this is not really what we want, but changing it requires re-optimizing the
         // graph contraction parameters, because it affects the node contraction order.
-        meanDegree = prepareGraph.getAllEdges().getMaxId() / prepareGraph.getNodes();
+        meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
         initSize = sortedNodes.getSize();
         // todo: why do we start counting levels with 1 ??
         int level = 1;

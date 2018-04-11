@@ -669,8 +669,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public int getMaxId() {
-            return super.getMaxId() + shortcutCount;
+        public int length() {
+            return super.length() + shortcutCount;
         }
 
         @Override

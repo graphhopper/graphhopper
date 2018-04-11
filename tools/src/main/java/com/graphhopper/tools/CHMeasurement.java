@@ -104,12 +104,12 @@ public class CHMeasurement {
         }
         ManualPrepareContractionHierarchies pch = contractGraphWithRandomTurnCosts();
         int numNodes = ghStorage.getNodes();
-        int numShortcuts = chGraph.getAllEdges().getMaxId() - ghStorage.getAllEdges().getMaxId();
+        int numShortcuts = chGraph.getAllEdges().length() - ghStorage.getAllEdges().length();
         LOGGER.info("### Average contraction time: {} ms, time per node: {} micros, time per shortcut: {} micros",
                 Helper.nf(totalElapsed / numRepeats / 1_000_000),
                 Helper.nf(totalElapsed / numRepeats / numNodes / 1_000),
                 Helper.nf(totalElapsed / numRepeats / numShortcuts / 1_000));
-        LOGGER.info("nodes: {}, edges: {}, shortcuts: {}", Helper.nf(numNodes), Helper.nf(ghStorage.getAllEdges().getMaxId()), Helper.nf(numShortcuts));
+        LOGGER.info("nodes: {}, edges: {}, shortcuts: {}", Helper.nf(numNodes), Helper.nf(ghStorage.getAllEdges().length()), Helper.nf(numShortcuts));
 
         LOGGER.info("Running comparison with dijkstra to check correctness... ");
         int errorCount = 0;
@@ -195,7 +195,7 @@ public class CHMeasurement {
         LOGGER.info("Running graph contraction... ");
         LOGGER.info("nodes: {}, nodes to contract: {}, edges: {}, shortcuts: {}",
                 Helper.nf(ghStorage.getNodes()), Helper.nf((int) (ghStorage.getNodes() / 100 * nodesContractedPercentage)),
-                Helper.nf(ghStorage.getAllEdges().getMaxId()), Helper.nf(chGraph.getAllEdges().getMaxId() - ghStorage.getAllEdges().getMaxId()));
+                Helper.nf(ghStorage.getAllEdges().length()), Helper.nf(chGraph.getAllEdges().length() - ghStorage.getAllEdges().length()));
         long start = nanoTime();
         ManualPrepareContractionHierarchies pch = new ManualPrepareContractionHierarchies(
                 dir, ghStorage, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR);

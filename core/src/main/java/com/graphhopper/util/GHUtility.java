@@ -115,7 +115,7 @@ public class GHUtility {
     }
 
     public static void printEdgeInfo(final Graph g, FlagEncoder encoder) {
-        System.out.println("-- Graph nodes:" + g.getNodes() + " edges:" + g.getAllEdges().getMaxId() + " ---");
+        System.out.println("-- Graph nodes:" + g.getNodes() + " edges:" + g.getAllEdges().length() + " ---");
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next()) {
             String prefix = (iter instanceof AllCHEdgesIterator && ((AllCHEdgesIterator) iter).isShortcut()) ? "sc" : "  ";

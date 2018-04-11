@@ -28,7 +28,7 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
 
     public ArrayBasedWitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, int maxLevel) {
         super(graph, weighting, traversalMode, maxLevel);
-        final int numOriginalEdges = graph.getBaseGraph().getAllEdges().getMaxId();
+        final int numOriginalEdges = graph.getBaseGraph().getAllEdges().length();
         final int numEntries = 2 * numOriginalEdges;
         initStorage(numEntries);
         initCollections();
