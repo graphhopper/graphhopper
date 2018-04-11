@@ -1,0 +1,10 @@
+language: java
+jdk:
+  - oraclejdk8
+# script: ./map-matching.sh action=test
+notifications:
+  email:
+    - github@graphhopper.com
+
+# enable container-based stack
+sudo: false

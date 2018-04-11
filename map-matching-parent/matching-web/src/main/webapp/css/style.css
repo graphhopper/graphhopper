@@ -1,0 +1,16 @@
+body {
+}
+
+#main {
+    margin: auto; 
+    width: 800px;
+}
+
+#map-matching-error {
+    color: red;
+    font-weight: bold;
+}
+
+#map-matching-response {    
+    font-weight: bold;
+}
