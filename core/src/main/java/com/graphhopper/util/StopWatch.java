@@ -58,7 +58,7 @@ public class StopWatch {
      * @return the time delta in milliseconds
      */
     public long getTime() {
-        return nanoTime / 1000000;
+        return nanoTime / 1_000_000;
     }
 
     public long getNanos() {

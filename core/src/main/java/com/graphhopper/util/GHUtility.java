@@ -18,8 +18,6 @@
 package com.graphhopper.util;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
-import com.carrotsearch.hppc.LongArrayList;
-import com.carrotsearch.hppc.LongIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
@@ -116,17 +114,13 @@ public class GHUtility {
     }
 
     public static void printEdgeInfo(final Graph g, FlagEncoder encoder) {
-        System.out.println("-- Graph n:" + g.getNodes() + " e:" + g.getAllEdges().getMaxId() + " ---");
+        System.out.println("-- Graph nodes:" + g.getNodes() + " edges:" + g.getAllEdges().getMaxId() + " ---");
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next()) {
-            String sc = "";
-            if (iter instanceof AllCHEdgesIterator) {
-                AllCHEdgesIterator aeSkip = (AllCHEdgesIterator) iter;
-                sc = aeSkip.isShortcut() ? "sc" : "  ";
-            }
+            String prefix = (iter instanceof AllCHEdgesIterator && ((AllCHEdgesIterator) iter).isShortcut()) ? "sc" : "  ";
             String fwdStr = iter.isForward(encoder) ? "fwd" : "   ";
-            String bckStr = iter.isBackward(encoder) ? "bckwd" : "";
-            System.out.println(sc + " " + iter + " " + fwdStr + " " + bckStr);
+            String bwdStr = iter.isBackward(encoder) ? "bwd" : "   ";
+            System.out.println(prefix + " " + iter + " " + fwdStr + " " + bwdStr + " " + iter.getDistance());
         }
     }
 
@@ -137,10 +131,7 @@ public class GHUtility {
             @Override
             protected boolean goFurther(int nodeId) {
                 System.out.println(getNodeInfo(g, nodeId, filter));
-                if (counter++ > counts) {
-                    return false;
-                }
-                return true;
+                return counter++ <= counts;
             }
         }.start(g.createEdgeExplorer(), startNode);
     }
@@ -308,8 +299,6 @@ public class GHUtility {
             }
         };
     }
-
-    ;
 
     /**
      * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if

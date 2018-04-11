@@ -407,11 +407,11 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertFalse(p.isFound());
     }
 
-    // 1-2-3-4-5
+    // 0-1-2-3-4
     // |     / |
-    // |    9  |
+    // |    8  |
     // \   /   /
-    //  8-7-6-/
+    //  7-6-5-/
     @Test
     public void testBidirectional2() {
         GraphHopperStorage graph = createGHStorage(false);

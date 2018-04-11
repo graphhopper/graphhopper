@@ -268,7 +268,7 @@ public class MiniGraphUI {
                     g2.setColor(color);
                     boolean fwd = encoder.isForward(edge.getFlags());
                     boolean bwd = encoder.isBackward(edge.getFlags());
-                    float width = speed > 90? 1f : 0.8f;
+                    float width = speed > 90 ? 1f : 0.8f;
                     if (fwd && !bwd) {
                         mg.plotDirectedEdge(g2, lat, lon, lat2, lon2, width);
                     } else {

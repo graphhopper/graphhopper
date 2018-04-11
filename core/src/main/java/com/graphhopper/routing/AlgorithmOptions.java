@@ -142,7 +142,7 @@ public class AlgorithmOptions {
         }
 
         /**
-         * For possible values see Parameters.Algorithms
+         * For possible values see {@link Parameters.Algorithms}
          */
         public Builder algorithm(String algorithm) {
             this.opts.algorithm = algorithm;
