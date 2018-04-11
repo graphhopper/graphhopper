@@ -53,6 +53,10 @@ android:
  * android (Apache license)
  * org.mapsforge, LGPL
  * VTM, LGPL
+ 
+hmm-lib: Apache license
+ 
+map-matching: Apache license
 
 ## Data
 

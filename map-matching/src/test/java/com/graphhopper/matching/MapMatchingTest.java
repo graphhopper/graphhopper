@@ -71,7 +71,7 @@ public class MapMatchingTest {
         // create hopper instance with CH enabled
         CarFlagEncoder encoder = new CarFlagEncoder();
         TestGraphHopper hopper = new TestGraphHopper();
-        hopper.setDataReaderFile("../map-data/leipzig_germany.osm.pbf");
+        hopper.setDataReaderFile("../core/files/leipzig_germany.osm.pbf");
         hopper.setGraphHopperLocation("../target/mapmatchingtest-ch");
         hopper.setEncodingManager(new EncodingManager(encoder));
         hopper.importOrLoad();

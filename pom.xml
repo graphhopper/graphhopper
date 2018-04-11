@@ -77,6 +77,8 @@
         <module>reader-gtfs</module>
         <module>reader-json</module>
         <module>tools</module>
+        <module>hmm-lib</module>
+        <module>map-matching</module>
         <module>web</module>
         <module>client-hc</module>
     </modules>

@@ -37,8 +37,8 @@ public class MapMatching2Test {
     public void testIssue13() {
         CarFlagEncoder encoder = new CarFlagEncoder();
         TestGraphHopper hopper = new TestGraphHopper();
-        hopper.setDataReaderFile("../map-data/map-issue13.osm.gz");
-        hopper.setGraphHopperLocation("../target/mapmatchingtest-13");
+        hopper.setDataReaderFile("../core/files/map-matching-issue-13.osm.gz");
+        hopper.setGraphHopperLocation("./target/mapmatchingtest-13");
         hopper.setEncodingManager(new EncodingManager(encoder));
         hopper.importOrLoad();
 
@@ -67,8 +67,8 @@ public class MapMatching2Test {
     public void testIssue70() {
         CarFlagEncoder encoder = new CarFlagEncoder();
         TestGraphHopper hopper = new TestGraphHopper();
-        hopper.setDataReaderFile("../map-data/issue-70.osm.gz");
-        hopper.setGraphHopperLocation("../target/mapmatchingtest-70");
+        hopper.setDataReaderFile("../core/files/map-matching-issue-70.osm.gz");
+        hopper.setGraphHopperLocation("./target/mapmatchingtest-70");
         hopper.setEncodingManager(new EncodingManager(encoder));
         hopper.importOrLoad();
 
