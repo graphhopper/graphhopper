@@ -1066,6 +1066,7 @@ public class GraphHopper implements GraphHopperAPI {
                         hints(hints).
                         build();
 
+                // do the actual route calculation !
                 altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
 
                 boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, enableInstructions);
@@ -1219,9 +1220,9 @@ public class GraphHopper implements GraphHopperAPI {
         preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
         preparation.doWork();
         int currNodeCount = ghStorage.getNodes();
-        logger.info("edges: " + ghStorage.getAllEdges().getMaxId() + ", nodes " + currNodeCount
-                + ", there were " + preparation.getMaxSubnetworks()
-                + " subnetworks. removed them => " + (prevNodeCount - currNodeCount)
+        logger.info("edges: " + Helper.nf(ghStorage.getAllEdges().getMaxId()) + ", nodes " + Helper.nf(currNodeCount)
+                + ", there were " + Helper.nf(preparation.getMaxSubnetworks())
+                + " subnetworks. removed them => " + Helper.nf(prevNodeCount - currNodeCount)
                 + " less nodes");
     }
 
