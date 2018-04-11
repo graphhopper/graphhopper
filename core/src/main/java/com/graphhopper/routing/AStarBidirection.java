@@ -61,7 +61,7 @@ import java.util.PriorityQueue;
  * @author Peter Karich
  * @author jansoe
  */
-public class AStarBidirection extends AbstractBidirAlgo implements RecalculationHook {
+public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> implements RecalculationHook {
     protected AStarEntry currFrom;
     protected AStarEntry currTo;
     protected PathBidirRef bestPath;
@@ -85,11 +85,11 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
     }
 
     protected void initCollections(int size) {
-        pqOpenSetFrom = new PriorityQueue<AStarEntry>(size);
-        bestWeightMapFrom = new GHIntObjectHashMap<AStarEntry>(size);
+        pqOpenSetFrom = new PriorityQueue<>(size);
+        bestWeightMapFrom = new GHIntObjectHashMap<>(size);
 
-        pqOpenSetTo = new PriorityQueue<AStarEntry>(size);
-        bestWeightMapTo = new GHIntObjectHashMap<AStarEntry>(size);
+        pqOpenSetTo = new PriorityQueue<>(size);
+        bestWeightMapTo = new GHIntObjectHashMap<>(size);
     }
 
     /**
@@ -105,7 +105,7 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
     }
 
     @Override
-    protected SPTEntry createSPTEntry(int node, double weight) {
+    protected AStarEntry createStartEntry(int node, double weight, boolean reverse) {
         throw new IllegalStateException("use AStarEdge constructor directly");
     }
 
