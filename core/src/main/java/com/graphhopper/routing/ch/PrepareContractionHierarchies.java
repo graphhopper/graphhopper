@@ -59,7 +59,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private CHEdgeExplorer vehicleAllTmpExplorer;
     private CHEdgeExplorer calcPrioAllExplorer;
     private int maxLevel;
-    // the most important nodes comes last
+    // nodes with highest priority come last
     private GHTreeMapComposed sortedNodes;
     private int oldPriorities[];
     private double meanDegree;
@@ -156,14 +156,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     @Override
-    public void doWork() {
+    public void doSpecificWork() {
         allSW.start();
-        super.doWork();
-
         initFromGraph();
+        runGraphContraction();
+    }
+
+    protected void runGraphContraction() {
         if (!prepareNodes())
             return;
-
         contractNodes();
     }
 
