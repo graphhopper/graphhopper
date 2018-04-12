@@ -74,9 +74,6 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         graph.edge(9, 11, 200, true);
         graph.edge(1, 2, 120, false);
 
-        assertEquals(4, graph.getAllEdges().length());
-        assertEquals(4, graph.getNodes());
-
         iter1.setName("named street1");
         iter2.setName("named street2");
 
