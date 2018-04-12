@@ -31,6 +31,8 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,12 +49,12 @@ public class MapMatchingMain {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private void start(CmdArgs args) {
-        String action = args.get("action", "").toLowerCase();
+        String action = Helper.toLowerCase(args.get("action", ""));
         args.put("graph.location", "./graph-cache");
         if (action.equals("import")) {
-            String flagEncoders = args.get("vehicle", "").toLowerCase();
+            String flagEncoders = Helper.toLowerCase(args.get("vehicle", ""));
             if (flagEncoders.isEmpty()) {
-                flagEncoders = args.get("vehicles", "car").toLowerCase();
+                flagEncoders = Helper.toLowerCase(args.get("vehicles", "car"));
             }
 
             args.put("graph.flag_encoders", flagEncoders);

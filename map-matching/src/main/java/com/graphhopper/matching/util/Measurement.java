@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
@@ -33,14 +33,13 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.FileWriter;
+
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Random;
-import java.util.TreeMap;
 
 /**
  * @author Peter Karisch
@@ -77,7 +76,7 @@ public class Measurement {
         hopper.getCHFactoryDecorator().setEnabled(true);
         hopper.getCHFactoryDecorator().setDisablingAllowed(true);
         hopper.importOrLoad();
-        
+
         // and map-matching stuff
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
         bbox = graph.getBounds();
@@ -88,7 +87,7 @@ public class Measurement {
                 .maxVisitedNodes((int) 1e20)
                 .build();
         MapMatching mapMatching = new MapMatching(hopper, algoOpts);
-        
+
         // start tests:
         StopWatch sw = new StopWatch().start();
         try {
@@ -107,7 +106,7 @@ public class Measurement {
             put("measurement.totalMB", Helper.getTotalMB());
             put("measurement.usedMB", Helper.getUsedMB());
             try {
-                store(new FileWriter(propLocation));
+                store(new OutputStreamWriter(new FileOutputStream(propLocation), Helper.UTF_CS));
             } catch (IOException ex) {
                 logger.error(
                         "Problem while storing properties " + graphLocation + ", " + propLocation,
@@ -119,7 +118,6 @@ public class Measurement {
     /**
      * Test the performance of finding candidate points for the index (which is run for every GPX
      * entry).
-     * 
      */
     private void printLocationIndexMatchQuery(final LocationIndexMatch idx) {
         final double latDelta = bbox.maxLat - bbox.minLat;
@@ -215,7 +213,7 @@ public class Measurement {
 
     void print(String prefix, MiniPerfTest perf) {
         logger.info(prefix + ": " + perf.getReport());
-        put(prefix + ".sum", perf.getSum());                                        
+        put(prefix + ".sum", perf.getSum());
         put(prefix + ".min", perf.getMin());
         put(prefix + ".mean", perf.getMean());
         put(prefix + ".max", perf.getMax());
@@ -226,7 +224,7 @@ public class Measurement {
         properties.put(key, "" + val);
     }
 
-    private void store(FileWriter fileWriter) throws IOException {
+    private void store(Writer fileWriter) throws IOException {
         for (Entry<String, String> e : properties.entrySet()) {
             fileWriter.append(e.getKey());
             fileWriter.append("=");

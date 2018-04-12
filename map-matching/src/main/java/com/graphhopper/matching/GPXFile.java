@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -100,9 +100,9 @@ public class GPXFile {
      *                     guessed from the distance and this provided default speed in kph.
      */
     public GPXFile doImport(InputStream is, double defaultSpeed) {
-        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
-        SimpleDateFormat formatterZ = new SimpleDateFormat(DATE_FORMAT_Z);
-        SimpleDateFormat formatterZMS = new SimpleDateFormat(DATE_FORMAT_Z_MS);
+        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT, Locale.ROOT);
+        SimpleDateFormat formatterZ = new SimpleDateFormat(DATE_FORMAT_Z, Locale.ROOT);
+        SimpleDateFormat formatterZMS = new SimpleDateFormat(DATE_FORMAT_Z_MS, Locale.ROOT);
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setValidating(false);
         factory.setIgnoringElementContentWhitespace(true);
@@ -177,14 +177,13 @@ public class GPXFile {
     //
     public String createString() {
         long startTimeMillis = 0;
-        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT_Z);
+        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT_Z, Locale.ROOT);
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-        DecimalFormat decimalFormat = new DecimalFormat("#");
+        DecimalFormat decimalFormat = new DecimalFormat("#", DecimalFormatSymbols.getInstance(Locale.US));
         decimalFormat.setMinimumFractionDigits(1);
         decimalFormat.setMaximumFractionDigits(6);
         decimalFormat.setMinimumIntegerDigits(1);
-        decimalFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.US));
 
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
                 + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"
@@ -237,7 +236,7 @@ public class GPXFile {
     public GPXFile doExport(String gpxFile) {
         BufferedWriter writer = null;
         try {
-            writer = new BufferedWriter(new FileWriter(gpxFile));
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(gpxFile), Helper.UTF_CS));
             writer.append(createString());
             return this;
         } catch (IOException ex) {
@@ -250,7 +249,7 @@ public class GPXFile {
     public static void write(Path path, String gpxFile, Translation translation) {
         BufferedWriter writer = null;
         try {
-            writer = new BufferedWriter(new FileWriter(gpxFile));
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(gpxFile), Helper.UTF_CS));
             writer.append(path.calcInstructions(translation).createGPX());
         } catch (IOException ex) {
             throw new RuntimeException(ex);

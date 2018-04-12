@@ -40,8 +40,7 @@ import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
@@ -165,7 +164,7 @@ public class Measurement {
             put("measurement.totalMB", getTotalMB());
             put("measurement.usedMB", getUsedMB());
             try {
-                store(new FileWriter(propLocation), "measurement finish, "
+                store(new OutputStreamWriter(new FileOutputStream(propLocation), Helper.UTF_CS), "measurement finish, "
                         + new Date().toString() + ", " + Constants.BUILD_DATE);
             } catch (IOException ex) {
                 logger.error("Problem while storing properties " + graphLocation + ", " + propLocation, ex);
@@ -500,7 +499,7 @@ public class Measurement {
         properties.put(key, "" + val);
     }
 
-    private void store(FileWriter fileWriter, String comment) throws IOException {
+    private void store(Writer fileWriter, String comment) throws IOException {
         fileWriter.append("#" + comment + "\n");
         for (Entry<String, String> e : properties.entrySet()) {
             fileWriter.append(e.getKey());
