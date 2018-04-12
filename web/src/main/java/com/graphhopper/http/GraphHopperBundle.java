@@ -169,6 +169,7 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
                 bind(configuration).to(CmdArgs.class);
                 bind(graphHopper).to(GraphHopperAPI.class);
                 bind(false).to(Boolean.class).named("hasElevation");
+                bind(configuration.getDouble("web.gps.max_accuracy", 100)).to(Double.class).named("gps.max_accuracy");
                 bind(locationIndex).to(LocationIndex.class);
                 bind(translationMap).to(TranslationMap.class);
                 bind(encodingManager).to(EncodingManager.class);
@@ -177,6 +178,7 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
         });
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(RouteResource.class);
+        environment.jersey().register(MapMatchingResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
         environment.lifecycle().manage(new Managed() {
@@ -202,6 +204,7 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
                 bind(graphHopperManaged).to(GraphHopperManaged.class);
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopper.class);
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopperAPI.class);
+                bind(configuration.getDouble("web.gps.max_accuracy", 100)).to(Double.class).named("gps.max_accuracy");
 
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
                 bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
@@ -216,6 +219,7 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
         }
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(RouteResource.class);
+        environment.jersey().register(MapMatchingResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
 

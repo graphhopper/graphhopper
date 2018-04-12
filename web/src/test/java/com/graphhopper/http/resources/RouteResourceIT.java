@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.http;
+package com.graphhopper.http.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.GHRequest;
@@ -23,6 +23,8 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.api.GraphHopperWeb;
+import com.graphhopper.http.GraphHopperApplication;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.details.PathDetail;

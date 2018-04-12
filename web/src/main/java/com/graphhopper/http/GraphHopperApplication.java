@@ -51,7 +51,7 @@ public class GraphHopperApplication extends Application<GraphHopperServerConfigu
     }
 
     @Override
-    public void run(GraphHopperServerConfiguration configuration, Environment environment) throws Exception {
+    public void run(GraphHopperServerConfiguration configuration, Environment environment) {
         environment.getObjectMapper().setDateFormat(new ISO8601DateFormat());
         environment.getObjectMapper().registerModule(new JtsModule());
         environment.getObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);

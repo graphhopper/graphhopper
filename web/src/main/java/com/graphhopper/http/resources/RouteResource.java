@@ -1,6 +1,6 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
  *  GraphHopper GmbH licenses this file to you under the Apache License,
@@ -52,10 +52,9 @@ import static com.graphhopper.util.Parameters.Routing.*;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 
 /**
- * Servlet to use GraphHopper in a remote client application like mobile or browser. Note: If type
- * is json it returns the points in GeoJson format (longitude,latitude) unlike the format "lat,lon"
- * used otherwise. See the full API response format in docs/web/api-doc.md
- * <p>
+ * Resource to use GraphHopper in a remote client application like mobile or browser. Note: If type
+ * is json it returns the points in GeoJson array format [longitude,latitude] unlike the format "lat,lon"
+ * used for the request. See the full API response format in docs/web/api-doc.md
  *
  * @author Peter Karich
  */
@@ -97,14 +96,14 @@ public class RouteResource {
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute /* default to false for the route part in next API version, see #437 */,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
-            @QueryParam("trackname") @DefaultValue("GraphHopper Track") String trackName,
-            @QueryParam("millis") String timeString) {
+            @QueryParam("gpx.trackname") @DefaultValue("GraphHopper Track") String trackName,
+            @QueryParam("gpx.millis") String timeString) {
+
         boolean writeGPX = "gpx".equalsIgnoreCase(type);
         instructions = writeGPX || instructions;
-
         StopWatch sw = new StopWatch().start();
 
-        if(requestPoints.isEmpty()) {
+        if (requestPoints.isEmpty()) {
             throw new WebApplicationException(errorResponse(new IllegalArgumentException("You have to pass at least one point"), writeGPX));
         }
 
@@ -164,24 +163,28 @@ public class RouteResource {
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
                     + ", points0: " + ghResponse.getBest().getPoints().getSize()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
-            return Response.fromResponse(writeGPX ?
-                    gpxSuccessResponse(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints) :
-                    jsonSuccessResponse(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took))
-                    .header("X-GH-Took", "" + Math.round(took * 1000))
-                    .build();
+            return writeGPX ?
+                    gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints).
+                            header("X-GH-Took", "" + Math.round(took * 1000)).
+                            build()
+                    :
+                    Response.ok(jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+                            header("X-GH-Took", "" + Math.round(took * 1000)).
+                            build();
         }
     }
 
-    private Response gpxSuccessResponse(GHResponse ghRsp, String timeString, String trackName, boolean enableElevation, boolean withRoute, boolean withTrack, boolean withWayPoints) {
+    static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String trackName, boolean enableElevation, boolean withRoute, boolean withTrack, boolean withWayPoints) {
         if (ghRsp.getAll().size() > 1) {
             throw new WebApplicationException("Alternatives are currently not yet supported for GPX");
         }
 
         long time = timeString != null ? Long.parseLong(timeString) : System.currentTimeMillis();
-        return Response.ok(ghRsp.getBest().getInstructions().createGPX(trackName, time, enableElevation, withRoute, withTrack, withWayPoints), "application/gpx+xml").header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx").build();
+        return Response.ok(ghRsp.getBest().getInstructions().createGPX(trackName, time, enableElevation, withRoute, withTrack, withWayPoints), "application/gpx+xml").
+                header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
     }
 
-    private Response xmlErrorResponse(Collection<Throwable> list) {
+    private static Response xmlErrorResponse(Collection<Throwable> list) {
         if (list.isEmpty())
             throw new RuntimeException("errorsToXML should not be called with an empty list");
 
@@ -219,7 +222,7 @@ public class RouteResource {
         }
     }
 
-    private void initHints(HintsMap m, MultivaluedMap<String, String> parameterMap) {
+    private static void initHints(HintsMap m, MultivaluedMap<String, String> parameterMap) {
         for (Map.Entry<String, List<String>> e : parameterMap.entrySet()) {
             if (e.getValue().size() == 1) {
                 m.put(e.getKey(), e.getValue().get(0));
@@ -240,7 +243,7 @@ public class RouteResource {
         }
     }
 
-    private Response jsonSuccessResponse(GHResponse ghRsp, boolean enableInstructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, float took) {
+    static ObjectNode jsonObject(GHResponse ghRsp, boolean enableInstructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, float took) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         json.putPOJO("hints", ghRsp.getHints().toMap());
         // If you replace GraphHopper with your own brand name, this is fine.
@@ -279,10 +282,10 @@ public class RouteResource {
                 jsonPath.put("fare", NumberFormat.getCurrencyInstance(Locale.ROOT).format(ar.getFare()));
             }
         }
-        return Response.ok(json).build();
+        return json;
     }
 
-    private Response errorResponse(List<Throwable> t, boolean writeGPX) {
+    static Response errorResponse(List<Throwable> t, boolean writeGPX) {
         if (writeGPX) {
             return xmlErrorResponse(t);
         } else {
@@ -290,11 +293,11 @@ public class RouteResource {
         }
     }
 
-    private Response errorResponse(Throwable t, boolean writeGPX) {
+    static Response errorResponse(Throwable t, boolean writeGPX) {
         return errorResponse(Collections.singletonList(t), writeGPX);
     }
 
-    private Response jsonErrorResponse(List<Throwable> errors) {
+    private static Response jsonErrorResponse(List<Throwable> errors) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         json.put("message", getMessage(errors.get(0)));
         ArrayNode errorHintList = json.putArray("hints");
@@ -309,7 +312,7 @@ public class RouteResource {
         return Response.status(SC_BAD_REQUEST).entity(json).build();
     }
 
-    private String getMessage(Throwable t) {
+    private static String getMessage(Throwable t) {
         if (t.getMessage() == null)
             return t.getClass().getSimpleName();
         else

@@ -35,6 +35,12 @@
             <artifactId>graphhopper-reader-gtfs</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-map-matching-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
         <!-- required for JDK9 -->
         <dependency>
             <groupId>javax.xml.ws</groupId>
