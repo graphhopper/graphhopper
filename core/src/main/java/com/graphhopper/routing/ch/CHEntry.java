@@ -33,7 +33,6 @@ public class CHEntry extends SPTEntry {
     }
 
     public CHEntry getParent() {
-        // todo: can we get rid of this cast ?
         return (CHEntry) super.parent;
     }
 

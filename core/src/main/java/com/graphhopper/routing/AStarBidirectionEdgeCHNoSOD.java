@@ -77,6 +77,11 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD<
         entry.parent = parent;
     }
 
+    @Override
+    protected AStarCHEntry getParent(AStarCHEntry entry) {
+        return entry.getParent();
+    }
+
     public WeightApproximator getApproximation() {
         return weightApprox.getApproximation();
     }

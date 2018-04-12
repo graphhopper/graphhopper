@@ -122,6 +122,10 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
         entry.parent = parent;
     }
 
+    protected AStarEntry getParent(AStarEntry entry) {
+        return entry.getParent();
+    }
+
     @Override
     protected boolean acceptTraversalId(int traversalId, boolean reverse) {
         // todo: ignoreExplorationFrom/To always stays empty (?!)
@@ -135,36 +139,6 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
         // then we could avoid the approximation as we already know the exact complete path!
         return super.calcWeight(iter, currEdge, reverse);
     }
-
-    @Override
-    public void updateBestPath(EdgeIteratorState edgeState, AStarEntry entry, int traversalId, boolean reverse) {
-        AStarEntry entryOther = bestWeightMapOther.get(traversalId);
-        if (entryOther == null)
-            return;
-
-        // update μ
-        double newWeight = entry.weightOfVisitedPath + entryOther.weightOfVisitedPath;
-        if (traversalMode.isEdgeBased()) {
-            if (entryOther.edge != entry.edge)
-                throw new IllegalStateException("cannot happen for edge based execution of " + getName());
-
-            // see DijkstraBidirectionRef
-            if (entryOther.adjNode != entry.adjNode) {
-                entry = (AStar.AStarEntry) entry.parent;
-                newWeight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
-            } else if (!traversalMode.hasUTurnSupport())
-                // we detected a u-turn at meeting point, skip if not supported
-                return;
-        }
-
-        if (newWeight < bestPath.getWeight()) {
-            bestPath.setSwitchToFrom(reverse);
-            bestPath.sptEntry = entry;
-            bestPath.edgeTo = entryOther;
-            bestPath.setWeight(newWeight);
-        }
-    }
-
     public WeightApproximator getApproximation() {
         return weightApprox.getApproximation();
     }

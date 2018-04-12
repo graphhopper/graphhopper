@@ -58,6 +58,11 @@ public class DijkstraBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoS
     }
 
     @Override
+    protected CHEntry getParent(CHEntry entry) {
+        return entry.getParent();
+    }
+
+    @Override
     public String getName() {
         return "dijkstrabi|ch|edge_based|no_sod";
     }

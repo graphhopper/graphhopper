@@ -34,6 +34,7 @@ import java.util.PriorityQueue;
  * Generic implementation of bidirectional Dijkstra algorithm that can be used with different shortest path entry types.
  *
  * @author Peter Karich
+ * @author ammagamma
  */
 public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends AbstractBidirAlgo {
     protected IntObjectMap<T> bestWeightMapFrom;
@@ -186,8 +187,8 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
         return currFrom.weight + currTo.weight >= bestPath.getWeight();
     }
 
-    void fillEdges(T currEdge, PriorityQueue<T> prioQueue,
-                   IntObjectMap<T> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
+    private void fillEdges(T currEdge, PriorityQueue<T> prioQueue,
+                           IntObjectMap<T> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
         EdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
             if (!accept(iter, currEdge, reverse))
@@ -219,6 +220,31 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
     }
 
     protected void updateBestPath(EdgeIteratorState edgeState, T entry, int traversalId, boolean reverse) {
+        T entryOther = bestWeightMapOther.get(traversalId);
+        if (entryOther == null)
+            return;
+
+        // update μ
+        double newWeight = entry.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath();
+        if (traversalMode.isEdgeBased()) {
+            if (entryOther.edge != entry.edge)
+                throw new IllegalStateException("cannot happen for edge based execution of " + getName());
+
+            if (entryOther.adjNode != entry.adjNode) {
+                // prevents the path to contain the edge at the meeting point twice and subtracts the weight (excluding turn weight => no previous edge)
+                entry = getParent(entry);
+                newWeight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
+            } else if (!traversalMode.hasUTurnSupport())
+                // we detected a u-turn at meeting point, skip if not supported
+                return;
+        }
+
+        if (newWeight < bestPath.getWeight()) {
+            bestPath.setSwitchToFrom(reverse);
+            bestPath.setSPTEntry(entry);
+            bestPath.setSPTEntryTo(entryOther);
+            bestPath.setWeight(newWeight);
+        }
     }
 
     protected abstract T createStartEntry(int node, double weight, boolean reverse);
@@ -230,6 +256,8 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
         entry.weight = weight;
         entry.parent = parent;
     }
+
+    protected abstract T getParent(T entry);
 
     protected boolean accept(EdgeIteratorState edge, T currEdge, boolean reverse) {
         return accept(edge, currEdge.edge);

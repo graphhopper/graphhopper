@@ -172,6 +172,11 @@ public class AStar extends AbstractRoutingAlgorithm {
         public final double getWeightOfVisitedPath() {
             return weightOfVisitedPath;
         }
+
+        @Override
+        public AStarEntry getParent() {
+            return (AStarEntry) super.parent;
+        }
     }
 
     @Override

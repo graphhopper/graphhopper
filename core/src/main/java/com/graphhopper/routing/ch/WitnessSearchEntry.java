@@ -27,7 +27,6 @@ class WitnessSearchEntry extends CHEntry {
     }
 
     public WitnessSearchEntry getParent() {
-        // todo: can we get rid of this cast ?
         return (WitnessSearchEntry) super.parent;
     }
 
