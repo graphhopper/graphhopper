@@ -26,6 +26,7 @@ import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
 import java.util.PriorityQueue;
 
@@ -58,6 +59,41 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
 
         pqOpenSetTo = new PriorityQueue<>(size);
         bestWeightMapTo = new GHIntObjectHashMap<>(size);
+    }
+
+    @Override
+    protected void initFrom(int from, double weight) {
+        currFrom = createStartEntry(from, weight, false);
+        pqOpenSetFrom.add(currFrom);
+        if (!traversalMode.isEdgeBased()) {
+            bestWeightMapFrom.put(from, currFrom);
+        }
+    }
+
+
+    @Override
+    protected void initTo(int to, double weight) {
+        currTo = createStartEntry(to, weight, true);
+        pqOpenSetTo.add(currTo);
+        if (!traversalMode.isEdgeBased()) {
+            bestWeightMapTo.put(to, currTo);
+        }
+    }
+
+    @Override
+    protected void postInit(int from, int to) {
+        if (!traversalMode.isEdgeBased()) {
+            if (updateBestPath) {
+                bestWeightMapOther = bestWeightMapFrom;
+                updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to, true);
+            }
+        } else if (from == to) {
+            // special case of identical start and end
+            bestPath.sptEntry = currFrom;
+            bestPath.edgeTo = currTo;
+            finishedFrom = true;
+            finishedTo = true;
+        }
     }
 
     @Override

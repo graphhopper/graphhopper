@@ -18,7 +18,6 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntHashSet;
-import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.AStar.AStarEntry;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
@@ -27,8 +26,6 @@ import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
-
-import java.util.PriorityQueue;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
@@ -69,60 +66,10 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
     }
 
     @Override
-    protected AStarEntry createStartEntry(int node, double weight, boolean reverse) {
-        throw new IllegalStateException("use AStarEdge constructor directly");
-    }
-
-    @Override
-    public void initFrom(int from, double weight) {
-        currFrom = new AStarEntry(EdgeIterator.NO_EDGE, from, weight, weight);
+    void init(int from, double fromWeight, int to, double toWeight) {
         weightApprox.setFrom(from);
-        pqOpenSetFrom.add(currFrom);
-
-        if (currTo != null) {
-            currFrom.weight += weightApprox.approximate(currFrom.adjNode, false);
-            currTo.weight += weightApprox.approximate(currTo.adjNode, true);
-        }
-
-        if (!traversalMode.isEdgeBased()) {
-            bestWeightMapFrom.put(from, currFrom);
-            if (currTo != null) {
-                bestWeightMapOther = bestWeightMapTo;
-                updateBestPath(GHUtility.getEdge(graph, from, currTo.adjNode), currTo, from, false);
-            }
-        } else if (currTo != null && currTo.adjNode == from) {
-            // special case of identical start and end
-            bestPath.sptEntry = currFrom;
-            bestPath.edgeTo = currTo;
-            finishedFrom = true;
-            finishedTo = true;
-        }
-    }
-
-    @Override
-    public void initTo(int to, double weight) {
-        currTo = new AStarEntry(EdgeIterator.NO_EDGE, to, weight, weight);
         weightApprox.setTo(to);
-        pqOpenSetTo.add(currTo);
-
-        if (currFrom != null) {
-            currFrom.weight += weightApprox.approximate(currFrom.adjNode, false);
-            currTo.weight += weightApprox.approximate(currTo.adjNode, true);
-        }
-
-        if (!traversalMode.isEdgeBased()) {
-            bestWeightMapTo.put(to, currTo);
-            if (currFrom != null) {
-                bestWeightMapOther = bestWeightMapFrom;
-                updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to, true);
-            }
-        } else if (currFrom != null && currFrom.adjNode == to) {
-            // special case of identical start and end
-            bestPath.sptEntry = currFrom;
-            bestPath.edgeTo = currTo;
-            finishedFrom = true;
-            finishedTo = true;
-        }
+        super.init(from, fromWeight, to, toWeight);
     }
 
     @Override
@@ -132,10 +79,15 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
     }
 
     @Override
+    protected AStarEntry createStartEntry(int node, double weight, boolean reverse) {
+        double heapWeight = weight + weightApprox.approximate(node, reverse);
+        return new AStarEntry(EdgeIterator.NO_EDGE, node, heapWeight, weight);
+    }
+
+    @Override
     protected AStarEntry createEntry(EdgeIteratorState iter, double weight, AStarEntry parent, boolean reverse) {
-        AStarEntry entry;
-        double currWeightToGoal = weightApprox.approximate(iter.getAdjNode(), reverse);
-        entry = new AStarEntry(iter.getEdge(), iter.getAdjNode(), weight + currWeightToGoal, weight);
+        double heapWeight = weight + weightApprox.approximate(iter.getAdjNode(), reverse);
+        AStarEntry entry = new AStarEntry(iter.getEdge(), iter.getAdjNode(), heapWeight, weight);
         entry.parent = parent;
         return entry;
     }
@@ -178,7 +130,7 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
         weightApprox = new ConsistentWeightApproximator(approx);
         return this;
     }
-    
+
     void setFromDataStructures(AStarBidirection astar) {
         pqOpenSetFrom = astar.pqOpenSetFrom;
         bestWeightMapFrom = astar.bestWeightMapFrom;

@@ -40,11 +40,14 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     void init(int from, double fromWeight, int to, double toWeight) {
         initFrom(from, fromWeight);
         initTo(to, toWeight);
+        postInit(from, to);
     }
 
     abstract void initFrom(int from, double dist);
 
     abstract void initTo(int to, double dist);
+
+    abstract void postInit(int from, int to);
 
     protected abstract Path createAndInitPath();
 

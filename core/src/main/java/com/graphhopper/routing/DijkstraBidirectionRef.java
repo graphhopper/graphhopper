@@ -17,14 +17,11 @@
  */
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
-
-import java.util.PriorityQueue;
 
 /**
  * Calculates best path in bidirectional way.
@@ -37,44 +34,6 @@ import java.util.PriorityQueue;
 public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry> {
     public DijkstraBidirectionRef(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
-    }
-
-    @Override
-    public void initFrom(int from, double weight) {
-        currFrom = createStartEntry(from, weight, false);
-        pqOpenSetFrom.add(currFrom);
-        if (!traversalMode.isEdgeBased()) {
-            bestWeightMapFrom.put(from, currFrom);
-            if (currTo != null) {
-                bestWeightMapOther = bestWeightMapTo;
-                updateBestPath(GHUtility.getEdge(graph, from, currTo.adjNode), currTo, from, false);
-            }
-        } else if (currTo != null && currTo.adjNode == from) {
-            // special case of identical start and end
-            bestPath.sptEntry = currFrom;
-            bestPath.edgeTo = currTo;
-            finishedFrom = true;
-            finishedTo = true;
-        }
-    }
-
-    @Override
-    public void initTo(int to, double weight) {
-        currTo = createStartEntry(to, weight, true);
-        pqOpenSetTo.add(currTo);
-        if (!traversalMode.isEdgeBased()) {
-            bestWeightMapTo.put(to, currTo);
-            if (currFrom != null) {
-                bestWeightMapOther = bestWeightMapFrom;
-                updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to, true);
-            }
-        } else if (currFrom != null && currFrom.adjNode == to) {
-            // special case of identical start and end
-            bestPath.sptEntry = currFrom;
-            bestPath.edgeTo = currTo;
-            finishedFrom = true;
-            finishedTo = true;
-        }
     }
 
     @Override
