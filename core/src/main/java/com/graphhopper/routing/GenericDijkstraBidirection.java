@@ -94,8 +94,7 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
         return currFrom.weight + currTo.weight >= bestPath.getWeight();
     }
 
-    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry bestSPTEntry, int traversalId) {
-    }
+    protected abstract void updateBestPath(EdgeIteratorState edgeState, T bestSPTEntry, int traversalId, boolean reverse);
 
     protected abstract T createStartEntry(int node, double weight, boolean reverse);
 

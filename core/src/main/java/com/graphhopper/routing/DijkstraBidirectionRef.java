@@ -48,7 +48,7 @@ public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry>
             bestWeightMapFrom.put(from, currFrom);
             if (currTo != null) {
                 bestWeightMapOther = bestWeightMapTo;
-                updateBestPath(GHUtility.getEdge(graph, from, currTo.adjNode), currTo, from);
+                updateBestPath(GHUtility.getEdge(graph, from, currTo.adjNode), currTo, from, false);
             }
         } else if (currTo != null && currTo.adjNode == from) {
             // special case of identical start and end
@@ -67,7 +67,7 @@ public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry>
             bestWeightMapTo.put(to, currTo);
             if (currFrom != null) {
                 bestWeightMapOther = bestWeightMapFrom;
-                updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to);
+                updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to, true);
             }
         } else if (currFrom != null && currFrom.adjNode == to) {
             // special case of identical start and end
@@ -131,17 +131,16 @@ public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry>
                 continue;
 
             if (updateBestPath)
-                updateBestPath(iter, entry, traversalId);
+                updateBestPath(iter, entry, traversalId, reverse);
         }
     }
 
     @Override
-    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entryCurrent, int traversalId) {
+    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entryCurrent, int traversalId, boolean reverse) {
         SPTEntry entryOther = bestWeightMapOther.get(traversalId);
         if (entryOther == null)
             return;
 
-        boolean reverse = bestWeightMapFrom == bestWeightMapOther;
         // update μ
         double newWeight = entryCurrent.weight + entryOther.weight;
         if (traversalMode.isEdgeBased()) {

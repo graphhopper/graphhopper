@@ -112,11 +112,11 @@ public class MiniGraphUI {
                     }
 
                     @Override
-                    public void updateBestPath(EdgeIteratorState es, SPTEntry bestEE, int currLoc) {
+                    public void updateBestPath(EdgeIteratorState es, SPTEntry bestEE, int currLoc, boolean reverse) {
                         if (g2 != null)
                             mg.plotNode(g2, currLoc, Color.YELLOW, 6);
 
-                        super.updateBestPath(es, bestEE, currLoc);
+                        super.updateBestPath(es, bestEE, currLoc, reverse);
                     }
                 }
 

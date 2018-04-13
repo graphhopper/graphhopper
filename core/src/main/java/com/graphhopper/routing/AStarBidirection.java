@@ -100,7 +100,7 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
             bestWeightMapFrom.put(from, currFrom);
             if (currTo != null) {
                 bestWeightMapOther = bestWeightMapTo;
-                updateBestPath(GHUtility.getEdge(graph, from, currTo.adjNode), currTo, from);
+                updateBestPath(GHUtility.getEdge(graph, from, currTo.adjNode), currTo, from, false);
             }
         } else if (currTo != null && currTo.adjNode == from) {
             // special case of identical start and end
@@ -126,7 +126,7 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
             bestWeightMapTo.put(to, currTo);
             if (currFrom != null) {
                 bestWeightMapOther = bestWeightMapFrom;
-                updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to);
+                updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to, true);
             }
         } else if (currFrom != null && currFrom.adjNode == to) {
             // special case of identical start and end
@@ -208,7 +208,7 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
                 continue;
 
             if (updateBestPath)
-                updateBestPath(iter, entry, traversalId);
+                updateBestPath(iter, entry, traversalId, reverse);
         }
     }
 
@@ -219,12 +219,12 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
 
     }
 
-    public void updateBestPath(EdgeIteratorState edgeState, AStarEntry entryCurrent, int traversalId) {
+    @Override
+    public void updateBestPath(EdgeIteratorState edgeState, AStarEntry entryCurrent, int traversalId, boolean reverse) {
         AStarEntry entryOther = bestWeightMapOther.get(traversalId);
         if (entryOther == null)
             return;
 
-        boolean reverse = bestWeightMapFrom == bestWeightMapOther;
         // update μ
         double newWeight = entryCurrent.weightOfVisitedPath + entryOther.weightOfVisitedPath;
         if (traversalMode.isEdgeBased()) {

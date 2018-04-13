@@ -47,11 +47,11 @@ public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements 
     }
 
     @Override
-    public void updateBestPath(EdgeIteratorState es, SPTEntry bestEE, int currLoc) {
+    public void updateBestPath(EdgeIteratorState es, SPTEntry bestEE, int currLoc, boolean reverse) {
         if (g2 != null) {
             mg.plotEdge(g2, na.getLat(bestEE.parent.adjNode), na.getLon(bestEE.parent.adjNode), na.getLat(currLoc), na.getLon(currLoc), .8f);
         }
         // System.out.println("new node:" + currLoc);
-        super.updateBestPath(es, bestEE, currLoc);
+        super.updateBestPath(es, bestEE, currLoc, reverse);
     }
 }
