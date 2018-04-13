@@ -19,8 +19,6 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntObjectMap;
-import com.carrotsearch.hppc.predicates.IntObjectPredicate;
-import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AStar.AStarEntry;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
@@ -28,11 +26,8 @@ import com.graphhopper.routing.weighting.ConsistentWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.PriorityQueue;
 
 /**
@@ -62,34 +57,15 @@ import java.util.PriorityQueue;
  * @author jansoe
  */
 public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> implements RecalculationHook {
-    protected AStarEntry currFrom;
-    protected AStarEntry currTo;
-    protected PathBidirRef bestPath;
-    protected IntObjectMap<AStarEntry> bestWeightMapFrom;
-    protected IntObjectMap<AStarEntry> bestWeightMapTo;
-    private IntObjectMap<AStarEntry> bestWeightMapOther;
     private ConsistentWeightApproximator weightApprox;
-    private PriorityQueue<AStarEntry> pqOpenSetFrom;
-    private PriorityQueue<AStarEntry> pqOpenSetTo;
     private IntHashSet ignoreExplorationFrom = new IntHashSet();
     private IntHashSet ignoreExplorationTo = new IntHashSet();
-    private boolean updateBestPath = true;
 
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
-        int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
-        initCollections(size);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);
         defaultApprox.setDistanceCalc(Helper.DIST_PLANE);
         setApproximation(defaultApprox);
-    }
-
-    protected void initCollections(int size) {
-        pqOpenSetFrom = new PriorityQueue<>(size);
-        bestWeightMapFrom = new GHIntObjectHashMap<>(size);
-
-        pqOpenSetTo = new PriorityQueue<>(size);
-        bestWeightMapTo = new GHIntObjectHashMap<>(size);
     }
 
     /**
@@ -162,36 +138,9 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
     }
 
     @Override
-    protected Path createAndInitPath() {
-        bestPath = new PathBidirRef(graph, weighting);
-        return bestPath;
-    }
-
-    @Override
-    protected Path extractPath() {
-        if (finished())
-            return bestPath.extract();
-
-        return bestPath;
-    }
-
-    @Override
-    protected double getCurrentFromWeight() {
-        return currFrom.weight;
-    }
-
-    @Override
-    protected double getCurrentToWeight() {
-        return currTo.weight;
-    }
-
-    @Override
     protected boolean finished() {
-        if (finishedFrom || finishedTo)
-            return true;
-
         // using 'weight' is important and correct here e.g. approximation can get negative and smaller than 'weightOfVisitedPath'
-        return currFrom.weight + currTo.weight >= bestPath.getWeight();
+        return super.finished();
     }
 
     @Override
@@ -201,7 +150,7 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
 
         currFrom = pqOpenSetFrom.poll();
         bestWeightMapOther = bestWeightMapTo;
-        fillEdges(currFrom, pqOpenSetFrom, bestWeightMapFrom, ignoreExplorationFrom, outEdgeExplorer, false);
+        fillEdges(currFrom, pqOpenSetFrom, bestWeightMapFrom, outEdgeExplorer, false);
         visitedCountFrom++;
         return true;
     }
@@ -213,61 +162,65 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
 
         currTo = pqOpenSetTo.poll();
         bestWeightMapOther = bestWeightMapFrom;
-        fillEdges(currTo, pqOpenSetTo, bestWeightMapTo, ignoreExplorationTo, inEdgeExplorer, true);
+        fillEdges(currTo, pqOpenSetTo, bestWeightMapTo, inEdgeExplorer, true);
         visitedCountTo++;
         return true;
     }
 
-    private void fillEdges(AStarEntry currEdge, PriorityQueue<AStarEntry> prioQueueOpenSet,
-                           IntObjectMap<AStarEntry> bestWeightMap, IntHashSet ignoreExploration,
-                           EdgeExplorer explorer, boolean reverse) {
-
-        int currNode = currEdge.adjNode;
-        EdgeIterator iter = explorer.setBaseNode(currNode);
+    private void fillEdges(AStarEntry currEdge, PriorityQueue<AStarEntry> prioQueue,
+                           IntObjectMap<AStarEntry> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
+        EdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
             if (!accept(iter, currEdge.edge))
                 continue;
 
-            int neighborNode = iter.getAdjNode();
             int traversalId = traversalMode.createTraversalId(iter, reverse);
-            if (ignoreExploration.contains(traversalId))
+            if (!acceptTraversalId(traversalId, reverse)) {
                 continue;
+            }
 
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
-            double alreadyVisitedWeight = weighting.calcWeight(iter, reverse, currEdge.edge)
+            double weight = weighting.calcWeight(iter, reverse, currEdge.edge)
                     + currEdge.getWeightOfVisitedPath();
-            if (Double.isInfinite(alreadyVisitedWeight))
+            if (Double.isInfinite(weight))
+                continue;
+            AStarEntry entry = bestWeightMap.get(traversalId);
+            if (entry == null) {
+                double currWeightToGoal = weightApprox.approximate(iter.getAdjNode(), reverse);
+                double estimationFullWeight = weight + currWeightToGoal;
+                entry = new AStarEntry(iter.getEdge(), iter.getAdjNode(), estimationFullWeight, weight);
+                entry.parent = currEdge;
+                bestWeightMap.put(traversalId, entry);
+                prioQueue.add(entry);
+            } else if (entry.getWeightOfVisitedPath() > weight) {
+//                assert (ase.weight > 0.999999 * estimationFullWeight) : "Inconsistent distance estimate "
+//                        + ase.weight + " vs " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and:"
+//                        + ase.getWeightOfVisitedPath() + " vs " + alreadyVisitedWeight + " (" + ase.getWeightOfVisitedPath() / alreadyVisitedWeight + ")";
+                prioQueue.remove(entry);
+                entry.edge = iter.getEdge();
+                double currWeightToGoal = weightApprox.approximate(iter.getAdjNode(), reverse);
+                entry.weight = weight + currWeightToGoal;
+                entry.weightOfVisitedPath = weight;
+                entry.parent = currEdge;
+                prioQueue.add(entry);
+            } else
                 continue;
 
-            AStarEntry ase = bestWeightMap.get(traversalId);
-            if (ase == null || ase.getWeightOfVisitedPath() > alreadyVisitedWeight) {
-                double currWeightToGoal = weightApprox.approximate(neighborNode, reverse);
-                double estimationFullWeight = alreadyVisitedWeight + currWeightToGoal;
-                if (ase == null) {
-                    ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, alreadyVisitedWeight);
-                    bestWeightMap.put(traversalId, ase);
-                } else {
-//                    assert (ase.weight > 0.999999 * estimationFullWeight) : "Inconsistent distance estimate "
-//                            + ase.weight + " vs " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and:"
-//                            + ase.getWeightOfVisitedPath() + " vs " + alreadyVisitedWeight + " (" + ase.getWeightOfVisitedPath() / alreadyVisitedWeight + ")";
-                    prioQueueOpenSet.remove(ase);
-                    ase.edge = iter.getEdge();
-                    ase.weight = estimationFullWeight;
-                    ase.weightOfVisitedPath = alreadyVisitedWeight;
-                }
-
-                ase.parent = currEdge;
-                prioQueueOpenSet.add(ase);
-
-                if (updateBestPath)
-                    updateBestPath(iter, ase, traversalId);
-            }
+            if (updateBestPath)
+                updateBestPath(iter, entry, traversalId);
         }
     }
 
-    public void updateBestPath(EdgeIteratorState edgeState, AStarEntry entryCurrent, int currLoc) {
-        AStarEntry entryOther = bestWeightMapOther.get(currLoc);
+    protected boolean acceptTraversalId(int traversalId, boolean reverse) {
+        // todo: ignoreExplorationFrom/To always stays empty (?!)
+        IntHashSet ignoreExploration = reverse ? ignoreExplorationTo : ignoreExplorationFrom;
+        return !ignoreExploration.contains(traversalId);
+
+    }
+
+    public void updateBestPath(EdgeIteratorState edgeState, AStarEntry entryCurrent, int traversalId) {
+        AStarEntry entryOther = bestWeightMapOther.get(traversalId);
         if (entryOther == null)
             return;
 
@@ -293,18 +246,6 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
             bestPath.edgeTo = entryOther;
             bestPath.setWeight(newWeight);
         }
-    }
-
-    IntObjectMap<AStarEntry> getBestFromMap() {
-        return bestWeightMapFrom;
-    }
-
-    IntObjectMap<AStarEntry> getBestToMap() {
-        return bestWeightMapTo;
-    }
-
-    void setBestOtherMap(IntObjectMap<AStarEntry> other) {
-        bestWeightMapOther = other;
     }
 
     void setFromDataStructures(AStarBidirection astar) {
