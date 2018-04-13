@@ -45,7 +45,7 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
     protected PathBidirRef bestPath;
     PriorityQueue<T> pqOpenSetFrom;
     PriorityQueue<T> pqOpenSetTo;
-    protected boolean updateBestPath = true;
+    private boolean updateBestPath = true;
 
     public GenericDijkstraBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
@@ -174,8 +174,8 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
 
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
     // a node from overlap may not be on the best path!
-    // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder 
-    //    search, update extractPath = μ if df (v) + (v, w) + dr (w) < μ            
+    // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder
+    //    search, update extractPath = μ if df (v) + (v, w) + dr (w) < μ
     @Override
     protected boolean finished() {
         if (finishedFrom || finishedTo)
@@ -191,7 +191,7 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
             if (!accept(iter, currEdge.edge))
                 continue;
 
-            int traversalId = traversalMode.createTraversalId(iter, reverse);
+            final int traversalId = traversalMode.createTraversalId(iter, reverse);
             if (!acceptTraversalId(traversalId, reverse)) {
                 continue;
             }
@@ -275,16 +275,16 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
         return weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
     }
 
-    void setBestOtherMap(IntObjectMap<T> other) {
-        bestWeightMapOther = other;
-    }
-
     IntObjectMap<T> getBestFromMap() {
         return bestWeightMapFrom;
     }
 
     IntObjectMap<T> getBestToMap() {
         return bestWeightMapTo;
+    }
+
+    void setBestOtherMap(IntObjectMap<T> other) {
+        bestWeightMapOther = other;
     }
 
     protected void setUpdateBestPath(boolean b) {

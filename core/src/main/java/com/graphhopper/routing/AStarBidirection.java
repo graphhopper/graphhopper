@@ -101,6 +101,11 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
     }
 
     @Override
+    protected AStarEntry getParent(AStarEntry entry) {
+        return entry.getParent();
+    }
+
+    @Override
     protected boolean acceptTraversalId(int traversalId, boolean reverse) {
         // todo: ignoreExplorationFrom/To always stays empty (?!)
         IntHashSet ignoreExploration = reverse ? ignoreExplorationTo : ignoreExplorationFrom;
@@ -112,11 +117,6 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
         // TODO performance: check if the node is already existent in the opposite direction
         // then we could avoid the approximation as we already know the exact complete path!
         return super.calcWeight(iter, currEdge, reverse);
-    }
-
-    @Override
-    protected AStarEntry getParent(AStarEntry entry) {
-        return entry.getParent();
     }
 
     public WeightApproximator getApproximation() {
