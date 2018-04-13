@@ -64,7 +64,7 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
     private void setMaxLevelOnAllNodes() {
         int nodes = prepareGraph.getNodes();
         for (int node = 0; node < nodes; node++) {
-            prepareGraph.setLevel(node, nodes + 1);
+            prepareGraph.setLevel(node, nodes);
         }
     }
 

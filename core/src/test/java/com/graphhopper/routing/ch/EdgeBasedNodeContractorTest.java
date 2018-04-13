@@ -1012,7 +1012,7 @@ public class EdgeBasedNodeContractorTest {
     private void setMaxLevelOnAllNodes() {
         int nodes = chGraph.getNodes();
         for (int node = 0; node < nodes; node++) {
-            chGraph.setLevel(node, nodes + 1);
+            chGraph.setLevel(node, nodes);
         }
     }
 

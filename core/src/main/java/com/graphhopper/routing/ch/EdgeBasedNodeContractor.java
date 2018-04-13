@@ -79,7 +79,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public void initFromGraph() {
         super.initFromGraph();
-        maxLevel = prepareGraph.getNodes() + 1;
+        maxLevel = prepareGraph.getNodes();
         witnessPathFinder = arrayBasedWitnessPathFinder ?
                 new ArrayBasedWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel) :
                 new MapBasedWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel);

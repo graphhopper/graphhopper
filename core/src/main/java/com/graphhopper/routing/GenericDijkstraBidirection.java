@@ -70,7 +70,6 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
         }
     }
 
-
     @Override
     protected void initTo(int to, double weight) {
         currTo = createStartEntry(to, weight, true);
@@ -217,7 +216,7 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
     }
 
     protected void updateBestPath(EdgeIteratorState edgeState, T entry, int traversalId, boolean reverse) {
-        SPTEntry entryOther = bestWeightMapOther.get(traversalId);
+        T entryOther = bestWeightMapOther.get(traversalId);
         if (entryOther == null)
             return;
 
@@ -228,7 +227,7 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
                 throw new IllegalStateException("cannot happen for edge based execution of " + getName());
 
             if (entryOther.adjNode != entry.adjNode) {
-                // prevents the path to contain the edge at the meeting point twice and subtract the weight (excluding turn weight => no previous edge)
+                // prevents the path to contain the edge at the meeting point twice and subtracts the weight (excluding turn weight => no previous edge)
                 entry = getParent(entry);
                 weight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
             } else if (!traversalMode.hasUTurnSupport())

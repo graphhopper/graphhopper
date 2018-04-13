@@ -32,7 +32,7 @@ abstract class AbstractNodeContractor implements NodeContractor {
     public void initFromGraph() {
         // todo: do we really need this method ? the problem is that ghStorage/prepareGraph can potentially be modified
         // between the constructor call and contractNode,calcShortcutCount etc. ...
-        maxLevel = prepareGraph.getNodes() + 1;
+        maxLevel = prepareGraph.getNodes();
         maxEdgesCount = ghStorage.getAllEdges().length();
     }
 

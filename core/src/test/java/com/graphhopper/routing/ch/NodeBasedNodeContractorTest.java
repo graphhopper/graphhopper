@@ -82,7 +82,7 @@ public class NodeBasedNodeContractorTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(3));
+        algo.setEdgeFilter(createIgnoreNodeFilter(3));
         algo.setWeightLimit(100);
         int nodeEntry = algo.findEndNode(4, 2);
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
@@ -102,7 +102,7 @@ public class NodeBasedNodeContractorTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(3));
+        algo.setEdgeFilter(createIgnoreNodeFilter(3));
         algo.setWeightLimit(10);
         int nodeEntry = algo.findEndNode(4, 2);
         assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
@@ -118,7 +118,7 @@ public class NodeBasedNodeContractorTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(0));
+        algo.setEdgeFilter(createIgnoreNodeFilter(0));
         algo.setWeightLimit(2);
         int endNode = algo.findEndNode(4, 1);
         // did not reach endNode
@@ -330,8 +330,12 @@ public class NodeBasedNodeContractorTest {
     private void setMaxLevelOnAllNodes() {
         int nodes = lg.getNodes();
         for (int node = 0; node < nodes; node++) {
-            lg.setLevel(node, nodes + 1);
+            lg.setLevel(node, nodes);
         }
+    }
+
+    private IgnoreNodeFilter createIgnoreNodeFilter(int node) {
+        return new IgnoreNodeFilter(lg, graph.getNodes()).setAvoidNode(node);
     }
 
     private static class Shortcut {
