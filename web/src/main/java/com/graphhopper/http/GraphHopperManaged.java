@@ -30,8 +30,12 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.details.AbstractPathDetailsBuilder;
+import com.graphhopper.util.details.AverageSpeedDetails;
+import com.graphhopper.util.details.EdgeIdDetails;
 import com.graphhopper.util.details.PathDetailsBuilder;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.util.details.StreetNameDetails;
+import com.graphhopper.util.details.TimeDetails;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +43,10 @@ import com.michaz.OriginalDirectionFlagEncoder;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.List;
+
+import static com.graphhopper.util.Parameters.DETAILS.*;
 
 @Singleton
 public class GraphHopperManaged implements Managed {
@@ -69,26 +76,45 @@ public class GraphHopperManaged implements Managed {
             public List<PathDetailsBuilder> createPathDetailsBuilders(List<String> requestedPathDetails, FlagEncoder encoder, Weighting weighting) {
                 // request-scoped
                 OriginalDirectionFlagEncoder originalDirectionFlagEncoder = (OriginalDirectionFlagEncoder) graphHopper.getGraphHopperStorage().getEncodingManager().getEncoder("original-direction");
-                List<PathDetailsBuilder> pathDetailsBuilders = super.createPathDetailsBuilders(requestedPathDetails, encoder, weighting);
-                pathDetailsBuilders.add(new AbstractPathDetailsBuilder("r5_edge_id") {
-                    private int edgeId = -1;
+                List<PathDetailsBuilder> builders = new ArrayList<>();
+                if (requestedPathDetails.contains(AVERAGE_SPEED))
+                    builders.add(new AverageSpeedDetails(encoder));
 
-                    @Override
-                    public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-                        int newEdgeId = edge.getEdge() * 2 + (originalDirectionFlagEncoder.isOriginalDirection(edge.getFlags()) ? 0 : 1);
-                        if (newEdgeId != edgeId) {
-                            edgeId = newEdgeId;
-                            return true;
+                if (requestedPathDetails.contains(STREET_NAME))
+                    builders.add(new StreetNameDetails());
+
+                if (requestedPathDetails.contains(EDGE_ID))
+                    builders.add(new EdgeIdDetails());
+
+                if (requestedPathDetails.contains(TIME))
+                    builders.add(new TimeDetails(weighting));
+
+                if (requestedPathDetails.contains("r5_edge_id")) {
+                    builders.add(new AbstractPathDetailsBuilder("r5_edge_id") {
+                        private int edgeId = -1;
+
+                        @Override
+                        public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
+                            int newEdgeId = edge.getEdge() * 2 + (originalDirectionFlagEncoder.isOriginalDirection(edge.getFlags()) ? 0 : 1);
+                            if (newEdgeId != edgeId) {
+                                edgeId = newEdgeId;
+                                return true;
+                            }
+                            return false;
                         }
-                        return false;
-                    }
 
-                    @Override
-                    public Object getCurrentValue() {
-                        return this.edgeId;
-                    }
-                });
-                return pathDetailsBuilders;
+                        @Override
+                        public Object getCurrentValue() {
+                            return this.edgeId;
+                        }
+                    });
+                }
+
+                if (requestedPathDetails.size() != builders.size()) {
+                    throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we could only find " + builders);
+                }
+
+                return builders;
             }
         });
     }
