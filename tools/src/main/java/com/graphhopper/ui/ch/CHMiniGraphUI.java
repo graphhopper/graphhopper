@@ -64,7 +64,7 @@ public class CHMiniGraphUI {
 
 
         GraphHopper tmpHopper = new GraphHopperOSM().
-                setOSMFile("kreisel.osm").
+                setOSMFile("local/maps/bremen-latest.osm.pbf").
                 setGraphHopperLocation("ch-graph-ui-gh").
                 setCHEnabled(true).
                 setEncodingManager(new EncodingManager("car|turn_costs=true"));

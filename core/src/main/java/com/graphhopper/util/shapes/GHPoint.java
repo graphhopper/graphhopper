@@ -98,7 +98,7 @@ public class GHPoint {
     }
 
     public String toShortString() {
-        return String.format("%.4f,%.4f", lat, lon);
+        return String.format("%.8f,%.8f", lat, lon);
     }
 
     /**
