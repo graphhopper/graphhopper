@@ -75,8 +75,9 @@ public class GraphHopperManaged implements Managed {
 
                     @Override
                     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-                        if (edge.getEdge() != edgeId) {
-                            edgeId = edge.getEdge() * 2 + (originalDirectionFlagEncoder.isOriginalDirection(edge.getFlags()) ? 0 : 1);
+                        int newEdgeId = edge.getEdge() * 2 + (originalDirectionFlagEncoder.isOriginalDirection(edge.getFlags()) ? 0 : 1);
+                        if (newEdgeId != edgeId) {
+                            edgeId = newEdgeId;
                             return true;
                         }
                         return false;
