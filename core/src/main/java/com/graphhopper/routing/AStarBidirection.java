@@ -68,18 +68,6 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
         setApproximation(defaultApprox);
     }
 
-    /**
-     * @param approx if true it enables approximate distance calculation from lat,lon values
-     */
-    public AStarBidirection setApproximation(WeightApproximator approx) {
-        weightApprox = new ConsistentWeightApproximator(approx);
-        return this;
-    }
-
-    public WeightApproximator getApproximation() {
-        return weightApprox.getApproximation();
-    }
-
     @Override
     protected AStarEntry createStartEntry(int node, double weight, boolean reverse) {
         throw new IllegalStateException("use AStarEdge constructor directly");
@@ -165,14 +153,13 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
         // todo: ignoreExplorationFrom/To always stays empty (?!)
         IntHashSet ignoreExploration = reverse ? ignoreExplorationTo : ignoreExplorationFrom;
         return !ignoreExploration.contains(traversalId);
-
     }
 
     @Override
     protected double calcWeight(EdgeIteratorState iter, AStarEntry currEdge, boolean reverse) {
         // TODO performance: check if the node is already existent in the opposite direction
         // then we could avoid the approximation as we already know the exact complete path!
-        return weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
+        return super.calcWeight(iter, currEdge, reverse);
     }
 
     @Override
@@ -180,6 +167,18 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
         return entry.getParent();
     }
 
+    public WeightApproximator getApproximation() {
+        return weightApprox.getApproximation();
+    }
+
+    /**
+     * @param approx if true it enables approximate distance calculation from lat,lon values
+     */
+    public AStarBidirection setApproximation(WeightApproximator approx) {
+        weightApprox = new ConsistentWeightApproximator(approx);
+        return this;
+    }
+    
     void setFromDataStructures(AStarBidirection astar) {
         pqOpenSetFrom = astar.pqOpenSetFrom;
         bestWeightMapFrom = astar.bestWeightMapFrom;
