@@ -37,7 +37,7 @@ public class AStarBidirectionCH extends AStarBidirection {
     }
 
     @Override
-    public boolean finished() {
+    protected boolean finished() {
         // we need to finish BOTH searches for CH!
         if (finishedFrom && finishedTo)
             return true;

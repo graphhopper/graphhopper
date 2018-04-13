@@ -62,35 +62,32 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
     }
 
     @Override
-    public void initFrom(int from, double weight) {
+    protected void initFrom(int from, double weight) {
         currFrom = createStartEntry(from, weight, false);
         pqOpenSetFrom.add(currFrom);
         if (!traversalMode.isEdgeBased()) {
             bestWeightMapFrom.put(from, currFrom);
-            if (currTo != null) {
-                bestWeightMapOther = bestWeightMapTo;
-                updateBestPath(GHUtility.getEdge(graph, from, currTo.adjNode), currTo, from, false);
-            }
-        } else if (currTo != null && currTo.adjNode == from) {
-            // special case of identical start and end
-            bestPath.sptEntry = currFrom;
-            bestPath.edgeTo = currTo;
-            finishedFrom = true;
-            finishedTo = true;
         }
     }
 
+
     @Override
-    public void initTo(int to, double weight) {
+    protected void initTo(int to, double weight) {
         currTo = createStartEntry(to, weight, true);
         pqOpenSetTo.add(currTo);
         if (!traversalMode.isEdgeBased()) {
             bestWeightMapTo.put(to, currTo);
-            if (currFrom != null) {
+        }
+    }
+
+    @Override
+    protected void postInit(int from, int to) {
+        if (!traversalMode.isEdgeBased()) {
+            if (updateBestPath) {
                 bestWeightMapOther = bestWeightMapFrom;
                 updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to, true);
             }
-        } else if (currFrom != null && currFrom.adjNode == to) {
+        } else if (from == to) {
             // special case of identical start and end
             bestPath.sptEntry = currFrom;
             bestPath.edgeTo = currTo;
@@ -124,7 +121,7 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
     }
 
     @Override
-    public boolean fillEdgesFrom() {
+    boolean fillEdgesFrom() {
         if (pqOpenSetFrom.isEmpty()) {
             return false;
         }
@@ -142,7 +139,7 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
     }
 
     @Override
-    public boolean fillEdgesTo() {
+    boolean fillEdgesTo() {
         if (pqOpenSetTo.isEmpty()) {
             return false;
         }
@@ -180,7 +177,7 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
     // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder
     //    search, update extractPath = μ if df (v) + (v, w) + dr (w) < μ
     @Override
-    public boolean finished() {
+    protected boolean finished() {
         if (finishedFrom || finishedTo)
             return true;
 
@@ -219,31 +216,31 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
         }
     }
 
-    protected void updateBestPath(EdgeIteratorState edgeState, T entry, int traversalId, boolean reverse) {
-        T entryOther = bestWeightMapOther.get(traversalId);
+    protected void updateBestPath(EdgeIteratorState edgeState, T entryCurrent, int traversalId, boolean reverse) {
+        SPTEntry entryOther = bestWeightMapOther.get(traversalId);
         if (entryOther == null)
             return;
 
         // update μ
-        double newWeight = entry.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath();
+        double weight = entryCurrent.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath();
         if (traversalMode.isEdgeBased()) {
-            if (entryOther.edge != entry.edge)
+            if (entryOther.edge != entryCurrent.edge)
                 throw new IllegalStateException("cannot happen for edge based execution of " + getName());
 
-            if (entryOther.adjNode != entry.adjNode) {
-                // prevents the path to contain the edge at the meeting point twice and subtracts the weight (excluding turn weight => no previous edge)
-                entry = getParent(entry);
-                newWeight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
+            if (entryOther.adjNode != entryCurrent.adjNode) {
+                // prevents the path to contain the edge at the meeting point twice and subtract the weight (excluding turn weight => no previous edge)
+                entryCurrent = getParent(entryCurrent);
+                weight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
             } else if (!traversalMode.hasUTurnSupport())
                 // we detected a u-turn at meeting point, skip if not supported
                 return;
         }
 
-        if (newWeight < bestPath.getWeight()) {
+        if (weight < bestPath.getWeight()) {
             bestPath.setSwitchToFrom(reverse);
-            bestPath.setSPTEntry(entry);
+            bestPath.setSPTEntry(entryCurrent);
             bestPath.setSPTEntryTo(entryOther);
-            bestPath.setWeight(newWeight);
+            bestPath.setWeight(weight);
         }
     }
 
@@ -271,9 +268,6 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
         return traversalMode.createTraversalId(edge, reverse);
     }
 
-    /**
-     * todo: do we really need this or can it be replaced by accept() ?
-     */
     protected boolean acceptTraversalId(int traversalId, boolean revers) {
         return true;
     }
@@ -300,6 +294,24 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
 
     void setBestPath(PathBidirRef bestPath) {
         this.bestPath = bestPath;
+    }
+
+    void setFromDataStructures(GenericDijkstraBidirection<T> other) {
+        pqOpenSetFrom = other.pqOpenSetFrom;
+        bestWeightMapFrom = other.bestWeightMapFrom;
+        finishedFrom = other.finishedFrom;
+        currFrom = other.currFrom;
+        visitedCountFrom = other.visitedCountFrom;
+        // outEdgeExplorer
+    }
+
+    void setToDataStructures(GenericDijkstraBidirection<T> other) {
+        pqOpenSetTo = other.pqOpenSetTo;
+        bestWeightMapTo = other.bestWeightMapTo;
+        finishedTo = other.finishedTo;
+        currTo = other.currTo;
+        visitedCountTo = other.visitedCountTo;
+        // inEdgeExplorer
     }
 
 }

@@ -25,10 +25,7 @@ import com.graphhopper.routing.weighting.ConsistentWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.*;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
@@ -69,59 +66,41 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
     }
 
     @Override
-    public void init(int from, double fromWeight, int to, double toWeight) {
+    void init(int from, double fromWeight, int to, double toWeight) {
         weightApprox.setFrom(from);
         weightApprox.setTo(to);
         super.init(from, fromWeight, to, toWeight);
     }
 
     @Override
-    public boolean finished() {
+    protected boolean finished() {
         // using 'weight' is important and correct here e.g. approximation can get negative and smaller than 'weightOfVisitedPath'
         return super.finished();
     }
 
     @Override
     protected AStarEntry createStartEntry(int node, double weight, boolean reverse) {
-        // todo: can we clean this up ? seems very counter-intuitive to manipulate the opposite from/to entry here
-        AStarEntry startEntry = new AStarEntry(EdgeIterator.NO_EDGE, node, weight, weight);
-        if (reverse) {
-            if (currFrom != null) {
-                currFrom.weight += weightApprox.approximate(currFrom.adjNode, false);
-                startEntry.weight += weightApprox.approximate(node, true);
-            }
-        } else {
-            if (currTo != null) {
-                startEntry.weight += weightApprox.approximate(node, false);
-                currTo.weight += weightApprox.approximate(currTo.adjNode, true);
-            }
-        }
-        return startEntry;
+        double heapWeight = weight + weightApprox.approximate(node, reverse);
+        return new AStarEntry(EdgeIterator.NO_EDGE, node, heapWeight, weight);
     }
 
     @Override
-    protected AStarEntry createEntry(EdgeIteratorState edge, int edgeId, double weight, AStarEntry parent, boolean reverse) {
-        int neighborNode = edge.getAdjNode();
-        double currWeightToGoal = weightApprox.approximate(neighborNode, reverse);
-        double estimationFullWeight = weight + currWeightToGoal;
-        AStarEntry entry = new AStarEntry(edge.getEdge(), neighborNode, estimationFullWeight, weight);
+    protected AStarEntry createEntry(EdgeIteratorState iter, double weight, AStarEntry parent, boolean reverse) {
+        double heapWeight = weight + weightApprox.approximate(iter.getAdjNode(), reverse);
+        AStarEntry entry = new AStarEntry(iter.getEdge(), iter.getAdjNode(), heapWeight, weight);
         entry.parent = parent;
         return entry;
     }
 
     @Override
-    protected void updateEntry(AStarEntry entry, EdgeIteratorState edge, int edgeId, double weight, AStarEntry parent, boolean reverse) {
-        double currWeightToGoal = weightApprox.approximate(edge.getAdjNode(), reverse);
-        double estimationFullWeight = weight + currWeightToGoal;
-//        assert (entry.weight > 0.999999 * estimationFullWeight) : "Inconsistent distance estimate "
-//                + entry.weight + " vs " + estimationFullWeight + " (" + entry.weight / estimationFullWeight + "), and:"
-//                + entry.getWeightOfVisitedPath() + " vs " + weight + " (" + entry.getWeightOfVisitedPath() / weight + ")";
-        entry.edge = edge.getEdge();
-        entry.weight = estimationFullWeight;
+    protected void updateEntry(AStarEntry entry, EdgeIteratorState iter, double weight, AStarEntry parent, boolean reverse) {
+        entry.edge = iter.getEdge();
+        entry.weight = weight + weightApprox.approximate(iter.getAdjNode(), reverse);
         entry.weightOfVisitedPath = weight;
         entry.parent = parent;
     }
 
+    @Override
     protected AStarEntry getParent(AStarEntry entry) {
         return entry.getParent();
     }
@@ -139,6 +118,7 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
         // then we could avoid the approximation as we already know the exact complete path!
         return super.calcWeight(iter, currEdge, reverse);
     }
+
     public WeightApproximator getApproximation() {
         return weightApprox.getApproximation();
     }
@@ -152,25 +132,15 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
     }
 
     void setFromDataStructures(AStarBidirection astar) {
-        pqOpenSetFrom = astar.pqOpenSetFrom;
-        bestWeightMapFrom = astar.bestWeightMapFrom;
-        finishedFrom = astar.finishedFrom;
-        currFrom = astar.currFrom;
-        visitedCountFrom = astar.visitedCountFrom;
+        super.setFromDataStructures(astar);
         ignoreExplorationFrom = astar.ignoreExplorationFrom;
         weightApprox.setFrom(astar.currFrom.adjNode);
-        // outEdgeExplorer
     }
 
     void setToDataStructures(AStarBidirection astar) {
-        pqOpenSetTo = astar.pqOpenSetTo;
-        bestWeightMapTo = astar.bestWeightMapTo;
-        finishedTo = astar.finishedTo;
-        currTo = astar.currTo;
-        visitedCountTo = astar.visitedCountTo;
+        super.setToDataStructures(astar);
         ignoreExplorationTo = astar.ignoreExplorationTo;
         weightApprox.setTo(astar.currTo.adjNode);
-        // inEdgeExplorer
     }
 
     @Override

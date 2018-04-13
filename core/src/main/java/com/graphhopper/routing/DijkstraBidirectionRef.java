@@ -21,9 +21,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.*;
 
 /**
  * Calculates best path in bidirectional way.
@@ -44,33 +42,14 @@ public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry>
     }
 
     @Override
-    protected SPTEntry createEntry(EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
-        SPTEntry sptEntry = new SPTEntry(edge.getEdge(), edge.getAdjNode(), weight);
-        sptEntry.parent = parent;
-        return sptEntry;
+    protected SPTEntry createEntry(EdgeIteratorState iter, double weight, SPTEntry parent, boolean reverse) {
+        SPTEntry entry = new SPTEntry(iter.getEdge(), iter.getAdjNode(), weight);
+        entry.parent = parent;
+        return entry;
     }
 
-    @Override
     protected SPTEntry getParent(SPTEntry entry) {
         return entry.getParent();
-    }
-
-    void setFromDataStructures(DijkstraBidirectionRef dijkstra) {
-        pqOpenSetFrom = dijkstra.pqOpenSetFrom;
-        bestWeightMapFrom = dijkstra.bestWeightMapFrom;
-        finishedFrom = dijkstra.finishedFrom;
-        currFrom = dijkstra.currFrom;
-        visitedCountFrom = dijkstra.visitedCountFrom;
-        // outEdgeExplorer
-    }
-
-    void setToDataStructures(DijkstraBidirectionRef dijkstra) {
-        pqOpenSetTo = dijkstra.pqOpenSetTo;
-        bestWeightMapTo = dijkstra.bestWeightMapTo;
-        finishedTo = dijkstra.finishedTo;
-        currTo = dijkstra.currTo;
-        visitedCountTo = dijkstra.visitedCountTo;
-        // inEdgeExplorer
     }
 
     @Override

@@ -134,7 +134,7 @@ public class GHUtility {
         NodeAccess na = g.getNodeAccess();
         for (int node = 0; node < g.getNodes(); ++node) {
             if (bBox.contains(na.getLat(node), na.getLon(node))) {
-                System.out.printf("na.setNode(%d, %f, %f);\n", node, na.getLat(node), na.getLon(node));
+                System.out.printf(Locale.ROOT, "na.setNode(%d, %f, %f);\n", node, na.getLat(node), na.getLon(node));
             }
         }
         AllEdgesIterator iter = g.getAllEdges();
@@ -154,7 +154,8 @@ public class GHUtility {
         }
         int from = fwd ? edge.getBaseNode() : edge.getAdjNode();
         int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
-        System.out.printf("graph.edge(%d, %d, %f, %s);\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false");
+        System.out.printf(Locale.ROOT,
+                "graph.edge(%d, %d, %f, %s);\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false");
     }
 
     public static void printInfo(final Graph g, int startNode, final int counts, final EdgeFilter filter) {

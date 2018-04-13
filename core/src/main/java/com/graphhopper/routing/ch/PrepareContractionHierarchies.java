@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Random;
 
+import static com.graphhopper.util.Helper.nf;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED_2DIR;
 import static com.graphhopper.util.Helper.nf;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
@@ -242,7 +243,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         ghStorage.freeze();
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
         final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
-        maxLevel = prepareGraph.getNodes() + 1;
+        maxLevel = prepareGraph.getNodes();
         vehicleAllExplorer = prepareGraph.createEdgeExplorer(allFilter);
         vehicleAllTmpExplorer = prepareGraph.createEdgeExplorer(allFilter);
 
@@ -290,8 +291,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // graph contraction parameters, because it affects the node contraction order.
         meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
         initSize = sortedNodes.getSize();
-        // todo: why do we start counting levels with 1 ??
-        int level = 1;
+        int level = 0;
         long counter = 0;
         long logSize = Math.round(Math.max(10, initSize / 100d * logMessagesPercentage));
         if (logMessagesPercentage == 0)
@@ -425,7 +425,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         close();
     }
 
-    public void close() {
+    private void close() {
         nodeContractor.close();
         sortedNodes = null;
         oldPriorities = null;
@@ -460,7 +460,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private String getTimesAsString() {
-        return String.format(
+        return String.format(Locale.ROOT,
                 "t(dijk): %6.2f, t(period): %6.2f, t(lazy): %6.2f, t(neighbor): %6.2f",
                 dijkstraTime, periodTime, lazyTime, neighborTime);
     }
@@ -511,4 +511,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 Helper.getMemInfo()));
     }
 
+    private void logStats(long counter, int updateCounter) {
+        logger.info(String.format(Locale.ROOT,
+                "%10s, updates: %2d, nodes: %10s, shortcuts: %10s, dijkstras: %10s, %s, meanDegree: %2d, %s, %s",
+                nf(counter), updateCounter, nf(sortedNodes.getSize()),
+                nf(nodeContractor.getAddedShortcutsCount()), nf(nodeContractor.getDijkstraCount()),
+                getTimesAsString(), (long) meanDegree, nodeContractor.getPrepareAlgoMemoryUsage(),
+                Helper.getMemInfo()));
+    }
 }

@@ -175,7 +175,7 @@ public class AStar extends AbstractRoutingAlgorithm {
 
         @Override
         public AStarEntry getParent() {
-            return (AStarEntry) super.parent;
+            return (AStarEntry) parent;
         }
     }
 
