@@ -42,8 +42,8 @@ public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry>
     }
 
     @Override
-    protected SPTEntry createEntry(EdgeIteratorState iter, double weight, SPTEntry parent, boolean reverse) {
-        SPTEntry entry = new SPTEntry(iter.getEdge(), iter.getAdjNode(), weight);
+    protected SPTEntry createEntry(EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
+        SPTEntry entry = new SPTEntry(edge.getEdge(), edge.getAdjNode(), weight);
         entry.parent = parent;
         return entry;
     }
