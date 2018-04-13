@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -83,6 +84,58 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
         return currTo.weight;
     }
 
+    @Override
+    boolean fillEdgesFrom() {
+        if (pqOpenSetFrom.isEmpty()) {
+            return false;
+        }
+        currFrom = pqOpenSetFrom.poll();
+        visitedCountFrom++;
+        if (fromEntryCanBeSkipped()) {
+            return true;
+        }
+        if (fwdSearchCanBeStopped()) {
+            return false;
+        }
+        bestWeightMapOther = bestWeightMapTo;
+        fillEdges(currFrom, pqOpenSetFrom, bestWeightMapFrom, outEdgeExplorer, false);
+        return true;
+    }
+
+    @Override
+    boolean fillEdgesTo() {
+        if (pqOpenSetTo.isEmpty()) {
+            return false;
+        }
+        currTo = pqOpenSetTo.poll();
+        visitedCountTo++;
+        if (toEntryCanBeSkipped()) {
+            return true;
+        }
+        if (bwdSearchCanBeStopped()) {
+            return false;
+        }
+        bestWeightMapOther = bestWeightMapFrom;
+        fillEdges(currTo, pqOpenSetTo, bestWeightMapTo, inEdgeExplorer, true);
+        return true;
+    }
+
+    protected boolean fromEntryCanBeSkipped() {
+        return false;
+    }
+
+    protected boolean fwdSearchCanBeStopped() {
+        return false;
+    }
+
+    protected boolean toEntryCanBeSkipped() {
+        return false;
+    }
+
+    protected boolean bwdSearchCanBeStopped() {
+        return false;
+    }
+
     // http://www.cs.princeton.edu/courses/archive/spr06/cos423/Handouts/EPP%20shortest%20path%20algorithms.pdf
     // a node from overlap may not be on the best path!
     // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder 
@@ -93,6 +146,37 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
             return true;
 
         return currFrom.weight + currTo.weight >= bestPath.getWeight();
+    }
+
+    private void fillEdges(T currEdge, PriorityQueue<T> prioQueue,
+                           IntObjectMap<T> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
+        EdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
+        while (iter.next()) {
+            if (!accept(iter, currEdge.edge))
+                continue;
+
+            int traversalId = traversalMode.createTraversalId(iter, reverse);
+            if (!acceptTraversalId(traversalId, reverse)) {
+                continue;
+            }
+            final double weight = calcWeight(iter, currEdge, reverse);
+            if (Double.isInfinite(weight))
+                continue;
+            T entry = bestWeightMap.get(traversalId);
+            if (entry == null) {
+                entry = createEntry(iter, weight, currEdge, reverse);
+                bestWeightMap.put(traversalId, entry);
+                prioQueue.add(entry);
+            } else if (entry.getWeightOfVisitedPath() > weight) {
+                prioQueue.remove(entry);
+                updateEntry(entry, iter, weight, currEdge, reverse);
+                prioQueue.add(entry);
+            } else
+                continue;
+
+            if (updateBestPath)
+                updateBestPath(iter, entry, traversalId, reverse);
+        }
     }
 
     protected void updateBestPath(EdgeIteratorState edgeState, T entryCurrent, int traversalId, boolean reverse) {

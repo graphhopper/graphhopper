@@ -78,60 +78,6 @@ public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry>
     }
 
     @Override
-    public boolean fillEdgesFrom() {
-        if (pqOpenSetFrom.isEmpty())
-            return false;
-
-        currFrom = pqOpenSetFrom.poll();
-        bestWeightMapOther = bestWeightMapTo;
-        fillEdges(currFrom, pqOpenSetFrom, bestWeightMapFrom, outEdgeExplorer, false);
-        visitedCountFrom++;
-        return true;
-    }
-
-    @Override
-    public boolean fillEdgesTo() {
-        if (pqOpenSetTo.isEmpty())
-            return false;
-        currTo = pqOpenSetTo.poll();
-        bestWeightMapOther = bestWeightMapFrom;
-        fillEdges(currTo, pqOpenSetTo, bestWeightMapTo, inEdgeExplorer, true);
-        visitedCountTo++;
-        return true;
-    }
-
-    void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
-                   IntObjectMap<SPTEntry> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
-        EdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
-        while (iter.next()) {
-            if (!accept(iter, currEdge.edge))
-                continue;
-
-            int traversalId = traversalMode.createTraversalId(iter, reverse);
-            if (!acceptTraversalId(traversalId, reverse)) {
-                continue;
-            }
-            double weight = calcWeight(iter, currEdge, reverse);
-            if (Double.isInfinite(weight))
-                continue;
-            SPTEntry entry = bestWeightMap.get(traversalId);
-            if (entry == null) {
-                entry = createEntry(iter, weight, currEdge, reverse);
-                bestWeightMap.put(traversalId, entry);
-                prioQueue.add(entry);
-            } else if (entry.getWeightOfVisitedPath() > weight) {
-                prioQueue.remove(entry);
-                updateEntry(entry, iter, weight, currEdge, reverse);
-                prioQueue.add(entry);
-            } else
-                continue;
-
-            if (updateBestPath)
-                updateBestPath(iter, entry, traversalId, reverse);
-        }
-    }
-
-    @Override
     protected SPTEntry createStartEntry(int node, double weight, boolean reverse) {
         return new SPTEntry(node, weight);
     }
