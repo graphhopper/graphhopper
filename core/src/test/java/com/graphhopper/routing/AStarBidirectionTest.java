@@ -73,23 +73,17 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
         updateDistancesFor(g, 0, 0.00, 0.00);
         updateDistancesFor(g, 1, 0.01, 0.01);
 
-        final AtomicReference<AStar.AStarEntry> fromRef = new AtomicReference<AStar.AStarEntry>();
-        final AtomicReference<AStar.AStarEntry> toRef = new AtomicReference<AStar.AStarEntry>();
+        final AtomicReference<AStar.AStarEntry> fromRef = new AtomicReference<>();
+        final AtomicReference<AStar.AStarEntry> toRef = new AtomicReference<>();
         AStarBidirection astar = new AStarBidirection(g, new ShortestWeighting(carEncoder), traversalMode) {
             @Override
-            public void initFrom(int from, double weight) {
-                super.initFrom(from, weight);
+            public void init(int from, double fromWeight, int to, double toWeight) {
+                super.init(from, fromWeight, to, toWeight);
                 fromRef.set(currFrom);
-            }
-
-            @Override
-            public void initTo(int to, double weight) {
-                super.initTo(to, weight);
                 toRef.set(currTo);
             }
         };
-        astar.initFrom(0, 1);
-        astar.initTo(1, 0.5);
+        astar.init(0, 1, 1, 0.5);
 
         assertEquals(1, fromRef.get().weightOfVisitedPath, .1);
         assertEquals(787.3, fromRef.get().weight, .1);

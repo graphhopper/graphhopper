@@ -37,6 +37,11 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         super(graph, weighting, tMode);
     }
 
+    void init(int from, double fromWeight, int to, double toWeight) {
+        initFrom(from, fromWeight);
+        initTo(to, toWeight);
+    }
+
     abstract void initFrom(int from, double dist);
 
     abstract void initTo(int to, double dist);
@@ -55,8 +60,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     public Path calcPath(int from, int to) {
         checkAlreadyRun();
         createAndInitPath();
-        initFrom(from, 0);
-        initTo(to, 0);
+        init(from, 0, to, 0);
         runAlgo();
         return extractPath();
     }
