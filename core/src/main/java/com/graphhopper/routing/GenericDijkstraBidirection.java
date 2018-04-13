@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.PriorityQueue;
@@ -94,9 +95,37 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
         return currFrom.weight + currTo.weight >= bestPath.getWeight();
     }
 
-    protected abstract void updateBestPath(EdgeIteratorState edgeState, T bestSPTEntry, int traversalId, boolean reverse);
+    protected void updateBestPath(EdgeIteratorState edgeState, T entryCurrent, int traversalId, boolean reverse) {
+        SPTEntry entryOther = bestWeightMapOther.get(traversalId);
+        if (entryOther == null)
+            return;
+
+        // update μ
+        double weight = entryCurrent.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath();
+        if (traversalMode.isEdgeBased()) {
+            if (entryOther.edge != entryCurrent.edge)
+                throw new IllegalStateException("cannot happen for edge based execution of " + getName());
+
+            if (entryOther.adjNode != entryCurrent.adjNode) {
+                // prevents the path to contain the edge at the meeting point twice and subtract the weight (excluding turn weight => no previous edge)
+                entryCurrent = getParent(entryCurrent);
+                weight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
+            } else if (!traversalMode.hasUTurnSupport())
+                // we detected a u-turn at meeting point, skip if not supported
+                return;
+        }
+
+        if (weight < bestPath.getWeight()) {
+            bestPath.setSwitchToFrom(reverse);
+            bestPath.setSPTEntry(entryCurrent);
+            bestPath.setSPTEntryTo(entryOther);
+            bestPath.setWeight(weight);
+        }
+    }
 
     protected abstract T createStartEntry(int node, double weight, boolean reverse);
+
+    protected abstract T getParent(T entry);
 
     protected boolean accept(EdgeIteratorState edge, T currEdge, boolean reverse) {
         return accept(edge, currEdge.edge);

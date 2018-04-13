@@ -136,40 +136,14 @@ public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry>
     }
 
     @Override
-    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entryCurrent, int traversalId, boolean reverse) {
-        SPTEntry entryOther = bestWeightMapOther.get(traversalId);
-        if (entryOther == null)
-            return;
-
-        // update μ
-        double newWeight = entryCurrent.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath();
-        if (traversalMode.isEdgeBased()) {
-            if (entryOther.edge != entryCurrent.edge)
-                throw new IllegalStateException("cannot happen for edge based execution of " + getName());
-
-            if (entryOther.adjNode != entryCurrent.adjNode) {
-                // prevents the path to contain the edge at the meeting point twice and subtract the weight (excluding turn weight => no previous edge)
-                entryCurrent = entryCurrent.parent;
-                newWeight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
-            } else if (!traversalMode.hasUTurnSupport())
-                // we detected a u-turn at meeting point, skip if not supported
-                return;
-        }
-
-        if (newWeight < bestPath.getWeight()) {
-            bestPath.setSwitchToFrom(reverse);
-            bestPath.setSPTEntry(entryCurrent);
-            bestPath.setSPTEntryTo(entryOther);
-            bestPath.setWeight(newWeight);
-        }
-    }
-
-    @Override
     protected SPTEntry createStartEntry(int node, double weight, boolean reverse) {
         return new SPTEntry(node, weight);
     }
 
-
+    protected SPTEntry getParent(SPTEntry entry) {
+        return entry.getParent();
+    }
+    
     void setFromDataStructures(DijkstraBidirectionRef dijkstra) {
         pqOpenSetFrom = dijkstra.pqOpenSetFrom;
         bestWeightMapFrom = dijkstra.bestWeightMapFrom;

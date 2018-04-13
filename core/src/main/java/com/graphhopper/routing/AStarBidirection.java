@@ -220,32 +220,8 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
     }
 
     @Override
-    public void updateBestPath(EdgeIteratorState edgeState, AStarEntry entryCurrent, int traversalId, boolean reverse) {
-        AStarEntry entryOther = bestWeightMapOther.get(traversalId);
-        if (entryOther == null)
-            return;
-
-        // update μ
-        double newWeight = entryCurrent.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath();
-        if (traversalMode.isEdgeBased()) {
-            if (entryOther.edge != entryCurrent.edge)
-                throw new IllegalStateException("cannot happen for edge based execution of " + getName());
-
-            // see DijkstraBidirectionRef
-            if (entryOther.adjNode != entryCurrent.adjNode) {
-                entryCurrent = (AStar.AStarEntry) entryCurrent.parent;
-                newWeight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
-            } else if (!traversalMode.hasUTurnSupport())
-                // we detected a u-turn at meeting point, skip if not supported
-                return;
-        }
-
-        if (newWeight < bestPath.getWeight()) {
-            bestPath.setSwitchToFrom(reverse);
-            bestPath.setSPTEntry(entryCurrent);
-            bestPath.setSPTEntryTo(entryOther);
-            bestPath.setWeight(newWeight);
-        }
+    protected AStarEntry getParent(AStarEntry entry) {
+        return entry.getParent();
     }
 
     void setFromDataStructures(AStarBidirection astar) {
