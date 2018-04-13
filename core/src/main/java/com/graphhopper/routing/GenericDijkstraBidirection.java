@@ -287,4 +287,30 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
         return bestWeightMapTo;
     }
 
+    protected void setUpdateBestPath(boolean b) {
+        updateBestPath = b;
+    }
+
+    void setBestPath(PathBidirRef bestPath) {
+        this.bestPath = bestPath;
+    }
+
+    void setFromDataStructures(GenericDijkstraBidirection<T> other) {
+        pqOpenSetFrom = other.pqOpenSetFrom;
+        bestWeightMapFrom = other.bestWeightMapFrom;
+        finishedFrom = other.finishedFrom;
+        currFrom = other.currFrom;
+        visitedCountFrom = other.visitedCountFrom;
+        // outEdgeExplorer
+    }
+
+    void setToDataStructures(GenericDijkstraBidirection<T> other) {
+        pqOpenSetTo = other.pqOpenSetTo;
+        bestWeightMapTo = other.bestWeightMapTo;
+        finishedTo = other.finishedTo;
+        currTo = other.currTo;
+        visitedCountTo = other.visitedCountTo;
+        // inEdgeExplorer
+    }
+
 }

@@ -53,32 +53,6 @@ public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry>
         return entry.getParent();
     }
 
-    void setFromDataStructures(DijkstraBidirectionRef dijkstra) {
-        pqOpenSetFrom = dijkstra.pqOpenSetFrom;
-        bestWeightMapFrom = dijkstra.bestWeightMapFrom;
-        finishedFrom = dijkstra.finishedFrom;
-        currFrom = dijkstra.currFrom;
-        visitedCountFrom = dijkstra.visitedCountFrom;
-        // outEdgeExplorer
-    }
-
-    void setToDataStructures(DijkstraBidirectionRef dijkstra) {
-        pqOpenSetTo = dijkstra.pqOpenSetTo;
-        bestWeightMapTo = dijkstra.bestWeightMapTo;
-        finishedTo = dijkstra.finishedTo;
-        currTo = dijkstra.currTo;
-        visitedCountTo = dijkstra.visitedCountTo;
-        // inEdgeExplorer
-    }
-
-    protected void setUpdateBestPath(boolean b) {
-        updateBestPath = b;
-    }
-
-    void setBestPath(PathBidirRef bestPath) {
-        this.bestPath = bestPath;
-    }
-
     @Override
     public String getName() {
         return Parameters.Algorithms.DIJKSTRA_BI;

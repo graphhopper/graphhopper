@@ -132,25 +132,15 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
     }
 
     void setFromDataStructures(AStarBidirection astar) {
-        pqOpenSetFrom = astar.pqOpenSetFrom;
-        bestWeightMapFrom = astar.bestWeightMapFrom;
-        finishedFrom = astar.finishedFrom;
-        currFrom = astar.currFrom;
-        visitedCountFrom = astar.visitedCountFrom;
+        super.setFromDataStructures(astar);
         ignoreExplorationFrom = astar.ignoreExplorationFrom;
         weightApprox.setFrom(astar.currFrom.adjNode);
-        // outEdgeExplorer
     }
 
     void setToDataStructures(AStarBidirection astar) {
-        pqOpenSetTo = astar.pqOpenSetTo;
-        bestWeightMapTo = astar.bestWeightMapTo;
-        finishedTo = astar.finishedTo;
-        currTo = astar.currTo;
-        visitedCountTo = astar.visitedCountTo;
+        super.setToDataStructures(astar);
         ignoreExplorationTo = astar.ignoreExplorationTo;
         weightApprox.setTo(astar.currTo.adjNode);
-        // inEdgeExplorer
     }
 
     @Override
