@@ -226,7 +226,7 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
             return;
 
         // update μ
-        double newWeight = entryCurrent.weightOfVisitedPath + entryOther.weightOfVisitedPath;
+        double newWeight = entryCurrent.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath();
         if (traversalMode.isEdgeBased()) {
             if (entryOther.edge != entryCurrent.edge)
                 throw new IllegalStateException("cannot happen for edge based execution of " + getName());
@@ -242,8 +242,8 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
 
         if (newWeight < bestPath.getWeight()) {
             bestPath.setSwitchToFrom(reverse);
-            bestPath.sptEntry = entryCurrent;
-            bestPath.edgeTo = entryOther;
+            bestPath.setSPTEntry(entryCurrent);
+            bestPath.setSPTEntryTo(entryOther);
             bestPath.setWeight(newWeight);
         }
     }

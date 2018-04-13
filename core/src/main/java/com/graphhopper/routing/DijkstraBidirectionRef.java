@@ -142,7 +142,7 @@ public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry>
             return;
 
         // update μ
-        double newWeight = entryCurrent.weight + entryOther.weight;
+        double newWeight = entryCurrent.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath();
         if (traversalMode.isEdgeBased()) {
             if (entryOther.edge != entryCurrent.edge)
                 throw new IllegalStateException("cannot happen for edge based execution of " + getName());
@@ -159,8 +159,8 @@ public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry>
         if (newWeight < bestPath.getWeight()) {
             bestPath.setSwitchToFrom(reverse);
             bestPath.setSPTEntry(entryCurrent);
-            bestPath.setWeight(newWeight);
             bestPath.setSPTEntryTo(entryOther);
+            bestPath.setWeight(newWeight);
         }
     }
 
