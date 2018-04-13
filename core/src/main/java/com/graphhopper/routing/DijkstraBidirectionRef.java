@@ -18,7 +18,6 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
-import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -117,15 +116,12 @@ public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry>
                 continue;
             SPTEntry entry = bestWeightMap.get(traversalId);
             if (entry == null) {
-                entry = new SPTEntry(iter.getEdge(), iter.getAdjNode(), weight);
-                entry.parent = currEdge;
+                entry = createEntry(iter, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
-            } else if (entry.weight > weight) {
+            } else if (entry.getWeightOfVisitedPath() > weight) {
                 prioQueue.remove(entry);
-                entry.edge = iter.getEdge();
-                entry.weight = weight;
-                entry.parent = currEdge;
+                updateEntry(entry, iter, weight, currEdge, reverse);
                 prioQueue.add(entry);
             } else
                 continue;
@@ -140,10 +136,18 @@ public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry>
         return new SPTEntry(node, weight);
     }
 
+    @Override
+    protected SPTEntry createEntry(EdgeIteratorState iter, double weight, SPTEntry parent, boolean reverse) {
+        SPTEntry entry;
+        entry = new SPTEntry(iter.getEdge(), iter.getAdjNode(), weight);
+        entry.parent = parent;
+        return entry;
+    }
+
     protected SPTEntry getParent(SPTEntry entry) {
         return entry.getParent();
     }
-    
+
     void setFromDataStructures(DijkstraBidirectionRef dijkstra) {
         pqOpenSetFrom = dijkstra.pqOpenSetFrom;
         bestWeightMapFrom = dijkstra.bestWeightMapFrom;

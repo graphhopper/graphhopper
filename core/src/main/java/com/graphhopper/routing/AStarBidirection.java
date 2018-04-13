@@ -178,31 +178,17 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
             if (!acceptTraversalId(traversalId, reverse)) {
                 continue;
             }
-
-            // TODO performance: check if the node is already existent in the opposite direction
-            // then we could avoid the approximation as we already know the exact complete path!
-            double weight = weighting.calcWeight(iter, reverse, currEdge.edge)
-                    + currEdge.getWeightOfVisitedPath();
+            double weight = calcWeight(iter, currEdge, reverse);
             if (Double.isInfinite(weight))
                 continue;
             AStarEntry entry = bestWeightMap.get(traversalId);
             if (entry == null) {
-                double currWeightToGoal = weightApprox.approximate(iter.getAdjNode(), reverse);
-                double estimationFullWeight = weight + currWeightToGoal;
-                entry = new AStarEntry(iter.getEdge(), iter.getAdjNode(), estimationFullWeight, weight);
-                entry.parent = currEdge;
+                entry = createEntry(iter, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
-//                assert (ase.weight > 0.999999 * estimationFullWeight) : "Inconsistent distance estimate "
-//                        + ase.weight + " vs " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and:"
-//                        + ase.getWeightOfVisitedPath() + " vs " + alreadyVisitedWeight + " (" + ase.getWeightOfVisitedPath() / alreadyVisitedWeight + ")";
                 prioQueue.remove(entry);
-                entry.edge = iter.getEdge();
-                double currWeightToGoal = weightApprox.approximate(iter.getAdjNode(), reverse);
-                entry.weight = weight + currWeightToGoal;
-                entry.weightOfVisitedPath = weight;
-                entry.parent = currEdge;
+                updateEntry(entry, iter, weight, currEdge, reverse);
                 prioQueue.add(entry);
             } else
                 continue;
@@ -212,11 +198,36 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
         }
     }
 
+    @Override
+    protected AStarEntry createEntry(EdgeIteratorState iter, double weight, AStarEntry parent, boolean reverse) {
+        AStarEntry entry;
+        double currWeightToGoal = weightApprox.approximate(iter.getAdjNode(), reverse);
+        entry = new AStarEntry(iter.getEdge(), iter.getAdjNode(), weight + currWeightToGoal, weight);
+        entry.parent = parent;
+        return entry;
+    }
+
+    @Override
+    protected void updateEntry(AStarEntry entry, EdgeIteratorState iter, double weight, AStarEntry parent, boolean reverse) {
+        entry.edge = iter.getEdge();
+        entry.weight = weight + weightApprox.approximate(iter.getAdjNode(), reverse);
+        entry.weightOfVisitedPath = weight;
+        entry.parent = parent;
+    }
+
+    @Override
     protected boolean acceptTraversalId(int traversalId, boolean reverse) {
         // todo: ignoreExplorationFrom/To always stays empty (?!)
         IntHashSet ignoreExploration = reverse ? ignoreExplorationTo : ignoreExplorationFrom;
         return !ignoreExploration.contains(traversalId);
 
+    }
+
+    @Override
+    protected double calcWeight(EdgeIteratorState iter, AStarEntry currEdge, boolean reverse) {
+        // TODO performance: check if the node is already existent in the opposite direction
+        // then we could avoid the approximation as we already know the exact complete path!
+        return weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
     }
 
     @Override

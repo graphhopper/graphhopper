@@ -125,6 +125,14 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
 
     protected abstract T createStartEntry(int node, double weight, boolean reverse);
 
+    protected abstract T createEntry(EdgeIteratorState edge, double weight, T parent, boolean reverse);
+
+    protected void updateEntry(T entry, EdgeIteratorState edge, double weight, T parent, boolean reverse) {
+        entry.edge = edge.getEdge();
+        entry.weight = weight;
+        entry.parent = parent;
+    }
+
     protected abstract T getParent(T entry);
 
     protected boolean accept(EdgeIteratorState edge, T currEdge, boolean reverse) {
