@@ -32,11 +32,11 @@ import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Locale;
 import java.util.Random;
 
 import static com.graphhopper.util.Helper.nf;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED_2DIR;
-import static com.graphhopper.util.Helper.nf;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 
@@ -501,14 +501,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         }
         TurnCostExtension turnCostExtension = (TurnCostExtension) extension;
         return new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension);
-    }
-
-    private void logStats(long counter, int updateCounter) {
-        logger.info(String.format("%10s, updates: %2d, nodes: %10s, shortcuts: %10s, dijkstras: %10s, %s, meanDegree: %2d, %s, %s",
-                nf(counter), updateCounter, nf(sortedNodes.getSize()),
-                nf(nodeContractor.getAddedShortcutsCount()), nf(nodeContractor.getDijkstraCount()),
-                getTimesAsString(), (long) meanDegree, nodeContractor.getPrepareAlgoMemoryUsage(),
-                Helper.getMemInfo()));
     }
 
     private void logStats(long counter, int updateCounter) {

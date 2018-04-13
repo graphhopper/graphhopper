@@ -26,7 +26,8 @@ public class DijkstraBidirectionCHNoSOD extends DijkstraBidirectionRef {
     public DijkstraBidirectionCHNoSOD(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         super(graph, weighting, traversalMode);
         if (traversalMode.isEdgeBased()) {
-            throw new IllegalArgumentException("Edge based traversal is not supported for CH");
+            throw new IllegalArgumentException("For edge based graph traversal " +
+                    " you need to use AStar/DijkstraBidirectionEdgeCHNoSOD instead");
         }
     }
 
