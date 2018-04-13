@@ -188,10 +188,11 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
                            IntObjectMap<T> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
         EdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
-            if (!accept(iter, currEdge.edge))
+            if (!accept(iter, currEdge, reverse))
                 continue;
 
-            final int traversalId = traversalMode.createTraversalId(iter, reverse);
+            final int origEdgeId = getOrigEdgeId(iter, reverse);
+            final int traversalId = getTraversalId(iter, origEdgeId, reverse);
             if (!acceptTraversalId(traversalId, reverse)) {
                 continue;
             }
@@ -215,20 +216,20 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
         }
     }
 
-    protected void updateBestPath(EdgeIteratorState edgeState, T entryCurrent, int traversalId, boolean reverse) {
-        SPTEntry entryOther = bestWeightMapOther.get(traversalId);
+    protected void updateBestPath(EdgeIteratorState edgeState, T entry, int traversalId, boolean reverse) {
+        T entryOther = bestWeightMapOther.get(traversalId);
         if (entryOther == null)
             return;
 
         // update μ
-        double weight = entryCurrent.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath();
+        double weight = entry.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath();
         if (traversalMode.isEdgeBased()) {
-            if (entryOther.edge != entryCurrent.edge)
+            if (entryOther.edge != entry.edge)
                 throw new IllegalStateException("cannot happen for edge based execution of " + getName());
 
-            if (entryOther.adjNode != entryCurrent.adjNode) {
-                // prevents the path to contain the edge at the meeting point twice and subtract the weight (excluding turn weight => no previous edge)
-                entryCurrent = getParent(entryCurrent);
+            if (entryOther.adjNode != entry.adjNode) {
+                // prevents the path to contain the edge at the meeting point twice and subtracts the weight (excluding turn weight => no previous edge)
+                entry = getParent(entry);
                 weight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
             } else if (!traversalMode.hasUTurnSupport())
                 // we detected a u-turn at meeting point, skip if not supported
@@ -237,7 +238,7 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
 
         if (weight < bestPath.getWeight()) {
             bestPath.setSwitchToFrom(reverse);
-            bestPath.setSPTEntry(entryCurrent);
+            bestPath.setSPTEntry(entry);
             bestPath.setSPTEntryTo(entryOther);
             bestPath.setWeight(weight);
         }

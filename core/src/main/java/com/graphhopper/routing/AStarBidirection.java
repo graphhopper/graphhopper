@@ -85,17 +85,18 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
     }
 
     @Override
-    protected AStarEntry createEntry(EdgeIteratorState iter, double weight, AStarEntry parent, boolean reverse) {
-        double heapWeight = weight + weightApprox.approximate(iter.getAdjNode(), reverse);
-        AStarEntry entry = new AStarEntry(iter.getEdge(), iter.getAdjNode(), heapWeight, weight);
+    protected AStarEntry createEntry(EdgeIteratorState edge, double weight, AStarEntry parent, boolean reverse) {
+        int neighborNode = edge.getAdjNode();
+        double heapWeight = weight + weightApprox.approximate(neighborNode, reverse);
+        AStarEntry entry = new AStarEntry(edge.getEdge(), neighborNode, heapWeight, weight);
         entry.parent = parent;
         return entry;
     }
 
     @Override
-    protected void updateEntry(AStarEntry entry, EdgeIteratorState iter, double weight, AStarEntry parent, boolean reverse) {
-        entry.edge = iter.getEdge();
-        entry.weight = weight + weightApprox.approximate(iter.getAdjNode(), reverse);
+    protected void updateEntry(AStarEntry entry, EdgeIteratorState edge, double weight, AStarEntry parent, boolean reverse) {
+        entry.edge = edge.getEdge();
+        entry.weight = weight + weightApprox.approximate(edge.getAdjNode(), reverse);
         entry.weightOfVisitedPath = weight;
         entry.parent = parent;
     }
