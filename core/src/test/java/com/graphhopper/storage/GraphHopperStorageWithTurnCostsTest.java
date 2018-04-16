@@ -17,8 +17,14 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
+import com.graphhopper.GraphHopper;
+import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters;
+import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -126,4 +132,5 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         // A new segment should be added, which will support 128 / 16 = 8 more entries.
         assertEquals(112, turnCostStorage.getCapacity() / 16);
     }
+
 }

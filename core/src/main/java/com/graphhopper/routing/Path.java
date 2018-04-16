@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHIntArrayList;
+import com.graphhopper.routing.util.EdgeData;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -34,6 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+
+import static com.graphhopper.routing.util.EdgeData.getEdgeId;
 
 /**
  * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
@@ -394,6 +397,22 @@ public class Path {
         }
 
         return pathDetails;
+    }
+
+    public List<EdgeData> getEdgesData() {
+        final List<EdgeData> edgeData = new ArrayList<>();
+        forEveryEdge(new EdgeVisitor() {
+            @Override
+            public void next(EdgeIteratorState edgeState, int index, int prevEdgeId) {
+                final int edgeId = getEdgeId(edgeState);
+                edgeData.add(new EdgeData(edgeId, edgeState.getBaseNode(), edgeState.getAdjNode()));
+            }
+
+            @Override
+            public void finish() {}
+        });
+
+        return edgeData;
     }
 
     @Override

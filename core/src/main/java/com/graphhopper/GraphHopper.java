@@ -17,6 +17,8 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.Penalties.Penalty;
+import com.graphhopper.Penalties.TurnPenalty;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
@@ -924,6 +926,10 @@ public class GraphHopper implements GraphHopperAPI {
 
         } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortFastestWeighting(encoder, hintsMap);
+        } else if ("weighting_with_penalties".equalsIgnoreCase(weightingStr)) {
+            Collection<Penalty> penalties = new ArrayList<>();
+            penalties.add(new TurnPenalty(hintsMap));
+            weighting = new WeightingWithPenalties(encoder, hintsMap, penalties);
         }
 
         if (weighting == null)
@@ -951,15 +957,20 @@ public class GraphHopper implements GraphHopperAPI {
 
     @Override
     public GHResponse route(GHRequest request) {
+        return route(request, new HashMap<EdgeData, Double>());
+    }
+
+    @Override
+    public GHResponse route(GHRequest request, Map<EdgeData, Double> edgesWeightFactors) {
         GHResponse response = new GHResponse();
-        calcPaths(request, response);
+        calcPaths(request, response, edgesWeightFactors);
         return response;
     }
 
     /**
      * This method calculates the alternative path list using the low level Path objects.
      */
-    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp) {
+    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp, Map<EdgeData, Double> edgesWeightFactors) {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
 
@@ -1060,6 +1071,9 @@ public class GraphHopper implements GraphHopperAPI {
 
                 weighting = createTurnWeighting(queryGraph, weighting, tMode);
 
+                if (!edgesWeightFactors.isEmpty())
+                    weighting = new WeightingsWithFactors(weighting, edgesWeightFactors);
+
                 AlgorithmOptions algoOpts = AlgorithmOptions.start().
                         algorithm(algoStr).traversalMode(tMode).weighting(weighting).
                         maxVisitedNodes(maxVisitedNodesForRequest).
@@ -1076,6 +1090,7 @@ public class GraphHopper implements GraphHopperAPI {
                 PathMerger pathMerger = new PathMerger().
                         setCalcPoints(tmpCalcPoints).
                         setDouglasPeucker(peucker).
+                        setAddRouteEdges(hints.getBool("add_edges_data", false)).
                         setEnableInstructions(tmpEnableInstructions).
                         setPathDetailsBuilders(pathBuilderFactory, request.getPathDetails()).
                         setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
