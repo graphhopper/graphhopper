@@ -82,10 +82,10 @@ public class Measurement {
                 StopWatch sw = new StopWatch().start();
                 super.prepareCH();
                 put(Parameters.CH.PREPARE + "time", sw.stop().getTime());
-                int edges = getGraphHopperStorage().getAllEdges().getMaxId();
+                int edges = getGraphHopperStorage().getAllEdges().length();
                 if (getCHFactoryDecorator().hasWeightings()) {
                     Weighting weighting = getCHFactoryDecorator().getWeightings().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getAllEdges().getMaxId();
+                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getAllEdges().length();
                     put(Parameters.CH.PREPARE + "shortcuts", edgesAndShortcuts - edges);
                 }
             }
@@ -183,12 +183,12 @@ public class Measurement {
     private GHBitSet printGraphDetails(GraphHopperStorage g, String vehicleStr) {
         // graph size (edge, node and storage size)
         put("graph.nodes", g.getNodes());
-        put("graph.edges", g.getAllEdges().getMaxId());
+        put("graph.edges", g.getAllEdges().length());
         put("graph.size_in_MB", g.getCapacity() / MB);
         put("graph.encoder", vehicleStr);
 
         AllEdgesIterator iter = g.getAllEdges();
-        final int maxEdgesId = g.getAllEdges().getMaxId();
+        final int maxEdgesId = g.getAllEdges().length();
         final GHBitSet allowedEdges = new GHBitSetImpl(maxEdgesId);
         fillAllowedEdges(iter, allowedEdges);
         put("graph.valid_edges", allowedEdges.getCardinality());
@@ -271,7 +271,7 @@ public class Measurement {
         }.setIterations(count).start();
         print("unit_tests" + description + ".all_edge_state_next", miniPerf);
 
-        final int maxEdgesId = graph.getAllEdges().getMaxId();
+        final int maxEdgesId = graph.getAllEdges().length();
         miniPerf = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {

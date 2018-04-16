@@ -55,7 +55,7 @@ public class LandmarkSuggestion {
                 continue;
             }
 
-            GHPoint point = GHPoint.parseLonLat(lmStr);
+            GHPoint point = GHPoint.fromStringLonLat(lmStr);
             if (point == null)
                 throw new RuntimeException("Invalid format " + lmStr + " for point " + lmSuggestionIdx);
 

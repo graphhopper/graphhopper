@@ -2,49 +2,93 @@
 (set -o igncr) 2>/dev/null && set -o igncr; # this comment is required for handling Windows cr/lf 
 # See StackOverflow answer http://stackoverflow.com/a/14607651
 
-GH_CLASS=com.graphhopper.tools.Import
 GH_HOME=$(dirname "$0")
 JAVA=$JAVA_HOME/bin/java
 if [ "$JAVA_HOME" = "" ]; then
  JAVA=java
 fi
 
-vers=$($JAVA -version 2>&1 | grep "java version" | awk '{print $3}' | tr -d \")
+vers=$($JAVA -version 2>&1 | grep "version" | awk '{print $3}' | tr -d \")
 bit64=$($JAVA -version 2>&1 | grep "64-Bit")
 if [ "$bit64" != "" ]; then
   vers="$vers (64bit)"
 fi
 echo "## using java $vers from $JAVA_HOME"
 
-CONFIG=config.properties
-if [ ! -f "config.properties" ]; then
-  cp config-example.properties $CONFIG
-fi
-
-ACTION=$1
-FILE=$2
-
-function printUsage {
- echo
- echo "./graphhopper.sh import|web <some-map-file>"
- echo "./graphhopper.sh clean|build|buildweb|help"
- echo
- echo "  help        this message"
- echo "  import      creates the graphhopper files used for later (faster) starts"
- echo "  web         starts a local server for user access at localhost:8989 and API access at localhost:8989/route"
- echo "  build       creates the graphhopper JAR (without the web module)"
- echo "  buildweb    creates the graphhopper JAR (with the web module)"
- echo "  clean       removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)"
- echo "  measurement does performance analysis of the current source version via random routes (Measurement class)"
- echo "  torture     can be used to test real world routes via feeding graphhopper logs into a GraphHopper system (Torture class)"
- echo "  miniui      is a simple Java/Swing visualization application used for debugging purposes (MiniGraphUI class)"
- echo "  extract     calls the overpass API to grab any area as .osm file"
- echo "  android     builds, deploys and starts the Android demo for your connected device"
+function printBashUsage {
+  echo "Usage:"
+  echo "-a | --action <action>    must be one the following actions:"
+  echo "     --action import      creates the graph cache only, used for later faster starts"
+  echo "     --action web         starts a local server for user access at localhost:8989 and API access at localhost:8989/route"
+  echo "     --action webdebug	  like web but with hot reloading of static files at web/src/main/resources/assets"
+  echo "     --action build       creates the graphhopper web JAR"
+  echo "     --action clean       removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)"
+  echo "     --action measurement does performance analysis of the current source version via random routes (Measurement class)"
+  echo "     --action torture     can be used to test real world routes via feeding graphhopper logs into a GraphHopper system (Torture class)"
+  echo "-c | --config <config>    specify the application configuration"
+  echo "-d | --run-background     run the application in background (detach)"
+  echo "-fd| --force-download     force the download of the OSM data file if needed"
+  echo "-h | --help               display this message"
+  echo "--host <host>             specify to which host the service should be bound"
+  echo "-i | --input <file>       path to the input map file or name of the file to download"
+  echo "--jar <file>              specify the jar file (useful if you want to reuse this script for custom builds)"
+  echo "-o | --graph-cache <dir>  directory for graph cache output"
+  echo "-p | --profiles <string>  comma separated list of vehicle profiles"
+  echo "--port <port>             start web server at specific port"
+  echo "-v | --version            print version"
 }
 
+VERSION=$(grep "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
+
+# one or two character parameters have one minus character'-' all longer parameters have two minus characters '--'
+while [ ! -z $1 ]; do
+  case $1 in
+    -a|--action) ACTION=$2; shift 2;;
+    -c|--config) CONFIG="$2"; shift 2;;
+    -d|--run-background) RUN_BACKGROUND=true; shift 1;;
+    -fd|--force-download) FORCE_DWN=1; shift 1;;
+    -h|--help) printBashUsage
+      exit 0;;
+    --host) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].bindHost=$2"; shift 2;;
+    -i|--input) FILE="$2"; shift 2;;
+    --jar) JAR="$2"; shift 2;;
+    -o|--graph-cache) GRAPH="$2"; shift 2;;
+    -p|--profiles) GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.graph.flag_encoders=$2"; shift 2;;
+    --port) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$2"; shift 2;;
+    -v|--version) echo $VERSION
+    	exit 2;;
+    # forward VM options, here we assume no spaces ie. just one parameter!?
+    -D*)
+       GH_WEB_OPTS="$GH_WEB_OPTS $1"; shift 1;;
+    # forward parameter via replacing first two characters of the key with -Dgraphhopper.
+    --*)
+       GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.${1:2}=$2"; shift 2;;
+    -*) echo "Option unknown: $1"
+        echo
+        printBashUsage
+	exit 2;;
+    # backward compatibility
+    *) REMAINING_ARGS+=($1); shift 1;;
+  esac
+done
+
+if [ -z $ACTION ]; then
+  ACTION=${REMAINING_ARGS[0]}
+fi
+
+if [ -z $FILE ]; then
+  FILE=${REMAINING_ARGS[1]}
+fi
+
 if [ "$ACTION" = "" ]; then
- echo "## action $ACTION not found. try" 
- printUsage
+ echo "## action $ACTION not found!"
+ printBashUsage
+fi
+
+# default init, https://stackoverflow.com/a/28085062/194609
+: "${CONFIG:=config.yml}"
+if [ ! -f "config.yml" ]; then
+  cp config-example.yml $CONFIG
 fi
 
 function ensureOsm { 
@@ -52,10 +96,12 @@ function ensureOsm {
     # skip
     return
   elif [ ! -s "$OSM_FILE" ]; then
-    echo "File not found '$OSM_FILE'. Press ENTER to get it from: $LINK"
-    echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
-    read -e
-      
+    if [ -z $FORCE_DWN ]; then
+      echo "File not found '$OSM_FILE'. Press ENTER to get it from: $LINK"
+      echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
+      read -e
+    fi
+
     echo "## now downloading OSM file from $LINK and extracting to $OSM_FILE"
     
     if [ ${OSM_FILE: -4} == ".pbf" ]; then
@@ -63,7 +109,7 @@ function ensureOsm {
     elif [ ${OSM_FILE: -4} == ".ghz" ]; then
        wget -S -nv -O "$OSM_FILE" "$LINK"
        cd $DATADIR && unzip "$BASENAME" -d "$NAME-gh"
-    else    
+    else
        # make sure aborting download does not result in loading corrupt osm file
        TMP_OSM=temp.osm
        wget -S -nv -O - "$LINK" | bzip2 -d > $TMP_OSM
@@ -110,11 +156,11 @@ function execMvn {
   fi
 }
 
-function packageCoreJar {
+function packageJar {
   if [ ! -f "$JAR" ]; then
     echo "## building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
-    execMvn --projects tools -am -DskipTests=true package
+    execMvn --projects web -am -DskipTests=true package
   else
     echo "## existing jar found $JAR"
   fi
@@ -129,33 +175,14 @@ if [ "$ACTION" = "clean" ]; then
  rm -rf ./target
  exit
 
-elif [ "$ACTION" = "eclipse" ]; then
- packageCoreJar
- exit
-
 elif [ "$ACTION" = "build" ]; then
- packageCoreJar
+ packageJar
  exit  
- 
-elif [ "$ACTION" = "buildweb" ]; then
- execMvn --projects web -am -DskipTests=true package
- exit
-
-elif [ "$ACTION" = "extract" ]; then
- echo use "./graphhopper.sh extract \"left,bottom,right,top\""
- URL="http://overpass-api.de/api/map?bbox=$2"
- #echo "$URL"
- wget -O extract.osm "$URL"
- exit
- 
-elif [ "$ACTION" = "android" ]; then
- execMvn -P include-android --projects android/app -am package android:deploy android:run
- exit
 fi
-
+ 
 if [ "$FILE" = "" ]; then
-  echo -e "no file specified? try"
-  printUsage
+  echo -e "no file specified?"
+  printBashUsage
   exit
 fi
 
@@ -187,10 +214,6 @@ else
    OSM_FILE=
 fi
 
-GRAPH=$DATADIR/$NAME-gh
-VERSION=$(grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
-JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
-
 LINK=$(echo $NAME | tr '_' '/')
 if [ "$FILE" == "-" ]; then
    LINK=
@@ -205,69 +228,51 @@ else
    LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
 fi
 
-if [ "$JAVA_OPTS" = "" ]; then
-  JAVA_OPTS="-Xmx1000m -Xms1000m -server"
-fi
+: "${JAVA_OPTS:=-Xmx1000m -Xms1000m -server}"
+: "${JAR:=web/target/graphhopper-web-$VERSION.jar}"
+: "${GRAPH:=$DATADIR/$NAME-gh}"
 
 ensureOsm
-packageCoreJar
+packageJar
 
 echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 
-if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
+if [[ "$ACTION" = "webdebug" ]]; then
+  echo $GH_WEB_OPTS
+  exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
+                 $GH_WEB_OPTS -cp "$JAR" com.graphhopper.http.GraphHopperDebugApplication server $CONFIG
+
+elif [[ "$ACTION" = "web" ]]; then
   export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
-  if [ "$JETTY_PORT" = "" ]; then  
-    JETTY_PORT=8989
-  fi
-  WEB_JAR="$GH_HOME/web/target/graphhopper-web-$VERSION-with-dep.jar"
-  if [ ! -s "$WEB_JAR" ]; then
-    execMvn --projects web -am -DskipTests=true package
-  fi
 
-  RC_BASE=./web/src/main/webapp
-
-  if [ "$GH_FOREGROUND" = "" ]; then
-    exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE \
-	jetty.port=$JETTY_PORT jetty.host=$JETTY_HOST \
-    	config=$CONFIG $GH_WEB_OPTS graph.location="$GRAPH" datareader.file="$OSM_FILE"
-    # foreground => we never reach this here
-  else
-    exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE \
-    	jetty.port=$JETTY_PORT jetty.host=$JETTY_HOST \
-    	config=$CONFIG $GH_WEB_OPTS graph.location="$GRAPH" datareader.file="$OSM_FILE" <&- &
-    if [ "$GH_PID_FILE" != "" ]; then
+  if [[ "$RUN_BACKGROUND" == "true" ]]; then
+    exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
+                 $GH_WEB_OPTS -jar "$JAR" server $CONFIG <&- &
+    
+    if [[ "$GH_PID_FILE" != "" ]]; then
        echo $! > $GH_PID_FILE
     fi
-    exit $?                    
+    exit $?
+  else
+    # TODO how to avoid duplicative command for foreground and background?
+    exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
+                 $GH_WEB_OPTS -jar "$JAR" server $CONFIG
+    # foreground => we never reach this here
   fi
 
 elif [ "$ACTION" = "import" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS config=$CONFIG \
-      $GH_IMPORT_OPTS graph.location="$GRAPH" datareader.file="$OSM_FILE"
-
+ "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \ 
+         $GH_IMPORT_OPTS -jar "$JAR" import $CONFIG
 
 elif [ "$ACTION" = "torture" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $@
 
-
-elif [ "$ACTION" = "miniui" ]; then
- execMvn --projects tools -am -DskipTests clean package
- JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar   
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI datareader.file="$OSM_FILE" config=$CONFIG \
-              graph.location="$GRAPH"
-
-
 elif [ "$ACTION" = "measurement" ]; then
- ARGS="config=$CONFIG graph.location=$GRAPH datareader.file=$OSM_FILE prepare.ch.weightings=fastest prepare.lm.weightings=fastest graph.flag_encoders=car prepare.min_network_size=10000 prepare.min_oneway_network_size=10000"
- # echo -e "\ncreate graph via $ARGS, $JAR"
- # START=$(date +%s)
- # avoid islands for measurement at all costs
- # "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS $ARGS prepare.doPrepare=false prepare.minNetworkSize=10000 prepare.minOnewayNetworkSize=10000
- # END=$(date +%s)
- # IMPORT_TIME=$(($END - $START))
+ ARGS="config=$CONFIG graph.location=$GRAPH datareader.file=$OSM_FILE prepare.ch.weightings=fastest prepare.lm.weightings=fastest graph.flag_encoders=car \
+       prepare.min_network_size=10000 prepare.min_oneway_network_size=10000"
 
  function startMeasurement {
-    execMvn --projects tools -am -DskipTests clean package
+    execMvn --projects web -am -DskipTests clean package
     COUNT=5000
     commit_info=$(git log -n 1 --pretty=oneline)
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
