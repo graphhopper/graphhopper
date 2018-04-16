@@ -3,7 +3,7 @@
 To avoid confusion with alternative route search we talk not about ALT but about
 the 'landmarks' algorithm. The landmarks algorithm is like CH a post-import 
 process which makes routing faster. It is disable by default. To enable it
-set e.g. `prepare.lm.weightings=fastest` in the config.properties.
+set e.g. `prepare.lm.weightings=fastest` in the configuration.
 
 The interesting part is that we just have to set a special landmarks WeightApproximator
 for (bidirectional) A* and are done. It is important that although a weight

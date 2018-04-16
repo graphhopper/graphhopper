@@ -19,8 +19,6 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
-import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
@@ -34,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * This class does the preprocessing for the ALT algorithm (A* , landmark, triangle inequality).

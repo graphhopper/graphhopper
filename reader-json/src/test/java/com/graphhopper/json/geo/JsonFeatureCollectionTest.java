@@ -51,10 +51,10 @@ public class JsonFeatureCollectionTest {
         // read as string despite the 2 (not a string) in json
         assertEquals("2", f2.getId());
         assertEquals(4, f2.getGeometry().getNumPoints());
-        assertEquals(0.0, PointList.from((LineString) f2.getGeometry()).getLat(0), .1);
-        assertEquals(102.0, PointList.from((LineString) f2.getGeometry()).getLon(0), .1);
-        assertEquals(1.0, PointList.from((LineString) f2.getGeometry()).getLat(1), .1);
-        assertEquals(103.0, PointList.from((LineString) f2.getGeometry()).getLon(1), .1);
+        assertEquals(0.0, PointList.fromLineString((LineString) f2.getGeometry()).getLat(0), .1);
+        assertEquals(102.0, PointList.fromLineString((LineString) f2.getGeometry()).getLon(0), .1);
+        assertEquals(1.0, PointList.fromLineString((LineString) f2.getGeometry()).getLat(1), .1);
+        assertEquals(103.0, PointList.fromLineString((LineString) f2.getGeometry()).getLon(1), .1);
 
         JsonFeature f3 = data.getFeatures().get(2);
         assertEquals("0.0,102.0,1.0,103.0", f3.getBBox().toString());

@@ -39,6 +39,10 @@
                     <groupId>com.vividsolutions</groupId>
                     <artifactId>jts</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-s3</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -69,6 +73,12 @@
             <artifactId>graphhopper-core</artifactId>
             <version>${project.parent.version}</version>
             <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>
         <dependency>

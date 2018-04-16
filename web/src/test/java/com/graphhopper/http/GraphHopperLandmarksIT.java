@@ -18,13 +18,14 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.GraphHopper;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
-import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
+import javax.ws.rs.core.Response;
 import java.io.File;
 
 import static org.junit.Assert.assertEquals;
@@ -35,67 +36,63 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Robin Boldt
  */
-public class GraphHopperLandmarksIT extends BaseServletTester {
+public class GraphHopperLandmarksIT {
     private static final String DIR = "./target/landmark-test-gh/";
 
-    @AfterClass
-    public static void cleanUp() {
-        Helper.removeDir(new File(DIR));
-        shutdownJetty(true);
-    }
+    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
-    @Before
-    public void setUp() {
-        CmdArgs args = new CmdArgs().
-                put("config", "../config-example.properties").
+    static {
+        config.graphhopper.merge(new CmdArgs().
+                put("graph.flag_encoders", "car").
                 put("prepare.ch.weightings", "fastest").
                 put("prepare.lm.weightings", "fastest").
                 put("datareader.file", "../core/files/belarus-east.osm.gz").
                 put("prepare.min_network_size", 0).
                 put("prepare.min_one_way_network_size", 0).
                 put("routing.ch.disabling_allowed", true).
-                put("graph.location", DIR);
+                put("routing.lm.disabling_allowed", true).
+                put("graph.location", DIR).
+                put("prepare.lm.min_network_size", 2)); // force landmark creation even for tiny networks
+    }
 
-        // force landmark creation even for tiny networks:
-        args.put("prepare.lm.min_network_size", 2);
+    @ClassRule
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
+            GraphHopperApplication.class, config);
 
-        setUpJetty(args);
+    @AfterClass
+    public static void cleanUp() {
+        Helper.removeDir(new File(DIR));
     }
 
     @Test
     public void testQueries() throws Exception {
-        JsonNode json = query("point=55.99022,29.129734&point=56.001069,29.150848", 200);
+        Response response = app.client().target("http://localhost:8080/route?point=55.99022,29.129734&point=56.001069,29.150848").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
         assertEquals("distance wasn't correct:" + distance, 1870, distance, 100);
 
-        json = query("point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true", 200);
+        response = app.client().target("http://localhost:8080/route?point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true").request().buildGet().invoke();
+        json = response.readEntity(JsonNode.class);
         distance = json.get("paths").get(0).get("distance").asDouble();
         assertEquals("distance wasn't correct:" + distance, 1870, distance, 100);
-
-        GraphHopper hopper = getInstance(GraphHopper.class);
-        hopper.getLMFactoryDecorator().setDisablingAllowed(true);
-        json = query("point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true&lm.disable=true", 200);
-        distance = json.get("paths").get(0).get("distance").asDouble();
-        assertEquals("distance wasn't correct:" + distance, 1870, distance, 100);
-        hopper.getLMFactoryDecorator().setDisablingAllowed(false);
     }
 
     @Test
     public void testLandmarkDisconnect() throws Exception {
         // if one algorithm is disabled then the following chain is executed: CH -> LM -> flexible
         // disconnected for landmarks
-        JsonNode json = query("point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true", 400);
-        JsonNode errorJson = json.get("message");
-        assertTrue(errorJson.toString(), errorJson.toString().contains("Different subnetworks"));
+        Response response = app.client().target("http://localhost:8080/route?" + "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertTrue(json.get("message").toString().contains("Different subnetworks"));
 
         // without landmarks it should work
-        GraphHopper hopper = getInstance(GraphHopper.class);
-        hopper.getLMFactoryDecorator().setDisablingAllowed(true);
-        json = query("point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true&lm.disable=true", 200);
-        JsonNode path = json.get("paths").get(0);
-        double distance = path.get("distance").asDouble();
+        response = app.client().target("http://localhost:8080/route?" + "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true&lm.disable=true").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        json = response.readEntity(JsonNode.class);
+        double distance = json.get("paths").get(0).get("distance").asDouble();
         assertEquals("distance wasn't correct:" + distance, 5790, distance, 100);
-        hopper.getLMFactoryDecorator().setDisablingAllowed(false);
     }
 }
