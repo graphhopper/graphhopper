@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -39,6 +41,7 @@ public class CmdArgs extends PMap {
     public CmdArgs() {
     }
 
+    @JsonCreator
     public CmdArgs(Map<String, String> map) {
         super(map);
     }
@@ -121,6 +124,45 @@ public class CmdArgs extends PMap {
             }
         }
         return args;
+    }
+
+    public static CmdArgs readFromConfigAndMerge(CmdArgs args) {
+        final CmdArgs argsFromSystemProperties = argsFromSystemProperties();
+        args.merge(argsFromSystemProperties);
+
+        String propertiesFile = args.get("config", "");
+        if (!Helper.isEmpty(propertiesFile)) {
+            final CmdArgs argsFromPropertiesFile = argsFromPropertiesFile(propertiesFile);
+            argsFromPropertiesFile.merge(args);
+            return argsFromPropertiesFile;
+        }
+        return args;
+    }
+
+    private static CmdArgs argsFromPropertiesFile(String configLocation) {
+        CmdArgs cmdArgs = new CmdArgs();
+        Map<String, String> map = new LinkedHashMap<>();
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(
+                new File(configLocation).getAbsoluteFile()), Helper.UTF_CS)) {
+            Helper.loadProperties(map, reader);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        cmdArgs.merge(map);
+        return cmdArgs;
+    }
+
+    private static CmdArgs argsFromSystemProperties() {
+        CmdArgs cmdArgs = new CmdArgs();
+        for (Entry<Object, Object> e : System.getProperties().entrySet()) {
+            String k = ((String) e.getKey());
+            String v = ((String) e.getValue());
+            if (k.startsWith("graphhopper.")) {
+                k = k.substring("graphhopper.".length());
+                cmdArgs.put(k, v);
+            }
+        }
+        return cmdArgs;
     }
 
     @Override

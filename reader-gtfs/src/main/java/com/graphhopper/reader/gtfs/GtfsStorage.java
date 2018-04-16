@@ -90,7 +90,6 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 	private Map<String, GTFSFeed> gtfsFeeds = new HashMap<>();
 	private Map<String, Transfers> transfers = new HashMap<>();
 	private HTreeMap<Validity, Integer> operatingDayPatterns;
-	private Map<Integer, Validity> validities;
 	private Bind.MapWithModificationListener<FeedIdWithTimezone, Integer> timeZones;
 	private Map<Integer, FeedIdWithTimezone> readableTimeZones;
 	private Map<Integer, byte[]> tripDescriptors;
@@ -177,11 +176,6 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
     private void init() {
 		this.gtfsFeedIds = data.getHashSet("gtfsFeeds");
 		this.operatingDayPatterns = data.getHashMap("validities");
-		Map<Integer, Validity> reverseOperatingDayPatterns = new HashMap<>();
-		for (Map.Entry<Validity, Integer> entry : this.operatingDayPatterns.entrySet()) {
-			reverseOperatingDayPatterns.put(entry.getValue(), entry.getKey());
-		}
-		Bind.mapInverse(this.operatingDayPatterns, reverseOperatingDayPatterns);
 		this.timeZones = data.getHashMap("timeZones");
 		Map<Integer, FeedIdWithTimezone> readableTimeZones = new HashMap<>();
 		for (Map.Entry<FeedIdWithTimezone, Integer> entry : this.timeZones.entrySet()) {
@@ -189,7 +183,6 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 		}
 		Bind.mapInverse(this.timeZones, readableTimeZones);
 		this.readableTimeZones = Collections.unmodifiableMap(readableTimeZones);
-		this.validities = Collections.unmodifiableMap(reverseOperatingDayPatterns);
 		this.tripDescriptors = data.getTreeMap("tripDescriptors");
 		this.stopSequences = data.getTreeMap("stopSequences");
 		this.fares = data.getTreeMap("fares");
@@ -252,10 +245,6 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 	public Map<Validity, Integer> getOperatingDayPatterns() {
         return operatingDayPatterns;
     }
-
-	Map<Integer, Validity> getValidities() {
-		return validities;
-	}
 
 	Map<Integer, FeedIdWithTimezone> getTimeZones() {
 		return readableTimeZones;

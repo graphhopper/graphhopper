@@ -81,7 +81,7 @@ public abstract class AbstractEdgeElevationInterpolator {
 
     private void interpolateElevationsOfTowerNodes() {
         final AllEdgesIterator edge = storage.getAllEdges();
-        final GHBitSet visitedEdgeIds = new GHBitSetImpl(edge.getMaxId());
+        final GHBitSet visitedEdgeIds = new GHBitSetImpl(edge.length());
         final EdgeExplorer edgeExplorer = storage.createEdgeExplorer();
 
         while (edge.next()) {

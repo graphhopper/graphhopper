@@ -23,6 +23,7 @@ import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.util.shapes.Polygon;
 
 import java.util.List;
 

@@ -18,6 +18,7 @@
 package com.graphhopper.util.shapes;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
 
@@ -258,8 +259,9 @@ public class BBox implements Shape, Cloneable {
      * @return array containing this bounding box. Attention: GeoJson is lon,lat! If 3D is gets even
      * worse: lon,lat,ele
      */
+    @JsonValue
     public List<Double> toGeoJson() {
-        List<Double> list = new ArrayList<Double>(4);
+        List<Double> list = new ArrayList<>(4);
         list.add(Helper.round6(minLon));
         list.add(Helper.round6(minLat));
         // hmh
