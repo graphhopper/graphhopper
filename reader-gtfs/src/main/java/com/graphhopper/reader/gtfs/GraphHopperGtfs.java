@@ -24,6 +24,7 @@ import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
+import com.graphhopper.routing.util.EdgeData;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -368,6 +369,11 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     @Override
     public GHResponse route(GHRequest request) {
         return new RequestHandler(request).route();
+    }
+
+    @Override
+    public GHResponse route(GHRequest request, Map<EdgeData, Double> edgesWeightFactors) {
+        return route(request);
     }
 
     private static PtTravelTimeWeighting createPtTravelTimeWeighting(PtFlagEncoder encoder, boolean arriveBy, double walkSpeedKmH) {

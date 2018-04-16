@@ -957,15 +957,20 @@ public class GraphHopper implements GraphHopperAPI {
 
     @Override
     public GHResponse route(GHRequest request) {
+        return route(request, new HashMap<EdgeData, Double>());
+    }
+
+    @Override
+    public GHResponse route(GHRequest request, Map<EdgeData, Double> edgesWeightFactors) {
         GHResponse response = new GHResponse();
-        calcPaths(request, response);
+        calcPaths(request, response, edgesWeightFactors);
         return response;
     }
 
     /**
      * This method calculates the alternative path list using the low level Path objects.
      */
-    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp) {
+    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp, Map<EdgeData, Double> edgesWeightFactors) {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
 
@@ -1065,6 +1070,9 @@ public class GraphHopper implements GraphHopperAPI {
                     throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes);
 
                 weighting = createTurnWeighting(queryGraph, weighting, tMode);
+
+                if (!edgesWeightFactors.isEmpty())
+                    weighting = new WeightingsWithFactors(weighting, edgesWeightFactors);
 
                 AlgorithmOptions algoOpts = AlgorithmOptions.start().
                         algorithm(algoStr).traversalMode(tMode).weighting(weighting).

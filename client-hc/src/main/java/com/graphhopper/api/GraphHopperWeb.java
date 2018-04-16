@@ -24,6 +24,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.routing.util.EdgeData;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.*;
@@ -407,6 +408,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
         } catch (Exception ex) {
             throw new RuntimeException("Problem while fetching path " + request.getPoints() + ": " + ex.getMessage(), ex);
         }
+    }
+
+    @Override
+    public GHResponse route(GHRequest request, Map<EdgeData, Double> edgesWeightFactors) {
+        return route(request);
     }
 
     private OkHttpClient getClientForRequest(GHRequest request) {
