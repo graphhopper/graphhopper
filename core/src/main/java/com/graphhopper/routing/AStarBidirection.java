@@ -55,8 +55,6 @@ import com.graphhopper.util.*;
  */
 public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> implements RecalculationHook {
     private ConsistentWeightApproximator weightApprox;
-    private IntHashSet ignoreExplorationFrom = new IntHashSet();
-    private IntHashSet ignoreExplorationTo = new IntHashSet();
 
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
@@ -107,13 +105,6 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
     }
 
     @Override
-    protected boolean acceptTraversalId(int traversalId, boolean reverse) {
-        // todo: ignoreExplorationFrom/To always stays empty (?!)
-        IntHashSet ignoreExploration = reverse ? ignoreExplorationTo : ignoreExplorationFrom;
-        return !ignoreExploration.contains(traversalId);
-    }
-
-    @Override
     protected double calcWeight(EdgeIteratorState iter, AStarEntry currEdge, boolean reverse) {
         // TODO performance: check if the node is already existent in the opposite direction
         // then we could avoid the approximation as we already know the exact complete path!
@@ -134,13 +125,11 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
 
     void setFromDataStructures(AStarBidirection astar) {
         super.setFromDataStructures(astar);
-        ignoreExplorationFrom = astar.ignoreExplorationFrom;
         weightApprox.setFrom(astar.currFrom.adjNode);
     }
 
     void setToDataStructures(AStarBidirection astar) {
         super.setToDataStructures(astar);
-        ignoreExplorationTo = astar.ignoreExplorationTo;
         weightApprox.setTo(astar.currTo.adjNode);
     }
 

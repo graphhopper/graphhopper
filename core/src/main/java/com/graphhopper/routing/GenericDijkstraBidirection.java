@@ -192,9 +192,6 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
 
             final int origEdgeId = getOrigEdgeId(iter, reverse);
             final int traversalId = getTraversalId(iter, origEdgeId, reverse);
-            if (!acceptTraversalId(traversalId, reverse)) {
-                continue;
-            }
             final double weight = calcWeight(iter, currEdge, reverse);
             if (Double.isInfinite(weight))
                 continue;
@@ -265,10 +262,6 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
 
     protected int getTraversalId(EdgeIteratorState edge, int origEdgeId, boolean reverse) {
         return traversalMode.createTraversalId(edge, reverse);
-    }
-
-    protected boolean acceptTraversalId(int traversalId, boolean revers) {
-        return true;
     }
 
     protected double calcWeight(EdgeIteratorState iter, T currEdge, boolean reverse) {
