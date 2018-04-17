@@ -19,12 +19,6 @@ package com.graphhopper.routing.profiles;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.tagparsers.*;
-import com.graphhopper.routing.util.AbstractFlagEncoder;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +28,7 @@ public class TagParserFactory {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(TagParserFactory.class);
     private static Map<String, Double> speedMap = createCarSpeedMap();
+    private static Set<String> footAccessTags = createFootAccessTags();
     public static final Set<String> fwdOneways = new HashSet<String>() {
         {
             add("yes");
@@ -56,6 +51,13 @@ public class TagParserFactory {
         }
     };
 
+    public static final ReaderWayFilter FOOTACCESSFILTER = new ReaderWayFilter() {
+        @Override
+        public boolean accept(ReaderWay way) {
+            return footAccessTags.contains(way.getTag("highway"));
+        }
+    };
+
     public static final String ROUNDABOUT = "roundabout";
     public static final String ROAD_CLASS = "road_class";
     public static final String ROAD_ENVIRONMENT = "road_environment";
@@ -70,6 +72,7 @@ public class TagParserFactory {
     public static final String CAR_AVERAGE_SPEED = "car.average_speed";
     public static final String BIKE_ACCESS = "bike.access";
     public static final String BIKE_AVERAGE_SPEED = "bike.average_speed";
+    public static final String BIKE_PRIORITY = "bike.priority";
     public static final String FOOT_ACCESS = "foot.access";
     public static final String FOOT_AVERAGE_SPEED = "foot.average_speed";
 
@@ -186,6 +189,39 @@ public class TagParserFactory {
         // forestry stuff
         map.put("track", 15d);
         return map;
+    }
+
+    public static Set<String> createFootAccessTags() {
+        Set<String> map = new HashSet<String>();
+        map.add("footway");
+        map.add("path");
+        map.add("steps");
+        map.add("pedestrian");
+        map.add("living_street");
+        map.add("track");
+        map.add("residential");
+        map.add("service");
+
+        map.add("trunk");
+        map.add("trunk_link");
+        map.add("primary");
+        map.add("primary_link");
+        map.add("secondary");
+        map.add("secondary_link");
+        map.add("tertiary");
+        map.add("tertiary_link");
+
+        map.add("cycleway");
+        map.add("unclassified");
+        map.add("road");
+
+        return map;
+    }
+    
+    //TODO
+    public static Map<String, Double> createBikeSpeedMap(){
+        Map<String, Double> map = new LinkedHashMap<>();
+    return map;
     }
 
     public static Map<String, Double> getSpeedMap() {

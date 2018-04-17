@@ -24,11 +24,13 @@ import com.graphhopper.storage.IntsRef;
 
 
 public class CarAccessParser implements TagParser {
-    private BooleanEncodedValue ev;
+    private final BooleanEncodedValue ev;
     private ReaderWayFilter acceptKnownRoadClasses = TagParserFactory.SPEEDMAPFILTER;
     public CarAccessParser(){
         this.ev = new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true);
     }
+    public CarAccessParser(BooleanEncodedValue ev){this.ev = ev;}
+
     public void parse(IntsRef ints, ReaderWay way) {
         assert acceptKnownRoadClasses.accept(way);
 
@@ -45,6 +47,11 @@ public class CarAccessParser implements TagParser {
 
     public ReaderWayFilter getReadWayFilter() {
         return acceptKnownRoadClasses;
+    }
+
+    public CarAccessParser setReadWayFilter(ReaderWayFilter rf){
+        this.acceptKnownRoadClasses = rf;
+        return this;
     }
 
     public final EncodedValue getEncodedValue() {

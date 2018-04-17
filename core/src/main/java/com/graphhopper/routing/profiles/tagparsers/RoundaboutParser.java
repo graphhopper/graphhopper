@@ -18,18 +18,15 @@
 package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.ReaderWayFilter;
-import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 
-public class RoundaboutParser implements TagParser  {
-    private BooleanEncodedValue ev;
+public class RoundaboutParser implements TagParser {
+    private final BooleanEncodedValue ev;
     public RoundaboutParser(){
         this.ev = new BooleanEncodedValue(TagParserFactory.ROUNDABOUT);
     }
-
+    public RoundaboutParser(BooleanEncodedValue ev){this.ev = ev;}
     public void parse(IntsRef ints, ReaderWay way) {
         if (way.hasTag("junction", "roundabout")) ev.setBool(false, ints, true);
     }

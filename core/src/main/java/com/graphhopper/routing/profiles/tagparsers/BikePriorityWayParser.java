@@ -19,35 +19,26 @@ package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.AbstractFlagEncoder;
+import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
 
-import static com.graphhopper.routing.profiles.TagParserFactory.ACCEPT_IF_HIGHWAY;
 
-
-public class CarMaxSpeedParser implements TagParser {
+//TODO class
+public class BikePriorityWayParser implements TagParser {
     private final DecimalEncodedValue ev;
-    private ReaderWayFilter rwf = TagParserFactory.ACCEPT_IF_HIGHWAY;
-    public CarMaxSpeedParser(){
-        this.ev = new DecimalEncodedValue(TagParserFactory.CAR_MAX_SPEED, 7, 0, 2, false);
-    }
-    public CarMaxSpeedParser(DecimalEncodedValue ev){this.ev = ev;}
-    public void parse(IntsRef ints, ReaderWay way) {
-        assert rwf.accept(way);
 
-        double val = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
-        if (val < 0)
-            return;
-        ev.setDecimal(false, ints, val);
+    public BikePriorityWayParser(){
+        this.ev = new DecimalEncodedValue(TagParserFactory.BIKE_PRIORITY, 3, 0, (double) 1 / PriorityCode.BEST.getValue(), false);
+    }
+
+    public BikePriorityWayParser(DecimalEncodedValue ev){this.ev = ev;}
+
+    public void parse(IntsRef ints, ReaderWay way) {
+        //TODO
     }
 
     public ReaderWayFilter getReadWayFilter() {
-        return rwf;
-    }
-
-    public CarMaxSpeedParser setReadWayFilter(ReaderWayFilter rf){
-        this.rwf = rf;
-        return this;
+        return TagParserFactory.ACCEPT_IF_HIGHWAY;
     }
 
     public final EncodedValue getEncodedValue() {
@@ -61,6 +52,5 @@ public class CarMaxSpeedParser implements TagParser {
     public final String getName() {
         return ev.getName();
     }
-
 
 }

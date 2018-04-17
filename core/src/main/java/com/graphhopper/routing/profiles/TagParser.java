@@ -1,4 +1,4 @@
-package com.graphhopper.routing.profiles.tagparsers;
+package com.graphhopper.routing.profiles;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;

@@ -18,10 +18,7 @@
 package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.ReaderWayFilter;
-import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.storage.IntsRef;
 
@@ -30,12 +27,13 @@ import java.util.Map;
 
 
 public class CarAverageSpeedParser implements TagParser {
-    private DecimalEncodedValue ev;
+    private final DecimalEncodedValue ev;
     private ReaderWayFilter acceptKnownRoadClasses = TagParserFactory.SPEEDMAPFILTER;
     private Map<String, Double> speedMap = TagParserFactory.getSpeedMap();
     public CarAverageSpeedParser(){
         this.ev = new DecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED, 5, 0, 5, false);
     }
+    public CarAverageSpeedParser(DecimalEncodedValue ev){this.ev = ev;}
     public void parse(IntsRef ints, ReaderWay way) {
         assert acceptKnownRoadClasses.accept(way);
 
@@ -49,6 +47,11 @@ public class CarAverageSpeedParser implements TagParser {
 
     public ReaderWayFilter getReadWayFilter() {
         return acceptKnownRoadClasses;
+    }
+
+    public CarAverageSpeedParser setReadWayFilter(ReaderWayFilter rf){
+        this.acceptKnownRoadClasses = rf;
+        return this;
     }
 
     public final EncodedValue getEncodedValue() {

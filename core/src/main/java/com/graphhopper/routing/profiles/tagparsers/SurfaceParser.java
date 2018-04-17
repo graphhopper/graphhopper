@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class SurfaceParser implements TagParser {
-    private StringEncodedValue ev;
+    private final StringEncodedValue ev;
 
     static List<String> surfaces = Arrays.asList("_default", "paved", "asphalt", "cobblestone", "cobblestone:flattened", "sett", "concrete",
             "concrete:lanes", "concrete:plates", "paving_stones", "paving_stones:30", "unpaved", "compacted"
@@ -35,6 +35,7 @@ public class SurfaceParser implements TagParser {
     public SurfaceParser(){
         this.ev = new StringEncodedValue(TagParserFactory.SURFACE, surfaces, "_default");
     }
+    public SurfaceParser(StringEncodedValue ev){this.ev = ev;}
 
     public void parse(IntsRef ints, ReaderWay way) {
         ev.setString(false, ints, way.getTag("surface"));

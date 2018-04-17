@@ -18,10 +18,7 @@
 package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.ReaderWayFilter;
-import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
@@ -31,7 +28,7 @@ import java.util.List;
 
 
 public class MaxWeightParser implements TagParser {
-    private DecimalEncodedValue ev;
+    private final DecimalEncodedValue ev;
 
     final List<String> weightTags = Arrays.asList("maxweight", "maxgcweight");
 
@@ -40,6 +37,7 @@ public class MaxWeightParser implements TagParser {
     public MaxWeightParser(){
         this.ev = new DecimalEncodedValue(TagParserFactory.MAX_WEIGHT, 10, 0, 0.1, false);
     }
+    public MaxWeightParser(DecimalEncodedValue ev){this.ev = ev;}
 
     public void parse(IntsRef ints, ReaderWay way) {
         String value = way.getFirstPriorityTag(weightTags);

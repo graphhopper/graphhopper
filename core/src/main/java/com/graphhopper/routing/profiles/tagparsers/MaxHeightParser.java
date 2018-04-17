@@ -26,7 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MaxHeightParser implements TagParser {
-    private DecimalEncodedValue ev;
+    private final DecimalEncodedValue ev;
 
     final List<String> heightTags = Arrays.asList("maxheight", "maxheight:physical");
 
@@ -34,6 +34,7 @@ public class MaxHeightParser implements TagParser {
     public MaxHeightParser(){
         this.ev = new DecimalEncodedValue(TagParserFactory.MAX_HEIGHT, 7, 10, 2, false);
     }
+    public MaxHeightParser(DecimalEncodedValue ev){this.ev = ev;}
 
     public void parse(IntsRef ints, ReaderWay way) {
         String value = way.getFirstPriorityTag(heightTags);
@@ -48,7 +49,7 @@ public class MaxHeightParser implements TagParser {
     }
 
     public ReaderWayFilter getReadWayFilter() {
-        return TagParserFactory.ACCEPT_IF_HIGHWAY;
+        return TagParserFactory.SPEEDMAPFILTER;
     }
 
     public final EncodedValue getEncodedValue() {

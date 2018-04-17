@@ -20,7 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.profiles.tagparsers.TagParser;
+import com.graphhopper.routing.profiles.TagParser;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
@@ -217,9 +217,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 return highwaySpeeds.containsKey(way.getTag("highway"));
             }
         };
-        tpMap.put(prefix + "access", TagParserFactory.Bike.createAccess(new BooleanEncodedValue(prefix + "access", true), filter));
+        tpMap.put(prefix + "access", TagParserFactory.createParser(TagParserFactory.BIKE_ACCESS));
         averageSpeedEnc = new DecimalEncodedValue(prefix + "average_speed", speedBits, 0, speedFactor, speedTwoDirections);
-        tpMap.put(averageSpeedEnc.getName(), TagParserFactory.Bike.createAverageSpeed(averageSpeedEnc));
+        tpMap.put(averageSpeedEnc.getName(), TagParserFactory.createParser(TagParserFactory.BIKE_AVERAGE_SPEED));
 
         priorityWayEnc = new DecimalEncodedValue(prefix + "priority", 3, 0, (double) 1 / PriorityCode.BEST.getValue(), false);
 
@@ -689,6 +689,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     protected void setHighwaySpeed(String highway, int speed) {
         highwaySpeeds.put(highway, speed);
+    }
+
+    public Map<String, Integer>  getHighwaySpeed() {
+        return highwaySpeeds;
     }
 
     protected int getHighwaySpeed(String key) {

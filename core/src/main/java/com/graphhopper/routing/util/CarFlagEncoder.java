@@ -20,7 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.profiles.tagparsers.TagParser;
+import com.graphhopper.routing.profiles.TagParser;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -118,7 +118,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
         maxPossibleSpeed = 140;
 
-        defaultSpeedMap.putAll(TagParserFactory.Car.createSpeedMap());
+        defaultSpeedMap.putAll(TagParserFactory.createCarSpeedMap());
 
         init();
     }
@@ -138,15 +138,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         Map<String, TagParser> tpMap = new HashMap<>();
         tpMap.put(TagParserFactory.ROUNDABOUT, null);
         tpMap.put(TagParserFactory.CAR_MAX_SPEED, null);
-        tpMap.put(prefix + "average_speed", TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue(prefix + "average_speed", speedBits, 0, speedFactor, false),
-                defaultSpeedMap));
-        ReaderWayFilter filter = new ReaderWayFilter() {
-            @Override
-            public boolean accept(ReaderWay way) {
-                return defaultSpeedMap.containsKey(way.getTag("highway"));
-            }
-        };
-        tpMap.put(prefix + "access", TagParserFactory.Car.createAccess(new BooleanEncodedValue(prefix + "access", true), filter));
+        tpMap.put(TagParserFactory.CAR_AVERAGE_SPEED, TagParserFactory.createParser(TagParserFactory.CAR_AVERAGE_SPEED));
+        tpMap.put(TagParserFactory.CAR_ACCESS, TagParserFactory.createParser(TagParserFactory.CAR_ACCESS));
         return tpMap;
     }
 

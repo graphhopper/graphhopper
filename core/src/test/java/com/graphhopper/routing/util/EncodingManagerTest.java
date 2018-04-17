@@ -21,8 +21,10 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.TagParser;
 import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.profiles.TagParser;
+import com.graphhopper.routing.profiles.tagparsers.CarAccessParser;
+import com.graphhopper.routing.profiles.tagparsers.CarAverageSpeedParser;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.BitUtil;
 import org.junit.Rule;
@@ -123,9 +125,12 @@ public class EncodingManagerTest {
             public Map<String, TagParser> createTagParsers(String prefix) {
                 Map<String, TagParser> map = new HashMap<>();
                 DecimalEncodedValue speedEnc = new DecimalEncodedValue(prefix + "average_speed", 3, 0, 5, false);
-                map.put(speedEnc.getName(), TagParserFactory.Car.createAverageSpeed(speedEnc, TagParserFactory.Car.createSpeedMap()));
-                BooleanEncodedValue accessEnc = new BooleanEncodedValue(prefix + "access", true);
-                map.put(accessEnc.getName(), TagParserFactory.Car.createAccess(accessEnc, TagParserFactory.ACCEPT_IF_HIGHWAY));
+
+                CarAverageSpeedParser carAverageSpeedParser = new CarAverageSpeedParser(speedEnc);
+                map.put(TagParserFactory.CAR_AVERAGE_SPEED, carAverageSpeedParser);
+                CarAccessParser carAccessParser = (CarAccessParser) TagParserFactory.createParser(TagParserFactory.CAR_ACCESS);
+                carAccessParser.setReadWayFilter(TagParserFactory.ACCEPT_IF_HIGHWAY);
+                map.put(accessEnc.getName(), carAccessParser);
                 return map;
             }
 

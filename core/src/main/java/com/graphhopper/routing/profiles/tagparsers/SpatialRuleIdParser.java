@@ -19,21 +19,22 @@ package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.shapes.GHPoint;
 
 
 public class SpatialRuleIdParser implements TagParser {
-    private IntEncodedValue ev;
+    private final IntEncodedValue ev;
     public SpatialRuleIdParser(){
-        //TODO NOW Use correct SpatialRuleLookup
+//        //TODO NOW Use correct SpatialRuleLookup
+        this.ev = null;
 //        int tmpMax = spatialRuleLookup.size() - 1;
 //        int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
 //        if (bits > 0)
 //            this.ev = new IntEncodedValue(TagParserFactory.SPATIAL_RULE_ID, bits, 0, false);
     }
+
+    public SpatialRuleIdParser(IntEncodedValue ev){this.ev = ev;}
 
     public void parse(IntsRef ints, ReaderWay way) {
         GHPoint estimatedCenter = way.getTag("estimated_center", null);

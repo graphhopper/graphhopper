@@ -18,10 +18,7 @@
 package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.ReaderWayFilter;
-import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
@@ -30,7 +27,7 @@ import java.util.List;
 
 
 public class MaxWidthParser implements TagParser {
-    private DecimalEncodedValue ev;
+    private final DecimalEncodedValue ev;
 
     final List<String> widthTags = Arrays.asList("maxwidth", "maxwidth:physical");
 
@@ -39,7 +36,7 @@ public class MaxWidthParser implements TagParser {
     public MaxWidthParser(){
         this.ev = new DecimalEncodedValue(TagParserFactory.MAX_WIDTH, 6, 0, 0.1, false);
     }
-
+    public MaxWidthParser(DecimalEncodedValue ev){this.ev = ev;}
     public void parse(IntsRef ints, ReaderWay way) {
         String value = way.getFirstPriorityTag(widthTags);
         if (Helper.isEmpty(value)) return;

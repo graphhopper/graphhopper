@@ -817,7 +817,7 @@ public class OSMReaderTest {
 
     @Test
     public void testEncodedValueBasedEncodingManager() {
-        final Map<String, Double> speedMap = TagParserFactory.Car.createSpeedMap();
+        final Map<String, Double> speedMap = TagParserFactory.createCarSpeedMap();
         ReaderWayFilter filter = new ReaderWayFilter() {
             @Override
             public boolean accept(ReaderWay way) {
@@ -827,8 +827,8 @@ public class OSMReaderTest {
 
         final EncodingManager em = new EncodingManager.Builder(4).
                 addGlobalEncodedValues().
-                add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED, 5, 0, 5, false), speedMap)).
-                add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true), filter)).
+                add(TagParserFactory.createParser(TagParserFactory.CAR_AVERAGE_SPEED)).
+                add(TagParserFactory.createParser(TagParserFactory.CAR_ACCESS)).
                 build();
         GraphHopper hopper = new GraphHopperOSM(json) {
             @Override

@@ -18,10 +18,7 @@
 package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.ReaderWayFilter;
-import com.graphhopper.routing.profiles.StringEncodedValue;
-import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
@@ -29,7 +26,7 @@ import java.util.List;
 
 
 public class RoadClassParser implements TagParser {
-    private StringEncodedValue ev;
+    private final StringEncodedValue ev;
 
     List<String> roadClasses = Arrays.asList("_default", "footway", "path", "steps", "pedestrian", "living_street", "track",
             "residential", "service", "trunk", "trunk_link", "motorway", "motorway_link", "motorroad",
@@ -39,6 +36,7 @@ public class RoadClassParser implements TagParser {
     public RoadClassParser(){
         this.ev = new StringEncodedValue(TagParserFactory.ROAD_CLASS, roadClasses, "_default");
     }
+    public RoadClassParser(StringEncodedValue ev){this.ev = ev;}
 
     public void parse(IntsRef ints, ReaderWay way) {
         ev.setString(false, ints, way.getTag("highway"));

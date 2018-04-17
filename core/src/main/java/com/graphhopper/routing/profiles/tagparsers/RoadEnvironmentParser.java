@@ -18,17 +18,14 @@
 package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.ReaderWayFilter;
-import com.graphhopper.routing.profiles.StringEncodedValue;
-import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
 import java.util.List;
 
 public class RoadEnvironmentParser implements TagParser {
-    private StringEncodedValue ev;
+    private final StringEncodedValue ev;
 
     List<String> roadEnvList = Arrays.asList("_default", "bridge", "tunnel", "ford", "aerialway");
 
@@ -38,6 +35,7 @@ public class RoadEnvironmentParser implements TagParser {
 
         this.ev = new StringEncodedValue(TagParserFactory.ROAD_ENVIRONMENT, roadEnvList, "_default");
     }
+    public RoadEnvironmentParser(StringEncodedValue ev){this.ev = ev;}
 
     public void parse(IntsRef ints, ReaderWay way) {
         // TODO use roadEnvEnc.getDefault instead

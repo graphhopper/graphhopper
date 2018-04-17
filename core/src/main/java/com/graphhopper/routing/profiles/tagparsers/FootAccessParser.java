@@ -18,20 +18,17 @@
 package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.ReaderWayFilter;
-import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 
 
 public class FootAccessParser implements TagParser {
-    private BooleanEncodedValue ev;
+    private final BooleanEncodedValue ev;
     private ReaderWayFilter acceptKnownRoadClasses = TagParserFactory.SPEEDMAPFILTER;
     public FootAccessParser(){
-        this.ev = new BooleanEncodedValue(TagParserFactory.FOOT_ACCESS, true)
+        this.ev = new BooleanEncodedValue(TagParserFactory.FOOT_ACCESS, true);
     }
-
+    public FootAccessParser(BooleanEncodedValue ev){this.ev = ev;}
     public void parse(IntsRef ints, ReaderWay way) {
         assert acceptKnownRoadClasses.accept(way) : way.toString();
 

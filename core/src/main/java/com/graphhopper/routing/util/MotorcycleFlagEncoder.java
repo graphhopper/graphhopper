@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.profiles.tagparsers.TagParser;
+import com.graphhopper.routing.profiles.TagParser;
 import com.graphhopper.routing.weighting.CurvatureWeighting;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
@@ -126,16 +126,12 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         Map<String, TagParser> map = new HashMap<>();
         map.put("roundabout", null);
 
-        map.put(prefix + "average_speed", TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue(prefix + "average_speed", speedBits, 0, speedFactor, true),
-                defaultSpeedMap));
-        ReaderWayFilter filter = new ReaderWayFilter() {
-            @Override
-            public boolean accept(ReaderWay way) {
-                return defaultSpeedMap.containsKey(way.getTag("highway"));
-            }
-        };
-        map.put(prefix + "access", TagParserFactory.Car.createAccess(new BooleanEncodedValue(prefix + "access", true), filter));
+        //TODO: is the prefix car here?
+        map.put(TagParserFactory.CAR_AVERAGE_SPEED, TagParserFactory.createParser(TagParserFactory.CAR_AVERAGE_SPEED));
 
+        map.put(TagParserFactory.CAR_ACCESS, TagParserFactory.createParser(TagParserFactory.CAR_ACCESS));
+
+        //TODO: Move to separate class
         final DecimalEncodedValue priorityWayEnc = new DecimalEncodedValue(prefix + "priority", 3, 3, .15, false);
         map.put(priorityWayEnc.getName(), new TagParser() {
             @Override
@@ -158,6 +154,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
 // TODO NOW
             }
         });
+        //TODO: Move to separate class
+
         final DecimalEncodedValue curvatureEnc = new DecimalEncodedValue(TagParserFactory.CURVATURE, 4, 10, 1, false);
         map.put(curvatureEnc.getName(), new TagParser() {
             @Override

@@ -296,12 +296,12 @@ public class FootFlagEncoderTest {
         way.setTag("highway", "track");
         way.setTag("sac_scale", "hiking");
         IntsRef flags = encodingManager.handleWayTags(encodingManager.createIntsRef(), way, new EncodingManager.AcceptWay(), 0);
-        assertEquals(TagParserFactory.Foot.MEAN_SPEED, footEncoder.getSpeed(flags), 1e-1);
+        assertEquals(TagParserFactory.Foot.FOOT_MEAN_SPEED, footEncoder.getSpeed(flags), 1e-1);
 
         way.setTag("highway", "track");
         way.setTag("sac_scale", "mountain_hiking");
         flags = encodingManager.handleWayTags(encodingManager.createIntsRef(), way, new EncodingManager.AcceptWay(), 0);
-        assertEquals(TagParserFactory.Foot.SLOW_SPEED, footEncoder.getSpeed(flags), 1e-1);
+        assertEquals(TagParserFactory.Foot.FOOT_SLOW_SPEED, footEncoder.getSpeed(flags), 1e-1);
     }
 
     @Test

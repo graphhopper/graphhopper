@@ -20,7 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.profiles.tagparsers.TagParser;
+import com.graphhopper.routing.profiles.TagParser;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
@@ -135,7 +135,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         allowedSacScaleTags.add("demanding_mountain_hiking");
         allowedSacScaleTags.add("alpine_hiking");
 
-        maxPossibleSpeed = FOOT_FERRY_SPEED;
+        maxPossibleSpeed = TagParserFactory.Foot.FOOT_FERRY_SPEED;
 
         init();
     }
@@ -149,14 +149,14 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     public Map<String, TagParser> createTagParsers(final String prefix) {
         Map<String, TagParser> map = new HashMap<>();
         averageSpeedEnc = new DecimalEncodedValue(prefix + "average_speed", speedBits, 0, speedFactor, false);
-        map.put(prefix + "average_speed", TagParserFactory.Foot.createAverageSpeed(averageSpeedEnc));
+        map.put(TagParserFactory.FOOT_AVERAGE_SPEED, TagParserFactory.createParser(TagParserFactory.FOOT_AVERAGE_SPEED));
         final ReaderWayFilter filter = new ReaderWayFilter() {
             @Override
             public boolean accept(ReaderWay way) {
                 return allowedHighwayTags.contains(way.getTag("highway"));
             }
         };
-        map.put(prefix + "access", TagParserFactory.Foot.createAccess(new BooleanEncodedValue(prefix + "access", true), filter));
+        map.put(TagParserFactory.FOOT_ACCESS, TagParserFactory.createParser(TagParserFactory.FOOT_ACCESS));
         map.put("roundabout", null);
 
         priorityEnc = new IntEncodedValue(prefix + "priority", 3, 0, false);
@@ -306,7 +306,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             return ints;
 
         if (allowed.isFerry()) {
-            double ferrySpeed = getFerrySpeed(way, FOOT_SLOW_SPEED, FOOT_MEAN_SPEED, FOOT_FERRY_SPEED);
+            double ferrySpeed = getFerrySpeed(way, TagParserFactory.Foot.FOOT_SLOW_SPEED, TagParserFactory.Foot.FOOT_MEAN_SPEED, TagParserFactory.Foot.FOOT_FERRY_SPEED);
             averageSpeedEnc.setDecimal(false, ints, ferrySpeed);
             accessEnc.setBool(false, ints, true);
             accessEnc.setBool(true, ints, true);

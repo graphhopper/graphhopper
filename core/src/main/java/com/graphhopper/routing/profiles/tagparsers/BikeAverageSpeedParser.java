@@ -18,23 +18,21 @@
 package com.graphhopper.routing.profiles.tagparsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.ReaderWayFilter;
-import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Map;
 
 
 public class BikeAverageSpeedParser implements TagParser {
-    private DecimalEncodedValue ev;
+    private final DecimalEncodedValue ev;
     private ReaderWayFilter acceptKnownRoadClasses = TagParserFactory.SPEEDMAPFILTER;
     private Map<String, Double> speedMap = TagParserFactory.getSpeedMap();
     public BikeAverageSpeedParser(){
         // TODO Are these the correct speedbit values?
         this.ev = new DecimalEncodedValue(TagParserFactory.BIKE_AVERAGE_SPEED, 5, 0, 5, false);
     }
+    public BikeAverageSpeedParser(DecimalEncodedValue ev){this.ev = ev;}
     public void parse(IntsRef ints, ReaderWay way) {
         //TODO NOW
     }
