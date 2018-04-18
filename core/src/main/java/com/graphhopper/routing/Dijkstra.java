@@ -25,6 +25,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
 
 import java.util.PriorityQueue;
@@ -58,7 +59,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
     public Path calcPath(int from, int to) {
         checkAlreadyRun();
         this.to = to;
-        currEdge = createSPTEntry(from, 0);
+        currEdge = new SPTEntry(from, 0);
         if (!traversalMode.isEdgeBased()) {
             fromMap.put(from, currEdge);
         }
@@ -128,6 +129,9 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
     @Override
     public int getVisitedNodes() {
         return visitedNodes;
+    }
+
+    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry bestSPTEntry, int traversalId) {
     }
 
     @Override

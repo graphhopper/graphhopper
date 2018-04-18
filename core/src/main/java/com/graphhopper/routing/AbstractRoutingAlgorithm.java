@@ -26,7 +26,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Collections;
@@ -44,7 +43,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected EdgeExplorer inEdgeExplorer;
     protected EdgeExplorer outEdgeExplorer;
     protected int maxVisitedNodes = Integer.MAX_VALUE;
-    private EdgeFilter additionalEdgeFilter;
+    protected EdgeFilter additionalEdgeFilter;
     private boolean alreadyRun;
 
     /**
@@ -72,14 +71,11 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         return this;
     }
 
-    protected boolean accept(EdgeIterator iter, int prevOrNextEdgeId) {
+    protected boolean accept(EdgeIteratorState iter, int prevOrNextEdgeId) {
         if (!traversalMode.hasUTurnSupport() && iter.getEdge() == prevOrNextEdgeId)
             return false;
 
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
-    }
-
-    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry bestSPTEntry, int traversalId) {
     }
 
     protected void checkAlreadyRun() {
@@ -87,10 +83,6 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
             throw new IllegalStateException("Create a new instance per call");
 
         alreadyRun = true;
-    }
-
-    protected SPTEntry createSPTEntry(int node, double weight) {
-        return new SPTEntry(EdgeIterator.NO_EDGE, node, weight);
     }
 
     /**
