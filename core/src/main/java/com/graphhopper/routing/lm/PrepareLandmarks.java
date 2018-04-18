@@ -122,9 +122,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     }
 
     @Override
-    public void doWork() {
-        super.doWork();
-
+    public void doSpecificWork() {
         StopWatch sw = new StopWatch().start();
         LOGGER.info("Start calculating " + lms.getLandmarkCount() + " landmarks, default active lms:"
                 + defaultActiveLandmarks + ", weighting:" + lms.getLmSelectionWeighting() + ", " + Helper.getMemInfo());
@@ -141,7 +139,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         int activeLM = Math.max(1, opts.getHints().getInt(Landmark.ACTIVE_COUNT, defaultActiveLandmarks));
         if (algo instanceof AStar) {
             if (!lms.isInitialized())
-                throw new IllegalStateException("Initalize landmark storage before creating algorithms");
+                throw new IllegalStateException("Initialize landmark storage before creating algorithms");
 
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStar.EPSILON, 1);
             AStar astar = (AStar) algo;
@@ -150,7 +148,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
             return algo;
         } else if (algo instanceof AStarBidirection) {
             if (!lms.isInitialized())
-                throw new IllegalStateException("Initalize landmark storage before creating algorithms");
+                throw new IllegalStateException("Initialize landmark storage before creating algorithms");
 
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
             AStarBidirection astarbi = (AStarBidirection) algo;
@@ -159,7 +157,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
             return algo;
         } else if (algo instanceof AlternativeRoute) {
             if (!lms.isInitialized())
-                throw new IllegalStateException("Initalize landmark storage before creating algorithms");
+                throw new IllegalStateException("Initialize landmark storage before creating algorithms");
 
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
             AlternativeRoute altRoute = (AlternativeRoute) algo;

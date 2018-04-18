@@ -50,8 +50,8 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
     }
 
     protected void initCollections(int size) {
-        fromHeap = new PriorityQueue<SPTEntry>(size);
-        fromMap = new GHIntObjectHashMap<SPTEntry>(size);
+        fromHeap = new PriorityQueue<>(size);
+        fromMap = new GHIntObjectHashMap<>(size);
     }
 
     @Override

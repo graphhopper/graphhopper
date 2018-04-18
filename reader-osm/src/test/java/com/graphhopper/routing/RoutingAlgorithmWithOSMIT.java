@@ -139,7 +139,7 @@ public class RoutingAlgorithmWithOSMIT {
     @Test
     public void testOneWayCircleBug() {
         // export from http://www.openstreetmap.org/export#map=19/51.37605/-0.53155
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         // going the bit longer way out of the circle
         list.add(new OneRun(51.376197, -0.531576, 51.376509, -0.530863, 153, 18));
         // now exacle the opposite direction: going into the circle (shorter)
@@ -153,7 +153,7 @@ public class RoutingAlgorithmWithOSMIT {
     @Test
     public void testMoscow() {
         // extracted via ./graphhopper.sh extract "37.582641,55.805261,37.626929,55.824455"
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         // choose perpendicular
         // http://localhost:8989/?point=55.818994%2C37.595354&point=55.819175%2C37.596931
         list.add(new OneRun(55.818994, 37.595354, 55.819175, 37.596931, 1052, 14));
@@ -170,7 +170,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testMoscowTurnCosts() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
         list.add(new OneRun(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
         // TODO include CH
@@ -183,7 +183,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testSidewalkNo() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         // roundabout contains sidewalk=no which should be avoided
         list.add(new OneRun(57.154888, -2.101822, 57.153445, -2.099869, 329, 31));
         // longer path should go through tertiary, see discussion in #476
@@ -227,7 +227,7 @@ public class RoutingAlgorithmWithOSMIT {
     }
 
     List<OneRun> createMonacoFoot() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(43.730729, 7.421288, 43.727697, 7.419199, 1566, 92));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3438, 136));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2085, 112));
@@ -269,7 +269,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testNorthBayreuthHikeFastestAnd3D() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'        
         list.add(new OneRun(49.974972, 11.515657, 49.991022, 11.512299, 2365, 66));
         // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
@@ -281,7 +281,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testMonacoBike3D_twoSpeedsPerEdge() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
         list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2710, 118));
         // 2.
@@ -319,7 +319,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testMonacoBike() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 1642, 87));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3580, 168));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2323, 121));
@@ -331,7 +331,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testMonacoMountainBike() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2322, 110));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3655, 176));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2331, 121));
@@ -348,7 +348,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testMonacoRacingBike() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2594, 111));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3588, 170));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2572, 135));
@@ -364,7 +364,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testKremsBikeRelation() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12491, 159));
         // 3109m is better as cyclepath is used
         list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3112, 87));
@@ -381,7 +381,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testKremsMountainBikeRelation() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12574, 169));
         list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3101, 94));
         list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 95));
@@ -396,7 +396,7 @@ public class RoutingAlgorithmWithOSMIT {
     }
 
     List<OneRun> createAndorra() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(42.56819, 1.603231, 42.571034, 1.520662, 17708, 524));
         list.add(new OneRun(42.529176, 1.571302, 42.571034, 1.520662, 11408, 305));
         return list;
@@ -436,7 +436,7 @@ public class RoutingAlgorithmWithOSMIT {
         // bzcat campo-grande.osm.bz2 
         //   | ./bin/osmosis --read-xml enableDateParsing=no file=- --bounding-box top=-20.4 left=-54.6 bottom=-20.6 right=-54.5 --write-xml file=- 
         //   | bzip2 > campo-grande.extracted.osm.bz2
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25516, 271));
         list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18009, 237));
         runAlgo(testCollector, DIR + "/campo-grande.osm.gz", "target/campo-grande-gh", list,
@@ -451,7 +451,7 @@ public class RoutingAlgorithmWithOSMIT {
         oneRun.add(43.727697, 7.419199, 2581, 110);
         oneRun.add(43.726387, 7.4, 3001, 90);
 
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         list.add(oneRun);
 
         runAlgo(testCollector, DIR + "/monaco.osm.gz", "target/monaco-gh",
@@ -461,7 +461,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testHarsdorf() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         // TODO somehow the bigger road is take even if we make it less preferred (e.g. introduce AVOID AT ALL costs for lanes=2&&maxspeed>50)
         list.add(new OneRun(50.004333, 11.600254, 50.044449, 11.543434, 6952, 190));
 
@@ -474,7 +474,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testNeudrossenfeld() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         // choose cycleway (Dreschenauer Straße)
         list.add(new OneRun(49.987132, 11.510496, 50.018839, 11.505024, 3985, 106));
 
@@ -488,7 +488,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testDisconnectedAreaAndMultiplePoints() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         OneRun oneRun = new OneRun();
         oneRun.add(53.753177, 9.435968, 10, 10);
         oneRun.add(53.751299, 9.386959, 10, 10);

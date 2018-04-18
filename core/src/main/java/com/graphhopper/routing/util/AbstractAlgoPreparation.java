@@ -26,9 +26,11 @@ public abstract class AbstractAlgoPreparation {
     public void doWork() {
         if (prepared)
             throw new IllegalStateException("Call doWork only once!");
-
         prepared = true;
+        doSpecificWork();
     }
+
+    protected abstract void doSpecificWork();
 
     public boolean isPrepared() {
         return prepared;
