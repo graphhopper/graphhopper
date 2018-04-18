@@ -57,6 +57,9 @@ while [ ! -z $1 ]; do
     --port) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$2"; shift 2;;
     -v|--version) echo $VERSION
     	exit 2;;
+    # forward VM options, here we assume no spaces ie. just one parameter!?
+    -D*)
+       GH_WEB_OPTS="$GH_WEB_OPTS $1"; shift 1;;
     # forward parameter via replacing first two characters of the key with -Dgraphhopper.
     --*)
        GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.${1:2}=$2"; shift 2;;
@@ -235,6 +238,7 @@ packageJar
 echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 
 if [[ "$ACTION" = "webdebug" ]]; then
+  echo $GH_WEB_OPTS
   exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
                  $GH_WEB_OPTS -cp "$JAR" com.graphhopper.http.GraphHopperDebugApplication server $CONFIG
 
