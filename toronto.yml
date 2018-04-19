@@ -1,0 +1,11 @@
+graphhopper:
+  graph.location: transit_data/toronto-r5-gh
+
+server:
+  applicationConnectors:
+  - type: http
+    port: 8998
+    # for security reasons bind to localhost
+    bindHost: localhost
+  requestLog:
+      appenders: []
