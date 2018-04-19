@@ -56,7 +56,7 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
  */
 public class Measurement {
     private static final Logger logger = LoggerFactory.getLogger(Measurement.class);
-    private final Map<String, String> properties = new TreeMap<String, String>();
+    private final Map<String, String> properties = new TreeMap<>();
     private long seed;
     private int maxNode;
 
