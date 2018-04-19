@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Graphhopper" version="1.1" xmlns:gh="https://graphhopper.com/public/schema/gpx/1.1">
+<metadata><copyright author="OpenStreetMap contributors"/><link href="http://graphhopper.com"><text>GraphHopper GPX</text></link><time>2015-02-03T17:34:05+00:00</time></metadata>
+<rte>
+<rtept lat="51.342375" lon="12.361369"><desc>continue onto Jahnallee, B 87</desc><extensions><gh:distance>139.5</gh:distance><gh:time>11160</gh:time><gh:direction>E</gh:direction><gh:azimuth>77.0</gh:azimuth><gh:sign>0</gh:sign></extensions></rtept>
+<rtept lat="51.342821" lon="12.363246"><desc>turn sharp left onto Funkenburgstraße</desc><extensions><gh:distance>93.8</gh:distance><gh:time>13505</gh:time><gh:direction>NW</gh:direction><gh:azimuth>333.0</gh:azimuth><gh:sign>-3</gh:sign></extensions></rtept>
+<rtept lat="51.343627" lon="12.362848"><extensions><gh:distance>0.0</gh:distance><gh:time>0</gh:time><gh:direction>N</gh:direction><gh:azimuth>0.0</gh:azimuth><gh:sign>5</gh:sign></extensions></rtept>
+<rtept lat="51.343627" lon="12.362848"><desc>continue onto Funkenburgstraße</desc><extensions><gh:distance>54.4</gh:distance><gh:time>7838</gh:time><gh:direction>NW</gh:direction><gh:azimuth>333.0</gh:azimuth><gh:sign>0</gh:sign></extensions></rtept>
+<rtept lat="51.344095" lon="12.362617"><desc>turn left onto Gustav-Adolf-Straße</desc><extensions><gh:distance>94.9</gh:distance><gh:time>13667</gh:time><gh:direction>W</gh:direction><gh:azimuth>257.0</gh:azimuth><gh:sign>-2</gh:sign></extensions></rtept>
+<rtept lat="51.343796" lon="12.361337"><desc>turn sharp left onto Tschaikowskistraße</desc><extensions><gh:distance>57.4</gh:distance><gh:time>6886</gh:time><gh:direction>SE</gh:direction><gh:azimuth>151.0</gh:azimuth><gh:sign>-3</gh:sign></extensions></rtept>
+<rtept lat="51.343306" lon="12.361601"><extensions><gh:distance>0.0</gh:distance><gh:time>0</gh:time><gh:direction>N</gh:direction><gh:azimuth>0.0</gh:azimuth><gh:sign>5</gh:sign></extensions></rtept>
+<rtept lat="51.343306" lon="12.361601"><desc>continue onto Tschaikowskistraße</desc><extensions><gh:distance>91.7</gh:distance><gh:time>11009</gh:time><gh:direction>SE</gh:direction><gh:azimuth>151.0</gh:azimuth><gh:sign>0</gh:sign></extensions></rtept>
+<rtept lat="51.342524" lon="12.362022"><desc>turn left onto Jahnallee, B 87</desc><extensions><gh:distance>8.6</gh:distance><gh:time>690</gh:time><gh:direction>E</gh:direction><gh:azimuth>78.0</gh:azimuth><gh:sign>-2</gh:sign></extensions></rtept>
+<rtept lat="51.34255" lon="12.36214"><desc>turn slight right onto Lessingstraße</desc><extensions><gh:distance>83.0</gh:distance><gh:time>11954</gh:time><gh:direction>SE</gh:direction><gh:azimuth>113.0</gh:azimuth><gh:sign>1</gh:sign></extensions></rtept>
+<rtept lat="51.342128" lon="12.363127"><extensions><gh:distance>0.0</gh:distance><gh:time>0</gh:time><gh:sign>4</gh:sign></extensions></rtept></rte>
+<trk><name>GraphHopper Track</name><trkseg>
+<trkpt lat="51.342375" lon="12.361369"><time>2015-02-03T17:34:05+00:00</time></trkpt>
+<trkpt lat="51.342607" lon="12.362373"><time>2015-02-03T17:34:11+00:00</time></trkpt>
+<trkpt lat="51.342836" lon="12.363238"><time>2015-02-03T17:34:16+00:00</time></trkpt>
+<trkpt lat="51.343627" lon="12.362848"><time>2015-02-03T17:34:30+00:00</time></trkpt>
+<trkpt lat="51.344095" lon="12.362617"><time>2015-02-03T17:34:38+00:00</time></trkpt>
+<trkpt lat="51.343796" lon="12.361337"><time>2015-02-03T17:34:51+00:00</time></trkpt>
+<trkpt lat="51.343306" lon="12.361601"><time>2015-02-03T17:34:58+00:00</time></trkpt>
+<trkpt lat="51.342524" lon="12.362022"><time>2015-02-03T17:35:09+00:00</time></trkpt>
+<trkpt lat="51.34255" lon="12.36214"><time>2015-02-03T17:35:10+00:00</time></trkpt>
+<trkpt lat="51.342448" lon="12.362379"><time>2015-02-03T17:35:13+00:00</time></trkpt>
+<trkpt lat="51.342128" lon="12.363127"><time>2015-02-03T17:35:22+00:00</time></trkpt></trkseg></trk></gpx>

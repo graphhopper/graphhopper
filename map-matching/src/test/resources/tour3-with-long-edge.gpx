@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?><gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Graphhopper" version="1.1" xmlns:gh="https://graphhopper.com/public/schema/gpx/1.1">
+<metadata><copyright author="OpenStreetMap contributors"/><link href="http://graphhopper.com"><text>GraphHopper GPX</text></link><time>2015-02-09T20:53:01+00:00</time></metadata>
+<!--
+<rte>
+<rtept lat="51.359723" lon="12.360108"><desc>continue onto Marbachstraße</desc><extensions><gh:distance>14.7</gh:distance><gh:time>2119</gh:time><gh:direction>SE</gh:direction><gh:azimuth>127.0</gh:azimuth><gh:sign>0</gh:sign></extensions></rtept>
+<rtept lat="51.359621" lon="12.360243"><desc>turn sharp right onto Weinligstraße</desc><extensions><gh:distance>267.6</gh:distance><gh:time>38529</gh:time><gh:direction>SW</gh:direction><gh:azimuth>238.0</gh:azimuth><gh:sign>3</gh:sign></extensions></rtept>
+<rtept lat="51.357935" lon="12.357494"><desc>turn right onto Fechnerstraße</desc><extensions><gh:distance>10.1</gh:distance><gh:time>1461</gh:time><gh:direction>NW</gh:direction><gh:azimuth>308.0</gh:azimuth><gh:sign>2</gh:sign></extensions></rtept>
+<rtept lat="51.358007" lon="12.357403"><extensions><gh:distance>0.0</gh:distance><gh:time>0</gh:time><gh:direction>N</gh:direction><gh:azimuth>0.0</gh:azimuth><gh:sign>5</gh:sign></extensions></rtept>
+<rtept lat="51.358007" lon="12.357403"><desc>continue onto Fechnerstraße</desc><extensions><gh:distance>99.6</gh:distance><gh:time>14345</gh:time><gh:direction>NW</gh:direction><gh:azimuth>308.0</gh:azimuth><gh:sign>0</gh:sign></extensions></rtept>
+<rtept lat="51.358709" lon="12.356511"><extensions><gh:distance>0.0</gh:distance><gh:time>0</gh:time><gh:sign>4</gh:sign></extensions></rtept></rte>
+-->
+<trk><name>GraphHopper Track</name><trkseg>
+<trkpt lat="51.359723" lon="12.360108"><time>2015-02-09T20:53:01+00:00</time></trkpt>
+<trkpt lat="51.359621" lon="12.360243"><time>2015-02-09T20:53:03+00:00</time></trkpt>
+
+<trkpt lat="51.358591" lon="12.358584"><time>2015-02-09T20:53:29+00:00</time></trkpt>
+<trkpt lat="51.358189" lon="12.357876"><time>2015-02-09T20:53:42+00:00</time></trkpt>
+
+<trkpt lat="51.358007" lon="12.357403"><time>2015-02-09T20:53:43+00:00</time></trkpt>
+<trkpt lat="51.358627" lon="12.356612"><time>2015-02-09T20:53:56+00:00</time></trkpt>
+<trkpt lat="51.358709" lon="12.356511"><time>2015-02-09T20:53:58+00:00</time></trkpt></trkseg></trk></gpx>

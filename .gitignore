@@ -21,6 +21,7 @@ debug.sh
 /web/src/main/webapp/js/config/options_prod.js
 /web/dependency-reduced-pom.xml
 *.pbf
+!/core/files/*.pbf
 !/reader-osm/src/test/resources/com/graphhopper/reader/osm/*.pbf
 *.dem
 *.log
