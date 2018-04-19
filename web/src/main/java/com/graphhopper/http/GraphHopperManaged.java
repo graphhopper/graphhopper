@@ -23,6 +23,7 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoderFactory;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.util.CmdArgs;
@@ -63,7 +64,7 @@ public class GraphHopperManaged implements Managed {
             private FlagEncoderFactory delegate = new DefaultFlagEncoderFactory();
             @Override
             public FlagEncoder createFlagEncoder(String name, PMap configuration) {
-                if (name.equals("original-direction")) {
+                if (name.equals("car")) {
                     return new OriginalDirectionFlagEncoder();
                 }
                 return delegate.createFlagEncoder(name, configuration);
@@ -75,7 +76,7 @@ public class GraphHopperManaged implements Managed {
             @Override
             public List<PathDetailsBuilder> createPathDetailsBuilders(List<String> requestedPathDetails, FlagEncoder encoder, Weighting weighting) {
                 // request-scoped
-                OriginalDirectionFlagEncoder originalDirectionFlagEncoder = (OriginalDirectionFlagEncoder) graphHopper.getGraphHopperStorage().getEncodingManager().getEncoder("original-direction");
+                OriginalDirectionFlagEncoder originalDirectionFlagEncoder = (OriginalDirectionFlagEncoder) graphHopper.getGraphHopperStorage().getEncodingManager().getEncoder("car");
                 List<PathDetailsBuilder> builders = new ArrayList<>();
                 if (requestedPathDetails.contains(AVERAGE_SPEED))
                     builders.add(new AverageSpeedDetails(encoder));
