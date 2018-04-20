@@ -17,10 +17,7 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.IntObjectHashMap;
-import com.carrotsearch.hppc.IntObjectMap;
-import com.carrotsearch.hppc.LongHashSet;
-import com.carrotsearch.hppc.LongSet;
+import com.carrotsearch.hppc.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
@@ -32,13 +29,18 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
 import static com.graphhopper.util.Helper.nf;
 import static java.lang.System.nanoTime;
 
 public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     // todo: modify code such that logging does not alter performance 
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
-    public static boolean aggressiveSearch = true;
+    //    public static SearchType searchType = SearchType.AGGRESSIVE;
+    public static SearchType searchType = SearchType.SMART;
     public static boolean arrayBasedWitnessPathFinder = true;
     public static float edgeDifferenceWeight = 1;
     public static float originalEdgeDifferenceWeight = 3;
@@ -51,6 +53,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private ShortcutHandler activeShortcutHandler;
     private int[] hierarchyDepths;
     private WitnessPathFinder witnessPathFinder;
+    private SmartWitnessPathFinder smartWitnessPathFinder;
     private CHEdgeExplorer scExplorer;
     private CHEdgeExplorer allCHExplorer;
     private EdgeExplorer fromNodeOrigInEdgeExplorer;
@@ -86,6 +89,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         witnessPathFinder = arrayBasedWitnessPathFinder ?
                 new ArrayBasedWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel) :
                 new MapBasedWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel);
+        smartWitnessPathFinder = new SmartWitnessPathFinder(ghStorage, prepareGraph, turnWeighting);
         DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
         DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
         inEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
@@ -172,10 +176,115 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private int findAndHandleShortcuts(int node) {
-        if (aggressiveSearch) {
-            return findAndHandleShortcutsAggressive(node);
+        if (searchType == SearchType.SMART) {
+            return findAndHandleShortcutsSmart(node);
         } else {
-            return findAndHandleShortcutsClassic(node);
+            return findAndHandleShortcutsAggressive(node);
+        }
+    }
+
+    private int findAndHandleShortcutsSmart(int node) {
+        LOGGER.debug("Finding shortcuts (smart) for node {}, required shortcuts will be {}ed", node, activeShortcutHandler.getAction());
+        stats().nodes++;
+        resetEdgeCounters();
+        Set<AddedShortcut> addedShortcuts = new HashSet<>();
+
+        // first we need to identify those nodes from which we can reach our node to be contracted
+        // todo: optimize collection size
+        IntSet fromNodes = new IntHashSet(100);
+        EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
+        while (incomingEdges.next()) {
+            int fromNode = incomingEdges.getAdjNode();
+            if (isContracted(fromNode) || fromNode == node) {
+                continue;
+            }
+            boolean isNewFromNode = fromNodes.add(fromNode);
+            if (!isNewFromNode) {
+                continue;
+            }
+            // for each such fromNode we need to look at every incoming original edge and find the initial entries
+            EdgeIterator origInIter = fromNodeOrigInEdgeExplorer.setBaseNode(fromNode);
+            while (origInIter.next()) {
+                if (origInIter.getAdjNode() == node) {
+                    // todo: yes or no ?
+//                    continue;
+                }
+                smartWitnessPathFinder.init(node, fromNode, origInIter.getLastOrigEdge());
+                numSearches++;
+
+                // now we need to identify all nodes that could be reached from our node to be contracted
+                // todo: optimize collection size
+                IntSet toNodes = new IntHashSet(100);
+                EdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
+                while (outgoingEdges.next()) {
+                    int toNode = outgoingEdges.getAdjNode();
+                    if (isContracted(toNode) || toNode == node) {
+                        continue;
+                    }
+                    boolean isNewToNode = toNodes.add(toNode);
+                    if (!isNewToNode) {
+                        continue;
+                    }
+                    // for each target edge outgoing from a toNode we need to check if reaching it requires the node to be contracted
+                    EdgeIterator targetEdgeIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
+                    while (targetEdgeIter.next()) {
+                        if (targetEdgeIter.getAdjNode() == node) {
+                            // todo: yes or no ?
+//                            continue;
+                        }
+                        int targetEdge = targetEdgeIter.getFirstOrigEdge();
+                        SmartWitnessSearchEntry entry = smartWitnessPathFinder.runSearch(toNode, targetEdge);
+                        if (entry == null || Double.isInfinite(entry.weight)) {
+                            continue;
+                        }
+                        // todo: do not search parent root twice, this is stolen from handleShortcuts()
+                        CHEntry root = entry.getParent();
+                        while (root.parent.edge != EdgeIterator.NO_EDGE) {
+                            root = root.getParent();
+                        }
+                        AddedShortcut addedShortcut = new AddedShortcut(fromNode, root.getParent().incEdge, toNode, entry.incEdge);
+                        if (addedShortcuts.contains(addedShortcut)) {
+                            continue;
+                        }
+                        // root parent weight was misused to store initial turn cost here
+                        double initialTurnCost = root.getParent().weight;
+                        entry.weight -= initialTurnCost;
+                        handleShortcuts(entry);
+                        addedShortcuts.add(addedShortcut);
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    private static class AddedShortcut {
+        int startNode;
+        int startEdge;
+        int endNode;
+        int targetEdge;
+
+        public AddedShortcut(int startNode, int startEdge, int endNode, int targetEdge) {
+            this.startNode = startNode;
+            this.startEdge = startEdge;
+            this.endNode = endNode;
+            this.targetEdge = targetEdge;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            AddedShortcut that = (AddedShortcut) o;
+            return startNode == that.startNode &&
+                    startEdge == that.startEdge &&
+                    endNode == that.endNode &&
+                    targetEdge == that.targetEdge;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(startNode, startEdge, endNode, targetEdge);
         }
     }
 

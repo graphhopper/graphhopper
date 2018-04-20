@@ -1153,6 +1153,9 @@ public class EdgeBasedNodeContractorTest {
         System.out.println("Using seed " + seed);
         GHUtility.buildRandomGraph(graph, seed, 7, 1.3, false, 0.0);
         GHUtility.printGraphForUnitTest(graph, encoder);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(0);
         int numEdgesPolled = nodeContractor.getNumPolledEdges();
