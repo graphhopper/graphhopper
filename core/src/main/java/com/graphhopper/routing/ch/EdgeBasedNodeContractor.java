@@ -39,7 +39,7 @@ import static java.lang.System.nanoTime;
 public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     // todo: modify code such that logging does not alter performance 
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
-    //    public static SearchType searchType = SearchType.AGGRESSIVE;
+    //        public static SearchType searchType = SearchType.AGGRESSIVE;
     public static SearchType searchType = SearchType.SMART;
     public static boolean arrayBasedWitnessPathFinder = true;
     public static float edgeDifferenceWeight = 1;

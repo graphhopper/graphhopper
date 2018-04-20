@@ -1144,7 +1144,6 @@ public class EdgeBasedNodeContractorTest {
         nodeContractor.contractNode(0);
         assertTrue("too many edges polled: " + nodeContractor.getNumPolledEdges(),
                 nodeContractor.getNumPolledEdges() <= 8);
-        // todo: make sure that 8 or less edges got polled
     }
 
     @Test

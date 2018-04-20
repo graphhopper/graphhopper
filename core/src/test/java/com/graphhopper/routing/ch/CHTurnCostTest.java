@@ -615,6 +615,19 @@ public class CHTurnCostTest {
         compareCHWithDijkstra(100, contractionOrder);
     }
 
+    @Test
+    public void testFindPath_bug2() {
+        graph.edge(0, 3, 24.001000, true);
+        graph.edge(0, 1, 6.087000, true);
+        graph.edge(0, 1, 6.067000, true);
+        graph.edge(2, 3, 46.631000, true);
+        graph.edge(2, 4, 46.184000, true);
+        graph.freeze();
+
+        List<Integer> contractionOrder = Arrays.asList(1, 0, 3, 2, 4);
+        compareCHWithDijkstra(1000, contractionOrder);
+    }
+
     @Repeat(times = 100)
     @Test
     public void testFindPath_random_compareWithDijkstra() {

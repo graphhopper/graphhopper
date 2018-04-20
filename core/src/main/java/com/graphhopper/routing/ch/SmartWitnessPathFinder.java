@@ -43,6 +43,9 @@ public class SmartWitnessPathFinder {
     private int centerNode;
     private int fromNode;
     private int sourceEdge;
+    private double bestWeight;
+    private int resIncEdge;
+    private boolean resOnOrigPath;
 
 
     public SmartWitnessPathFinder(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting) {
@@ -73,13 +76,11 @@ public class SmartWitnessPathFinder {
 
     public SmartWitnessSearchEntry runSearch(int toNode, int targetEdge) {
         // todo: write a test for this case where it becomes clear
-        double bestWeight = fromNode == toNode
+        bestWeight = fromNode == toNode
                 ? calcTurnWeight(sourceEdge, fromNode, targetEdge)
                 : Double.POSITIVE_INFINITY;
-        SmartWitnessSearchEntry result = new SmartWitnessSearchEntry(
-                EdgeIterator.NO_EDGE,
-                EdgeIterator.NO_EDGE,
-                toNode, bestWeight, false, false);
+        resIncEdge = EdgeIterator.NO_EDGE;
+        resOnOrigPath = false;
 
         // check if we can already reach the target from the shortest path tree we discovered so far
         EdgeIterator inIter = origInEdgeExplorer.setBaseNode(toNode);
@@ -91,25 +92,23 @@ public class SmartWitnessPathFinder {
                 continue;
             }
             double totalWeight = entry.weight + calcTurnWeight(incEdge, toNode, targetEdge);
-            if (totalWeight < result.weight) {
-                result.weight = totalWeight;
-                result.edge = inIter.getEdge();
-                result.incEdge = incEdge;
-                result.onOrigPath = entry.onOrigPath;
-                result.parent = entry.parent;
+            if (totalWeight < bestWeight) {
+                bestWeight = totalWeight;
+                resIncEdge = incEdge;
+                resOnOrigPath = entry.onOrigPath;
             }
         }
 
         // run dijkstra to find the optimal path
         while (!priorityQueue.isEmpty()) {
-            if (numViaCenter < 1 && (!result.onOrigPath || isInfinite(result.weight))) {
+            if (numViaCenter < 1 && (!resOnOrigPath || isInfinite(bestWeight))) {
                 // we have not found a connection to the target edge yet and there are no entries
                 // in the priority queue anymore that are part of the direct path via the center node
                 // -> we will not need a shortcut
                 break;
             }
             SmartWitnessSearchEntry entry = priorityQueue.peek();
-            if (entry.weight > result.weight) {
+            if (entry.weight > bestWeight) {
                 // just reaching this edge is more expensive than the best path found so far including the turn costs
                 // to reach the targetOutEdge -> we can stop
                 // important: we only peeked so far, so we keep the entry for future searches
@@ -144,20 +143,6 @@ public class SmartWitnessPathFinder {
                 boolean viaCenter = entry.viaCenter && iter.getAdjNode() == centerNode;
                 boolean onOrigPath = entry.onOrigPath && iter.getBaseNode() == centerNode;
 
-                // when we hit the target node we update the best path
-                if (iter.getAdjNode() == toNode) {
-                    double turnWeight = calcTurnWeight(iter.getLastOrigEdge(), toNode, targetEdge);
-                    // when in doubt prefer a witness path over an original path
-                    double tolerance = onOrigPath ? 0 : 1.e-6;
-                    if (weight + turnWeight - tolerance < result.weight) {
-                        result.weight = weight + turnWeight;
-                        result.edge = iter.getEdge();
-                        result.incEdge = iter.getLastOrigEdge();
-                        result.onOrigPath = onOrigPath;
-                        result.parent = entry;
-                    }
-                }
-
                 // dijkstra expansion: add or update current entries
                 int key = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
                 int index = entries.indexOf(key);
@@ -176,6 +161,7 @@ public class SmartWitnessPathFinder {
                     }
                     entries.indexInsert(index, key, newEntry);
                     priorityQueue.add(newEntry);
+                    updateBestPath(toNode, targetEdge, weight, newEntry);
                 } else {
                     SmartWitnessSearchEntry existingEntry = entries.indexGet(index);
                     if (weight < existingEntry.weight) {
@@ -184,7 +170,7 @@ public class SmartWitnessPathFinder {
                         existingEntry.incEdge = iter.getLastOrigEdge();
                         existingEntry.weight = weight;
                         existingEntry.parent = entry;
-                        entry.onOrigPath = onOrigPath;
+                        existingEntry.onOrigPath = onOrigPath;
                         if (viaCenter) {
                             if (!existingEntry.viaCenter) {
                                 numViaCenter++;
@@ -194,21 +180,36 @@ public class SmartWitnessPathFinder {
                                 numViaCenter--;
                             }
                         }
-                        entry.viaCenter = viaCenter;
+                        existingEntry.viaCenter = viaCenter;
                         priorityQueue.add(existingEntry);
+                        updateBestPath(toNode, targetEdge, weight, existingEntry);
                     }
                 }
             }
             numSettledEdges++;
         }
 
-        if (result.onOrigPath) {
+        if (resOnOrigPath) {
             // the best path we could find is an original path so we return it
             // (note that this path may contain loops at the center node)
-            int edgeKey = getEdgeKey(result.incEdge, result.adjNode);
+            int edgeKey = getEdgeKey(resIncEdge, toNode);
             return entries.get(edgeKey);
         } else {
             return null;
+        }
+    }
+
+    private void updateBestPath(int toNode, int targetEdge, double weight, SmartWitnessSearchEntry newEntry) {
+        // when we hit the target node we update the best path
+        if (newEntry.adjNode == toNode) {
+            double turnWeight = calcTurnWeight(newEntry.incEdge, toNode, targetEdge);
+            // when in doubt prefer a witness path over an original path
+            double tolerance = newEntry.onOrigPath ? 0 : 1.e-6;
+            if (weight + turnWeight - tolerance < bestWeight) {
+                bestWeight = weight + turnWeight;
+                resIncEdge = newEntry.incEdge;
+                resOnOrigPath = newEntry.onOrigPath;
+            }
         }
     }
 
