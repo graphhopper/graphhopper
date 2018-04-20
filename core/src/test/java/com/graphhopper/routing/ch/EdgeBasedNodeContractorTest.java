@@ -1128,22 +1128,38 @@ public class EdgeBasedNodeContractorTest {
         checkNumShortcuts(1);
     }
 
-
     @Test
     public void testNodeContraction_numPolledEdges() {
-        graph.edge(3, 2, 71, false);
-        graph.edge(0, 3, 79, false);
-        graph.edge(2, 0, 21, false);
-        graph.edge(2, 4, 16, false);
-        graph.edge(4, 2, 16, false);
-        graph.edge(2, 1, 33, false);
-        graph.edge(4, 5, 29, false);
+        graph.edge(3, 2, 71.203000, false);
+        graph.edge(0, 3, 79.003000, false);
+        graph.edge(2, 0, 21.328000, false);
+        graph.edge(2, 4, 16.499000, false);
+        graph.edge(4, 2, 16.487000, false);
+        graph.edge(6, 1, 55.603000, false);
+        graph.edge(2, 1, 33.453000, false);
+        graph.edge(4, 5, 29.665000, false);
         graph.freeze();
         setMaxLevelOnAllNodes();
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
-        nodeContractor.contractNode(2);
+        nodeContractor.contractNode(0);
+        assertTrue("too many edges polled: " + nodeContractor.getNumPolledEdges(),
+                nodeContractor.getNumPolledEdges() <= 8);
         // todo: make sure that 8 or less edges got polled
     }
+
+    @Test
+    public void testNodeContraction_randomGraph_checkStatistics() {
+        final long seed = System.nanoTime();
+        System.out.println("Using seed " + seed);
+        GHUtility.buildRandomGraph(graph, seed, 7, 1.3, false, 0.0);
+        GHUtility.printGraphForUnitTest(graph, encoder);
+        EdgeBasedNodeContractor nodeContractor = createNodeContractor();
+        nodeContractor.contractNode(0);
+        int numEdgesPolled = nodeContractor.getNumPolledEdges();
+        int numSearches = nodeContractor.getNumSearches();
+        // todo: use this to compare different search strategies
+    }
+
 
     private void contractNode(NodeContractor nodeContractor, int node, int level) {
         nodeContractor.contractNode(node);

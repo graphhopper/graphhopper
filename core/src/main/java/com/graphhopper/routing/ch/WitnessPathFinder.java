@@ -44,6 +44,7 @@ public abstract class WitnessPathFinder {
     protected int avoidNode = Integer.MAX_VALUE;
     protected int maxSettledEdges = initialMaxSettledEdges;
     protected int numSettledEdges;
+    protected int numEntriesPolled;
     private final OnFlyStatisticsCalculator statisticsCalculator = new OnFlyStatisticsCalculator();
     private final Stats stats = new Stats();
 
@@ -83,10 +84,15 @@ public abstract class WitnessPathFinder {
         stats.reset();
     }
 
+    public int getNumEntriesPolled() {
+        return numEntriesPolled;
+    }
+
     private void reset() {
         readjustMaxSettledEdges();
         stats.onReset(numSettledEdges, maxSettledEdges);
         numSettledEdges = 0;
+        numEntriesPolled = 0;
         numOnOrigPath = 0;
         avoidNode = Integer.MAX_VALUE;
         doReset();

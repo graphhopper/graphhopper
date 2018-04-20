@@ -92,6 +92,7 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
                 break;
             }
             heap.poll_element();
+            numEntriesPolled++;
 
             if (onOrigPaths[currKey]) {
                 numOnOrigPath--;

@@ -68,6 +68,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private int duplicateOutEdges;
     private int duplicateInEdges;
 
+    private int numPolledEdges;
+    private int numSearches;
+
     public EdgeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, TurnWeighting turnWeighting, TraversalMode traversalMode) {
         super(dir, ghStorage, prepareGraph, turnWeighting);
         this.turnWeighting = turnWeighting;
@@ -146,6 +149,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public long contractNode(int node) {
         activeShortcutHandler = addingShortcutHandler;
+        numPolledEdges = 0;
+        numSearches = 0;
         long start = nanoTime();
         long result = findAndHandleShortcuts(node);
         CHEdgeIterator iter = allCHExplorer.setBaseNode(node);
@@ -156,6 +161,14 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         }
         stats().calcTime += nanoTime() - start;
         return result;
+    }
+
+    public int getNumPolledEdges() {
+        return numPolledEdges;
+    }
+
+    public int getNumSearches() {
+        return numSearches;
     }
 
     private int findAndHandleShortcuts(int node) {
@@ -193,6 +206,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
             IntObjectMap<WitnessSearchEntry> initialEntries = simpleSearch.getInitialEntries(fromNode, incomingEdges);
             witnessPathFinder.setInitialEntries(initialEntries);
+            numSearches++;
             if (initialEntries.isEmpty()) {
                 continue;
             }
@@ -214,6 +228,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     witnessedPairs.add(twoIntsInLong(incomingEdges.getEdge(), outgoingEdges.getEdge()));
                 }
             }
+            numPolledEdges += witnessPathFinder.getNumEntriesPolled();
         }
         return degree;
     }
@@ -233,6 +248,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     continue;
                 }
                 witnessPathFinder.setInitialEntries(initialEntries);
+                numSearches++;
 
                 CHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
                 while (outgoingEdges.next()) {
@@ -302,6 +318,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         }
                     }
                 }
+                numPolledEdges += witnessPathFinder.getNumEntriesPolled();
             }
         }
     }

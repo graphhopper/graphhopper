@@ -78,6 +78,7 @@ public class MapBasedWitnessPathFinder extends WitnessPathFinder {
             }
 
             currEdge = priorityQueue.poll();
+            numEntriesPolled++;
 
             if (currEdge.onOrigPath) {
                 numOnOrigPath--;
