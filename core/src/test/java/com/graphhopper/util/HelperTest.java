@@ -93,7 +93,7 @@ public class HelperTest {
 
     @Test
     public void testLoadProperties() throws IOException {
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         Helper.loadProperties(map, new StringReader("blup=test\n blup2 = xy"));
         assertEquals("test", map.get("blup"));
         assertEquals("xy", map.get("blup2"));

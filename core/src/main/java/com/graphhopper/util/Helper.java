@@ -68,7 +68,7 @@ public class Helper {
 
     public static ArrayList<Integer> intListToArrayList(IntIndexedContainer from) {
         int len = from.size();
-        ArrayList<Integer> list = new ArrayList<Integer>(len);
+        ArrayList<Integer> list = new ArrayList<>(len);
         for (int i = 0; i < len; i++) {
             list.add(from.get(i));
         }
@@ -161,7 +161,7 @@ public class Helper {
     public static List<String> readFile(Reader simpleReader) throws IOException {
         BufferedReader reader = new BufferedReader(simpleReader);
         try {
-            List<String> res = new ArrayList<String>();
+            List<String> res = new ArrayList<>();
             String line;
             while ((line = reader.readLine()) != null) {
                 res.add(line);

@@ -43,7 +43,7 @@ public class GHUtility {
      * This method could throw exception if uncatched problems like index out of bounds etc
      */
     public static List<String> getProblems(Graph g) {
-        List<String> problems = new ArrayList<String>();
+        List<String> problems = new ArrayList<>();
         int nodes = g.getNodes();
         int nodeIndex = 0;
         NodeAccess na = g.getNodeAccess();
@@ -90,7 +90,7 @@ public class GHUtility {
     }
 
     public static Set<Integer> asSet(int... values) {
-        Set<Integer> s = new HashSet<Integer>();
+        Set<Integer> s = new HashSet<>();
         for (int v : values) {
             s.add(v);
         }
@@ -99,7 +99,7 @@ public class GHUtility {
 
     public static Set<Integer> getNeighbors(EdgeIterator iter) {
         // make iteration order over set static => linked
-        Set<Integer> list = new LinkedHashSet<Integer>();
+        Set<Integer> list = new LinkedHashSet<>();
         while (iter.next()) {
             list.add(iter.getAdjNode());
         }
@@ -107,7 +107,7 @@ public class GHUtility {
     }
 
     public static List<Integer> getEdgeIds(EdgeIterator iter) {
-        List<Integer> list = new ArrayList<Integer>();
+        List<Integer> list = new ArrayList<>();
         while (iter.next()) {
             list.add(iter.getEdge());
         }

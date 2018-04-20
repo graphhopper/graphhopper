@@ -40,8 +40,8 @@ public class OSMTurnRelationTest {
     @Test
     public void testGetRestrictionAsEntries() {
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
-        final Map<Long, Integer> osmNodeToInternal = new HashMap<Long, Integer>();
-        final Map<Integer, Long> internalToOSMEdge = new HashMap<Integer, Long>();
+        final Map<Long, Integer> osmNodeToInternal = new HashMap<>();
+        final Map<Integer, Long> internalToOSMEdge = new HashMap<>();
 
         osmNodeToInternal.put(3L, 3);
         // edge ids are only stored if they occured before in an OSMRelation

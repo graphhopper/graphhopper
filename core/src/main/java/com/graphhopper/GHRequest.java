@@ -49,8 +49,8 @@ public class GHRequest {
     }
 
     public GHRequest(int size) {
-        points = new ArrayList<GHPoint>(size);
-        favoredHeadings = new ArrayList<Double>(size);
+        points = new ArrayList<>(size);
+        favoredHeadings = new ArrayList<>(size);
         possibleToAdd = true;
     }
 
@@ -82,11 +82,11 @@ public class GHRequest {
         if (endPlace == null)
             throw new IllegalStateException("'to' cannot be null");
 
-        points = new ArrayList<GHPoint>(2);
+        points = new ArrayList<>(2);
         points.add(startPlace);
         points.add(endPlace);
 
-        favoredHeadings = new ArrayList<Double>(2);
+        favoredHeadings = new ArrayList<>(2);
         validateAzimuthValue(startHeading);
         favoredHeadings.add(startHeading);
         validateAzimuthValue(endHeading);

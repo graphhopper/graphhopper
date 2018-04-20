@@ -102,7 +102,7 @@ public class PrepareRoutingSubnetworks {
         final FlagEncoder encoder = filter.getEncoder();
         final EdgeExplorer explorer = ghStorage.createEdgeExplorer(filter);
         int locs = ghStorage.getNodes();
-        List<IntArrayList> list = new ArrayList<IntArrayList>(100);
+        List<IntArrayList> list = new ArrayList<>(100);
         final GHBitSet bs = new GHBitSetImpl(locs);
         for (int start = 0; start < locs; start++) {
             if (bs.contains(start))

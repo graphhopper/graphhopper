@@ -37,8 +37,8 @@ public class GHDirectory implements Directory {
     protected final String location;
     private final DAType defaultType;
     private final ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
-    protected Map<String, DataAccess> map = new HashMap<String, DataAccess>();
-    protected Map<String, DAType> types = new HashMap<String, DAType>();
+    protected Map<String, DataAccess> map = new HashMap<>();
+    protected Map<String, DAType> types = new HashMap<>();
 
     public GHDirectory(String _location, DAType defaultType) {
         this.defaultType = defaultType;

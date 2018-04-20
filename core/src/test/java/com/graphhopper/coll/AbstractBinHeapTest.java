@@ -118,7 +118,7 @@ public abstract class AbstractBinHeapTest {
 
     @Test
     public void testSize() {
-        PriorityQueue<SPTEntry> juQueue = new PriorityQueue<SPTEntry>(100);
+        PriorityQueue<SPTEntry> juQueue = new PriorityQueue<>(100);
         BinHeapWrapper<Number, Integer> binHeap = createHeap(100);
 
         Random rand = new Random(1);

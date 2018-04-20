@@ -43,7 +43,7 @@ public class GHRequestTest {
     public void testCorrectInit() {
         double lat0 = 51, lon0 = 1, lat1 = 52, lon1 = 2, lat2 = 53, lon2 = 3;
 
-        ArrayList<GHPoint> points = new ArrayList<GHPoint>(3);
+        ArrayList<GHPoint> points = new ArrayList<>(3);
         points.add(new GHPoint(lat0, lon0));
         points.add(new GHPoint(lat1, lon1));
         points.add(new GHPoint(lat2, lon2));

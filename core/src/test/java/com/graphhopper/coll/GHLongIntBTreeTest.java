@@ -137,7 +137,7 @@ public class GHLongIntBTreeTest {
             GHLongIntBTree instance = new GHLongIntBTree(j);
             int size = 500;
             Random rand = new Random(123);
-            Set<Integer> addedValues = new LinkedHashSet<Integer>(size);
+            Set<Integer> addedValues = new LinkedHashSet<>(size);
             for (int i = 0; i < size; i++) {
                 int val = rand.nextInt(size);
                 addedValues.add(val);

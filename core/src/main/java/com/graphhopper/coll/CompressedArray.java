@@ -60,7 +60,7 @@ public class CompressedArray {
         }
         this.entriesPerSegment = entriesPerSeg;
         this.approxBytesPerEntry = approxBytesPerEntry;
-        segments = new ArrayList<byte[]>(_segments);
+        segments = new ArrayList<>(_segments);
         algo = new SpatialKeyAlgo(63);
     }
 

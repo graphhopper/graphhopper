@@ -493,7 +493,7 @@ public class PathTest {
     }
 
     List<String> pick(String key, List<Map<String, Object>> instructionJson) {
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<>();
 
         for (Map<String, Object> json : instructionJson) {
             list.add(json.get(key).toString());
@@ -894,7 +894,7 @@ public class PathTest {
         final public NodeAccess na = g.getNodeAccess();
         private final EdgeIteratorState edge3to6, edge3to9;
         boolean clockwise = false;
-        List<EdgeIteratorState> roundaboutEdges = new LinkedList<EdgeIteratorState>();
+        List<EdgeIteratorState> roundaboutEdges = new LinkedList<>();
 
         private RoundaboutGraph() {
             //                                       18

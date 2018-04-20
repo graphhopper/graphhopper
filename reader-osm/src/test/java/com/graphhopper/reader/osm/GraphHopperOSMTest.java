@@ -236,7 +236,7 @@ public class GraphHopperOSMTest {
                 setEncodingManager(new EncodingManager("car")).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
-        final AtomicReference<Exception> ar = new AtomicReference<Exception>();
+        final AtomicReference<Exception> ar = new AtomicReference<>();
         Thread thread = new Thread() {
             @Override
             public void run() {
@@ -789,7 +789,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testMultipleCHPreparationsInParallel() {
-        HashMap<String, Integer> shortcutCountMap = new HashMap<String, Integer>();
+        HashMap<String, Integer> shortcutCountMap = new HashMap<>();
         // try all parallelization modes        
         for (int threadCount = 1; threadCount < 6; threadCount++) {
             EncodingManager em = new EncodingManager(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),
@@ -830,7 +830,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testMultipleLMPreparationsInParallel() {
-        HashMap<String, Integer> landmarkCount = new HashMap<String, Integer>();
+        HashMap<String, Integer> landmarkCount = new HashMap<>();
         // try all parallelization modes
         for (int threadCount = 1; threadCount < 6; threadCount++) {
             EncodingManager em = new EncodingManager(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),

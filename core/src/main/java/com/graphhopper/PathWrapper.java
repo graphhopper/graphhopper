@@ -33,7 +33,7 @@ import java.util.*;
  * @author Peter Karich
  */
 public class PathWrapper {
-    private final List<Throwable> errors = new ArrayList<Throwable>(4);
+    private final List<Throwable> errors = new ArrayList<>(4);
     private List<String> description;
     private double distance;
     private double ascend;

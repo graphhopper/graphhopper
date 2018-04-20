@@ -36,7 +36,7 @@ import java.util.Locale;
  * @author Peter Karich
  */
 public class TestAlgoCollector {
-    public final List<String> errors = new ArrayList<String>();
+    public final List<String> errors = new ArrayList<>();
     private final String name;
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
     private final TranslationMap trMap = new TranslationMap().doImport();
@@ -194,7 +194,7 @@ public class TestAlgoCollector {
     }
 
     public static class OneRun {
-        private final List<AssumptionPerPath> assumptions = new ArrayList<AssumptionPerPath>();
+        private final List<AssumptionPerPath> assumptions = new ArrayList<>();
 
         public OneRun() {
         }
@@ -234,7 +234,7 @@ public class TestAlgoCollector {
         }
 
         public List<QueryResult> getList(LocationIndex idx, EdgeFilter edgeFilter) {
-            List<QueryResult> qr = new ArrayList<QueryResult>();
+            List<QueryResult> qr = new ArrayList<>();
             for (AssumptionPerPath p : assumptions) {
                 qr.add(idx.findClosest(p.lat, p.lon, edgeFilter));
             }

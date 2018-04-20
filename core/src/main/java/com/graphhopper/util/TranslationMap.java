@@ -37,7 +37,7 @@ public class TranslationMap {
             "fr_FR", "fr_CH", "gl", "he", "hr_HR", "hsb", "hu_HU", "it", "ja", "ko", "lt_LT", "ne",
             "nl", "pl_PL", "pt_BR", "pt_PT", "ro", "ru", "sk", "sl_SI", "sr_RS", "sv_SE", "tr", "uk",
             "vi_VI", "zh_CN", "zh_HK");
-    private final Map<String, Translation> translations = new HashMap<String, Translation>();
+    private final Map<String, Translation> translations = new HashMap<>();
 
     public static int countOccurence(String phrase, String splitter) {
         if (isEmpty(phrase))
@@ -169,7 +169,7 @@ public class TranslationMap {
 
     public static class TranslationHashMap implements Translation {
         final Locale locale;
-        private final Map<String, String> map = new HashMap<String, String>();
+        private final Map<String, String> map = new HashMap<>();
 
         public TranslationHashMap(Locale locale) {
             this.locale = locale;

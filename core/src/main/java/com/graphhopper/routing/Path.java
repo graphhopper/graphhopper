@@ -275,7 +275,7 @@ public class Path {
      * Returns the list of all edges.
      */
     public List<EdgeIteratorState> calcEdges() {
-        final List<EdgeIteratorState> edges = new ArrayList<EdgeIteratorState>(edgeIds.size());
+        final List<EdgeIteratorState> edges = new ArrayList<>(edgeIds.size());
         if (edgeIds.isEmpty())
             return edges;
 

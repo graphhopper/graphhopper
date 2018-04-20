@@ -31,7 +31,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class ConditionalOSMTagInspectorTest extends CalendarBasedTest {
     private static Set<String> getSampleRestrictedValues() {
-        Set<String> restrictedValues = new HashSet<String>();
+        Set<String> restrictedValues = new HashSet<>();
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -44,14 +44,14 @@ public class ConditionalOSMTagInspectorTest extends CalendarBasedTest {
     }
 
     private static Set<String> getSamplePermissiveValues() {
-        Set<String> restrictedValues = new HashSet<String>();
+        Set<String> restrictedValues = new HashSet<>();
         restrictedValues.add("yes");
         restrictedValues.add("permissive");
         return restrictedValues;
     }
 
     private static List<String> getSampleConditionalTags() {
-        List<String> conditionalTags = new ArrayList<String>();
+        List<String> conditionalTags = new ArrayList<>();
         conditionalTags.add("vehicle");
         conditionalTags.add("access");
         return conditionalTags;

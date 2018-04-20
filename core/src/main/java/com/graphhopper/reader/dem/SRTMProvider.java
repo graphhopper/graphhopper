@@ -35,7 +35,7 @@ import java.util.zip.ZipInputStream;
  * @author Peter Karich
  */
 public class SRTMProvider extends AbstractSRTMElevationProvider {
-    private final GHIntObjectHashMap<String> areas = new GHIntObjectHashMap<String>();
+    private final GHIntObjectHashMap<String> areas = new GHIntObjectHashMap<>();
 
     public SRTMProvider() {
         this("");

@@ -575,8 +575,8 @@ public class OSMReaderTest {
         };
         EncodingManager manager = new EncodingManager(encoder);
         GraphHopperStorage ghStorage = newGraph(dir, manager, false, false);
-        final Map<Integer, Double> latMap = new HashMap<Integer, Double>();
-        final Map<Integer, Double> lonMap = new HashMap<Integer, Double>();
+        final Map<Integer, Double> latMap = new HashMap<>();
+        final Map<Integer, Double> lonMap = new HashMap<>();
         latMap.put(1, 1.1d);
         latMap.put(2, 1.2d);
 

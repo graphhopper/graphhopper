@@ -34,7 +34,7 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     private int current;
 
     public VirtualEdgeIterator(int edgeCount) {
-        edges = new ArrayList<EdgeIteratorState>(edgeCount);
+        edges = new ArrayList<>(edgeCount);
         reset();
     }
 

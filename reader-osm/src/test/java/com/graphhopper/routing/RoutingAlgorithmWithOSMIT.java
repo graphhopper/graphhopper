@@ -60,7 +60,7 @@ public class RoutingAlgorithmWithOSMIT {
     }
 
     List<OneRun> createMonacoCar() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(43.730729, 7.42135, 43.727697, 7.419199, 2580, 110));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3588, 170));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 2561, 133));
@@ -96,7 +96,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testMonacoMotorcycle() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(43.730729, 7.42135, 43.727697, 7.419199, 2703, 119));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3749, 170));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 3175, 169));
@@ -111,7 +111,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testMonacoMotorcycleCurvature() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(43.730729, 7.42135, 43.727697, 7.419199, 2703, 119));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3749, 170));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 3175, 169));
@@ -126,7 +126,7 @@ public class RoutingAlgorithmWithOSMIT {
 
     @Test
     public void testBike2_issue432() {
-        List<OneRun> list = new ArrayList<OneRun>();
+        List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(52.349969, 8.013813, 52.349713, 8.013293, 56, 7));
         // reverse route avoids the location
 //        list.add(new OneRun(52.349713, 8.013293, 52.349969, 8.013813, 293, 21));
@@ -586,7 +586,7 @@ public class RoutingAlgorithmWithOSMIT {
         final Graph g = hopper.getGraphHopperStorage();
         final LocationIndex idx = hopper.getLocationIndex();
         final List<OneRun> instances = createMonacoCar();
-        List<Thread> threads = new ArrayList<Thread>();
+        List<Thread> threads = new ArrayList<>();
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;
         final FlagEncoder carEncoder = encodingManager.getEncoder("car");

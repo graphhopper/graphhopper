@@ -47,14 +47,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected final static int K_FORWARD = 0, K_BACKWARD = 1;
     private final static Logger logger = LoggerFactory.getLogger(AbstractFlagEncoder.class);
     /* restriction definitions where order is important */
-    protected final List<String> restrictions = new ArrayList<String>(5);
-    protected final Set<String> intendedValues = new HashSet<String>(5);
-    protected final Set<String> restrictedValues = new HashSet<String>(5);
-    protected final Set<String> ferries = new HashSet<String>(5);
-    protected final Set<String> oneways = new HashSet<String>(5);
+    protected final List<String> restrictions = new ArrayList<>(5);
+    protected final Set<String> intendedValues = new HashSet<>(5);
+    protected final Set<String> restrictedValues = new HashSet<>(5);
+    protected final Set<String> ferries = new HashSet<>(5);
+    protected final Set<String> oneways = new HashSet<>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
-    protected final Set<String> absoluteBarriers = new HashSet<String>(5);
-    protected final Set<String> potentialBarriers = new HashSet<String>(5);
+    protected final Set<String> absoluteBarriers = new HashSet<>(5);
+    protected final Set<String> potentialBarriers = new HashSet<>(5);
     protected final int speedBits;
     protected final double speedFactor;
     private final int maxTurnCosts;

@@ -63,8 +63,8 @@ public class AStar extends AbstractRoutingAlgorithm {
     }
 
     protected void initCollections(int size) {
-        fromMap = new GHIntObjectHashMap<AStarEntry>();
-        prioQueueOpenSet = new PriorityQueue<AStarEntry>(size);
+        fromMap = new GHIntObjectHashMap<>();
+        prioQueueOpenSet = new PriorityQueue<>(size);
     }
 
     @Override

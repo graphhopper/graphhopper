@@ -39,7 +39,7 @@ public class GHSortedCollection {
 
     public GHSortedCollection() {
         // use size as indicator for maxEntries => try radix sort?
-        map = new TreeMap<Integer, GHIntHashSet>();
+        map = new TreeMap<>();
     }
 
     public void clear() {

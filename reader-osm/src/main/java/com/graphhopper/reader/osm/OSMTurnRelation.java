@@ -82,7 +82,7 @@ public class OSMTurnRelation {
             if (edgeIdFrom == EdgeIterator.NO_EDGE)
                 return Collections.emptyList();
 
-            final Collection<TurnCostTableEntry> entries = new ArrayList<TurnCostTableEntry>();
+            final Collection<TurnCostTableEntry> entries = new ArrayList<>();
             // get all outgoing edges of the via node
             iter = edgeOutExplorer.setBaseNode(nodeVia);
             // for TYPE_ONLY_* we add ALL restrictions (from, via, * ) EXCEPT the given turn
@@ -117,7 +117,7 @@ public class OSMTurnRelation {
     enum Type {
         UNSUPPORTED, NOT, ONLY;
 
-        private static final Map<String, Type> tags = new HashMap<String, Type>();
+        private static final Map<String, Type> tags = new HashMap<>();
 
         static {
             tags.put("no_left_turn", NOT);

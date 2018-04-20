@@ -58,7 +58,7 @@ public class CmdArgs extends PMap {
         if (Helper.isEmpty(configLocation))
             configLocation = fileStr;
 
-        Map<String, String> map = new LinkedHashMap<String, String>();
+        Map<String, String> map = new LinkedHashMap<>();
         loadProperties(map, new InputStreamReader(new FileInputStream(
                 new File(configLocation).getAbsoluteFile()), UTF_CS));
         CmdArgs args = new CmdArgs();

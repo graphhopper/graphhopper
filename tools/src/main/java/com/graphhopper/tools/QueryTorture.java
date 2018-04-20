@@ -85,8 +85,8 @@ public class QueryTorture {
         }
 
         // there should be enough feed available for the workers in the queue
-        queryQueue = new LinkedBlockingQueue<Query>(workers * 100);
-        noDuplicate = new HashSet<Query>();
+        queryQueue = new LinkedBlockingQueue<>(workers * 100);
+        noDuplicate = new HashSet<>();
         successfullQueries = new AtomicInteger(0);
         httpErrorCounter = new AtomicInteger(0);
         routingErrorCounter = new AtomicInteger(0);
@@ -120,7 +120,7 @@ public class QueryTorture {
         Thread mainThread = new Thread("mainThread") {
             @Override
             public void run() {
-                Collection<Callable<Object>> workerCollection = new ArrayList<Callable<Object>>(workers);
+                Collection<Callable<Object>> workerCollection = new ArrayList<>(workers);
                 for (int i = 0; i < workers; i++) {
                     final int workerNo = i;
                     workerCollection.add(new Callable<Object>() {
@@ -239,8 +239,8 @@ public class QueryTorture {
         GHPoint start;
         GHPoint end;
         long realCount;
-        List<String> points = new ArrayList<String>();
-        Map<String, String> params = new HashMap<String, String>();
+        List<String> points = new ArrayList<>();
+        Map<String, String> params = new HashMap<>();
 
         static Query parse(String logLine) {
             String START = "GHBaseServlet - ";

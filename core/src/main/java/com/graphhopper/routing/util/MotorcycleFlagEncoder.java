@@ -37,8 +37,8 @@ import static com.graphhopper.routing.util.PriorityCode.BEST;
  */
 public class MotorcycleFlagEncoder extends CarFlagEncoder {
     public static final int CURVATURE_KEY = 112;
-    private final HashSet<String> avoidSet = new HashSet<String>();
-    private final HashSet<String> preferSet = new HashSet<String>();
+    private final HashSet<String> avoidSet = new HashSet<>();
+    private final HashSet<String> preferSet = new HashSet<>();
     private EncodedDoubleValue reverseSpeedEncoder;
     private EncodedValue priorityWayEncoder;
     private EncodedValue curvatureEncoder;

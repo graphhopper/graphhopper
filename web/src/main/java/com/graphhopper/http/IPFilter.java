@@ -96,7 +96,7 @@ public class IPFilter implements Filter {
     }
 
     private Set<String> createSet(String[] split) {
-        Set<String> set = new HashSet<String>(split.length);
+        Set<String> set = new HashSet<>(split.length);
         for (String str : split) {
             str = str.trim();
             if (!str.isEmpty())

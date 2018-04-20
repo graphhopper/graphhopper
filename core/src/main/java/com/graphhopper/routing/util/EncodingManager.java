@@ -45,7 +45,7 @@ import static com.graphhopper.util.Helper.toLowerCase;
 public class EncodingManager {
     private static final String ERR = "Encoders are requesting %s bits, more than %s bits of %s flags. ";
     private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via graph.bytes_for_flags=8";
-    private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
+    private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
     private final int bitsForEdgeFlags;
     private final int bitsForTurnFlags = 8 * 4;
     private int nextWayBit = 0;
@@ -115,7 +115,7 @@ public class EncodingManager {
             throw new IllegalArgumentException("Since 0.7 EncodingManager does no longer accept upper case profiles: " + encoderList);
 
         String[] entries = encoderList.split(",");
-        List<FlagEncoder> resultEncoders = new ArrayList<FlagEncoder>();
+        List<FlagEncoder> resultEncoders = new ArrayList<>();
 
         for (String entry : entries) {
             entry = toLowerCase(entry.trim());
@@ -401,7 +401,7 @@ public class EncodingManager {
      * The returned list is never empty.
      */
     public List<FlagEncoder> fetchEdgeEncoders() {
-        List<FlagEncoder> list = new ArrayList<FlagEncoder>();
+        List<FlagEncoder> list = new ArrayList<>();
         list.addAll(edgeEncoders);
         return list;
     }

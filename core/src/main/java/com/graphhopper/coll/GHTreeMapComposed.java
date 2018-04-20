@@ -34,7 +34,7 @@ public class GHTreeMapComposed {
     private final TreeMap<Long, Integer> map;
 
     public GHTreeMapComposed() {
-        map = new TreeMap<Long, Integer>();
+        map = new TreeMap<>();
     }
 
     public void clear() {

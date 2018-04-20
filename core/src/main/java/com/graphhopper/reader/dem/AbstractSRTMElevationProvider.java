@@ -40,7 +40,7 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
     private final int WIDTH_BYTE_INDEX = 0;
     private final int DEGREE = 1;
     // use a map as an array is not quite useful if we want to hold only parts of the world
-    private final GHIntObjectHashMap<HeightTile> cacheData = new GHIntObjectHashMap<HeightTile>();
+    private final GHIntObjectHashMap<HeightTile> cacheData = new GHIntObjectHashMap<>();
     private final double precision = 1e7;
     private final double invPrecision = 1 / precision;
 

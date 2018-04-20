@@ -16,7 +16,7 @@ public class GHMRequest extends GHRequest {
     private List<GHPoint> fromPoints;
     private List<GHPoint> toPoints;
     boolean identicalLists = true;
-    private final Set<String> outArrays = new HashSet<String>(5);
+    private final Set<String> outArrays = new HashSet<>(5);
 
     public GHMRequest() {
         this(10);
@@ -24,8 +24,8 @@ public class GHMRequest extends GHRequest {
 
     public GHMRequest(int size) {
         super(0);
-        fromPoints = new ArrayList<GHPoint>(size);
-        toPoints = new ArrayList<GHPoint>(size);
+        fromPoints = new ArrayList<>(size);
+        toPoints = new ArrayList<>(size);
     }
 
     /**

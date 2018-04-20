@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
  */
 public class ConditionalParserTest extends CalendarBasedTest {
 
-    private final HashSet<String> restrictedValues = new HashSet<String>();
+    private final HashSet<String> restrictedValues = new HashSet<>();
 
     public ConditionalParserTest() {
         restrictedValues.add("private");

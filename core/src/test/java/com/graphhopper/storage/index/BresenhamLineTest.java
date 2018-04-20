@@ -102,7 +102,7 @@ public class BresenhamLineTest {
         final KeyAlgo keyAlgo = new SpatialKeyAlgo(bits).setBounds(minLon, maxLon, minLat, maxLat);
         double deltaLat = (maxLat - minLat) / parts;
         double deltaLon = (maxLon - minLon) / parts;
-        final ArrayList<Long> keys = new ArrayList<Long>();
+        final ArrayList<Long> keys = new ArrayList<>();
         PointEmitter tmpEmitter = new PointEmitter() {
             @Override
             public void set(double lat, double lon) {

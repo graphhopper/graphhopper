@@ -965,7 +965,7 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void test8BytesFlags() {
         Directory dir = new RAMDirectory();
-        List<FlagEncoder> list = new ArrayList<FlagEncoder>();
+        List<FlagEncoder> list = new ArrayList<>();
         list.add(new TmpCarFlagEncoder(29, 0.001, 0) {
             @Override
             public String toString() {

@@ -33,7 +33,7 @@ import java.util.Map;
  * @author Robin Boldt
  */
 public abstract class AbstractTiffElevationProvider extends AbstractElevationProvider {
-    private final Map<String, HeightTile> cacheData = new HashMap<String, HeightTile>();
+    private final Map<String, HeightTile> cacheData = new HashMap<>();
     final double precision = 1e7;
 
     private final int WIDTH;
