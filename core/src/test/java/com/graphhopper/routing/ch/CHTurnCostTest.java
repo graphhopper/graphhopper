@@ -103,6 +103,35 @@ public class CHTurnCostTest {
     }
 
     @Test
+    public void testFindPath_randomContractionOrder_duplicate_edges() {
+        //  /\    /<-3
+        // 0  1--2
+        //  \/    \->4
+        graph.edge(0, 1, 5, true);
+        graph.edge(0, 1, 6, true);
+        graph.edge(1, 2, 2, true);
+        graph.edge(3, 2, 3, false);
+        graph.edge(2, 4, 3, false);
+        addRestriction(3, 2, 4);
+        graph.freeze();
+        compareCHWithDijkstra(10, Arrays.asList(0, 1, 2, 3, 4));
+    }
+
+    @Test
+    public void testFindPath_randomContractionOrder_double_duplicate_edges() {
+        //  /\ /\   
+        // 0  1  2--3
+        //  \/ \/
+        graph.edge(0, 1, 25.789000, true);
+        graph.edge(0, 1, 26.016000, true);
+        graph.edge(1, 2, 21.902000, true);
+        graph.edge(1, 2, 21.862000, true);
+        graph.edge(2, 3, 52.987000, true);
+        graph.freeze();
+        compareCHWithDijkstra(1000, Arrays.asList(0, 1, 2, 3));
+    }
+
+    @Test
     @Repeat(times = 1000)
     public void testFindPath_multipleInOutEdges_turnReplacementDifference() {
         //   0   3 - 4   8
@@ -570,6 +599,33 @@ public class CHTurnCostTest {
 
         List<Integer> contractionOrder = getRandomIntegerSequence(chGraph.getNodes(), rnd);
         compareCHWithDijkstra(numQueries, contractionOrder);
+    }
+
+    @Test
+    public void testFindPath_bug() {
+        graph.edge(1, 2, 18.364000, false);
+        graph.edge(1, 4, 29.814000, true);
+        graph.edge(0, 2, 14.554000, true);
+        graph.edge(1, 4, 29.819000, true);
+        graph.edge(1, 3, 29.271000, true);
+        addRestriction(3, 1, 2);
+        graph.freeze();
+
+        List<Integer> contractionOrder = Arrays.asList(1, 0, 3, 2, 4);
+        compareCHWithDijkstra(100, contractionOrder);
+    }
+
+    @Repeat(times = 100)
+    @Test
+    public void testFindPath_random_compareWithDijkstra() {
+        long seed = System.nanoTime();
+        LOGGER.info("Seed used to generate graph: {}", seed);
+        final Random rnd = new Random(seed);
+        GHUtility.buildRandomGraph(graph, seed, 10, 3, true, 0.9);
+        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxCost, turnCostExtension);
+        graph.freeze();
+        List<Integer> contractionOrder = getRandomIntegerSequence(chGraph.getNodes(), rnd);
+        compareCHWithDijkstra(100, contractionOrder);
     }
 
     private int nextCost(Random rnd) {
