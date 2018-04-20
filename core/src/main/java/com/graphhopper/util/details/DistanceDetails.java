@@ -1,4 +1,4 @@
-1package com.graphhopper.util.details;
+package com.graphhopper.util.details;
 
 import com.graphhopper.util.EdgeIteratorState;
 
