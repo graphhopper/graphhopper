@@ -1,6 +1,5 @@
-package com.graphhopper.util.details;
+1package com.graphhopper.util.details;
 
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 
 import static com.graphhopper.util.Parameters.DETAILS.DISTANCE;
