@@ -21,6 +21,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.profiles.TagParser;
+import com.graphhopper.routing.profiles.tagparsers.CarAverageSpeedParser;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -136,6 +137,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     @Override
     public Map<String, TagParser> createTagParsers(String prefix) {
         Map<String, TagParser> tpMap = new HashMap<>();
+        //TODO Use prefix dependent encoders and tagparsers
         tpMap.put(TagParserFactory.ROUNDABOUT, null);
         tpMap.put(TagParserFactory.CAR_MAX_SPEED, null);
         tpMap.put(TagParserFactory.CAR_AVERAGE_SPEED, TagParserFactory.createParser(TagParserFactory.CAR_AVERAGE_SPEED));

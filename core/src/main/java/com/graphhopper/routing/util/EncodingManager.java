@@ -105,8 +105,8 @@ public class EncodingManager implements EncodedValueLookup {
     private static String[] globalEncodedValues = {
             TagParserFactory.ROUNDABOUT,
             TagParserFactory.ROAD_CLASS,
-            TagParserFactory.ROAD_ENVIRONMENT,
-            TagParserFactory.CURVATURE
+            TagParserFactory.ROAD_ENVIRONMENT
+//            TagParserFactory.CURVATURE
     };
 
     /**

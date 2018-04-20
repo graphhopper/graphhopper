@@ -21,6 +21,8 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.profiles.TagParser;
+import com.graphhopper.routing.profiles.tagparsers.BikeAccessParser;
+import com.graphhopper.routing.profiles.tagparsers.BikeAverageSpeedParser;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
@@ -217,9 +219,13 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 return highwaySpeeds.containsKey(way.getTag("highway"));
             }
         };
-        tpMap.put(prefix + "access", TagParserFactory.createParser(TagParserFactory.BIKE_ACCESS));
+        //Using more generic EncodedValues to account for different prefixes. Possibly need to define separate TagParsers for each
+        //vehicle type, e.g. bike and bike2
+        tpMap.put(prefix + "access", new BikeAccessParser(new BooleanEncodedValue(prefix + "access", true)));
+//        tpMap.put(prefix + "access", TagParserFactory.createParser(TagParserFactory.BIKE_ACCESS));
         averageSpeedEnc = new DecimalEncodedValue(prefix + "average_speed", speedBits, 0, speedFactor, speedTwoDirections);
-        tpMap.put(averageSpeedEnc.getName(), TagParserFactory.createParser(TagParserFactory.BIKE_AVERAGE_SPEED));
+        tpMap.put(averageSpeedEnc.getName(), new BikeAverageSpeedParser(averageSpeedEnc));
+//        tpMap.put(averageSpeedEnc.getName(), TagParserFactory.createParser(TagParserFactory.BIKE_AVERAGE_SPEED));
 
         priorityWayEnc = new DecimalEncodedValue(prefix + "priority", 3, 0, (double) 1 / PriorityCode.BEST.getValue(), false);
 
