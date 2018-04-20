@@ -2,29 +2,20 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
-import com.graphhopper.routing.util.AllCHEdgesIterator;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.*;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * In this test we mainly test if {@link EdgeBasedNodeContractorTest} inserts the correct shortcuts when certain
@@ -49,6 +40,10 @@ public class EdgeBasedNodeContractorTest {
     @Before
     public void setup() {
         // its important to use @Before when using Repeat Rule!
+        initialize();
+    }
+
+    private void initialize() {
         encoder = new CarFlagEncoder(5, 5, maxCost);
         EncodingManager encodingManager = new EncodingManager(encoder);
         Weighting weighting = new ShortestWeighting(encoder);
@@ -890,6 +885,264 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(nodeToContract);
         checkShortcuts(expectedShortcuts);
+    }
+
+    @Test
+    public void testNodeContraction_directWitness() {
+        // 0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
+        //     /      \                 /      \
+        //10 ->        ------> 9 ------>        -> 11
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(2, 3, 1, false);
+        graph.edge(3, 4, 1, false);
+        graph.edge(4, 5, 1, false);
+        graph.edge(5, 6, 1, false);
+        graph.edge(6, 7, 1, false);
+        graph.edge(7, 8, 1, false);
+        graph.edge(2, 9, 1, false);
+        graph.edge(9, 6, 1, false);
+        graph.edge(10, 1, 1, false);
+        graph.edge(7, 11, 1, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(2, 6, 3, 5, 4);
+        // note that the shortcut edge ids depend on the insertion order which might change when changing the implementation
+        checkShortcuts(
+                createShortcut(1, 3, 1, 2, 1, 2, 2),
+                createShortcut(1, 9, 1, 8, 1, 8, 2),
+                createShortcut(5, 7, 5, 6, 5, 6, 2),
+                createShortcut(9, 7, 9, 6, 9, 6, 2),
+                createShortcut(1, 4, 1, 3, 13, 3, 3),
+                createShortcut(4, 7, 4, 6, 4, 15, 3)
+        );
+    }
+
+    @Test
+    @Ignore("does not work for aggressive search")
+    public void testNodeContraction_witnessBetterBecauseOfTurnCostAtTargetNode() {
+        // when we contract node 2 we should not stop searching for witnesses when edge 2->3 is settled, because then we miss
+        // the witness path via 5 that is found later, but still has less weight because of the turn costs at node 3
+        // 0 -> 1 -> 2 -> 3 -> 4
+        //       \       /         
+        //        -- 5 ->   
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(2, 3, 1, false);
+        graph.edge(3, 4, 1, false);
+        graph.edge(1, 5, 3, false);
+        graph.edge(5, 3, 1, false);
+        addTurnCost(2, 3, 4, 5);
+        addTurnCost(5, 3, 4, 2);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(2);
+        checkShortcuts();
+    }
+
+    @Test
+    public void testNodeContraction_letShortcutsWitnessEachOther_twoIn() {
+        // coming from (0->1) it is best to go via node 2 to reach (5->6)
+        // when contracting node 3 adding the shortcut 2->3->4 is therefore enough and we do not need an 
+        // additional shortcut 1->3->4. while this seems obvious it requires that the 1->3->4 witness search is 
+        // somehow 'aware' of the fact that the shortcut 2->3->4 will be introduced anyway.
+
+        // 0 -> 1 -> 2 -> 3 -> 4 -> 5
+        //       \        |
+        //        ------->|
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(2, 3, 1, false);
+        graph.edge(3, 4, 1, false);
+        graph.edge(1, 3, 4, false);
+        graph.edge(4, 5, 1, false);
+
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(3);
+        checkShortcuts(
+                createShortcut(2, 4, 2, 3, 2, 3, 2)
+        );
+    }
+
+    @Test
+    public void testNodeContraction_letShortcutsWitnessEachOther_twoOut() {
+        // coming from (0->1) it is best to go via node 3 to reach (4->5)
+        // when contracting node 2 adding the shortcut 1->2->3 is therefore enough and we do not need an 
+        // additional shortcut 1->2->4.
+
+        // 0 -> 1 -> 2 -> 3 -> 4 -> 5
+        //           |        / 
+        //           ------->
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(2, 3, 1, false);
+        graph.edge(3, 4, 1, false);
+        graph.edge(4, 5, 1, false);
+        graph.edge(2, 4, 4, false);
+
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(2);
+        checkShortcuts(
+                createShortcut(1, 3, 1, 2, 1, 2, 2)
+        );
+    }
+
+    @Test
+    @Ignore("does not work for aggressive search")
+    public void testNodeContraction_parallelEdges_onlyOneLoopShortcutNeeded() {
+        // 0 -- 1 -- 2
+        //  \--/
+        EdgeIteratorState edge0 = graph.edge(0, 1, 2, true);
+        EdgeIteratorState edge1 = graph.edge(1, 0, 4, true);
+        graph.edge(1, 2, 5, true);
+        addTurnCost(edge0, edge1, 0, 1);
+        addTurnCost(edge1, edge0, 0, 2);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(0);
+        // it is sufficient to be able to travel the 1-0-1 loop in one (the cheaper) direction
+        checkShortcuts(
+                createShortcut(1, 1, 0, 1, 0, 1, 7)
+        );
+    }
+
+    @Test
+    @Ignore("does not work for aggressive search")
+    public void testNodeContraction_duplicateEdge_severalLoops() {
+        // 5 -- 4 -- 3 -- 1
+        // |\   |
+        // | \  /        
+        // -- 2 
+        graph.edge(1, 3, 47, true);
+        graph.edge(2, 4, 19, true);
+        EdgeIteratorState e2 = graph.edge(2, 5, 38, true);
+        EdgeIteratorState e3 = graph.edge(2, 5, 57, true); // note there is a duplicate edge here (with different weight) 
+        graph.edge(3, 4, 10, true);
+        EdgeIteratorState e5 = graph.edge(4, 5, 56, true);
+
+        addTurnCost(e3, e2, 5, 4);
+        addTurnCost(e2, e3, 5, 5);
+        addTurnCost(e5, e3, 5, 3);
+        addTurnCost(e3, e5, 5, 2);
+        addTurnCost(e2, e5, 5, 2);
+        addTurnCost(e5, e2, 5, 1);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(4, 5);
+        // note that the shortcut edge ids depend on the insertion order which might change when changing the implementation
+        checkNumShortcuts(11);
+        checkShortcuts(
+                // from node 4 contraction
+                createShortcut(5, 3, 5, 4, 5, 4, 66),
+                createShortcut(3, 5, 4, 5, 4, 5, 66),
+                createShortcut(2, 3, 1, 4, 1, 4, 29),
+                createShortcut(3, 2, 4, 1, 4, 1, 29),
+                createShortcut(2, 5, 1, 5, 1, 5, 75),
+                createShortcut(5, 2, 5, 1, 5, 1, 75),
+                // from node 5 contraction
+                createShortcut(2, 2, 3, 2, 3, 2, 99),
+                createShortcut(2, 2, 3, 1, 3, 7, 134),
+                createShortcut(2, 2, 1, 2, 10, 2, 114),
+                createShortcut(2, 3, 2, 4, 2, 6, 106),
+                createShortcut(3, 2, 4, 2, 8, 2, 105)
+        );
+    }
+
+    @Test
+    @Ignore("does not work for aggressive search")
+    public void testNodeContraction_tripleConnection() {
+        graph.edge(0, 1, 1.0, true);
+        graph.edge(0, 1, 2.0, true);
+        graph.edge(0, 1, 3.5, true);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(1);
+        checkShortcuts(
+                createShortcut(0, 0, 1, 2, 1, 2, 5.5),
+                createShortcut(0, 0, 0, 2, 0, 2, 4.5),
+                createShortcut(0, 0, 0, 1, 0, 1, 3.0)
+        );
+    }
+
+    @Test
+    @Ignore("does not work for aggressive search")
+    public void testNodeContraction_fromAndToNodesEqual() {
+        // 0 -> 1 -> 3
+        //     / \
+        //    v   ^
+        //     \ /
+        //      2
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(2, 1, 1, false);
+        graph.edge(1, 3, 1, true);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(2);
+        checkShortcuts();
+    }
+
+    @Test
+    public void testNodeContraction_node_in_loop() {
+        //      2
+        //     /|
+        //  0-4-3
+        //    |
+        //    1
+        graph.edge(0, 4, 2, false);
+        graph.edge(4, 3, 2, true);
+        graph.edge(3, 2, 1, true);
+        graph.edge(2, 4, 1, true);
+        graph.edge(4, 1, 1, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+
+        // enforce loop (going counter-clockwise)
+        addRestriction(0, 4, 1);
+        addTurnCost(4, 2, 3, 4);
+        addTurnCost(3, 2, 4, 2);
+        contractNodes(2);
+        checkShortcuts(
+                createShortcut(4, 3, 3, 2, 3, 2, 6),
+                createShortcut(3, 4, 2, 3, 2, 3, 4)
+        );
+    }
+
+    @Test
+    @Ignore("does not work for aggressive search")
+    public void testNodeContraction_turnRestrictionAndLoop() {
+        //  /\    /<-3
+        // 0  1--2
+        //  \/    \->4
+        graph.edge(0, 1, 5, true);
+        graph.edge(0, 1, 6, true);
+        graph.edge(1, 2, 2, true);
+        graph.edge(3, 2, 3, false);
+        graph.edge(2, 4, 3, false);
+        addRestriction(3, 2, 4);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(0);
+        checkNumShortcuts(1);
+    }
+
+
+    @Test
+    public void testNodeContraction_numPolledEdges() {
+        graph.edge(3, 2, 71, false);
+        graph.edge(0, 3, 79, false);
+        graph.edge(2, 0, 21, false);
+        graph.edge(2, 4, 16, false);
+        graph.edge(4, 2, 16, false);
+        graph.edge(2, 1, 33, false);
+        graph.edge(4, 5, 29, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        EdgeBasedNodeContractor nodeContractor = createNodeContractor();
+        nodeContractor.contractNode(2);
+        // todo: make sure that 8 or less edges got polled
     }
 
     private void contractNode(NodeContractor nodeContractor, int node, int level) {
