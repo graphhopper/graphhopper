@@ -153,11 +153,16 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(2, response.getAll().size());
 
-        assertEquals("It's better to wait half an hour for the next one (and ride 5 minutes)", time(0, 35), response.getBest().getTime(), 0.1);
+        PathWrapper best = response.getBest();
+        Trip.PtLeg bestPtLeg = (Trip.PtLeg) best.getLegs().get(1);
+        assertEquals("It's better to wait half an hour for the next one (and ride 5 minutes).", LocalDateTime.parse("2007-01-01T07:19:00").atZone(zoneId).toInstant(), bestPtLeg.stops.get(bestPtLeg.stops.size()-1).plannedArrivalTime.toInstant());
+        assertEquals("There is no predicted arrival time.", null, bestPtLeg.stops.get(bestPtLeg.stops.size()-1).predictedArrivalTime);
 
         PathWrapper impossibleAlternative = response.getAll().get(1);
-        assertEquals("The impossible alternative is my planned 5-minute-trip", time(0, 5), impossibleAlternative.getTime(), 0.1);
         assertTrue(impossibleAlternative.isImpossible());
+        Trip.PtLeg impossiblePtLeg = (Trip.PtLeg) impossibleAlternative.getLegs().get(1);
+        assertEquals("The impossible alternative is my planned 5-minute-trip", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), impossiblePtLeg.stops.get(impossiblePtLeg.stops.size()-1).plannedArrivalTime.toInstant());
+        assertEquals("..which is very late today", LocalDateTime.parse("2007-01-01T07:49:00").atZone(zoneId).toInstant(), impossiblePtLeg.stops.get(impossiblePtLeg.stops.size()-1).predictedArrivalTime.toInstant());
     }
 
     @Test
