@@ -8,6 +8,7 @@ var menuStart;
 var menuIntermediate;
 var menuEnd;
 var elevationControl = null;
+var fullscreenControl = null;
 
 // Items added in every contextmenu.
 var defaultContextmenuItems;
@@ -15,6 +16,19 @@ var defaultContextmenuItems;
 // called if window changes or before map is created
 function adjustMapSize() {
     var mapDiv = $("#map");
+
+    if(fullscreenControl) {
+        fullscreenControl.updateClass();
+        if(fullscreenControl.isFullscreen()) {
+            $("#input").hide();
+            mapDiv.width( $(window).width() );
+            // inform map that with is potentially bigger, otherwise we get a gray border at the right side
+            map.invalidateSize()
+            return;
+         }
+    }
+
+    $("#input").show();
     var width = $(window).width() - 280;
     if (width < 400) {
         width = 400;
@@ -106,9 +120,30 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         zoomOutTitle: translate.tr('zoom_out')
     }).addTo(map);
 
-    new L.Control.loading({
-        zoomControl: zoomControl
-    }).addTo(map);
+    var full = false;
+    L.Control.Fullscreen = L.Control.extend({
+        isFullscreen: function() {
+            return full;
+        },
+        updateClass: function() {
+            var container = this.getContainer();
+            L.DomUtil.setClass(container, full ? 'fullscreen-reverse-btn' : 'fullscreen-btn');
+            L.DomUtil.addClass(container, 'leaflet-control');
+        },
+        onAdd: function (map) {
+            var container = L.DomUtil.create('div', 'fullscreen-btn');
+            container.title = "Fullscreen Mode";
+            container.onmousedown = function(event) {
+                full = !full;
+                adjustMapSize();
+            };
+
+            return container;
+        }
+    });
+    fullscreenControl = new L.Control.Fullscreen({ position: 'topleft'}).addTo(map);
+
+    new L.Control.loading().addTo(map);
 
     L.control.layers(tileLayers.getAvailableTileLayers()/*, overlays*/).addTo(map);
 
