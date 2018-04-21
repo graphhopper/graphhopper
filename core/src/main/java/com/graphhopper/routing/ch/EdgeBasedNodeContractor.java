@@ -253,6 +253,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         addedShortcuts.add(addedShortcut);
                     }
                 }
+                numPolledEdges += smartWitnessPathFinder.getNumPolledEdges();
             }
         }
         return 0;

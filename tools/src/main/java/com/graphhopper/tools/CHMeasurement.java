@@ -68,8 +68,79 @@ public class CHMeasurement {
     private double nodesContractedPercentage;
 
     public static void main(String[] args) {
-        testPerformanceAutomaticNodeOrdering(args);
+//        testPerformanceAutomaticNodeOrdering(args);
 //        new CHMeasurement().testPerformanceFixedNodeOrdering();
+        new CHMeasurement().analyzeSmartVsAggressive();
+    }
+
+    private void analyzeSmartVsAggressive() {
+        osmFile = "local/maps/bremen-latest.osm.pbf";
+        maxTurnCost = 100;
+        seed = 91358696691522L;
+        System.out.println("seed : " + seed);
+
+        EdgeBasedNodeContractor.searchType = SearchType.SMART;
+        List<ManualPrepareContractionHierarchies.Stats> smartCounts = runContraction();
+        System.out.printf("super: numpolled = %d, numsearches = %d\n", getTotalPolled(smartCounts), getTotalSearches(smartCounts));
+
+        EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
+        List<ManualPrepareContractionHierarchies.Stats> aggressiveCounts = runContraction();
+        System.out.printf("agggr: numpolled = %d, numsearches = %d\n", getTotalPolled(aggressiveCounts), getTotalSearches(aggressiveCounts));
+
+        if (smartCounts.size() != aggressiveCounts.size()) {
+            throw new IllegalStateException("shouldnt be really");
+        }
+        for (int i = 0; i < smartCounts.size(); ++i) {
+            if (smartCounts.get(i).shortcutCount > aggressiveCounts.get(i).shortcutCount) {
+                System.out.println("found one: " + smartCounts.get(i).nodeId + " idx: " + i + ", " + smartCounts.get(i).shortcutCount + "-" + aggressiveCounts.get(i).shortcutCount);
+            }
+        }
+        for (int i = 0; i < smartCounts.size(); ++i) {
+            if (smartCounts.get(i).numPolled > aggressiveCounts.get(i).numPolled) {
+                System.out.println("found one poll count: " + smartCounts.get(i).nodeId + " idx: " + i + ", " + smartCounts.get(i).numPolled + "-" + aggressiveCounts.get(i).numPolled);
+            }
+        }
+    }
+
+    private int getTotalPolled(List<ManualPrepareContractionHierarchies.Stats> counts) {
+        int result = 0;
+        for (ManualPrepareContractionHierarchies.Stats s : counts) {
+            result += s.numPolled;
+        }
+        return result;
+    }
+
+    private int getTotalSearches(List<ManualPrepareContractionHierarchies.Stats> counts) {
+        int result = 0;
+        for (ManualPrepareContractionHierarchies.Stats s : counts) {
+            result += s.numSearches;
+        }
+        return result;
+    }
+
+    private List<ManualPrepareContractionHierarchies.Stats> runContraction() {
+        FlagEncoder encoder = new CarFlagEncoder(5, 5, maxTurnCost);
+        EncodingManager encodingManager = new EncodingManager(encoder);
+        weighting = new FastestWeighting(encoder);
+        ghStorage = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).build();
+        turnCostExtension = (TurnCostExtension) ghStorage.getExtension();
+        chGraph = ghStorage.getGraph(CHGraph.class);
+        RAMDirectory dir = new RAMDirectory();
+        OSMReader osmReader = new OSMReader(ghStorage);
+        osmReader.setFile(new File(osmFile));
+        try {
+            LOGGER.info("Reading graph for file {}", osmFile);
+            osmReader.readGraph();
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not read graph: " + osmFile + ", the error was: " + e.getMessage());
+        }
+
+        ManualPrepareContractionHierarchies pch = new ManualPrepareContractionHierarchies(
+                dir, ghStorage, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR);
+        pch.setSeed(seed);
+        pch.setContractedNodes(50);
+        pch.doWork();
+        return pch.getStats();
     }
 
     /**

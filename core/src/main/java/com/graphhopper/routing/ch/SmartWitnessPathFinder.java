@@ -194,6 +194,10 @@ public class SmartWitnessPathFinder {
         }
     }
 
+    public int getNumPolledEdges() {
+        return numPolledEdges;
+    }
+
     private void updateBestPath(int toNode, int targetEdge, SmartWitnessSearchEntry entry) {
         // when we hit the target node we update the best path
         if (entry.adjNode == toNode) {
@@ -268,6 +272,7 @@ public class SmartWitnessPathFinder {
         readjustMaxSettledEdges();
         stats.onReset(numSettledEdges, maxSettledEdges);
         numSettledEdges = 0;
+        numPolledEdges = 0;
         numViaCenter = 0;
         initCollections();
     }

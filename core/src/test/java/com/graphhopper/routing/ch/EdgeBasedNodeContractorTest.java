@@ -1149,16 +1149,64 @@ public class EdgeBasedNodeContractorTest {
     public void testNodeContraction_randomGraph_checkStatistics() {
         final long seed = System.nanoTime();
         System.out.println("Using seed " + seed);
-        GHUtility.buildRandomGraph(graph, seed, 7, 1.3, false, 0.0);
-        GHUtility.printGraphForUnitTest(graph, encoder);
+        int totalNumSearchesA = 0;
+        int totalNumSearchesS = 0;
+        int totalEdgesPolledA = 0;
+        int totalEdgesPolledS = 0;
+        int totalNumShortcutsA = 0;
+        int totalNumShortcutsS = 0;
+        for (int i = 0; i < 10; ++i) {
+            initialize();
+            buildRandomGraph(seed);
+            System.out.println("graph for aggressive search");
+            GHUtility.printGraphForUnitTest(graph, encoder);
+            EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
+
+            EdgeBasedNodeContractor nodeContractor = createNodeContractor();
+            nodeContractor.contractNode(0);
+            int numEdgesPolledA = nodeContractor.getNumPolledEdges();
+            int numSearchesA = nodeContractor.getNumSearches();
+            int numShortcutsA = getCurrentShortcuts().size();
+
+            initialize();
+            buildRandomGraph(seed);
+            System.out.println("graph for smart search");
+            GHUtility.printGraphForUnitTest(graph, encoder);
+            EdgeBasedNodeContractor.searchType = SearchType.SMART;
+
+            nodeContractor = createNodeContractor();
+            nodeContractor.contractNode(0);
+            int numEdgesPolledS = nodeContractor.getNumPolledEdges();
+            int numSearchesS = nodeContractor.getNumSearches();
+            int numShortcutsS = getCurrentShortcuts().size();
+
+            if (numEdgesPolledS > numEdgesPolledA) {
+                System.out.println("Warning: aggressive search polled less nodes than smart search " +
+                        +numEdgesPolledA + " compared to " + numEdgesPolledS);
+                fail();
+            }
+            if (numShortcutsS > numShortcutsA) {
+                System.out.println("Warning: aggressive search introduced less shortcuts than smart search " +
+                        +numShortcutsA + " compared to " + numShortcutsS);
+                fail();
+            }
+            totalNumSearchesA += numSearchesA;
+            totalNumSearchesS += numSearchesS;
+            totalEdgesPolledA += numEdgesPolledA;
+            totalEdgesPolledS += numEdgesPolledS;
+            totalNumShortcutsA += numShortcutsA;
+            totalNumShortcutsS += numShortcutsS;
+        }
+        System.out.println("            aggressive        smart");
+        System.out.println("searches    " + totalNumSearchesA + "               " + totalNumSearchesS);
+        System.out.println("polls       " + totalEdgesPolledA + "               " + totalEdgesPolledS);
+        System.out.println("shortcuts   " + totalNumShortcutsA + "                " + totalNumShortcutsS);
+    }
+
+    private void buildRandomGraph(long seed) {
+        GHUtility.buildRandomGraph(graph, seed, 20, 3, false, 0.9);
         graph.freeze();
         setMaxLevelOnAllNodes();
-
-        EdgeBasedNodeContractor nodeContractor = createNodeContractor();
-        nodeContractor.contractNode(0);
-        int numEdgesPolled = nodeContractor.getNumPolledEdges();
-        int numSearches = nodeContractor.getNumSearches();
-        // todo: use this to compare different search strategies
     }
 
 

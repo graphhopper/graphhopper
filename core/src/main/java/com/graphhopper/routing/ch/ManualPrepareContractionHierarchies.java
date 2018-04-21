@@ -34,6 +34,8 @@ import static java.lang.System.nanoTime;
  */
 public class ManualPrepareContractionHierarchies extends PrepareContractionHierarchies {
     private List<Integer> contractionOrder = new ArrayList<>();
+    private List<Stats> stats = new ArrayList<>();
+    private int lastShortcutCount;
 
     public ManualPrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph, Weighting weighting,
                                                TraversalMode traversalMode) {
@@ -79,17 +81,29 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
         int degree = 0;
         long startTime = nanoTime();
         for (int i = 0; i < nodesToContract; ++i) {
-            degree += nodeContractor.contractNode(contractionOrder.get(i));
-            prepareGraph.setLevel(contractionOrder.get(i), i);
+            int node = contractionOrder.get(i);
+            degree += nodeContractor.contractNode(node);
+            int shortcutCount = nodeContractor.getAddedShortcutsCount();
+            if (isEdgeBased()) {
+                int numPolled = ((EdgeBasedNodeContractor) nodeContractor).getNumPolledEdges();
+                int numSearches = ((EdgeBasedNodeContractor) nodeContractor).getNumSearches();
+                stats.add(new Stats(shortcutCount - lastShortcutCount, node, numPolled, numSearches));
+                lastShortcutCount = shortcutCount;
+            }
+            prepareGraph.setLevel(node, i);
             if (i % logSize == 0) {
                 long elapsed = nanoTime() - startTime;
                 logger.info(String.format("contracted %s / %s nodes, shortcuts: %s, avg degree: %.2f, last batch took: %.2f s, time per node: %.2f micros",
-                        nf(i), nf(nodesToContract), nf(nodeContractor.getAddedShortcutsCount()),
+                        nf(i), nf(nodesToContract), nf(shortcutCount),
                         degree / (double) logSize, elapsed * 1.e-9, elapsed / logSize * 1.e-3));
                 degree = 0;
                 startTime = nanoTime();
             }
         }
+    }
+
+    public List<Stats> getStats() {
+        return stats;
     }
 
     private List<Integer> createRandomContractionOrder(long seed) {
@@ -101,6 +115,20 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
         // the shuffle method is the only reason we are using java.util.ArrayList instead of hppc IntArrayList
         Collections.shuffle(result, new Random(seed));
         return result;
+    }
+
+    public static class Stats {
+        public int shortcutCount;
+        public int nodeId;
+        public int numPolled;
+        public int numSearches;
+
+        public Stats(int shortcutCount, int nodeId, int numPolled, int numSearches) {
+            this.shortcutCount = shortcutCount;
+            this.nodeId = nodeId;
+            this.numPolled = numPolled;
+            this.numSearches = numSearches;
+        }
     }
 
 }
