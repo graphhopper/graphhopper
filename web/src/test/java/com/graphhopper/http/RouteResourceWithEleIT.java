@@ -40,7 +40,7 @@ public class RouteResourceWithEleIT {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.graphhopper.merge(new CmdArgs().
+        config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.elevation.provider", "srtm").
                 put("graph.elevation.cachedir", "../core/files/").
                 put(Parameters.CH.PREPARE + "weightings", "no").
