@@ -2,18 +2,25 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AllCHEdgesIterator;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
@@ -332,14 +339,7 @@ public class EdgeBasedNodeContractorTest {
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2);
-        // todo: we could prevent one of the two shortcuts, because once the first one is inserted it is a witness
-        // for the other one, but right now this does not work because we do not re-run the witness search after
-        // inserting the first shortcut. a better solution would probably be a clean-up after parsing the osm data where
-        // duplicate edges get removed. However, there should not be too many such duplicates
-        checkShortcuts(
-                createShortcut(1, 3, 1, 2, 1, 2, 2),
-                createShortcut(1, 3, 1, 3, 1, 3, 2)
-        );
+        checkNumShortcuts(1);
     }
 
     @Test
@@ -761,7 +761,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    @Ignore("not sure how to fix this yet")
+//    @Ignore("not sure how to fix this yet")
     @Repeat(times = 10)
     public void testContractNode_noUnnecessaryShortcut_witnessPathOfEqualWeight() {
         // this test runs repeatedly because it might pass/fail by chance (because path lengths are equal)
@@ -919,7 +919,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    @Ignore("does not work for aggressive search")
+//    @Ignore("does not work for aggressive search")
     public void testNodeContraction_witnessBetterBecauseOfTurnCostAtTargetNode() {
         // when we contract node 2 we should not stop searching for witnesses when edge 2->3 is settled, because then we miss
         // the witness path via 5 that is found later, but still has less weight because of the turn costs at node 3
@@ -990,7 +990,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    @Ignore("does not work for aggressive search")
+//    @Ignore("does not work for aggressive search")
     public void testNodeContraction_parallelEdges_onlyOneLoopShortcutNeeded() {
         // 0 -- 1 -- 2
         //  \--/
@@ -1009,7 +1009,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    @Ignore("does not work for aggressive search")
+//    @Ignore("does not work for aggressive search")
     public void testNodeContraction_duplicateEdge_severalLoops() {
         // 5 -- 4 -- 3 -- 1
         // |\   |
@@ -1051,7 +1051,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    @Ignore("does not work for aggressive search")
+//    @Ignore("does not work for aggressive search")
     public void testNodeContraction_tripleConnection() {
         graph.edge(0, 1, 1.0, true);
         graph.edge(0, 1, 2.0, true);
@@ -1067,7 +1067,6 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    @Ignore("does not work for aggressive search")
     public void testNodeContraction_fromAndToNodesEqual() {
         // 0 -> 1 -> 3
         //     / \
@@ -1077,7 +1076,7 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(0, 1, 1, false);
         graph.edge(1, 2, 1, false);
         graph.edge(2, 1, 1, false);
-        graph.edge(1, 3, 1, true);
+        graph.edge(1, 3, 1, false);
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2);
@@ -1111,7 +1110,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    @Ignore("does not work for aggressive search")
+//    @Ignore("does not work for aggressive search")
     public void testNodeContraction_turnRestrictionAndLoop() {
         //  /\    /<-3
         // 0  1--2
@@ -1154,7 +1153,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.printGraphForUnitTest(graph, encoder);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        
+
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(0);
         int numEdgesPolled = nodeContractor.getNumPolledEdges();

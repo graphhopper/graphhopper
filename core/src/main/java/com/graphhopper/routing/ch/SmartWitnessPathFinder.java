@@ -91,12 +91,7 @@ public class SmartWitnessPathFinder {
             if (entry == null) {
                 continue;
             }
-            double totalWeight = entry.weight + calcTurnWeight(incEdge, toNode, targetEdge);
-            if (totalWeight < bestWeight) {
-                bestWeight = totalWeight;
-                resIncEdge = incEdge;
-                resOnOrigPath = entry.onOrigPath;
-            }
+            updateBestPath(toNode, targetEdge, entry);
         }
 
         // run dijkstra to find the optimal path
@@ -161,7 +156,7 @@ public class SmartWitnessPathFinder {
                     }
                     entries.indexInsert(index, key, newEntry);
                     priorityQueue.add(newEntry);
-                    updateBestPath(toNode, targetEdge, weight, newEntry);
+                    updateBestPath(toNode, targetEdge, newEntry);
                 } else {
                     SmartWitnessSearchEntry existingEntry = entries.indexGet(index);
                     if (weight < existingEntry.weight) {
@@ -182,7 +177,7 @@ public class SmartWitnessPathFinder {
                         }
                         existingEntry.viaCenter = viaCenter;
                         priorityQueue.add(existingEntry);
-                        updateBestPath(toNode, targetEdge, weight, existingEntry);
+                        updateBestPath(toNode, targetEdge, existingEntry);
                     }
                 }
             }
@@ -199,16 +194,16 @@ public class SmartWitnessPathFinder {
         }
     }
 
-    private void updateBestPath(int toNode, int targetEdge, double weight, SmartWitnessSearchEntry newEntry) {
+    private void updateBestPath(int toNode, int targetEdge, SmartWitnessSearchEntry entry) {
         // when we hit the target node we update the best path
-        if (newEntry.adjNode == toNode) {
-            double turnWeight = calcTurnWeight(newEntry.incEdge, toNode, targetEdge);
+        if (entry.adjNode == toNode) {
+            double totalWeight = entry.weight + calcTurnWeight(entry.incEdge, toNode, targetEdge);
             // when in doubt prefer a witness path over an original path
-            double tolerance = newEntry.onOrigPath ? 0 : 1.e-6;
-            if (weight + turnWeight - tolerance < bestWeight) {
-                bestWeight = weight + turnWeight;
-                resIncEdge = newEntry.incEdge;
-                resOnOrigPath = newEntry.onOrigPath;
+            double tolerance = entry.onOrigPath ? 0 : 1.e-6;
+            if (totalWeight - tolerance < bestWeight) {
+                bestWeight = totalWeight;
+                resIncEdge = entry.incEdge;
+                resOnOrigPath = entry.onOrigPath;
             }
         }
     }
