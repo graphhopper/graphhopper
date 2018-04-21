@@ -47,6 +47,8 @@ public abstract class WitnessPathFinder {
     protected int numEntriesPolled;
     private final OnFlyStatisticsCalculator statisticsCalculator = new OnFlyStatisticsCalculator();
     private final Stats stats = new Stats();
+    public static int searchCount = 0;
+    public static int pollCount = 0;
 
     public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, int maxLevel) {
         if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
@@ -60,6 +62,7 @@ public abstract class WitnessPathFinder {
     }
 
     public void setInitialEntries(IntObjectMap<WitnessSearchEntry> initialEntries) {
+        searchCount++;
         reset();
         initEntries(initialEntries);
         stats.onInitEntries(initialEntries.size());

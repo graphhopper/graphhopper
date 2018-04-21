@@ -81,11 +81,11 @@ public class CHMeasurement {
 
         EdgeBasedNodeContractor.searchType = SearchType.SMART;
         List<ManualPrepareContractionHierarchies.Stats> smartCounts = runContraction();
-        System.out.printf("super: numpolled = %d, numsearches = %d\n", getTotalPolled(smartCounts), getTotalSearches(smartCounts));
+        System.out.printf("super: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(smartCounts), SmartWitnessPathFinder.pollCount, getTotalSearches(smartCounts), SmartWitnessPathFinder.searchCount);
 
         EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
         List<ManualPrepareContractionHierarchies.Stats> aggressiveCounts = runContraction();
-        System.out.printf("agggr: numpolled = %d, numsearches = %d\n", getTotalPolled(aggressiveCounts), getTotalSearches(aggressiveCounts));
+        System.out.printf("agggr: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(aggressiveCounts), WitnessPathFinder.pollCount, getTotalSearches(aggressiveCounts), WitnessPathFinder.searchCount);
 
         if (smartCounts.size() != aggressiveCounts.size()) {
             throw new IllegalStateException("shouldnt be really");

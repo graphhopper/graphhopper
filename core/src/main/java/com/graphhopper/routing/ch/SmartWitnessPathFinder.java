@@ -47,6 +47,8 @@ public class SmartWitnessPathFinder {
     private int resIncEdge;
     private boolean resOnOrigPath;
 
+    public static int searchCount;
+    public static int pollCount;
 
     public SmartWitnessPathFinder(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting) {
         this.graph = graph;
@@ -61,6 +63,7 @@ public class SmartWitnessPathFinder {
     }
 
     public void init(int centerNode, int fromNode, int sourceEdge) {
+        searchCount++;
         reset();
         this.sourceEdge = sourceEdge;
         this.fromNode = fromNode;
@@ -111,6 +114,7 @@ public class SmartWitnessPathFinder {
             }
             priorityQueue.poll();
             numPolledEdges++;
+            pollCount++;
 
             if (entry.viaCenter) {
                 numViaCenter--;
