@@ -11,6 +11,8 @@ import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
 
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class RoadLayer extends DefaultMapLayer {
     private final Graph graph;
@@ -35,8 +37,13 @@ public class RoadLayer extends DefaultMapLayer {
 
         g2.setColor(Color.black);
 
+        Set<Integer> highlightedNodes = new HashSet<>();
         for (int node = 0; node < graph.getNodes(); ++node) {
-            mg.plotNode(g2, node, Color.RED, 10, String.format("%d (%d)", node, chGraph.getLevel(node)));
+            if (highlightedNodes.contains(node)) {
+                mg.plotNode(g2, node, Color.RED, 15, String.format("%d (%d)", node, chGraph.getLevel(node)));
+            } else {
+                mg.plotNode(g2, node, Color.BLACK, 10, String.format("%d (%d)", node, chGraph.getLevel(node)));
+            }
         }
 
         AllCHEdgesIterator edge = chGraph.getAllEdges();
