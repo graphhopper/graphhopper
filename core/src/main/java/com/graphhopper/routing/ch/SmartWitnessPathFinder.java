@@ -62,8 +62,7 @@ public class SmartWitnessPathFinder {
         reset();
     }
 
-    public void init(int centerNode, int fromNode, int sourceEdge) {
-        searchCount++;
+    public int init(int centerNode, int fromNode, int sourceEdge) {
         reset();
         this.sourceEdge = sourceEdge;
         this.fromNode = fromNode;
@@ -73,8 +72,11 @@ public class SmartWitnessPathFinder {
         // and do not need any start entries, because no shortcut will ever be required
         if (numViaCenter < 1) {
             reset();
+            return 0;
         }
+        searchCount++;
         stats.onInitEntries(entries.size());
+        return entries.size();
     }
 
     public SmartWitnessSearchEntry runSearch(int toNode, int targetEdge) {

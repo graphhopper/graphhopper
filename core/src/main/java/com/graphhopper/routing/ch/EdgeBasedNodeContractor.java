@@ -205,7 +205,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             // for each such fromNode we need to look at every incoming original edge and find the initial entries
             EdgeIterator origInIter = fromNodeOrigInEdgeExplorer.setBaseNode(fromNode);
             while (origInIter.next()) {
-                smartWitnessPathFinder.init(node, fromNode, origInIter.getLastOrigEdge());
+                int numInitialEntries = smartWitnessPathFinder.init(node, fromNode, origInIter.getLastOrigEdge());
+                if (numInitialEntries < 1) {
+                    continue;
+                }
                 numSearches++;
 
                 // now we need to identify all nodes that could be reached from our node to be contracted

@@ -90,12 +90,12 @@ public class CHMeasurement {
         if (smartCounts.size() != aggressiveCounts.size()) {
             throw new IllegalStateException("shouldnt be really");
         }
-        for (int i = 0; i < smartCounts.size(); ++i) {
+        for (int i = 0; i < Math.min(smartCounts.size(), 10); ++i) {
             if (smartCounts.get(i).shortcutCount > aggressiveCounts.get(i).shortcutCount) {
                 System.out.println("found one: " + smartCounts.get(i).nodeId + " idx: " + i + ", " + smartCounts.get(i).shortcutCount + "-" + aggressiveCounts.get(i).shortcutCount);
             }
         }
-        for (int i = 0; i < smartCounts.size(); ++i) {
+        for (int i = 0; i < Math.min(smartCounts.size(), 10); ++i) {
             if (smartCounts.get(i).numPolled > aggressiveCounts.get(i).numPolled) {
                 System.out.println("found one poll count: " + smartCounts.get(i).nodeId + " idx: " + i + ", " + smartCounts.get(i).numPolled + "-" + aggressiveCounts.get(i).numPolled);
             }
@@ -151,7 +151,7 @@ public class CHMeasurement {
      * contraction order and a changed contraction algorithm.
      */
     private void testPerformanceFixedNodeOrdering() {
-        osmFile = "bremen-latest.osm.pbf";
+        osmFile = "local/maps/bremen-latest.osm.pbf";
         EdgeBasedNodeContractor.searchType = SearchType.SMART;
         EdgeBasedNodeContractor.arrayBasedWitnessPathFinder = true;
         WitnessPathFinder.sigmaFactor = 4.0;
