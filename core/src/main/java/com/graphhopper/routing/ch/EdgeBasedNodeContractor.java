@@ -205,10 +205,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             // for each such fromNode we need to look at every incoming original edge and find the initial entries
             EdgeIterator origInIter = fromNodeOrigInEdgeExplorer.setBaseNode(fromNode);
             while (origInIter.next()) {
-                if (origInIter.getAdjNode() == node) {
-                    // todo: yes or no ?
-//                    continue;
-                }
                 smartWitnessPathFinder.init(node, fromNode, origInIter.getLastOrigEdge());
                 numSearches++;
 
@@ -228,10 +224,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     // for each target edge outgoing from a toNode we need to check if reaching it requires the node to be contracted
                     EdgeIterator targetEdgeIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
                     while (targetEdgeIter.next()) {
-                        if (targetEdgeIter.getAdjNode() == node) {
-                            // todo: yes or no ?
-//                            continue;
-                        }
                         int targetEdge = targetEdgeIter.getFirstOrigEdge();
                         SmartWitnessSearchEntry entry = smartWitnessPathFinder.runSearch(toNode, targetEdge);
                         if (entry == null || Double.isInfinite(entry.weight)) {
