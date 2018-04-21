@@ -228,7 +228,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     EdgeIterator targetEdgeIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
                     while (targetEdgeIter.next()) {
                         int targetEdge = targetEdgeIter.getFirstOrigEdge();
-                        SmartWitnessSearchEntry entry = smartWitnessPathFinder.runSearch(toNode, targetEdge);
+                        WitnessSearchEntry entry = smartWitnessPathFinder.runSearch(toNode, targetEdge);
                         if (entry == null || Double.isInfinite(entry.weight)) {
                             continue;
                         }

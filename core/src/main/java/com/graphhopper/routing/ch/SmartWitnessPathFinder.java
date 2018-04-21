@@ -34,9 +34,9 @@ public class SmartWitnessPathFinder {
     private final OnFlyStatisticsCalculator statisticsCalculator = new OnFlyStatisticsCalculator();
     private final Stats stats = new Stats();
 
-    private IntObjectMap<SmartWitnessSearchEntry> entries;
-    private PriorityQueue<SmartWitnessSearchEntry> priorityQueue;
-    private int numViaCenter;
+    private IntObjectMap<WitnessSearchEntry> entries;
+    private PriorityQueue<WitnessSearchEntry> priorityQueue;
+    private int numOnOrigPath;
     private int numSettledEdges;
     private int numPolledEdges;
     private int maxSettledEdges = initialMaxSettledEdges;
@@ -45,7 +45,7 @@ public class SmartWitnessPathFinder {
     private int sourceEdge;
     private double bestWeight;
     private int resIncEdge;
-    private boolean resOnOrigPath;
+    private boolean resViaCenter;
 
     public static int searchCount;
     public static int pollCount;
@@ -70,7 +70,7 @@ public class SmartWitnessPathFinder {
         setInitialEntries(centerNode, fromNode, sourceEdge);
         // if there is no entry that reaches the center node we can skip the entire search 
         // and do not need any start entries, because no shortcut will ever be required
-        if (numViaCenter < 1) {
+        if (numOnOrigPath < 1) {
             reset();
             return 0;
         }
@@ -79,20 +79,20 @@ public class SmartWitnessPathFinder {
         return entries.size();
     }
 
-    public SmartWitnessSearchEntry runSearch(int toNode, int targetEdge) {
+    public WitnessSearchEntry runSearch(int toNode, int targetEdge) {
         // todo: write a test for this case where it becomes clear
         bestWeight = fromNode == toNode
                 ? calcTurnWeight(sourceEdge, fromNode, targetEdge)
                 : Double.POSITIVE_INFINITY;
         resIncEdge = EdgeIterator.NO_EDGE;
-        resOnOrigPath = false;
+        resViaCenter = false;
 
         // check if we can already reach the target from the shortest path tree we discovered so far
         EdgeIterator inIter = origInEdgeExplorer.setBaseNode(toNode);
         while (inIter.next()) {
             final int incEdge = inIter.getLastOrigEdge();
             final int edgeKey = getEdgeKey(incEdge, toNode);
-            SmartWitnessSearchEntry entry = entries.get(edgeKey);
+            WitnessSearchEntry entry = entries.get(edgeKey);
             if (entry == null) {
                 continue;
             }
@@ -101,13 +101,13 @@ public class SmartWitnessPathFinder {
 
         // run dijkstra to find the optimal path
         while (!priorityQueue.isEmpty()) {
-            if (numViaCenter < 1 && (!resOnOrigPath || isInfinite(bestWeight))) {
+            if (numOnOrigPath < 1 && (!resViaCenter || isInfinite(bestWeight))) {
                 // we have not found a connection to the target edge yet and there are no entries
                 // in the priority queue anymore that are part of the direct path via the center node
                 // -> we will not need a shortcut
                 break;
             }
-            SmartWitnessSearchEntry entry = priorityQueue.peek();
+            WitnessSearchEntry entry = priorityQueue.peek();
             if (entry.weight > bestWeight) {
                 // just reaching this edge is more expensive than the best path found so far including the turn costs
                 // to reach the targetOutEdge -> we can stop
@@ -118,13 +118,13 @@ public class SmartWitnessPathFinder {
             numPolledEdges++;
             pollCount++;
 
-            if (entry.viaCenter) {
-                numViaCenter--;
+            if (entry.onOrigPath) {
+                numOnOrigPath--;
             }
 
             // after a certain amount of edges has been settled we no longer expand entries
             // that are not on a path via the center node
-            if (numSettledEdges > maxSettledEdges && !entry.viaCenter) {
+            if (numSettledEdges > maxSettledEdges && !entry.onOrigPath) {
                 continue;
             }
 
@@ -141,47 +141,44 @@ public class SmartWitnessPathFinder {
                 if (isInfinite(weight)) {
                     continue;
                 }
-                boolean viaCenter = entry.viaCenter && iter.getAdjNode() == centerNode;
-                boolean onOrigPath = entry.onOrigPath && iter.getBaseNode() == centerNode;
+                boolean onOrigPath = entry.onOrigPath && iter.getAdjNode() == centerNode;
 
                 // dijkstra expansion: add or update current entries
                 int key = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
                 int index = entries.indexOf(key);
                 if (index < 0) {
-                    SmartWitnessSearchEntry newEntry = new SmartWitnessSearchEntry(
+                    WitnessSearchEntry newEntry = new WitnessSearchEntry(
                             iter.getEdge(),
                             iter.getLastOrigEdge(),
                             iter.getAdjNode(),
                             weight,
-                            onOrigPath,
-                            viaCenter
+                            onOrigPath
                     );
                     newEntry.parent = entry;
-                    if (viaCenter) {
-                        numViaCenter++;
+                    if (onOrigPath) {
+                        numOnOrigPath++;
                     }
                     entries.indexInsert(index, key, newEntry);
                     priorityQueue.add(newEntry);
                     updateBestPath(toNode, targetEdge, newEntry);
                 } else {
-                    SmartWitnessSearchEntry existingEntry = entries.indexGet(index);
+                    WitnessSearchEntry existingEntry = entries.indexGet(index);
                     if (weight < existingEntry.weight) {
                         priorityQueue.remove(existingEntry);
                         existingEntry.edge = iter.getEdge();
                         existingEntry.incEdge = iter.getLastOrigEdge();
                         existingEntry.weight = weight;
                         existingEntry.parent = entry;
-                        existingEntry.onOrigPath = onOrigPath;
-                        if (viaCenter) {
-                            if (!existingEntry.viaCenter) {
-                                numViaCenter++;
+                        if (onOrigPath) {
+                            if (!existingEntry.onOrigPath) {
+                                numOnOrigPath++;
                             }
                         } else {
-                            if (existingEntry.viaCenter) {
-                                numViaCenter--;
+                            if (existingEntry.onOrigPath) {
+                                numOnOrigPath--;
                             }
                         }
-                        existingEntry.viaCenter = viaCenter;
+                        existingEntry.onOrigPath = onOrigPath;
                         priorityQueue.add(existingEntry);
                         updateBestPath(toNode, targetEdge, existingEntry);
                     }
@@ -190,7 +187,7 @@ public class SmartWitnessPathFinder {
             numSettledEdges++;
         }
 
-        if (resOnOrigPath) {
+        if (resViaCenter) {
             // the best path we could find is an original path so we return it
             // (note that this path may contain loops at the center node)
             int edgeKey = getEdgeKey(resIncEdge, toNode);
@@ -204,16 +201,17 @@ public class SmartWitnessPathFinder {
         return numPolledEdges;
     }
 
-    private void updateBestPath(int toNode, int targetEdge, SmartWitnessSearchEntry entry) {
+    private void updateBestPath(int toNode, int targetEdge, WitnessSearchEntry entry) {
         // when we hit the target node we update the best path
         if (entry.adjNode == toNode) {
             double totalWeight = entry.weight + calcTurnWeight(entry.incEdge, toNode, targetEdge);
+            boolean viaCenter = entry.getParent().onOrigPath;
             // when in doubt prefer a witness path over an original path
-            double tolerance = entry.onOrigPath ? 0 : 1.e-6;
+            double tolerance = viaCenter ? 0 : 1.e-6;
             if (totalWeight - tolerance < bestWeight) {
                 bestWeight = totalWeight;
                 resIncEdge = entry.incEdge;
-                resOnOrigPath = entry.onOrigPath;
+                resViaCenter = viaCenter;
             }
         }
     }
@@ -238,28 +236,28 @@ public class SmartWitnessPathFinder {
                 continue;
             }
             double weight = turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
-            boolean viaCenter = outIter.getAdjNode() == centerNode;
-            SmartWitnessSearchEntry entry = new SmartWitnessSearchEntry(
+            boolean onOrigPath = outIter.getAdjNode() == centerNode;
+            WitnessSearchEntry entry = new WitnessSearchEntry(
                     outIter.getEdge(),
                     outIter.getLastOrigEdge(),
-                    outIter.getAdjNode(), turnWeight + weight, viaCenter, viaCenter);
-            entry.parent = new SmartWitnessSearchEntry(
+                    outIter.getAdjNode(), turnWeight + weight, onOrigPath);
+            entry.parent = new WitnessSearchEntry(
                     EdgeIterator.NO_EDGE,
                     outIter.getFirstOrigEdge(),
-                    fromNode, turnWeight, false, false);
+                    fromNode, turnWeight, false);
             addOrUpdateInitialEntry(entry);
         }
 
         // now that we know which entries are actually needed we add them to the priority queue
-        for (IntObjectCursor<SmartWitnessSearchEntry> e : entries) {
-            if (e.value.viaCenter) {
-                numViaCenter++;
+        for (IntObjectCursor<WitnessSearchEntry> e : entries) {
+            if (e.value.onOrigPath) {
+                numOnOrigPath++;
             }
             priorityQueue.add(e.value);
         }
     }
 
-    private void addOrUpdateInitialEntry(SmartWitnessSearchEntry entry) {
+    private void addOrUpdateInitialEntry(WitnessSearchEntry entry) {
         int edgeKey = getEdgeKey(entry.incEdge, entry.adjNode);
         int index = entries.indexOf(edgeKey);
         if (index < 0) {
@@ -267,7 +265,7 @@ public class SmartWitnessPathFinder {
         } else {
             // there may be entries with the same adjNode and last original edge, but we only need the one with
             // the lowest weight
-            SmartWitnessSearchEntry currEntry = entries.indexGet(index);
+            WitnessSearchEntry currEntry = entries.indexGet(index);
             if (entry.weight < currEntry.weight) {
                 entries.indexReplace(index, entry);
             }
@@ -279,7 +277,7 @@ public class SmartWitnessPathFinder {
         stats.onReset(numSettledEdges, maxSettledEdges);
         numSettledEdges = 0;
         numPolledEdges = 0;
-        numViaCenter = 0;
+        numOnOrigPath = 0;
         initCollections();
     }
 
