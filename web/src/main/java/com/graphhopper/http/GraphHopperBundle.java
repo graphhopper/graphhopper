@@ -54,7 +54,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 
-public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfiguration> {
+public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConfiguration> {
 
     static class TranslationMapFactory implements Factory<TranslationMap> {
 
@@ -136,18 +136,18 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
     }
 
     @Override
-    public void run(HasGraphHopperConfiguration configuration, Environment environment) throws Exception {
-        configuration.graphhopper().merge(CmdArgs.readFromConfigAndMerge(configuration.graphhopper()));
+    public void run(GraphHopperBundleConfiguration configuration, Environment environment) throws Exception {
+        configuration.getGraphHopperConfiguration().merge(CmdArgs.readFromConfigAndMerge(configuration.getGraphHopperConfiguration()));
 
-        if (configuration.graphhopper().has("gtfs.file")) {
+        if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
             // switch to different API implementation when using Pt
-            runPtGraphHopper(configuration.graphhopper(), environment);
+            runPtGraphHopper(configuration.getGraphHopperConfiguration(), environment);
         } else {
-            runRegularGraphHopper(configuration.graphhopper(), environment);
+            runRegularGraphHopper(configuration.getGraphHopperConfiguration(), environment);
         }
 
         environment.servlets().addFilter("cors", CORSFilter.class).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");
-        environment.servlets().addFilter("ipfilter", new IPFilter(configuration.graphhopper().get("jetty.whiteips", ""), configuration.graphhopper().get("jetty.blackips", ""))).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");
+        environment.servlets().addFilter("ipfilter", new IPFilter(configuration.getGraphHopperConfiguration().get("jetty.whiteips", ""), configuration.getGraphHopperConfiguration().get("jetty.blackips", ""))).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");
 
     }
 

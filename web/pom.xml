@@ -53,14 +53,9 @@
             <version>1.2.2</version>
         </dependency>
         <dependency>
-            <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-assets</artifactId>
-            <version>1.2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.github.dirkraft.dropwizard</groupId>
-            <artifactId>dropwizard-file-assets</artifactId>
-            <version>0.0.2</version>
+            <groupId>io.dropwizard-bundles</groupId>
+            <artifactId>dropwizard-configurable-assets-bundle</artifactId>
+            <version>1.0.5</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>

@@ -41,7 +41,7 @@ public class ChangeGraphResourceIT {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.graphhopper.merge(new CmdArgs().
+        config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put(Parameters.CH.PREPARE + "weightings", "no").
                 put("graph.flag_encoders", "car").
                 put("web.change_graph.enabled", "true").
