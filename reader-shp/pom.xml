@@ -10,7 +10,7 @@
     <name>GraphHopper Reader for Shapefile Data</name>
 	
     <properties>      
-        <geotools.version>15.2</geotools.version>
+        <geotools.version>19.0</geotools.version>
     </properties>
     	
     <parent>
@@ -49,9 +49,13 @@
             <version>${log4j.version}</version>
             <scope>test</scope>
         </dependency>
-        
         <dependency>
-            <!--  Include the pbf reader for test purposes -->
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-reader-osm</artifactId>
             <version>${project.parent.version}</version>

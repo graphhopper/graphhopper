@@ -238,7 +238,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // node priorities all shortcut searches are cancelled immediately and all possible shortcuts are counted because
         // no witness path can be found. this is not really what we want, but changing it requires re-optimizing the
         // graph contraction parameters, because it affects the node contraction order.
-        meanDegree = prepareGraph.getAllEdges().getMaxId() / prepareGraph.getNodes();
+        meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
         int level = 1;
         long counter = 0;
         int initSize = sortedNodes.getSize();

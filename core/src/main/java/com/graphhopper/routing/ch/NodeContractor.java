@@ -70,7 +70,7 @@ class NodeContractor {
         // todo: do we really need this method ? the problem is that ghStorage/prepareGraph can potentially be modified
         // between the constructor call and contractNode,calcShortcutCount etc. ...
         maxLevel = prepareGraph.getNodes() + 1;
-        maxEdgesCount = ghStorage.getAllEdges().getMaxId();
+        maxEdgesCount = ghStorage.getAllEdges().length();
         ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
         vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
@@ -247,7 +247,7 @@ class NodeContractor {
             if (value != 1)
                 throw new IllegalStateException("Trying to set original edge count for normal edge to a value = " + value
                         + ", edge:" + (edgeId + maxEdgesCount) + ", max:" + maxEdgesCount + ", graph.max:" +
-                        prepareGraph.getAllEdges().getMaxId());
+                        prepareGraph.getAllEdges().length());
             return;
         }
 

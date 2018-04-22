@@ -5,11 +5,11 @@ This guide is written for everyone interested in deploying graphhopper on a serv
 ## Basics
  
 For simplicity you could just start jetty from maven and schedule it as background job: 
-`export GH_FOREGROUND=false && export JETTY_PORT=11111 && ./graphhopper.sh web europe_germany_berlin.pbf`. 
+`./graphhopper.sh -a web -i europe_germany_berlin.pbf -d --port 11111`. 
 Then the service will be accessible on port 11111.
 
-For production usage you have a jetty already bundled as a simple jar. Then copy web/config.properties also there and change this properties 
-file to point to the required graphhopper folder. Increase the -Xmx/-Xms values of your server server e.g. 
+For production usage you have a web service included. Copy [this configuration](https://raw.githubusercontent.com/graphhopper/graphhopper/master/config-example.yml) 
+also there and use `-c config.yml` in the script to point to it. Increase the -Xmx/-Xms values of your server server e.g. 
 for world wide coverage with a hierarchical graph do the following before calling graphhopper.sh:
 
 ```

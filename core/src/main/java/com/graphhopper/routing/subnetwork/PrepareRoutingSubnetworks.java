@@ -21,12 +21,10 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -178,8 +176,8 @@ public class PrepareRoutingSubnetworks {
             allRemoved += removedEdges;
         }
 
-        if (allRemoved > ghStorage.getAllEdges().getMaxId() / 2)
-            throw new IllegalStateException("Too many total edges were removed: " + allRemoved + ", all edges:" + ghStorage.getAllEdges().getMaxId());
+        if (allRemoved > ghStorage.getAllEdges().length() / 2)
+            throw new IllegalStateException("Too many total edges were removed: " + allRemoved + ", all edges:" + ghStorage.getAllEdges().length());
         return allRemoved;
     }
 

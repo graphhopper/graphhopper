@@ -37,7 +37,7 @@ virtual node x and virtual edges A-x, x-B for every query point located on an ed
 But we need to decouple requests from each other and therefor we create a very lightweight graph called 
 `QueryGraph` for every request which handles also stuff like two query points on the same edge.
 
-The virtual nodes and edges have a higher `int` ID than `graph.getNodes()` or `allEdges.getMaxId()`
+The virtual nodes and edges have a higher `int` ID than `graph.getNodes()` or `allEdges.length()`
 
 A call `queryGraph.lookup(allQRs)` will determine the correct node for all `QueryResult`s: and either 
 create new virtual nodes or if close enough use the existing junction node.

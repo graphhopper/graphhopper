@@ -88,7 +88,7 @@ public class MatrixResponse {
 
     public void setWeightRow(int row, double weightRow[]) {
         if (weights.length > 0) {
-            check(weights.length, toCount, "to weights");
+            check(weightRow.length, toCount, "to weights");
             weights[row] = weightRow;
         } else {
             throw new UnsupportedOperationException("Cannot call setWeightRow if weights are disabled");
