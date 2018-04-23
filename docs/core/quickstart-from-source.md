@@ -5,7 +5,8 @@
 ## Try out
 
 For a start which requires only the JRE have a look [here](../web/quickstart.md). 
-Windows user can find a quick guide [here](./windows-setup.md). 
+Windows user can find a quick guide [here](./windows-setup.md).
+People with IDE knowledge can directly jump to [Start Development](./#start-development)
 
 Now, before you proceed install git and jdk8, then do:
 
@@ -31,7 +32,8 @@ $ ./graphhopper.sh -a web -i north-america_us_new-york.pbf -o new-york-gh
 
 ## Start Development
 
-Open the project in your IDE, first class IDEs are NetBeans and IntelliJ where no further setup is required.
+Open the project in your IDE, first class IDEs are NetBeans and [IntelliJ](https://github.com/graphhopper/isochrone-experiments/issues/1) 
+where no further setup is required.
 
 ### Contribute
 
