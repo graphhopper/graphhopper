@@ -8,8 +8,8 @@
     <packaging>jar</packaging>
     <version>0.11-SNAPSHOT</version>
     <name>GraphHopper Isochrone</name>
-    <description>Isochrone calculation with GraphHopper</description>    
-    
+    <description>Isochrone calculation with GraphHopper</description>
+
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
@@ -22,7 +22,14 @@
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-reader-osm</artifactId>
             <version>${project.parent.version}</version>
-        </dependency> 
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>
