@@ -234,11 +234,13 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         if (entry == null || Double.isInfinite(entry.weight)) {
                             continue;
                         }
-                        // todo: do not search parent root twice, this is stolen from handleShortcuts()
                         CHEntry root = entry.getParent();
                         while (root.parent.edge != EdgeIterator.NO_EDGE) {
                             root = root.getParent();
                         }
+                        // todo: removing this 'optimization' improves contraction time significantly, but introduces 
+                        // more shortcuts. why is this so ? any 'duplicate' shortcuts should be detected at time of
+                        // insertion !??
                         AddedShortcut addedShortcut = new AddedShortcut(fromNode, root.getParent().incEdge, toNode, entry.incEdge);
                         if (addedShortcuts.contains(addedShortcut)) {
                             continue;
@@ -246,7 +248,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         // root parent weight was misused to store initial turn cost here
                         double initialTurnCost = root.getParent().weight;
                         entry.weight -= initialTurnCost;
-                        handleShortcuts(entry);
+                        handleShortcuts(entry, root);
                         addedShortcuts.add(addedShortcut);
                     }
                 }
@@ -533,11 +535,15 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private void handleShortcuts(CHEntry chEntry) {
-        LOGGER.trace("Adding shortcuts for target entry {}", chEntry);
         CHEntry root = chEntry.getParent();
         while (root.parent.edge != EdgeIterator.NO_EDGE) {
             root = root.getParent();
         }
+        handleShortcuts(chEntry, root);
+    }
+
+    private void handleShortcuts(CHEntry chEntry, CHEntry root) {
+        LOGGER.trace("Adding shortcuts for target entry {}", chEntry);
         if (root.parent.adjNode == chEntry.adjNode &&
                 //here we misuse root.parent.incEdge as first orig edge of the potential shortcut
                 !loopShortcutNecessary(
