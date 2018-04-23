@@ -64,18 +64,25 @@ as those versions are not in maven central:
 ### JavaScript
 
 When developing the UI for GraphHopper you need to enable serving files
-directly from local storage which you can do via `./graphhopper.sh -a webdebug -i <your_osm.pbf>`
+directly from local disc via your config.yml:
 
-Open the browser at `localhost:8989` and you should see something like [GraphHopper Maps](https://graphhopper.com/maps/).
+```yml
+assets:
+  overrides:
+    /maps: web/src/main/resources/assets/
+```
+
+The run the graphhopper.sh script with the web action and open the browser at
+`localhost:8989`. You should see something like [GraphHopper Maps](https://graphhopper.com/maps/).
 
 To setup the JavaScript environment install the node package manager (npm):
 
 For linux do
 ```bash
-curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.29.0/install.sh | bash
+curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.9/install.sh | bash
 # close and reopen terminal now
-nvm install 4.2.2
-nvm use 4.2.2
+nvm install --lts
+nvm use --lts
 ```
 
 For windows download either [nvm](https://github.com/coreybutler/nvm-windows) or [node](https://nodejs.org/en/download/) directly.
@@ -91,8 +98,12 @@ npm test
 npm run bundle
 ```
 
-There are more npm commands e.g. to change the main.js on the fly or create an uglified main.js for production:
+There are more npm commands e.g. to change the main.js on the fly or create an uglified main.js for
+production.
+
 ```bash
+cd web
+
 # For development just use watchify and all changes will be available on refresh:
 npm run watch
 
