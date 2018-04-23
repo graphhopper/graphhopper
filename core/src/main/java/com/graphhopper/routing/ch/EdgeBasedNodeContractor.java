@@ -89,7 +89,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         witnessPathFinder = arrayBasedWitnessPathFinder ?
                 new ArrayBasedWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel) :
                 new MapBasedWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel);
-        smartWitnessPathFinder = new SmartWitnessPathFinder(ghStorage, prepareGraph, turnWeighting);
+        smartWitnessPathFinder = arrayBasedWitnessPathFinder ?
+                new ArraySmartWitnessPathFinder(ghStorage, prepareGraph, turnWeighting) :
+                new MapSmartWitnessPathFinder(ghStorage, prepareGraph, turnWeighting);
         DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
         DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
         inEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
