@@ -35,7 +35,7 @@ public class EncodingManagerNewTest {
 
     @Before
     public void setUp() {
-        final Map<String, Double> speedMap = TagParserFactory.Car.createSpeedMap();
+        final Map<String, Double> speedMap = TagParserFactory.createCarSpeedMap();
         ReaderWayFilter filter = new ReaderWayFilter() {
             @Override
             public boolean accept(ReaderWay way) {
@@ -48,9 +48,9 @@ public class EncodingManagerNewTest {
         encodingManager = new EncodingManager.Builder(8).
                 // do not add surface property to test exception below
                         addGlobalEncodedValues(false, true).
-                        add(TagParserFactory.Car.createAverageSpeed(avSpeedEnc, speedMap)).
-                        add(TagParserFactory.Car.createAccess(accessEnc, filter)).
-                        add(TagParserFactory.createMaxWeight(maxWeightEnc, filter)).
+                        add(TagParserFactory.createParser(TagParserFactory.CAR_AVERAGE_SPEED)).
+                        add(TagParserFactory.createParser(TagParserFactory.CAR_ACCESS)).
+                        add(TagParserFactory.createParser(TagParserFactory.MAX_WEIGHT)).
                         build();
         graph = new GraphBuilder(encodingManager, json).create();
     }
@@ -206,7 +206,7 @@ public class EncodingManagerNewTest {
             }
         };
 
-        final Map<String, Double> speedMap = TagParserFactory.Car.createSpeedMap();
+        final Map<String, Double> speedMap = TagParserFactory.createCarSpeedMap();
         ReaderWayFilter filter = new ReaderWayFilter() {
             @Override
             public boolean accept(ReaderWay way) {
@@ -215,7 +215,7 @@ public class EncodingManagerNewTest {
         };
 
         EncodingManager encodingManager = new EncodingManager.Builder(4).
-                add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true), filter)).
+                add(TagParserFactory.createParser(TagParserFactory.CAR_ACCESS)).
                 add(directedSpeedParser).
                 build();
 
@@ -241,7 +241,7 @@ public class EncodingManagerNewTest {
 
     @Test
     public void deserializationWithoutFlagEncoders() {
-        final Map<String, Double> speedMap = TagParserFactory.Car.createSpeedMap();
+        final Map<String, Double> speedMap = TagParserFactory.createCarSpeedMap();
         ReaderWayFilter filter = new ReaderWayFilter() {
             @Override
             public boolean accept(ReaderWay way) {
@@ -251,7 +251,7 @@ public class EncodingManagerNewTest {
 
         EncodingManager encodingManager = new EncodingManager.Builder(4).
                 addGlobalEncodedValues().
-                add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true), filter)).
+                add(TagParserFactory.createParser(TagParserFactory.CAR_ACCESS)).
                 build();
 
         String jsonStr = json.toJson(encodingManager);

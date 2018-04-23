@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.TagParser;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
@@ -34,8 +35,6 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.util.*;
 import java.util.Map.Entry;
 
-import static com.graphhopper.routing.profiles.TagParserFactory.*;
-
 /**
  * This encoder tries to store all way information into a 32 or 64bit value. Later extendable to
  * multiple ints or bytes. The assumption is that edge.getFlags is cheap and can be later replaced
@@ -47,7 +46,7 @@ import static com.graphhopper.routing.profiles.TagParserFactory.*;
  */
 public class DataFlagEncoder extends AbstractFlagEncoder {
 
-    private static final Map<String, Double> DEFAULT_SPEEDS = TagParserFactory.Car.createSpeedMap();
+    private static final Map<String, Double> DEFAULT_SPEEDS = TagParserFactory.createCarSpeedMap();
 
     private IntEncodedValue accessClassEnc;
     private Map<String, Integer> accessClassMap = new HashMap<>();
@@ -163,21 +162,19 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             }
         });
 
-        map.put(prefix + "access", TagParserFactory.Car.createAccess(new BooleanEncodedValue(prefix + "access", true),
-                osmWayFilter));
+        map.put(TagParserFactory.CAR_ACCESS, TagParserFactory.createParser(TagParserFactory.CAR_ACCESS));
+
 
         // value range: [3.0m, 5.4m]
         if (isStoreHeight())
-            map.put(MAX_HEIGHT, TagParserFactory.createMaxHeight(new DecimalEncodedValue(MAX_HEIGHT, 7, 0, 0.1, false),
-                    osmWayFilter));
+            map.put(TagParserFactory.MAX_HEIGHT, TagParserFactory.createParser(TagParserFactory.MAX_HEIGHT));
         // value range: [1.0t, 59.5t]
         if (isStoreWeight())
-            map.put(MAX_WEIGHT, TagParserFactory.createMaxWeight(new DecimalEncodedValue(MAX_WEIGHT, 10, 0, 0.1, false),
-                    osmWayFilter));
+            map.put(TagParserFactory.MAX_WEIGHT, TagParserFactory.createParser(TagParserFactory.MAX_WEIGHT));
         // value range: [2.5m, 3.5m]
         if (isStoreWidth())
-            map.put(MAX_WIDTH, TagParserFactory.createMaxWidth(new DecimalEncodedValue(MAX_WIDTH, 6, 0, 0.1, false),
-                    osmWayFilter));
+            map.put(TagParserFactory.MAX_WIDTH, TagParserFactory.createParser(TagParserFactory.MAX_WIDTH));
+
 
         // Ordered in increasingly restrictive order
         // Note: if you update this list you have to update the method getAccessTagAsInt too
@@ -249,8 +246,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         int tmpMax = spatialRuleLookup.size() - 1;
         int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
         if (bits > 0)
-            map.put(TagParserFactory.SPATIAL_RULE_ID, TagParserFactory.createSpatialRuleId(spatialRuleLookup,
-                    new IntEncodedValue(TagParserFactory.SPATIAL_RULE_ID, bits, 0, false)));
+            map.put(TagParserFactory.SPATIAL_RULE_ID, TagParserFactory.createParser(TagParserFactory.SPATIAL_RULE_ID));
         return map;
     }
 

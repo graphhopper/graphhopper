@@ -544,7 +544,7 @@ public class GraphHopper implements GraphHopperAPI {
         String flagEncodersStr = args.get("graph.flag_encoders", "");
         if (!flagEncodersStr.isEmpty()) {
             if (bytesForFlags > 8) {
-                final Map<String, Double> speedMap = TagParserFactory.Car.createSpeedMap();
+                final Map<String, Double> speedMap = TagParserFactory.createCarSpeedMap();
                 ReaderWayFilter filter = new ReaderWayFilter() {
                     @Override
                     public boolean accept(ReaderWay way) {
@@ -553,9 +553,9 @@ public class GraphHopper implements GraphHopperAPI {
                 };
                 setEncodingManager(new EncodingManager.Builder(bytesForFlags).
                         addGlobalEncodedValues().
-                        add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue(TagParserFactory.CAR_MAX_SPEED, 5, 0, 5, false), filter)).
-                        add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED, 5, 0, 5, false), speedMap)).
-                        add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true), filter)).
+                        add(TagParserFactory.createParser(TagParserFactory.CAR_MAX_SPEED)).
+                        add(TagParserFactory.createParser(TagParserFactory.CAR_AVERAGE_SPEED)).
+                        add(TagParserFactory.createParser(TagParserFactory.CAR_ACCESS)).
                         build());
             } else {
                 setEncodingManager(new EncodingManager.Builder(bytesForFlags).addGlobalEncodedValues().

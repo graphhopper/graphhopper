@@ -24,6 +24,7 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.TagParser;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.IntsRef;
@@ -34,7 +35,6 @@ import com.graphhopper.util.PMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
 import java.util.*;
 
 /**
@@ -71,6 +71,43 @@ public class EncodingManager implements EncodedValueLookup {
     private boolean enableInstructions = true;
     @JsonProperty("preferred_language")
     private String preferredLanguage = "";
+
+    /**
+     * thematically structured encoders. Double encoders will be added once only.
+     */
+
+    private static String[] footEncodedValues = {
+            TagParserFactory.FOOT_ACCESS,
+            TagParserFactory.FOOT_AVERAGE_SPEED,
+            TagParserFactory.CAR_MAX_SPEED,
+            TagParserFactory.ROAD_CLASS,
+            TagParserFactory.ROAD_ENVIRONMENT
+            };
+    private static String[] bikeEncodedValues = {
+            TagParserFactory.BIKE_ACCESS,
+            TagParserFactory.BIKE_AVERAGE_SPEED,
+            TagParserFactory.ROAD_CLASS,
+            TagParserFactory.ROAD_ENVIRONMENT,
+            TagParserFactory.CAR_MAX_SPEED
+    };
+    private static String[] carEncodedValues = {
+            TagParserFactory.CAR_ACCESS,
+            TagParserFactory.CAR_AVERAGE_SPEED,
+            TagParserFactory.CAR_MAX_SPEED,
+            TagParserFactory.ROAD_CLASS,
+            TagParserFactory.ROAD_ENVIRONMENT,
+            TagParserFactory.ROUNDABOUT,
+            TagParserFactory.MAX_HEIGHT,
+            TagParserFactory.MAX_WEIGHT,
+            TagParserFactory.MAX_WIDTH,
+            TagParserFactory.CURVATURE
+    };
+    private static String[] globalEncodedValues = {
+            TagParserFactory.ROUNDABOUT,
+            TagParserFactory.ROAD_CLASS,
+            TagParserFactory.ROAD_ENVIRONMENT
+//            TagParserFactory.CURVATURE
+    };
 
     /**
      * This constructor creates the object that orchestrates the edge properties, so called EncodedValues.
@@ -115,33 +152,19 @@ public class EncodingManager implements EncodedValueLookup {
         /**
          * This method adds some EncodedValues that are required like roundabout and road_class
          */
+
+        public Builder addGlobalEncodedValues(String... parsers) {
+            for (String parser : parsers){
+                add(TagParserFactory.createParser(parser));
+
+            }
+            return this;
+        }
+
         public Builder addGlobalEncodedValues(boolean surface, boolean carMaxSpeed) {
-            // TODO NOW for all bike we need surface (unpaved) as global encoded value to avoid creating multiple -> addBikeEncodedValues()?
-            if (surface) {
-                List<String> surfaces = Arrays.asList("_default", "paved", "asphalt", "cobblestone", "cobblestone:flattened", "sett", "concrete",
-                        "concrete:lanes", "concrete:plates", "paving_stones", "paving_stones:30", "unpaved", "compacted"
-                        , "dirt", "earth", "fine_gravel", "grass", "grass_paver", "gravel", "ground", "ice", "metal"
-                        , "mud", "pebblestone", "salt", "sand", "wood");
-                add(TagParserFactory.createSurface(new StringEncodedValue(TagParserFactory.SURFACE, surfaces, "_default")));
-            }
-
-            if (carMaxSpeed) {
-                // TODO NOW do we really need this for instructions?
-                DecimalEncodedValue ev = new DecimalEncodedValue(TagParserFactory.CAR_MAX_SPEED, 7, 0, 2, false);
-                add(TagParserFactory.Car.createMaxSpeed(ev, TagParserFactory.ACCEPT_IF_HIGHWAY));
-            }
-
-            add(TagParserFactory.createRoundabout(new BooleanEncodedValue(TagParserFactory.ROUNDABOUT)));
-            List<String> roadClasses = Arrays.asList("_default", "footway", "path", "steps", "pedestrian", "living_street", "track",
-                    "residential", "service", "trunk", "trunk_link", "motorway", "motorway_link", "motorroad",
-                    "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
-                    "cycleway", "unclassified", "road", "bridleway");
-            add(TagParserFactory.createRoadClass(new StringEncodedValue(TagParserFactory.ROAD_CLASS, roadClasses, "_default")));
-
-            List<String> roadEnvList = Arrays.asList("_default", "bridge", "tunnel", "ford", "aerialway");
-            add(TagParserFactory.createRoadEnvironment(new StringEncodedValue(TagParserFactory.ROAD_ENVIRONMENT, roadEnvList, "_default"), roadEnvList));
-
-            // bit usage: 1, 5, 3, plus surface: 5, plus max_speed: 7
+            if(surface) add(TagParserFactory.createParser(TagParserFactory.SURFACE));
+            if(carMaxSpeed) add(TagParserFactory.createParser(TagParserFactory.CAR_MAX_SPEED));
+            addGlobalEncodedValues(globalEncodedValues);
             return this;
         }
 
@@ -162,6 +185,27 @@ public class EncodingManager implements EncodedValueLookup {
             em.encodedValueMap.put(parser.getName(), parser.getEncodedValue());
             em.encodedValueList.add(parser.getEncodedValue());
             em.filters.add(parser.getReadWayFilter());
+            return this;
+        }
+
+        public Builder addBikeEncodedValues(){
+            for(String parser : bikeEncodedValues){
+                add(TagParserFactory.createParser(parser));
+            }
+            return this;
+        }
+
+        public Builder addCarEncodedValues(){
+            for(String parser : carEncodedValues){
+                add(TagParserFactory.createParser(parser));
+            }
+            return this;
+        }
+
+        public Builder addFootEncodedValues(){
+            for(String parser : footEncodedValues){
+                add(TagParserFactory.createParser(parser));
+            }
             return this;
         }
 

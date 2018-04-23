@@ -1,6 +1,7 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.tagparsers.CarMaxSpeedParser;
 import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
@@ -22,12 +23,11 @@ public class TagParserFactoryTest {
         };
 
         IntsRef ints = new IntsRef(1);
-        TagParserFactory.Car.createMaxSpeed(ev, filter).parse(ints, way);
+        new CarMaxSpeedParser(ev).setReadWayFilter(filter).parse(ints, way);
         assertEquals(1, ev.getDecimal(false, ints), .1);
 
         way.setTag("maxspeed", "30");
-        TagParser tp = TagParserFactory.Car.createMaxSpeed(ev, filter);
-        tp.parse(ints, way);
+        new CarMaxSpeedParser(ev).setReadWayFilter(filter).parse(ints, way);
         assertEquals(30, ev.getDecimal(false, ints), .1);
     }
 }

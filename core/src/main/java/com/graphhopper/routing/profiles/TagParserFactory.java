@@ -18,12 +18,7 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.util.AbstractFlagEncoder;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.routing.profiles.tagparsers.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +26,17 @@ import java.util.*;
 
 public class TagParserFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TagParserFactory.class);
+    public static final Logger LOGGER = LoggerFactory.getLogger(TagParserFactory.class);
+    private static Map<String, Double> speedMap = createCarSpeedMap();
+    private static Set<String> footAccessTags = createFootAccessTags();
+    public static final Set<String> fwdOneways = new HashSet<String>() {
+        {
+            add("yes");
+            add("true");
+            add("1");
+        }
+    };
+
     public static final ReaderWayFilter ACCEPT_IF_HIGHWAY = new ReaderWayFilter() {
         @Override
         public boolean accept(ReaderWay way) {
@@ -39,11 +44,17 @@ public class TagParserFactory {
         }
     };
 
-    private static final Set<String> fwdOneways = new HashSet<String>() {
-        {
-            add("yes");
-            add("true");
-            add("1");
+    public static final ReaderWayFilter SPEEDMAPFILTER = new ReaderWayFilter() {
+        @Override
+        public boolean accept(ReaderWay way) {
+            return speedMap.containsKey(way.getTag("highway"));
+        }
+    };
+
+    public static final ReaderWayFilter FOOTACCESSFILTER = new ReaderWayFilter() {
+        @Override
+        public boolean accept(ReaderWay way) {
+            return footAccessTags.contains(way.getTag("highway"));
         }
     };
 
@@ -61,172 +72,42 @@ public class TagParserFactory {
     public static final String CAR_AVERAGE_SPEED = "car.average_speed";
     public static final String BIKE_ACCESS = "bike.access";
     public static final String BIKE_AVERAGE_SPEED = "bike.average_speed";
+    public static final String BIKE_PRIORITY = "bike.priority";
     public static final String FOOT_ACCESS = "foot.access";
     public static final String FOOT_AVERAGE_SPEED = "foot.average_speed";
 
-    public static TagParser createRoundabout(final BooleanEncodedValue ev) {
-        return new AbstractTagParser(ev) {
-            @Override
-            public void parse(IntsRef ints, ReaderWay way) {
-                if (way.hasTag("junction", "roundabout")) ev.setBool(false, ints, true);
-            }
-
-            @Override
-            public ReaderWayFilter getReadWayFilter() {
-                return ACCEPT_IF_HIGHWAY;
-            }
-
-        };
+    public static class Foot {
+        public static final double FOOT_SLOW_SPEED = 2d;
+        public static final double FOOT_MEAN_SPEED = 5d;
+        public static final double FOOT_FERRY_SPEED = 10d;
     }
 
-    /**
-     * For OpenStreetMap this TagParser handles the highway tag and sets it to "ferry" if this is a ferry relation.
-     */
-    public static TagParser createRoadClass(final StringEncodedValue ev) {
-        return new AbstractTagParser(ev) {
-            @Override
-            public void parse(IntsRef ints, ReaderWay way) {
-                ev.setString(false, ints, way.getTag("highway"));
-            }
 
-            @Override
-            public ReaderWayFilter getReadWayFilter() {
-                return ACCEPT_IF_HIGHWAY;
-            }
-        };
+
+    public static TagParser createParser(final String parser) {
+        switch(parser){
+            case CAR_MAX_SPEED: return new CarMaxSpeedParser();
+            case CAR_ACCESS: return new CarAccessParser();
+            case CAR_AVERAGE_SPEED: return new CarAverageSpeedParser();
+
+            case BIKE_ACCESS: return new BikeAccessParser();
+            case BIKE_AVERAGE_SPEED: return new BikeAverageSpeedParser();
+
+            case FOOT_ACCESS: return new FootAccessParser();
+            case FOOT_AVERAGE_SPEED: return new FootAverageSpeedParser();
+
+            case SPATIAL_RULE_ID: return new SpatialRuleIdParser();
+            case ROUNDABOUT: return new RoundaboutParser();
+            case SURFACE: return new SurfaceParser();
+            case ROAD_CLASS: return new RoadClassParser();
+            case ROAD_ENVIRONMENT: return new RoadEnvironmentParser();
+            case MAX_HEIGHT: return new MaxHeightParser();
+            case MAX_WEIGHT: return new MaxWeightParser();
+            case MAX_WIDTH: return new MaxWidthParser();
+            default: throw new IllegalArgumentException("Unsupported TagParser type " + parser);
+        }
     }
 
-    public static TagParser createSurface(final StringEncodedValue ev) {
-        return new AbstractTagParser(ev) {
-            @Override
-            public void parse(IntsRef ints, ReaderWay way) {
-                ev.setString(false, ints, way.getTag("surface"));
-            }
-
-            @Override
-            public ReaderWayFilter getReadWayFilter() {
-                return ACCEPT_IF_HIGHWAY;
-            }
-        };
-    }
-
-    public static TagParser createSpatialRuleId(final SpatialRuleLookup spatialRuleLookup, final IntEncodedValue spatialId) {
-        return new AbstractTagParser(spatialId) {
-            @Override
-            public ReaderWayFilter getReadWayFilter() {
-                return ACCEPT_IF_HIGHWAY;
-            }
-
-            @Override
-            public void parse(IntsRef ints, ReaderWay way) {
-                GHPoint estimatedCenter = way.getTag("estimated_center", null);
-                if (estimatedCenter != null) {
-                    SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);
-                    spatialId.setInt(false, ints, spatialRuleLookup.getSpatialId(rule));
-                }
-            }
-        };
-    }
-
-    /**
-     * For OpenStreetMap this TagParser handles the road environment like if the transportation happens on a ferry or tunnel.
-     */
-    public static TagParser createRoadEnvironment(final StringEncodedValue roadEnvEnc, final List<String> roadEnvOrder) {
-        if (roadEnvOrder.isEmpty())
-            throw new IllegalArgumentException("Road environment list mustn't be empty");
-
-        return new AbstractTagParser(roadEnvEnc) {
-            @Override
-            public ReaderWayFilter getReadWayFilter() {
-                return ACCEPT_IF_HIGHWAY;
-            }
-
-            @Override
-            public void parse(IntsRef ints, ReaderWay way) {
-                // TODO use roadEnvEnc.getDefault instead
-                String roadEnv = roadEnvOrder.get(0);
-                for (String tm : roadEnvOrder) {
-                    if (way.hasTag(tm)) {
-                        roadEnv = tm;
-                        break;
-                    }
-                }
-
-                roadEnvEnc.setString(false, ints, roadEnv);
-            }
-        };
-    }
-
-    public static TagParser createMaxWeight(final DecimalEncodedValue ev, final ReaderWayFilter filter) {
-        final List<String> weightTags = Arrays.asList("maxweight", "maxgcweight");
-        return new AbstractTagParser(ev) {
-            @Override
-            public void parse(IntsRef ints, ReaderWay way) {
-                String value = way.getFirstPriorityTag(weightTags);
-                if (Helper.isEmpty(value)) return;
-
-                try {
-                    ev.setDecimal(false, ints, stringToTons(value));
-                } catch (Throwable ex) {
-                    LOGGER.warn("Unable to extract tons from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId(), ex);
-                    return;
-                }
-            }
-
-            @Override
-            public ReaderWayFilter getReadWayFilter() {
-                return filter;
-            }
-        };
-    }
-
-    public static TagParser createMaxHeight(final DecimalEncodedValue ev, final ReaderWayFilter filter) {
-        final List<String> heightTags = Arrays.asList("maxheight", "maxheight:physical");
-
-        return new AbstractTagParser(ev) {
-            @Override
-            public void parse(IntsRef ints, ReaderWay way) {
-                String value = way.getFirstPriorityTag(heightTags);
-                if (Helper.isEmpty(value)) return;
-
-                try {
-                    ev.setDecimal(false, ints, stringToMeter(value));
-                } catch (Throwable ex) {
-                    LOGGER.warn("Unable to extract height from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId(), ex);
-                    return;
-                }
-            }
-
-            @Override
-            public ReaderWayFilter getReadWayFilter() {
-                return filter;
-            }
-        };
-    }
-
-    public static TagParser createMaxWidth(final DecimalEncodedValue ev, final ReaderWayFilter filter) {
-        final List<String> widthTags = Arrays.asList("maxwidth", "maxwidth:physical");
-
-        return new AbstractTagParser(ev) {
-            @Override
-            public void parse(IntsRef ints, ReaderWay way) {
-                String value = way.getFirstPriorityTag(widthTags);
-                if (Helper.isEmpty(value)) return;
-
-                try {
-                    ev.setDecimal(false, ints, stringToMeter(value));
-                } catch (Throwable ex) {
-                    LOGGER.warn("Unable to extract width from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId(), ex);
-                    return;
-                }
-            }
-
-            @Override
-            public ReaderWayFilter getReadWayFilter() {
-                return filter;
-            }
-        };
-    }
 
     public static double stringToTons(String value) {
         value = value.toLowerCase().replaceAll(" ", "").replaceAll("(tons|ton)", "t");
@@ -280,216 +161,71 @@ public class TagParserFactory {
         }
     }
 
-    public static class Car {
-
-        public static TagParser createMaxSpeed(final DecimalEncodedValue ev, final ReaderWayFilter filter) {
-            return new AbstractTagParser(ev) {
-                @Override
-                public void parse(IntsRef ints, ReaderWay way) {
-                    assert filter.accept(way);
-
-                    double val = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
-                    if (val < 0)
-                        return;
-                    ev.setDecimal(false, ints, val);
-                }
-
-                @Override
-                public ReaderWayFilter getReadWayFilter() {
-                    return filter;
-                }
-            };
-        }
-
-        public static TagParser createAverageSpeed(final DecimalEncodedValue ev, final Map<String, Double> speedMap) {
-            final ReaderWayFilter acceptKnownRoadClasses = new ReaderWayFilter() {
-                @Override
-                public boolean accept(ReaderWay way) {
-                    return speedMap.containsKey(way.getTag("highway"));
-                }
-            };
-
-            return new AbstractTagParser(ev) {
-                @Override
-                public void parse(IntsRef ints, ReaderWay way) {
-                    assert acceptKnownRoadClasses.accept(way);
-
-                    double num = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
-                    Double defaultSp = speedMap.get(way.getTag("highway"));
-                    if (defaultSp == null)
-                        throw new IllegalStateException("Illegal tag '" + way.getTag("highway") + "' should not happen as filtered before");
-
-                    ev.setDecimal(false, ints, num < 0.01 ? defaultSp : num * 0.9);
-                }
-
-                @Override
-                public ReaderWayFilter getReadWayFilter() {
-                    return acceptKnownRoadClasses;
-                }
-            };
-        }
-
-        public static TagParser createAccess(final BooleanEncodedValue access, final ReaderWayFilter acceptKnownRoadClasses) {
-            return new AbstractTagParser(access) {
-
-                @Override
-                public void parse(IntsRef ints, ReaderWay way) {
-                    assert acceptKnownRoadClasses.accept(way);
-
-                    if (way.hasTag("oneway", "-1")) {
-                        access.setBool(true, ints, true);
-                    } else if (way.hasTag("oneway", fwdOneways)
-                            || way.hasTag("junction", "roundabout")) {
-                        access.setBool(false, ints, true);
-                    } else {
-                        access.setBool(false, ints, true);
-                        access.setBool(true, ints, true);
-                    }
-                }
-
-                @Override
-                public ReaderWayFilter getReadWayFilter() {
-                    return acceptKnownRoadClasses;
-                }
-            };
-        }
-
-        public static Map<String, Double> createSpeedMap() {
-            Map<String, Double> map = new LinkedHashMap<>();
-            // autobahn
-            map.put("motorway", 100d);
-            map.put("motorway_link", 70d);
-            map.put("motorroad", 90d);
-            // bundesstraße
-            map.put("trunk", 70d);
-            map.put("trunk_link", 65d);
-            // linking bigger town
-            map.put("primary", 65d);
-            map.put("primary_link", 60d);
-            // linking towns + villages
-            map.put("secondary", 60d);
-            map.put("secondary_link", 50d);
-            // streets without middle line separation
-            map.put("tertiary", 50d);
-            map.put("tertiary_link", 40d);
-            map.put("unclassified", 30d);
-            map.put("residential", 30d);
-            // spielstraße
-            map.put("living_street", 5d);
-            map.put("service", 20d);
-            // unknown road
-            map.put("road", 20d);
-            // forestry stuff
-            map.put("track", 15d);
-            return map;
-        }
+    public static Map<String, Double> createCarSpeedMap() {
+        Map<String, Double> map = new LinkedHashMap<>();
+        // autobahn
+        map.put("motorway", 100d);
+        map.put("motorway_link", 70d);
+        map.put("motorroad", 90d);
+        // bundesstraße
+        map.put("trunk", 70d);
+        map.put("trunk_link", 65d);
+        // linking bigger town
+        map.put("primary", 65d);
+        map.put("primary_link", 60d);
+        // linking towns + villages
+        map.put("secondary", 60d);
+        map.put("secondary_link", 50d);
+        // streets without middle line separation
+        map.put("tertiary", 50d);
+        map.put("tertiary_link", 40d);
+        map.put("unclassified", 30d);
+        map.put("residential", 30d);
+        // spielstraße
+        map.put("living_street", 5d);
+        map.put("service", 20d);
+        // unknown road
+        map.put("road", 20d);
+        // forestry stuff
+        map.put("track", 15d);
+        return map;
     }
 
-    public static class Foot {
-        public static final double SLOW_SPEED = 2d;
-        public static final double MEAN_SPEED = 5d;
-        public static final double FERRY_SPEED = 10d;
+    public static Set<String> createFootAccessTags() {
+        Set<String> map = new HashSet<String>();
+        map.add("footway");
+        map.add("path");
+        map.add("steps");
+        map.add("pedestrian");
+        map.add("living_street");
+        map.add("track");
+        map.add("residential");
+        map.add("service");
 
-        public static final TagParser createAverageSpeed(final DecimalEncodedValue encodedValue) {
-            return new AbstractTagParser(encodedValue) {
+        map.add("trunk");
+        map.add("trunk_link");
+        map.add("primary");
+        map.add("primary_link");
+        map.add("secondary");
+        map.add("secondary_link");
+        map.add("tertiary");
+        map.add("tertiary_link");
 
-                @Override
-                public ReaderWayFilter getReadWayFilter() {
-                    return ACCEPT_IF_HIGHWAY;
-                }
+        map.add("cycleway");
+        map.add("unclassified");
+        map.add("road");
 
-                @Override
-                public void parse(IntsRef ints, ReaderWay way) {
-                    String sacScale = way.getTag("sac_scale");
-                    if (sacScale != null) {
-                        if ("hiking".equals(sacScale))
-                            encodedValue.setDecimal(false, ints, MEAN_SPEED);
-                        else
-                            encodedValue.setDecimal(false, ints, SLOW_SPEED);
-                    } else {
-                        encodedValue.setDecimal(false, ints, MEAN_SPEED);
-                    }
-                }
-            };
-        }
-
-        public static TagParser createAccess(final BooleanEncodedValue access, final ReaderWayFilter acceptKnownRoadClasses) {
-            return new AbstractTagParser(access) {
-                @Override
-                public void parse(IntsRef ints, ReaderWay way) {
-                    assert acceptKnownRoadClasses.accept(way) : way.toString();
-
-                    access.setBool(false, ints, true);
-                    access.setBool(true, ints, true);
-                }
-
-                @Override
-                public ReaderWayFilter getReadWayFilter() {
-                    return acceptKnownRoadClasses;
-                }
-            };
-        }
+        return map;
+    }
+    
+    //TODO
+    public static Map<String, Double> createBikeSpeedMap(){
+        Map<String, Double> map = new LinkedHashMap<>();
+    return map;
     }
 
-    public static class Bike {
-
-        public static TagParser createAverageSpeed(final DecimalEncodedValue averageSpeedEnc) {
-            return new AbstractTagParser(averageSpeedEnc) {
-                @Override
-                public ReaderWayFilter getReadWayFilter() {
-                    return ACCEPT_IF_HIGHWAY;
-                }
-
-                @Override
-                public void parse(IntsRef ints, ReaderWay way) {
-                    // TODO NOW
-                }
-            };
-        }
-
-        public static TagParser createAccess(final BooleanEncodedValue access, final ReaderWayFilter acceptKnownRoadClasses) {
-            return new AbstractTagParser(access) {
-                @Override
-                public void parse(IntsRef ints, ReaderWay way) {
-                    assert acceptKnownRoadClasses.accept(way);
-
-                    if (way.hasTag("oneway", fwdOneways)
-                            || way.hasTag("junction", "roundabout")) {
-                        access.setBool(false, ints, true);
-                    } else {
-                        access.setBool(false, ints, true);
-                        access.setBool(true, ints, true);
-                    }
-                }
-
-                @Override
-                public ReaderWayFilter getReadWayFilter() {
-                    return acceptKnownRoadClasses;
-                }
-            };
-        }
+    public static Map<String, Double> getSpeedMap() {
+        return speedMap;
     }
 
-    private static abstract class AbstractTagParser implements TagParser {
-        private EncodedValue ev;
-
-        public AbstractTagParser(EncodedValue ev) {
-            this.ev = ev;
-        }
-
-        @Override
-        public final EncodedValue getEncodedValue() {
-            return ev;
-        }
-
-        @Override
-        public final String toString() {
-            return ev.toString();
-        }
-
-        @Override
-        public final String getName() {
-            return ev.getName();
-        }
-    }
 }
