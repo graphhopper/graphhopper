@@ -29,6 +29,7 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.http.health.GraphHopperStorageHealthCheck;
 import com.graphhopper.http.resources.*;
+import com.graphhopper.isochrone.algorithm.RasterHullBuilder;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
@@ -58,7 +59,8 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
     static class TranslationMapFactory implements Factory<TranslationMap> {
 
-        @Inject GraphHopper graphHopper;
+        @Inject
+        GraphHopper graphHopper;
 
         @Override
         public TranslationMap provide() {
@@ -70,9 +72,11 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
         }
     }
+
     static class GraphHopperStorageFactory implements Factory<GraphHopperStorage> {
 
-        @Inject GraphHopper graphHopper;
+        @Inject
+        GraphHopper graphHopper;
 
         @Override
         public GraphHopperStorage provide() {
@@ -87,7 +91,8 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
     static class EncodingManagerFactory implements Factory<EncodingManager> {
 
-        @Inject GraphHopper graphHopper;
+        @Inject
+        GraphHopper graphHopper;
 
         @Override
         public EncodingManager provide() {
@@ -102,7 +107,8 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
     static class LocationIndexFactory implements Factory<LocationIndex> {
 
-        @Inject GraphHopper graphHopper;
+        @Inject
+        GraphHopper graphHopper;
 
         @Override
         public LocationIndex provide() {
@@ -117,7 +123,8 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
     static class HasElevation implements Factory<Boolean> {
 
-        @Inject GraphHopper graphHopper;
+        @Inject
+        GraphHopper graphHopper;
 
         @Override
         public Boolean provide() {
@@ -127,6 +134,20 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         @Override
         public void dispose(Boolean instance) {
 
+        }
+    }
+
+    static class RasterHullBuilderFactory implements Factory<RasterHullBuilder> {
+
+        RasterHullBuilder builder = new RasterHullBuilder();
+
+        @Override
+        public RasterHullBuilder provide() {
+            return builder;
+        }
+
+        @Override
+        public void dispose(RasterHullBuilder rasterHullBuilder) {
         }
     }
 
@@ -173,15 +194,18 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(translationMap).to(TranslationMap.class);
                 bind(encodingManager).to(EncodingManager.class);
                 bind(graphHopperStorage).to(GraphHopperStorage.class);
+                bindFactory(RasterHullBuilderFactory.class).to(RasterHullBuilder.class);
             }
         });
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(RouteResource.class);
+        environment.jersey().register(IsochroneResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
         environment.lifecycle().manage(new Managed() {
             @Override
-            public void start() throws Exception {}
+            public void start() throws Exception {
+            }
 
             @Override
             public void stop() throws Exception {
@@ -208,6 +232,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
                 bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
                 bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
+                bindFactory(RasterHullBuilderFactory.class).to(RasterHullBuilder.class);
             }
         });
 
@@ -216,6 +241,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(RouteResource.class);
+        environment.jersey().register(IsochroneResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
 

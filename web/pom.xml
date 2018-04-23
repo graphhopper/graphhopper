@@ -35,6 +35,13 @@
             <artifactId>graphhopper-reader-gtfs</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-isochrone</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
         <!-- required for JDK9 -->
         <dependency>
             <groupId>javax.xml.ws</groupId>
@@ -71,6 +78,13 @@
             <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>directions-api-client</artifactId>
+            <version>0.10.0</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
