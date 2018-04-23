@@ -124,14 +124,7 @@ public class IsochroneResource {
             calcRes = list;
 
         } else if ("polygon".equalsIgnoreCase(resultStr)) {
-            // bigger raster distance => bigger raster => less points => stranger buffer results, but faster
-            double rasterDistance = 0.75; // cmdArgs.getDouble("isochrone.raster_distance", 0.75);
-            // bigger buffer distance => less holes, lower means less points!
-            double bufferDistance = 0.003; // cmdArgs.getDouble("isochrone.buffer_distance", 0.003);
-            // precision of the 'circles'
-            int quadrantSegments = 3; // cmdArgs.getInt("isochrone.quadrant_segments", 3);
-
-            list = rasterHullBuilder.calcList(list, list.size() - 1, rasterDistance, bufferDistance, quadrantSegments);
+            list = rasterHullBuilder.calcList(list, list.size() - 1);
 
             ArrayList polyList = new ArrayList();
             int index = 0;

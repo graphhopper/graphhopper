@@ -45,7 +45,7 @@ public class IsochroneTest {
     // 4-5-- |
     // |/ \--7
     // 6----/
-    void initDirectedAndDiffSpeed(Graph graph) {
+    private void initDirectedAndDiffSpeed(Graph graph) {
         graph.edge(0, 1).setDistance(70).setFlags(carEncoder.setProperties(10, true, false));
         graph.edge(0, 4).setDistance(50).setFlags(carEncoder.setProperties(20, true, false));
 

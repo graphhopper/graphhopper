@@ -45,7 +45,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
     // TODO use same class as used in GTFS module?
     class IsoLabel extends SPTEntry {
 
-        public IsoLabel(int edgeId, int adjNode, double weight, long time, double distance) {
+        IsoLabel(int edgeId, int adjNode, double weight, long time, double distance) {
             super(edgeId, adjNode, weight);
             this.time = time;
             this.distance = distance;
@@ -71,13 +71,9 @@ public class Isochrone extends AbstractRoutingAlgorithm {
 
     public Isochrone(Graph g, Weighting weighting, boolean reverseFlow) {
         super(g, weighting, TraversalMode.NODE_BASED);
-        initCollections(1000);
+        fromHeap = new PriorityQueue<>(1000);
+        fromMap = new GHIntObjectHashMap<>(1000);
         this.reverseFlow = reverseFlow;
-    }
-
-    protected void initCollections(int size) {
-        fromHeap = new PriorityQueue<>(size);
-        fromMap = new GHIntObjectHashMap<>(size);
     }
 
     @Override
@@ -138,8 +134,6 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                     double lon2 = na.getLongitude(nodeId);
                     buckets.get(bucketIndex).add(new Double[]{(lon + lon2) / 2, (lat + lat2) / 2});
                 }
-
-                return;
             }
         });
         return buckets;
@@ -173,13 +167,12 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                 }
 
                 list.get(bucketIndex).add(nodeId);
-                return;
             }
         });
         return list;
     }
 
-    public void searchInternal(int from) {
+    private void searchInternal(int from) {
         checkAlreadyRun();
         currEdge = new IsoLabel(-1, from, 0, 0, 0);
         fromMap.put(from, currEdge);
@@ -236,7 +229,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
         }
     }
 
-    final double getExploreValue(IsoLabel label) {
+    private double getExploreValue(IsoLabel label) {
         if (exploreType == TIME)
             return label.time;
         // if(exploreType == DISTANCE)

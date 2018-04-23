@@ -24,7 +24,7 @@ public class RasterHullBuilderTest {
         list.add(new Double[]{0.001, 0.002});
         list.add(new Double[]{0.000, 0.002});
 
-        List<List<Double[]>> res = instance.calcList(listOfList, listOfList.size(), 3, 0.007, 2);
+        List<List<Double[]>> res = instance.calcList(listOfList, listOfList.size());
         List<Double[]> geometry = res.get(0);
         Assert.assertEquals(9, geometry.size());
     }

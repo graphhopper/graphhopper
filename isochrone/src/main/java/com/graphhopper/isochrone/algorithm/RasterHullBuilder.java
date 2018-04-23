@@ -42,8 +42,7 @@ public class RasterHullBuilder {
      * @return a list of polygons wrapping the specified points
      */
     @SuppressWarnings("unchecked")
-    public List<List<Double[]>> calcList(List<List<Double[]>> pointsList, int maxIsolines,
-            double rasterDistance, double bufferDistance, int quadrantSegments) {
+    public List<List<Double[]>> calcList(List<List<Double[]>> pointsList, int maxIsolines) {
 
         if (maxIsolines > pointsList.size()) {
             throw new IllegalStateException("maxIsolines can only be smaller or equals to pointsList");
@@ -102,7 +101,7 @@ public class RasterHullBuilder {
         return polygons;
     }
 
-    void fillExteriorRing(List<Double[]> coords, Geometry geo) {
+    private void fillExteriorRing(List<Double[]> coords, Geometry geo) {
         if (geo instanceof Polygon) {
             // normally this will be picked
             Polygon poly = (Polygon) geo;
