@@ -4,7 +4,7 @@ body {
     color: #111;
     background-color: white;
     margin: 0;
-    min-width: 700px;
+    min-width: 300px;
 }
 #map {
     /* set size via JS */
@@ -32,7 +32,7 @@ body {
 }
 
 #input {
-    min-height: 400px;
+    min-height: 300px;
     max-width: 270px;
 }
 
@@ -436,4 +436,22 @@ td img.pic {
     border: none;
     background: none;
     cursor: pointer;
+}
+
+.fullscreen-reverse-btn, .fullscreen-btn {
+    cursor:pointer;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    background-repeat: no-repeat;
+    box-shadow: none;
+    border: 2px solid rgba(0,0,0,0.2);
+}
+
+.fullscreen-btn {
+    background-image: url("../img/full.png");
+}
+
+.fullscreen-reverse-btn {
+    background-image: url("../img/full-reverse.png");
 }
