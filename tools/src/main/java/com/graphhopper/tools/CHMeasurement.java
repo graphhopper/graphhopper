@@ -283,7 +283,7 @@ public class CHMeasurement {
      * The queries are compared with a normal AStar search for comparison and to ensure correctness.
      */
     private static void testPerformanceAutomaticNodeOrdering(String[] args) {
-        String osmFile = "local/maps/unterfranken-latest.osm.pbf";
+        String osmFile = "local/maps/bremen-latest.osm.pbf";
         int periodicUpdates = 20;
         int lazyUpdates = 100;
         int neighborUpdates = 4;

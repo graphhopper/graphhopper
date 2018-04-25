@@ -590,6 +590,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         final CHEdgeIterator iter = scExplorer.setBaseNode(from);
         while (iter.next()) {
             if (!iter.isShortcut()
+                    || !(iter.getAdjNode() == adjNode)
                     || !(iter.getFirstOrigEdge() == edgeFrom.getParent().incEdge)
                     || !(iter.getLastOrigEdge() == edgeTo.incEdge)) {
                 continue;
@@ -755,6 +756,25 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
         @Override
         public void handleShortcut(CHEntry edgeFrom, CHEntry edgeTo) {
+            int fromNode = edgeFrom.parent.adjNode;
+            int toNode = edgeTo.adjNode;
+            int firstOrigEdge = edgeFrom.getParent().incEdge;
+            int lastOrigEdge = edgeTo.incEdge;
+
+            // check if this shortcut already exists
+            final CHEdgeIterator iter = scExplorer.setBaseNode(fromNode);
+            while (iter.next()) {
+                if (iter.isShortcut()
+                        && iter.getAdjNode() == toNode
+                        && (iter.getFirstOrigEdge() == firstOrigEdge)
+                        && (iter.getLastOrigEdge() == lastOrigEdge)) {
+                    // this shortcut exists already, maybe its weight will be updated but we should not count it as
+                    // a new edge
+                    return;
+                }
+            }
+
+            // this shortcut is new --> increase counts
             numEdges++;
             numOrigEdges += getOrigEdgeCount(edgeFrom.edge) + getOrigEdgeCount(edgeTo.edge);
         }
