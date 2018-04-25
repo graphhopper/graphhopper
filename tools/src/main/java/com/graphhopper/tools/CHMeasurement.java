@@ -291,7 +291,7 @@ public class CHMeasurement {
         WitnessPathFinder.sigmaFactor = 3.0;
         SmartWitnessPathFinder.sigmaFactor = 3.0;
         boolean cleanup = true;
-        int landmarks = 32;
+        int landmarks = 0;
         if (args.length == 12) {
             LOGGER.info("Running analysis with parameters {}", Arrays.toString(args));
             osmFile = args[0];
@@ -299,9 +299,9 @@ public class CHMeasurement {
             double factor = Double.valueOf(args[2]);
             WitnessPathFinder.sigmaFactor = factor;
             SmartWitnessPathFinder.sigmaFactor = factor;
-            EdgeBasedNodeContractor.edgeDifferenceWeight = Integer.valueOf(args[3]);
-            EdgeBasedNodeContractor.originalEdgeDifferenceWeight = Integer.valueOf(args[4]);
-            EdgeBasedNodeContractor.hierarchyDepthWeight = Integer.valueOf(args[5]);
+            EdgeBasedNodeContractor.edgeDifferenceWeight = Float.valueOf(args[3]);
+            EdgeBasedNodeContractor.originalEdgeDifferenceWeight = Float.valueOf(args[4]);
+            EdgeBasedNodeContractor.hierarchyDepthWeight = Float.valueOf(args[5]);
             periodicUpdates = Integer.valueOf(args[6]);
             lazyUpdates = Integer.valueOf(args[7]);
             neighborUpdates = Integer.valueOf(args[8]);
