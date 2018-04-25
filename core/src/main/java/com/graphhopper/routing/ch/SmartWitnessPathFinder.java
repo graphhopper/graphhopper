@@ -13,10 +13,10 @@ import java.util.Arrays;
 public abstract class SmartWitnessPathFinder {
     // for very dense graph a higher initial value is probably appropriate, the initial value does not play a big role
     // because this parameter will be adjusted automatically during the graph contraction
-    public static int initialMaxSettledEdges = 10;
+    public static int initialMaxSettledEdges = 100;
     // number of standard deviations above mean where distribution is truncated, for a normal distribution for
     // example sigmaFactor = 2 means about 95% of all observations are included
-    public static double sigmaFactor = 3;
+    public static double sigmaFactor = 3.0;
 
     protected final GraphHopperStorage graph;
     protected final CHGraph chGraph;

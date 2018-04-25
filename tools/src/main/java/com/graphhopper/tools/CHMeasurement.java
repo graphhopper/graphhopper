@@ -289,13 +289,16 @@ public class CHMeasurement {
         int neighborUpdates = 4;
         int contractedNodes = 100;
         WitnessPathFinder.sigmaFactor = 3.0;
+        SmartWitnessPathFinder.sigmaFactor = 3.0;
         boolean cleanup = true;
         int landmarks = 32;
         if (args.length == 12) {
             LOGGER.info("Running analysis with parameters {}", Arrays.toString(args));
             osmFile = args[0];
-            WitnessPathFinder.sigmaFactor = Double.valueOf(args[1]);
-            EdgeBasedNodeContractor.searchType = SearchType.valueOf(args[2]);
+            EdgeBasedNodeContractor.searchType = SearchType.valueOf(args[1]);
+            double factor = Double.valueOf(args[2]);
+            WitnessPathFinder.sigmaFactor = factor;
+            SmartWitnessPathFinder.sigmaFactor = factor;
             EdgeBasedNodeContractor.edgeDifferenceWeight = Integer.valueOf(args[3]);
             EdgeBasedNodeContractor.originalEdgeDifferenceWeight = Integer.valueOf(args[4]);
             EdgeBasedNodeContractor.hierarchyDepthWeight = Integer.valueOf(args[5]);
