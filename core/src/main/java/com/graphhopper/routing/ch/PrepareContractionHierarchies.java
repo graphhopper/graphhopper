@@ -56,7 +56,7 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private final Directory dir;
-    private final PreparationWeighting prepareWeighting;
+    protected final PreparationWeighting prepareWeighting;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
     private final GraphHopperStorage ghStorage;
@@ -328,8 +328,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             if (periodicUpdate && pollCounter > 0 && pollCounter % periodicUpdatesCount == 0) {
                 periodicUpdateSW.start();
                 sortedNodes.clear();
-                int len = prepareGraph.getNodes();
-                for (int node = 0; node < len; node++) {
+                for (int node = 0; node < prepareGraph.getNodes(); node++) {
                     if (prepareGraph.getLevel(node) != maxLevel)
                         continue;
 
@@ -404,6 +403,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 prepareGraph.disconnect(vehicleAllTmpExplorer, iter);
             }
         }
+// print the contraction order to file to reuse it later (added for analysis, remove before merge)
+//        try {
+//            FileOutputStream fos = new FileOutputStream("contraction-order.dat");
+//            ObjectOutputStream oos = new ObjectOutputStream(fos);
+//            oos.writeObject(contractedNodes);
+//            oos.close();
+//            fos.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         logStats(updateCounter);
 

@@ -27,6 +27,7 @@ import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ch.*;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
+import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
@@ -37,7 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -73,6 +76,47 @@ public class CHMeasurement {
 //        new CHMeasurement().analyzeLegacyVsAggressive();
     }
 
+    private void analyzeNodePrio() {
+        osmFile = "local/maps/bremen-latest.osm.pbf";
+        maxTurnCost = 100;
+        seed = 91358696691522L;
+        System.out.println("seed : " + seed);
+
+        FlagEncoder encoder = new CarFlagEncoder(5, 5, maxTurnCost);
+        EncodingManager encodingManager = new EncodingManager(encoder);
+        weighting = new FastestWeighting(encoder);
+        ghStorage = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).build();
+        turnCostExtension = (TurnCostExtension) ghStorage.getExtension();
+        chGraph = ghStorage.getGraph(CHGraph.class);
+        RAMDirectory dir = new RAMDirectory();
+        OSMReader osmReader = new OSMReader(ghStorage);
+        osmReader.setFile(new File(osmFile));
+        try {
+            LOGGER.info("Reading graph for file {}", osmFile);
+            osmReader.readGraph();
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not read graph: " + osmFile + ", the error was: " + e.getMessage());
+        }
+        ghStorage.freeze();
+
+        EdgeBasedNodeContractor contractor = new EdgeBasedNodeContractor(dir, ghStorage, chGraph, new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension), TraversalMode.EDGE_BASED_2DIR);
+        contractor.initFromGraph();
+        int maxLevel = chGraph.getNodes();
+        for (int i = 0; i < chGraph.getNodes(); ++i) {
+            chGraph.setLevel(i, maxLevel);
+        }
+        for (int i = 0; i < chGraph.getNodes(); ++i) {
+            EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
+            float prio = contractor.calculatePriority(i);
+            System.out.println("aggressive: " + prio);
+//            System.out.printf("aggressive: %f, sc: %d, sc-prev: %d, o: %d, o-prev: %d, ", prio, contractor.numEdges, contractor.numPrevEdges, contractor.numOrigEdges, contractor.numPrevOrigEdges);
+            EdgeBasedNodeContractor.searchType = SearchType.LEGACY_AGGRESSIVE;
+            float legacyPrio = contractor.calculatePriority(i);
+            System.out.println("legacyaggr: " + legacyPrio);
+//            System.out.printf("legacyaggr:  %f, sc: %d, sc-prev: %d, o: %d, o-prev: %d\n", legacyPrio, contractor.numEdges, contractor.numPrevEdges, contractor.numOrigEdges, contractor.numPrevOrigEdges);
+        }
+    }
+    
     private void analyzeLegacyVsAggressive() {
         osmFile = "local/maps/bremen-latest.osm.pbf";
         maxTurnCost = 100;
@@ -232,6 +276,18 @@ public class CHMeasurement {
             throw new IllegalArgumentException("Could not read graph: " + osmFile + ", the error was: " + e.getMessage());
         }
 
+        // remove subnetworks, important if we want to reuse some previously found contraction order
+        int prevNodeCount = ghStorage.getNodes();
+        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, encodingManager.fetchEdgeEncoders());
+        preparation.setMinNetworkSize(200);
+        preparation.setMinOneWayNetworkSize(0);
+        preparation.doWork();
+        int currNodeCount = ghStorage.getNodes();
+        LOGGER.info("edges: " + Helper.nf(ghStorage.getAllEdges().length()) + ", nodes " + Helper.nf(currNodeCount)
+                + ", there were " + Helper.nf(preparation.getMaxSubnetworks())
+                + " subnetworks. removed them => " + Helper.nf(prevNodeCount - currNodeCount)
+                + " less nodes");
+
         Random rnd = new Random(seed);
         LOGGER.info("Adding random turn costs and restrictions");
         EdgeExplorer inExplorer = ghStorage.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
@@ -269,6 +325,20 @@ public class CHMeasurement {
                 dir, ghStorage, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR);
         pch.setSeed(seed);
         pch.setContractedNodes(nodesContractedPercentage);
+
+        // load a previously stored contraction order, for analysis purposes only, remove before merge
+//        List<Integer> contractionOrder = new ArrayList<>();
+//        try {
+//            FileInputStream fis = new FileInputStream("contraction-order.dat");
+//            ObjectInputStream ois = new ObjectInputStream(fis);
+//            contractionOrder = (ArrayList) ois.readObject();
+//            ois.close();
+//            fis.close();
+//        } catch (IOException | ClassNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//        pch.setContractionOrder(contractionOrder);
+        
         pch.doWork();
         long elapsed = nanoTime() - start;
         totalElapsed += elapsed;
