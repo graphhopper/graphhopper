@@ -1158,7 +1158,7 @@ public class EdgeBasedNodeContractorTest {
         for (int i = 0; i < 10; ++i) {
             initialize();
             buildRandomGraph(seed);
-            System.out.println("graph for legacy aggressive search");
+//            System.out.println("graph for legacy aggressive search");
             GHUtility.printGraphForUnitTest(graph, encoder);
             EdgeBasedNodeContractor.searchType = SearchType.LEGACY_AGGRESSIVE;
 
@@ -1170,7 +1170,7 @@ public class EdgeBasedNodeContractorTest {
 
             initialize();
             buildRandomGraph(seed);
-            System.out.println("graph for aggressive search");
+//            System.out.println("graph for aggressive search");
             GHUtility.printGraphForUnitTest(graph, encoder);
             EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
 
