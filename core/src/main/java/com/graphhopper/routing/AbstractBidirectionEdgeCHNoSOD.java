@@ -33,7 +33,7 @@ import com.graphhopper.util.GHUtility;
 
 import java.util.Locale;
 
-public abstract class AbstractBidirectionEdgeCHNoSOD<T extends CHEntry> extends GenericDijkstraBidirection<T> {
+public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     private int from;
     private int to;
     private final EdgeExplorer innerInExplorer;
@@ -115,7 +115,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD<T extends CHEntry> extends 
     }
 
     @Override
-    protected void updateBestPath(EdgeIteratorState edgeState, T entry, int traversalId, boolean reverse) {
+    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entry, int traversalId, boolean reverse) {
         // special case where the fwd/bwd search runs directly into the opposite node, for example if the highest level
         // node of the shortest path matches the source or target. in this case one of the searches does not contribute
         // anything to the shortest path.
@@ -184,16 +184,16 @@ public abstract class AbstractBidirectionEdgeCHNoSOD<T extends CHEntry> extends 
     }
 
     @Override
-    protected double calcWeight(EdgeIteratorState edge, CHEntry currEdge, boolean reverse) {
-        return weighting.calcWeight(edge, reverse, currEdge.incEdge) + currEdge.getWeightOfVisitedPath();
+    protected double calcWeight(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
+        return weighting.calcWeight(edge, reverse, ((CHEntry) currEdge).incEdge) + currEdge.getWeightOfVisitedPath();
     }
 
     @Override
-    protected boolean accept(EdgeIteratorState edge, CHEntry currEdge, boolean reverse) {
+    protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
         int edgeId = getOrigEdgeId(edge, !reverse);
         // todo: is it really enough to compare edge ids here ? what if there are two different edges between the 
         // same nodes ?
-        if (!traversalMode.hasUTurnSupport() && edgeId == currEdge.incEdge)
+        if (!traversalMode.hasUTurnSupport() && edgeId == ((CHEntry) currEdge).incEdge)
             return false;
 
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(edge);

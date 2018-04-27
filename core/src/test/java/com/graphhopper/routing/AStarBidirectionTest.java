@@ -86,10 +86,10 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
         };
         astar.init(0, 1, 1, 0.5);
 
-        assertEquals(1, fromRef.get().weightOfVisitedPath, .1);
+        assertEquals(1, ((AStar.AStarEntry) fromRef.get()).weightOfVisitedPath, .1);
         assertEquals(787.3, fromRef.get().weight, .1);
 
-        assertEquals(0.5, toRef.get().weightOfVisitedPath, .1);
+        assertEquals(0.5, ((AStar.AStarEntry) toRef.get()).weightOfVisitedPath, .1);
         assertEquals(786.8, toRef.get().weight, .1);
     }
 }

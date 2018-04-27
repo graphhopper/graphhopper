@@ -32,7 +32,7 @@ import com.graphhopper.util.GHUtility;
 
 import java.util.Locale;
 
-public class DijkstraBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD<CHEntry> {
+public class DijkstraBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD {
     public DijkstraBidirectionEdgeCHNoSOD(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         super(graph, weighting, traversalMode);
     }
@@ -43,23 +43,18 @@ public class DijkstraBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoS
     }
 
     @Override
-    protected CHEntry createEntry(EdgeIteratorState edge, int edgeId, double weight, CHEntry parent, boolean reverse) {
+    protected CHEntry createEntry(EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
         CHEntry entry = new CHEntry(edge.getEdge(), edgeId, edge.getAdjNode(), weight);
         entry.parent = parent;
         return entry;
     }
 
     @Override
-    protected void updateEntry(CHEntry entry, EdgeIteratorState edge, int edgeId, double weight, CHEntry parent, boolean reverse) {
+    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
         entry.edge = edge.getEdge();
-        entry.incEdge = edgeId;
+        ((CHEntry) entry).incEdge = edgeId;
         entry.weight = weight;
         entry.parent = parent;
-    }
-
-    @Override
-    protected CHEntry getParent(CHEntry entry) {
-        return entry.getParent();
     }
 
     @Override

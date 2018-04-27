@@ -24,10 +24,11 @@ import com.graphhopper.routing.weighting.ConsistentWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 
-public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD<AStarCHEntry> {
+public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD {
     private final boolean useHeuristicForNodeOrder = false;
     private ConsistentWeightApproximator weightApprox;
 
@@ -60,7 +61,7 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD<
     }
 
     @Override
-    protected AStarCHEntry createEntry(EdgeIteratorState edge, int edgeId, double weight, AStarCHEntry parent, boolean reverse) {
+    protected SPTEntry createEntry(EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
         int neighborNode = edge.getAdjNode();
         double heapWeight = getHeapWeight(neighborNode, reverse, weight);
         AStarCHEntry entry = new AStarCHEntry(edge.getEdge(), edgeId, neighborNode, heapWeight, weight);
@@ -69,17 +70,12 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD<
     }
 
     @Override
-    protected void updateEntry(AStarCHEntry entry, EdgeIteratorState edge, int edgeId, double weight, AStarCHEntry parent, boolean reverse) {
+    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
         entry.edge = edge.getEdge();
-        entry.incEdge = edgeId;
+        ((AStarCHEntry) entry).incEdge = edgeId;
         entry.weight = getHeapWeight(edge.getAdjNode(), reverse, weight);
-        entry.weightOfVisitedPath = weight;
+        ((AStarCHEntry) entry).weightOfVisitedPath = weight;
         entry.parent = parent;
-    }
-
-    @Override
-    protected AStarCHEntry getParent(AStarCHEntry entry) {
-        return entry.getParent();
     }
 
     public WeightApproximator getApproximation() {

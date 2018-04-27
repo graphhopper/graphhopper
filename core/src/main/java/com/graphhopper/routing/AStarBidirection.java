@@ -92,7 +92,7 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
     protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
         entry.edge = edge.getEdge();
         entry.weight = weight + weightApprox.approximate(edge.getAdjNode(), reverse);
-        entry.weightOfVisitedPath = weight;
+        ((AStarEntry) entry).weightOfVisitedPath = weight;
         entry.parent = parent;
     }
 
