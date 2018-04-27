@@ -277,7 +277,7 @@ class GtfsReader {
 //                            EdgeIterator ei = graph.getBaseGraph().createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false)).setBaseNode(after.b);
 //                            while(ei.next()) {
 //                                if (encoder.getEdgeType(ei.getFlags()) == GtfsStorage.EdgeType.TRANSFER) {
-//                                    System.out.println("   "+ei+"   @"+Long.toString(after.a-encoder.getTime(ei.getFlags())));
+//                                    System.out.println("   "+ei+"   @"+Long.toString(after.a-encoder.getMillis(ei.getFlags())));
 //                                }
 //                            }
 

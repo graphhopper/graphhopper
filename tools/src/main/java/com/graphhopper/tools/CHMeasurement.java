@@ -348,7 +348,7 @@ public class CHMeasurement {
         sw.start();
         graphHopper.importOrLoad();
         sw.stop();
-        LOGGER.info("Import and preparation took {}s", sw.getTime() / 1000);
+        LOGGER.info("Import and preparation took {}s", sw.getMillis() / 1000);
 
         long seed = 456;
         int iterations = 1_000;
