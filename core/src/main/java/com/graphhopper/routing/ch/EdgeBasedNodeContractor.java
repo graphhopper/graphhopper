@@ -42,8 +42,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     //            public static SearchType searchType = SearchType.LEGACY_AGGRESSIVE;
     public static SearchType searchType = SearchType.AGGRESSIVE;
     public static boolean arrayBasedWitnessPathFinder = true;
-    public static float edgeDifferenceWeight = 1;
-    public static float originalEdgeDifferenceWeight = 3;
+    public static float edgeQuotientWeight = 1;
+    public static float originalEdgeQuotientWeight = 3;
     public static float hierarchyDepthWeight = 2;
     private final TurnWeighting turnWeighting;
     private final TraversalMode traversalMode;
@@ -149,8 +149,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         // the more edges will be removed when contracting this node the earlier we want to contract the node
         //        System.out.printf("node: %d, eq: %d / %d = %f, oeq: %d / %d = %f, depth: %d --> %f\n", node, numEdges, numPrevEdges, edgeQuotient,
 //                numOrigEdges, numPrevOrigEdges, origEdgeQuotient, hierarchyDepth, result);
-        return edgeDifferenceWeight * (numEdges / (float) numPrevEdges) +
-                originalEdgeDifferenceWeight * (numOrigEdges / (float) numPrevOrigEdges) +
+        return edgeQuotientWeight * (numEdges / (float) numPrevEdges) +
+                originalEdgeQuotientWeight * (numOrigEdges / (float) numPrevOrigEdges) +
                 hierarchyDepthWeight * hierarchyDepths[node];
     }
 
@@ -525,8 +525,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     @Override
-    public String getPrepareAlgoMemoryUsage() {
-        // todo: this method is currently misused to print some statistics for performance analysis
+    public String getStatisticsString() {
         String result = String.format("stats(calc): %s, stats(contract): %s, %s",
                 countingShortcutHandler.getStats(), addingShortcutHandler.getStats(),
                 searchType == SearchType.AGGRESSIVE ? witnessPathFinder.getStatusString() : legacyWitnessPathFinder.getStatusString());
@@ -644,10 +643,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             return turnWeighting.getDefaultUTurnCost();
         }
         return turnCost;
-    }
-
-    private boolean isContracted(int node) {
-        return prepareGraph.getLevel(node) != maxLevel;
     }
 
     private void resetEdgeCounters() {

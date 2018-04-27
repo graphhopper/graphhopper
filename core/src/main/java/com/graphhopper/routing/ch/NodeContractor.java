@@ -37,7 +37,7 @@ public interface NodeContractor {
 
     int getAddedShortcutsCount();
 
-    String getPrepareAlgoMemoryUsage();
+    String getStatisticsString();
 
     long getDijkstraCount();
 

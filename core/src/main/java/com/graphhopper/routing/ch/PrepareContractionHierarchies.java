@@ -506,7 +506,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 nf(nodeContractor.getDijkstraCount()),
                 getTimesAsString(),
                 meanDegree,
-                nodeContractor.getPrepareAlgoMemoryUsage(),
+                nodeContractor.getStatisticsString(),
                 Helper.getMemInfo()));
     }
 }

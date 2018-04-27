@@ -81,11 +81,11 @@ public class CHMeasurement {
 
         EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
         List<ManualPrepareContractionHierarchies.Stats> aggressiveCounts = runContraction();
-        System.out.printf("super: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(aggressiveCounts), WitnessPathFinder.pollCount, getTotalSearches(aggressiveCounts), WitnessPathFinder.searchCount);
+        System.out.printf("aggressive: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(aggressiveCounts), WitnessPathFinder.pollCount, getTotalSearches(aggressiveCounts), WitnessPathFinder.searchCount);
 
         EdgeBasedNodeContractor.searchType = SearchType.LEGACY_AGGRESSIVE;
         List<ManualPrepareContractionHierarchies.Stats> legacyCounts = runContraction();
-        System.out.printf("agggr: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(legacyCounts), LegacyWitnessPathFinder.pollCount, getTotalSearches(legacyCounts), LegacyWitnessPathFinder.searchCount);
+        System.out.printf("legacyaggr: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(legacyCounts), LegacyWitnessPathFinder.pollCount, getTotalSearches(legacyCounts), LegacyWitnessPathFinder.searchCount);
 
         if (aggressiveCounts.size() != legacyCounts.size()) {
             throw new IllegalStateException("shouldnt be really");
@@ -299,8 +299,8 @@ public class CHMeasurement {
             double factor = Double.valueOf(args[2]);
             LegacyWitnessPathFinder.sigmaFactor = factor;
             WitnessPathFinder.sigmaFactor = factor;
-            EdgeBasedNodeContractor.edgeDifferenceWeight = Float.valueOf(args[3]);
-            EdgeBasedNodeContractor.originalEdgeDifferenceWeight = Float.valueOf(args[4]);
+            EdgeBasedNodeContractor.edgeQuotientWeight = Float.valueOf(args[3]);
+            EdgeBasedNodeContractor.originalEdgeQuotientWeight = Float.valueOf(args[4]);
             EdgeBasedNodeContractor.hierarchyDepthWeight = Float.valueOf(args[5]);
             periodicUpdates = Integer.valueOf(args[6]);
             lazyUpdates = Integer.valueOf(args[7]);

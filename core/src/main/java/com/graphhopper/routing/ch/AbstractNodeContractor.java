@@ -41,6 +41,10 @@ abstract class AbstractNodeContractor implements NodeContractor {
         originalEdges.close();
     }
 
+    boolean isContracted(int node) {
+        return prepareGraph.getLevel(node) != maxLevel;
+    }
+
     @Override
     public int getAddedShortcutsCount() {
         return addedShortcutsCount;

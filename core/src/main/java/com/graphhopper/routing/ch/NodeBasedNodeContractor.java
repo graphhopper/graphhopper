@@ -127,7 +127,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     @Override
-    public String getPrepareAlgoMemoryUsage() {
+    public String getStatisticsString() {
         return prepareAlgo.getMemoryUsageAsString();
     }
 
@@ -144,7 +144,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         while (incomingEdges.next()) {
             int fromNode = incomingEdges.getAdjNode();
             // accept only uncontracted nodes
-            if (prepareGraph.getLevel(fromNode) != maxLevel)
+            if (isContracted(fromNode))
                 continue;
 
             final double incomingEdgeDistance = incomingEdges.getDistance();
@@ -159,7 +159,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             while (outgoingEdges.next()) {
                 int toNode = outgoingEdges.getAdjNode();
                 // add only uncontracted nodes
-                if (prepareGraph.getLevel(toNode) != maxLevel || fromNode == toNode)
+                if (isContracted(toNode) || fromNode == toNode)
                     continue;
 
                 // Limit weight as ferries or forbidden edges can increase local search too much.
