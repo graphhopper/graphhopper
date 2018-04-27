@@ -39,8 +39,8 @@ import static java.lang.System.nanoTime;
 public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     // todo: modify code such that logging does not alter performance 
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
-    //            public static SearchType searchType = SearchType.AGGRESSIVE;
-    public static SearchType searchType = SearchType.SMART;
+    //            public static SearchType searchType = SearchType.LEGACY_AGGRESSIVE;
+    public static SearchType searchType = SearchType.AGGRESSIVE;
     public static boolean arrayBasedWitnessPathFinder = true;
     public static float edgeDifferenceWeight = 1;
     public static float originalEdgeDifferenceWeight = 3;
@@ -52,8 +52,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private final ShortcutHandler countingShortcutHandler = new CountingShortcutHandler();
     private ShortcutHandler activeShortcutHandler;
     private int[] hierarchyDepths;
+    private LegacyWitnessPathFinder legacyWitnessPathFinder;
     private WitnessPathFinder witnessPathFinder;
-    private SmartWitnessPathFinder smartWitnessPathFinder;
     private CHEdgeExplorer scExplorer;
     private CHEdgeExplorer allCHExplorer;
     private EdgeExplorer fromNodeOrigInEdgeExplorer;
@@ -86,12 +86,12 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     public void initFromGraph() {
         super.initFromGraph();
         maxLevel = prepareGraph.getNodes();
+        legacyWitnessPathFinder = arrayBasedWitnessPathFinder ?
+                new ArrayBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel) :
+                new MapBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel);
         witnessPathFinder = arrayBasedWitnessPathFinder ?
-                new ArrayBasedWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel) :
-                new MapBasedWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel);
-        smartWitnessPathFinder = arrayBasedWitnessPathFinder ?
-                new ArraySmartWitnessPathFinder(ghStorage, prepareGraph, turnWeighting) :
-                new MapSmartWitnessPathFinder(ghStorage, prepareGraph, turnWeighting);
+                new ArrayWitnessPathFinder(ghStorage, prepareGraph, turnWeighting) :
+                new MapWitnessPathFinder(ghStorage, prepareGraph, turnWeighting);
         DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
         DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
         inEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
@@ -180,15 +180,17 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private int findAndHandleShortcuts(int node) {
-        if (searchType == SearchType.SMART) {
-            return findAndHandleShortcutsSmart(node);
-        } else {
+        if (searchType == SearchType.AGGRESSIVE) {
             return findAndHandleShortcutsAggressive(node);
+        } else if (searchType == SearchType.LEGACY_AGGRESSIVE) {
+            return findAndHandleShortcutsLegacyAggressive(node);
+        } else {
+            return findAndHandleShortcutsClassic(node);
         }
     }
 
-    private int findAndHandleShortcutsSmart(int node) {
-        LOGGER.debug("Finding shortcuts (smart) for node {}, required shortcuts will be {}ed", node, activeShortcutHandler.getAction());
+    private int findAndHandleShortcutsAggressive(int node) {
+        LOGGER.debug("Finding shortcuts (aggressive) for node {}, required shortcuts will be {}ed", node, activeShortcutHandler.getAction());
         stats().nodes++;
         resetEdgeCounters();
         Set<AddedShortcut> addedShortcuts = new HashSet<>();
@@ -209,7 +211,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             // for each such fromNode we need to look at every incoming original edge and find the initial entries
             EdgeIterator origInIter = fromNodeOrigInEdgeExplorer.setBaseNode(fromNode);
             while (origInIter.next()) {
-                int numInitialEntries = smartWitnessPathFinder.init(node, fromNode, origInIter.getLastOrigEdge());
+                int numInitialEntries = witnessPathFinder.init(node, fromNode, origInIter.getLastOrigEdge());
                 if (numInitialEntries < 1) {
                     continue;
                 }
@@ -232,7 +234,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     EdgeIterator targetEdgeIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
                     while (targetEdgeIter.next()) {
                         int targetEdge = targetEdgeIter.getFirstOrigEdge();
-                        WitnessSearchEntry entry = smartWitnessPathFinder.runSearch(toNode, targetEdge);
+                        WitnessSearchEntry entry = witnessPathFinder.runSearch(toNode, targetEdge);
                         if (entry == null || Double.isInfinite(entry.weight)) {
                             continue;
                         }
@@ -254,7 +256,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         addedShortcuts.add(addedShortcut);
                     }
                 }
-                numPolledEdges += smartWitnessPathFinder.getNumPolledEdges();
+                numPolledEdges += witnessPathFinder.getNumPolledEdges();
             }
         }
         return 0;
@@ -290,7 +292,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         }
     }
 
-    private int findAndHandleShortcutsAggressive(int node) {
+    private int findAndHandleShortcutsLegacyAggressive(int node) {
         LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}ed", node, activeShortcutHandler.getAction());
         stats().nodes++;
         resetEdgeCounters();
@@ -316,7 +318,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             }
 
             IntObjectMap<WitnessSearchEntry> initialEntries = simpleSearch.getInitialEntries(fromNode, incomingEdges);
-            witnessPathFinder.setInitialEntries(initialEntries);
+            legacyWitnessPathFinder.setInitialEntries(initialEntries);
             numSearches++;
             if (initialEntries.isEmpty()) {
                 continue;
@@ -329,17 +331,17 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     continue;
                 }
                 int targetEdge = outgoingEdges.getLastOrigEdge();
-                witnessPathFinder.findTarget(targetEdge, toNode);
+                legacyWitnessPathFinder.findTarget(targetEdge, toNode);
 
-                WitnessSearchEntry originalPath = witnessPathFinder.getFoundEntry(targetEdge, toNode);
+                WitnessSearchEntry originalPath = legacyWitnessPathFinder.getFoundEntry(targetEdge, toNode);
                 if (originalPath == null) {
                     continue;
                 }
-                if (!simpleSearch.shortcutRequired(node, toNode, outgoingEdges, witnessPathFinder, originalPath)) {
+                if (!simpleSearch.shortcutRequired(node, toNode, outgoingEdges, legacyWitnessPathFinder, originalPath)) {
                     witnessedPairs.add(twoIntsInLong(incomingEdges.getEdge(), outgoingEdges.getEdge()));
                 }
             }
-            numPolledEdges += witnessPathFinder.getNumEntriesPolled();
+            numPolledEdges += legacyWitnessPathFinder.getNumEntriesPolled();
         }
         return degree;
     }
@@ -358,7 +360,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 if (initialEntries.isEmpty()) {
                     continue;
                 }
-                witnessPathFinder.setInitialEntries(initialEntries);
+                legacyWitnessPathFinder.setInitialEntries(initialEntries);
                 numSearches++;
 
                 CHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
@@ -372,8 +374,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         continue;
                     }
                     int targetEdge = outgoingEdges.getLastOrigEdge();
-                    witnessPathFinder.findTarget(targetEdge, toNode);
-                    WitnessSearchEntry originalPath = witnessPathFinder.getFoundEntry(targetEdge, toNode);
+                    legacyWitnessPathFinder.findTarget(targetEdge, toNode);
+                    WitnessSearchEntry originalPath = legacyWitnessPathFinder.getFoundEntry(targetEdge, toNode);
                     if (originalPath == null) {
                         continue;
                     }
@@ -410,7 +412,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                                 duplicateOutEdges++;
                                 continue;
                             }
-                            CHEntry potentialWitness = witnessPathFinder.getFoundEntryNoParents(origInIterLastOrigEdge, toNode);
+                            CHEntry potentialWitness = legacyWitnessPathFinder.getFoundEntryNoParents(origInIterLastOrigEdge, toNode);
                             if (potentialWitness == null || Double.isInfinite(potentialWitness.weight)) {
                                 continue;
                             }
@@ -429,7 +431,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         }
                     }
                 }
-                numPolledEdges += witnessPathFinder.getNumEntriesPolled();
+                numPolledEdges += legacyWitnessPathFinder.getNumEntriesPolled();
             }
         }
     }
@@ -494,7 +496,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 LOGGER.trace("No initial entries for incoming edge {}", incomingEdges);
                 continue;
             }
-            witnessPathFinder.setInitialEntries(initialEntries);
+            legacyWitnessPathFinder.setInitialEntries(initialEntries);
             CHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
             while (outgoingEdges.next()) {
                 int toNode = outgoingEdges.getAdjNode();
@@ -506,15 +508,15 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
                 dijkstraSW.start();
                 dijkstraCount++;
-                witnessPathFinder.findTarget(targetEdge, toNode);
+                legacyWitnessPathFinder.findTarget(targetEdge, toNode);
                 dijkstraSW.stop();
 
-                WitnessSearchEntry originalPath = witnessPathFinder.getFoundEntry(targetEdge, toNode);
+                WitnessSearchEntry originalPath = legacyWitnessPathFinder.getFoundEntry(targetEdge, toNode);
                 if (originalPath == null) {
                     continue;
                 }
                 LOGGER.trace("Witness path search to outgoing edge yielded {}", originalPath);
-                if (witnessSearchStrategy.shortcutRequired(node, toNode, outgoingEdges, witnessPathFinder, originalPath)) {
+                if (witnessSearchStrategy.shortcutRequired(node, toNode, outgoingEdges, legacyWitnessPathFinder, originalPath)) {
                     handleShortcuts(originalPath);
                 }
             }
@@ -527,11 +529,11 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         // todo: this method is currently misused to print some statistics for performance analysis
         String result = String.format("stats(calc): %s, stats(contract): %s, %s",
                 countingShortcutHandler.getStats(), addingShortcutHandler.getStats(),
-                searchType == SearchType.SMART ? smartWitnessPathFinder.getStatusString() : witnessPathFinder.getStatusString());
+                searchType == SearchType.AGGRESSIVE ? witnessPathFinder.getStatusString() : legacyWitnessPathFinder.getStatusString());
         countingShortcutHandler.resetStats();
         addingShortcutHandler.resetStats();
+        legacyWitnessPathFinder.resetStats();
         witnessPathFinder.resetStats();
-        smartWitnessPathFinder.resetStats();
         result += String.format(", duplicate edges: %d, %d", duplicateInEdges, duplicateOutEdges);
         return result;
     }
@@ -801,7 +803,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         IntObjectMap<WitnessSearchEntry> getInitialEntries(int fromNode, EdgeIteratorState incomingEdge);
 
         boolean shortcutRequired(int node, int toNode, EdgeIteratorState outgoingEdge,
-                                 WitnessPathFinder witnessPathFinder, WitnessSearchEntry entry);
+                                 LegacyWitnessPathFinder legacyWitnessPathFinder, WitnessSearchEntry entry);
     }
 
     /**
@@ -903,9 +905,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
         @Override
         public boolean shortcutRequired(int node, int toNode,
-                                        EdgeIteratorState outgoingEdge, WitnessPathFinder witnessPathFinder, WitnessSearchEntry originalPath) {
+                                        EdgeIteratorState outgoingEdge, LegacyWitnessPathFinder legacyWitnessPathFinder, WitnessSearchEntry originalPath) {
             return bestPathIsValidAndRequiresNode(originalPath, outgoingEdge)
-                    && !alternativeWitnessExistsOrNotNeeded(node, outgoingEdge, toNode, witnessPathFinder, originalPath);
+                    && !alternativeWitnessExistsOrNotNeeded(node, outgoingEdge, toNode, legacyWitnessPathFinder, originalPath);
         }
 
         /**
@@ -921,7 +923,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
          * the worst case cost at the target node and then checking each edge at the from node separately
          */
         private boolean alternativeWitnessExistsOrNotNeeded(int node,
-                                                            EdgeIteratorState outgoingEdge, int toNode, WitnessPathFinder witnessPathFinder, CHEntry originalPath) {
+                                                            EdgeIteratorState outgoingEdge, int toNode, LegacyWitnessPathFinder legacyWitnessPathFinder, CHEntry originalPath) {
             EdgeIterator origOutIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
             final int originalPathLastOrigEdge = outgoingEdge.getLastOrigEdge();
             while (origOutIter.next()) {
@@ -941,7 +943,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     if (origInIterLastOrigEdge == originalPathLastOrigEdge || origInIter.getAdjNode() == node) {
                         continue;
                     }
-                    CHEntry potentialWitness = witnessPathFinder.getFoundEntryNoParents(origInIterLastOrigEdge, toNode);
+                    CHEntry potentialWitness = legacyWitnessPathFinder.getFoundEntryNoParents(origInIterLastOrigEdge, toNode);
                     if (potentialWitness == null) {
                         // we did not find any witness path leading to this edge -> no witness
                         continue;
@@ -988,7 +990,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         }
 
         @Override
-        public boolean shortcutRequired(int node, int toNode, EdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, WitnessSearchEntry entry) {
+        public boolean shortcutRequired(int node, int toNode, EdgeIteratorState outgoingEdges, LegacyWitnessPathFinder legacyWitnessPathFinder, WitnessSearchEntry entry) {
             return bestPathIsValidAndRequiresNode(entry, outgoingEdges);
         }
     }

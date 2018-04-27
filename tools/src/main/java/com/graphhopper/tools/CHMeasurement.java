@@ -70,34 +70,34 @@ public class CHMeasurement {
     public static void main(String[] args) {
         testPerformanceAutomaticNodeOrdering(args);
 //        new CHMeasurement().testPerformanceFixedNodeOrdering();
-//        new CHMeasurement().analyzeSmartVsAggressive();
+//        new CHMeasurement().analyzeLegacyVsAggressive();
     }
 
-    private void analyzeSmartVsAggressive() {
+    private void analyzeLegacyVsAggressive() {
         osmFile = "local/maps/bremen-latest.osm.pbf";
         maxTurnCost = 100;
         seed = 91358696691522L;
         System.out.println("seed : " + seed);
 
-        EdgeBasedNodeContractor.searchType = SearchType.SMART;
-        List<ManualPrepareContractionHierarchies.Stats> smartCounts = runContraction();
-        System.out.printf("super: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(smartCounts), SmartWitnessPathFinder.pollCount, getTotalSearches(smartCounts), SmartWitnessPathFinder.searchCount);
-
         EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
         List<ManualPrepareContractionHierarchies.Stats> aggressiveCounts = runContraction();
-        System.out.printf("agggr: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(aggressiveCounts), WitnessPathFinder.pollCount, getTotalSearches(aggressiveCounts), WitnessPathFinder.searchCount);
+        System.out.printf("super: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(aggressiveCounts), WitnessPathFinder.pollCount, getTotalSearches(aggressiveCounts), WitnessPathFinder.searchCount);
 
-        if (smartCounts.size() != aggressiveCounts.size()) {
+        EdgeBasedNodeContractor.searchType = SearchType.LEGACY_AGGRESSIVE;
+        List<ManualPrepareContractionHierarchies.Stats> legacyCounts = runContraction();
+        System.out.printf("agggr: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(legacyCounts), LegacyWitnessPathFinder.pollCount, getTotalSearches(legacyCounts), LegacyWitnessPathFinder.searchCount);
+
+        if (aggressiveCounts.size() != legacyCounts.size()) {
             throw new IllegalStateException("shouldnt be really");
         }
-        for (int i = 0; i < Math.min(smartCounts.size(), 10); ++i) {
-            if (smartCounts.get(i).shortcutCount > aggressiveCounts.get(i).shortcutCount) {
-                System.out.println("found one: " + smartCounts.get(i).nodeId + " idx: " + i + ", " + smartCounts.get(i).shortcutCount + "-" + aggressiveCounts.get(i).shortcutCount);
+        for (int i = 0; i < Math.min(aggressiveCounts.size(), 10); ++i) {
+            if (aggressiveCounts.get(i).shortcutCount > legacyCounts.get(i).shortcutCount) {
+                System.out.println("found one: " + aggressiveCounts.get(i).nodeId + " idx: " + i + ", " + aggressiveCounts.get(i).shortcutCount + "-" + legacyCounts.get(i).shortcutCount);
             }
         }
-        for (int i = 0; i < Math.min(smartCounts.size(), 10); ++i) {
-            if (smartCounts.get(i).numPolled > aggressiveCounts.get(i).numPolled) {
-                System.out.println("found one poll count: " + smartCounts.get(i).nodeId + " idx: " + i + ", " + smartCounts.get(i).numPolled + "-" + aggressiveCounts.get(i).numPolled);
+        for (int i = 0; i < Math.min(aggressiveCounts.size(), 10); ++i) {
+            if (aggressiveCounts.get(i).numPolled > legacyCounts.get(i).numPolled) {
+                System.out.println("found one poll count: " + aggressiveCounts.get(i).nodeId + " idx: " + i + ", " + aggressiveCounts.get(i).numPolled + "-" + legacyCounts.get(i).numPolled);
             }
         }
     }
@@ -152,9 +152,9 @@ public class CHMeasurement {
      */
     private void testPerformanceFixedNodeOrdering() {
         osmFile = "local/maps/bremen-latest.osm.pbf";
-        EdgeBasedNodeContractor.searchType = SearchType.SMART;
+        EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
         EdgeBasedNodeContractor.arrayBasedWitnessPathFinder = true;
-        WitnessPathFinder.sigmaFactor = 4.0;
+        LegacyWitnessPathFinder.sigmaFactor = 4.0;
         maxTurnCost = 100;
         seed = 123;
         pNodeHasTurnCosts = 0.3;
@@ -288,8 +288,8 @@ public class CHMeasurement {
         int lazyUpdates = 100;
         int neighborUpdates = 4;
         int contractedNodes = 100;
+        LegacyWitnessPathFinder.sigmaFactor = 3.0;
         WitnessPathFinder.sigmaFactor = 3.0;
-        SmartWitnessPathFinder.sigmaFactor = 3.0;
         boolean cleanup = true;
         int landmarks = 0;
         if (args.length == 12) {
@@ -297,8 +297,8 @@ public class CHMeasurement {
             osmFile = args[0];
             EdgeBasedNodeContractor.searchType = SearchType.valueOf(args[1]);
             double factor = Double.valueOf(args[2]);
+            LegacyWitnessPathFinder.sigmaFactor = factor;
             WitnessPathFinder.sigmaFactor = factor;
-            SmartWitnessPathFinder.sigmaFactor = factor;
             EdgeBasedNodeContractor.edgeDifferenceWeight = Float.valueOf(args[3]);
             EdgeBasedNodeContractor.originalEdgeDifferenceWeight = Float.valueOf(args[4]);
             EdgeBasedNodeContractor.hierarchyDepthWeight = Float.valueOf(args[5]);

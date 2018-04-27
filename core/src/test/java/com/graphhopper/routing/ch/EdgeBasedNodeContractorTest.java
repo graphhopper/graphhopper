@@ -1149,58 +1149,58 @@ public class EdgeBasedNodeContractorTest {
     public void testNodeContraction_randomGraph_checkStatistics() {
         final long seed = System.nanoTime();
         System.out.println("Using seed " + seed);
+        int totalNumSearchesL = 0;
         int totalNumSearchesA = 0;
-        int totalNumSearchesS = 0;
+        int totalEdgesPolledL = 0;
         int totalEdgesPolledA = 0;
-        int totalEdgesPolledS = 0;
+        int totalNumShortcutsL = 0;
         int totalNumShortcutsA = 0;
-        int totalNumShortcutsS = 0;
         for (int i = 0; i < 10; ++i) {
+            initialize();
+            buildRandomGraph(seed);
+            System.out.println("graph for legacy aggressive search");
+            GHUtility.printGraphForUnitTest(graph, encoder);
+            EdgeBasedNodeContractor.searchType = SearchType.LEGACY_AGGRESSIVE;
+
+            EdgeBasedNodeContractor nodeContractor = createNodeContractor();
+            nodeContractor.contractNode(0);
+            int numEdgesPolledL = nodeContractor.getNumPolledEdges();
+            int numSearchesL = nodeContractor.getNumSearches();
+            int numShortcutsL = getCurrentShortcuts().size();
+
             initialize();
             buildRandomGraph(seed);
             System.out.println("graph for aggressive search");
             GHUtility.printGraphForUnitTest(graph, encoder);
             EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
 
-            EdgeBasedNodeContractor nodeContractor = createNodeContractor();
+            nodeContractor = createNodeContractor();
             nodeContractor.contractNode(0);
             int numEdgesPolledA = nodeContractor.getNumPolledEdges();
             int numSearchesA = nodeContractor.getNumSearches();
             int numShortcutsA = getCurrentShortcuts().size();
 
-            initialize();
-            buildRandomGraph(seed);
-            System.out.println("graph for smart search");
-            GHUtility.printGraphForUnitTest(graph, encoder);
-            EdgeBasedNodeContractor.searchType = SearchType.SMART;
-
-            nodeContractor = createNodeContractor();
-            nodeContractor.contractNode(0);
-            int numEdgesPolledS = nodeContractor.getNumPolledEdges();
-            int numSearchesS = nodeContractor.getNumSearches();
-            int numShortcutsS = getCurrentShortcuts().size();
-
-            if (numEdgesPolledS > numEdgesPolledA) {
-                System.out.println("Warning: aggressive search polled less nodes than smart search " +
-                        +numEdgesPolledA + " compared to " + numEdgesPolledS);
+            if (numEdgesPolledA > numEdgesPolledL) {
+                System.out.println("Warning: legacy aggressive search polled less nodes than aggressive search " +
+                        +numEdgesPolledL + " compared to " + numEdgesPolledA);
                 fail();
             }
-            if (numShortcutsS > numShortcutsA) {
-                System.out.println("Warning: aggressive search introduced less shortcuts than smart search " +
-                        +numShortcutsA + " compared to " + numShortcutsS);
+            if (numShortcutsA > numShortcutsL) {
+                System.out.println("Warning: legacy aggressive search introduced less shortcuts than aggressive search " +
+                        +numShortcutsL + " compared to " + numShortcutsA);
                 fail();
             }
+            totalNumSearchesL += numSearchesL;
             totalNumSearchesA += numSearchesA;
-            totalNumSearchesS += numSearchesS;
+            totalEdgesPolledL += numEdgesPolledL;
             totalEdgesPolledA += numEdgesPolledA;
-            totalEdgesPolledS += numEdgesPolledS;
+            totalNumShortcutsL += numShortcutsL;
             totalNumShortcutsA += numShortcutsA;
-            totalNumShortcutsS += numShortcutsS;
         }
-        System.out.println("            aggressive        smart");
-        System.out.println("searches    " + totalNumSearchesA + "               " + totalNumSearchesS);
-        System.out.println("polls       " + totalEdgesPolledA + "               " + totalEdgesPolledS);
-        System.out.println("shortcuts   " + totalNumShortcutsA + "                " + totalNumShortcutsS);
+        System.out.println("            legacy         aggressive");
+        System.out.println("searches    " + totalNumSearchesL + "               " + totalNumSearchesA);
+        System.out.println("polls       " + totalEdgesPolledL + "               " + totalEdgesPolledA);
+        System.out.println("shortcuts   " + totalNumShortcutsL + "                " + totalNumShortcutsA);
     }
 
     private void buildRandomGraph(long seed) {

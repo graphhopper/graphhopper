@@ -12,11 +12,11 @@ import java.util.PriorityQueue;
 
 import static java.lang.Double.isInfinite;
 
-public class MapSmartWitnessPathFinder extends SmartWitnessPathFinder {
+public class MapWitnessPathFinder extends WitnessPathFinder {
     private IntObjectMap<WitnessSearchEntry> entries;
     private PriorityQueue<WitnessSearchEntry> priorityQueue;
 
-    public MapSmartWitnessPathFinder(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting) {
+    public MapWitnessPathFinder(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting) {
         super(graph, chGraph, turnWeighting);
         doReset();
     }

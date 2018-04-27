@@ -30,12 +30,12 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.util.BitSet;
 import java.util.PriorityQueue;
 
-public class MapBasedWitnessPathFinder extends WitnessPathFinder {
+public class MapBasedLegacyWitnessPathFinder extends LegacyWitnessPathFinder {
     private IntObjectMap<WitnessSearchEntry> chEntries;
     private BitSet settledEntries;
     private PriorityQueue<WitnessSearchEntry> priorityQueue;
 
-    public MapBasedWitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, int maxLevel) {
+    public MapBasedLegacyWitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, int maxLevel) {
         super(graph, weighting, traversalMode, maxLevel);
         doReset();
     }

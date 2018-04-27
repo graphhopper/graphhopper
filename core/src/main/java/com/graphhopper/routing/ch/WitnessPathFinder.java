@@ -1,29 +1,11 @@
-/*
- *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for
- *  additional information regarding copyright ownership.
- *
- *  GraphHopper GmbH licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except in
- *  compliance with the License. You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
 import java.util.Arrays;
@@ -31,53 +13,68 @@ import java.util.Arrays;
 public abstract class WitnessPathFinder {
     // for very dense graph a higher initial value is probably appropriate, the initial value does not play a big role
     // because this parameter will be adjusted automatically during the graph contraction
-    public static int initialMaxSettledEdges = 10;
+    public static int initialMaxSettledEdges = 100;
     // number of standard deviations above mean where distribution is truncated, for a normal distribution for
     // example sigmaFactor = 2 means about 95% of all observations are included
-    public static double sigmaFactor = 3;
-    protected final CHGraph graph;
-    protected final Weighting weighting;
-    protected final TraversalMode traversalMode;
-    protected final int maxLevel;
+    public static double sigmaFactor = 3.0;
+
+    protected final GraphHopperStorage graph;
+    protected final CHGraph chGraph;
+    protected final TurnWeighting turnWeighting;
     protected final EdgeExplorer outEdgeExplorer;
+    protected final EdgeExplorer origInEdgeExplorer;
+    protected final int maxLevel;
+    protected final OnFlyStatisticsCalculator statisticsCalculator = new OnFlyStatisticsCalculator();
+    protected final Stats stats = new Stats();
+
     protected int numOnOrigPath;
-    protected int avoidNode = Integer.MAX_VALUE;
-    protected int maxSettledEdges = initialMaxSettledEdges;
     protected int numSettledEdges;
-    protected int numEntriesPolled;
-    private final OnFlyStatisticsCalculator statisticsCalculator = new OnFlyStatisticsCalculator();
-    private final Stats stats = new Stats();
-    public static int searchCount = 0;
-    public static int pollCount = 0;
+    protected int numPolledEdges;
+    protected int maxSettledEdges = initialMaxSettledEdges;
+    protected int centerNode;
+    protected int fromNode;
+    protected int sourceEdge;
+    protected double bestWeight;
+    protected int resIncEdge;
+    protected boolean resViaCenter;
 
-    public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, int maxLevel) {
-        if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
-            throw new IllegalArgumentException("Traversal mode " + traversalMode + "not supported");
-        }
+    public static int searchCount;
+    public static int pollCount;
+
+    public WitnessPathFinder(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting) {
         this.graph = graph;
-        this.weighting = weighting;
-        this.traversalMode = traversalMode;
-        this.maxLevel = maxLevel;
-        outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(weighting.getFlagEncoder(), false, true));
+        this.chGraph = chGraph;
+        this.turnWeighting = turnWeighting;
+        DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(turnWeighting.getFlagEncoder(), true, false);
+        DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(turnWeighting.getFlagEncoder(), false, true);
+        outEdgeExplorer = chGraph.createEdgeExplorer(outEdgeFilter);
+        origInEdgeExplorer = graph.createEdgeExplorer(inEdgeFilter);
+        maxLevel = chGraph.getNodes();
     }
 
-    public void setInitialEntries(IntObjectMap<WitnessSearchEntry> initialEntries) {
-        searchCount++;
+    public int init(int centerNode, int fromNode, int sourceEdge) {
         reset();
-        initEntries(initialEntries);
-        stats.onInitEntries(initialEntries.size());
-        if (numOnOrigPath != 1) {
-            throw new IllegalStateException("There should be exactly one initial entry with onOrigPath = true, but given: " + numOnOrigPath);
+        this.sourceEdge = sourceEdge;
+        this.fromNode = fromNode;
+        this.centerNode = centerNode;
+        setInitialEntries(centerNode, fromNode, sourceEdge);
+        // if there is no entry that reaches the center node we can skip the entire search 
+        // and do not need any start entries, because no shortcut will ever be required
+        if (numOnOrigPath < 1) {
+            reset();
+            return 0;
         }
+        searchCount++;
+        int numEntries = getNumEntries();
+        stats.onInitEntries(numEntries);
+        return numEntries;
     }
 
-    protected abstract void initEntries(IntObjectMap<WitnessSearchEntry> initialEntries);
+    public abstract WitnessSearchEntry runSearch(int toNode, int targetEdge);
 
-    public abstract WitnessSearchEntry getFoundEntry(int edge, int adjNode);
-
-    public abstract WitnessSearchEntry getFoundEntryNoParents(int edge, int adjNode);
-
-    public abstract void findTarget(int targetEdge, int targetNode);
+    public int getNumPolledEdges() {
+        return numPolledEdges;
+    }
 
     public String getStatusString() {
         return stats.toString();
@@ -87,17 +84,18 @@ public abstract class WitnessPathFinder {
         stats.reset();
     }
 
-    public int getNumEntriesPolled() {
-        return numEntriesPolled;
-    }
+    abstract void setInitialEntries(int centerNode, int fromNode, int sourceEdge);
+
+    abstract void doReset();
+
+    abstract int getNumEntries();
 
     private void reset() {
         readjustMaxSettledEdges();
         stats.onReset(numSettledEdges, maxSettledEdges);
         numSettledEdges = 0;
-        numEntriesPolled = 0;
+        numPolledEdges = 0;
         numOnOrigPath = 0;
-        avoidNode = Integer.MAX_VALUE;
         doReset();
     }
 
@@ -106,27 +104,34 @@ public abstract class WitnessPathFinder {
         // approximate the number of settled edges in the next batch
         statisticsCalculator.addObservation(numSettledEdges);
         if (statisticsCalculator.getCount() == 10_000) {
-            maxSettledEdges = Math.max(initialMaxSettledEdges, (int) (statisticsCalculator.getMean() + sigmaFactor * Math.sqrt(statisticsCalculator.getVariance())));
+            maxSettledEdges = Math.max(
+                    initialMaxSettledEdges,
+                    (int) (statisticsCalculator.getMean() +
+                            sigmaFactor * Math.sqrt(statisticsCalculator.getVariance()))
+            );
             stats.onStatCalcReset(statisticsCalculator);
             statisticsCalculator.reset();
         }
     }
 
-    protected abstract void doReset();
-
-    protected int getEdgeKey(int edge, int adjNode) {
-        // todo: we should check if calculating the edge key this way affects performance, this method is probably run
-        // millions of times
+    int getEdgeKey(int edge, int adjNode) {
         // todo: this is similar to some code in DijkstraBidirectionEdgeCHNoSOD and should be cleaned up, see comments there
-        EdgeIteratorState eis = graph.getEdgeIteratorState(edge, adjNode);
+        CHEdgeIteratorState eis = chGraph.getEdgeIteratorState(edge, adjNode);
         return GHUtility.createEdgeKey(eis.getBaseNode(), eis.getAdjNode(), eis.getEdge(), false);
     }
 
-    protected boolean isContracted(int node) {
-        return graph.getLevel(node) != maxLevel;
+    double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+        if (inEdge == outEdge) {
+            return Double.POSITIVE_INFINITY;
+        }
+        return turnWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
     }
 
-    private static class Stats {
+    boolean isContracted(int node) {
+        return chGraph.getLevel(node) != maxLevel;
+    }
+
+    static class Stats {
         // helps to analyze how many edges get settled during a search typically, can be reused when stable
         private final long[] settledEdgesStats = new long[20];
         private long totalNumResets;
@@ -167,11 +172,11 @@ public abstract class WitnessPathFinder {
             totalStdDeviationSettledEdges = 0;
         }
 
-        public void onInitEntries(int numInitialEntries) {
+        void onInitEntries(int numInitialEntries) {
             totalNumInitialEntries += numInitialEntries;
         }
 
-        public void onReset(int numSettledEdges, int maxSettledEdges) {
+        void onReset(int numSettledEdges, int maxSettledEdges) {
             int bucket = numSettledEdges / 10;
             if (bucket >= settledEdgesStats.length) {
                 bucket = settledEdgesStats.length - 1;
@@ -183,7 +188,7 @@ public abstract class WitnessPathFinder {
             totalMaxSettledEdges += maxSettledEdges;
         }
 
-        public void onStatCalcReset(OnFlyStatisticsCalculator statisticsCalculator) {
+        void onStatCalcReset(OnFlyStatisticsCalculator statisticsCalculator) {
             totalNumStatCalcResets++;
             totalMeanSettledEdges += statisticsCalculator.getMean();
             totalStdDeviationSettledEdges += (long) Math.sqrt(statisticsCalculator.getVariance());

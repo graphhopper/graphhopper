@@ -14,7 +14,7 @@ import java.util.Arrays;
 
 import static java.lang.Double.isInfinite;
 
-public class ArraySmartWitnessPathFinder extends SmartWitnessPathFinder {
+public class ArrayWitnessPathFinder extends WitnessPathFinder {
     private double[] weights;
     private int[] edges;
     private int[] incEdges;
@@ -26,7 +26,7 @@ public class ArraySmartWitnessPathFinder extends SmartWitnessPathFinder {
     private IntDoubleBinaryHeap heap;
     private IntArrayList changedEdges;
 
-    public ArraySmartWitnessPathFinder(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting) {
+    public ArrayWitnessPathFinder(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting) {
         super(graph, chGraph, turnWeighting);
         final int numOriginalEdges = graph.getBaseGraph().getAllEdges().length();
         final int numEntries = 2 * numOriginalEdges;

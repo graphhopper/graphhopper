@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
+public class ArrayBasedLegacyWitnessPathFinder extends LegacyWitnessPathFinder {
     private double[] weights;
     private int[] edges;
     private int[] incEdges;
@@ -26,7 +26,7 @@ public class ArrayBasedWitnessPathFinder extends WitnessPathFinder {
     private IntDoubleBinaryHeap heap;
     private IntArrayList changedEdges;
 
-    public ArrayBasedWitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, int maxLevel) {
+    public ArrayBasedLegacyWitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, int maxLevel) {
         super(graph, weighting, traversalMode, maxLevel);
         final int numOriginalEdges = graph.getBaseGraph().getAllEdges().length();
         final int numEntries = 2 * numOriginalEdges;
