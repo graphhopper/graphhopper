@@ -82,7 +82,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     protected double logMessagesPercentage = 20;
     private double dijkstraTime;
     private int initSize;
-    private int counter;
+    private int pollCounter;
 
     public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph,
                                          Weighting weighting, TraversalMode traversalMode) {
@@ -182,7 +182,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 + ", lazy:" + lastNodesLazyUpdatePercentage
                 + ", neighbor:" + neighborUpdatePercentage
                 + ", " + getTimesAsString()
-                + ", lazy-overhead: " + (int) (100 * ((counter / (double) initSize) - 1)) + "%"
+                + ", lazy-overhead: " + (int) (100 * ((pollCounter / (double) initSize) - 1)) + "%"
                 + ", " + Helper.getMemInfo());
 
         int edgeCount = ghStorage.getAllEdges().length();
@@ -296,7 +296,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
         initSize = sortedNodes.getSize();
         int level = 0;
-        counter = 0;
+        pollCounter = 0;
         long logSize = Math.round(Math.max(10, initSize / 100d * logMessagesPercentage));
         if (logMessagesPercentage == 0)
             logSize = Integer.MAX_VALUE;
@@ -326,7 +326,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         while (!sortedNodes.isEmpty()) {
             // periodically update priorities of ALL nodes
-            if (periodicUpdate && counter > 0 && counter % periodicUpdatesCount == 0) {
+            if (periodicUpdate && pollCounter > 0 && pollCounter % periodicUpdatesCount == 0) {
                 periodicUpdateSW.start();
                 sortedNodes.clear();
                 int len = prepareGraph.getNodes();
@@ -343,13 +343,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     throw new IllegalStateException("Cannot prepare as no unprepared nodes where found. Called preparation twice?");
             }
 
-            if (counter % logSize == 0) {
+            if (pollCounter % logSize == 0) {
                 dijkstraTime += nodeContractor.getDijkstraSeconds();
                 logStats(updateCounter);
                 nodeContractor.resetDijkstraTime();
             }
 
-            counter++;
+            pollCounter++;
             int polledNode = sortedNodes.pollKey();
 
             if (!sortedNodes.isEmpty() && sortedNodes.getSize() < lastNodesLazyUpdates) {
@@ -502,7 +502,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 nf(sortedNodes.getSize()),
                 nf(nodeContractor.getAddedShortcutsCount()),
                 updateCounter,
-                nf(counter),
+                nf(pollCounter),
                 nf(nodeContractor.getDijkstraCount()),
                 getTimesAsString(),
                 meanDegree,

@@ -288,6 +288,7 @@ public class CHMeasurement {
         int lazyUpdates = 100;
         int neighborUpdates = 4;
         int contractedNodes = 100;
+        int logMessages = 5;
         LegacyWitnessPathFinder.sigmaFactor = 3.0;
         WitnessPathFinder.sigmaFactor = 3.0;
         boolean cleanup = true;
@@ -331,7 +332,7 @@ public class CHMeasurement {
         chDecorator.setPreparationLazyUpdates(lazyUpdates);     // default: 10
         chDecorator.setPreparationNeighborUpdates(neighborUpdates); // default: 20
         chDecorator.setPreparationContractedNodes(contractedNodes);// default: 100
-        chDecorator.setPreparationLogMessages(20); // default: 20
+        chDecorator.setPreparationLogMessages(logMessages); // default: 20
 
         LMAlgoFactoryDecorator lmDecorator = graphHopper.getLMFactoryDecorator();
         lmDecorator.setEnabled(true);
