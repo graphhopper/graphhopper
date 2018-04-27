@@ -17,7 +17,7 @@ abstract class AbstractNodeContractor implements NodeContractor {
     private final DataAccess originalEdges;
     int addedShortcutsCount;
     long dijkstraCount;
-    StopWatch dijkstraSW = new StopWatch();
+    final StopWatch dijkstraSW = new StopWatch();
     int maxLevel;
     private int maxEdgesCount;
 
@@ -56,15 +56,9 @@ abstract class AbstractNodeContractor implements NodeContractor {
     }
 
     @Override
-    public void resetDijkstraTime() {
-        dijkstraSW = new StopWatch();
-    }
-
-    @Override
     public float getDijkstraSeconds() {
-        return dijkstraSW.getSeconds();
+        return dijkstraSW.getCurrentSeconds();
     }
-
 
     void setOrigEdgeCount(int edgeId, int value) {
         edgeId -= maxEdgesCount;

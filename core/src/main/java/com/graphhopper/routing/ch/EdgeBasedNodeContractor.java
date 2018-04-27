@@ -234,7 +234,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     EdgeIterator targetEdgeIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
                     while (targetEdgeIter.next()) {
                         int targetEdge = targetEdgeIter.getFirstOrigEdge();
+                        dijkstraSW.start();
                         WitnessSearchEntry entry = witnessPathFinder.runSearch(toNode, targetEdge);
+                        dijkstraSW.stop();
                         if (entry == null || Double.isInfinite(entry.weight)) {
                             continue;
                         }
@@ -331,7 +333,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     continue;
                 }
                 int targetEdge = outgoingEdges.getLastOrigEdge();
+                dijkstraSW.start();
                 legacyWitnessPathFinder.findTarget(targetEdge, toNode);
+                dijkstraSW.stop();
 
                 WitnessSearchEntry originalPath = legacyWitnessPathFinder.getFoundEntry(targetEdge, toNode);
                 if (originalPath == null) {
@@ -374,7 +378,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         continue;
                     }
                     int targetEdge = outgoingEdges.getLastOrigEdge();
+                    dijkstraSW.start();
                     legacyWitnessPathFinder.findTarget(targetEdge, toNode);
+                    dijkstraSW.stop();
                     WitnessSearchEntry originalPath = legacyWitnessPathFinder.getFoundEntry(targetEdge, toNode);
                     if (originalPath == null) {
                         continue;

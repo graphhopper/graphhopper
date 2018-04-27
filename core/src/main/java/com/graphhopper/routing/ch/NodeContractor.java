@@ -41,7 +41,5 @@ public interface NodeContractor {
 
     long getDijkstraCount();
 
-    void resetDijkstraTime();
-
     float getDijkstraSeconds();
 }

@@ -80,7 +80,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int neighborUpdatePercentage = 20;
     protected double nodesContractedPercentage = 100;
     protected double logMessagesPercentage = 20;
-    private double dijkstraTime;
     private int initSize;
     private int pollCounter;
 
@@ -344,9 +343,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
 
             if (pollCounter % logSize == 0) {
-                dijkstraTime += nodeContractor.getDijkstraSeconds();
                 logStats(updateCounter);
-                nodeContractor.resetDijkstraTime();
             }
 
             pollCounter++;
@@ -408,7 +405,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
         }
 
-        dijkstraTime += nodeContractor.getDijkstraSeconds();
         logStats(updateCounter);
 
         // Preparation works only once so we can release temporary data.
@@ -453,6 +449,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         float neighborUpdateTime = neighborUpdateSW.getCurrentSeconds();
         float contractionTime = contractionSW.getCurrentSeconds();
         float otherTime = totalTime - (periodicUpdateTime + lazyUpdateTime + neighborUpdateTime + contractionTime);
+        // dijkstra time is included in the others
+        float dijkstraTime = nodeContractor.getDijkstraSeconds();
         return String.format(Locale.ROOT,
                 "t(total): %6.2f,  t(period): %6.2f, t(lazy): %6.2f, t(neighbor): %6.2f, t(contr): %6.2f, t(other) : %6.2f, t(dijk): %6.2f",
                 totalTime, periodicUpdateTime, lazyUpdateTime, neighborUpdateTime, contractionTime, otherTime, dijkstraTime);
