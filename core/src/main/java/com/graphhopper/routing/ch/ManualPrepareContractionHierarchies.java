@@ -98,17 +98,19 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
             }
             prepareGraph.setLevel(node, i);
 
+            // todo: !!
             // without disconnecting the degree of the graph rises and the contraction
             // becomes slower with each contracted node. however, using it showed an infinite loop
-            CHEdgeIterator iter = explorer.setBaseNode(node);
-            int maxLevel = prepareGraph.getNodes();
-            while (iter.next()) {
-                int nn = iter.getAdjNode();
-                if (prepareGraph.getLevel(nn) != maxLevel)
-                    continue;
-
-                prepareGraph.disconnect(explorer, iter);
-            }
+            // and also makes some tests fail, although we do it just like its done in PCH ??
+//            int maxLevel = prepareGraph.getNodes();
+//            CHEdgeIterator iter = explorer.setBaseNode(node);
+//            while (iter.next()) {
+//                int nn = iter.getAdjNode();
+//                if (prepareGraph.getLevel(nn) != maxLevel)
+//                    continue;
+//
+//                prepareGraph.disconnect(explorer, iter);
+//            }
             if (i % logSize == 0) {
                 long elapsed = nanoTime() - startTime;
                 logger.info(String.format("contracted %s / %s nodes, shortcuts: %s, avg degree: %.2f, last batch took: %.2f s, time per node: %.2f micros",
