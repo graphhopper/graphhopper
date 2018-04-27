@@ -62,7 +62,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private EdgeExplorer loopAvoidanceInEdgeExplorer;
     private EdgeExplorer loopAvoidanceOutEdgeExplorer;
     private WitnessSearchStrategy witnessSearchStrategy;
-    private int maxLevel;
     private int numEdges;
     private int numPrevEdges;
     private int numOrigEdges;
@@ -71,6 +70,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private int duplicateOutEdges;
     private int duplicateInEdges;
 
+    private long totalNumPolledEdges;
+    private long totalNumSearches;
     private int numPolledEdges;
     private int numSearches;
 
@@ -85,7 +86,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public void initFromGraph() {
         super.initFromGraph();
-        maxLevel = prepareGraph.getNodes();
+        int maxLevel = prepareGraph.getNodes();
         legacyWitnessPathFinder = arrayBasedWitnessPathFinder ?
                 new ArrayBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel) :
                 new MapBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel);
@@ -157,8 +158,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public long contractNode(int node) {
         activeShortcutHandler = addingShortcutHandler;
-        numPolledEdges = 0;
-        numSearches = 0;
         long start = nanoTime();
         long result = findAndHandleShortcuts(node);
         CHEdgeIterator iter = allCHExplorer.setBaseNode(node);
@@ -180,6 +179,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private int findAndHandleShortcuts(int node) {
+        numPolledEdges = 0;
+        numSearches = 0;
         if (searchType == SearchType.AGGRESSIVE) {
             return findAndHandleShortcutsAggressive(node);
         } else if (searchType == SearchType.LEGACY_AGGRESSIVE) {
@@ -216,6 +217,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     continue;
                 }
                 numSearches++;
+                totalNumSearches++;
 
                 // now we need to identify all nodes that could be reached from our node to be contracted
                 // todo: optimize collection size
@@ -259,6 +261,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     }
                 }
                 numPolledEdges += witnessPathFinder.getNumPolledEdges();
+                totalNumPolledEdges += witnessPathFinder.getNumPolledEdges();
             }
         }
         return 0;
@@ -322,6 +325,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             IntObjectMap<WitnessSearchEntry> initialEntries = simpleSearch.getInitialEntries(fromNode, incomingEdges);
             legacyWitnessPathFinder.setInitialEntries(initialEntries);
             numSearches++;
+            totalNumSearches++;
             if (initialEntries.isEmpty()) {
                 continue;
             }
@@ -346,6 +350,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 }
             }
             numPolledEdges += legacyWitnessPathFinder.getNumEntriesPolled();
+            totalNumPolledEdges += legacyWitnessPathFinder.getNumEntriesPolled();
         }
         return degree;
     }
@@ -366,6 +371,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 }
                 legacyWitnessPathFinder.setInitialEntries(initialEntries);
                 numSearches++;
+                totalNumSearches++;
 
                 CHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
                 while (outgoingEdges.next()) {
@@ -438,6 +444,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                     }
                 }
                 numPolledEdges += legacyWitnessPathFinder.getNumEntriesPolled();
+                totalNumPolledEdges += legacyWitnessPathFinder.getNumEntriesPolled();
             }
         }
     }
@@ -532,6 +539,11 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
     @Override
     public String getStatisticsString() {
+        return String.format("searches: %10s, polled-edges: %10s", nf(totalNumSearches), nf(totalNumPolledEdges));
+    }
+
+    @Override
+    public String getDetailedStatisticsString() {
         String result = String.format("stats(calc): %s, stats(contract): %s, %s",
                 countingShortcutHandler.getStats(), addingShortcutHandler.getStats(),
                 searchType == SearchType.AGGRESSIVE ? witnessPathFinder.getStatusString() : legacyWitnessPathFinder.getStatusString());

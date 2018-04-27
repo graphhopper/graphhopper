@@ -19,7 +19,6 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
@@ -27,6 +26,8 @@ import com.graphhopper.util.*;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.graphhopper.util.Helper.nf;
 
 class NodeBasedNodeContractor extends AbstractNodeContractor {
     private final PreparationWeighting prepareWeighting;
@@ -128,6 +129,11 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
 
     @Override
     public String getStatisticsString() {
+        return "dijkstras:" + nf(dijkstraCount);
+    }
+
+    @Override
+    public String getDetailedStatisticsString() {
         return prepareAlgo.getMemoryUsageAsString();
     }
 

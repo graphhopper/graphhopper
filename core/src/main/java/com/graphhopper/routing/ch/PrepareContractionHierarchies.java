@@ -175,13 +175,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 + ", new shortcuts: " + nf(nodeContractor.getAddedShortcutsCount())
                 + ", initSize:" + nf(initSize)
                 + ", " + prepareWeighting
-                + ", dijkstras:" + nf(nodeContractor.getDijkstraCount())
-                + ", meanDegree:" + (long) meanDegree
                 + ", periodic:" + periodicUpdatesPercentage
                 + ", lazy:" + lastNodesLazyUpdatePercentage
                 + ", neighbor:" + neighborUpdatePercentage
                 + ", " + getTimesAsString()
                 + ", lazy-overhead: " + (int) (100 * ((pollCounter / (double) initSize) - 1)) + "%"
+                + ", " + nodeContractor.getStatisticsString()
+                + ", meanDegree:" + (long) meanDegree
                 + ", " + Helper.getMemInfo());
 
         int edgeCount = ghStorage.getAllEdges().length();
@@ -496,15 +496,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     private void logStats(int updateCounter) {
         logger.info(String.format(Locale.ROOT,
-                "nodes: %10s, shortcuts: %10s, updates: %2d, polled: %10s, dijkstras: %10s, %s, %.1f, %s, %s",
+                "nodes: %10s, shortcuts: %10s, updates: %2d, polled: %10s, %s, %s, %.1f, %s, %s",
                 nf(sortedNodes.getSize()),
                 nf(nodeContractor.getAddedShortcutsCount()),
                 updateCounter,
                 nf(pollCounter),
-                nf(nodeContractor.getDijkstraCount()),
+                nodeContractor.getStatisticsString(),
                 getTimesAsString(),
                 meanDegree,
-                nodeContractor.getStatisticsString(),
+                nodeContractor.getDetailedStatisticsString(),
                 Helper.getMemInfo()));
     }
 }
