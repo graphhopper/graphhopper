@@ -44,7 +44,7 @@ public class DebugAStarBi extends AStarBidirection implements DebugAlgo {
     }
 
     @Override
-    public void updateBestPath(EdgeIteratorState edgeState, AStar.AStarEntry entry, int traversalId, boolean reverse) {
+    public void updateBestPath(EdgeIteratorState edgeState, SPTEntry entry, int traversalId, boolean reverse) {
         if (g2 != null) {
             mg.plotNode(g2, traversalId, Color.YELLOW);
         }

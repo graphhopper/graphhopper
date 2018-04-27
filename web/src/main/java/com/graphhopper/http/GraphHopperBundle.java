@@ -29,6 +29,7 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.http.health.GraphHopperStorageHealthCheck;
 import com.graphhopper.http.resources.*;
+import com.graphhopper.isochrone.algorithm.RasterHullBuilder;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
@@ -54,11 +55,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 
-public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfiguration> {
+public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConfiguration> {
 
     static class TranslationMapFactory implements Factory<TranslationMap> {
 
-        @Inject GraphHopper graphHopper;
+        @Inject
+        GraphHopper graphHopper;
 
         @Override
         public TranslationMap provide() {
@@ -70,9 +72,11 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
 
         }
     }
+
     static class GraphHopperStorageFactory implements Factory<GraphHopperStorage> {
 
-        @Inject GraphHopper graphHopper;
+        @Inject
+        GraphHopper graphHopper;
 
         @Override
         public GraphHopperStorage provide() {
@@ -87,7 +91,8 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
 
     static class EncodingManagerFactory implements Factory<EncodingManager> {
 
-        @Inject GraphHopper graphHopper;
+        @Inject
+        GraphHopper graphHopper;
 
         @Override
         public EncodingManager provide() {
@@ -102,7 +107,8 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
 
     static class LocationIndexFactory implements Factory<LocationIndex> {
 
-        @Inject GraphHopper graphHopper;
+        @Inject
+        GraphHopper graphHopper;
 
         @Override
         public LocationIndex provide() {
@@ -117,7 +123,8 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
 
     static class HasElevation implements Factory<Boolean> {
 
-        @Inject GraphHopper graphHopper;
+        @Inject
+        GraphHopper graphHopper;
 
         @Override
         public Boolean provide() {
@@ -130,24 +137,38 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
         }
     }
 
+    static class RasterHullBuilderFactory implements Factory<RasterHullBuilder> {
+
+        RasterHullBuilder builder = new RasterHullBuilder();
+
+        @Override
+        public RasterHullBuilder provide() {
+            return builder;
+        }
+
+        @Override
+        public void dispose(RasterHullBuilder rasterHullBuilder) {
+        }
+    }
+
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
 
     }
 
     @Override
-    public void run(HasGraphHopperConfiguration configuration, Environment environment) throws Exception {
-        configuration.graphhopper().merge(CmdArgs.readFromConfigAndMerge(configuration.graphhopper()));
+    public void run(GraphHopperBundleConfiguration configuration, Environment environment) throws Exception {
+        configuration.getGraphHopperConfiguration().merge(CmdArgs.readFromConfigAndMerge(configuration.getGraphHopperConfiguration()));
 
-        if (configuration.graphhopper().has("gtfs.file")) {
+        if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
             // switch to different API implementation when using Pt
-            runPtGraphHopper(configuration.graphhopper(), environment);
+            runPtGraphHopper(configuration.getGraphHopperConfiguration(), environment);
         } else {
-            runRegularGraphHopper(configuration.graphhopper(), environment);
+            runRegularGraphHopper(configuration.getGraphHopperConfiguration(), environment);
         }
 
         environment.servlets().addFilter("cors", CORSFilter.class).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");
-        environment.servlets().addFilter("ipfilter", new IPFilter(configuration.graphhopper().get("jetty.whiteips", ""), configuration.graphhopper().get("jetty.blackips", ""))).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");
+        environment.servlets().addFilter("ipfilter", new IPFilter(configuration.getGraphHopperConfiguration().get("jetty.whiteips", ""), configuration.getGraphHopperConfiguration().get("jetty.blackips", ""))).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");
 
     }
 
@@ -173,15 +194,18 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
                 bind(translationMap).to(TranslationMap.class);
                 bind(encodingManager).to(EncodingManager.class);
                 bind(graphHopperStorage).to(GraphHopperStorage.class);
+                bindFactory(RasterHullBuilderFactory.class).to(RasterHullBuilder.class);
             }
         });
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(RouteResource.class);
+        environment.jersey().register(IsochroneResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
         environment.lifecycle().manage(new Managed() {
             @Override
-            public void start() throws Exception {}
+            public void start() throws Exception {
+            }
 
             @Override
             public void stop() throws Exception {
@@ -208,6 +232,7 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
                 bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
                 bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
+                bindFactory(RasterHullBuilderFactory.class).to(RasterHullBuilder.class);
             }
         });
 
@@ -216,6 +241,7 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
         }
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(RouteResource.class);
+        environment.jersey().register(IsochroneResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
 

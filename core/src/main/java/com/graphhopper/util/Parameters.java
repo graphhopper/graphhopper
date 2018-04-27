@@ -197,6 +197,7 @@ public class Parameters {
         public static final String STREET_NAME = "street_name";
         public static final String EDGE_ID = "edge_id";
         public static final String TIME = "time";
+        public static final String DISTANCE = "distance";
     }
 
     public static final class PT {

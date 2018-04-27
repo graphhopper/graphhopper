@@ -41,7 +41,7 @@ public class GraphHopperDataflagEncoderSpatialRulesIT {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.graphhopper.merge(new CmdArgs().
+        config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "generic").
                 put("prepare.ch.weightings", "no").
                 put("spatial_rules.location", "../core/files/spatialrules/countries.geo.json").

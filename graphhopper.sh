@@ -20,7 +20,6 @@ function printBashUsage {
   echo "-a | --action <action>    must be one the following actions:"
   echo "     --action import      creates the graph cache only, used for later faster starts"
   echo "     --action web         starts a local server for user access at localhost:8989 and API access at localhost:8989/route"
-  echo "     --action webdebug	  like web but with hot reloading of static files at web/src/main/resources/assets"
   echo "     --action build       creates the graphhopper web JAR"
   echo "     --action clean       removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)"
   echo "     --action measurement does performance analysis of the current source version via random routes (Measurement class)"
@@ -57,6 +56,9 @@ while [ ! -z $1 ]; do
     --port) GH_WEB_OPTS="$GH_WEB_OPTS -Ddw.server.applicationConnectors[0].port=$2"; shift 2;;
     -v|--version) echo $VERSION
     	exit 2;;
+    # forward VM options, here we assume no spaces ie. just one parameter!?
+    -D*)
+       GH_WEB_OPTS="$GH_WEB_OPTS $1"; shift 1;;
     # forward parameter via replacing first two characters of the key with -Dgraphhopper.
     --*)
        GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.${1:2}=$2"; shift 2;;
@@ -234,11 +236,7 @@ packageJar
 
 echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 
-if [[ "$ACTION" = "webdebug" ]]; then
-  exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
-                 $GH_WEB_OPTS -cp "$JAR" com.graphhopper.http.GraphHopperDebugApplication server $CONFIG
-
-elif [[ "$ACTION" = "web" ]]; then
+if [[ "$ACTION" = "web" ]]; then
   export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
 
   if [[ "$RUN_BACKGROUND" == "true" ]]; then

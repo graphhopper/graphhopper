@@ -154,38 +154,7 @@ public class GHUtility {
         System.out.printf(Locale.ROOT,
                 "graph.edge(%d, %d, %f, %s);\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false");
     }
-
-    public static void buildRandomGraph(Graph graph, long seed, int numNodes, double meanDegree, boolean allowLoops, double pBothDir) {
-        Random random = new Random(seed);
-        for (int i = 0; i < numNodes; ++i) {
-            double lat = 49.4 + (random.nextDouble() * 0.001);
-            double lon = 9.7 + (random.nextDouble() * 0.001);
-            graph.getNodeAccess().setNode(i, lat, lon);
-        }
-        int numEdges = (int) (meanDegree * numNodes);
-        for (int i = 0; i < numEdges; ++i) {
-            int from = random.nextInt(numNodes);
-            int to = random.nextInt(numNodes);
-            if (!allowLoops && from == to) {
-                continue;
-            }
-            double distance = GHUtility.getDistance(from, to, graph.getNodeAccess());
-            // add some random offset for most cases, but also allow duplicate edges with same weight
-            if (random.nextDouble() < 0.8)
-                distance += random.nextDouble() * distance * 0.01;
-            boolean bothDirections = random.nextDouble() < pBothDir;
-            graph.edge(from, to, distance, bothDirections);
-        }
-    }
-
-    private static double getDistance(int from, int to, NodeAccess nodeAccess) {
-        double fromLat = nodeAccess.getLat(from);
-        double fromLon = nodeAccess.getLon(from);
-        double toLat = nodeAccess.getLat(to);
-        double toLon = nodeAccess.getLon(to);
-        return Helper.DIST_PLANE.calcDist(fromLat, fromLon, toLat, toLon);
-    }
-
+    
     public static void addRandomTurnCosts(Graph graph, long seed, FlagEncoder encoder, int maxTurnCost, TurnCostExtension turnCostExtension) {
         Random random = new Random(seed);
         double pNodeHasTurnCosts = 0.3;
@@ -216,6 +185,18 @@ public class GHUtility {
                 }
             }
         }
+    }
+
+    private static void printUnitTestEdge(FlagEncoder flagEncoder, EdgeIteratorState edge) {
+        boolean fwd = edge.isForward(flagEncoder);
+        boolean bwd = edge.isBackward(flagEncoder);
+        if (!fwd && !bwd) {
+            return;
+        }
+        int from = fwd ? edge.getBaseNode() : edge.getAdjNode();
+        int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
+        System.out.printf(Locale.ROOT,
+                "graph.edge(%d, %d, %f, %s);\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false");
     }
 
     public static void printInfo(final Graph g, int startNode, final int counts, final EdgeFilter filter) {

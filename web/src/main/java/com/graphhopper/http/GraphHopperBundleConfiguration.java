@@ -20,8 +20,8 @@ package com.graphhopper.http;
 
 import com.graphhopper.util.CmdArgs;
 
-public interface HasGraphHopperConfiguration {
+public interface GraphHopperBundleConfiguration {
 
-    CmdArgs graphhopper();
+    CmdArgs getGraphHopperConfiguration();
 
 }

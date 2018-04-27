@@ -78,7 +78,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         // default is enabled & fastest
         String chWeightingsStr = args.get(CH.PREPARE + "weightings", "");
 
-        if ("no".equals(chWeightingsStr)) {
+        if ("no".equals(chWeightingsStr) || "false".equals(chWeightingsStr)) {
             // default is fastest and we need to clear this explicitly
             weightingsAsStrings.clear();
         } else if (!chWeightingsStr.isEmpty()) {
