@@ -31,7 +31,7 @@ import com.graphhopper.util.*;
  *
  * @author Peter Karich
  */
-public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry> {
+public class DijkstraBidirectionRef extends AbstractBidirAlgo {
     public DijkstraBidirectionRef(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
     }

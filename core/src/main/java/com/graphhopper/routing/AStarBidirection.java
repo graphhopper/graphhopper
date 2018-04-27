@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.routing.AStar.AStarEntry;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
@@ -25,7 +24,11 @@ import com.graphhopper.routing.weighting.ConsistentWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
+import com.graphhopper.storage.SPTEntry;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
@@ -53,7 +56,7 @@ import com.graphhopper.util.*;
  * @author Peter Karich
  * @author jansoe
  */
-public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> implements RecalculationHook {
+public class AStarBidirection extends AbstractBidirAlgo implements RecalculationHook {
     private ConsistentWeightApproximator weightApprox;
 
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
@@ -71,19 +74,13 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
     }
 
     @Override
-    protected boolean finished() {
-        // using 'weight' is important and correct here e.g. approximation can get negative and smaller than 'weightOfVisitedPath'
-        return super.finished();
-    }
-
-    @Override
-    protected AStarEntry createStartEntry(int node, double weight, boolean reverse) {
+    protected SPTEntry createStartEntry(int node, double weight, boolean reverse) {
         double heapWeight = weight + weightApprox.approximate(node, reverse);
         return new AStarEntry(EdgeIterator.NO_EDGE, node, heapWeight, weight);
     }
 
     @Override
-    protected AStarEntry createEntry(EdgeIteratorState edge, int edgeId, double weight, AStarEntry parent, boolean reverse) {
+    protected SPTEntry createEntry(EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
         int neighborNode = edge.getAdjNode();
         double heapWeight = weight + weightApprox.approximate(neighborNode, reverse);
         AStarEntry entry = new AStarEntry(edge.getEdge(), neighborNode, heapWeight, weight);
@@ -92,7 +89,7 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
     }
 
     @Override
-    protected void updateEntry(AStarEntry entry, EdgeIteratorState edge, int edgeId, double weight, AStarEntry parent, boolean reverse) {
+    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
         entry.edge = edge.getEdge();
         entry.weight = weight + weightApprox.approximate(edge.getAdjNode(), reverse);
         entry.weightOfVisitedPath = weight;
@@ -100,12 +97,7 @@ public class AStarBidirection extends GenericDijkstraBidirection<AStarEntry> imp
     }
 
     @Override
-    protected AStarEntry getParent(AStarEntry entry) {
-        return entry.getParent();
-    }
-
-    @Override
-    protected double calcWeight(EdgeIteratorState iter, AStarEntry currEdge, boolean reverse) {
+    protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
         // TODO performance: check if the node is already existent in the opposite direction
         // then we could avoid the approximation as we already know the exact complete path!
         return super.calcWeight(iter, currEdge, reverse);
