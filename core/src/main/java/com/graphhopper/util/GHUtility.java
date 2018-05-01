@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -158,11 +158,13 @@ public class GHUtility {
     public static void buildRandomGraph(Graph graph, long seed, int numNodes, double meanDegree, boolean allowLoops, double pBothDir) {
         Random random = new Random(seed);
         for (int i = 0; i < numNodes; ++i) {
-            double lat = 49.4 + (random.nextDouble() * 0.001);
-            double lon = 9.7 + (random.nextDouble() * 0.001);
+            double lat = 49.4 + (random.nextDouble() * 0.01);
+            double lon = 9.7 + (random.nextDouble() * 0.01);
             graph.getNodeAccess().setNode(i, lat, lon);
         }
-        int numEdges = (int) (meanDegree * numNodes);
+        double minDist = Double.MAX_VALUE;
+        double maxDist = Double.MIN_VALUE;
+        int numEdges = (int) (0.5 * meanDegree * numNodes);
         for (int i = 0; i < numEdges; ++i) {
             int from = random.nextInt(numNodes);
             int to = random.nextInt(numNodes);
@@ -170,12 +172,22 @@ public class GHUtility {
                 continue;
             }
             double distance = GHUtility.getDistance(from, to, graph.getNodeAccess());
+            // there should be no edges with zero weight, not even loop shortcuts
+            distance = Math.max(0.001, distance);
             // add some random offset for most cases, but also allow duplicate edges with same weight
             if (random.nextDouble() < 0.8)
                 distance += random.nextDouble() * distance * 0.01;
+            minDist = Math.min(minDist, distance);
+            maxDist = Math.max(maxDist, distance);
+            // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
             graph.edge(from, to, distance, bothDirections);
         }
+        System.out.println("Finished building random graph" +
+                ", nodes: " + graph.getNodes() +
+                ", edges: " + graph.getAllEdges().length() +
+                ", min distance: " + minDist +
+                ", max distance: " + maxDist);
     }
 
     private static double getDistance(int from, int to, NodeAccess nodeAccess) {
