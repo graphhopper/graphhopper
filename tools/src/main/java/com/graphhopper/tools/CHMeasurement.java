@@ -356,9 +356,9 @@ public class CHMeasurement {
      */
     private static void testPerformanceAutomaticNodeOrdering(String[] args) {
         String osmFile = "local/maps/unterfranken-latest.osm.pbf";
-        int periodicUpdates = 20;
+        int periodicUpdates = 0;
         int lazyUpdates = 100;
-        int neighborUpdates = 4;
+        int neighborUpdates = 0;
         int contractedNodes = 100;
         int logMessages = 5;
         LegacyWitnessPathFinder.sigmaFactor = 3.0;

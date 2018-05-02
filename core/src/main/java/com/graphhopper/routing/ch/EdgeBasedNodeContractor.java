@@ -302,6 +302,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         stats().nodes++;
         resetEdgeCounters();
         LongSet witnessedPairs = new LongHashSet(16);
+        // todo: quick search is not beneficial in all cases...
         int degree = runQuickWitnessSearch(node, witnessedPairs);
         // todo: performance: does it help to stop here in case all pairs have been witnessed already ?
         runExhaustiveWitnessSearch(node, witnessedPairs);
