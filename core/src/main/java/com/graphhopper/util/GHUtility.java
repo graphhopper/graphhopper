@@ -453,6 +453,15 @@ public class GHUtility {
     }
 
     /**
+     * Returns the edge key for a given edge id and adjacent node. This is needed in a few places where
+     * the base node is not known.
+     */
+    public static int getEdgeKey(Graph graph, int edgeId, int node, boolean reverse) {
+        EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(edgeId, node);
+        return GHUtility.createEdgeKey(edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode(), edgeId, reverse);
+    }
+
+    /**
      * This edge iterator can be used in tests to mock specific iterator behaviour via overloading
      * certain methods.
      */

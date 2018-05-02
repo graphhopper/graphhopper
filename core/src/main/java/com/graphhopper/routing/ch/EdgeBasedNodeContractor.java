@@ -727,9 +727,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private int getEdgeKey(int edge, int adjNode) {
-        // todo: this is similar to some code in DijkstraBidirectionEdgeCHNoSOD and should be cleaned up, see comments there
-        CHEdgeIteratorState eis = prepareGraph.getEdgeIteratorState(edge, adjNode);
-        return GHUtility.createEdgeKey(eis.getBaseNode(), eis.getAdjNode(), eis.getEdge(), false);
+        return GHUtility.getEdgeKey(prepareGraph, edge, adjNode, false);
     }
 
     private Stats stats() {

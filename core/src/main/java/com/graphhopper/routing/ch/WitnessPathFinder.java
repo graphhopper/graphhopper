@@ -132,9 +132,7 @@ public abstract class WitnessPathFinder {
     }
 
     int getEdgeKey(int edge, int adjNode) {
-        // todo: this is similar to some code in DijkstraBidirectionEdgeCHNoSOD and should be cleaned up, see comments there
-        CHEdgeIteratorState eis = chGraph.getEdgeIteratorState(edge, adjNode);
-        return GHUtility.createEdgeKey(eis.getBaseNode(), eis.getAdjNode(), eis.getEdge(), false);
+        return GHUtility.getEdgeKey(chGraph, edge, adjNode, false);
     }
 
     double calcTurnWeight(int inEdge, int viaNode, int outEdge) {

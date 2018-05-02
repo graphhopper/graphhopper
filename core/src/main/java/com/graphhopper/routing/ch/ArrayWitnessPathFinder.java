@@ -35,7 +35,7 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
     }
 
     public WitnessSearchEntry runSearch(int toNode, int targetEdge) {
-        // todo: write a test for this case where it becomes clear
+        // todo: write a test for this case to make it clear
         bestWeight = fromNode == toNode
                 ? calcTurnWeight(sourceEdge, fromNode, targetEdge)
                 : Double.POSITIVE_INFINITY;
@@ -179,7 +179,7 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
     }
 
     private void updateBestPath(int toNode, int targetEdge, int edgeKey) {
-        // when we hit the target node we update the best path
+        // whenever we hit the target node we update the best path
         if (adjNodes[edgeKey] == toNode) {
             double totalWeight = weights[edgeKey] + calcTurnWeight(incEdges[edgeKey], toNode, targetEdge);
             // we know that there must be some parent so a negative parent key is a real

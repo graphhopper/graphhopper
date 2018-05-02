@@ -48,7 +48,6 @@ import static org.junit.Assert.assertTrue;
  * or random contraction order, so the hard to test and heuristic automatic search for an efficient contraction order
  * taking place  in {@link PrepareContractionHierarchies} is not covered here, but this is ok, because the correctness
  * of CH should not depend on the contraction order.
- * todo: so far tests  focus on case without u-turns only
  *
  * @see EdgeBasedNodeContractor where shortcut creation is tested independent from the routing query
  */

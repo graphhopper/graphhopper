@@ -42,9 +42,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     public AbstractBidirectionEdgeCHNoSOD(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         super(graph, weighting, traversalMode);
         if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
-            // todo: properly test/implement u-turn mode and allow it here
-            throw new IllegalArgumentException(String.format(Locale.ROOT, "Traversal mode '%s' not supported by this algorithm, " +
-                    "for node based traversal use DijkstraBidirectionCH instead", traversalMode));
+            throw new IllegalArgumentException(String.format(Locale.ROOT, "Only traversal mode '%s' supported by this algorithm, " +
+                    "for node based traversal use DijkstraBidirectionCH instead", TraversalMode.EDGE_BASED_2DIR));
         }
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
         innerInExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
@@ -142,17 +141,14 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
             if (!traversalMode.hasUTurnSupport() && edgeId == prevOrNextOrigEdgeId) {
                 continue;
             }
-            // we need the traversal id of the incoming edge, this is different to what traversalMode.createTraversalId
-            // would calculate. todo: can we get rid of 'knowing' how the traversal ids are calculated here ?
-            EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(edgeId, iter.getBaseNode());
-            int key = GHUtility.createEdgeKey(edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode(), edgeId, !reverse);
+            int key = GHUtility.getEdgeKey(graph, edgeId, iter.getBaseNode(), !reverse);
             SPTEntry entryOther = bestWeightMapOther.get(key);
             if (entryOther == null) {
                 continue;
             }
 
             double turnCostsAtBridgeNode = reverse ?
-//                     todo: maybe we should make this a bit cleaner (check weighting type at construction time etc.)
+//                     todo: maybe we should remove the cast and check weighting type at construction time or similar
                     ((TurnWeighting) weighting).calcTurnWeight(iter.getLastOrigEdge(), iter.getBaseNode(), prevOrNextOrigEdgeId) :
                     ((TurnWeighting) weighting).calcTurnWeight(prevOrNextOrigEdgeId, iter.getBaseNode(), iter.getFirstOrigEdge());
 
@@ -191,8 +187,6 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     @Override
     protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
         int edgeId = getOrigEdgeId(edge, !reverse);
-        // todo: is it really enough to compare edge ids here ? what if there are two different edges between the 
-        // same nodes ?
         if (!traversalMode.hasUTurnSupport() && edgeId == ((CHEntry) currEdge).incEdge)
             return false;
 

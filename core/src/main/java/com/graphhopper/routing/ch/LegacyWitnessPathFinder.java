@@ -115,11 +115,7 @@ public abstract class LegacyWitnessPathFinder {
     protected abstract void doReset();
 
     protected int getEdgeKey(int edge, int adjNode) {
-        // todo: we should check if calculating the edge key this way affects performance, this method is probably run
-        // millions of times
-        // todo: this is similar to some code in DijkstraBidirectionEdgeCHNoSOD and should be cleaned up, see comments there
-        EdgeIteratorState eis = graph.getEdgeIteratorState(edge, adjNode);
-        return GHUtility.createEdgeKey(eis.getBaseNode(), eis.getAdjNode(), eis.getEdge(), false);
+        return GHUtility.getEdgeKey(graph, edge, adjNode, false);
     }
 
     protected boolean isContracted(int node) {
