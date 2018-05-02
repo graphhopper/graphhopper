@@ -72,6 +72,7 @@ public class CHMeasurement {
 
     public static void main(String[] args) {
         testPerformanceAutomaticNodeOrdering(args);
+//        new CHMeasurement().analyzeNodePrio();
 //        new CHMeasurement().testPerformanceFixedNodeOrdering();
 //        new CHMeasurement().analyzeLegacyVsAggressive();
     }
@@ -134,12 +135,12 @@ public class CHMeasurement {
         if (aggressiveCounts.size() != legacyCounts.size()) {
             throw new IllegalStateException("shouldnt be really");
         }
-        for (int i = 0; i < Math.min(aggressiveCounts.size(), 10); ++i) {
+        for (int i = 0; i < aggressiveCounts.size(); ++i) {
             if (aggressiveCounts.get(i).shortcutCount > legacyCounts.get(i).shortcutCount) {
                 System.out.println("found one: " + aggressiveCounts.get(i).nodeId + " idx: " + i + ", " + aggressiveCounts.get(i).shortcutCount + "-" + legacyCounts.get(i).shortcutCount);
             }
         }
-        for (int i = 0; i < Math.min(aggressiveCounts.size(), 10); ++i) {
+        for (int i = 0; i < aggressiveCounts.size(); ++i) {
             if (aggressiveCounts.get(i).numPolled > legacyCounts.get(i).numPolled) {
                 System.out.println("found one poll count: " + aggressiveCounts.get(i).nodeId + " idx: " + i + ", " + aggressiveCounts.get(i).numPolled + "-" + legacyCounts.get(i).numPolled);
             }
@@ -325,6 +326,7 @@ public class CHMeasurement {
                 dir, ghStorage, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR);
         pch.setSeed(seed);
         pch.setContractedNodes(nodesContractedPercentage);
+        pch.setLogMessages(10);
 
         // load a previously stored contraction order, for analysis purposes only, remove before merge
 //        List<Integer> contractionOrder = new ArrayList<>();
@@ -353,7 +355,7 @@ public class CHMeasurement {
      * The queries are compared with a normal AStar search for comparison and to ensure correctness.
      */
     private static void testPerformanceAutomaticNodeOrdering(String[] args) {
-        String osmFile = "local/maps/bremen-latest.osm.pbf";
+        String osmFile = "local/maps/unterfranken-latest.osm.pbf";
         int periodicUpdates = 20;
         int lazyUpdates = 100;
         int neighborUpdates = 4;
@@ -540,7 +542,7 @@ public class CHMeasurement {
     }
 
     private static String getWeightDifferenceString(double weight1, double weight2) {
-        return String.format("route weight: %.2f vs. %.2f (diff = %.4f)",
+        return String.format("route weight: %.6f vs. %.6f (diff = %.6f)",
                 weight1, weight2, (weight1 - weight2));
     }
 

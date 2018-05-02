@@ -44,10 +44,10 @@ import static org.junit.Assert.assertTrue;
 /**
  * Here we test if Contraction Hierarchies work with turn costs, i.e. we first contract the graph and then run
  * routing queries and check if the routing results are correct. We thus test the combination of
- * {@link EdgeBasedNodeContractor} and {@link DijkstraBidirectionEdgeCHNoSOD}. We either use a predefined or random
- * contraction order, so the hard to test and heuristic automatic search for an efficient contraction order taking place
- * in {@link PrepareContractionHierarchies} is not covered here, but this is ok, because the correctness of CH does not
- * depend on the contraction order.
+ * {@link EdgeBasedNodeContractor} and {@link DijkstraBidirectionEdgeCHNoSOD}. In most cases we either use a predefined
+ * or random contraction order, so the hard to test and heuristic automatic search for an efficient contraction order
+ * taking place  in {@link PrepareContractionHierarchies} is not covered here, but this is ok, because the correctness
+ * of CH should not depend on the contraction order.
  * todo: so far tests  focus on case without u-turns only
  *
  * @see EdgeBasedNodeContractor where shortcut creation is tested independent from the routing query
@@ -641,6 +641,35 @@ public class CHTurnCostTest {
         compareCHWithDijkstra(100, contractionOrder);
     }
 
+    @Repeat(times = 10)
+    @Test
+    public void testFindPath_heuristic_compareWithDijkstra() {
+        // todo: why are so many edges polled and why does the contraction take so long for a random graph ??
+        long seed = System.nanoTime();
+        LOGGER.info("Seed used to generate graph: {}", seed);
+        GHUtility.buildRandomGraph(graph, seed, 100, 3, true, 0.9);
+        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxCost, turnCostExtension);
+        graph.freeze();
+
+        GHUtility.printGraphForUnitTest(graph, encoder);
+        automaticCompareCHWithDijkstra(1000);
+    }
+
+    @Test
+    public void testFindPath_compareWithDijkstra_bug1() {
+        graph.edge(5, 3, 21.329000, false);
+        graph.edge(4, 5, 29.126000, false);
+        graph.edge(1, 0, 38.865000, false);
+        graph.edge(1, 4, 80.005000, false);
+        graph.edge(3, 1, 91.023000, false);
+        // add loops with zero weight ...
+        graph.edge(1, 1, 0.000000, false);
+        graph.edge(1, 1, 0.000000, false);
+        // aggressive search cannot handle such zero weight loops, they should probably be filtered out 
+        graph.freeze();
+        compareCHWithDijkstra(100, Arrays.asList(0, 3, 1, 4, 5, 2));
+    } 
+    
     private int nextCost(Random rnd) {
         // choose bound above max cost such that turn restrictions are likely
         return rnd.nextInt(3 * maxCost);
@@ -692,6 +721,27 @@ public class CHTurnCostTest {
         return ch;
     }
 
+    private RoutingAlgorithmFactory automaticPrepareCH() {
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(
+                new RAMDirectory(""), graph, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR);
+        ch.setPeriodicUpdates(20);
+        ch.setLazyUpdates(100);
+        ch.setNeighborUpdates(4);
+        ch.setLogMessages(10);
+        ch.doWork();
+        return ch;
+    }
+
+    private void automaticCompareCHWithDijkstra(int numQueries) {
+        long seed = System.nanoTime();
+        LOGGER.info("Seed used to create random routing queries: {}", seed);
+        final Random rnd = new Random(seed);
+        RoutingAlgorithmFactory factory = automaticPrepareCH();
+        for (int i = 0; i < numQueries; ++i) {
+            compareCHQueryWithDijkstra(factory, rnd.nextInt(graph.getNodes()), rnd.nextInt(graph.getNodes()));
+        }
+    }
+
     private void compareCHWithDijkstra(int numQueries, List<Integer> contractionOrder) {
         long seed = System.nanoTime();
         LOGGER.info("Seed used to create random routing queries: {}", seed);
@@ -706,9 +756,8 @@ public class CHTurnCostTest {
         Path dijkstraPath = findPathUsingDijkstra(from, to);
         RoutingAlgorithm chAlgo = factory.createAlgo(chGraph, AlgorithmOptions.start().build());
         Path chPath = chAlgo.calcPath(from, to);
-        // todo: why do some tests fail when we increase precision (e.g. 1.e-1) ? any rounding issues here ?
-        // this could be due to numeric cancellation when calculating turn replacement differences in 
-        // EdgeBasedNodeContractor !?
+        // todo: for increased precision some tests fail. this is because the weight is truncated, not rounded
+        // when storing shortcut edges. should we fix this ?
         boolean algosAgree = Math.abs(dijkstraPath.getWeight() - chPath.getWeight()) < 1.e-2;
         assertTrue("Dijkstra and CH did not find equal shortest paths for route from " + from + " to " + to + "\n" +
                         " dijkstra: weight: " + dijkstraPath.getWeight() + ", nodes: " + dijkstraPath.calcNodes() + "\n" +

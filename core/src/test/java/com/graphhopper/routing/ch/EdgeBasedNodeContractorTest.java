@@ -761,7 +761,6 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-//    @Ignore("not sure how to fix this yet")
     @Repeat(times = 10)
     public void testContractNode_noUnnecessaryShortcut_witnessPathOfEqualWeight() {
         // this test runs repeatedly because it might pass/fail by chance (because path lengths are equal)
@@ -919,7 +918,6 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-//    @Ignore("does not work for aggressive search")
     public void testNodeContraction_witnessBetterBecauseOfTurnCostAtTargetNode() {
         // when we contract node 2 we should not stop searching for witnesses when edge 2->3 is settled, because then we miss
         // the witness path via 5 that is found later, but still has less weight because of the turn costs at node 3
@@ -990,7 +988,6 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-//    @Ignore("does not work for aggressive search")
     public void testNodeContraction_parallelEdges_onlyOneLoopShortcutNeeded() {
         // 0 -- 1 -- 2
         //  \--/
@@ -1009,7 +1006,6 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-//    @Ignore("does not work for aggressive search")
     public void testNodeContraction_duplicateEdge_severalLoops() {
         // 5 -- 4 -- 3 -- 1
         // |\   |
@@ -1051,7 +1047,6 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-//    @Ignore("does not work for aggressive search")
     public void testNodeContraction_tripleConnection() {
         graph.edge(0, 1, 1.0, true);
         graph.edge(0, 1, 2.0, true);
@@ -1110,7 +1105,6 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-//    @Ignore("does not work for aggressive search")
     public void testNodeContraction_turnRestrictionAndLoop() {
         //  /\    /<-3
         // 0  1--2
@@ -1125,6 +1119,46 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         contractNodes(0);
         checkNumShortcuts(1);
+    }
+
+    @Test
+    public void testNodeContraction_minorWeightDeviation() {
+        // this test fails because of shortcut weight truncation in CHGraphImpl
+        graph.edge(3, 2, 51.401, false);
+        graph.edge(2, 0, 70.041, false);
+        graph.edge(2, 1, 45.852, false);
+        graph.edge(0, 3, 75.806, false);
+        graph.edge(1, 2, 45.773, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(0);
+        checkShortcuts(
+                createShortcut(2, 3, 1, 3, 1, 3, 145.847)
+        );
+    }
+
+    @Test
+    public void testNodeContraction_zeroWeightLoops() {
+        // sometimes OSM data contains loop edges with zero weight...
+        // 0 <- 1 -> 4
+        //      ^    v
+        //      3 <- 5
+        graph.edge(4, 5, 29, false);
+        graph.edge(5, 3, 21, false);
+        graph.edge(3, 1, 91, false);
+        graph.edge(1, 0, 38, false);
+        graph.edge(1, 4, 80, false);
+        // add two loop edges with zero weight
+        graph.edge(1, 1, 0, false);
+        graph.edge(1, 1, 0, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(3);
+        // this test fails for aggressive search and this is rather difficult to fix, its probably a better idea
+        // to remove zero weight loops when parsing the original data already
+        checkShortcuts(
+                createShortcut(5, 1, 1, 2, 1, 2, 112)
+        );
     }
 
     @Test
@@ -1147,18 +1181,18 @@ public class EdgeBasedNodeContractorTest {
 
     @Test
     public void testNodeContraction_randomGraph_checkStatistics() {
-        final long seed = System.nanoTime();
-        System.out.println("Using seed " + seed);
         int totalNumSearchesL = 0;
         int totalNumSearchesA = 0;
         int totalEdgesPolledL = 0;
         int totalEdgesPolledA = 0;
         int totalNumShortcutsL = 0;
         int totalNumShortcutsA = 0;
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 1000; ++i) {
+            final long seed = System.nanoTime();
+            System.out.println("Run " + i + ", using seed " + seed);
             initialize();
             buildRandomGraph(seed);
-//            System.out.println("graph for legacy aggressive search");
+            System.out.println("graph for legacy aggressive search");
             GHUtility.printGraphForUnitTest(graph, encoder);
             EdgeBasedNodeContractor.searchType = SearchType.LEGACY_AGGRESSIVE;
 
@@ -1168,9 +1202,11 @@ public class EdgeBasedNodeContractorTest {
             int numSearchesL = nodeContractor.getNumSearches();
             int numShortcutsL = getCurrentShortcuts().size();
 
+            graph.close();
+            ((CHGraphImpl) chGraph).close();
             initialize();
             buildRandomGraph(seed);
-//            System.out.println("graph for aggressive search");
+            System.out.println("graph for aggressive search");
             GHUtility.printGraphForUnitTest(graph, encoder);
             EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
 
@@ -1182,12 +1218,12 @@ public class EdgeBasedNodeContractorTest {
 
             if (numEdgesPolledA > numEdgesPolledL) {
                 System.out.println("Warning: legacy aggressive search polled less nodes than aggressive search " +
-                        +numEdgesPolledL + " compared to " + numEdgesPolledA);
+                        numEdgesPolledL + " compared to " + numEdgesPolledA);
                 fail();
             }
             if (numShortcutsA > numShortcutsL) {
                 System.out.println("Warning: legacy aggressive search introduced less shortcuts than aggressive search " +
-                        +numShortcutsL + " compared to " + numShortcutsA);
+                        numShortcutsL + " compared to " + numShortcutsA);
                 fail();
             }
             totalNumSearchesL += numSearchesL;
@@ -1204,7 +1240,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void buildRandomGraph(long seed) {
-        GHUtility.buildRandomGraph(graph, seed, 20, 3, false, 0.9);
+        GHUtility.buildRandomGraph(graph, seed, 10, 2, true, 0.9);
         graph.freeze();
         setMaxLevelOnAllNodes();
     }
