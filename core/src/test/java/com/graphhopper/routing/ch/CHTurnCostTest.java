@@ -656,7 +656,7 @@ public class CHTurnCostTest {
     }
 
     @Test
-    public void testFindPath_compareWithDijkstra_bug1() {
+    public void testFindPath_compareWithDijkstra_zeroWeightLoops() {
         graph.edge(5, 3, 21.329000, false);
         graph.edge(4, 5, 29.126000, false);
         graph.edge(1, 0, 38.865000, false);

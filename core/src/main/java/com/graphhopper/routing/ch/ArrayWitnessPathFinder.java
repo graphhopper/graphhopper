@@ -111,6 +111,10 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
                 }
             }
             numSettledEdges++;
+            // do not keep searching after to node has been expanded first time, should speed contraction up a bit but finds less witnesses.
+//            if (adjNodes[currKey] == toNode) {
+//                break;
+//            }
         }
 
         if (resViaCenter) {
