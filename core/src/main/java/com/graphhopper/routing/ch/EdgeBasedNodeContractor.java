@@ -323,12 +323,13 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             }
 
             IntObjectMap<WitnessSearchEntry> initialEntries = simpleSearch.getInitialEntries(fromNode, incomingEdges);
-            legacyWitnessPathFinder.setInitialEntries(initialEntries);
-            numSearches++;
-            totalNumSearches++;
             if (initialEntries.isEmpty()) {
                 continue;
             }
+
+            legacyWitnessPathFinder.setInitialEntries(initialEntries);
+            numSearches++;
+            totalNumSearches++;
 
             EdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
             while (outgoingEdges.next()) {

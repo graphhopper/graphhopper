@@ -110,9 +110,9 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
             }
             if (i % logSize == 0) {
                 long elapsed = nanoTime() - startTime;
-                logger.info(String.format("contracted %s / %s nodes, shortcuts: %s, avg degree: %.2f, last batch took: %.2f s, time per node: %.2f micros",
+                logger.info(String.format("contracted %s / %s nodes, shortcuts: %s, avg degree: %.2f, last batch took: %.2f s, time per node: %.2f micros, %s",
                         nf(i), nf(nodesToContract), nf(shortcutCount),
-                        degree / (double) logSize, elapsed * 1.e-9, elapsed / logSize * 1.e-3));
+                        degree / (double) logSize, elapsed * 1.e-9, elapsed / logSize * 1.e-3, nodeContractor.getStatisticsString()));
                 degree = 0;
                 startTime = nanoTime();
             }
