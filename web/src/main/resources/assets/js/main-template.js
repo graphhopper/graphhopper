@@ -477,6 +477,8 @@ function flagAll() {
 }
 
 function routeLatLng(request, doQuery) {
+    var i;
+
     // do_zoom should not show up in the URL but in the request object to avoid zooming for history change
     var doZoom = request.do_zoom;
     request.do_zoom = true;
@@ -583,7 +585,7 @@ function routeLatLng(request, doQuery) {
         if(json.paths.length > 0 && json.paths[0].points_order) {
             mapLayer.clearLayers();
             var po = json.paths[0].points_order;
-            for (var i = 0; i < po.length; i++) {
+            for (i = 0; i < po.length; i++) {
                 setFlag(ghRequest.route.getIndex(po[i]), i);
             }
         }
@@ -649,12 +651,12 @@ function routeLatLng(request, doQuery) {
             buttons.append('|');
             buttons.append(miButton);
 
-            routeInfo.append(buttons);            
+            routeInfo.append(buttons);
 
             if (request.hasElevation()) {
                 routeInfo.append(translate.createEleInfoString(path.ascend, path.descend, request.useMiles));
             }
-            
+
             routeInfo.append($("<div style='clear:both'/>"));
             oneTab.append(routeInfo);
 
@@ -668,7 +670,7 @@ function routeLatLng(request, doQuery) {
                 // detailKey, would be for example average_speed
                 for (var detailKey in detailObj) {
                     var pathDetailsArr = detailObj[detailKey];
-                    for (var i = 0; i < pathDetailsArr.length; i++) {
+                    for (i = 0; i < pathDetailsArr.length; i++) {
                         var pathDetailObj = pathDetailsArr[i];
                         var firstIndex = pathDetailObj[0];
                         var value = pathDetailObj[2];

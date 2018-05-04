@@ -207,27 +207,28 @@ GHRequest.prototype.createPath = function (url, skipParameters) {
 };
 
 GHRequest.prototype.flatParameter = function (key, val) {
+    var url = "";
+    var arr;
+    var keyIndex;
 
-    if(GHRoute.isObject(val)) {
-        var url = "";
-        var arr = Object.keys(val);
-        for (var keyIndex in arr) {
-           var objKey = arr[keyIndex];
-           url += this.flatParameter(key + "." + objKey, val[objKey]);
+    if (GHRoute.isObject(val)) {
+        arr = Object.keys(val);
+        for (keyIndex in arr) {
+            var objKey = arr[keyIndex];
+            url += this.flatParameter(key + "." + objKey, val[objKey]);
         }
         return url;
 
-    } else  if (GHRoute.isArray(val)) {
-        var url = "";
-        var arr = val;
-        for (var keyIndex in arr) {
+    } else if (GHRoute.isArray(val)) {
+        arr = val;
+        for (keyIndex in arr) {
             url += this.flatParameter(key, arr[keyIndex]);
         }
         return url;
     }
 
     return "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val);
-}
+};
 
 GHRequest.prototype.doRequest = function (url, callback) {
     var that = this;

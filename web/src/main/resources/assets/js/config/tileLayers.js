@@ -50,8 +50,6 @@ var thunderNeighbourhood = L.tileLayer('https://{s}.tile.thunderforest.com/neigh
     attribution: osmAttr + ', <a href="https://thunderforest.com/maps/neighbourhood/" target="_blank">Thunderforest Neighbourhood</a>'
 });
 
-https://{s}.tile.thunderforest.com/neighbourhood/{z}/{x}/{y}.png?apikey=<insert-your-apikey-here>
-
 var wrk = L.tileLayer('http://{s}.wanderreitkarte.de/topo/{z}/{x}/{y}.png', {
     attribution: osmAttr + ', <a href="http://wanderreitkarte.de" target="_blank">WanderReitKarte</a>',
     subdomains: ['topo4', 'topo', 'topo2', 'topo3']
