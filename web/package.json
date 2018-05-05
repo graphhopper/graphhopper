@@ -10,7 +10,7 @@
     "bundle": "browserify src/main/resources/assets/js/main-template.js -o src/main/resources/assets/js/main.js",
     "bundleDebug": "browserify src/main/resources/assets/js/main-template.js --debug -o src/main/resources/assets/js/main.js",
     "bundleProduction": "browserify -g uglifyify src/main/resources/assets/js/main-template.js -o src/main/resources/assets/js/main.js",
-    "test": "JASMINE_CONFIG_PATH=src/test/webapp/spec/jasmine.json jasmine",
+    "test": "JASMINE_CONFIG_PATH=src/test/resources/assets/spec/jasmine.json jasmine",
     "lint": "jshint src/main/resources/assets/js/"
   },
   "browserify": {
