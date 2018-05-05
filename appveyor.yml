@@ -22,7 +22,7 @@ install:
   - cmd: mvn --version
   - cmd: java -version
 build_script:
-  - mvn clean package -DskipTest -B
+  - mvn clean install -DskipTests=true -B
 test_script:
   - mvn test verify -B && mvn checkstyle:check findbugs:check forbiddenapis:check -B
 cache:

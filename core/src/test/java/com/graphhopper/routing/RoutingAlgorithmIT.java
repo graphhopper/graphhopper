@@ -166,7 +166,7 @@ public class RoutingAlgorithmIT {
             float perRun = sw.stop().getSeconds() / ((float) (N - noJvmWarming));
             System.out.println("# " + getClass().getSimpleName() + " " + entry
                     + ":" + sw.stop().getSeconds() + ", per run:" + perRun);
-            assertTrue("speed to low!? " + perRun + " per run", perRun < 0.08);
+            assertTrue("speed too low!? " + perRun + " per run", perRun < 0.08);
         }
     }
 }

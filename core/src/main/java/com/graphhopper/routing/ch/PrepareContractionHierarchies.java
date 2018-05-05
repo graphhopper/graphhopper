@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+import static com.graphhopper.util.Helper.nf;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 
@@ -59,7 +60,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private CHEdgeExplorer vehicleAllTmpExplorer;
     private CHEdgeExplorer calcPrioAllExplorer;
     private int maxLevel;
-    // the most important nodes comes last
+    // nodes with highest priority come last
     private GHTreeMapComposed sortedNodes;
     private int oldPriorities[];
     private double meanDegree;
@@ -72,6 +73,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private double periodTime;
     private double lazyTime;
     private double neighborTime;
+    private int initSize;
 
     public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph,
                                          Weighting weighting, TraversalMode traversalMode) {
@@ -156,14 +158,31 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     @Override
-    public void doWork() {
+    public void doSpecificWork() {
         allSW.start();
-        super.doWork();
-
         initFromGraph();
+        runGraphContraction();
+
+        logger.info("took:" + (int) allSW.stop().getSeconds() + "s "
+                + ", new shortcuts: " + nf(nodeContractor.getAddedShortcutsCount())
+                + ", " + prepareWeighting
+                + ", dijkstras:" + nf(nodeContractor.getDijkstraCount())
+                + ", " + getTimesAsString()
+                + ", meanDegree:" + (long) meanDegree
+                + ", initSize:" + nf(initSize)
+                + ", periodic:" + periodicUpdatesPercentage
+                + ", lazy:" + lastNodesLazyUpdatePercentage
+                + ", neighbor:" + neighborUpdatePercentage
+                + ", " + Helper.getMemInfo());
+
+        int edgeCount = ghStorage.getAllEdges().length();
+        logger.info("graph now - num edges: {}, num nodes: {}, num shortcuts: {}",
+                nf(edgeCount), nf(ghStorage.getNodes()), nf(prepareGraph.getAllEdges().length() - edgeCount));
+    }
+
+    protected void runGraphContraction() {
         if (!prepareNodes())
             return;
-
         contractNodes();
     }
 
@@ -201,7 +220,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
         };
 
-        maxLevel = prepareGraph.getNodes() + 1;
+        maxLevel = prepareGraph.getNodes();
         vehicleAllExplorer = prepareGraph.createEdgeExplorer(allFilter);
         vehicleAllTmpExplorer = prepareGraph.createEdgeExplorer(allFilter);
         calcPrioAllExplorer = prepareGraph.createEdgeExplorer(accessWithLevelFilter);
@@ -238,11 +257,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // node priorities all shortcut searches are cancelled immediately and all possible shortcuts are counted because
         // no witness path can be found. this is not really what we want, but changing it requires re-optimizing the
         // graph contraction parameters, because it affects the node contraction order.
-        meanDegree = prepareGraph.getAllEdges().getMaxId() / prepareGraph.getNodes();
-        int level = 1;
+        meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
+        initSize = sortedNodes.getSize();
+        int level = 0;
         long counter = 0;
-        int initSize = sortedNodes.getSize();
-        long logSize = Math.round(Math.max(10, sortedNodes.getSize() / 100 * logMessagesPercentage));
+        long logSize = Math.round(Math.max(10, initSize / 100d * logMessagesPercentage));
         if (logMessagesPercentage == 0)
             logSize = Integer.MAX_VALUE;
 
@@ -261,7 +280,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         // according to paper "Polynomial-time Construction of Contraction Hierarchies for Multi-criteria Objectives" by Funke and Storandt
         // we don't need to wait for all nodes to be contracted
-        long nodesToAvoidContract = Math.round((100 - nodesContractedPercentage) / 100 * sortedNodes.getSize());
+        long nodesToAvoidContract = Math.round((100 - nodesContractedPercentage) / 100d * sortedNodes.getSize());
         StopWatch lazySW = new StopWatch();
 
         // Recompute priority of uncontracted neighbors.
@@ -297,14 +316,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 lazyTime += lazySW.getSeconds();
                 neighborTime += neighborSW.getSeconds();
 
-                logger.info(Helper.nf(counter) + ", updates:" + updateCounter
-                        + ", nodes: " + Helper.nf(sortedNodes.getSize())
-                        + ", shortcuts:" + Helper.nf(nodeContractor.getAddedShortcutsCount())
-                        + ", dijkstras:" + Helper.nf(nodeContractor.getDijkstraCount())
-                        + ", " + getTimesAsString()
-                        + ", meanDegree:" + (long) meanDegree
-                        + ", algo:" + nodeContractor.getPrepareAlgoMemoryUsage()
-                        + ", " + Helper.getMemInfo());
+                logStats(counter, updateCounter);
 
                 nodeContractor.resetDijkstraTime();
                 periodSW = new StopWatch();
@@ -364,28 +376,18 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
         }
 
-        // Preparation works only once so we can release temporary data.
-        // The preparation object itself has to be intact to create the algorithm.
-        close();
-
         dijkstraTime += nodeContractor.getDijkstraSeconds();
         periodTime += periodSW.getSeconds();
         lazyTime += lazySW.getSeconds();
         neighborTime += neighborSW.getSeconds();
-        logger.info("took:" + (int) allSW.stop().getSeconds()
-                + ", new shortcuts: " + Helper.nf(nodeContractor.getAddedShortcutsCount())
-                + ", " + prepareWeighting
-                + ", dijkstras:" + nodeContractor.getDijkstraCount()
-                + ", " + getTimesAsString()
-                + ", meanDegree:" + (long) meanDegree
-                + ", initSize:" + initSize
-                + ", periodic:" + periodicUpdatesPercentage
-                + ", lazy:" + lastNodesLazyUpdatePercentage
-                + ", neighbor:" + neighborUpdatePercentage
-                + ", " + Helper.getMemInfo());
+        logStats(counter, updateCounter);
+
+        // Preparation works only once so we can release temporary data.
+        // The preparation object itself has to be intact to create the algorithm.
+        close();
     }
 
-    public void close() {
+    private void close() {
         nodeContractor.close();
         sortedNodes = null;
         oldPriorities = null;
@@ -420,10 +422,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private String getTimesAsString() {
-        return "t(dijk):" + Helper.round2(dijkstraTime)
-                + ", t(period):" + Helper.round2(periodTime)
-                + ", t(lazy):" + Helper.round2(lazyTime)
-                + ", t(neighbor):" + Helper.round2(neighborTime);
+        return String.format(Locale.ROOT,
+                "t(dijk): %6.2f, t(period): %6.2f, t(lazy): %6.2f, t(neighbor): %6.2f",
+                dijkstraTime, periodTime, lazyTime, neighborTime);
     }
 
     /**
@@ -481,4 +482,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return "prepare|dijkstrabi|ch";
     }
 
+    private void logStats(long counter, int updateCounter) {
+        logger.info(String.format(Locale.ROOT,
+                "%10s, updates: %2d, nodes: %10s, shortcuts: %10s, dijkstras: %10s, %s, meanDegree: %2d, %s, %s",
+                nf(counter), updateCounter, nf(sortedNodes.getSize()),
+                nf(nodeContractor.getAddedShortcutsCount()), nf(nodeContractor.getDijkstraCount()),
+                getTimesAsString(), (long) meanDegree, nodeContractor.getPrepareAlgoMemoryUsage(),
+                Helper.getMemInfo()));
+    }
 }

@@ -9,11 +9,11 @@ There are mainly three parts:
 ### 1. Data Import
 
 The default import is done via OSMReader which imports OpenStreetMap data. You can configure it via API 
-or use the `graphhopper.sh` script which utilizes the config.properties where you can specify if it should 
+or use the `graphhopper.sh` script which utilizes the config.yml where you can specify if it should 
 read `car`, `foot` or all vehicles at once. You'll have to make sure that you allocate enough memory for your 
 specific graph (E.g. ~2GB for Germany) e.g. `export JAVA_OPTS="-Xmx2g"`. The import process is fast e.g. 
 complete Germany takes roughly 10 minutes. Additionally it will take time if you choose 
-`prepare.ch.weightings=fastest` in the config.properties which will dramatically improve query time
+`prepare.ch.weightings=fastest` in the config.yml which will dramatically improve query time
 but requires more RAM on import.
 
 ### 2. The Graph

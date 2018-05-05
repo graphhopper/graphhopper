@@ -23,12 +23,12 @@ package com.graphhopper.storage;
  */
 public interface GraphExtension extends Storable<GraphExtension> {
     /**
-     * @return true, if and only if, if an additional field at the graphs node storage is required
+     * @return true, if and only if an additional field at the graphs node storage is required
      */
     boolean isRequireNodeField();
 
     /**
-     * @return true, if and only if, if an additional field at the graphs edge storage is required
+     * @return true, if and only if an additional field at the graphs edge storage is required
      */
     boolean isRequireEdgeField();
 

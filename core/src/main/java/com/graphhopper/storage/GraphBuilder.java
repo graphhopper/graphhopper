@@ -23,7 +23,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import java.util.Arrays;
 
 /**
- * For now this is just a helper class to quickly create a GraphStorage.
+ * For now this is just a helper class to quickly create a {@link GraphHopperStorage}
  * <p>
  *
  * @author Peter Karich
@@ -86,16 +86,14 @@ public class GraphBuilder {
     }
 
     /**
-     * Default graph is a GraphStorage with an in memory directory and disabled storing on flush.
-     * Afterwards you'll need to call GraphStorage. Create to have a usable object. Better use
-     * create.
+     * Default graph is a {@link GraphHopperStorage} with an in memory directory and disabled storing on flush.
+     * Afterwards you'll need to call {@link GraphHopperStorage#create} to have a usable object. Better use
+     * {@link GraphHopperStorage#create} directly.
      */
     public GraphHopperStorage build() {
-        Directory dir;
-        if (mmap)
-            dir = new MMapDirectory(location);
-        else
-            dir = new RAMDirectory(location, store);
+        Directory dir = mmap ?
+                new MMapDirectory(location) :
+                new RAMDirectory(location, store);
 
         GraphHopperStorage graph;
         if (encodingManager.needsTurnCostsSupport() || singleCHWeighting == null)
@@ -107,7 +105,7 @@ public class GraphBuilder {
     }
 
     /**
-     * Default graph is a GraphStorage with an in memory directory and disabled storing on flush.
+     * Default graph is a {@link GraphHopperStorage} with an in memory directory and disabled storing on flush.
      */
     public GraphHopperStorage create() {
         return build().create(byteCapacity);

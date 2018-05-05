@@ -24,10 +24,7 @@ import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.*;
 
 import java.util.PriorityQueue;
 
@@ -151,11 +148,6 @@ public class AStar extends AbstractRoutingAlgorithm {
     }
 
     @Override
-    protected SPTEntry createSPTEntry(int node, double weight) {
-        throw new IllegalStateException("use AStarEdge constructor directly");
-    }
-
-    @Override
     protected boolean finished() {
         return currEdge.adjNode == to1;
     }
@@ -163,6 +155,9 @@ public class AStar extends AbstractRoutingAlgorithm {
     @Override
     public int getVisitedNodes() {
         return visitedCount;
+    }
+
+    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry bestSPTEntry, int traversalId) {
     }
 
     public static class AStarEntry extends SPTEntry {
@@ -176,6 +171,11 @@ public class AStar extends AbstractRoutingAlgorithm {
         @Override
         public final double getWeightOfVisitedPath() {
             return weightOfVisitedPath;
+        }
+
+        @Override
+        public AStarEntry getParent() {
+            return (AStarEntry) parent;
         }
     }
 

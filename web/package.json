@@ -6,19 +6,21 @@
   "license": "Apache-2.0",
   "main": "main.js",
   "scripts": {
-    "watch": "watchify src/main/webapp/js/main-template.js -o src/main/webapp/js/main.js --debug --verbose",
-    "bundle": "browserify src/main/webapp/js/main-template.js -o src/main/webapp/js/main.js",
-    "bundleDebug": "browserify src/main/webapp/js/main-template.js --debug -o src/main/webapp/js/main.js",
-    "bundleProduction": "browserify -g uglifyify src/main/webapp/js/main-template.js -o src/main/webapp/js/main.js",
+    "watch": "watchify src/main/resources/assets/js/main-template.js -o src/main/resources/assets/js/main.js --debug --verbose",
+    "bundle": "browserify src/main/resources/assets/js/main-template.js -o src/main/resources/assets/js/main.js",
+    "bundleDebug": "browserify src/main/resources/assets/js/main-template.js --debug -o src/main/resources/assets/js/main.js",
+    "bundleProduction": "browserify -g uglifyify src/main/resources/assets/js/main-template.js -o src/main/resources/assets/js/main.js",
     "test": "JASMINE_CONFIG_PATH=src/test/webapp/spec/jasmine.json jasmine",
-    "lint": "jshint src/main/webapp/js/"
+    "lint": "jshint src/main/resources/assets/js/"
   },
   "browserify": {
-    "transform": [ "browserify-swap" ]
+    "transform": [
+      "browserify-swap"
+    ]
   },
   "browserify-swap": {
     "production": {
-      "config/options.js$": "./src/main/webapp/js/config/options_prod.js"
+      "config/options.js$": "./src/main/resources/assets/js/config/options_prod.js"
     }
   },
   "dependencies": {
@@ -29,7 +31,7 @@
     "leaflet": "1.0.3",
     "leaflet-contextmenu": "1.2.1",
     "leaflet-loading": "0.1.24",
-    "moment": "2.17.1",
+    "moment": "2.21.0",
     "uglifyify": "3.0.4",
     "flatpickr": "2.3.5"
   },

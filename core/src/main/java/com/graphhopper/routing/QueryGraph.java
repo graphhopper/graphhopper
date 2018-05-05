@@ -52,7 +52,7 @@ import java.util.*;
  * @author Peter Karich
  */
 public class QueryGraph implements Graph {
-    final static int VE_BASE = 0, VE_BASE_REV = 1, VE_ADJ = 2, VE_ADJ_REV = 3;
+    static final int VE_BASE = 0, VE_BASE_REV = 1, VE_ADJ = 2, VE_ADJ_REV = 3;
     private static final AngleCalc AC = Helper.ANGLE_CALC;
     private final Graph mainGraph;
     private final NodeAccess mainNodeAccess;
@@ -61,7 +61,7 @@ public class QueryGraph implements Graph {
     private final QueryGraph baseGraph;
     private final GraphExtension wrappedExtension;
     // TODO when spreading it on different threads we need multiple independent explorers
-    private final Map<Integer, EdgeExplorer> cacheMap = new HashMap<Integer, EdgeExplorer>(4);
+    private final Map<Integer, EdgeExplorer> cacheMap = new HashMap<>(4);
 
     // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
     List<VirtualEdgeIteratorState> virtualEdges;
@@ -154,7 +154,7 @@ public class QueryGraph implements Graph {
         mainGraph = graph;
         mainNodeAccess = graph.getNodeAccess();
         mainNodes = graph.getNodes();
-        mainEdges = graph.getAllEdges().getMaxId();
+        mainEdges = graph.getAllEdges().length();
 
         if (mainGraph.getExtension() instanceof TurnCostExtension)
             wrappedExtension = new QueryGraphTurnExt();

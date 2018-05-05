@@ -265,14 +265,6 @@ public class AlternativeRoute implements RoutingAlgorithm {
             this.explorationFactor = explorationFactor;
         }
 
-        public IntObjectMap<AStarEntry> getBestWeightMapFrom() {
-            return bestWeightMapFrom;
-        }
-
-        public IntObjectMap<AStarEntry> getBestWeightMapTo() {
-            return bestWeightMapTo;
-        }
-
         @Override
         public boolean finished() {
             // we need to finish BOTH searches identical to CH
@@ -293,10 +285,9 @@ public class AlternativeRoute implements RoutingAlgorithm {
             // For bidir A* and AStarEdge.getWeightOfVisitedPath see comment in AStarBidirection.finished
         }
 
-        public Path searchBest(int to, int from) {
+        public Path searchBest(int from, int to) {
             createAndInitPath();
-            initFrom(to, 0);
-            initTo(from, 0);
+            init(from, 0, to, 0);
             // init collections and bestPath.getWeight properly
             runAlgo();
             return extractPath();

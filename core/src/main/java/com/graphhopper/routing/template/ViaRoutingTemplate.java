@@ -112,6 +112,8 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             String debug = ", algoInit:" + sw.stop().getSeconds() + "s";
 
             sw = new StopWatch().start();
+
+            // calculate paths
             List<Path> tmpPathList = algo.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode());
             debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s";
             if (tmpPathList.isEmpty())
@@ -136,6 +138,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                 throw new IllegalArgumentException("No path found due to maximum nodes exceeded " + algoOpts.getMaxVisitedNodes());
 
             visitedNodesSum += algo.getVisitedNodes();
+            altResponse.addDebugInfo("visited nodes sum: " + visitedNodesSum);
             fromQResult = toQResult;
         }
 
