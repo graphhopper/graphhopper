@@ -62,7 +62,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int maxLevel;
     // nodes with highest priority come last
     private GHTreeMapComposed sortedNodes;
-    private int oldPriorities[];
+    private float oldPriorities[];
     private double meanDegree;
     private int periodicUpdatesPercentage = 20;
     private int lastNodesLazyUpdatePercentage = 10;
@@ -231,7 +231,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         //   2. is slightly faster
         //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
         sortedNodes = new GHTreeMapComposed();
-        oldPriorities = new int[prepareGraph.getNodes()];
+        oldPriorities = new float[prepareGraph.getNodes()];
         nodeContractor = new NodeContractor(dir, ghStorage, prepareGraph, weighting, traversalMode);
         nodeContractor.initFromGraph();
     }
@@ -243,7 +243,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         }
 
         for (int node = 0; node < nodes; node++) {
-            int priority = oldPriorities[node] = calculatePriority(node);
+            float priority = oldPriorities[node] = calculatePriority(node);
             sortedNodes.insert(node, priority);
         }
 
@@ -301,7 +301,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     if (prepareGraph.getLevel(node) != maxLevel)
                         continue;
 
-                    int priority = oldPriorities[node] = calculatePriority(node);
+                    float priority = oldPriorities[node] = calculatePriority(node);
                     sortedNodes.insert(node, priority);
                 }
                 periodSW.stop();
@@ -329,7 +329,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             if (!sortedNodes.isEmpty() && sortedNodes.getSize() < lastNodesLazyUpdates) {
                 lazySW.start();
-                int priority = oldPriorities[polledNode] = calculatePriority(polledNode);
+                float priority = oldPriorities[polledNode] = calculatePriority(polledNode);
                 if (priority > sortedNodes.peekValue()) {
                     // current node got more important => insert as new value and contract it later
                     sortedNodes.insert(polledNode, priority);
@@ -364,8 +364,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
                 if (neighborUpdate && rand.nextInt(100) < neighborUpdatePercentage) {
                     neighborSW.start();
-                    int oldPrio = oldPriorities[nn];
-                    int priority = oldPriorities[nn] = calculatePriority(nn);
+                    float oldPrio = oldPriorities[nn];
+                    float priority = oldPriorities[nn] = calculatePriority(nn);
                     if (priority != oldPrio)
                         sortedNodes.update(nn, oldPrio, priority);
 
@@ -433,7 +433,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
      * the priority(v). Otherwise updating the priority before contracting in contractNodes() could
      * lead to a slowish or even endless loop.
      */
-    private int calculatePriority(int node) {
+    private float calculatePriority(int node) {
         nodeContractor.setMaxVisitedNodes(getMaxVisitedNodesEstimate());
         NodeContractor.CalcShortcutsResult calcShortcutsResult = nodeContractor.calcShortcutCount(node);
 
