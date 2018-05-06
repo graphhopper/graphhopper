@@ -185,21 +185,21 @@ $(document).ready(function (e) {
 
     var language_code = urlParams.locale.split('-', 1)[0];
     if (language_code != 'en') {
-      // A few language codes are different in GraphHopper and Flatpickr.
-      var flatpickr_locale;
-      switch (language_code) {
-        case 'ca':  // Catalan
-          flatpickr_locale = 'cat';
-          break;
-        case 'el':  // Greek
-          flatpickr_locale = 'gr';
-          break;
-        default:
-          flatpickr_locale = language_code;
-      }
-      if (Flatpickr.l10ns.hasOwnProperty(flatpickr_locale)) {
-        Flatpickr.localize(Flatpickr.l10ns[flatpickr_locale]);
-      }
+        // A few language codes are different in GraphHopper and Flatpickr.
+        var flatpickr_locale;
+        switch (language_code) {
+            case 'ca':  // Catalan
+                flatpickr_locale = 'cat';
+                break;
+            case 'el':  // Greek
+                flatpickr_locale = 'gr';
+                break;
+            default:
+                flatpickr_locale = language_code;
+        }
+        if (Flatpickr.l10ns.hasOwnProperty(flatpickr_locale)) {
+            Flatpickr.localize(Flatpickr.l10ns[flatpickr_locale]);
+        }
     }
 
     $(window).resize(function () {
