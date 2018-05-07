@@ -18,10 +18,7 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.DijkstraOneToMany;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -43,6 +40,7 @@ class NodeContractor {
     private final CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
     private CHEdgeExplorer vehicleInExplorer;
     private CHEdgeExplorer vehicleOutExplorer;
+    private CHEdgeExplorer calcPrioAllExplorer;
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany prepareAlgo;
     private int addedShortcutsCount;
@@ -75,6 +73,16 @@ class NodeContractor {
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
         vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
         vehicleOutExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
+
+        // filter by vehicle and level number
+        final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
+        final EdgeFilter accessWithLevelFilter = new LevelEdgeFilter(prepareGraph) {
+            @Override
+            public final boolean accept(EdgeIteratorState edgeState) {
+                return super.accept(edgeState) && allFilter.accept(edgeState);
+            }
+        };
+        calcPrioAllExplorer = prepareGraph.createEdgeExplorer(accessWithLevelFilter);
         prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareWeighting, traversalMode);
     }
 
@@ -280,6 +288,49 @@ class NodeContractor {
 
     float getDijkstraSeconds() {
         return dijkstraSW.getSeconds();
+    }
+
+    /**
+     * Calculates the priority of a node v without changing the graph. Warning: the calculated
+     * priority must NOT depend on priority(v) and therefore findShortcuts should also not depend on
+     * the priority(v). Otherwise updating the priority before contracting in contractNodes() could
+     * lead to a slowish or even endless loop.
+     */
+    public float calculatePriority(int node) {
+        NodeContractor.CalcShortcutsResult calcShortcutsResult = calcShortcutCount(node);
+
+        // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
+        //
+        // every adjNode has an 'original edge' number associated. initially it is r=1
+        // when a new shortcut is introduced then r of the associated edges is summed up:
+        // r(u,w)=r(u,v)+r(v,w) now we can define
+        // originalEdgesCount = σ(v) := sum_{ (u,w) ∈ shortcuts(v) } of r(u, w)
+        int originalEdgesCount = calcShortcutsResult.originalEdgesCount;
+
+        // # lowest influence on preparation speed or shortcut creation count
+        // (but according to paper should speed up queries)
+        //
+        // number of already contracted neighbors of v
+        int contractedNeighbors = 0;
+        int degree = 0;
+        CHEdgeIterator iter = calcPrioAllExplorer.setBaseNode(node);
+        while (iter.next()) {
+            degree++;
+            if (iter.isShortcut())
+                contractedNeighbors++;
+        }
+
+        // from shortcuts we can compute the edgeDifference
+        // # low influence: with it the shortcut creation is slightly faster
+        //
+        // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|
+        // meanDegree is used instead of outDegree+inDegree as if one adjNode is in both directions
+        // only one bucket memory is used. Additionally one shortcut could also stand for two directions.
+        int edgeDifference = calcShortcutsResult.shortcutsCount - degree;
+
+        // according to the paper do a simple linear combination of the properties to get the priority.
+        // this is the current optimum for unterfranken:
+        return 10 * edgeDifference + originalEdgesCount + contractedNeighbors;
     }
 
     static class IgnoreNodeFilter implements EdgeFilter {
