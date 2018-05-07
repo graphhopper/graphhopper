@@ -25,7 +25,7 @@ package com.graphhopper.util;
  */
 public class StopWatch {
     private long lastTime;
-    private long nanoTime;
+    private long elapsedNanos;
     private String name = "";
 
     public StopWatch(String name) {
@@ -49,20 +49,32 @@ public class StopWatch {
         if (lastTime < 0)
             return this;
 
-        nanoTime += System.nanoTime() - lastTime;
+        elapsedNanos += System.nanoTime() - lastTime;
         lastTime = -1;
         return this;
     }
 
+    public float getSeconds() {
+        return elapsedNanos / 1e9f;
+    }
+
     /**
-     * @return the time delta in milliseconds
+     * returns the total elapsed time on this stopwatch without the need of stopping it
      */
-    public long getTime() {
-        return nanoTime / 1_000_000;
+    public float getCurrentSeconds() {
+        if (notStarted()) {
+            return 0;
+        }
+        long lastNanos = lastTime < 0 ? 0 : System.nanoTime() - lastTime;
+        return (elapsedNanos + lastNanos) / 1e9f;
+    }
+
+    public long getMillis() {
+        return elapsedNanos / 1_000_000;
     }
 
     public long getNanos() {
-        return nanoTime;
+        return elapsedNanos;
     }
 
     @Override
@@ -75,7 +87,7 @@ public class StopWatch {
         return str + "time:" + getSeconds();
     }
 
-    public float getSeconds() {
-        return nanoTime / 1e9f;
+    private boolean notStarted() {
+        return lastTime == 0 && elapsedNanos == 0;
     }
 }

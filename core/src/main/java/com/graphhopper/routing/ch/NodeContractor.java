@@ -28,6 +28,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.graphhopper.util.Helper.nf;
+
 class NodeContractor {
     private final GraphHopperStorage ghStorage;
     private final CHGraph prepareGraph;
@@ -111,7 +113,7 @@ class NodeContractor {
     /**
      * Searches for shortcuts and calls the given handler on each shortcut that is found. The graph is not directly
      * changed by this method.
-     * Returns the 'degree' of the handler's node (disregarding edges from/to already contracted nodes). Note that 
+     * Returns the 'degree' of the handler's node (disregarding edges from/to already contracted nodes). Note that
      * here the degree is not the total number of adjacent edges, but only the number of incoming edges
      */
     private long findShortcuts(ShortcutHandler sch) {
@@ -276,16 +278,8 @@ class NodeContractor {
         return originalEdges.getInt(tmp);
     }
 
-    String getPrepareAlgoMemoryUsage() {
-        return prepareAlgo.getMemoryUsageAsString();
-    }
-
     long getDijkstraCount() {
         return dijkstraCount;
-    }
-
-    void resetDijkstraTime() {
-        dijkstraSW = new StopWatch();
     }
 
     float getDijkstraSeconds() {
@@ -336,7 +330,9 @@ class NodeContractor {
     }
 
     public String getStatisticsString() {
-        return String.format("meanDegree: %.2f", meanDegree);
+        return String.format("meanDegree: %.2f, dijkstras: %10s, mem: %10s",
+                meanDegree, nf(dijkstraCount), prepareAlgo.getMemoryUsageAsString());
+
     }
 
     public void prepareContraction() {
