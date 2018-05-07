@@ -49,6 +49,9 @@ class NodeContractor {
     private StopWatch dijkstraSW = new StopWatch();
     private int maxEdgesCount;
     private int maxLevel;
+    // meanDegree is the number of edges / number of nodes ratio of the graph, not really the average degree, because
+    // each edge can exist in both directions
+    private double meanDegree;
 
     NodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting,
                    TraversalMode traversalMode) {
@@ -91,18 +94,16 @@ class NodeContractor {
         originalEdges.close();
     }
 
-    void setMaxVisitedNodes(int maxVisitedNodes) {
-        this.maxVisitedNodes = maxVisitedNodes;
-    }
-
     long contractNode(int node) {
         shortcuts.clear();
         long degree = findShortcuts(addScHandler.setNode(node));
         addedShortcutsCount += addShortcuts(shortcuts.keySet());
+        // put weight factor on meanDegree instead of taking the average => meanDegree is more stable
+        meanDegree = (meanDegree * 2 + degree) / 3;
         return degree;
     }
 
-    CalcShortcutsResult calcShortcutCount(int node) {
+    private CalcShortcutsResult calcShortcutCount(int node) {
         findShortcuts(calcScHandler.setNode(node));
         return calcScHandler.calcShortcutsResult;
     }
@@ -114,6 +115,7 @@ class NodeContractor {
      * here the degree is not the total number of adjacent edges, but only the number of incoming edges
      */
     private long findShortcuts(ShortcutHandler sch) {
+        this.maxVisitedNodes = getMaxVisitedNodesEstimate();
         long degree = 0;
         EdgeIterator incomingEdges = vehicleInExplorer.setBaseNode(sch.getNode());
         // collect outgoing nodes (goal-nodes) only once
@@ -331,6 +333,25 @@ class NodeContractor {
         // according to the paper do a simple linear combination of the properties to get the priority.
         // this is the current optimum for unterfranken:
         return 10 * edgeDifference + originalEdgesCount + contractedNeighbors;
+    }
+
+    public String getStatisticsString() {
+        return String.format("meanDegree: %.2f", meanDegree);
+    }
+
+    public void prepareContraction() {
+        // todo: initializing meanDegree here instead of in initFromGraph() means that in the first round of calculating
+        // node priorities all shortcut searches are cancelled immediately and all possible shortcuts are counted because
+        // no witness path can be found. this is not really what we want, but changing it requires re-optimizing the
+        // graph contraction parameters, because it affects the node contraction order.
+        // when this is done there should be no need for this method any longer.
+        meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
+    }
+
+    private int getMaxVisitedNodesEstimate() {
+        // todo: we return 0 here if meanDegree is < 1, which is not really what we want, but changing this changes
+        // the node contraction order and requires re-optimizing the parameters of the graph contraction
+        return (int) meanDegree * 100;
     }
 
     static class IgnoreNodeFilter implements EdgeFilter {

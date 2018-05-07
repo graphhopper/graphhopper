@@ -62,7 +62,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     // nodes with highest priority come last
     private GHTreeMapComposed sortedNodes;
     private float oldPriorities[];
-    private double meanDegree;
     private int periodicUpdatesPercentage = 20;
     private int lastNodesLazyUpdatePercentage = 10;
     private int neighborUpdatePercentage = 20;
@@ -167,7 +166,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 + ", " + prepareWeighting
                 + ", dijkstras:" + nf(nodeContractor.getDijkstraCount())
                 + ", " + getTimesAsString()
-                + ", meanDegree:" + (long) meanDegree
+                + ", " + nodeContractor.getStatisticsString()
                 + ", initSize:" + nf(initSize)
                 + ", periodic:" + periodicUpdatesPercentage
                 + ", lazy:" + lastNodesLazyUpdatePercentage
@@ -241,13 +240,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private void contractNodes() {
-        // meanDegree is the number of edges / number of nodes ratio of the graph, not really the average degree, because
-        // each edge can exist in both directions
-        // todo: initializing meanDegree here instead of in initFromGraph() means that in the first round of calculating
-        // node priorities all shortcut searches are cancelled immediately and all possible shortcuts are counted because
-        // no witness path can be found. this is not really what we want, but changing it requires re-optimizing the
-        // graph contraction parameters, because it affects the node contraction order.
-        meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
+        nodeContractor.prepareContraction();
         initSize = sortedNodes.getSize();
         int level = 0;
         long counter = 0;
@@ -330,10 +323,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
 
             // contract node v!
-            nodeContractor.setMaxVisitedNodes(getMaxVisitedNodesEstimate());
-            long degree = nodeContractor.contractNode(polledNode);
-            // put weight factor on meanDegree instead of taking the average => meanDegree is more stable
-            meanDegree = (meanDegree * 2 + degree) / 3;
+            nodeContractor.contractNode(polledNode);
             prepareGraph.setLevel(polledNode, level);
             level++;
 
@@ -418,14 +408,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private float calculatePriority(int node) {
-        nodeContractor.setMaxVisitedNodes(getMaxVisitedNodesEstimate());
         return nodeContractor.calculatePriority(node);
-    }
-
-    private int getMaxVisitedNodesEstimate() {
-        // todo: we return 0 here if meanDegree is < 1, which is not really what we want, but changing this changes
-        // the node contraction order and requires re-optimizing the parameters of the graph contraction
-        return (int) meanDegree * 100;
     }
 
     @Override
@@ -435,10 +418,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     private void logStats(long counter, int updateCounter) {
         logger.info(String.format(Locale.ROOT,
-                "%10s, updates: %2d, nodes: %10s, shortcuts: %10s, dijkstras: %10s, %s, meanDegree: %2d, %s, %s",
+                "%10s, updates: %2d, nodes: %10s, shortcuts: %10s, dijkstras: %10s, %s, %s, %s, %s",
                 nf(counter), updateCounter, nf(sortedNodes.getSize()),
                 nf(nodeContractor.getAddedShortcutsCount()), nf(nodeContractor.getDijkstraCount()),
-                getTimesAsString(), (long) meanDegree, nodeContractor.getPrepareAlgoMemoryUsage(),
+                getTimesAsString(), nodeContractor.getStatisticsString(), nodeContractor.getPrepareAlgoMemoryUsage(),
                 Helper.getMemInfo()));
     }
 }
