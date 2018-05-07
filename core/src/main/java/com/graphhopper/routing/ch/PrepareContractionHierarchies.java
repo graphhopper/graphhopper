@@ -58,7 +58,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private NodeContractor nodeContractor;
     private CHEdgeExplorer vehicleAllExplorer;
     private CHEdgeExplorer vehicleAllTmpExplorer;
-    private CHEdgeExplorer calcPrioAllExplorer;
     private int maxLevel;
     // nodes with highest priority come last
     private GHTreeMapComposed sortedNodes;
@@ -212,18 +211,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         ghStorage.freeze();
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
         final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
-        // filter by vehicle and level number
-        final EdgeFilter accessWithLevelFilter = new LevelEdgeFilter(prepareGraph) {
-            @Override
-            public final boolean accept(EdgeIteratorState edgeState) {
-                return super.accept(edgeState) && allFilter.accept(edgeState);
-            }
-        };
-
         maxLevel = prepareGraph.getNodes();
         vehicleAllExplorer = prepareGraph.createEdgeExplorer(allFilter);
         vehicleAllTmpExplorer = prepareGraph.createEdgeExplorer(allFilter);
-        calcPrioAllExplorer = prepareGraph.createEdgeExplorer(accessWithLevelFilter);
 
         // Use an alternative to PriorityQueue as it has some advantages:
         //   1. Gets automatically smaller if less entries are stored => less total RAM used.
@@ -427,48 +417,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 dijkstraTime, periodTime, lazyTime, neighborTime);
     }
 
-    /**
-     * Calculates the priority of a node v without changing the graph. Warning: the calculated
-     * priority must NOT depend on priority(v) and therefore findShortcuts should also not depend on
-     * the priority(v). Otherwise updating the priority before contracting in contractNodes() could
-     * lead to a slowish or even endless loop.
-     */
     private float calculatePriority(int node) {
         nodeContractor.setMaxVisitedNodes(getMaxVisitedNodesEstimate());
-        NodeContractor.CalcShortcutsResult calcShortcutsResult = nodeContractor.calcShortcutCount(node);
-
-        // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
-        //
-        // every adjNode has an 'original edge' number associated. initially it is r=1
-        // when a new shortcut is introduced then r of the associated edges is summed up:
-        // r(u,w)=r(u,v)+r(v,w) now we can define
-        // originalEdgesCount = σ(v) := sum_{ (u,w) ∈ shortcuts(v) } of r(u, w)
-        int originalEdgesCount = calcShortcutsResult.originalEdgesCount;
-
-        // # lowest influence on preparation speed or shortcut creation count
-        // (but according to paper should speed up queries)
-        //
-        // number of already contracted neighbors of v
-        int contractedNeighbors = 0;
-        int degree = 0;
-        CHEdgeIterator iter = calcPrioAllExplorer.setBaseNode(node);
-        while (iter.next()) {
-            degree++;
-            if (iter.isShortcut())
-                contractedNeighbors++;
-        }
-
-        // from shortcuts we can compute the edgeDifference
-        // # low influence: with it the shortcut creation is slightly faster
-        //
-        // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|
-        // meanDegree is used instead of outDegree+inDegree as if one adjNode is in both directions
-        // only one bucket memory is used. Additionally one shortcut could also stand for two directions.
-        int edgeDifference = calcShortcutsResult.shortcutsCount - degree;
-
-        // according to the paper do a simple linear combination of the properties to get the priority.
-        // this is the current optimum for unterfranken:
-        return 10 * edgeDifference + originalEdgesCount + contractedNeighbors;
+        return nodeContractor.calculatePriority(node);
     }
 
     private int getMaxVisitedNodesEstimate() {
