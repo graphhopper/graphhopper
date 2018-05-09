@@ -17,7 +17,6 @@
  */
 package com.graphhopper.ui;
 
-import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
