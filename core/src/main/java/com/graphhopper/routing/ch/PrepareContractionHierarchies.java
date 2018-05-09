@@ -74,14 +74,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     // nodes with highest priority come last
     private GHTreeMapComposed sortedNodes;
     private float oldPriorities[];
-    private double meanDegree;
     private int periodicUpdatesPercentage = 20;
     private int lastNodesLazyUpdatePercentage = 10;
     private int neighborUpdatePercentage = 20;
     protected double nodesContractedPercentage = 100;
     protected double logMessagesPercentage = 20;
     private int initSize;
-    private int pollCounter;
+    private int checkCounter;
 
     public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph,
                                          Weighting weighting, TraversalMode traversalMode) {
@@ -179,9 +178,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 + ", lazy:" + lastNodesLazyUpdatePercentage
                 + ", neighbor:" + neighborUpdatePercentage
                 + ", " + getTimesAsString()
-                + ", lazy-overhead: " + (int) (100 * ((pollCounter / (double) initSize) - 1)) + "%"
-                + ", " + nodeContractor.getStatisticsString()
-                + ", meanDegree:" + (long) meanDegree
+                + ", lazy-overhead: " + (int) (100 * ((checkCounter / (double) initSize) - 1)) + "%"
                 + ", " + Helper.getMemInfo());
 
         int edgeCount = ghStorage.getAllEdges().length();
@@ -249,7 +246,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         vehicleAllExplorer = prepareGraph.createEdgeExplorer(allFilter);
         vehicleAllTmpExplorer = prepareGraph.createEdgeExplorer(allFilter);
 
-
         // Use an alternative to PriorityQueue as it has some advantages:
         //   1. Gets automatically smaller if less entries are stored => less total RAM used.
         //      Important because Graph is increasing until the end.
@@ -286,16 +282,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private void contractNodes() {
-        // meanDegree is the number of edges / number of nodes ratio of the graph, not really the average degree, because
-        // each edge can exist in both directions
-        // todo: initializing meanDegree here instead of in initFromGraph() means that in the first round of calculating
-        // node priorities all shortcut searches are cancelled immediately and all possible shortcuts are counted because
-        // no witness path can be found. this is not really what we want, but changing it requires re-optimizing the
-        // graph contraction parameters, because it affects the node contraction order.
-        meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
+        nodeContractor.prepareContraction();
         initSize = sortedNodes.getSize();
         int level = 0;
-        pollCounter = 0;
+        checkCounter = 0;
         long logSize = Math.round(Math.max(10, initSize / 100d * logMessagesPercentage));
         if (logMessagesPercentage == 0)
             logSize = Integer.MAX_VALUE;
@@ -325,7 +315,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         while (!sortedNodes.isEmpty()) {
             // periodically update priorities of ALL nodes
-            if (periodicUpdate && pollCounter > 0 && pollCounter % periodicUpdatesCount == 0) {
+            if (periodicUpdate && checkCounter > 0 && checkCounter % periodicUpdatesCount == 0) {
                 periodicUpdateSW.start();
                 sortedNodes.clear();
                 for (int node = 0; node < prepareGraph.getNodes(); node++) {
@@ -341,11 +331,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     throw new IllegalStateException("Cannot prepare as no unprepared nodes where found. Called preparation twice?");
             }
 
-            if (pollCounter % logSize == 0) {
+            if (checkCounter % logSize == 0) {
                 logStats(updateCounter);
             }
 
-            pollCounter++;
+            checkCounter++;
             int polledNode = sortedNodes.pollKey();
 
             if (!sortedNodes.isEmpty() && sortedNodes.getSize() < lastNodesLazyUpdates) {
@@ -362,10 +352,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             // contract node v!
             contractionSW.start();
-            nodeContractor.setMaxVisitedNodes(getMaxVisitedNodesEstimate());
-            long degree = nodeContractor.contractNode(polledNode);
-            // put weight factor on meanDegree instead of taking the average => meanDegree is more stable
-            meanDegree = (meanDegree * 2 + degree) / 3;
+            nodeContractor.contractNode(polledNode);
             prepareGraph.setLevel(polledNode, level);
             level++;
             contractionSW.stop();
@@ -466,14 +453,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private float calculatePriority(int node) {
-        nodeContractor.setMaxVisitedNodes(getMaxVisitedNodesEstimate());
         return nodeContractor.calculatePriority(node);
-    }
-
-    private int getMaxVisitedNodesEstimate() {
-        // todo: we return 0 here if meanDegree is < 1, which is not really what we want, but changing this changes
-        // the node contraction order and requires re-optimizing the parameters of the graph contraction
-        return (int) meanDegree * 100;
     }
 
     @Override
@@ -505,15 +485,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     private void logStats(int updateCounter) {
         logger.info(String.format(Locale.ROOT,
-                "nodes: %10s, shortcuts: %10s, updates: %2d, polled: %10s, %s, %s, %.1f, %s, %s",
+                "nodes: %10s, shortcuts: %10s, updates: %2d, checked-nodes: %10s, %s, %s, %s",
                 nf(sortedNodes.getSize()),
                 nf(nodeContractor.getAddedShortcutsCount()),
                 updateCounter,
-                nf(pollCounter),
-                nodeContractor.getStatisticsString(),
+                nf(checkCounter),
                 getTimesAsString(),
-                meanDegree,
-                nodeContractor.getDetailedStatisticsString(),
+                nodeContractor.getStatisticsString(),
                 Helper.getMemInfo()));
     }
 }

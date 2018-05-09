@@ -50,6 +50,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private final SimpleSearch simpleSearch = new SimpleSearch();
     private final ShortcutHandler addingShortcutHandler = new AddingShortcutHandler();
     private final ShortcutHandler countingShortcutHandler = new CountingShortcutHandler();
+    private final StopWatch dijkstraSW = new StopWatch();
+    private int dijkstraCount;
+    private int addedShortcutsCount;
     private ShortcutHandler activeShortcutHandler;
     private int[] hierarchyDepths;
     private LegacyWitnessPathFinder legacyWitnessPathFinder;
@@ -113,9 +116,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     @Override
-    public void setMaxVisitedNodes(int maxVisitedNodes) {
-        // todo: limiting local searches is a bit more complicated in the edge-based case, because the local searches
-        // are also used to find the shortcut
+    public void prepareContraction() {
+        // not needed 
     }
 
     @Override
@@ -541,12 +543,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
     @Override
     public String getStatisticsString() {
-        return String.format("searches: %10s, polled-edges: %10s", nf(totalNumSearches), nf(totalNumPolledEdges));
-    }
-
-    @Override
-    public String getDetailedStatisticsString() {
-        String result = String.format("stats(calc): %s, stats(contract): %s, %s",
+        String result = String.format("searches: %10s, polled-edges: %10s, stats(calc): %s, stats(contract): %s, %s",
+                nf(totalNumSearches), nf(totalNumPolledEdges),
                 countingShortcutHandler.getStats(), addingShortcutHandler.getStats(),
                 searchType == SearchType.AGGRESSIVE ? witnessPathFinder.getStatusString() : legacyWitnessPathFinder.getStatusString());
         countingShortcutHandler.resetStats();
@@ -555,6 +553,22 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         witnessPathFinder.resetStats();
         result += String.format(", duplicate edges: %d, %d", duplicateInEdges, duplicateOutEdges);
         return result;
+    }
+
+    @Override
+    public int getAddedShortcutsCount() {
+        return addedShortcutsCount;
+    }
+
+    @Override
+    public long getDijkstraCount() {
+        // todo: this count is not incremented correctly yet and might be redundant with one of the other counters
+        return dijkstraCount;
+    }
+
+    @Override
+    public float getDijkstraSeconds() {
+        return dijkstraSW.getCurrentSeconds();
     }
 
     private void handleShortcuts(CHEntry chEntry) {

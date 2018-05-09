@@ -22,8 +22,6 @@ public interface NodeContractor {
 
     void close();
 
-    void setMaxVisitedNodes(int maxVisitedNodes);
-
     /**
      * Calculates the priority of a node v without changing the graph. Lower (!!) priority nodes are contracted first.
      */
@@ -39,9 +37,9 @@ public interface NodeContractor {
 
     String getStatisticsString();
 
-    String getDetailedStatisticsString();
-
     long getDijkstraCount();
 
     float getDijkstraSeconds();
+
+    void prepareContraction();
 }

@@ -37,7 +37,12 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     private CHEdgeExplorer calcPrioAllExplorer;
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany prepareAlgo;
-    private int maxVisitedNodes = Integer.MAX_VALUE;
+    int addedShortcutsCount;
+    private long dijkstraCount;
+    private StopWatch dijkstraSW = new StopWatch();
+    // meanDegree is the number of edges / number of nodes ratio of the graph, not really the average degree, because
+    // each edge can exist in both directions
+    private double meanDegree;
 
     NodeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting) {
         // todo: it would be nice to check if ghStorage is frozen here
@@ -65,15 +70,19 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareWeighting, TraversalMode.NODE_BASED);
     }
 
+    public void prepareContraction() {
+        // todo: initializing meanDegree here instead of in initFromGraph() means that in the first round of calculating
+        // node priorities all shortcut searches are cancelled immediately and all possible shortcuts are counted because
+        // no witness path can be found. this is not really what we want, but changing it requires re-optimizing the
+        // graph contraction parameters, because it affects the node contraction order.
+        // when this is done there should be no need for this method any longer.
+        meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
+    }
+    
     @Override
     public void close() {
         super.close();
         prepareAlgo.close();
-    }
-
-    @Override
-    public void setMaxVisitedNodes(int maxVisitedNodes) {
-        this.maxVisitedNodes = maxVisitedNodes;
     }
 
     /**
@@ -124,17 +133,15 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         shortcuts.clear();
         long degree = findShortcuts(addScHandler.setNode(node));
         addedShortcutsCount += addShortcuts(shortcuts.keySet());
+        // put weight factor on meanDegree instead of taking the average => meanDegree is more stable
+        meanDegree = (meanDegree * 2 + degree) / 3;
         return degree;
     }
 
     @Override
     public String getStatisticsString() {
-        return "dijkstras:" + nf(dijkstraCount);
-    }
-
-    @Override
-    public String getDetailedStatisticsString() {
-        return prepareAlgo.getMemoryUsageAsString();
+        return String.format("meanDegree: %.2f, dijkstras: %10s, mem: %10s",
+                meanDegree, nf(dijkstraCount), prepareAlgo.getMemoryUsageAsString());
     }
 
     /**
@@ -144,6 +151,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
      * here the degree is not the total number of adjacent edges, but only the number of incoming edges
      */
     private long findShortcuts(ShortcutHandler sch) {
+        int maxVisitedNodes = getMaxVisitedNodesEstimate();
         long degree = 0;
         EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(sch.getNode());
         // collect outgoing nodes (goal-nodes) only once
@@ -277,6 +285,27 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         int adj = edge.getAdjNode();
         return base + "->" + adj + " (" + edge.getEdge() + "); "
                 + na.getLat(base) + "," + na.getLon(base) + " -> " + na.getLat(adj) + "," + na.getLon(adj);
+    }
+
+    @Override
+    public int getAddedShortcutsCount() {
+        return addedShortcutsCount;
+    }
+
+    @Override
+    public long getDijkstraCount() {
+        return dijkstraCount;
+    }
+
+    @Override
+    public float getDijkstraSeconds() {
+        return dijkstraSW.getCurrentSeconds();
+    }
+
+    private int getMaxVisitedNodesEstimate() {
+        // todo: we return 0 here if meanDegree is < 1, which is not really what we want, but changing this changes
+        // the node contraction order and requires re-optimizing the parameters of the graph contraction
+        return (int) meanDegree * 100;
     }
 
     private static class Shortcut {
