@@ -78,7 +78,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         // when this is done there should be no need for this method any longer.
         meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
     }
-    
+
     @Override
     public void close() {
         super.close();

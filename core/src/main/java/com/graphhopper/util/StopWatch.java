@@ -58,6 +58,9 @@ public class StopWatch {
         return elapsedNanos / 1e9f;
     }
 
+    /**
+     * returns the total elapsed time on this stopwatch without the need of stopping it
+     */
     public float getCurrentSeconds() {
         if (notStarted()) {
             return 0;
@@ -87,5 +90,4 @@ public class StopWatch {
     private boolean notStarted() {
         return lastTime == 0 && elapsedNanos == 0;
     }
-
 }
