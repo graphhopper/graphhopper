@@ -59,7 +59,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private final StopWatch lazyUpdateSW = new StopWatch();
     private final StopWatch neighborUpdateSW = new StopWatch();
     private final StopWatch contractionSW = new StopWatch();
-    private NodeContractor nodeContractor;
+    private NodeBasedNodeContractor nodeContractor;
     private CHEdgeExplorer vehicleAllExplorer;
     private CHEdgeExplorer vehicleAllTmpExplorer;
     private int maxLevel;
@@ -221,7 +221,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new float[prepareGraph.getNodes()];
-        nodeContractor = new NodeContractor(dir, ghStorage, prepareGraph, weighting, traversalMode);
+        nodeContractor = new NodeBasedNodeContractor(dir, ghStorage, prepareGraph, weighting, traversalMode);
         nodeContractor.initFromGraph();
     }
 

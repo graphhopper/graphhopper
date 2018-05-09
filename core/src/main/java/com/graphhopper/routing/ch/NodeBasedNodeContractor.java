@@ -30,7 +30,7 @@ import java.util.Map;
 
 import static com.graphhopper.util.Helper.nf;
 
-class NodeContractor {
+class NodeBasedNodeContractor {
     private final GraphHopperStorage ghStorage;
     private final CHGraph prepareGraph;
     private final PreparationWeighting prepareWeighting;
@@ -54,8 +54,8 @@ class NodeContractor {
     // each edge can exist in both directions
     private double meanDegree;
 
-    NodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting,
-                   TraversalMode traversalMode) {
+    NodeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting,
+                            TraversalMode traversalMode) {
         if (traversalMode.isEdgeBased()) {
             throw new IllegalArgumentException("Contraction Hierarchies only support node based traversal so far, given: " + traversalMode);
         }
