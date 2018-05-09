@@ -31,11 +31,10 @@ import static com.graphhopper.util.Helper.nf;
 
 class NodeBasedNodeContractor extends AbstractNodeContractor {
     private final PreparationWeighting prepareWeighting;
-    // todo: so far node contraction can only be done for node-based graph traversal
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<>();
     private final AddShortcutHandler addScHandler = new AddShortcutHandler();
     private final CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
-    private CHEdgeExplorer calcPrioAllExplorer;
+    private CHEdgeExplorer remainingEdgeExplorer;
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany prepareAlgo;
     private int addedShortcutsCount;
@@ -58,15 +57,14 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         inEdgeExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
         outEdgeExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
 
-        // filter by vehicle and level number
         final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
-        final EdgeFilter accessWithLevelFilter = new LevelEdgeFilter(prepareGraph) {
+        final EdgeFilter remainingNodesFilter = new LevelEdgeFilter(prepareGraph) {
             @Override
             public final boolean accept(EdgeIteratorState edgeState) {
                 return super.accept(edgeState) && allFilter.accept(edgeState);
             }
         };
-        calcPrioAllExplorer = prepareGraph.createEdgeExplorer(accessWithLevelFilter);
+        remainingEdgeExplorer = prepareGraph.createEdgeExplorer(remainingNodesFilter);
         prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareWeighting, TraversalMode.NODE_BASED);
     }
 
@@ -107,7 +105,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         // number of already contracted neighbors of v
         int contractedNeighbors = 0;
         int degree = 0;
-        CHEdgeIterator iter = calcPrioAllExplorer.setBaseNode(node);
+        CHEdgeIterator iter = remainingEdgeExplorer.setBaseNode(node);
         while (iter.next()) {
             degree++;
             if (iter.isShortcut())

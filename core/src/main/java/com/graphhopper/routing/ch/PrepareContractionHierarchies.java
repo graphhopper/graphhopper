@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,11 +22,15 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CHEdgeExplorer;
+import com.graphhopper.util.CHEdgeIterator;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Locale;
+import java.util.Random;
 
 import static com.graphhopper.util.Helper.nf;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
@@ -186,24 +190,25 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     @Override
     public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
-        AbstractBidirAlgo algo;
+        AbstractBidirAlgo algo = doCreateAlgo(graph, opts);
+        algo.setEdgeFilter(new LevelEdgeFilter(prepareGraph));
+        algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+        return algo;
+    }
+
+    private AbstractBidirAlgo doCreateAlgo(Graph graph, AlgorithmOptions opts) {
         if (ASTAR_BI.equals(opts.getAlgorithm())) {
-            AStarBidirection tmpAlgo = new AStarBidirectionCH(graph, prepareWeighting, traversalMode);
-            tmpAlgo.setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
-            algo = tmpAlgo;
+            return new AStarBidirectionCH(graph, prepareWeighting, traversalMode)
+                    .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
             if (opts.getHints().getBool("stall_on_demand", true)) {
-                algo = new DijkstraBidirectionCH(graph, prepareWeighting, traversalMode);
+                return new DijkstraBidirectionCH(graph, prepareWeighting, traversalMode);
             } else {
-                algo = new DijkstraBidirectionCHNoSOD(graph, prepareWeighting, traversalMode);
+                return new DijkstraBidirectionCHNoSOD(graph, prepareWeighting, traversalMode);
             }
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies. Try with ch.disable=true");
         }
-
-        algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
-        algo.setEdgeFilter(new LevelEdgeFilter(prepareGraph));
-        return algo;
     }
 
     private void initFromGraph() {
@@ -221,7 +226,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new float[prepareGraph.getNodes()];
-        nodeContractor = new NodeBasedNodeContractor(dir, ghStorage, prepareGraph, weighting, traversalMode);
+        nodeContractor = new NodeBasedNodeContractor(dir, ghStorage, prepareGraph, weighting);
         nodeContractor.initFromGraph();
     }
 

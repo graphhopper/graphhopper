@@ -51,7 +51,7 @@ public class NodeBasedNodeContractorTest {
     }
 
     private NodeBasedNodeContractor createNodeContractor() {
-        NodeBasedNodeContractor nodeContractor = new NodeBasedNodeContractor(dir, graph, lg, weighting, traversalMode);
+        NodeBasedNodeContractor nodeContractor = new NodeBasedNodeContractor(dir, graph, lg, weighting);
         nodeContractor.initFromGraph();
         return nodeContractor;
     }
