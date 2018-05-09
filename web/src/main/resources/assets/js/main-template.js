@@ -1,5 +1,6 @@
 global.d3 = require('d3');
 var Flatpickr = require('flatpickr');
+require('flatpickr/dist/l10n');
 
 var L = require('leaflet');
 require('leaflet-contextmenu');
@@ -181,6 +182,25 @@ $(document).ready(function (e) {
                 nominatim.setBounds(bounds);
                 mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, urlParams.layer, urlParams.use_miles);
             });
+
+    var language_code = urlParams.locale.split('-', 1)[0];
+    if (language_code != 'en') {
+        // A few language codes are different in GraphHopper and Flatpickr.
+        var flatpickr_locale;
+        switch (language_code) {
+            case 'ca':  // Catalan
+                flatpickr_locale = 'cat';
+                break;
+            case 'el':  // Greek
+                flatpickr_locale = 'gr';
+                break;
+            default:
+                flatpickr_locale = language_code;
+        }
+        if (Flatpickr.l10ns.hasOwnProperty(flatpickr_locale)) {
+            Flatpickr.localize(Flatpickr.l10ns[flatpickr_locale]);
+        }
+    }
 
     $(window).resize(function () {
         mapLayer.adjustMapSize();
@@ -680,7 +700,8 @@ function routeLatLng(request, doQuery) {
                                 iconUrl: './img/marker-small-blue.png',
                                 iconSize: [15, 15]
                             }),
-                            draggable: true
+                            draggable: true,
+                            autoPan: true
                         }).addTo(mapLayer.getRoutingLayer()).bindPopup(detailKey + ":" + value);
                     }
                 }
