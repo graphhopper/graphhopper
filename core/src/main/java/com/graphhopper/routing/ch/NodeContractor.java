@@ -47,7 +47,6 @@ class NodeContractor {
     private DijkstraOneToMany prepareAlgo;
     private int addedShortcutsCount;
     private long dijkstraCount;
-    private int maxVisitedNodes = Integer.MAX_VALUE;
     private StopWatch dijkstraSW = new StopWatch();
     private int maxEdgesCount;
     private int maxLevel;
@@ -117,7 +116,7 @@ class NodeContractor {
      * here the degree is not the total number of adjacent edges, but only the number of incoming edges
      */
     private long findShortcuts(ShortcutHandler sch) {
-        this.maxVisitedNodes = getMaxVisitedNodesEstimate();
+        int maxVisitedNodes = getMaxVisitedNodesEstimate();
         long degree = 0;
         EdgeIterator incomingEdges = vehicleInExplorer.setBaseNode(sch.getNode());
         // collect outgoing nodes (goal-nodes) only once
@@ -293,7 +292,7 @@ class NodeContractor {
      * lead to a slowish or even endless loop.
      */
     public float calculatePriority(int node) {
-        NodeContractor.CalcShortcutsResult calcShortcutsResult = calcShortcutCount(node);
+        CalcShortcutsResult calcShortcutsResult = calcShortcutCount(node);
 
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
         //
