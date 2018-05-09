@@ -36,7 +36,7 @@ import java.util.Set;
 
 import static org.junit.Assert.*;
 
-public class NodeContractorTest {
+public class NodeBasedNodeContractorTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = new EncodingManager(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
@@ -50,8 +50,8 @@ public class NodeContractorTest {
         dir = new GHDirectory("", DAType.RAM_INT);
     }
 
-    private NodeContractor createNodeContractor() {
-        NodeContractor nodeContractor = new NodeContractor(dir, graph, lg, weighting, traversalMode);
+    private NodeBasedNodeContractor createNodeContractor() {
+        NodeBasedNodeContractor nodeContractor = new NodeBasedNodeContractor(dir, graph, lg, weighting, traversalMode);
         nodeContractor.initFromGraph();
         return nodeContractor;
     }
@@ -149,7 +149,7 @@ public class NodeContractorTest {
         setMaxLevelOnAllNodes();
 
         // find all shortcuts if we contract node 1
-        NodeContractor nodeContractor = createNodeContractor();
+        NodeBasedNodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(1);
         checkShortcuts(
                 expectedShortcut(2, 3, edge1to3, edge2to1bidirected, true, true),
@@ -208,7 +208,7 @@ public class NodeContractorTest {
         //        --<----
 
         // contract node 4!
-        NodeContractor nodeContractor = createNodeContractor();
+        NodeBasedNodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(4);
         checkShortcuts(manualSc1, manualSc2, manualSc3,
                 // there should be two different shortcuts for both directions!
@@ -233,7 +233,7 @@ public class NodeContractorTest {
         final EdgeIteratorState edge2to3 = graph.edge(2, 3, 1, true);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        NodeContractor nodeContractor = createNodeContractor();
+        NodeBasedNodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(2);
         checkShortcuts(
                 expectedShortcut(1, 3, edge2to3, edge1to2bidirected, false, true),
