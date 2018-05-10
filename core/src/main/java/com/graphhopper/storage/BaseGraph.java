@@ -403,7 +403,7 @@ class BaseGraph implements Graph {
                     edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_FLAGS));
         }
         if (edgeCount > printMax) {
-            System.out.printf(" ... %d more edges", edgeCount - printMax);
+            System.out.printf(Locale.ROOT, " ... %d more edges", edgeCount - printMax);
         }
     }
 
