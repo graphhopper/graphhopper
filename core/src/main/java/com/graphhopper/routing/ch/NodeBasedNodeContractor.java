@@ -85,10 +85,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     /**
-     * Calculates the priority of a node v without changing the graph. Warning: the calculated
-     * priority must NOT depend on priority(v) and therefore findShortcuts should also not depend on
-     * the priority(v). Otherwise updating the priority before contracting in contractNodes() could
-     * lead to a slowish or even endless loop.
+     * Warning: the calculated priority must NOT depend on priority(v) and therefore findShortcuts should also not
+     * depend on the priority(v). Otherwise updating the priority before contracting in contractNodes() could lead to
+     * a slowish or even endless loop.
      */
     @Override
     public float calculatePriority(int node) {
@@ -298,7 +297,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
 
     @Override
     public float getDijkstraSeconds() {
-        return dijkstraSW.getSeconds();
+        return dijkstraSW.getCurrentSeconds();
     }
 
     private int getMaxVisitedNodesEstimate() {

@@ -50,8 +50,8 @@ public class NodeBasedNodeContractorTest {
         dir = new GHDirectory("", DAType.RAM_INT);
     }
 
-    private NodeBasedNodeContractor createNodeContractor() {
-        NodeBasedNodeContractor nodeContractor = new NodeBasedNodeContractor(dir, graph, lg, weighting);
+    private NodeContractor createNodeContractor() {
+        NodeContractor nodeContractor = new NodeBasedNodeContractor(dir, graph, lg, weighting);
         nodeContractor.initFromGraph();
         return nodeContractor;
     }
@@ -82,7 +82,7 @@ public class NodeBasedNodeContractorTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new IgnoreNodeFilter(lg, graph.getNodes()).setAvoidNode(3));
+        algo.setEdgeFilter(createIgnoreNodeFilter(3));
         algo.setWeightLimit(100);
         int nodeEntry = algo.findEndNode(4, 2);
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
@@ -102,7 +102,7 @@ public class NodeBasedNodeContractorTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new IgnoreNodeFilter(lg, graph.getNodes()).setAvoidNode(3));
+        algo.setEdgeFilter(createIgnoreNodeFilter(3));
         algo.setWeightLimit(10);
         int nodeEntry = algo.findEndNode(4, 2);
         assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
@@ -118,7 +118,7 @@ public class NodeBasedNodeContractorTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new IgnoreNodeFilter(lg, graph.getNodes()).setAvoidNode(0));
+        algo.setEdgeFilter(createIgnoreNodeFilter(0));
         algo.setWeightLimit(2);
         int endNode = algo.findEndNode(4, 1);
         // did not reach endNode
@@ -149,7 +149,7 @@ public class NodeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
 
         // find all shortcuts if we contract node 1
-        NodeBasedNodeContractor nodeContractor = createNodeContractor();
+        NodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(1);
         checkShortcuts(
                 expectedShortcut(2, 3, edge1to3, edge2to1bidirected, true, true),
@@ -208,7 +208,7 @@ public class NodeBasedNodeContractorTest {
         //        --<----
 
         // contract node 4!
-        NodeBasedNodeContractor nodeContractor = createNodeContractor();
+        NodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(4);
         checkShortcuts(manualSc1, manualSc2, manualSc3,
                 // there should be two different shortcuts for both directions!
@@ -233,7 +233,7 @@ public class NodeBasedNodeContractorTest {
         final EdgeIteratorState edge2to3 = graph.edge(2, 3, 1, true);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        NodeBasedNodeContractor nodeContractor = createNodeContractor();
+        NodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(2);
         checkShortcuts(
                 expectedShortcut(1, 3, edge2to3, edge1to2bidirected, false, true),
@@ -332,6 +332,10 @@ public class NodeBasedNodeContractorTest {
         for (int node = 0; node < nodes; node++) {
             lg.setLevel(node, nodes);
         }
+    }
+
+    private IgnoreNodeFilter createIgnoreNodeFilter(int node) {
+        return new IgnoreNodeFilter(lg, graph.getNodes()).setAvoidNode(node);
     }
 
     private static class Shortcut {
