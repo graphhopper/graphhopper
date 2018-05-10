@@ -33,6 +33,8 @@ import static com.graphhopper.util.Helper.nf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Locale;
+
 /**
  * The base graph handles nodes and edges file format. It can be used with different Directory
  * implementations like RAMDirectory for fast access or via MMapDirectory for virtual-memory and not
@@ -380,19 +382,19 @@ class BaseGraph implements Graph {
         final int printMax = 100;
         System.out.println("nodes:");
         String formatNodes = "%12s | %12s | %12s | %12s \n";
-        System.out.format(formatNodes, "#", "N_EDGE_REF", "N_LAT", "N_LON");
+        System.out.format(Locale.ROOT, formatNodes, "#", "N_EDGE_REF", "N_LAT", "N_LON");
         NodeAccess nodeAccess = getNodeAccess();
         for (int i = 0; i < Math.min(nodeCount, printMax); ++i) {
-            System.out.format(formatNodes, i, edgeAccess.getEdgeRef(i), nodeAccess.getLat(i), nodeAccess.getLon(i));
+            System.out.format(Locale.ROOT, formatNodes, i, edgeAccess.getEdgeRef(i), nodeAccess.getLat(i), nodeAccess.getLon(i));
         }
         if (nodeCount > printMax) {
-            System.out.format(" ... %d more nodes\n", nodeCount - printMax);
+            System.out.format(Locale.ROOT, " ... %d more nodes\n", nodeCount - printMax);
         }
         System.out.println("edges:");
         String formatEdges = "%12s | %12s | %12s | %12s | %12s | %12s | %12s \n";
-        System.out.format(formatEdges, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS");
+        System.out.format(Locale.ROOT, formatEdges, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS");
         for (int i = 0; i < Math.min(edgeCount, printMax); ++i) {
-            System.out.format(formatEdges, i,
+            System.out.format(Locale.ROOT, formatEdges, i,
                     edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_NODEA),
                     edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_NODEB),
                     edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_LINKA),
