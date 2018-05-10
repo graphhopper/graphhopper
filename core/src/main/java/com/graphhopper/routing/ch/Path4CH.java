@@ -64,12 +64,10 @@ public class Path4CH extends PathBidirRef {
                 from = to;
                 to = tmp;
             }
-            CHEdgeIteratorState sk2 = getEdge(skippedEdge2, to);
-            CHEdgeIteratorState sk1 = getEdge(skippedEdge1, from);
-            // todo: minor possible optimization: if sk2 is null we do not need to create sk1
-            if (sk2 != null && sk1 != null) {
-                expandEdge(sk2, !reverseOrder);
-                expandEdge(sk1, reverseOrder);
+            CHEdgeIteratorState sk2to = getEdge(skippedEdge2, to);
+            if (sk2to != null) {
+                expandEdge(sk2to, !reverseOrder);
+                expandEdge(getEdge(skippedEdge1, from), reverseOrder);
             } else {
                 expandEdge(getEdge(skippedEdge1, to), !reverseOrder);
                 expandEdge(getEdge(skippedEdge2, from), reverseOrder);
