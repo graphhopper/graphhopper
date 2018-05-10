@@ -581,6 +581,9 @@ public class Measurement {
 
     private String getFormattedProperty(String property) {
         String result = properties.get(property);
+        if (result == null) {
+            result = "nan";
+        }
         // limit number of decimal places for floating point numbers
         try {
             double doubleValue = Double.parseDouble(result.trim());
@@ -590,7 +593,7 @@ public class Measurement {
         } catch (NumberFormatException e) {
             // its not a number, never mind
         }
-        return String.format("%" + getSummaryColumnWidth(property) + "s ", result == null ? "nan" : result);
+        return String.format("%" + getSummaryColumnWidth(property) + "s ", result);
     }
 
     private int getSummaryColumnWidth(String p) {
