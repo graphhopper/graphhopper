@@ -136,7 +136,7 @@ graphhopper:
 #
 # assets:
 #  overrides:
-#    /maps: src/main/resources/assets/
+#    /maps: web/src/main/resources/assets/
 
 # Dropwizard server configuration
 server:

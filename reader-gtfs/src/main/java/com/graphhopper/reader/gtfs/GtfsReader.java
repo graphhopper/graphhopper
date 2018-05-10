@@ -411,7 +411,7 @@ class GtfsReader {
             if (frequencyBased) {
                 tripDescriptor = tripDescriptor.setStartTime(convertToGtfsTime(time));
             }
-            addTrip(zoneId, time, arrivalNodes, trip, tripDescriptor.build());
+            addTrip(zoneId, time, arrivalNodes, trip, tripDescriptor.build(), frequencyBased);
         }
     }
 
@@ -420,7 +420,7 @@ class GtfsReader {
         int arrivalNode;
     }
 
-    void addTrip(ZoneId zoneId, int time, List<TripWithStopTimeAndArrivalNode> arrivalNodes, GtfsReader.TripWithStopTimes trip, GtfsRealtime.TripDescriptor tripDescriptor) {
+    void addTrip(ZoneId zoneId, int time, List<TripWithStopTimeAndArrivalNode> arrivalNodes, TripWithStopTimes trip, GtfsRealtime.TripDescriptor tripDescriptor, boolean frequencyBased) {
         IntArrayList boardEdges = new IntArrayList();
         IntArrayList alightEdges = new IntArrayList();
         StopTime prev = null;
@@ -519,8 +519,8 @@ class GtfsReader {
             }
             prev = stopTime;
         }
-        gtfsStorage.getBoardEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor.getTripId(), tripDescriptor.getStartTime()), boardEdges.toArray());
-        gtfsStorage.getAlightEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor.getTripId(), tripDescriptor.getStartTime()), alightEdges.toArray());
+        gtfsStorage.getBoardEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor, frequencyBased), boardEdges.toArray());
+        gtfsStorage.getAlightEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor, frequencyBased), alightEdges.toArray());
         TripWithStopTimeAndArrivalNode tripWithStopTimeAndArrivalNode = new TripWithStopTimeAndArrivalNode();
         tripWithStopTimeAndArrivalNode.tripWithStopTimes = trip;
         tripWithStopTimeAndArrivalNode.arrivalNode = arrivalNode;

@@ -35,7 +35,7 @@ abstract class AbstractNodeContractor implements NodeContractor {
     int maxLevel;
     private int maxEdgesCount;
 
-    AbstractNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting) {
+    public AbstractNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting) {
         this.ghStorage = ghStorage;
         this.prepareGraph = prepareGraph;
         originalEdges = dir.find("original_edges_" + AbstractWeighting.weightingToFileName(weighting));

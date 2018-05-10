@@ -32,5 +32,5 @@ ratings:
   paths:
   - "**.java"
 exclude_paths:
-- "web/src/main/webapp/"
+- "web/src/main/resources/assets/"
 - "**.js"

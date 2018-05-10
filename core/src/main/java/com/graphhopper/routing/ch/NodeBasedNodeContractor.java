@@ -34,10 +34,10 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<>();
     private final AddShortcutHandler addScHandler = new AddShortcutHandler();
     private final CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
-    private CHEdgeExplorer calcPrioAllExplorer;
+    private CHEdgeExplorer remainingEdgeExplorer;
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany prepareAlgo;
-    int addedShortcutsCount;
+    private int addedShortcutsCount;
     private long dijkstraCount;
     private StopWatch dijkstraSW = new StopWatch();
     // meanDegree is the number of edges / number of nodes ratio of the graph, not really the average degree, because
@@ -58,18 +58,18 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         inEdgeExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
         outEdgeExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
 
-        // filter by vehicle and level number
         final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
-        final EdgeFilter accessWithLevelFilter = new LevelEdgeFilter(prepareGraph) {
+        final EdgeFilter remainingNodesFilter = new LevelEdgeFilter(prepareGraph) {
             @Override
             public final boolean accept(EdgeIteratorState edgeState) {
                 return super.accept(edgeState) && allFilter.accept(edgeState);
             }
         };
-        calcPrioAllExplorer = prepareGraph.createEdgeExplorer(accessWithLevelFilter);
+        remainingEdgeExplorer = prepareGraph.createEdgeExplorer(remainingNodesFilter);
         prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareWeighting, TraversalMode.NODE_BASED);
     }
 
+    @Override
     public void prepareContraction() {
         // todo: initializing meanDegree here instead of in initFromGraph() means that in the first round of calculating
         // node priorities all shortcut searches are cancelled immediately and all possible shortcuts are counted because
@@ -108,7 +108,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         // number of already contracted neighbors of v
         int contractedNeighbors = 0;
         int degree = 0;
-        CHEdgeIterator iter = calcPrioAllExplorer.setBaseNode(node);
+        CHEdgeIterator iter = remainingEdgeExplorer.setBaseNode(node);
         while (iter.next()) {
             degree++;
             if (iter.isShortcut())

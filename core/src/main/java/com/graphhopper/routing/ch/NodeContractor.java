@@ -15,6 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package com.graphhopper.routing.ch;
 
 public interface NodeContractor {
@@ -23,15 +24,14 @@ public interface NodeContractor {
     void close();
 
     /**
-     * Calculates the priority of a node v without changing the graph. Lower (!!) priority nodes are contracted first.
+     * Calculates the priority of a node without changing the graph. Lower (!!) priority nodes are contracted first.
      */
     float calculatePriority(int node);
 
     /**
-     * Adds the required shortcuts for the given node and returns the number of incoming edges to the given node
-     * in the remaining graph (= the graph of uncontracted nodes with shortcuts)
+     * Adds the required shortcuts for the given node.
      */
-    long contractNode(int node);
+    void contractNode(int node);
 
     int getAddedShortcutsCount();
 

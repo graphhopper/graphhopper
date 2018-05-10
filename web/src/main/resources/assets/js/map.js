@@ -338,6 +338,7 @@ module.exports.createMarker = function (index, coord, setToEnd, setToStart, dele
     return L.marker([coord.lat, coord.lng], {
         icon: ((toFrom === FROM) ? iconFrom : ((toFrom === TO) ? iconTo : new L.NumberedDivIcon({number: index}))),
         draggable: true,
+        autoPan: true,
         contextmenu: true,
         contextmenuItems: defaultContextmenuItems.concat([{
                 text: translate.tr("marker") + ' ' + ((toFrom === FROM) ?
