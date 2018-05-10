@@ -376,6 +376,35 @@ class BaseGraph implements Graph {
                 + "bounds:" + bounds;
     }
 
+    public void debugPrint() {
+        final int printMax = 100;
+        System.out.println("nodes:");
+        String formatNodes = "%12s | %12s | %12s | %12s \n";
+        System.out.format(formatNodes, "#", "N_EDGE_REF", "N_LAT", "N_LON");
+        NodeAccess nodeAccess = getNodeAccess();
+        for (int i = 0; i < Math.min(nodeCount, printMax); ++i) {
+            System.out.format(formatNodes, i, edgeAccess.getEdgeRef(i), nodeAccess.getLat(i), nodeAccess.getLon(i));
+        }
+        if (nodeCount > printMax) {
+            System.out.format(" ... %d more nodes\n", nodeCount - printMax);
+        }
+        System.out.println("edges:");
+        String formatEdges = "%12s | %12s | %12s | %12s | %12s | %12s | %12s \n";
+        System.out.format(formatEdges, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS");
+        for (int i = 0; i < Math.min(edgeCount, printMax); ++i) {
+            System.out.format(formatEdges, i,
+                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_NODEA),
+                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_NODEB),
+                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_LINKA),
+                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_LINKB),
+                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_DIST),
+                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_FLAGS));
+        }
+        if (edgeCount > printMax) {
+            System.out.printf(" ... %d more edges", edgeCount - printMax);
+        }
+    }
+
     void flush() {
         setNodesHeader();
         setEdgesHeader();
