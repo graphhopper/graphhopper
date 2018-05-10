@@ -75,8 +75,11 @@ public class Measurement {
         String propLocation = args.get("measurement.location", "");
         boolean cleanGraph = args.getBool("measurement.clean", false);
         String summaryLocation = args.get("measurement.summaryfile", "");
-        if (isEmpty(propLocation))
-            propLocation = "measurement" + new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date()) + ".properties";
+        String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date());
+        put("measurement.timestamp", timeStamp);
+        if (isEmpty(propLocation)) {
+            propLocation = "measurement" + timeStamp + ".properties";
+        }
 
         seed = args.getLong("measurement.seed", 123);
         String gitCommit = args.get("measurement.gitinfo", "");
@@ -543,7 +546,8 @@ public class Measurement {
                 "routing.visited_nodes_mean",
                 "routingCH.distance_mean",
                 "routingCH.mean",
-                "routingCH.visited_nodes_mean"
+                "routingCH.visited_nodes_mean",
+                "measurement.timestamp"
         };
         try {
             File f = new File(summaryLocation);
@@ -561,7 +565,7 @@ public class Measurement {
     private String getSummaryHeader(String[] properties) {
         StringBuilder sb = new StringBuilder("#");
         for (String p : properties) {
-            String columnName = String.format("%" + getSummaryColumnWidth(p) + "s ", p);
+            String columnName = String.format("%" + getSummaryColumnWidth(p) + "s, ", p);
             sb.append(columnName);
         }
         sb.append("propertyFile");
@@ -582,7 +586,7 @@ public class Measurement {
     private String getFormattedProperty(String property) {
         String result = properties.get(property);
         if (result == null) {
-            result = "nan";
+            result = "missing";
         }
         // limit number of decimal places for floating point numbers
         try {
@@ -593,7 +597,7 @@ public class Measurement {
         } catch (NumberFormatException e) {
             // its not a number, never mind
         }
-        return String.format("%" + getSummaryColumnWidth(property) + "s ", result);
+        return String.format("%" + getSummaryColumnWidth(property) + "s, ", result);
     }
 
     private int getSummaryColumnWidth(String p) {
