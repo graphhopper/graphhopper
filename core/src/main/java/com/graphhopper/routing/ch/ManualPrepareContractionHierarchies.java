@@ -85,11 +85,10 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
         CHEdgeExplorer discExplorer = prepareGraph.createEdgeExplorer(allFilter);
         final int nodesToContract = (int) (contractionOrder.size() * nodesContractedPercentage / 100);
         final long logSize = Math.round(Math.max(10, contractionOrder.size() * logMessagesPercentage / 100));
-        int degree = 0;
         long startTime = nanoTime();
         for (int i = 0; i < nodesToContract; ++i) {
             int node = contractionOrder.get(i);
-            degree += nodeContractor.contractNode(node);
+            nodeContractor.contractNode(node);
             int shortcutCount = nodeContractor.getAddedShortcutsCount();
             if (isEdgeBased()) {
                 int numPolled = ((EdgeBasedNodeContractor) nodeContractor).getNumPolledEdges();
@@ -110,10 +109,9 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
             }
             if (i % logSize == 0) {
                 long elapsed = nanoTime() - startTime;
-                logger.info(String.format("contracted %s / %s nodes, shortcuts: %s, avg degree: %.2f, last batch took: %.2f s, time per node: %.2f micros, %s",
+                logger.info(String.format("contracted %s / %s nodes, shortcuts: %s, last batch took: %.2f s, time per node: %.2f micros, %s",
                         nf(i), nf(nodesToContract), nf(shortcutCount),
-                        degree / (double) logSize, elapsed * 1.e-9, elapsed / logSize * 1.e-3, nodeContractor.getStatisticsString()));
-                degree = 0;
+                        elapsed * 1.e-9, elapsed / logSize * 1.e-3, nodeContractor.getStatisticsString()));
                 startTime = nanoTime();
             }
         }

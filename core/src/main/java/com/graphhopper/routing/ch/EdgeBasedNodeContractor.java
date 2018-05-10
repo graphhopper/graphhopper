@@ -158,10 +158,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     @Override
-    public long contractNode(int node) {
+    public void contractNode(int node) {
         activeShortcutHandler = addingShortcutHandler;
         long start = nanoTime();
-        long result = findAndHandleShortcuts(node);
+        findAndHandleShortcuts(node);
         CHEdgeIterator iter = allCHExplorer.setBaseNode(node);
         while (iter.next()) {
             if (isContracted(iter.getAdjNode()) || iter.getAdjNode() == node)
@@ -169,7 +169,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             hierarchyDepths[iter.getAdjNode()] = Math.max(hierarchyDepths[iter.getAdjNode()], hierarchyDepths[node] + 1);
         }
         stats().calcTime += nanoTime() - start;
-        return result;
     }
 
     public int getNumPolledEdges() {

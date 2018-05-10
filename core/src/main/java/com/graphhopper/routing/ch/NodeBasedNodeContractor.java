@@ -129,13 +129,12 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     @Override
-    public long contractNode(int node) {
+    public void contractNode(int node) {
         shortcuts.clear();
         long degree = findShortcuts(addScHandler.setNode(node));
         addedShortcutsCount += addShortcuts(shortcuts.keySet());
         // put weight factor on meanDegree instead of taking the average => meanDegree is more stable
         meanDegree = (meanDegree * 2 + degree) / 3;
-        return degree;
     }
 
     @Override

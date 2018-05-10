@@ -77,8 +77,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int periodicUpdatesPercentage = 20;
     private int lastNodesLazyUpdatePercentage = 10;
     private int neighborUpdatePercentage = 20;
-    private double nodesContractedPercentage = 100;
-    private double logMessagesPercentage = 20;
     protected double nodesContractedPercentage = 100;
     protected double logMessagesPercentage = 20;
     private int initSize;
