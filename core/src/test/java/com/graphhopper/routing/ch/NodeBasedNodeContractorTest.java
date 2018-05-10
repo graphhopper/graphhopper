@@ -53,6 +53,7 @@ public class NodeBasedNodeContractorTest {
     private NodeContractor createNodeContractor() {
         NodeContractor nodeContractor = new NodeBasedNodeContractor(dir, graph, lg, weighting);
         nodeContractor.initFromGraph();
+        nodeContractor.prepareContraction();
         return nodeContractor;
     }
 

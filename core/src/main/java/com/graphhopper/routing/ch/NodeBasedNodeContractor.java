@@ -25,6 +25,7 @@ import com.graphhopper.util.*;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.graphhopper.util.Helper.nf;
@@ -139,7 +140,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
 
     @Override
     public String getStatisticsString() {
-        return String.format("meanDegree: %.2f, dijkstras: %10s, mem: %10s",
+        return String.format(Locale.ROOT, "meanDegree: %.2f, dijkstras: %10s, mem: %10s",
                 meanDegree, nf(dijkstraCount), prepareAlgo.getMemoryUsageAsString());
     }
 
