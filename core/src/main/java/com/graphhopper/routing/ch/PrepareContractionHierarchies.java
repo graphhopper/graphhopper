@@ -63,7 +63,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private final StopWatch lazyUpdateSW = new StopWatch();
     private final StopWatch neighborUpdateSW = new StopWatch();
     private final StopWatch contractionSW = new StopWatch();
-    private NodeBasedNodeContractor nodeContractor;
+    private NodeContractor nodeContractor;
     private CHEdgeExplorer vehicleAllExplorer;
     private CHEdgeExplorer vehicleAllTmpExplorer;
     private int maxLevel;

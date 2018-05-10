@@ -26,7 +26,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CHEdgeExplorer;
 
-abstract class AbstractNodeContractor {
+abstract class AbstractNodeContractor implements NodeContractor {
     final GraphHopperStorage ghStorage;
     final CHGraph prepareGraph;
     CHEdgeExplorer inEdgeExplorer;
@@ -42,11 +42,13 @@ abstract class AbstractNodeContractor {
         originalEdges.create(1000);
     }
 
+    @Override
     public void initFromGraph() {
         maxLevel = prepareGraph.getNodes();
         maxEdgesCount = ghStorage.getAllEdges().length();
     }
 
+    @Override
     public void close() {
         originalEdges.close();
     }

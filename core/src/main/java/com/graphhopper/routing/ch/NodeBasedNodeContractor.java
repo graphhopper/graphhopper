@@ -68,6 +68,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareWeighting, TraversalMode.NODE_BASED);
     }
 
+    @Override
     public void prepareContraction() {
         // todo: initializing meanDegree here instead of in initFromGraph() means that in the first round of calculating
         // node priorities all shortcut searches are cancelled immediately and all possible shortcuts are counted because
@@ -77,6 +78,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
     }
 
+    @Override
     public void close() {
         super.close();
         prepareAlgo.close();
@@ -88,6 +90,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
      * the priority(v). Otherwise updating the priority before contracting in contractNodes() could
      * lead to a slowish or even endless loop.
      */
+    @Override
     public float calculatePriority(int node) {
         CalcShortcutsResult calcShortcutsResult = calcShortcutCount(node);
 
@@ -125,7 +128,8 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         return 10 * edgeDifference + originalEdgesCount + contractedNeighbors;
     }
 
-    long contractNode(int node) {
+    @Override
+    public long contractNode(int node) {
         shortcuts.clear();
         long degree = findShortcuts(addScHandler.setNode(node));
         addedShortcutsCount += addShortcuts(shortcuts.keySet());
@@ -134,6 +138,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         return degree;
     }
 
+    @Override
     public String getStatisticsString() {
         return String.format("meanDegree: %.2f, dijkstras: %10s, mem: %10s",
                 meanDegree, nf(dijkstraCount), prepareAlgo.getMemoryUsageAsString());
@@ -282,15 +287,18 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                 + na.getLat(base) + "," + na.getLon(base) + " -> " + na.getLat(adj) + "," + na.getLon(adj);
     }
 
-    int getAddedShortcutsCount() {
+    @Override
+    public int getAddedShortcutsCount() {
         return addedShortcutsCount;
     }
 
-    long getDijkstraCount() {
+    @Override
+    public long getDijkstraCount() {
         return dijkstraCount;
     }
 
-    float getDijkstraSeconds() {
+    @Override
+    public float getDijkstraSeconds() {
         return dijkstraSW.getSeconds();
     }
 
