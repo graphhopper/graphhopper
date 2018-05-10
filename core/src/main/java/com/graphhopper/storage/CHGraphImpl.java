@@ -31,6 +31,8 @@ import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Locale;
+
 import static com.graphhopper.util.Helper.nf;
 
 /**
@@ -427,16 +429,16 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         final int printMax = 100;
         System.out.println("nodesCH:");
         String formatNodes = "%12s | %12s | %12s \n";
-        System.out.format(formatNodes, "#", "N_CH_REF", "N_LEVEL");
+        System.out.format(Locale.ROOT, formatNodes, "#", "N_CH_REF", "N_LEVEL");
         for (int i = 0; i < Math.min(baseGraph.getNodes(), printMax); ++i) {
-            System.out.format(formatNodes, i, chEdgeAccess.getEdgeRef(i), getLevel(i));
+            System.out.format(Locale.ROOT, formatNodes, i, chEdgeAccess.getEdgeRef(i), getLevel(i));
         }
         if (baseGraph.getNodes() > printMax) {
-            System.out.format(" ... %d more nodes", baseGraph.getNodes() - printMax);
+            System.out.format(Locale.ROOT, " ... %d more nodes", baseGraph.getNodes() - printMax);
         }
         System.out.println("shortcuts:");
         String formatShortcuts = "%12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s\n";
-        System.out.format(formatShortcuts, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS", "S_SKIP_EDGE1", "S_SKIP_EDGE2", "S_ORIG_FIRST", "S_ORIG_LAST");
+        System.out.format(Locale.ROOT, formatShortcuts, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS", "S_SKIP_EDGE1", "S_SKIP_EDGE2", "S_ORIG_FIRST", "S_ORIG_LAST");
         for (int i = baseGraph.edgeCount; i < baseGraph.edgeCount + Math.min(shortcutCount, printMax); ++i) {
             System.out.format(formatShortcuts, i,
                     shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_NODEA),
@@ -451,7 +453,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     shortcuts.getInt(chEdgeAccess.toPointer(i) + S_ORIG_LAST));
         }
         if (shortcutCount > printMax) {
-            System.out.printf(" ... %d more shortcut edges\n", shortcutCount - printMax);
+            System.out.printf(Locale.ROOT, " ... %d more shortcut edges\n", shortcutCount - printMax);
         }
     }
 

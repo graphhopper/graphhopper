@@ -37,7 +37,7 @@ public interface EdgeIteratorState {
     int getEdge();
 
     /**
-     * @return the edge id of the first original edge of the current edge. This is needed for shorcuts
+     * @return the edge id of the first original edge of the current edge. This is needed for shortcuts
      * in edge-based contraction hierarchies and otherwise simply returns the id of the current edge.
      */
     int getFirstOrigEdge();
