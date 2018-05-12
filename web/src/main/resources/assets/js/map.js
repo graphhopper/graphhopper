@@ -8,6 +8,7 @@ var menuStart;
 var menuIntermediate;
 var menuEnd;
 var elevationControl = null;
+var fullscreenControl = null;
 
 // Items added in every contextmenu.
 var defaultContextmenuItems;
@@ -15,32 +16,35 @@ var defaultContextmenuItems;
 // called if window changes or before map is created
 function adjustMapSize() {
     var mapDiv = $("#map");
-    var width = $(window).width() - 280;
-    if (width < 400) {
-        width = 400;
-        mapDiv.attr("style", "position: relative; float: right;");
-    } else {
-        mapDiv.attr("style", "position: absolute; right: 0;");
+
+    // ensure that map does never exceed current window width so that no scrollbars are triggered leading to a smaller total width
+    mapDiv.width(100);
+    if(fullscreenControl) {
+        fullscreenControl.updateClass();
+        if(fullscreenControl.isFullscreen()) {
+            mapDiv.height( $(window).height() ).width( $(window).width() );
+            $("#input").hide();
+            map.invalidateSize();
+            return;
+         }
     }
+
     var height = $(window).height();
-    if (height < 500)
-        height = 500;
+    height = height < 100? 100 : height;
 
-    mapDiv.width(width).height(height);
-    $("#input").height(height);
+    // to avoid height==0 for input_header etc ensure that it is not hidden
+    $("#input").show();
 
-    // console.log("adjustMapSize " + height + "x" + width);
-
-    // reduce info size depending on how heigh the input_header is and reserve space for footer
-    var instructionInfoMaxHeight = height - 60 -
-            $("#input_header").height() - $("#footer").height() - $(".route_description").height();
+    // reduce info size depending on how the height of the input_header is and reserve space for footer
+    var instructionInfoMaxHeight = height - 60 - $("#input_header").height() - $("#footer").height();
     var tabHeight = $("#route_result_tabs li").height();
-    if (!isNaN(tabHeight))
-        instructionInfoMaxHeight -= tabHeight;
+    instructionInfoMaxHeight -= isNaN(tabHeight)? 0 : tabHeight;
+    var routeDescHeight = $(".route_description").height();
+    instructionInfoMaxHeight -= isNaN(routeDescHeight)? 0 : routeDescHeight;
     $(".instructions_info").css("max-height", instructionInfoMaxHeight);
-
-    // reduce info size depending on how high the input_header is and reserve space for footer
-    // $("#info").css("height", height - $("#input_header").height() - 100);
+    var width = $(window).width() - $("#input").width() - 10;
+    mapDiv.width(width).height(height);
+    // somehow this does not work: map.invalidateSize();
 }
 
 function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selectLayer, useMiles) {
@@ -106,9 +110,30 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         zoomOutTitle: translate.tr('zoom_out')
     }).addTo(map);
 
-    new L.Control.loading({
-        zoomControl: zoomControl
-    }).addTo(map);
+    var full = false;
+    L.Control.Fullscreen = L.Control.extend({
+        isFullscreen: function() {
+            return full;
+        },
+        updateClass: function() {
+            var container = this.getContainer();
+            L.DomUtil.setClass(container, full ? 'fullscreen-reverse-btn' : 'fullscreen-btn');
+            L.DomUtil.addClass(container, 'leaflet-control');
+        },
+        onAdd: function (map) {
+            var container = L.DomUtil.create('div', 'fullscreen-btn');
+            container.title = "Fullscreen Mode";
+            container.onmousedown = function(event) {
+                full = !full;
+                adjustMapSize();
+            };
+
+            return container;
+        }
+    });
+    fullscreenControl = new L.Control.Fullscreen({ position: 'topleft'}).addTo(map);
+
+    new L.Control.loading().addTo(map);
 
     L.control.layers(tileLayers.getAvailableTileLayers()/*, overlays*/).addTo(map);
 
@@ -313,6 +338,7 @@ module.exports.createMarker = function (index, coord, setToEnd, setToStart, dele
     return L.marker([coord.lat, coord.lng], {
         icon: ((toFrom === FROM) ? iconFrom : ((toFrom === TO) ? iconTo : new L.NumberedDivIcon({number: index}))),
         draggable: true,
+        autoPan: true,
         contextmenu: true,
         contextmenuItems: defaultContextmenuItems.concat([{
                 text: translate.tr("marker") + ' ' + ((toFrom === FROM) ?

@@ -42,7 +42,7 @@ public class GraphHopperLandmarksIT {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.graphhopper.merge(new CmdArgs().
+        config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "car").
                 put("prepare.ch.weightings", "fastest").
                 put("prepare.lm.weightings", "fastest").

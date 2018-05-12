@@ -20,7 +20,6 @@ function printBashUsage {
   echo "-a | --action <action>    must be one the following actions:"
   echo "     --action import      creates the graph cache only, used for later faster starts"
   echo "     --action web         starts a local server for user access at localhost:8989 and API access at localhost:8989/route"
-  echo "     --action webdebug	  like web but with hot reloading of static files at web/src/main/resources/assets"
   echo "     --action build       creates the graphhopper web JAR"
   echo "     --action clean       removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)"
   echo "     --action measurement does performance analysis of the current source version via random routes (Measurement class)"
@@ -218,14 +217,14 @@ LINK=$(echo $NAME | tr '_' '/')
 if [ "$FILE" == "-" ]; then
    LINK=
 elif [ ${FILE: -4} == ".osm" ]; then 
-   LINK="http://download.geofabrik.de/$LINK-latest.osm.bz2"
+   LINK="https://download.geofabrik.de/$LINK-latest.osm.bz2"
 elif [ ${FILE: -4} == ".ghz" ]; then
-   LINK="http://graphhopper.com/public/maps/0.1/$FILE"      
+   LINK="https://graphhopper.com/public/maps/0.1/$FILE"
 elif [ ${FILE: -4} == ".pbf" ]; then
-   LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
+   LINK="https://download.geofabrik.de/$LINK-latest.osm.pbf"
 else
    # e.g. if directory ends on '-gh'
-   LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
+   LINK="https://download.geofabrik.de/$LINK-latest.osm.pbf"
 fi
 
 : "${JAVA_OPTS:=-Xmx1000m -Xms1000m -server}"
@@ -237,12 +236,7 @@ packageJar
 
 echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 
-if [[ "$ACTION" = "webdebug" ]]; then
-  echo $GH_WEB_OPTS
-  exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
-                 $GH_WEB_OPTS -cp "$JAR" com.graphhopper.http.GraphHopperDebugApplication server $CONFIG
-
-elif [[ "$ACTION" = "web" ]]; then
+if [[ "$ACTION" = "web" ]]; then
   export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
 
   if [[ "$RUN_BACKGROUND" == "true" ]]; then

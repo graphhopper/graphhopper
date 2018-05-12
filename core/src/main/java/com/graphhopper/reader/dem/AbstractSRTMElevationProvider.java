@@ -177,6 +177,12 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
                 } catch (SocketTimeoutException ex) {
                     // just try again after a little nap
                     Thread.sleep(2000);
+                } catch (FileNotFoundException ex) {
+                    if (zippedURL.contains(".hgt.zip")) {
+                        zippedURL = zippedURL.replace(".hgt.zip", "hgt.zip");
+                    } else {
+                        throw ex;
+                    }
                 }
             }
 

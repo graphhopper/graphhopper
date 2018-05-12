@@ -33,6 +33,8 @@ function parseUrl(query) {
 // it is suboptimal that we need two long parameters for two array entries:
 // one.two=1&one.two=2 => one: { two : ["1", "2"] }
 function mergeParamIntoObject(res, key, value) {
+    var tmpVal;
+
     var objectIndex = key.indexOf(".");
     if(objectIndex < 0) {
         // force always array for some keys even if just one parameter
@@ -44,7 +46,7 @@ function mergeParamIntoObject(res, key, value) {
 
             res[key] = value;
         } else {
-            var tmpVal = res[key];
+            tmpVal = res[key];
             if (isArray(tmpVal)) {
                 tmpVal.push(value);
             } else if (tmpVal) {
@@ -60,7 +62,7 @@ function mergeParamIntoObject(res, key, value) {
     var newKey = key.substring(0, objectIndex);
     var subKey = key.substring(objectIndex + 1);
 
-    var tmpVal = res[newKey];
+    tmpVal = res[newKey];
     if(!tmpVal)
         tmpVal = {};
 

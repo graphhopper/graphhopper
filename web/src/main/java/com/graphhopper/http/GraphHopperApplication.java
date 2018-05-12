@@ -30,13 +30,14 @@ import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.graphhopper.http.cli.ImportCommand;
 import com.graphhopper.http.resources.RootResource;
 import io.dropwizard.Application;
+import io.dropwizard.bundles.assets.ConfiguredAssetsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class GraphHopperApplication extends Application<GraphHopperServerConfiguration> {
+public final class GraphHopperApplication extends Application<GraphHopperServerConfiguration> {
 
     public static void main(String[] args) throws Exception {
         new GraphHopperApplication().run(args);
@@ -45,6 +46,7 @@ public class GraphHopperApplication extends Application<GraphHopperServerConfigu
     @Override
     public void initialize(Bootstrap<GraphHopperServerConfiguration> bootstrap) {
         bootstrap.addBundle(new GraphHopperBundle());
+        bootstrap.addBundle(new ConfiguredAssetsBundle("/assets/", "/maps/", "index.html"));
         bootstrap.addCommand(new ImportCommand());
     }
 

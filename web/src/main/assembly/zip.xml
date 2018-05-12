@@ -11,7 +11,7 @@
             <directory>${project.basedir}/src/main/</directory>
             <outputDirectory/>
             <includes>
-                <include>webapp/**</include>
+                <include>resources/assets/**</include>
             </includes>
         </fileSet>
         <fileSet>
