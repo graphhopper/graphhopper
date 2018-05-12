@@ -177,17 +177,9 @@ public class Measurement {
             put("measurement.usedMB", getUsedMB());
 
             if (!summaryLocation.trim().isEmpty()) {
-                logger.info("writing summary to " + summaryLocation);
                 writeSummary(summaryLocation, propLocation);
             }
-
-            try {
-                logger.info("store into " + propLocation);
-                store(new FileWriter(propLocation), "measurement finish, "
-                        + new Date().toString() + ", " + Constants.BUILD_DATE);
-            } catch (IOException ex) {
-                logger.error("Problem while storing properties " + graphLocation + ", " + propLocation, ex);
-            }
+            storeProperties(graphLocation, propLocation);
         }
     }
 
@@ -518,15 +510,21 @@ public class Measurement {
         properties.put(key, "" + val);
     }
 
-    private void store(FileWriter fileWriter, String comment) throws IOException {
-        fileWriter.append("#" + comment + "\n");
-        for (Entry<String, String> e : properties.entrySet()) {
-            fileWriter.append(e.getKey());
-            fileWriter.append("=");
-            fileWriter.append(e.getValue());
-            fileWriter.append("\n");
+    private void storeProperties(String graphLocation, String propLocation) {
+        logger.info("storing measurement properties in " + propLocation);
+        try (FileWriter fileWriter = new FileWriter(propLocation)) {
+            String comment = "measurement finish, " + new Date().toString() + ", " + Constants.BUILD_DATE;
+            fileWriter.append("#" + comment + "\n");
+            for (Entry<String, String> e : properties.entrySet()) {
+                fileWriter.append(e.getKey());
+                fileWriter.append("=");
+                fileWriter.append(e.getValue());
+                fileWriter.append("\n");
+            }
+            fileWriter.flush();
+        } catch (IOException e) {
+            logger.error("Problem while storing properties " + graphLocation + ", " + propLocation, e);
         }
-        fileWriter.flush();
     }
 
     /**
@@ -534,6 +532,7 @@ public class Measurement {
      * a file. Each run of the measurement class will append a new line.
      */
     private void writeSummary(String summaryLocation, String propLocation) {
+        logger.info("writing summary to " + summaryLocation);
         // choose properties that should be in summary here
         String[] properties = {
                 "graph.nodes",
@@ -549,14 +548,12 @@ public class Measurement {
                 "routingCH.visited_nodes_mean",
                 "measurement.timestamp"
         };
-        try {
-            File f = new File(summaryLocation);
-            boolean writeHeader = !f.exists();
-            FileWriter writer = new FileWriter(f, true);
+        File f = new File(summaryLocation);
+        boolean writeHeader = !f.exists();
+        try (FileWriter writer = new FileWriter(f, true)) {
             if (writeHeader)
                 writer.write(getSummaryHeader(properties));
             writer.write(getSummaryLogLine(properties, propLocation));
-            writer.close();
         } catch (IOException e) {
             logger.error("Could not write summary to file '{}'", summaryLocation, e);
         }
