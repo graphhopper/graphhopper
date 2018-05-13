@@ -538,11 +538,7 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private void testPathCalculation(int from, int to, int expectedWeight, IntArrayList expectedNodes) {
-        testPathCalculation(from, to, expectedWeight, expectedNodes, TraversalMode.EDGE_BASED_2DIR);
-    }
-
-    private void testPathCalculation(int from, int to, int expectedWeight, IntArrayList expectedNodes, TraversalMode traversalMode) {
-        AbstractBidirectionEdgeCHNoSOD algo = createAlgo(traversalMode);
+        AbstractBidirectionEdgeCHNoSOD algo = createAlgo();
         Path path = algo.calcPath(from, to);
         if (expectedWeight < 0) {
             assertFalse(String.format(Locale.ROOT, "Unexpected path from %d to %d.", from, to), path.isFound());
@@ -554,10 +550,10 @@ public class CHQueryWithTurnCostsTest {
         }
     }
 
-    private AbstractBidirectionEdgeCHNoSOD createAlgo(TraversalMode traversalMode) {
+    private AbstractBidirectionEdgeCHNoSOD createAlgo() {
         TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension);
         chTurnWeighting.setDefaultUTurnCost(0);
-        AbstractBidirectionEdgeCHNoSOD algo = new AStarBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting, traversalMode);
+        AbstractBidirectionEdgeCHNoSOD algo = new AStarBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting);
         algo.setEdgeFilter(new LevelEdgeFilter(chGraph));
         return algo;
     }

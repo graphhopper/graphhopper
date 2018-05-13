@@ -39,12 +39,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     private final EdgeExplorer innerInExplorer;
     private final EdgeExplorer innerOutExplorer;
 
-    public AbstractBidirectionEdgeCHNoSOD(Graph graph, Weighting weighting, TraversalMode traversalMode) {
-        super(graph, weighting, traversalMode);
-        if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
-            throw new IllegalArgumentException(String.format(Locale.ROOT, "Only traversal mode '%s' supported by this algorithm, " +
-                    "for node based traversal use DijkstraBidirectionCH instead", TraversalMode.EDGE_BASED_2DIR));
-        }
+    public AbstractBidirectionEdgeCHNoSOD(Graph graph, Weighting weighting) {
+        super(graph, weighting, TraversalMode.EDGE_BASED_2DIR);
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
         innerInExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
         innerOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));

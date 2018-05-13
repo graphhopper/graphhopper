@@ -25,8 +25,8 @@ import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
 
 public class DijkstraBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD {
-    public DijkstraBidirectionEdgeCHNoSOD(Graph graph, Weighting weighting, TraversalMode traversalMode) {
-        super(graph, weighting, traversalMode);
+    public DijkstraBidirectionEdgeCHNoSOD(Graph graph, Weighting weighting) {
+        super(graph, weighting);
     }
 
     @Override

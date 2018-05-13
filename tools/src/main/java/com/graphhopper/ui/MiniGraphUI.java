@@ -101,8 +101,8 @@ public class MiniGraphUI {
                     private final GraphicsWrapper mg;
                     private Graphics2D g2;
 
-                    public TmpAlgo(Graph graph, Weighting type, TraversalMode tMode, GraphicsWrapper mg) {
-                        super(graph, type, tMode);
+                    public TmpAlgo(Graph graph, Weighting type, GraphicsWrapper mg) {
+                        super(graph, type);
                         this.mg = mg;
                     }
 
@@ -124,7 +124,7 @@ public class MiniGraphUI {
                 public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
                     // doable but ugly
                     Weighting w = ((PrepareContractionHierarchies) tmpFactory).getWeighting();
-                    return new TmpAlgo(g, new PreparationWeighting(w), TraversalMode.NODE_BASED, mg).
+                    return new TmpAlgo(g, new PreparationWeighting(w), mg).
                             setEdgeFilter(new LevelEdgeFilter((CHGraph) routingGraph));
                 }
             };

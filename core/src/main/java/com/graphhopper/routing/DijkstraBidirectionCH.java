@@ -33,8 +33,8 @@ import com.graphhopper.util.EdgeIterator;
  * @author ammagamma
  */
 public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
-    public DijkstraBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
-        super(graph, weighting, traversalMode);
+    public DijkstraBidirectionCH(Graph graph, Weighting weighting) {
+        super(graph, weighting);
     }
 
     @Override
