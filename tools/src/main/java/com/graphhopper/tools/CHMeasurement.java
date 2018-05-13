@@ -38,9 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -126,7 +124,7 @@ public class CHMeasurement {
 
         EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
         List<ManualPrepareContractionHierarchies.Stats> aggressiveCounts = runContraction();
-        System.out.printf("aggressive: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(aggressiveCounts), WitnessPathFinder.pollCount, getTotalSearches(aggressiveCounts), WitnessPathFinder.searchCount);
+        System.out.printf("aggressive: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(aggressiveCounts), WitnessPathSearcher.pollCount, getTotalSearches(aggressiveCounts), WitnessPathSearcher.searchCount);
 
         EdgeBasedNodeContractor.searchType = SearchType.LEGACY_AGGRESSIVE;
         List<ManualPrepareContractionHierarchies.Stats> legacyCounts = runContraction();
@@ -362,7 +360,7 @@ public class CHMeasurement {
         int contractedNodes = 100;
         int logMessages = 5;
         LegacyWitnessPathFinder.sigmaFactor = 3.0;
-        WitnessPathFinder.sigmaFactor = 3.0;
+        WitnessPathSearcher.sigmaFactor = 3.0;
         boolean cleanup = true;
         int landmarks = 0;
         if (args.length == 12) {
@@ -371,7 +369,7 @@ public class CHMeasurement {
             EdgeBasedNodeContractor.searchType = SearchType.valueOf(args[1]);
             double factor = Double.valueOf(args[2]);
             LegacyWitnessPathFinder.sigmaFactor = factor;
-            WitnessPathFinder.sigmaFactor = factor;
+            WitnessPathSearcher.sigmaFactor = factor;
             EdgeBasedNodeContractor.edgeQuotientWeight = Float.valueOf(args[3]);
             EdgeBasedNodeContractor.originalEdgeQuotientWeight = Float.valueOf(args[4]);
             EdgeBasedNodeContractor.hierarchyDepthWeight = Float.valueOf(args[5]);

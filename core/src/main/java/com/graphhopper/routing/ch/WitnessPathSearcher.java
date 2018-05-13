@@ -59,7 +59,7 @@ import static java.lang.Double.isInfinite;
  * edges during the search and determine this maximum number based on the statistics we collected during previous
  * searches.
  */
-public class WitnessPathFinder {
+public class WitnessPathSearcher {
     private static final int NO_NODE = -1;
 
     protected final GraphHopperStorage graph;
@@ -119,7 +119,7 @@ public class WitnessPathFinder {
     public static int pollCount;
     protected final Stats stats = new Stats();
 
-    public WitnessPathFinder(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting) {
+    public WitnessPathSearcher(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting) {
         this.graph = graph;
         this.chGraph = chGraph;
         this.turnWeighting = turnWeighting;

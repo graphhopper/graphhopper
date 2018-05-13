@@ -15,7 +15,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class WitnessPathFinderTest {
+public class WitnessPathSearcherTest {
 
     private GraphHopperStorage graph;
     private CHGraph chGraph;
@@ -42,7 +42,7 @@ public class WitnessPathFinderTest {
         graph.edge(3, 4, 1, false);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        WitnessPathFinder finder = createFinder();
+        WitnessPathSearcher finder = createFinder();
         finder.initSearch(2, 1, 0);
         WitnessSearchEntry result = finder.runSearch(3, 3);
         WitnessSearchEntry expected = new ExpectedResultBuilder(3, 2, 2, 2.0)
@@ -60,7 +60,7 @@ public class WitnessPathFinderTest {
         graph.edge(3, 4, 1, true);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        WitnessPathFinder finder = createFinder();
+        WitnessPathSearcher finder = createFinder();
         finder.initSearch(2, 1, 0);
         WitnessSearchEntry result = finder.runSearch(3, 3);
         WitnessSearchEntry expected = new ExpectedResultBuilder(3, 2, 2, 2.0)
@@ -82,7 +82,7 @@ public class WitnessPathFinderTest {
         graph.edge(5, 3, 1, false);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        WitnessPathFinder finder = createFinder();
+        WitnessPathSearcher finder = createFinder();
         finder.initSearch(2, 1, 0);
         WitnessSearchEntry result = finder.runSearch(3, 3);
         assertNull(result);
@@ -101,14 +101,14 @@ public class WitnessPathFinderTest {
         graph.edge(5, 3, 1, true);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        WitnessPathFinder finder = createFinder();
+        WitnessPathSearcher finder = createFinder();
         finder.initSearch(2, 1, 0);
         WitnessSearchEntry result = finder.runSearch(3, 3);
         assertNull(result);
     }
 
-    private WitnessPathFinder createFinder() {
-        return new WitnessPathFinder(graph, chGraph, chTurnWeighting);
+    private WitnessPathSearcher createFinder() {
+        return new WitnessPathSearcher(graph, chGraph, chTurnWeighting);
     }
 
     private void setMaxLevelOnAllNodes() {
