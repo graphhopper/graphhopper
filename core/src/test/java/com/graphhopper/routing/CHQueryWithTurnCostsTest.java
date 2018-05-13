@@ -6,7 +6,6 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.LevelEdgeFilter;
-import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -19,6 +18,8 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,6 +33,7 @@ import static org.junit.Assert.assertFalse;
  * The graph preparation is done manually here and the tests try to focus on border cases that have to be covered
  * by the query algorithm correctly.
  */
+@RunWith(Parameterized.class)
 public class CHQueryWithTurnCostsTest {
     private final int maxCost = 10;
     private final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost);
@@ -40,6 +42,16 @@ public class CHQueryWithTurnCostsTest {
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
     private final TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
     private final CHGraph chGraph = graph.getGraph(CHGraph.class);
+    private String algoString;
+
+    @Parameterized.Parameters(name = "{0}")
+    public static Object[] parameters() {
+        return new Object[]{"astar", "dijkstra"};
+    }
+
+    public CHQueryWithTurnCostsTest(String algoString) {
+        this.algoString = algoString;
+    }
 
     @Test
     public void testFindPathWithTurnCosts_bidirected_no_shortcuts_smallGraph() {
@@ -553,7 +565,9 @@ public class CHQueryWithTurnCostsTest {
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
         TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension);
         chTurnWeighting.setDefaultUTurnCost(0);
-        AbstractBidirectionEdgeCHNoSOD algo = new AStarBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting);
+        AbstractBidirectionEdgeCHNoSOD algo = "astar".equals(algoString) ?
+                new AStarBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting) :
+                new DijkstraBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting);
         algo.setEdgeFilter(new LevelEdgeFilter(chGraph));
         return algo;
     }
