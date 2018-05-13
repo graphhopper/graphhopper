@@ -46,7 +46,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     public static float originalEdgeQuotientWeight = 3;
     public static float hierarchyDepthWeight = 2;
     private final TurnWeighting turnWeighting;
-    private final TraversalMode traversalMode;
     private final SimpleSearch simpleSearch = new SimpleSearch();
     private final ShortcutHandler addingShortcutHandler = new AddingShortcutHandler();
     private final ShortcutHandler countingShortcutHandler = new CountingShortcutHandler();
@@ -78,12 +77,15 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private int numPolledEdges;
     private int numSearches;
 
-    public EdgeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, TurnWeighting turnWeighting, TraversalMode traversalMode) {
+    private final PMap options;
+
+    public EdgeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph,
+                                   TurnWeighting turnWeighting, PMap options) {
         super(dir, ghStorage, prepareGraph, turnWeighting);
         this.turnWeighting = turnWeighting;
         this.encoder = turnWeighting.getFlagEncoder();
-        this.traversalMode = traversalMode;
         this.witnessSearchStrategy = new TurnReplacementSearch();
+        this.options = options;
     }
 
     @Override
@@ -91,11 +93,11 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         super.initFromGraph();
         int maxLevel = prepareGraph.getNodes();
         legacyWitnessPathFinder = arrayBasedWitnessPathFinder ?
-                new ArrayBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel) :
-                new MapBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, traversalMode, maxLevel);
+                new ArrayBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, TraversalMode.EDGE_BASED_2DIR, maxLevel) :
+                new MapBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, TraversalMode.EDGE_BASED_2DIR, maxLevel);
         witnessPathSearcher = arrayBasedWitnessPathFinder ?
-                new WitnessPathSearcher(ghStorage, prepareGraph, turnWeighting) :
-                new MapWitnessPathSearcher(ghStorage, prepareGraph, turnWeighting);
+                new WitnessPathSearcher(ghStorage, prepareGraph, turnWeighting, options) :
+                new MapWitnessPathSearcher(ghStorage, prepareGraph, turnWeighting, options);
         DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
         DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
         inEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
@@ -736,7 +738,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private boolean illegalUTurn(int inEdge, int outEdge) {
-        return !traversalMode.hasUTurnSupport() && outEdge == inEdge;
+        return outEdge == inEdge;
     }
 
     private int getEdgeKey(int edge, int adjNode) {

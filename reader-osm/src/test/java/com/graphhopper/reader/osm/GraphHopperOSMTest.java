@@ -32,10 +32,7 @@ import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
@@ -886,8 +883,8 @@ public class GraphHopperOSMTest {
         GraphHopperStorage storage = new GraphHopperStorage(Arrays.asList(fwSimpleTruck, fwTruck), ramDir, em, false, new GraphExtension.NoOpExtension());
         decorator.addWeighting(fwSimpleTruck);
         decorator.addWeighting(fwTruck);
-        decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck), fwSimpleTruck, TraversalMode.NODE_BASED));
-        decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwTruck), fwTruck, TraversalMode.NODE_BASED));
+        decorator.addPreparation(createPrepareContractionHierarchies(ramDir, storage, fwSimpleTruck));
+        decorator.addPreparation(createPrepareContractionHierarchies(ramDir, storage, fwTruck));
 
         HintsMap wMap = new HintsMap("fastest");
         wMap.put("vehicle", "truck");
@@ -899,10 +896,15 @@ public class GraphHopperOSMTest {
         decorator.addWeighting(fwTruck);
         decorator.addWeighting(fwSimpleTruck);
         try {
-            decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck), fwSimpleTruck, TraversalMode.NODE_BASED));
+            decorator.addPreparation(createPrepareContractionHierarchies(ramDir, storage, fwSimpleTruck));
             assertTrue(false);
         } catch (Exception ex) {
         }
+    }
+
+    private PrepareContractionHierarchies createPrepareContractionHierarchies(RAMDirectory ramDir, GraphHopperStorage storage, Weighting fwSimpleTruck) {
+        return new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck),
+                fwSimpleTruck, TraversalMode.NODE_BASED, new PMap());
     }
 
     @Test

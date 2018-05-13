@@ -25,10 +25,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.CHEdgeExplorer;
-import com.graphhopper.util.CHEdgeIterator;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,16 +76,18 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int neighborUpdatePercentage = 20;
     protected double nodesContractedPercentage = 100;
     protected double logMessagesPercentage = 20;
+    private final PMap options;
     private int initSize;
     private int checkCounter;
 
     public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph,
-                                         Weighting weighting, TraversalMode traversalMode) {
+                                         Weighting weighting, TraversalMode traversalMode, PMap options) {
         this.dir = dir;
         this.ghStorage = ghStorage;
         this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
         this.weighting = weighting;
+        this.options = options;
         prepareWeighting = new PreparationWeighting(weighting);
     }
 
@@ -464,8 +463,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private NodeContractor createNodeContractor(Graph graph, TraversalMode traversalMode) {
         if (traversalMode.isEdgeBased()) {
             TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased(graph);
-            // todo: shall we support TraversalMode.EDGE_BASED_2DIR_UTURN ?
-            return new EdgeBasedNodeContractor(dir, ghStorage, prepareGraph, chTurnWeighting, EDGE_BASED_2DIR);
+            return new EdgeBasedNodeContractor(dir, ghStorage, prepareGraph, chTurnWeighting, options);
         } else {
             return new NodeBasedNodeContractor(dir, ghStorage, prepareGraph, weighting);
         }
@@ -476,7 +474,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // query graph!
         GraphExtension extension = graph.getExtension();
         if (!(extension instanceof TurnCostExtension)) {
-            // todo: can we allow edge-based CH without turn costs ? does this make any sense (not really (?))
             throw new IllegalArgumentException("For edge-based CH you need a turn cost extension");
         }
         TurnCostExtension turnCostExtension = (TurnCostExtension) extension;

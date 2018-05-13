@@ -7,6 +7,7 @@ import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.PMap;
 
 import java.util.PriorityQueue;
 
@@ -16,8 +17,8 @@ public class MapWitnessPathSearcher extends WitnessPathSearcher {
     private IntObjectMap<WitnessSearchEntry> entries;
     private PriorityQueue<WitnessSearchEntry> priorityQueue;
 
-    public MapWitnessPathSearcher(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting) {
-        super(graph, chGraph, turnWeighting);
+    public MapWitnessPathSearcher(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting, PMap options) {
+        super(graph, chGraph, turnWeighting, options);
     }
 
     @Override

@@ -25,10 +25,7 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.*;
 
 import java.util.Arrays;
 
@@ -100,19 +97,17 @@ public class WitnessPathSearcher {
 
     // used to limit searches
     int numSettledEdges;
-    // todo: provide setter
-    private final int minimumMaxSettledEdges = 100;
-    int maxSettledEdges = minimumMaxSettledEdges;
+    private int minimumMaxSettledEdges;
+    int maxSettledEdges;
     int numDirectCenterNodePaths;
-    // Number of standard deviations above the mean of the distribution of observed number of settled edges in previous
-    // searches where the maximum for the next searches is chosen. For a normal distribution for example sigmaFactor = 2
-    // means that about 95% of all observations are included.
-    // todo: make private and use setter
-    public static double sigmaFactor = 3.0;
-    // Used to keep track of the average number and distribution width of settled edges during the last searches. This
-    // allows estimating a reasonable limit for the maximum number of settled edges for the next searches.
+    // Determines the maximum number of settled edges for the next search based on the mean number of settled edges and
+    // the fluctuation in the previous searches. The higher this number the longer the search will last and the more
+    // witness paths will be found. Assuming a normal distribution for example sigmaFactor = 2 means that about 95% of  
+    // the searches will be within the limit.
+    private double sigmaFactor;
+    // Used to keep track of the average number and distribution width of settled edges during the last searches.
     private final OnFlyStatisticsCalculator statisticsCalculator = new OnFlyStatisticsCalculator();
-    private final int statisticsResetInterval = 10_000;
+    private int statisticsResetInterval;
 
     // statistics to analyze performance
     int numPolledEdges;
@@ -120,7 +115,7 @@ public class WitnessPathSearcher {
     public static int pollCount;
     protected final Stats stats = new Stats();
 
-    public WitnessPathSearcher(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting) {
+    public WitnessPathSearcher(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting, PMap options) {
         this.graph = graph;
         this.chGraph = chGraph;
         this.turnWeighting = turnWeighting;
@@ -129,6 +124,12 @@ public class WitnessPathSearcher {
         outEdgeExplorer = chGraph.createEdgeExplorer(outEdgeFilter);
         origInEdgeExplorer = graph.createEdgeExplorer(inEdgeFilter);
         maxLevel = chGraph.getNodes();
+
+        minimumMaxSettledEdges = options.getInt("edge_ch_witness_path_searcher.min_max_settled_edges", 100);
+        sigmaFactor = options.getDouble("edge_ch_witness_path_searcher.sigma_factor", 3.0);
+        statisticsResetInterval = options.getInt("edge_ch_witness_path_searcher.statistics_reset_interval", 10_000);
+
+        maxSettledEdges = minimumMaxSettledEdges;
         setupSearcher(graph);
     }
 
@@ -494,14 +495,13 @@ public class WitnessPathSearcher {
         @Override
         public String toString() {
             return String.format("settled edges stats (since last reset) - " +
-                            " limit-exhaustion: %5.1f %%, (avg-settled: %5.1f, avg-max: %5.1f, avg-mean: %5.1f, avg-sigma: %5.1f, sigma-factor: %.1f)," +
+                            " limit-exhaustion: %5.1f %%, (avg-settled: %5.1f, avg-max: %5.1f, avg-mean: %5.1f, avg-sigma: %5.1f)," +
                             " avg-initial entries: %5.1f, settled edges distribution: %s",
                     divideOrZero(totalNumSettledEdges, totalMaxSettledEdges) * 100,
                     divideOrZero(totalNumSettledEdges, totalNumResets),
                     divideOrZero(totalMaxSettledEdges, totalNumResets),
                     divideOrZero(totalMeanSettledEdges, totalNumStatCalcResets),
                     divideOrZero(totalStdDeviationSettledEdges, totalNumStatCalcResets),
-                    sigmaFactor,
                     divideOrZero(totalNumInitialEntries, totalNumResets),
                     Arrays.toString(settledEdgesStats));
         }

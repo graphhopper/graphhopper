@@ -26,6 +26,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIterator;
+import com.graphhopper.util.PMap;
 
 import java.util.*;
 
@@ -42,8 +43,8 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
     private int lastShortcutCount;
 
     public ManualPrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph, Weighting weighting,
-                                               TraversalMode traversalMode) {
-        super(dir, ghStorage, chGraph, weighting, traversalMode);
+                                               TraversalMode traversalMode, PMap options) {
+        super(dir, ghStorage, chGraph, weighting, traversalMode, options);
     }
 
     public ManualPrepareContractionHierarchies setContractionOrder(List<Integer> contractionOrder) {

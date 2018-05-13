@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -98,7 +97,8 @@ public class CHMeasurement {
         }
         ghStorage.freeze();
 
-        EdgeBasedNodeContractor contractor = new EdgeBasedNodeContractor(dir, ghStorage, chGraph, new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension), TraversalMode.EDGE_BASED_2DIR);
+        EdgeBasedNodeContractor contractor = new EdgeBasedNodeContractor(dir, ghStorage, chGraph,
+                new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension), new PMap());
         contractor.initFromGraph();
         int maxLevel = chGraph.getNodes();
         for (int i = 0; i < chGraph.getNodes(); ++i) {
@@ -115,7 +115,7 @@ public class CHMeasurement {
 //            System.out.printf("legacyaggr:  %f, sc: %d, sc-prev: %d, o: %d, o-prev: %d\n", legacyPrio, contractor.numEdges, contractor.numPrevEdges, contractor.numOrigEdges, contractor.numPrevOrigEdges);
         }
     }
-    
+
     private void analyzeLegacyVsAggressive() {
         osmFile = "local/maps/bremen-latest.osm.pbf";
         maxTurnCost = 100;
@@ -179,7 +179,7 @@ public class CHMeasurement {
         }
 
         ManualPrepareContractionHierarchies pch = new ManualPrepareContractionHierarchies(
-                dir, ghStorage, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR);
+                dir, ghStorage, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR, new PMap());
         pch.setSeed(seed);
         pch.setContractedNodes(50);
         pch.doWork();
@@ -321,7 +321,7 @@ public class CHMeasurement {
                 Helper.nf(ghStorage.getAllEdges().length()), Helper.nf(chGraph.getAllEdges().length() - ghStorage.getAllEdges().length()));
         long start = nanoTime();
         ManualPrepareContractionHierarchies pch = new ManualPrepareContractionHierarchies(
-                dir, ghStorage, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR);
+                dir, ghStorage, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR, new PMap());
         pch.setSeed(seed);
         pch.setContractedNodes(nodesContractedPercentage);
         pch.setLogMessages(10);
@@ -338,7 +338,7 @@ public class CHMeasurement {
 //            e.printStackTrace();
 //        }
 //        pch.setContractionOrder(contractionOrder);
-        
+
         pch.doWork();
         long elapsed = nanoTime() - start;
         totalElapsed += elapsed;
@@ -353,44 +353,25 @@ public class CHMeasurement {
      * The queries are compared with a normal AStar search for comparison and to ensure correctness.
      */
     private static void testPerformanceAutomaticNodeOrdering(String[] args) {
-        String osmFile = "local/maps/unterfranken-latest.osm.pbf";
-        int periodicUpdates = 0;
-        int lazyUpdates = 100;
-        int neighborUpdates = 0;
-        int contractedNodes = 100;
-        int logMessages = 5;
-        LegacyWitnessPathFinder.sigmaFactor = 3.0;
-        WitnessPathSearcher.sigmaFactor = 3.0;
-        boolean cleanup = true;
-        int landmarks = 0;
-        if (args.length == 12) {
-            LOGGER.info("Running analysis with parameters {}", Arrays.toString(args));
-            osmFile = args[0];
-            EdgeBasedNodeContractor.searchType = SearchType.valueOf(args[1]);
-            double factor = Double.valueOf(args[2]);
-            LegacyWitnessPathFinder.sigmaFactor = factor;
-            WitnessPathSearcher.sigmaFactor = factor;
-            EdgeBasedNodeContractor.edgeQuotientWeight = Float.valueOf(args[3]);
-            EdgeBasedNodeContractor.originalEdgeQuotientWeight = Float.valueOf(args[4]);
-            EdgeBasedNodeContractor.hierarchyDepthWeight = Float.valueOf(args[5]);
-            periodicUpdates = Integer.valueOf(args[6]);
-            lazyUpdates = Integer.valueOf(args[7]);
-            neighborUpdates = Integer.valueOf(args[8]);
-            contractedNodes = Integer.valueOf(args[9]);
-            landmarks = Integer.valueOf(args[10]);
-            cleanup = Boolean.valueOf(args[11]);
-        }
+        CmdArgs cmdArgs = CmdArgs.read(args);
+        LOGGER.info("Running analysis with parameters {}", cmdArgs);
+        cmdArgs.putIfAbsent("datareader.file", "local/maps/unterfranken-latest.osm.pbf");
+        int periodicUpdates = cmdArgs.getInt("period_updates", 0);
+        int lazyUpdates = cmdArgs.getInt("lazy_updates", 100);
+        int neighborUpdates = cmdArgs.getInt("neighbor_updates", 0);
+        int contractedNodes = cmdArgs.getInt("contract_nodes", 100);
+        int logMessages = cmdArgs.getInt("log_messages", 5);
+        int landmarks = cmdArgs.getInt("landmarks", 0);
+        boolean cleanup = cmdArgs.getBool("cleanup", true);
+        final boolean withTurnCosts = cmdArgs.getBool("with_turncosts", true);
+
         final GraphHopper graphHopper = new GraphHopperOSM();
-        CmdArgs cmdArgs = new CmdArgs();
-        cmdArgs.put("datareader.file", osmFile);
-        final boolean withTurnCosts = true;
-//        final boolean withTurnCosts = false;
         if (withTurnCosts) {
             cmdArgs.put("graph.flag_encoders", "car|turn_costs=true");
             cmdArgs.put("prepare.ch.weightings", "fastest");
             if (landmarks > 0) {
                 cmdArgs.put("prepare.lm.weightings", "fastest");
-                cmdArgs.put("prepare.lm.landmarks", "32");
+                cmdArgs.put("prepare.lm.landmarks", landmarks);
             }
         } else {
             cmdArgs.put("graph.flag_encoders", "car");
@@ -398,11 +379,12 @@ public class CHMeasurement {
         }
         CHAlgoFactoryDecorator chDecorator = graphHopper.getCHFactoryDecorator();
         chDecorator.setDisablingAllowed(true);
-        chDecorator.setPreparationPeriodicUpdates(periodicUpdates); // default: 20
-        chDecorator.setPreparationLazyUpdates(lazyUpdates);     // default: 10
-        chDecorator.setPreparationNeighborUpdates(neighborUpdates); // default: 20
-        chDecorator.setPreparationContractedNodes(contractedNodes);// default: 100
-        chDecorator.setPreparationLogMessages(logMessages); // default: 20
+        chDecorator.setPreparationPeriodicUpdates(periodicUpdates);
+        chDecorator.setPreparationLazyUpdates(lazyUpdates);
+        chDecorator.setPreparationNeighborUpdates(neighborUpdates);
+        chDecorator.setPreparationContractedNodes(contractedNodes);
+        chDecorator.setPreparationLogMessages(logMessages);
+        chDecorator.setOptions(cmdArgs);
 
         LMAlgoFactoryDecorator lmDecorator = graphHopper.getLMFactoryDecorator();
         lmDecorator.setEnabled(true);
@@ -410,7 +392,6 @@ public class CHMeasurement {
 
         graphHopper.init(cmdArgs);
 
-        // remove previous data
         if (cleanup) {
             graphHopper.clean();
         }

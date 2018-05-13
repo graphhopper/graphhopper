@@ -25,6 +25,7 @@ import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.CH;
 import org.slf4j.Logger;
@@ -59,6 +60,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private int preparationNeighborUpdates = -1;
     private int preparationContractedNodes = -1;
     private double preparationLogMessages = -1;
+    private PMap options = new PMap();
 
     public CHAlgoFactoryDecorator() {
         setPreparationThreads(1);
@@ -143,6 +145,10 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         return this;
     }
 
+    public void setOptions(PMap options) {
+        this.options = options;
+    }
+    
     @Override
     public final boolean isEnabled() {
         return enabled;
@@ -317,7 +323,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         for (Weighting weighting : getWeightings()) {
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
                     new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class, weighting),
-                    weighting, traversalMode);
+                    weighting, traversalMode, options);
             tmpPrepareCH.setPeriodicUpdates(preparationPeriodicUpdates).
                     setLazyUpdates(preparationLazyUpdates).
                     setNeighborUpdates(preparationNeighborUpdates).
@@ -326,5 +332,4 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             addPreparation(tmpPrepareCH);
         }
     }
-
 }

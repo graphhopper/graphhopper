@@ -73,6 +73,11 @@ public class PMap {
         return this;
     }
 
+    public void putIfAbsent(String key, Object str) {
+        if (!has(key))
+            put(key, str);
+    }
+
     public PMap remove(String key) {
         // query accepts camelCase and under_score
         map.remove(Helper.camelCaseToUnderScore(key));
@@ -181,4 +186,5 @@ public class PMap {
     public String toString() {
         return getMap().toString();
     }
+
 }

@@ -13,6 +13,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,8 +33,6 @@ import static org.junit.Assert.*;
  */
 public class EdgeBasedNodeContractorTest {
     private final int maxCost = 10;
-    // todo: u-turn support ? so far tests etc. focus on case without u-turns
-    private final TraversalMode traversalMode = TraversalMode.EDGE_BASED_2DIR;
     private CHGraph chGraph;
     private CarFlagEncoder encoder;
     private GraphHopperStorage graph;
@@ -1273,7 +1272,7 @@ public class EdgeBasedNodeContractorTest {
 
     private EdgeBasedNodeContractor createNodeContractor() {
         Directory dir = new GHDirectory("", DAType.RAM_INT);
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(dir, graph, chGraph, chTurnWeighting, traversalMode);
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(dir, graph, chGraph, chTurnWeighting, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
     }
