@@ -20,7 +20,7 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
     private int[] incEdges;
     private int[] parents;
     private int[] adjNodes;
-    private boolean[] onOrigPaths;
+    private boolean[] isDirectCenterNodePaths;
 
     private IntObjectMap<WitnessSearchEntry> rootParents;
     private IntDoubleBinaryHeap heap;
@@ -47,7 +47,7 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
             }
             double edgeWeight = turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
             double weight = turnWeight + edgeWeight;
-            boolean onOrigPath = outIter.getAdjNode() == centerNode;
+            boolean isDirectCenterNodePath = outIter.getAdjNode() == centerNode;
             int incEdge = outIter.getLastOrigEdge();
             int adjNode = outIter.getAdjNode();
             int key = getEdgeKey(incEdge, adjNode);
@@ -62,7 +62,7 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
                 adjNodes[key] = adjNode;
                 weights[key] = weight;
                 parents[key] = parentKey;
-                onOrigPaths[key] = onOrigPath;
+                isDirectCenterNodePaths[key] = isDirectCenterNodePath;
                 rootParents.put(parentKey, parent);
                 changedEdges.add(key);
             } else if (weight < weights[key]) {
@@ -71,7 +71,7 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
                 edges[key] = outIter.getEdge();
                 weights[key] = weight;
                 parents[key] = parentKey;
-                onOrigPaths[key] = onOrigPath;
+                isDirectCenterNodePaths[key] = isDirectCenterNodePath;
                 rootParents.put(parentKey, parent);
             }
         }
@@ -79,8 +79,8 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
         // now that we know which entries are actually needed we add them to the heap
         for (int i = 0; i < changedEdges.size(); ++i) {
             int key = changedEdges.get(i);
-            if (onOrigPaths[key]) {
-                numOnOrigPath++;
+            if (isDirectCenterNodePaths[key]) {
+                numDirectCenterNodePaths++;
             }
             heap.insert_(weights[key], key);
         }
@@ -108,7 +108,7 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
 
         // run dijkstra to find the optimal path
         while (!heap.isEmpty()) {
-            if (numOnOrigPath < 1 && (!resViaCenter || isInfinite(bestWeight))) {
+            if (numDirectCenterNodePaths < 1 && (!resViaCenter || isInfinite(bestWeight))) {
                 // we have not found a connection to the target edge yet and there are no entries
                 // in the priority queue anymore that are part of the direct path via the center node
                 // -> we will not need a shortcut
@@ -125,13 +125,13 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
             numPolledEdges++;
             pollCount++;
 
-            if (onOrigPaths[currKey]) {
-                numOnOrigPath--;
+            if (isDirectCenterNodePaths[currKey]) {
+                numDirectCenterNodePaths--;
             }
 
             // after a certain amount of edges has been settled we no longer expand entries
             // that are not on a path via the center node
-            if (numSettledEdges > maxSettledEdges && !onOrigPaths[currKey]) {
+            if (numSettledEdges > maxSettledEdges && !isDirectCenterNodePaths[currKey]) {
                 continue;
             }
 
@@ -148,17 +148,17 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
                 if (isInfinite(weight)) {
                     continue;
                 }
-                boolean onOrigPath = onOrigPaths[currKey] && iter.getAdjNode() == centerNode;
+                boolean isDirectCenterNodePath = isDirectCenterNodePaths[currKey] && iter.getAdjNode() == centerNode;
 
                 // dijkstra expansion: add or update current entries
                 int key = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
                 if (edges[key] == -1) {
-                    setEntry(key, iter, weight, currKey, onOrigPath);
+                    setEntry(key, iter, weight, currKey, isDirectCenterNodePath);
                     changedEdges.add(key);
                     heap.insert_(weight, key);
                     updateBestPath(toNode, targetEdge, key);
                 } else if (weight < weights[key]) {
-                    updateEntry(key, iter, weight, currKey, onOrigPath);
+                    updateEntry(key, iter, weight, currKey, isDirectCenterNodePath);
                     heap.update_(weight, key);
                     updateBestPath(toNode, targetEdge, key);
                 }
@@ -190,35 +190,35 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
     }
 
     private WitnessSearchEntry getEntryForKey(int edgeKey) {
-        return new WitnessSearchEntry(edges[edgeKey], incEdges[edgeKey], adjNodes[edgeKey], weights[edgeKey], onOrigPaths[edgeKey]);
+        return new WitnessSearchEntry(edges[edgeKey], incEdges[edgeKey], adjNodes[edgeKey], weights[edgeKey], isDirectCenterNodePaths[edgeKey]);
     }
 
-    private void setEntry(int key, EdgeIteratorState iter, double weight, int parent, boolean onOrigPath) {
+    private void setEntry(int key, EdgeIteratorState iter, double weight, int parent, boolean isDirectCenterNodePath) {
         edges[key] = iter.getEdge();
         incEdges[key] = iter.getLastOrigEdge();
         adjNodes[key] = iter.getAdjNode();
         weights[key] = weight;
         parents[key] = parent;
-        if (onOrigPath) {
-            onOrigPaths[key] = true;
-            numOnOrigPath++;
+        if (isDirectCenterNodePath) {
+            isDirectCenterNodePaths[key] = true;
+            numDirectCenterNodePaths++;
         }
     }
 
-    private void updateEntry(int key, EdgeIteratorState iter, double weight, int currKey, boolean onOrigPath) {
+    private void updateEntry(int key, EdgeIteratorState iter, double weight, int currKey, boolean isDirectCenterNodePath) {
         edges[key] = iter.getEdge();
         weights[key] = weight;
         parents[key] = currKey;
-        if (onOrigPath) {
-            if (!onOrigPaths[key]) {
-                numOnOrigPath++;
+        if (isDirectCenterNodePath) {
+            if (!isDirectCenterNodePaths[key]) {
+                numDirectCenterNodePaths++;
             }
         } else {
-            if (onOrigPaths[key]) {
-                numOnOrigPath--;
+            if (isDirectCenterNodePaths[key]) {
+                numDirectCenterNodePaths--;
             }
         }
-        onOrigPaths[key] = onOrigPath;
+        isDirectCenterNodePaths[key] = isDirectCenterNodePath;
     }
 
 
@@ -228,7 +228,7 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
         incEdges[key] = EdgeIterator.NO_EDGE;
         parents[key] = -1;
         adjNodes[key] = -1;
-        onOrigPaths[key] = false;
+        isDirectCenterNodePaths[key] = false;
     }
 
     private void updateBestPath(int toNode, int targetEdge, int edgeKey) {
@@ -237,7 +237,7 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
             double totalWeight = weights[edgeKey] + calcTurnWeight(incEdges[edgeKey], toNode, targetEdge);
             // we know that there must be some parent so a negative parent key is a real
             // key in the root parents collection --> in this case we did not go via the center
-            boolean viaCenter = parents[edgeKey] >= 0 && onOrigPaths[parents[edgeKey]];
+            boolean viaCenter = parents[edgeKey] >= 0 && isDirectCenterNodePaths[parents[edgeKey]];
             // when in doubt prefer a witness path over an original path
             double tolerance = viaCenter ? 0 : 1.e-6;
             if (totalWeight - tolerance < bestWeight) {
@@ -286,8 +286,8 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
         adjNodes = new int[numEntries];
         Arrays.fill(adjNodes, -1);
 
-        onOrigPaths = new boolean[numEntries];
-        Arrays.fill(onOrigPaths, false);
+        isDirectCenterNodePaths = new boolean[numEntries];
+        Arrays.fill(isDirectCenterNodePaths, false);
     }
 
 }

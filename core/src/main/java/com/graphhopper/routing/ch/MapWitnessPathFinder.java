@@ -47,8 +47,8 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
 
         // now that we know which entries are actually needed we add them to the priority queue
         for (IntObjectCursor<WitnessSearchEntry> e : entries) {
-            if (e.value.onOrigPath) {
-                numOnOrigPath++;
+            if (e.value.isDirectCenterNodePath) {
+                numDirectCenterNodePaths++;
             }
             priorityQueue.add(e.value);
         }
@@ -77,7 +77,7 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
 
         // run dijkstra to find the optimal path
         while (!priorityQueue.isEmpty()) {
-            if (numOnOrigPath < 1 && (!resViaCenter || isInfinite(bestWeight))) {
+            if (numDirectCenterNodePaths < 1 && (!resViaCenter || isInfinite(bestWeight))) {
                 // we have not found a connection to the target edge yet and there are no entries
                 // in the priority queue anymore that are part of the direct path via the center node
                 // -> we will not need a shortcut
@@ -94,13 +94,13 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
             numPolledEdges++;
             pollCount++;
 
-            if (entry.onOrigPath) {
-                numOnOrigPath--;
+            if (entry.isDirectCenterNodePath) {
+                numDirectCenterNodePaths--;
             }
 
             // after a certain amount of edges has been settled we no longer expand entries
             // that are not on a path via the center node
-            if (numSettledEdges > maxSettledEdges && !entry.onOrigPath) {
+            if (numSettledEdges > maxSettledEdges && !entry.isDirectCenterNodePath) {
                 continue;
             }
 
@@ -117,7 +117,7 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
                 if (isInfinite(weight)) {
                     continue;
                 }
-                boolean onOrigPath = entry.onOrigPath && iter.getAdjNode() == centerNode;
+                boolean isDirectCenterNodePath = entry.isDirectCenterNodePath && iter.getAdjNode() == centerNode;
 
                 // dijkstra expansion: add or update current entries
                 int key = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
@@ -128,11 +128,11 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
                             iter.getLastOrigEdge(),
                             iter.getAdjNode(),
                             weight,
-                            onOrigPath
+                            isDirectCenterNodePath
                     );
                     newEntry.parent = entry;
-                    if (onOrigPath) {
-                        numOnOrigPath++;
+                    if (isDirectCenterNodePath) {
+                        numDirectCenterNodePaths++;
                     }
                     entries.indexInsert(index, key, newEntry);
                     priorityQueue.add(newEntry);
@@ -145,16 +145,16 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
                         existingEntry.incEdge = iter.getLastOrigEdge();
                         existingEntry.weight = weight;
                         existingEntry.parent = entry;
-                        if (onOrigPath) {
-                            if (!existingEntry.onOrigPath) {
-                                numOnOrigPath++;
+                        if (isDirectCenterNodePath) {
+                            if (!existingEntry.isDirectCenterNodePath) {
+                                numDirectCenterNodePaths++;
                             }
                         } else {
-                            if (existingEntry.onOrigPath) {
-                                numOnOrigPath--;
+                            if (existingEntry.isDirectCenterNodePath) {
+                                numDirectCenterNodePaths--;
                             }
                         }
-                        existingEntry.onOrigPath = onOrigPath;
+                        existingEntry.isDirectCenterNodePath = isDirectCenterNodePath;
                         priorityQueue.add(existingEntry);
                         updateBestPath(toNode, targetEdge, existingEntry);
                     }
@@ -177,13 +177,13 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
         // when we hit the target node we update the best path
         if (entry.adjNode == toNode) {
             double totalWeight = entry.weight + calcTurnWeight(entry.incEdge, toNode, targetEdge);
-            boolean viaCenter = entry.getParent().onOrigPath;
+            boolean isDirectCenterNodePath = entry.getParent().isDirectCenterNodePath;
             // when in doubt prefer a witness path over an original path
-            double tolerance = viaCenter ? 0 : 1.e-6;
+            double tolerance = isDirectCenterNodePath ? 0 : 1.e-6;
             if (totalWeight - tolerance < bestWeight) {
                 bestWeight = totalWeight;
                 resIncEdge = entry.incEdge;
-                resViaCenter = viaCenter;
+                resViaCenter = isDirectCenterNodePath;
             }
         }
     }

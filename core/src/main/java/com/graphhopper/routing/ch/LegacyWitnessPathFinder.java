@@ -67,7 +67,7 @@ public abstract class LegacyWitnessPathFinder {
         initEntries(initialEntries);
         stats.onInitEntries(initialEntries.size());
         if (numOnOrigPath != 1) {
-            throw new IllegalStateException("There should be exactly one initial entry with onOrigPath = true, but given: " + numOnOrigPath);
+            throw new IllegalStateException("There should be exactly one initial entry with isDirectCenterNodePath = true, but given: " + numOnOrigPath);
         }
     }
 

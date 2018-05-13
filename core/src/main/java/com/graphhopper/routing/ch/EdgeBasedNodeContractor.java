@@ -368,7 +368,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
             EdgeIterator origInIter = fromNodeOrigInEdgeExplorer.setBaseNode(fromNode);
             while (origInIter.next()) {
-                IntObjectMap<WitnessSearchEntry> initialEntries = getInitialEntriesAggressive(fromNode, node, incomingEdges, origInIter);
+                IntObjectMap<WitnessSearchEntry> initialEntries = getInitialEntriesLegacyAggressive(fromNode, node, incomingEdges, origInIter);
                 if (initialEntries.isEmpty()) {
                     continue;
                 }
@@ -452,7 +452,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         }
     }
 
-    private IntObjectMap<WitnessSearchEntry> getInitialEntriesAggressive(int fromNode, int node, EdgeIteratorState origPath, EdgeIteratorState origSourceEdge) {
+    private IntObjectMap<WitnessSearchEntry> getInitialEntriesLegacyAggressive(int fromNode, int node, EdgeIteratorState origPath, EdgeIteratorState origSourceEdge) {
         IntObjectMap<WitnessSearchEntry> initialEntries = new IntObjectHashMap<>();
         int numOnOrigPath = 0;
         final double origPathWeight = turnWeighting.calcWeight(origPath, false, EdgeIterator.NO_EDGE);
@@ -700,7 +700,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             LOGGER.trace("Found a witness path using alternative target edge -> no shortcut");
             return false;
         }
-        return bestPath.getParent().onOrigPath;
+        return bestPath.getParent().isDirectCenterNodePath;
     }
 
     /**
@@ -712,7 +712,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         if (index < 0) {
             LOGGER.trace("Adding/Updating initial entry {}", entry);
             initialEntries.indexInsert(index, edgeKey, entry);
-            if (entry.onOrigPath) {
+            if (entry.isDirectCenterNodePath) {
                 return 1;
             }
         } else {
@@ -721,10 +721,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             // the lowest weight
             if (entry.weight < currEntry.weight) {
                 int difference = 0;
-                if (currEntry.onOrigPath) {
+                if (currEntry.isDirectCenterNodePath) {
                     difference--;
                 }
-                if (entry.onOrigPath) {
+                if (entry.isDirectCenterNodePath) {
                     difference++;
                 }
                 initialEntries.indexReplace(index, entry);

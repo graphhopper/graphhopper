@@ -18,12 +18,16 @@
 package com.graphhopper.routing.ch;
 
 class WitnessSearchEntry extends CHEntry {
-    // todo: explain what this is needed for
-    boolean onOrigPath;
+    /**
+     * Flag used to keep track whether or not a shortest path tree entry represents a path that goes directly (without
+     * visiting any other node) from the source node to the center node (the node to be contracted). The path may
+     * contain additional loops at the center node.
+     */
+    boolean isDirectCenterNodePath;
 
-    public WitnessSearchEntry(int edge, int incEdge, int adjNode, double weight, boolean onOrigPath) {
+    public WitnessSearchEntry(int edge, int incEdge, int adjNode, double weight, boolean isDirectCenterNodePath) {
         super(edge, incEdge, adjNode, weight);
-        this.onOrigPath = onOrigPath;
+        this.isDirectCenterNodePath = isDirectCenterNodePath;
     }
 
     public WitnessSearchEntry getParent() {
@@ -32,6 +36,6 @@ class WitnessSearchEntry extends CHEntry {
 
     @Override
     public String toString() {
-        return super.toString() + ", onOrigPath: " + onOrigPath;
+        return super.toString() + ", isDirectCenterNodePath: " + isDirectCenterNodePath;
     }
 }

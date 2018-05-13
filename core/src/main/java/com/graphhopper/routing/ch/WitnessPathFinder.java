@@ -21,7 +21,6 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.GHUtility;
 
@@ -44,7 +43,7 @@ public abstract class WitnessPathFinder {
     protected final OnFlyStatisticsCalculator statisticsCalculator = new OnFlyStatisticsCalculator();
     protected final Stats stats = new Stats();
 
-    protected int numOnOrigPath;
+    protected int numDirectCenterNodePaths;
     protected int numSettledEdges;
     protected int numPolledEdges;
     protected int maxSettledEdges = initialMaxSettledEdges;
@@ -77,7 +76,7 @@ public abstract class WitnessPathFinder {
         setInitialEntries(centerNode, fromNode, sourceEdge);
         // if there is no entry that reaches the center node we can skip the entire search 
         // and do not need any start entries, because no shortcut will ever be required
-        if (numOnOrigPath < 1) {
+        if (numDirectCenterNodePaths < 1) {
             reset();
             return 0;
         }
@@ -112,7 +111,7 @@ public abstract class WitnessPathFinder {
         stats.onReset(numSettledEdges, maxSettledEdges);
         numSettledEdges = 0;
         numPolledEdges = 0;
-        numOnOrigPath = 0;
+        numDirectCenterNodePaths = 0;
         doReset();
     }
 

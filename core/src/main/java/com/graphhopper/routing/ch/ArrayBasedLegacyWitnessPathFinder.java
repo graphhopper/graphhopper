@@ -38,7 +38,7 @@ public class ArrayBasedLegacyWitnessPathFinder extends LegacyWitnessPathFinder {
     protected void initEntries(IntObjectMap<WitnessSearchEntry> initialEntries) {
         int parentId = -1;
         for (IntObjectCursor<WitnessSearchEntry> e : initialEntries) {
-            if (e.value.onOrigPath) {
+            if (e.value.isDirectCenterNodePath) {
                 numOnOrigPath++;
                 avoidNode = e.value.adjNode;
             }
@@ -149,7 +149,7 @@ public class ArrayBasedLegacyWitnessPathFinder extends LegacyWitnessPathFinder {
         weights[key] = entry.weight;
         parents[key] = parentId;
         rootParents.add(entry.getParent());
-        onOrigPaths[key] = entry.onOrigPath;
+        onOrigPaths[key] = entry.isDirectCenterNodePath;
     }
 
     private void setEntry(int key, EdgeIteratorState iter, double weight, int parent, boolean onOrigPath) {

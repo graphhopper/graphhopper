@@ -43,7 +43,7 @@ public class MapBasedLegacyWitnessPathFinder extends LegacyWitnessPathFinder {
     @Override
     protected void initEntries(IntObjectMap<WitnessSearchEntry> initialEntries) {
         for (IntObjectCursor<WitnessSearchEntry> e : initialEntries) {
-            if (e.value.onOrigPath) {
+            if (e.value.isDirectCenterNodePath) {
                 numOnOrigPath++;
                 avoidNode = e.value.adjNode;
             }
@@ -81,18 +81,18 @@ public class MapBasedLegacyWitnessPathFinder extends LegacyWitnessPathFinder {
             numEntriesPolled++;
             pollCount++;
 
-            if (currEdge.onOrigPath) {
+            if (currEdge.isDirectCenterNodePath) {
                 numOnOrigPath--;
             }
 
-            if (numSettledEdges > maxSettledEdges && !currEdge.onOrigPath) {
+            if (numSettledEdges > maxSettledEdges && !currEdge.isDirectCenterNodePath) {
                 continue;
             }
 
             EdgeIterator iter = outEdgeExplorer.setBaseNode(currEdge.adjNode);
             while (iter.next()) {
                 // todo: increases number of shortcuts and not sure if needed
-//                if (!currEdge.onOrigPath && iter.getAdjNode() == avoidNode) {
+//                if (!currEdge.isDirectCenterNodePath && iter.getAdjNode() == avoidNode) {
 //                    continue;
 //                }
                 if ((!traversalMode.hasUTurnSupport() && iter.getFirstOrigEdge() == currEdge.incEdge) ||
@@ -104,7 +104,7 @@ public class MapBasedLegacyWitnessPathFinder extends LegacyWitnessPathFinder {
                     continue;
                 }
 
-                boolean onOrigPath = currEdge.onOrigPath && iter.getBaseNode() == iter.getAdjNode();
+                boolean onOrigPath = currEdge.isDirectCenterNodePath && iter.getBaseNode() == iter.getAdjNode();
                 int key = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
                 WitnessSearchEntry entry = chEntries.get(key);
                 if (entry == null) {
@@ -151,19 +151,19 @@ public class MapBasedLegacyWitnessPathFinder extends LegacyWitnessPathFinder {
         entry.weight = weight;
         entry.parent = parent;
         if (onOrigPath) {
-            if (!entry.onOrigPath) {
+            if (!entry.isDirectCenterNodePath) {
                 numOnOrigPath++;
             }
         } else {
-            if (entry.onOrigPath) {
+            if (entry.isDirectCenterNodePath) {
                 numOnOrigPath--;
             }
         }
-        entry.onOrigPath = onOrigPath;
+        entry.isDirectCenterNodePath = onOrigPath;
     }
 
     private boolean targetDiscoveredByOrigPath(int targetEdge, int targetNode, WitnessSearchEntry currEdge, EdgeIteratorState iter) {
-        return currEdge.onOrigPath && iter.getLastOrigEdge() == targetEdge && iter.getAdjNode() == targetNode;
+        return currEdge.isDirectCenterNodePath && iter.getLastOrigEdge() == targetEdge && iter.getAdjNode() == targetNode;
     }
 
     private void initCollections() {
