@@ -22,6 +22,39 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
     }
 
     @Override
+    protected void setInitialEntries(int centerNode, int fromNode, int sourceEdge) {
+        EdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
+        while (outIter.next()) {
+            if (isContracted(outIter.getAdjNode())) {
+                continue;
+            }
+            double turnWeight = calcTurnWeight(sourceEdge, fromNode, outIter.getFirstOrigEdge());
+            if (isInfinite(turnWeight)) {
+                continue;
+            }
+            double weight = turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
+            boolean onOrigPath = outIter.getAdjNode() == centerNode;
+            WitnessSearchEntry entry = new WitnessSearchEntry(
+                    outIter.getEdge(),
+                    outIter.getLastOrigEdge(),
+                    outIter.getAdjNode(), turnWeight + weight, onOrigPath);
+            entry.parent = new WitnessSearchEntry(
+                    EdgeIterator.NO_EDGE,
+                    outIter.getFirstOrigEdge(),
+                    fromNode, turnWeight, false);
+            addOrUpdateInitialEntry(entry);
+        }
+
+        // now that we know which entries are actually needed we add them to the priority queue
+        for (IntObjectCursor<WitnessSearchEntry> e : entries) {
+            if (e.value.onOrigPath) {
+                numOnOrigPath++;
+            }
+            priorityQueue.add(e.value);
+        }
+    }
+    
+    @Override
     public WitnessSearchEntry runSearch(int toNode, int targetEdge) {
         // todo: write a test for this case where it becomes clear
         bestWeight = fromNode == toNode
@@ -152,39 +185,6 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
                 resIncEdge = entry.incEdge;
                 resViaCenter = viaCenter;
             }
-        }
-    }
-
-    @Override
-    protected void setInitialEntries(int centerNode, int fromNode, int sourceEdge) {
-        EdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
-        while (outIter.next()) {
-            if (isContracted(outIter.getAdjNode())) {
-                continue;
-            }
-            double turnWeight = calcTurnWeight(sourceEdge, fromNode, outIter.getFirstOrigEdge());
-            if (isInfinite(turnWeight)) {
-                continue;
-            }
-            double weight = turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
-            boolean onOrigPath = outIter.getAdjNode() == centerNode;
-            WitnessSearchEntry entry = new WitnessSearchEntry(
-                    outIter.getEdge(),
-                    outIter.getLastOrigEdge(),
-                    outIter.getAdjNode(), turnWeight + weight, onOrigPath);
-            entry.parent = new WitnessSearchEntry(
-                    EdgeIterator.NO_EDGE,
-                    outIter.getFirstOrigEdge(),
-                    fromNode, turnWeight, false);
-            addOrUpdateInitialEntry(entry);
-        }
-
-        // now that we know which entries are actually needed we add them to the priority queue
-        for (IntObjectCursor<WitnessSearchEntry> e : entries) {
-            if (e.value.onOrigPath) {
-                numOnOrigPath++;
-            }
-            priorityQueue.add(e.value);
         }
     }
 

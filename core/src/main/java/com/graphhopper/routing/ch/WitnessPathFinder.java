@@ -87,6 +87,8 @@ public abstract class WitnessPathFinder {
         return numEntries;
     }
 
+    abstract void setInitialEntries(int centerNode, int fromNode, int sourceEdge);
+
     public abstract WitnessSearchEntry runSearch(int toNode, int targetEdge);
 
     public int getNumPolledEdges() {
@@ -100,8 +102,6 @@ public abstract class WitnessPathFinder {
     public void resetStats() {
         stats.reset();
     }
-
-    abstract void setInitialEntries(int centerNode, int fromNode, int sourceEdge);
 
     abstract void doReset();
 

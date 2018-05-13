@@ -34,6 +34,59 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
         initCollections();
     }
 
+    @Override
+    protected void setInitialEntries(int centerNode, int fromNode, int sourceEdge) {
+        EdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
+        while (outIter.next()) {
+            if (isContracted(outIter.getAdjNode())) {
+                continue;
+            }
+            double turnWeight = calcTurnWeight(sourceEdge, fromNode, outIter.getFirstOrigEdge());
+            if (isInfinite(turnWeight)) {
+                continue;
+            }
+            double edgeWeight = turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
+            double weight = turnWeight + edgeWeight;
+            boolean onOrigPath = outIter.getAdjNode() == centerNode;
+            int incEdge = outIter.getLastOrigEdge();
+            int adjNode = outIter.getAdjNode();
+            int key = getEdgeKey(incEdge, adjNode);
+            int parentKey = -key - 1;
+            WitnessSearchEntry parent = new WitnessSearchEntry(
+                    EdgeIterator.NO_EDGE,
+                    outIter.getFirstOrigEdge(),
+                    fromNode, turnWeight, false);
+            if (edges[key] == -1) {
+                edges[key] = outIter.getEdge();
+                incEdges[key] = incEdge;
+                adjNodes[key] = adjNode;
+                weights[key] = weight;
+                parents[key] = parentKey;
+                onOrigPaths[key] = onOrigPath;
+                rootParents.put(parentKey, parent);
+                changedEdges.add(key);
+            } else if (weight < weights[key]) {
+                // there may be entries with the same adjNode and last original edge, but we only need the one with
+                // the lowest weight
+                edges[key] = outIter.getEdge();
+                weights[key] = weight;
+                parents[key] = parentKey;
+                onOrigPaths[key] = onOrigPath;
+                rootParents.put(parentKey, parent);
+            }
+        }
+
+        // now that we know which entries are actually needed we add them to the heap
+        for (int i = 0; i < changedEdges.size(); ++i) {
+            int key = changedEdges.get(i);
+            if (onOrigPaths[key]) {
+                numOnOrigPath++;
+            }
+            heap.insert_(weights[key], key);
+        }
+    }
+
+    @Override
     public WitnessSearchEntry runSearch(int toNode, int targetEdge) {
         // todo: write a test for this case to make it clear
         bestWeight = fromNode == toNode
@@ -192,58 +245,6 @@ public class ArrayWitnessPathFinder extends WitnessPathFinder {
                 resIncEdge = incEdges[edgeKey];
                 resViaCenter = viaCenter;
             }
-        }
-    }
-
-    @Override
-    protected void setInitialEntries(int centerNode, int fromNode, int sourceEdge) {
-        EdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
-        while (outIter.next()) {
-            if (isContracted(outIter.getAdjNode())) {
-                continue;
-            }
-            double turnWeight = calcTurnWeight(sourceEdge, fromNode, outIter.getFirstOrigEdge());
-            if (isInfinite(turnWeight)) {
-                continue;
-            }
-            double edgeWeight = turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
-            double weight = turnWeight + edgeWeight;
-            boolean onOrigPath = outIter.getAdjNode() == centerNode;
-            int incEdge = outIter.getLastOrigEdge();
-            int adjNode = outIter.getAdjNode();
-            int key = getEdgeKey(incEdge, adjNode);
-            int parentKey = -key - 1;
-            WitnessSearchEntry parent = new WitnessSearchEntry(
-                    EdgeIterator.NO_EDGE,
-                    outIter.getFirstOrigEdge(),
-                    fromNode, turnWeight, false);
-            if (edges[key] == -1) {
-                edges[key] = outIter.getEdge();
-                incEdges[key] = incEdge;
-                adjNodes[key] = adjNode;
-                weights[key] = weight;
-                parents[key] = parentKey;
-                onOrigPaths[key] = onOrigPath;
-                rootParents.put(parentKey, parent);
-                changedEdges.add(key);
-            } else if (weight < weights[key]) {
-                // there may be entries with the same adjNode and last original edge, but we only need the one with
-                // the lowest weight
-                edges[key] = outIter.getEdge();
-                weights[key] = weight;
-                parents[key] = parentKey;
-                onOrigPaths[key] = onOrigPath;
-                rootParents.put(parentKey, parent);
-            }
-        }
-
-        // now that we know which entries are actually needed we add them to the heap
-        for (int i = 0; i < changedEdges.size(); ++i) {
-            int key = changedEdges.get(i);
-            if (onOrigPaths[key]) {
-                numOnOrigPath++;
-            }
-            heap.insert_(weights[key], key);
         }
     }
 
