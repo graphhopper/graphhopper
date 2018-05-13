@@ -47,7 +47,8 @@ import static java.lang.Double.isInfinite;
  * <p>
  * 1) The optimal path described above has finite weight and is a 'direct center node path': it only consists of
  * one edge from s to x, an arbitrary number of loops at x and one edge from x to t.
- * 2) The optimal path has infinite weight or it is not such a direct center node path, i.e. it includes edges from s
+ * 2) The optimal path has infinite weight or it is not a direct center node path, i.e. it includes edges from s to
+ * another node than x or edges from another node than x to t.
  * <p>
  * To find the optimal path an edge-based unidirectional Dijkstra algorithm is used that takes into account turn-costs.
  * The search can be initialized for a given source edge and node to be contracted x. Subsequent searches for different
