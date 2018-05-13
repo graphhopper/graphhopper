@@ -23,15 +23,12 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-
-import java.util.Locale;
 
 public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     private int from;
@@ -49,11 +46,14 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     }
 
     @Override
-    public void initFrom(int from, double weight) {
+    void init(int from, double fromWeight, int to, double toWeight) {
         this.from = from;
-        currFrom = createStartEntry(from, weight, false);
+        this.to = to;
+        currFrom = createStartEntry(from, fromWeight, false);
+        currTo = createStartEntry(to, toWeight, true);
         pqOpenSetFrom.add(currFrom);
-        if (currTo != null && currTo.adjNode == from) {
+        pqOpenSetTo.add(currTo);
+        if (from == to) {
             // special case of identical start and end
             setFinished();
             return;
@@ -61,22 +61,6 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         EdgeFilter filter = additionalEdgeFilter;
         setEdgeFilter(EdgeFilter.ALL_EDGES);
         fillEdgesFrom();
-        setEdgeFilter(filter);
-
-    }
-
-    @Override
-    public void initTo(int to, double weight) {
-        this.to = to;
-        currTo = createStartEntry(to, weight, true);
-        pqOpenSetTo.add(currTo);
-        if (currFrom != null && currFrom.adjNode == to) {
-            // special case of identical start and end
-            setFinished();
-            return;
-        }
-        EdgeFilter filter = additionalEdgeFilter;
-        setEdgeFilter(EdgeFilter.ALL_EDGES);
         fillEdgesTo();
         setEdgeFilter(filter);
     }
