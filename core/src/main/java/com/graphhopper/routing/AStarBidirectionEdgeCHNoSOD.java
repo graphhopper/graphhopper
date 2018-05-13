@@ -18,11 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.AStarCHEntry;
-import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.BeelineWeightApproximator;
-import com.graphhopper.routing.weighting.ConsistentWeightApproximator;
-import com.graphhopper.routing.weighting.WeightApproximator;
-import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
@@ -32,7 +28,7 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
     private final boolean useHeuristicForNodeOrder = false;
     private ConsistentWeightApproximator weightApprox;
 
-    public AStarBidirectionEdgeCHNoSOD(Graph graph, Weighting weighting) {
+    public AStarBidirectionEdgeCHNoSOD(Graph graph, TurnWeighting weighting) {
         super(graph, weighting);
         setApproximation(new BeelineWeightApproximator(nodeAccess, weighting).setDistanceCalc(Helper.DIST_PLANE));
     }

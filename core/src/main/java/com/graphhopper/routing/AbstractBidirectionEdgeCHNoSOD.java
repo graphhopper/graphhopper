@@ -38,9 +38,11 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     private int to;
     private final EdgeExplorer innerInExplorer;
     private final EdgeExplorer innerOutExplorer;
+    private final TurnWeighting turnWeighting;
 
-    public AbstractBidirectionEdgeCHNoSOD(Graph graph, Weighting weighting) {
+    public AbstractBidirectionEdgeCHNoSOD(Graph graph, TurnWeighting weighting) {
         super(graph, weighting, TraversalMode.EDGE_BASED_2DIR);
+        this.turnWeighting = weighting;
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
         innerInExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
         innerOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
@@ -144,9 +146,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
             }
 
             double turnCostsAtBridgeNode = reverse ?
-//                     todo: maybe we should remove the cast and check weighting type at construction time or similar
-                    ((TurnWeighting) weighting).calcTurnWeight(iter.getLastOrigEdge(), iter.getBaseNode(), prevOrNextOrigEdgeId) :
-                    ((TurnWeighting) weighting).calcTurnWeight(prevOrNextOrigEdgeId, iter.getBaseNode(), iter.getFirstOrigEdge());
+                    turnWeighting.calcTurnWeight(iter.getLastOrigEdge(), iter.getBaseNode(), prevOrNextOrigEdgeId) :
+                    turnWeighting.calcTurnWeight(prevOrNextOrigEdgeId, iter.getBaseNode(), iter.getFirstOrigEdge());
 
             double newWeight = entry.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath() + turnCostsAtBridgeNode;
             if (newWeight < bestPath.getWeight()) {
@@ -172,7 +173,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     @Override
     protected int getTraversalId(EdgeIteratorState edge, int origEdgeId, boolean reverse) {
         EdgeIteratorState iterState = graph.getEdgeIteratorState(origEdgeId, edge.getAdjNode());
-        return traversalMode.createTraversalId(iterState, reverse);
+        return GHUtility.createEdgeKey(iterState.getBaseNode(), iterState.getAdjNode(), iterState.getEdge(), reverse);
     }
 
     @Override
