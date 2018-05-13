@@ -18,6 +18,10 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
 
     public MapWitnessPathFinder(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting) {
         super(graph, chGraph, turnWeighting);
+    }
+
+    @Override
+    protected void initialize(GraphHopperStorage graph) {
         doReset();
     }
 

@@ -107,8 +107,8 @@ public class WitnessPathFinderTest {
         assertNull(result);
     }
 
-    private ArrayWitnessPathFinder createFinder() {
-        return new ArrayWitnessPathFinder(graph, chGraph, chTurnWeighting);
+    private WitnessPathFinder createFinder() {
+        return new WitnessPathFinder(graph, chGraph, chTurnWeighting);
     }
 
     private void setMaxLevelOnAllNodes() {
