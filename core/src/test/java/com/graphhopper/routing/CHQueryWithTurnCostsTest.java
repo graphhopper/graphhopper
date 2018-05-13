@@ -272,10 +272,6 @@ public class CHQueryWithTurnCostsTest {
 
         // without u-turns no path can be found
         testPathCalculation(0, 1, -1, Helper.createTList());
-
-        // with u-turns there is a shortest path, node 2 is visited twice
-        // todo: test/implement support for u-turn mode
-//        testPathCalculation(0, 1, 24, Helper.createTList(0, 2, 3, 2, 1), TraversalMode.EDGE_BASED_2DIR_UTURN);
     }
 
     @Test
@@ -339,10 +335,6 @@ public class CHQueryWithTurnCostsTest {
 
         // without u-turns we need to take the loop
         testPathCalculation(0, 1, 18, Helper.createTList(0, 2, 3, 2, 1));
-
-        // with u-turns it is better to turn around at node 3 (note that default u-turn costs are set to 0!)
-        // todo: test/implement support for u-turn mode
-//        testPathCalculation(0, 1, 12, Helper.createTList(0, 2, 3, 2, 1), TraversalMode.EDGE_BASED_2DIR_UTURN);
 
         // additional check
         testPathCalculation(3, 1, 4, Helper.createTList(3, 2, 1));
