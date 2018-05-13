@@ -43,7 +43,7 @@ public class WitnessPathFinderTest {
         graph.freeze();
         setMaxLevelOnAllNodes();
         WitnessPathFinder finder = createFinder();
-        finder.init(2, 1, 0);
+        finder.initSearch(2, 1, 0);
         WitnessSearchEntry result = finder.runSearch(3, 3);
         WitnessSearchEntry expected = new ExpectedResultBuilder(3, 2, 2, 2.0)
                 .withParent(2, 1, 1, 1.0)
@@ -61,7 +61,7 @@ public class WitnessPathFinderTest {
         graph.freeze();
         setMaxLevelOnAllNodes();
         WitnessPathFinder finder = createFinder();
-        finder.init(2, 1, 0);
+        finder.initSearch(2, 1, 0);
         WitnessSearchEntry result = finder.runSearch(3, 3);
         WitnessSearchEntry expected = new ExpectedResultBuilder(3, 2, 2, 2.0)
                 .withParent(2, 1, 1, 1.0)
@@ -83,7 +83,7 @@ public class WitnessPathFinderTest {
         graph.freeze();
         setMaxLevelOnAllNodes();
         WitnessPathFinder finder = createFinder();
-        finder.init(2, 1, 0);
+        finder.initSearch(2, 1, 0);
         WitnessSearchEntry result = finder.runSearch(3, 3);
         assertNull(result);
     }
@@ -102,7 +102,7 @@ public class WitnessPathFinderTest {
         graph.freeze();
         setMaxLevelOnAllNodes();
         WitnessPathFinder finder = createFinder();
-        finder.init(2, 1, 0);
+        finder.initSearch(2, 1, 0);
         WitnessSearchEntry result = finder.runSearch(3, 3);
         assertNull(result);
     }

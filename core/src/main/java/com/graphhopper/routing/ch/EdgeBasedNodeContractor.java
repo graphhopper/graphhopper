@@ -213,7 +213,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             // for each such fromNode we need to look at every incoming original edge and find the initial entries
             EdgeIterator origInIter = fromNodeOrigInEdgeExplorer.setBaseNode(fromNode);
             while (origInIter.next()) {
-                int numInitialEntries = witnessPathFinder.init(node, fromNode, origInIter.getLastOrigEdge());
+                int numInitialEntries = witnessPathFinder.initSearch(node, fromNode, origInIter.getLastOrigEdge());
                 if (numInitialEntries < 1) {
                     continue;
                 }

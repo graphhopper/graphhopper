@@ -21,18 +21,18 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
     }
 
     @Override
-    protected void initialize(GraphHopperStorage graph) {
+    protected void setupSearcher(GraphHopperStorage graph) {
         doReset();
     }
 
     @Override
-    protected void setInitialEntries(int centerNode, int fromNode, int sourceEdge) {
-        EdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
+    protected void setInitialEntries(int sourceNode, int sourceEdge, int centerNode) {
+        EdgeIterator outIter = outEdgeExplorer.setBaseNode(sourceNode);
         while (outIter.next()) {
             if (isContracted(outIter.getAdjNode())) {
                 continue;
             }
-            double turnWeight = calcTurnWeight(sourceEdge, fromNode, outIter.getFirstOrigEdge());
+            double turnWeight = calcTurnWeight(sourceEdge, sourceNode, outIter.getFirstOrigEdge());
             if (isInfinite(turnWeight)) {
                 continue;
             }
@@ -45,7 +45,7 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
             entry.parent = new WitnessSearchEntry(
                     EdgeIterator.NO_EDGE,
                     outIter.getFirstOrigEdge(),
-                    fromNode, turnWeight, false);
+                    sourceNode, turnWeight, false);
             addOrUpdateInitialEntry(entry);
         }
 
@@ -59,36 +59,36 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
     }
     
     @Override
-    public WitnessSearchEntry runSearch(int toNode, int targetEdge) {
+    public WitnessSearchEntry runSearch(int targetNode, int targetEdge) {
         // todo: write a test for this case where it becomes clear
-        bestWeight = fromNode == toNode
-                ? calcTurnWeight(sourceEdge, fromNode, targetEdge)
+        bestPathWeight = sourceNode == targetNode
+                ? calcTurnWeight(sourceEdge, sourceNode, targetEdge)
                 : Double.POSITIVE_INFINITY;
-        resIncEdge = EdgeIterator.NO_EDGE;
-        resViaCenter = false;
+        bestPathIncEdge = EdgeIterator.NO_EDGE;
+        bestPathIsDirectCenterNodePath = false;
 
         // check if we can already reach the target from the shortest path tree we discovered so far
-        EdgeIterator inIter = origInEdgeExplorer.setBaseNode(toNode);
+        EdgeIterator inIter = origInEdgeExplorer.setBaseNode(targetNode);
         while (inIter.next()) {
             final int incEdge = inIter.getLastOrigEdge();
-            final int edgeKey = getEdgeKey(incEdge, toNode);
+            final int edgeKey = getEdgeKey(incEdge, targetNode);
             WitnessSearchEntry entry = entries.get(edgeKey);
             if (entry == null) {
                 continue;
             }
-            updateBestPath(toNode, targetEdge, entry);
+            updateBestPath(targetNode, targetEdge, entry);
         }
 
         // run dijkstra to find the optimal path
         while (!priorityQueue.isEmpty()) {
-            if (numDirectCenterNodePaths < 1 && (!resViaCenter || isInfinite(bestWeight))) {
+            if (numDirectCenterNodePaths < 1 && (!bestPathIsDirectCenterNodePath || isInfinite(bestPathWeight))) {
                 // we have not found a connection to the target edge yet and there are no entries
                 // in the priority queue anymore that are part of the direct path via the center node
                 // -> we will not need a shortcut
                 break;
             }
             WitnessSearchEntry entry = priorityQueue.peek();
-            if (entry.weight > bestWeight) {
+            if (entry.weight > bestPathWeight) {
                 // just reaching this edge is more expensive than the best path found so far including the turn costs
                 // to reach the targetOutEdge -> we can stop
                 // important: we only peeked so far, so we keep the entry for future searches
@@ -140,7 +140,7 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
                     }
                     entries.indexInsert(index, key, newEntry);
                     priorityQueue.add(newEntry);
-                    updateBestPath(toNode, targetEdge, newEntry);
+                    updateBestPath(targetNode, targetEdge, newEntry);
                 } else {
                     WitnessSearchEntry existingEntry = entries.indexGet(index);
                     if (weight < existingEntry.weight) {
@@ -160,17 +160,17 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
                         }
                         existingEntry.isDirectCenterNodePath = isDirectCenterNodePath;
                         priorityQueue.add(existingEntry);
-                        updateBestPath(toNode, targetEdge, existingEntry);
+                        updateBestPath(targetNode, targetEdge, existingEntry);
                     }
                 }
             }
             numSettledEdges++;
         }
 
-        if (resViaCenter) {
+        if (bestPathIsDirectCenterNodePath) {
             // the best path we could find is an original path so we return it
             // (note that this path may contain loops at the center node)
-            int edgeKey = getEdgeKey(resIncEdge, toNode);
+            int edgeKey = getEdgeKey(bestPathIncEdge, targetNode);
             return entries.get(edgeKey);
         } else {
             return null;
@@ -184,10 +184,10 @@ public class MapWitnessPathFinder extends WitnessPathFinder {
             boolean isDirectCenterNodePath = entry.getParent().isDirectCenterNodePath;
             // when in doubt prefer a witness path over an original path
             double tolerance = isDirectCenterNodePath ? 0 : 1.e-6;
-            if (totalWeight - tolerance < bestWeight) {
-                bestWeight = totalWeight;
-                resIncEdge = entry.incEdge;
-                resViaCenter = isDirectCenterNodePath;
+            if (totalWeight - tolerance < bestPathWeight) {
+                bestPathWeight = totalWeight;
+                bestPathIncEdge = entry.incEdge;
+                bestPathIsDirectCenterNodePath = isDirectCenterNodePath;
             }
         }
     }
