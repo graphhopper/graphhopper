@@ -69,7 +69,7 @@ public class WitnessPathSearcher {
 
     // search setup parameters
     int sourceEdge;
-    protected int sourceNode;
+    int sourceNode;
     int centerNode;
 
     // best path properties
@@ -482,7 +482,7 @@ public class WitnessPathSearcher {
     }
 
     static class Stats {
-        // helps to analyze how many edges get settled during a search typically, can be reused when stable
+        // helps to analyze how many edges get settled during a search typically, can be removed when stable
         private final long[] settledEdgesStats = new long[20];
         private long totalNumResets;
         private long totalNumStatCalcResets;
