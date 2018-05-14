@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ public class GHUtility {
      * This method could throw exception if uncatched problems like index out of bounds etc
      */
     public static List<String> getProblems(Graph g) {
-        List<String> problems = new ArrayList<String>();
+        List<String> problems = new ArrayList<>();
         int nodes = g.getNodes();
         int nodeIndex = 0;
         NodeAccess na = g.getNodeAccess();
@@ -90,7 +90,7 @@ public class GHUtility {
     }
 
     public static Set<Integer> asSet(int... values) {
-        Set<Integer> s = new HashSet<Integer>();
+        Set<Integer> s = new HashSet<>();
         for (int v : values) {
             s.add(v);
         }
@@ -99,7 +99,7 @@ public class GHUtility {
 
     public static Set<Integer> getNeighbors(EdgeIterator iter) {
         // make iteration order over set static => linked
-        Set<Integer> list = new LinkedHashSet<Integer>();
+        Set<Integer> list = new LinkedHashSet<>();
         while (iter.next()) {
             list.add(iter.getAdjNode());
         }
@@ -107,7 +107,7 @@ public class GHUtility {
     }
 
     public static List<Integer> getEdgeIds(EdgeIterator iter) {
-        List<Integer> list = new ArrayList<Integer>();
+        List<Integer> list = new ArrayList<>();
         while (iter.next()) {
             list.add(iter.getEdge());
         }

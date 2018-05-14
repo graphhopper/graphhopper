@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,13 +40,13 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     static final int SLOW_SPEED = 2;
     static final int MEAN_SPEED = 5;
     static final int FERRY_SPEED = 15;
-    final Set<String> safeHighwayTags = new HashSet<String>();
-    final Set<String> allowedHighwayTags = new HashSet<String>();
-    final Set<String> avoidHighwayTags = new HashSet<String>();
+    final Set<String> safeHighwayTags = new HashSet<>();
+    final Set<String> allowedHighwayTags = new HashSet<>();
+    final Set<String> avoidHighwayTags = new HashSet<>();
     // convert network tag of hiking routes into a way route code
-    final Map<String, Integer> hikingNetworkToCode = new HashMap<String, Integer>();
-    protected HashSet<String> sidewalkValues = new HashSet<String>(5);
-    protected HashSet<String> sidewalksNoValues = new HashSet<String>(5);
+    final Map<String, Integer> hikingNetworkToCode = new HashMap<>();
+    protected HashSet<String> sidewalkValues = new HashSet<>(5);
+    protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
     private EncodedValue priorityWayEncoder;
     private EncodedValue relationCodeEncoder;
 
@@ -325,7 +325,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     protected int handlePriority(ReaderWay way, int priorityFromRelation) {
-        TreeMap<Double, Integer> weightToPrioMap = new TreeMap<Double, Integer>();
+        TreeMap<Double, Integer> weightToPrioMap = new TreeMap<>();
         if (priorityFromRelation == 0)
             weightToPrioMap.put(0d, UNCHANGED.getValue());
         else

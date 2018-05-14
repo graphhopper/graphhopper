@@ -79,7 +79,7 @@ public class PbfBlobDecoder implements Runnable {
 
         // Build the list of active and unsupported features in the file.
         List<String> supportedFeatures = Arrays.asList("OsmSchema-V0.6", "DenseNodes");
-        List<String> unsupportedFeatures = new ArrayList<String>();
+        List<String> unsupportedFeatures = new ArrayList<>();
         for (String feature : header.getRequiredFeaturesList()) {
             if (supportedFeatures.contains(feature)) {
             } else {
@@ -129,7 +129,7 @@ public class PbfBlobDecoder implements Runnable {
         Iterator<Integer> keyIterator = keys.iterator();
         Iterator<Integer> valueIterator = values.iterator();
         if (keyIterator.hasNext()) {
-            Map<String, String> tags = new HashMap<String, String>(keys.size());
+            Map<String, String> tags = new HashMap<>(keys.size());
             while (keyIterator.hasNext()) {
                 String key = fieldDecoder.decodeString(keyIterator.next());
                 String value = fieldDecoder.decodeString(valueIterator.next());
@@ -231,7 +231,7 @@ public class PbfBlobDecoder implements Runnable {
 
                 if (tags == null) {
                     // devide by 2 as key&value, multiple by 2 because of the better approximation
-                    tags = new HashMap<String, String>(Math.max(3, 2 * (nodes.getKeysValsList().size() / 2) / idList.size()));
+                    tags = new HashMap<>(Math.max(3, 2 * (nodes.getKeysValsList().size() / 2) / idList.size()));
                 }
 
                 tags.put(fieldDecoder.decodeString(keyIndex), fieldDecoder.decodeString(valueIndex));
@@ -335,7 +335,7 @@ public class PbfBlobDecoder implements Runnable {
 
     private void runAndTrapExceptions() {
         try {
-            decodedEntities = new ArrayList<ReaderElement>();
+            decodedEntities = new ArrayList<>();
             if ("OSMHeader".equals(blobType)) {
                 processOsmHeader(readBlobContent());
 

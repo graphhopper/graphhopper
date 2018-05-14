@@ -73,7 +73,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
                 build();
 
         // some parameters are supported directly via Java API so ignore them when writing the getHints map
-        ignoreSet = new HashSet<String>();
+        ignoreSet = new HashSet<>();
         ignoreSet.add("calc_points");
         ignoreSet.add("calcpoints");
         ignoreSet.add("instructions");
