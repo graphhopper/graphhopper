@@ -47,7 +47,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     private final StorableProperties properties;
     private final BaseGraph baseGraph;
     // same flush order etc
-    private final Collection<CHGraphImpl> chGraphs = new ArrayList<CHGraphImpl>(5);
+    private final Collection<CHGraphImpl> chGraphs = new ArrayList<>(5);
 
     public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage) {
         this(Collections.<Weighting>emptyList(), dir, encodingManager, withElevation, extendedStorage);
@@ -100,7 +100,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         if (weighting == null)
             throw new IllegalStateException("Cannot find CHGraph with null weighting");
 
-        List<Weighting> existing = new ArrayList<Weighting>();
+        List<Weighting> existing = new ArrayList<>();
         for (CHGraphImpl cg : chGraphs) {
             if (cg.getWeighting() == weighting)
                 return (T) cg;
@@ -127,7 +127,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     public List<Weighting> getCHWeightings() {
-        List<Weighting> list = new ArrayList<Weighting>(chGraphs.size());
+        List<Weighting> list = new ArrayList<>(chGraphs.size());
         for (CHGraphImpl cg : chGraphs) {
             list.add(cg.getWeighting());
         }

@@ -269,7 +269,7 @@ public class QueryTorture {
                 }
 
                 value = value.replace("%2C", ",");
-                GHPoint point = GHPoint.parse(value);
+                GHPoint point = GHPoint.fromString(value);
                 if (point == null)
                     continue;
 

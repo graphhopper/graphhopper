@@ -39,8 +39,8 @@ import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.CH.DISABLE;
 
 /**
- * This class implements the CH decorator and provides several helper methods related to CH
- * preparation and its vehicle profiles.
+ * This class implements the CH decorator for the routing algorithm factory and provides several
+ * helper methods related to CH preparation and its vehicle profiles.
  *
  * @author Peter Karich
  */
@@ -80,7 +80,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         // default is enabled & fastest
         String chWeightingsStr = args.get(CH.PREPARE + "weightings", "");
 
-        if ("no".equals(chWeightingsStr)) {
+        if ("no".equals(chWeightingsStr) || "false".equals(chWeightingsStr)) {
             // default is fastest and we need to clear this explicitely
             weightingsAsStrings.clear();
         } else if (!chWeightingsStr.isEmpty()) {

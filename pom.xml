@@ -18,7 +18,7 @@
         <slf4j.version>1.7.25</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
         <commons-compress.version>1.12</commons-compress.version>
-        <jackson.version>2.8.4</jackson.version>
+        <jackson.version>2.9.1</jackson.version>
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>4</org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>
@@ -74,6 +74,7 @@
     <modules>
         <module>core</module>
         <module>reader-osm</module>
+        <module>isochrone</module>
         <module>reader-gtfs</module>
         <module>reader-json</module>
         <module>tools</module>
@@ -204,15 +205,6 @@
             </plugin>
         </plugins>
     </build>
-
-    <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
 
     <distributionManagement>
         <snapshotRepository>

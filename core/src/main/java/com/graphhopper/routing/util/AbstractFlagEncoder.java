@@ -599,7 +599,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             if (costs != 0 || Double.isInfinite(costs))
                 throw new IllegalArgumentException("Restricted turn can only have infinite costs (or use 0)");
         } else if (costs >= maxTurnCosts)
-            throw new IllegalArgumentException("Cost is too high. Or specifiy restricted == true");
+            throw new IllegalArgumentException("Cost is too high. Or specify restricted == true");
 
         if (costs < 0)
             throw new IllegalArgumentException("Turn costs cannot be negative");
@@ -682,7 +682,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     protected double applyMaxSpeed(ReaderWay way, double speed) {
         double maxSpeed = getMaxSpeed(way);
-        // We obay speed limits
+        // We obey speed limits
         if (maxSpeed >= 0) {
             // We assume that the average speed is 90% of the allowed maximum
             return maxSpeed * 0.9;

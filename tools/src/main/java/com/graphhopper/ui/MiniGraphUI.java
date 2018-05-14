@@ -112,11 +112,11 @@ public class MiniGraphUI {
                     }
 
                     @Override
-                    public void updateBestPath(EdgeIteratorState es, SPTEntry bestEE, int currLoc) {
+                    public void updateBestPath(EdgeIteratorState es, SPTEntry entry, int traversalId, boolean reverse) {
                         if (g2 != null)
-                            mg.plotNode(g2, currLoc, Color.YELLOW, 6);
+                            mg.plotNode(g2, traversalId, Color.YELLOW, 6);
 
-                        super.updateBestPath(es, bestEE, currLoc);
+                        super.updateBestPath(es, entry, traversalId, reverse);
                     }
                 }
 
@@ -268,7 +268,7 @@ public class MiniGraphUI {
                     g2.setColor(color);
                     boolean fwd = encoder.isForward(edge.getFlags());
                     boolean bwd = encoder.isBackward(edge.getFlags());
-                    float width = speed > 90? 1f : 0.8f;
+                    float width = speed > 90 ? 1f : 0.8f;
                     if (fwd && !bwd) {
                         mg.plotDirectedEdge(g2, lat, lon, lat2, lon2, width);
                     } else {
