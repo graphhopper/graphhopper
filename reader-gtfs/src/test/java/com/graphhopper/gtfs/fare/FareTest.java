@@ -58,6 +58,7 @@ public class FareTest {
     public static @DataPoint Trip tripWithOneSegment;
     public static @DataPoint Trip tripWithTwoSegments;
     public static @DataPoint Trip shortTripWithTwoSegments;
+    public static @DataPoint Trip twoLegsWithDistinctZones;
 
 
     static {
@@ -71,6 +72,11 @@ public class FareTest {
         shortTripWithTwoSegments = new Trip();
         shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_1",0, "S1", "S4", new HashSet<>(Arrays.asList("2", "3"))));
         shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_2",5000, "S4", "S1", new HashSet<>(Arrays.asList("2", "3"))));
+
+        twoLegsWithDistinctZones = new Trip();
+        twoLegsWithDistinctZones.segments.add(new Trip.Segment("Route_1",0, "S1", "S4", new HashSet<>(Arrays.asList("1"))));
+        twoLegsWithDistinctZones.segments.add(new Trip.Segment("Route_2",5000, "S4", "S1", new HashSet<>(Arrays.asList("2"))));
+        twoLegsWithDistinctZones.segments.add(new Trip.Segment("Route_1",6000, "S1", "S4", new HashSet<>(Arrays.asList("3"))));
     }
 
     @Theory
@@ -138,6 +144,20 @@ public class FareTest {
         assertThat(amount.getAmount().doubleValue(), greaterThan(onlyFare.fare_attribute.price));
     }
 
+    @Theory
+    public void ifAllLegsPassThroughAllZonesOfTheTripItCantGetCheaper(Map<String, Fare> fares, Trip trip) {
+        double cheapestFare = Fares.cheapestFare(fares, trip).get().getAmount().doubleValue();
+        System.out.println(cheapestFare);
+        Set<String> allZones = trip.segments.stream().flatMap(seg -> seg.getZones().stream()).collect(Collectors.toSet());
+        System.out.println(allZones);
+        Trip otherTrip = new Trip();
+        for (Trip.Segment segment : trip.segments) {
+            otherTrip.segments.add(new Trip.Segment(segment.getRoute(), segment.getStartTime(), segment.getOriginId(), segment.getDestinationId(), allZones));
+        }
+        double cheapestFareWhereEveryLegGoesThroughAllZones = Fares.cheapestFare(fares, otherTrip).get().getAmount().doubleValue();
+        System.out.println(cheapestFareWhereEveryLegGoesThroughAllZones);
+        assertThat(cheapestFareWhereEveryLegGoesThroughAllZones, not(lessThan(cheapestFare)));
+    }
 
     private static Map<String, Fare> parseFares(String fareAttributes, String fareRules) {
         GTFSFeed feed = new GTFSFeed();
