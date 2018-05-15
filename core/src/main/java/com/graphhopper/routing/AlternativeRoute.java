@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -191,7 +191,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
     @Override
     public List<Path> calcPaths(int from, int to) {
         List<AlternativeInfo> alts = calcAlternatives(from, to);
-        List<Path> paths = new ArrayList<Path>(alts.size());
+        List<Path> paths = new ArrayList<>(alts.size());
         for (AlternativeInfo a : alts) {
             paths.add(a.getPath());
         }
@@ -302,13 +302,13 @@ public class AlternativeRoute implements RoutingAlgorithm {
                                                       final double maxShareFactor, final double shareInfluence,
                                                       final double minPlateauFactor, final double plateauInfluence) {
             final double maxWeight = maxWeightFactor * bestPath.getWeight();
-            final GHIntObjectHashMap<IntSet> traversalIDMap = new GHIntObjectHashMap<IntSet>();
+            final GHIntObjectHashMap<IntSet> traversalIDMap = new GHIntObjectHashMap<>();
             final AtomicInteger startTID = addToMap(traversalIDMap, bestPath);
 
             // find all 'good' alternatives from forward-SPT matching the backward-SPT and optimize by
             // small total weight (1), small share and big plateau (3a+b) and do these expensive calculations
             // only for plateau start candidates (2)
-            final List<AlternativeInfo> alternatives = new ArrayList<AlternativeInfo>(maxPaths);
+            final List<AlternativeInfo> alternatives = new ArrayList<>(maxPaths);
 
             double bestPlateau = bestPath.getWeight();
             double bestShare = 0;
@@ -319,7 +319,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
             final AlternativeInfo bestAlt = new AlternativeInfo(sortBy, bestPath,
                     bestPath.sptEntry, bestPath.edgeTo, bestShare, getAltNames(graph, bestPath.sptEntry));
             alternatives.add(bestAlt);
-            final List<SPTEntry> bestPathEntries = new ArrayList<SPTEntry>(2);
+            final List<SPTEntry> bestPathEntries = new ArrayList<>(2);
 
             bestWeightMapFrom.forEach(new IntObjectPredicate<SPTEntry>() {
                 @Override

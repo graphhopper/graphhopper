@@ -227,7 +227,7 @@ else
    LINK="https://download.geofabrik.de/$LINK-latest.osm.pbf"
 fi
 
-: "${JAVA_OPTS:=-Xmx1000m -Xms1000m -server}"
+: "${JAVA_OPTS:=-Xmx1000m -Xms1000m}"
 : "${JAR:=web/target/graphhopper-web-$VERSION.jar}"
 : "${GRAPH:=$DATADIR/$NAME-gh}"
 
@@ -259,16 +259,19 @@ elif [ "$ACTION" = "import" ]; then
          $GH_IMPORT_OPTS -jar "$JAR" import $CONFIG
 
 elif [ "$ACTION" = "torture" ]; then
+ execMvn --projects tools -am -DskipTests clean package
+ JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $@
 
 elif [ "$ACTION" = "measurement" ]; then
- ARGS="config=$CONFIG graph.location=$GRAPH datareader.file=$OSM_FILE prepare.ch.weightings=fastest prepare.lm.weightings=fastest graph.flag_encoders=car \
+ ARGS="$GH_WEB_OPTS graph.location=$GRAPH datareader.file=$OSM_FILE prepare.ch.weightings=fastest prepare.lm.weightings=fastest graph.flag_encoders=car \
        prepare.min_network_size=10000 prepare.min_oneway_network_size=10000"
 
  function startMeasurement {
-    execMvn --projects web -am -DskipTests clean package
+    execMvn --projects tools -am -DskipTests clean package
     COUNT=5000
     commit_info=$(git log -n 1 --pretty=oneline)
+    JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
     "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.Measurement $ARGS measurement.count=$COUNT measurement.location="$M_FILE_NAME" \
             measurement.gitinfo="$commit_info"
