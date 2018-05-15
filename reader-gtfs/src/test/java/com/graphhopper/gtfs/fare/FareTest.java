@@ -38,6 +38,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
@@ -155,6 +156,18 @@ public class FareTest {
         }
         double cheapestFareWhereEveryLegGoesThroughAllZones = Fares.cheapestFare(fares, otherTrip).get().getAmount().doubleValue();
         assertThat(cheapestFareWhereEveryLegGoesThroughAllZones, not(lessThan(cheapestFare)));
+    }
+
+    @Theory
+    public void ifIOnlyHaveOneTicketAndItIsZoneBasedItMustBeGoodForAllZonesOnMyTrip(Map<String, Fare> fares, Trip trip) {
+        Fares.allShoppingCarts(fares, trip)
+                .filter(purchase -> purchase.getTickets().size() == 1)
+                .filter(purchase -> purchase.getTickets().get(0).getFare().fare_rules.stream().anyMatch(rule -> rule.contains_id != null))
+                .forEach(purchase -> {
+                    Set<String> zonesICanUse = purchase.getTickets().get(0).getFare().fare_rules.stream().filter(rule -> rule.contains_id != null).map(rule -> rule.contains_id).collect(Collectors.toSet());
+                    Set<String> zonesINeed = trip.segments.stream().flatMap(segment -> segment.getZones().stream()).collect(Collectors.toSet());
+                    assertTrue(zonesICanUse.containsAll(zonesINeed));
+                });
     }
 
     private static Map<String, Fare> parseFares(String fareAttributes, String fareRules) {
