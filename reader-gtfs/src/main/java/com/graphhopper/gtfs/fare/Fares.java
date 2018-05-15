@@ -49,7 +49,7 @@ public class Fares {
         // Take the cheapest.
         TicketPurchaseScoreCalculator ticketPurchaseScoreCalculator = new TicketPurchaseScoreCalculator();
         return allShoppingCarts(fares, trip)
-                .max(Comparator.comparingInt(ticketPurchaseScoreCalculator::calculateScore))
+                .max(Comparator.comparingDouble(ticketPurchaseScoreCalculator::calculateScore))
                 .map(TicketPurchase::getTickets);
     }
 

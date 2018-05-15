@@ -51,7 +51,7 @@ public class FareTest {
     public static @DataPoint Map<String, Fare> oneDollarNoTransfers = parseFares("only_fare,1.00,USD,0,0\n", "");
     public static @DataPoint Map<String, Fare> oneDollarTimeLimitedTransfers = parseFares("only_fare,1.00,USD,0,,5400\n", "");
     public static @DataPoint Map<String, Fare> regularAndExpress = parseFares("local_fare,1.75,USD,0,0\n"+"express_fare,5.00,USD,0,0\n", "local_fare,Route_1\nexpress_fare,Route_2\nexpress_fare,Route3\n");
-    public static @DataPoint Map<String, Fare> withTransfersOrWithout = parseFares("simple_fare,1.75,USD,0,0\n"+"plustransfer_fare,2.00,USD,0,,5400", "");
+    public static @DataPoint Map<String, Fare> withTransfersOrWithout = parseFares("simple_fare,2.00,USD,0,0\n"+"plustransfer_fare,2.50,USD,0,,5400", "");
     public static @DataPoint Map<String, Fare> stationPairs = parseFares("!S1_to_S2,1.75,USD,0\n!S1_to_S3,3.25,USD,0\n!S1_to_S4,4.55,USD,0\n!S4_to_S1,5.65,USD,0\n", "!S1_to_S2,,S1,S2\n!S1_to_S3,,S1,S3\n!S1_to_S4,,S1,S4\n!S4_to_S1,,S4,S1\n");
     public static @DataPoint Map<String, Fare> zones = parseFares("F1,4.15,USD,0\nF2,2.20,USD,0\nF3,2.20,USD,0\nF4,2.95,USD,0\nF5,1.25,USD,0\nF6,1.95,USD,0\nF7,1.95,USD,0\n", "F1,,,,1\nF1,,,,2\nF1,,,,3\nF2,,,,1\nF2,,,,2\nF3,,,,1\nF3,,,,3\nF4,,,,2\nF4,,,,3\nF5,,,,1\nF6,,,,2\nF7,,,,3\n");
 
@@ -124,14 +124,14 @@ public class FareTest {
 
     @Theory
     public void canGoAllTheWayOnOneTicket(Map<String, Fare> fares, Trip trip) throws IOException {
-        Optional<Fare> firstFare = fares.values().stream()
+        Optional<Fare> obviouslyCheapestFare = fares.values().stream()
                 .filter(fare -> fare.fare_rules.isEmpty()) // Fare has no restrictions except transfer count/duration
                 .filter(fare -> fare.fare_attribute.transfers >= trip.segments.size()-1) // Fare allows the number of transfers we need for our trip
                 .filter(fare -> fare.fare_attribute.transfer_duration >= trip.segments.get(trip.segments.size() - 1).getStartTime() - trip.segments.get(0).getStartTime())
                 .min(Comparator.comparingDouble(fare -> fare.fare_attribute.price));
-        assumeTrue("There is an obviously cheapest fare.", firstFare.isPresent());
+        assumeTrue("There is an obviously cheapest fare.", obviouslyCheapestFare.isPresent());
         Amount amount = Fares.cheapestFare(fares, trip).get();
-        Assert.assertEquals("The fare calculator agrees", BigDecimal.valueOf(firstFare.get().fare_attribute.price), amount.getAmount());
+        Assert.assertEquals("The fare calculator agrees", BigDecimal.valueOf(obviouslyCheapestFare.get().fare_attribute.price), amount.getAmount());
     }
 
     @Theory
