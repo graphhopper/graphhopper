@@ -40,6 +40,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 @RunWith(Theories.class)
 public class FareTest {
@@ -123,13 +124,14 @@ public class FareTest {
 
     @Theory
     public void canGoAllTheWayOnOneTicket(Map<String, Fare> fares, Trip trip) throws IOException {
-        assumeThat("Only one fare.", fares.size(), equalTo(1));
-        Fare onlyFare = fares.values().iterator().next();
-        assumeThat("Fare allows the number of transfers we need for our trip.", onlyFare.fare_attribute.transfers, greaterThanOrEqualTo(trip.segments.size()));
-        assumeThat("Fare allows the time we need for our trip.", (long) onlyFare.fare_attribute.transfer_duration, greaterThanOrEqualTo(trip.segments.get(trip.segments.size()-1).getStartTime() - trip.segments.get(0).getStartTime()));
-
+        Optional<Fare> firstFare = fares.values().stream()
+                .filter(fare -> fare.fare_rules.isEmpty()) // Fare has no restrictions except transfer count/duration
+                .filter(fare -> fare.fare_attribute.transfers >= trip.segments.size()-1) // Fare allows the number of transfers we need for our trip
+                .filter(fare -> fare.fare_attribute.transfer_duration >= trip.segments.get(trip.segments.size() - 1).getStartTime() - trip.segments.get(0).getStartTime())
+                .min(Comparator.comparingDouble(fare -> fare.fare_attribute.price));
+        assumeTrue("There is an obviously cheapest fare.", firstFare.isPresent());
         Amount amount = Fares.cheapestFare(fares, trip).get();
-        Assert.assertEquals(BigDecimal.valueOf(onlyFare.fare_attribute.price), amount.getAmount());
+        Assert.assertEquals("The fare calculator agrees", BigDecimal.valueOf(firstFare.get().fare_attribute.price), amount.getAmount());
     }
 
     @Theory
