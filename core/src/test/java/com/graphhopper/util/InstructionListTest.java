@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -156,7 +156,7 @@ public class InstructionListTest {
     }
 
     List<String> pick(String key, List<Map<String, Object>> instructionJson) {
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<>();
 
         for (Map<String, Object> json : instructionJson) {
             list.add(json.get(key).toString());
@@ -165,9 +165,9 @@ public class InstructionListTest {
     }
 
     List<List<Double>> createList(PointList pl, List<Integer> integs) {
-        List<List<Double>> list = new ArrayList<List<Double>>();
+        List<List<Double>> list = new ArrayList<>();
         for (int i : integs) {
-            List<Double> entryList = new ArrayList<Double>(2);
+            List<Double> entryList = new ArrayList<>(2);
             entryList.add(pl.getLatitude(i));
             entryList.add(pl.getLongitude(i));
             list.add(entryList);
@@ -430,7 +430,7 @@ public class InstructionListTest {
 
     @Test
     public void testCreateGPXWithEle() {
-        final List<GPXEntry> fakeList = new ArrayList<GPXEntry>();
+        final List<GPXEntry> fakeList = new ArrayList<>();
         fakeList.add(new GPXEntry(12, 13, 0));
         fakeList.add(new GPXEntry(12.5, 13, 1000));
         InstructionList il = new InstructionList(usTR) {

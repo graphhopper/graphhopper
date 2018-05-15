@@ -27,7 +27,7 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperWebIT {
 
-    public static final String KEY = "614b8305-b4db-48c9-bf4a-40de90919939";
+    public static final String KEY = System.getProperty("key", "missing key from command line, specify via -Dkey=$API_KEY");
 
     private final GraphHopperWeb gh = new GraphHopperWeb();
     private final GraphHopperMatrixWeb ghMatrix = new GraphHopperMatrixWeb();
@@ -53,8 +53,8 @@ public class GraphHopperWebIT {
         PathWrapper alt = res.getBest();
         isBetween(200, 250, alt.getPoints().size());
         isBetween(11000, 12000, alt.getDistance());
-        isBetween(310, 320, alt.getAscend());
-        isBetween(235, 245, alt.getDescend());
+        isBetween(240, 270, alt.getAscend());
+        isBetween(180, 200, alt.getDescend());
         isBetween(1000, 1500, alt.getRouteWeight());
 
 
