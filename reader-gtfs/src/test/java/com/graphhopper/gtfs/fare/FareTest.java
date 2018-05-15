@@ -20,7 +20,6 @@ package com.graphhopper.gtfs.fare;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
-import com.conveyal.gtfs.model.FareAttribute;
 import com.conveyal.gtfs.model.FareRule;
 import com.csvreader.CsvReader;
 import org.junit.Assert;
@@ -149,15 +148,12 @@ public class FareTest {
     @Theory
     public void ifAllLegsPassThroughAllZonesOfTheTripItCantGetCheaper(Map<String, Fare> fares, Trip trip) {
         double cheapestFare = Fares.cheapestFare(fares, trip).get().getAmount().doubleValue();
-        System.out.println(cheapestFare);
         Set<String> allZones = trip.segments.stream().flatMap(seg -> seg.getZones().stream()).collect(Collectors.toSet());
-        System.out.println(allZones);
         Trip otherTrip = new Trip();
         for (Trip.Segment segment : trip.segments) {
             otherTrip.segments.add(new Trip.Segment(segment.getRoute(), segment.getStartTime(), segment.getOriginId(), segment.getDestinationId(), allZones));
         }
         double cheapestFareWhereEveryLegGoesThroughAllZones = Fares.cheapestFare(fares, otherTrip).get().getAmount().doubleValue();
-        System.out.println(cheapestFareWhereEveryLegGoesThroughAllZones);
         assertThat(cheapestFareWhereEveryLegGoesThroughAllZones, not(lessThan(cheapestFare)));
     }
 
