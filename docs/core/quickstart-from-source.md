@@ -32,8 +32,21 @@ $ ./graphhopper.sh -a web -i north-america_us_new-york.pbf -o new-york-gh
 
 ## Start Development
 
-Open the project in your IDE, first class IDEs are NetBeans and [IntelliJ](https://github.com/graphhopper/isochrone-experiments/issues/1) 
-where no further setup is required.
+Open the project in your IDE, first class IDEs are NetBeans and IntelliJ where no further setup is required.
+
+### Running / Debbuging with IntelliJ
+
+![intelliJ run config](./images/intellij-run-config.png)
+
+Go to `Run->Edit Configurations...` and set the following to run GraphHopper from within IntelliJ:
+```
+Main class: com.graphhopper.http.GraphHopperApplication
+VM options: -Xms1000m -Xmx1000m -server -Dgraphhopper.datareader.file=[your-area].osm.pbf -Dgraphhopper.graph.location=./[your-area].osm-gh
+Program arguments: server config.yml
+```
+
+Note:  you might need to modify Xms and Xmx values, for larger areas you might want to use higher values.
+
 
 ### Contribute
 

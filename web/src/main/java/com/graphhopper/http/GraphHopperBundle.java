@@ -157,8 +157,8 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
     }
 
     @Override
-    public void run(GraphHopperBundleConfiguration configuration, Environment environment) throws Exception {
-        configuration.getGraphHopperConfiguration().merge(CmdArgs.readFromConfigAndMerge(configuration.getGraphHopperConfiguration()));
+    public void run(GraphHopperBundleConfiguration configuration, Environment environment) {
+        configuration.getGraphHopperConfiguration().merge(CmdArgs.readFromSystemProperties());
 
         if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
             // switch to different API implementation when using Pt

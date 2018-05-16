@@ -519,7 +519,7 @@ public class GraphHopper implements GraphHopperAPI {
      * CmdArgs.readFromConfig("config.properties", "graphhopper.config")
      */
     public GraphHopper init(CmdArgs args) {
-        args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
+        args.merge(CmdArgs.readFromSystemProperties());
         if (args.has("osmreader.osm"))
             throw new IllegalArgumentException("Instead osmreader.osm use datareader.file, for other changes see core/files/changelog.txt");
 

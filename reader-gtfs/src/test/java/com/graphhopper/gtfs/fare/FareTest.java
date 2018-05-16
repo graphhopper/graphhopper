@@ -20,7 +20,6 @@ package com.graphhopper.gtfs.fare;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
-import com.conveyal.gtfs.model.FareAttribute;
 import com.conveyal.gtfs.model.FareRule;
 import com.csvreader.CsvReader;
 import org.junit.Assert;
@@ -39,7 +38,9 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 @RunWith(Theories.class)
 public class FareTest {
@@ -50,7 +51,7 @@ public class FareTest {
     public static @DataPoint Map<String, Fare> oneDollarNoTransfers = parseFares("only_fare,1.00,USD,0,0\n", "");
     public static @DataPoint Map<String, Fare> oneDollarTimeLimitedTransfers = parseFares("only_fare,1.00,USD,0,,5400\n", "");
     public static @DataPoint Map<String, Fare> regularAndExpress = parseFares("local_fare,1.75,USD,0,0\n"+"express_fare,5.00,USD,0,0\n", "local_fare,Route_1\nexpress_fare,Route_2\nexpress_fare,Route3\n");
-    public static @DataPoint Map<String, Fare> withTransfersOrWithout = parseFares("simple_fare,1.75,USD,0,0\n"+"plustransfer_fare,2.00,USD,0,,5400", "");
+    public static @DataPoint Map<String, Fare> withTransfersOrWithout = parseFares("simple_fare,2.00,USD,0,0\n"+"plustransfer_fare,2.50,USD,0,,5400", "");
     public static @DataPoint Map<String, Fare> stationPairs = parseFares("!S1_to_S2,1.75,USD,0\n!S1_to_S3,3.25,USD,0\n!S1_to_S4,4.55,USD,0\n!S4_to_S1,5.65,USD,0\n", "!S1_to_S2,,S1,S2\n!S1_to_S3,,S1,S3\n!S1_to_S4,,S1,S4\n!S4_to_S1,,S4,S1\n");
     public static @DataPoint Map<String, Fare> zones = parseFares("F1,4.15,USD,0\nF2,2.20,USD,0\nF3,2.20,USD,0\nF4,2.95,USD,0\nF5,1.25,USD,0\nF6,1.95,USD,0\nF7,1.95,USD,0\n", "F1,,,,1\nF1,,,,2\nF1,,,,3\nF2,,,,1\nF2,,,,2\nF3,,,,1\nF3,,,,3\nF4,,,,2\nF4,,,,3\nF5,,,,1\nF6,,,,2\nF7,,,,3\n");
 
@@ -58,6 +59,7 @@ public class FareTest {
     public static @DataPoint Trip tripWithOneSegment;
     public static @DataPoint Trip tripWithTwoSegments;
     public static @DataPoint Trip shortTripWithTwoSegments;
+    public static @DataPoint Trip twoLegsWithDistinctZones;
 
 
     static {
@@ -71,6 +73,11 @@ public class FareTest {
         shortTripWithTwoSegments = new Trip();
         shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_1",0, "S1", "S4", new HashSet<>(Arrays.asList("2", "3"))));
         shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_2",5000, "S4", "S1", new HashSet<>(Arrays.asList("2", "3"))));
+
+        twoLegsWithDistinctZones = new Trip();
+        twoLegsWithDistinctZones.segments.add(new Trip.Segment("Route_1",0, "S1", "S4", new HashSet<>(Arrays.asList("1"))));
+        twoLegsWithDistinctZones.segments.add(new Trip.Segment("Route_2",5000, "S4", "S1", new HashSet<>(Arrays.asList("2"))));
+        twoLegsWithDistinctZones.segments.add(new Trip.Segment("Route_1",6000, "S1", "S4", new HashSet<>(Arrays.asList("3"))));
     }
 
     @Theory
@@ -117,13 +124,14 @@ public class FareTest {
 
     @Theory
     public void canGoAllTheWayOnOneTicket(Map<String, Fare> fares, Trip trip) throws IOException {
-        assumeThat("Only one fare.", fares.size(), equalTo(1));
-        Fare onlyFare = fares.values().iterator().next();
-        assumeThat("Fare allows the number of transfers we need for our trip.", onlyFare.fare_attribute.transfers, greaterThanOrEqualTo(trip.segments.size()));
-        assumeThat("Fare allows the time we need for our trip.", (long) onlyFare.fare_attribute.transfer_duration, greaterThanOrEqualTo(trip.segments.get(trip.segments.size()-1).getStartTime() - trip.segments.get(0).getStartTime()));
-
+        Optional<Fare> obviouslyCheapestFare = fares.values().stream()
+                .filter(fare -> fare.fare_rules.isEmpty()) // Fare has no restrictions except transfer count/duration
+                .filter(fare -> fare.fare_attribute.transfers >= trip.segments.size()-1) // Fare allows the number of transfers we need for our trip
+                .filter(fare -> fare.fare_attribute.transfer_duration >= trip.segments.get(trip.segments.size() - 1).getStartTime() - trip.segments.get(0).getStartTime())
+                .min(Comparator.comparingDouble(fare -> fare.fare_attribute.price));
+        assumeTrue("There is an obviously cheapest fare.", obviouslyCheapestFare.isPresent());
         Amount amount = Fares.cheapestFare(fares, trip).get();
-        Assert.assertEquals(BigDecimal.valueOf(onlyFare.fare_attribute.price), amount.getAmount());
+        Assert.assertEquals("The fare calculator agrees", BigDecimal.valueOf(obviouslyCheapestFare.get().fare_attribute.price), amount.getAmount());
     }
 
     @Theory
@@ -138,6 +146,29 @@ public class FareTest {
         assertThat(amount.getAmount().doubleValue(), greaterThan(onlyFare.fare_attribute.price));
     }
 
+    @Theory
+    public void ifAllLegsPassThroughAllZonesOfTheTripItCantGetCheaper(Map<String, Fare> fares, Trip trip) {
+        double cheapestFare = Fares.cheapestFare(fares, trip).get().getAmount().doubleValue();
+        Set<String> allZones = trip.segments.stream().flatMap(seg -> seg.getZones().stream()).collect(Collectors.toSet());
+        Trip otherTrip = new Trip();
+        for (Trip.Segment segment : trip.segments) {
+            otherTrip.segments.add(new Trip.Segment(segment.getRoute(), segment.getStartTime(), segment.getOriginId(), segment.getDestinationId(), allZones));
+        }
+        double cheapestFareWhereEveryLegGoesThroughAllZones = Fares.cheapestFare(fares, otherTrip).get().getAmount().doubleValue();
+        assertThat(cheapestFareWhereEveryLegGoesThroughAllZones, not(lessThan(cheapestFare)));
+    }
+
+    @Theory
+    public void ifIOnlyHaveOneTicketAndItIsZoneBasedItMustBeGoodForAllZonesOnMyTrip(Map<String, Fare> fares, Trip trip) {
+        Fares.allShoppingCarts(fares, trip)
+                .filter(purchase -> purchase.getTickets().size() == 1)
+                .filter(purchase -> purchase.getTickets().get(0).getFare().fare_rules.stream().anyMatch(rule -> rule.contains_id != null))
+                .forEach(purchase -> {
+                    Set<String> zonesICanUse = purchase.getTickets().get(0).getFare().fare_rules.stream().filter(rule -> rule.contains_id != null).map(rule -> rule.contains_id).collect(Collectors.toSet());
+                    Set<String> zonesINeed = trip.segments.stream().flatMap(segment -> segment.getZones().stream()).collect(Collectors.toSet());
+                    assertTrue(zonesICanUse.containsAll(zonesINeed));
+                });
+    }
 
     private static Map<String, Fare> parseFares(String fareAttributes, String fareRules) {
         GTFSFeed feed = new GTFSFeed();
