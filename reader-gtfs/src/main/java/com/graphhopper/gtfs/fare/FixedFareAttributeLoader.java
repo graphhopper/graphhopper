@@ -44,5 +44,6 @@ public class FixedFareAttributeLoader extends FareAttribute.Loader {
         String fareId = getStringField("fare_id", true);
         final Fare fare = fares.get(fareId);
         fare.fare_attribute.transfers = getIntField("transfers", false, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
+        fare.fare_attribute.transfer_duration = getIntField("transfer_duration", false, 0, 24*60*60, 24*60*60);
     }
 }

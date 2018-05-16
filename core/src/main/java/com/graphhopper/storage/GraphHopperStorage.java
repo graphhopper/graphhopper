@@ -231,8 +231,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             String flagEncodersStr = properties.get("graph.flag_encoders");
 
             if (!flagEncodersStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(flagEncodersStr)) {
-                throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.toDetailsString()
-                        + "\nGraph: " + flagEncodersStr + ", dir:" + dir.getLocation());
+                throw new IllegalStateException("Encoding does not match:"
+                        + "\nGraphhopper config: " + encodingManager.toDetailsString()
+                        + "\nGraph: " + flagEncodersStr
+                        + "\nChange configuration to match the graph or delete " + dir.getLocation());
             }
 
             String byteOrder = properties.get("graph.byte_order");
