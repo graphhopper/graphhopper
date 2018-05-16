@@ -35,12 +35,12 @@ before_script:
 before_script:
   - _JAVA_OPTIONS=
 script:
-  - "mvn --version && mvn -Dkey=$API_KEY clean test verify checkstyle:check findbugs:check forbiddenapis:check -B"
+  - "mvn --version && mvn -Dkey=$API_KEY -P include-client-hc clean test verify checkstyle:check findbugs:check forbiddenapis:check -B"
 
 after_success:
-  # deploy snapshot artifacts to sonatype and if tagged deploy the release to maven central
+  # deploy snapshot artifacts to sonatype and if tagged deploy then release to maven central
   - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-        mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
+        mvn deploy -P include-client-hc --settings core/files/settings.xml -DskipTests=true -B;
     elif [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_TAG" != "" ]; then
         echo "release to maven central";
         mvn versions:set -DnewVersion=$TRAVIS_TAG -DgenerateBackupPoms=false;
