@@ -17,4 +17,5 @@ See [here](./../core/elevation.md) how to easily enable elevation data. To see h
  * Regarding step 2:
     * The folder where you execute the java command should contain the following files: berlin-latest.osm.pbf, config-example.yml and `graphhopper-web-[version].jar`
     * The first time you execute this it'll take ~30 seconds (for Berlin), further starts will only load the graph and should be nearly instantaneous. You should see log statements but no exceptions and the last entry should be something like: Started server at HTTP 8989
+    * If you make changes to the config file, you may need to delete the generated .osm-gh folder to avoid the `Encoding does not match:` error.
  * Or [contact us](../index.md#contact)
