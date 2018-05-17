@@ -34,9 +34,9 @@ before_script:
 # Undo `_JAVA_OPTIONS` environment variable; see https://github.com/travis-ci/travis-ci/issues/8408
 before_script:
   - _JAVA_OPTIONS=
-script:
   - "mvn --version"
   - "[ -z \"$API_KEY\" ] && API_KEY=78da6e9a-273e-43d1-bdda-8f24e007a1fa" # change in GraphHopperWebIT too
+script:
   - "mvn -Dkey=$API_KEY clean test verify checkstyle:check findbugs:check forbiddenapis:check -B"
 
 after_success:
