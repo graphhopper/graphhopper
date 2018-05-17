@@ -53,7 +53,7 @@ public class MapMatchingResourceIT {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.graphhopper.merge(new CmdArgs().
+        config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "car").
                 put("prepare.ch.weightings", "no").
                 put("datareader.file", "../map-data/leipzig_germany.osm.pbf").

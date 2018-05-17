@@ -25,7 +25,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.http.WebHelper;
-import com.graphhopper.http.resources.RouteResource;
 import com.graphhopper.matching.*;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
@@ -106,9 +105,9 @@ public class MapMatchingResource {
 
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
         if (!encodingManager.supports(vehicleStr)) {
-            throw new WebApplicationException(RouteResource.errorResponse(new IllegalArgumentException("Vehicle not supported: " + vehicleStr), writeGPX));
+            throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("Vehicle not supported: " + vehicleStr), writeGPX));
         } else if (enableElevation && !hasElevation) {
-            throw new WebApplicationException(RouteResource.errorResponse(new IllegalArgumentException("Elevation not supported!"), writeGPX));
+            throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("Elevation not supported!"), writeGPX));
         }
 
         String inType = "gpx";
@@ -183,21 +182,21 @@ public class MapMatchingResource {
         Object object;
         if (matchGHRsp.hasErrors()) {
             logger.error(logStr + ", errors:" + matchGHRsp.getErrors());
-            throw new WebApplicationException(RouteResource.errorResponse(matchGHRsp.getErrors(), writeGPX));
+            throw new WebApplicationException(WebHelper.errorResponse(matchGHRsp.getErrors(), writeGPX));
         } else if ("extended_json".equals(outType)) {
             object = convertToTree(matchRsp, enableElevation, pointsEncoded);
 
         } else if (writeGPX) {
             GHResponse rsp = new GHResponse();
             rsp.add(matchGHRsp);
-            return RouteResource.gpxSuccessResponseBuilder(rsp, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints).
+            return WebHelper.gpxSuccessResponseBuilder(rsp, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
 
         } else {
             GHResponse rsp = new GHResponse();
             rsp.add(matchGHRsp);
-            ObjectNode map = RouteResource.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
+            ObjectNode map = WebHelper.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
 
             Map<String, Object> matchResult = new HashMap<>();
             matchResult.put("distance", matchRsp.getMatchLength());
