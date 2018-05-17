@@ -36,7 +36,7 @@ before_script:
   - _JAVA_OPTIONS=
 script:
   - "mvn --version"
-  - "[ -z "$API_KEY" ] && API_KEY=78da6e9a-273e-43d1-bdda-8f24e007a1fa"
+  - "[ -z \"$API_KEY\" ] && API_KEY=78da6e9a-273e-43d1-bdda-8f24e007a1fa"
   - "mvn -Dkey=$API_KEY clean test verify checkstyle:check findbugs:check forbiddenapis:check -B"
 
 after_success:
