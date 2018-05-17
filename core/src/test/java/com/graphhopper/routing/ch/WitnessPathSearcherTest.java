@@ -109,7 +109,7 @@ public class WitnessPathSearcherTest {
     }
 
     private WitnessPathSearcher createFinder() {
-        return new WitnessPathSearcher(graph, chGraph, chTurnWeighting, new PMap());
+        return new WitnessPathSearcher(graph, chGraph, chTurnWeighting, new WitnessPathSearcher.Config());
     }
 
     private void setMaxLevelOnAllNodes() {

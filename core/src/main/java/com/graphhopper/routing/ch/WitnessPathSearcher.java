@@ -25,7 +25,10 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
 import java.util.Arrays;
 
@@ -42,95 +45,80 @@ import static java.lang.Double.isInfinite;
  * onto a given original edge outgoing from t (the 'target edge') are also considered. This class is mainly used to
  * differentiate between the following two cases:
  * <p>
- * 1) The optimal path described above has finite weight and is a 'direct center node path': it only consists of
- * one edge from s to x, an arbitrary number of loops at x and one edge from x to t.
- * 2) The optimal path has infinite weight or it is not a direct center node path, i.e. it includes edges from s to
- * another node than x or edges from another node than x to t.
+ * 1) The optimal path described above has finite weight and only consists of one edge from s to x, an arbitrary number
+ * of loops at x, and one edge from x to t. This is called a 'bridge-path' here.
+ * 2) The optimal path has infinite weight or it includes an edge from s to another node than x or an edge from another
+ * node than x to t. This is called a 'witness-path'.
  * <p>
  * To find the optimal path an edge-based unidirectional Dijkstra algorithm is used that takes into account turn-costs.
  * The search can be initialized for a given source edge and node to be contracted x. Subsequent searches for different
  * target edges will keep on building the shortest path tree from previous searches. For the performance of edge-based
- * CH graph preparation it is crucial to limit the local witness path searches. However the search always needs to
- * find the best direct center node path if one exists. Therefore we may stop expanding edges when a certain limit is
- * exceeded, but even then we still need to expand edges that could possibly yield a direct center node path and we may
- * only stop this when it is guaranteed that no such direct path exists. Here we limit the maximum number of settled
+ * CH graph preparation it is crucial to limit the local witness path searches. However the search always needs to at
+ * least find the best bridge-path if one exists. Therefore we may stop expanding edges when a certain amount of settled 
+ * edges is exceeded, but even then we still need to expand edges that could possibly yield a bridge-path and we may
+ * only stop this when it is guaranteed that no bridge-path exists. Here we limit the maximum number of settled
  * edges during the search and determine this maximum number based on the statistics we collected during previous
  * searches.
  */
 public class WitnessPathSearcher {
     private static final int NO_NODE = -1;
 
-    protected final GraphHopperStorage graph;
-    protected final CHGraph chGraph;
-    final TurnWeighting turnWeighting;
-    protected final EdgeExplorer outEdgeExplorer;
-    final EdgeExplorer origInEdgeExplorer;
-    protected final int maxLevel;
+    // graph variables
+    private final CHGraph chGraph;
+    private final TurnWeighting turnWeighting;
+    private final EdgeExplorer outEdgeExplorer;
+    private final EdgeExplorer origInEdgeExplorer;
+    private final int maxLevel;
 
-    // search setup parameters
-    int sourceEdge;
-    int sourceNode;
-    int centerNode;
+    // general parameters affecting the number of found witnesses and the search time
+    private final Config config;
 
-    // best path properties
-    double bestPathWeight;
-    int bestPathIncEdge;
-    boolean bestPathIsDirectCenterNodePath;
+    // variables of the current search
+    private int sourceEdge;
+    private int sourceNode;
+    private int centerNode;
+    private double bestPathWeight;
+    private int bestPathIncEdge;
+    private boolean bestPathIsBridgePath;
+    private int numPotentialBridgePaths;
+    private int numSettledEdges;
 
-    // we allocate memory for all possible edge keys
+    // data structures used to build the shortest path tree
+    // we allocate memory for all possible edge keys and keep track which ones have been discovered so far
     private double[] weights;
     private int[] edges;
     private int[] incEdges;
     private int[] parents;
     private int[] adjNodes;
-    private boolean[] isDirectCenterNodePaths;
-
-    // used to keep track of which entries have been written during the current search to be able to efficiently reset
-    // the data structures for the next search
+    private boolean[] isPotentialBridgePaths;
+    private IntObjectMap<WitnessSearchEntry> initialEntryParents;
     private IntArrayList changedEdges;
+    private IntDoubleBinaryHeap dijkstraHeap;
 
-    // used to store parent information of the initial search entries
-    private IntObjectMap<WitnessSearchEntry> rootParents;
-
-    // used to pick the next edge to be expanded during Dijkstra search
-    private IntDoubleBinaryHeap heap;
-
-    // used to limit searches
-    int numSettledEdges;
-    private int minimumMaxSettledEdges;
-    int maxSettledEdges;
-    int numDirectCenterNodePaths;
-    // Determines the maximum number of settled edges for the next search based on the mean number of settled edges and
-    // the fluctuation in the previous searches. The higher this number the longer the search will last and the more
-    // witness paths will be found. Assuming a normal distribution for example sigmaFactor = 2 means that about 95% of  
-    // the searches will be within the limit.
-    private double sigmaFactor;
-    // Used to keep track of the average number and distribution width of settled edges during the last searches.
-    private final OnFlyStatisticsCalculator statisticsCalculator = new OnFlyStatisticsCalculator();
-    private int statisticsResetInterval;
+    // we keep track of the average number and distribution width of settled edges during the last searches to estimate
+    // an appropriate maximum of settled edges for the next searches
+    private int maxSettledEdges;
+    private final OnFlyStatisticsCalculator settledEdgesStats = new OnFlyStatisticsCalculator();
 
     // statistics to analyze performance
-    int numPolledEdges;
-    public static int searchCount;
-    public static int pollCount;
-    protected final Stats stats = new Stats();
+    private final Stats currentBatchStats = new Stats();
+    private final Stats totalStats = new Stats();
 
-    public WitnessPathSearcher(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting, PMap options) {
-        this.graph = graph;
+    public WitnessPathSearcher(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting, Config config) {
         this.chGraph = chGraph;
         this.turnWeighting = turnWeighting;
+        this.config = config;
+        
         DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(turnWeighting.getFlagEncoder(), true, false);
         DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(turnWeighting.getFlagEncoder(), false, true);
         outEdgeExplorer = chGraph.createEdgeExplorer(outEdgeFilter);
         origInEdgeExplorer = graph.createEdgeExplorer(inEdgeFilter);
         maxLevel = chGraph.getNodes();
 
-        minimumMaxSettledEdges = options.getInt("edge_ch_witness_path_searcher.min_max_settled_edges", 100);
-        sigmaFactor = options.getDouble("edge_ch_witness_path_searcher.sigma_factor", 3.0);
-        statisticsResetInterval = options.getInt("edge_ch_witness_path_searcher.statistics_reset_interval", 10_000);
-
-        maxSettledEdges = minimumMaxSettledEdges;
-        setupSearcher(graph);
+        maxSettledEdges = config.minimumMaxSettledEdges;
+        int numOriginalEdges = graph.getBaseGraph().getAllEdges().length();
+        initStorage(2 * numOriginalEdges);
+        initCollections();
     }
 
     /**
@@ -150,14 +138,15 @@ public class WitnessPathSearcher {
         this.centerNode = centerNode;
         setInitialEntries(sourceNode, sourceEdge, centerNode);
         // if there is no entry that reaches the center node we won't need to search for any witnesses
-        if (numDirectCenterNodePaths < 1) {
+        if (numPotentialBridgePaths < 1) {
             reset();
             return 0;
         }
-        searchCount++;
-        int numEntries = getNumEntries();
-        stats.onInitEntries(numEntries);
-        return numEntries;
+        currentBatchStats.numSearches++;
+        currentBatchStats.maxNumSettledEdges += maxSettledEdges;
+        totalStats.numSearches++;
+        totalStats.maxNumSettledEdges += maxSettledEdges;
+        return dijkstraHeap.getSize();
     }
 
     /**
@@ -167,10 +156,9 @@ public class WitnessPathSearcher {
      *
      * @param targetNode the neighbor node where the node should end (t)
      * @param targetEdge the original edge outgoing from t where the search ends
-     * @return the leaf shortest path tree entry ending in an edge incoming in t if a 'direct center node path'
-     * (see above) has been found to be the optimal path or null if the optimal path is no such direct path (in this case
-     * either the optimal path is a 'witness' or no finite weight path starting with the search edge and leading to
-     * the target edge could be found at all).
+     * @return the leaf shortest path tree entry (including all ancestor entries) ending in an edge incoming in t if a
+     * 'bridge-path' (see above) has been found to be the optimal path or null if the optimal path is either a witness
+     * path or no finite weight path starting with the search edge and leading to the target edge could be found at all.
      */
     public WitnessSearchEntry runSearch(int targetNode, int targetEdge) {
         // if source and target are equal we already have a candidate for the best path: a simple turn from the source
@@ -179,7 +167,7 @@ public class WitnessPathSearcher {
                 ? calcTurnWeight(sourceEdge, sourceNode, targetEdge)
                 : Double.POSITIVE_INFINITY;
         bestPathIncEdge = NO_EDGE;
-        bestPathIsDirectCenterNodePath = false;
+        bestPathIsBridgePath = false;
 
         // check if we can already reach the target from the shortest path tree we discovered so far
         EdgeIterator inIter = origInEdgeExplorer.setBaseNode(targetNode);
@@ -192,30 +180,29 @@ public class WitnessPathSearcher {
         }
 
         // run dijkstra to find the optimal path
-        while (!heap.isEmpty()) {
-            if (numDirectCenterNodePaths < 1 && (!bestPathIsDirectCenterNodePath || isInfinite(bestPathWeight))) {
+        while (!dijkstraHeap.isEmpty()) {
+            if (numPotentialBridgePaths < 1 && (!bestPathIsBridgePath || isInfinite(bestPathWeight))) {
                 // we have not found a connection to the target edge yet and there are no entries on the heap anymore 
-                // that could yield a direct center node path
+                // that could yield a bridge-path
                 break;
             }
-            final int currKey = heap.peek_element();
+            final int currKey = dijkstraHeap.peek_element();
             if (weights[currKey] > bestPathWeight) {
                 // just reaching this edge is more expensive than the best path found so far including the turn costs
                 // to reach the target edge -> we can stop
                 // important: we only peeked so far, so we keep the entry for future searches
                 break;
             }
-            heap.poll_element();
-            numPolledEdges++;
-            pollCount++;
+            dijkstraHeap.poll_element();
+            currentBatchStats.numPolledEdges++;
+            totalStats.numPolledEdges++;
 
-            if (isDirectCenterNodePaths[currKey]) {
-                numDirectCenterNodePaths--;
+            if (isPotentialBridgePaths[currKey]) {
+                numPotentialBridgePaths--;
             }
 
-            // after a certain amount of edges has been settled we only expand entries that might yield a direct center
-            // node path
-            if (numSettledEdges > maxSettledEdges && !isDirectCenterNodePaths[currKey]) {
+            // after a certain amount of edges has been settled we only expand entries that might yield a bridge-path
+            if (numSettledEdges > maxSettledEdges && !isPotentialBridgePaths[currKey]) {
                 continue;
             }
 
@@ -232,33 +219,35 @@ public class WitnessPathSearcher {
                 if (isInfinite(weight)) {
                     continue;
                 }
-                boolean isDirectCenterNodePath = isDirectCenterNodePaths[currKey] && iter.getAdjNode() == centerNode;
+                boolean isPotentialBridgePath = this.isPotentialBridgePaths[currKey] && iter.getAdjNode() == centerNode;
 
                 // dijkstra expansion: add or update current entries
                 int key = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
                 if (edges[key] == NO_EDGE) {
-                    setEntry(key, iter, weight, currKey, isDirectCenterNodePath);
+                    setEntry(key, iter, weight, currKey, isPotentialBridgePath);
                     changedEdges.add(key);
-                    heap.insert_(weight, key);
+                    dijkstraHeap.insert_(weight, key);
                     updateBestPath(targetNode, targetEdge, key);
                 } else if (weight < weights[key]) {
-                    updateEntry(key, iter, weight, currKey, isDirectCenterNodePath);
-                    heap.update_(weight, key);
+                    updateEntry(key, iter, weight, currKey, isPotentialBridgePath);
+                    dijkstraHeap.update_(weight, key);
                     updateBestPath(targetNode, targetEdge, key);
                 }
             }
             numSettledEdges++;
-            // do not keep searching after to node has been expanded first time, should speed up contraction a bit but
+            currentBatchStats.numSettledEdges++;
+            totalStats.numSettledEdges++;
+            // do not keep searching after target node has been expanded first time, should speed up contraction a bit but
             // leads to less witnesses being found.
 //            if (adjNodes[currKey] == targetNode) {
 //                break;
 //            }
         }
 
-        if (bestPathIsDirectCenterNodePath) {
+        if (bestPathIsBridgePath) {
             int edgeKey = getEdgeKey(bestPathIncEdge, targetNode);
             WitnessSearchEntry result = getEntryForKey(edgeKey);
-            // prepend all parents up to root
+            // prepend all ancestors
             WitnessSearchEntry entry = result;
             while (parents[edgeKey] >= 0) {
                 edgeKey = parents[edgeKey];
@@ -266,30 +255,23 @@ public class WitnessPathSearcher {
                 entry.parent = parent;
                 entry = parent;
             }
-            entry.parent = rootParents.get(parents[edgeKey]);
+            entry.parent = initialEntryParents.get(parents[edgeKey]);
             return result;
         } else {
             return null;
         }
     }
 
-    public int getNumPolledEdges() {
-        return numPolledEdges;
+    public String getStatisticsString() {
+        return currentBatchStats.toString();
     }
 
-    public String getStatusString() {
-        return stats.toString();
+    public long getNumPolledEdges() {
+        return currentBatchStats.numPolledEdges;
     }
 
     public void resetStats() {
-        stats.reset();
-    }
-
-    protected void setupSearcher(GraphHopperStorage graph) {
-        final int numOriginalEdges = graph.getBaseGraph().getAllEdges().length();
-        final int numEntries = 2 * numOriginalEdges;
-        initStorage(numEntries);
-        initCollections();
+        currentBatchStats.reset();
     }
 
     private void initStorage(int numEntries) {
@@ -308,17 +290,17 @@ public class WitnessPathSearcher {
         adjNodes = new int[numEntries];
         Arrays.fill(adjNodes, NO_NODE);
 
-        isDirectCenterNodePaths = new boolean[numEntries];
-        Arrays.fill(isDirectCenterNodePaths, false);
+        isPotentialBridgePaths = new boolean[numEntries];
+        Arrays.fill(isPotentialBridgePaths, false);
     }
 
     private void initCollections() {
-        rootParents = new IntObjectHashMap<>(10);
+        initialEntryParents = new IntObjectHashMap<>(10);
         changedEdges = new IntArrayList(1000);
-        heap = new IntDoubleBinaryHeap(1000);
+        dijkstraHeap = new IntDoubleBinaryHeap(1000);
     }
 
-    protected void setInitialEntries(int sourceNode, int sourceEdge, int centerNode) {
+    private void setInitialEntries(int sourceNode, int sourceEdge, int centerNode) {
         EdgeIterator outIter = outEdgeExplorer.setBaseNode(sourceNode);
         while (outIter.next()) {
             if (isContracted(outIter.getAdjNode())) {
@@ -330,7 +312,7 @@ public class WitnessPathSearcher {
             }
             double edgeWeight = turnWeighting.calcWeight(outIter, false, NO_EDGE);
             double weight = turnWeight + edgeWeight;
-            boolean isDirectCenterNodePath = outIter.getAdjNode() == centerNode;
+            boolean isPotentialBridgePath = outIter.getAdjNode() == centerNode;
             int incEdge = outIter.getLastOrigEdge();
             int adjNode = outIter.getAdjNode();
             int key = getEdgeKey(incEdge, adjNode);
@@ -346,8 +328,8 @@ public class WitnessPathSearcher {
                 adjNodes[key] = adjNode;
                 weights[key] = weight;
                 parents[key] = parentKey;
-                isDirectCenterNodePaths[key] = isDirectCenterNodePath;
-                rootParents.put(parentKey, parent);
+                isPotentialBridgePaths[key] = isPotentialBridgePath;
+                initialEntryParents.put(parentKey, parent);
                 changedEdges.add(key);
             } else if (weight < weights[key]) {
                 // update existing entry, there may be entries with the same adjNode and last original edge,
@@ -355,52 +337,49 @@ public class WitnessPathSearcher {
                 edges[key] = outIter.getEdge();
                 weights[key] = weight;
                 parents[key] = parentKey;
-                isDirectCenterNodePaths[key] = isDirectCenterNodePath;
-                rootParents.put(parentKey, parent);
+                isPotentialBridgePaths[key] = isPotentialBridgePath;
+                initialEntryParents.put(parentKey, parent);
             }
         }
 
         // now that we know which entries are actually needed we add them to the heap
         for (int i = 0; i < changedEdges.size(); ++i) {
             int key = changedEdges.get(i);
-            if (isDirectCenterNodePaths[key]) {
-                numDirectCenterNodePaths++;
+            if (isPotentialBridgePaths[key]) {
+                numPotentialBridgePaths++;
             }
-            heap.insert_(weights[key], key);
+            dijkstraHeap.insert_(weights[key], key);
         }
     }
 
     private void reset() {
-        updateSettledEdgeStatistics();
-        stats.onReset(numSettledEdges, maxSettledEdges);
+        updateMaxSettledEdges();
         numSettledEdges = 0;
-        numPolledEdges = 0;
-        numDirectCenterNodePaths = 0;
-        doReset();
+        numPotentialBridgePaths = 0;
+        resetShortestPathTree();
     }
 
-    private void updateSettledEdgeStatistics() {
+    private void updateMaxSettledEdges() {
         // we use the statistics of settled edges of a batch of previous witness path searches to dynamically 
         // approximate the number of settled edges in the next batch
-        statisticsCalculator.addObservation(numSettledEdges);
-        if (statisticsCalculator.getCount() == statisticsResetInterval) {
+        settledEdgesStats.addObservation(numSettledEdges);
+        if (settledEdgesStats.getCount() == config.getSettledEdgeStatsResetInterval()) {
             maxSettledEdges = Math.max(
-                    minimumMaxSettledEdges,
-                    (int) (statisticsCalculator.getMean() +
-                            sigmaFactor * Math.sqrt(statisticsCalculator.getVariance()))
+                    config.getMinimumMaxSettledEdges(),
+                    (int) (settledEdgesStats.getMean() +
+                            config.getSigmaFactor() * Math.sqrt(settledEdgesStats.getVariance()))
             );
-            stats.onStatCalcReset(statisticsCalculator);
-            statisticsCalculator.reset();
+            settledEdgesStats.reset();
         }
     }
 
-    void doReset() {
+    private void resetShortestPathTree() {
         for (int i = 0; i < changedEdges.size(); ++i) {
             resetEntry(changedEdges.get(i));
         }
         changedEdges.elementsCount = 0;
-        rootParents.clear();
-        heap.clear();
+        initialEntryParents.clear();
+        dijkstraHeap.clear();
     }
 
     private void updateBestPath(int targetNode, int targetEdge, int edgeKey) {
@@ -410,43 +389,43 @@ public class WitnessPathSearcher {
             // there is a path to the target so we know that there must be some parent. therefore a negative parent key
             // means that the parent is a root parent (a parent of an initial entry) and we did not go via the center
             // node.
-            boolean isDirectCenterNodePath = parents[edgeKey] >= 0 && isDirectCenterNodePaths[parents[edgeKey]];
-            // in case of equal weights we always prefer a witness path over a direct center node path
-            double tolerance = isDirectCenterNodePath ? 0 : 1.e-6;
+            boolean isBridgePath = parents[edgeKey] >= 0 && isPotentialBridgePaths[parents[edgeKey]];
+            // in case of equal weights we always prefer a witness path over a bridge-path
+            double tolerance = isBridgePath ? 0 : 1.e-6;
             if (totalWeight - tolerance < bestPathWeight) {
                 bestPathWeight = totalWeight;
                 bestPathIncEdge = incEdges[edgeKey];
-                bestPathIsDirectCenterNodePath = isDirectCenterNodePath;
+                bestPathIsBridgePath = isBridgePath;
             }
         }
     }
 
-    private void setEntry(int key, EdgeIteratorState edge, double weight, int parent, boolean isDirectCenterNodePath) {
+    private void setEntry(int key, EdgeIteratorState edge, double weight, int parent, boolean isPotentialBridgePath) {
         edges[key] = edge.getEdge();
         incEdges[key] = edge.getLastOrigEdge();
         adjNodes[key] = edge.getAdjNode();
         weights[key] = weight;
         parents[key] = parent;
-        if (isDirectCenterNodePath) {
-            isDirectCenterNodePaths[key] = true;
-            numDirectCenterNodePaths++;
+        if (isPotentialBridgePath) {
+            isPotentialBridgePaths[key] = true;
+            numPotentialBridgePaths++;
         }
     }
 
-    private void updateEntry(int key, EdgeIteratorState edge, double weight, int currKey, boolean isDirectCenterNodePath) {
+    private void updateEntry(int key, EdgeIteratorState edge, double weight, int currKey, boolean isPotentialBridgePath) {
         edges[key] = edge.getEdge();
         weights[key] = weight;
         parents[key] = currKey;
-        if (isDirectCenterNodePath) {
-            if (!isDirectCenterNodePaths[key]) {
-                numDirectCenterNodePaths++;
+        if (isPotentialBridgePath) {
+            if (!isPotentialBridgePaths[key]) {
+                numPotentialBridgePaths++;
             }
         } else {
-            if (isDirectCenterNodePaths[key]) {
-                numDirectCenterNodePaths--;
+            if (isPotentialBridgePaths[key]) {
+                numPotentialBridgePaths--;
             }
         }
-        isDirectCenterNodePaths[key] = isDirectCenterNodePath;
+        isPotentialBridgePaths[key] = isPotentialBridgePath;
     }
 
     private void resetEntry(int key) {
@@ -455,92 +434,90 @@ public class WitnessPathSearcher {
         incEdges[key] = NO_EDGE;
         parents[key] = NO_NODE;
         adjNodes[key] = NO_NODE;
-        isDirectCenterNodePaths[key] = false;
-    }
-
-    int getNumEntries() {
-        return heap.getSize();
+        isPotentialBridgePaths[key] = false;
     }
 
     private WitnessSearchEntry getEntryForKey(int edgeKey) {
-        return new WitnessSearchEntry(edges[edgeKey], incEdges[edgeKey], adjNodes[edgeKey], weights[edgeKey], isDirectCenterNodePaths[edgeKey]);
+        return new WitnessSearchEntry(edges[edgeKey], incEdges[edgeKey], adjNodes[edgeKey], weights[edgeKey], isPotentialBridgePaths[edgeKey]);
     }
 
-    int getEdgeKey(int edge, int adjNode) {
+    private int getEdgeKey(int edge, int adjNode) {
         return GHUtility.getEdgeKey(chGraph, edge, adjNode, false);
     }
 
-    double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+    private double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
         if (inEdge == outEdge) {
             return Double.POSITIVE_INFINITY;
         }
         return turnWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
     }
 
-    boolean isContracted(int node) {
+    private boolean isContracted(int node) {
         return chGraph.getLevel(node) != maxLevel;
     }
 
+    static class Config {
+        /**
+         * Determines the maximum number of settled edges for the next search based on the mean number of settled edges and
+         * the fluctuation in the previous searches. The higher this number the longer the search will last and the more
+         * witness paths will be found. Assuming a normal distribution for example sigmaFactor = 2 means that about 95% of
+         * the searches will be within the limit.
+         */
+        private double sigmaFactor = 3.0;
+        private int minimumMaxSettledEdges = 100;
+        private int settledEdgeStatsResetInterval = 10_000;
+
+        public double getSigmaFactor() {
+            return sigmaFactor;
+        }
+
+        public void setSigmaFactor(double sigmaFactor) {
+            this.sigmaFactor = sigmaFactor;
+        }
+
+        public int getMinimumMaxSettledEdges() {
+            return minimumMaxSettledEdges;
+        }
+
+        public void setMinimumMaxSettledEdges(int minimumMaxSettledEdges) {
+            this.minimumMaxSettledEdges = minimumMaxSettledEdges;
+        }
+
+        public int getSettledEdgeStatsResetInterval() {
+            return settledEdgeStatsResetInterval;
+        }
+
+        public void setSettledEdgeStatsResetInterval(int settledEdgeStatsResetInterval) {
+            this.settledEdgeStatsResetInterval = settledEdgeStatsResetInterval;
+        }
+    }
+
     static class Stats {
-        // helps to analyze how many edges get settled during a search typically, can be removed when stable
-        private final long[] settledEdgesStats = new long[20];
-        private long totalNumResets;
-        private long totalNumStatCalcResets;
-        private long totalNumInitialEntries;
-        private long totalNumSettledEdges;
-        private long totalMaxSettledEdges;
-        private long totalMeanSettledEdges;
-        private long totalStdDeviationSettledEdges;
+        private long numSearches;
+        private long numPolledEdges;
+        private long numSettledEdges;
+        private long maxNumSettledEdges;
 
         @Override
         public String toString() {
-            return String.format("settled edges stats (since last reset) - " +
-                            " limit-exhaustion: %5.1f %%, (avg-settled: %5.1f, avg-max: %5.1f, avg-mean: %5.1f, avg-sigma: %5.1f)," +
-                            " avg-initial entries: %5.1f, settled edges distribution: %s",
-                    divideOrZero(totalNumSettledEdges, totalMaxSettledEdges) * 100,
-                    divideOrZero(totalNumSettledEdges, totalNumResets),
-                    divideOrZero(totalMaxSettledEdges, totalNumResets),
-                    divideOrZero(totalMeanSettledEdges, totalNumStatCalcResets),
-                    divideOrZero(totalStdDeviationSettledEdges, totalNumStatCalcResets),
-                    divideOrZero(totalNumInitialEntries, totalNumResets),
-                    Arrays.toString(settledEdgesStats));
+            return String.format(
+                    "limit-exhaustion: %s %%, avg-settled: %s, avg-max-settled: %s, avg-polled-edges: %s",
+                    quotient(numSettledEdges, maxNumSettledEdges * 100),
+                    quotient(numSettledEdges, numSearches),
+                    quotient(maxNumSettledEdges, numSearches),
+                    quotient(numPolledEdges, numSearches));
         }
 
-        private double divideOrZero(long a, long b) {
-            return b == 0 ? 0 : 1.0 * a / b;
+        private String quotient(long a, long b) {
+            return b == 0 ? "NaN" : String.format("%5.1f", a / ((double) b));
         }
 
         void reset() {
-            Arrays.fill(settledEdgesStats, 0);
-            totalNumResets = 0;
-            totalNumStatCalcResets = 0;
-            totalNumInitialEntries = 0;
-            totalNumSettledEdges = 0;
-            totalMaxSettledEdges = 0;
-            totalMeanSettledEdges = 0;
-            totalStdDeviationSettledEdges = 0;
+            numSearches = 0;
+            numPolledEdges = 0;
+            numSettledEdges = 0;
+            maxNumSettledEdges = 0;
         }
 
-        void onInitEntries(int numInitialEntries) {
-            totalNumInitialEntries += numInitialEntries;
-        }
-
-        void onReset(int numSettledEdges, int maxSettledEdges) {
-            int bucket = numSettledEdges / 10;
-            if (bucket >= settledEdgesStats.length) {
-                bucket = settledEdgesStats.length - 1;
-            }
-
-            settledEdgesStats[bucket]++;
-            totalNumResets++;
-            totalNumSettledEdges += numSettledEdges;
-            totalMaxSettledEdges += maxSettledEdges;
-        }
-
-        void onStatCalcReset(OnFlyStatisticsCalculator statisticsCalculator) {
-            totalNumStatCalcResets++;
-            totalMeanSettledEdges += statisticsCalculator.getMean();
-            totalStdDeviationSettledEdges += (long) Math.sqrt(statisticsCalculator.getVariance());
-        }
     }
 }

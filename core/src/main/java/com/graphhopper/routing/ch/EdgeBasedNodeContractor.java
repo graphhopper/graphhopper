@@ -77,15 +77,12 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private int numPolledEdges;
     private int numSearches;
 
-    private final PMap options;
-
     public EdgeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph,
                                    TurnWeighting turnWeighting, PMap options) {
         super(dir, ghStorage, prepareGraph, turnWeighting);
         this.turnWeighting = turnWeighting;
         this.encoder = turnWeighting.getFlagEncoder();
         this.witnessSearchStrategy = new TurnReplacementSearch();
-        this.options = options;
     }
 
     @Override
@@ -95,9 +92,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         legacyWitnessPathFinder = arrayBasedWitnessPathFinder ?
                 new ArrayBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, TraversalMode.EDGE_BASED_2DIR, maxLevel) :
                 new MapBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, TraversalMode.EDGE_BASED_2DIR, maxLevel);
-        witnessPathSearcher = arrayBasedWitnessPathFinder ?
-                new WitnessPathSearcher(ghStorage, prepareGraph, turnWeighting, options) :
-                new MapWitnessPathSearcher(ghStorage, prepareGraph, turnWeighting, options);
+        WitnessPathSearcher.Config config = new WitnessPathSearcher.Config();
+        witnessPathSearcher = new WitnessPathSearcher(ghStorage, prepareGraph, turnWeighting, config);
         DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
         DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
         inEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
@@ -547,7 +543,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         String result = String.format("searches: %10s, polled-edges: %10s, stats(calc): %s, stats(contract): %s, %s",
                 nf(totalNumSearches), nf(totalNumPolledEdges),
                 countingShortcutHandler.getStats(), addingShortcutHandler.getStats(),
-                searchType == SearchType.AGGRESSIVE ? witnessPathSearcher.getStatusString() : legacyWitnessPathFinder.getStatusString());
+                searchType == SearchType.AGGRESSIVE ? witnessPathSearcher.getStatisticsString() : legacyWitnessPathFinder.getStatusString());
         countingShortcutHandler.resetStats();
         addingShortcutHandler.resetStats();
         legacyWitnessPathFinder.resetStats();

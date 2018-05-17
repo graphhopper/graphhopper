@@ -28,7 +28,7 @@ class OnFlyStatisticsCalculator {
     private double mean;
     private double varianceHelper;
 
-    void addObservation(int value) {
+    void addObservation(long value) {
         count++;
         double delta = value - mean;
         mean += delta / count;

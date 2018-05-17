@@ -124,11 +124,11 @@ public class CHMeasurement {
 
         EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
         List<ManualPrepareContractionHierarchies.Stats> aggressiveCounts = runContraction();
-        System.out.printf("aggressive: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(aggressiveCounts), WitnessPathSearcher.pollCount, getTotalSearches(aggressiveCounts), WitnessPathSearcher.searchCount);
+//        System.out.printf("aggressive: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(aggressiveCounts), WitnessPathSearcher.pollCount, getTotalSearches(aggressiveCounts), WitnessPathSearcher.searchCount);
 
         EdgeBasedNodeContractor.searchType = SearchType.LEGACY_AGGRESSIVE;
         List<ManualPrepareContractionHierarchies.Stats> legacyCounts = runContraction();
-        System.out.printf("legacyaggr: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(legacyCounts), LegacyWitnessPathFinder.pollCount, getTotalSearches(legacyCounts), LegacyWitnessPathFinder.searchCount);
+//        System.out.printf("legacyaggr: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(legacyCounts), LegacyWitnessPathFinder.pollCount, getTotalSearches(legacyCounts), LegacyWitnessPathFinder.searchCount);
 
         if (aggressiveCounts.size() != legacyCounts.size()) {
             throw new IllegalStateException("shouldnt be really");
@@ -355,7 +355,7 @@ public class CHMeasurement {
     private static void testPerformanceAutomaticNodeOrdering(String[] args) {
         CmdArgs cmdArgs = CmdArgs.read(args);
         LOGGER.info("Running analysis with parameters {}", cmdArgs);
-        cmdArgs.putIfAbsent("datareader.file", "local/maps/unterfranken-latest.osm.pbf");
+        cmdArgs.putIfAbsent("datareader.file", "local/maps/berlin-latest.osm.pbf");
         int periodicUpdates = cmdArgs.getInt("period_updates", 0);
         int lazyUpdates = cmdArgs.getInt("lazy_updates", 100);
         int neighborUpdates = cmdArgs.getInt("neighbor_updates", 0);
