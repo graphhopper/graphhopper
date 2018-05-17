@@ -82,6 +82,7 @@ public class WitnessPathSearcher {
     private boolean bestPathIsBridgePath;
     private int numPotentialBridgePaths;
     private int numSettledEdges;
+    private int numPolledEdges;
 
     // data structures used to build the shortest path tree
     // we allocate memory for all possible edge keys and keep track which ones have been discovered so far
@@ -194,6 +195,7 @@ public class WitnessPathSearcher {
                 break;
             }
             dijkstraHeap.poll_element();
+            numPolledEdges++;
             currentBatchStats.numPolledEdges++;
             totalStats.numPolledEdges++;
 
@@ -267,7 +269,7 @@ public class WitnessPathSearcher {
     }
 
     public long getNumPolledEdges() {
-        return currentBatchStats.numPolledEdges;
+        return numPolledEdges;
     }
 
     public void resetStats() {
@@ -357,6 +359,7 @@ public class WitnessPathSearcher {
     private void reset() {
         updateMaxSettledEdges();
         numSettledEdges = 0;
+        numPolledEdges = 0;
         numPotentialBridgePaths = 0;
         resetShortestPathTree();
     }
