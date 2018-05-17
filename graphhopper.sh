@@ -166,7 +166,7 @@ function packageJar {
   if [ ! -f "$JAR" ]; then
     echo "## building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
-    execMvn --projects web -am -DskipTests=true package
+    execMvn --projects web -P include-client-hc -am -DskipTests=true package
   else
     echo "## existing jar found $JAR"
   fi
