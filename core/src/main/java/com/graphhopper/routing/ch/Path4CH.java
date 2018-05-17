@@ -56,7 +56,7 @@ public class Path4CH extends PathBidirRef {
     }
 
     private void expandSkippedEdges(int skippedEdge1, int skippedEdge2, int from, int to, boolean reverse) {
-        // todo: add some explanation what is going on here / what the different cases are
+        // for edge-based CH we need to take special care for loop shortcuts
         if (from != to) {
             // get properties like speed of the edge in the correct direction
             if (reverseOrder == reverse) {
@@ -76,9 +76,9 @@ public class Path4CH extends PathBidirRef {
             CHEdgeIteratorState sk1 = getEdge(skippedEdge1, from);
             CHEdgeIteratorState sk2 = getEdge(skippedEdge2, from);
             if (sk1.getAdjNode() == sk1.getBaseNode() || sk2.getAdjNode() == sk2.getBaseNode()) {
-                // todo: this is a loop where both skipped edges are loops. what to do here ? can this ever happen ?
-                // if yes construct a test where this case happens and do something appropriate here
-                throw new IllegalStateException("Detected edge where both skipped edges are loops, did not anticipate this so far");
+                // todo: this is a loop where both skipped edges are loops. this should never happen, because we only
+                // ever look for shortcuts between real neighbor nodes. 
+                throw new IllegalStateException("Error: Detected edge where both skipped edges are loops");
             }
 
             if (!reverseOrder) {
