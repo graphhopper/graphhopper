@@ -159,10 +159,6 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(old + 2, lg.getAllEdges().length());
     }
 
-    private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHGraph lg) {
-        return new PrepareContractionHierarchies(dir, g, lg, weighting, tMode, new PrepareContractionHierarchies.Config());
-    }
-
     @Test
     public void testMoreComplexGraph() {
         GraphHopperStorage g = createGHStorage();
@@ -481,6 +477,10 @@ public class PrepareContractionHierarchiesTest {
         checkPath(ghStorage, bikeWeighting, 9, 5, Helper.createTList(3, 10, 14, 16, 13, 12));
     }
 
+    private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHGraph lg) {
+        return new PrepareContractionHierarchies(dir, g, lg, weighting, tMode, new PrepareContractionHierarchies.Config());
+    }
+    
     void checkPath(GraphHopperStorage ghStorage, Weighting w, int expShortcuts, double expDistance, IntIndexedContainer expNodes) {
         CHGraph lg = ghStorage.getGraph(CHGraph.class, w);
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, ghStorage, lg, w, tMode, new PrepareContractionHierarchies.Config());

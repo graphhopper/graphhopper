@@ -54,7 +54,7 @@ import static java.lang.Double.isInfinite;
  * The search can be initialized for a given source edge and node to be contracted x. Subsequent searches for different
  * target edges will keep on building the shortest path tree from previous searches. For the performance of edge-based
  * CH graph preparation it is crucial to limit the local witness path searches. However the search always needs to at
- * least find the best bridge-path if one exists. Therefore we may stop expanding edges when a certain amount of settled 
+ * least find the best bridge-path if one exists. Therefore we may stop expanding edges when a certain amount of settled
  * edges is exceeded, but even then we still need to expand edges that could possibly yield a bridge-path and we may
  * only stop this when it is guaranteed that no bridge-path exists. Here we limit the maximum number of settled
  * edges during the search and determine this maximum number based on the statistics we collected during previous
@@ -108,7 +108,7 @@ public class WitnessPathSearcher {
         this.chGraph = chGraph;
         this.turnWeighting = turnWeighting;
         this.config = config;
-        
+
         DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(turnWeighting.getFlagEncoder(), true, false);
         DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(turnWeighting.getFlagEncoder(), false, true);
         outEdgeExplorer = chGraph.createEdgeExplorer(outEdgeFilter);
@@ -317,6 +317,8 @@ public class WitnessPathSearcher {
             int adjNode = outIter.getAdjNode();
             int key = getEdgeKey(incEdge, adjNode);
             int parentKey = -key - 1;
+            // note that we 'misuse' the parent also to store initial turncost and the first original edge of this 
+            // initial entry
             WitnessSearchEntry parent = new WitnessSearchEntry(
                     NO_EDGE,
                     outIter.getFirstOrigEdge(),
