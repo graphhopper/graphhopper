@@ -1,0 +1,16 @@
+graphhopper:
+  # OSM input file (example data)
+  datareader.file: map-data/leipzig_germany.osm.pbf
+  graph.flag_encoders: car
+  prepare.ch.weightings: no
+
+server:
+  applicationConnectors:
+  - type: http
+    port: 8989
+    # for security reasons bind to localhost
+    bindHost: localhost
+  adminConnectors:
+  - type: http
+    port: 8990
+    bindHost: localhost

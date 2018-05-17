@@ -60,19 +60,15 @@ public class MapMatchingResource {
 
     private final GraphHopper graphHopper;
     private final EncodingManager encodingManager;
-    private final Boolean hasElevation;
     private final double gpsMaxAccuracy;
     private final TranslationMap trMap;
 
     @Inject
-    public MapMatchingResource(GraphHopper graphHopper, EncodingManager encodingManager,
-                               @Named("hasElevation") Boolean hasElevation,
-                               @Named("gps.max_accuracy") double gpsMaxAccuracy,
+    public MapMatchingResource(CmdArgs configuration, GraphHopper graphHopper, EncodingManager encodingManager,
                                TranslationMap trMap) {
         this.graphHopper = graphHopper;
         this.encodingManager = encodingManager;
-        this.hasElevation = hasElevation;
-        this.gpsMaxAccuracy = gpsMaxAccuracy;
+        this.gpsMaxAccuracy = configuration.getDouble("web.gps.max_accuracy", 100);
         this.trMap = trMap;
     }
 
@@ -106,8 +102,6 @@ public class MapMatchingResource {
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
         if (!encodingManager.supports(vehicleStr)) {
             throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("Vehicle not supported: " + vehicleStr), writeGPX));
-        } else if (enableElevation && !hasElevation) {
-            throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("Elevation not supported!"), writeGPX));
         }
 
         String inType = "gpx";
