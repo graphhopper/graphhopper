@@ -81,7 +81,7 @@ public class MapMatchingMain {
             }
 
             String instructions = args.get("instructions", "");
-            logger.info("Setup lookup index. Accuracy filter is at " + gpsAccuracy + "m");
+            logger.info("Accuracy filter is at " + gpsAccuracy + "m");
             AlgorithmOptions opts = AlgorithmOptions.start().
                     algorithm(Parameters.Algorithms.DIJKSTRA_BI).traversalMode(hopper.getTraversalMode()).
                     weighting(new FastestWeighting(firstEncoder)).
