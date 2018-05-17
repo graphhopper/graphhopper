@@ -17,7 +17,6 @@
  */
 package com.graphhopper.matching;
 
-import com.graphhopper.routing.Path;
 import com.graphhopper.util.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -44,24 +43,20 @@ import java.util.TimeZone;
  */
 public class GPXFile {
 
-    static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
-    static final String DATE_FORMAT_Z = "yyyy-MM-dd'T'HH:mm:ss'Z'";
-    static final String DATE_FORMAT_Z_MS = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
+    private static final String DATE_FORMAT_Z = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    private static final String DATE_FORMAT_Z_MS = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     private final List<GPXEntry> entries;
     private boolean includeElevation = false;
     private InstructionList instructions;
 
     public GPXFile() {
-        entries = new ArrayList<GPXEntry>();
-    }
-
-    public GPXFile(List<GPXEntry> entries) {
-        this.entries = entries;
+        entries = new ArrayList<>();
     }
 
     public GPXFile(MatchResult mr, InstructionList il) {
         this.instructions = il;
-        this.entries = new ArrayList<GPXEntry>(mr.getEdgeMatches().size());
+        this.entries = new ArrayList<>(mr.getEdgeMatches().size());
         // TODO fetch time from GPX or from calculated route?
         long time = 0;
         for (int emIndex = 0; emIndex < mr.getEdgeMatches().size(); emIndex++) {
@@ -175,7 +170,7 @@ public class GPXFile {
 
     // TODO DUPLICATE CODE from GraphHopper InstructionList!
     //
-    public String createString() {
+    private String createString() {
         long startTimeMillis = 0;
         SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT_Z);
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -234,28 +229,12 @@ public class GPXFile {
         return gpxOutput.toString().replaceAll("\\'", "\"");
     }
 
-    public GPXFile doExport(String gpxFile) {
-        BufferedWriter writer = null;
-        try {
-            writer = new BufferedWriter(new FileWriter(gpxFile));
+    public void doExport(String gpxFile) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(gpxFile))) {
             writer.append(createString());
-            return this;
         } catch (IOException ex) {
             throw new RuntimeException(ex);
-        } finally {
-            Helper.close(writer);
         }
     }
 
-    public static void write(Path path, String gpxFile, Translation translation) {
-        BufferedWriter writer = null;
-        try {
-            writer = new BufferedWriter(new FileWriter(gpxFile));
-            writer.append(path.calcInstructions(translation).createGPX());
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        } finally {
-            Helper.close(writer);
-        }
-    }
 }

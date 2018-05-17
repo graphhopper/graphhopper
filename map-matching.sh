@@ -32,7 +32,7 @@ elif [ "$1" = "action=test" ]; then
     # return exit code of mvn
     exit $?
 elif [ "$1" = "action=measurement" ]; then
-    # the purpose of this is to run the com.graphhopper.matching.util.Measurement suite, which outputs 
+    # the purpose of this is to run the com.graphhopper.matching.cli.MeasurementCommand suite, which outputs
     # measurement files locally. Usage is either
     #
     #   ./map-matching.sh action=measurement map.osm.pbf
@@ -54,7 +54,7 @@ elif [ "$1" = "action=measurement" ]; then
         # runs a measurement for the current code base
         mvn --projects matching-core -DskipTests=true clean install assembly:single
         measurement_fname="measurement$(date +%Y-%m-%d_%H_%M_%S).properties"
-        "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.matching.util.Measurement $ARGS measurement.location="$measurement_fname"
+        "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.matching.cli.MeasurementCommand $ARGS measurement.location="$measurement_fname"
     }
 
     # use all <last_commits> versions starting from HEAD
