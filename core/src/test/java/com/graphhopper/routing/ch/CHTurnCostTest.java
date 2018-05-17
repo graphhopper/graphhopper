@@ -627,6 +627,22 @@ public class CHTurnCostTest {
         compareCHWithDijkstra(1000, contractionOrder);
     }
 
+    @Test
+    public void testFindPath_loopsMustAlwaysBeAccepted() {
+        //     ---
+        //     \ /
+        // 0 -- 1 -- 2 -- 3
+        EdgeIteratorState edge0 = graph.edge(0, 1, 1, true);
+        EdgeIteratorState edge1 = graph.edge(1, 1, 1, false);
+        EdgeIteratorState edge2 = graph.edge(1, 2, 1, true);
+        EdgeIteratorState edge3 = graph.edge(2, 3, 1, false);
+        addTurnCost(edge0, edge1, 1, 1);
+        addRestriction(edge0, edge2, 1);
+        graph.freeze();
+        final IntArrayList expectedPath = Helper.createTList(0, 1, 1, 2, 3);
+        checkPath(expectedPath, 5, 0, 3, Arrays.asList(0, 2, 1, 3));
+    }
+
     @Repeat(times = 100)
     @Test
     public void testFindPath_random_compareWithDijkstra() {
@@ -758,6 +774,10 @@ public class CHTurnCostTest {
         // todo: for increased precision some tests fail. this is because the weight is truncated, not rounded
         // when storing shortcut edges. should we fix this ?
         boolean algosAgree = Math.abs(dijkstraPath.getWeight() - chPath.getWeight()) < 1.e-2;
+        if (!algosAgree) {
+            System.out.println("Graph that produced error:");
+            GHUtility.printGraphForUnitTest(graph, encoder);
+        }
         assertTrue("Dijkstra and CH did not find equal shortest paths for route from " + from + " to " + to + "\n" +
                         " dijkstra: weight: " + dijkstraPath.getWeight() + ", nodes: " + dijkstraPath.calcNodes() + "\n" +
                         "       ch: weight: " + chPath.getWeight() + ", nodes: " + chPath.calcNodes(),

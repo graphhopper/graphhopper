@@ -385,6 +385,28 @@ public class CHQueryWithTurnCostsTest {
     }
 
     @Test
+    public void testFindPath_loopIsRecognizedAsIncomingEdge() {
+        //     ---
+        //     \ /
+        // 0 -- 3 -- 2 -- 1
+        EdgeIteratorState edge0 = graph.edge(0, 3, 1, true);
+        EdgeIteratorState edge1 = graph.edge(3, 3, 1, false);
+        EdgeIteratorState edge2 = graph.edge(3, 2, 1, true);
+        EdgeIteratorState edge3 = graph.edge(2, 1, 1, false);
+        addRestriction(edge0, edge2, 3);
+        graph.freeze();
+
+        // contraction yields no shortcuts
+        setLevelEqualToNodeIdForAllNodes();
+
+        // node 3 is the bridge node where both forward and backward searches meet. since there is a turn restriction
+        // at node 3 we cannot go from 0 to 2 directly, but we need to take the loop at 3 first. when the backward 
+        // search arrives at 3 it checks if 3 could be reached by the forward search and therefore its crucial that
+        // the ('forward') loop at 3 is recognized as an incoming edge at node 3
+        testPathCalculation(0, 1, 4, Helper.createTList(0, 3, 3, 2, 1));
+    }
+    
+    @Test
     public void testFindPathWithTurnRestriction_single_loop() {
         //     0
         //     | \
