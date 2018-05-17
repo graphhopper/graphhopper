@@ -40,25 +40,22 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     // todo: modify code such that logging does not alter performance 
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
     private final TurnWeighting turnWeighting;
-    private final SimpleSearch simpleSearch = new SimpleSearch();
+    private final Config config;
     private final ShortcutHandler addingShortcutHandler = new AddingShortcutHandler();
     private final ShortcutHandler countingShortcutHandler = new CountingShortcutHandler();
     private ShortcutHandler activeShortcutHandler;
-    private final Config config;
     private final StopWatch dijkstraSW = new StopWatch();
     private int dijkstraCount;
     private int addedShortcutsCount;
     private int[] hierarchyDepths;
-    private LegacyWitnessPathFinder legacyWitnessPathFinder;
     private WitnessPathSearcher witnessPathSearcher;
-    private CHEdgeExplorer scExplorer;
-    private CHEdgeExplorer allCHExplorer;
+    private CHEdgeExplorer existingShortcutExplorer;
+    private CHEdgeExplorer allEdgeExplorer;
     private EdgeExplorer fromNodeOrigInEdgeExplorer;
     private EdgeExplorer toNodeOrigOutEdgeExplorer;
     private EdgeExplorer toNodeOrigInEdgeExplorer;
     private EdgeExplorer loopAvoidanceInEdgeExplorer;
     private EdgeExplorer loopAvoidanceOutEdgeExplorer;
-    private WitnessSearchStrategy witnessSearchStrategy;
     private int numEdges;
     private int numPrevEdges;
     private int numOrigEdges;
@@ -72,35 +69,41 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private int numPolledEdges;
     private int numSearches;
 
+    private AggressiveStrategy aggressiveStrategy;
+    private LegacyAggressiveStrategy legacyAggressiveStrategy;
+    private ClassicStrategy classicStrategy;
+    private SearchStrategy activeStrategy;
+
     public EdgeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph,
                                    TurnWeighting turnWeighting, Config config) {
         super(dir, ghStorage, prepareGraph, turnWeighting);
         this.turnWeighting = turnWeighting;
         this.encoder = turnWeighting.getFlagEncoder();
-        this.witnessSearchStrategy = new TurnReplacementSearch();
         this.config = config;
     }
 
     @Override
     public void initFromGraph() {
         super.initFromGraph();
-        int maxLevel = prepareGraph.getNodes();
-        legacyWitnessPathFinder =
-                new ArrayBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, TraversalMode.EDGE_BASED_2DIR, maxLevel);
         WitnessPathSearcher.Config config = new WitnessPathSearcher.Config();
         witnessPathSearcher = new WitnessPathSearcher(ghStorage, prepareGraph, turnWeighting, config);
         DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
         DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
+        DefaultEdgeFilter allEdgeFilter = new DefaultEdgeFilter(encoder, true, true);
         inEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
         outEdgeExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
-        scExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
-        allCHExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, true));
+        existingShortcutExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
+        allEdgeExplorer = prepareGraph.createEdgeExplorer(allEdgeFilter);
         fromNodeOrigInEdgeExplorer = ghStorage.createEdgeExplorer(inEdgeFilter);
         toNodeOrigOutEdgeExplorer = ghStorage.createEdgeExplorer(outEdgeFilter);
         toNodeOrigInEdgeExplorer = ghStorage.createEdgeExplorer(inEdgeFilter);
         loopAvoidanceInEdgeExplorer = ghStorage.createEdgeExplorer(inEdgeFilter);
         loopAvoidanceOutEdgeExplorer = ghStorage.createEdgeExplorer(outEdgeFilter);
         hierarchyDepths = new int[prepareGraph.getNodes()];
+        aggressiveStrategy = new AggressiveStrategy();
+        legacyAggressiveStrategy = new LegacyAggressiveStrategy();
+        classicStrategy = new ClassicStrategy();
+        activeStrategy = aggressiveStrategy;
     }
 
     @Override
@@ -119,7 +122,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         long start = nanoTime();
         findAndHandleShortcuts(node);
         stats().calcTime += (nanoTime() - start);
-        CHEdgeIterator iter = allCHExplorer.setBaseNode(node);
+        CHEdgeIterator iter = allEdgeExplorer.setBaseNode(node);
         while (iter.next()) {
             if (isContracted(iter.getAdjNode()))
                 continue;
@@ -155,7 +158,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         activeShortcutHandler = addingShortcutHandler;
         long start = nanoTime();
         findAndHandleShortcuts(node);
-        CHEdgeIterator iter = allCHExplorer.setBaseNode(node);
+        CHEdgeIterator iter = allEdgeExplorer.setBaseNode(node);
         while (iter.next()) {
             if (isContracted(iter.getAdjNode()) || iter.getAdjNode() == node)
                 continue;
@@ -175,90 +178,14 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private int findAndHandleShortcuts(int node) {
         numPolledEdges = 0;
         numSearches = 0;
-        if (config.searchType == SearchType.AGGRESSIVE) {
-            return findAndHandleShortcutsAggressive(node);
+        if (config.searchType == SearchType.CLASSIC) {
+            activeStrategy = classicStrategy;
         } else if (config.searchType == SearchType.LEGACY_AGGRESSIVE) {
-            return findAndHandleShortcutsLegacyAggressive(node);
+            activeStrategy = legacyAggressiveStrategy;
         } else {
-            return findAndHandleShortcutsClassic(node);
+            activeStrategy = aggressiveStrategy;
         }
-    }
-
-    private int findAndHandleShortcutsAggressive(int node) {
-        LOGGER.debug("Finding shortcuts (aggressive) for node {}, required shortcuts will be {}ed", node, activeShortcutHandler.getAction());
-        stats().nodes++;
-        resetEdgeCounters();
-        Set<AddedShortcut> addedShortcuts = new HashSet<>();
-
-        // first we need to identify those nodes from which we can reach our node to be contracted
-        // todo: optimize collection size
-        IntSet fromNodes = new IntHashSet(100);
-        EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
-        while (incomingEdges.next()) {
-            int fromNode = incomingEdges.getAdjNode();
-            if (isContracted(fromNode) || fromNode == node) {
-                continue;
-            }
-            boolean isNewFromNode = fromNodes.add(fromNode);
-            if (!isNewFromNode) {
-                continue;
-            }
-            // for each such fromNode we need to look at every incoming original edge and find the initial entries
-            EdgeIterator origInIter = fromNodeOrigInEdgeExplorer.setBaseNode(fromNode);
-            while (origInIter.next()) {
-                int numInitialEntries = witnessPathSearcher.initSearch(node, fromNode, origInIter.getLastOrigEdge());
-                if (numInitialEntries < 1) {
-                    continue;
-                }
-                numSearches++;
-                totalNumSearches++;
-
-                // now we need to identify all nodes that could be reached from our node to be contracted
-                // todo: optimize collection size
-                IntSet toNodes = new IntHashSet(100);
-                EdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
-                while (outgoingEdges.next()) {
-                    int toNode = outgoingEdges.getAdjNode();
-                    if (isContracted(toNode) || toNode == node) {
-                        continue;
-                    }
-                    boolean isNewToNode = toNodes.add(toNode);
-                    if (!isNewToNode) {
-                        continue;
-                    }
-                    // for each target edge outgoing from a toNode we need to check if reaching it requires the node to be contracted
-                    EdgeIterator targetEdgeIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
-                    while (targetEdgeIter.next()) {
-                        int targetEdge = targetEdgeIter.getFirstOrigEdge();
-                        dijkstraSW.start();
-                        WitnessSearchEntry entry = witnessPathSearcher.runSearch(toNode, targetEdge);
-                        dijkstraSW.stop();
-                        if (entry == null || Double.isInfinite(entry.weight)) {
-                            continue;
-                        }
-                        CHEntry root = entry.getParent();
-                        while (root.parent.edge != EdgeIterator.NO_EDGE) {
-                            root = root.getParent();
-                        }
-                        // todo: removing this 'optimization' improves contraction time significantly, but introduces 
-                        // more shortcuts. why is this so ? any 'duplicate' shortcuts should be detected at time of
-                        // insertion !??
-                        AddedShortcut addedShortcut = new AddedShortcut(fromNode, root.getParent().incEdge, toNode, entry.incEdge);
-                        if (addedShortcuts.contains(addedShortcut)) {
-                            continue;
-                        }
-                        // root parent weight was misused to store initial turn cost here
-                        double initialTurnCost = root.getParent().weight;
-                        entry.weight -= initialTurnCost;
-                        handleShortcuts(entry, root);
-                        addedShortcuts.add(addedShortcut);
-                    }
-                }
-                numPolledEdges += witnessPathSearcher.getNumPolledEdges();
-                totalNumPolledEdges += witnessPathSearcher.getNumPolledEdges();
-            }
-        }
-        return 0;
+        return activeStrategy.findAndHandleShortcuts(node);
     }
 
     public void setSearchType(SearchType searchType) {
@@ -295,258 +222,16 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         }
     }
 
-    private int findAndHandleShortcutsLegacyAggressive(int node) {
-        LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}ed", node, activeShortcutHandler.getAction());
-        stats().nodes++;
-        resetEdgeCounters();
-        LongSet witnessedPairs = new LongHashSet(16);
-        // todo: quick search is not beneficial in all cases...
-        int degree = runQuickWitnessSearch(node, witnessedPairs);
-        // todo: performance: does it help to stop here in case all pairs have been witnessed already ?
-        runExhaustiveWitnessSearch(node, witnessedPairs);
-        return degree;
-    }
-
-    private int runQuickWitnessSearch(int node, LongSet witnessedPairs) {
-        int degree = 0;
-        EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
-        while (incomingEdges.next()) {
-            int fromNode = incomingEdges.getAdjNode();
-            if (isContracted(fromNode))
-                continue;
-
-            degree++;
-
-            if (fromNode == node) {
-                continue;
-            }
-
-            IntObjectMap<WitnessSearchEntry> initialEntries = simpleSearch.getInitialEntries(fromNode, incomingEdges);
-            if (initialEntries.isEmpty()) {
-                continue;
-            }
-
-            legacyWitnessPathFinder.setInitialEntries(initialEntries);
-            numSearches++;
-            totalNumSearches++;
-
-            EdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
-            while (outgoingEdges.next()) {
-                int toNode = outgoingEdges.getAdjNode();
-                if (isContracted(toNode) || toNode == node) {
-                    continue;
-                }
-                int targetEdge = outgoingEdges.getLastOrigEdge();
-                dijkstraSW.start();
-                legacyWitnessPathFinder.findTarget(targetEdge, toNode);
-                dijkstraSW.stop();
-
-                WitnessSearchEntry originalPath = legacyWitnessPathFinder.getFoundEntry(targetEdge, toNode);
-                if (originalPath == null) {
-                    continue;
-                }
-                if (!simpleSearch.shortcutRequired(node, toNode, outgoingEdges, legacyWitnessPathFinder, originalPath)) {
-                    witnessedPairs.add(twoIntsInLong(incomingEdges.getEdge(), outgoingEdges.getEdge()));
-                }
-            }
-            numPolledEdges += legacyWitnessPathFinder.getNumEntriesPolled();
-            totalNumPolledEdges += legacyWitnessPathFinder.getNumEntriesPolled();
-        }
-        return degree;
-    }
-
-    private void runExhaustiveWitnessSearch(int node, LongSet witnessedPairs) {
-        EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
-        while (incomingEdges.next()) {
-            int fromNode = incomingEdges.getAdjNode();
-            if (isContracted(fromNode) || fromNode == node) {
-                continue;
-            }
-
-            EdgeIterator origInIter = fromNodeOrigInEdgeExplorer.setBaseNode(fromNode);
-            while (origInIter.next()) {
-                IntObjectMap<WitnessSearchEntry> initialEntries = getInitialEntriesLegacyAggressive(fromNode, node, incomingEdges, origInIter);
-                if (initialEntries.isEmpty()) {
-                    continue;
-                }
-                legacyWitnessPathFinder.setInitialEntries(initialEntries);
-                numSearches++;
-                totalNumSearches++;
-
-                CHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
-                while (outgoingEdges.next()) {
-                    int toNode = outgoingEdges.getAdjNode();
-                    if (isContracted(toNode) || toNode == node) {
-                        continue;
-                    }
-                    stats().shortcutsChecked++;
-                    if (witnessedPairs.contains(twoIntsInLong(incomingEdges.getEdge(), outgoingEdges.getEdge()))) {
-                        continue;
-                    }
-                    int targetEdge = outgoingEdges.getLastOrigEdge();
-                    dijkstraSW.start();
-                    legacyWitnessPathFinder.findTarget(targetEdge, toNode);
-                    dijkstraSW.stop();
-                    WitnessSearchEntry originalPath = legacyWitnessPathFinder.getFoundEntry(targetEdge, toNode);
-                    if (originalPath == null) {
-                        continue;
-                    }
-                    if (!bestPathIsValidAndRequiresNode(originalPath, outgoingEdges)) {
-                        continue;
-                    }
-                    final double targetEdgeWeight = turnWeighting.calcWeight(outgoingEdges, true, EdgeIterator.NO_EDGE);
-                    EdgeIterator toNodeOrigOutIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
-                    while (toNodeOrigOutIter.next()) {
-                        int origOutIterFirstOrigEdge = toNodeOrigOutIter.getFirstOrigEdge();
-                        if (illegalUTurn(origOutIterFirstOrigEdge, targetEdge)) {
-                            continue;
-                        }
-                        double origPathOutTurnWeight = turnWeighting.calcTurnWeight(targetEdge, toNode, origOutIterFirstOrigEdge);
-                        if (Double.isInfinite(origPathOutTurnWeight)) {
-                            continue;
-                        }
-                        boolean witnessFound = false;
-                        EdgeIterator inIter = toNodeOrigInEdgeExplorer.setBaseNode(toNode);
-                        while (inIter.next()) {
-                            int origInIterLastOrigEdge = inIter.getLastOrigEdge();
-                            if (origInIterLastOrigEdge == targetEdge) {
-                                continue;
-                            }
-                            if (illegalUTurn(origOutIterFirstOrigEdge, origInIterLastOrigEdge)) {
-                                continue;
-                            }
-                            // we need to protect against duplicate outgoing edges that sometimes occur in osm data
-                            // and can potentially witness each other
-                            CHEdgeIteratorState inEdge = prepareGraph.getEdgeIteratorState(inIter.getLastOrigEdge(), toNode);
-                            if (inIter.getAdjNode() == node && !outgoingEdges.isShortcut() &&
-                                    Math.abs(turnWeighting.calcWeight(inEdge, false, EdgeIterator.NO_EDGE)
-                                            - targetEdgeWeight) < 1.e-6) {
-                                duplicateOutEdges++;
-                                continue;
-                            }
-                            CHEntry potentialWitness = legacyWitnessPathFinder.getFoundEntryNoParents(origInIterLastOrigEdge, toNode);
-                            if (potentialWitness == null || Double.isInfinite(potentialWitness.weight)) {
-                                continue;
-                            }
-                            double witnessWeight = potentialWitness.weight + turnWeighting.calcTurnWeight(origInIterLastOrigEdge, toNode, origOutIterFirstOrigEdge);
-                            final double tolerance = 1.e-12;
-                            if (witnessWeight - tolerance < originalPath.weight + origPathOutTurnWeight) {
-                                witnessFound = true;
-                                break;
-                            }
-                        }
-                        if (!witnessFound) {
-                            double initialTurnCost = getTurnCost(origInIter.getLastOrigEdge(), fromNode, incomingEdges.getFirstOrigEdge());
-                            originalPath.weight -= initialTurnCost;
-                            handleShortcuts(originalPath);
-                            break;
-                        }
-                    }
-                }
-                numPolledEdges += legacyWitnessPathFinder.getNumEntriesPolled();
-                totalNumPolledEdges += legacyWitnessPathFinder.getNumEntriesPolled();
-            }
-        }
-    }
-
-    private IntObjectMap<WitnessSearchEntry> getInitialEntriesLegacyAggressive(int fromNode, int node, EdgeIteratorState origPath, EdgeIteratorState origSourceEdge) {
-        IntObjectMap<WitnessSearchEntry> initialEntries = new IntObjectHashMap<>();
-        int numOnOrigPath = 0;
-        final double origPathWeight = turnWeighting.calcWeight(origPath, false, EdgeIterator.NO_EDGE);
-        CHEdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
-        while (outIter.next()) {
-            if (isContracted(outIter.getAdjNode())) {
-                continue;
-            }
-            if (illegalUTurn(outIter.getFirstOrigEdge(), origSourceEdge.getLastOrigEdge())) {
-                continue;
-            }
-            double turnWeight = turnWeighting.calcTurnWeight(origSourceEdge.getLastOrigEdge(), fromNode, outIter.getFirstOrigEdge());
-            if (Double.isInfinite(turnWeight)) {
-                continue;
-            }
-            double weight = turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
-            boolean onOrigPath = (outIter.getEdge() == origPath.getEdge());
-            // we need to protect against duplicate edges that sometimes occur in osm data
-            // todo: performance: can we stop here when we know there is a cheaper alternative than the original path
-            // (first & last orig edges must be equal not only nodes!)
-            if (!onOrigPath && !outIter.isShortcut() && outIter.getAdjNode() == node &&
-                    Math.abs(origPathWeight - weight) < 1.e-6) {
-                duplicateInEdges++;
-                continue;
-            }
-            WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(),
-                    outIter.getAdjNode(), turnWeight + weight, onOrigPath);
-            entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0, false);
-            numOnOrigPath += insertOrUpdateInitialEntry(initialEntries, entry);
-        }
-        return numOnOrigPath > 0 ? initialEntries : new IntObjectHashMap<WitnessSearchEntry>();
-    }
-
-    private int findAndHandleShortcutsClassic(int node) {
-        // todo: for osm data where there are only a very few turn restrictions (no left turn etc.) the graph
-        // contraction should be much faster if we exploit that there are no turn costs on most nodes
-        LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}ed", node, activeShortcutHandler.getAction());
-        stats().nodes++;
-        resetEdgeCounters();
-        int degree = 0;
-        EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
-        while (incomingEdges.next()) {
-            int fromNode = incomingEdges.getAdjNode();
-            if (isContracted(fromNode))
-                continue;
-
-            degree++;
-
-            if (fromNode == node) {
-                continue;
-            }
-
-            // todo: note that we rely on shortcuts always having forward direction only, if we change this we need a
-            // more sophisticated way to figure out what the 'first' and 'last' original edges are
-            IntObjectMap<WitnessSearchEntry> initialEntries = witnessSearchStrategy.getInitialEntries(fromNode, incomingEdges);
-            if (initialEntries.isEmpty()) {
-                LOGGER.trace("No initial entries for incoming edge {}", incomingEdges);
-                continue;
-            }
-            legacyWitnessPathFinder.setInitialEntries(initialEntries);
-            CHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
-            while (outgoingEdges.next()) {
-                int toNode = outgoingEdges.getAdjNode();
-                if (isContracted(toNode) || toNode == node)
-                    continue;
-
-                stats().shortcutsChecked++;
-                int targetEdge = outgoingEdges.getLastOrigEdge();
-
-                dijkstraSW.start();
-                dijkstraCount++;
-                legacyWitnessPathFinder.findTarget(targetEdge, toNode);
-                dijkstraSW.stop();
-
-                WitnessSearchEntry originalPath = legacyWitnessPathFinder.getFoundEntry(targetEdge, toNode);
-                if (originalPath == null) {
-                    continue;
-                }
-                LOGGER.trace("Witness path search to outgoing edge yielded {}", originalPath);
-                if (witnessSearchStrategy.shortcutRequired(node, toNode, outgoingEdges, legacyWitnessPathFinder, originalPath)) {
-                    handleShortcuts(originalPath);
-                }
-            }
-        }
-        return degree;
-    }
-
     @Override
     public String getStatisticsString() {
         String result = String.format("searches: %10s, polled-edges: %10s, stats(calc): %s, stats(contract): %s, %s",
                 nf(totalNumSearches), nf(totalNumPolledEdges),
                 countingShortcutHandler.getStats(), addingShortcutHandler.getStats(),
-                config.searchType == SearchType.AGGRESSIVE ? witnessPathSearcher.getStatisticsString() : legacyWitnessPathFinder.getStatusString());
+                activeStrategy.getStatisticsString()
+        );
         countingShortcutHandler.resetStats();
         addingShortcutHandler.resetStats();
-        legacyWitnessPathFinder.resetStats();
-        witnessPathSearcher.resetStats();
+        activeStrategy.resetStats();
         result += String.format(", duplicate edges: %d, %d", duplicateInEdges, duplicateOutEdges);
         return result;
     }
@@ -620,7 +305,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         int from = edgeFrom.parent.adjNode;
         int adjNode = edgeTo.adjNode;
 
-        final CHEdgeIterator iter = scExplorer.setBaseNode(from);
+        final CHEdgeIterator iter = existingShortcutExplorer.setBaseNode(from);
         while (iter.next()) {
             if (!iter.isShortcut()
                     || !(iter.getAdjNode() == adjNode)
@@ -682,56 +367,6 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         numPrevOrigEdges = 0;
     }
 
-    /**
-     * Checks if the path leading to the given shortest path entry consists only of the incoming edge, the outgoing edge
-     * and an arbitrary number of loops at the node.
-     */
-    private static boolean bestPathIsValidAndRequiresNode(
-            WitnessSearchEntry bestPath, EdgeIteratorState outgoingEdge) {
-        if (Double.isInfinite(bestPath.weight)) {
-            LOGGER.trace("Target edge could not be reached even via node to be contracted -> no shortcut");
-            return false;
-        }
-
-        if (bestPath.edge != outgoingEdge.getEdge()) {
-            LOGGER.trace("Found a witness path using alternative target edge -> no shortcut");
-            return false;
-        }
-        return bestPath.getParent().isDirectCenterNodePath;
-    }
-
-    /**
-     * @return the difference of possible shortcuts induced by the update/insert
-     */
-    private int insertOrUpdateInitialEntry(IntObjectMap<WitnessSearchEntry> initialEntries, WitnessSearchEntry entry) {
-        int edgeKey = getEdgeKey(entry.incEdge, entry.adjNode);
-        int index = initialEntries.indexOf(edgeKey);
-        if (index < 0) {
-            LOGGER.trace("Adding/Updating initial entry {}", entry);
-            initialEntries.indexInsert(index, edgeKey, entry);
-            if (entry.isDirectCenterNodePath) {
-                return 1;
-            }
-        } else {
-            WitnessSearchEntry currEntry = initialEntries.indexGet(index);
-            // there may be entries with the same adjNode and last original edge, but we only need the one with
-            // the lowest weight
-            if (entry.weight < currEntry.weight) {
-                int difference = 0;
-                if (currEntry.isDirectCenterNodePath) {
-                    difference--;
-                }
-                if (entry.isDirectCenterNodePath) {
-                    difference++;
-                }
-                initialEntries.indexReplace(index, entry);
-                LOGGER.trace("Adding/Updating initial entry {}", entry);
-                return difference;
-            }
-        }
-        return 0;
-    }
-
     private boolean illegalUTurn(int inEdge, int outEdge) {
         return outEdge == inEdge;
     }
@@ -789,7 +424,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             int lastOrigEdge = edgeTo.incEdge;
 
             // check if this shortcut already exists
-            final CHEdgeIterator iter = scExplorer.setBaseNode(fromNode);
+            final CHEdgeIterator iter = existingShortcutExplorer.setBaseNode(fromNode);
             while (iter.next()) {
                 if (iter.isShortcut()
                         && iter.getAdjNode() == toNode
@@ -819,6 +454,435 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         @Override
         public String getAction() {
             return "count";
+        }
+    }
+
+    public static class Config {
+        public SearchType searchType = SearchType.AGGRESSIVE;
+        public float edgeQuotientWeight = 1;
+        public float originalEdgeQuotientWeight = 3;
+        public float hierarchyDepthWeight = 2;
+
+        public SearchType getSearchType() {
+            return searchType;
+        }
+
+        public void setSearchType(SearchType searchType) {
+            this.searchType = searchType;
+        }
+
+        public float getEdgeQuotientWeight() {
+            return edgeQuotientWeight;
+        }
+
+        public void setEdgeQuotientWeight(float edgeQuotientWeight) {
+            this.edgeQuotientWeight = edgeQuotientWeight;
+        }
+
+        public float getOriginalEdgeQuotientWeight() {
+            return originalEdgeQuotientWeight;
+        }
+
+        public void setOriginalEdgeQuotientWeight(float originalEdgeQuotientWeight) {
+            this.originalEdgeQuotientWeight = originalEdgeQuotientWeight;
+        }
+
+        public float getHierarchyDepthWeight() {
+            return hierarchyDepthWeight;
+        }
+
+        public void setHierarchyDepthWeight(float hierarchyDepthWeight) {
+            this.hierarchyDepthWeight = hierarchyDepthWeight;
+        }
+    }
+
+    private static class Stats {
+        int nodes;
+        long shortcutsChecked;
+        long shortcutsNeeded;
+        long loopsAvoided;
+        long calcTime;
+
+        @Override
+        public String toString() {
+            return String.format("runtime: %7.2f, nodes: %10s, scChecked: %10s, scNeeded: %10s, scNotNeeded: %10s, loopsAvoided: %10s",
+                    calcTime * 1.e-9, nf(nodes), nf(shortcutsChecked), nf(shortcutsNeeded),
+                    nf(shortcutsChecked - shortcutsNeeded), nf(loopsAvoided));
+        }
+    }
+
+    private interface SearchStrategy {
+        int findAndHandleShortcuts(int node);
+
+        String getStatisticsString();
+
+        void resetStats();
+
+    }
+
+    private class AggressiveStrategy implements SearchStrategy {
+        @Override
+        public String getStatisticsString() {
+            return witnessPathSearcher.getStatisticsString();
+        }
+
+        @Override
+        public void resetStats() {
+            witnessPathSearcher.resetStats();
+        }
+
+        @Override
+        public int findAndHandleShortcuts(int node) {
+            LOGGER.debug("Finding shortcuts (aggressive) for node {}, required shortcuts will be {}ed", node, activeShortcutHandler.getAction());
+            stats().nodes++;
+            resetEdgeCounters();
+            Set<AddedShortcut> addedShortcuts = new HashSet<>();
+
+            // first we need to identify those nodes from which we can reach our node to be contracted
+            // todo: optimize collection size
+            IntSet fromNodes = new IntHashSet(100);
+            EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
+            while (incomingEdges.next()) {
+                int fromNode = incomingEdges.getAdjNode();
+                if (isContracted(fromNode) || fromNode == node) {
+                    continue;
+                }
+                boolean isNewFromNode = fromNodes.add(fromNode);
+                if (!isNewFromNode) {
+                    continue;
+                }
+                // for each such fromNode we need to look at every incoming original edge and find the initial entries
+                EdgeIterator origInIter = fromNodeOrigInEdgeExplorer.setBaseNode(fromNode);
+                while (origInIter.next()) {
+                    int numInitialEntries = witnessPathSearcher.initSearch(node, fromNode, origInIter.getLastOrigEdge());
+                    if (numInitialEntries < 1) {
+                        continue;
+                    }
+                    numSearches++;
+                    totalNumSearches++;
+
+                    // now we need to identify all nodes that could be reached from our node to be contracted
+                    // todo: optimize collection size
+                    IntSet toNodes = new IntHashSet(100);
+                    EdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
+                    while (outgoingEdges.next()) {
+                        int toNode = outgoingEdges.getAdjNode();
+                        if (isContracted(toNode) || toNode == node) {
+                            continue;
+                        }
+                        boolean isNewToNode = toNodes.add(toNode);
+                        if (!isNewToNode) {
+                            continue;
+                        }
+                        // for each target edge outgoing from a toNode we need to check if reaching it requires the node to be contracted
+                        EdgeIterator targetEdgeIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
+                        while (targetEdgeIter.next()) {
+                            int targetEdge = targetEdgeIter.getFirstOrigEdge();
+                            dijkstraSW.start();
+                            WitnessSearchEntry entry = witnessPathSearcher.runSearch(toNode, targetEdge);
+                            dijkstraSW.stop();
+                            if (entry == null || Double.isInfinite(entry.weight)) {
+                                continue;
+                            }
+                            CHEntry root = entry.getParent();
+                            while (root.parent.edge != EdgeIterator.NO_EDGE) {
+                                root = root.getParent();
+                            }
+                            // todo: removing this 'optimization' improves contraction time significantly, but introduces 
+                            // more shortcuts. why is this so ? any 'duplicate' shortcuts should be detected at time of
+                            // insertion !??
+                            AddedShortcut addedShortcut = new AddedShortcut(fromNode, root.getParent().incEdge, toNode, entry.incEdge);
+                            if (addedShortcuts.contains(addedShortcut)) {
+                                continue;
+                            }
+                            // root parent weight was misused to store initial turn cost here
+                            double initialTurnCost = root.getParent().weight;
+                            entry.weight -= initialTurnCost;
+                            handleShortcuts(entry, root);
+                            addedShortcuts.add(addedShortcut);
+                        }
+                    }
+                    numPolledEdges += witnessPathSearcher.getNumPolledEdges();
+                    totalNumPolledEdges += witnessPathSearcher.getNumPolledEdges();
+                }
+            }
+            return 0;
+        }
+    }
+
+    private class LegacyAggressiveStrategy implements SearchStrategy {
+        private final SimpleSearch simpleSearch = new SimpleSearch();
+        private LegacyWitnessPathFinder legacyWitnessPathFinder =
+                new ArrayBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, TraversalMode.EDGE_BASED_2DIR, maxLevel);
+
+        @Override
+        public int findAndHandleShortcuts(int node) {
+            LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}ed", node, activeShortcutHandler.getAction());
+            stats().nodes++;
+            resetEdgeCounters();
+            LongSet witnessedPairs = new LongHashSet(16);
+            // todo: quick search is not beneficial in all cases...
+            int degree = runQuickWitnessSearch(node, witnessedPairs);
+            // todo: performance: does it help to stop here in case all pairs have been witnessed already ?
+            runExhaustiveWitnessSearch(node, witnessedPairs);
+            return degree;
+        }
+
+        @Override
+        public String getStatisticsString() {
+            return legacyWitnessPathFinder.getStatusString();
+        }
+
+        @Override
+        public void resetStats() {
+            legacyWitnessPathFinder.resetStats();
+        }
+
+        private int runQuickWitnessSearch(int node, LongSet witnessedPairs) {
+            int degree = 0;
+            EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
+            while (incomingEdges.next()) {
+                int fromNode = incomingEdges.getAdjNode();
+                if (isContracted(fromNode))
+                    continue;
+
+                degree++;
+
+                if (fromNode == node) {
+                    continue;
+                }
+
+                IntObjectMap<WitnessSearchEntry> initialEntries = simpleSearch.getInitialEntries(fromNode, incomingEdges);
+                if (initialEntries.isEmpty()) {
+                    continue;
+                }
+
+                legacyWitnessPathFinder.setInitialEntries(initialEntries);
+                numSearches++;
+                totalNumSearches++;
+
+                EdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
+                while (outgoingEdges.next()) {
+                    int toNode = outgoingEdges.getAdjNode();
+                    if (isContracted(toNode) || toNode == node) {
+                        continue;
+                    }
+                    int targetEdge = outgoingEdges.getLastOrigEdge();
+                    dijkstraSW.start();
+                    legacyWitnessPathFinder.findTarget(targetEdge, toNode);
+                    dijkstraSW.stop();
+
+                    WitnessSearchEntry originalPath = legacyWitnessPathFinder.getFoundEntry(targetEdge, toNode);
+                    if (originalPath == null) {
+                        continue;
+                    }
+                    if (!simpleSearch.shortcutRequired(node, toNode, outgoingEdges, legacyWitnessPathFinder, originalPath)) {
+                        witnessedPairs.add(twoIntsInLong(incomingEdges.getEdge(), outgoingEdges.getEdge()));
+                    }
+                }
+                numPolledEdges += legacyWitnessPathFinder.getNumEntriesPolled();
+                totalNumPolledEdges += legacyWitnessPathFinder.getNumEntriesPolled();
+            }
+            return degree;
+        }
+
+        private void runExhaustiveWitnessSearch(int node, LongSet witnessedPairs) {
+            EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
+            while (incomingEdges.next()) {
+                int fromNode = incomingEdges.getAdjNode();
+                if (isContracted(fromNode) || fromNode == node) {
+                    continue;
+                }
+
+                EdgeIterator origInIter = fromNodeOrigInEdgeExplorer.setBaseNode(fromNode);
+                while (origInIter.next()) {
+                    IntObjectMap<WitnessSearchEntry> initialEntries = getInitialEntriesLegacyAggressive(fromNode, node, incomingEdges, origInIter);
+                    if (initialEntries.isEmpty()) {
+                        continue;
+                    }
+                    legacyWitnessPathFinder.setInitialEntries(initialEntries);
+                    numSearches++;
+                    totalNumSearches++;
+
+                    CHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
+                    while (outgoingEdges.next()) {
+                        int toNode = outgoingEdges.getAdjNode();
+                        if (isContracted(toNode) || toNode == node) {
+                            continue;
+                        }
+                        stats().shortcutsChecked++;
+                        if (witnessedPairs.contains(twoIntsInLong(incomingEdges.getEdge(), outgoingEdges.getEdge()))) {
+                            continue;
+                        }
+                        int targetEdge = outgoingEdges.getLastOrigEdge();
+                        dijkstraSW.start();
+                        legacyWitnessPathFinder.findTarget(targetEdge, toNode);
+                        dijkstraSW.stop();
+                        WitnessSearchEntry originalPath = legacyWitnessPathFinder.getFoundEntry(targetEdge, toNode);
+                        if (originalPath == null) {
+                            continue;
+                        }
+                        if (!bestPathIsValidAndRequiresNode(originalPath, outgoingEdges)) {
+                            continue;
+                        }
+                        final double targetEdgeWeight = turnWeighting.calcWeight(outgoingEdges, true, EdgeIterator.NO_EDGE);
+                        EdgeIterator toNodeOrigOutIter = toNodeOrigOutEdgeExplorer.setBaseNode(toNode);
+                        while (toNodeOrigOutIter.next()) {
+                            int origOutIterFirstOrigEdge = toNodeOrigOutIter.getFirstOrigEdge();
+                            if (illegalUTurn(origOutIterFirstOrigEdge, targetEdge)) {
+                                continue;
+                            }
+                            double origPathOutTurnWeight = turnWeighting.calcTurnWeight(targetEdge, toNode, origOutIterFirstOrigEdge);
+                            if (Double.isInfinite(origPathOutTurnWeight)) {
+                                continue;
+                            }
+                            boolean witnessFound = false;
+                            EdgeIterator inIter = toNodeOrigInEdgeExplorer.setBaseNode(toNode);
+                            while (inIter.next()) {
+                                int origInIterLastOrigEdge = inIter.getLastOrigEdge();
+                                if (origInIterLastOrigEdge == targetEdge) {
+                                    continue;
+                                }
+                                if (illegalUTurn(origOutIterFirstOrigEdge, origInIterLastOrigEdge)) {
+                                    continue;
+                                }
+                                // we need to protect against duplicate outgoing edges that sometimes occur in osm data
+                                // and can potentially witness each other
+                                CHEdgeIteratorState inEdge = prepareGraph.getEdgeIteratorState(inIter.getLastOrigEdge(), toNode);
+                                if (inIter.getAdjNode() == node && !outgoingEdges.isShortcut() &&
+                                        Math.abs(turnWeighting.calcWeight(inEdge, false, EdgeIterator.NO_EDGE)
+                                                - targetEdgeWeight) < 1.e-6) {
+                                    duplicateOutEdges++;
+                                    continue;
+                                }
+                                CHEntry potentialWitness = legacyWitnessPathFinder.getFoundEntryNoParents(origInIterLastOrigEdge, toNode);
+                                if (potentialWitness == null || Double.isInfinite(potentialWitness.weight)) {
+                                    continue;
+                                }
+                                double witnessWeight = potentialWitness.weight + turnWeighting.calcTurnWeight(origInIterLastOrigEdge, toNode, origOutIterFirstOrigEdge);
+                                final double tolerance = 1.e-12;
+                                if (witnessWeight - tolerance < originalPath.weight + origPathOutTurnWeight) {
+                                    witnessFound = true;
+                                    break;
+                                }
+                            }
+                            if (!witnessFound) {
+                                double initialTurnCost = getTurnCost(origInIter.getLastOrigEdge(), fromNode, incomingEdges.getFirstOrigEdge());
+                                originalPath.weight -= initialTurnCost;
+                                handleShortcuts(originalPath);
+                                break;
+                            }
+                        }
+                    }
+                    numPolledEdges += legacyWitnessPathFinder.getNumEntriesPolled();
+                    totalNumPolledEdges += legacyWitnessPathFinder.getNumEntriesPolled();
+                }
+            }
+        }
+
+        private IntObjectMap<WitnessSearchEntry> getInitialEntriesLegacyAggressive(int fromNode, int node, EdgeIteratorState origPath, EdgeIteratorState origSourceEdge) {
+            IntObjectMap<WitnessSearchEntry> initialEntries = new IntObjectHashMap<>();
+            int numOnOrigPath = 0;
+            final double origPathWeight = turnWeighting.calcWeight(origPath, false, EdgeIterator.NO_EDGE);
+            CHEdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
+            while (outIter.next()) {
+                if (isContracted(outIter.getAdjNode())) {
+                    continue;
+                }
+                if (illegalUTurn(outIter.getFirstOrigEdge(), origSourceEdge.getLastOrigEdge())) {
+                    continue;
+                }
+                double turnWeight = turnWeighting.calcTurnWeight(origSourceEdge.getLastOrigEdge(), fromNode, outIter.getFirstOrigEdge());
+                if (Double.isInfinite(turnWeight)) {
+                    continue;
+                }
+                double weight = turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
+                boolean onOrigPath = (outIter.getEdge() == origPath.getEdge());
+                // we need to protect against duplicate edges that sometimes occur in osm data
+                // todo: performance: can we stop here when we know there is a cheaper alternative than the original path
+                // (first & last orig edges must be equal not only nodes!)
+                if (!onOrigPath && !outIter.isShortcut() && outIter.getAdjNode() == node &&
+                        Math.abs(origPathWeight - weight) < 1.e-6) {
+                    duplicateInEdges++;
+                    continue;
+                }
+                WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(),
+                        outIter.getAdjNode(), turnWeight + weight, onOrigPath);
+                entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0, false);
+                numOnOrigPath += insertOrUpdateInitialEntry(initialEntries, entry);
+            }
+            return numOnOrigPath > 0 ? initialEntries : new IntObjectHashMap<WitnessSearchEntry>();
+        }
+    }
+
+    private class ClassicStrategy implements SearchStrategy {
+        private WitnessSearchStrategy witnessSearchStrategy = new TurnReplacementSearch();
+        private LegacyWitnessPathFinder legacyWitnessPathFinder =
+                new ArrayBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, TraversalMode.EDGE_BASED_2DIR, maxLevel);
+
+        @Override
+        public String getStatisticsString() {
+            return legacyWitnessPathFinder.getStatusString();
+        }
+
+        @Override
+        public void resetStats() {
+            legacyWitnessPathFinder.resetStats();
+        }
+        
+        @Override
+        public int findAndHandleShortcuts(int node) {
+            // todo: for osm data where there are only a very few turn restrictions (no left turn etc.) the graph
+            // contraction should be much faster if we exploit that there are no turn costs on most nodes
+            LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}ed", node, activeShortcutHandler.getAction());
+            stats().nodes++;
+            resetEdgeCounters();
+            int degree = 0;
+            EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
+            while (incomingEdges.next()) {
+                int fromNode = incomingEdges.getAdjNode();
+                if (isContracted(fromNode))
+                    continue;
+
+                degree++;
+
+                if (fromNode == node) {
+                    continue;
+                }
+
+                // todo: note that we rely on shortcuts always having forward direction only, if we change this we need a
+                // more sophisticated way to figure out what the 'first' and 'last' original edges are
+                IntObjectMap<WitnessSearchEntry> initialEntries = witnessSearchStrategy.getInitialEntries(fromNode, incomingEdges);
+                if (initialEntries.isEmpty()) {
+                    LOGGER.trace("No initial entries for incoming edge {}", incomingEdges);
+                    continue;
+                }
+                legacyWitnessPathFinder.setInitialEntries(initialEntries);
+                CHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
+                while (outgoingEdges.next()) {
+                    int toNode = outgoingEdges.getAdjNode();
+                    if (isContracted(toNode) || toNode == node)
+                        continue;
+
+                    stats().shortcutsChecked++;
+                    int targetEdge = outgoingEdges.getLastOrigEdge();
+
+                    dijkstraSW.start();
+                    dijkstraCount++;
+                    legacyWitnessPathFinder.findTarget(targetEdge, toNode);
+                    dijkstraSW.stop();
+
+                    WitnessSearchEntry originalPath = legacyWitnessPathFinder.getFoundEntry(targetEdge, toNode);
+                    if (originalPath == null) {
+                        continue;
+                    }
+                    LOGGER.trace("Witness path search to outgoing edge yielded {}", originalPath);
+                    if (witnessSearchStrategy.shortcutRequired(node, toNode, outgoingEdges, legacyWitnessPathFinder, originalPath)) {
+                        handleShortcuts(originalPath);
+                    }
+                }
+            }
+            return degree;
         }
     }
 
@@ -1022,56 +1086,54 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         return (((long) p << 32) | (q & 0xFFFFFFFFL));
     }
 
-    public static class Config {
-        public SearchType searchType = SearchType.AGGRESSIVE;
-        public float edgeQuotientWeight = 1;
-        public float originalEdgeQuotientWeight = 3;
-        public float hierarchyDepthWeight = 2;
-
-        public SearchType getSearchType() {
-            return searchType;
+    /**
+     * Checks if the path leading to the given shortest path entry consists only of the incoming edge, the outgoing edge
+     * and an arbitrary number of loops at the node.
+     */
+    private static boolean bestPathIsValidAndRequiresNode(
+            WitnessSearchEntry bestPath, EdgeIteratorState outgoingEdge) {
+        if (Double.isInfinite(bestPath.weight)) {
+            LOGGER.trace("Target edge could not be reached even via node to be contracted -> no shortcut");
+            return false;
         }
 
-        public void setSearchType(SearchType searchType) {
-            this.searchType = searchType;
+        if (bestPath.edge != outgoingEdge.getEdge()) {
+            LOGGER.trace("Found a witness path using alternative target edge -> no shortcut");
+            return false;
         }
-
-        public float getEdgeQuotientWeight() {
-            return edgeQuotientWeight;
-        }
-
-        public void setEdgeQuotientWeight(float edgeQuotientWeight) {
-            this.edgeQuotientWeight = edgeQuotientWeight;
-        }
-
-        public float getOriginalEdgeQuotientWeight() {
-            return originalEdgeQuotientWeight;
-        }
-
-        public void setOriginalEdgeQuotientWeight(float originalEdgeQuotientWeight) {
-            this.originalEdgeQuotientWeight = originalEdgeQuotientWeight;
-        }
-
-        public float getHierarchyDepthWeight() {
-            return hierarchyDepthWeight;
-        }
-
-        public void setHierarchyDepthWeight(float hierarchyDepthWeight) {
-            this.hierarchyDepthWeight = hierarchyDepthWeight;
-        }
+        return bestPath.getParent().isDirectCenterNodePath;
     }
-    private static class Stats {
-        int nodes;
-        long shortcutsChecked;
-        long shortcutsNeeded;
-        long loopsAvoided;
-        long calcTime;
 
-        @Override
-        public String toString() {
-            return String.format("runtime: %7.2f, nodes: %10s, scChecked: %10s, scNeeded: %10s, scNotNeeded: %10s, loopsAvoided: %10s",
-                    calcTime * 1.e-9, nf(nodes), nf(shortcutsChecked), nf(shortcutsNeeded),
-                    nf(shortcutsChecked - shortcutsNeeded), nf(loopsAvoided));
+    /**
+     * @return the difference of possible shortcuts induced by the update/insert
+     */
+    private int insertOrUpdateInitialEntry(IntObjectMap<WitnessSearchEntry> initialEntries, WitnessSearchEntry entry) {
+        int edgeKey = getEdgeKey(entry.incEdge, entry.adjNode);
+        int index = initialEntries.indexOf(edgeKey);
+        if (index < 0) {
+            LOGGER.trace("Adding/Updating initial entry {}", entry);
+            initialEntries.indexInsert(index, edgeKey, entry);
+            if (entry.isDirectCenterNodePath) {
+                return 1;
+            }
+        } else {
+            WitnessSearchEntry currEntry = initialEntries.indexGet(index);
+            // there may be entries with the same adjNode and last original edge, but we only need the one with
+            // the lowest weight
+            if (entry.weight < currEntry.weight) {
+                int difference = 0;
+                if (currEntry.isDirectCenterNodePath) {
+                    difference--;
+                }
+                if (entry.isDirectCenterNodePath) {
+                    difference++;
+                }
+                initialEntries.indexReplace(index, entry);
+                LOGGER.trace("Adding/Updating initial entry {}", entry);
+                return difference;
+            }
         }
+        return 0;
     }
+
 }
