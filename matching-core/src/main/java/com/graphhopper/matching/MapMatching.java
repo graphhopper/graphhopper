@@ -70,7 +70,7 @@ public class MapMatching {
 
     private final Graph graph;
     private final Graph routingGraph;
-    private final LocationIndexMatch locationIndex;
+    private final LocationIndexTree locationIndex;
     private double measurementErrorSigma = 50.0;
     private double transitionProbabilityBeta = 2.0;
     private final int nodeCount;
@@ -85,8 +85,7 @@ public class MapMatching {
                 Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY);
         uTurnDistancePenalty = headingTimePenalty * PENALTY_CONVERSION_VELOCITY;
 
-        this.locationIndex = new LocationIndexMatch(hopper.getGraphHopperStorage(),
-                (LocationIndexTree) hopper.getLocationIndex());
+        this.locationIndex = (LocationIndexTree) hopper.getLocationIndex();
 
         // create hints from algoOptions, so we can create the algorithm factory        
         HintsMap hints = new HintsMap();

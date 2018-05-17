@@ -20,7 +20,6 @@ package com.graphhopper.matching.util;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.matching.LocationIndexMatch;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -81,8 +80,7 @@ public class Measurement {
         // and map-matching stuff
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
         bbox = graph.getBounds();
-        LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
-                (LocationIndexTree) hopper.getLocationIndex());
+        LocationIndexTree locationIndex = (LocationIndexTree) hopper.getLocationIndex();
         // TODO: allow tests of non-CH?
         AlgorithmOptions algoOpts = AlgorithmOptions.start()
                 .maxVisitedNodes((int) 1e20)
@@ -121,7 +119,7 @@ public class Measurement {
      * entry).
      * 
      */
-    private void printLocationIndexMatchQuery(final LocationIndexMatch idx) {
+    private void printLocationIndexMatchQuery(final LocationIndexTree idx) {
         final double latDelta = bbox.maxLat - bbox.minLat;
         final double lonDelta = bbox.maxLon - bbox.minLon;
         final Random rand = new Random(seed);
