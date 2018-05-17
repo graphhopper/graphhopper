@@ -79,6 +79,7 @@
         <module>reader-json</module>
         <module>tools</module>
         <module>web</module>
+        <module>client-hc</module>
     </modules>
     <build>
         <plugins>
@@ -224,7 +225,6 @@
                 <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518
                 Currently works for jdk8 only -->
                 <module>reader-shp</module>
-                <module>client-hc</module>
             </modules>
             <build>
                 <plugins>
@@ -285,15 +285,6 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>
-        <profile>
-            <id>include-client-hc</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <modules>
-                <module>client-hc</module>
-            </modules>
         </profile>
         <profile>
             <id>include-android</id>
