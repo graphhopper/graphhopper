@@ -83,8 +83,8 @@ public class RouteResource {
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute /* default to false for the route part in next API version, see #437 */,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
-            @QueryParam("trackname") @DefaultValue("GraphHopper Track") String trackName,
-            @QueryParam("millis") String timeString) {
+            @QueryParam("gpx.trackname") @DefaultValue("GraphHopper Track") String trackName,
+            @QueryParam("gpx.millis") String timeString) {
         boolean writeGPX = "gpx".equalsIgnoreCase(type);
         instructions = writeGPX || instructions;
 
