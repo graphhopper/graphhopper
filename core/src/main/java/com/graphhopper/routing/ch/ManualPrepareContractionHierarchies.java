@@ -43,8 +43,8 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
     private int lastShortcutCount;
 
     public ManualPrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph, Weighting weighting,
-                                               TraversalMode traversalMode, PMap options) {
-        super(dir, ghStorage, chGraph, weighting, traversalMode, options);
+                                               TraversalMode traversalMode, Config config) {
+        super(dir, ghStorage, chGraph, weighting, traversalMode, config);
     }
 
     public ManualPrepareContractionHierarchies setContractionOrder(List<Integer> contractionOrder) {

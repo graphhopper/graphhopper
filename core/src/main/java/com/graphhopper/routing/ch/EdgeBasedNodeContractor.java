@@ -39,20 +39,15 @@ import static java.lang.System.nanoTime;
 public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     // todo: modify code such that logging does not alter performance 
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
-    //            public static SearchType searchType = SearchType.LEGACY_AGGRESSIVE;
-    public static SearchType searchType = SearchType.AGGRESSIVE;
-    public static boolean arrayBasedWitnessPathFinder = true;
-    public static float edgeQuotientWeight = 1;
-    public static float originalEdgeQuotientWeight = 3;
-    public static float hierarchyDepthWeight = 2;
     private final TurnWeighting turnWeighting;
     private final SimpleSearch simpleSearch = new SimpleSearch();
     private final ShortcutHandler addingShortcutHandler = new AddingShortcutHandler();
     private final ShortcutHandler countingShortcutHandler = new CountingShortcutHandler();
+    private ShortcutHandler activeShortcutHandler;
+    private final Config config;
     private final StopWatch dijkstraSW = new StopWatch();
     private int dijkstraCount;
     private int addedShortcutsCount;
-    private ShortcutHandler activeShortcutHandler;
     private int[] hierarchyDepths;
     private LegacyWitnessPathFinder legacyWitnessPathFinder;
     private WitnessPathSearcher witnessPathSearcher;
@@ -78,20 +73,20 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private int numSearches;
 
     public EdgeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph,
-                                   TurnWeighting turnWeighting, PMap options) {
+                                   TurnWeighting turnWeighting, Config config) {
         super(dir, ghStorage, prepareGraph, turnWeighting);
         this.turnWeighting = turnWeighting;
         this.encoder = turnWeighting.getFlagEncoder();
         this.witnessSearchStrategy = new TurnReplacementSearch();
+        this.config = config;
     }
 
     @Override
     public void initFromGraph() {
         super.initFromGraph();
         int maxLevel = prepareGraph.getNodes();
-        legacyWitnessPathFinder = arrayBasedWitnessPathFinder ?
-                new ArrayBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, TraversalMode.EDGE_BASED_2DIR, maxLevel) :
-                new MapBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, TraversalMode.EDGE_BASED_2DIR, maxLevel);
+        legacyWitnessPathFinder =
+                new ArrayBasedLegacyWitnessPathFinder(prepareGraph, turnWeighting, TraversalMode.EDGE_BASED_2DIR, maxLevel);
         WitnessPathSearcher.Config config = new WitnessPathSearcher.Config();
         witnessPathSearcher = new WitnessPathSearcher(ghStorage, prepareGraph, turnWeighting, config);
         DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
@@ -150,9 +145,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         // the more edges will be removed when contracting this node the earlier we want to contract the node
         //        System.out.printf("node: %d, eq: %d / %d = %f, oeq: %d / %d = %f, depth: %d --> %f\n", node, numEdges, numPrevEdges, edgeQuotient,
 //                numOrigEdges, numPrevOrigEdges, origEdgeQuotient, hierarchyDepth, result);
-        return edgeQuotientWeight * (numEdges / (float) numPrevEdges) +
-                originalEdgeQuotientWeight * (numOrigEdges / (float) numPrevOrigEdges) +
-                hierarchyDepthWeight * hierarchyDepths[node];
+        return config.getEdgeQuotientWeight() * (numEdges / (float) numPrevEdges) +
+                config.getOriginalEdgeQuotientWeight() * (numOrigEdges / (float) numPrevOrigEdges) +
+                config.getHierarchyDepthWeight() * hierarchyDepths[node];
     }
 
     @Override
@@ -180,9 +175,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private int findAndHandleShortcuts(int node) {
         numPolledEdges = 0;
         numSearches = 0;
-        if (searchType == SearchType.AGGRESSIVE) {
+        if (config.searchType == SearchType.AGGRESSIVE) {
             return findAndHandleShortcutsAggressive(node);
-        } else if (searchType == SearchType.LEGACY_AGGRESSIVE) {
+        } else if (config.searchType == SearchType.LEGACY_AGGRESSIVE) {
             return findAndHandleShortcutsLegacyAggressive(node);
         } else {
             return findAndHandleShortcutsClassic(node);
@@ -264,6 +259,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             }
         }
         return 0;
+    }
+
+    public void setSearchType(SearchType searchType) {
+        config.setSearchType(searchType);
     }
 
     private static class AddedShortcut {
@@ -543,7 +542,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         String result = String.format("searches: %10s, polled-edges: %10s, stats(calc): %s, stats(contract): %s, %s",
                 nf(totalNumSearches), nf(totalNumPolledEdges),
                 countingShortcutHandler.getStats(), addingShortcutHandler.getStats(),
-                searchType == SearchType.AGGRESSIVE ? witnessPathSearcher.getStatisticsString() : legacyWitnessPathFinder.getStatusString());
+                config.searchType == SearchType.AGGRESSIVE ? witnessPathSearcher.getStatisticsString() : legacyWitnessPathFinder.getStatusString());
         countingShortcutHandler.resetStats();
         addingShortcutHandler.resetStats();
         legacyWitnessPathFinder.resetStats();
@@ -1023,6 +1022,44 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         return (((long) p << 32) | (q & 0xFFFFFFFFL));
     }
 
+    public static class Config {
+        public SearchType searchType = SearchType.AGGRESSIVE;
+        public float edgeQuotientWeight = 1;
+        public float originalEdgeQuotientWeight = 3;
+        public float hierarchyDepthWeight = 2;
+
+        public SearchType getSearchType() {
+            return searchType;
+        }
+
+        public void setSearchType(SearchType searchType) {
+            this.searchType = searchType;
+        }
+
+        public float getEdgeQuotientWeight() {
+            return edgeQuotientWeight;
+        }
+
+        public void setEdgeQuotientWeight(float edgeQuotientWeight) {
+            this.edgeQuotientWeight = edgeQuotientWeight;
+        }
+
+        public float getOriginalEdgeQuotientWeight() {
+            return originalEdgeQuotientWeight;
+        }
+
+        public void setOriginalEdgeQuotientWeight(float originalEdgeQuotientWeight) {
+            this.originalEdgeQuotientWeight = originalEdgeQuotientWeight;
+        }
+
+        public float getHierarchyDepthWeight() {
+            return hierarchyDepthWeight;
+        }
+
+        public void setHierarchyDepthWeight(float hierarchyDepthWeight) {
+            this.hierarchyDepthWeight = hierarchyDepthWeight;
+        }
+    }
     private static class Stats {
         int nodes;
         long shortcutsChecked;

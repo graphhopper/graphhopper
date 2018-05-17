@@ -76,18 +76,18 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int neighborUpdatePercentage = 20;
     protected double nodesContractedPercentage = 100;
     protected double logMessagesPercentage = 20;
-    private final PMap options;
+    private final Config config;
     private int initSize;
     private int checkCounter;
 
     public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph,
-                                         Weighting weighting, TraversalMode traversalMode, PMap options) {
+                                         Weighting weighting, TraversalMode traversalMode, Config config) {
         this.dir = dir;
         this.ghStorage = ghStorage;
         this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
         this.weighting = weighting;
-        this.options = options;
+        this.config = config;
         prepareWeighting = new PreparationWeighting(weighting);
     }
 
@@ -463,7 +463,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private NodeContractor createNodeContractor(Graph graph, TraversalMode traversalMode) {
         if (traversalMode.isEdgeBased()) {
             TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased(graph);
-            return new EdgeBasedNodeContractor(dir, ghStorage, prepareGraph, chTurnWeighting, options);
+            return new EdgeBasedNodeContractor(dir, ghStorage, prepareGraph, chTurnWeighting,
+                    config.getEdgeBasedNodeContractorConfig());
         } else {
             return new NodeBasedNodeContractor(dir, ghStorage, prepareGraph, weighting);
         }
@@ -490,5 +491,17 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 getTimesAsString(),
                 nodeContractor.getStatisticsString(),
                 Helper.getMemInfo()));
+    }
+
+    public static class Config {
+        EdgeBasedNodeContractor.Config edgeBasedNodeContractorConfig = new EdgeBasedNodeContractor.Config();
+
+        public EdgeBasedNodeContractor.Config getEdgeBasedNodeContractorConfig() {
+            return edgeBasedNodeContractorConfig;
+        }
+
+        public void setEdgeBasedNodeContractorConfig(EdgeBasedNodeContractor.Config edgeBasedNodeContractorConfig) {
+            this.edgeBasedNodeContractorConfig = edgeBasedNodeContractorConfig;
+        }
     }
 }

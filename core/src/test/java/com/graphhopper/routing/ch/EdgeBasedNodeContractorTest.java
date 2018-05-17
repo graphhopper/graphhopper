@@ -1193,9 +1193,8 @@ public class EdgeBasedNodeContractorTest {
             buildRandomGraph(seed);
             System.out.println("graph for legacy aggressive search");
             GHUtility.printGraphForUnitTest(graph, encoder);
-            EdgeBasedNodeContractor.searchType = SearchType.LEGACY_AGGRESSIVE;
 
-            EdgeBasedNodeContractor nodeContractor = createNodeContractor();
+            EdgeBasedNodeContractor nodeContractor = createNodeContractor(SearchType.LEGACY_AGGRESSIVE);
             nodeContractor.contractNode(0);
             int numEdgesPolledL = nodeContractor.getNumPolledEdges();
             int numSearchesL = nodeContractor.getNumSearches();
@@ -1207,9 +1206,8 @@ public class EdgeBasedNodeContractorTest {
             buildRandomGraph(seed);
             System.out.println("graph for aggressive search");
             GHUtility.printGraphForUnitTest(graph, encoder);
-            EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
 
-            nodeContractor = createNodeContractor();
+            nodeContractor = createNodeContractor(SearchType.AGGRESSIVE);
             nodeContractor.contractNode(0);
             int numEdgesPolledA = nodeContractor.getNumPolledEdges();
             int numSearchesA = nodeContractor.getNumSearches();
@@ -1271,8 +1269,14 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private EdgeBasedNodeContractor createNodeContractor() {
+        return createNodeContractor(SearchType.AGGRESSIVE);
+    }
+
+    private EdgeBasedNodeContractor createNodeContractor(SearchType searchType) {
+        EdgeBasedNodeContractor.Config config = new EdgeBasedNodeContractor.Config();
+        config.setSearchType(searchType);
         Directory dir = new GHDirectory("", DAType.RAM_INT);
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(dir, graph, chGraph, chTurnWeighting, new PMap());
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(dir, graph, chGraph, chTurnWeighting, config);
         nodeContractor.initFromGraph();
         return nodeContractor;
     }

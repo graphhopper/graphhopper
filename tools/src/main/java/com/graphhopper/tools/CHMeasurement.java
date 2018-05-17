@@ -98,18 +98,18 @@ public class CHMeasurement {
         ghStorage.freeze();
 
         EdgeBasedNodeContractor contractor = new EdgeBasedNodeContractor(dir, ghStorage, chGraph,
-                new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension), new PMap());
+                new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension), new EdgeBasedNodeContractor.Config());
         contractor.initFromGraph();
         int maxLevel = chGraph.getNodes();
         for (int i = 0; i < chGraph.getNodes(); ++i) {
             chGraph.setLevel(i, maxLevel);
         }
         for (int i = 0; i < chGraph.getNodes(); ++i) {
-            EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
+            contractor.setSearchType(SearchType.AGGRESSIVE);
             float prio = contractor.calculatePriority(i);
             System.out.println("aggressive: " + prio);
 //            System.out.printf("aggressive: %f, sc: %d, sc-prev: %d, o: %d, o-prev: %d, ", prio, contractor.numEdges, contractor.numPrevEdges, contractor.numOrigEdges, contractor.numPrevOrigEdges);
-            EdgeBasedNodeContractor.searchType = SearchType.LEGACY_AGGRESSIVE;
+            contractor.setSearchType(SearchType.LEGACY_AGGRESSIVE);
             float legacyPrio = contractor.calculatePriority(i);
             System.out.println("legacyaggr: " + legacyPrio);
 //            System.out.printf("legacyaggr:  %f, sc: %d, sc-prev: %d, o: %d, o-prev: %d\n", legacyPrio, contractor.numEdges, contractor.numPrevEdges, contractor.numOrigEdges, contractor.numPrevOrigEdges);
@@ -122,12 +122,10 @@ public class CHMeasurement {
         seed = 91358696691522L;
         System.out.println("seed : " + seed);
 
-        EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
-        List<ManualPrepareContractionHierarchies.Stats> aggressiveCounts = runContraction();
+        List<ManualPrepareContractionHierarchies.Stats> aggressiveCounts = runContraction(SearchType.AGGRESSIVE);
 //        System.out.printf("aggressive: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(aggressiveCounts), WitnessPathSearcher.pollCount, getTotalSearches(aggressiveCounts), WitnessPathSearcher.searchCount);
 
-        EdgeBasedNodeContractor.searchType = SearchType.LEGACY_AGGRESSIVE;
-        List<ManualPrepareContractionHierarchies.Stats> legacyCounts = runContraction();
+        List<ManualPrepareContractionHierarchies.Stats> legacyCounts = runContraction(SearchType.LEGACY_AGGRESSIVE);
 //        System.out.printf("legacyaggr: numpolled = %d (%d), numsearches = %d (%d)\n", getTotalPolled(legacyCounts), LegacyWitnessPathFinder.pollCount, getTotalSearches(legacyCounts), LegacyWitnessPathFinder.searchCount);
 
         if (aggressiveCounts.size() != legacyCounts.size()) {
@@ -161,7 +159,7 @@ public class CHMeasurement {
         return result;
     }
 
-    private List<ManualPrepareContractionHierarchies.Stats> runContraction() {
+    private List<ManualPrepareContractionHierarchies.Stats> runContraction(SearchType searchType) {
         FlagEncoder encoder = new CarFlagEncoder(5, 5, maxTurnCost);
         EncodingManager encodingManager = new EncodingManager(encoder);
         weighting = new FastestWeighting(encoder);
@@ -178,8 +176,10 @@ public class CHMeasurement {
             throw new IllegalArgumentException("Could not read graph: " + osmFile + ", the error was: " + e.getMessage());
         }
 
+        PrepareContractionHierarchies.Config config = new PrepareContractionHierarchies.Config();
+        config.getEdgeBasedNodeContractorConfig().setSearchType(searchType);
         ManualPrepareContractionHierarchies pch = new ManualPrepareContractionHierarchies(
-                dir, ghStorage, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR, new PMap());
+                dir, ghStorage, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR, config);
         pch.setSeed(seed);
         pch.setContractedNodes(50);
         pch.doWork();
@@ -195,9 +195,8 @@ public class CHMeasurement {
      */
     private void testPerformanceFixedNodeOrdering() {
         osmFile = "local/maps/bremen-latest.osm.pbf";
-        EdgeBasedNodeContractor.searchType = SearchType.AGGRESSIVE;
-        EdgeBasedNodeContractor.arrayBasedWitnessPathFinder = true;
-        LegacyWitnessPathFinder.sigmaFactor = 4.0;
+        PrepareContractionHierarchies.Config config = new PrepareContractionHierarchies.Config();
+        config.getEdgeBasedNodeContractorConfig().setSearchType(SearchType.AGGRESSIVE);
         maxTurnCost = 100;
         seed = 123;
         pNodeHasTurnCosts = 0.3;
@@ -211,9 +210,9 @@ public class CHMeasurement {
         int numRepeats = 5;
         totalElapsed = 0;
         for (int i = 0; i < numRepeats - 1; ++i) {
-            contractGraphWithRandomTurnCosts();
+            contractGraphWithRandomTurnCosts(config);
         }
-        ManualPrepareContractionHierarchies pch = contractGraphWithRandomTurnCosts();
+        ManualPrepareContractionHierarchies pch = contractGraphWithRandomTurnCosts(config);
         int numNodes = ghStorage.getNodes();
         int numShortcuts = chGraph.getAllEdges().length() - ghStorage.getAllEdges().length();
         LOGGER.info("### Average contraction time: {} ms, time per node: {} micros, time per shortcut: {} micros",
@@ -256,7 +255,7 @@ public class CHMeasurement {
         LOGGER.info("errors: {}, max error: {}, min error: {}", errorCount, maxError, minError);
     }
 
-    private ManualPrepareContractionHierarchies contractGraphWithRandomTurnCosts() {
+    private ManualPrepareContractionHierarchies contractGraphWithRandomTurnCosts(PrepareContractionHierarchies.Config config) {
         FlagEncoder encoder = new CarFlagEncoder(5, 5, maxTurnCost);
         EncodingManager encodingManager = new EncodingManager(encoder);
         // todo: are there any performance differences between fastest and shortest routes ? this should be the case
@@ -321,7 +320,7 @@ public class CHMeasurement {
                 Helper.nf(ghStorage.getAllEdges().length()), Helper.nf(chGraph.getAllEdges().length() - ghStorage.getAllEdges().length()));
         long start = nanoTime();
         ManualPrepareContractionHierarchies pch = new ManualPrepareContractionHierarchies(
-                dir, ghStorage, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR, new PMap());
+                dir, ghStorage, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR, config);
         pch.setSeed(seed);
         pch.setContractedNodes(nodesContractedPercentage);
         pch.setLogMessages(10);
@@ -384,7 +383,6 @@ public class CHMeasurement {
         chDecorator.setPreparationNeighborUpdates(neighborUpdates);
         chDecorator.setPreparationContractedNodes(contractedNodes);
         chDecorator.setPreparationLogMessages(logMessages);
-        chDecorator.setOptions(cmdArgs);
 
         LMAlgoFactoryDecorator lmDecorator = graphHopper.getLMFactoryDecorator();
         lmDecorator.setEnabled(true);

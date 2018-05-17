@@ -904,7 +904,7 @@ public class GraphHopperOSMTest {
 
     private PrepareContractionHierarchies createPrepareContractionHierarchies(RAMDirectory ramDir, GraphHopperStorage storage, Weighting fwSimpleTruck) {
         return new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck),
-                fwSimpleTruck, TraversalMode.NODE_BASED, new PMap());
+                fwSimpleTruck, TraversalMode.NODE_BASED, new PrepareContractionHierarchies.Config());
     }
 
     @Test
