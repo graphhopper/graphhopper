@@ -22,10 +22,14 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.*;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.BufferedWriter;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
@@ -81,9 +85,12 @@ public class GPXFile {
 
     public GPXFile doImport(String fileStr) {
         try {
-            return doImport(new FileInputStream(fileStr), 20);
-        } catch (FileNotFoundException ex) {
-            throw new RuntimeException(ex);
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setValidating(false);
+            factory.setIgnoringElementContentWhitespace(true);
+            return doImport(factory.newDocumentBuilder().parse(new FileInputStream(fileStr)), 20);
+        } catch (SAXException | ParserConfigurationException | IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -91,20 +98,15 @@ public class GPXFile {
      * This method creates a GPXFile object filled with lat,lon values from the
      * xml inputstream is.
      *
+     * @param doc the GPX XML document
      * @param defaultSpeed if no time element is found the time value will be
-     *                     guessed from the distance and this provided default speed in kph.
      */
-    public GPXFile doImport(InputStream is, double defaultSpeed) {
+    public GPXFile doImport(Document doc, double defaultSpeed) {
         SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
         SimpleDateFormat formatterZ = new SimpleDateFormat(DATE_FORMAT_Z);
         SimpleDateFormat formatterZMS = new SimpleDateFormat(DATE_FORMAT_Z_MS);
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setValidating(false);
-        factory.setIgnoringElementContentWhitespace(true);
         DistanceCalc distCalc = Helper.DIST_PLANE;
         try {
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(is);
             NodeList nl = doc.getElementsByTagName("trkpt");
             double prevLat = 0, prevLon = 0;
             long prevMillis = 0;
@@ -151,7 +153,7 @@ public class GPXFile {
                 prevMillis = millis;
             }
             return this;
-        } catch (Exception e) {
+        } catch (ParseException e) {
             throw new RuntimeException(e);
         }
     }

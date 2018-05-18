@@ -33,6 +33,7 @@ import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -40,7 +41,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.util.*;
 
 import static com.graphhopper.util.Parameters.Routing.*;
@@ -71,7 +71,8 @@ public class MapMatchingResource {
     @Consumes({MediaType.APPLICATION_XML, "application/gpx+xml"})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
     public Response doGet(
-            @Context HttpServletRequest httpReq,
+            Document body,
+            @Context HttpServletRequest request,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
             @QueryParam("type") @DefaultValue("json") String outType,
             @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
@@ -95,78 +96,56 @@ public class MapMatchingResource {
             throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("Vehicle not supported: " + vehicleStr), writeGPX));
         }
 
-        PathWrapper matchGHRsp = new PathWrapper();
-        GPXFile gpxFile = new GPXFile();
-        try {
-            gpxFile = parseGPX(httpReq);
-        } catch (Exception ex) {
-            matchGHRsp.addError(ex);
-        }
+        PathWrapper pathWrapper = new PathWrapper();
+        GPXFile file = new GPXFile();
+
+        GPXFile gpxFile = file.doImport(body, 20);
 
         instructions = writeGPX || instructions;
 
         MatchResult matchRsp = null;
         StopWatch sw = new StopWatch().start();
 
-        if (!matchGHRsp.hasErrors()) {
-            try {
-                AlgorithmOptions opts = AlgorithmOptions.start()
-                        .traversalMode(graphHopper.getTraversalMode())
-                        .maxVisitedNodes(maxVisitedNodes)
-                        .hints(new HintsMap().put("vehicle", vehicleStr))
-                        .build();
-                MapMatching matching = new MapMatching(graphHopper, opts);
-                matching.setMeasurementErrorSigma(gpsAccuracy);
-                matchRsp = matching.doWork(gpxFile.getEntries());
+        AlgorithmOptions opts = AlgorithmOptions.start()
+                .traversalMode(graphHopper.getTraversalMode())
+                .maxVisitedNodes(maxVisitedNodes)
+                .hints(new HintsMap().put("vehicle", vehicleStr))
+                .build();
+        MapMatching matching = new MapMatching(graphHopper, opts);
+        matching.setMeasurementErrorSigma(gpsAccuracy);
+        matchRsp = matching.doWork(gpxFile.getEntries());
 
-                // fill GHResponse for identical structure
-                Path path = matching.calcPath(matchRsp);
-                Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
-                DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
-                PathMerger pathMerger = new PathMerger().
-                        setEnableInstructions(instructions).
-                        setPathDetailsBuilders(graphHopper.getPathDetailsBuilderFactory(), pathDetails).
-                        setDouglasPeucker(peucker).
-                        setSimplifyResponse(minPathPrecision > 0);
-                pathMerger.doWork(matchGHRsp, Collections.singletonList(path), tr);
-
-            } catch (Exception ex) {
-                matchGHRsp.addError(ex);
-            }
-        }
+        // fill GHResponse for identical structure
+        Path path = matching.calcPath(matchRsp);
+        Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
+        DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
+        PathMerger pathMerger = new PathMerger().
+                setEnableInstructions(instructions).
+                setPathDetailsBuilders(graphHopper.getPathDetailsBuilderFactory(), pathDetails).
+                setDouglasPeucker(peucker).
+                setSimplifyResponse(minPathPrecision > 0);
+        pathMerger.doWork(pathWrapper, Collections.singletonList(path), tr);
 
         // TODO: Request logging and timing should perhaps be done somewhere outside
         float took = sw.stop().getSeconds();
-        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
-        String logStr = httpReq.getQueryString() + ", " + infoStr + ", took:" + took + ", entries:" + gpxFile.getEntries().size() + ", " + matchGHRsp.getDebugInfo();
+        String infoStr = request.getRemoteAddr() + " " + request.getLocale() + " " + request.getHeader("User-Agent");
+        String logStr = request.getQueryString() + ", " + infoStr + ", took:" + took + ", entries:" + gpxFile.getEntries().size() + ", " + pathWrapper.getDebugInfo();
 
-        if (matchGHRsp.hasErrors()) {
-            if (matchGHRsp.getErrors().get(0) instanceof IllegalArgumentException) {
-                logger.error(logStr + ", errors:" + matchGHRsp.getErrors());
-            } else {
-                logger.error(logStr + ", errors:" + matchGHRsp.getErrors(), matchGHRsp.getErrors().get(0));
-            }
-        } else {
-            logger.info(logStr);
-        }
+        logger.info(logStr);
 
-        Object object;
-        if (matchGHRsp.hasErrors()) {
-            logger.error(logStr + ", errors:" + matchGHRsp.getErrors());
-            throw new WebApplicationException(WebHelper.errorResponse(matchGHRsp.getErrors(), writeGPX));
-        } else if ("extended_json".equals(outType)) {
-            object = convertToTree(matchRsp, enableElevation, pointsEncoded);
-
+        if ("extended_json".equals(outType)) {
+            return Response.ok(convertToTree(matchRsp, enableElevation, pointsEncoded)).
+                    header("X-GH-Took", "" + Math.round(took * 1000)).
+                    build();
         } else if (writeGPX) {
             GHResponse rsp = new GHResponse();
-            rsp.add(matchGHRsp);
+            rsp.add(pathWrapper);
             return WebHelper.gpxSuccessResponseBuilder(rsp, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
-
         } else {
             GHResponse rsp = new GHResponse();
-            rsp.add(matchGHRsp);
+            rsp.add(pathWrapper);
             ObjectNode map = WebHelper.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
 
             Map<String, Object> matchResult = new HashMap<>();
@@ -185,18 +164,10 @@ public class MapMatchingResource {
                 }
                 map.putPOJO("traversal_keys", traversalKeylist);
             }
-
-            object = map;
+            return Response.ok(map).
+                    header("X-GH-Took", "" + Math.round(took * 1000)).
+                    build();
         }
-
-        return Response.ok(object).
-                header("X-GH-Took", "" + Math.round(took * 1000)).
-                build();
-    }
-
-    private GPXFile parseGPX(HttpServletRequest httpReq) throws IOException {
-        GPXFile file = new GPXFile();
-        return file.doImport(httpReq.getInputStream(), 20);
     }
 
     static JsonNode convertToTree(MatchResult result, boolean elevation, boolean pointsEncoded) {
