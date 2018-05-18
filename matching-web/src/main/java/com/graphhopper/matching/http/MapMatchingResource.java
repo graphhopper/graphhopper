@@ -31,18 +31,15 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.util.*;
 
@@ -77,17 +74,13 @@ public class MapMatchingResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
     public Response doGet(
             @Context HttpServletRequest httpReq,
-            @Context UriInfo uriInfo,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
-            @QueryParam("point") List<GHPoint> requestPoints,
             @QueryParam("type") @DefaultValue("json") String outType,
             @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
             @QueryParam("vehicle") @DefaultValue("car") String vehicleStr,
-            @QueryParam("weighting") @DefaultValue("fastest") String weighting,
-            @QueryParam("algorithm") @DefaultValue("") String algoStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
             @QueryParam(Parameters.DETAILS.PATH_DETAILS) List<String> pathDetails,
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute /* default to false for the route part in next API version, see #437 */,
@@ -104,24 +97,12 @@ public class MapMatchingResource {
             throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("Vehicle not supported: " + vehicleStr), writeGPX));
         }
 
-        String inType = "gpx";
-        String contentType = httpReq.getContentType();
-        if (contentType.contains("application/xml") || contentType.contains("application/gpx+xml")) {
-            inType = "gpx";
-        } else if (contentType.contains("application/json")) {
-            inType = "json";
-        }
-
         PathWrapper matchGHRsp = new PathWrapper();
         GPXFile gpxFile = new GPXFile();
-        if (inType.equals("gpx")) {
-            try {
-                gpxFile = parseGPX(httpReq);
-            } catch (Exception ex) {
-                matchGHRsp.addError(ex);
-            }
-        } else {
-            matchGHRsp.addError(new IllegalArgumentException("Input type not supported " + inType + ", Content-Type:" + contentType));
+        try {
+            gpxFile = parseGPX(httpReq);
+        } catch (Exception ex) {
+            matchGHRsp.addError(ex);
         }
 
         instructions = writeGPX || instructions;
