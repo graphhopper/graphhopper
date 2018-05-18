@@ -8,7 +8,7 @@ This repository is an add-on that will do 'snap to road' using the
 Map matching is the process to match a sequence of real world coordinates into a digital map.
 Read more at [Wikipedia](https://en.wikipedia.org/wiki/Map_matching). It can be used for tracking vehicles' GPS information, important for further digital analysis. Or e.g. attaching turn instructions for any recorded GPX route.
 
-Currently this project is under heavy development but produces already good results for various use cases. Let us know if not and create an issue!
+Currently this project is under development but produces already good results for various use cases. Let us know if not and create an issue!
 
 See the demo in action (black is GPS track, green is matched result):
 
@@ -26,43 +26,36 @@ Discussion happens [here](https://discuss.graphhopper.com/c/graphhopper/map-matc
 
 Java 8 and Maven >=3.3 are required. For the 'core' module Java 7 is sufficient.
 
-Then you need to import the area you want to do map-matching on:
+Build:
 
-```bash
-git checkout [stable-branch] # optional
-./map-matching.sh action=import datasource=./some-dir/osm-file.pbf vehicle=car
+````bash
+mvn package -DskipTests
 ```
 
-As an example you use `datasource=./map-data/leipzig_germany.osm.pbf` as road network base or any other pbf or xml from [here](http://download.geofabrik.de/).
+Then you need to import an OSM map for the area you want to do map-matching on, e.g. the provided
+sample data:
 
-The optional parameter `vehicle` defines the routing profile like `car`, `bike`, `motorcycle` or `foot`. 
+```bash
+java -jar target/matching-web/graphhopper-map-matching-web-0.11-SNAPSHOT.jar import map-data/leipzig_germany.osm.pbf
+```
+
+OpenStreetMap data in pbf or xml format are available from [here](http://download.geofabrik.de/).
+
+The optional parameter `--vehicle` defines the routing profile like `car`, `bike`, `motorcycle` or `foot`.
 You can also provide a comma separated list. For all supported values see the variables in the [FlagEncoderFactory](https://github.com/graphhopper/graphhopper/blob/0.7/core/src/main/java/com/graphhopper/routing/util/FlagEncoderFactory.java) of GraphHopper. 
 
-If you have already imported a datasource with a specific profile, you need to remove the folder graph-cache in your map-matching root directory.
+Before re-importing, you need to delete the `graph-cache` directory, which is created by the import.
 
-Now you can do these matches:
+Now you can match GPX traces against the map:
 ```bash
-./map-matching.sh action=match gpx=./some-dir/*.gpx
+java -jar target/matching-web/graphhopper-map-matching-web-0.11-SNAPSHOT.jar match matching-core/src/test/resources/*.gpx
 ```
-
-As example use `gpx=./matching-core/src/test/resources/*.gpx` or one specific gpx file.
-
-Possible arguments are:
-```bash
-instructions=de             # default=, type=String, if an country-iso-code (like en or de) is specified turn instructions are included in the output, leave empty or default to avoid this
-gps_accuracy=15              # default=15, type=int, unit=meter, the precision of the used device
-```
-
-This will produce gpx results similar named as the input files.
-
-Developer note: After changing the code you should run `mvn clean` before running `map-matching.sh`
-again.
 
 ### UI and matching Service
 
 Start via:
 ```bash
-./map-matching.sh action=start-server
+java -jar target/matching-web/graphhopper-map-matching-web-0.11-SNAPSHOT.jar server config.yml
 ```
 
 Access the simple UI via localhost:8989.
@@ -74,49 +67,22 @@ curl -XPOST -H "Content-Type: application/gpx+xml" -d @/path/to/gpx/file.gpx "lo
 
 #### Development tools
 
-Determine the maximum bounds of one or more GPX file:
+Determine the bounding box of one or more GPX files:
 ```bash
-./map-matching.sh action=getbounds gpx=./track-data/.*gpx
+java -jar target/matching-web/graphhopper-map-matching-web-0.11-SNAPSHOT.jar getbounds matching-core/src/test/resources/*.gpx
 ```
 
 #### Java usage
 
-Or use this Java snippet:
+Have a look at `MapMatchingResource.java` to see how the web services is implemented on top
+of library functions to get an idea how to use map matching in your own project.
 
-```java
-// import OpenStreetMap data
-GraphHopper hopper = new GraphHopperOSM();
-hopper.setDataReaderFile("./map-data/leipzig_germany.osm.pbf");
-hopper.setGraphHopperLocation("./target/mapmatchingtest");
-CarFlagEncoder encoder = new CarFlagEncoder();
-hopper.setEncodingManager(new EncodingManager(encoder));
-hopper.getCHFactoryDecorator().setEnabled(false);
-hopper.importOrLoad();
-
-// create MapMatching object, can and should be shared accross threads
-String algorithm = Parameters.Algorithms.DIJKSTRA_BI;
-Weighting weighting = new FastestWeighting(encoder);
-AlgorithmOptions algoOptions = new AlgorithmOptions(algorithm, weighting);
-MapMatching mapMatching = new MapMatching(hopper, algoOptions);
-
-// do the actual matching, get the GPX entries from a file or via stream
-List<GPXEntry> inputGPXEntries = new GPXFile().doImport("nice.gpx").getEntries();
-MatchResult mr = mapMatching.doWork(inputGPXEntries);
-
-// return GraphHopper edges with all associated GPX entries
-List<EdgeMatch> matches = mr.getEdgeMatches();
-// now do something with the edges like storing the edgeIds or doing fetchWayGeometry etc
-matches.get(0).getEdgeState();
-```
-
-with this maven dependency:
-
+Use this Maven dependencie:
 ```xml
 <dependency>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-map-matching-core</artifactId>
-    <!-- or 0.10-SNAPSHOT for the unstable -->
-    <version>0.9.0</version>
+    <version>0.11-SNAPSHOT</version>
 </dependency>
 ```
 
