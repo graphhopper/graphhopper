@@ -61,7 +61,7 @@ Access the simple UI via localhost:8989.
 
 You can post GPX files and get back snapped results as GPX or as compatible GraphHopper JSON. An example curl request is:
 ```bash
-curl -XPOST -H "Content-Type: application/gpx+xml" -d @matching-core/src/test/resources/*.gpx "localhost:8989/match?vehicle=car&type=json"
+curl -XPOST -H "Content-Type: application/gpx+xml" -d @matching-core/src/test/resources/test1.gpx "localhost:8989/match?vehicle=car&type=json"
 ```
 
 #### Tools
