@@ -51,7 +51,7 @@ Now you can match GPX traces against the map:
 java -jar target/matching-web/graphhopper-map-matching-web-0.11-SNAPSHOT.jar match matching-core/src/test/resources/*.gpx
 ```
 
-### UI and matching Service
+### Web app
 
 Start via:
 ```bash
@@ -62,10 +62,10 @@ Access the simple UI via localhost:8989.
 
 You can post GPX files and get back snapped results as GPX or as compatible GraphHopper JSON. An example curl request is:
 ```bash
-curl -XPOST -H "Content-Type: application/gpx+xml" -d @/path/to/gpx/file.gpx "localhost:8989/match?vehicle=car&type=json"
+curl -XPOST -H "Content-Type: application/gpx+xml" -d @matching-core/src/test/resources/*.gpx "localhost:8989/match?vehicle=car&type=json"
 ```
 
-#### Development tools
+#### Tools
 
 Determine the bounding box of one or more GPX files:
 ```bash
@@ -77,7 +77,7 @@ java -jar target/matching-web/graphhopper-map-matching-web-0.11-SNAPSHOT.jar get
 Have a look at `MapMatchingResource.java` to see how the web services is implemented on top
 of library functions to get an idea how to use map matching in your own project.
 
-Use this Maven dependencie:
+Use this Maven dependency:
 ```xml
 <dependency>
     <groupId>com.graphhopper</groupId>
