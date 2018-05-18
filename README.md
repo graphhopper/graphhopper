@@ -73,7 +73,7 @@ java -jar matching-web/target/graphhopper-map-matching-web-0.11-SNAPSHOT.jar get
 
 #### Java usage
 
-Have a look at `MapMatchingResource.java` to see how the web services is implemented on top
+Have a look at `MapMatchingResource.java` to see how the web service is implemented on top
 of library functions to get an idea how to use map matching in your own project.
 
 Use this Maven dependency:
