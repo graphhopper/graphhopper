@@ -172,18 +172,8 @@ public class MapMatching {
      *                of the graph specified in the constructor
      */
     public MatchResult doWork(List<GPXEntry> gpxList) {
-        if (gpxList.size() < 2) {
-            throw new IllegalArgumentException("Too few coordinates in input file ("
-                    + gpxList.size() + "). Correct format?");
-        }
-
         // filter the entries:
         List<GPXEntry> filteredGPXEntries = filterGPXEntries(gpxList);
-        if (filteredGPXEntries.size() < 2) {
-            throw new IllegalStateException("Only " + filteredGPXEntries.size()
-                    + " filtered GPX entries (from " + gpxList.size()
-                    + "), but two or more are needed");
-        }
 
         // now find each of the entries in the graph:
         final EdgeFilter edgeFilter = new DefaultEdgeFilter(algoOptions.getWeighting().getFlagEncoder());
@@ -560,40 +550,40 @@ public class MapMatching {
         long time = 0;
         EdgeIteratorState currentEdge = null;
         List<GPXExtension> gpxExtensions = new ArrayList<>();
-        GPXExtension queryResult = seq.get(0).state;
-        gpxExtensions.add(queryResult);
-        for (int j = 1; j < seq.size(); j++) {
-            queryResult = seq.get(j).state;
-            Path path = seq.get(j).transitionDescriptor;
-            distance += path.getDistance();
-            time += path.getTime();
-            for (EdgeIteratorState edgeIteratorState : path.calcEdges()) {
-                EdgeIteratorState directedRealEdge = resolveToRealEdge(virtualEdgesMap,
-                        edgeIteratorState);
-                if (directedRealEdge == null) {
-                    throw new RuntimeException("Did not find real edge for "
-                            + edgeIteratorState.getEdge());
-                }
-                if (currentEdge == null || !equalEdges(directedRealEdge, currentEdge)) {
-                    EdgeMatch edgeMatch = new EdgeMatch(directedRealEdge, gpxExtensions);
-                    edgeMatches.add(edgeMatch);
-                    gpxExtensions = new ArrayList<>();
-                    
-                    currentEdge = directedRealEdge;
-                }
-            }
+        if (!seq.isEmpty()) {
+            GPXExtension queryResult = seq.get(0).state;
             gpxExtensions.add(queryResult);
-        }
-        if (edgeMatches.isEmpty()) {
-            throw new IllegalArgumentException("No edge matches found for submitted track. Too short? Sequence size " + seq.size());
-        }
-        EdgeMatch lastEdgeMatch = edgeMatches.get(edgeMatches.size() - 1);
-        if (!gpxExtensions.isEmpty() && !equalEdges(currentEdge, lastEdgeMatch.getEdgeState())) {
-            edgeMatches.add(new EdgeMatch(currentEdge, gpxExtensions));
-        } else {
-            lastEdgeMatch.getGpxExtensions().addAll(gpxExtensions);
+            for (int j = 1; j < seq.size(); j++) {
+                queryResult = seq.get(j).state;
+                Path path = seq.get(j).transitionDescriptor;
+                distance += path.getDistance();
+                time += path.getTime();
+                for (EdgeIteratorState edgeIteratorState : path.calcEdges()) {
+                    EdgeIteratorState directedRealEdge = resolveToRealEdge(virtualEdgesMap,
+                            edgeIteratorState);
+                    if (directedRealEdge == null) {
+                        throw new RuntimeException("Did not find real edge for "
+                                + edgeIteratorState.getEdge());
+                    }
+                    if (currentEdge == null || !equalEdges(directedRealEdge, currentEdge)) {
+                        EdgeMatch edgeMatch = new EdgeMatch(directedRealEdge, gpxExtensions);
+                        edgeMatches.add(edgeMatch);
+                        gpxExtensions = new ArrayList<>();
+                        currentEdge = directedRealEdge;
+                    }
+                }
+                gpxExtensions.add(queryResult);
+            }
         }
         MatchResult matchResult = new MatchResult(edgeMatches);
+        if (!edgeMatches.isEmpty()) {
+            EdgeMatch lastEdgeMatch = edgeMatches.get(edgeMatches.size() - 1);
+            if (!gpxExtensions.isEmpty() && !equalEdges(currentEdge, lastEdgeMatch.getEdgeState())) {
+                edgeMatches.add(new EdgeMatch(currentEdge, gpxExtensions));
+            } else {
+                lastEdgeMatch.getGpxExtensions().addAll(gpxExtensions);
+            }
+        }
         matchResult.setMatchMillis(time);
         matchResult.setMatchLength(distance);
         return matchResult;
@@ -603,17 +593,31 @@ public class MapMatching {
      * Calculate GPX stats to determine quality of matching.
      */
     private void computeGpxStats(List<GPXEntry> gpxList, MatchResult matchResult) {
-        double gpxLength = 0;
-        GPXEntry prevEntry = gpxList.get(0);
-        for (int i = 1; i < gpxList.size(); i++) {
-            GPXEntry entry = gpxList.get(i);
-            gpxLength += distanceCalc.calcDist(prevEntry.lat, prevEntry.lon, entry.lat, entry.lon);
-            prevEntry = entry;
-        }
+        matchResult.setGPXEntriesMillis(durationMillis(gpxList));
+        matchResult.setGPXEntriesLength(gpxLength(gpxList));
+    }
 
-        long gpxMillis = gpxList.get(gpxList.size() - 1).getTime() - gpxList.get(0).getTime();
-        matchResult.setGPXEntriesMillis(gpxMillis);
-        matchResult.setGPXEntriesLength(gpxLength);
+    private double gpxLength(List<GPXEntry> gpxList) {
+        if (gpxList.isEmpty()) {
+            return 0;
+        } else {
+            double gpxLength = 0;
+            GPXEntry prevEntry = gpxList.get(0);
+            for (int i = 1; i < gpxList.size(); i++) {
+                GPXEntry entry = gpxList.get(i);
+                gpxLength += distanceCalc.calcDist(prevEntry.lat, prevEntry.lon, entry.lat, entry.lon);
+                prevEntry = entry;
+            }
+            return gpxLength;
+        }
+    }
+
+    private long durationMillis(List<GPXEntry> gpxList) {
+        if (gpxList.isEmpty()) {
+            return 0L;
+        } else {
+            return gpxList.get(gpxList.size() - 1).getTime() - gpxList.get(0).getTime();
+        }
     }
 
     private boolean equalEdges(EdgeIteratorState edge1, EdgeIteratorState edge2) {
@@ -757,9 +761,7 @@ public class MapMatching {
                 p.processEdge(em.getEdgeState().getEdge(), em.getEdgeState().getAdjNode(), prevEdge);
                 prevEdge = em.getEdgeState().getEdge();
             }
-
             p.setFound(true);
-
             return p;
         } else {
             return p;

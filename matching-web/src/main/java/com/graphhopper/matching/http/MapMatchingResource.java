@@ -126,6 +126,10 @@ public class MapMatchingResource {
                 setSimplifyResponse(minPathPrecision > 0);
         pathMerger.doWork(pathWrapper, Collections.singletonList(path), tr);
 
+        // GraphHopper thinks an empty path is an invalid path, and an invalid path is still a path but
+        // marked with a non-empty list of exception objects. I disagree, so I clear it.
+        pathWrapper.getErrors().clear();
+
         // TODO: Request logging and timing should perhaps be done somewhere outside
         float took = sw.stop().getSeconds();
         String infoStr = request.getRemoteAddr() + " " + request.getLocale() + " " + request.getHeader("User-Agent");

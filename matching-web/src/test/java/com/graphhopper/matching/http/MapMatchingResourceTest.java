@@ -87,20 +87,6 @@ public class MapMatchingResourceTest {
         assertEquals(1002, path.get("distance").asDouble(), 1);
     }
 
-    @Test
-    public void testErrorMessage() throws Exception {
-        // empty xml
-        String xmlStr = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?><gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" creator=\"Graphhopper\" version=\"1.1\" xmlns:gh=\"https://graphhopper.com/public/schema/gpx/1.1\"></gpx>";
-        final Response response = app.client().target("http://localhost:8080/match").request().buildPost(Entity.xml(xmlStr)).invoke();
-        assertEquals(400, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
-
-        String responseAsJsonStr = new ObjectMapper().writeValueAsString(json);
-        assertTrue(responseAsJsonStr, responseAsJsonStr.contains("\"message\":\"Too few coordinates in input file (0). Correct format?\""));
-        assertTrue(responseAsJsonStr, responseAsJsonStr.contains("\"hints\":[{\""));
-        assertTrue(responseAsJsonStr, responseAsJsonStr.contains("\"details\":\"java.lang.IllegalArgumentException\"}]}"));
-    }
-
     private List<EdgeMatch> getEdgeMatch() {
         List<EdgeMatch> list = new ArrayList<>();
         list.add(new EdgeMatch(getEdgeInterator(), getGpxExtension()));
