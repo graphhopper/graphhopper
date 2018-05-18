@@ -21,7 +21,7 @@ Apache License 2.0
 
 Our web forum is [here](https://discuss.graphhopper.com/c/graphhopper/map-matching).
 
-### Installation and Usage
+### Usage
 
 Java 8 and Maven >=3.3 are required. For the 'core' module Java 7 is sufficient.
 
