@@ -92,7 +92,7 @@ public class WitnessPathSearcher {
     private int[] parents;
     private int[] adjNodes;
     private boolean[] isPotentialBridgePaths;
-    private IntObjectMap<WitnessSearchEntry> initialEntryParents;
+    private IntObjectMap<CHEntry> initialEntryParents;
     private IntArrayList changedEdges;
     private IntDoubleBinaryHeap dijkstraHeap;
 
@@ -161,7 +161,7 @@ public class WitnessPathSearcher {
      * 'bridge-path' (see above) has been found to be the optimal path or null if the optimal path is either a witness
      * path or no finite weight path starting with the search edge and leading to the target edge could be found at all.
      */
-    public WitnessSearchEntry runSearch(int targetNode, int targetEdge) {
+    public CHEntry runSearch(int targetNode, int targetEdge) {
         // if source and target are equal we already have a candidate for the best path: a simple turn from the source
         // to the target edge
         bestPathWeight = sourceNode == targetNode
@@ -248,12 +248,12 @@ public class WitnessPathSearcher {
 
         if (bestPathIsBridgePath) {
             int edgeKey = getEdgeKey(bestPathIncEdge, targetNode);
-            WitnessSearchEntry result = getEntryForKey(edgeKey);
+            CHEntry result = getEntryForKey(edgeKey);
             // prepend all ancestors
-            WitnessSearchEntry entry = result;
+            CHEntry entry = result;
             while (parents[edgeKey] >= 0) {
                 edgeKey = parents[edgeKey];
-                WitnessSearchEntry parent = getEntryForKey(edgeKey);
+                CHEntry parent = getEntryForKey(edgeKey);
                 entry.parent = parent;
                 entry = parent;
             }
@@ -321,10 +321,10 @@ public class WitnessPathSearcher {
             int parentKey = -key - 1;
             // note that we 'misuse' the parent also to store initial turncost and the first original edge of this 
             // initial entry
-            WitnessSearchEntry parent = new WitnessSearchEntry(
+            CHEntry parent = new CHEntry(
                     NO_EDGE,
                     outIter.getFirstOrigEdge(),
-                    sourceNode, turnWeight, false);
+                    sourceNode, turnWeight);
             if (edges[key] == NO_EDGE) {
                 // add new initial entry
                 edges[key] = outIter.getEdge();
@@ -442,8 +442,8 @@ public class WitnessPathSearcher {
         isPotentialBridgePaths[key] = false;
     }
 
-    private WitnessSearchEntry getEntryForKey(int edgeKey) {
-        return new WitnessSearchEntry(edges[edgeKey], incEdges[edgeKey], adjNodes[edgeKey], weights[edgeKey], isPotentialBridgePaths[edgeKey]);
+    private CHEntry getEntryForKey(int edgeKey) {
+        return new CHEntry(edges[edgeKey], incEdges[edgeKey], adjNodes[edgeKey], weights[edgeKey]);
     }
 
     private int getEdgeKey(int edge, int adjNode) {

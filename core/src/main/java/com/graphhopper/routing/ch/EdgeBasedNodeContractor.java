@@ -581,7 +581,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         while (targetEdgeIter.next()) {
                             int targetEdge = targetEdgeIter.getFirstOrigEdge();
                             dijkstraSW.start();
-                            WitnessSearchEntry entry = witnessPathSearcher.runSearch(targetNode, targetEdge);
+                            CHEntry entry = witnessPathSearcher.runSearch(targetNode, targetEdge);
                             dijkstraSW.stop();
                             if (entry == null || Double.isInfinite(entry.weight)) {
                                 continue;

@@ -45,8 +45,8 @@ public class WitnessPathSearcherTest {
         setMaxLevelOnAllNodes();
         WitnessPathSearcher finder = createFinder();
         finder.initSearch(2, 1, 0);
-        WitnessSearchEntry result = finder.runSearch(3, 3);
-        WitnessSearchEntry expected = new ExpectedResultBuilder(3, 2, 2, 2.0)
+        CHEntry result = finder.runSearch(3, 3);
+        CHEntry expected = new ExpectedResultBuilder(3, 2, 2, 2.0)
                 .withParent(2, 1, 1, 1.0)
                 .build(1);
         assertFinderResult(expected, result);
@@ -63,8 +63,8 @@ public class WitnessPathSearcherTest {
         setMaxLevelOnAllNodes();
         WitnessPathSearcher finder = createFinder();
         finder.initSearch(2, 1, 0);
-        WitnessSearchEntry result = finder.runSearch(3, 3);
-        WitnessSearchEntry expected = new ExpectedResultBuilder(3, 2, 2, 2.0)
+        CHEntry result = finder.runSearch(3, 3);
+        CHEntry expected = new ExpectedResultBuilder(3, 2, 2, 2.0)
                 .withParent(2, 1, 1, 1.0)
                 .build(1);
         assertFinderResult(expected, result);
@@ -85,7 +85,7 @@ public class WitnessPathSearcherTest {
         setMaxLevelOnAllNodes();
         WitnessPathSearcher finder = createFinder();
         finder.initSearch(2, 1, 0);
-        WitnessSearchEntry result = finder.runSearch(3, 3);
+        CHEntry result = finder.runSearch(3, 3);
         assertNull(result);
     }
 
@@ -104,7 +104,7 @@ public class WitnessPathSearcherTest {
         setMaxLevelOnAllNodes();
         WitnessPathSearcher finder = createFinder();
         finder.initSearch(2, 1, 0);
-        WitnessSearchEntry result = finder.runSearch(3, 3);
+        CHEntry result = finder.runSearch(3, 3);
         assertNull(result);
     }
 
@@ -119,7 +119,7 @@ public class WitnessPathSearcherTest {
         }
     }
 
-    private void assertFinderResult(WitnessSearchEntry expected, WitnessSearchEntry result) {
+    private void assertFinderResult(CHEntry expected, CHEntry result) {
         while (expected.parent != null) {
             assertEquals(expected.adjNode, result.adjNode);
             assertEquals(expected.edge, result.edge);
@@ -131,23 +131,23 @@ public class WitnessPathSearcherTest {
     }
 
     private static class ExpectedResultBuilder {
-        private WitnessSearchEntry result;
-        private WitnessSearchEntry last;
+        private CHEntry result;
+        private CHEntry last;
 
         private ExpectedResultBuilder(int adjNode, int edge, int incEdge, double weight) {
-            result = new WitnessSearchEntry(edge, incEdge, adjNode, weight, true);
+            result = new CHEntry(edge, incEdge, adjNode, weight);
             last = result;
         }
 
         ExpectedResultBuilder withParent(int adjNode, int edge, int incEdge, double weight) {
-            WitnessSearchEntry parent = new WitnessSearchEntry(edge, incEdge, adjNode, weight, true);
+            CHEntry parent = new CHEntry(edge, incEdge, adjNode, weight);
             last.parent = parent;
             last = parent;
             return this;
         }
 
-        WitnessSearchEntry build(int firstEdge) {
-            last.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, firstEdge, -1, 0.0, true);
+        CHEntry build(int firstEdge) {
+            last.parent = new CHEntry(EdgeIterator.NO_EDGE, firstEdge, -1, 0.0);
             return result;
         }
 
