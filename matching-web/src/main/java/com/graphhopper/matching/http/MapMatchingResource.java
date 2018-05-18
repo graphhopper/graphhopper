@@ -57,15 +57,13 @@ public class MapMatchingResource {
 
     private final GraphHopper graphHopper;
     private final EncodingManager encodingManager;
-    private final double gpsMaxAccuracy;
     private final TranslationMap trMap;
 
     @Inject
-    public MapMatchingResource(CmdArgs configuration, GraphHopper graphHopper, EncodingManager encodingManager,
+    public MapMatchingResource(GraphHopper graphHopper, EncodingManager encodingManager,
                                TranslationMap trMap) {
         this.graphHopper = graphHopper;
         this.encodingManager = encodingManager;
-        this.gpsMaxAccuracy = configuration.getDouble("web.gps.max_accuracy", 100);
         this.trMap = trMap;
     }
 
@@ -106,8 +104,6 @@ public class MapMatchingResource {
         }
 
         instructions = writeGPX || instructions;
-        maxVisitedNodes = Math.min(maxVisitedNodes, 5000);
-        gpsAccuracy = Math.min(Math.max(gpsAccuracy, 5), gpsMaxAccuracy);
 
         MatchResult matchRsp = null;
         StopWatch sw = new StopWatch().start();
