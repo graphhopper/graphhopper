@@ -11,9 +11,7 @@ nbactions.xml
 .settings/
 .classpath
 .project
-matching-vaadin/src/main/webapp/
 matching-core/build.xml
 /map-data/**/*
 bin/
-measurement*
 /matching-core/nbproject/
