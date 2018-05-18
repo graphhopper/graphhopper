@@ -34,7 +34,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import static com.graphhopper.util.Helper.nf;
-import static java.lang.System.nanoTime;
 
 /**
  * This class is used to calculate the priority of or contract a given node in edge-based Contraction Hierarchies as it
@@ -50,13 +49,14 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     // todo: does logging affect performance ?
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
     private final TurnWeighting turnWeighting;
+    private final FlagEncoder encoder;
     private final Config config;
     private final ShortcutHandler addingShortcutHandler = new AddingShortcutHandler();
     private final ShortcutHandler countingShortcutHandler = new CountingShortcutHandler();
     private ShortcutHandler activeShortcutHandler;
     private final StopWatch dijkstraSW = new StopWatch();
+    private SearchStrategy activeStrategy = new AggressiveStrategy();
     private int dijkstraCount;
-    private int addedShortcutsCount;
     private int[] hierarchyDepths;
     private WitnessPathSearcher witnessPathSearcher;
     private CHEdgeExplorer existingShortcutExplorer;
@@ -66,23 +66,28 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private EdgeExplorer targetNodeOrigInEdgeExplorer;
     private EdgeExplorer loopAvoidanceInEdgeExplorer;
     private EdgeExplorer loopAvoidanceOutEdgeExplorer;
-    private int numEdges;
+
+    // counts the total number of added shortcuts
+    private int addedShortcutsCount;
+
+    // edge counts used to calculate priority
+    private int numShortcuts;
     private int numPrevEdges;
     private int numOrigEdges;
     private int numPrevOrigEdges;
-    private FlagEncoder encoder;
+
     private int duplicateOutEdges;
     private int duplicateInEdges;
 
+    // counters used for performance analysis
+    private int numPolledEdges;
     private long totalNumPolledEdges;
     private long totalNumSearches;
-    private int numPolledEdges;
     private int numSearches;
 
     private AggressiveStrategy aggressiveStrategy;
     private LegacyAggressiveStrategy legacyAggressiveStrategy;
     private ClassicStrategy classicStrategy;
-    private SearchStrategy activeStrategy;
 
     public EdgeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph,
                                    TurnWeighting turnWeighting, Config config) {
@@ -95,15 +100,15 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public void initFromGraph() {
         super.initFromGraph();
-        WitnessPathSearcher.Config config = new WitnessPathSearcher.Config();
-        witnessPathSearcher = new WitnessPathSearcher(ghStorage, prepareGraph, turnWeighting, config);
+        witnessPathSearcher = new WitnessPathSearcher(ghStorage, prepareGraph, turnWeighting,
+                config.getWitnessPathSearcherConfig());
         DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
         DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
         DefaultEdgeFilter allEdgeFilter = new DefaultEdgeFilter(encoder, true, true);
         inEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
         outEdgeExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
-        existingShortcutExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
         allEdgeExplorer = prepareGraph.createEdgeExplorer(allEdgeFilter);
+        existingShortcutExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
         sourceNodeOrigInEdgeExplorer = ghStorage.createEdgeExplorer(inEdgeFilter);
         targetNodeOrigOutEdgeExplorer = ghStorage.createEdgeExplorer(outEdgeFilter);
         targetNodeOrigInEdgeExplorer = ghStorage.createEdgeExplorer(inEdgeFilter);
@@ -131,29 +136,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         stats().stopWatch.start();
         findAndHandleShortcuts(node);
         stats().stopWatch.stop();
-        CHEdgeIterator iter = allEdgeExplorer.setBaseNode(node);
-        while (iter.next()) {
-            if (isContracted(iter.getAdjNode()))
-                continue;
-            if (iter.isForward(encoder)) {
-                numPrevEdges++;
-            }
-            if (iter.isBackward(encoder)) {
-                numPrevEdges++;
-            }
-            if (!iter.isShortcut()) {
-                if (iter.isForward(encoder)) {
-                    numPrevOrigEdges++;
-                }
-                if (iter.isBackward(encoder)) {
-                    numPrevOrigEdges++;
-                }
-            } else {
-                numPrevOrigEdges += getOrigEdgeCount(iter.getEdge());
-            }
-        }
+        countPreviousEdges(node);
         // the higher the priority the later (!) this node will be contracted
-        float edgeQuotient = numEdges / (float) numPrevEdges;
+        float edgeQuotient = numShortcuts / (float) numPrevEdges;
         float origEdgeQuotient = numOrigEdges / (float) numPrevOrigEdges;
         int hierarchyDepth = hierarchyDepths[node];
         float priority = config.getEdgeQuotientWeight() * edgeQuotient +
@@ -161,7 +146,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 config.getHierarchyDepthWeight() * hierarchyDepth;
         LOGGER.trace("node: %d, eq: %d / %d = %f, oeq: %d / %d = %f, depth: %d --> %f\n",
                 node,
-                numEdges, numPrevEdges, edgeQuotient,
+                numShortcuts, numPrevEdges, edgeQuotient,
                 numOrigEdges, numPrevOrigEdges, origEdgeQuotient,
                 hierarchyDepth, priority);
         return priority;
@@ -225,6 +210,30 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             activeStrategy = aggressiveStrategy;
         }
         activeStrategy.findAndHandleShortcuts(node);
+    }
+
+    private void countPreviousEdges(int node) {
+        CHEdgeIterator iter = allEdgeExplorer.setBaseNode(node);
+        while (iter.next()) {
+            if (isContracted(iter.getAdjNode()))
+                continue;
+            if (iter.isForward(encoder)) {
+                numPrevEdges++;
+            }
+            if (iter.isBackward(encoder)) {
+                numPrevEdges++;
+            }
+            if (!iter.isShortcut()) {
+                if (iter.isForward(encoder)) {
+                    numPrevOrigEdges++;
+                }
+                if (iter.isBackward(encoder)) {
+                    numPrevOrigEdges++;
+                }
+            } else {
+                numPrevOrigEdges += getOrigEdgeCount(iter.getEdge());
+            }
+        }
     }
 
     private void updateHierarchyDepthsOfNeighbors(int node) {
@@ -291,15 +300,13 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
         final CHEdgeIterator iter = existingShortcutExplorer.setBaseNode(from);
         while (iter.next()) {
-            if (!iter.isShortcut()
-                    || !(iter.getAdjNode() == adjNode)
-                    || !(iter.getFirstOrigEdge() == edgeFrom.getParent().incEdge)
-                    || !(iter.getLastOrigEdge() == edgeTo.incEdge)) {
+            if (!isSameShortcut(iter, adjNode, edgeFrom.getParent().incEdge, edgeTo.incEdge)) {
+                // this is some other (shortcut) edge, we do not care
                 continue;
             }
             final double existingWeight = turnWeighting.calcWeight(iter, false, EdgeIterator.NO_EDGE);
             if (existingWeight <= edgeTo.weight) {
-                // this shortcut already exists with lower weight --> do nothing
+                // our shortcut already exists with lower weight --> do nothing
                 CHEntry entry = new CHEntry(iter.getEdge(), iter.getLastOrigEdge(), adjNode, existingWeight);
                 entry.parent = edgeFrom.parent;
                 return entry;
@@ -313,7 +320,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             }
         }
 
-        // this shortcut is new --> add it
+        // our shortcut is new --> add it
         LOGGER.debug("Adding shortcut from {} to {}, weight: {}, firstOrigEdge: {}, lastOrigEdge: {}",
                 from, adjNode, edgeTo.weight, edgeFrom.getParent().incEdge, edgeTo.incEdge);
         CHEdgeIteratorState shortcut = prepareGraph.shortcut(from, adjNode);
@@ -333,6 +340,13 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         return entry;
     }
 
+    private boolean isSameShortcut(CHEdgeIteratorState iter, int adjNode, int firstOrigEdge, int lastOrigEdge) {
+        return iter.isShortcut()
+                && (iter.getAdjNode() == adjNode)
+                && (iter.getFirstOrigEdge() == firstOrigEdge)
+                && (iter.getLastOrigEdge() == lastOrigEdge);
+    }
+
     private double getTurnCost(int inEdge, int node, int outEdge) {
         if (illegalUTurn(outEdge, inEdge)) {
             return Double.POSITIVE_INFINITY;
@@ -345,7 +359,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private void resetEdgeCounters() {
-        numEdges = 0;
+        numShortcuts = 0;
         numPrevEdges = 0;
         numOrigEdges = 0;
         numPrevOrigEdges = 0;
@@ -411,10 +425,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             // check if this shortcut already exists
             final CHEdgeIterator iter = existingShortcutExplorer.setBaseNode(fromNode);
             while (iter.next()) {
-                if (iter.isShortcut()
-                        && iter.getAdjNode() == toNode
-                        && (iter.getFirstOrigEdge() == firstOrigEdge)
-                        && (iter.getLastOrigEdge() == lastOrigEdge)) {
+                if (isSameShortcut(iter, toNode, firstOrigEdge, lastOrigEdge)) {
                     // this shortcut exists already, maybe its weight will be updated but we should not count it as
                     // a new edge
                     return;
@@ -422,7 +433,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             }
 
             // this shortcut is new --> increase counts
-            numEdges++;
+            numShortcuts++;
             numOrigEdges += getOrigEdgeCount(edgeFrom.edge) + getOrigEdgeCount(edgeTo.edge);
         }
 
@@ -447,6 +458,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         public float edgeQuotientWeight = 1;
         public float originalEdgeQuotientWeight = 3;
         public float hierarchyDepthWeight = 2;
+        private WitnessPathSearcher.Config witnessPathSearcherConfig = new WitnessPathSearcher.Config();
 
         public SearchType getSearchType() {
             return searchType;
@@ -478,6 +490,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
         public void setHierarchyDepthWeight(float hierarchyDepthWeight) {
             this.hierarchyDepthWeight = hierarchyDepthWeight;
+        }
+
+        public WitnessPathSearcher.Config getWitnessPathSearcherConfig() {
+            return witnessPathSearcherConfig;
         }
     }
 
