@@ -19,7 +19,7 @@ Apache License 2.0
 
 ### Discussion
 
-Discussion happens [here](https://discuss.graphhopper.com/c/graphhopper/map-matching).
+Our web forum is [here](https://discuss.graphhopper.com/c/graphhopper/map-matching).
 
 ### Installation and Usage
 
