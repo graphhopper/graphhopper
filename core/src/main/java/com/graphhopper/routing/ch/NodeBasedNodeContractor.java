@@ -283,7 +283,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     @Override
-    public int getAddedShortcutsCount() {
+    public long getAddedShortcutsCount() {
         return addedShortcutsCount;
     }
 

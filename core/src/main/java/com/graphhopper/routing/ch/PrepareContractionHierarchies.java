@@ -367,7 +367,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return nodeContractor.getDijkstraCount();
     }
 
-    public int getShortcuts() {
+    public long getShortcuts() {
         return nodeContractor.getAddedShortcutsCount();
     }
 
