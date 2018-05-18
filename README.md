@@ -28,7 +28,7 @@ Java 8 and Maven >=3.3 are required. For the 'core' module Java 7 is sufficient.
 
 Build:
 
-````bash
+```bash
 mvn package -DskipTests
 ```
 
