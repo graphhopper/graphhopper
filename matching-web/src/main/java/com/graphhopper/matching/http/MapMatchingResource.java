@@ -96,14 +96,11 @@ public class MapMatchingResource {
             throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("Vehicle not supported: " + vehicleStr), writeGPX));
         }
 
-        PathWrapper pathWrapper = new PathWrapper();
         GPXFile file = new GPXFile();
-
         GPXFile gpxFile = file.doImport(body, 20);
 
         instructions = writeGPX || instructions;
 
-        MatchResult matchRsp = null;
         StopWatch sw = new StopWatch().start();
 
         AlgorithmOptions opts = AlgorithmOptions.start()
@@ -113,64 +110,63 @@ public class MapMatchingResource {
                 .build();
         MapMatching matching = new MapMatching(graphHopper, opts);
         matching.setMeasurementErrorSigma(gpsAccuracy);
-        matchRsp = matching.doWork(gpxFile.getEntries());
-
-        // fill GHResponse for identical structure
-        Path path = matching.calcPath(matchRsp);
-        Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
-        DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
-        PathMerger pathMerger = new PathMerger().
-                setEnableInstructions(instructions).
-                setPathDetailsBuilders(graphHopper.getPathDetailsBuilderFactory(), pathDetails).
-                setDouglasPeucker(peucker).
-                setSimplifyResponse(minPathPrecision > 0);
-        pathMerger.doWork(pathWrapper, Collections.singletonList(path), tr);
-
-        // GraphHopper thinks an empty path is an invalid path, and an invalid path is still a path but
-        // marked with a non-empty list of exception objects. I disagree, so I clear it.
-        pathWrapper.getErrors().clear();
+        MatchResult matchRsp = matching.doWork(gpxFile.getEntries());
 
         // TODO: Request logging and timing should perhaps be done somewhere outside
         float took = sw.stop().getSeconds();
         String infoStr = request.getRemoteAddr() + " " + request.getLocale() + " " + request.getHeader("User-Agent");
-        String logStr = request.getQueryString() + ", " + infoStr + ", took:" + took + ", entries:" + gpxFile.getEntries().size() + ", " + pathWrapper.getDebugInfo();
-
+        String logStr = request.getQueryString() + ", " + infoStr + ", took:" + took + ", entries:" + gpxFile.getEntries().size();
         logger.info(logStr);
 
         if ("extended_json".equals(outType)) {
             return Response.ok(convertToTree(matchRsp, enableElevation, pointsEncoded)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
-        } else if (writeGPX) {
-            GHResponse rsp = new GHResponse();
-            rsp.add(pathWrapper);
-            return WebHelper.gpxSuccessResponseBuilder(rsp, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints).
-                    header("X-GH-Took", "" + Math.round(took * 1000)).
-                    build();
         } else {
+            Path path = matching.calcPath(matchRsp);
+            Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
+            DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
+            PathMerger pathMerger = new PathMerger().
+                    setEnableInstructions(instructions).
+                    setPathDetailsBuilders(graphHopper.getPathDetailsBuilderFactory(), pathDetails).
+                    setDouglasPeucker(peucker).
+                    setSimplifyResponse(minPathPrecision > 0);
+            PathWrapper pathWrapper = new PathWrapper();
+            pathMerger.doWork(pathWrapper, Collections.singletonList(path), tr);
+
+            // GraphHopper thinks an empty path is an invalid path, and further than an invalid path is still a path but
+            // marked with a non-empty list of Exception objects. I disagree, so I clear it.
+            pathWrapper.getErrors().clear();
             GHResponse rsp = new GHResponse();
             rsp.add(pathWrapper);
-            ObjectNode map = WebHelper.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
 
-            Map<String, Object> matchResult = new HashMap<>();
-            matchResult.put("distance", matchRsp.getMatchLength());
-            matchResult.put("time", matchRsp.getMatchMillis());
-            matchResult.put("original_distance", matchRsp.getGpxEntriesLength());
-            matchResult.put("original_time", matchRsp.getGpxEntriesMillis());
-            map.putPOJO("map_matching", matchResult);
+            if (writeGPX) {
+                return WebHelper.gpxSuccessResponseBuilder(rsp, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints).
+                        header("X-GH-Took", "" + Math.round(took * 1000)).
+                        build();
+            } else {
+                ObjectNode map = WebHelper.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
 
-            if (enableTraversalKeys) {
-                List<Integer> traversalKeylist = new ArrayList<>();
-                for (EdgeMatch em : matchRsp.getEdgeMatches()) {
-                    EdgeIteratorState edge = em.getEdgeState();
-                    // encode edges as traversal keys which includes orientation, decode simply by multiplying with 0.5
-                    traversalKeylist.add(GHUtility.createEdgeKey(edge.getBaseNode(), edge.getAdjNode(), edge.getEdge(), false));
+                Map<String, Object> matchResult = new HashMap<>();
+                matchResult.put("distance", matchRsp.getMatchLength());
+                matchResult.put("time", matchRsp.getMatchMillis());
+                matchResult.put("original_distance", matchRsp.getGpxEntriesLength());
+                matchResult.put("original_time", matchRsp.getGpxEntriesMillis());
+                map.putPOJO("map_matching", matchResult);
+
+                if (enableTraversalKeys) {
+                    List<Integer> traversalKeylist = new ArrayList<>();
+                    for (EdgeMatch em : matchRsp.getEdgeMatches()) {
+                        EdgeIteratorState edge = em.getEdgeState();
+                        // encode edges as traversal keys which includes orientation, decode simply by multiplying with 0.5
+                        traversalKeylist.add(GHUtility.createEdgeKey(edge.getBaseNode(), edge.getAdjNode(), edge.getEdge(), false));
+                    }
+                    map.putPOJO("traversal_keys", traversalKeylist);
                 }
-                map.putPOJO("traversal_keys", traversalKeylist);
+                return Response.ok(map).
+                        header("X-GH-Took", "" + Math.round(took * 1000)).
+                        build();
             }
-            return Response.ok(map).
-                    header("X-GH-Took", "" + Math.round(took * 1000)).
-                    build();
         }
     }
 
