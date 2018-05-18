@@ -83,44 +83,18 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.6.0</version>
                 <configuration>        
-                    <!--             
-                    <compilerArgument>-Xlint:unchecked</compilerArgument>
-                    -->
-                                        
                     <fork>true</fork>
                     <source>1.7</source>
                     <target>1.7</target>
                 </configuration>
             </plugin>
-            
-            <!-- to run single tests -->
-            <plugin>                
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19.1</version>
                 <configuration>
                     <argLine>-Xmx100m -Xms100m</argLine>
                 </configuration>
-            </plugin>
-                        
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.19.1</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-                        
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.0.0</version>                    
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -19,6 +19,7 @@ package com.graphhopper.matching.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.GPXExtension;
@@ -44,11 +45,11 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Peter Karich
  */
-public class MapMatchingResourceIT {
+public class MapMatchingResourceTest {
 
     private static final String DIR = "../target/mapmatchingtest";
 
-    private static final MapMatchingServerConfiguration config = new MapMatchingServerConfiguration();
+    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
@@ -59,7 +60,7 @@ public class MapMatchingResourceIT {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<MapMatchingServerConfiguration> app = new DropwizardAppRule(MapMatchingApplication.class, config);
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(MapMatchingApplication.class, config);
 
     @AfterClass
     public static void cleanUp() {
