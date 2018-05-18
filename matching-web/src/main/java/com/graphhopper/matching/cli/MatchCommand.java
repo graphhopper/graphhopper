@@ -32,7 +32,8 @@ public class MatchCommand extends Command {
         subparser.addArgument("gpx")
                 .type(File.class)
                 .required(true)
-                .nargs("+");
+                .nargs("+")
+                .help("GPX file");
         subparser.addArgument("--instructions")
                 .type(String.class)
                 .required(false)

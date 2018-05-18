@@ -22,7 +22,8 @@ public class GetBoundsCommand extends Command {
         subparser.addArgument("gpx")
             .type(File.class)
             .required(true)
-            .nargs("+");
+            .nargs("+")
+            .help("GPX file");
     }
 
     @Override
@@ -35,7 +36,7 @@ public class GetBoundsCommand extends Command {
             }
         }
 
-        System.out.println("max bounds: " + bbox);
+        System.out.println("bounds: " + bbox);
 
         // show download only for small areas
         if (bbox.maxLat - bbox.minLat < 0.1 && bbox.maxLon - bbox.minLon < 0.1) {
