@@ -157,7 +157,7 @@ public class NameSimilarityEdgeFilterTest {
     }
 
     @Ignore
-    public void testThatShouldSucceed(){
+    public void testThatShouldSucceed() {
         EdgeFilter edgeFilter;
         EdgeIteratorState edge;
 
@@ -242,13 +242,13 @@ public class NameSimilarityEdgeFilterTest {
 
             @Override
             public int getBaseNode() {
-                //todo: this override can be removed if the loop-check in DefaultEdgeFilter is removed again
+                //needed because of the loop-check in DefaultEdgeFilter is removed again
                 return 0;
             }
 
             @Override
             public int getAdjNode() {
-                //todo: this override can be removed if the loop-check in DefaultEdgeFilter is removed again
+                //needed because of the loop-check in DefaultEdgeFilter is removed again
                 return 0;
             }
 

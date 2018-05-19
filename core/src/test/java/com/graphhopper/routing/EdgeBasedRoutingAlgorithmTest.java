@@ -59,8 +59,6 @@ public class EdgeBasedRoutingAlgorithmTest {
                 {DIJKSTRA_BI},
                 {ASTAR},
                 {ASTAR_BI}
-                // TODO { AlgorithmOptions.DIJKSTRA_ONE_TO_MANY }
-                // TODO modify this test so we can include edge based contraction hierarchies
         });
     }
 

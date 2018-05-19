@@ -18,6 +18,8 @@
 
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
@@ -29,6 +31,7 @@ import com.graphhopper.util.CHEdgeExplorer;
 abstract class AbstractNodeContractor implements NodeContractor {
     final GraphHopperStorage ghStorage;
     final CHGraph prepareGraph;
+    final FlagEncoder encoder;
     CHEdgeExplorer inEdgeExplorer;
     CHEdgeExplorer outEdgeExplorer;
     private final DataAccess originalEdges;
@@ -38,14 +41,15 @@ abstract class AbstractNodeContractor implements NodeContractor {
     public AbstractNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting) {
         this.ghStorage = ghStorage;
         this.prepareGraph = prepareGraph;
+        this.encoder = weighting.getFlagEncoder();
         originalEdges = dir.find("original_edges_" + AbstractWeighting.weightingToFileName(weighting));
         originalEdges.create(1000);
     }
 
     @Override
     public void initFromGraph() {
-        // todo: do we really need this method ? the problem is that ghStorage/prepareGraph can potentially be modified
-        // between the constructor call and contractNode,calcShortcutCount etc. ...
+        inEdgeExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
+        outEdgeExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
         maxLevel = prepareGraph.getNodes();
         maxEdgesCount = ghStorage.getAllEdges().length();
     }
