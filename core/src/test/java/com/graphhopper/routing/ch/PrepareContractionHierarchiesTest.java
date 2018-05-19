@@ -207,7 +207,7 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(oldCount, g.getAllEdges().length());
         assertEquals(oldCount, GHUtility.count(g.getAllEdges()));
 
-        int numShortcuts = 9;
+        long numShortcuts = 9;
         assertEquals(numShortcuts, prepare.getShortcuts());
         assertEquals(oldCount + numShortcuts, lg.getAllEdges().length());
         assertEquals(oldCount + numShortcuts, GHUtility.count(lg.getAllEdges()));

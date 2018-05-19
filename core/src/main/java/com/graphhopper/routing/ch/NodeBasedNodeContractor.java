@@ -38,7 +38,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     private CHEdgeExplorer remainingEdgeExplorer;
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany prepareAlgo;
-    private int addedShortcutsCount;
+    private long addedShortcutsCount;
     private long dijkstraCount;
     private StopWatch dijkstraSW = new StopWatch();
     // meanDegree is the number of edges / number of nodes ratio of the graph, not really the average degree, because
@@ -288,7 +288,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     @Override
-    public int getAddedShortcutsCount() {
+    public long getAddedShortcutsCount() {
         return addedShortcutsCount;
     }
 

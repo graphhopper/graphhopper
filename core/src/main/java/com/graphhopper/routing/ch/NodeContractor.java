@@ -33,7 +33,7 @@ public interface NodeContractor {
      */
     void contractNode(int node);
 
-    int getAddedShortcutsCount();
+    long getAddedShortcutsCount();
 
     String getStatisticsString();
 

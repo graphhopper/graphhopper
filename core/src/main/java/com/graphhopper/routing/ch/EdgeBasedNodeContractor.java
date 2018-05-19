@@ -68,7 +68,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private EdgeExplorer loopAvoidanceOutEdgeExplorer;
 
     // counts the total number of added shortcuts
-    private int addedShortcutsCount;
+    private long addedShortcutsCount;
 
     // edge counts used to calculate priority
     private int numShortcuts;
@@ -162,7 +162,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     @Override
-    public int getAddedShortcutsCount() {
+    public long getAddedShortcutsCount() {
         return addedShortcutsCount;
     }
 

@@ -44,7 +44,7 @@ import static java.lang.System.nanoTime;
 public class ManualPrepareContractionHierarchies extends PrepareContractionHierarchies {
     private List<Integer> contractionOrder = new ArrayList<>();
     private List<Stats> stats = new ArrayList<>();
-    private int lastShortcutCount;
+    private long lastShortcutCount;
 
     public ManualPrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph, Weighting weighting,
                                                TraversalMode traversalMode, Config config) {
@@ -96,7 +96,7 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
             int node = contractionOrder.get(i);
             // contract node
             nodeContractor.contractNode(node);
-            int shortcutCount = nodeContractor.getAddedShortcutsCount();
+            long shortcutCount = nodeContractor.getAddedShortcutsCount();
             if (isEdgeBased()) {
                 int numPolled = ((EdgeBasedNodeContractor) nodeContractor).getNumPolledEdges();
                 int numSearches = ((EdgeBasedNodeContractor) nodeContractor).getNumSearches();
@@ -137,12 +137,12 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
     }
 
     public static class Stats {
-        public int shortcutCount;
+        public long shortcutCount;
         public int nodeId;
         public int numPolled;
         public int numSearches;
 
-        public Stats(int shortcutCount, int nodeId, int numPolled, int numSearches) {
+        public Stats(long shortcutCount, int nodeId, int numPolled, int numSearches) {
             this.shortcutCount = shortcutCount;
             this.nodeId = nodeId;
             this.numPolled = numPolled;
