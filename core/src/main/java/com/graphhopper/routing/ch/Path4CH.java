@@ -23,6 +23,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 
+import java.util.Locale;
+
 /**
  * Recursively unpack shortcuts.
  * <p>
@@ -76,9 +78,10 @@ public class Path4CH extends PathBidirRef {
             CHEdgeIteratorState sk1 = getEdge(skippedEdge1, from);
             CHEdgeIteratorState sk2 = getEdge(skippedEdge2, from);
             if (sk1.getAdjNode() == sk1.getBaseNode() || sk2.getAdjNode() == sk2.getBaseNode()) {
-                // todo: this is a loop where both skipped edges are loops. this should never happen, because we only
-                // ever look for shortcuts between real neighbor nodes. 
-                throw new IllegalStateException("Error: Detected edge where both skipped edges are loops");
+                // this is a loop where both skipped edges are loops. but this should never happen.
+                throw new IllegalStateException(String.format(Locale.ROOT,
+                        "error: detected edge where both skipped edges are loops. from: %d, to: %d, " +
+                                "skip-edge1: %d, skip-edge2: %d, reverse: %b", from, to, skippedEdge1, skippedEdge2, reverse));
             }
 
             if (!reverseOrder) {

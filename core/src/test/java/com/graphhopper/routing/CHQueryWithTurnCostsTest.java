@@ -444,7 +444,8 @@ public class CHQueryWithTurnCostsTest {
 
     private void runTestWithSingleLoop(boolean loopInFwdSearch) {
         // because we set the node levels equal to the node ids, depending on the size relation between node A and B
-        // either the fwd search or the bwd search will explore the loop at node 5
+        // either the fwd search or the bwd search will explore the loop at node 5.
+        // in any case it is important that the fwd/bwd search unpacks the loop shortcut at node 5 correctly
         int nodeA = 0;
         int nodeB = 6;
         if (!loopInFwdSearch) {

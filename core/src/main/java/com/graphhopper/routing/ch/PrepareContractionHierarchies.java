@@ -51,31 +51,31 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
  * @author Peter Karich
  */
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    final Logger logger = LoggerFactory.getLogger(getClass());
     private final Directory dir;
-    protected final PreparationWeighting prepareWeighting;
+    final PreparationWeighting prepareWeighting;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
     private final GraphHopperStorage ghStorage;
-    protected final CHGraphImpl prepareGraph;
+    final CHGraphImpl prepareGraph;
     private final Random rand = new Random(123);
     private final StopWatch allSW = new StopWatch();
     private final StopWatch periodicUpdateSW = new StopWatch();
     private final StopWatch lazyUpdateSW = new StopWatch();
     private final StopWatch neighborUpdateSW = new StopWatch();
     private final StopWatch contractionSW = new StopWatch();
-    protected NodeContractor nodeContractor;
+    NodeContractor nodeContractor;
     private CHEdgeExplorer vehicleAllExplorer;
     private CHEdgeExplorer vehicleAllTmpExplorer;
-    private int maxLevel;
+    int maxLevel;
     // nodes with highest priority come last
     private GHTreeMapComposed sortedNodes;
     private float oldPriorities[];
     private int periodicUpdatesPercentage = 20;
     private int lastNodesLazyUpdatePercentage = 10;
     private int neighborUpdatePercentage = 20;
-    protected double nodesContractedPercentage = 100;
-    protected double logMessagesPercentage = 20;
+    double nodesContractedPercentage = 100;
+    double logMessagesPercentage = 20;
     private final Config config;
     private int initSize;
     private int checkCounter;

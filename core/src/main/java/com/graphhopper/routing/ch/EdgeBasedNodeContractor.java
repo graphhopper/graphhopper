@@ -454,10 +454,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     public static class Config {
-        public SearchType searchType = SearchType.AGGRESSIVE;
-        public float edgeQuotientWeight = 1;
-        public float originalEdgeQuotientWeight = 3;
-        public float hierarchyDepthWeight = 2;
+        private SearchType searchType = SearchType.AGGRESSIVE;
+        private float edgeQuotientWeight = 1;
+        private float originalEdgeQuotientWeight = 3;
+        private float hierarchyDepthWeight = 2;
         private WitnessPathSearcher.Config witnessPathSearcherConfig = new WitnessPathSearcher.Config();
 
         public SearchType getSearchType() {

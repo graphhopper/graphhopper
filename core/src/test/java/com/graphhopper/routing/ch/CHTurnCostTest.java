@@ -46,7 +46,7 @@ import static org.junit.Assert.assertTrue;
  * routing queries and check if the routing results are correct. We thus test the combination of
  * {@link EdgeBasedNodeContractor} and {@link DijkstraBidirectionEdgeCHNoSOD}. In most cases we either use a predefined
  * or random contraction order, so the hard to test and heuristic automatic search for an efficient contraction order
- * taking place  in {@link PrepareContractionHierarchies} is not covered here, but this is ok, because the correctness
+ * taking place  in {@link PrepareContractionHierarchies} is not covered, but this is ok, because the correctness
  * of CH should not depend on the contraction order.
  *
  * @see EdgeBasedNodeContractor where shortcut creation is tested independent from the routing query
@@ -131,7 +131,7 @@ public class CHTurnCostTest {
     }
 
     @Test
-    @Repeat(times = 1000)
+    @Repeat(times = 100)
     public void testFindPath_multipleInOutEdges_turnReplacementDifference() {
         //   0   3 - 4   8
         //    \ /     \ /
@@ -140,9 +140,7 @@ public class CHTurnCostTest {
         //   2           10
         // When we contract node 6, 'normally' a shortcut would be expected using nodes 3 and 4, but this strongly depends
         // on the turn restrictions of the in/outcoming edges. Basically a shortcut is only needed if 5, 6, 7 is part of
-        // the shortest path between an incoming source edge x-5 and an outgoing target edge 7-y. This can be decided
-        // most efficiently by calculating the 'turn replacement difference' and starting a single witness path search,
-        // see EdgeBasedNodeContractor.
+        // the shortest path between an incoming source edge x-5 and an outgoing target edge 7-y. 
         // To cover all or at least as many as possible different cases we randomly apply some restrictions and compare
         // the resulting query with a standard Dijkstra search.
         // If this test fails use the logger output to generate code for further debugging.
@@ -180,22 +178,6 @@ public class CHTurnCostTest {
         compareCHQueryWithDijkstra(factory, 1, 10);
         compareCHQueryWithDijkstra(factory, 2, 9);
         compareCHQueryWithDijkstra(factory, 1, 9);
-    }
-
-    private void addRandomCostOrRestriction(int from, int via, int to, Random rnd) {
-        final double chance = 0.7;
-        if (rnd.nextDouble() < chance) {
-            addRestriction(from, via, to);
-            LOGGER.trace("addRestriction({}, {}, {});", from, via, to);
-        } else {
-            addRandomCost(from, via, to, rnd);
-        }
-    }
-
-    private void addRandomCost(int from, int via, int to, Random rnd) {
-        int cost = (int) (rnd.nextDouble() * maxCost / 2);
-        addTurnCost(from, via, to, cost);
-        LOGGER.trace("addTurnCost({}, {}, {}, {});", from, via, to, cost);
     }
 
     @Test
@@ -518,8 +500,6 @@ public class CHTurnCostTest {
 
     @Test
     @Repeat(times = 10)
-    // todo: this test is rather slow at the moment but should become much faster once CH performance will be improved
-    // (improved contraction order, improved witness path finder etc.)
     public void testFindPath_highlyConnectedGraph_compareWithDijkstra() {
         // In this test we use a random contraction order and run many random routing queries. the results are checked
         // by comparing them to the results of a standard dijkstra search.
@@ -530,8 +510,9 @@ public class CHTurnCostTest {
         // 3 - 4 - 5
         // | x | x |
         // 6 - 7 - 8
-        final int size = 5;
-        final int maxDist = 5;
+        // for large sizes contraction takes very long because there are so many edges
+        final int size = 4;
+        final int maxDist = 4;
         final int numQueries = 1000;
         long seed = System.nanoTime();
         LOGGER.info("Seed used to generate graph: {}", seed);
@@ -643,31 +624,38 @@ public class CHTurnCostTest {
         checkPath(expectedPath, 5, 0, 3, Arrays.asList(0, 2, 1, 3));
     }
 
-    @Repeat(times = 100)
+    /**
+     * This test runs on a random graph with random turn costs and a predefined (but random) contraction order.
+     * It often produces exotic conditions that are hard to anticipate beforehand.
+     * when it fails use {@link GHUtility#printGraphForUnitTest} to extract the graph and reproduce the error.
+     */
+    @Repeat(times = 10)
     @Test
     public void testFindPath_random_compareWithDijkstra() {
+
         long seed = System.nanoTime();
         LOGGER.info("Seed used to generate graph: {}", seed);
         final Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, seed, 10, 3, true, 0.9);
+        // for larger graphs preparation takes much longer the higher the degree is!
+        GHUtility.buildRandomGraph(graph, seed, 20, 3.0, true, 0.9);
         GHUtility.addRandomTurnCosts(graph, seed, encoder, maxCost, turnCostExtension);
         graph.freeze();
         List<Integer> contractionOrder = getRandomIntegerSequence(chGraph.getNodes(), rnd);
         compareCHWithDijkstra(100, contractionOrder);
     }
 
+    /**
+     * same as {@link #testFindPath_random_compareWithDijkstra()}, but using automatic node priority calculation
+     */
     @Repeat(times = 10)
     @Test
     public void testFindPath_heuristic_compareWithDijkstra() {
-        // todo: why are so many edges polled and why does the contraction take so long for a random graph ??
         long seed = System.nanoTime();
         LOGGER.info("Seed used to generate graph: {}", seed);
-        GHUtility.buildRandomGraph(graph, seed, 100, 3, true, 0.9);
+        GHUtility.buildRandomGraph(graph, seed, 20, 3.0, true, 0.9);
         GHUtility.addRandomTurnCosts(graph, seed, encoder, maxCost, turnCostExtension);
         graph.freeze();
-
-        GHUtility.printGraphForUnitTest(graph, encoder);
-        automaticCompareCHWithDijkstra(1000);
+        automaticCompareCHWithDijkstra(100);
     }
 
     @Test
@@ -795,6 +783,22 @@ public class CHTurnCostTest {
         }
         Collections.shuffle(contractionOrder, rnd);
         return contractionOrder;
+    }
+
+    private void addRandomCostOrRestriction(int from, int via, int to, Random rnd) {
+        final double chance = 0.7;
+        if (rnd.nextDouble() < chance) {
+            addRestriction(from, via, to);
+            LOGGER.trace("addRestriction({}, {}, {});", from, via, to);
+        } else {
+            addRandomCost(from, via, to, rnd);
+        }
+    }
+
+    private void addRandomCost(int from, int via, int to, Random rnd) {
+        int cost = (int) (rnd.nextDouble() * maxCost / 2);
+        addTurnCost(from, via, to, cost);
+        LOGGER.trace("addTurnCost({}, {}, {}, {});", from, via, to, cost);
     }
 
     private void addRestriction(int from, int via, int to) {

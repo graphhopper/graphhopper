@@ -27,6 +27,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIterator;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.StopWatch;
 
 import java.util.*;
 
@@ -36,6 +37,9 @@ import static java.lang.System.nanoTime;
 /**
  * Makes it possible to control the node contraction order in contraction hierarchies, which is useful for debugging
  * and performance analysis.
+ * todo: remove this class and move the same functionality into PrepareContractionHierarchies. Also this should be
+ * extended to the case where we can save/load the contraction order to/from disk. For example when we use another
+ * vehicle profile we still might get reasonable results for a previous contraction order.
  */
 public class ManualPrepareContractionHierarchies extends PrepareContractionHierarchies {
     private List<Integer> contractionOrder = new ArrayList<>();
@@ -86,9 +90,11 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
         CHEdgeExplorer discExplorer = prepareGraph.createEdgeExplorer(allFilter);
         final int nodesToContract = (int) (contractionOrder.size() * nodesContractedPercentage / 100);
         final long logSize = Math.round(Math.max(10, contractionOrder.size() * logMessagesPercentage / 100));
-        long startTime = nanoTime();
+        StopWatch stopWatch = new StopWatch();
         for (int i = 0; i < nodesToContract; ++i) {
+            stopWatch.start();
             int node = contractionOrder.get(i);
+            // contract node
             nodeContractor.contractNode(node);
             int shortcutCount = nodeContractor.getAddedShortcutsCount();
             if (isEdgeBased()) {
@@ -99,21 +105,18 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
             }
             prepareGraph.setLevel(node, i);
 
-            int maxLevel = prepareGraph.getNodes();
+            // disconnect neighbors
             CHEdgeIterator iter = explorer.setBaseNode(node);
             while (iter.next()) {
-                int nn = iter.getAdjNode();
-                if (prepareGraph.getLevel(nn) != maxLevel)
+                if (prepareGraph.getLevel(iter.getAdjNode()) != maxLevel)
                     continue;
-
                 prepareGraph.disconnect(discExplorer, iter);
             }
+            stopWatch.stop();
             if (i % logSize == 0) {
-                long elapsed = nanoTime() - startTime;
                 logger.info(String.format("contracted %s / %s nodes, shortcuts: %s, last batch took: %.2f s, time per node: %.2f micros, %s",
-                        nf(i), nf(nodesToContract), nf(shortcutCount),
-                        elapsed * 1.e-9, elapsed / logSize * 1.e-3, nodeContractor.getStatisticsString()));
-                startTime = nanoTime();
+                        nf(i), nf(nodesToContract), nf(shortcutCount), stopWatch.getSeconds(),
+                        stopWatch.getNanos() / logSize * 1.e-3, nodeContractor.getStatisticsString()));
             }
         }
     }
@@ -128,7 +131,7 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
         for (int i = 0; i < nodes; ++i) {
             result.add(i);
         }
-        // the shuffle method is the only reason we are using java.util.ArrayList instead of hppc IntArrayList
+        // the shuffle method is the only reason we are using java.util.ArrayList instead of hppc IntArrayList here
         Collections.shuffle(result, new Random(seed));
         return result;
     }

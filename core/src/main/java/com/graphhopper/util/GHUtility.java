@@ -24,6 +24,8 @@ import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.shapes.BBox;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Peter Karich
  */
 public class GHUtility {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GHUtility.class);
     /**
      * This method could throw exception if uncatched problems like index out of bounds etc
      */
@@ -183,11 +186,9 @@ public class GHUtility {
             boolean bothDirections = random.nextDouble() < pBothDir;
             graph.edge(from, to, distance, bothDirections);
         }
-        System.out.println("Finished building random graph" +
-                ", nodes: " + graph.getNodes() +
-                ", edges: " + graph.getAllEdges().length() +
-                ", min distance: " + minDist +
-                ", max distance: " + maxDist);
+        LOGGER.debug(String.format(Locale.ROOT, "Finished building random graph" +
+                        ", nodes: %d, edges: %d , min distance: %.2f, max distance: %.2f\n",
+                graph.getNodes(), graph.getAllEdges().length(), minDist, maxDist));
     }
 
     private static double getDistance(int from, int to, NodeAccess nodeAccess) {
