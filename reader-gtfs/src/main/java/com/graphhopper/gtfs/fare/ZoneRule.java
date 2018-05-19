@@ -34,7 +34,7 @@ final class ZoneRule extends SanitizedFareRule {
         if (zones.isEmpty()) {
             return false;
         } else {
-            return zones.equals(segment.getZones());
+            return zones.containsAll(segment.getZones());
         }
     }
 }

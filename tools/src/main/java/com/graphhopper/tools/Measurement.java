@@ -177,17 +177,9 @@ public class Measurement {
             put("measurement.usedMB", getUsedMB());
 
             if (!summaryLocation.trim().isEmpty()) {
-                logger.info("writing summary to " + summaryLocation);
                 writeSummary(summaryLocation, propLocation);
             }
-
-            try {
-                logger.info("store into " + propLocation);
-                store(new FileWriter(propLocation), "measurement finish, "
-                        + new Date().toString() + ", " + Constants.BUILD_DATE);
-            } catch (IOException ex) {
-                logger.error("Problem while storing properties " + graphLocation + ", " + propLocation, ex);
-            }
+            storeProperties(graphLocation, propLocation);
         }
     }
 
@@ -518,15 +510,95 @@ public class Measurement {
         properties.put(key, "" + val);
     }
 
-    private void store(FileWriter fileWriter, String comment) throws IOException {
-        fileWriter.append("#" + comment + "\n");
-        for (Entry<String, String> e : properties.entrySet()) {
-            fileWriter.append(e.getKey());
-            fileWriter.append("=");
-            fileWriter.append(e.getValue());
-            fileWriter.append("\n");
+    private void storeProperties(String graphLocation, String propLocation) {
+        logger.info("storing measurement properties in " + propLocation);
+        try (FileWriter fileWriter = new FileWriter(propLocation)) {
+            String comment = "measurement finish, " + new Date().toString() + ", " + Constants.BUILD_DATE;
+            fileWriter.append("#" + comment + "\n");
+            for (Entry<String, String> e : properties.entrySet()) {
+                fileWriter.append(e.getKey());
+                fileWriter.append("=");
+                fileWriter.append(e.getValue());
+                fileWriter.append("\n");
+            }
+            fileWriter.flush();
+        } catch (IOException e) {
+            logger.error("Problem while storing properties " + graphLocation + ", " + propLocation, e);
         }
-        fileWriter.flush();
+    }
+
+    /**
+     * Writes a selection of measurement results to a single line in
+     * a file. Each run of the measurement class will append a new line.
+     */
+    private void writeSummary(String summaryLocation, String propLocation) {
+        logger.info("writing summary to " + summaryLocation);
+        // choose properties that should be in summary here
+        String[] properties = {
+                "graph.nodes",
+                "graph.edges",
+                "measurement.seed",
+                CH.PREPARE + "time",
+                CH.PREPARE + "shortcuts",
+                "routing.distance_mean",
+                "routing.mean",
+                "routing.visited_nodes_mean",
+                "routingCH.distance_mean",
+                "routingCH.mean",
+                "routingCH.visited_nodes_mean",
+                "measurement.timestamp"
+        };
+        File f = new File(summaryLocation);
+        boolean writeHeader = !f.exists();
+        try (FileWriter writer = new FileWriter(f, true)) {
+            if (writeHeader)
+                writer.write(getSummaryHeader(properties));
+            writer.write(getSummaryLogLine(properties, propLocation));
+        } catch (IOException e) {
+            logger.error("Could not write summary to file '{}'", summaryLocation, e);
+        }
+    }
+
+    private String getSummaryHeader(String[] properties) {
+        StringBuilder sb = new StringBuilder("#");
+        for (String p : properties) {
+            String columnName = String.format("%" + getSummaryColumnWidth(p) + "s, ", p);
+            sb.append(columnName);
+        }
+        sb.append("propertyFile");
+        sb.append('\n');
+        return sb.toString();
+    }
+
+    private String getSummaryLogLine(String[] properties, String propLocation) {
+        StringBuilder sb = new StringBuilder(" ");
+        for (String p : properties) {
+            sb.append(getFormattedProperty(p));
+        }
+        sb.append(propLocation);
+        sb.append('\n');
+        return sb.toString();
+    }
+
+    private String getFormattedProperty(String property) {
+        String result = properties.get(property);
+        if (result == null) {
+            result = "missing";
+        }
+        // limit number of decimal places for floating point numbers
+        try {
+            double doubleValue = Double.parseDouble(result.trim());
+            if (doubleValue != (long) doubleValue) {
+                result = String.format("%.2f", doubleValue);
+            }
+        } catch (NumberFormatException e) {
+            // its not a number, never mind
+        }
+        return String.format("%" + getSummaryColumnWidth(property) + "s, ", result);
+    }
+
+    private int getSummaryColumnWidth(String p) {
+        return Math.max(10, p.length());
     }
 
     /**

@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -238,8 +238,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             String flagEncodersStr = properties.get("graph.flag_encoders");
 
             if (!flagEncodersStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(flagEncodersStr)) {
-                throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.toDetailsString()
-                        + "\nGraph: " + flagEncodersStr + ", dir:" + dir.getLocation());
+                throw new IllegalStateException("Encoding does not match:"
+                        + "\nGraphhopper config: " + encodingManager.toDetailsString()
+                        + "\nGraph: " + flagEncodersStr
+                        + "\nChange configuration to match the graph or delete " + dir.getLocation());
             }
 
             String byteOrder = properties.get("graph.byte_order");

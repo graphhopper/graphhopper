@@ -171,7 +171,7 @@
             <plugin>
                 <groupId>de.thetaphi</groupId>
                 <artifactId>forbiddenapis</artifactId>
-                <version>2.4.1</version>
+                <version>2.5</version>
                 <configuration>
                     <!--
                       if the used Java version is too new,
@@ -286,7 +286,6 @@
                 </plugins>
             </build>
         </profile>
-
         <profile>
             <id>include-android</id>
             <activation>
@@ -295,6 +294,17 @@
             <modules>
                 <module>android/app</module>
             </modules>
+        </profile>
+	<profile>
+            <id>jdk10</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>10</jdk>
+            </activation>
+            <properties>
+              <maven.compiler.source>10</maven.compiler.source>
+              <maven.compiler.target>10</maven.compiler.target>
+            </properties>
         </profile>
 
     </profiles>

@@ -60,6 +60,8 @@ while [ ! -z $1 ]; do
     -D*)
        GH_WEB_OPTS="$GH_WEB_OPTS $1"; shift 1;;
     # forward parameter via replacing first two characters of the key with -Dgraphhopper.
+    *=*)
+       echo "Old parameter assignment not allowed $1"; exit 2;;
     --*)
        GH_WEB_OPTS="$GH_WEB_OPTS -Dgraphhopper.${1:2}=$2"; shift 2;;
     -*) echo "Option unknown: $1"
@@ -82,6 +84,11 @@ fi
 if [ "$ACTION" = "" ]; then
  echo "## action $ACTION not found!"
  printBashUsage
+fi
+
+if [[ "$CONFIG" == *properties ]]; then
+ echo "$CONFIG not allowed as configuration. Use yml"
+ exit
 fi
 
 # default init, https://stackoverflow.com/a/28085062/194609
@@ -227,7 +234,7 @@ else
    LINK="https://download.geofabrik.de/$LINK-latest.osm.pbf"
 fi
 
-: "${JAVA_OPTS:=-Xmx1000m -Xms1000m -server}"
+: "${JAVA_OPTS:=-Xmx1000m -Xms1000m}"
 : "${JAR:=web/target/graphhopper-web-$VERSION.jar}"
 : "${GRAPH:=$DATADIR/$NAME-gh}"
 
@@ -238,7 +245,6 @@ echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 
 if [[ "$ACTION" = "web" ]]; then
   export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
-
   if [[ "$RUN_BACKGROUND" == "true" ]]; then
     exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
                  $GH_WEB_OPTS -jar "$JAR" server $CONFIG <&- &
@@ -255,20 +261,23 @@ if [[ "$ACTION" = "web" ]]; then
   fi
 
 elif [ "$ACTION" = "import" ]; then
- "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \ 
+  "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
          $GH_IMPORT_OPTS -jar "$JAR" import $CONFIG
 
 elif [ "$ACTION" = "torture" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $@
+  execMvn --projects tools -am -DskipTests clean package
+  JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
+  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $@
 
 elif [ "$ACTION" = "measurement" ]; then
- ARGS="config=$CONFIG graph.location=$GRAPH datareader.file=$OSM_FILE prepare.ch.weightings=fastest prepare.lm.weightings=fastest graph.flag_encoders=car \
+  ARGS="$GH_WEB_OPTS graph.location=$GRAPH datareader.file=$OSM_FILE prepare.ch.weightings=fastest prepare.lm.weightings=fastest graph.flag_encoders=car \
        prepare.min_network_size=10000 prepare.min_oneway_network_size=10000"
 
  function startMeasurement {
-    execMvn --projects web -am -DskipTests clean package
+    execMvn --projects tools -am -DskipTests clean package
     COUNT=5000
     commit_info=$(git log -n 1 --pretty=oneline)
+    JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
     "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.Measurement $ARGS measurement.count=$COUNT measurement.location="$M_FILE_NAME" \
             measurement.gitinfo="$commit_info"
