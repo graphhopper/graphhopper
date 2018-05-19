@@ -27,7 +27,6 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.matching.*;
 import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.*;
@@ -110,7 +109,7 @@ public class MapMatchingResource {
                 .build();
         MapMatching matching = new MapMatching(graphHopper, opts);
         matching.setMeasurementErrorSigma(gpsAccuracy);
-        MatchResult matchRsp = matching.doWork(gpxFile.getEntries());
+        MatchResult matchResult = matching.doWork(gpxFile.getEntries());
 
         // TODO: Request logging and timing should perhaps be done somewhere outside
         float took = sw.stop().getSeconds();
@@ -119,11 +118,10 @@ public class MapMatchingResource {
         logger.info(logStr);
 
         if ("extended_json".equals(outType)) {
-            return Response.ok(convertToTree(matchRsp, enableElevation, pointsEncoded)).
+            return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         } else {
-            Path path = matching.calcPath(matchRsp);
             Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
             DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
             PathMerger pathMerger = new PathMerger().
@@ -132,7 +130,7 @@ public class MapMatchingResource {
                     setDouglasPeucker(peucker).
                     setSimplifyResponse(minPathPrecision > 0);
             PathWrapper pathWrapper = new PathWrapper();
-            pathMerger.doWork(pathWrapper, Collections.singletonList(path), tr);
+            pathMerger.doWork(pathWrapper, Collections.singletonList(matchResult.getMergedPath()), tr);
 
             // GraphHopper thinks an empty path is an invalid path, and further than an invalid path is still a path but
             // marked with a non-empty list of Exception objects. I disagree, so I clear it.
@@ -147,16 +145,16 @@ public class MapMatchingResource {
             } else {
                 ObjectNode map = WebHelper.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
 
-                Map<String, Object> matchResult = new HashMap<>();
-                matchResult.put("distance", matchRsp.getMatchLength());
-                matchResult.put("time", matchRsp.getMatchMillis());
-                matchResult.put("original_distance", matchRsp.getGpxEntriesLength());
-                matchResult.put("original_time", matchRsp.getGpxEntriesMillis());
-                map.putPOJO("map_matching", matchResult);
+                Map<String, Object> matchStatistics = new HashMap<>();
+                matchStatistics.put("distance", matchResult.getMatchLength());
+                matchStatistics.put("time", matchResult.getMatchMillis());
+                matchStatistics.put("original_distance", matchResult.getGpxEntriesLength());
+                matchStatistics.put("original_time", matchResult.getGpxEntriesMillis());
+                map.putPOJO("map_matching", matchStatistics);
 
                 if (enableTraversalKeys) {
                     List<Integer> traversalKeylist = new ArrayList<>();
-                    for (EdgeMatch em : matchRsp.getEdgeMatches()) {
+                    for (EdgeMatch em : matchResult.getEdgeMatches()) {
                         EdgeIteratorState edge = em.getEdgeState();
                         // encode edges as traversal keys which includes orientation, decode simply by multiplying with 0.5
                         traversalKeylist.add(GHUtility.createEdgeKey(edge.getBaseNode(), edge.getAdjNode(), edge.getEdge(), false));

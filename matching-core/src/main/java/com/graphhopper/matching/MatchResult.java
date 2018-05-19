@@ -17,6 +17,8 @@
  */
 package com.graphhopper.matching;
 
+import com.graphhopper.routing.Path;
+
 import java.util.List;
 
 /**
@@ -26,6 +28,7 @@ import java.util.List;
 public class MatchResult {
 
     private List<EdgeMatch> edgeMatches;
+    private Path mergedPath;
     private double matchLength;
     private long matchMillis;
     private double gpxEntriesLength;
@@ -58,6 +61,11 @@ public class MatchResult {
     public void setMatchMillis(long matchMillis) {
         this.matchMillis = matchMillis;
     }
+
+    public void setMergedPath(Path mergedPath) {
+        this.mergedPath = mergedPath;
+    }
+
 
     /**
      * All possible assigned edges.
@@ -92,6 +100,10 @@ public class MatchResult {
      */
     public long getMatchMillis() {
         return matchMillis;
+    }
+
+    public Path getMergedPath() {
+        return mergedPath;
     }
 
     @Override

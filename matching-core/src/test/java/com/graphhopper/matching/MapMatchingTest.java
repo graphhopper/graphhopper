@@ -125,9 +125,8 @@ public class MapMatchingTest {
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 1.5);
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
 
-        Path path = mapMatching.calcPath(mr);
         PathWrapper matchGHRsp = new PathWrapper();
-        new PathMerger().doWork(matchGHRsp, Collections.singletonList(path), SINGLETON.get("en"));
+        new PathMerger().doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), SINGLETON.get("en"));
         InstructionList il = matchGHRsp.getInstructions();
 
         assertEquals(il.toString(), 2, il.size());
@@ -143,9 +142,8 @@ public class MapMatchingTest {
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), .1);
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis(), 1);
 
-        path = mapMatching.calcPath(mr);
         matchGHRsp = new PathWrapper();
-        new PathMerger().doWork(matchGHRsp, Collections.singletonList(path), SINGLETON.get("en"));
+        new PathMerger().doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), SINGLETON.get("en"));
         il = matchGHRsp.getInstructions();
 
         assertEquals(il.toString(), 3, il.size());

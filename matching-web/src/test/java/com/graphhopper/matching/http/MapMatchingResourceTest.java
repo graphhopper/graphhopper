@@ -18,7 +18,6 @@
 package com.graphhopper.matching.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.matching.EdgeMatch;
@@ -40,7 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
@@ -73,18 +71,25 @@ public class MapMatchingResourceTest {
         final Response response = app.client().target("http://localhost:8080/match").request().buildPost(Entity.xml(xmlStr)).invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
-
-        // {"hints":{},
-        //  "paths":[{"instructions":[{"distance":417.326,"sign":0,"interval":[0,3],"text":"Continue onto Gustav-Adolf-Straße","time":60093},{"distance":108.383,"sign":-2,"interval":[3,4],"text":"Turn left onto Leibnizstraße","time":15607},{"distance":218.914,"sign":-2,"interval":[4,6],"text":"Turn left onto Hinrichsenstraße","time":26269},{"distance":257.727,"sign":-2,"interval":[6,8],"text":"Turn left onto Tschaikowskistraße","time":30926},{"distance":0,"sign":4,"interval":[8,8],"text":"Finish!","time":0}],
-        //  "descend":0,"ascend":0,"distance":1002.35,"bbox":[12.35853,51.342524,12.36419,51.345381],"weight":1002.35,"time":132895,"points_encoded":true,"points":"{}jxHwwljAsBuOaA{GcAyH}DlAhAdIz@jGvDeB|FiC"}],
-        //  "info":{"copyrights":["GraphHopper","OpenStreetMap contributors"]}
-        // }
         JsonNode path = json.get("paths").get(0);
-        assertEquals(5, path.get("instructions").size());
-        assertEquals(7, WebHelper.decodePolyline(path.get("points").asText(), 10, false).size());
 
-        assertEquals(132.9, path.get("time").asLong() / 1000f, 0.1);
-        assertEquals(1002, path.get("distance").asDouble(), 1);
+        assertEquals(5, path.get("instructions").size());
+        assertEquals(5, WebHelper.decodePolyline(path.get("points").asText(), 10, false).size());
+        assertEquals(106.15, path.get("time").asLong() / 1000f, 0.1);
+        assertEquals(106.15, json.get("map_matching").get("time").asLong() / 1000f, 0.1);
+        assertEquals(811.56, path.get("distance").asDouble(), 1);
+        assertEquals(811.56, json.get("map_matching").get("distance").asDouble(), 1);
+    }
+
+    @Test
+    public void testEmptyGPX() throws Exception {
+        // empty xml
+        String xmlStr = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?><gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" creator=\"Graphhopper\" version=\"1.1\" xmlns:gh=\"https://graphhopper.com/public/schema/gpx/1.1\"></gpx>";
+        final Response response = app.client().target("http://localhost:8080/match").request().buildPost(Entity.xml(xmlStr)).invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode path = json.get("paths").get(0);
+        assertEquals(0, WebHelper.decodePolyline(path.get("points").asText(), 10, false).size());
     }
 
     private List<EdgeMatch> getEdgeMatch() {

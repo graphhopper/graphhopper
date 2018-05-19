@@ -7,7 +7,6 @@ import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -101,8 +100,7 @@ public class MatchCommand extends Command {
                     il = new InstructionList(null);
                 } else {
                     PathWrapper matchGHRsp = new PathWrapper();
-                    Path path = mapMatching.calcPath(mr);
-                    new PathMerger().doWork(matchGHRsp, Collections.singletonList(path), tr);
+                    new PathMerger().doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), tr);
                     il = matchGHRsp.getInstructions();
                 }
 
