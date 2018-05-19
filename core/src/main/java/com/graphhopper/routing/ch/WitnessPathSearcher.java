@@ -265,7 +265,7 @@ public class WitnessPathSearcher {
     }
 
     public String getStatisticsString() {
-        return currentBatchStats.toString();
+        return "last batch: " + currentBatchStats.toString() + "total: " + totalStats.toString();
     }
 
     public long getNumPolledEdges() {

@@ -49,17 +49,17 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private static final long MAX_WEIGHT_LONG = (Integer.MAX_VALUE >> 2) << 2;
     private static final double MAX_WEIGHT = (Integer.MAX_VALUE >> 2) / WEIGHT_FACTOR;
     private static final double MIN_WEIGHT = 1 / WEIGHT_FACTOR;
-    private final DataAccess shortcuts;
-    private final DataAccess nodesCH;
-    private final long scDirMask = PrepareEncoder.getScDirMask();
+    final DataAccess shortcuts;
+    final DataAccess nodesCH;
+    final long scDirMask = PrepareEncoder.getScDirMask();
     private final boolean forEdgeBasedTraversal;
     private final BaseGraph baseGraph;
     private final EdgeAccess chEdgeAccess;
     private final Weighting weighting;
-    private int N_CH_REF;
-    private int shortcutEntryBytes;
+    int N_CH_REF;
+    int shortcutEntryBytes;
     // the nodesCH storage is limited via baseGraph.nodeCount too
-    private int nodeCHEntryBytes;
+    int nodeCHEntryBytes;
     private int N_LEVEL;
     // shortcut memory layout is synced with edges indices until E_FLAGS, then:
     private int S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_FIRST, S_ORIG_LAST;

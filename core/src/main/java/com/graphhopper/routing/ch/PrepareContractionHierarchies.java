@@ -494,7 +494,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     public static class Config {
-        EdgeBasedNodeContractor.Config edgeBasedNodeContractorConfig = new EdgeBasedNodeContractor.Config();
+        private EdgeBasedNodeContractor.Config edgeBasedNodeContractorConfig = new EdgeBasedNodeContractor.Config();
 
         public EdgeBasedNodeContractor.Config getEdgeBasedNodeContractorConfig() {
             return edgeBasedNodeContractorConfig;

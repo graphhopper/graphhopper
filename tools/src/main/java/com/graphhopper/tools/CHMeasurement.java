@@ -47,12 +47,7 @@ import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static java.lang.System.nanoTime;
 
-/**
- * Measurement class used to analyze different contraction hierarchy parameters.
- */
 public class CHMeasurement {
-    // todo: make this class more useful, for example use command line arguments to be able to automatically run tests
-    // for larger parameter ranges
     private static final Logger LOGGER = LoggerFactory.getLogger(CHMeasurement.class);
     private FastestWeighting weighting;
     private GraphHopperStorage ghStorage;
@@ -460,8 +455,7 @@ public class CHMeasurement {
                 }
 
                 if (!chRoute.getBest().getPoints().equals(nonChRoute.getBest().getPoints())) {
-                    // todo: this test finds some differences that are most likely due to rounding issues (the weights
-                    // are very similar, and the paths have minor differences (with ch the route weight seems to be smaller if different)
+                    // small negative deviations are due to weight truncation when shortcuts are stored
                     double chWeight = chRoute.getBest().getRouteWeight();
                     double nonCHWeight = nonChRoute.getBest().getRouteWeight();
                     LOGGER.warn("error for {}: found different points for query from {} to {}, {}", algo,
