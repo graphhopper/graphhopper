@@ -23,10 +23,6 @@ public class ImportCommand extends Command {
                 .type(String.class)
                 .required(false)
                 .setDefault("car");
-        subparser.addArgument("--prepare.min_one_way_network_size")
-                .type(Integer.class)
-                .required(false)
-                .setDefault(200);
     }
 
     @Override
@@ -34,7 +30,6 @@ public class ImportCommand extends Command {
         CmdArgs graphHopperConfiguration = new CmdArgs();
         graphHopperConfiguration.put("graph.flag_encoders", args.getString("vehicle"));
         graphHopperConfiguration.put("datareader.file", args.getString("datasource"));
-        graphHopperConfiguration.put("prepare.min_one_way_network_size", args.getInt("prepare.min_one_way_network_size"));
         graphHopperConfiguration.put("graph.location", "graph-cache");
 
         GraphHopper hopper = new GraphHopperOSM().init(graphHopperConfiguration);
