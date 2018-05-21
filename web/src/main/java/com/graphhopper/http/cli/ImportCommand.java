@@ -31,7 +31,7 @@ public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfigurat
     }
 
     @Override
-    protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace namespace, GraphHopperServerConfiguration configuration) throws Exception {
+    protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace namespace, GraphHopperServerConfiguration configuration) {
         final GraphHopperManaged graphHopper = new GraphHopperManaged(configuration.getGraphHopperConfiguration());
         graphHopper.start();
         graphHopper.stop();

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.exceptions.GHException;
@@ -29,6 +30,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -36,10 +38,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.net.URLEncoder;
 import java.text.NumberFormat;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 
@@ -272,5 +271,26 @@ public class WebHelper {
             return t.getClass().getSimpleName();
         else
             return t.getMessage();
+    }
+
+    public static void initHints(HintsMap m, MultivaluedMap<String, String> parameterMap) {
+        for (Map.Entry<String, List<String>> e : parameterMap.entrySet()) {
+            if (e.getValue().size() == 1) {
+                m.put(e.getKey(), e.getValue().get(0));
+            } else {
+                // Do nothing.
+                // TODO: this is dangerous: I can only silently swallow
+                // the forbidden multiparameter. If I comment-in the line below,
+                // I get an exception, because "point" regularly occurs
+                // multiple times.
+                // I think either unknown parameters (hints) should be allowed
+                // to be multiparameters, too, or we shouldn't use them for
+                // known parameters either, _or_ known parameters
+                // must be filtered before they come to this code point,
+                // _or_ we stop passing unknown parameters alltogether..
+                //
+                // throw new WebApplicationException(String.format("This query parameter (hint) is not allowed to occur multiple times: %s", e.getKey()));
+            }
+        }
     }
 }

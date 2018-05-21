@@ -59,7 +59,7 @@ public class GraphHopperManaged implements Managed {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop() {
         graphHopper.close();
     }
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.isochrone.algorithm.RasterHullBuilder;
 import com.graphhopper.routing.QueryGraph;
@@ -79,8 +80,7 @@ public class IsochroneResource {
         queryGraph.lookup(Collections.singletonList(qr));
 
         HintsMap hintsMap = new HintsMap();
-
-        initHints(hintsMap, uriInfo.getQueryParameters());
+        WebHelper.initHints(hintsMap, uriInfo.getQueryParameters());
 
         Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, graph);
         Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
@@ -179,28 +179,6 @@ public class IsochroneResource {
             return t.getClass().getSimpleName();
         else
             return t.getMessage();
-    }
-
-    // TODO Copied from RouteResource
-    private void initHints(HintsMap m, MultivaluedMap<String, String> parameterMap) {
-        for (Map.Entry<String, List<String>> e : parameterMap.entrySet()) {
-            if (e.getValue().size() == 1) {
-                m.put(e.getKey(), e.getValue().get(0));
-            } else {
-                // Do nothing.
-                // TODO: this is dangerous: I can only silently swallow
-                // the forbidden multiparameter. If I comment-in the line below,
-                // I get an exception, because "point" regularly occurs
-                // multiple times.
-                // I think either unknown parameters (hints) should be allowed
-                // to be multiparameters, too, or we shouldn't use them for
-                // known parameters either, _or_ known parameters
-                // must be filtered before they come to this code point,
-                // _or_ we stop passing unknown parameters alltogether..
-                //
-                // throw new WebApplicationException(String.format("This query parameter (hint) is not allowed to occur multiple times: %s", e.getKey()));
-            }
-        }
     }
 
     private Response jsonSuccessResponse(Object result, float took) {

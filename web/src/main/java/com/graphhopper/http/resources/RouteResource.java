@@ -22,7 +22,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
@@ -121,7 +120,7 @@ public class RouteResource {
             request = new GHRequest(requestPoints);
         }
 
-        initHints(request.getHints(), uriInfo.getQueryParameters());
+        WebHelper.initHints(request.getHints(), uriInfo.getQueryParameters());
         request.setVehicle(encodingManager.getEncoder(vehicleStr).toString()).
                 setWeighting(weighting).
                 setAlgorithm(algoStr).
@@ -158,27 +157,6 @@ public class RouteResource {
                     Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                             header("X-GH-Took", "" + Math.round(took * 1000)).
                             build();
-        }
-    }
-
-    private static void initHints(HintsMap m, MultivaluedMap<String, String> parameterMap) {
-        for (Map.Entry<String, List<String>> e : parameterMap.entrySet()) {
-            if (e.getValue().size() == 1) {
-                m.put(e.getKey(), e.getValue().get(0));
-            } else {
-                // Do nothing.
-                // TODO: this is dangerous: I can only silently swallow
-                // the forbidden multiparameter. If I comment-in the line below,
-                // I get an exception, because "point" regularly occurs
-                // multiple times.
-                // I think either unknown parameters (hints) should be allowed
-                // to be multiparameters, too, or we shouldn't use them for
-                // known parameters either, _or_ known parameters
-                // must be filtered before they come to this code point,
-                // _or_ we stop passing unknown parameters alltogether..
-                //
-                // throw new WebApplicationException(String.format("This query parameter (hint) is not allowed to occur multiple times: %s", e.getKey()));
-            }
         }
     }
 
