@@ -132,7 +132,7 @@ public class MapMatchingResource {
             PathWrapper pathWrapper = new PathWrapper();
             pathMerger.doWork(pathWrapper, Collections.singletonList(matchResult.getMergedPath()), tr);
 
-            // GraphHopper thinks an empty path is an invalid path, and further than an invalid path is still a path but
+            // GraphHopper thinks an empty path is an invalid path, and further that an invalid path is still a path but
             // marked with a non-empty list of Exception objects. I disagree, so I clear it.
             pathWrapper.getErrors().clear();
             GHResponse rsp = new GHResponse();
