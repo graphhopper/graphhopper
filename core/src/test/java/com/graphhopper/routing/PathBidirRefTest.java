@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -27,7 +28,6 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -56,7 +56,7 @@ public class PathBidirRefTest {
         pw.sptEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 10);
         pw.edgeTo = new SPTEntry(EdgeIterator.NO_EDGE, 2, 0);
         Path p = pw.extract();
-        assertEquals(Helper.createTList(1, 2), p.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{1, 2}), p.calcNodes());
         assertEquals(10, p.getDistance(), 1e-4);
     }
 
@@ -78,7 +78,7 @@ public class PathBidirRefTest {
         pw.edgeTo = new SPTEntry(iter.getEdge(), 2, 20);
         pw.edgeTo.parent = new SPTEntry(EdgeIterator.NO_EDGE, 3, 0);
         Path p = pw.extract();
-        assertEquals(Helper.createTList(1, 2, 3), p.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{1, 2, 3}), p.calcNodes());
         assertEquals(30, p.getDistance(), 1e-4);
     }
 }

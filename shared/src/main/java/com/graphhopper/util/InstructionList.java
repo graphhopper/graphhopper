@@ -148,13 +148,13 @@ public class InstructionList extends AbstractList<Instruction> {
      *
      * @return string to be stored as gpx file
      */
-    public String createGPX() {
-        return createGPX("GraphHopper", new Date().getTime());
+    public String createGPX(String version) {
+        return createGPX("GraphHopper", new Date().getTime(), version);
     }
 
-    public String createGPX(String trackName, long startTimeMillis) {
+    public String createGPX(String trackName, long startTimeMillis, String version) {
         boolean includeElevation = size() > 0 && get(0).getPoints().is3D();
-        return createGPX(trackName, startTimeMillis, includeElevation, true, true, true);
+        return createGPX(trackName, startTimeMillis, includeElevation, true, true, true, version);
     }
 
     private void createWayPointBlock(StringBuilder output, Instruction instruction, DecimalFormat decimalFormat) {
@@ -171,7 +171,7 @@ public class InstructionList extends AbstractList<Instruction> {
         output.append("</wpt>");
     }
 
-    public String createGPX(String trackName, long startTimeMillis, boolean includeElevation, boolean withRoute, boolean withTrack, boolean withWayPoints) {
+    public String createGPX(String trackName, long startTimeMillis, boolean includeElevation, boolean withRoute, boolean withTrack, boolean withWayPoints, String version) {
         DateFormat formatter = Helper.createFormatter();
 
         DecimalFormat decimalFormat = new DecimalFormat("#", DecimalFormatSymbols.getInstance(Locale.ROOT));
@@ -181,7 +181,7 @@ public class InstructionList extends AbstractList<Instruction> {
 
         String header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
                 + "<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
-                + " creator=\"Graphhopper version " + Constants.VERSION + "\" version=\"1.1\""
+                + " creator=\"Graphhopper version " + version + "\" version=\"1.1\""
                 // This xmlns:gh acts only as ID, no valid URL necessary.
                 // Use a separate namespace for custom extensions to make basecamp happy.
                 + " xmlns:gh=\"https://graphhopper.com/public/schema/gpx/1.1\">"

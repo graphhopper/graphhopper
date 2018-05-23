@@ -1,6 +1,5 @@
 package com.graphhopper;
 
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.InstructionList;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
@@ -12,14 +11,12 @@ public class Trip {
     public static abstract class Leg {
         public final String type;
         public final String departureLocation;
-        public final List<EdgeIteratorState> edges;
         public final Geometry geometry;
         public final double distance;
 
-        public Leg(String type, String departureLocation, List<EdgeIteratorState> edges, Geometry geometry, double distance) {
+        public Leg(String type, String departureLocation, Geometry geometry, double distance) {
             this.type = type;
             this.departureLocation = departureLocation;
-            this.edges = edges;
             this.geometry = geometry;
             this.distance = distance;
         }
@@ -75,8 +72,8 @@ public class Trip {
         private final Date departureTime;
         private final Date arrivalTime;
 
-        public WalkLeg(String departureLocation, Date departureTime, List<EdgeIteratorState> edges, Geometry geometry, double distance, InstructionList instructions, Date arrivalTime) {
-            super("walk", departureLocation, edges, geometry, distance);
+        public WalkLeg(String departureLocation, Date departureTime, Geometry geometry, double distance, InstructionList instructions, Date arrivalTime) {
+            super("walk", departureLocation, geometry, distance);
             this.instructions = instructions;
             this.departureTime = departureTime;
             this.arrivalTime = arrivalTime;
@@ -102,13 +99,13 @@ public class Trip {
         public final String trip_id;
         public final String route_id;
 
-        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, List<EdgeIteratorState> edges, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
-            super("pt", stops.get(0).stop_name, edges, geometry, distance);
+        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, String headsign, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
+            super("pt", stops.get(0).stop_name, geometry, distance);
             this.feed_id = feedId;
             this.isInSameVehicleAsPrevious = isInSameVehicleAsPrevious;
             this.trip_id = tripId;
             this.route_id = routeId;
-            this.trip_headsign = edges.get(0).getName();
+            this.trip_headsign = headsign;
             this.travelTime = travelTime;
             this.stops = stops;
         }

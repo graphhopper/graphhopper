@@ -40,8 +40,6 @@ import java.net.URLEncoder;
 import java.text.NumberFormat;
 import java.util.*;
 
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-
 /**
  * Code which handles polyline encoding and other web stuff.
  * <p>
@@ -149,13 +147,13 @@ public class WebHelper {
         sb.append((char) (num));
     }
 
-    public static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String trackName, boolean enableElevation, boolean withRoute, boolean withTrack, boolean withWayPoints) {
+    public static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String trackName, boolean enableElevation, boolean withRoute, boolean withTrack, boolean withWayPoints, String version) {
         if (ghRsp.getAll().size() > 1) {
             throw new WebApplicationException("Alternatives are currently not yet supported for GPX");
         }
 
         long time = timeString != null ? Long.parseLong(timeString) : System.currentTimeMillis();
-        return Response.ok(ghRsp.getBest().getInstructions().createGPX(trackName, time, enableElevation, withRoute, withTrack, withWayPoints), "application/gpx+xml").
+        return Response.ok(ghRsp.getBest().getInstructions().createGPX(trackName, time, enableElevation, withRoute, withTrack, withWayPoints, version), "application/gpx+xml").
                 header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
     }
 
@@ -191,7 +189,7 @@ public class WebHelper {
                 error.setAttribute("message", t.getMessage());
                 error.setAttribute("details", t.getClass().getName());
             }
-            return Response.status(SC_BAD_REQUEST).entity(doc).build();
+            return Response.status(400).entity(doc).build();
         } catch (ParserConfigurationException e) {
             throw new RuntimeException(e);
         }
@@ -263,7 +261,7 @@ public class WebHelper {
                 ((GHException) t).getDetails().forEach(error::putPOJO);
             }
         }
-        return Response.status(SC_BAD_REQUEST).entity(json).build();
+        return Response.status(400).entity(json).build();
     }
 
     private static String getMessage(Throwable t) {

@@ -17,25 +17,14 @@
  */
 package com.graphhopper.util;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.charset.Charset;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -64,15 +53,6 @@ public class Helper {
     private static final float ELE_FACTOR = 1000f;
 
     private Helper() {
-    }
-
-    public static ArrayList<Integer> intListToArrayList(IntIndexedContainer from) {
-        int len = from.size();
-        ArrayList<Integer> list = new ArrayList<>(len);
-        for (int i = 0; i < len; i++) {
-            list.add(from.get(i));
-        }
-        return list;
     }
 
     public static Locale getLocale(String param) {
@@ -296,10 +276,6 @@ public class Helper {
         return list;
     }
 
-    public static IntArrayList createTList(int... list) {
-        return IntArrayList.from(list);
-    }
-
     public static PointList createPointList(double... list) {
         if (list.length % 2 != 0)
             throw new IllegalArgumentException("list should consist of lat,lon pairs!");
@@ -373,79 +349,6 @@ public class Helper {
         return integEle / ELE_FACTOR;
     }
 
-    public static void cleanMappedByteBuffer(final ByteBuffer buffer) {
-        // TODO avoid reflection on every call
-        try {
-            AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-                @Override
-                public Object run() throws Exception {
-                    if (Constants.JRE_IS_MINIMUM_JAVA9) {
-                        // >=JDK9 class sun.misc.Unsafe { void invokeCleaner(ByteBuffer buf) }
-                        final Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
-                        // fetch the unsafe instance and bind it to the virtual MethodHandle
-                        final Field f = unsafeClass.getDeclaredField("theUnsafe");
-                        f.setAccessible(true);
-                        final Object theUnsafe = f.get(null);
-                        final Method method = unsafeClass.getDeclaredMethod("invokeCleaner", ByteBuffer.class);
-                        try {
-                            method.invoke(theUnsafe, buffer);
-                            return null;
-                        } catch (Throwable t) {
-                            throw new RuntimeException(t);
-                        }
-                    }
-
-                    if (buffer.getClass().getSimpleName().equals("MappedByteBufferAdapter")) {
-                        if (!Constants.ANDROID)
-                            throw new RuntimeException("MappedByteBufferAdapter only supported for Android at the moment");
-
-                        // For Android 4.1 call ((MappedByteBufferAdapter)buffer).free() see #914
-                        Class<?> directByteBufferClass = Class.forName("java.nio.MappedByteBufferAdapter");
-                        callBufferFree(buffer, directByteBufferClass);
-                    } else {
-                        // <=JDK8 class DirectByteBuffer { sun.misc.Cleaner cleaner(Buffer buf) }
-                        //        then call sun.misc.Cleaner.clean
-                        final Class<?> directByteBufferClass = Class.forName("java.nio.DirectByteBuffer");
-                        try {
-                            final Method dbbCleanerMethod = directByteBufferClass.getMethod("cleaner");
-                            dbbCleanerMethod.setAccessible(true);
-                            // call: cleaner = ((DirectByteBuffer)buffer).cleaner()
-                            final Object cleaner = dbbCleanerMethod.invoke(buffer);
-                            if (cleaner != null) {
-                                final Class<?> cleanerMethodReturnType = dbbCleanerMethod.getReturnType();
-                                final Method cleanMethod = cleanerMethodReturnType.getDeclaredMethod("clean");
-                                cleanMethod.setAccessible(true);
-                                // call: ((sun.misc.Cleaner)cleaner).clean()
-                                cleanMethod.invoke(cleaner);
-                            }
-                        } catch (NoSuchMethodException ex2) {
-                            if (Constants.ANDROID)
-                                // For Android 5.1.1 call ((DirectByteBuffer)buffer).free() see #933
-                                callBufferFree(buffer, directByteBufferClass);
-                            else
-                                // ignore if method cleaner or clean is not available
-                                LOGGER.warn("NoSuchMethodException | " + Constants.JAVA_VERSION, ex2);
-                        }
-                    }
-
-                    return null;
-                }
-            });
-        } catch (PrivilegedActionException e) {
-            throw new RuntimeException("Unable to unmap the mapped buffer", e);
-        }
-    }
-
-    private static void callBufferFree(ByteBuffer buffer, Class<?> directByteBufferClass)
-            throws InvocationTargetException, IllegalAccessException {
-        try {
-            final Method dbbFreeMethod = directByteBufferClass.getMethod("free");
-            dbbFreeMethod.setAccessible(true);
-            dbbFreeMethod.invoke(buffer);
-        } catch (NoSuchMethodException ex2) {
-            LOGGER.warn("NoSuchMethodException | " + Constants.JAVA_VERSION, ex2);
-        }
-    }
 
     /**
      * Trying to force the release of the mapped ByteBuffer. See

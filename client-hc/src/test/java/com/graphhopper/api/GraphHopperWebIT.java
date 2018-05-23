@@ -247,7 +247,7 @@ public class GraphHopperWebIT {
         req.getHints().put("instructions", true);
         req.getHints().put("calc_points", true);
         GHResponse ghResponse = gh.route(req);
-        String gpx = ghResponse.getBest().getInstructions().createGPX();
+        String gpx = ghResponse.getBest().getInstructions().createGPX("wurst");
         assertTrue(gpx.contains("<gpx"));
         assertTrue(gpx.contains("<rtept lat="));
         assertTrue(gpx.contains("<trk><name>"));

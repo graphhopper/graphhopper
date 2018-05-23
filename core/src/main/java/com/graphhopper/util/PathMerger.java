@@ -158,25 +158,6 @@ public class PathMerger {
     }
 
     /**
-     * Merges <code>otherDetails</code> into the <code>pathDetails</code>.
-     * <p>
-     * This method makes sure that Entry list around via points are merged correctly.
-     * See #1091 and the misplaced PathDetail after waypoints.
-     */
-    public static void merge(List<PathDetail> pathDetails, List<PathDetail> otherDetails) {
-        // Make sure that the PathDetail list is merged correctly at via points
-        if (!pathDetails.isEmpty() && !otherDetails.isEmpty()) {
-            PathDetail lastDetail = pathDetails.get(pathDetails.size() - 1);
-            if (lastDetail.getValue().equals(otherDetails.get(0).getValue())) {
-                lastDetail.setLast(otherDetails.get(0).getLast());
-                otherDetails.remove(0);
-            }
-        }
-
-        pathDetails.addAll(otherDetails);
-    }
-
-    /**
      * This method iterates over all instructions and uses the available context to improve the instructions.
      * If the requests contains a heading, this method can transform the first continue to a u-turn if the heading
      * points into the opposite direction of the route.

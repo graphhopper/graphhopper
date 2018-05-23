@@ -152,7 +152,8 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             throw new UnsupportedOperationException("cannot access EMPTY PointList");
         }
     };
-    private final static DistanceCalc3D distCalc3D = Helper.DIST_3D;
+
+    private final static DistanceCalc3D distCalc3D = new DistanceCalc3D();
     final static String ERR_MSG = "Tried to access PointList with too big index!";
     protected int size = 0;
     protected boolean is3D;
@@ -410,14 +411,22 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         for (int i = 0; i < getSize(); i++) {
             coordinates[i] = includeElevation ?
                     new Coordinate(
-                            Helper.round6(getLongitude(i)),
-                            Helper.round6(getLatitude(i)),
-                            Helper.round2(getElevation(i))) :
+                            round6(getLongitude(i)),
+                            round6(getLatitude(i)),
+                            round2(getElevation(i))) :
                     new Coordinate(
-                            Helper.round6(getLongitude(i)),
-                            Helper.round6(getLatitude(i)));
+                            round6(getLongitude(i)),
+                            round6(getLatitude(i)));
         }
         return gf.createLineString(coordinates);
+    }
+
+    public static final double round6(double value) {
+        return Math.round(value * 1e6) / 1e6;
+    }
+
+    public static final double round2(double value) {
+        return Math.round(value * 100) / 100d;
     }
 
     @Override
@@ -433,16 +442,26 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             return false;
 
         for (int i = 0; i < size(); i++) {
-            if (!NumHelper.equalsEps(getLatitude(i), other.getLatitude(i)))
+            if (!equalsEps(getLatitude(i), other.getLatitude(i)))
                 return false;
 
-            if (!NumHelper.equalsEps(getLongitude(i), other.getLongitude(i)))
+            if (!equalsEps(getLongitude(i), other.getLongitude(i)))
                 return false;
 
-            if (this.is3D() && !NumHelper.equalsEps(getElevation(i), other.getElevation(i)))
+            if (this.is3D() && !equalsEps(getElevation(i), other.getElevation(i)))
                 return false;
         }
         return true;
+    }
+
+    private final static double DEFAULT_PRECISION = 1e-6;
+
+    public static boolean equalsEps(double d1, double d2) {
+        return equalsEps(d1, d2, DEFAULT_PRECISION);
+    }
+
+    public static boolean equalsEps(double d1, double d2, double epsilon) {
+        return Math.abs(d1 - d2) < epsilon;
     }
 
     /**

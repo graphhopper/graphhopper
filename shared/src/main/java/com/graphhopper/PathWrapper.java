@@ -18,7 +18,6 @@
 package com.graphhopper;
 
 import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.BBox;
@@ -246,11 +245,30 @@ public class PathWrapper {
         for (Map.Entry<String, List<PathDetail>> detailEntry : details.entrySet()) {
             if (this.pathDetails.containsKey(detailEntry.getKey())) {
                 List<PathDetail> pd = this.pathDetails.get(detailEntry.getKey());
-                PathMerger.merge(pd, detailEntry.getValue());
+                merge(pd, detailEntry.getValue());
             } else {
                 this.pathDetails.put(detailEntry.getKey(), detailEntry.getValue());
             }
         }
+    }
+
+    /**
+     * Merges <code>otherDetails</code> into the <code>pathDetails</code>.
+     * <p>
+     * This method makes sure that Entry list around via points are merged correctly.
+     * See #1091 and the misplaced PathDetail after waypoints.
+     */
+    public static void merge(List<PathDetail> pathDetails, List<PathDetail> otherDetails) {
+        // Make sure that the PathDetail list is merged correctly at via points
+        if (!pathDetails.isEmpty() && !otherDetails.isEmpty()) {
+            PathDetail lastDetail = pathDetails.get(pathDetails.size() - 1);
+            if (lastDetail.getValue().equals(otherDetails.get(0).getValue())) {
+                lastDetail.setLast(otherDetails.get(0).getLast());
+                otherDetails.remove(0);
+            }
+        }
+
+        pathDetails.addAll(otherDetails);
     }
 
     public Map<String, List<PathDetail>> getPathDetails() {

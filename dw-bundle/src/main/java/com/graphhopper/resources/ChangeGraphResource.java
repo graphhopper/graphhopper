@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.http.resources;
+package com.graphhopper.resources;
 
 import com.codahale.metrics.annotation.Timed;
 import com.graphhopper.GraphHopper;
