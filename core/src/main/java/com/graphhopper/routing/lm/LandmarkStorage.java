@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -496,14 +496,15 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     int getToWeight(int landmarkIndex, int node) {
         int res = landmarkWeightDA.getInt((long) node * LM_ROW_LENGTH + landmarkIndex * 4);
 
-        //the right bits of "res" store the backward value
-        int from = res & FROM_WEIGHT_INF;
         //the left bits of "res" store the difference between forward and backward value
         int delta = res >> FROM_WEIGHT_BITS;
 
         if (delta == DELTA_INF)
-            return DELTA_MAX;
+            return FROM_WEIGHT_MAX + DELTA_MAX;
 //            throw new IllegalStateException("Do not call getToWeight for wrong landmark[" + landmarkIndex + "]=" + landmarkIDs[landmarkIndex] + " and node " + node);
+
+        //the right bits of "res" store the backward value
+        int from = res & FROM_WEIGHT_INF;
 
         //to get the forward value you have to add the backward to the delta value
         res = from + delta;
@@ -516,16 +517,16 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     The rest of overall 32 bits stores the difference between forward and backward weight*/
     private static final int FROM_WEIGHT_BITS = 18;
     // The backward weight is unsigned --> 2^x - 1
-    private static final int FROM_WEIGHT_INF = (int) Math.pow(2,FROM_WEIGHT_BITS)-1;
+    private static final int FROM_WEIGHT_INF = (int) Math.pow(2, FROM_WEIGHT_BITS) - 1;
     // This value will be used if the backward weight is too large
-    private static final int FROM_WEIGHT_MAX = FROM_WEIGHT_INF-1;
+    private static final int FROM_WEIGHT_MAX = FROM_WEIGHT_INF - 1;
     /* The difference between forward and backward weight is signed
     --> 2^(31-x) - 1 instead of 2^(32-x) - 1*/
-    private static final int DELTA_INF = (int) Math.pow(2,31-FROM_WEIGHT_BITS)-1;
+    private static final int DELTA_INF = (int) Math.pow(2, 31 - FROM_WEIGHT_BITS) - 1;
     // This value will be used if the difference between these weights is too large and forward > backward
-    private static final int DELTA_MAX = DELTA_INF-1;
+    private static final int DELTA_MAX = DELTA_INF - 1;
     // This value will be used if the difference between these weights is too large and forward < backward
-    private static final int DELTA_MIN = -DELTA_INF-1;
+    private static final int DELTA_MIN = -DELTA_INF - 1;
 
     /**
      * @return false if the value capacity was reached and instead of the real value the MAX was stored.
@@ -535,23 +536,23 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         if (tmpVal > Integer.MAX_VALUE)
             throw new UnsupportedOperationException("Cannot store infinity explicitely, landmark: " + lmIdx + ", node: " + nodeId + ", value: " + value);
 
-        if (from){
-            if (tmpVal >= FROM_WEIGHT_MAX){
+        if (from) {
+            if (tmpVal >= FROM_WEIGHT_MAX) {
                 landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, FROM_WEIGHT_MAX);
                 return false;
-            }else{
+            } else {
                 landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, (int) tmpVal);
                 return true;
             }
-        }else{
-            int delta = (int)tmpVal - getFromWeight(lmIdx, nodeId);
-            if (delta >= DELTA_MAX){
+        } else {
+            int delta = (int) tmpVal - getFromWeight(lmIdx, nodeId);
+            if (delta >= DELTA_MAX) {
                 landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, (DELTA_MAX << FROM_WEIGHT_BITS) | getFromWeight(lmIdx, nodeId));
                 return false;
-            }else if(delta <= DELTA_MIN){
+            } else if (delta <= DELTA_MIN) {
                 landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, (DELTA_MIN << FROM_WEIGHT_BITS) | getFromWeight(lmIdx, nodeId));
                 return false;
-            }else{
+            } else {
                 landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, (delta << FROM_WEIGHT_BITS) | getFromWeight(lmIdx, nodeId));
                 return true;
             }
@@ -842,15 +843,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             });
 
             if ((double) maxedout.get() / map.size() > 0.1) {
-                if (from){
-                    LOGGER.warn("landmark " + lmIdx + " (" + nodeAccess.getLatitude(lmNodeId) + "," + nodeAccess.getLongitude(lmNodeId) + "): " +
-                            "too many backward weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Use a bigger factor than " + lms.factor
-                            + ". For example use the following in the config.properties: weighting=" + weighting.getName() + "|maximum=" + finalMaxWeight.getValue() * 1.2);
-                }else{
-                    LOGGER.warn("landmark " + lmIdx + " (" + nodeAccess.getLatitude(lmNodeId) + "," + nodeAccess.getLongitude(lmNodeId) + "): " +
-                            "too many delta weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Use a bigger factor than " + lms.factor
-                            + ". For example use the following in the config.properties: weighting=" + weighting.getName() + "|maximum=" + finalMaxWeight.getValue() * 1.2);
-                }
+                LOGGER.warn("landmark " + lmIdx + " (" + nodeAccess.getLatitude(lmNodeId) + "," + nodeAccess.getLongitude(lmNodeId) + "): " +
+                        "too many " + (from ? "backward" : "delta") + " weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Use a bigger factor than " + lms.factor
+                        + ". For example use the following in the config.properties: weighting=" + weighting.getName() + "|maximum=" + finalMaxWeight.getValue() * 1.2);
             }
         }
     }
