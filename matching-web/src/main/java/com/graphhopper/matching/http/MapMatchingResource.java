@@ -139,7 +139,7 @@ public class MapMatchingResource {
             rsp.add(pathWrapper);
 
             if (writeGPX) {
-                return WebHelper.gpxSuccessResponseBuilder(rsp, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints).
+                return WebHelper.gpxSuccessResponseBuilder(rsp, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
                         header("X-GH-Took", "" + Math.round(took * 1000)).
                         build();
             } else {
