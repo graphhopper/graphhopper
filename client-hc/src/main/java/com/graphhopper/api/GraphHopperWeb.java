@@ -225,33 +225,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
                 while (detailIterator.hasNext()) {
                     Map.Entry<String, JsonNode> detailEntry = detailIterator.next();
                     List<PathDetail> pathDetailList = new ArrayList<>();
-
-                    // TODO duplicate deserialization code for PathDetail, @see GraphHopperServletModule.PathDetailDeserializer
-                    // see issue #1137
                     for (JsonNode pathDetail : detailEntry.getValue()) {
-                        if (pathDetail.size() != 3)
-                            throw new IllegalStateException("PathDetail must have exactly 3 entries but was " + pathDetail.size());
-
-                        JsonNode from = pathDetail.get(0);
-                        JsonNode to = pathDetail.get(1);
-                        JsonNode val = pathDetail.get(2);
-
-                        PathDetail pd;
-                        if (val.isBoolean())
-                            pd = new PathDetail(val.asBoolean());
-                        else if (val.isLong())
-                            pd = new PathDetail(val.asLong());
-                        else if (val.isInt())
-                            pd = new PathDetail(val.asInt());
-                        else if (val.isDouble())
-                            pd = new PathDetail(val.asDouble());
-                        else if (val.isTextual())
-                            pd = new PathDetail(val.asText());
-                        else
-                            throw new IllegalStateException("Unsupported type of PathDetail value for key " + detailEntry.getKey() + " and value " + val.toString() + "of class " + val.getClass());
-
-                        pd.setFirst(from.asInt());
-                        pd.setLast(to.asInt());
+                        PathDetail pd = objectMapper.convertValue(pathDetail, PathDetail.class);
                         pathDetailList.add(pd);
                     }
                     pathDetails.put(detailEntry.getKey(), pathDetailList);

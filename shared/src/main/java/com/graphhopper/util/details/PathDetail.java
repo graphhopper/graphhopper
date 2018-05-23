@@ -1,10 +1,15 @@
 package com.graphhopper.util.details;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 /**
  * A detail information of a Path
  *
  * @author Robin Boldt
  */
+@JsonSerialize(using = PathDetailSerializer.class)
+@JsonDeserialize(using = PathDetailDeserializer.class)
 public class PathDetail {
     private final Object value;
     private int first;
