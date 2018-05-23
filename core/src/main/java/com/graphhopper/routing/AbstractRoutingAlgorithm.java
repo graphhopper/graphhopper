@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -132,5 +133,10 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
 
     protected boolean isMaxVisitedNodesExceeded() {
         return maxVisitedNodes < getVisitedNodes();
+    }
+
+    @VisibleForTesting
+    public Weighting getWeighting() {
+        return weighting;
     }
 }

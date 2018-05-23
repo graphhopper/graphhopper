@@ -1068,6 +1068,7 @@ public class GraphHopper implements GraphHopperAPI {
 
                 AlgorithmOptions algoOpts = AlgorithmOptions.start().
                         algorithm(algoStr).traversalMode(tMode).weighting(weighting).
+                        weightingsFactorGetter(request.getWeightFactors()).
                         maxVisitedNodes(maxVisitedNodesForRequest).
                         hints(hints).
                         build();

@@ -18,6 +18,7 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.WeightingWithPenalties;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -26,6 +27,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.FactoredWeightings;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import org.junit.Before;
@@ -34,8 +36,10 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Peter Karich
@@ -486,6 +490,23 @@ public class PrepareContractionHierarchiesTest {
         Path p = algo.calcPath(3, 12);
         assertEquals(w.toString(), expDistance, p.getDistance(), 1e-5);
         assertEquals(w.toString(), expNodes, p.calcNodes());
+    }
+
+    @Test
+    public void testCreateAlg() {
+        Graph graph = mock(Graph.class);
+        AlgorithmOptions algorithmOptions = mock(AlgorithmOptions.class);
+        WeightFactors weightFactors = mock(WeightFactors.class);
+        Directory dir = mock(Directory.class);
+        CHGraph chGraph = mock(CHGraphImpl.class);
+
+        when(algorithmOptions.getAlgorithm()).thenReturn(ASTAR_BI);
+        when(algorithmOptions.getHints()).thenReturn(new PMap());
+        when(algorithmOptions.getWeightFactors()).thenReturn(weightFactors);
+        final PrepareContractionHierarchies prepareContractionHierarchies = new PrepareContractionHierarchies(dir, null, chGraph, mock(WeightingWithPenalties.class), TraversalMode.NODE_BASED);
+
+        final RoutingAlgorithm algo = prepareContractionHierarchies.createAlgo(graph, algorithmOptions);
+        assertTrue(((AStarBidirectionCH)algo).getWeighting() instanceof FactoredWeightings);
     }
 
 }
