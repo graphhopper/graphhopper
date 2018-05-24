@@ -54,7 +54,6 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private boolean instructions = true;
     private boolean calcPoints = true;
     private boolean elevation = false;
-    private boolean turnDescription = true;
     private String optimize = "false";
     private final Set<String> ignoreSet;
 
@@ -103,10 +102,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
         return downloader;
     }
 
-    PathWrapper createPathWrapper(JsonNode path,
-                                  boolean tmpCalcPoints, boolean tmpInstructions,
-                                  boolean tmpElevation, boolean turnDescription,
-                                  boolean tmpCalcDetails) {
+    PathWrapper createPathWrapper(JsonNode path, boolean tmpElevation, boolean turnDescription) {
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.addErrors(readErrors(path));
         if (pathWrapper.hasErrors())
@@ -140,12 +136,12 @@ public class GraphHopperWeb implements GraphHopperAPI {
             }
         }
 
-        if (tmpCalcPoints) {
+        if (path.has("points")) {
             String pointStr = path.get("points").asText();
             PointList pointList = WebHelper.decodePolyline(pointStr, 100, tmpElevation);
             pathWrapper.setPoints(pointList);
 
-            if (tmpInstructions) {
+            if (path.has("instructions")) {
                 JsonNode instrArr = path.get("instructions");
 
                 InstructionList il = new InstructionList(null);
@@ -218,7 +214,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
                 pathWrapper.setInstructions(il);
             }
 
-            if (tmpCalcDetails) {
+            if (path.has("details")) {
                 JsonNode details = path.get("details");
                 Map<String, List<PathDetail>> pathDetails = new HashMap<>(details.size());
                 Iterator<Map.Entry<String, JsonNode>> detailIterator = details.fields();
@@ -367,13 +363,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
             JsonNode paths = json.get("paths");
 
-            boolean tmpInstructions = request.getHints().getBool("instructions", instructions);
-            boolean tmpCalcPoints = request.getHints().getBool("calc_points", calcPoints);
             boolean tmpElevation = request.getHints().getBool("elevation", elevation);
-            boolean tmpTurnDescription = request.getHints().getBool("turn_description", turnDescription);
+            boolean tmpTurnDescription = request.getHints().getBool("turn_description", true);
 
             for (JsonNode path : paths) {
-                PathWrapper altRsp = createPathWrapper(path, tmpCalcPoints, tmpInstructions, tmpElevation, tmpTurnDescription, !request.getPathDetails().isEmpty());
+                PathWrapper altRsp = createPathWrapper(path, tmpElevation, tmpTurnDescription);
                 res.add(altRsp);
             }
 
