@@ -78,8 +78,8 @@
         <module>reader-gtfs</module>
         <module>reader-json</module>
         <module>tools</module>
-        <module>dw-bundle</module>
-        <module>shared</module>
+        <module>web-bundle</module>
+        <module>api</module>
         <module>web</module>
         <module>client-hc</module>
     </modules>

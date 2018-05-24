@@ -36,7 +36,7 @@
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>shared</artifactId>
+            <artifactId>graphhopper-api</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>

@@ -22,7 +22,7 @@
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>dw-bundle</artifactId>
+            <artifactId>graphhopper-web-bundle</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 

@@ -4,10 +4,10 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
-    <artifactId>shared</artifactId>
+    <artifactId>graphhopper-api</artifactId>
     <packaging>jar</packaging>
     <version>0.11-SNAPSHOT</version>
-    <name>GraphHopper Dropwizard Bundle</name>
+    <name>GraphHopper API</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
 
     <parent>
