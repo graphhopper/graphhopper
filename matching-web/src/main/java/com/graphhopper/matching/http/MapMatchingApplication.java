@@ -1,7 +1,6 @@
 package com.graphhopper.matching.http;
 
 import com.graphhopper.http.GraphHopperBundle;
-import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.matching.cli.GetBoundsCommand;
 import com.graphhopper.matching.cli.ImportCommand;
 import com.graphhopper.matching.cli.MatchCommand;
@@ -11,14 +10,14 @@ import io.dropwizard.bundles.assets.ConfiguredAssetsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
-public class MapMatchingApplication extends Application<GraphHopperServerConfiguration> {
+public class MapMatchingApplication extends Application<MapMatchingServerConfiguration> {
 
     public static void main(String[] args) throws Exception {
         new MapMatchingApplication().run(args);
     }
 
     @Override
-    public void initialize(Bootstrap<GraphHopperServerConfiguration> bootstrap) {
+    public void initialize(Bootstrap<MapMatchingServerConfiguration> bootstrap) {
         bootstrap.addBundle(new GraphHopperBundle());
         bootstrap.addCommand(new ImportCommand());
         bootstrap.addCommand(new MatchCommand());
@@ -28,7 +27,7 @@ public class MapMatchingApplication extends Application<GraphHopperServerConfigu
     }
 
     @Override
-    public void run(GraphHopperServerConfiguration graphHopperServerConfiguration, Environment environment) {
+    public void run(MapMatchingServerConfiguration graphHopperServerConfiguration, Environment environment) {
         environment.jersey().register(MapMatchingResource.class);
         environment.jersey().register(new RootResource());
     }

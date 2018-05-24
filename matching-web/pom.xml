@@ -24,7 +24,7 @@
         </dependency>
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-web</artifactId>
+            <artifactId>graphhopper-web-bundle</artifactId>
             <version>${gh.version}</version>
         </dependency>
         <dependency>
