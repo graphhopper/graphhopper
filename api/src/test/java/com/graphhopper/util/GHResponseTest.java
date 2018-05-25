@@ -15,11 +15,27 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.shapes;
+package com.graphhopper.util;
 
-/**
- * @author Peter Karich
- */
-public class CoordTrigTest {
+import com.graphhopper.GHResponse;
+import com.graphhopper.PathWrapper;
+import org.junit.Assert;
+import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
+public class GHResponseTest {
+    @Test
+    public void testToString() throws Exception {
+        Assert.assertEquals("no paths", new GHResponse().toString());
+    }
+
+    @Test
+    public void testHasNoErrorIfEmpty() throws Exception {
+        assertFalse(new GHResponse().hasErrors());
+        GHResponse rsp = new GHResponse();
+        rsp.add(new PathWrapper());
+        assertFalse(rsp.hasErrors());
+    }
 }

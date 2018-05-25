@@ -19,6 +19,7 @@ package com.graphhopper.http;
 
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
+import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -30,18 +31,18 @@ public class WebHelperTest {
     @Test
     public void testDecode() throws Exception {
         PointList list = WebHelper.decodePolyline("_p~iF~ps|U", 1, false);
-        assertEquals(Helper.createPointList(38.5, -120.2), list);
+        Assert.assertEquals(Helper.createPointList(38.5, -120.2), list);
 
         list = WebHelper.decodePolyline("_p~iF~ps|U_ulLnnqC_mqNvxq`@", 3, false);
-        assertEquals(Helper.createPointList(38.5, -120.2, 40.7, -120.95, 43.252, -126.453), list);
+        Assert.assertEquals(Helper.createPointList(38.5, -120.2, 40.7, -120.95, 43.252, -126.453), list);
     }
 
     @Test
     public void testEncode() throws Exception {
-        assertEquals("_p~iF~ps|U", WebHelper.encodePolyline(
+        Assert.assertEquals("_p~iF~ps|U", WebHelper.encodePolyline(
                 Helper.createPointList(38.5, -120.2)));
 
-        assertEquals("_p~iF~ps|U_ulLnnqC_mqNvxq`@", WebHelper.encodePolyline(
+        Assert.assertEquals("_p~iF~ps|U_ulLnnqC_mqNvxq`@", WebHelper.encodePolyline(
                 Helper.createPointList(38.5, -120.2, 40.7, -120.95, 43.252, -126.453)));
     }
 
@@ -50,27 +51,27 @@ public class WebHelperTest {
         PointList list = Helper.createPointList(38.5, -120.2, 43.252, -126.453,
                 40.7, -120.95, 50.3139, 10.61279, 50.04303, 9.49768);
         String str = WebHelper.encodePolyline(list);
-        assertEquals(list, WebHelper.decodePolyline(str, list.getSize(), false));
+        Assert.assertEquals(list, WebHelper.decodePolyline(str, list.getSize(), false));
 
         list = Helper.createPointList(38.5, -120.2, 43.252, -126.453,
                 40.7, -120.95, 40.70001, -120.95001);
         str = WebHelper.encodePolyline(list);
-        assertEquals(list, WebHelper.decodePolyline(str, list.getSize(), false));
+        Assert.assertEquals(list, WebHelper.decodePolyline(str, list.getSize(), false));
     }
 
     @Test
     public void testDecode3D() throws Exception {
         PointList list = WebHelper.decodePolyline("_p~iF~ps|Uo}@", 1, true);
-        assertEquals(Helper.createPointList3D(38.5, -120.2, 10), list);
+        Assert.assertEquals(Helper.createPointList3D(38.5, -120.2, 10), list);
 
         list = WebHelper.decodePolyline("_p~iF~ps|Uo}@_ulLnnqC_anF_mqNvxq`@?", 3, true);
-        assertEquals(Helper.createPointList3D(38.5, -120.2, 10, 40.7, -120.95, 1234, 43.252, -126.453, 1234), list);
+        Assert.assertEquals(Helper.createPointList3D(38.5, -120.2, 10, 40.7, -120.95, 1234, 43.252, -126.453, 1234), list);
     }
 
     @Test
     public void testEncode3D() throws Exception {
-        assertEquals("_p~iF~ps|Uo}@", WebHelper.encodePolyline(Helper.createPointList3D(38.5, -120.2, 10)));
-        assertEquals("_p~iF~ps|Uo}@_ulLnnqC_anF_mqNvxq`@?", WebHelper.encodePolyline(
+        Assert.assertEquals("_p~iF~ps|Uo}@", WebHelper.encodePolyline(Helper.createPointList3D(38.5, -120.2, 10)));
+        Assert.assertEquals("_p~iF~ps|Uo}@_ulLnnqC_anF_mqNvxq`@?", WebHelper.encodePolyline(
                 Helper.createPointList3D(38.5, -120.2, 10, 40.7, -120.95, 1234, 43.252, -126.453, 1234)));
     }
 }

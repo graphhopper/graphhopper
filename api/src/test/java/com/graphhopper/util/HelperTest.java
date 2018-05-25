@@ -17,17 +17,9 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.storage.StorableProperties;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -36,15 +28,6 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class HelperTest {
-    @Before
-    public void setUp() {
-        Helper.removeDir(new File("test"));
-    }
-
-    @After
-    public void tearDown() {
-        Helper.removeDir(new File("test"));
-    }
 
     @Test
     public void testCountBitValue() throws Exception {
@@ -55,17 +38,6 @@ public class HelperTest {
         assertEquals(3, Helper.countBitValue(7));
         assertEquals(4, Helper.countBitValue(8));
         assertEquals(5, Helper.countBitValue(20));
-    }
-
-    @Test
-    public void testUnzip() throws Exception {
-        String to = "./target/tmp/test";
-        Helper.removeDir(new File(to));
-        new Unzipper().unzip("./src/test/resources/com/graphhopper/util/test.zip", to, false);
-        assertTrue(new File("./target/tmp/test/file2 bäh").exists());
-        assertTrue(new File("./target/tmp/test/folder1").isDirectory());
-        assertTrue(new File("./target/tmp/test/folder1/folder 3").isDirectory());
-        Helper.removeDir(new File(to));
     }
 
     @Test

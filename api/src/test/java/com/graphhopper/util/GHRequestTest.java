@@ -15,8 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper;
+package com.graphhopper.util;
 
+import com.graphhopper.GHRequest;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
