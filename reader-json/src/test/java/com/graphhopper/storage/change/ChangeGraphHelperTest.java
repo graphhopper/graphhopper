@@ -3,6 +3,7 @@ package com.graphhopper.storage.change;
 import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.json.JsonFeatureConverter;
+import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
@@ -17,6 +18,7 @@ import com.graphhopper.util.Helper;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
@@ -65,8 +67,8 @@ public class ChangeGraphHelperTest {
 
         Reader reader = new InputStreamReader(getClass().getResourceAsStream("overlaydata1.json"), Helper.UTF_CS);
         ChangeGraphHelper instance = new ChangeGraphHelper(graph, locationIndex);
-        JsonFeatureConverter converter = new JsonFeatureConverter(ghson, instance, encodingManager);
-        long updates = converter.applyChanges(reader);
+        JsonFeatureCollection collection = new GHJsonFactory().create().fromJson(reader, JsonFeatureCollection.class);
+        long updates = instance.applyChanges(encodingManager, collection.getFeatures());
         assertEquals(2, updates);
 
         // assert changed speed and access
