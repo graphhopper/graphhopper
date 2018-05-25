@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.storage.StorableProperties;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -89,14 +90,6 @@ public class HelperTest {
         assertEquals(2, Helper.keepIn(2, 1, 4), 1e-2);
         assertEquals(3, Helper.keepIn(2, 3, 4), 1e-2);
         assertEquals(3, Helper.keepIn(-2, 3, 4), 1e-2);
-    }
-
-    @Test
-    public void testLoadProperties() throws IOException {
-        Map<String, String> map = new HashMap<>();
-        Helper.loadProperties(map, new StringReader("blup=test\n blup2 = xy"));
-        assertEquals("test", map.get("blup"));
-        assertEquals("xy", map.get("blup2"));
     }
 
     @Test

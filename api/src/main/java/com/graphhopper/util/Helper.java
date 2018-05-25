@@ -18,8 +18,6 @@
 package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.BBox;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -46,7 +44,6 @@ public class Helper {
     public static final Charset UTF_CS = Charset.forName("UTF-8");
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;
-    private static final Logger LOGGER = LoggerFactory.getLogger(Helper.class);
     // +- 180 and +-90 => let use use 400
     private static final float DEGREE_FACTOR = Integer.MAX_VALUE / 400f;
     // milli meter is a bit extreme but we have integers
@@ -90,34 +87,6 @@ public class Helper {
             counter++;
         }
         return counter++;
-    }
-
-    public static void loadProperties(Map<String, String> map, Reader tmpReader) throws IOException {
-        BufferedReader reader = new BufferedReader(tmpReader);
-        String line;
-        try {
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("//") || line.startsWith("#")) {
-                    continue;
-                }
-
-                if (Helper.isEmpty(line)) {
-                    continue;
-                }
-
-                int index = line.indexOf("=");
-                if (index < 0) {
-                    LOGGER.warn("Skipping configuration at line:" + line);
-                    continue;
-                }
-
-                String field = line.substring(0, index);
-                String value = line.substring(index + 1);
-                map.put(field.trim(), value.trim());
-            }
-        } finally {
-            reader.close();
-        }
     }
 
     public static void saveProperties(Map<String, String> map, Writer tmpWriter) throws IOException {
