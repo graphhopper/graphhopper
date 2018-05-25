@@ -17,13 +17,14 @@
  */
 package com.graphhopper.json.geo;
 
-import com.graphhopper.json.GHJson;
-import com.graphhopper.json.GHJsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.graphhopper.util.ObjectMapperFactory;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.vividsolutions.jts.geom.LineString;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Map;
@@ -34,11 +35,12 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class JsonFeatureCollectionTest {
-    private final GHJson ghson = new GHJsonFactory().create();
+    private final ObjectMapper objectMapper = ObjectMapperFactory.create();
 
     @Test
-    public void testDeserialization() {
-        JsonFeatureCollection data = getJson("geojson1.json");
+    public void testDeserialization() throws IOException {
+        Reader reader = new InputStreamReader(getClass().getResourceAsStream("geojson1.json"), Helper.UTF_CS);
+        JsonFeatureCollection data = objectMapper.readValue(reader, JsonFeatureCollection.class);
         assertEquals(3, data.getFeatures().size());
 
         JsonFeature f1 = data.getFeatures().get(0);
@@ -61,8 +63,4 @@ public class JsonFeatureCollectionTest {
         assertEquals("a", ((Map) f3.getProperty("prop1")).get("test"));
     }
 
-    JsonFeatureCollection getJson(String name) {
-        Reader reader = new InputStreamReader(getClass().getResourceAsStream(name), Helper.UTF_CS);
-        return ghson.fromJson(reader, JsonFeatureCollection.class);
-    }
 }

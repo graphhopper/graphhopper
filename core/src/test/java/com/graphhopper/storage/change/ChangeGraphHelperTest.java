@@ -1,8 +1,6 @@
 package com.graphhopper.storage.change;
 
-import com.graphhopper.json.GHJson;
-import com.graphhopper.json.GHJsonFactory;
-import com.graphhopper.json.JsonFeatureConverter;
+import com.graphhopper.util.ObjectMapperFactory;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -18,7 +16,7 @@ import com.graphhopper.util.Helper;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
@@ -30,17 +28,15 @@ import static org.junit.Assert.*;
 public class ChangeGraphHelperTest {
     private EncodingManager encodingManager;
     private GraphHopperStorage graph;
-    private GHJson ghson;
 
     @Before
     public void setUp() {
         encodingManager = new EncodingManager("car");
         graph = new GraphBuilder(encodingManager).create();
-        ghson = new GHJsonFactory().create();
     }
 
     @Test
-    public void testApplyChanges() {
+    public void testApplyChanges() throws IOException {
         // 0-1-2
         // | |
         // 3-4
@@ -67,7 +63,7 @@ public class ChangeGraphHelperTest {
 
         Reader reader = new InputStreamReader(getClass().getResourceAsStream("overlaydata1.json"), Helper.UTF_CS);
         ChangeGraphHelper instance = new ChangeGraphHelper(graph, locationIndex);
-        JsonFeatureCollection collection = new GHJsonFactory().create().fromJson(reader, JsonFeatureCollection.class);
+        JsonFeatureCollection collection = ObjectMapperFactory.create().readValue(reader, JsonFeatureCollection.class);
         long updates = instance.applyChanges(encodingManager, collection.getFeatures());
         assertEquals(2, updates);
 

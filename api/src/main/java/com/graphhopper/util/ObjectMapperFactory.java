@@ -15,20 +15,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.json;
+package com.graphhopper.util;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-/**
- * This class wraps the creation of the specific GHJson implementation.
- *
- * @author Peter Karich
- */
-public class GHJsonFactory {
-    public GHJson create() {
+public class ObjectMapperFactory {
+    public static ObjectMapper create() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
-        return new GHJsonJackson(objectMapper);
+        return objectMapper;
     }
 }
