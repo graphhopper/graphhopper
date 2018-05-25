@@ -190,10 +190,6 @@
                         <bundledSignature>jdk-non-portable</bundledSignature>
                     </bundledSignatures>
                     <excludes>
-                        <!-- Excluded because of "Helper7#getBeanMemInfo" -->
-                        <exclude>
-                            com/graphhopper/util/Helper7.class
-                        </exclude>
                         <exclude>
                             com/graphhopper/storage/UnsafeDataAccess.class
                         </exclude>

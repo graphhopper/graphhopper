@@ -30,11 +30,8 @@ import java.util.*;
 import java.util.Map.Entry;
 
 /**
- * Several utility classes which are compatible with Java6 on Android.
- * <p>
  *
  * @author Peter Karich
- * @see Helper7 for none-Android compatible methods.
  */
 public class Helper {
     public static final DistanceCalc DIST_EARTH = new DistanceCalcEarth();
