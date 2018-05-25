@@ -193,7 +193,7 @@ public class StorableProperties implements Storable<StorableProperties> {
         return da.toString();
     }
 
-    public static void loadProperties(Map<String, String> map, Reader tmpReader) throws IOException {
+    static void loadProperties(Map<String, String> map, Reader tmpReader) throws IOException {
         BufferedReader reader = new BufferedReader(tmpReader);
         String line;
         try {
