@@ -4,10 +4,10 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
-    <artifactId>graphhopper-map-matching-web</artifactId>
+    <artifactId>graphhopper-map-matching-web-bundle</artifactId>
     <packaging>jar</packaging>
     <version>0.11-SNAPSHOT</version>
-    <name>GraphHopper Map Matching Web</name>
+    <name>GraphHopper Map Matching Dropwizard Bundle</name>
     <description>Export GraphHopper Map Matching in a web-based application</description>
         
     <parent>
@@ -18,30 +18,14 @@
     
     <dependencies>
         <dependency>
-            <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-core</artifactId>
-            <version>1.3.2</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-map-matching-core</artifactId>
             <version>${project.parent.version}</version>            
         </dependency>
         <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-web-bundle</artifactId>
-            <version>${gh.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-map-matching-web-bundle</artifactId>
-            <version>${gh.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.dropwizard-bundles</groupId>
-            <artifactId>dropwizard-configurable-assets-bundle</artifactId>
-            <version>1.2.2</version>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-core</artifactId>
+            <version>1.3.2</version>
         </dependency>
 
         <dependency>
