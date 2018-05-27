@@ -23,11 +23,9 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.matching.util.HmmProbabilities;
 import com.graphhopper.matching.util.TimeStep;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
+import com.graphhopper.routing.ch.PreparationWeighting;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
@@ -71,19 +69,20 @@ public class MapMatching {
     private final LocationIndexTree locationIndex;
     private double measurementErrorSigma = 50.0;
     private double transitionProbabilityBeta = 2.0;
+    private final int maxVisitedNodes;
     private final int nodeCount;
     private DistanceCalc distanceCalc = new DistancePlaneProjection();
-    private final RoutingAlgorithmFactory algoFactory;
-    private final AlgorithmOptions algoOptions;
+    private final Weighting weighting;
+    private final boolean ch;
 
-    public MapMatching(GraphHopper hopper, AlgorithmOptions algoOptions) {
+    public MapMatching(GraphHopper graphHopper, AlgorithmOptions algoOptions) {
         // Convert heading penalty [s] into U-turn penalty [m]
         final double PENALTY_CONVERSION_VELOCITY = 5;  // [m/s]
         final double headingTimePenalty = algoOptions.getHints().getDouble(
                 Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY);
         uTurnDistancePenalty = headingTimePenalty * PENALTY_CONVERSION_VELOCITY;
 
-        this.locationIndex = (LocationIndexTree) hopper.getLocationIndex();
+        this.locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
 
         // create hints from algoOptions, so we can create the algorithm factory        
         HintsMap hints = new HintsMap();
@@ -95,7 +94,7 @@ public class MapMatching {
         if (!hints.has(Parameters.CH.DISABLE)) {
             hints.put(Parameters.CH.DISABLE, true);
 
-            if (!hopper.getCHFactoryDecorator().isDisablingAllowed())
+            if (!graphHopper.getCHFactoryDecorator().isDisablingAllowed())
                 throw new IllegalArgumentException("Cannot disable CH. Not allowed on server side");
         }
 
@@ -106,39 +105,22 @@ public class MapMatching {
             if (algoOptions.hasWeighting()) {
                 vehicle = algoOptions.getWeighting().getFlagEncoder().toString();
             } else {
-                vehicle = hopper.getEncodingManager().fetchEdgeEncoders().get(0).toString();
+                vehicle = graphHopper.getEncodingManager().fetchEdgeEncoders().get(0).toString();
             }
             hints.setVehicle(vehicle);
         }
-
-        if (!hopper.getEncodingManager().supports(vehicle)) {
-            throw new IllegalArgumentException("Vehicle " + vehicle + " unsupported. "
-                    + "Supported are: " + hopper.getEncodingManager());
-        }
-
-        algoFactory = hopper.getAlgorithmFactory(hints);
-
-        Weighting weighting;
-        CHAlgoFactoryDecorator chFactoryDecorator = hopper.getCHFactoryDecorator();
-        boolean forceFlexibleMode = hints.getBool(Parameters.CH.DISABLE, false);
-        if (chFactoryDecorator.isEnabled() && !forceFlexibleMode) {
-            if (!(algoFactory instanceof PrepareContractionHierarchies)) {
-                throw new IllegalStateException("Although CH was enabled a non-CH algorithm "
-                        + "factory was returned " + algoFactory);
-            }
-
-            weighting = ((PrepareContractionHierarchies) algoFactory).getWeighting();
-            this.routingGraph = hopper.getGraphHopperStorage().getGraph(CHGraph.class, weighting);
+        RoutingAlgorithmFactory routingAlgorithmFactory = graphHopper.getAlgorithmFactory(hints);
+        if (routingAlgorithmFactory instanceof PrepareContractionHierarchies) {
+            ch = true;
+            weighting = ((PrepareContractionHierarchies) routingAlgorithmFactory).getWeighting();
+            routingGraph = graphHopper.getGraphHopperStorage().getGraph(CHGraph.class, weighting);
         } else {
-            weighting = algoOptions.hasWeighting()
-                    ? algoOptions.getWeighting()
-                    : new FastestWeighting(hopper.getEncodingManager().getEncoder(vehicle),
-                    algoOptions.getHints());
-            this.routingGraph = hopper.getGraphHopperStorage();
+            ch = false;
+            weighting = new FastestWeighting(graphHopper.getEncodingManager().getEncoder(vehicle), algoOptions.getHints());
+            routingGraph = graphHopper.getGraphHopperStorage();
         }
-
-        this.algoOptions = AlgorithmOptions.start(algoOptions).weighting(weighting).build();
         this.nodeCount = routingGraph.getNodes();
+        this.maxVisitedNodes = algoOptions.getMaxVisitedNodes();
     }
 
     public void setDistanceCalc(DistanceCalc distanceCalc) {
@@ -173,7 +155,7 @@ public class MapMatching {
         List<GPXEntry> filteredGPXEntries = filterGPXEntries(gpxList);
 
         // now find each of the entries in the graph:
-        List<Collection<QueryResult>> queriesPerEntry = lookupGPXEntries(filteredGPXEntries, new DefaultEdgeFilter(algoOptions.getWeighting().getFlagEncoder()));
+        List<Collection<QueryResult>> queriesPerEntry = lookupGPXEntries(filteredGPXEntries, new DefaultEdgeFilter(weighting.getFlagEncoder()));
 
         // Add virtual nodes and edges to the graph so that candidates on edges can be represented
         // by virtual nodes.
@@ -230,7 +212,7 @@ public class MapMatching {
             i++;
         }
 
-        final EdgeExplorer explorer = queryGraph.createEdgeExplorer(new DefaultEdgeFilter(algoOptions.getWeighting().getFlagEncoder()));
+        final EdgeExplorer explorer = queryGraph.createEdgeExplorer(new DefaultEdgeFilter(weighting.getFlagEncoder()));
         final Map<String, EdgeIteratorState> virtualEdgesMap = createVirtualEdgesMap(queriesPerEntry, explorer);
         MatchResult matchResult = computeMatchResult(seq, virtualEdgesMap, gpxList, queryGraph);
         logger.debug("=============== Matched real edges =============== ");
@@ -468,10 +450,17 @@ public class MapMatching {
                             to.getOutgoingVirtualEdge().getEdge());
                 }
 
-                // Need to create a new routing algorithm for every routing.
-                RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOptions);
+                RoutingAlgorithm router;
+                if (ch) {
+                    router = new DijkstraBidirectionCH(queryGraph, new PreparationWeighting(weighting), TraversalMode.NODE_BASED);
+                    ((DijkstraBidirectionCH) router).setEdgeFilter(new LevelEdgeFilter((CHGraph) routingGraph));
+                    router.setMaxVisitedNodes(maxVisitedNodes);
+                } else {
+                    router = new DijkstraBidirectionRef(queryGraph, weighting, TraversalMode.NODE_BASED);
+                    router.setMaxVisitedNodes(maxVisitedNodes);
+                }
 
-                final Path path = algo.calcPath(from.getQueryResult().getClosestNode(),
+                final Path path = router.calcPath(from.getQueryResult().getClosestNode(),
                         to.getQueryResult().getClosestNode());
 
                 if (path.isFound()) {
@@ -570,7 +559,7 @@ public class MapMatching {
                 edges.addAll(state.transitionDescriptor.calcEdges());
             }
         }
-        Path mergedPath = new MapMatchedPath(queryGraph.getBaseGraph(), algoOptions.getWeighting(), edges);
+        Path mergedPath = new MapMatchedPath(queryGraph.getBaseGraph(), weighting, edges);
         matchResult.setMergedPath(mergedPath);
         matchResult.setMatchMillis(time);
         matchResult.setMatchLength(distance);
