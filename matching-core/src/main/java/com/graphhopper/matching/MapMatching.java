@@ -452,11 +452,21 @@ public class MapMatching {
 
                 RoutingAlgorithm router;
                 if (ch) {
-                    router = new DijkstraBidirectionCH(queryGraph, new PreparationWeighting(weighting), TraversalMode.NODE_BASED);
+                    router = new DijkstraBidirectionCH(queryGraph, new PreparationWeighting(weighting), TraversalMode.NODE_BASED) {
+                        @Override
+                        protected void initCollections(int size) {
+                            super.initCollections(50);
+                        }
+                    };
                     ((DijkstraBidirectionCH) router).setEdgeFilter(new LevelEdgeFilter((CHGraph) routingGraph));
                     router.setMaxVisitedNodes(maxVisitedNodes);
                 } else {
-                    router = new DijkstraBidirectionRef(queryGraph, weighting, TraversalMode.NODE_BASED);
+                    router = new DijkstraBidirectionRef(queryGraph, weighting, TraversalMode.NODE_BASED) {
+                        @Override
+                        protected void initCollections(int size) {
+                            super.initCollections(50);
+                        }
+                    };
                     router.setMaxVisitedNodes(maxVisitedNodes);
                 }
 
