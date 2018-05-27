@@ -100,6 +100,13 @@ public class Measurement {
             }
 
             @Override
+            protected void loadOrPrepareLM() {
+                StopWatch sw = new StopWatch().start();
+                super.loadOrPrepareLM();
+                put(Parameters.Landmark.PREPARE + "time", sw.stop().getTime());
+            }
+
+            @Override
             protected DataReader importData() throws IOException {
                 StopWatch sw = new StopWatch().start();
                 DataReader dr = super.importData();
