@@ -109,14 +109,17 @@ public class MapMatching {
             }
             hints.setVehicle(vehicle);
         }
+        weighting = new FastestWeighting(graphHopper.getEncodingManager().getEncoder(vehicle), algoOptions.getHints());
         RoutingAlgorithmFactory routingAlgorithmFactory = graphHopper.getAlgorithmFactory(hints);
         if (routingAlgorithmFactory instanceof PrepareContractionHierarchies) {
             ch = true;
-            weighting = ((PrepareContractionHierarchies) routingAlgorithmFactory).getWeighting();
-            routingGraph = graphHopper.getGraphHopperStorage().getGraph(CHGraph.class, weighting);
+            // I want to use my own instance of FastestWeighting because it uses its own U-Turn-penalty,
+            // but I have to pass a _different_ instance of FastestWeighting to getGraph so it gives me the graph,
+            // (even though this is non-dangerous since it's only about virtual (split) edges (nothing to do with shortcuts),
+            // but it's _still_ a different one than the one which I have to pass to the router itself (see below).
+            routingGraph = graphHopper.getGraphHopperStorage().getGraph(CHGraph.class, ((PrepareContractionHierarchies) routingAlgorithmFactory).getWeighting());
         } else {
             ch = false;
-            weighting = new FastestWeighting(graphHopper.getEncodingManager().getEncoder(vehicle), algoOptions.getHints());
             routingGraph = graphHopper.getGraphHopperStorage();
         }
         this.nodeCount = routingGraph.getNodes();

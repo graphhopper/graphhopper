@@ -279,12 +279,7 @@ public class MapMatchingTest {
      */
     @Test
     public void testUTurns() {
-        // This test requires changing the default heading penalty, which does not work for CH.
-        if (parameterName.equals("CH")) {
-            return;
-        }
-
-        final AlgorithmOptions algoOptions = AlgorithmOptions.start()
+        final AlgorithmOptions algoOptions = AlgorithmOptions.start(this.algoOptions)
                 // Reduce penalty to allow U-turns
                 .hints(new PMap().put(Parameters.Routing.HEADING_PENALTY, 50))
                 .build();
