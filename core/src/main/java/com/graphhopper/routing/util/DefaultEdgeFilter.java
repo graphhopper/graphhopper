@@ -27,14 +27,7 @@ public class DefaultEdgeFilter implements EdgeFilter {
     private final boolean fwd;
     private FlagEncoder encoder;
 
-    /**
-     * Creates an edges filter which accepts both direction of the specified vehicle.
-     */
-    public DefaultEdgeFilter(FlagEncoder encoder) {
-        this(encoder, true, true);
-    }
-
-    public DefaultEdgeFilter(FlagEncoder encoder, boolean bwd, boolean fwd) {
+    protected DefaultEdgeFilter(FlagEncoder encoder, boolean bwd, boolean fwd) {
         this.encoder = encoder;
         this.bwd = bwd;
         this.fwd = fwd;
@@ -48,6 +41,11 @@ public class DefaultEdgeFilter implements EdgeFilter {
         return new DefaultEdgeFilter(flagEncoder, true, false);
     }
 
+    /**
+     * Accepts all edges that are either forward or backward for the given flag encoder.
+     * Edges where neither one of the flags is enabled will still not be accepted. If you need to retrieve all edges
+     * regardless of their encoding use {@link EdgeFilter#ALL_EDGES} instead.
+     */
     public static DefaultEdgeFilter allEdges(FlagEncoder flagEncoder) {
         return new DefaultEdgeFilter(flagEncoder, true, true);
     }

@@ -288,7 +288,7 @@ public class PrepareRoutingSubnetworks {
         FlagEncoder encoder;
 
         public PrepEdgeFilter(FlagEncoder encoder) {
-            super(encoder);
+            super(encoder, true, true);
             this.encoder = encoder;
         }
 

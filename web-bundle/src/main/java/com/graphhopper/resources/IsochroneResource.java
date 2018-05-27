@@ -69,7 +69,7 @@ public class IsochroneResource {
             throwArgExc("vehicle not supported:" + vehicle);
 
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
+        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();
         QueryResult qr = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
         if (!qr.isValid())
