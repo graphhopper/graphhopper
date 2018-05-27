@@ -18,7 +18,7 @@ script:
 
 after_success:
   # deploy snapshot artifacts to sonatype
-  - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+  - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ]; then
         mvn deploy --settings mvn-settings.xml -DskipTests=true -B;
     else
         echo "Not deploying artifacts for $TRAVIS_BRANCH";
