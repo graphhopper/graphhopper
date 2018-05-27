@@ -325,7 +325,7 @@ public class OSMReaderTest {
         assertEquals(GHUtility.asSet(n10, n30, n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n20)));
         assertEquals(GHUtility.asSet(n30, n40), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n20)));
 
-        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
+        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(footEncoder));
         assertEquals(GHUtility.asSet(n20, n50), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n10)));
         assertEquals(GHUtility.asSet(n20, n50), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n30)));
         assertEquals(GHUtility.asSet(n10, n30), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n20)));
@@ -847,7 +847,7 @@ public class OSMReaderTest {
                 throw new RuntimeException(e);
             }
             osmReader.readGraph();
-            carOutExplorer = getGraphHopperStorage().createEdgeExplorer(new DefaultEdgeFilter(carEncoder, false, true));
+            carOutExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
             carAllExplorer = getGraphHopperStorage().createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, true));
             return osmReader;
         }

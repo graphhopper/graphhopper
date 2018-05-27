@@ -40,6 +40,18 @@ public class DefaultEdgeFilter implements EdgeFilter {
         this.fwd = fwd;
     }
 
+    public static DefaultEdgeFilter outEdges(FlagEncoder flagEncoder) {
+        return new DefaultEdgeFilter(flagEncoder, false, true);
+    }
+
+    public static DefaultEdgeFilter inEdges(FlagEncoder flagEncoder) {
+        return new DefaultEdgeFilter(flagEncoder, true, false);
+    }
+
+    public static DefaultEdgeFilter allEdges(FlagEncoder flagEncoder) {
+        return new DefaultEdgeFilter(flagEncoder, true, true);
+    }
+
     @Override
     public final boolean accept(EdgeIteratorState iter) {
         return fwd && iter.isForward(encoder) || bwd && iter.isBackward(encoder);

@@ -283,7 +283,7 @@ public class PrepareRoutingSubnetworksTest {
         GraphHopperStorage g = createSubnetworkTestStorage();
 
         // Requires a single vehicle type, otherwise we throw.
-        final EdgeFilter filter = new DefaultEdgeFilter(carFlagEncoder, false, true);
+        final EdgeFilter filter = DefaultEdgeFilter.outEdges(carFlagEncoder);
         TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(g, filter, false);
 
         List<IntArrayList> components = tarjan.findComponents();
