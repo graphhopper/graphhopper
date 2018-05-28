@@ -38,7 +38,7 @@ public class CHEdgeIteratorTest {
         CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = new EncodingManager(carFlagEncoder);
         FastestWeighting weighting = new FastestWeighting(carFlagEncoder);
-        EdgeFilter carOutFilter = new DefaultEdgeFilter(carFlagEncoder, false, true);
+        EdgeFilter carOutFilter = DefaultEdgeFilter.outEdges(carFlagEncoder);
         GraphHopperStorage ghStorage = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
         CHGraph g = ghStorage.getGraph(CHGraph.class, weighting);
         g.edge(0, 1).setDistance(12).setFlags(carFlagEncoder.setProperties(10, true, true));

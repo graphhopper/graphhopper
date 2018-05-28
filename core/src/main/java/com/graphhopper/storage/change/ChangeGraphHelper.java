@@ -91,7 +91,7 @@ public class ChangeGraphHelper {
 
     private long applyChange(JsonFeature jsonFeature, FlagEncoder encoder) {
         long updates = 0;
-        EdgeFilter filter = new DefaultEdgeFilter(encoder);
+        EdgeFilter filter = DefaultEdgeFilter.allEdges(encoder);
         GHIntHashSet edges = new GHIntHashSet();
         if (jsonFeature.hasGeometry()) {
             graphBrowser.fillEdgeIDs(edges, jsonFeature.getGeometry(), filter);

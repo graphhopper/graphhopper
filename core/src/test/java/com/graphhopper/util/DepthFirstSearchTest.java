@@ -68,7 +68,7 @@ public class DepthFirstSearchTest {
         g.edge(5, 6, 1, false);
         g.edge(6, 4, 1, false);
 
-        dfs.start(g.createEdgeExplorer(new DefaultEdgeFilter(fe, false, true)), 1);
+        dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(fe)), 1);
 
         assertTrue(counter > 0);
         assertEquals("[1, 2, 3, 4, 5, 6]", list.toString());
@@ -96,7 +96,7 @@ public class DepthFirstSearchTest {
         g.edge(2, 3, 1, false);
         g.edge(4, 3, 1, true);
 
-        dfs.start(g.createEdgeExplorer(new DefaultEdgeFilter(fe, false, true)), 1);
+        dfs.start(g.createEdgeExplorer(DefaultEdgeFilter.outEdges(fe)), 1);
 
         assertTrue(counter > 0);
         assertEquals("[1, 2, 3, 4]", list.toString());

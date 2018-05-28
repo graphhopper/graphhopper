@@ -88,8 +88,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevNode = -1;
         prevInRoundabout = false;
         prevName = null;
-        outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(this.encoder, false, true));
-        crossingExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, true));
+        outEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+        crossingExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder));
     }
 
 

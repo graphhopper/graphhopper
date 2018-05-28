@@ -38,7 +38,7 @@ import static org.junit.Assert.assertEquals;
 public class PathBidirRefTest {
     private final EncodingManager encodingManager = new EncodingManager("car");
     private FlagEncoder carEncoder = encodingManager.getEncoder("car");
-    private EdgeFilter carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
+    private EdgeFilter carOutEdges = DefaultEdgeFilter.outEdges(carEncoder);
 
     Graph createGraph() {
         return new GraphBuilder(encodingManager).create();
@@ -72,7 +72,7 @@ public class PathBidirRefTest {
         pw.sptEntry = new SPTEntry(iter.getEdge(), 2, 10);
         pw.sptEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);
 
-        explorer = g.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, false));
+        explorer = g.createEdgeExplorer(DefaultEdgeFilter.inEdges(carEncoder));
         iter = explorer.setBaseNode(3);
         iter.next();
         pw.edgeTo = new SPTEntry(iter.getEdge(), 2, 20);

@@ -73,8 +73,8 @@ class NodeContractor {
         maxEdgesCount = ghStorage.getAllEdges().length();
         ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
-        vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
-        vehicleOutExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
+        vehicleInExplorer = prepareGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(prepareFlagEncoder));
+        vehicleOutExplorer = prepareGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(prepareFlagEncoder));
         prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareWeighting, traversalMode);
     }
 

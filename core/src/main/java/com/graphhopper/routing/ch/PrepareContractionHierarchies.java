@@ -211,7 +211,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private void initFromGraph() {
         ghStorage.freeze();
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
-        final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
+        final EdgeFilter allFilter = DefaultEdgeFilter.allEdges(prepareFlagEncoder);
         // filter by vehicle and level number
         final EdgeFilter accessWithLevelFilter = new LevelEdgeFilter(prepareGraph) {
             @Override
