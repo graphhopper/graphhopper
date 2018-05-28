@@ -242,7 +242,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         byte[] subnetworks = new byte[graph.getNodes()];
         Arrays.fill(subnetworks, (byte) UNSET_SUBNETWORK);
-        EdgeFilter tarjanFilter = new DefaultEdgeFilter(encoder, false, true);
+        EdgeFilter tarjanFilter = DefaultEdgeFilter.outEdges(encoder);
         IntHashSet blockedEdges = new IntHashSet();
 
         // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
@@ -361,10 +361,10 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         } else {
             // 1a) pick landmarks via special weighting for a better geographical spreading
             Weighting initWeighting = lmSelectionWeighting;
-            LandmarkExplorer explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode);
-            explorer.initFrom(startNode, 0);
+            LandmarkExplorer explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, true);
+            explorer.setStartNode(startNode);
             explorer.setFilter(blockedEdges, true, true);
-            explorer.runAlgo(true);
+            explorer.runAlgo();
 
             if (explorer.getFromCount() < minimumNodes) {
                 // too small subnetworks are initialized with special id==0
@@ -378,13 +378,13 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 if (Thread.currentThread().isInterrupted()) {
                     throw new RuntimeException("Thread was interrupted");
                 }
-                explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode);
+                explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, true);
                 explorer.setFilter(blockedEdges, true, true);
                 // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
                 for (int j = 0; j < lmIdx + 1; j++) {
-                    explorer.initFrom(tmpLandmarkNodeIds[j], 0);
+                    explorer.setStartNode(tmpLandmarkNodeIds[j]);
                 }
-                explorer.runAlgo(true);
+                explorer.runAlgo();
                 tmpLandmarkNodeIds[lmIdx + 1] = explorer.getLastNode();
                 if (logDetails && lmIdx % logOffset == 0)
                     LOGGER.info("Finding landmarks [" + weighting + "] in network [" + explorer.getVisitedNodes() + "]. "
@@ -401,10 +401,10 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 throw new RuntimeException("Thread was interrupted");
             }
             int lmNodeId = tmpLandmarkNodeIds[lmIdx];
-            LandmarkExplorer explorer = new LandmarkExplorer(graph, this, weighting, traversalMode);
-            explorer.initFrom(lmNodeId, 0);
+            LandmarkExplorer explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, true);
+            explorer.setStartNode(lmNodeId);
             explorer.setFilter(blockedEdges, false, true);
-            explorer.runAlgo(true);
+            explorer.runAlgo();
             explorer.initLandmarkWeights(lmIdx, lmNodeId, LM_ROW_LENGTH);
 
             // set subnetwork id to all explored nodes, but do this only for the first landmark
@@ -413,10 +413,10 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                     return false;
             }
 
-            explorer = new LandmarkExplorer(graph, this, weighting, traversalMode);
-            explorer.initTo(lmNodeId, 0);
+            explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, false);
+            explorer.setStartNode(lmNodeId);
             explorer.setFilter(blockedEdges, true, false);
-            explorer.runAlgo(false);
+            explorer.runAlgo();
             explorer.initLandmarkWeights(lmIdx, lmNodeId, LM_ROW_LENGTH);
 
             if (lmIdx == 0) {
@@ -746,15 +746,25 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
     /**
      * This class is used to calculate landmark location (equally distributed).
+     * It derives from DijkstraBidirectionRef, but is only used as forward or backward search.
      */
     private static class LandmarkExplorer extends DijkstraBidirectionRef {
         private int lastNode;
+        // todo: rename 'from' to 'reverse' (and flip it) ? 'from' is used in many places for node ids and 'reverse' is mostly used for the direction
         private boolean from;
         private final LandmarkStorage lms;
 
-        public LandmarkExplorer(Graph g, LandmarkStorage lms, Weighting weighting, TraversalMode tMode) {
+        public LandmarkExplorer(Graph g, LandmarkStorage lms, Weighting weighting, TraversalMode tMode, boolean from) {
             super(g, weighting, tMode);
             this.lms = lms;
+            this.from = from;
+            // set one of the bi directions as already finished            
+            if (from)
+                finishedTo = true;
+            else
+                finishedFrom = true;
+            // no path should be calculated
+            setUpdateBestPath(false);
         }
 
         public void setFilter(IntHashSet set, boolean bwd, boolean fwd) {
@@ -775,16 +785,14 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             return lastNode;
         }
 
-        public void runAlgo(boolean from) {
-            // no path should be calculated
-            setUpdateBestPath(false);
-            // set one of the bi directions as already finished            
+        public void setStartNode(int startNode) {
             if (from)
-                finishedTo = true;
+                initFrom(startNode, 0);
             else
-                finishedFrom = true;
+                initTo(startNode, 0);
+        }
 
-            this.from = from;
+        public void runAlgo() {
             super.runAlgo();
         }
 

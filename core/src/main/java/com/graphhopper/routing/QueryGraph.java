@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ import java.util.*;
  * @author Peter Karich
  */
 public class QueryGraph implements Graph {
-    final static int VE_BASE = 0, VE_BASE_REV = 1, VE_ADJ = 2, VE_ADJ_REV = 3;
+    static final int VE_BASE = 0, VE_BASE_REV = 1, VE_ADJ = 2, VE_ADJ_REV = 3;
     private static final AngleCalc AC = Helper.ANGLE_CALC;
     private final Graph mainGraph;
     private final NodeAccess mainNodeAccess;
@@ -61,7 +61,7 @@ public class QueryGraph implements Graph {
     private final QueryGraph baseGraph;
     private final GraphExtension wrappedExtension;
     // TODO when spreading it on different threads we need multiple independent explorers
-    private final Map<Integer, EdgeExplorer> cacheMap = new HashMap<Integer, EdgeExplorer>(4);
+    private final Map<Integer, EdgeExplorer> cacheMap = new HashMap<>(4);
 
     // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
     List<VirtualEdgeIteratorState> virtualEdges;
@@ -190,7 +190,7 @@ public class QueryGraph implements Graph {
      * @see #lookup(List)
      */
     public QueryGraph lookup(QueryResult fromRes, QueryResult toRes) {
-        List<QueryResult> results = new ArrayList<QueryResult>(2);
+        List<QueryResult> results = new ArrayList<>(2);
         results.add(fromRes);
         results.add(toRes);
         lookup(results);
@@ -209,14 +209,14 @@ public class QueryGraph implements Graph {
             throw new IllegalStateException("Call lookup only once. Otherwise you'll have problems for queries sharing the same edge.");
 
         // initialize all none-final variables
-        virtualEdges = new ArrayList<VirtualEdgeIteratorState>(resList.size() * 2);
+        virtualEdges = new ArrayList<>(resList.size() * 2);
         virtualNodes = new PointList(resList.size(), mainNodeAccess.is3D());
-        queryResults = new ArrayList<QueryResult>(resList.size());
+        queryResults = new ArrayList<>(resList.size());
         baseGraph.virtualEdges = virtualEdges;
         baseGraph.virtualNodes = virtualNodes;
         baseGraph.queryResults = queryResults;
 
-        GHIntObjectHashMap<List<QueryResult>> edge2res = new GHIntObjectHashMap<List<QueryResult>>(resList.size());
+        GHIntObjectHashMap<List<QueryResult>> edge2res = new GHIntObjectHashMap<>(resList.size());
 
         // Phase 1
         // calculate snapped point and swap direction of closest edge if necessary
@@ -260,7 +260,7 @@ public class QueryGraph implements Graph {
             int edgeId = closestEdge.getEdge();
             List<QueryResult> list = edge2res.get(edgeId);
             if (list == null) {
-                list = new ArrayList<QueryResult>(5);
+                list = new ArrayList<>(5);
                 edge2res.put(edgeId, list);
             }
             list.add(res);
@@ -608,7 +608,7 @@ public class QueryGraph implements Graph {
         // This needs to be a HashMap (and cannot be an array) as we also need to tweak edges for some mainNodes!
         // The more query points we have the more inefficient this map could be. Hmmh.
         final IntObjectMap<VirtualEdgeIterator> node2EdgeMap
-                = new GHIntObjectHashMap<VirtualEdgeIterator>(queryResults.size() * 3);
+                = new GHIntObjectHashMap<>(queryResults.size() * 3);
 
         final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
         final GHIntHashSet towerNodesToChange = new GHIntHashSet(queryResults.size());

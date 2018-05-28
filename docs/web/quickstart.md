@@ -15,6 +15,6 @@ See [here](./../core/elevation.md) how to easily enable elevation data. To see h
 
  * Make sure JRE8 is installed. If not get Java [here](http://java.com).
  * Regarding step 2:
-    * The folder where you execute the java command should contain the following files: berlin-latest.osm.pbf, config-example.properties and `graphhopper-web-[version].jar`
+    * The folder where you execute the java command should contain the following files: berlin-latest.osm.pbf, config-example.yml and `graphhopper-web-[version].jar`
     * The first time you execute this it'll take ~30 seconds (for Berlin), further starts will only load the graph and should be nearly instantaneous. You should see log statements but no exceptions and the last entry should be something like: Started server at HTTP 8989
  * Or [contact us](../index.md#contact)

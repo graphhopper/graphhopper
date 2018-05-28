@@ -62,7 +62,7 @@ public class GraphEdgeIdFinderTest {
                 .prepareIndex();
 
         GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
-        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("0.01,0.005,1", new DefaultEdgeFilter(encoder), 1000 * 1000);
+        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("0.01,0.005,1", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
 
         GHIntHashSet blockedEdges = new GHIntHashSet();
         blockedEdges.add(0);
@@ -72,7 +72,7 @@ public class GraphEdgeIdFinderTest {
 
         // big area converts into shapes
         graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
-        blockArea = graphFinder.parseBlockArea("0,0,1000", new DefaultEdgeFilter(encoder), 1000 * 1000);
+        blockArea = graphFinder.parseBlockArea("0,0,1000", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
         blockedEdges.clear();
         assertEquals(blockedEdges, blockArea.blockedEdges);
         blockedShapes.add(new Circle(0, 0, 1000));
@@ -121,13 +121,13 @@ public class GraphEdgeIdFinderTest {
                 .prepareIndex();
 
         GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
-        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("2,1, 0,2, 2,3", new DefaultEdgeFilter(encoder), 1000 * 1000);
+        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("2,1, 0,2, 2,3", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
 
         GHIntHashSet blockedEdges = new GHIntHashSet();
         blockedEdges.addAll(new int[]{1, 2, 6, 7});
         assertEquals(blockedEdges, blockArea.blockedEdges);
 
-        blockArea = graphFinder.parseBlockArea("2,1, 1,3, 1,2, 0,1", new DefaultEdgeFilter(encoder), 1000 * 1000);
+        blockArea = graphFinder.parseBlockArea("2,1, 1,3, 1,2, 0,1", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
 
         blockedEdges = new GHIntHashSet();
         blockedEdges.addAll(new int[]{4, 9, 6, 7});

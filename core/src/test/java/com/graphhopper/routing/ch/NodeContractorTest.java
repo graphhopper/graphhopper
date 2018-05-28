@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,7 +85,7 @@ public class NodeContractorTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(3));
+        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, graph.getNodes()).setAvoidNode(3));
         algo.setWeightLimit(100);
         int nodeEntry = algo.findEndNode(4, 2);
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
@@ -105,7 +105,7 @@ public class NodeContractorTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(3));
+        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, graph.getNodes()).setAvoidNode(3));
         algo.setWeightLimit(10);
         int nodeEntry = algo.findEndNode(4, 2);
         assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
@@ -121,7 +121,7 @@ public class NodeContractorTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(0));
+        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, graph.getNodes()).setAvoidNode(0));
         algo.setWeightLimit(2);
         int endNode = algo.findEndNode(4, 1);
         // did not reach endNode
@@ -333,7 +333,7 @@ public class NodeContractorTest {
     private void setMaxLevelOnAllNodes() {
         int nodes = lg.getNodes();
         for (int node = 0; node < nodes; node++) {
-            lg.setLevel(node, nodes + 1);
+            lg.setLevel(node, nodes);
         }
     }
 

@@ -74,9 +74,11 @@
     <modules>
         <module>core</module>
         <module>reader-osm</module>
+        <module>isochrone</module>
         <module>reader-gtfs</module>
-        <module>reader-json</module>
         <module>tools</module>
+        <module>web-bundle</module>
+        <module>api</module>
         <module>web</module>
         <module>client-hc</module>
     </modules>
@@ -170,7 +172,7 @@
             <plugin>
                 <groupId>de.thetaphi</groupId>
                 <artifactId>forbiddenapis</artifactId>
-                <version>2.4.1</version>
+                <version>2.5</version>
                 <configuration>
                     <!--
                       if the used Java version is too new,
@@ -188,10 +190,6 @@
                         <bundledSignature>jdk-non-portable</bundledSignature>
                     </bundledSignatures>
                     <excludes>
-                        <!-- Excluded because of "Helper7#getBeanMemInfo" -->
-                        <exclude>
-                            com/graphhopper/util/Helper7.class
-                        </exclude>
                         <exclude>
                             com/graphhopper/storage/UnsafeDataAccess.class
                         </exclude>
@@ -285,7 +283,6 @@
                 </plugins>
             </build>
         </profile>
-
         <profile>
             <id>include-android</id>
             <activation>
@@ -294,6 +291,17 @@
             <modules>
                 <module>android/app</module>
             </modules>
+        </profile>
+	<profile>
+            <id>jdk10</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>10</jdk>
+            </activation>
+            <properties>
+              <maven.compiler.source>10</maven.compiler.source>
+              <maven.compiler.target>10</maven.compiler.target>
+            </properties>
         </profile>
 
     </profiles>

@@ -274,7 +274,7 @@ class GtfsReader {
                             edge.setFlags(encoder.setTime(edge.getFlags(), after.a-timelineNode.a));
 
 //                            System.out.println(" "+ after);
-//                            EdgeIterator ei = graph.getBaseGraph().createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false)).setBaseNode(after.b);
+//                            EdgeIterator ei = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder)).setBaseNode(after.b);
 //                            while(ei.next()) {
 //                                if (encoder.getEdgeType(ei.getFlags()) == GtfsStorage.EdgeType.TRANSFER) {
 //                                    System.out.println("   "+ei+"   @"+Long.toString(after.a-encoder.getTime(ei.getFlags())));
@@ -338,7 +338,7 @@ class GtfsReader {
             return Stream.empty();
         }
         return StreamSupport.stream(new Spliterators.AbstractSpliterator<EdgeIteratorState>(0, 0) {
-            EdgeIterator edgeIterator = graph.getBaseGraph().createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true)).setBaseNode(node);
+            EdgeIterator edgeIterator = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)).setBaseNode(node);
             @Override
             public boolean tryAdvance(Consumer<? super EdgeIteratorState> action) {
                 if (edgeIterator.next()) {
@@ -354,7 +354,7 @@ class GtfsReader {
     }
 
     private int findPlatformEnterNode(int stationNode, String routeId) {
-        EdgeIterator i = graph.getBaseGraph().createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true)).setBaseNode(stationNode);
+        EdgeIterator i = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)).setBaseNode(stationNode);
         while (i.next()) {
             GtfsStorage.EdgeType edgeType = encoder.getEdgeType(i.getFlags());
             if (edgeType == GtfsStorage.EdgeType.ENTER_PT) {
@@ -367,7 +367,7 @@ class GtfsReader {
     }
 
     private int findPlatformExitNode(int stationNode, String routeId) {
-        EdgeIterator i = graph.getBaseGraph().createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false)).setBaseNode(stationNode);
+        EdgeIterator i = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder)).setBaseNode(stationNode);
         while (i.next()) {
             GtfsStorage.EdgeType edgeType = encoder.getEdgeType(i.getFlags());
             if (edgeType == GtfsStorage.EdgeType.EXIT_PT) {
@@ -411,7 +411,7 @@ class GtfsReader {
             if (frequencyBased) {
                 tripDescriptor = tripDescriptor.setStartTime(convertToGtfsTime(time));
             }
-            addTrip(zoneId, time, arrivalNodes, trip, tripDescriptor.build());
+            addTrip(zoneId, time, arrivalNodes, trip, tripDescriptor.build(), frequencyBased);
         }
     }
 
@@ -420,7 +420,7 @@ class GtfsReader {
         int arrivalNode;
     }
 
-    void addTrip(ZoneId zoneId, int time, List<TripWithStopTimeAndArrivalNode> arrivalNodes, GtfsReader.TripWithStopTimes trip, GtfsRealtime.TripDescriptor tripDescriptor) {
+    void addTrip(ZoneId zoneId, int time, List<TripWithStopTimeAndArrivalNode> arrivalNodes, TripWithStopTimes trip, GtfsRealtime.TripDescriptor tripDescriptor, boolean frequencyBased) {
         IntArrayList boardEdges = new IntArrayList();
         IntArrayList alightEdges = new IntArrayList();
         StopTime prev = null;
@@ -519,8 +519,8 @@ class GtfsReader {
             }
             prev = stopTime;
         }
-        gtfsStorage.getBoardEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor.getTripId(), tripDescriptor.getStartTime()), boardEdges.toArray());
-        gtfsStorage.getAlightEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor.getTripId(), tripDescriptor.getStartTime()), alightEdges.toArray());
+        gtfsStorage.getBoardEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor, frequencyBased), boardEdges.toArray());
+        gtfsStorage.getAlightEdgesForTrip().put(GtfsStorage.tripKey(tripDescriptor, frequencyBased), alightEdges.toArray());
         TripWithStopTimeAndArrivalNode tripWithStopTimeAndArrivalNode = new TripWithStopTimeAndArrivalNode();
         tripWithStopTimeAndArrivalNode.tripWithStopTimes = trip;
         tripWithStopTimeAndArrivalNode.arrivalNode = arrivalNode;
