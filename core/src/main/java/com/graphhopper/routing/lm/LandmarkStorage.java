@@ -246,7 +246,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         byte[] subnetworks = new byte[graph.getNodes()];
         Arrays.fill(subnetworks, (byte) UNSET_SUBNETWORK);
-        EdgeFilter tarjanFilter = new DefaultEdgeFilter(encoder, false, true);
+        EdgeFilter tarjanFilter = DefaultEdgeFilter.outEdges(encoder);
         IntHashSet blockedEdges = new IntHashSet();
 
         // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.

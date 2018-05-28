@@ -19,7 +19,7 @@ package com.graphhopper.http.resources;
 
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
-import com.graphhopper.http.resources.NearestResource;
+import com.graphhopper.resources.NearestResource;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;

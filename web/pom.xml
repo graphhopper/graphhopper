@@ -21,53 +21,24 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-reader-osm</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-reader-json</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-reader-gtfs</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-isochrone</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <!-- required for JDK9 -->
-        <dependency>
-            <groupId>javax.xml.ws</groupId>
-            <artifactId>jaxws-api</artifactId>
-            <version>2.3.0</version>
-        </dependency>
-        <!-- required for dropwizard -->
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>21.0</version>
-        </dependency>
-        <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
-            <version>1.2.2</version>
+            <version>1.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-web-bundle</artifactId>
+            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard-bundles</groupId>
             <artifactId>dropwizard-configurable-assets-bundle</artifactId>
-            <version>1.0.5</version>
+            <version>1.2.2</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-testing</artifactId>
-            <version>1.2.2</version>
+            <version>1.3.2</version>
             <scope>test</scope>
         </dependency>
 

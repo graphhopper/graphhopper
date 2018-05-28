@@ -76,8 +76,9 @@
         <module>reader-osm</module>
         <module>isochrone</module>
         <module>reader-gtfs</module>
-        <module>reader-json</module>
         <module>tools</module>
+        <module>web-bundle</module>
+        <module>api</module>
         <module>web</module>
         <module>client-hc</module>
     </modules>
@@ -189,10 +190,6 @@
                         <bundledSignature>jdk-non-portable</bundledSignature>
                     </bundledSignatures>
                     <excludes>
-                        <!-- Excluded because of "Helper7#getBeanMemInfo" -->
-                        <exclude>
-                            com/graphhopper/util/Helper7.class
-                        </exclude>
                         <exclude>
                             com/graphhopper/storage/UnsafeDataAccess.class
                         </exclude>

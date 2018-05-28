@@ -24,7 +24,6 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -57,8 +56,8 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         this.traversalMode = traversalMode;
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
-        outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
-        inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
+        outEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder));
+        inEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder));
     }
 
     @Override

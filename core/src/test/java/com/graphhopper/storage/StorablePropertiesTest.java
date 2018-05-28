@@ -21,6 +21,10 @@ import com.graphhopper.util.Helper;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -80,4 +84,13 @@ public class StorablePropertiesTest {
 
         Helper.removeDir(new File(dir));
     }
+
+    @Test
+    public void testLoadProperties() throws IOException {
+        Map<String, String> map = new HashMap<>();
+        StorableProperties.loadProperties(map, new StringReader("blup=test\n blup2 = xy"));
+        assertEquals("test", map.get("blup"));
+        assertEquals("xy", map.get("blup2"));
+    }
+
 }

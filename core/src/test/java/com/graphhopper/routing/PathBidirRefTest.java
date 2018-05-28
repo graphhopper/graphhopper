@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -27,7 +28,6 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -38,7 +38,7 @@ import static org.junit.Assert.assertEquals;
 public class PathBidirRefTest {
     private final EncodingManager encodingManager = new EncodingManager("car");
     private FlagEncoder carEncoder = encodingManager.getEncoder("car");
-    private EdgeFilter carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
+    private EdgeFilter carOutEdges = DefaultEdgeFilter.outEdges(carEncoder);
 
     Graph createGraph() {
         return new GraphBuilder(encodingManager).create();
@@ -56,7 +56,7 @@ public class PathBidirRefTest {
         pw.sptEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 10);
         pw.edgeTo = new SPTEntry(EdgeIterator.NO_EDGE, 2, 0);
         Path p = pw.extract();
-        assertEquals(Helper.createTList(1, 2), p.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{1, 2}), p.calcNodes());
         assertEquals(10, p.getDistance(), 1e-4);
     }
 
@@ -72,13 +72,13 @@ public class PathBidirRefTest {
         pw.sptEntry = new SPTEntry(iter.getEdge(), 2, 10);
         pw.sptEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);
 
-        explorer = g.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, false));
+        explorer = g.createEdgeExplorer(DefaultEdgeFilter.inEdges(carEncoder));
         iter = explorer.setBaseNode(3);
         iter.next();
         pw.edgeTo = new SPTEntry(iter.getEdge(), 2, 20);
         pw.edgeTo.parent = new SPTEntry(EdgeIterator.NO_EDGE, 3, 0);
         Path p = pw.extract();
-        assertEquals(Helper.createTList(1, 2, 3), p.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{1, 2, 3}), p.calcNodes());
         assertEquals(30, p.getDistance(), 1e-4);
     }
 }

@@ -274,7 +274,7 @@ class GtfsReader {
                             edge.setFlags(encoder.setTime(edge.getFlags(), after.a-timelineNode.a));
 
 //                            System.out.println(" "+ after);
-//                            EdgeIterator ei = graph.getBaseGraph().createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false)).setBaseNode(after.b);
+//                            EdgeIterator ei = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder)).setBaseNode(after.b);
 //                            while(ei.next()) {
 //                                if (encoder.getEdgeType(ei.getFlags()) == GtfsStorage.EdgeType.TRANSFER) {
 //                                    System.out.println("   "+ei+"   @"+Long.toString(after.a-encoder.getTime(ei.getFlags())));
@@ -338,7 +338,7 @@ class GtfsReader {
             return Stream.empty();
         }
         return StreamSupport.stream(new Spliterators.AbstractSpliterator<EdgeIteratorState>(0, 0) {
-            EdgeIterator edgeIterator = graph.getBaseGraph().createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true)).setBaseNode(node);
+            EdgeIterator edgeIterator = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)).setBaseNode(node);
             @Override
             public boolean tryAdvance(Consumer<? super EdgeIteratorState> action) {
                 if (edgeIterator.next()) {
@@ -354,7 +354,7 @@ class GtfsReader {
     }
 
     private int findPlatformEnterNode(int stationNode, String routeId) {
-        EdgeIterator i = graph.getBaseGraph().createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true)).setBaseNode(stationNode);
+        EdgeIterator i = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)).setBaseNode(stationNode);
         while (i.next()) {
             GtfsStorage.EdgeType edgeType = encoder.getEdgeType(i.getFlags());
             if (edgeType == GtfsStorage.EdgeType.ENTER_PT) {
@@ -367,7 +367,7 @@ class GtfsReader {
     }
 
     private int findPlatformExitNode(int stationNode, String routeId) {
-        EdgeIterator i = graph.getBaseGraph().createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false)).setBaseNode(stationNode);
+        EdgeIterator i = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder)).setBaseNode(stationNode);
         while (i.next()) {
             GtfsStorage.EdgeType edgeType = encoder.getEdgeType(i.getFlags());
             if (edgeType == GtfsStorage.EdgeType.EXIT_PT) {

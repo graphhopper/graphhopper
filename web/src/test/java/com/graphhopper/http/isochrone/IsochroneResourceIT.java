@@ -7,6 +7,7 @@ import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.Polygon;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
