@@ -158,7 +158,7 @@ public class MapMatching {
         List<GPXEntry> filteredGPXEntries = filterGPXEntries(gpxList);
 
         // now find each of the entries in the graph:
-        List<Collection<QueryResult>> queriesPerEntry = lookupGPXEntries(filteredGPXEntries, new DefaultEdgeFilter(weighting.getFlagEncoder()));
+        List<Collection<QueryResult>> queriesPerEntry = lookupGPXEntries(filteredGPXEntries, DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()));
 
         // Add virtual nodes and edges to the graph so that candidates on edges can be represented
         // by virtual nodes.
@@ -215,7 +215,7 @@ public class MapMatching {
             i++;
         }
 
-        final EdgeExplorer explorer = queryGraph.createEdgeExplorer(new DefaultEdgeFilter(weighting.getFlagEncoder()));
+        final EdgeExplorer explorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()));
         final Map<String, EdgeIteratorState> virtualEdgesMap = createVirtualEdgesMap(queriesPerEntry, explorer);
         MatchResult matchResult = computeMatchResult(seq, virtualEdgesMap, gpxList, queryGraph);
         logger.debug("=============== Matched real edges =============== ");
