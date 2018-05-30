@@ -48,28 +48,6 @@ public final class GraphHopperApplication extends Application<GraphHopperServerC
 
     @Override
     public void initialize(Bootstrap<GraphHopperServerConfiguration> bootstrap) {
-        bootstrap.getObjectMapper().setDateFormat(new ISO8601DateFormat());
-        bootstrap.getObjectMapper().registerModule(new JtsModule());
-        bootstrap.getObjectMapper().registerModule(new GraphHopperModule());
-        bootstrap.getObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        // Because VirtualEdgeIteratorState has getters which throw Exceptions.
-        // http://stackoverflow.com/questions/35359430/how-to-make-jackson-ignore-properties-if-the-getters-throw-exceptions
-        bootstrap.getObjectMapper().registerModule(new SimpleModule().setSerializerModifier(new BeanSerializerModifier() {
-            @Override
-            public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
-                return beanProperties.stream().map(bpw -> new BeanPropertyWriter(bpw) {
-                    @Override
-                    public void serializeAsField(Object bean, JsonGenerator gen, SerializerProvider prov) throws Exception {
-                        try {
-                            super.serializeAsField(bean, gen, prov);
-                        } catch (Exception e) {
-                            // Ignoring expected exception, see above.
-                        }
-                    }
-                }).collect(Collectors.toList());
-            }
-        }));
-
         bootstrap.addBundle(new GraphHopperBundle());
         bootstrap.addBundle(new ConfiguredAssetsBundle("/assets/", "/maps/", "index.html"));
         bootstrap.addCommand(new ImportCommand(bootstrap.getObjectMapper()));
