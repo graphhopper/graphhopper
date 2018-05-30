@@ -39,10 +39,10 @@ public class WebHelperTest {
 
     @Test
     public void testEncode() throws Exception {
-        Assert.assertEquals("_p~iF~ps|U", WebHelper.encodePolyline(
+        assertEquals("_p~iF~ps|U", WebHelper.encodePolyline(
                 Helper.createPointList(38.5, -120.2)));
 
-        Assert.assertEquals("_p~iF~ps|U_ulLnnqC_mqNvxq`@", WebHelper.encodePolyline(
+        assertEquals("_p~iF~ps|U_ulLnnqC_mqNvxq`@", WebHelper.encodePolyline(
                 Helper.createPointList(38.5, -120.2, 40.7, -120.95, 43.252, -126.453)));
     }
 
@@ -51,12 +51,12 @@ public class WebHelperTest {
         PointList list = Helper.createPointList(38.5, -120.2, 43.252, -126.453,
                 40.7, -120.95, 50.3139, 10.61279, 50.04303, 9.49768);
         String str = WebHelper.encodePolyline(list);
-        Assert.assertEquals(list, WebHelper.decodePolyline(str, list.getSize(), false));
+        assertEquals(list, WebHelper.decodePolyline(str, list.getSize(), false));
 
         list = Helper.createPointList(38.5, -120.2, 43.252, -126.453,
                 40.7, -120.95, 40.70001, -120.95001);
         str = WebHelper.encodePolyline(list);
-        Assert.assertEquals(list, WebHelper.decodePolyline(str, list.getSize(), false));
+        assertEquals(list, WebHelper.decodePolyline(str, list.getSize(), false));
     }
 
     @Test
@@ -70,8 +70,8 @@ public class WebHelperTest {
 
     @Test
     public void testEncode3D() throws Exception {
-        Assert.assertEquals("_p~iF~ps|Uo}@", WebHelper.encodePolyline(Helper.createPointList3D(38.5, -120.2, 10)));
-        Assert.assertEquals("_p~iF~ps|Uo}@_ulLnnqC_anF_mqNvxq`@?", WebHelper.encodePolyline(
+        assertEquals("_p~iF~ps|Uo}@", WebHelper.encodePolyline(Helper.createPointList3D(38.5, -120.2, 10)));
+        assertEquals("_p~iF~ps|Uo}@_ulLnnqC_anF_mqNvxq`@?", WebHelper.encodePolyline(
                 Helper.createPointList3D(38.5, -120.2, 10, 40.7, -120.95, 1234, 43.252, -126.453, 1234)));
     }
 }

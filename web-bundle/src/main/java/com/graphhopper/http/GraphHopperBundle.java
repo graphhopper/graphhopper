@@ -203,7 +203,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
     }
 
     private void runRegularGraphHopper(CmdArgs configuration, Environment environment) {
-        final GraphHopperManaged graphHopperManaged = new GraphHopperManaged(configuration);
+        final GraphHopperManaged graphHopperManaged = new GraphHopperManaged(configuration, environment.getObjectMapper());
         environment.lifecycle().manage(graphHopperManaged);
         environment.jersey().register(new AbstractBinder() {
             @Override

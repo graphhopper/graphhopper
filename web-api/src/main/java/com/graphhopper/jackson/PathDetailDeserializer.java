@@ -1,10 +1,11 @@
-package com.graphhopper.util.details;
+package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.util.details.PathDetail;
 
 import java.io.IOException;
 

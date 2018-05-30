@@ -25,6 +25,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.http.WebHelper;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.*;
@@ -90,7 +91,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
         ignoreSet.add("points_encoded");
         ignoreSet.add("pointsencoded");
         ignoreSet.add("type");
-        objectMapper = new ObjectMapper();
+        objectMapper = Jackson.newObjectMapper();
     }
 
     public GraphHopperWeb setDownloader(OkHttpClient downloader) {

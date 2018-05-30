@@ -18,8 +18,8 @@
 
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.util.ObjectMapperFactory;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
@@ -31,8 +31,6 @@ import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -40,18 +38,16 @@ import java.io.Reader;
 
 import static com.graphhopper.util.Helper.UTF_CS;
 
-@Singleton
 public class GraphHopperManaged implements Managed {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GraphHopper graphHopper;
 
-    @Inject
-    public GraphHopperManaged(CmdArgs configuration) {
+    public GraphHopperManaged(CmdArgs configuration, ObjectMapper objectMapper) {
         String splitAreaLocation = configuration.get(Parameters.Landmark.PREPARE + "split_area_location", "");
         JsonFeatureCollection landmarkSplittingFeatureCollection;
         try (Reader reader = splitAreaLocation.isEmpty() ? new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream(), UTF_CS) : new InputStreamReader(new FileInputStream(splitAreaLocation), UTF_CS)) {
-            landmarkSplittingFeatureCollection = ObjectMapperFactory.create().readValue(reader, JsonFeatureCollection.class);
+            landmarkSplittingFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
         } catch (IOException e1) {
             logger.error("Problem while reading border map GeoJSON. Skipping this.", e1);
             landmarkSplittingFeatureCollection = null;
@@ -61,7 +57,7 @@ public class GraphHopperManaged implements Managed {
         if (!spatialRuleLocation.isEmpty()) {
             final BBox maxBounds = BBox.parseBBoxString(configuration.get("spatial_rules.max_bbox", "-180, 180, -90, 90"));
             try (final InputStreamReader reader = new InputStreamReader(new FileInputStream(spatialRuleLocation), UTF_CS)) {
-                JsonFeatureCollection jsonFeatureCollection = ObjectMapperFactory.create().readValue(reader, JsonFeatureCollection.class);
+                JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
                 SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, maxBounds, jsonFeatureCollection);
             } catch (IOException e) {
                 throw new RuntimeException(e);

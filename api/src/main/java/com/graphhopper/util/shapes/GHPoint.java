@@ -17,7 +17,6 @@
  */
 package com.graphhopper.util.shapes;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.graphhopper.util.NumHelper;
 import com.vividsolutions.jts.geom.Point;
 
@@ -48,7 +47,6 @@ public class GHPoint {
         return fromString(str, true);
     }
 
-    @JsonCreator
     public static GHPoint fromJson(double[] xy) {
         return new GHPoint(xy[1], xy[0]);
     }

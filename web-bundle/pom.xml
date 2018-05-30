@@ -19,6 +19,11 @@
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-web-api</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-reader-osm</artifactId>
             <version>${project.parent.version}</version>
         </dependency>

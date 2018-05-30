@@ -17,8 +17,6 @@
  */
 package com.graphhopper.json.geo;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.util.shapes.BBox;
 import com.vividsolutions.jts.geom.Geometry;
 
@@ -30,14 +28,16 @@ import java.util.Map;
  * @author Peter Karich
  */
 public class JsonFeature {
-    final String id;
-    final String type;
-    final BBox bbox;
-    final Geometry geometry;
-    final Map<String, Object> properties;
+    private String id;
+    private String type;
+    private BBox bbox;
+    private Geometry geometry;
+    private Map<String, Object> properties;
 
-    @JsonCreator
-    public JsonFeature(@JsonProperty("id") String id, @JsonProperty("type") String type, @JsonProperty("bbox") BBox bbox, @JsonProperty("geometry") Geometry geometry, @JsonProperty("properties") Map<String, Object> properties) {
+    public JsonFeature() {
+    }
+
+    public JsonFeature(String id, String type, BBox bbox, Geometry geometry, Map<String, Object> properties) {
         this.id = id;
         this.type = type;
         this.bbox = bbox;
@@ -75,6 +75,26 @@ public class JsonFeature {
 
     public Object getProperty(String key) {
         return properties.get(key);
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setBbox(BBox bbox) {
+        this.bbox = bbox;
+    }
+
+    public void setGeometry(Geometry geometry) {
+        this.geometry = geometry;
+    }
+
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
     }
 
     @Override
