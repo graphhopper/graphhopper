@@ -50,19 +50,25 @@ public class Unzipper {
             toFolder.mkdirs();
 
         long sumBytes = 0;
+        String targetDirPath = toFolder.getCanonicalPath() + File.separator;
         ZipInputStream zis = new ZipInputStream(fromIs);
         try {
             ZipEntry ze = zis.getNextEntry();
             byte[] buffer = new byte[8 * 1024];
             while (ze != null) {
+                File newFile = new File(toFolder, ze.getName());
                 if (ze.isDirectory()) {
-                    new File(toFolder, ze.getName()).mkdir();
+                    if (!newFile.exists())
+                        newFile.mkdir();
                 } else {
+                    if (!newFile.getCanonicalPath().startsWith(targetDirPath))
+                        throw new IOException("Illegal zip entry. Zip entries must not escape destination: " + targetDirPath
+                                + " vs " + newFile.getCanonicalPath());
+    
                     double factor = 1;
                     if (ze.getCompressedSize() > 0 && ze.getSize() > 0)
                         factor = (double) ze.getCompressedSize() / ze.getSize();
 
-                    File newFile = new File(toFolder, ze.getName());
                     FileOutputStream fos = new FileOutputStream(newFile);
                     try {
                         int len;
