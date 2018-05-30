@@ -1,6 +1,7 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.BBox;
@@ -16,6 +17,7 @@ public class GraphHopperModule extends SimpleModule {
         addDeserializer(PathDetail.class, new PathDetailDeserializer());
         addSerializer(PathDetail.class, new PathDetailSerializer());
         addSerializer(InstructionList.class, new InstructionListSerializer());
+        addDeserializer(CmdArgs.class, new CmdArgsDeserializer());
     }
 
 }
