@@ -28,11 +28,6 @@ reader-gtfs:
  * com.conveyal:gtfs-lib (BSD 2-clause license)
  * com.google.transit:gtfs-realtime-bindings (Apache license)
 
-reader-json:
-
- * com.bedatadriven:jackson-datatype-jts (Apache license)
- * com.fasterxml.jackson.core:jackson-databind (Apache license)
-
 reader-shp:
  
  * org.geotools:gt-shapefile (LGPL)
