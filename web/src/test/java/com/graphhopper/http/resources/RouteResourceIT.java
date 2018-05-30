@@ -182,7 +182,7 @@ public class RouteResourceIT {
 
         List<PathDetail> edgeIdDetails = pathDetails.get("edge_id");
         assertEquals(77, edgeIdDetails.size());
-        assertEquals(3759L, edgeIdDetails.get(0).getValue());
+        assertEquals(880L, edgeIdDetails.get(0).getValue());
         assertEquals(2, edgeIdDetails.get(0).getLength());
         assertEquals(881L, edgeIdDetails.get(1).getValue());
         assertEquals(8, edgeIdDetails.get(1).getLength());
