@@ -24,12 +24,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.PriorityQueue;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -47,6 +42,7 @@ class MultiCriteriaLabelSetting {
 
     private final Comparator<Label> queueComparator;
     private long startTime;
+    private int blockedRouteTypes;
     private final PtFlagEncoder flagEncoder;
     private final PtTravelTimeWeighting weighting;
     private final Multimap<Integer, Label> fromMap;
@@ -80,8 +76,9 @@ class MultiCriteriaLabelSetting {
         fromMap = ArrayListMultimap.create();
     }
 
-    Stream<Label> calcLabels(int from, int to, Instant startTime) {
+    Stream<Label> calcLabels(int from, int to, Instant startTime, int blockedRouteTypes) {
         this.startTime = startTime.toEpochMilli();
+        this.blockedRouteTypes = blockedRouteTypes;
         return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false)
                 .limit(maxVisitedNodes)
                 .peek(label -> visitedNodes++);
@@ -118,6 +115,7 @@ class MultiCriteriaLabelSetting {
                     if (edgeType == GtfsStorage.EdgeType.HIGHWAY && maxTransferDistancePerLeg <= 0.0) return;
                     if (edgeType == GtfsStorage.EdgeType.ENTER_PT && ((reverse?edge.getAdjNode():edge.getBaseNode()) != (reverse?to:from)) && maxTransferDistancePerLeg <= 0.0) return;
                     if (edgeType == GtfsStorage.EdgeType.EXIT_PT && ((reverse?edge.getBaseNode():edge.getAdjNode()) != (reverse?from:to)) && maxTransferDistancePerLeg <= 0.0) return;
+                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << flagEncoder.getValidityId(edge.getFlags()))) != 0) return;
                     long nextTime;
                     if (reverse) {
                         nextTime = label.currentTime - explorer.calcTravelTimeMillis(edge, label.currentTime);

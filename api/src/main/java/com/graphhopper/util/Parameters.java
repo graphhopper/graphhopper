@@ -209,6 +209,6 @@ public class Parameters {
         public static final String MAX_WALK_DISTANCE_PER_LEG = "pt.max_walk_distance_per_leg";
         public static final String MAX_TRANSFER_DISTANCE_PER_LEG = "pt.max_transfer_distance_per_leg";
         public static final String LIMIT_SOLUTIONS = "pt.limit_solutions";
-
+        public static final String BLOCKED_ROUTE_TYPES = "pt.blocked_route_types";
     }
 }
