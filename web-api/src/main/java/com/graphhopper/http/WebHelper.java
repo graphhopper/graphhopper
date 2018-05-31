@@ -22,23 +22,13 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.exceptions.GHException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.*;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.Locale;
 
 /**
  * Code which handles polyline encoding and other web stuff.
@@ -147,53 +137,6 @@ public class WebHelper {
         sb.append((char) (num));
     }
 
-    public static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String trackName, boolean enableElevation, boolean withRoute, boolean withTrack, boolean withWayPoints, String version) {
-        if (ghRsp.getAll().size() > 1) {
-            throw new WebApplicationException("Alternatives are currently not yet supported for GPX");
-        }
-
-        long time = timeString != null ? Long.parseLong(timeString) : System.currentTimeMillis();
-        return Response.ok(ghRsp.getBest().getInstructions().createGPX(trackName, time, enableElevation, withRoute, withTrack, withWayPoints, version), "application/gpx+xml").
-                header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
-    }
-
-    private static Response xmlErrorResponse(Collection<Throwable> list) {
-        if (list.isEmpty())
-            throw new RuntimeException("errorsToXML should not be called with an empty list");
-
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.newDocument();
-            Element gpxElement = doc.createElement("gpx");
-            gpxElement.setAttribute("creator", "GraphHopper");
-            gpxElement.setAttribute("version", "1.1");
-            doc.appendChild(gpxElement);
-
-            Element mdElement = doc.createElement("metadata");
-            gpxElement.appendChild(mdElement);
-
-            Element extensionsElement = doc.createElement("extensions");
-            mdElement.appendChild(extensionsElement);
-
-            Element messageElement = doc.createElement("message");
-            extensionsElement.appendChild(messageElement);
-            messageElement.setTextContent(list.iterator().next().getMessage());
-
-            Element hintsElement = doc.createElement("hints");
-            extensionsElement.appendChild(hintsElement);
-
-            for (Throwable t : list) {
-                Element error = doc.createElement("error");
-                hintsElement.appendChild(error);
-                error.setAttribute("message", t.getMessage());
-                error.setAttribute("details", t.getClass().getName());
-            }
-            return Response.status(400).entity(doc).build();
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public static ObjectNode jsonObject(GHResponse ghRsp, boolean enableInstructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, float took) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
@@ -237,58 +180,4 @@ public class WebHelper {
         return json;
     }
 
-    public static Response errorResponse(List<Throwable> t, boolean writeGPX) {
-        if (writeGPX) {
-            return xmlErrorResponse(t);
-        } else {
-            return jsonErrorResponse(t);
-        }
-    }
-
-    public static Response errorResponse(Throwable t, boolean writeGPX) {
-        return errorResponse(Collections.singletonList(t), writeGPX);
-    }
-
-    private static Response jsonErrorResponse(List<Throwable> errors) {
-        ObjectNode json = JsonNodeFactory.instance.objectNode();
-        json.put("message", getMessage(errors.get(0)));
-        ArrayNode errorHintList = json.putArray("hints");
-        for (Throwable t : errors) {
-            ObjectNode error = errorHintList.addObject();
-            error.put("message", getMessage(t));
-            error.put("details", t.getClass().getName());
-            if (t instanceof GHException) {
-                ((GHException) t).getDetails().forEach(error::putPOJO);
-            }
-        }
-        return Response.status(400).entity(json).build();
-    }
-
-    private static String getMessage(Throwable t) {
-        if (t.getMessage() == null)
-            return t.getClass().getSimpleName();
-        else
-            return t.getMessage();
-    }
-
-    public static void initHints(HintsMap m, MultivaluedMap<String, String> parameterMap) {
-        for (Map.Entry<String, List<String>> e : parameterMap.entrySet()) {
-            if (e.getValue().size() == 1) {
-                m.put(e.getKey(), e.getValue().get(0));
-            } else {
-                // Do nothing.
-                // TODO: this is dangerous: I can only silently swallow
-                // the forbidden multiparameter. If I comment-in the line below,
-                // I get an exception, because "point" regularly occurs
-                // multiple times.
-                // I think either unknown parameters (hints) should be allowed
-                // to be multiparameters, too, or we shouldn't use them for
-                // known parameters either, _or_ known parameters
-                // must be filtered before they come to this code point,
-                // _or_ we stop passing unknown parameters alltogether..
-                //
-                // throw new WebApplicationException(String.format("This query parameter (hint) is not allowed to occur multiple times: %s", e.getKey()));
-            }
-        }
-    }
 }

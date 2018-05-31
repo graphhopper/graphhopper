@@ -17,23 +17,33 @@
  */
 package com.graphhopper.resources;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.exceptions.GHException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.util.*;
 
 import static com.graphhopper.util.Parameters.Routing.*;
@@ -91,20 +101,20 @@ public class RouteResource {
         StopWatch sw = new StopWatch().start();
 
         if(requestPoints.isEmpty()) {
-            throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("You have to pass at least one point"), writeGPX));
+            throw new WebApplicationException(errorResponse(new IllegalArgumentException("You have to pass at least one point"), writeGPX));
         }
 
         if (!encodingManager.supports(vehicleStr)) {
-            throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("Vehicle not supported: " + vehicleStr), writeGPX));
+            throw new WebApplicationException(errorResponse(new IllegalArgumentException("Vehicle not supported: " + vehicleStr), writeGPX));
         } else if (enableElevation && !hasElevation) {
-            throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("Elevation not supported!"), writeGPX));
+            throw new WebApplicationException(errorResponse(new IllegalArgumentException("Elevation not supported!"), writeGPX));
         } else if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size()) {
-            throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
+            throw new WebApplicationException(errorResponse(new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
                     + "or equal to the number of points (" + requestPoints.size() + ")"), writeGPX));
         }
 
         if (pointHints.size() > 0 && pointHints.size() != requestPoints.size()) {
-            throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty hints will be ignored"), writeGPX));
+            throw new WebApplicationException(errorResponse(new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty hints will be ignored"), writeGPX));
         }
 
         GHRequest request;
@@ -121,7 +131,7 @@ public class RouteResource {
             request = new GHRequest(requestPoints);
         }
 
-        WebHelper.initHints(request.getHints(), uriInfo.getQueryParameters());
+        initHints(request.getHints(), uriInfo.getQueryParameters());
         request.setVehicle(encodingManager.getEncoder(vehicleStr).toString()).
                 setWeighting(weighting).
                 setAlgorithm(algoStr).
@@ -143,7 +153,7 @@ public class RouteResource {
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
-            throw new WebApplicationException(WebHelper.errorResponse(ghResponse.getErrors(), writeGPX));
+            throw new WebApplicationException(errorResponse(ghResponse.getErrors(), writeGPX));
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
                     + ", distance0: " + ghResponse.getBest().getDistance()
@@ -151,7 +161,7 @@ public class RouteResource {
                     + ", points0: " + ghResponse.getBest().getPoints().getSize()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
             return writeGPX ?
-                    WebHelper.gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
+                    gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
                             header("X-GH-Took", "" + Math.round(took * 1000)).
                             build()
                     :
@@ -159,6 +169,109 @@ public class RouteResource {
                             header("X-GH-Took", "" + Math.round(took * 1000)).
                             build();
         }
+    }
+
+    private static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String trackName, boolean enableElevation, boolean withRoute, boolean withTrack, boolean withWayPoints, String version) {
+        if (ghRsp.getAll().size() > 1) {
+            throw new WebApplicationException("Alternatives are currently not yet supported for GPX");
+        }
+
+        long time = timeString != null ? Long.parseLong(timeString) : System.currentTimeMillis();
+        return Response.ok(ghRsp.getBest().getInstructions().createGPX(trackName, time, enableElevation, withRoute, withTrack, withWayPoints, version), "application/gpx+xml").
+                header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
+    }
+
+    private static Response xmlErrorResponse(Collection<Throwable> list) {
+        if (list.isEmpty())
+            throw new RuntimeException("errorsToXML should not be called with an empty list");
+
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.newDocument();
+            Element gpxElement = doc.createElement("gpx");
+            gpxElement.setAttribute("creator", "GraphHopper");
+            gpxElement.setAttribute("version", "1.1");
+            doc.appendChild(gpxElement);
+
+            Element mdElement = doc.createElement("metadata");
+            gpxElement.appendChild(mdElement);
+
+            Element extensionsElement = doc.createElement("extensions");
+            mdElement.appendChild(extensionsElement);
+
+            Element messageElement = doc.createElement("message");
+            extensionsElement.appendChild(messageElement);
+            messageElement.setTextContent(list.iterator().next().getMessage());
+
+            Element hintsElement = doc.createElement("hints");
+            extensionsElement.appendChild(hintsElement);
+
+            for (Throwable t : list) {
+                Element error = doc.createElement("error");
+                hintsElement.appendChild(error);
+                error.setAttribute("message", t.getMessage());
+                error.setAttribute("details", t.getClass().getName());
+            }
+            return Response.status(400).entity(doc).build();
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static Response errorResponse(List<Throwable> t, boolean writeGPX) {
+        if (writeGPX) {
+            return xmlErrorResponse(t);
+        } else {
+            return jsonErrorResponse(t);
+        }
+    }
+
+    private static Response errorResponse(Throwable t, boolean writeGPX) {
+        return errorResponse(Collections.singletonList(t), writeGPX);
+    }
+
+    private static Response jsonErrorResponse(List<Throwable> errors) {
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
+        json.put("message", getMessage(errors.get(0)));
+        ArrayNode errorHintList = json.putArray("hints");
+        for (Throwable t : errors) {
+            ObjectNode error = errorHintList.addObject();
+            error.put("message", getMessage(t));
+            error.put("details", t.getClass().getName());
+            if (t instanceof GHException) {
+                ((GHException) t).getDetails().forEach(error::putPOJO);
+            }
+        }
+        return Response.status(400).entity(json).build();
+    }
+
+    public static void initHints(HintsMap m, MultivaluedMap<String, String> parameterMap) {
+        for (Map.Entry<String, List<String>> e : parameterMap.entrySet()) {
+            if (e.getValue().size() == 1) {
+                m.put(e.getKey(), e.getValue().get(0));
+            } else {
+                // Do nothing.
+                // TODO: this is dangerous: I can only silently swallow
+                // the forbidden multiparameter. If I comment-in the line below,
+                // I get an exception, because "point" regularly occurs
+                // multiple times.
+                // I think either unknown parameters (hints) should be allowed
+                // to be multiparameters, too, or we shouldn't use them for
+                // known parameters either, _or_ known parameters
+                // must be filtered before they come to this code point,
+                // _or_ we stop passing unknown parameters alltogether..
+                //
+                // throw new WebApplicationException(String.format("This query parameter (hint) is not allowed to occur multiple times: %s", e.getKey()));
+            }
+        }
+    }
+
+    private static String getMessage(Throwable t) {
+        if (t.getMessage() == null)
+            return t.getClass().getSimpleName();
+        else
+            return t.getMessage();
     }
 
 }
