@@ -92,7 +92,7 @@ public class MapMatchingResource {
 
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
         if (!encodingManager.supports(vehicleStr)) {
-            throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("Vehicle not supported: " + vehicleStr), writeGPX));
+            throw new WebApplicationException("Vehicle not supported: " + vehicleStr);
         }
 
         GPXFile file = new GPXFile();
@@ -139,7 +139,9 @@ public class MapMatchingResource {
             rsp.add(pathWrapper);
 
             if (writeGPX) {
-                return WebHelper.gpxSuccessResponseBuilder(rsp, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
+                long time = timeString != null ? Long.parseLong(timeString) : System.currentTimeMillis();
+                return Response.ok(rsp.getBest().getInstructions().createGPX(trackName, time, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION), "application/gpx+xml").
+                        header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx").
                         header("X-GH-Took", "" + Math.round(took * 1000)).
                         build();
             } else {
@@ -197,4 +199,5 @@ public class MapMatchingResource {
         }
         return root;
     }
+
 }
