@@ -102,6 +102,31 @@ public class Isochrone extends AbstractRoutingAlgorithm {
         this.finishLimit = limit + Math.max(limit * 0.14, 2_000);
     }
 
+    public List<Number[]> searchEdges(int from) {
+        searchInternal(from);
+
+        final List<Number[]> list = new ArrayList<>(fromMap.size());
+        final NodeAccess na = graph.getNodeAccess();
+        fromMap.forEach(new IntObjectProcedure<IsoLabel>() {
+
+            @Override
+            public void apply(int nodeId, IsoLabel label) {
+                if (label.parent == null)
+                    return;
+
+                double lat = na.getLatitude(nodeId);
+                double lon = na.getLongitude(nodeId);
+
+                int toNodeIdx = label.parent.adjNode;
+                double toLat = na.getLatitude(toNodeIdx);
+                double toLon = na.getLongitude(toNodeIdx);
+
+                list.add(new Number[]{lon, lat, toLon, toLat, label.time, label.distance});
+            }
+        });
+        return list;
+    }
+
     public List<List<Double[]>> searchGPS(int from, final int bucketCount) {
         searchInternal(from);
 
@@ -197,7 +222,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                 double tmpWeight = weighting.calcWeight(iter, reverseFlow, currEdge.edge) + currEdge.weight;
                 if (Double.isInfinite(tmpWeight))
                     continue;
-                
+
                 double tmpDistance = iter.getDistance() + currEdge.distance;
                 long tmpTime = weighting.calcMillis(iter, reverseFlow, currEdge.edge) + currEdge.time;
                 int tmpNode = iter.getAdjNode();
