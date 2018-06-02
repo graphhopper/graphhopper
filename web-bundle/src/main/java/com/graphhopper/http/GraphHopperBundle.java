@@ -183,6 +183,14 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
     public void run(GraphHopperBundleConfiguration configuration, Environment environment) {
         configuration.getGraphHopperConfiguration().merge(CmdArgs.readFromSystemProperties());
 
+        // If the "?format=gpx" parameter is present, sets a corresponding media type header
+        environment.jersey().register(new FormatGPXFilter());
+
+        // Together, these two take care that MultiExceptions thrown from RouteResource
+        // come out as JSON or GPX, depending on the media type
+        environment.jersey().register(new MultiExceptionMapper());
+        environment.jersey().register(new MultiExceptionGPXMessageBodyWriter());
+
         if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
             // switch to different API implementation when using Pt
             runPtGraphHopper(configuration.getGraphHopperConfiguration(), environment);
@@ -263,7 +271,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(IsochroneResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
-
         environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopperManaged.getGraphHopper()));
     }
 
