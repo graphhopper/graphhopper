@@ -20,7 +20,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
@@ -43,7 +42,7 @@ public class MultiExceptionGPXMessageBodyWriter implements MessageBodyWriter<Mul
         if (e.getErrors().isEmpty())
             throw new RuntimeException("errorsToXML should not be called with an empty list");
 
-        try (OutputStreamWriter writer = new OutputStreamWriter(entityStream)) {
+        try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.newDocument();
@@ -73,7 +72,7 @@ public class MultiExceptionGPXMessageBodyWriter implements MessageBodyWriter<Mul
             }
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
-            transformer.transform(new DOMSource(doc), new StreamResult(writer));
+            transformer.transform(new DOMSource(doc), new StreamResult(entityStream));
         } catch (ParserConfigurationException | TransformerException e2) {
             throw new RuntimeException(e2);
         }
