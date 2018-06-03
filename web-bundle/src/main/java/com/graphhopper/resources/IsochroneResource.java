@@ -15,6 +15,15 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.exceptions.GHException;
 import com.graphhopper.util.shapes.GHPoint;
+import com.vividsolutions.jts.geom.*;
+import com.wdtinc.mapbox_vector_tile.VectorTile;
+import com.wdtinc.mapbox_vector_tile.adapt.jts.IGeometryFilter;
+import com.wdtinc.mapbox_vector_tile.adapt.jts.JtsAdapter;
+import com.wdtinc.mapbox_vector_tile.adapt.jts.TileGeomResult;
+import com.wdtinc.mapbox_vector_tile.adapt.jts.UserDataIgnoreConverter;
+import com.wdtinc.mapbox_vector_tile.build.MvtLayerBuild;
+import com.wdtinc.mapbox_vector_tile.build.MvtLayerParams;
+import com.wdtinc.mapbox_vector_tile.build.MvtLayerProps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +34,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,7 +68,7 @@ public class IsochroneResource {
             @QueryParam("buckets") @DefaultValue("1") int buckets,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("point") GHPoint point,
-            @QueryParam("result") @DefaultValue("edgelist") String resultStr,
+            @QueryParam("result") @DefaultValue("edgelist-json") String resultStr,
             @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter) {
 
@@ -110,8 +120,61 @@ public class IsochroneResource {
         }
 
         Object calcRes;
-        if ("edgelist".equalsIgnoreCase(resultStr)) {
+
+        if ("mvt".equalsIgnoreCase(resultStr)) {
+
+            final GeometryFactory geomFactory = new GeometryFactory();
+            // TODO increase to global boundaries - what's the purpose of this?
+            final Envelope tileEnvelope = new Envelope(0d, 100, 0d, 100d);
+            final MvtLayerParams DEFAULT_MVT_PARAMS = new MvtLayerParams();
+            final IGeometryFilter ACCEPT_ALL_FILTER = geometry -> true;
+
+            List<Number[]> edgeList = isochrone.searchEdges(qr.getClosestNode());
+            LineString[] lineStrings = new LineString[edgeList.size()];
+            for (int i = 0; i < edgeList.size(); i++) {
+                final CoordinateSequence coordSeq = geomFactory.getCoordinateSequenceFactory().create(2, 2);
+                Number[] edgeProps = edgeList.get(i);
+                final Coordinate coord1 = coordSeq.getCoordinate(0);
+                coord1.setOrdinate(0, edgeProps[0].doubleValue());
+                coord1.setOrdinate(1, edgeProps[1].doubleValue());
+                final Coordinate coord2 = coordSeq.getCoordinate(1);
+                coord2.setOrdinate(0, edgeProps[2].doubleValue());
+                coord2.setOrdinate(1, edgeProps[3].doubleValue());
+
+                lineStrings[i] = new LineString(coordSeq, geomFactory);
+            }
+            final TileGeomResult tileGeom = JtsAdapter.createTileGeom(new MultiLineString(lineStrings, geomFactory), tileEnvelope, geomFactory,
+                    DEFAULT_MVT_PARAMS, ACCEPT_ALL_FILTER);
+            // "source-layer: "isochrone"
+            final VectorTile.Tile mvt = encodeMvt("isochrone", DEFAULT_MVT_PARAMS, tileGeom);
+
+            return Response.fromResponse(Response.ok(mvt.toByteArray(), new MediaType("application", "vnd.mapbox-vector-tile")).build())
+                    .header("X-GH-Took", "" + sw.stop().getSeconds() * 1000)
+                    .build();
+
+        } else if ("edgelist-json".equalsIgnoreCase(resultStr)) {
             calcRes = isochrone.searchEdges(qr.getClosestNode());
+
+        } else if ("edgelist".equalsIgnoreCase(resultStr)) {
+            // write binary
+            List<Number[]> edgeList = isochrone.searchEdges(qr.getClosestNode());
+
+            // for every edge we store 6 floats
+            int entrySizeInBytes = 6;
+            // float size is 4
+            ByteBuffer bb = ByteBuffer.allocate(2 * 4 + edgeList.size() * entrySizeInBytes * 4);
+            bb.putInt(edgeList.size());
+            bb.putInt(entrySizeInBytes * 4);
+            for (int i = 0; i < edgeList.size(); i++) {
+                Number[] entries = edgeList.get(i);
+                for (int e = 0; e < entrySizeInBytes; e++) {
+                    bb.putFloat(entries[e].floatValue());
+                }
+            }
+
+            return Response.fromResponse(Response.ok(bb.array(), new MediaType("application", "octet-stream")).build())
+                    .header("X-GH-Took", "" + sw.stop().getSeconds() * 1000)
+                    .build();
 
         } else {
 
@@ -129,7 +192,6 @@ public class IsochroneResource {
                 }
                 counter++;
             }
-
 
             if ("pointlist".equalsIgnoreCase(resultStr)) {
                 calcRes = list;
@@ -164,6 +226,26 @@ public class IsochroneResource {
         return Response.fromResponse(jsonSuccessResponse(calcRes, sw.stop().getSeconds()))
                 .header("X-GH-Took", "" + sw.stop().getSeconds() * 1000)
                 .build();
+    }
+
+    private static VectorTile.Tile encodeMvt(String name, MvtLayerParams mvtParams, TileGeomResult tileGeom) {
+
+        // Create MVT layer
+        final VectorTile.Tile.Layer.Builder layerBuilder = MvtLayerBuild.newLayerBuilder(name, mvtParams);
+        final MvtLayerProps layerProps = new MvtLayerProps();
+        final UserDataIgnoreConverter ignoreUserData = new UserDataIgnoreConverter();
+
+        // MVT tile geometry to MVT features
+        final List<VectorTile.Tile.Feature> features = JtsAdapter.toFeatures(tileGeom.mvtGeoms, layerProps, ignoreUserData);
+        layerBuilder.addAllFeatures(features);
+        MvtLayerBuild.writeProps(layerBuilder, layerProps);
+
+        // Build MVT layer
+        final VectorTile.Tile.Layer layer = layerBuilder.build();
+
+        final VectorTile.Tile.Builder tileBuilder = VectorTile.Tile.newBuilder();
+        tileBuilder.addLayers(layer);
+        return tileBuilder.build();
     }
 
     private void throwArgExc(String msg) {
