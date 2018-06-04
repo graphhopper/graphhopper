@@ -103,7 +103,7 @@ public class Measurement {
             protected void loadOrPrepareLM() {
                 StopWatch sw = new StopWatch().start();
                 super.loadOrPrepareLM();
-                put(Parameters.Landmark.PREPARE + "time", sw.stop().getTime());
+                put(Parameters.Landmark.PREPARE + "time", sw.stop().getMillis());
             }
 
             @Override
