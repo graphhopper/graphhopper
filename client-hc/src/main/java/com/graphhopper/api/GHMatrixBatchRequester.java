@@ -63,7 +63,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
             outArraysList.add("weights");
         }
 
-        ArrayNode outArrayListJson = factory.arrayNode(outArraysList.size());
+        ArrayNode outArrayListJson = factory.arrayNode();
         for (String str : outArraysList) {
             outArrayListJson.add(str);
         }
@@ -168,9 +168,9 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
     }
 
     protected final ArrayNode createPointList(List<GHPoint> list) {
-        ArrayNode outList = factory.arrayNode(list.size()); // new ArrayList<>(list.size())
+        ArrayNode outList = factory.arrayNode(); // new ArrayList<>(list.size())
         for (GHPoint p : list) {
-            ArrayNode entry = factory.arrayNode(2);
+            ArrayNode entry = factory.arrayNode();
             entry.add(p.lon);
             entry.add(p.lat);
             outList.add(entry);

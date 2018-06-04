@@ -211,12 +211,14 @@ class GtfsReader {
                     final Map<String, List<TimelineNodeIdWithTripId>> arrivalTimelineNodesByRoute = arrivalTimelineNodes.get(stop.stop_id).stream().collect(Collectors.groupingBy(t -> t.routeId));
 
                     arrivalTimelineNodesByRoute.forEach((routeId, timelineNodesWithTripId) -> {
+                        Route route = feed.routes.get(routeId);
                         nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
                         int stopExitNode = i-1;
                         nodeAccess.setAdditionalNodeField(stopExitNode, NodeType.STOP_EXIT_NODE.ordinal());
 
                         EdgeIteratorState exitEdge = graph.edge(stopExitNode, streetNode, 0.0, false);
                         setEdgeType(exitEdge, GtfsStorage.EdgeType.EXIT_PT);
+                        exitEdge.setFlags(encoder.setValidityId(exitEdge.getFlags(), route.route_type));
                         exitEdge.setName(stop.stop_name);
                         gtfsStorage.getRoutes().put(exitEdge.getEdge(), routeId);
 
@@ -230,12 +232,14 @@ class GtfsReader {
                     final Map<String, List<TimelineNodeIdWithTripId>> departureTimelineNodesByRoute = departureTimelineNodes.get(stop.stop_id).stream().collect(Collectors.groupingBy(t -> t.routeId));
 
                     departureTimelineNodesByRoute.forEach((routeId, timelineNodesWithTripId) -> {
+                        Route route = feed.routes.get(routeId);
                         nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
                         int stopEnterNode = i-1;
                         nodeAccess.setAdditionalNodeField(stopEnterNode, NodeType.STOP_ENTER_NODE.ordinal());
 
                         EdgeIteratorState entryEdge = graph.edge(streetNode, stopEnterNode, 0.0, false);
                         setEdgeType(entryEdge, GtfsStorage.EdgeType.ENTER_PT);
+                        entryEdge.setFlags(encoder.setValidityId(entryEdge.getFlags(), route.route_type));
                         entryEdge.setName(stop.stop_name);
                         gtfsStorage.getRoutes().put(entryEdge.getEdge(), routeId);
 
@@ -624,7 +628,7 @@ class GtfsReader {
     private void insertInboundBlockTransfers(List<TripWithStopTimeAndArrivalNode> arrivalNodes, GtfsRealtime.TripDescriptor tripDescriptor, int departureNode, StopTime stopTime, Stop stop, GtfsStorage.Validity validOn, ZoneId zoneId) {
         BitSet accumulatorValidity = new BitSet(validOn.validity.size());
         accumulatorValidity.or(validOn.validity);
-        EdgeIteratorState edge;
+        EdgeIteratorState boardEdge;
         ListIterator<TripWithStopTimeAndArrivalNode> li = arrivalNodes.listIterator(arrivalNodes.size());
         while(li.hasPrevious() && accumulatorValidity.cardinality() > 0) {
             TripWithStopTimeAndArrivalNode lastTrip = li.previous();
@@ -643,22 +647,22 @@ class GtfsReader {
                 }
                 nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
                 nodeAccess.setAdditionalNodeField(i-1, NodeType.INTERNAL_PT.ordinal());
-                edge = graph.edge(
+                boardEdge = graph.edge(
                         lastTrip.arrivalNode,
                         i-1,
                         0.0,
                         false);
-                setEdgeType(edge, GtfsStorage.EdgeType.TRANSFER);
-                edge.setFlags(encoder.setTime(edge.getFlags(), dwellTime));
-                edge = graph.edge(
+                setEdgeType(boardEdge, GtfsStorage.EdgeType.TRANSFER);
+                boardEdge.setFlags(encoder.setTime(boardEdge.getFlags(), dwellTime));
+                boardEdge = graph.edge(
                         i-1,
                         departureNode,
                         0.0,
                         false);
-                setEdgeType(edge, GtfsStorage.EdgeType.BOARD);
-                edge.setFlags(encoder.setValidityId(edge.getFlags(), blockTransferValidityId));
-                gtfsStorage.getStopSequences().put(edge.getEdge(), stopTime.stop_sequence);
-                gtfsStorage.getTripDescriptors().put(edge.getEdge(), tripDescriptor.toByteArray());
+                setEdgeType(boardEdge, GtfsStorage.EdgeType.BOARD);
+                boardEdge.setFlags(encoder.setValidityId(boardEdge.getFlags(), blockTransferValidityId));
+                gtfsStorage.getStopSequences().put(boardEdge.getEdge(), stopTime.stop_sequence);
+                gtfsStorage.getTripDescriptors().put(boardEdge.getEdge(), tripDescriptor.toByteArray());
                 accumulatorValidity.andNot(lastTrip.tripWithStopTimes.validOnDay);
             }
         }

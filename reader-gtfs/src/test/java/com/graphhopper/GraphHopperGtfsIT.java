@@ -47,6 +47,7 @@ import java.util.stream.Stream;
 import static com.graphhopper.reader.gtfs.GtfsHelper.time;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class GraphHopperGtfsIT {
 
@@ -119,6 +120,7 @@ public class GraphHopperGtfsIT {
         );
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,7,44).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
+        ghRequest.getHints().put(Parameters.PT.BLOCKED_ROUTE_TYPES, 1); // Blocking trams shouldn't matter, this is a bus.
 
         GHResponse response = graphHopper.route(ghRequest);
 
@@ -126,7 +128,21 @@ public class GraphHopperGtfsIT {
         assertEquals("Expected travel time == scheduled arrival time", time(0, 5), response.getBest().getTime(), 0.1);
     }
 
+    @Test
+    public void testNoSolutionIfIDontLikeBusses() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,7,44).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.BLOCKED_ROUTE_TYPES, 8);
 
+        GHResponse response = graphHopper.route(ghRequest);
+
+        assertTrue("When I block busses, there is no solution", response.getAll().isEmpty());
+    }
 
     @Test
     public void testRoute1ArriveBy() {
@@ -446,7 +462,7 @@ public class GraphHopperGtfsIT {
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         GHResponse route = graphHopper.route(ghRequest);
-        Assert.assertTrue(route.getAll().isEmpty());
+        assertTrue(route.getAll().isEmpty());
     }
 
     @Test

@@ -18,35 +18,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>javax.xml.ws</groupId>
-            <artifactId>jaxws-api</artifactId>
-            <version>2.3.0</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-            <version>2.0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.vividsolutions</groupId>
             <artifactId>jts-core</artifactId>
             <version>1.14.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.bedatadriven</groupId>
-            <artifactId>jackson-datatype-jts</artifactId>
-            <version>2.4</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.vividsolutions</groupId>
-                    <artifactId>jts</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

@@ -95,6 +95,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         private final double walkSpeedKmH;
         private final double maxWalkDistancePerLeg;
         private final double maxTransferDistancePerLeg;
+        private final int blockedRouteTypes;
         private final PtTravelTimeWeighting weighting;
         private final GHPoint enter;
         private final GHPoint exit;
@@ -122,6 +123,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             walkSpeedKmH = request.getHints().getDouble(Parameters.PT.WALK_SPEED, 5.0);
             maxWalkDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 1000.0);
             maxTransferDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, Double.MAX_VALUE);
+            blockedRouteTypes = request.getHints().getInt(Parameters.PT.BLOCKED_ROUTE_TYPES, 0);
             weighting = createPtTravelTimeWeighting(flagEncoder, arriveBy, walkSpeedKmH);
             translation = translationMap.getWithFallBack(request.getLocale());
             if (request.getPoints().size() != 2) {
@@ -181,6 +183,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 newEdge.setFlags(((PtFlagEncoder) weighting.getFlagEncoder()).setEdgeType(newEdge.getFlags(), reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT));
                 final long time = pathWrapper.getTime() / 1000;
                 newEdge.setFlags(((PtFlagEncoder) weighting.getFlagEncoder()).setTime(newEdge.getFlags(), time));
+                newEdge.setFlags(flagEncoder.setValidityId(newEdge.getFlags(), flagEncoder.getValidityId(graphExplorer.getEdgeIteratorState(stationNode.edge, Integer.MIN_VALUE).getFlags())));
                 reverseNewEdge.setFlags(newEdge.getFlags());
                 newEdge.setReverseEdge(reverseNewEdge);
                 reverseNewEdge.setReverseEdge(newEdge);
@@ -198,7 +201,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         private List<Label> findStationNodes(GraphExplorer graphExplorer, int node, boolean reverse) {
             GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, weighting, reverse, maxWalkDistancePerLeg, maxTransferDistancePerLeg, false, false, maxVisitedNodesForRequest);
-            final Stream<Label> labels = router.calcLabels(node, -1, initialTime);
+            final Stream<Label> labels = router.calcLabels(node, -1, initialTime, blockedRouteTypes);
             return labels
                     .filter(current -> current.edge != -1 && flagEncoder.getEdgeType(graphExplorer.getEdgeIteratorState(current.edge, current.adjNode).getFlags()) == edgeType)
                     .collect(Collectors.toList());
@@ -265,7 +268,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             StopWatch stopWatch = new StopWatch().start();
             graphExplorer = new GraphExplorer(queryGraph, weighting, flagEncoder, gtfsStorage, realtimeFeed, arriveBy, extraEdges, false);
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, weighting, arriveBy, maxWalkDistancePerLeg, -1, !ignoreTransfers, profileQuery, maxVisitedNodesForRequest);
-            final Stream<Label> labels = router.calcLabels(startNode, destNode, initialTime);
+            final Stream<Label> labels = router.calcLabels(startNode, destNode, initialTime, 0);
             List<Label> solutions = labels
                     .filter(current -> destNode == current.adjNode)
                     .limit(limitSolutions)

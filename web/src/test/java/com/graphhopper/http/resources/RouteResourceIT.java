@@ -25,6 +25,7 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.api.GraphHopperWeb;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.resources.NearestResource;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.details.PathDetail;
@@ -181,7 +182,7 @@ public class RouteResourceIT {
 
         List<PathDetail> edgeIdDetails = pathDetails.get("edge_id");
         assertEquals(77, edgeIdDetails.size());
-        assertEquals(3759L, edgeIdDetails.get(0).getValue());
+        assertEquals(880L, edgeIdDetails.get(0).getValue());
         assertEquals(2, edgeIdDetails.get(0).getLength());
         assertEquals(881L, edgeIdDetails.get(1).getValue());
         assertEquals(8, edgeIdDetails.get(1).getLength());
@@ -219,7 +220,7 @@ public class RouteResourceIT {
 
     @Test
     public void testPathDetailsWithoutGraphHopperWeb() throws Exception {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed").request().buildGet().invoke();
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -233,6 +234,12 @@ public class RouteResourceIT {
         assertEquals(14, averageSpeed.get(0).get(1).asInt());
         assertEquals(60.0, averageSpeed.get(1).get(2).asDouble(), .01);
         assertEquals(19, averageSpeed.get(1).get(1).asInt());
+        assertTrue(details.has("edge_id"));
+        JsonNode edgeIds = details.get("edge_id");
+        int firstLink = edgeIds.get(0).get(2).asInt();
+        int lastLink = edgeIds.get(edgeIds.size()-1).get(2).asInt();
+        assertEquals(880, firstLink);
+        assertEquals(1419, lastLink);
     }
 
     @Test

@@ -79,6 +79,7 @@
         <module>tools</module>
         <module>web-bundle</module>
         <module>api</module>
+        <module>web-api</module>
         <module>web</module>
         <module>client-hc</module>
     </modules>

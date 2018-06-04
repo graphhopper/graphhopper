@@ -45,6 +45,5 @@ local.properties
 /core/nbproject/
 /reader-overlay-data/nbproject/
 !malta-latest.osm.pbf
-/reader-json/nbproject/
 /graph-cache
 package-lock.json

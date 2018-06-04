@@ -17,22 +17,19 @@
  */
 package com.graphhopper.storage.change;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 /**
  * This class describes the changes that were applied to the graph, currently only used in GraphHopper.changeGraph
  *
  * @author Peter Karich
  */
 public class ChangeGraphResponse {
-    private final long updateCount;
+    private final long updates;
 
-    public ChangeGraphResponse(long updateCount) {
-        this.updateCount = updateCount;
+    public ChangeGraphResponse(long updates) {
+        this.updates = updates;
     }
 
-    @JsonProperty("updates")
-    public long getUpdateCount() {
-        return updateCount;
+    public long getUpdates() {
+        return updates;
     }
 }
