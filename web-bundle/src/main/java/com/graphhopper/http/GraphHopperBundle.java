@@ -184,7 +184,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         configuration.getGraphHopperConfiguration().merge(CmdArgs.readFromSystemProperties());
 
         // If the "?format=gpx" parameter is present, sets a corresponding media type header
-        environment.jersey().register(new FormatGPXFilter());
+        environment.jersey().register(new TypeGPXFilter());
 
         // Together, these two take care that MultiExceptions thrown from RouteResource
         // come out as JSON or GPX, depending on the media type

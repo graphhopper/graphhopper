@@ -9,7 +9,7 @@ import javax.ws.rs.core.HttpHeaders;
 
 @PreMatching
 @Priority(Priorities.HEADER_DECORATOR)
-public class FormatGPXFilter implements ContainerRequestFilter {
+public class TypeGPXFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext rc) {
