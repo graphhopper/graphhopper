@@ -31,3 +31,4 @@ deploy:
   on:
     branch: master
     tags: true
+    jdk: openjdk8
