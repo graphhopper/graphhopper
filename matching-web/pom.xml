@@ -26,7 +26,7 @@
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-map-matching-core</artifactId>
-            <version>${project.parent.version}</version>            
+            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>com.graphhopper</groupId>
@@ -36,7 +36,7 @@
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-map-matching-web-bundle</artifactId>
-            <version>${gh.version}</version>
+            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard-bundles</groupId>

@@ -19,7 +19,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.21</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
-        <gh.version>0.11-SNAPSHOT</gh.version>
+        <gh.version>0.11.0-pre1</gh.version>
 	
         <org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>4</org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>
         <org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>4</org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>
@@ -102,22 +102,14 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.0.2</version>
             </plugin>
-            <plugin>
-              <groupId>com.hbakkum.maven.plugins</groupId>
-              <artifactId>resolve-parent-version-maven-plugin</artifactId>
-              <version>0.7</version>
-              <executions>
-                <execution>
-                  <goals>
-                    <goal>resolve-parent-version</goal>
-                  </goals>
-                </execution>
-              </executions>
-            </plugin>
         </plugins>
     </build>    
 
     <distributionManagement>
+        <repository>
+            <id>packagecloud-graphhopper</id>
+            <url>packagecloud+https://packagecloud.io/graphhopper/map-matching</url>
+        </repository>
         <snapshotRepository>
             <id>ossrh</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
