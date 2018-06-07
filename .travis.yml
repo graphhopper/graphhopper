@@ -23,3 +23,11 @@ after_success:
     else
         echo "Not deploying artifacts for $TRAVIS_BRANCH";
     fi
+
+deploy:
+  provider: script
+  script: "mvn versions:set -DnewVersion=$TRAVIS_TAG -DgenerateBackupPoms=false && mvn --settings .travis.settings.xml -DskipTests=true -B clean deploy"
+  skip_cleanup: true
+  on:
+    branch: master
+    tags: true

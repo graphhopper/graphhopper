@@ -1,0 +1,23 @@
+<!--
+  ~ Copyright 2014-2016 GraphHopper GmbH
+  ~
+  ~  NOTICE:  All information contained herein is, and remains the property
+  ~  of GraphHopper GmbH. The intellectual and technical concepts contained
+  ~  herein are proprietary to GraphHopper GmbH, and are protected by trade secret
+  ~  or copyright law. Dissemination of this information or reproduction of
+  ~  this material is strictly forbidden unless prior written permission
+  ~  is obtained from GraphHopper GmbH.
+  -->
+
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <servers>
+    <server>
+      <id>packagecloud-graphhopper</id>
+      <password>${env.PACKAGECLOUD_TOKEN}</password>
+    </server>
+    <server>
+      <id>packagecloud-read</id>
+      <password>${env.PACKAGECLOUD_TOKEN_READ}</password>
+    </server>
+  </servers>
+</settings>
