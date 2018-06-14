@@ -237,6 +237,8 @@ public class PointListTest {
 
         assertEquals(3, pl.toLineString(true).getNumPoints());
         assertEquals(2, pl.shallowCopy(1, 3, false).toLineString(true).getNumPoints());
+
+        assertEquals(0, PointList.EMPTY.toLineString(false).getNumPoints());
     }
 
 

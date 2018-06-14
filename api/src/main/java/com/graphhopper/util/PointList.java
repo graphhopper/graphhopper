@@ -123,11 +123,6 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
 
         @Override
-        public LineString toLineString(boolean includeElevation) {
-            throw new UnsupportedOperationException("cannot access EMPTY PointList");
-        }
-
-        @Override
         public void reverse() {
             throw new UnsupportedOperationException("cannot change EMPTY PointList");
         }
