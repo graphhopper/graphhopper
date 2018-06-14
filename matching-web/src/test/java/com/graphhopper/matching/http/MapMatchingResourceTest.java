@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.InputStream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
@@ -78,9 +79,10 @@ public class MapMatchingResourceTest {
     public void testEmptyGPX() {
         String emptyGPX = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?><gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" creator=\"Graphhopper\" version=\"1.1\" xmlns:gh=\"https://graphhopper.com/public/schema/gpx/1.1\"></gpx>";
         final Response response = app.client().target("http://localhost:8080/match").request().buildPost(Entity.xml(emptyGPX)).invoke();
-        assertEquals(200, response.getStatus());
+        assertEquals(500, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
-        JsonNode path = json.get("paths").get(0);
-        assertEquals(0, WebHelper.decodePolyline(path.get("points").asText(), 10, false).size());
+        JsonNode message = json.get("message");
+        assertTrue(message.isValueNode());
+        assertTrue(message.asText().startsWith("There was an error processing your request."));
     }
 }
