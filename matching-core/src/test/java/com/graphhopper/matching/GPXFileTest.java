@@ -21,7 +21,11 @@ import com.graphhopper.util.GPXEntry;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
+
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
 import static org.junit.Assert.*;
 
 /**
@@ -29,6 +33,9 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class GPXFileTest {
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void testDoImport() {
@@ -64,5 +71,13 @@ public class GPXFileTest {
     public void testParseDate() throws ParseException {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
         assertEquals(1412700604000L, df.parse("2014-10-07T16:50:04+0000").getTime());
+    }
+
+    @Test
+    public void testGPXWithoutTrackpoints() throws RuntimeException {
+        GPXFile instance = new GPXFile();
+        thrown.expect(RuntimeException.class);
+        thrown.expectMessage("java.text.ParseException: No trackpoints found in GPX file");
+        instance.doImport("./src/test/resources/test-only-wpt.gpx");
     }
 }

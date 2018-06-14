@@ -152,6 +152,9 @@ public class GPXFile {
                 prevLon = lon;
                 prevMillis = millis;
             }
+            if (entries.size() == 0) {
+                throw new ParseException("No trackpoints found in GPX file", 0);
+            }
             return this;
         } catch (ParseException e) {
             throw new RuntimeException(e);
