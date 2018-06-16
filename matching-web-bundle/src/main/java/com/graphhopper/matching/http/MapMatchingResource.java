@@ -33,6 +33,7 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -92,7 +93,10 @@ public class MapMatchingResource {
 
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
         if (!encodingManager.supports(vehicleStr)) {
-            throw new WebApplicationException("Vehicle not supported: " + vehicleStr);
+            throw new WebApplicationException("Vehicle not supported: " + vehicleStr, 400);
+        }
+        if (body.getElementsByTagName("trk").getLength() == 0) {
+            throw new WebApplicationException("No tracks found in GPX document. Are you using waypoints or routes instead?", 400);
         }
 
         GPXFile file = new GPXFile();
