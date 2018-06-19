@@ -11,10 +11,11 @@ env:
 
 matrix:
   include:
-    - jdk: oraclejdk8
     - jdk: openjdk8
     - env: JDK='OpenJDK 10'
       install: . ./install-jdk.sh -F 10 -C
+    - env: JDK='OpenJDK 11'
+      install: . ./install-jdk.sh -F 11 -C
     
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
