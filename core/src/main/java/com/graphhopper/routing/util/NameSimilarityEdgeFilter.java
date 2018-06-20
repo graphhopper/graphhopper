@@ -21,10 +21,7 @@ import com.graphhopper.apache.commons.lang3.StringUtils;
 import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -48,19 +45,24 @@ import static com.graphhopper.util.Helper.toLowerCase;
  */
 public class NameSimilarityEdgeFilter implements EdgeFilter {
 
+
     private static final Map<String, String> DEFAULT_REWRITE_MAP = new HashMap<String, String>() {{
         // two char words will be ignored but ignore certain longer phrases (or rename them)
-        put("av.", "");
-        put("avenue", "");
-        put("avenida", "");
-        put("rd.", "");
-        put("road", "");
-        put("str.", "");
-        put("str", "");
-        put("straße", "");
-        put("strasse", "");
-        put("st.", ""); // saint vs. street
-        put("street", "");
+        for (String remove : Arrays.asList(
+                "ally", "alley",
+                "arc", "arcade",
+                "bvd", "boulevard",
+                "av.", "avenue", "avenida",
+                "calle",
+                "rd.", "road",
+                "ln.", "lane",
+                "pl.", "place", "plaza",
+                "str.", "str", "straße", "strasse", "st.", "street", "strada",
+                "sq.", "square",
+                "tr.", "track",
+                "via")) {
+            put(remove, "");
+        }
     }};
     private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{L}]+");
     private static final JaroWinkler jaroWinkler = new JaroWinkler();
