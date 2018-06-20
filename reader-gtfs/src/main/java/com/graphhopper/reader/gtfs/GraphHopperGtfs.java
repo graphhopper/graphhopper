@@ -18,6 +18,8 @@
 
 package com.graphhopper.reader.gtfs;
 
+import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.model.Transfer;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.*;
 import com.graphhopper.reader.osm.OSMReader;
@@ -343,8 +345,19 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             } else {
                 walkNetworkIndex = new EmptyLocationIndex();
             }
+            GraphHopperGtfs graphHopperGtfs = new GraphHopperGtfs(ptFlagEncoder, createTranslationMap(), graphHopperStorage, walkNetworkIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
             for (int i = 0; i < id; i++) {
-                new GtfsReader("gtfs_" + i, graphHopperStorage, gtfsStorage, ptFlagEncoder, walkNetworkIndex).readGraph();
+                GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get("gtfs_" + i);
+                GtfsReader gtfsReader = new GtfsReader("gtfs_" + i, graphHopperStorage, gtfsStorage, ptFlagEncoder, walkNetworkIndex);
+                gtfsReader.connectStopsToStreetNetwork();
+                graphHopperGtfs.getType0TransferWithTimes(gtfsFeed)
+                        .forEach(t -> {
+                            t.transfer.transfer_type = 2;
+                            t.transfer.min_transfer_time = (int) (t.time / 1000L);
+                            gtfsFeed.transfers.put(t.id, t.transfer);
+                            System.out.print(String.format("%s\t%s\t%d\t%d\n", t.transfer.from_stop_id, t.transfer.to_stop_id, t.transfer.transfer_type, t.time));
+                        });
+                gtfsReader.readGraph();
             }
             graphHopperStorage.flush();
             return graphHopperStorage;
@@ -369,6 +382,46 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     @Override
     public GHResponse route(GHRequest request) {
         return new RequestHandler(request).route();
+    }
+
+    private class TransferWithTime {
+        public String id;
+        Transfer transfer;
+        long time;
+    }
+
+    private Stream<TransferWithTime> getType0TransferWithTimes(GTFSFeed gtfsFeed) {
+        return gtfsFeed.transfers.entrySet()
+                .parallelStream()
+                .filter(e -> e.getValue().transfer_type == 0)
+                .map(e -> {
+                    PointList points = new PointList(2, false);
+                    final int fromnode = gtfsStorage.getStationNodes().get(e.getValue().from_stop_id);
+                    final QueryResult fromstation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
+                    fromstation.setClosestNode(fromnode);
+                    points.add(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
+
+                    final int tonode = gtfsStorage.getStationNodes().get(e.getValue().to_stop_id);
+                    final QueryResult tostation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
+                    tostation.setClosestNode(tonode);
+                    points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
+
+                    PtTravelTimeWeighting weighting = createPtTravelTimeWeighting(flagEncoder, false, 5.0);
+                    QueryGraph queryGraph = new QueryGraph(graphHopperStorage);
+                    queryGraph.lookup(Collections.emptyList());
+                    final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, weighting, flagEncoder, gtfsStorage, realtimeFeed, false, Collections.emptyList(), true);
+
+                    MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, weighting, false, Double.MAX_VALUE, Double.MAX_VALUE, false, false, Integer.MAX_VALUE);
+                    final Stream<Label> labels = router.calcLabels(fromnode, tonode, Instant.ofEpochMilli(0), 0);
+                    List<Label> solutions = labels
+                            .filter(current -> tonode == current.adjNode)
+                            .collect(Collectors.toList());
+                    TransferWithTime transferWithTime = new TransferWithTime();
+                    transferWithTime.id = e.getKey();
+                    transferWithTime.transfer = e.getValue();
+                    transferWithTime.time = solutions.get(0).currentTime;
+                    return transferWithTime;
+                });
     }
 
     private static PtTravelTimeWeighting createPtTravelTimeWeighting(PtFlagEncoder encoder, boolean arriveBy, double walkSpeedKmH) {
