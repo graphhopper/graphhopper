@@ -25,6 +25,7 @@ import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Constants;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
@@ -37,7 +38,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.util.Parameters.Routing.*;
 
@@ -54,13 +58,11 @@ public class RouteResource {
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
     private final GraphHopperAPI graphHopper;
-    private final EncodingManager encodingManager;
     private final Boolean hasElevation;
 
     @Inject
-    public RouteResource(GraphHopperAPI graphHopper, EncodingManager encodingManager, @Named("hasElevation") Boolean hasElevation) {
+    public RouteResource(GraphHopperAPI graphHopper, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
-        this.encodingManager = encodingManager;
         this.hasElevation = hasElevation;
     }
 
@@ -70,7 +72,7 @@ public class RouteResource {
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
             @Context ContainerRequestContext rc,
-            @QueryParam(WAY_POINT_MAX_DISTANCE)@DefaultValue("1") double minPathPrecision,
+            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
             @QueryParam("point") List<GHPoint> requestPoints,
             @QueryParam("type") @DefaultValue("json") String type,
             @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
@@ -94,22 +96,15 @@ public class RouteResource {
 
         StopWatch sw = new StopWatch().start();
 
-        if(requestPoints.isEmpty()) {
-            throw new MultiException(new IllegalArgumentException("You have to pass at least one point"));
-        }
-
-        if (!encodingManager.supports(vehicleStr)) {
-            throw new MultiException(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
-        } else if (enableElevation && !hasElevation) {
-            throw new MultiException(new IllegalArgumentException("Elevation not supported!"));
-        } else if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size()) {
-            throw new MultiException(new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
-                    + "or equal to the number of points (" + requestPoints.size() + ")"));
-        }
-
-        if (pointHints.size() > 0 && pointHints.size() != requestPoints.size()) {
-            throw new MultiException(new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty hints will be ignored"));
-        }
+        if (requestPoints.isEmpty())
+            throw new IllegalArgumentException("You have to pass at least one point");
+        if (enableElevation && !hasElevation)
+            throw new IllegalArgumentException("Elevation not supported!");
+        if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size())
+            throw new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
+                    + "or equal to the number of points (" + requestPoints.size() + ")");
+        if (pointHints.size() > 0 && pointHints.size() != requestPoints.size())
+            throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty hints will be ignored");
 
         GHRequest request;
         if (favoredHeadings.size() > 0) {
@@ -126,7 +121,7 @@ public class RouteResource {
         }
 
         initHints(request.getHints(), uriInfo.getQueryParameters());
-        request.setVehicle(encodingManager.getEncoder(vehicleStr).toString()).
+        request.setVehicle(Helper.toLowerCase(vehicleStr)).
                 setWeighting(weighting).
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
@@ -165,9 +160,10 @@ public class RouteResource {
         }
     }
 
-    private static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String trackName, boolean enableElevation, boolean withRoute, boolean withTrack, boolean withWayPoints, String version) {
+    private static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String
+            trackName, boolean enableElevation, boolean withRoute, boolean withTrack, boolean withWayPoints, String version) {
         if (ghRsp.getAll().size() > 1) {
-            throw new MultiException(new IllegalArgumentException("Alternatives are currently not yet supported for GPX"));
+            throw new IllegalArgumentException("Alternatives are currently not yet supported for GPX");
         }
 
         long time = timeString != null ? Long.parseLong(timeString) : System.currentTimeMillis();

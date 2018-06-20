@@ -28,6 +28,6 @@ import javax.ws.rs.ext.Provider;
 public class MultiExceptionMapper implements ExceptionMapper<MultiException> {
     @Override
     public Response toResponse(MultiException exception) {
-        return Response.status(400).entity(exception).build();
+        return Response.status(Response.Status.BAD_REQUEST).entity(exception).build();
     }
 }
