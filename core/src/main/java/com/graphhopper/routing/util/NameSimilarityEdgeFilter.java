@@ -22,7 +22,9 @@ import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -47,33 +49,54 @@ import static com.graphhopper.util.Helper.toLowerCase;
 public class NameSimilarityEdgeFilter implements EdgeFilter {
 
     private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{L}]+");
-    private final double JARO_WINKLER_ACCEPT_FACTOR = .79;
+    private final double JARO_WINKLER_ACCEPT_FACTOR = .9;
     private final JaroWinkler jaroWinkler = new JaroWinkler();
-
     private final EdgeFilter edgeFilter;
     private final String pointHint;
+    private final Map<String, String> rewriteMap;
 
     public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint) {
+        this(edgeFilter, pointHint, new HashMap<String, String>() {{
+            // two char words will be ignored but ignore certain longer phrases (or rename them)
+            put("av.", "");
+            put("avenue", "");
+            put("avenida", "");
+            put("rd.", "");
+            put("road", "");
+            put("str.", "");
+            put("str", "");
+            put("straße", "");
+            put("strasse", "");
+            put("st.", ""); // saint vs. street
+            put("street", "");
+        }});
+    }
+
+    /**
+     * @param rewriteMap maps abreviations to its longer form
+     */
+    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint, Map<String, String> rewriteMap) {
         this.edgeFilter = edgeFilter;
-        this.pointHint = prepareName(pointHint == null ? "" : pointHint);
+        this.rewriteMap = rewriteMap;
+        this.pointHint = prepareName(removeRelation(pointHint == null ? "" : pointHint));
     }
 
     /**
      * Removes any characters in the String that we don't care about in the matching procedure
-     * TODO: Remove common street names like: street, road, avenue?
+     * TODO Currently limited to certain 'western' languages
      */
     private String prepareName(String name) {
-        // TODO make this better, also split at ',' and others?
-        // TODO This limits the approach to certain 'western' languages
         // \s = A whitespace character: [ \t\n\x0B\f\r]
         String[] arr = name.split("\\s");
-        String tmp;
         List<String> list = new ArrayList<>(arr.length);
         for (int i = 0; i < arr.length; i++) {
-            tmp = NON_WORD_CHAR.matcher(toLowerCase(arr[i])).replaceAll("");
-            // Ignore matching short frases like, de, rue, st, etc.
-            if (!tmp.isEmpty() && tmp.length() > 3) {
-                list.add(tmp);
+            String rewrite = NON_WORD_CHAR.matcher(toLowerCase(arr[i])).replaceAll("");
+            String tmp = rewriteMap.get(rewrite);
+            if (tmp != null)
+                rewrite = tmp;
+            // Ignore matching short frases like de, la, ...
+            if (!rewrite.isEmpty() && rewrite.length() > 2) {
+                list.add(rewrite);
             }
         }
         return listToString(list);
