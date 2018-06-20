@@ -48,6 +48,20 @@ import static com.graphhopper.util.Helper.toLowerCase;
  */
 public class NameSimilarityEdgeFilter implements EdgeFilter {
 
+    private static final Map<String, String> DEFAULT_REWRITE_MAP = new HashMap<String, String>() {{
+        // two char words will be ignored but ignore certain longer phrases (or rename them)
+        put("av.", "");
+        put("avenue", "");
+        put("avenida", "");
+        put("rd.", "");
+        put("road", "");
+        put("str.", "");
+        put("str", "");
+        put("straße", "");
+        put("strasse", "");
+        put("st.", ""); // saint vs. street
+        put("street", "");
+    }};
     private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{L}]+");
     private final double JARO_WINKLER_ACCEPT_FACTOR = .9;
     private final JaroWinkler jaroWinkler = new JaroWinkler();
@@ -56,20 +70,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
     private final Map<String, String> rewriteMap;
 
     public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint) {
-        this(edgeFilter, pointHint, new HashMap<String, String>() {{
-            // two char words will be ignored but ignore certain longer phrases (or rename them)
-            put("av.", "");
-            put("avenue", "");
-            put("avenida", "");
-            put("rd.", "");
-            put("road", "");
-            put("str.", "");
-            put("str", "");
-            put("straße", "");
-            put("strasse", "");
-            put("st.", ""); // saint vs. street
-            put("street", "");
-        }});
+        this(edgeFilter, pointHint, DEFAULT_REWRITE_MAP);
     }
 
     /**
