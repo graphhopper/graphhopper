@@ -38,7 +38,7 @@ before_script:
   - "mvn --version"
   - "if [ -z \"$API_KEY\" ]; then API_KEY=78da6e9a-273e-43d1-bdda-8f24e007a1fa; fi" # change in GraphHopperWebIT too
 script:
-  - "mvn -Dkey=$API_KEY clean test verify checkstyle:check findbugs:check forbiddenapis:check -B"
+  - "mvn -Dkey=$API_KEY clean test verify checkstyle:check findbugs:check forbiddenapis:check -B -e"
 
 after_success:
   # deploy snapshot artifacts to sonatype and if tagged deploy then release to maven central
@@ -56,6 +56,6 @@ notifications:
   email:
     - secure: l7/fjqL0c/9UcULXdhaKxsroZMg07nfNDiOHRBf7YKf8wrKdH52Z5kP7E10+a8iD/ieLD+ZaZPlom1bE7HymE1bVkp3d17Ezha47W5sdyOOb3NBDpg8olS4TkehOKo3AQhLXSfF6QGtipxY8Iy9QknXHngQOrcoGYiOlzCZ3BTQ=
 
-cache:
-  directories:
-  - $HOME/.m2
+#cache:
+#  directories:
+#  - $HOME/.m2
