@@ -63,8 +63,8 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         put("street", "");
     }};
     private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{L}]+");
-    private final double JARO_WINKLER_ACCEPT_FACTOR = .9;
-    private final JaroWinkler jaroWinkler = new JaroWinkler();
+    private static final JaroWinkler jaroWinkler = new JaroWinkler();
+    private static final double JARO_WINKLER_ACCEPT_FACTOR = .9;
     private final EdgeFilter edgeFilter;
     private final String pointHint;
     private final Map<String, String> rewriteMap;
