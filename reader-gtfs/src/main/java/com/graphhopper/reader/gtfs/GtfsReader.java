@@ -138,11 +138,10 @@ class GtfsReader {
         gtfsStorage.getFares().putAll(feed.fares);
         transfers = new Transfers(feed);
         gtfsStorage.getTransfers().put(id, transfers);
-        connectStopsToStreetNetwork();
         buildPtNetwork();
     }
 
-    private void connectStopsToStreetNetwork() {
+    void connectStopsToStreetNetwork() {
         EdgeFilter filter = new EverythingButPt(encoder);
         for (Stop stop : feed.stops.values()) {
             QueryResult locationQueryResult = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
