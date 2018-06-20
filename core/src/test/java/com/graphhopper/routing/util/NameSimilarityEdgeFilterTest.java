@@ -97,10 +97,16 @@ public class NameSimilarityEdgeFilterTest {
         edgeFilter = createNameSimilarityEdgeFilter("Rue Saint-Antoine O, Montréal");
         assertTrue(edgeFilter.accept(createTestEdgeIterator("Rue Saint-Antoine O")));
         assertFalse(edgeFilter.accept(createTestEdgeIterator("Rue Saint-Jacques")));
+
+        edgeFilter = createNameSimilarityEdgeFilter("Rue de Bleury");
+        assertTrue(edgeFilter.accept(createTestEdgeIterator("Rue de Bleury")));
         assertFalse(edgeFilter.accept(createTestEdgeIterator("Rue Balmoral")));
 
         assertTrue(createNameSimilarityEdgeFilter("Main Rd").accept(createTestEdgeIterator("Main Road")));
         assertTrue(createNameSimilarityEdgeFilter("Main Road").accept(createTestEdgeIterator("Main Rd")));
+
+        assertTrue(createNameSimilarityEdgeFilter("Cape Point Rd").accept(createTestEdgeIterator("Cape Point")));
+        assertTrue(createNameSimilarityEdgeFilter("Cape Point Rd").accept(createTestEdgeIterator("Cape Point Road")));
 
         assertTrue(createNameSimilarityEdgeFilter("Av. Juan Ramón Ramírez").accept(createTestEdgeIterator("Avenida Juan Ramón Ramírez")));
     }
@@ -121,6 +127,8 @@ public class NameSimilarityEdgeFilterTest {
         EdgeIteratorState edge = createTestEdgeIterator("Ben-Gurion-Straße");
         assertTrue(createNameSimilarityEdgeFilter("Ben-Gurion").accept(edge));
         assertTrue(createNameSimilarityEdgeFilter("Ben Gurion").accept(edge));
+        assertTrue(createNameSimilarityEdgeFilter("Ben Gurion Strasse").accept(edge));
+        assertFalse(createNameSimilarityEdgeFilter("Potsdamer Str.").accept(edge));
     }
 
     @Ignore
