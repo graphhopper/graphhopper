@@ -121,7 +121,7 @@ public class RouteResource {
         }
 
         initHints(request.getHints(), uriInfo.getQueryParameters());
-        request.setVehicle(Helper.toLowerCase(vehicleStr)).
+        request.setVehicle(vehicleStr).
                 setWeighting(weighting).
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
