@@ -355,7 +355,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                             t.transfer.transfer_type = 2;
                             t.transfer.min_transfer_time = (int) (t.time / 1000L);
                             gtfsFeed.transfers.put(t.id, t.transfer);
-                            System.out.print(String.format("%s\t%s\t%d\t%d\n", t.transfer.from_stop_id, t.transfer.to_stop_id, t.transfer.transfer_type, t.time));
                         });
                 gtfsReader.readGraph();
             }
