@@ -977,7 +977,7 @@ public class GraphHopper implements GraphHopperAPI {
         readLock.lock();
         try {
             if (!encodingManager.supports(vehicle))
-                throw new IllegalArgumentException("Vehicle not supported: " + vehicle);
+                throw new IllegalArgumentException("Vehicle not supported: " + vehicle + ". Supported are: " + encodingManager.toString());
 
             HintsMap hints = request.getHints();
             String tModeStr = hints.get("traversal_mode", traversalMode.toString());
