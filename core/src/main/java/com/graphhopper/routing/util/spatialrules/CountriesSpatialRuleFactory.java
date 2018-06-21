@@ -40,7 +40,6 @@ public class CountriesSpatialRuleFactory implements SpatialRuleLookupBuilder.Spa
                 germanySpatialRule.setBorders(polygons);
                 return germanySpatialRule;
             case "GBR":
-                System.out.println("GBR!!!!!!!");
                 GreatBritainSpatialRule greatBritainSpatialRule = new GreatBritainSpatialRule();
                 greatBritainSpatialRule.setBorders(polygons);
                 return greatBritainSpatialRule;
