@@ -19,7 +19,6 @@ package com.graphhopper.reader.gtfs;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -44,7 +43,6 @@ class MultiCriteriaLabelSetting {
     private long startTime;
     private int blockedRouteTypes;
     private final PtFlagEncoder flagEncoder;
-    private final PtTravelTimeWeighting weighting;
     private final Multimap<Integer, Label> fromMap;
     private final PriorityQueue<Label> fromHeap;
     private final int maxVisitedNodes;
@@ -56,9 +54,8 @@ class MultiCriteriaLabelSetting {
     private int visitedNodes;
     private final GraphExplorer explorer;
 
-    MultiCriteriaLabelSetting(GraphExplorer explorer, Weighting weighting, boolean reverse, double maxWalkDistancePerLeg, double maxTransferDistancePerLeg, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes) {
-        this.weighting = (PtTravelTimeWeighting) weighting;
-        this.flagEncoder = (PtFlagEncoder) weighting.getFlagEncoder();
+    MultiCriteriaLabelSetting(GraphExplorer explorer, PtFlagEncoder flagEncoder, boolean reverse, double maxWalkDistancePerLeg, double maxTransferDistancePerLeg, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes) {
+        this.flagEncoder = flagEncoder;
         this.maxVisitedNodes = maxVisitedNodes;
         this.explorer = explorer;
         this.reverse = reverse;
@@ -122,7 +119,7 @@ class MultiCriteriaLabelSetting {
                     } else {
                         nextTime = label.currentTime + explorer.calcTravelTimeMillis(edge, label.currentTime);
                     }
-                    int nTransfers = label.nTransfers + weighting.calcNTransfers(edge);
+                    int nTransfers = label.nTransfers + explorer.calcNTransfers(edge);
                     Long firstPtDepartureTime = label.departureTime;
                     if (!reverse && (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK || edgeType == GtfsStorage.EdgeType.WAIT)) {
                         if (label.nTransfers == 0) {
@@ -133,7 +130,7 @@ class MultiCriteriaLabelSetting {
                             firstPtDepartureTime = nextTime - label.walkTime;
                         }
                     }
-                    double walkDistanceOnCurrentLeg = (!reverse && edgeType == GtfsStorage.EdgeType.BOARD || reverse && edgeType == GtfsStorage.EdgeType.ALIGHT) ? 0 : (label.walkDistanceOnCurrentLeg + weighting.getWalkDistance(edge));
+                    double walkDistanceOnCurrentLeg = (!reverse && edgeType == GtfsStorage.EdgeType.BOARD || reverse && edgeType == GtfsStorage.EdgeType.ALIGHT) ? 0 : (label.walkDistanceOnCurrentLeg + explorer.getWalkDistance(edge));
                     boolean isTryingToReEnterPtAfterTransferWalking = (!reverse && edgeType == GtfsStorage.EdgeType.ENTER_PT || reverse && edgeType == GtfsStorage.EdgeType.EXIT_PT) && label.nTransfers > 0 && label.walkDistanceOnCurrentLeg > maxTransferDistancePerLeg;
                     long walkTime = label.walkTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? nextTime - label.currentTime : 0);
                     int nWalkDistanceConstraintViolations = Math.min(1, label.nWalkDistanceConstraintViolations + (

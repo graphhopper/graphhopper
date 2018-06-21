@@ -32,6 +32,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
@@ -105,14 +106,14 @@ public class RealtimeFeed {
         return new RealtimeFeed(staticGtfs, Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), staticGtfs.getOperatingDayPatterns(), staticGtfs.getWritableTimeZones());
     }
 
-    public static RealtimeFeed fromProtobuf(Graph graph, GtfsStorage staticGtfs, PtFlagEncoder encoder, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
+    public static RealtimeFeed fromProtobuf(GraphHopperStorage graphHopperStorage, GtfsStorage staticGtfs, PtFlagEncoder encoder, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
         final IntHashSet blockedEdges = new IntHashSet();
         final IntLongHashMap delaysForBoardEdges = new IntLongHashMap();
         final IntLongHashMap delaysForAlightEdges = new IntLongHashMap();
         final LinkedList<VirtualEdgeIteratorState> additionalEdges = new LinkedList<>();
         final Graph overlayGraph = new Graph() {
             int nNodes = 0;
-            int firstEdge = graph.getAllEdges().length();
+            int firstEdge = graphHopperStorage.getAllEdges().length();
             final NodeAccess nodeAccess = new NodeAccess() {
                 IntIntHashMap additionalNodeFields = new IntIntHashMap();
 
@@ -183,12 +184,12 @@ public class RealtimeFeed {
             };
             @Override
             public Graph getBaseGraph() {
-                return graph;
+                return graphHopperStorage;
             }
 
             @Override
             public int getNodes() {
-                return graph.getNodes() + nNodes;
+                return graphHopperStorage.getNodes() + nNodes;
             }
 
             @Override
@@ -203,21 +204,20 @@ public class RealtimeFeed {
 
             @Override
             public EdgeIteratorState edge(int a, int b) {
-                return null;
-            }
-
-            @Override
-            public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
                 int edge = firstEdge++;
                 final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(-1,
-                        edge, a, b, distance,0, "", new PointList());
+                        edge, a, b, 0.0, 0, "", new PointList());
                 final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(-1,
-                        edge, b, a, distance,0, "", new PointList());
-
+                        edge, b, a, 0.0, 0, "", new PointList());
                 newEdge.setReverseEdge(reverseNewEdge);
                 reverseNewEdge.setReverseEdge(newEdge);
                 additionalEdges.push(newEdge);
                 return newEdge;
+            }
+
+            @Override
+            public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
+                return null;
             }
 
             @Override
@@ -237,7 +237,7 @@ public class RealtimeFeed {
 
             @Override
             public EdgeExplorer createEdgeExplorer() {
-                return graph.createEdgeExplorer();
+                return graphHopperStorage.createEdgeExplorer();
             }
 
             @Override
@@ -359,7 +359,7 @@ public class RealtimeFeed {
                             int departureDelay = stopTime.departure_time - originalStopTime.departure_time;
                             if (departureDelay > 0) {
                                 int boardEdge = boardEdges[stopTime.stop_sequence];
-                                int departureNode = graph.getEdgeIteratorState(boardEdge, Integer.MIN_VALUE).getAdjNode();
+                                int departureNode = graphHopperStorage.getEdgeIteratorState(boardEdge, Integer.MIN_VALUE).getAdjNode();
                                 int delayedBoardEdge = gtfsReader.addDelayedBoardEdge(timezone, tripUpdate.getTrip(), stopTime.stop_sequence, stopTime.departure_time + timeOffset, departureNode, validOnDay);
                                 delaysForBoardEdges.put(delayedBoardEdge, departureDelay * 1000);
                             }
