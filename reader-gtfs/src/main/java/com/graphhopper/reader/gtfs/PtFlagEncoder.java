@@ -54,14 +54,14 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
 		speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, 0, 0);
 		shift += speedEncoder.getBits();
 
-		time = new EncodedValue("time", shift, 32, 1.0, 0, Integer.MAX_VALUE);
+		time = new EncodedValue("time", shift, 17, 1.0, 0, 24*60*60);
 		shift += time.getBits();
 		transfers = new EncodedValue("transfers", shift, 1, 1.0, 0, 1);
 		shift += transfers.getBits();
 		validityId = new EncodedValue("validityId", shift, 20, 1.0, 0, 1048575);
 		shift += validityId.getBits();
 		GtfsStorage.EdgeType[] edgeTypes = GtfsStorage.EdgeType.values();
-		type = new EncodedValue("type", shift, 6, 1.0, GtfsStorage.EdgeType.HIGHWAY.ordinal(), edgeTypes[edgeTypes.length-1].ordinal());
+		type = new EncodedValue("type", shift, 4, 1.0, GtfsStorage.EdgeType.HIGHWAY.ordinal(), edgeTypes[edgeTypes.length-1].ordinal());
 		shift += type.getBits();
 		return shift;
 	}
