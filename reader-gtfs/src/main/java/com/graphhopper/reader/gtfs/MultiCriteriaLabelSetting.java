@@ -19,7 +19,6 @@ package com.graphhopper.reader.gtfs;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -44,7 +43,6 @@ class MultiCriteriaLabelSetting {
     private long startTime;
     private int blockedRouteTypes;
     private final PtFlagEncoder flagEncoder;
-    private final PtTravelTimeWeighting weighting;
     private final Multimap<Integer, Label> fromMap;
     private final PriorityQueue<Label> fromHeap;
     private final int maxVisitedNodes;
@@ -56,9 +54,8 @@ class MultiCriteriaLabelSetting {
     private int visitedNodes;
     private final GraphExplorer explorer;
 
-    MultiCriteriaLabelSetting(GraphExplorer explorer, Weighting weighting, boolean reverse, double maxWalkDistancePerLeg, double maxTransferDistancePerLeg, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes) {
-        this.weighting = (PtTravelTimeWeighting) weighting;
-        this.flagEncoder = (PtFlagEncoder) weighting.getFlagEncoder();
+    MultiCriteriaLabelSetting(GraphExplorer explorer, PtFlagEncoder flagEncoder, boolean reverse, double maxWalkDistancePerLeg, double maxTransferDistancePerLeg, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes) {
+        this.flagEncoder = flagEncoder;
         this.maxVisitedNodes = maxVisitedNodes;
         this.explorer = explorer;
         this.reverse = reverse;
