@@ -33,6 +33,7 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -142,7 +143,7 @@ class GtfsReader {
     }
 
     void connectStopsToStreetNetwork() {
-        EdgeFilter filter = new EverythingButPt(encoder);
+        final EdgeFilter filter = DefaultEdgeFilter.allEdges(((GraphHopperStorage) graph).getEncodingManager().getEncoder("foot"));
         for (Stop stop : feed.stops.values()) {
             QueryResult locationQueryResult = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
             int streetNode;

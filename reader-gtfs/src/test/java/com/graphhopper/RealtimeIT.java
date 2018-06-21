@@ -22,6 +22,7 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.GHDirectory;
@@ -31,7 +32,6 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -65,17 +65,17 @@ public class RealtimeIT {
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder, new FootFlagEncoder()), 8);
+        EncodingManager encodingManager = new EncodingManager(Arrays.asList(new CarFlagEncoder(), new FootFlagEncoder(), ptFlagEncoder), 8);
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
         GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, true, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
-        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage, ptFlagEncoder);
+        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         graphHopperStorage.close();
         locationIndex.close();
         // Re-load read only
         directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, true, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
-        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage, ptFlagEncoder);
+        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         graphHopperFactory = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage);
     }
 

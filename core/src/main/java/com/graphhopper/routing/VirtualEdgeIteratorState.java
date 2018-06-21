@@ -49,6 +49,9 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         this.adjNode = adjNode;
         this.distance = distance;
         this.flags = flags;
+        if (flags == 786432) {
+            System.out.println("blubb");
+        }
         this.name = name;
         this.pointList = pointList;
     }
@@ -122,6 +125,9 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     @Override
     public EdgeIteratorState setFlags(long flags) {
         this.flags = flags;
+        if (flags == 3) {
+            System.out.println("pups");
+        }
         return this;
     }
 

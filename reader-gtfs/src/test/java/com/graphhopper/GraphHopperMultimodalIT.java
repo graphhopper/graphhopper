@@ -56,7 +56,7 @@ public class GraphHopperMultimodalIT {
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
         GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, false, Collections.singleton("files/sample-feed.zip"), Collections.singleton("files/beatty.osm"));
-        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage, ptFlagEncoder);
+        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
                 .createWithoutRealtimeFeed();
     }

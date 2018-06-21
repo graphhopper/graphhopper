@@ -26,6 +26,8 @@ import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -212,9 +214,13 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         }
 
         private QueryResult findClosest(GHPoint point, int indexForErrorMessage) {
-            QueryResult source = locationIndex.findClosest(point.lat, point.lon, new EverythingButPt(flagEncoder));
+            final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot"));
+            QueryResult source = locationIndex.findClosest(point.lat, point.lon, filter);
             if (!source.isValid()) {
                 throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);
+            }
+            if (flagEncoder.getEdgeType(source.getClosestEdge().getFlags()) != GtfsStorage.EdgeType.HIGHWAY) {
+                throw new RuntimeException(flagEncoder.getEdgeType(source.getClosestEdge().getFlags()).name());
             }
             return source;
         }
@@ -366,9 +372,9 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     }
 
 
-    public static LocationIndex createOrLoadIndex(GHDirectory directory, GraphHopperStorage graphHopperStorage, PtFlagEncoder flagEncoder) {
-        final EverythingButPt everythingButPt = new EverythingButPt(flagEncoder);
-        Graph walkNetwork = GraphSupport.filteredView(graphHopperStorage, everythingButPt);
+    public static LocationIndex createOrLoadIndex(GHDirectory directory, GraphHopperStorage graphHopperStorage) {
+        final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot"));
+        Graph walkNetwork = GraphSupport.filteredView(graphHopperStorage, filter);
         LocationIndex locationIndex = new LocationIndexTree(walkNetwork, directory);
         if (!locationIndex.loadExisting()) {
             locationIndex.prepareIndex();

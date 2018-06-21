@@ -209,7 +209,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 configuration.has("gtfs.file") ? Arrays.asList(configuration.get("gtfs.file", "").split(",")) : Collections.emptyList(),
                 configuration.has("datareader.file") ? Arrays.asList(configuration.get("datareader.file", "").split(",")) : Collections.emptyList());
         final TranslationMap translationMap = GraphHopperGtfs.createTranslationMap();
-        final LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(ghDirectory, graphHopperStorage, ptFlagEncoder);
+        final LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(ghDirectory, graphHopperStorage);
         final GraphHopperAPI graphHopper = new GraphHopperGtfs(ptFlagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
         environment.jersey().register(new AbstractBinder() {
             @Override
