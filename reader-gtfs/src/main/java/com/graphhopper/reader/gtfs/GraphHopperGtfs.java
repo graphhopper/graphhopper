@@ -128,7 +128,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             maxWalkDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 1000.0);
             maxTransferDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, Double.MAX_VALUE);
             blockedRouteTypes = request.getHints().getInt(Parameters.PT.BLOCKED_ROUTE_TYPES, 0);
-            weighting = new FastestWeighting(flagEncoder);
+            weighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
             translation = translationMap.getWithFallBack(request.getLocale());
             if (request.getPoints().size() != 2) {
                 throw new IllegalArgumentException("Exactly 2 points have to be specified, but was:" + request.getPoints().size());
@@ -184,9 +184,9 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                         nextEdgeId++, reverse ? stationNode.adjNode : nextNodeId, reverse ? nextNodeId : stationNode.adjNode, pathWrapper.getDistance(), 0, "", pathWrapper.getPoints());
                 final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(stationNode.edge,
                         nextEdgeId++, reverse ? nextNodeId : stationNode.adjNode, reverse ? stationNode.adjNode : nextNodeId, pathWrapper.getDistance(), 0, "", pathWrapper.getPoints());
-                newEdge.setFlags(((PtFlagEncoder) weighting.getFlagEncoder()).setEdgeType(newEdge.getFlags(), reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT));
+                newEdge.setFlags(flagEncoder.setEdgeType(newEdge.getFlags(), reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT));
                 final long time = pathWrapper.getTime() / 1000;
-                newEdge.setFlags(((PtFlagEncoder) weighting.getFlagEncoder()).setTime(newEdge.getFlags(), time));
+                newEdge.setFlags(flagEncoder.setTime(newEdge.getFlags(), time));
                 newEdge.setFlags(flagEncoder.setValidityId(newEdge.getFlags(), flagEncoder.getValidityId(graphExplorer.getEdgeIteratorState(stationNode.edge, Integer.MIN_VALUE).getFlags())));
                 reverseNewEdge.setFlags(newEdge.getFlags());
                 newEdge.setReverseEdge(reverseNewEdge);
