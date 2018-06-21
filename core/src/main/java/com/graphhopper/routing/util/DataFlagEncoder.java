@@ -19,9 +19,14 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.AccessValue;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.GenericWeighting;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.InstructionAnnotation;
+import com.graphhopper.util.PMap;
+import com.graphhopper.util.Translation;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +34,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.Map.Entry;
 
-import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.util.Helper.isEmpty;
+import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
  * This encoder tries to store all way information into a 32 or 64bit value. Later extendable to
@@ -88,7 +94,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private boolean storeWeight = false;
     private boolean storeWidth = false;
     private EncodedValue spatialEncoder;
-    private SpatialRuleLookup spatialRuleLookup = SpatialRuleLookup.EMPTY;
 
     public DataFlagEncoder() {
         this(5, 5, 0);
@@ -213,7 +218,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         accessEncoder = new EncodedValue("access car", shift, 3, 1, 1, 4, true);
         shift += accessEncoder.getBits();
 
-        int tmpMax = spatialRuleLookup.size() - 1;
+        int tmpMax = getSpatialRuleLookup().size() - 1;
         int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
         spatialEncoder = new EncodedValue("spatial_location", shift, bits, 1, 0, tmpMax, true);
         shift += spatialEncoder.getBits();
@@ -408,8 +413,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
             GHPoint estimatedCenter = way.getTag("estimated_center", null);
             if (estimatedCenter != null) {
-                SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);
-                flags = spatialEncoder.setValue(flags, spatialRuleLookup.getSpatialId(rule));
+                SpatialRule rule = getSpatialRuleLookup().lookupRule(estimatedCenter);
+                flags = spatialEncoder.setValue(flags, getSpatialRuleLookup().getSpatialId(rule));
             }
 
             return flags;
@@ -421,7 +426,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private SpatialRule getSpatialRule(ReaderWay way) {
         GHPoint estmCentre = way.getTag("estimated_center", null);
         if (estmCentre != null) {
-            return spatialRuleLookup.lookupRule(estmCentre);
+            return getSpatialRuleLookup().lookupRule(estmCentre);
         }
         return SpatialRule.EMPTY;
     }
@@ -811,12 +816,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return storeWidth;
     }
 
-
-    public DataFlagEncoder setSpatialRuleLookup(SpatialRuleLookup spatialRuleLookup) {
-        this.spatialRuleLookup = spatialRuleLookup;
-        return this;
-    }
-
     @Override
     public InstructionAnnotation getAnnotation(long flags, Translation tr) {
         if (isTransportModeFord(flags)) {
@@ -825,7 +824,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
         return super.getAnnotation(flags, tr);
     }
-
 
     @Override
     protected String getPropertiesString() {

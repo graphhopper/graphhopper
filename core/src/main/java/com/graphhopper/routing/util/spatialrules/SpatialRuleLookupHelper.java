@@ -5,6 +5,7 @@ import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoderFactory;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
@@ -28,6 +29,9 @@ public class SpatialRuleLookupHelper {
             public FlagEncoder createFlagEncoder(String name, PMap configuration) {
                 if (name.equals(GENERIC)) {
                     return new DataFlagEncoder(configuration).setSpatialRuleLookup(index);
+                }
+                if (name.equals(FOOT)) {
+                    return new FootFlagEncoder(configuration).setSpatialRuleLookup(index);
                 }
 
                 return oldFEF.createFlagEncoder(name, configuration);

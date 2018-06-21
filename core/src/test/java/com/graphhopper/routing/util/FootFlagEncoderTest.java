@@ -19,15 +19,23 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupArray;
+import com.graphhopper.routing.util.spatialrules.countries.GreatBritainSpatialRule;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.Polygon;
 import org.junit.Test;
 
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -179,6 +187,35 @@ public class FootFlagEncoderTest {
         way.setTag("access", "no");
         way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
         assertTrue(footEncoder.acceptWay(way) > 0);
+    }
+
+    @Test
+    public void testBriddleway469() {
+        ReaderWay osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "bridleway");
+
+        List<SpatialRule> spatialRules = new ArrayList<>();
+        SpatialRule gbrRule = new GreatBritainSpatialRule().addBorder(new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1}));
+        spatialRules.add(gbrRule);
+        SpatialRuleLookupArray lookup = new SpatialRuleLookupArray(spatialRules, 1, false, new BBox(1, 2, 1, 2));
+        footEncoder.setSpatialRuleLookup(lookup);
+
+        GHPoint insideGBR = new GHPoint(1.5, 1.5);
+        GHPoint outsideGBR = new GHPoint(2.5, 2.5);
+
+        osmWay.setTag("estimated_center", outsideGBR);
+        assertEquals(0, footEncoder.acceptWay(osmWay));
+
+        osmWay.setTag("estimated_center", insideGBR);
+        assertNotEquals(0, footEncoder.acceptWay(osmWay));
+
+        osmWay.setTag("estimated_center", outsideGBR);
+        osmWay.setTag("foot", "yes");
+        assertNotEquals(0, footEncoder.acceptWay(osmWay));
+
+        osmWay.setTag("estimated_center", insideGBR);
+        osmWay.setTag("foot", "no");
+        assertEquals(0, footEncoder.acceptWay(osmWay));
     }
 
     @Test

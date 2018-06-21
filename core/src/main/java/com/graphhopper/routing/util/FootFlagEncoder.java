@@ -19,8 +19,11 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.util.spatialrules.AccessValue;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
 
@@ -121,7 +124,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         allowedHighwayTags.add("unclassified");
         allowedHighwayTags.add("road");
         // disallowed in some countries
-        //allowedHighwayTags.add("bridleway");
+        allowedHighwayTags.add("bridleway");
 
         hikingNetworkToCode.put("iwn", UNCHANGED.getValue());
         hikingNetworkToCode.put("nwn", UNCHANGED.getValue());
@@ -245,6 +248,16 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
         if (!allowedHighwayTags.contains(highwayValue))
             return 0;
+
+        //Only allow bridleways if they are explicitly tagged with access=yes or if the SpatialRule allows it
+        if (highwayValue.equals("bridleway")) {
+            GHPoint estimatedCenter = way.getTag("estimated_center", null);
+            if (estimatedCenter != null) {
+                if (getSpatialRuleLookup().lookupRule(estimatedCenter).getAccessValue(highwayValue, TransportationMode.BICYCLE, AccessValue.NOT_ACCESSIBLE) != AccessValue.ACCESSIBLE) {
+                    return 0;
+                }
+            }
+        }
 
         if (way.hasTag("motorroad", "yes"))
             return 0;

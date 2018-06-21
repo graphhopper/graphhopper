@@ -68,7 +68,7 @@ public interface SpatialRule {
 
         @Override
         public AccessValue getAccessValue(String highwayTag, TransportationMode transportationMode, AccessValue _default) {
-            return AccessValue.ACCESSIBLE;
+            return _default;
         }
 
         @Override

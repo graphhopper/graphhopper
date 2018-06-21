@@ -23,6 +23,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
@@ -82,6 +83,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     private boolean blockByDefault = true;
     private boolean blockFords = true;
     private boolean registered;
+    private SpatialRuleLookup spatialRuleLookup = SpatialRuleLookup.EMPTY;
 
     // Speeds from CarFlagEncoder
     protected static final double UNKNOWN_DURATION_FERRY_SPEED = 5;
@@ -487,7 +489,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             }
 
         if (durationInHours == 0) {
-            if(estimatedLength != null && estimatedLength.doubleValue() <= 300)
+            if (estimatedLength != null && estimatedLength.doubleValue() <= 300)
                 return speedEncoder.factor / 2;
             // unknown speed -> put penalty on ferry transport
             return UNKNOWN_DURATION_FERRY_SPEED;
@@ -700,6 +702,15 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             return maxTurnCosts > 0;
 
         return false;
+    }
+
+    public AbstractFlagEncoder setSpatialRuleLookup(SpatialRuleLookup spatialRuleLookup) {
+        this.spatialRuleLookup = spatialRuleLookup;
+        return this;
+    }
+
+    protected final SpatialRuleLookup getSpatialRuleLookup() {
+        return this.spatialRuleLookup;
     }
 
 }
