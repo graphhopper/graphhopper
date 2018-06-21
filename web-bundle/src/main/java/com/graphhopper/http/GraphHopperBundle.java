@@ -192,6 +192,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(new MultiExceptionGPXMessageBodyWriter());
 
         environment.jersey().register(new IllegalArgumentExceptionMapper());
+        environment.jersey().register(new GHPointConverterProvider());
 
         if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
             // switch to different API implementation when using Pt

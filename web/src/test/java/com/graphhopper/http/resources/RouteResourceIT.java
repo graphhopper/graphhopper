@@ -71,7 +71,7 @@ public class RouteResourceIT {
     }
 
     @Test
-    public void testBasicQuery() throws Exception {
+    public void testBasicQuery() {
         final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -81,6 +81,14 @@ public class RouteResourceIT {
         double distance = path.get("distance").asDouble();
         assertTrue("distance wasn't correct:" + distance, distance > 9000);
         assertTrue("distance wasn't correct:" + distance, distance < 9500);
+    }
+
+    @Test
+    public void testWrongPointFormat() {
+        final Response response = app.client().target("http://localhost:8080/route?point=1234&point=42.510071,1.548128").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertTrue("There should be an error " + json.get("message"), json.get("message").asText().contains("Cannot parse point '1234'"));
     }
 
     @Test
