@@ -22,27 +22,21 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.time.Instant;
-
 class PtTravelTimeWeighting extends AbstractWeighting {
 
     private final boolean reverse;
-    private final double walkSpeedKmH;
-    private final int transferFactor;
 
-    PtTravelTimeWeighting(FlagEncoder encoder, double walkSpeedKmH) {
-		this(encoder, false, walkSpeedKmH, 1);
+    PtTravelTimeWeighting(FlagEncoder encoder) {
+		this(encoder, false);
     }
 
-    private PtTravelTimeWeighting(FlagEncoder encoder, boolean reverse, double walkSpeedKmH, int transferFactor) {
+    private PtTravelTimeWeighting(FlagEncoder encoder, boolean reverse) {
         super(encoder);
         this.reverse = reverse;
-        this.walkSpeedKmH = walkSpeedKmH;
-        this.transferFactor = transferFactor;
     }
 
     PtTravelTimeWeighting reverse() {
-        return new PtTravelTimeWeighting(flagEncoder, !reverse, walkSpeedKmH, transferFactor);
+        return new PtTravelTimeWeighting(flagEncoder, !reverse);
     }
 
     @Override
@@ -57,33 +51,7 @@ class PtTravelTimeWeighting extends AbstractWeighting {
 
     @Override
     public long calcMillis(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-        GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edge.getFlags());
-        switch (edgeType) {
-            case HIGHWAY:
-                return (long) (getWalkDistance(edge) * 3.6 / walkSpeedKmH) * 1000;
-            case ENTER_TIME_EXPANDED_NETWORK:
-            case LEAVE_TIME_EXPANDED_NETWORK:
-                return 0;
-            default:
-                return ((PtFlagEncoder) getFlagEncoder()).getTime(edge.getFlags());
-        }
-    }
-
-	int calcNTransfers(EdgeIteratorState edge) {
-        return transferFactor * ((PtFlagEncoder) getFlagEncoder()).getTransfers(edge.getFlags());
-	}
-
-    double getWalkDistance(EdgeIteratorState edge) {
-        GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edge.getFlags());
-        switch (edgeType) {
-            case HIGHWAY:
-                return edge.getDistance();
-            case ENTER_PT:
-            case EXIT_PT:
-                return 10.0;
-            default:
-                return 0.0;
-        }
+        throw new RuntimeException("Not supported.");
     }
 
     @Override
