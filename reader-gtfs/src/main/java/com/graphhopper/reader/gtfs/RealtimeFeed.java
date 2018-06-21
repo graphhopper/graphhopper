@@ -204,22 +204,20 @@ public class RealtimeFeed {
 
             @Override
             public EdgeIteratorState edge(int a, int b) {
-                return null;
-            }
-
-            @Override
-            public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
                 int edge = firstEdge++;
                 final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(-1,
-                        edge, a, b, distance, graphHopperStorage.getEncodingManager().flagsDefault(true, bothDirections), "", new PointList());
+                        edge, a, b, 0.0, 0, "", new PointList());
                 final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(-1,
-                        edge, b, a, distance, graphHopperStorage.getEncodingManager().flagsDefault(true, bothDirections), "", new PointList());
-
-                if (newEdge.getFlags() < 10) System.out.println(newEdge.getFlags());
+                        edge, b, a, 0.0, 0, "", new PointList());
                 newEdge.setReverseEdge(reverseNewEdge);
                 reverseNewEdge.setReverseEdge(newEdge);
                 additionalEdges.push(newEdge);
                 return newEdge;
+            }
+
+            @Override
+            public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
+                return null;
             }
 
             @Override
