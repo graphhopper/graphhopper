@@ -251,11 +251,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
         //Only allow bridleways if they are explicitly tagged with access=yes or if the SpatialRule allows it
         if (highwayValue.equals("bridleway")) {
-            GHPoint estimatedCenter = way.getTag("estimated_center", null);
-            if (estimatedCenter != null) {
-                if (getSpatialRuleLookup().lookupRule(estimatedCenter).getAccessValue(highwayValue, TransportationMode.BICYCLE, AccessValue.NOT_ACCESSIBLE) != AccessValue.ACCESSIBLE) {
-                    return 0;
-                }
+            GHPoint wayStartPoint = way.getTag("way_start_point", null);
+            if (wayStartPoint == null || getSpatialRuleLookup().lookupRule(wayStartPoint).getAccessValue(highwayValue, TransportationMode.FOOT, AccessValue.NOT_ACCESSIBLE) != AccessValue.ACCESSIBLE) {
+                return 0;
             }
         }
 

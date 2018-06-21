@@ -203,17 +203,20 @@ public class FootFlagEncoderTest {
         GHPoint insideGBR = new GHPoint(1.5, 1.5);
         GHPoint outsideGBR = new GHPoint(2.5, 2.5);
 
-        osmWay.setTag("estimated_center", outsideGBR);
+        // If no coordinates are provided, bridleways should not be accepted
         assertEquals(0, footEncoder.acceptWay(osmWay));
 
-        osmWay.setTag("estimated_center", insideGBR);
+        osmWay.setTag("way_start_point", outsideGBR);
+        assertEquals(0, footEncoder.acceptWay(osmWay));
+
+        osmWay.setTag("way_start_point", insideGBR);
         assertNotEquals(0, footEncoder.acceptWay(osmWay));
 
-        osmWay.setTag("estimated_center", outsideGBR);
+        osmWay.setTag("way_start_point", outsideGBR);
         osmWay.setTag("foot", "yes");
         assertNotEquals(0, footEncoder.acceptWay(osmWay));
 
-        osmWay.setTag("estimated_center", insideGBR);
+        osmWay.setTag("way_start_point", insideGBR);
         osmWay.setTag("foot", "no");
         assertEquals(0, footEncoder.acceptWay(osmWay));
     }
