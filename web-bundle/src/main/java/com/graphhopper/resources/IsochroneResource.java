@@ -59,22 +59,22 @@ public class IsochroneResource {
             @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter) {
 
         if (buckets > 20 || buckets < 1)
-            new IllegalArgumentException("Number of buckets has to be in the range [1, 20]");
+            throw new IllegalArgumentException("Number of buckets has to be in the range [1, 20]");
 
         if (point == null)
-            new IllegalArgumentException("point parameter cannot be null");
+            throw new IllegalArgumentException("point parameter cannot be null");
 
         StopWatch sw = new StopWatch().start();
 
         if (!encodingManager.supports(vehicle))
-            new IllegalArgumentException("vehicle not supported:" + vehicle);
+            throw new IllegalArgumentException("vehicle not supported:" + vehicle);
 
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         LocationIndex locationIndex = graphHopper.getLocationIndex();
         QueryResult qr = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
         if (!qr.isValid())
-            new IllegalArgumentException("Point not found:" + point);
+            throw new IllegalArgumentException("Point not found:" + point);
 
         Graph graph = graphHopper.getGraphHopperStorage();
         QueryGraph queryGraph = new QueryGraph(graph);
@@ -89,31 +89,31 @@ public class IsochroneResource {
         if (distanceInMeter > 0) {
             double maxMeter = 50 * 1000;
             if (distanceInMeter > maxMeter)
-                new IllegalArgumentException("Specify a limit of less than " + maxMeter / 1000f + "km");
+                throw new IllegalArgumentException("Specify a limit of less than " + maxMeter / 1000f + "km");
             if (buckets > (distanceInMeter / 500))
-                new IllegalArgumentException("Specify buckets less than the number of explored kilometers");
+                throw new IllegalArgumentException("Specify buckets less than the number of explored kilometers");
 
             isochrone.setDistanceLimit(distanceInMeter);
         } else {
 
             long maxSeconds = 80 * 60;
             if (timeLimitInSeconds > maxSeconds)
-                new IllegalArgumentException("Specify a limit of less than " + maxSeconds + " seconds");
+                throw new IllegalArgumentException("Specify a limit of less than " + maxSeconds + " seconds");
             if (buckets > (timeLimitInSeconds / 60))
-                new IllegalArgumentException("Specify buckets less than the number of explored minutes");
+                throw new IllegalArgumentException("Specify buckets less than the number of explored minutes");
 
             isochrone.setTimeLimit(timeLimitInSeconds);
         }
 
         List<List<Double[]>> list = isochrone.searchGPS(qr.getClosestNode(), buckets);
         if (isochrone.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
-            new IllegalArgumentException("Server side reset: too many junction nodes would have to explored (" + isochrone.getVisitedNodes() + "). Let us know if you need this increased.");
+            throw new IllegalArgumentException("Server side reset: too many junction nodes would have to explored (" + isochrone.getVisitedNodes() + "). Let us know if you need this increased.");
         }
 
         int counter = 0;
         for (List<Double[]> tmp : list) {
             if (tmp.size() < 2) {
-                new IllegalArgumentException("Too few points found for bucket " + counter + ". "
+                throw new IllegalArgumentException("Too few points found for bucket " + counter + ". "
                         + "Please try a different 'point', a smaller 'buckets' count or a larger 'time_limit'. "
                         + "And let us know if you think this is a bug!");
             }

@@ -3,8 +3,4 @@
     <!-- documentation about findbug's rule match clauses can be found here:
          http://findbugs.sourceforge.net/manual/filter.html -->
          
-  <Match>
-    <Class name="com.graphhopper.resources.IsochroneResource" />
-    <Bug pattern="RV_EXCEPTION_NOT_THROWN" />
-  </Match>
 </FindBugsFilter>

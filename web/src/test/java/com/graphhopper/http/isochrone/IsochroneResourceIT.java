@@ -13,6 +13,7 @@ import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.List;
 
@@ -89,6 +90,12 @@ public class IsochroneResourceIT {
 
         assertTrue(contains(polygon1, 42.558012, 1.589756));
         assertFalse(contains(polygon1, 42.53841, 1.635246));
+    }
+
+    @Test
+    public void requestBadRequest() {
+        Response response = app.client().target("http://localhost:8080/route?point=-1.816719,51.557148").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
     }
 
     private boolean contains(List polygon, double lat, double lon) {
