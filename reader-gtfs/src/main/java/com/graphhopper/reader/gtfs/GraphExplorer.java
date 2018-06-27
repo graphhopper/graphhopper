@@ -163,19 +163,6 @@ final class GraphExplorer {
         return flagEncoder.getTransfers(edge.getFlags());
     }
 
-    double getWalkDistance(EdgeIteratorState edge) {
-        GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
-        switch (edgeType) {
-            case HIGHWAY:
-                return edge.getDistance();
-            case ENTER_PT:
-            case EXIT_PT:
-                return 10.0;
-            default:
-                return 0.0;
-        }
-    }
-
     EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
         if (edgeId == -1) {
             throw new RuntimeException();
