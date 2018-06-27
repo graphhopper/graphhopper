@@ -21,6 +21,7 @@ package com.graphhopper.reader.gtfs;
 import com.google.common.collect.ArrayListMultimap;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
@@ -49,12 +50,14 @@ final class GraphExplorer {
     private final ArrayListMultimap<Integer, VirtualEdgeIteratorState> extraEdgesBySource = ArrayListMultimap.create();
     private final ArrayListMultimap<Integer, VirtualEdgeIteratorState> extraEdgesByDestination = ArrayListMultimap.create();
     private final Graph graph;
+    private final Weighting accessEgressWeighting;
     private final boolean walkOnly;
     private double walkSpeedKmH;
 
 
-    GraphExplorer(Graph graph, PtFlagEncoder flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, List<VirtualEdgeIteratorState> extraEdges, boolean walkOnly, double walkSpeedKmh) {
+    GraphExplorer(Graph graph, Weighting accessEgressWeighting, PtFlagEncoder flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, List<VirtualEdgeIteratorState> extraEdges, boolean walkOnly, double walkSpeedKmh) {
         this.graph = graph;
+        this.accessEgressWeighting = accessEgressWeighting;
         this.edgeExplorer = graph.createEdgeExplorer(reverse ? DefaultEdgeFilter.inEdges(flagEncoder) : DefaultEdgeFilter.outEdges(flagEncoder));
         this.flagEncoder = flagEncoder;
         this.gtfsStorage = gtfsStorage;
@@ -100,7 +103,7 @@ final class GraphExplorer {
         GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
         switch (edgeType) {
             case HIGHWAY:
-                return (long) (getWalkDistance(edge) * 3.6 / walkSpeedKmH) * 1000;
+                return (long) (accessEgressWeighting.calcMillis(edge, reverse, -1) * (5.0 / walkSpeedKmH));
             case ENTER_TIME_EXPANDED_NETWORK:
                 if (reverse) {
                     return 0;

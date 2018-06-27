@@ -34,6 +34,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
@@ -79,7 +80,7 @@ public class GraphHopperMultimodalIT {
         GHResponse response = graphHopper.route(ghRequest);
 
         assertThat(response.getAll().get(0).getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo("06:41:06");
+                .isEqualTo(LocalTime.parse("06:41:04.834"));
         assertThat(response.getAll().get(0).getLegs().get(0).getArrivalTime().toInstant())
                 .isEqualTo(response.getAll().get(0).getLegs().get(1).getDepartureTime().toInstant());
     }

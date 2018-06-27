@@ -155,6 +155,7 @@ class GtfsReader {
                 EdgeIteratorState edge = graph.edge(streetNode, streetNode);
                 edge.setFlags(encoder.setAccess(edge.getFlags(), true, false));
                 edge.setFlags(footEncoder.setAccess(edge.getFlags(), true, false));
+                edge.setFlags(footEncoder.setSpeed(edge.getFlags(), 5.0));
             } else {
                 streetNode = locationQueryResult.getClosestNode();
             }
