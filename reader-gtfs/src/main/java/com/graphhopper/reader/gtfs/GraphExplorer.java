@@ -192,7 +192,14 @@ final class GraphExplorer {
         @Override
         public boolean test(EdgeIteratorState edgeIterator) {
             final GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator.getFlags());
-            if (walkOnly && edgeType != GtfsStorage.EdgeType.HIGHWAY && edgeType != (reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT)) {
+            if (edgeType == GtfsStorage.EdgeType.HIGHWAY) {
+                if (reverse) {
+                    return accessEgressWeighting.getFlagEncoder().isBackward(edgeIterator.getFlags());
+                } else {
+                    return accessEgressWeighting.getFlagEncoder().isForward(edgeIterator.getFlags());
+                }
+            }
+            if (walkOnly && edgeType != (reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT)) {
                 return false;
             }
             if (!isValidOn(edgeIterator, label.currentTime)) {
