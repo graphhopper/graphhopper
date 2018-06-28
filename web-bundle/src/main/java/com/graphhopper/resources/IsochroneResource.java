@@ -50,7 +50,6 @@ public class IsochroneResource {
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
             @QueryParam("vehicle") @DefaultValue("car") String vehicle,
-            @QueryParam("weighting") @DefaultValue("fastest") String weightingStr,
             @QueryParam("buckets") @DefaultValue("1") int buckets,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("point") GHPoint point,

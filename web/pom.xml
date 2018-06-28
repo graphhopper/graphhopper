@@ -57,7 +57,7 @@
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>directions-api-client</artifactId>
-            <version>0.10.0</version>
+            <version>0.10.1-2</version>
             <scope>test</scope>
         </dependency>
 

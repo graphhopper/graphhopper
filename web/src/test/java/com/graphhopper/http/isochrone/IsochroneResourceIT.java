@@ -50,7 +50,7 @@ public class IsochroneResourceIT {
     @Test
     public void requestByTimeLimit() throws Exception {
         IsochroneResponse rsp = client.isochroneGet("42.531073,1.573792", "no_key_necessary",
-                5 * 60, -1, "car", 2, false);
+                5 * 60, -1, "car", 2, false, "fastest");
         assertEquals(2, rsp.getPolygons().size());
         List polygon0 = rsp.getPolygons().get(0).getGeometry().getCoordinates().get(0);
         List polygon1 = rsp.getPolygons().get(1).getGeometry().getCoordinates().get(0);
@@ -65,7 +65,7 @@ public class IsochroneResourceIT {
     @Test
     public void requestByDistanceLimit() throws Exception {
         IsochroneResponse rsp = client.isochroneGet("42.531073,1.573792", "no_key_necessary", -1,
-                3_000, "car", 2, false);
+                3_000, "car", 2, false, "fastest");
         assertEquals(2, rsp.getPolygons().size());
         List polygon0 = rsp.getPolygons().get(0).getGeometry().getCoordinates().get(0);
         List polygon1 = rsp.getPolygons().get(1).getGeometry().getCoordinates().get(0);
@@ -80,7 +80,7 @@ public class IsochroneResourceIT {
     @Test
     public void requestReverseFlow() throws Exception {
         IsochroneResponse rsp = client.isochroneGet("42.531073,1.573792", "no_key_necessary",
-                5 * 60, -1, "car", 2, true);
+                5 * 60, -1, "car", 2, true, "fastest");
         assertEquals(2, rsp.getPolygons().size());
         List polygon0 = rsp.getPolygons().get(0).getGeometry().getCoordinates().get(0);
         List polygon1 = rsp.getPolygons().get(1).getGeometry().getCoordinates().get(0);
@@ -96,6 +96,23 @@ public class IsochroneResourceIT {
     public void requestBadRequest() {
         Response response = app.client().target("http://localhost:8080/route?point=-1.816719,51.557148").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
+    }
+  
+    public void requestWithShortest() throws Exception {
+        IsochroneResponse rsp = client.isochroneGet("42.509644,1.540554", "no_key_necessary", 130,
+                -1, "car", 1, false, "shortest");
+        assertEquals(1, rsp.getPolygons().size());
+        List polygon0 = rsp.getPolygons().get(0).getGeometry().getCoordinates().get(0);
+
+        assertTrue(contains(polygon0, 42.507145, 1.527057));
+        assertFalse(contains(polygon0, 42.507081, 1.525404));
+
+        // more like a circle => shorter is expected
+        assertTrue(polygon0.size() < 185);
+        rsp = client.isochroneGet("42.509644,1.540554", "no_key_necessary", 130,
+                -1, "car", 1, false, "fastest");
+        polygon0 = rsp.getPolygons().get(0).getGeometry().getCoordinates().get(0);
+        assertTrue(polygon0.size() >= 190);
     }
 
     private boolean contains(List polygon, double lat, double lon) {

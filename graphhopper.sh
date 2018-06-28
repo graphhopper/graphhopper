@@ -224,14 +224,14 @@ LINK=$(echo $NAME | tr '_' '/')
 if [ "$FILE" == "-" ]; then
    LINK=
 elif [ ${FILE: -4} == ".osm" ]; then 
-   LINK="https://download.geofabrik.de/$LINK-latest.osm.bz2"
+   LINK="http://download.geofabrik.de/$LINK-latest.osm.bz2"
 elif [ ${FILE: -4} == ".ghz" ]; then
    LINK="https://graphhopper.com/public/maps/0.1/$FILE"
 elif [ ${FILE: -4} == ".pbf" ]; then
-   LINK="https://download.geofabrik.de/$LINK-latest.osm.pbf"
+   LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
 else
    # e.g. if directory ends on '-gh'
-   LINK="https://download.geofabrik.de/$LINK-latest.osm.pbf"
+   LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
 fi
 
 : "${JAVA_OPTS:=-Xmx1000m -Xms1000m}"
