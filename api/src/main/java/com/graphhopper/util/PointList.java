@@ -402,7 +402,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
 
     public LineString toLineString(boolean includeElevation) {
         GeometryFactory gf = new GeometryFactory();
-        Coordinate[] coordinates = new Coordinate[getSize()];
+        Coordinate[] coordinates = new Coordinate[getSize() == 1 ? 2 : getSize()];
         for (int i = 0; i < getSize(); i++) {
             coordinates[i] = includeElevation ?
                     new Coordinate(
@@ -413,6 +413,10 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
                             round6(getLongitude(i)),
                             round6(getLatitude(i)));
         }
+
+        // special case as just 1 point is not supported in the specification #1412
+        if (getSize() == 1)
+            coordinates[1] = coordinates[0];
         return gf.createLineString(coordinates);
     }
 
