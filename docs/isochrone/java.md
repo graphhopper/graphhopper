@@ -7,19 +7,6 @@ To create an isochrone in Java code:
 
 You'll first need to build off an existing Graphhopper instance for [routing](/../core/routing.md).
 
-```java
-// create one GraphHopper instance
-GraphHopper hopper = new GraphHopperOSM().forServer();
-hopper.setDataReaderFile(osmFile);
-// where to store graphhopper files?
-hopper.setGraphHopperLocation(graphFolder);
-hopper.setEncodingManager(new EncodingManager("car"));
-
-// now this can take minutes if it imports or a few seconds for loading
-// of course this is dependent on the area you import
-hopper.importOrLoad();
-```
-
 Next, compute the isochrone itself.
 ```java
 
