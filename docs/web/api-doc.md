@@ -6,9 +6,9 @@ server you need to understand how to use it. There is a separate [JavaScript](ht
 ### A simple example
 [http://localhost:8989/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959](http://localhost:8989/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959)
 
-The end point of the local instance is [http://localhost:8989](http://localhost:8989)
+The URL path of the local instance is [http://localhost:8989](http://localhost:8989)
 
-The URL path to obtain the route is `/route`
+The endpoint to obtain the route is `/route`
 
 ## Parameters
 
@@ -220,3 +220,21 @@ HTTP error code | Reason
 500             | Internal server error. It is strongly recommended to send us the message and the link to it, as it is very likely a bug in our system.
 501             | Only a special list of vehicles is supported
 400             | Something was wrong in your request
+
+## Isochrone
+
+In addition to routing, the end point to obtain an isochrone is `/isochrone`.
+
+[http://localhost:8989/isochrone](http://localhost:8989/isochrone)
+
+All parameters are shown in the following table.
+
+Parameter                   | Default | Description
+:---------------------------|:--------|:-----------
+vehicle                     | car     | The vehicle for which the route should be calculated. Other vehicles are foot, bike, motorcycle, hike, ...
+buckets                     | 1       | Number by which to divide the given `time_limit` to create `buckets` nested isochrones of time intervals `time_limit/buckets`, `time_limit/(buckets - 1)`, ... , `time_limit`. Applies analogously to `distance_limit`.
+reverse_flow                | false   | If false the flow goes from point to the polygon, if true the flow goes from the polygon inside to the point. Example usage for false: *How many potential customer can be reached within 30min travel time from your store* vs. true: *How many customers can reach your store within 30min travel time.* (optional, default to false)
+point                       |         | Specify the start coordinate (required). A string organized as `latitude,longitude`.
+result                      | polygon | Can be "pointlist" or "polygon".
+time_limit                  | 600     | Specify which time the vehicle should travel. In seconds. (optional, default to 600)
+distance_limit              | -1      | Specify which distance the vehicle should travel. In meter. (optional, default to -1)
