@@ -53,6 +53,7 @@ class MultiCriteriaLabelSetting {
     private final boolean profileQuery;
     private int visitedNodes;
     private final GraphExplorer explorer;
+    private double betaTransfers;
 
     MultiCriteriaLabelSetting(GraphExplorer explorer, PtFlagEncoder flagEncoder, boolean reverse, double maxWalkDistancePerLeg, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes) {
         this.flagEncoder = flagEncoder;
@@ -79,6 +80,11 @@ class MultiCriteriaLabelSetting {
         return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false)
                 .limit(maxVisitedNodes)
                 .peek(label -> visitedNodes++);
+    }
+
+    // experimental
+    void setBetaTransfers(double betaTransfers) {
+        this.betaTransfers = betaTransfers;
     }
 
     private class MultiCriteriaLabelSettingSpliterator extends Spliterators.AbstractSpliterator<Label> {
@@ -257,7 +263,7 @@ class MultiCriteriaLabelSetting {
     }
 
     private long earliestArrivalOrLatestDepartureTimeCriterion(Label label) {
-        return (reverse ? -1 : 1) * label.currentTime - startTime;
+        return (reverse ? -1 : 1) * (label.currentTime - startTime) + (long) (label.nTransfers * betaTransfers);
     }
 
     private long travelTimeCriterion(Label label) {
