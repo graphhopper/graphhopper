@@ -99,6 +99,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         private final boolean separateWalkQuery = true;
         private final boolean arriveBy;
         private final boolean ignoreTransfers;
+        private final double betaTransfers;
         private final double walkSpeedKmH;
         private final double maxWalkDistancePerLeg;
         private final int blockedRouteTypes;
@@ -117,6 +118,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, 1_000_000);
             profileQuery = request.getHints().getBool(PROFILE_QUERY, false);
             ignoreTransfers = request.getHints().getBool(Parameters.PT.IGNORE_TRANSFERS, profileQuery);
+            betaTransfers = request.getHints().getDouble("beta_transfers", 0.0);
             limitSolutions = request.getHints().getInt(Parameters.PT.LIMIT_SOLUTIONS, profileQuery ? 5 : ignoreTransfers ? 1 : Integer.MAX_VALUE);
             final String departureTimeString = request.getHints().get(Parameters.PT.EARLIEST_DEPARTURE_TIME, "");
             try {
@@ -231,7 +233,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 }
                 final PathWrapper pathWrapper = tripFromLabel.createPathWrapper(translation, waypoints, legs);
                 pathWrapper.setImpossible(isImpossible(solution));
-                // TODO: remove
                 pathWrapper.setTime((solution.currentTime - initialTime.toEpochMilli()) * (arriveBy ? -1 : 1));
                 response.add(pathWrapper);
             }
@@ -275,6 +276,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             StopWatch stopWatch = new StopWatch().start();
             graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, flagEncoder, gtfsStorage, realtimeFeed, arriveBy, extraEdges, false, walkSpeedKmH);
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, flagEncoder, arriveBy, maxWalkDistancePerLeg, separateWalkQuery, !ignoreTransfers, profileQuery, maxVisitedNodesForRequest);
+            router.setBetaTransfers(betaTransfers);
             final Stream<Label> labels = router.calcLabels(startNode, destNode, initialTime, blockedRouteTypes);
             List<Label> solutions = labels
                     .filter(current -> destNode == current.adjNode)

@@ -53,6 +53,7 @@ class MultiCriteriaLabelSetting {
     private final boolean profileQuery;
     private int visitedNodes;
     private final GraphExplorer explorer;
+    private double betaTransfers;
 
     MultiCriteriaLabelSetting(GraphExplorer explorer, PtFlagEncoder flagEncoder, boolean reverse, double maxWalkDistancePerLeg, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes) {
         this.flagEncoder = flagEncoder;
@@ -65,7 +66,7 @@ class MultiCriteriaLabelSetting {
         this.profileQuery = profileQuery;
 
         queueComparator = Comparator.<Label>comparingLong(l2 -> l2.impossible ? 1 : 0)
-                .thenComparing(Comparator.comparingLong(l2 -> currentTimeCriterion(l2)))
+                .thenComparing(Comparator.comparingLong(l2 -> earliestArrivalOrLatestDepartureTimeCriterion(l2)))
                 .thenComparing(Comparator.comparingLong(l1 -> l1.nTransfers))
                 .thenComparing(Comparator.comparingLong(l1 -> l1.nWalkDistanceConstraintViolations))
                 .thenComparing(Comparator.comparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0));
@@ -79,6 +80,11 @@ class MultiCriteriaLabelSetting {
         return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false)
                 .limit(maxVisitedNodes)
                 .peek(label -> visitedNodes++);
+    }
+
+    // experimental
+    void setBetaTransfers(double betaTransfers) {
+        this.betaTransfers = betaTransfers;
     }
 
     private class MultiCriteriaLabelSettingSpliterator extends Spliterators.AbstractSpliterator<Label> {
@@ -213,19 +219,17 @@ class MultiCriteriaLabelSetting {
     }
 
     private boolean dominates(Label me, Label they) {
+        if (earliestArrivalOrLatestDepartureTimeCriterion(me) > earliestArrivalOrLatestDepartureTimeCriterion(they))
+            return false;
+
         if (profileQuery) {
             if (me.departureTime != null && they.departureTime != null) {
-                if (currentTimeCriterion(me) > currentTimeCriterion(they))
-                    return false;
                 if (departureTimeCriterion(me) > departureTimeCriterion(they))
                     return false;
             } else {
                 if (travelTimeCriterion(me) > travelTimeCriterion(they))
                     return false;
             }
-        } else {
-            if (currentTimeCriterion(me) > currentTimeCriterion(they))
-                return false;
         }
 
         if (mindTransfers && me.nTransfers > they.nTransfers)
@@ -235,19 +239,16 @@ class MultiCriteriaLabelSetting {
         if (me.impossible && !they.impossible)
             return false;
 
+        if (earliestArrivalOrLatestDepartureTimeCriterion(me) < earliestArrivalOrLatestDepartureTimeCriterion(they))
+            return true;
         if (profileQuery) {
             if (me.departureTime != null && they.departureTime != null) {
-                if (currentTimeCriterion(me) < currentTimeCriterion(they))
-                    return true;
                 if (departureTimeCriterion(me) < departureTimeCriterion(they))
                     return true;
             } else {
                 if (travelTimeCriterion(me) < travelTimeCriterion(they))
                     return true;
             }
-        } else {
-            if (currentTimeCriterion(me) < currentTimeCriterion(they))
-                return true;
         }
         if (mindTransfers && me.nTransfers  < they.nTransfers)
             return true;
@@ -261,8 +262,8 @@ class MultiCriteriaLabelSetting {
         return label.departureTime == null ? null : reverse ? label.departureTime : -label.departureTime;
     }
 
-    private long currentTimeCriterion(Label label) {
-        return reverse ? -label.currentTime : label.currentTime;
+    private long earliestArrivalOrLatestDepartureTimeCriterion(Label label) {
+        return (reverse ? -1 : 1) * (label.currentTime - startTime) + (long) (label.nTransfers * betaTransfers);
     }
 
     private long travelTimeCriterion(Label label) {
