@@ -40,7 +40,7 @@ public class GHPointConverterProvider implements ParamConverterProvider {
                         return (T) GHPoint.fromString(value);
                     } catch (IllegalArgumentException ex) {
                         throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
-                                .entity(new MultiException(new Throwable("Cannot parse point '" + value + "'")))
+                                .entity(new MultiException(ex))
                                 .build());
                     }
                 }
