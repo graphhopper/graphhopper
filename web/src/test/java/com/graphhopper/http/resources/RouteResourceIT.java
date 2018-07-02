@@ -25,7 +25,6 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.api.GraphHopperWeb;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
-import com.graphhopper.resources.NearestResource;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.details.PathDetail;
@@ -72,7 +71,7 @@ public class RouteResourceIT {
     }
 
     @Test
-    public void testBasicQuery() throws Exception {
+    public void testBasicQuery() {
         final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -82,6 +81,14 @@ public class RouteResourceIT {
         double distance = path.get("distance").asDouble();
         assertTrue("distance wasn't correct:" + distance, distance > 9000);
         assertTrue("distance wasn't correct:" + distance, distance < 9500);
+    }
+
+    @Test
+    public void testWrongPointFormat() {
+        final Response response = app.client().target("http://localhost:8080/route?point=1234&point=42.510071,1.548128").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertTrue("There should be an error " + json.get("message"), json.get("message").asText().contains("Cannot parse point '1234'"));
     }
 
     @Test
@@ -100,7 +107,7 @@ public class RouteResourceIT {
 
     @Test
     public void testQueryWithStraightVia() throws Exception {
-        // Note, in general specifying straightvia does not work with CH, but this is an example where it works
+        // Note, in general specifying pass_through does not work with CH, but this is an example where it works
         final Response response = app.client().target("http://localhost:8080/route?point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -190,7 +197,7 @@ public class RouteResourceIT {
         long expectedTime = rsp.getBest().getTime();
         long actualTime = 0;
         List<PathDetail> timeDetails = pathDetails.get("time");
-        for (PathDetail pd: timeDetails) {
+        for (PathDetail pd : timeDetails) {
             actualTime += (Long) pd.getValue();
         }
 
@@ -237,7 +244,7 @@ public class RouteResourceIT {
         assertTrue(details.has("edge_id"));
         JsonNode edgeIds = details.get("edge_id");
         int firstLink = edgeIds.get(0).get(2).asInt();
-        int lastLink = edgeIds.get(edgeIds.size()-1).get(2).asInt();
+        int lastLink = edgeIds.get(edgeIds.size() - 1).get(2).asInt();
         assertEquals(880, firstLink);
         assertEquals(1419, lastLink);
     }
@@ -284,10 +291,16 @@ public class RouteResourceIT {
         ex = rsp.getErrors().get(0);
         assertTrue("Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
+
+        // an IllegalArgumentException from inside the core is written as JSON
+        final Response response = app.client().target("http://localhost:8080/route?vehicle=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
+        String msg = (String) response.readEntity(Map.class).get("message");
+        assertTrue(msg, msg.contains("Vehicle not supported:"));
     }
 
     @Test
-    public void testGPX() throws Exception {
+    public void testGPX() {
         final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         String str = response.readEntity(String.class);
@@ -318,7 +331,7 @@ public class RouteResourceIT {
     }
 
     @Test
-    public void testGPXWithError() throws Exception {
+    public void testGPXWithError() {
         final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&type=gpx").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         String str = response.readEntity(String.class);

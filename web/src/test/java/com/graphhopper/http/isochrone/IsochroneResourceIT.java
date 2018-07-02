@@ -13,6 +13,7 @@ import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.List;
 
@@ -92,6 +93,11 @@ public class IsochroneResourceIT {
     }
 
     @Test
+    public void requestBadRequest() {
+        Response response = app.client().target("http://localhost:8080/route?point=-1.816719,51.557148").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
+    }
+  
     public void requestWithShortest() throws Exception {
         IsochroneResponse rsp = client.isochroneGet("42.509644,1.540554", "no_key_necessary", 130,
                 -1, "car", 1, false, "shortest");
