@@ -27,13 +27,11 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.matching.*;
 import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -56,14 +54,11 @@ public class MapMatchingResource {
     private static final Logger logger = LoggerFactory.getLogger(MapMatchingResource.class);
 
     private final GraphHopper graphHopper;
-    private final EncodingManager encodingManager;
     private final TranslationMap trMap;
 
     @Inject
-    public MapMatchingResource(GraphHopper graphHopper, EncodingManager encodingManager,
-                               TranslationMap trMap) {
+    public MapMatchingResource(GraphHopper graphHopper, TranslationMap trMap) {
         this.graphHopper = graphHopper;
-        this.encodingManager = encodingManager;
         this.trMap = trMap;
     }
 
@@ -92,11 +87,8 @@ public class MapMatchingResource {
             @QueryParam("gps_accuracy") @DefaultValue("40") double gpsAccuracy) {
 
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
-        if (!encodingManager.supports(vehicleStr)) {
-            throw new WebApplicationException("Vehicle not supported: " + vehicleStr, 400);
-        }
         if (body.getElementsByTagName("trk").getLength() == 0) {
-            throw new WebApplicationException("No tracks found in GPX document. Are you using waypoints or routes instead?", 400);
+            throw new IllegalArgumentException("No tracks found in GPX document. Are you using waypoints or routes instead?");
         }
 
         GPXFile file = new GPXFile();
