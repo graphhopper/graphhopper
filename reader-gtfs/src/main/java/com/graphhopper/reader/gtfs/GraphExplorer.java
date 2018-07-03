@@ -40,7 +40,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-final class GraphExplorer {
+public final class GraphExplorer {
 
     private final EdgeExplorer edgeExplorer;
     private final PtFlagEncoder flagEncoder;
@@ -56,7 +56,7 @@ final class GraphExplorer {
     private double walkSpeedKmH;
 
 
-    GraphExplorer(Graph graph, Weighting accessEgressWeighting, PtFlagEncoder flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, List<VirtualEdgeIteratorState> extraEdges, boolean walkOnly, double walkSpeedKmh) {
+    public GraphExplorer(Graph graph, Weighting accessEgressWeighting, PtFlagEncoder flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, List<VirtualEdgeIteratorState> extraEdges, boolean walkOnly, double walkSpeedKmh) {
         this.graph = graph;
         this.accessEgressWeighting = accessEgressWeighting;
         DefaultEdgeFilter accessEgressIn = DefaultEdgeFilter.inEdges(accessEgressWeighting.getFlagEncoder());
@@ -83,15 +83,15 @@ final class GraphExplorer {
     }
 
     Stream<EdgeIteratorState> exploreEdgesAround(Label label) {
-        final List<VirtualEdgeIteratorState> extraEdges = reverse ? extraEdgesByDestination.get(label.adjNode) : extraEdgesBySource.get(label.adjNode);
+        final List<VirtualEdgeIteratorState> extraEdges = reverse ? extraEdgesByDestination.get(label.node) : extraEdgesBySource.get(label.node);
         return Stream.concat(
-                label.adjNode < graph.getNodes() ? mainEdgesAround(label) : Stream.empty(),
+                label.node < graph.getNodes() ? mainEdgesAround(label) : Stream.empty(),
                 extraEdges.stream()).filter(new EdgeIteratorStatePredicate(label));
     }
 
     private Stream<EdgeIteratorState> mainEdgesAround(Label label) {
         return StreamSupport.stream(new Spliterators.AbstractSpliterator<EdgeIteratorState>(0, 0) {
-            EdgeIterator edgeIterator = edgeExplorer.setBaseNode(label.adjNode);
+            EdgeIterator edgeIterator = edgeExplorer.setBaseNode(label.node);
 
             @Override
             public boolean tryAdvance(Consumer<? super EdgeIteratorState> action) {
