@@ -68,20 +68,15 @@ public class PtIsochroneResource {
         this.locationIndex = locationIndex;
         System.out.println("Initializing index..");
         spatialIndex = new IntHashGrid();
+        PtFlagEncoder ptFlagEncoder = (PtFlagEncoder) encodingManager.getEncoder("pt");
         AllEdgesIterator allEdges = graphHopperStorage.getAllEdges();
-        Envelope envelope = new Envelope();
         while (allEdges.next()) {
-            LineString geom = allEdges.fetchWayGeometry(3).toLineString(false);
-            envelope.expandToInclude(geom.getEnvelopeInternal());
-            spatialIndex.insert(geom, allEdges.getEdge());
-//            System.out.println(spatialIndex.query(envelope).size());
+            if (ptFlagEncoder.getEdgeType(allEdges.getFlags()) == GtfsStorage.EdgeType.HIGHWAY) {
+                LineString geom = allEdges.fetchWayGeometry(3).toLineString(false);
+                spatialIndex.insert(geom, allEdges.getEdge());
+            }
         }
-        Envelope bbox = new Envelope(IntHashGrid.floatingDegreesToFixed(envelope.getMinX()),
-                IntHashGrid.floatingDegreesToFixed(envelope.getMaxX()),
-                IntHashGrid.floatingDegreesToFixed(envelope.getMinY()),
-                IntHashGrid.floatingDegreesToFixed(envelope.getMaxY()));
-        TIntSet entries = spatialIndex.query(bbox);
-        System.out.println("Finished. "+entries.size());
+        System.out.println("Finished. ");
     }
 
     @GET
@@ -90,7 +85,8 @@ public class PtIsochroneResource {
             @QueryParam("point") GHPoint source,
             @QueryParam("time_limit") @DefaultValue("600") long seconds,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
-            @QueryParam(Parameters.PT.EARLIEST_DEPARTURE_TIME) String departureTimeString) {
+            @QueryParam(Parameters.PT.EARLIEST_DEPARTURE_TIME) String departureTimeString,
+            @QueryParam(Parameters.PT.BLOCKED_ROUTE_TYPES) @DefaultValue("0") int blockedRouteTypes) {
         Instant initialTime;
         try {
             initialTime = Instant.parse(departureTimeString);
@@ -120,7 +116,7 @@ public class PtIsochroneResource {
             Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(nodeLabel.node), nodeAccess.getLatitude(nodeLabel.node));
             z1.merge(nodeCoordinate, this.z.apply(nodeLabel), Math::min);
         };
-        router.calcLabelsAndNeighbors(queryResult.getClosestNode(), -1, initialTime, 0, sptVisitor, label -> label.currentTime <= targetZ);
+        router.calcLabelsAndNeighbors(queryResult.getClosestNode(), -1, initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
 
         MultiPoint exploredPoints = geometryFactory.createMultiPoint(z1.keySet().toArray(new Coordinate[0]));
         Envelope realBbox = exploredPoints.getEnvelopeInternal();
