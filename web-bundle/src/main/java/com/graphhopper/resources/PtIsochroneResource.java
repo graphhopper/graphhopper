@@ -21,6 +21,7 @@ package com.graphhopper.resources;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.reader.gtfs.*;
 import com.graphhopper.routing.QueryGraph;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -29,17 +30,17 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.CoordinateList;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.triangulate.ConformingDelaunayTriangulator;
 import com.vividsolutions.jts.triangulate.ConstraintVertex;
 import com.vividsolutions.jts.triangulate.DelaunayTriangulationBuilder;
 import com.vividsolutions.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import com.vividsolutions.jts.triangulate.quadedge.Vertex;
+import gnu.trove.set.TIntSet;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -56,6 +57,7 @@ public class PtIsochroneResource {
     private EncodingManager encodingManager;
     private GraphHopperStorage graphHopperStorage;
     private LocationIndex locationIndex;
+    private final IntHashGrid spatialIndex;
 
     private final Function<Label, Double> z = label -> (double) label.currentTime;
 
@@ -64,6 +66,22 @@ public class PtIsochroneResource {
         this.encodingManager = encodingManager;
         this.graphHopperStorage = graphHopperStorage;
         this.locationIndex = locationIndex;
+        System.out.println("Initializing index..");
+        spatialIndex = new IntHashGrid();
+        AllEdgesIterator allEdges = graphHopperStorage.getAllEdges();
+        Envelope envelope = new Envelope();
+        while (allEdges.next()) {
+            LineString geom = allEdges.fetchWayGeometry(3).toLineString(false);
+            envelope.expandToInclude(geom.getEnvelopeInternal());
+            spatialIndex.insert(geom, allEdges.getEdge());
+//            System.out.println(spatialIndex.query(envelope).size());
+        }
+        Envelope bbox = new Envelope(IntHashGrid.floatingDegreesToFixed(envelope.getMinX()),
+                IntHashGrid.floatingDegreesToFixed(envelope.getMaxX()),
+                IntHashGrid.floatingDegreesToFixed(envelope.getMinY()),
+                IntHashGrid.floatingDegreesToFixed(envelope.getMaxY()));
+        TIntSet entries = spatialIndex.query(bbox);
+        System.out.println("Finished. "+entries.size());
     }
 
     @GET
@@ -104,9 +122,24 @@ public class PtIsochroneResource {
         };
         router.calcLabelsAndNeighbors(queryResult.getClosestNode(), -1, initialTime, 0, sptVisitor, label -> label.currentTime <= targetZ);
 
-        CoordinateList siteCoords = DelaunayTriangulationBuilder.extractUniqueCoordinates(geometryFactory.createMultiPoint(z1.keySet().toArray(new Coordinate[0])));
+        MultiPoint exploredPoints = geometryFactory.createMultiPoint(z1.keySet().toArray(new Coordinate[0]));
+        Envelope realBbox = exploredPoints.getEnvelopeInternal();
+        Envelope bbox = new Envelope(IntHashGrid.floatingDegreesToFixed(realBbox.getMinX()),
+                IntHashGrid.floatingDegreesToFixed(realBbox.getMaxX()),
+                IntHashGrid.floatingDegreesToFixed(realBbox.getMinY()),
+                IntHashGrid.floatingDegreesToFixed(realBbox.getMaxY()));
+        TIntSet allEdgesInBbox = spatialIndex.query(bbox);
+        allEdgesInBbox.forEach(edge -> {
+            EdgeIteratorState e = graphHopperStorage.getEdgeIteratorState(edge, Integer.MIN_VALUE);
+            Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(e.getBaseNode()), nodeAccess.getLatitude(e.getBaseNode()));
+            z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
+            nodeCoordinate = new Coordinate(nodeAccess.getLongitude(e.getAdjNode()), nodeAccess.getLatitude(e.getAdjNode()));
+            z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
+            return true;
+        });
 
-
+        exploredPoints = geometryFactory.createMultiPoint(z1.keySet().toArray(new Coordinate[0]));
+        CoordinateList siteCoords = DelaunayTriangulationBuilder.extractUniqueCoordinates(exploredPoints);
         List<ConstraintVertex> constraintVertices = new ArrayList();
         for (Object siteCoord : siteCoords) {
             Coordinate coord = (Coordinate) siteCoord;
