@@ -32,7 +32,7 @@ $ ./graphhopper.sh -a web -i north-america_us_new-york.pbf -o new-york-gh
 
 For larger maps you might need to allow the JVM to access more memory. For example for 2GB you can do this using:
 ```bash
-$ export JAVA_OPTS="-Xmx=2g -Xms=2g"
+$ export JAVA_OPTS="-Xmx2g -Xms2g"
 ```
 before running `graphhopper.sh`.
 
