@@ -169,7 +169,6 @@ public class GraphHopperWebIT {
         assertTrue(res.getErrors().get(0) instanceof PointNotFoundException);
     }
 
-
     @Test
     public void testOutOfBoundsException() {
         GHRequest req = new GHRequest().
@@ -331,5 +330,16 @@ public class GraphHopperWebIT {
         assertFalse(details.isEmpty());
         assertTrue((Double) details.get(0).getValue() > 20);
         assertTrue((Double) details.get(0).getValue() < 70);
+    }
+
+    @Test
+    public void testPointHints() {
+        GHRequest ghRequest = new GHRequest();
+        ghRequest.addPoint(new GHPoint(52.50977, 13.371971));
+        ghRequest.addPoint(new GHPoint(52.509842, 13.369761));
+
+        ghRequest.setPointHints(Arrays.asList("Ben-Gurion", ""));
+        GHResponse response = gh.route(ghRequest);
+        assertTrue(response.getBest().getDistance() + "m", response.getBest().getDistance() < 500);
     }
 }

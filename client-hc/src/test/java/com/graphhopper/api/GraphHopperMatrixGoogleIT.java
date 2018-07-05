@@ -32,4 +32,9 @@ public class GraphHopperMatrixGoogleIT {
         assertEquals(11000, res.getDistance(1, 2), 2000);
         assertEquals(2500, res.getTime(1, 2) / 1000, 1000);
     }
+
+    @Test
+    public void testPOSTMatrixQueryWithPointHints() {
+        // for now ignore
+    }
 }
