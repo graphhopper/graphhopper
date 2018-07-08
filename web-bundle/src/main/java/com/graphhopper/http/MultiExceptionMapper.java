@@ -16,21 +16,18 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.gtfs;
+package com.graphhopper.http;
 
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.MultiException;
 
-class EverythingButPt implements EdgeFilter {
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
 
-    PtFlagEncoder encoder;
-
-    EverythingButPt(PtFlagEncoder encoder) {
-        this.encoder = encoder;
-    }
-
+@Provider
+public class MultiExceptionMapper implements ExceptionMapper<MultiException> {
     @Override
-    public boolean accept(EdgeIteratorState edgeState) {
-        return encoder.getEdgeType(edgeState.getFlags()) == GtfsStorage.EdgeType.HIGHWAY;
+    public Response toResponse(MultiException exception) {
+        return Response.status(Response.Status.BAD_REQUEST).entity(exception).build();
     }
 }

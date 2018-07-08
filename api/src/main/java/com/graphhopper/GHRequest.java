@@ -251,7 +251,7 @@ public class GHRequest {
     }
 
     public boolean hasPointHints() {
-        return pointHints.size() == points.size();
+        return pointHints.size() == points.size() && !points.isEmpty();
     }
 
     public GHRequest setPathDetails(List<String> pathDetails) {

@@ -39,7 +39,9 @@ import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
 import com.graphhopper.reader.gtfs.RealtimeFeed;
 import com.graphhopper.resources.*;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
@@ -53,6 +55,10 @@ import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.ext.WriterInterceptor;
+import javax.ws.rs.ext.WriterInterceptorContext;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -183,6 +189,17 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
     public void run(GraphHopperBundleConfiguration configuration, Environment environment) {
         configuration.getGraphHopperConfiguration().merge(CmdArgs.readFromSystemProperties());
 
+        // If the "?type=gpx" parameter is present, sets a corresponding media type header
+        environment.jersey().register(new TypeGPXFilter());
+
+        // Together, these two take care that MultiExceptions thrown from RouteResource
+        // come out as JSON or GPX, depending on the media type
+        environment.jersey().register(new MultiExceptionMapper());
+        environment.jersey().register(new MultiExceptionGPXMessageBodyWriter());
+
+        environment.jersey().register(new IllegalArgumentExceptionMapper());
+        environment.jersey().register(new GHPointConverterProvider());
+
         if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
             // switch to different API implementation when using Pt
             runPtGraphHopper(configuration.getGraphHopperConfiguration(), environment);
@@ -195,13 +212,13 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
         final GHDirectory ghDirectory = GraphHopperGtfs.createGHDirectory(configuration.get("graph.location", "target/tmp"));
         final GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
-        final EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
+        final EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder, new FootFlagEncoder(), new CarFlagEncoder()), 8);
         final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, ptFlagEncoder, gtfsStorage,
                 configuration.getBool("gtfs.createwalknetwork", false),
                 configuration.has("gtfs.file") ? Arrays.asList(configuration.get("gtfs.file", "").split(",")) : Collections.emptyList(),
                 configuration.has("datareader.file") ? Arrays.asList(configuration.get("datareader.file", "").split(",")) : Collections.emptyList());
         final TranslationMap translationMap = GraphHopperGtfs.createTranslationMap();
-        final LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(ghDirectory, graphHopperStorage, ptFlagEncoder);
+        final LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(ghDirectory, graphHopperStorage);
         final GraphHopperAPI graphHopper = new GraphHopperGtfs(ptFlagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
         environment.jersey().register(new AbstractBinder() {
             @Override
@@ -221,6 +238,17 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(IsochroneResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
+        // Say we only support pt, even though we now have several flag encoders. Yes, I know, we're almost there.
+        environment.jersey().register((WriterInterceptor) context -> {
+            if (context.getEntity() instanceof InfoResource.Info) {
+                InfoResource.Info info = (InfoResource.Info) context.getEntity();
+                info.supported_vehicles = new String[]{"pt"};
+                info.features.remove("car");
+                info.features.remove("foot");
+                context.setEntity(info);
+            }
+            context.proceed();
+        });
         environment.lifecycle().manage(new Managed() {
             @Override
             public void start() throws Exception {
@@ -263,7 +291,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(IsochroneResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
-
         environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopperManaged.getGraphHopper()));
     }
 

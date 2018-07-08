@@ -22,6 +22,7 @@ import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
@@ -33,6 +34,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,11 +53,11 @@ public class GraphHopperMultimodalIT {
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
+        EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder, new FootFlagEncoder()), 8);
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
         GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, false, Collections.singleton("files/sample-feed.zip"), Collections.singleton("files/beatty.osm"));
-        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage, ptFlagEncoder);
+        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
                 .createWithoutRealtimeFeed();
     }
@@ -77,10 +79,11 @@ public class GraphHopperMultimodalIT {
 
         GHResponse response = graphHopper.route(ghRequest);
 
-        assertThat(response.getAll().get(0).getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo("06:41:06");
-        assertThat(response.getAll().get(0).getLegs().get(0).getArrivalTime().toInstant())
-                .isEqualTo(response.getAll().get(0).getLegs().get(1).getDepartureTime().toInstant());
+        PathWrapper firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
+        assertThat(firstTransitSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:41:04.834"));
+        assertThat(firstTransitSolution.getLegs().get(0).getArrivalTime().toInstant())
+                .isEqualTo(firstTransitSolution.getLegs().get(1).getDepartureTime().toInstant());
     }
 
 }

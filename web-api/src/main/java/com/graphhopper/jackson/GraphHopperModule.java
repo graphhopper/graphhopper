@@ -1,6 +1,7 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.graphhopper.MultiException;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.details.PathDetail;
@@ -18,6 +19,7 @@ public class GraphHopperModule extends SimpleModule {
         addSerializer(PathDetail.class, new PathDetailSerializer());
         addSerializer(InstructionList.class, new InstructionListSerializer());
         addDeserializer(CmdArgs.class, new CmdArgsDeserializer());
+        addSerializer(MultiException.class, new MultiExceptionSerializer());
     }
 
 }
