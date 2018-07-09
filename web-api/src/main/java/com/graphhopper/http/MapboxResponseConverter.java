@@ -145,31 +145,7 @@ public class MapboxResponseConverter {
         PointList points = instruction.getPoints();
         putLocation(points.getLat(0), points.getLon(0), maneuver);
 
-        // TODO: do we need the turn description here? If yes, get translation map
-        maneuver.put("instruction", instruction.getName());
-
-        // type
-        if (index == 0) {
-            maneuver.put("type", "depart");
-        } else {
-            switch (instruction.getSign()) {
-                case Instruction.FINISH:
-                case Instruction.REACHED_VIA:
-                    maneuver.put("type", "arrive");
-                    break;
-                case Instruction.USE_ROUNDABOUT:
-                case Instruction.LEAVE_ROUNDABOUT:
-                    // TODO: We don't use leave roundabout instructions in GraphHopper, this might break mapbox?
-                    maneuver.put("type", "roundabout");
-                    // exit number
-                    if (instruction instanceof RoundaboutInstruction)
-                        maneuver.put("exit", ((RoundaboutInstruction) instruction).getExitNumber());
-                    break;
-                default:
-                    maneuver.put("type", "turn");
-            }
-        }
-
+        // modifier
         switch (instruction.getSign()) {
             case Instruction.CONTINUE_ON_STREET:
                 // TODO: might break mapbox for first instruction?
@@ -208,6 +184,32 @@ public class MapboxResponseConverter {
             default:
                 break;
         }
+
+
+        // type
+        if (index == 0) {
+            maneuver.put("type", "depart");
+        } else {
+            switch (instruction.getSign()) {
+                case Instruction.FINISH:
+                case Instruction.REACHED_VIA:
+                    maneuver.put("type", "arrive");
+                    break;
+                case Instruction.USE_ROUNDABOUT:
+                case Instruction.LEAVE_ROUNDABOUT:
+                    // TODO: We don't use leave roundabout instructions in GraphHopper, this might break mapbox?
+                    maneuver.put("type", "roundabout");
+                    // exit number
+                    if (instruction instanceof RoundaboutInstruction)
+                        maneuver.put("exit", ((RoundaboutInstruction) instruction).getExitNumber());
+                    break;
+                default:
+                    maneuver.put("type", "turn");
+            }
+        }
+
+        // TODO: do we need the turn description here? If yes, get translation map
+        maneuver.put("instruction", instruction.getName());
 
     }
 

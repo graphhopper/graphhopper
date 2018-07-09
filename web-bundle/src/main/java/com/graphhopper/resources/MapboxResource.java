@@ -46,7 +46,7 @@ import static com.graphhopper.util.Parameters.Routing.*;
  *
  * @author Robin Boldt
  */
-@Path("mapbox")
+@Path("directions/v5/mapbox")
 public class MapboxResource {
 
     private static final Logger logger = LoggerFactory.getLogger(MapboxResource.class);
@@ -71,6 +71,7 @@ public class MapboxResource {
             @QueryParam("voice_instructions") @DefaultValue("false") boolean voiceInstructions,
             @QueryParam("banner_instructions") @DefaultValue("false") boolean bannerInstructions,
             @QueryParam("roundabout_exits") @DefaultValue("false") boolean roundaboutExits,
+            @QueryParam("voice_units") @DefaultValue("metric") String voiceUnits,
             @QueryParam("overview") @DefaultValue("simplified") String overview,
             @QueryParam("geometries") @DefaultValue("polyline") String geometries,
             @QueryParam("language") @DefaultValue("en") String localeStr,
@@ -98,6 +99,24 @@ public class MapboxResource {
 
             if (!roundaboutExits) {
                 String logStr = "Roundabout exits have to be enabled right now";
+                logger.error(logStr);
+                throw new IllegalArgumentException(logStr);
+            }
+
+            if (!voiceUnits.equals("metric")) {
+                String logStr = "Voice units only support metric right now";
+                logger.error(logStr);
+                throw new IllegalArgumentException(logStr);
+            }
+
+            if (!voiceInstructions) {
+                String logStr = "You need to enable voice instructions right now";
+                logger.error(logStr);
+                throw new IllegalArgumentException(logStr);
+            }
+
+            if (!bannerInstructions) {
+                String logStr = "You need to enable banner instructions right now";
                 logger.error(logStr);
                 throw new IllegalArgumentException(logStr);
             }
@@ -227,6 +246,8 @@ public class MapboxResource {
     private String convertProfileToGraphHopperVehicleString(String profile) {
         switch (profile) {
             case "driving":
+                // driving-traffic is mapped to regular car as well
+            case "driving-traffic":
                 return "car";
             case "walking":
                 return "foot";
