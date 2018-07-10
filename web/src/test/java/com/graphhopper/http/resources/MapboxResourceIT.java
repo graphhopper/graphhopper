@@ -106,7 +106,7 @@ public class MapboxResourceIT {
         assertEquals("la Callisa", bannerInstruction.get("text").asText());
         assertEquals("turn", bannerInstruction.get("type").asText());
         assertEquals("sharp left", bannerInstruction.get("modifier").asText());
-        JsonNode bannerInstructionComponent = bannerInstruction.get("components");
+        JsonNode bannerInstructionComponent = bannerInstruction.get("components").get(0);
         assertEquals("la Callisa", bannerInstructionComponent.get("text").asText());
 
         JsonNode waypointsJson = json.get("waypoints");

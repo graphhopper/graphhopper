@@ -184,9 +184,10 @@ public class MapboxResponseConverter {
             bannerInstruction.put("distanceAlongGeometry", distance);
             ObjectNode primary = bannerInstruction.putObject("primary");
             primary.put("text", nextInstruction.getName());
-            ObjectNode components = primary.putObject("components");
-            components.put("text", nextInstruction.getName());
-            components.put("type", "text");
+            ArrayNode components = primary.putArray("components");
+            ObjectNode component = components.addObject();
+            component.put("text", nextInstruction.getName());
+            component.put("type", "text");
             primary.put("type", getTurnType(nextInstruction, index + 1));
             String modifier = getModifier(nextInstruction);
             if (modifier != null)
