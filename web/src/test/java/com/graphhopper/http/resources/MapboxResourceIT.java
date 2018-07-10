@@ -97,7 +97,7 @@ public class MapboxResourceIT {
         JsonNode voiceInstructions = step.get("voiceInstructions");
         assertEquals(1, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
-        assertTrue(voiceInstruction.get("distanceAlongGeometry").asDouble() < instructionDistance);
+        assertTrue(voiceInstruction.get("distanceAlongGeometry").asDouble() <= instructionDistance);
         assertEquals("turn sharp left onto la Callisa", voiceInstruction.get("announcement").asText());
 
         JsonNode bannerInstructions = step.get("bannerInstructions");
@@ -109,8 +109,14 @@ public class MapboxResourceIT {
         JsonNode bannerInstructionComponent = bannerInstruction.get("components").get(0);
         assertEquals("la Callisa", bannerInstructionComponent.get("text").asText());
 
-        // Get the second last step (and the last banner instruction)
+        // Get the second last step (and the last banner/voice instruction)
         step = steps.get(steps.size() - 2);
+
+        voiceInstructions = step.get("voiceInstructions");
+        assertEquals(1, voiceInstructions.size());
+        voiceInstruction = voiceInstructions.get(0);
+        assertTrue(voiceInstruction.get("distanceAlongGeometry").asDouble() < instructionDistance);
+
         bannerInstructions = step.get("bannerInstructions");
         assertEquals(1, bannerInstructions.size());
         bannerInstruction = bannerInstructions.get(0).get("primary");

@@ -152,11 +152,11 @@ public class MapboxResponseConverter {
             */
             // Either speak 80m before the instruction or at distance/2 whatever is further down the road
             // Note distanceAlongGeometry: "how far from the upcoming maneuver the voice instruction should begin"
-            double distanceAlongGeometry = Helper.round2(Math.min(distance / 2, 80));
+            double distanceAlongGeometry = Helper.round2(Math.min(distance, 80));
 
             // Special case for the arrive instruction, we want to notify this at distance=0
             if (index + 2 == instructions.size())
-                Helper.round2(Math.min(distance / 2, 30));
+                Helper.round2(Math.min(distance, 30));
 
             voiceInstruction.put("distanceAlongGeometry", distanceAlongGeometry);
             //TODO: ideally, we would even generate instructions including the instructions after the next like turn left **then** turn right
@@ -184,13 +184,13 @@ public class MapboxResponseConverter {
             bannerInstruction.put("distanceAlongGeometry", distance);
             ObjectNode primary = bannerInstruction.putObject("primary");
             String bannerInstructionName = nextInstruction.getName();
-            if(bannerInstructionName == null || bannerInstructionName.isEmpty())
+            if (bannerInstructionName == null || bannerInstructionName.isEmpty())
                 // Fix for final instruction and for instructions without name
                 bannerInstructionName = turnDescription;
-            primary.put("text", nextInstruction.getName());
+            primary.put("text", bannerInstructionName);
             ArrayNode components = primary.putArray("components");
             ObjectNode component = components.addObject();
-            component.put("text", nextInstruction.getName());
+            component.put("text", bannerInstructionName);
             component.put("type", "text");
             primary.put("type", getTurnType(nextInstruction, index + 1));
             String modifier = getModifier(nextInstruction);
