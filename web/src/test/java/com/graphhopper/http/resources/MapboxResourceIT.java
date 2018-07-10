@@ -96,7 +96,7 @@ public class MapboxResourceIT {
         assertEquals(1, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertTrue(voiceInstruction.get("distanceAlongGeometry").asDouble() < instructionDistance);
-        assertEquals("continue onto la Callisa", voiceInstruction.get("announcement").asText());
+        assertEquals("turn sharp left onto la Callisa", voiceInstruction.get("announcement").asText());
 
         JsonNode waypointsJson = json.get("waypoints");
         assertEquals(2, waypointsJson.size());

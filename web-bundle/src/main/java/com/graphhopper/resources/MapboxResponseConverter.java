@@ -73,8 +73,9 @@ public class MapboxResponseConverter {
 
                 for (int j = 0; j < instructions.size(); j++) {
                     Instruction instruction = instructions.get(j);
+                    Instruction nextInstruction = (j + 1) < instructions.size() ? instructions.get(j + 1) : null;
                     ObjectNode instructionJson = steps.addObject();
-                    instructionJson = fillInstruction(instruction, instructionJson, j, locale);
+                    instructionJson = fillInstruction(instruction, nextInstruction, instructionJson, j, locale);
                 }
 
                 pathJson.put("weight_name", "routability");
@@ -99,7 +100,7 @@ public class MapboxResponseConverter {
         return json;
     }
 
-    private static ObjectNode fillInstruction(Instruction instruction, ObjectNode instructionJson, int index, Locale locale) {
+    private static ObjectNode fillInstruction(Instruction instruction, Instruction nextInstruction, ObjectNode instructionJson, int index, Locale locale) {
         ArrayNode intersections = instructionJson.putArray("intersections");
         ObjectNode intersection = intersections.addObject();
         intersection.put("out", 0);
@@ -129,19 +130,22 @@ public class MapboxResponseConverter {
         ArrayNode voiceInstructions = instructionJson.putArray("voiceInstructions");
         ObjectNode voiceInstruction = voiceInstructions.addObject();
 
-        /*
-        {
-            distanceAlongGeometry: 40.9,
-            announcement: "Exit the traffic circle",
-            ssmlAnnouncement: "<speak><amazon:effect name="drc"><prosody rate="1.08">Exit the traffic circle</prosody></amazon:effect></speak>",
+        if (nextInstruction != null) {
+            /*
+            {
+                distanceAlongGeometry: 40.9,
+                announcement: "Exit the traffic circle",
+                ssmlAnnouncement: "<speak><amazon:effect name="drc"><prosody rate="1.08">Exit the traffic circle</prosody></amazon:effect></speak>",
+            }
+            */
+            // Either speak 50m before the instruction or at distance/2 whatever is further down the road
+            // Note distanceAlongGeometry: "how far from the upcoming maneuver the voice instruction should begin"
+            voiceInstruction.put("distanceAlongGeometry", Helper.round2(Math.min(distance / 2, 50)));
+            //TODO: ideally, we would even generate instructions including the instructions after the next like turn left **then** turn right
+            String turnDescription = nextInstruction.getTurnDescription(trMap.getWithFallBack(locale));
+            voiceInstruction.put("announcement", turnDescription);
+            voiceInstruction.put("ssmlAnnouncement", "<speak><amazon:effect name=\"drc\"><prosody rate=\"1.08\">" + turnDescription + "</prosody></amazon:effect></speak>");
         }
-         */
-
-        // Either speak 50m before the instruction or at distance/2 whatever is further down the road
-        voiceInstruction.put("distanceAlongGeometry", Helper.round2(Math.max(distance / 2, distance - 50)));
-        String turnDescription = instruction.getTurnDescription(trMap.getWithFallBack(locale));
-        voiceInstruction.put("announcement", turnDescription);
-        voiceInstruction.put("ssmlAnnouncement", "<speak><amazon:effect name=\"drc\"><prosody rate=\"1.08\">" + turnDescription + "</prosody></amazon:effect></speak>");
 
         return instructionJson;
     }
