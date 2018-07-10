@@ -15,24 +15,30 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.http;
+package com.graphhopper.resources;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.http.WebHelper;
 import com.graphhopper.util.*;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 public class MapboxResponseConverter {
 
+    // TODO: this is already in GraphHopper, but getting it from there is not possible easily?
+    private static final TranslationMap trMap = new TranslationMap().doImport();
+
+
     /**
      * Converts a GHResponse into Mapbox compatible json
      */
-    public static ObjectNode convertFromGHResponse(GHResponse ghResponse) {
+    public static ObjectNode convertFromGHResponse(GHResponse ghResponse, Locale locale) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
         if (ghResponse.hasErrors()) {
@@ -68,7 +74,7 @@ public class MapboxResponseConverter {
                 for (int j = 0; j < instructions.size(); j++) {
                     Instruction instruction = instructions.get(j);
                     ObjectNode instructionJson = steps.addObject();
-                    instructionJson = fillInstruction(instruction, instructionJson, j);
+                    instructionJson = fillInstruction(instruction, instructionJson, j, locale);
                 }
 
                 pathJson.put("weight_name", "routability");
@@ -93,7 +99,7 @@ public class MapboxResponseConverter {
         return json;
     }
 
-    private static ObjectNode fillInstruction(Instruction instruction, ObjectNode instructionJson, int index) {
+    private static ObjectNode fillInstruction(Instruction instruction, ObjectNode instructionJson, int index, Locale locale) {
         ArrayNode intersections = instructionJson.putArray("intersections");
         ObjectNode intersection = intersections.addObject();
         intersection.put("out", 0);
@@ -110,7 +116,7 @@ public class MapboxResponseConverter {
         // TODO: how about other modes?
         instructionJson.put("mode", "driving");
 
-        putManeuver(instruction, instructionJson, index);
+        putManeuver(instruction, instructionJson, index, locale);
 
         // TODO distance = weight, is weight even important?
         double distance = Helper.round2(instruction.getDistance());
@@ -131,11 +137,11 @@ public class MapboxResponseConverter {
         }
          */
 
-        // Fixed distance/2, so the instruction is spoken at the half of the distance between two instructions
-        // TODO: make this more intelligent
-        voiceInstruction.put("distanceAlongGeometry", Helper.round2(distance / 2));
-        voiceInstruction.put("announcement", "Exit the traffic circle");
-        voiceInstruction.put("ssmlAnnouncement", "<speak><amazon:effect name=\"drc\"><prosody rate=\"1.08\">Exit the traffic circle</prosody></amazon:effect></speak>");
+        // Either speak 50m before the instruction or at distance/2 whatever is further down the road
+        voiceInstruction.put("distanceAlongGeometry", Helper.round2(Math.max(distance / 2, distance - 50)));
+        String turnDescription = instruction.getTurnDescription(trMap.getWithFallBack(locale));
+        voiceInstruction.put("announcement", turnDescription);
+        voiceInstruction.put("ssmlAnnouncement", "<speak><amazon:effect name=\"drc\"><prosody rate=\"1.08\">" + turnDescription + "</prosody></amazon:effect></speak>");
 
         return instructionJson;
     }
@@ -153,7 +159,7 @@ public class MapboxResponseConverter {
      * Find modifier values here: https://www.mapbox.com/api-documentation/#stepmaneuver-object
      *
      */
-    private static void putManeuver(Instruction instruction, ObjectNode instructionJson, int index) {
+    private static void putManeuver(Instruction instruction, ObjectNode instructionJson, int index, Locale locale) {
         ObjectNode maneuver = instructionJson.putObject("maneuver");
         maneuver.put("bearing_after", 0);
         maneuver.put("bearing_before", 0);
@@ -225,7 +231,7 @@ public class MapboxResponseConverter {
         }
 
         // TODO: do we need the turn description here? If yes, get translation map
-        maneuver.put("instruction", instruction.getName());
+        maneuver.put("instruction", instruction.getTurnDescription(trMap.getWithFallBack(locale)));
 
     }
 

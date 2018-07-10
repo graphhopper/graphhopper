@@ -21,7 +21,6 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
-import com.graphhopper.http.MapboxResponseConverter;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
@@ -153,7 +152,7 @@ public class MapboxResource {
                 logger.error(logStr + ", errors:" + ghResponse.getErrors());
                 throw new MultiException(ghResponse.getErrors());
             } else {
-                return Response.ok(MapboxResponseConverter.convertFromGHResponse(ghResponse)).
+                return Response.ok(MapboxResponseConverter.convertFromGHResponse(ghResponse, request.getLocale())).
                         header("X-GH-Took", "" + Math.round(took * 1000)).
                         build();
             }

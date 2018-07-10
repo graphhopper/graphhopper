@@ -89,9 +89,14 @@ public class MapboxResourceIT {
         assertEquals("straight", maneuver.get("modifier").asText());
 
         assertEquals("la Callisa", step.get("name").asText());
-        assertTrue(step.get("distance").asDouble() < routeDistance);
+        double instructionDistance = step.get("distance").asDouble();
+        assertTrue(instructionDistance < routeDistance);
 
-        assertEquals(1, step.get("voiceInstructions").size());
+        JsonNode voiceInstructions = step.get("voiceInstructions");
+        assertEquals(1, voiceInstructions.size());
+        JsonNode voiceInstruction = voiceInstructions.get(0);
+        assertTrue(voiceInstruction.get("distanceAlongGeometry").asDouble() < instructionDistance);
+        assertEquals("continue onto la Callisa", voiceInstruction.get("announcement").asText());
 
         JsonNode waypointsJson = json.get("waypoints");
         assertEquals(2, waypointsJson.size());
