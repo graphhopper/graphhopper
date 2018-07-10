@@ -150,13 +150,13 @@ public class MapboxResponseConverter {
                 ssmlAnnouncement: "<speak><amazon:effect name="drc"><prosody rate="1.08">Exit the traffic circle</prosody></amazon:effect></speak>",
             }
             */
-            // Either speak 50m before the instruction or at distance/2 whatever is further down the road
+            // Either speak 80m before the instruction or at distance/2 whatever is further down the road
             // Note distanceAlongGeometry: "how far from the upcoming maneuver the voice instruction should begin"
-            double distanceAlongGeometry = Helper.round2(Math.min(distance / 2, 50));
+            double distanceAlongGeometry = Helper.round2(Math.min(distance / 2, 80));
 
             // Special case for the arrive instruction, we want to notify this at distance=0
             if (index + 2 == instructions.size())
-                Helper.round2(Math.min(distance / 2, 25));
+                Helper.round2(Math.min(distance / 2, 30));
 
             voiceInstruction.put("distanceAlongGeometry", distanceAlongGeometry);
             //TODO: ideally, we would even generate instructions including the instructions after the next like turn left **then** turn right
