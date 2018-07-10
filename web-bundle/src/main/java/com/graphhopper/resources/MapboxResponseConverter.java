@@ -156,7 +156,7 @@ public class MapboxResponseConverter {
 
             // Special case for the arrive instruction, we want to notify this at distance=0
             if (index + 2 == instructions.size())
-                Helper.round2(Math.min(distance, 30));
+                Helper.round2(Math.min(distance, 25));
 
             voiceInstruction.put("distanceAlongGeometry", distanceAlongGeometry);
             //TODO: ideally, we would even generate instructions including the instructions after the next like turn left **then** turn right
