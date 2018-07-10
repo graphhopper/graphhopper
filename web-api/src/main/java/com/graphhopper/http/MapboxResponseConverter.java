@@ -112,14 +112,30 @@ public class MapboxResponseConverter {
 
         putManeuver(instruction, instructionJson, index);
 
-        // TODO distance = weight
-        instructionJson.put("weight", Helper.round2(instruction.getDistance()));
+        // TODO distance = weight, is weight even important?
+        double distance = Helper.round2(instruction.getDistance());
+        instructionJson.put("weight", distance);
         instructionJson.put("duration", convertToSeconds(instruction.getTime()));
         instructionJson.put("name", instruction.getName());
-        instructionJson.put("distance", Helper.round2(instruction.getDistance()));
+        instructionJson.put("distance", distance);
 
         // TODO pass empty array, works but is not very nice
-        instructionJson.putArray("voiceInstructions");
+        ArrayNode voiceInstructions = instructionJson.putArray("voiceInstructions");
+        ObjectNode voiceInstruction = voiceInstructions.addObject();
+
+        /*
+        {
+            distanceAlongGeometry: 40.9,
+            announcement: "Exit the traffic circle",
+            ssmlAnnouncement: "<speak><amazon:effect name="drc"><prosody rate="1.08">Exit the traffic circle</prosody></amazon:effect></speak>",
+        }
+         */
+
+        // Fixed distance/2, so the instruction is spoken at the half of the distance between two instructions
+        // TODO: make this more intelligent
+        voiceInstruction.put("distanceAlongGeometry", Helper.round2(distance / 2));
+        voiceInstruction.put("announcement", "Exit the traffic circle");
+        voiceInstruction.put("ssmlAnnouncement", "<speak><amazon:effect name=\"drc\"><prosody rate=\"1.08\">Exit the traffic circle</prosody></amazon:effect></speak>");
 
         return instructionJson;
     }

@@ -62,7 +62,7 @@ public class MapboxResourceIT {
 
     @Test
     public void testBasicQuery() {
-        final Response response = app.client().target("http://localhost:8080/directions/v5/mapbox/driving-traffic/1.536198,42.554851;1.548128,42.510071?geometries=polyline6&steps=true&roundabout_exits=true&voice_instructions=true&banner_instructions=true").request().buildGet().invoke();
+        final Response response = app.client().target("http://localhost:8080/mapbox/directions/v5/mapbox/driving-traffic/1.536198,42.554851;1.548128,42.510071?geometries=polyline6&steps=true&roundabout_exits=true&voice_instructions=true&banner_instructions=true").request().buildGet().invoke();
         assertEquals(response.toString(), 200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         System.out.println(json);
@@ -90,6 +90,8 @@ public class MapboxResourceIT {
 
         assertEquals("la Callisa", step.get("name").asText());
         assertTrue(step.get("distance").asDouble() < routeDistance);
+
+        assertEquals(1, step.get("voiceInstructions").size());
 
         JsonNode waypointsJson = json.get("waypoints");
         assertEquals(2, waypointsJson.size());

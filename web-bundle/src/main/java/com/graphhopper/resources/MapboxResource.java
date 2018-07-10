@@ -46,7 +46,7 @@ import static com.graphhopper.util.Parameters.Routing.*;
  *
  * @author Robin Boldt
  */
-@Path("directions/v5/mapbox")
+@Path("mapbox/directions/v5/mapbox")
 public class MapboxResource {
 
     private static final Logger logger = LoggerFactory.getLogger(MapboxResource.class);
