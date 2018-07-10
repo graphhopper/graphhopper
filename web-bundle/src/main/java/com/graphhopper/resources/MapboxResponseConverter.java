@@ -75,7 +75,7 @@ public class MapboxResponseConverter {
                     Instruction instruction = instructions.get(j);
                     Instruction nextInstruction = (j + 1) < instructions.size() ? instructions.get(j + 1) : null;
                     ObjectNode instructionJson = steps.addObject();
-                    instructionJson = fillInstruction(instruction, nextInstruction, instructionJson, j, locale);
+                    instructionJson = fillInstruction(instructions, j, locale, instructionJson);
                 }
 
                 pathJson.put("weight_name", "routability");
@@ -100,7 +100,8 @@ public class MapboxResponseConverter {
         return json;
     }
 
-    private static ObjectNode fillInstruction(Instruction instruction, Instruction nextInstruction, ObjectNode instructionJson, int index, Locale locale) {
+    private static ObjectNode fillInstruction(InstructionList instructions, int index, Locale locale, ObjectNode instructionJson) {
+        Instruction instruction = instructions.get(index);
         ArrayNode intersections = instructionJson.putArray("intersections");
         ObjectNode intersection = intersections.addObject();
         intersection.put("out", 0);
@@ -129,8 +130,9 @@ public class MapboxResponseConverter {
         // TODO pass empty array, works but is not very nice
         ArrayNode voiceInstructions = instructionJson.putArray("voiceInstructions");
 
-        if (nextInstruction != null) {
+        if (index + 1 < instructions.size()) {
             ObjectNode voiceInstruction = voiceInstructions.addObject();
+            Instruction nextInstruction = instructions.get(index + 1);
             /*
             {
                 distanceAlongGeometry: 40.9,
@@ -140,7 +142,13 @@ public class MapboxResponseConverter {
             */
             // Either speak 50m before the instruction or at distance/2 whatever is further down the road
             // Note distanceAlongGeometry: "how far from the upcoming maneuver the voice instruction should begin"
-            voiceInstruction.put("distanceAlongGeometry", Helper.round2(Math.min(distance / 2, 50)));
+            double distanceAlongGeometry = Helper.round2(Math.min(distance / 2, 50));
+
+            // Special case for the arrive instruction, we want to notify this at distance=0
+            if (index + 2 == instructions.size())
+                distanceAlongGeometry = 0;
+
+            voiceInstruction.put("distanceAlongGeometry", distanceAlongGeometry);
             //TODO: ideally, we would even generate instructions including the instructions after the next like turn left **then** turn right
             String turnDescription = nextInstruction.getTurnDescription(trMap.getWithFallBack(locale));
             voiceInstruction.put("announcement", turnDescription);
