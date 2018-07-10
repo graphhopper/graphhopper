@@ -183,6 +183,10 @@ public class MapboxResponseConverter {
             //Show from the beginning from
             bannerInstruction.put("distanceAlongGeometry", distance);
             ObjectNode primary = bannerInstruction.putObject("primary");
+            String bannerInstructionName = nextInstruction.getName();
+            if(bannerInstructionName == null || bannerInstructionName.isEmpty())
+                // Fix for final instruction and for instructions without name
+                bannerInstructionName = turnDescription;
             primary.put("text", nextInstruction.getName());
             ArrayNode components = primary.putArray("components");
             ObjectNode component = components.addObject();

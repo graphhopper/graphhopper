@@ -109,6 +109,13 @@ public class MapboxResourceIT {
         JsonNode bannerInstructionComponent = bannerInstruction.get("components").get(0);
         assertEquals("la Callisa", bannerInstructionComponent.get("text").asText());
 
+        // Get the second last step (and the last banner instruction)
+        step = steps.get(steps.size() - 2);
+        bannerInstructions = step.get("bannerInstructions");
+        assertEquals(1, bannerInstructions.size());
+        bannerInstruction = bannerInstructions.get(0).get("primary");
+        assertEquals("arrive at destination", bannerInstruction.get("text").asText());
+
         JsonNode waypointsJson = json.get("waypoints");
         assertEquals(2, waypointsJson.size());
         JsonNode waypointLoc = waypointsJson.get(0).get("location");
