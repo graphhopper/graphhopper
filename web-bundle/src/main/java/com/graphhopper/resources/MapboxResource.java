@@ -121,8 +121,9 @@ public class MapboxResource {
             }
 
             double minPathPrecision = 1;
-            if (overview.equals("full"))
-                minPathPrecision = 0;
+            // TODO: lets not do this for now...
+            //if (overview.equals("full"))
+                //minPathPrecision = 0;
 
             boolean instructions = enableSteps;
 
