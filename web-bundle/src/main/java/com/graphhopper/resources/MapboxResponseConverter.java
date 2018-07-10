@@ -128,9 +128,9 @@ public class MapboxResponseConverter {
 
         // TODO pass empty array, works but is not very nice
         ArrayNode voiceInstructions = instructionJson.putArray("voiceInstructions");
-        ObjectNode voiceInstruction = voiceInstructions.addObject();
 
         if (nextInstruction != null) {
+            ObjectNode voiceInstruction = voiceInstructions.addObject();
             /*
             {
                 distanceAlongGeometry: 40.9,
