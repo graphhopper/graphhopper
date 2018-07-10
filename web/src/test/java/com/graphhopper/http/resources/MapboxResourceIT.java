@@ -76,6 +76,8 @@ public class MapboxResourceIT {
         assertTrue("duration wasn't correct:" + routeDuration, routeDuration > 500);
         assertTrue("duration wasn't correct:" + routeDuration, routeDuration < 600);
 
+        assertEquals("en", route.get("voiceLocale").asText());
+
         JsonNode leg = route.get("legs").get(0);
         assertEquals(routeDistance, leg.get("distance").asDouble(), .000001);
 
@@ -97,6 +99,13 @@ public class MapboxResourceIT {
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertTrue(voiceInstruction.get("distanceAlongGeometry").asDouble() < instructionDistance);
         assertEquals("turn sharp left onto la Callisa", voiceInstruction.get("announcement").asText());
+
+        JsonNode bannerInstructions = step.get("bannerInstructions");
+        assertEquals(1, bannerInstructions.size());
+        JsonNode bannerInstruction = bannerInstructions.get(0).get("primary");
+        assertEquals("la Callisa", bannerInstruction.get("text").asText());
+        assertEquals("turn", bannerInstruction.get("type").asText());
+        assertEquals("sharp left", bannerInstruction.get("modifier").asText());
 
         JsonNode waypointsJson = json.get("waypoints");
         assertEquals(2, waypointsJson.size());

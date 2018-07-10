@@ -61,7 +61,15 @@ public class MapboxResponseConverter {
                 //TODO: leg support, multiple waypoints...
                 ObjectNode legJson = legsJson.addObject();
 
-                legJson.put("summary", "GraphHopper Route " + i);
+                /*
+                TODO: Peter: Bei den Beschreibungen kannst du ja mal in die Alternativerouten Sache reinschauen da liefere ich meistens ganz okaye Beschreibungen für die zumind. die erste Alternative zurück. Oder Du misst da einfach die Länge der Strecke wo sich der Name der Straße nicht ändert und nimmst die häufigsten beiden oder so?
+                 */
+                String summary;
+                if (!path.getDescription().isEmpty())
+                    summary = String.join(",", path.getDescription());
+                else
+                    summary = "GraphHopper Route " + i;
+                legJson.put("summary", summary);
 
                 // Copied from below
                 legJson.put("weight", path.getRouteWeight());
@@ -82,6 +90,7 @@ public class MapboxResponseConverter {
                 pathJson.put("weight", path.getRouteWeight());
                 pathJson.put("duration", convertToSeconds(path.getTime()));
                 pathJson.put("distance", Helper.round2(path.getDistance()));
+                pathJson.put("voiceLocale", locale.toLanguageTag());
             }
 
             final ArrayNode waypointsJson = json.putArray("waypoints");
@@ -127,11 +136,12 @@ public class MapboxResponseConverter {
         instructionJson.put("name", instruction.getName());
         instructionJson.put("distance", distance);
 
-        // TODO pass empty array, works but is not very nice
         ArrayNode voiceInstructions = instructionJson.putArray("voiceInstructions");
+        ArrayNode bannerInstructions = instructionJson.putArray("bannerInstructions");
 
         if (index + 1 < instructions.size()) {
             ObjectNode voiceInstruction = voiceInstructions.addObject();
+            ObjectNode bannerInstruction = bannerInstructions.addObject();
             Instruction nextInstruction = instructions.get(index + 1);
             /*
             {
@@ -153,6 +163,37 @@ public class MapboxResponseConverter {
             String turnDescription = nextInstruction.getTurnDescription(trMap.getWithFallBack(locale));
             voiceInstruction.put("announcement", turnDescription);
             voiceInstruction.put("ssmlAnnouncement", "<speak><amazon:effect name=\"drc\"><prosody rate=\"1.08\">" + turnDescription + "</prosody></amazon:effect></speak>");
+
+            /*
+            distanceAlongGeometry: 107,
+            primary: {
+                text: "Lichtensteinstraße",
+                components: [
+                {
+                    text: "Lichtensteinstraße",
+                    type: "text",
+                }
+                ],
+                type: "turn",
+                modifier: "right",
+            },
+            secondary: null,
+             */
+
+            //Show from the beginning from
+            bannerInstruction.put("distanceAlongGeometry", distance);
+            ObjectNode primary = bannerInstruction.putObject("primary");
+            primary.put("text", nextInstruction.getName());
+            ObjectNode components = bannerInstruction.putObject("components");
+            components.put("text", nextInstruction.getName());
+            components.put("type", "text");
+            primary.put("type", getTurnType(nextInstruction, index + 1));
+            String modifier = getModifier(nextInstruction);
+            if (modifier != null)
+                primary.put("modifier", modifier);
+            // TODO might be missing things for roundabout etc.
+
+            bannerInstruction.putNull("secondary");
         }
 
         return instructionJson;
@@ -179,72 +220,67 @@ public class MapboxResponseConverter {
         PointList points = instruction.getPoints();
         putLocation(points.getLat(0), points.getLon(0), maneuver);
 
-        // modifier
-        switch (instruction.getSign()) {
-            case Instruction.CONTINUE_ON_STREET:
-                // TODO: might break mapbox for first instruction?
-                maneuver.put("modifier", "straight");
-                break;
-            case Instruction.U_TURN_LEFT:
-            case Instruction.U_TURN_RIGHT:
-            case Instruction.U_TURN_UNKNOWN:
-                maneuver.put("modifier", "uturn");
-                break;
-            case Instruction.KEEP_LEFT:
-            case Instruction.TURN_SLIGHT_LEFT:
-                maneuver.put("modifier", "slight left");
-                break;
-            case Instruction.TURN_LEFT:
-                maneuver.put("modifier", "left");
-                break;
-            case Instruction.TURN_SHARP_LEFT:
-                maneuver.put("modifier", "sharp left");
-                break;
-            case Instruction.KEEP_RIGHT:
-            case Instruction.TURN_SLIGHT_RIGHT:
-                maneuver.put("modifier", "slight right");
-                break;
-            case Instruction.TURN_RIGHT:
-                maneuver.put("modifier", "right");
-                break;
-            case Instruction.TURN_SHARP_RIGHT:
-                maneuver.put("modifier", "sharp right");
-                break;
-            case Instruction.USE_ROUNDABOUT:
-            case Instruction.LEAVE_ROUNDABOUT:
-                // TODO: We might want to calculate this (maybe via angle?)
-                maneuver.put("modifier", "straight");
-                break;
-            default:
-                break;
-        }
+        String modifier = getModifier(instruction);
+        if (modifier != null)
+            maneuver.put("modifier", modifier);
 
+        maneuver.put("type", getTurnType(instruction, index));
+        // exit number
+        if (instruction instanceof RoundaboutInstruction)
+            maneuver.put("exit", ((RoundaboutInstruction) instruction).getExitNumber());
 
-        // type
+        maneuver.put("instruction", instruction.getTurnDescription(trMap.getWithFallBack(locale)));
+
+    }
+
+    private static String getTurnType(Instruction instruction, int index) {
         if (index == 0) {
-            maneuver.put("type", "depart");
+            return "depart";
         } else {
             switch (instruction.getSign()) {
                 case Instruction.FINISH:
                 case Instruction.REACHED_VIA:
-                    maneuver.put("type", "arrive");
-                    break;
+                    return "arrive";
                 case Instruction.USE_ROUNDABOUT:
                 case Instruction.LEAVE_ROUNDABOUT:
                     // TODO: We don't use leave roundabout instructions in GraphHopper, this might break mapbox?
-                    maneuver.put("type", "roundabout");
-                    // exit number
-                    if (instruction instanceof RoundaboutInstruction)
-                        maneuver.put("exit", ((RoundaboutInstruction) instruction).getExitNumber());
-                    break;
+                    return "roundabout";
                 default:
-                    maneuver.put("type", "turn");
+                    return "turn";
             }
         }
+    }
 
-        // TODO: do we need the turn description here? If yes, get translation map
-        maneuver.put("instruction", instruction.getTurnDescription(trMap.getWithFallBack(locale)));
-
+    private static String getModifier(Instruction instruction) {
+        switch (instruction.getSign()) {
+            case Instruction.CONTINUE_ON_STREET:
+                // TODO: might break mapbox for first instruction?
+                return "straight";
+            case Instruction.U_TURN_LEFT:
+            case Instruction.U_TURN_RIGHT:
+            case Instruction.U_TURN_UNKNOWN:
+                return "uturn";
+            case Instruction.KEEP_LEFT:
+            case Instruction.TURN_SLIGHT_LEFT:
+                return "slight left";
+            case Instruction.TURN_LEFT:
+                return "left";
+            case Instruction.TURN_SHARP_LEFT:
+                return "sharp left";
+            case Instruction.KEEP_RIGHT:
+            case Instruction.TURN_SLIGHT_RIGHT:
+                return "slight right";
+            case Instruction.TURN_RIGHT:
+                return "right";
+            case Instruction.TURN_SHARP_RIGHT:
+                return "sharp right";
+            case Instruction.USE_ROUNDABOUT:
+            case Instruction.LEAVE_ROUNDABOUT:
+                // TODO: We might want to calculate this (maybe via angle?)
+                return "straight";
+            default:
+                return null;
+        }
     }
 
     private static ObjectNode putLocation(double lat, double lon, ObjectNode node) {
