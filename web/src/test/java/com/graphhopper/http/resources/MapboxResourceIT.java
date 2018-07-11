@@ -65,7 +65,6 @@ public class MapboxResourceIT {
         final Response response = app.client().target("http://localhost:8080/mapbox/directions/v5/mapbox/driving-traffic/1.536198,42.554851;1.548128,42.510071?geometries=polyline6&steps=true&roundabout_exits=true&voice_instructions=true&banner_instructions=true").request().buildGet().invoke();
         assertEquals(response.toString(), 200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
-        System.out.println(json);
 
         JsonNode route = json.get("routes").get(0);
         double routeDistance = route.get("distance").asDouble();
@@ -126,6 +125,16 @@ public class MapboxResourceIT {
         assertEquals(2, waypointsJson.size());
         JsonNode waypointLoc = waypointsJson.get(0).get("location");
         assertEquals(1.536198, waypointLoc.get(0).asDouble(), .001);
+    }
+
+    @Test
+    public void testError(){
+        final Response response = app.client().target("http://localhost:8080/mapbox/directions/v5/mapbox/driving-traffic/111.536198,42.554851;1.548128,42.510071?geometries=polyline6&steps=true&roundabout_exits=true&voice_instructions=true&banner_instructions=true").request().buildGet().invoke();
+        assertEquals(response.toString(), 422, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+
+        assertEquals("InvalidInput", json.get("code").asText());
+        assertEquals("Point 0 is out of bounds: 42.554851,111.536198", json.get("message").asText());
     }
 
 }
