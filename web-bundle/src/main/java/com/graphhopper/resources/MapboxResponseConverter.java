@@ -217,8 +217,8 @@ public class MapboxResponseConverter {
 
     private static void putManeuver(Instruction instruction, ObjectNode instructionJson, int index, Locale locale) {
         ObjectNode maneuver = instructionJson.putObject("maneuver");
-        maneuver.put("bearing_after", 0);
-        maneuver.put("bearing_before", 0);
+        maneuver.put("bearing_after", 144);
+        maneuver.put("bearing_before", 217);
 
         PointList points = instruction.getPoints();
         putLocation(points.getLat(0), points.getLon(0), maneuver);
