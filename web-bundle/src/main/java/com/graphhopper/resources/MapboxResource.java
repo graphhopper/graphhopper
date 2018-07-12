@@ -20,7 +20,6 @@ package com.graphhopper.resources;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.MultiException;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
@@ -81,74 +80,67 @@ public class MapboxResource {
             @PathParam("profile") String profile,
             @PathParam("coordinatesArray") PathSegment pathSegment) {
 
-        try {
+        /*
+            Mapbox always uses fastest or priority weighting, except for walking, it's shortest
+            https://www.mapbox.com/api-documentation/#directions
+         */
+        final String weighting = "fastest";
 
-            /*
-                Mapbox always uses fastest or priority weighting, except for walking, it's shortest
-                https://www.mapbox.com/api-documentation/#directions
-             */
-            final String weighting = "fastest";
+        /*
+            Currently, the MapboxResponseConverter is pretty limited.
+            Therefore, we enforce these values to make sure the client does not receive an unexpected answer.
+         */
+        if (!geometries.equals("polyline6"))
+            throwIllegalArgumentException("Currently, we only support polyline6");
+        if (!enableInstructions)
+            throwIllegalArgumentException("Currently, you need to enable steps");
+        if (!roundaboutExits)
+            throwIllegalArgumentException("Roundabout exits have to be enabled right now");
+        if (!voiceUnits.equals("metric"))
+            throwIllegalArgumentException("Voice units only support metric right now");
+        if (!voiceInstructions)
+            throwIllegalArgumentException("You need to enable voice instructions right now");
+        if (!bannerInstructions)
+            throwIllegalArgumentException("You need to enable banner instructions right now");
 
-            /*
-                Currently, the MapboxResponseConverter is pretty limited.
-                Therefore, we enforce these values to make sure the client does not receive an unexpected answer.
-             */
-            if (!geometries.equals("polyline6"))
-                throwIllegalArgumentException("Currently, we only support polyline6");
-            if (!enableInstructions)
-                throwIllegalArgumentException("Currently, you need to enable steps");
-            if (!roundaboutExits)
-                throwIllegalArgumentException("Roundabout exits have to be enabled right now");
-            if (!voiceUnits.equals("metric"))
-                throwIllegalArgumentException("Voice units only support metric right now");
-            if (!voiceInstructions)
-                throwIllegalArgumentException("You need to enable voice instructions right now");
-            if (!bannerInstructions)
-                throwIllegalArgumentException("You need to enable banner instructions right now");
+        double minPathPrecision = 1;
+        if (overview.equals("full"))
+            minPathPrecision = 0;
 
-            double minPathPrecision = 1;
-            if (overview.equals("full"))
-                minPathPrecision = 0;
+        String vehicleStr = convertProfileToGraphHopperVehicleString(profile);
+        List<GHPoint> requestPoints = getPointsFromRequest(pathSegment);
 
-            String vehicleStr = convertProfileToGraphHopperVehicleString(profile);
-            List<GHPoint> requestPoints = getPointsFromRequest(pathSegment);
+        StopWatch sw = new StopWatch().start();
 
-            StopWatch sw = new StopWatch().start();
+        // TODO: initialization with heading/bearings
+        // TODO: how should we use the "continue_straight" parameter? This is analog to pass_through, would require disabling CH
 
-            // TODO: initialization with heading/bearings
-            // TODO: how should we use the "continue_straight" parameter? This is analog to pass_through, would require disabling CH
+        GHRequest request = new GHRequest(requestPoints);
+        request.setVehicle(vehicleStr).
+                setWeighting(weighting).
+                setLocale(localeStr).
+                getHints().
+                put(CALC_POINTS, true).
+                put(INSTRUCTIONS, enableInstructions).
+                put(WAY_POINT_MAX_DISTANCE, minPathPrecision);
 
-            GHRequest request = new GHRequest(requestPoints);
-            request.setVehicle(vehicleStr).
-                    setWeighting(weighting).
-                    setLocale(localeStr).
-                    getHints().
-                    put(CALC_POINTS, true).
-                    put(INSTRUCTIONS, enableInstructions).
-                    put(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+        GHResponse ghResponse = graphHopper.route(request);
 
-            GHResponse ghResponse = graphHopper.route(request);
+        float took = sw.stop().getSeconds();
+        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
+        String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
+                + took + ", " + weighting + ", " + vehicleStr;
 
-            float took = sw.stop().getSeconds();
-            String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
-            String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
-                    + took + ", " + weighting + ", " + vehicleStr;
-
-            if (ghResponse.hasErrors()) {
-                logger.error(logStr + ", errors:" + ghResponse.getErrors());
-                // Mapbox specifies 422 return type for input errors
-                return Response.status(422).entity(MapboxResponseConverter.convertFromGHResponseError(ghResponse)).
-                        header("X-GH-Took", "" + Math.round(took * 1000)).
-                        build();
-            } else {
-                return Response.ok(MapboxResponseConverter.convertFromGHResponse(ghResponse, translationMap, request.getLocale())).
-                        header("X-GH-Took", "" + Math.round(took * 1000)).
-                        build();
-            }
-
-        } catch (Exception e) {
-            logger.error("Exception while processing: ", e);
-            throw new MultiException(e);
+        if (ghResponse.hasErrors()) {
+            logger.error(logStr + ", errors:" + ghResponse.getErrors());
+            // Mapbox specifies 422 return type for input errors
+            return Response.status(422).entity(MapboxResponseConverter.convertFromGHResponseError(ghResponse)).
+                    header("X-GH-Took", "" + Math.round(took * 1000)).
+                    build();
+        } else {
+            return Response.ok(MapboxResponseConverter.convertFromGHResponse(ghResponse, translationMap, request.getLocale())).
+                    header("X-GH-Took", "" + Math.round(took * 1000)).
+                    build();
         }
     }
 

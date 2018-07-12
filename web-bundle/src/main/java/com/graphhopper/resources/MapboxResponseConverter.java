@@ -38,7 +38,7 @@ public class MapboxResponseConverter {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
         if (ghResponse.hasErrors())
-            throw new IllegalStateException("Cannot convert an errornous ghResponse");
+            throw new IllegalStateException("If the response has errors, you should use the method MapboxResponseConverter#convertFromGHResponseError");
 
         PointList waypoints = ghResponse.getBest().getWaypoints();
 
