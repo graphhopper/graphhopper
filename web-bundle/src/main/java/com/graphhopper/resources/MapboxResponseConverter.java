@@ -31,14 +31,10 @@ import java.util.UUID;
 
 public class MapboxResponseConverter {
 
-    // TODO: this is already in GraphHopper, but getting it from there is not possible easily?
-    private static final TranslationMap trMap = new TranslationMap().doImport();
-
-
     /**
      * Converts a GHResponse into Mapbox compatible json
      */
-    public static ObjectNode convertFromGHResponse(GHResponse ghResponse, Locale locale) {
+    public static ObjectNode convertFromGHResponse(GHResponse ghResponse, TranslationMap translationMap, Locale locale) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
         if (ghResponse.hasErrors())
@@ -78,7 +74,7 @@ public class MapboxResponseConverter {
 
             for (int j = 0; j < instructions.size(); j++) {
                 ObjectNode instructionJson = steps.addObject();
-                putInstruction(instructions, j, locale, instructionJson);
+                putInstruction(instructions, j, locale, translationMap, instructionJson);
             }
 
             pathJson.put("weight_name", "routability");
@@ -103,7 +99,7 @@ public class MapboxResponseConverter {
         return json;
     }
 
-    private static ObjectNode putInstruction(InstructionList instructions, int index, Locale locale, ObjectNode instructionJson) {
+    private static ObjectNode putInstruction(InstructionList instructions, int index, Locale locale, TranslationMap translationMap, ObjectNode instructionJson) {
         Instruction instruction = instructions.get(index);
         ArrayNode intersections = instructionJson.putArray("intersections");
         ObjectNode intersection = intersections.addObject();
@@ -120,7 +116,7 @@ public class MapboxResponseConverter {
         // TODO: how about other modes?
         instructionJson.put("mode", "driving");
 
-        putManeuver(instruction, instructionJson, index, locale);
+        putManeuver(instruction, instructionJson, index, locale, translationMap);
 
         // TODO distance = weight, is weight even important?
         double distance = Helper.round(instruction.getDistance(), 1);
@@ -134,14 +130,14 @@ public class MapboxResponseConverter {
 
         // Voice and banner instructions are empty for the last element
         if (index + 1 < instructions.size()) {
-            putVoiceInstructions(instructions, distance, index, locale, voiceInstructions);
-            putBannerInstruction(instructions, distance, index, locale, bannerInstructions);
+            putVoiceInstructions(instructions, distance, index, locale, translationMap, voiceInstructions);
+            putBannerInstruction(instructions, distance, index, locale, translationMap, bannerInstructions);
         }
 
         return instructionJson;
     }
 
-    private static void putVoiceInstructions(InstructionList instructions, double distance, int index, Locale locale, ArrayNode voiceInstructions) {
+    private static void putVoiceInstructions(InstructionList instructions, double distance, int index, Locale locale, TranslationMap translationMap, ArrayNode voiceInstructions) {
         /*
             A VoiceInstruction Object looks like this
             {
@@ -163,12 +159,12 @@ public class MapboxResponseConverter {
 
         voiceInstruction.put("distanceAlongGeometry", distanceAlongGeometry);
         //TODO: ideally, we would even generate instructions including the instructions after the next like turn left **then** turn right
-        String turnDescription = nextInstruction.getTurnDescription(trMap.getWithFallBack(locale));
+        String turnDescription = nextInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
         voiceInstruction.put("announcement", turnDescription);
         voiceInstruction.put("ssmlAnnouncement", "<speak><amazon:effect name=\"drc\"><prosody rate=\"1.08\">" + turnDescription + "</prosody></amazon:effect></speak>");
     }
 
-    private static void putBannerInstruction(InstructionList instructions, double distance, int index, Locale locale, ArrayNode bannerInstructions) {
+    private static void putBannerInstruction(InstructionList instructions, double distance, int index, Locale locale, TranslationMap translationMap, ArrayNode bannerInstructions) {
         /*
         A BannerInstruction looks like this
         distanceAlongGeometry: 107,
@@ -196,7 +192,7 @@ public class MapboxResponseConverter {
         String bannerInstructionName = nextInstruction.getName();
         if (bannerInstructionName == null || bannerInstructionName.isEmpty())
             // Fix for final instruction and for instructions without name
-            bannerInstructionName = nextInstruction.getTurnDescription(trMap.getWithFallBack(locale));
+            bannerInstructionName = nextInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
         primary.put("text", bannerInstructionName);
 
         ArrayNode components = primary.putArray("components");
@@ -214,7 +210,7 @@ public class MapboxResponseConverter {
         bannerInstruction.putNull("secondary");
     }
 
-    private static void putManeuver(Instruction instruction, ObjectNode instructionJson, int index, Locale locale) {
+    private static void putManeuver(Instruction instruction, ObjectNode instructionJson, int index, Locale locale, TranslationMap translationMap) {
         ObjectNode maneuver = instructionJson.putObject("maneuver");
         maneuver.put("bearing_after", 0);
         maneuver.put("bearing_before", 0);
@@ -231,7 +227,7 @@ public class MapboxResponseConverter {
         if (instruction instanceof RoundaboutInstruction)
             maneuver.put("exit", ((RoundaboutInstruction) instruction).getExitNumber());
 
-        maneuver.put("instruction", instruction.getTurnDescription(trMap.getWithFallBack(locale)));
+        maneuver.put("instruction", instruction.getTurnDescription(translationMap.getWithFallBack(locale)));
 
     }
 

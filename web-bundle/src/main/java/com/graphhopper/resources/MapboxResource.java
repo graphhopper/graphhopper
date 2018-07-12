@@ -22,6 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
 import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,11 +52,13 @@ public class MapboxResource {
     private static final Logger logger = LoggerFactory.getLogger(MapboxResource.class);
 
     private final GraphHopperAPI graphHopper;
+    private final TranslationMap translationMap;
     private final Boolean hasElevation;
 
     @Inject
-    public MapboxResource(GraphHopperAPI graphHopper, @Named("hasElevation") Boolean hasElevation) {
+    public MapboxResource(GraphHopperAPI graphHopper, TranslationMap translationMap, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
+        this.translationMap = translationMap;
         this.hasElevation = hasElevation;
     }
 
@@ -138,7 +141,7 @@ public class MapboxResource {
                         header("X-GH-Took", "" + Math.round(took * 1000)).
                         build();
             } else {
-                return Response.ok(MapboxResponseConverter.convertFromGHResponse(ghResponse, request.getLocale())).
+                return Response.ok(MapboxResponseConverter.convertFromGHResponse(ghResponse, translationMap, request.getLocale())).
                         header("X-GH-Took", "" + Math.round(took * 1000)).
                         build();
             }
