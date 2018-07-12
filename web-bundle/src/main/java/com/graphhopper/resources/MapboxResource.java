@@ -105,7 +105,7 @@ public class MapboxResource {
 
             double minPathPrecision = 1;
             if (overview.equals("full"))
-                minPathPrecision = 0.1;
+                minPathPrecision = 0;
 
             String vehicleStr = convertProfileToGraphHopperVehicleString(profile);
             List<GHPoint> requestPoints = getPointsFromRequest(pathSegment);
