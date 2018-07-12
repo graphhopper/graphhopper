@@ -69,9 +69,9 @@ public class MapboxResponseConverter {
             legJson.put("summary", summary);
 
             // Copied from below
-            legJson.put("weight", path.getRouteWeight());
+            legJson.put("weight", Helper.round(path.getRouteWeight(), 1));
             legJson.put("duration", convertToSeconds(path.getTime()));
-            legJson.put("distance", Helper.round(path.getDistance(), 2));
+            legJson.put("distance", Helper.round(path.getDistance(), 1));
 
             ArrayNode steps = legJson.putArray("steps");
             InstructionList instructions = path.getInstructions();
@@ -82,9 +82,9 @@ public class MapboxResponseConverter {
             }
 
             pathJson.put("weight_name", "routability");
-            pathJson.put("weight", Helper.round(path.getRouteWeight(), 2));
+            pathJson.put("weight", Helper.round(path.getRouteWeight(), 1));
             pathJson.put("duration", convertToSeconds(path.getTime()));
-            pathJson.put("distance", Helper.round(path.getDistance(), 2));
+            pathJson.put("distance", Helper.round(path.getDistance(), 1));
             pathJson.put("voiceLocale", locale.toLanguageTag());
         }
 
@@ -124,7 +124,7 @@ public class MapboxResponseConverter {
         putManeuver(instruction, instructionJson, index, locale);
 
         // TODO distance = weight, is weight even important?
-        double distance = Helper.round(instruction.getDistance(), 2);
+        double distance = Helper.round(instruction.getDistance(), 1);
         instructionJson.put("weight", distance);
         instructionJson.put("duration", convertToSeconds(instruction.getTime()));
         instructionJson.put("name", instruction.getName());
@@ -156,11 +156,11 @@ public class MapboxResponseConverter {
 
         // Speak 80m instructions 80 before the turn
         // Note: distanceAlongGeometry: "how far from the upcoming maneuver the voice instruction should begin"
-        double distanceAlongGeometry = Helper.round(Math.min(distance, 80), 2);
+        double distanceAlongGeometry = Helper.round(Math.min(distance, 80), 1);
 
         // Special case for the arrive instruction
         if (index + 2 == instructions.size())
-            distanceAlongGeometry = Helper.round(Math.min(distance, 25), 2);
+            distanceAlongGeometry = Helper.round(Math.min(distance, 25), 1);
 
         voiceInstruction.put("distanceAlongGeometry", distanceAlongGeometry);
         //TODO: ideally, we would even generate instructions including the instructions after the next like turn left **then** turn right
@@ -311,7 +311,7 @@ public class MapboxResponseConverter {
      * Mapbox uses seconds instead of milliSeconds
      */
     private static double convertToSeconds(double milliSeconds) {
-        return milliSeconds / 1000;
+        return Helper.round(milliSeconds / 1000, 1);
     }
 
     public static ObjectNode convertFromGHResponseError(GHResponse ghResponse) {
