@@ -107,9 +107,16 @@ public class MapboxResponseConverter {
         Instruction instruction = instructions.get(index);
         ArrayNode intersections = instructionJson.putArray("intersections");
         ObjectNode intersection = intersections.addObject();
-        intersection.put("out", 0);
-        intersection.putArray("entry");
-        intersection.putArray("bearings");
+        intersection.put("out", 1);
+        intersection.put("in", 0);
+        ArrayNode entry = intersection.putArray("entry");
+        entry.add(false);
+        entry.add(true);
+        entry.add(true);
+        ArrayNode bearings = intersection.putArray("bearings");
+        bearings.add(45);
+        bearings.add(150);
+        bearings.add(315);
         PointList pointList = instruction.getPoints();
         putLocation(pointList.getLat(0), pointList.getLon(0), intersection);
 
@@ -217,8 +224,8 @@ public class MapboxResponseConverter {
 
     private static void putManeuver(Instruction instruction, ObjectNode instructionJson, int index, Locale locale) {
         ObjectNode maneuver = instructionJson.putObject("maneuver");
-        maneuver.put("bearing_after", 144);
-        maneuver.put("bearing_before", 217);
+        maneuver.put("bearing_after", 0);
+        maneuver.put("bearing_before", 0);
 
         PointList points = instruction.getPoints();
         putLocation(points.getLat(0), points.getLon(0), maneuver);
