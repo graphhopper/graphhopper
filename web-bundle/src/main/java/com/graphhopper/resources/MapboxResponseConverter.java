@@ -107,16 +107,8 @@ public class MapboxResponseConverter {
         Instruction instruction = instructions.get(index);
         ArrayNode intersections = instructionJson.putArray("intersections");
         ObjectNode intersection = intersections.addObject();
-        intersection.put("out", 1);
-        intersection.put("in", 0);
-        ArrayNode entry = intersection.putArray("entry");
-        entry.add(false);
-        entry.add(true);
-        entry.add(true);
-        ArrayNode bearings = intersection.putArray("bearings");
-        bearings.add(45);
-        bearings.add(150);
-        bearings.add(315);
+        intersection.putArray("entry");
+        intersection.putArray("bearings");
         PointList pointList = instruction.getPoints();
         putLocation(pointList.getLat(0), pointList.getLon(0), intersection);
 
