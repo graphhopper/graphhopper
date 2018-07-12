@@ -104,8 +104,8 @@ public class MapboxResource {
             throwIllegalArgumentException("You need to enable banner instructions right now");
 
         double minPathPrecision = 1;
-        //if (overview.equals("full"))
-        //    minPathPrecision = 0;
+        if (overview.equals("full"))
+            minPathPrecision = 0;
 
         String vehicleStr = convertProfileToGraphHopperVehicleString(profile);
         List<GHPoint> requestPoints = getPointsFromRequest(pathSegment);
