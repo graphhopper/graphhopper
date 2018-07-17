@@ -1,5 +1,7 @@
 graphhopper:
   graph.location: transit_data/toronto-r5-gh
+  routing.ch.disabling_allowed: true
+  graph.flag_encoders: car
 
 server:
   applicationConnectors:
