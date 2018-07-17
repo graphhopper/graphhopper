@@ -90,7 +90,7 @@ public class Measurement {
             protected void prepareCH() {
                 StopWatch sw = new StopWatch().start();
                 super.prepareCH();
-                put(Parameters.CH.PREPARE + "time", sw.stop().getTime());
+                put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 int edges = getGraphHopperStorage().getAllEdges().length();
                 if (getCHFactoryDecorator().hasWeightings()) {
                     Weighting weighting = getCHFactoryDecorator().getWeightings().get(0);
@@ -103,7 +103,7 @@ public class Measurement {
             protected void loadOrPrepareLM() {
                 StopWatch sw = new StopWatch().start();
                 super.loadOrPrepareLM();
-                put(Parameters.Landmark.PREPARE + "time", sw.stop().getTime());
+                put(Parameters.Landmark.PREPARE + "time", sw.stop().getMillis());
             }
 
             @Override
@@ -178,7 +178,7 @@ public class Measurement {
             put("measurement.gitinfo", gitCommit);
             put("measurement.count", count);
             put("measurement.seed", seed);
-            put("measurement.time", sw.stop().getTime());
+            put("measurement.time", sw.stop().getMillis());
             System.gc();
             put("measurement.totalMB", getTotalMB());
             put("measurement.usedMB", getUsedMB());
