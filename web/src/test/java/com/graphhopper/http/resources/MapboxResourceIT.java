@@ -128,7 +128,30 @@ public class MapboxResourceIT {
     }
 
     @Test
-    public void testError(){
+    public void testMultipleWaypoints() {
+        final Response response = app.client().target("http://localhost:8080/mapbox/directions/v5/mapbox/driving-traffic/1.522438,42.504606;1.527209,42.504776;1.526113,42.505144;1.527218,42.50529?geometries=polyline6&steps=true&roundabout_exits=true&voice_instructions=true&banner_instructions=true").request().buildGet().invoke();
+        assertEquals(response.toString(), 200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode waypointsJson = json.get("waypoints");
+        assertEquals(4, waypointsJson.size());
+
+        JsonNode waypointLoc = waypointsJson.get(0).get("location");
+        assertEquals(1.522438, waypointLoc.get(0).asDouble(), .00001);
+
+        waypointLoc = waypointsJson.get(1).get("location");
+        assertEquals(1.527209, waypointLoc.get(0).asDouble(), .00001);
+
+        waypointLoc = waypointsJson.get(2).get("location");
+        assertEquals(1.526113, waypointLoc.get(0).asDouble(), .00001);
+
+        waypointLoc = waypointsJson.get(3).get("location");
+        assertEquals(1.527218, waypointLoc.get(0).asDouble(), .00001);
+
+
+    }
+
+    @Test
+    public void testError() {
         final Response response = app.client().target("http://localhost:8080/mapbox/directions/v5/mapbox/driving-traffic/111.536198,42.554851;1.548128,42.510071?geometries=polyline6&steps=true&roundabout_exits=true&voice_instructions=true&banner_instructions=true").request().buildGet().invoke();
         assertEquals(response.toString(), 422, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);

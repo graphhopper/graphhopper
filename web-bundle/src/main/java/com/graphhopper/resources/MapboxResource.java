@@ -27,14 +27,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import static com.graphhopper.util.Parameters.Routing.*;
 
@@ -52,13 +53,11 @@ public class MapboxResource {
 
     private final GraphHopperAPI graphHopper;
     private final TranslationMap translationMap;
-    private final Boolean hasElevation;
 
     @Inject
-    public MapboxResource(GraphHopperAPI graphHopper, TranslationMap translationMap, @Named("hasElevation") Boolean hasElevation) {
+    public MapboxResource(GraphHopperAPI graphHopper, TranslationMap translationMap) {
         this.graphHopper = graphHopper;
         this.translationMap = translationMap;
-        this.hasElevation = hasElevation;
     }
 
     @GET
@@ -77,8 +76,7 @@ public class MapboxResource {
             @QueryParam("geometries") @DefaultValue("polyline") String geometries,
             @QueryParam("language") @DefaultValue("en") String localeStr,
             @QueryParam("heading") List<Double> favoredHeadings,
-            @PathParam("profile") String profile,
-            @PathParam("coordinatesArray") PathSegment pathSegment) {
+            @PathParam("profile") String profile) {
 
         /*
             Mapbox always uses fastest or priority weighting, except for walking, it's shortest
@@ -91,24 +89,24 @@ public class MapboxResource {
             Therefore, we enforce these values to make sure the client does not receive an unexpected answer.
          */
         if (!geometries.equals("polyline6"))
-            throwIllegalArgumentException("Currently, we only support polyline6");
+            throw new IllegalArgumentException("Currently, we only support polyline6");
         if (!enableInstructions)
-            throwIllegalArgumentException("Currently, you need to enable steps");
+            throw new IllegalArgumentException("Currently, you need to enable steps");
         if (!roundaboutExits)
-            throwIllegalArgumentException("Roundabout exits have to be enabled right now");
+            throw new IllegalArgumentException("Roundabout exits have to be enabled right now");
         if (!voiceUnits.equals("metric"))
-            throwIllegalArgumentException("Voice units only support metric right now");
+            throw new IllegalArgumentException("Voice units only support metric right now");
         if (!voiceInstructions)
-            throwIllegalArgumentException("You need to enable voice instructions right now");
+            throw new IllegalArgumentException("You need to enable voice instructions right now");
         if (!bannerInstructions)
-            throwIllegalArgumentException("You need to enable banner instructions right now");
+            throw new IllegalArgumentException("You need to enable banner instructions right now");
 
         double minPathPrecision = 1;
         if (overview.equals("full"))
             minPathPrecision = 0;
 
         String vehicleStr = convertProfileToGraphHopperVehicleString(profile);
-        List<GHPoint> requestPoints = getPointsFromRequest(pathSegment);
+        List<GHPoint> requestPoints = getPointsFromRequest(httpReq, profile);
 
         StopWatch sw = new StopWatch().start();
 
@@ -144,20 +142,23 @@ public class MapboxResource {
         }
     }
 
-    private void throwIllegalArgumentException(String exceptionMessage) {
-        logger.error(exceptionMessage);
-        throw new IllegalArgumentException(exceptionMessage);
-    }
+    /**
+     * This method is parsing the request URL String. Unfortunately it seems that there is no better options right now.
+     * See: https://stackoverflow.com/q/51420380/1548788
+     *
+     * The url looks like: ".../{profile}/1.522438,42.504606;1.527209,42.504776;1.526113,42.505144;1.527218,42.50529?.."
+     */
+    private List<GHPoint> getPointsFromRequest(HttpServletRequest httpServletRequest, String profile) {
 
-    private List<GHPoint> getPointsFromRequest(PathSegment pathSegment) {
+        String url = httpServletRequest.getRequestURI();
+        url = url.replaceFirst("/mapbox/directions/v5/mapbox/" + profile + "/", "");
+        url = url.replaceAll("\\?[*]", "");
 
-        // TODO: Could the map at some point break the order?
-        Set<String> pointParams = pathSegment.getMatrixParameters().keySet();
-        List<GHPoint> points = new ArrayList<>(pointParams.size() + 1);
+        String[] pointStrings = url.split(";");
 
-        points.add(GHPoint.fromStringLonLat(pathSegment.getPath()));
-        for (String pointParam : pointParams) {
-            points.add(GHPoint.fromStringLonLat(pointParam));
+        List<GHPoint> points = new ArrayList<>(pointStrings.length);
+        for (int i = 0; i < pointStrings.length; i++) {
+            points.add(GHPoint.fromStringLonLat(pointStrings[i]));
         }
 
         return points;
