@@ -81,23 +81,25 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
         req.addPoint(new GHPoint(52.516848, 13.424606));
         req.addOutArray("distances");
         MatrixResponse res = ghMatrix.route(req);
-        assertEquals(4833, res.getDistance(1, 2), 50);
+        assertEquals(4833, res.getDistance(1, 2), 30);
+        assertEquals(5162, res.getDistance(2, 1), 30);
 
         req = new GHMRequest();
         req.addPoint(new GHPoint(52.517004, 13.389416));
         req.addPoint(new GHPoint(52.485707, 13.435249));
         req.addPoint(new GHPoint(52.516848, 13.424606));
         req.addOutArray("distances");
-        req.setPointHints(Arrays.asList("", "singerstr", ""));
+        req.setPointHints(Arrays.asList("", "", "ifflandstr"));
         res = ghMatrix.route(req);
-        assertEquals(3900, res.getDistance(1, 2), 50);
+        assertEquals(4953, res.getDistance(1, 2), 30);
+        assertEquals(4927, res.getDistance(2, 1), 30);
 
         req = new GHMRequest();
         req.addPoint(new GHPoint(52.517004, 13.389416));
         req.addPoint(new GHPoint(52.485707, 13.435249));
         req.addPoint(new GHPoint(52.516848, 13.424606));
         // wrong count
-        req.setPointHints(Arrays.asList("", "singerstr"));
+        req.setPointHints(Arrays.asList("", "ifflandstr"));
         res = ghMatrix.route(req);
         assertTrue(res.hasErrors());
         assertEquals("Array length of point_hints must match length of points (or from/to equivalent)", res.getErrors().get(0).getMessage());

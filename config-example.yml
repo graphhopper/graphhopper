@@ -91,15 +91,6 @@ graphhopper:
   routing.non_ch.max_waypoint_distance: 1000000
 
 
-
-  ##### Web #####
-
-
-  # if you want to support jsonp response type you need to add it explicitly here. By default it is disabled for stronger security.
-  # web.jsonp_allowed: true
-
-
-
   ##### Storage #####
 
 

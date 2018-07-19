@@ -36,7 +36,6 @@ var GHRequest = function (host, api_key) {
 
     this.do_zoom = true;
     this.useMiles = false;
-    // use jsonp here if host allows CORS
     this.dataType = "json";
     this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "elevation": false,
         "key": api_key, "pt": {}};
@@ -258,8 +257,6 @@ GHRequest.prototype.doRequest = function (url, callback) {
             callback(json);
         },
         error: function (err) {
-            // problematic: this callback is not invoked when using JSONP!
-            // http://stackoverflow.com/questions/19035557/jsonp-request-error-handling
             var msg = "API did not respond! ";
             var json;
 
