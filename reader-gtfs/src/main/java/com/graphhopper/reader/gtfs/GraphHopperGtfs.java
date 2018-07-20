@@ -318,7 +318,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         return new TranslationMap().doImport();
     }
 
-    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, PtFlagEncoder ptFlagEncoder, GtfsStorage gtfsStorage, boolean createWalkNetwork, Collection<String> gtfsFiles, Collection<String> osmFiles) {
+    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, PtFlagEncoder ptFlagEncoder, GtfsStorage gtfsStorage, Collection<String> gtfsFiles, Collection<String> osmFiles) {
         GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, gtfsStorage);
         if (graphHopperStorage.loadExisting()) {
             return graphHopperStorage;
@@ -343,9 +343,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }
-            if (createWalkNetwork) {
-                FakeWalkNetworkBuilder.buildWalkNetwork(((GtfsStorage) graphHopperStorage.getExtension()).getGtfsFeeds().values(), graphHopperStorage, ptFlagEncoder, Helper.DIST_EARTH);
             }
             LocationIndex walkNetworkIndex;
             if (graphHopperStorage.getNodes() > 0) {
