@@ -85,7 +85,7 @@ class BaseGraph implements Graph {
     private GHBitSet removedNodes;
     private int edgeEntryIndex, nodeEntryIndex;
     private long maxGeoRef;
-    private boolean frozen = false;
+    private AtomicBoolean frozen = new AtomicBoolean(false);
 
     public BaseGraph(Directory dir, final EncodingManager encodingManager, boolean withElevation,
                      InternalGraphEventListener listener, GraphExtension extendedStorage) {
@@ -175,7 +175,7 @@ class BaseGraph implements Graph {
             bounds.maxEle = Helper.intToEle(nodes.getHeader(8 * 4));
         }
 
-        frozen = nodes.getHeader(9 * 4) == 1;
+        frozen.set(nodes.getHeader(9 * 4) == 1);
         return 10;
     }
 
@@ -337,16 +337,15 @@ class BaseGraph implements Graph {
         extStorage.setSegmentSize(bytes);
     }
 
-    synchronized void freeze() {
-        if (isFrozen())
+    void freeze() {
+        if (frozen.getAndSet(true))
             throw new IllegalStateException("base graph already frozen");
 
-        frozen = true;
         listener.freeze();
     }
 
-    synchronized boolean isFrozen() {
-        return frozen;
+    boolean isFrozen() {
+        return frozen.get();
     }
 
     public void checkFreeze() {
