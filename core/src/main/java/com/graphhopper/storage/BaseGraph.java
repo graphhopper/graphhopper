@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import static com.graphhopper.util.Helper.nf;
 
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The base graph handles nodes and edges file format. It can be used with different Directory
