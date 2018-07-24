@@ -1,7 +1,9 @@
 package com.graphhopper.api;
 
+import com.graphhopper.api.model.GHGeocodingEntry;
 import com.graphhopper.api.model.GHGeocodingRequest;
 import com.graphhopper.api.model.GHGeocodingResponse;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,6 +34,17 @@ public class GraphHopperGeocodingIT {
     }
 
     @Test
+    public void testExtent() {
+        GHGeocodingResponse response = geocoding.geocode(new GHGeocodingRequest("new york", "en", 7));
+        BBox extent = response.getHits().get(0).getExtendBBox();
+        assertTrue(extent.isValid());
+        assertTrue(extent.minLon < -79);
+        assertTrue(extent.maxLon > -72);
+        assertTrue(extent.minLat < 40.5);
+        assertTrue(extent.maxLat > 45);
+    }
+
+    @Test
     public void testForwardGeocodingNominatim() {
         GHGeocodingResponse response = geocoding.geocode(new GHGeocodingRequest(false, null, "Berlin", "en", 5, "nominatim", 5000));
         assertEquals(5, response.getHits().size());
@@ -42,7 +55,11 @@ public class GraphHopperGeocodingIT {
     public void testReverseGeocoding() {
         GHGeocodingResponse response = geocoding.geocode(new GHGeocodingRequest(52.5170365, 13.3888599, "en", 5));
         assertEquals(5, response.getHits().size());
-        assertTrue(response.getHits().get(0).getName().contains("Berlin"));
+        GHGeocodingEntry entry = response.getHits().get(0);
+        assertTrue(entry.getName().contains("Berlin"));
+        assertEquals("place", entry.getOsmKey());
+        assertEquals(0, entry.getExtent().length);
+
     }
 
     @Test

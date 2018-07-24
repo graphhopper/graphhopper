@@ -5,14 +5,14 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-reader-gtfs</artifactId>
-    <version>0.10-SNAPSHOT</version>
+    <version>0.11-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>GraphHopper Reader for Gtfs Data</name>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.10-SNAPSHOT</version>
+        <version>0.11-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -38,6 +38,10 @@
                 <exclusion>
                     <groupId>com.vividsolutions</groupId>
                     <artifactId>jts</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.amazonaws</groupId>
+                    <artifactId>aws-java-sdk-s3</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -72,6 +76,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
             <version>1.3</version>
@@ -101,22 +111,6 @@
                     <fork>true</fork>
                     <source>1.8</source>
                     <target>1.8</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>                
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.graphhopper.import.osm.Import</mainClass>
-                        </manifest>
-                    </archive>
-                        	                    
-                    <!-- for standalone usage -->
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
                 </configuration>
             </plugin>
             <plugin>                

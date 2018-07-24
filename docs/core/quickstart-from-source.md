@@ -5,14 +5,15 @@
 ## Try out
 
 For a start which requires only the JRE have a look [here](../web/quickstart.md). 
-Windows user can find a quick guide [here](./windows-setup.md). 
+Windows user can find a quick guide [here](./windows-setup.md).
+People with IDE knowledge can directly jump to [Start Development](#start-development)
 
 Now, before you proceed install git and jdk8, then do:
 
 ```bash
 $ git clone git://github.com/graphhopper/graphhopper.git
 $ cd graphhopper; git checkout master
-$ ./graphhopper.sh web europe_germany_berlin.pbf
+$ ./graphhopper.sh -a web -i europe_germany_berlin.pbf
 now go to http://localhost:8989/
 ```
 
@@ -24,14 +25,38 @@ now go to http://localhost:8989/
 For you favourite area do
 
 ```bash
-$ ./graphhopper.sh web europe_france.pbf
-$ ./graphhopper.sh web north-america_us_new-york.pbf
+$ ./graphhopper.sh -a web -i europe_france.pbf -o france-gh
+$ ./graphhopper.sh -a web -i north-america_us_new-york.pbf -o new-york-gh
 # the format follows the link structure at http://download.geofabrik.de
 ```
+
+For larger maps you might need to allow the JVM to access more memory. For example for 2GB you can do this using:
+```bash
+$ export JAVA_OPTS="-Xmx2g -Xms2g"
+```
+before running `graphhopper.sh`.
 
 ## Start Development
 
 Open the project in your IDE, first class IDEs are NetBeans and IntelliJ where no further setup is required.
+
+### Running / Debbuging with IntelliJ
+
+![intelliJ run config](./images/intellij-run-config.png)
+
+Go to `Run->Edit Configurations...` and set the following to run GraphHopper from within IntelliJ:
+```
+Main class: com.graphhopper.http.GraphHopperApplication
+VM options: -Xms1000m -Xmx1000m -server -Dgraphhopper.datareader.file=[your-area].osm.pbf -Dgraphhopper.graph.location=./[your-area].osm-gh
+Program arguments: server config.yml
+```
+
+Note:  you might need to modify Xms and Xmx values, for larger areas you might want to use higher values.
+
+
+### Contribute
+
+See this [guide](https://github.com/graphhopper/graphhopper/blob/master/.github/CONTRIBUTING.md) on how to contribute.
 
 ### Java, Embedded Usage
 
@@ -59,18 +84,26 @@ as those versions are not in maven central:
 
 ### JavaScript
 
-When you started GraphHopper via `./graphhopper.sh web <your_osm.pbf>` a web server is already
-started and waiting for your commands. You can see this for the whole world at [GraphHopper Maps](https://graphhopper.com/maps/).
+When developing the UI for GraphHopper you need to enable serving files
+directly from local disc via your config.yml:
 
-If you want to change the JavaScript you have to setup the JavaScript environment - 
-i.e. install the node package manager (npm):
+```yml
+assets:
+  overrides:
+    /maps: web/src/main/resources/assets/
+```
+
+The run the graphhopper.sh script with the web action and open the browser at
+`localhost:8989`. You should see something like [GraphHopper Maps](https://graphhopper.com/maps/).
+
+To setup the JavaScript environment install the node package manager (npm):
 
 For linux do
 ```bash
-curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.29.0/install.sh | bash
+curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.9/install.sh | bash
 # close and reopen terminal now
-nvm install 4.2.2
-nvm use 4.2.2
+nvm install --lts
+nvm use --lts
 ```
 
 For windows download either [nvm](https://github.com/coreybutler/nvm-windows) or [node](https://nodejs.org/en/download/) directly.
@@ -86,11 +119,13 @@ npm test
 npm run bundle
 ```
 
-Finally start GraphHopper e.g. via the `./graphhopper.sh` script and open the browser at `localhost:8989`.
+There are more npm commands e.g. to change the main.js on the fly or create an uglified main.js for
+production.
 
-There are more npm commands e.g. to change the main.js on the fly or create an uglified main.js for production:
 ```bash
-# For development just use watchify:
+cd web
+
+# For development just use watchify and all changes will be available on refresh:
 npm run watch
 
 # bundle creates the main file
@@ -99,7 +134,7 @@ npm run bundle
 # create main.js for debugging
 npm run bundleDebug
 
-# create main.js for production and specify as CLI parameter `export NODE_ENV=development` which `options_*.js` should be selected
+# create main.js for production and specify as CLI parameter `export NODE_ENV=development` which `options_*.js` file should be selected
 npm run bundleProduction
 
 # Forcing consistent code style with jshint:
@@ -128,7 +163,3 @@ For smallish graph (e.g. size of Berlin) use a RAMDataAccess driven GraphStorage
 For larger ones use the ContractionHierarchies preparation class and MMapDataAccess to avoid OutOfMemoryErrors if you have only few RAM. 
 
 Raspberry Pi usage is also possible. Have a look into this [blog post](https://karussell.wordpress.com/2014/01/09/road-routing-on-raspberry-pi-with-graphhopper/).
-
-## Contribute
-
-See this [contributing guide](https://github.com/graphhopper/graphhopper/blob/master/.github/CONTRIBUTING.md) on how to contribute.

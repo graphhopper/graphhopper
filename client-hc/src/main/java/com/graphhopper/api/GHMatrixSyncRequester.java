@@ -36,18 +36,39 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
         ignoreSet.add("vehicle");
         ignoreSet.add("point");
         ignoreSet.add("from_point");
+        ignoreSet.add("from_point_hint");
         ignoreSet.add("to_point");
+        ignoreSet.add("to_point_hint");
         ignoreSet.add("add_array");
     }
 
     @Override
     public MatrixResponse route(GHMRequest ghRequest) {
+        StringBuilder pointHintsStr = new StringBuilder();
+
         String pointsStr;
         if (ghRequest.identicalLists) {
             pointsStr = createPointQuery(ghRequest.getFromPoints(), "point");
+
+            for (String hint : ghRequest.getFromPointHints()) {
+                if (pointHintsStr.length() > 0)
+                    pointHintsStr.append("&");
+                pointHintsStr.append("point_hint=").append(encode(hint));
+            }
         } else {
             pointsStr = createPointQuery(ghRequest.getFromPoints(), "from_point");
             pointsStr += "&" + createPointQuery(ghRequest.getToPoints(), "to_point");
+
+            for (String hint : ghRequest.getFromPointHints()) {
+                if (pointHintsStr.length() > 0)
+                    pointHintsStr.append("&");
+                pointHintsStr.append("from_point_hint=").append(encode(hint));
+            }
+            for (String hint : ghRequest.getToPointHints()) {
+                if (pointHintsStr.length() > 0)
+                    pointHintsStr.append("&");
+                pointHintsStr.append("to_point_hint=").append(encode(hint));
+            }
         }
 
         String outArrayStr = "";
@@ -65,7 +86,7 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
         }
 
         String url = buildURL("", ghRequest);
-        url += "&" + pointsStr + "&" + outArrayStr + "&vehicle=" + ghRequest.getVehicle();
+        url += "&" + pointsStr + "&" + pointHintsStr + "&" + outArrayStr + "&vehicle=" + ghRequest.getVehicle();
 
         boolean withTimes = outArraysList.contains("times");
         boolean withDistances = outArraysList.contains("distances");
@@ -94,14 +115,13 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
     }
 
     private String createPointQuery(List<GHPoint> list, String pointName) {
-        String pointsStr = "";
+        StringBuilder pointsStr = new StringBuilder();
         for (GHPoint p : list) {
-            if (!pointsStr.isEmpty()) {
-                pointsStr += "&";
-            }
+            if (pointsStr.length() > 0)
+                pointsStr.append("&");
 
-            pointsStr += pointName + "=" + encode(Helper.round6(p.lat) + "," + Helper.round6(p.lon));
+            pointsStr.append(pointName).append('=').append(encode(Helper.round6(p.lat) + "," + Helper.round6(p.lon)));
         }
-        return pointsStr;
+        return pointsStr.toString();
     }
 }

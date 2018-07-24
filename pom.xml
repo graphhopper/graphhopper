@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>0.10-SNAPSHOT</version>
+    <version>0.11-SNAPSHOT</version>
     <packaging>pom</packaging>
     <url>https://www.graphhopper.com</url>
     <inceptionYear>2012</inceptionYear>
@@ -18,7 +18,7 @@
         <slf4j.version>1.7.25</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
         <commons-compress.version>1.12</commons-compress.version>
-        <jackson.version>2.8.4</jackson.version>
+        <jackson.version>2.9.1</jackson.version>
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>4</org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>
@@ -71,15 +71,15 @@
         <url>https://github.com/graphhopper/graphhopper/issues</url>
     </issueManagement>
 
-    <prerequisites>
-        <maven>3.2</maven>
-    </prerequisites>
     <modules>
         <module>core</module>
         <module>reader-osm</module>
+        <module>isochrone</module>
         <module>reader-gtfs</module>
-        <module>reader-json</module>
         <module>tools</module>
+        <module>web-bundle</module>
+        <module>api</module>
+        <module>web-api</module>
         <module>web</module>
         <module>client-hc</module>
     </modules>
@@ -130,7 +130,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.1.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -143,7 +143,7 @@
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>2.17</version>
                 <configuration>
-                    <configLocation>checkstyle.xml</configLocation>
+                    <configLocation>${user.dir}/core/files/checkstyle.xml</configLocation>
                     <failsOnError>true</failsOnError>
                     <consoleOutput>true</consoleOutput>
                     <linkXRef>false</linkXRef>
@@ -157,7 +157,7 @@
                 <configuration>
                     <maxRank>4</maxRank>
                     <failOnError>true</failOnError>
-                    <excludeFilterFile>findbugs-exclude.xml</excludeFilterFile>
+                    <excludeFilterFile>core/files/findbugs-exclude.xml</excludeFilterFile>
                 </configuration>
             </plugin>
             <plugin>
@@ -173,7 +173,7 @@
             <plugin>
                 <groupId>de.thetaphi</groupId>
                 <artifactId>forbiddenapis</artifactId>
-                <version>2.4.1</version>
+                <version>2.5</version>
                 <configuration>
                     <!--
                       if the used Java version is too new,
@@ -191,10 +191,6 @@
                         <bundledSignature>jdk-non-portable</bundledSignature>
                     </bundledSignatures>
                     <excludes>
-                        <!-- Excluded because of "Helper7#getBeanMemInfo" -->
-                        <exclude>
-                            com/graphhopper/util/Helper7.class
-                        </exclude>
                         <exclude>
                             com/graphhopper/storage/UnsafeDataAccess.class
                         </exclude>
@@ -207,15 +203,6 @@
             </plugin>
         </plugins>
     </build>
-
-    <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
 
     <distributionManagement>
         <snapshotRepository>
@@ -269,6 +256,9 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>2.10.4</version>
+                        <configuration>
+                          <quiet>true</quiet>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -294,7 +284,6 @@
                 </plugins>
             </build>
         </profile>
-
         <profile>
             <id>include-android</id>
             <activation>
@@ -304,38 +293,18 @@
                 <module>android/app</module>
             </modules>
         </profile>
-
-        <profile>
-            <id>jdk8</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties />
-            <modules>
-                <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518
-                Currently works for jdk8 only -->
-                <module>reader-shp</module>
-            </modules>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                    </plugin>
-                    <plugin>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>jdk9</id>
+	<profile>
+            <id>jdk10</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
-                <jdk>9</jdk>
+                <jdk>10</jdk>
             </activation>
-            <!-- 1. reader-shp does not work yet with jdk9. 2. See #852 and #701 for possible compiler options -->
+            <properties>
+              <maven.compiler.source>10</maven.compiler.source>
+              <maven.compiler.target>10</maven.compiler.target>
+            </properties>
         </profile>
+
     </profiles>
 
 </project>

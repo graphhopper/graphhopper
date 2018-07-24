@@ -6,36 +6,38 @@
   "license": "Apache-2.0",
   "main": "main.js",
   "scripts": {
-    "watch": "watchify src/main/webapp/js/main-template.js -o src/main/webapp/js/main.js --debug --verbose",
-    "bundle": "browserify src/main/webapp/js/main-template.js -o src/main/webapp/js/main.js",
-    "bundleDebug": "browserify src/main/webapp/js/main-template.js --debug -o src/main/webapp/js/main.js",
-    "bundleProduction": "browserify -g uglifyify src/main/webapp/js/main-template.js -o src/main/webapp/js/main.js",
-    "test": "JASMINE_CONFIG_PATH=src/test/webapp/spec/jasmine.json jasmine",
-    "lint": "jshint src/main/webapp/js/"
+    "watch": "watchify src/main/resources/assets/js/main-template.js -o src/main/resources/assets/js/main.js --debug --verbose",
+    "bundle": "browserify src/main/resources/assets/js/main-template.js -o src/main/resources/assets/js/main.js",
+    "bundleDebug": "browserify src/main/resources/assets/js/main-template.js --debug -o src/main/resources/assets/js/main.js",
+    "bundleProduction": "browserify -g uglifyify src/main/resources/assets/js/main-template.js -o src/main/resources/assets/js/main.js",
+    "test": "JASMINE_CONFIG_PATH=src/test/resources/assets/spec/jasmine.json jasmine",
+    "lint": "jshint src/main/resources/assets/js/"
   },
   "browserify": {
-    "transform": [ "browserify-swap" ]
+    "transform": [
+      "browserify-swap"
+    ]
   },
   "browserify-swap": {
     "production": {
-      "config/options.js$": "./src/main/webapp/js/config/options_prod.js"
+      "config/options.js$": "./src/main/resources/assets/js/config/options_prod.js"
     }
   },
   "dependencies": {
-    "browserify": "14.0.0",
+    "browserify": "16.2.0",
     "browserify-swap": "0.2.2",
     "d3": "3.5.17",
-    "jquery": "3.1.1",
-    "leaflet": "1.0.3",
-    "leaflet-contextmenu": "1.2.1",
+    "jquery": "3.3.1",
+    "leaflet": "1.3.1",
+    "leaflet-contextmenu": "1.4.0",
     "leaflet-loading": "0.1.24",
-    "moment": "2.17.1",
-    "uglifyify": "3.0.4",
-    "flatpickr": "2.3.5"
+    "moment": "2.22.1",
+    "uglifyify": "5.0.0",
+    "flatpickr": "4.4.6"
   },
   "devDependencies": {
-    "jasmine": "2.5.3",
-    "jshint": "2.9.4",
-    "watchify": "3.9.0"
+    "jasmine": "3.1.0",
+    "jshint": "2.9.5",
+    "watchify": "3.11.0"
   }
 }

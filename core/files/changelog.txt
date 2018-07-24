@@ -1,3 +1,7 @@
+0.11
+    web resources for dropwizard web framework (no servlets anymore)
+    prefix -Dgraphhopper. for command line arguments necessary, see docs/web/quickstart.md or docs/core/quickstart-from-source.md#running--debbuging-with-intellij for details
+    delegated reading properties to dropwizard, i.e. the new format yml is not read again in GraphHopper.init
 0.9
     remove war bundling support #297
     rename of DefaultModule to GraphHopperModule and GHServletModule to GraphHopperServletModule

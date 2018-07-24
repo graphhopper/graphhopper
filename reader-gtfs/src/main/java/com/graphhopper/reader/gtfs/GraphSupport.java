@@ -88,8 +88,8 @@ class GraphSupport {
                 final AllEdgesIterator edge = baseGraph.getAllEdges();
                 return new AllEdgesIterator() {
                     @Override
-                    public int getMaxId() {
-                        return edge.getMaxId();
+                    public int length() {
+                        return edge.length();
                     }
 
                     @Override

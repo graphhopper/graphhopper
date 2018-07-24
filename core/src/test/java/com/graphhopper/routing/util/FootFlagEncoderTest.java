@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,7 @@ public class FootFlagEncoderTest {
         g.edge(0, 1).setDistance(10).setFlags(footEncoder.setProperties(10, true, true));
         g.edge(0, 2).setDistance(10).setFlags(footEncoder.setProperties(5, true, true));
         g.edge(1, 3).setDistance(10).setFlags(footEncoder.setProperties(10, true, true));
-        EdgeExplorer out = g.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
+        EdgeExplorer out = g.createEdgeExplorer(DefaultEdgeFilter.outEdges(footEncoder));
         assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(out.setBaseNode(2)));

@@ -5,6 +5,7 @@ TODO.txt
 *.osm
 nbactions*.xml
 config.properties
+config.yml
 build.xml
 queries.sh
 maven/
@@ -18,6 +19,8 @@ android/libs/graphhopper-*-android.jar
 *iml
 debug.sh
 /web/src/main/webapp/js/config/options_prod.js
+/web/src/main/resources/assets/js/config/options_prod.js
+/web/dependency-reduced-pom.xml
 *.pbf
 !/reader-osm/src/test/resources/com/graphhopper/reader/osm/*.pbf
 *.dem
@@ -42,5 +45,5 @@ local.properties
 /core/nbproject/
 /reader-overlay-data/nbproject/
 !malta-latest.osm.pbf
-/reader-json/nbproject/
 /graph-cache
+package-lock.json

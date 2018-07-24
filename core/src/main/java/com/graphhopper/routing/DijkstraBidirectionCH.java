@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,33 +38,13 @@ public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
     }
 
     @Override
-    public boolean fillEdgesFrom() {
-        if (pqOpenSetFrom.isEmpty()) {
-            return false;
-        }
-        currFrom = pqOpenSetFrom.poll();
-        visitedCountFrom++;
-        if (entryIsStallable(currFrom, bestWeightMapFrom, inEdgeExplorer, false)) {
-            return true;
-        }
-        bestWeightMapOther = bestWeightMapTo;
-        fillEdges(currFrom, pqOpenSetFrom, bestWeightMapFrom, outEdgeExplorer, false);
-        return true;
+    protected boolean fromEntryCanBeSkipped() {
+        return entryIsStallable(currFrom, bestWeightMapFrom, inEdgeExplorer, false);
     }
 
     @Override
-    public boolean fillEdgesTo() {
-        if (pqOpenSetTo.isEmpty()) {
-            return false;
-        }
-        currTo = pqOpenSetTo.poll();
-        visitedCountTo++;
-        if (entryIsStallable(currTo, bestWeightMapTo, outEdgeExplorer, true)) {
-            return true;
-        }
-        bestWeightMapOther = bestWeightMapFrom;
-        fillEdges(currTo, pqOpenSetTo, bestWeightMapTo, inEdgeExplorer, true);
-        return true;
+    protected boolean toEntryCanBeSkipped() {
+        return entryIsStallable(currTo, bestWeightMapTo, outEdgeExplorer, true);
     }
 
     @Override

@@ -5,25 +5,20 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-tools</artifactId>
-    <version>0.10-SNAPSHOT</version>
+    <version>0.11-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>GraphHopper Tools</name>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.10-SNAPSHOT</version>
+        <version>0.11-SNAPSHOT</version>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-reader-osm</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-reader-json</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
@@ -49,34 +44,12 @@
             <version>${log4j.version}</version>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>                
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.graphhopper.tools.Import</mainClass>
-                        </manifest>
-                    </archive>
-                        	                    
-                    <!-- for standalone usage -->
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>

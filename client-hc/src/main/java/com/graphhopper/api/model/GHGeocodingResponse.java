@@ -32,7 +32,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GHGeocodingResponse {
 
-    private List<String> copyrights = new ArrayList<String>(5);
+    private List<String> copyrights = new ArrayList<>(5);
     private List<GHGeocodingEntry> hits;
     private String locale = "en";
 

@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,8 +49,8 @@ public abstract class AbstractGraphStorageTester {
     protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
     protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
     protected GraphHopperStorage graph;
-    EdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
-    EdgeFilter carInFilter = new DefaultEdgeFilter(carEncoder, true, false);
+    EdgeFilter carOutFilter = DefaultEdgeFilter.outEdges(carEncoder);
+    EdgeFilter carInFilter = DefaultEdgeFilter.inEdges(carEncoder);
     EdgeExplorer carOutExplorer;
     EdgeExplorer carInExplorer;
     EdgeExplorer carAllExplorer;
@@ -881,7 +881,7 @@ public abstract class AbstractGraphStorageTester {
         graph.edge(0, 1).setDistance(10).setFlags(footEncoder.setProperties(10, true, true));
         graph.edge(0, 2).setDistance(10).setFlags(carEncoder.setProperties(10, true, true));
         graph.edge(0, 3).setDistance(10).setFlags(footEncoder.setProperties(10, true, true) | carEncoder.setProperties(10, true, true));
-        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
+        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(footEncoder));
         assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(footOutExplorer.setBaseNode(0)));
         assertEquals(GHUtility.asSet(3, 2), GHUtility.getNeighbors(carOutExplorer.setBaseNode(0)));
     }
@@ -927,14 +927,14 @@ public abstract class AbstractGraphStorageTester {
         graph.edge(2, 3, 1, true);
         AllEdgesIterator iter = graph.getAllEdges();
         assertEquals(4, GHUtility.count(iter));
-        assertEquals(4, iter.getMaxId());
+        assertEquals(4, iter.length());
 
         // delete
         graph.markNodeRemoved(1);
         graph.optimize();
         iter = graph.getAllEdges();
         assertEquals(2, GHUtility.count(iter));
-        assertEquals(4, iter.getMaxId());
+        assertEquals(4, iter.length());
 
         iter = graph.getAllEdges();
         assertTrue(iter.next());
@@ -965,7 +965,7 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void test8BytesFlags() {
         Directory dir = new RAMDirectory();
-        List<FlagEncoder> list = new ArrayList<FlagEncoder>();
+        List<FlagEncoder> list = new ArrayList<>();
         list.add(new TmpCarFlagEncoder(29, 0.001, 0) {
             @Override
             public String toString() {

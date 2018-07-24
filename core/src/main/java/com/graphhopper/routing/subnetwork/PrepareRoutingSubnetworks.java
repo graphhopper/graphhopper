@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,12 +21,10 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,7 +102,7 @@ public class PrepareRoutingSubnetworks {
         final FlagEncoder encoder = filter.getEncoder();
         final EdgeExplorer explorer = ghStorage.createEdgeExplorer(filter);
         int locs = ghStorage.getNodes();
-        List<IntArrayList> list = new ArrayList<IntArrayList>(100);
+        List<IntArrayList> list = new ArrayList<>(100);
         final GHBitSet bs = new GHBitSetImpl(locs);
         for (int start = 0; start < locs; start++) {
             if (bs.contains(start))
@@ -178,8 +176,8 @@ public class PrepareRoutingSubnetworks {
             allRemoved += removedEdges;
         }
 
-        if (allRemoved > ghStorage.getAllEdges().getMaxId() / 2)
-            throw new IllegalStateException("Too many total edges were removed: " + allRemoved + ", all edges:" + ghStorage.getAllEdges().getMaxId());
+        if (allRemoved > ghStorage.getAllEdges().length() / 2)
+            throw new IllegalStateException("Too many total edges were removed: " + allRemoved + ", all edges:" + ghStorage.getAllEdges().length());
         return allRemoved;
     }
 
@@ -207,7 +205,7 @@ public class PrepareRoutingSubnetworks {
      */
     int removeDeadEndUnvisitedNetworks(final PrepEdgeFilter bothFilter) {
         StopWatch sw = new StopWatch(bothFilter.getEncoder() + " findComponents").start();
-        final EdgeFilter outFilter = new DefaultEdgeFilter(bothFilter.getEncoder(), false, true);
+        final EdgeFilter outFilter = DefaultEdgeFilter.outEdges(bothFilter.getEncoder());
 
         // partition graph into strongly connected components using Tarjan's algorithm        
         TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, outFilter, true);
@@ -290,7 +288,7 @@ public class PrepareRoutingSubnetworks {
         FlagEncoder encoder;
 
         public PrepEdgeFilter(FlagEncoder encoder) {
-            super(encoder);
+            super(encoder, true, true);
             this.encoder = encoder;
         }
 

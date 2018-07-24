@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ package com.graphhopper.util;
  */
 public class StopWatch {
     private long lastTime;
-    private long nanoTime;
+    private long elapsedNanos;
     private String name = "";
 
     public StopWatch(String name) {
@@ -49,20 +49,32 @@ public class StopWatch {
         if (lastTime < 0)
             return this;
 
-        nanoTime += System.nanoTime() - lastTime;
+        elapsedNanos += System.nanoTime() - lastTime;
         lastTime = -1;
         return this;
     }
 
+    public float getSeconds() {
+        return elapsedNanos / 1e9f;
+    }
+
     /**
-     * @return the time delta in milliseconds
+     * returns the total elapsed time on this stopwatch without the need of stopping it
      */
-    public long getTime() {
-        return nanoTime / 1000000;
+    public float getCurrentSeconds() {
+        if (notStarted()) {
+            return 0;
+        }
+        long lastNanos = lastTime < 0 ? 0 : System.nanoTime() - lastTime;
+        return (elapsedNanos + lastNanos) / 1e9f;
+    }
+
+    public long getMillis() {
+        return elapsedNanos / 1_000_000;
     }
 
     public long getNanos() {
-        return nanoTime;
+        return elapsedNanos;
     }
 
     @Override
@@ -75,7 +87,7 @@ public class StopWatch {
         return str + "time:" + getSeconds();
     }
 
-    public float getSeconds() {
-        return nanoTime / 1e9f;
+    private boolean notStarted() {
+        return lastTime == 0 && elapsedNanos == 0;
     }
 }

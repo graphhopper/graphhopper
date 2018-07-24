@@ -55,22 +55,30 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
     @Override
     public MatrixResponse route(GHMRequest ghRequest) {
         ObjectNode requestJson = factory.objectNode();
-        ArrayNode fromPointList = createPointList(ghRequest.getFromPoints());
-        ArrayNode toPointList = createPointList(ghRequest.getToPoints());
 
         List<String> outArraysList = new ArrayList<>(ghRequest.getOutArrays());
         if (outArraysList.isEmpty()) {
             outArraysList.add("weights");
         }
 
-        ArrayNode outArrayListJson = factory.arrayNode(outArraysList.size());
+        ArrayNode outArrayListJson = factory.arrayNode();
         for (String str : outArraysList) {
             outArrayListJson.add(str);
         }
 
         boolean hasElevation = false;
-        requestJson.putArray("from_points").addAll(fromPointList);
-        requestJson.putArray("to_points").addAll(toPointList);
+        if (ghRequest.identicalLists) {
+            requestJson.putArray("points").addAll(createPointList(ghRequest.getFromPoints()));
+            requestJson.putArray("point_hints").addAll(createStringList(ghRequest.getFromPointHints()));
+        } else {
+            ArrayNode fromPointList = createPointList(ghRequest.getFromPoints());
+            ArrayNode toPointList = createPointList(ghRequest.getToPoints());
+            requestJson.putArray("from_points").addAll(fromPointList);
+            requestJson.putArray("from_point_hints").addAll(createStringList(ghRequest.getFromPointHints()));
+            requestJson.putArray("to_points").addAll(toPointList);
+            requestJson.putArray("to_point_hints").addAll(createStringList(ghRequest.getToPointHints()));
+        }
+
         requestJson.putArray("out_arrays").addAll(outArrayListJson);
         requestJson.put("vehicle", ghRequest.getVehicle());
         requestJson.put("elevation", hasElevation);
@@ -102,7 +110,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
 
             JsonNode responseJson = toJSON(postUrl, postResponseStr);
             if (responseJson.has("message")) {
-                matrixResponse.addError(new RuntimeException(responseJson.get("message").asText()));
+                matrixResponse.addErrors(readErrors(responseJson));
                 return matrixResponse;
             }
             if (!responseJson.has("job_id")) {
@@ -167,10 +175,18 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         return matrixResponse;
     }
 
+    private final ArrayNode createStringList(List<String> list) {
+        ArrayNode outList = factory.arrayNode();
+        for (String str : list) {
+            outList.add(str);
+        }
+        return outList;
+    }
+
     protected final ArrayNode createPointList(List<GHPoint> list) {
-        ArrayNode outList = factory.arrayNode(list.size()); // new ArrayList<>(list.size())
+        ArrayNode outList = factory.arrayNode();
         for (GHPoint p : list) {
-            ArrayNode entry = factory.arrayNode(2);
+            ArrayNode entry = factory.arrayNode();
             entry.add(p.lon);
             entry.add(p.lat);
             outList.add(entry);

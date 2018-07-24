@@ -49,11 +49,11 @@ public class Fares {
         // Take the cheapest.
         TicketPurchaseScoreCalculator ticketPurchaseScoreCalculator = new TicketPurchaseScoreCalculator();
         return allShoppingCarts(fares, trip)
-                .max(Comparator.comparingInt(ticketPurchaseScoreCalculator::calculateScore))
+                .max(Comparator.comparingDouble(ticketPurchaseScoreCalculator::calculateScore))
                 .map(TicketPurchase::getTickets);
     }
 
-    private static Stream<TicketPurchase> allShoppingCarts(Map<String, Fare> fares, Trip trip) {
+    static Stream<TicketPurchase> allShoppingCarts(Map<String, Fare> fares, Trip trip) {
         // Recursively enumerate all packages of tickets with which the trip can be done.
         List<Trip.Segment> segments = trip.segments;
         List<List<FareAssignment>> result = allFareAssignments(fares, segments);
@@ -92,7 +92,7 @@ public class Fares {
         return fare.fare_rules.isEmpty() || sanitizeFareRules(fare.fare_rules).stream().anyMatch(rule -> rule.appliesTo(segment));
     }
 
-    private static List<SanitizedFareRule> sanitizeFareRules(List<FareRule> gtfsFareRules) {
+    static List<SanitizedFareRule> sanitizeFareRules(List<FareRule> gtfsFareRules) {
         // Make proper fare rule objects from the CSV-like FareRule
         ArrayList<SanitizedFareRule> result = new ArrayList<>();
         result.addAll(gtfsFareRules.stream().filter(rule -> rule.route_id != null).map(rule -> new RouteRule(rule.route_id)).collect(toList()));

@@ -23,55 +23,27 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>directions-api-client-hc</artifactId>
-    <version>0.10-SNAPSHOT</version>
+    <version>0.11-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>GraphHopper Directions API hand-crafted Java Client.</name>
      
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>0.10-SNAPSHOT</version>
+        <version>0.11-SNAPSHOT</version>
     </parent>  
-    
-    <properties>
-        <slf4j.version>1.7.21</slf4j.version>        
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    </properties>
     
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-core</artifactId>
+            <artifactId>graphhopper-web-api</artifactId>
             <version>${project.parent.version}</version>
-            <exclusions>
-                <!-- We cannot yet exclude this as e.g. Helper class uses trove classes
-                     and Helper is used e.g. in PointList
-                <exclusion>
-                    <groupId>net.sf.trove4j</groupId>
-                    <artifactId>trove4j</artifactId>
-                </exclusion>
-                -->
-                <exclusion>
-                    <groupId>org.apache.xmlgraphics</groupId>
-                    <artifactId>xmlgraphics-commons</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <!-- TODO how to sync with GH? -->
-            <version>2.8.4</version>
-        </dependency>
-
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <version>3.8.0</version>
         </dependency>
-        
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
