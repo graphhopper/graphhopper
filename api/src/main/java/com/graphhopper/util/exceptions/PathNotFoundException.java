@@ -37,7 +37,6 @@ public class PathNotFoundException extends DetailedIllegalArgumentException {
         public ConnectionNotFoundException(String var1, Map<String, Object> details) {
             super(var1, details);
         }
-
     }
 
     /**
