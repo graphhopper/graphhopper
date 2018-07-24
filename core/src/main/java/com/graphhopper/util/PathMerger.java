@@ -21,7 +21,7 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.Path;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import com.graphhopper.util.exceptions.ConnectionNotFoundException;
+import com.graphhopper.util.exceptions.PathNotFoundException.ConnectionNotFoundException;
 
 import java.util.ArrayList;
 import java.util.Collections;

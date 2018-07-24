@@ -29,12 +29,24 @@ public class PathNotFoundException extends DetailedIllegalArgumentException {
         super(var1, details);
     }
 
-    public static final class ConnectionNotFoundException extends PathNotFoundException {
+    /**
+     * If a path cannot be found due to disconnected graphs.
+     */
+    public static class ConnectionNotFoundException extends PathNotFoundException {
         public ConnectionNotFoundException(String var1, Map<String, Object> details) {
             super(var1, details);
         }
+
+        public static final class DifferentSubnetworksException extends ConnectionNotFoundException {
+            public DifferentSubnetworksException(String var1, Map<String, Object> details) {
+                super(var1, details);
+            }
+        }
     }
 
+    /**
+     * If a paht cannot be found because the maximum nodes have been exceeded
+     */
     public static final class MaximumNodesExceededException extends PathNotFoundException {
         public MaximumNodesExceededException(String var1, Map<String, Object> details) {
             super(var1, details);

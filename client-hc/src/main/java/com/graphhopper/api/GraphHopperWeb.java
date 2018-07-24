@@ -274,16 +274,16 @@ public class GraphHopperWeb implements GraphHopperAPI {
                 errors.add(new DetailedRuntimeException(exMessage, toMap(error)));
             else if (exClass.equals(IllegalArgumentException.class.getName()))
                 errors.add(new DetailedIllegalArgumentException(exMessage, toMap(error)));
-            else if (exClass.equals(ConnectionNotFoundException.class.getName())) {
-                errors.add(new ConnectionNotFoundException(exMessage, toMap(error)));
+            else if (exClass.equals(PathNotFoundException.ConnectionNotFoundException.class.getName())) {
+                errors.add(new PathNotFoundException.ConnectionNotFoundException(exMessage, toMap(error)));
             } else if (exClass.equals(PointNotFoundException.class.getName())) {
                 int pointIndex = error.get("point_index").asInt();
                 errors.add(new PointNotFoundException(exMessage, pointIndex));
             } else if (exClass.equals(PointOutOfBoundsException.class.getName())) {
                 int pointIndex = error.get("point_index").asInt();
                 errors.add(new PointOutOfBoundsException(exMessage, pointIndex));
-            } else if (exClass.equals(MaximumNodesExceededException.class.getName())) {
-                errors.add(new MaximumNodesExceededException(exMessage, toMap(error)));
+            } else if (exClass.equals(PathNotFoundException.MaximumNodesExceededException.class.getName())) {
+                errors.add(new PathNotFoundException.MaximumNodesExceededException(exMessage, toMap(error)));
             } else if (exClass.equals(PathNotFoundException.class.getName())) {
                 errors.add(new PathNotFoundException(exMessage, toMap(error)));
             } else if (exClass.isEmpty())

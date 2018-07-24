@@ -26,7 +26,7 @@ import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.GHException;
-import com.graphhopper.util.exceptions.MaximumNodesExceededException;
+import com.graphhopper.util.exceptions.PathNotFoundException.MaximumNodesExceededException;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.*;

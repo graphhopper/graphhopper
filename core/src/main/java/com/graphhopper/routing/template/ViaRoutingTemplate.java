@@ -26,15 +26,13 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.exceptions.DetailedRuntimeException;
-import com.graphhopper.util.exceptions.MaximumNodesExceededException;
+import com.graphhopper.util.exceptions.PathNotFoundException.MaximumNodesExceededException;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Implementation of calculating a route with multiple via points.
