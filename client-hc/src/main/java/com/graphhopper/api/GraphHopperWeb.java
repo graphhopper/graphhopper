@@ -288,6 +288,9 @@ public class GraphHopperWeb implements GraphHopperAPI {
             else if (exClass.equals(PointNotFoundException.class.getName())) {
                 int pointIndex = error.get("point_index").asInt();
                 errors.add(new PointNotFoundException(exMessage, pointIndex));
+            } else if (exClass.equals(PointOutOfBoundsException.class.getName())) {
+                int pointIndex = error.get("point_index").asInt();
+                errors.add(new PointOutOfBoundsException(exMessage, pointIndex));
             } else if (exClass.isEmpty())
                 errors.add(new DetailedRuntimeException(exMessage, toMap(error)));
             else
