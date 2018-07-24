@@ -30,7 +30,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.*;
 import com.graphhopper.util.exceptions.PathNotFoundException.ConnectionNotFoundException;
-import com.graphhopper.util.exceptions.PathNotFoundException.ConnectionNotFoundException.DifferentSubnetworksException;
+import com.graphhopper.util.exceptions.PathNotFoundException.DifferentSubnetworksException;
 import com.graphhopper.util.exceptions.PathNotFoundException.MaximumNodesExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;

@@ -34,7 +34,7 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
-import com.graphhopper.util.exceptions.PathNotFoundException.ConnectionNotFoundException.DifferentSubnetworksException;
+import com.graphhopper.util.exceptions.PathNotFoundException.DifferentSubnetworksException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;

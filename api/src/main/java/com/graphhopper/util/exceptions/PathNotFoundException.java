@@ -20,7 +20,8 @@ package com.graphhopper.util.exceptions;
 import java.util.Map;
 
 /**
- * General exception if a path cannot be found.
+ * General exception if a path cannot be found. Contains different subclasses to further differentiate different cases
+ * and to make it easier to communicate the reason of this exception to the client.
  *
  * @author Robin Boldt
  */
@@ -32,23 +33,28 @@ public class PathNotFoundException extends DetailedIllegalArgumentException {
     /**
      * If a path cannot be found due to disconnected graphs.
      */
-    public static class ConnectionNotFoundException extends PathNotFoundException {
+    public static final class ConnectionNotFoundException extends PathNotFoundException {
         public ConnectionNotFoundException(String var1, Map<String, Object> details) {
             super(var1, details);
         }
 
-        public static final class DifferentSubnetworksException extends ConnectionNotFoundException {
-            public DifferentSubnetworksException(String var1, Map<String, Object> details) {
-                super(var1, details);
-            }
+    }
+
+    /**
+     * If a path cannot be found because the maximum nodes have been exceeded
+     */
+    public static final class MaximumNodesExceededException extends PathNotFoundException {
+        public MaximumNodesExceededException(String var1, Map<String, Object> details) {
+            super(var1, details);
         }
     }
 
     /**
-     * If a paht cannot be found because the maximum nodes have been exceeded
+     * If a path cannot be found found because the waypoints are in different subnetworks.
+     * Currently, this is only relevant for LM.
      */
-    public static final class MaximumNodesExceededException extends PathNotFoundException {
-        public MaximumNodesExceededException(String var1, Map<String, Object> details) {
+    public static final class DifferentSubnetworksException extends PathNotFoundException {
+        public DifferentSubnetworksException(String var1, Map<String, Object> details) {
             super(var1, details);
         }
     }
