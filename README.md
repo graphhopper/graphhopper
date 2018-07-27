@@ -21,7 +21,7 @@ To get started, read through our documentation and install the GraphHopper Web S
 
 ## Questions
 
-All questions can go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage (iOS&Android), and [our map matching component](https://github.com/graphhopper/map-matching). Another place to ask questions would be on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper), but please do **not** use our issue section. Create new issues only if you are sure that this is a bug. Also, see how to contribute in the next section.
+All questions can go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage (iOS & Android), and [our map matching component](https://github.com/graphhopper/map-matching). Another place to ask questions would be on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper), but please do **not** use our issue section. Create new issues only if you are sure that this is a bug. Also, see how to contribute in the next section.
 
 ## Contribute
 
@@ -141,7 +141,7 @@ A fast and production ready map visualization for the Desktop can be easily impl
 ### Docker
 
 Install GraphHopper via [Docker](https://github.com/graphhopper/graphhopper/pull/849).
-You only need to change the docker-compose.yml entrypoint in core/files/ to run whatever map you like.
+You only need to change the `docker-compose.yml` entrypoint in `core/files/` to run whatever map you like.
 Then just type:
 ```bash
 cd core/files/
