@@ -54,6 +54,7 @@ class MultiCriteriaLabelSetting {
     private int visitedNodes;
     private final GraphExplorer explorer;
     private double betaTransfers;
+    private double betaWalkTime = 1.0;
 
     MultiCriteriaLabelSetting(GraphExplorer explorer, PtFlagEncoder flagEncoder, boolean reverse, double maxWalkDistancePerLeg, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes) {
         this.flagEncoder = flagEncoder;
@@ -66,7 +67,7 @@ class MultiCriteriaLabelSetting {
         this.profileQuery = profileQuery;
 
         queueComparator = Comparator.<Label>comparingLong(l2 -> l2.impossible ? 1 : 0)
-                .thenComparing(Comparator.comparingLong(l2 -> earliestArrivalOrLatestDepartureTimeCriterion(l2)))
+                .thenComparing(Comparator.comparingLong(l2 -> weight(l2)))
                 .thenComparing(Comparator.comparingLong(l1 -> l1.nTransfers))
                 .thenComparing(Comparator.comparingLong(l1 -> l1.nWalkDistanceConstraintViolations))
                 .thenComparing(Comparator.comparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0));
@@ -85,6 +86,11 @@ class MultiCriteriaLabelSetting {
     // experimental
     void setBetaTransfers(double betaTransfers) {
         this.betaTransfers = betaTransfers;
+    }
+
+    // experimental
+    void setBetaWalkTime(double betaWalkTime) {
+        this.betaWalkTime = betaWalkTime;
     }
 
     private class MultiCriteriaLabelSettingSpliterator extends Spliterators.AbstractSpliterator<Label> {
@@ -219,7 +225,7 @@ class MultiCriteriaLabelSetting {
     }
 
     private boolean dominates(Label me, Label they) {
-        if (earliestArrivalOrLatestDepartureTimeCriterion(me) > earliestArrivalOrLatestDepartureTimeCriterion(they))
+        if (weight(me) > weight(they))
             return false;
 
         if (profileQuery) {
@@ -239,7 +245,7 @@ class MultiCriteriaLabelSetting {
         if (me.impossible && !they.impossible)
             return false;
 
-        if (earliestArrivalOrLatestDepartureTimeCriterion(me) < earliestArrivalOrLatestDepartureTimeCriterion(they))
+        if (weight(me) < weight(they))
             return true;
         if (profileQuery) {
             if (me.departureTime != null && they.departureTime != null) {
@@ -262,8 +268,8 @@ class MultiCriteriaLabelSetting {
         return label.departureTime == null ? null : reverse ? label.departureTime : -label.departureTime;
     }
 
-    private long earliestArrivalOrLatestDepartureTimeCriterion(Label label) {
-        return (reverse ? -1 : 1) * (label.currentTime - startTime) + (long) (label.nTransfers * betaTransfers);
+    private long weight(Label label) {
+        return (reverse ? -1 : 1) * (label.currentTime - startTime) + (long) (label.nTransfers * betaTransfers) + (long) (label.walkTime * (betaWalkTime - 1.0));
     }
 
     private long travelTimeCriterion(Label label) {

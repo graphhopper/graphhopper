@@ -84,6 +84,43 @@ public class GraphHopperMultimodalIT {
                 .isEqualTo(LocalTime.parse("06:41:04.834"));
         assertThat(firstTransitSolution.getLegs().get(0).getArrivalTime().toInstant())
                 .isEqualTo(firstTransitSolution.getLegs().get(1).getDepartureTime().toInstant());
+        assertThat(firstTransitSolution.getLegs().get(2).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:52:02.728"));
+    }
+
+    @Test
+    public void testWalkSpeed() {
+        GHRequest ghRequest = new GHRequest(
+                36.91311729030539,-116.76769495010377,
+                36.91260259593356,-116.76149368286134
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,40,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.WALK_SPEED, 50); // Yes, I can walk very fast, 50 km/h. Problem?
+
+        GHResponse response = graphHopper.route(ghRequest);
+
+        PathWrapper walkSolution = response.getAll().stream().findFirst().get();
+        assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:40"));
+        assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:41:07.031"));
+        assertThat(walkSolution.getLegs().size()).isEqualTo(1);
+    }
+
+    @Test
+    public void testDisutilityOfWalking() {
+        GHRequest ghRequest = new GHRequest(
+                36.91311729030539,-116.76769495010377,
+                36.91260259593356,-116.76149368286134
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,40,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.WALK_SPEED, 50); // Yes, I can walk very fast, 50 km/h. Problem?
+        ghRequest.getHints().put("beta_walk_time", 20); // But I dislike walking a lot.
+
+        GHResponse response = graphHopper.route(ghRequest);
+
+        PathWrapper transitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
+        assertThat(transitSolution.getLegs().size()).isEqualTo(3);
     }
 
 }
