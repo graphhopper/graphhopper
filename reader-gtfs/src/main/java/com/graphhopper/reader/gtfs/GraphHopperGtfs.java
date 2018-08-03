@@ -114,6 +114,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         private final Graph graphWithExtraEdges = new WrapperGraph(graphHopperStorage, extraEdges);
         private QueryGraph queryGraph = new QueryGraph(graphWithExtraEdges);
         private GraphExplorer graphExplorer;
+        private int realDestinationNode;
 
         RequestHandler(GHRequest request) {
             maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, 1_000_000);
@@ -154,12 +155,36 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             allQueryResults.add(dest);
             queryGraph.lookup(Arrays.asList(source, dest)); // modifies queryGraph, source and dest!
 
+            realDestinationNode = allQueryResults.get(1).getClosestNode();
             PointList startAndEndpoint = pointListFrom(Arrays.asList(source, dest));
             response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
             if (separateWalkQuery) {
                 substitutePointWithVirtualNode(0, false, enter, allQueryResults);
                 substitutePointWithVirtualNode(1, true, exit, allQueryResults);
+                final int originNode = allQueryResults.get(0).getClosestNode();
+                final int destinationNode = allQueryResults.get(1).getClosestNode();
+                PathWrapper directWalkPath = walkPaths.get(realDestinationNode);
+                if (directWalkPath != null) {
+                    int nextEdgeId = graphWithExtraEdges.getAllEdges().length() + 200; // FIXME: A number bigger than the number of edges QueryGraph adds
+                    final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(-1,
+                            nextEdgeId++, originNode, destinationNode, directWalkPath.getDistance(), 0, "", directWalkPath.getPoints());
+                    final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(-1,
+                            nextEdgeId++, destinationNode, originNode, directWalkPath.getDistance(), 0, "", directWalkPath.getPoints());
+                    newEdge.setFlags(flagEncoder.setEdgeType(newEdge.getFlags(), GtfsStorage.EdgeType.HIGHWAY));
+                    final long time = directWalkPath.getTime() / 1000;
+                    newEdge.setFlags(flagEncoder.setTime(newEdge.getFlags(), time));
+                    newEdge.setFlags(flagEncoder.setAccess(newEdge.getFlags(), true, false));
+                    newEdge.setFlags(accessEgressWeighting.getFlagEncoder().setAccess(newEdge.getFlags(), true, false));
+                    newEdge.setFlags(accessEgressWeighting.getFlagEncoder().setSpeed(newEdge.getFlags(), 5.0));
+
+                    reverseNewEdge.setFlags(newEdge.getFlags());
+                    newEdge.setReverseEdge(reverseNewEdge);
+                    reverseNewEdge.setReverseEdge(newEdge);
+                    newEdge.setDistance(directWalkPath.getDistance());
+                    extraEdges.add(newEdge);
+                    extraEdges.add(reverseNewEdge);
+                }
             }
 
             int startNode;
@@ -181,7 +206,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             int nextNodeId = graphWithExtraEdges.getNodes() + 2 + index; // FIXME: A number bigger than the number of nodes QueryGraph adds
             int nextEdgeId = graphWithExtraEdges.getAllEdges().length() + 100; // FIXME: A number bigger than the number of edges QueryGraph adds
 
-            final List<Label> stationNodes = findStationNodes(graphExplorer, allQueryResults.get(index).getClosestNode(), reverse);
+            final List<Label> stationNodes = findStationNodes(graphExplorer, allQueryResults.get(index).getClosestNode(), reverse, allQueryResults.get(1-index).getClosestNode());
             for (Label stationNode : stationNodes) {
                 final PathWrapper pathWrapper = stationNode.parent.parent != null ?
                         tripFromLabel.parseSolutionIntoPath(reverse, flagEncoder, translation, graphExplorer, accessEgressWeighting, stationNode.parent, new PointList()) :
@@ -208,11 +233,19 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             allQueryResults.set(index, virtualNode);
         }
 
-        private List<Label> findStationNodes(GraphExplorer graphExplorer, int node, boolean reverse) {
+        private List<Label> findStationNodes(GraphExplorer graphExplorer, int node, boolean reverse, int otherNode) {
             GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, flagEncoder, reverse, maxWalkDistancePerLeg, false, false, false, maxVisitedNodesForRequest);
             final Stream<Label> labels = router.calcLabels(node, -1, initialTime, blockedRouteTypes);
             return labels
+                    .peek(current -> {
+                        if (!reverse && current.adjNode == otherNode) {
+                            final PathWrapper pathWrapper = current.parent != null ?
+                                    tripFromLabel.parseSolutionIntoPath(reverse, flagEncoder, translation, graphExplorer, accessEgressWeighting, current, new PointList()) :
+                                    new PathWrapper();
+                            walkPaths.put(current.adjNode, pathWrapper);
+                        }
+                    })
                     .filter(current -> current.edge != -1 && flagEncoder.getEdgeType(graphExplorer.getEdgeIteratorState(current.edge, current.adjNode).getFlags()) == edgeType)
                     .collect(Collectors.toList());
         }
@@ -231,10 +264,15 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         private void parseSolutionsAndAddToResponse(List<Label> solutions, PointList waypoints) {
             for (Label solution : solutions) {
-                final List<Trip.Leg> legs = tripFromLabel.getTrip(arriveBy, flagEncoder, translation, graphExplorer, accessEgressWeighting, solution);
-                if (separateWalkQuery) {
-                    legs.addAll(0, walkPaths.get(accessNode(solution)).getLegs());
-                    legs.addAll(walkPaths.get(egressNode(solution)).getLegs());
+                final List<Trip.Leg> legs = new ArrayList<>();
+                if (separateWalkQuery && solution.parent.parent == null) {
+                    legs.addAll(0, walkPaths.get(realDestinationNode).getLegs());
+                } else {
+                    legs.addAll(tripFromLabel.getTrip(arriveBy, flagEncoder, translation, graphExplorer, accessEgressWeighting, solution));
+                    if (separateWalkQuery) {
+                        legs.addAll(0, walkPaths.get(accessNode(solution)).getLegs());
+                        legs.addAll(walkPaths.get(egressNode(solution)).getLegs());
+                    }
                 }
                 final PathWrapper pathWrapper = tripFromLabel.createPathWrapper(translation, waypoints, legs);
                 pathWrapper.setImpossible(isImpossible(solution));

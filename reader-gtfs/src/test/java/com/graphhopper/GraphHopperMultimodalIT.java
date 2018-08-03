@@ -78,6 +78,7 @@ public class GraphHopperMultimodalIT {
         ghRequest.getHints().put(Parameters.PT.PROFILE_QUERY, true);
 
         GHResponse response = graphHopper.route(ghRequest);
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(129);
 
         PathWrapper firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
         assertThat(firstTransitSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
@@ -99,12 +100,34 @@ public class GraphHopperMultimodalIT {
 
         GHResponse response = graphHopper.route(ghRequest);
 
-        PathWrapper walkSolution = response.getAll().stream().findFirst().get();
+        PathWrapper walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:40"));
         assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:41:07.031"));
         assertThat(walkSolution.getLegs().size()).isEqualTo(1);
+        assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
+    }
+
+    @Test
+    public void testWalkSpeedInProfileQuery() {
+        GHRequest ghRequest = new GHRequest(
+                36.91311729030539,-116.76769495010377,
+                36.91260259593356,-116.76149368286134
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,40,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.WALK_SPEED, 50); // Yes, I can walk very fast, 50 km/h. Problem?
+        ghRequest.getHints().put(Parameters.PT.PROFILE_QUERY, true);
+
+        GHResponse response = graphHopper.route(ghRequest);
+
+        PathWrapper walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
+        assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:40"));
+        assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:41:07.031"));
+        assertThat(walkSolution.getLegs().size()).isEqualTo(1);
+        assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
     }
 
     @Test

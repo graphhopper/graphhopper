@@ -121,7 +121,6 @@ class MultiCriteriaLabelSetting {
                 action.accept(label);
                 explorer.exploreEdgesAround(label).forEach(edge -> {
                     GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
-                    if (edgeType == GtfsStorage.EdgeType.HIGHWAY && ptOnly) return;
                     if (edgeType == GtfsStorage.EdgeType.ENTER_PT && ((reverse?edge.getAdjNode():edge.getBaseNode()) != (reverse?to:from)) && ptOnly) return;
                     if (edgeType == GtfsStorage.EdgeType.EXIT_PT && ((reverse?edge.getBaseNode():edge.getAdjNode()) != (reverse?from:to)) && ptOnly) return;
                     if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << flagEncoder.getValidityId(edge.getFlags()))) != 0) return;
