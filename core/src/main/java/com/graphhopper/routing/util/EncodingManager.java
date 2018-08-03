@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -48,13 +50,21 @@ public class EncodingManager {
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
     private final int bitsForEdgeFlags;
     private final int bitsForTurnFlags = 8 * 4;
-    private int nextWayBit = 0;
-    private int nextNodeBit = 0;
-    private int nextRelBit = 0;
-    private int nextTurnBit = 0;
+    private BitWrapper nextWayBit = new BitWrapper();
+    private BitWrapper nextNodeBit = new BitWrapper();
+    private BitWrapper nextRelBit = new BitWrapper();
+    private BitWrapper nextTurnBit = new BitWrapper();
     private boolean enableInstructions = true;
     private String preferredLanguage = "";
 
+    private static class BitWrapper {
+        private int value = 0;
+
+        @Override
+        public String toString() {
+            return Integer.toString(value);
+        }
+    }
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
      * encoders ignoring case.
@@ -186,32 +196,30 @@ public class EncodingManager {
 
         encoder.setRegistered(true);
 
-        int encoderCount = edgeEncoders.size();
-        int usedBits = encoder.defineNodeBits(encoderCount, nextNodeBit);
-        if (usedBits > bitsForEdgeFlags)
-            throw new IllegalArgumentException(String.format(Locale.ROOT, ERR, usedBits, bitsForEdgeFlags, "node"));
-        encoder.setNodeBitMask(usedBits - nextNodeBit, nextNodeBit);
-        nextNodeBit = usedBits;
-
-        usedBits = encoder.defineWayBits(encoderCount, nextWayBit);
-        if (usedBits > bitsForEdgeFlags)
-            throw new IllegalArgumentException(String.format(Locale.ROOT, ERR, usedBits, bitsForEdgeFlags, "way") + WAY_ERR);
-        encoder.setWayBitMask(usedBits - nextWayBit, nextWayBit);
-        nextWayBit = usedBits;
-
-        usedBits = encoder.defineRelationBits(encoderCount, nextRelBit);
-        if (usedBits > bitsForEdgeFlags)
-            throw new IllegalArgumentException(String.format(Locale.ROOT, ERR, usedBits, bitsForEdgeFlags, "relation"));
-        encoder.setRelBitMask(usedBits - nextRelBit, nextRelBit);
-        nextRelBit = usedBits;
-
-        // turn flag bits are independent from edge encoder bits
-        usedBits = encoder.defineTurnBits(encoderCount, nextTurnBit);
-        if (usedBits > bitsForTurnFlags)
-            throw new IllegalArgumentException(String.format(Locale.ROOT, ERR, usedBits, bitsForTurnFlags, "turn"));
-        nextTurnBit = usedBits;
+        defineBits(nextNodeBit, encoder::defineNodeBits, encoder::setNodeBitMask);
+        defineBits(nextWayBit, encoder::defineWayBits, encoder::setWayBitMask);
+        defineBits(nextRelBit, encoder::defineRelationBits, encoder::setRelBitMask);
+        defineBits(nextTurnBit, encoder::defineTurnBits, null);
 
         edgeEncoders.add(encoder);
+    }
+
+    private void defineBits(
+            BitWrapper bit,
+            BiFunction<Integer, Integer, Integer> definer,
+            BiConsumer<Integer, Integer> setter
+    ) {
+        int encoderCount = edgeEncoders.size();
+        int usedBits = definer.apply(encoderCount, bit.value);
+        validateUsedBitsCount(usedBits);
+        if (setter != null)
+            setter.accept(usedBits - bit.value, bit.value);
+        bit.value = usedBits;
+    }
+
+    private void validateUsedBitsCount(int usedBits) {
+        if (usedBits > bitsForEdgeFlags)
+            throw new IllegalArgumentException(String.format(Locale.ROOT, ERR, usedBits, bitsForEdgeFlags, "way") + WAY_ERR);
     }
 
     /**
