@@ -29,6 +29,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import org.junit.AfterClass;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -40,6 +41,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
 public class GraphHopperMultimodalIT {
 
@@ -69,7 +71,7 @@ public class GraphHopperMultimodalIT {
     }
 
     @Test
-    public void testDepartureTimeOfAccessLeg() {
+    public void testDepartureTimeOfAccessLegInProfileQuery() {
         GHRequest ghRequest = new GHRequest(
                 36.91311729030539,-116.76769495010377,
                 36.91260259593356,-116.76149368286134
@@ -90,7 +92,44 @@ public class GraphHopperMultimodalIT {
     }
 
     @Test
-    public void testWalkSpeed() {
+    public void testDepartureTimeOfAccessLeg() {
+        GHRequest ghRequest = new GHRequest(
+                36.91311729030539,-116.76769495010377,
+                36.91260259593356,-116.76149368286134
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,40,0).atZone(zoneId).toInstant());
+
+        GHResponse response = graphHopper.route(ghRequest);
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(204);
+
+        PathWrapper firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
+        assertThat(firstTransitSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:41:04.834"));
+        assertThat(firstTransitSolution.getLegs().get(0).getArrivalTime().toInstant())
+                .isEqualTo(firstTransitSolution.getLegs().get(1).getDepartureTime().toInstant());
+        assertThat(firstTransitSolution.getLegs().get(2).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:52:02.728"));
+
+        PathWrapper walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
+        assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:40"));
+        // In principle, this would dominate the transit solution, since it's faster, but
+        // by default, walking gets a slight penalty.
+        assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:51:10.367"));
+        assertThat(walkSolution.getLegs().size()).isEqualTo(1);
+        assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
+
+        // I like walking exactly as I like riding a bus (per travel time unit)
+        // Now, the walk solution dominates, and we get no transit solution.
+        ghRequest.getHints().put("beta_walk_time",1.0);
+        response = graphHopper.route(ghRequest);
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(201);
+        assertThat(response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst()).isEmpty();
+    }
+
+    @Test
+    public void testFastWalking() {
         GHRequest ghRequest = new GHRequest(
                 36.91311729030539,-116.76769495010377,
                 36.91260259593356,-116.76149368286134
@@ -110,7 +149,7 @@ public class GraphHopperMultimodalIT {
     }
 
     @Test
-    public void testWalkSpeedInProfileQuery() {
+    public void testFastWalkingInProfileQuery() {
         GHRequest ghRequest = new GHRequest(
                 36.91311729030539,-116.76769495010377,
                 36.91260259593356,-116.76149368286134
@@ -131,7 +170,27 @@ public class GraphHopperMultimodalIT {
     }
 
     @Test
-    public void testDisutilityOfWalking() {
+    public void testSlowWalking() {
+        GHRequest ghRequest = new GHRequest(
+                36.91311729030539,-116.76769495010377,
+                36.91260259593356,-116.76149368286134
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,40,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.WALK_SPEED, 0.5);
+
+        GHResponse response = graphHopper.route(ghRequest);
+
+        PathWrapper walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
+        assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:40"));
+        assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:41:07.031"));
+        assertThat(walkSolution.getLegs().size()).isEqualTo(1);
+        assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
+    }
+
+    @Test
+    public void testHighDisutilityOfWalking() {
         GHRequest ghRequest = new GHRequest(
                 36.91311729030539,-116.76769495010377,
                 36.91260259593356,-116.76149368286134
@@ -145,5 +204,47 @@ public class GraphHopperMultimodalIT {
         PathWrapper transitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
         assertThat(transitSolution.getLegs().size()).isEqualTo(3);
     }
+
+    @Test
+    public void testCustomObjectiveFunction() {
+        GHRequest ghRequest = new GHRequest(
+                36.868446,-116.784582,  // where BEATTY_AIRPORT is attached to the road
+                36.425288,-117.133162       // FUR_CREEK_RES stop
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,14,0,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.BLOCKED_ROUTE_TYPES, 255);
+
+        GHResponse response = graphHopper.route(ghRequest);
+        System.out.println(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE));
+
+        PathWrapper solutionWithTransfer = response.getAll().get(0);
+        PathWrapper solutionWithoutTransfer = response.getAll().get(1);
+
+        Assume.assumeTrue("First solution has one transfer",solutionWithTransfer.getNumChanges() == 1);
+        Assume.assumeTrue("Second solution has no transfers", solutionWithoutTransfer.getNumChanges() == 0);
+        Assume.assumeTrue("With transfers is faster than without", solutionWithTransfer.getTime() < solutionWithoutTransfer.getTime());
+
+        // If one transfer is worth beta_transfers milliseconds of travel time savings
+        // to me, I will be indifferent when choosing between the two routes.
+        // Wiggle it by epsilon, and I should prefer one over the other.
+        double betaTransfers = solutionWithoutTransfer.getTime() - solutionWithTransfer.getTime();
+
+        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
+        // Well, not actually ignore them, but don't do multi-criteria search
+
+        ghRequest.getHints().put("beta_transfers", betaTransfers - 10);
+        response = graphHopper.route(ghRequest);
+
+        assertEquals("Get exactly one solution",1, response.getAll().size());
+        assertEquals("Prefer solution with transfers when I give the smaller beta", solutionWithTransfer.getTime(), response.getBest().getTime());
+
+        ghRequest.getHints().put("beta_transfers", betaTransfers + 10);
+
+        response = graphHopper.route(ghRequest);
+
+        assertEquals("Get exactly one solution",1, response.getAll().size());
+        assertEquals("Prefer solution without transfers when I give the higher beta", solutionWithoutTransfer.getTime(), response.getBest().getTime());
+    }
+
 
 }

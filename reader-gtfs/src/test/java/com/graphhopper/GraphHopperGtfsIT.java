@@ -503,8 +503,8 @@ public class GraphHopperGtfsIT {
         PathWrapper solutionWithTransfer = response.getAll().get(0);
         PathWrapper solutionWithoutTransfer = response.getAll().get(1);
 
-        Assume.assumeTrue("First solution has no transfers",solutionWithTransfer.getNumChanges() == 1);
-        Assume.assumeTrue("Second solution has one transfer", solutionWithoutTransfer.getNumChanges() == 0);
+        Assume.assumeTrue("First solution has one transfer",solutionWithTransfer.getNumChanges() == 1);
+        Assume.assumeTrue("Second solution has no transfers", solutionWithoutTransfer.getNumChanges() == 0);
         Assume.assumeTrue("With transfers is faster than without", solutionWithTransfer.getTime() < solutionWithoutTransfer.getTime());
 
         // If one transfer is worth beta_transfers milliseconds of travel time savings

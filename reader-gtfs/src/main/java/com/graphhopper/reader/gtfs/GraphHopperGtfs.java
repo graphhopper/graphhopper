@@ -139,7 +139,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             }
             enter = request.getPoints().get(0);
             exit = request.getPoints().get(1);
-            separateWalkQuery = profileQuery;
+            separateWalkQuery = true;
             // Maximum walking distance is unlimited by default, _except_ when we search for access/egress from origin
             // and destination separately (currently in profile queries). Because there we need to know when to stop.
             maxWalkDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, separateWalkQuery ? 1000.0 : Double.MAX_VALUE);
