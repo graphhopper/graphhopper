@@ -115,6 +115,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         private QueryGraph queryGraph = new QueryGraph(graphWithExtraEdges);
         private GraphExplorer graphExplorer;
         private int realDestinationNode;
+        private int visitedNodes;
 
         RequestHandler(GHRequest request) {
             maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, 1_000_000);
@@ -237,7 +238,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, flagEncoder, reverse, maxWalkDistancePerLeg, false, false, false, maxVisitedNodesForRequest);
             final Stream<Label> labels = router.calcLabels(node, -1, initialTime, blockedRouteTypes);
-            return labels
+            List<Label> stationNodes = labels
                     .peek(current -> {
                         if (!reverse && current.adjNode == otherNode) {
                             final PathWrapper pathWrapper = current.parent != null ?
@@ -248,6 +249,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     })
                     .filter(current -> current.edge != -1 && flagEncoder.getEdgeType(graphExplorer.getEdgeIteratorState(current.edge, current.adjNode).getFlags()) == edgeType)
                     .collect(Collectors.toList());
+            visitedNodes += router.getVisitedNodes();
+            return stationNodes;
         }
 
         private QueryResult findClosest(GHPoint point, int indexForErrorMessage) {
@@ -326,12 +329,13 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     .filter(current -> destNode == current.adjNode)
                     .limit(limitSolutions)
                     .collect(Collectors.toList());
+            visitedNodes += router.getVisitedNodes();
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
             if (solutions.isEmpty() && router.getVisitedNodes() >= maxVisitedNodesForRequest) {
                 throw new IllegalArgumentException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest);
             }
-            response.getHints().put("visited_nodes.sum", router.getVisitedNodes());
-            response.getHints().put("visited_nodes.average", router.getVisitedNodes());
+            response.getHints().put("visited_nodes.sum", visitedNodes);
+            response.getHints().put("visited_nodes.average", visitedNodes);
             if (solutions.isEmpty()) {
                 response.addError(new RuntimeException("No route found"));
             }

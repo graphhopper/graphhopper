@@ -78,7 +78,7 @@ public class GraphHopperMultimodalIT {
         ghRequest.getHints().put(Parameters.PT.PROFILE_QUERY, true);
 
         GHResponse response = graphHopper.route(ghRequest);
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(129);
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(310);
 
         PathWrapper firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
         assertThat(firstTransitSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
