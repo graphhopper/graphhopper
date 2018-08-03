@@ -130,7 +130,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             }
             arriveBy = request.getHints().getBool(Parameters.PT.ARRIVE_BY, false);
             walkSpeedKmH = request.getHints().getDouble(Parameters.PT.WALK_SPEED, 5.0);
-            maxWalkDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 1000.0);
             blockedRouteTypes = request.getHints().getInt(Parameters.PT.BLOCKED_ROUTE_TYPES, 0);
             translation = translationMap.getWithFallBack(request.getLocale());
             if (request.getPoints().size() != 2) {
@@ -139,6 +138,9 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             enter = request.getPoints().get(0);
             exit = request.getPoints().get(1);
             separateWalkQuery = profileQuery;
+            // Maximum walking distance is unlimited by default, _except_ when we search for access/egress from origin
+            // and destination separately (currently in profile queries). Because there we need to know when to stop.
+            maxWalkDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, separateWalkQuery ? 1000.0 : Double.MAX_VALUE);
         }
 
         GHResponse route() {
