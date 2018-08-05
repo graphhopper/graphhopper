@@ -56,7 +56,6 @@ public class GraphHopperWebIT {
         isBetween(180, 200, alt.getDescend());
         isBetween(1000, 1500, alt.getRouteWeight());
 
-
         // change vehicle
         res = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180).
                 setVehicle("bike"));
