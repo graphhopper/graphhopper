@@ -34,9 +34,8 @@ public class GraphHopperWebIT {
 
     @Before
     public void setUp() {
-        String key = System.getProperty("graphhopper.key", KEY);
-        gh.setKey(key);
-        ghMatrix.setKey(key);
+        gh.setKey(KEY);
+        ghMatrix.setKey(KEY);
     }
 
     @Test
