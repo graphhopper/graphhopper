@@ -55,10 +55,7 @@ import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.ext.WriterInterceptor;
-import javax.ws.rs.ext.WriterInterceptorContext;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -264,6 +261,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
     private void runRegularGraphHopper(CmdArgs configuration, Environment environment) {
         final GraphHopperManaged graphHopperManaged = new GraphHopperManaged(configuration, environment.getObjectMapper());
+        final TranslationMap translationMap = graphHopperManaged.getGraphHopper().getTranslationMap();
         environment.lifecycle().manage(graphHopperManaged);
         environment.jersey().register(new AbstractBinder() {
             @Override
@@ -272,6 +270,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(graphHopperManaged).to(GraphHopperManaged.class);
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopper.class);
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopperAPI.class);
+                bind(translationMap).to(TranslationMap.class);
 
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
                 bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
@@ -287,6 +286,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(RouteResource.class);
+        environment.jersey().register(MapboxResource.class);
         environment.jersey().register(IsochroneResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
