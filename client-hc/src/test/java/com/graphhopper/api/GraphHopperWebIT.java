@@ -26,16 +26,15 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperWebIT {
 
-    public static final String KEY = "614b8305-b4db-48c9-bf4a-40de90919939";
+    public static final String KEY = System.getProperty("key", "78da6e9a-273e-43d1-bdda-8f24e007a1fa");
 
     private final GraphHopperWeb gh = new GraphHopperWeb();
     private final GraphHopperMatrixWeb ghMatrix = new GraphHopperMatrixWeb();
 
     @Before
     public void setUp() {
-        String key = System.getProperty("graphhopper.key", KEY);
-        gh.setKey(key);
-        ghMatrix.setKey(key);
+        gh.setKey(KEY);
+        ghMatrix.setKey(KEY);
     }
 
     @Test

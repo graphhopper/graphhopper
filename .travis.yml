@@ -37,8 +37,10 @@ before_script:
 # Undo `_JAVA_OPTIONS` environment variable; see https://github.com/travis-ci/travis-ci/issues/8408
 before_script:
   - _JAVA_OPTIONS=
+  - "mvn --version"
+  - "if [ -z \"$API_KEY\" ]; then API_KEY=78da6e9a-273e-43d1-bdda-8f24e007a1fa; fi" # change in GraphHopperWebIT too
 script:
-  - "mvn --version && mvn clean test verify checkstyle:check findbugs:check forbiddenapis:check -B"
+  - "mvn --version && mvn -Dkey=$API_KEY clean test verify checkstyle:check findbugs:check forbiddenapis:check -B"
 
 after_success:
   # deploy snapshot artifacts to sonatype and if tagged deploy the release to maven central
