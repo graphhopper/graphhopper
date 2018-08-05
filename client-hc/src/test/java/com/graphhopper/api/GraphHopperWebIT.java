@@ -51,10 +51,9 @@ public class GraphHopperWebIT {
         PathWrapper alt = res.getBest();
         isBetween(200, 250, alt.getPoints().size());
         isBetween(11000, 12000, alt.getDistance());
-        isBetween(310, 320, alt.getAscend());
-        isBetween(235, 245, alt.getDescend());
+        isBetween(250, 270, alt.getAscend());
+        isBetween(180, 200, alt.getDescend());
         isBetween(1000, 1500, alt.getRouteWeight());
-
 
         // change vehicle
         res = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180).
