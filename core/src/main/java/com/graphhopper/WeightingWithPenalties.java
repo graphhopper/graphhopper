@@ -105,15 +105,19 @@ public class WeightingWithPenalties extends FastestWeighting {
         }
     }
 
-    private double updateVisitedEdgesAndGetPenalty(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-
+    protected double updateVisitedEdgesAndGetPenalty(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
         PointList pointList = edge.fetchWayGeometry(3);
         WayData wayData = new WayData(
                 pointList.getLat(0),
                 pointList.getLon(0),
                 pointList.getLat(pointList.size() - 1),
                 pointList.getLon(pointList.size() - 1));
-        visitedEdgesCoordinates.put(edge.getEdge(), wayData);
+        try {
+            visitedEdgesCoordinates.put(edge.getEdge(), wayData);
+        } catch (Exception e) {
+            logger.error("failed to put, size {} error {}", visitedEdgesCoordinates.size(), e);
+            return 0;
+        }
         WayData prevWayData;
         if (reverse) { //if reverse is true prevOrNextEdgeId has to be the next edgeId in the direction from start to end.
             prevWayData = wayData;
