@@ -76,7 +76,7 @@ public class SimpleFSLockFactory implements LockFactory {
             // make sure directory exists, do it on-the-fly (not possible when setLockDir is called)
             if (!lockDir.exists()) {
                 if (!lockDir.mkdirs())
-                    throw new RuntimeException("Directory " + lockDir + " does not exist and cannot created to place lock file there: " + lockFile);
+                    throw new RuntimeException("Directory " + lockDir + " does not exist and cannot be created to place lock file there: " + lockFile);
             }
 
             // this test can only be performed after the dir has created!
