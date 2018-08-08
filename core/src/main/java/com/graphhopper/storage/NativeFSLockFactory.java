@@ -107,7 +107,7 @@ public class NativeFSLockFactory implements LockFactory {
             // on-the-fly: make sure directory exists
             if (!lockDir.exists()) {
                 if (!lockDir.mkdirs())
-                    throw new RuntimeException("Directory " + lockDir + " does not exist and cannot created to place lock file there: " + lockFile);
+                    throw new RuntimeException("Directory " + lockDir + " does not exist and cannot be created to place lock file there: " + lockFile);
             }
 
             if (!lockDir.isDirectory())
