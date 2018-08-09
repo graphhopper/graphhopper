@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.graphhopper.storage.index.Location2IDFullIndexTest
+-------------------------------------------------------------------------------
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.103 sec - in com.graphhopper.storage.index.Location2IDFullIndexTest

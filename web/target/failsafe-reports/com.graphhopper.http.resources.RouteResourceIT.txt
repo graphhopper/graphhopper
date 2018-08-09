@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.graphhopper.http.resources.RouteResourceIT
+-------------------------------------------------------------------------------
+Tests run: 20, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.216 sec - in com.graphhopper.http.resources.RouteResourceIT

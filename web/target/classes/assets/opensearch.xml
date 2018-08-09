@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+    <ShortName>GraphHopper Maps</ShortName>
+    <Description>GraphHopper Maps gives you the best route for car, bike or by foot.</Description>
+    <Tags>route map openstreetmap</Tags>
+    <Contact>info@graphhopper.com</Contact>    
+    <Image height="16" width="16" type="image/x-icon">http://graphhopper.com/favicon.ico</Image>
+    <Image height="16" width="16" type="image/x-icon">http://graphhopper.com/img/icon.png</Image>
+    <Url type="text/html" template="http://graphhopper.com/maps?q={searchTerms}"/>    
+    <OutputEncoding>UTF-8</OutputEncoding>
+    <InputEncoding>UTF-8</InputEncoding>
+</OpenSearchDescription>

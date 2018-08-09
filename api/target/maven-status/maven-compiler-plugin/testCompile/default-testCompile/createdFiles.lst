@@ -1,0 +1,16 @@
+com/graphhopper/util/PMapTest.class
+com/graphhopper/util/shapes/BBoxTest$2.class
+com/graphhopper/util/shapes/GHPoint3DTest.class
+com/graphhopper/util/PointListTest.class
+com/graphhopper/util/shapes/PolygonTest.class
+com/graphhopper/util/GHResponseTest.class
+com/graphhopper/util/shapes/BBoxTest$1.class
+com/graphhopper/util/shapes/BBoxTest.class
+com/graphhopper/util/shapes/CircleTest.class
+com/graphhopper/util/HelperTest.class
+com/graphhopper/util/DistanceCalcEarthTest.class
+com/graphhopper/util/AngleCalcTest.class
+com/graphhopper/util/GHRequestTest.class
+com/graphhopper/util/shapes/GHPointTest.class
+com/graphhopper/util/InstructionTest.class
+com/graphhopper/util/FinishInstructionTest.class

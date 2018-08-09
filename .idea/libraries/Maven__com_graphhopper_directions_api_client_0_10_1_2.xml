@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.graphhopper:directions-api-client:0.10.1-2">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/graphhopper/directions-api-client/0.10.1-2/directions-api-client-0.10.1-2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/graphhopper/directions-api-client/0.10.1-2/directions-api-client-0.10.1-2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/graphhopper/directions-api-client/0.10.1-2/directions-api-client-0.10.1-2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

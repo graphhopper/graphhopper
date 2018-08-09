@@ -1,0 +1,14 @@
+com/graphhopper/jackson/GHPointDeserializer.class
+com/graphhopper/MultiException.class
+com/graphhopper/jackson/GHPointSerializer.class
+com/graphhopper/jackson/MultiExceptionSerializer.class
+com/graphhopper/jackson/BBoxSerializer.class
+com/graphhopper/jackson/Jackson.class
+com/graphhopper/jackson/BBoxDeserializer.class
+com/graphhopper/jackson/PathDetailDeserializer.class
+com/graphhopper/jackson/GraphHopperModule.class
+com/graphhopper/jackson/CmdArgsDeserializer.class
+com/graphhopper/jackson/InstructionListSerializer.class
+com/graphhopper/jackson/PathDetailSerializer.class
+com/graphhopper/jackson/CmdArgsDeserializer$1.class
+com/graphhopper/http/WebHelper.class

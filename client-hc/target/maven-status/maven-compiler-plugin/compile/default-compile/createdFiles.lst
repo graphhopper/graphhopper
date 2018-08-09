@@ -1,0 +1,14 @@
+com/graphhopper/api/GHMatrixAbstractRequester.class
+com/graphhopper/api/GraphHopperMatrixWeb.class
+com/graphhopper/api/model/GHGeocodingRequest.class
+com/graphhopper/api/GraphHopperWeb$1.class
+com/graphhopper/api/GraphHopperWeb.class
+com/graphhopper/api/GraphHopperGeocoding.class
+com/graphhopper/api/GHMRequest.class
+com/graphhopper/api/GHMatrixBatchRequester.class
+com/graphhopper/api/model/GHGeocodingEntry.class
+com/graphhopper/api/MatrixResponse.class
+com/graphhopper/api/model/GHGeocodingEntry$Point.class
+com/graphhopper/api/GoogleMatrixSyncRequester.class
+com/graphhopper/api/model/GHGeocodingResponse.class
+com/graphhopper/api/GHMatrixSyncRequester.class

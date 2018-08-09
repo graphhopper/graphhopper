@@ -1,0 +1,70 @@
+{
+    "info": {
+        "took": 0.00414920412003994
+    },
+    "paths": [{
+            "snapped_waypoints": "ud}iG}fhl@kI}K",
+            "bbox": [
+                13.362853824187303,
+                52.469481955531585,
+                13.385836736460217,
+                52.473849308838446
+            ],
+            "distance": 2138.3027624572337,
+            "instructions": [
+                {
+                    "distance": 1268.519329705091,
+                    "interval": [
+                        0,
+                        10
+                    ],
+                    "sign": 0,
+                    "text": "Geradeaus auf A 100",
+                    "time": 65237
+                },
+                {
+                    "distance": 379.74399999999997,
+                    "interval": [
+                        10,
+                        11
+                    ],
+                    "sign": 0,
+                    "text": "Geradeaus auf Strasse",
+                    "time": 24855
+                },
+                {
+                    "distance": 16.451,
+                    "interval": [
+                        11,
+                        11
+                    ],
+                    "sign": 0,
+                    "text": "Geradeaus auf Tempelhofer Damm",
+                    "time": 1316
+                },
+                {
+                    "distance": 473.58843275214315,
+                    "interval": [
+                        11,
+                        12
+                    ],
+                    "sign": -2,
+                    "text": "Links abbiegen auf Tempelhofer Damm, B 96",
+                    "time": 37882
+                },
+                {
+                    "distance": 0,
+                    "interval": [
+                        12,
+                        12
+                    ],
+                    "sign": 4,
+                    "text": "Ziel erreicht!",
+                    "time": 0
+                }
+            ],
+            "points": "oxg_Iy|ppAl@wCdE}LfFsN|@_Ej@eEtAaMh@sGVuDNcDb@{PFyGdAi]FoC?q@sXQ_@?",
+            "points_encoded": true,
+            "time": 129290
+        }]
+}

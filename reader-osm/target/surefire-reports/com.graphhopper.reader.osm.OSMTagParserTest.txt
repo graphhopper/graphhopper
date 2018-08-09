@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.graphhopper.reader.osm.OSMTagParserTest
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 sec - in com.graphhopper.reader.osm.OSMTagParserTest

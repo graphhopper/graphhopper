@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6">
+    <node id="-10" lat="51.2492152" lon="9.4317166">
+        <tag k="is_in" v="Wiesbaden,Hessen,Germany,Europe" />
+        <tag k="name" v="Wiesbaden-Naurod" />
+        <tag k="place" v="village" />
+    </node>
+    <node id="-20" lat="52" lon="9">
+        <tag k="name" v="Halbendorf-Spree" />
+    </node>
+    <node id="-30" lat="51.2" lon="9.4">
+        <tag k="name" v="Dresden" />
+    </node>
+    
+    <node id="-35" lat="45.2" lon="13.431">
+        <tag k="name" v="Unused1" />
+    </node>
+
+    <node id="-40" lat="51.25" lon="9.43">
+        <tag k="name" v="Cottbus" />
+    </node>
+    <node id="-41" lat="51.23" lon="11.43">
+        <tag k="name" v="Unused2" />
+    </node>
+    <node id="-45" lat="41.2" lon="10.431">
+        <tag k="name" v="Unused3" />
+    </node>
+    <node id="-50" lat="49" lon="10">
+        <tag k="name" v="Tester" />
+    </node>
+    
+    <way id="-10">
+        <nd ref="-10"/>
+        <nd ref="-20"/>        
+        <nd ref="-30"/>
+        <tag k="highway" v="motorway" />
+    </way> 
+    
+    <way id="-11">
+        <nd ref="-20"/>
+        <nd ref="-40"/>
+        <nd ref="-50"/>
+        <tag k="highway" v="service" />
+    </way>
+</osm>

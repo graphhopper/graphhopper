@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_7">
+    <output url="file://$MODULE_DIR$/target/classes" />
+    <output-test url="file://$MODULE_DIR$/target/test-classes" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="graphhopper-core" />
+    <orderEntry type="module" module-name="graphhopper-api" />
+    <orderEntry type="library" name="Maven: com.vividsolutions:jts-core:1.14.0" level="project" />
+    <orderEntry type="library" name="Maven: com.carrotsearch:hppc:0.7.2" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.xmlgraphics:xmlgraphics-commons:2.1" level="project" />
+    <orderEntry type="library" name="Maven: commons-io:commons-io:1.3.1" level="project" />
+    <orderEntry type="library" name="Maven: org.openstreetmap.osmosis:osmosis-osm-binary:0.46" level="project" />
+    <orderEntry type="library" name="Maven: com.google.protobuf:protobuf-java:3.4.0" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.25" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.slf4j:slf4j-log4j12:1.7.25" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: log4j:log4j:1.2.17" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: junit:junit:4.12" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.hamcrest:hamcrest-core:1.3" level="project" />
+    <orderEntry type="module" module-name="graphhopper-core" scope="TEST" production-on-test="" />
+  </component>
+</module>

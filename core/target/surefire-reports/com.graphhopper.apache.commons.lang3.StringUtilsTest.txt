@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.graphhopper.apache.commons.lang3.StringUtilsTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 sec - in com.graphhopper.apache.commons.lang3.StringUtilsTest

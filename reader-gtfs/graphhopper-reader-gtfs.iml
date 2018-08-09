@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
+    <output url="file://$MODULE_DIR$/target/classes" />
+    <output-test url="file://$MODULE_DIR$/target/test-classes" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="graphhopper-core" />
+    <orderEntry type="module" module-name="graphhopper-api" />
+    <orderEntry type="library" name="Maven: com.vividsolutions:jts-core:1.14.0" level="project" />
+    <orderEntry type="library" name="Maven: com.carrotsearch:hppc:0.7.2" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.xmlgraphics:xmlgraphics-commons:2.1" level="project" />
+    <orderEntry type="module" module-name="graphhopper-reader-osm" />
+    <orderEntry type="library" name="Maven: org.openstreetmap.osmosis:osmosis-osm-binary:0.46" level="project" />
+    <orderEntry type="library" name="Maven: com.conveyal:gtfs-lib:2.1.0" level="project" />
+    <orderEntry type="library" name="Maven: net.sourceforge.javacsv:javacsv:2.0" level="project" />
+    <orderEntry type="library" name="Maven: com.beust:jcommander:1.30" level="project" />
+    <orderEntry type="library" name="Maven: com.google.guava:guava:18.0" level="project" />
+    <orderEntry type="library" name="Maven: org.mapdb:mapdb:1.0.8" level="project" />
+    <orderEntry type="library" name="Maven: commons-io:commons-io:2.4" level="project" />
+    <orderEntry type="library" name="Maven: org.geotools:gt-api:14.0" level="project" />
+    <orderEntry type="library" name="Maven: org.geotools:gt-referencing:14.0" level="project" />
+    <orderEntry type="library" name="Maven: com.googlecode.efficient-java-matrix-library:core:0.26" level="project" />
+    <orderEntry type="library" name="Maven: commons-pool:commons-pool:1.5.4" level="project" />
+    <orderEntry type="library" name="Maven: org.geotools:gt-metadata:14.0" level="project" />
+    <orderEntry type="library" name="Maven: org.geotools:gt-opengis:14.0" level="project" />
+    <orderEntry type="library" name="Maven: net.java.dev.jsr-275:jsr-275:1.0-beta-2" level="project" />
+    <orderEntry type="library" name="Maven: jgridshift:jgridshift:1.0" level="project" />
+    <orderEntry type="library" name="Maven: net.sf.geographiclib:GeographicLib-Java:1.44" level="project" />
+    <orderEntry type="library" name="Maven: javax.media:jai_core:1.1.3" level="project" />
+    <orderEntry type="library" name="Maven: org.geotools:gt-epsg-hsql:11-beta" level="project" />
+    <orderEntry type="library" name="Maven: org.hsqldb:hsqldb:2.2.8" level="project" />
+    <orderEntry type="library" name="Maven: net.sf.trove4j:trove4j:3.0.3" level="project" />
+    <orderEntry type="library" name="Maven: commons-cli:commons-cli:1.3.1" level="project" />
+    <orderEntry type="library" name="Maven: com.conveyal:jackson2-geojson:0.8" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.3.2" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.3.0" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.3.2" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.25" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.slf4j:slf4j-log4j12:1.7.25" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: log4j:log4j:1.2.17" level="project" />
+    <orderEntry type="library" name="Maven: com.google.transit:gtfs-realtime-bindings:0.0.4" level="project" />
+    <orderEntry type="library" name="Maven: com.google.protobuf:protobuf-java:2.6.1" level="project" />
+    <orderEntry type="module" module-name="graphhopper-core" scope="TEST" production-on-test="" />
+    <orderEntry type="library" scope="TEST" name="Maven: junit:junit:4.12" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.hamcrest:hamcrest-core:1.3" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.hamcrest:hamcrest-library:1.3" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.assertj:assertj-core:3.6.2" level="project" />
+  </component>
+</module>

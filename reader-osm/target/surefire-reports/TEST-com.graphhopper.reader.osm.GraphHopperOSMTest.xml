@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="com.graphhopper.reader.osm.GraphHopperOSMTest" time="1.061" tests="25" errors="0" skipped="0" failures="0">
+  <properties>
+    <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
+    <property name="sun.boot.library.path" value="/Library/Java/JavaVirtualMachines/jdk1.8.0_171.jdk/Contents/Home/jre/lib"/>
+    <property name="java.vm.version" value="25.171-b11"/>
+    <property name="gopherProxySet" value="false"/>
+    <property name="java.vm.vendor" value="Oracle Corporation"/>
+    <property name="maven.multiModuleProjectDirectory" value="/Users/shivek.sacklecha/Desktop/curefit/graphhopper"/>
+    <property name="java.vendor.url" value="http://java.oracle.com/"/>
+    <property name="path.separator" value=":"/>
+    <property name="guice.disable.misplaced.annotation.check" value="true"/>
+    <property name="java.vm.name" value="Java HotSpot(TM) 64-Bit Server VM"/>
+    <property name="file.encoding.pkg" value="sun.io"/>
+    <property name="user.country" value="IN"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="sun.os.patch.level" value="unknown"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="user.dir" value="/Users/shivek.sacklecha/Desktop/curefit/graphhopper"/>
+    <property name="java.runtime.version" value="1.8.0_171-b11"/>
+    <property name="java.awt.graphicsenv" value="sun.awt.CGraphicsEnvironment"/>
+    <property name="java.endorsed.dirs" value="/Library/Java/JavaVirtualMachines/jdk1.8.0_171.jdk/Contents/Home/jre/lib/endorsed"/>
+    <property name="os.arch" value="x86_64"/>
+    <property name="java.io.tmpdir" value="/var/folders/cb/s11nlhrd7q9740z6rjd1fz3xjg446p/T/"/>
+    <property name="line.separator" value="&#10;"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="os.name" value="Mac OS X"/>
+    <property name="classworlds.conf" value="/usr/local/Cellar/maven/3.5.4/libexec/bin/m2.conf"/>
+    <property name="sun.jnu.encoding" value="UTF-8"/>
+    <property name="java.library.path" value="/Users/shivek.sacklecha/Library/Java/Extensions:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java:."/>
+    <property name="maven.conf" value="/usr/local/Cellar/maven/3.5.4/libexec/conf"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="java.class.version" value="52.0"/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="os.version" value="10.13.3"/>
+    <property name="library.jansi.path" value="/usr/local/Cellar/maven/3.5.4/libexec/lib/jansi-native"/>
+    <property name="user.home" value="/Users/shivek.sacklecha"/>
+    <property name="user.timezone" value="Asia/Kolkata"/>
+    <property name="java.awt.printerjob" value="sun.lwawt.macosx.CPrinterJob"/>
+    <property name="java.specification.version" value="1.8"/>
+    <property name="file.encoding" value="UTF-8"/>
+    <property name="user.name" value="shivek.sacklecha"/>
+    <property name="java.class.path" value="/usr/local/Cellar/maven/3.5.4/libexec/boot/plexus-classworlds-2.5.2.jar"/>
+    <property name="java.vm.specification.version" value="1.8"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="java.home" value="/Library/Java/JavaVirtualMachines/jdk1.8.0_171.jdk/Contents/Home/jre"/>
+    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher clean install"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="user.language" value="en"/>
+    <property name="awt.toolkit" value="sun.lwawt.macosx.LWCToolkit"/>
+    <property name="java.vm.info" value="mixed mode"/>
+    <property name="java.version" value="1.8.0_171"/>
+    <property name="java.ext.dirs" value="/Users/shivek.sacklecha/Library/Java/Extensions:/Library/Java/JavaVirtualMachines/jdk1.8.0_171.jdk/Contents/Home/jre/lib/ext:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java"/>
+    <property name="sun.boot.class.path" value="/Library/Java/JavaVirtualMachines/jdk1.8.0_171.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_171.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_171.jdk/Contents/Home/jre/lib/sunrsasign.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_171.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_171.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_171.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_171.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_171.jdk/Contents/Home/jre/classes"/>
+    <property name="java.vendor" value="Oracle Corporation"/>
+    <property name="maven.home" value="/usr/local/Cellar/maven/3.5.4/libexec"/>
+    <property name="file.separator" value="/"/>
+    <property name="java.vendor.url.bug" value="http://bugreport.sun.com/bugreport/"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeBig"/>
+    <property name="sun.cpu.isalist" value=""/>
+  </properties>
+  <testcase name="testCustomFactoryForNoneCH" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.031"/>
+  <testcase name="testGetPathsDirectionEnforcement1" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.022"/>
+  <testcase name="testGetPathsDirectionEnforcement2" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.016"/>
+  <testcase name="testGetPathsDirectionEnforcement3" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.014"/>
+  <testcase name="testGetPathsDirectionEnforcement4" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.013"/>
+  <testcase name="testGetPathsDirectionEnforcement5" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.014"/>
+  <testcase name="testGetPathsDirectionEnforcement6" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.013"/>
+  <testcase name="testDoNotAllowWritingAndLoadingAtTheSameTime" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.05"/>
+  <testcase name="testVia" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.042"/>
+  <testcase name="testMultipleLMPreparationsInParallel" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.147"/>
+  <testcase name="testPrepare" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.023"/>
+  <testcase name="testDoesNotCreateEmptyFolderIfLoadingFromNonExistingPath" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.014"/>
+  <testcase name="testSortedGraph_noCH" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.018"/>
+  <testcase name="testFootAndCar" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.019"/>
+  <testcase name="testLoadingWithDifferentCHConfig_issue471" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.112"/>
+  <testcase name="testLoadOSM" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.065"/>
+  <testcase name="testGetWeightingForCH" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.001"/>
+  <testcase name="testFailsForMissingParameters" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.058"/>
+  <testcase name="testAllowMultipleReadingInstances" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.116"/>
+  <testcase name="testLoadOSMNoCH" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.066"/>
+  <testcase name="testFootOnly" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.016"/>
+  <testcase name="testFailsForWrongConfig" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.055"/>
+  <testcase name="testGetMultipleWeightingsForCH" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.008"/>
+  <testcase name="testNoNPE_ifLoadNotSuccessful" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.01"/>
+  <testcase name="testMultipleCHPreparationsInParallel" classname="com.graphhopper.reader.osm.GraphHopperOSMTest" time="0.113"/>
+</testsuite>

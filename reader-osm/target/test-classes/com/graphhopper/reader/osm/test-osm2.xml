@@ -1,0 +1,117 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm" osmosis_replication_timestamp="2014-01-02T01:10:14Z">
+    <node id="10" lat="51.2492152" lon="9.4317166" uid="24853">
+        <tag k="is_in" v="Wiesbaden,Hessen,Germany,Europe" />
+        <tag k="name" v="Wiesbaden-Naurod" />
+        <tag k="place" v="village" />
+    </node>
+    <node id="20" lat="52.0" lon="9" uid="24854">
+        <tag k="name" v="Halbendorf-Spree" />
+    </node>
+
+    <node id="21" lat="52.1" lon="9.1" uid="24854">
+        <tag k="name" v="Next-Halbendorf-Spree" />
+    </node>
+
+    <node id="22" lat="52.133" lon="9.1" uid="24854">
+
+    </node>
+
+    <node id="23" lat="52.144" lon="9.1" uid="24854">
+
+    </node>
+
+    <node id="30" lat="51.2" lon="9.4" uid="24855">
+        <tag k="name" v="Dresden" />
+    </node>
+
+    <node id="40" lat="54.0" lon="10.1">
+        <tag k="name" v="Ferry End" />
+    </node>
+    <node id="50" lat="55.0" lon="10.2">
+        <tag k="name" v="Ferry Start" />
+    </node>
+
+    <node id="60" lat="56.0" lon="10.1">
+        <tag k="name" v="Start" />
+    </node>
+    <node id="70" lat="57.0" lon="10.2">
+        <tag k="name" v="End" />
+    </node>
+
+    <node id="80" lat="54.1" lon="11.1">
+        <tag k="name" v="Ferry2 End" />
+    </node>
+    <node id="90" lat="55.1" lon="11.2">
+        <tag k="name" v="Ferry2 Start" />
+    </node>
+    
+    <way id="10" uid="85761">
+        <!-- 0-1, 1-2 -->
+        <nd ref="10"/>
+        <nd ref="20"/>
+        <nd ref="30"/>
+        <tag k="oneway" v="true" />
+        <tag k="highway" v="motorway" />
+    </way>
+
+    <way id="11" uid="85761">
+        <nd ref="21"/>
+        <nd ref="20"/>
+        <tag k="oneway" v="yes" />
+        <tag k="highway" v="motorway" />
+    </way>
+
+    <way id="12" uid="85761">
+        <nd ref="20"/>
+        <nd ref="22"/>
+        <tag k="oneway" v="-1" />
+        <tag k="highway" v="primary" />
+    </way>
+
+    <way id="13" uid="85761">
+        <nd ref="20"/>
+        <nd ref="23"/>
+        <tag k="junction" v="roundabout" />
+        <tag k="highway" v="secondary" />
+    </way>
+
+    <way id="15" uid="85762">
+        <nd ref="50"/>
+        <nd ref="40"/>
+        <tag k="route" v="ferry"/>
+        <tag k="motorcar" v="yes"/>
+        <tag k="foot" v="yes"/>
+        <tag k="duration" v="01:10"/>
+    </way>
+
+    <way id="16" uid="85762">
+        <nd ref="80"/>
+        <nd ref="90"/>
+        <tag k="route" v="ferry"/>
+    </way>
+
+<!-- invalid duration format -->
+    <way id="17" uid="85762">
+        <nd ref="80"/>
+        <nd ref="90"/>
+        <tag k="route" v="ferry"/>
+        <tag k="duration" v="P01:10"/>
+    </way>
+
+<!-- invalid long duration -->
+    <way id="18" uid="85762">
+        <nd ref="22"/>
+        <nd ref="23"/>
+        <tag k="route" v="ferry"/>
+        <tag k="duration" v="P1M"/>
+    </way>
+
+    <way id="20">
+        <nd ref="60"/>
+        <nd ref="70"/>
+        <tag k="highway" v="motorway" />
+        <tag k="maxspeed" v="40" />
+    </way>
+
+</osm>
