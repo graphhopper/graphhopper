@@ -47,3 +47,20 @@ local.properties
 !malta-latest.osm.pbf
 /graph-cache
 package-lock.json
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Intellij
+.idea/
+*.iml
+*.iws
+
+# Mac
+.DS_Store
+
+# Maven
+log/
+target/
