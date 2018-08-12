@@ -5,5 +5,4 @@
 
 echo "GRAPHHOPPER will start in ENVIRONMENT : $ENVIRONMENT"
 
-./graphhopper.sh build
 ./graphhopper.sh -a web -i ./osrm_location.osm.pbf
