@@ -148,6 +148,13 @@ cd core/files/
 docker-compose up -d
 ```
 
+If you don't want to use docker-compose you can do the following:
+```bash
+docker build -t graphhopper:master .
+docker run -d --name graphhopper -v <path_data_directory>/data:/data -p 11111:11111 graphhopper:master
+```
+
+
 # Features
 
 Here is a list of the more detailed features including a link to the documentation:
