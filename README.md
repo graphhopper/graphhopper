@@ -46,6 +46,17 @@ There are subprojects to make GraphHopper working offline
 on [Android](https://github.com/graphhopper/graphhopper/tree/master/android)
 and [iOS](http://github.com/graphhopper/graphhopper-ios)
 
+## For Analysis
+
+There is the isochrone subproject to calculate and visualize the reachable area for a certain travel mode
+
+**[Isochrone Web API](./docs/web/api-doc.md#isochrone)**
+
+[![Isochrone API image](./docs/isochrone/images/isochrone.png)](./docs/web/api-doc.md#isochrone)
+
+**[Isochrone Experiments](//www.graphhopper.com/blog/2018/07/04/high-precision-reachability/)**
+
+[![high precision reachability image](https://www.graphhopper.com/wp-content/uploads/2018/06/berlin-reachability-768x401.png)](https://www.graphhopper.com/blog/2018/07/04/high-precision-reachability/)
 
 # Technical Overview
 
@@ -181,3 +192,4 @@ Here is a list of the more detailed features including a link to the documentati
  * Scales from small indoor-sized to world-wide-sized graphs
  * Find nearest point on street e.g. to get elevation or 'snapp to road'
  * Do [map matching](https://github.com/graphhopper/map-matching) with GraphHopper
+ * Calculate [isochrones](./docs/web/api-doc.md#isochrone) with GraphHopper
