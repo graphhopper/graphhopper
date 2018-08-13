@@ -1,0 +1,29 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/ubuntu/graphhopper
+
+permissions:
+  - object: /home/ubuntu/graphhopper
+    pattern: "**"
+    owner: ubuntu
+    mode: 777
+    type:
+      - file
+hooks:
+  BeforeInstall:
+    - location: cleanup.sh
+      runas: ubuntu
+#  ApplicationStop:
+#    - location: stop_server.sh
+#      runas: ubuntu
+  ApplicationStart:
+    - location: start_server.sh
+      timeout: 3600
+      runas: ubuntu
+  ValidateService:
+    - location: validate_service.sh
+      timeout: 120
+      runas: ubuntu
+
