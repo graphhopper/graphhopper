@@ -28,6 +28,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import org.junit.Before;
 import org.junit.Test;
@@ -426,11 +427,11 @@ public class InstructionListTest {
         verifyGPX(instructions.createGPX(Constants.VERSION));
     }
 
-    private long flagsForSpeed(EncodingManager encodingManager, int speedKmPerHour) {
+    private IntsRef flagsForSpeed(EncodingManager encodingManager, int speedKmPerHour) {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
         way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
-        return encodingManager.handleWayTags(way, 1, 0);
+        return encodingManager.handleWayTags(new IntsRef(), way, 1, 0);
     }
 
     @Test

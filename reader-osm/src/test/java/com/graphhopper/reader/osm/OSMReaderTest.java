@@ -596,7 +596,7 @@ public class OSMReaderTest {
             }
 
             @Override
-            Collection<EdgeIteratorState> addOSMWay(LongIndexedContainer osmNodeIds, long wayFlags, long osmId) {
+            Collection<EdgeIteratorState> addOSMWay(LongIndexedContainer osmNodeIds, IntsRef wayFlags, long osmId) {
                 return Collections.emptyList();
             }
         };

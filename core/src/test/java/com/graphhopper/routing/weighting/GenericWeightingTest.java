@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -66,7 +67,7 @@ public class GenericWeightingTest {
         graph.edge(0, 1, 1, true);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
-        graph.getEdgeIteratorState(0, 1).setFlags(encoder.handleWayTags(way, 1, 0));
+        graph.getEdgeIteratorState(0, 1).setFlags(encoder.handleWayTags(new IntsRef(), way, 1, 0));
     }
 
     @Test
@@ -101,7 +102,7 @@ public class GenericWeightingTest {
         simpleGraph.edge(0, 1, 1, true);
         AbstractRoutingAlgorithmTester.updateDistancesFor(simpleGraph, 0, 0.00, 0.00);
         AbstractRoutingAlgorithmTester.updateDistancesFor(simpleGraph, 1, 0.01, 0.01);
-        simpleGraph.getEdgeIteratorState(0, 1).setFlags(simpleEncoder.handleWayTags(way, 1, 0));
+        simpleGraph.getEdgeIteratorState(0, 1).setFlags(simpleEncoder.handleWayTags(new IntsRef(), way, 1, 0));
 
         Weighting instance = new GenericWeighting(simpleEncoder, new HintsMap().put(GenericWeighting.HEIGHT_LIMIT, 5.0));
         EdgeIteratorState edge = simpleGraph.getEdgeIteratorState(0, 1);

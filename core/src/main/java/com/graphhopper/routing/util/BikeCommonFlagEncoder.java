@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.weighting.PriorityWeighting;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionAnnotation;
 import com.graphhopper.util.Translation;
@@ -301,7 +302,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
+    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
         int code = 0;
         if (relation.hasTag("route", "bicycle")) {
             Integer val = bikeNetworkToCode.get(relation.getTag("network"));
@@ -342,33 +343,32 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
         if (!isAccept(allowed))
-            return 0;
+            return edgeFlags;
 
-        long flags = 0;
         double wayTypeSpeed = getSpeed(way);
         if (!isFerry(allowed)) {
             wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
-            flags = handleSpeed(way, wayTypeSpeed, flags);
-            flags = handleBikeRelated(way, flags, relationFlags > UNCHANGED.getValue());
+            handleSpeed(edgeFlags, way, wayTypeSpeed);
+            handleBikeRelated(edgeFlags, way, relationFlags > UNCHANGED.getValue());
 
             boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
             if (isRoundabout) {
-                flags = setBool(flags, K_ROUNDABOUT, true);
+                setBool(edgeFlags, K_ROUNDABOUT, true);
             }
 
         } else {
             double ferrySpeed = getFerrySpeed(way);
-            flags = handleSpeed(way, ferrySpeed, flags);
-            flags |= directionBitMask;
+            handleSpeed(edgeFlags, way, ferrySpeed);
+            edgeFlags.flags |= directionBitMask;
         }
         int priorityFromRelation = 0;
         if (relationFlags != 0)
             priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
-        flags = priorityWayEncoder.setValue(flags, handlePriority(way, wayTypeSpeed, priorityFromRelation));
-        return flags;
+        priorityWayEncoder.setValue(edgeFlags, handlePriority(way, wayTypeSpeed, priorityFromRelation));
+        return edgeFlags;
     }
 
     int getSpeed(ReaderWay way) {
@@ -434,12 +434,12 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public InstructionAnnotation getAnnotation(long flags, Translation tr) {
+    public InstructionAnnotation getAnnotation(IntsRef edgeFlags, Translation tr) {
         int paveType = 0; // paved
-        if (isBool(flags, K_UNPAVED))
+        if (isBool(edgeFlags, K_UNPAVED))
             paveType = 1; // unpaved        
 
-        int wayType = (int) wayTypeEncoder.getValue(flags);
+        int wayType = (int) wayTypeEncoder.getValue(edgeFlags);
         String wayName = getWayName(paveType, wayType, tr);
         return new InstructionAnnotation(0, wayName);
     }
@@ -599,7 +599,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     /**
      * Handle surface and wayType encoding
      */
-    long handleBikeRelated(ReaderWay way, long encoded, boolean partOfCycleRelation) {
+    void handleBikeRelated(IntsRef edgeFlags, ReaderWay way, boolean partOfCycleRelation) {
         String surfaceTag = way.getTag("surface");
         String highway = way.getTag("highway");
         String trackType = way.getTag("tracktype");
@@ -608,7 +608,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         if ("track".equals(highway) && (trackType == null || !"grade1".equals(trackType))
                 || "path".equals(highway) && surfaceTag == null
                 || unpavedSurfaceTags.contains(surfaceTag)) {
-            encoded = setBool(encoded, K_UNPAVED, true);
+            setBool(edgeFlags, K_UNPAVED, true);
         }
 
         WayType wayType;
@@ -629,36 +629,38 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         } else if ("cycleway".equals(highway))
             wayType = WayType.CYCLEWAY;
 
-        return wayTypeEncoder.setValue(encoded, wayType.getValue());
+        wayTypeEncoder.setValue(edgeFlags, wayType.getValue());
     }
 
     @Override
-    public long setBool(long flags, int key, boolean value) {
+    public IntsRef setBool(IntsRef edgeFlags, int key, boolean value) {
         switch (key) {
             case K_UNPAVED:
-                return value ? flags | unpavedBit : flags & ~unpavedBit;
+                edgeFlags.flags = value ? edgeFlags.flags | unpavedBit : edgeFlags.flags & ~unpavedBit;
+                break;
             default:
-                return super.setBool(flags, key, value);
+                super.setBool(edgeFlags, key, value);
+        }
+        return edgeFlags;
+    }
+
+    @Override
+    public boolean isBool(IntsRef edgeFlags, int key) {
+        switch (key) {
+            case K_UNPAVED:
+                return (edgeFlags.flags & unpavedBit) != 0;
+            default:
+                return super.isBool(edgeFlags, key);
         }
     }
 
     @Override
-    public boolean isBool(long flags, int key) {
-        switch (key) {
-            case K_UNPAVED:
-                return (flags & unpavedBit) != 0;
-            default:
-                return super.isBool(flags, key);
-        }
-    }
-
-    @Override
-    public double getDouble(long flags, int key) {
+    public double getDouble(IntsRef edgeFlags, int key) {
         switch (key) {
             case PriorityWeighting.KEY:
-                return (double) priorityWayEncoder.getValue(flags) / BEST.getValue();
+                return (double) priorityWayEncoder.getValue(edgeFlags) / BEST.getValue();
             default:
-                return super.getDouble(flags, key);
+                return super.getDouble(edgeFlags, key);
         }
     }
 
@@ -666,8 +668,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         return way.hasTag("highway", pushingSectionsHighways) || way.hasTag("railway", "platform") || way.hasTag("bicycle", "dismount");
     }
 
-    protected long handleSpeed(ReaderWay way, double speed, long encoded) {
-        encoded = setSpeed(encoded, speed);
+    protected void handleSpeed(IntsRef edgeFlags, ReaderWay way, double speed) {
+        setSpeed(edgeFlags, speed);
 
         // handle oneways        
         boolean isOneway = way.hasTag("oneway", oneways)
@@ -687,14 +689,13 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                     || way.hasTag("vehicle:forward", "no")
                     || way.hasTag("bicycle:forward", "no");
             if (isBackward)
-                encoded |= backwardBit;
+                edgeFlags.flags |= backwardBit;
             else
-                encoded |= forwardBit;
+                edgeFlags.flags |= forwardBit;
 
         } else {
-            encoded |= directionBitMask;
+            edgeFlags.flags |= directionBitMask;
         }
-        return encoded;
     }
 
     protected void setHighwaySpeed(String highway, int speed) {

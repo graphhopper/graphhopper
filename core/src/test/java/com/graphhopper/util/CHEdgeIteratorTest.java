@@ -25,6 +25,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -41,18 +42,18 @@ public class CHEdgeIteratorTest {
         EdgeFilter carOutFilter = DefaultEdgeFilter.outEdges(carFlagEncoder);
         GraphHopperStorage ghStorage = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
         CHGraph g = ghStorage.getGraph(CHGraph.class, weighting);
-        g.edge(0, 1).setDistance(12).setFlags(carFlagEncoder.setProperties(10, true, true));
-        g.edge(0, 2).setDistance(13).setFlags(carFlagEncoder.setProperties(20, true, true));
+        g.edge(0, 1).setDistance(12).setFlags(carFlagEncoder.setAccess(carFlagEncoder.setSpeed(new IntsRef(), 10), true, true));
+        g.edge(0, 2).setDistance(13).setFlags(carFlagEncoder.setAccess(carFlagEncoder.setSpeed(new IntsRef(), 20), true, true));
         ghStorage.freeze();
 
         assertEquals(2, GHUtility.count(g.getAllEdges()));
         assertEquals(1, GHUtility.count(g.createEdgeExplorer(carOutFilter).setBaseNode(1)));
         EdgeIteratorState iter = GHUtility.getEdge(g, 0, 1);
         assertEquals(1, iter.getAdjNode());
-        assertEquals(carFlagEncoder.setProperties(10, true, true), iter.getFlags());
+        assertEquals(carFlagEncoder.setAccess(carFlagEncoder.setSpeed(new IntsRef(), 10), true, true), iter.getFlags());
 
         // update setProperties
-        iter.setFlags(carFlagEncoder.setProperties(20, true, false));
+        iter.setFlags(carFlagEncoder.setAccess(carFlagEncoder.setSpeed(new IntsRef(), 20), true, false));
         assertEquals(12, iter.getDistance(), 1e-4);
 
         // update distance
@@ -60,7 +61,7 @@ public class CHEdgeIteratorTest {
         assertEquals(10, iter.getDistance(), 1e-4);
         assertEquals(0, GHUtility.count(g.createEdgeExplorer(carOutFilter).setBaseNode(1)));
         iter = GHUtility.getEdge(g, 0, 1);
-        assertEquals(carFlagEncoder.setProperties(20, true, false), iter.getFlags());
+        assertEquals(carFlagEncoder.setAccess(carFlagEncoder.setSpeed(new IntsRef(), 20), true, false), iter.getFlags());
         assertEquals(10, iter.getDistance(), 1e-4);
         assertEquals(1, GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(1)).size());
         assertEquals(0, GHUtility.getNeighbors(g.createEdgeExplorer(carOutFilter).setBaseNode(1)).size());

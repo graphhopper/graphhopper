@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
@@ -133,12 +134,12 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public long getFlags() {
+            public IntsRef getFlags() {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public EdgeIteratorState setFlags(long flags) {
+            public EdgeIteratorState setFlags(IntsRef flags) {
                 throw new UnsupportedOperationException();
             }
 

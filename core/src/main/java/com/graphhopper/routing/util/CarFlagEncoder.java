@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
@@ -231,16 +232,15 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
+    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
         return oldRelationFlags;
     }
 
     @Override
-    public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
         if (!isAccept(allowed))
-            return 0;
+            return edgeFlags;
 
-        long flags = 0;
         if (!isFerry(allowed)) {
             // get assumed speed from highway type
             double speed = getSpeed(way);
@@ -248,35 +248,34 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
             speed = applyBadSurfaceSpeed(way, speed);
 
-            flags = setSpeed(flags, speed);
+            setSpeed(edgeFlags, speed);
 
             boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
             if (isRoundabout)
-                flags = setBool(flags, K_ROUNDABOUT, true);
+                setBool(edgeFlags, K_ROUNDABOUT, true);
 
             if (isOneway(way) || isRoundabout) {
                 if (isBackwardOneway(way))
-                    flags |= backwardBit;
+                    edgeFlags.flags |= backwardBit;
 
                 if (isForwardOneway(way))
-                    flags |= forwardBit;
+                    edgeFlags.flags |= forwardBit;
             } else
-                flags |= directionBitMask;
+                edgeFlags.flags |= directionBitMask;
 
         } else {
             double ferrySpeed = getFerrySpeed(way);
-            flags = setSpeed(flags, ferrySpeed);
-            flags |= directionBitMask;
+            setSpeed(edgeFlags, ferrySpeed);
+            edgeFlags.flags |= directionBitMask;
         }
 
         for (String restriction : restrictions) {
             if (way.hasTag(restriction, "destination")) {
                 // This is problematic as Speed != Time
-                flags = setSpeed(flags, destinationSpeed);
+                setSpeed(edgeFlags, destinationSpeed);
             }
         }
-
-        return flags;
+        return edgeFlags;
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.graphhopper.storage.change;
 
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -7,12 +8,12 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.jackson.Jackson;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -56,7 +57,7 @@ public class ChangeGraphHelperTest {
         double defaultSpeed = encoder.getSpeed(GHUtility.getEdge(graph, 0, 1).getFlags());
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            long flags = GHUtility.getEdge(graph, 0, 1).getFlags();
+            IntsRef flags = GHUtility.getEdge(graph, 0, 1).getFlags();
             assertEquals(defaultSpeed, encoder.getSpeed(flags), .1);
             assertTrue(encoder.isForward(flags));
         }

@@ -85,15 +85,15 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.edge(4, 6, 1, true);
         g2.edge(6, 7, 1, true);
         EdgeIteratorState iter2_2 = g2.edge(5, 7);
-        iter2_2.setDistance(1.4).setFlags(encoder.setProperties(10, true, false));
+        iter2_2.setDistance(1.4).setFlags(encoder.setAccess(encoder.setSpeed(new IntsRef(), 10), true, false));
 
         ghStorage.freeze();
         // simulate preparation
         CHEdgeIteratorState iter2_1 = g2.shortcut(0, 5);
-        iter2_1.setDistance(2.8).setFlags(encoder.setProperties(10, true, false));
+        iter2_1.setDistance(2.8).setFlags(encoder.setAccess(encoder.setSpeed(new IntsRef(), 10), true, false));
         iter2_1.setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());
         CHEdgeIteratorState tmp = g2.shortcut(0, 7);
-        tmp.setDistance(4.2).setFlags(encoder.setProperties(10, true, false));
+        tmp.setDistance(4.2).setFlags(encoder.setAccess(encoder.setSpeed(new IntsRef(), 10), true, false));
         tmp.setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
         g2.setLevel(1, 0);
         g2.setLevel(3, 1);
@@ -242,9 +242,9 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         AlgorithmOptions algoOpts = AlgorithmOptions.start().weighting(weighting).build();
         GraphHopperStorage graph = createGHStorage(encodingManager, Arrays.asList(weighting), false);
         EdgeIteratorState edge = graph.edge(0, 1, 2, true);
-        long flags = edge.getFlags();
+        IntsRef flags = edge.getFlags();
         flags = encoder.setSpeed(flags, speed);
-        flags = encoder.setReverseSpeed(flags, revSpeed);
+        encoder.setReverseSpeed(flags, revSpeed);
         edge.setFlags(flags);
         graph.edge(1, 2, 1, true);
 

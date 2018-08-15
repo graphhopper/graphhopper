@@ -30,10 +30,7 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
@@ -206,9 +203,9 @@ public class RealtimeFeed {
             public EdgeIteratorState edge(int a, int b) {
                 int edge = firstEdge++;
                 final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(-1,
-                        edge, a, b, 0.0, 0, "", new PointList());
+                        edge, a, b, 0.0, new IntsRef(), "", new PointList());
                 final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(-1,
-                        edge, b, a, 0.0, 0, "", new PointList());
+                        edge, b, a, 0.0, new IntsRef(), "", new PointList());
                 newEdge.setReverseEdge(reverseNewEdge);
                 reverseNewEdge.setReverseEdge(newEdge);
                 additionalEdges.push(newEdge);

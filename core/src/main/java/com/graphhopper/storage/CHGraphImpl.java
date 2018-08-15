@@ -107,8 +107,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             @Override
             final long reverseFlags(long edgePointer, long flags) {
                 boolean isShortcut = edgePointer >= toPointer(baseGraph.edgeCount);
-                if (!isShortcut)
+                if (!isShortcut) {
                     return baseGraph.edgeAccess.reverseFlags(edgePointer, flags);
+                }
 
                 // we need a special swapping for CHGraph if it is a shortcut as we only store the weight and access flags then
                 long dir = flags & scDirMask;
@@ -300,13 +301,15 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         else
             weightLong = ((long) (weight * WEIGHT_FACTOR)) << 2;
 
-        long accessFlags = edge.getDirectFlags() & scDirMask;
-        edge.setFlags(weightLong | accessFlags);
+        IntsRef intsRef = edge.getDirectFlags();
+        long accessFlags = intsRef.flags & scDirMask;
+        intsRef.flags = weightLong | accessFlags;
+        edge.setFlags(intsRef);
     }
 
     final double getWeight(CommonEdgeIterator edge) {
         // no need for reverseFlags call (shortcut has identical weight if both dies) and also no need for 64bit
-        long flags32bit = edge.getDirectFlags();
+        long flags32bit = edge.getDirectFlags().flags;
         double weight = (flags32bit >>> 2) / WEIGHT_FACTOR;
         if (weight >= MAX_WEIGHT)
             return Double.POSITIVE_INFINITY;
@@ -417,7 +420,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public final long getFlags() {
+        public final IntsRef getFlags() {
             checkShortcut(false, "getFlags");
             return super.getDirectFlags();
         }
@@ -465,7 +468,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public boolean isBackward(FlagEncoder encoder) {
             assert encoder == weighting.getFlagEncoder() : encoder + " vs. " + weighting.getFlagEncoder();
             if (isShortcut())
-                return (getDirectFlags() & PrepareEncoder.getScBwdDir()) != 0;
+                return (getDirectFlags().flags & PrepareEncoder.getScBwdDir()) != 0;
 
             return encoder.isBackward(getDirectFlags());
         }
@@ -474,7 +477,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public boolean isForward(FlagEncoder encoder) {
             assert encoder == weighting.getFlagEncoder() : encoder + " vs. " + weighting.getFlagEncoder();
             if (isShortcut())
-                return (getDirectFlags() & PrepareEncoder.getScFwdDir()) != 0;
+                return (getDirectFlags().flags & PrepareEncoder.getScFwdDir()) != 0;
 
             return encoder.isForward(getDirectFlags());
         }
@@ -536,7 +539,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public int getMergeStatus(long flags) {
-            return PrepareEncoder.getScMergeStatus(getDirectFlags(), flags);
+            return PrepareEncoder.getScMergeStatus(getDirectFlags().flags, flags);
         }
     }
 
@@ -571,7 +574,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public boolean isBackward(FlagEncoder encoder) {
             assert encoder == weighting.getFlagEncoder() : encoder + " vs. " + weighting.getFlagEncoder();
             if (isShortcut())
-                return (getDirectFlags() & PrepareEncoder.getScBwdDir()) != 0;
+                return (getDirectFlags().flags & PrepareEncoder.getScBwdDir()) != 0;
 
             return encoder.isBackward(getDirectFlags());
         }
@@ -580,13 +583,13 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public boolean isForward(FlagEncoder encoder) {
             assert encoder == weighting.getFlagEncoder() : encoder + " vs. " + weighting.getFlagEncoder();
             if (isShortcut())
-                return (getDirectFlags() & PrepareEncoder.getScFwdDir()) != 0;
+                return (getDirectFlags().flags & PrepareEncoder.getScFwdDir()) != 0;
 
             return encoder.isForward(getDirectFlags());
         }
 
         @Override
-        public final long getFlags() {
+        public final IntsRef getFlags() {
             if (isShortcut())
                 throw new IllegalStateException("Shortcut should not need to return raw flags!");
             return getDirectFlags();
@@ -639,7 +642,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public int getMergeStatus(long flags) {
-            return PrepareEncoder.getScMergeStatus(getDirectFlags(), flags);
+            return PrepareEncoder.getScMergeStatus(getDirectFlags().flags, flags);
         }
 
         void checkShortcut(boolean shouldBeShortcut, String methodName) {

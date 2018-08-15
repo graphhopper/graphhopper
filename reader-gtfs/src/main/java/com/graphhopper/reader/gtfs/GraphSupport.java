@@ -21,10 +21,7 @@ package com.graphhopper.reader.gtfs;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
@@ -140,12 +137,12 @@ class GraphSupport {
                     }
 
                     @Override
-                    public long getFlags() {
+                    public IntsRef getFlags() {
                         return edge.getFlags();
                     }
 
                     @Override
-                    public EdgeIteratorState setFlags(long flags) {
+                    public EdgeIteratorState setFlags(IntsRef flags) {
                         edge.setFlags(flags);
                         return this;
                     }

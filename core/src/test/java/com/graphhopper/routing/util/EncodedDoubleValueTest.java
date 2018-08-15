@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -29,7 +30,9 @@ public class EncodedDoubleValueTest {
     @Test
     public void testSetDoubleValue() {
         EncodedDoubleValue instance = new EncodedDoubleValue("test", 6, 10, 0.01, 5, 10);
-        assertEquals(10.12, instance.getDoubleValue(instance.setDoubleValue(0, 10.12)), 1e-4);
+        IntsRef flags = new IntsRef();
+        instance.setDoubleValue(flags, 10.12);
+        assertEquals(10.12, instance.getDoubleValue(flags), 1e-4);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -40,25 +43,27 @@ public class EncodedDoubleValueTest {
     @Test
     public void testMaxValue() {
         EncodedDoubleValue instance1 = new EncodedDoubleValue("test1", 0, 8, 0.5, 60, 100);
-        long flags = instance1.setDoubleValue(0, instance1.getMaxValue());
-        assertEquals(100, instance1.getDoubleValue(flags), 1e-1);
+        IntsRef edgeFlags = new IntsRef();
+        instance1.setDoubleValue(edgeFlags, instance1.getMaxValue());
+        assertEquals(100, instance1.getDoubleValue(edgeFlags), 1e-1);
 
         CarFlagEncoder carEncoder = new CarFlagEncoder(10, 0.5, 0);
         new EncodingManager(carEncoder);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "70 mph");
-        flags = carEncoder.handleWayTags(way, 1, 0);
+        edgeFlags = carEncoder.handleWayTags(new IntsRef(), way, 1, 0);
 
         // double speed = AbstractFlagEncoder.parseSpeed("70 mph");
-        flags = carEncoder.reverseFlags(flags);
-        assertEquals(101.5, carEncoder.getSpeed(flags), 1e-1);
+        edgeFlags.flags = carEncoder.reverseFlags(edgeFlags.flags);
+        assertEquals(101.5, carEncoder.getSpeed(edgeFlags), 1e-1);
     }
 
     @Test
     public void testUnsignedRightShift_issue417() {
         EncodedDoubleValue speedEncoder = new EncodedDoubleValue("Speed", 56, 8, 1, 30, 255);
-        Long flags = -72057594037927936L;
+        IntsRef flags = new IntsRef();
+        flags.flags = -72057594037927936L;
         assertEquals(255, speedEncoder.getDoubleValue(flags), 0.01);
     }
 }

@@ -24,6 +24,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -192,7 +193,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     /**
      * Defines the bits which are used for relation flags.
-     * <p>
      *
      * @return incremented shift value pointing behind the last used bit
      */
@@ -203,24 +203,22 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * Analyze the properties of a relation and create the routing flags for the second read step.
      * In the pre-parsing step this method will be called to determine the useful relation tags.
-     * <p>
      */
-    public abstract long handleRelationTags(ReaderRelation relation, long oldRelationFlags);
+    public abstract long handleRelationTags(long oldRelation, ReaderRelation relation);
 
     /**
      * Decide whether a way is routable for a given mode of travel. This skips some ways before
      * handleWayTags is called.
-     * <p>
      *
      * @return the encoded value to indicate if this encoder allows travel or not.
      */
     public abstract long acceptWay(ReaderWay way);
 
     /**
-     * Analyze properties of a way and create the routing flags. This method is called in the second
+     * Analyze properties of a way and create the edge flags. This method is called in the second
      * parsing step.
      */
-    public abstract long handleWayTags(ReaderWay way, long allowed, long relationFlags);
+    public abstract IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags);
 
     /**
      * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
@@ -263,7 +261,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     @Override
-    public InstructionAnnotation getAnnotation(long flags, Translation tr) {
+    public InstructionAnnotation getAnnotation(IntsRef edgeFlags, Translation tr) {
         return InstructionAnnotation.EMPTY;
     }
 
@@ -283,38 +281,44 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * Sets default flags with specified access.
      */
-    public long flagsDefault(boolean forward, boolean backward) {
-        long flags = speedEncoder.setDefaultValue(0);
-        return setAccess(flags, forward, backward);
+    public void flagsDefault(IntsRef edgeFlags, boolean forward, boolean backward) {
+        speedEncoder.setDefaultValue(edgeFlags);
+        setAccess(edgeFlags, forward, backward);
     }
 
     @Override
-    public long setAccess(long flags, boolean forward, boolean backward) {
-        return setBool(setBool(flags, K_BACKWARD, backward), K_FORWARD, forward);
+    public IntsRef setAccess(IntsRef edgeFlags, boolean forward, boolean backward) {
+        setBool(edgeFlags, K_FORWARD, forward);
+        setBool(edgeFlags, K_BACKWARD, backward);
+        return edgeFlags;
     }
 
     @Override
-    public long setSpeed(long flags, double speed) {
+    public IntsRef setSpeed(IntsRef edgeFlags, double speed) {
         if (speed < 0 || Double.isNaN(speed))
             throw new IllegalArgumentException("Speed cannot be negative or NaN: " + speed
-                    + ", flags:" + BitUtil.LITTLE.toBitString(flags));
+                    + ", flags:" + BitUtil.LITTLE.toBitString(edgeFlags.flags));
 
-        if (speed < speedEncoder.factor / 2)
-            return setLowSpeed(flags, speed, false);
+        if (speed < speedEncoder.factor / 2) {
+            setLowSpeed(edgeFlags, speed, false);
+            return edgeFlags;
+        }
 
         if (speed > getMaxSpeed())
             speed = getMaxSpeed();
 
-        return speedEncoder.setDoubleValue(flags, speed);
+        speedEncoder.setDoubleValue(edgeFlags, speed);
+        return edgeFlags;
     }
 
-    protected long setLowSpeed(long flags, double speed, boolean reverse) {
-        return setAccess(speedEncoder.setDoubleValue(flags, 0), false, false);
+    protected void setLowSpeed(IntsRef edgeFlags, double speed, boolean reverse) {
+        speedEncoder.setDoubleValue(edgeFlags, 0);
+        setAccess(edgeFlags, false, false);
     }
 
     @Override
-    public double getSpeed(long flags) {
-        double speedVal = speedEncoder.getDoubleValue(flags);
+    public double getSpeed(IntsRef edgeFlags) {
+        double speedVal = speedEncoder.getDoubleValue(edgeFlags);
         if (speedVal < 0)
             throw new IllegalStateException("Speed was negative!? " + speedVal);
 
@@ -322,18 +326,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     @Override
-    public long setReverseSpeed(long flags, double speed) {
-        return setSpeed(flags, speed);
+    public IntsRef setReverseSpeed(IntsRef edgeFlags, double speed) {
+        return setSpeed(edgeFlags, speed);
     }
 
     @Override
-    public double getReverseSpeed(long flags) {
-        return getSpeed(flags);
-    }
-
-    @Override
-    public long setProperties(double speed, boolean forward, boolean backward) {
-        return setAccess(setSpeed(0, speed), forward, backward);
+    public double getReverseSpeed(IntsRef edgeFlags) {
+        return getSpeed(edgeFlags);
     }
 
     @Override
@@ -487,7 +486,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             }
 
         if (durationInHours == 0) {
-            if(estimatedLength != null && estimatedLength.doubleValue() <= 300)
+            if (estimatedLength != null && estimatedLength.doubleValue() <= 300)
                 return speedEncoder.factor / 2;
             // unknown speed -> put penalty on ferry transport
             return UNKNOWN_DURATION_FERRY_SPEED;
@@ -618,60 +617,73 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     @Override
-    public boolean isBackward(long flags) {
-        return (flags & backwardBit) != 0;
+    public boolean isBackward(IntsRef edgeFlags) {
+        return (edgeFlags.flags & backwardBit) != 0;
     }
 
     @Override
-    public boolean isForward(long flags) {
-        return (flags & forwardBit) != 0;
+    public boolean isForward(IntsRef edgeFlags) {
+        return (edgeFlags.flags & forwardBit) != 0;
     }
 
     @Override
-    public long setBool(long flags, int key, boolean value) {
+    public IntsRef setBool(IntsRef edgeFlags, int key, boolean value) {
         switch (key) {
             case K_FORWARD:
-                return value ? flags | forwardBit : flags & ~forwardBit;
+                if (value)
+                    edgeFlags.flags |= forwardBit;
+                else
+                    edgeFlags.flags &= ~forwardBit;
+                break;
             case K_BACKWARD:
-                return value ? flags | backwardBit : flags & ~backwardBit;
+                if (value)
+                    edgeFlags.flags |= backwardBit;
+                else
+                    edgeFlags.flags &= ~backwardBit;
+                break;
             case K_ROUNDABOUT:
-                return value ? flags | roundaboutBit : flags & ~roundaboutBit;
+                if (value)
+                    edgeFlags.flags |= roundaboutBit;
+                else
+                    edgeFlags.flags &= ~roundaboutBit;
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
+        }
+        return edgeFlags;
+    }
+
+    @Override
+    public boolean isBool(IntsRef edgeFlags, int key) {
+        switch (key) {
+            case K_FORWARD:
+                return isForward(edgeFlags);
+            case K_BACKWARD:
+                return isBackward(edgeFlags);
+            case K_ROUNDABOUT:
+                return (edgeFlags.flags & roundaboutBit) != 0;
             default:
                 throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
         }
     }
 
     @Override
-    public boolean isBool(long flags, int key) {
-        switch (key) {
-            case K_FORWARD:
-                return isForward(flags);
-            case K_BACKWARD:
-                return isBackward(flags);
-            case K_ROUNDABOUT:
-                return (flags & roundaboutBit) != 0;
-            default:
-                throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
-        }
-    }
-
-    @Override
-    public long setLong(long flags, int key, long value) {
+    public IntsRef setLong(IntsRef edgeFlags, int key, long value) {
         throw new UnsupportedOperationException("Unknown key " + key + " for long value.");
     }
 
     @Override
-    public long getLong(long flags, int key) {
+    public long getLong(IntsRef edgeFlags, int key) {
         throw new UnsupportedOperationException("Unknown key " + key + " for long value.");
     }
 
     @Override
-    public long setDouble(long flags, int key, double value) {
+    public IntsRef setDouble(IntsRef edgeFlags, int key, double value) {
         throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
     }
 
     @Override
-    public double getDouble(long flags, int key) {
+    public double getDouble(IntsRef edgeFlags, int key) {
         throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
     }
 

@@ -30,7 +30,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 
 import static com.graphhopper.storage.index.QueryResult.Position.*;
@@ -327,7 +326,7 @@ public class QueryGraphTest {
         // in the case of identical nodes the wayGeometry defines the direction!
         EdgeIteratorState edge = g.edge(0, 0).
                 setDistance(100).
-                setFlags(carEncoder.setProperties(20, true, false)).
+                setFlags(carEncoder.setAccess(carEncoder.setSpeed(new IntsRef(), 20), true, false)).
                 setWayGeometry(Helper.createPointList(0.001, 0, 0, 0.001));
 
         QueryResult qr = new QueryResult(0.0011, 0.0009);
@@ -437,7 +436,7 @@ public class QueryGraphTest {
         int nodeB = 1;
 
         /* init test graph: one directional edge going from A to B, via virtual nodes C and D
-         * 
+         *
          *   (C)-(D)
          *  /       \
          * A         B

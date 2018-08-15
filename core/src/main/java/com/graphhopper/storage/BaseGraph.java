@@ -30,9 +30,9 @@ import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.graphhopper.util.Helper.nf;
-
 import java.util.Locale;
+
+import static com.graphhopper.util.Helper.nf;
 
 /**
  * The base graph handles nodes and edges file format. It can be used with different Directory
@@ -726,9 +726,9 @@ class BaseGraph implements Graph {
             long edgePointer = edgeAccess.toPointer(edgeId);
             int linkA = edgeAccess.getEdgeRef(nodeA, nodeB, edgePointer);
             int linkB = edgeAccess.getEdgeRef(nodeB, nodeA, edgePointer);
-            long flags = edgeAccess.getFlags_(edgePointer, false);
+            long edgeFlags = edgeAccess.getFlags_(edgePointer, false);
             edgeAccess.writeEdge(edgeId, updatedA, updatedB, linkA, linkB);
-            edgeAccess.setFlags_(edgePointer, updatedA > updatedB, flags);
+            edgeAccess.setFlags_(edgePointer, updatedA > updatedB, edgeFlags);
             if (updatedA < updatedB != nodeA < nodeB)
                 setWayGeometry_(fetchWayGeometry_(edgePointer, true, 0, -1, -1), edgePointer, false);
         }
@@ -1101,7 +1101,7 @@ class BaseGraph implements Graph {
         boolean reverse = false;
         boolean freshFlags;
         int edgeId = -1;
-        private long cachedFlags;
+        private IntsRef cachedIntsRef;
 
         public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph) {
             this.edgePointer = edgePointer;
@@ -1130,23 +1130,24 @@ class BaseGraph implements Graph {
             return this;
         }
 
-        final long getDirectFlags() {
+        final IntsRef getDirectFlags() {
             if (!freshFlags) {
-                cachedFlags = edgeAccess.getFlags_(edgePointer, reverse);
+                cachedIntsRef = new IntsRef();
+                cachedIntsRef.flags = edgeAccess.getFlags_(edgePointer, reverse);
                 freshFlags = true;
             }
-            return cachedFlags;
+            return cachedIntsRef;
         }
 
         @Override
-        public long getFlags() {
+        public IntsRef getFlags() {
             return getDirectFlags();
         }
 
         @Override
-        public final EdgeIteratorState setFlags(long fl) {
-            edgeAccess.setFlags_(edgePointer, reverse, fl);
-            cachedFlags = fl;
+        public final EdgeIteratorState setFlags(IntsRef intsRef) {
+            edgeAccess.setFlags_(edgePointer, reverse, intsRef.flags);
+            getDirectFlags().flags = intsRef.flags;
             freshFlags = true;
             return this;
         }

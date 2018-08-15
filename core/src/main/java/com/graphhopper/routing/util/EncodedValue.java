@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.storage.IntsRef;
+
 /**
  * Encapsulates a bit-encoded value.
  * <p>
@@ -77,6 +79,10 @@ public class EncodedValue {
             throw new IllegalArgumentException("zero " + name + " value not allowed! " + value);
     }
 
+    public void setValue(IntsRef intsRef, long value) {
+        intsRef.flags = setValue(intsRef.flags, value);
+    }
+
     public long setValue(long flags, long value) {
         // scale value
         value = Math.round(value / factor);
@@ -94,6 +100,10 @@ public class EncodedValue {
         return name;
     }
 
+    public long getValue(IntsRef intsRef) {
+        return getValue(intsRef.flags);
+    }
+
     public long getValue(long flags) {
         // find value
         flags &= mask;
@@ -109,8 +119,8 @@ public class EncodedValue {
         return factor;
     }
 
-    public long setDefaultValue(long flags) {
-        return setValue(flags, defaultValue);
+    public void setDefaultValue(IntsRef flags) {
+        setValue(flags, defaultValue);
     }
 
     public long getMaxValue() {
@@ -123,9 +133,9 @@ public class EncodedValue {
      *
      * @return the new flags
      */
-    public long swap(long flags, EncodedValue otherEncoder) {
-        long otherValue = otherEncoder.getValue(flags);
-        flags = otherEncoder.setValue(flags, getValue(flags));
-        return setValue(flags, otherValue);
+    public void swap(IntsRef flags, EncodedValue otherEncoder) {
+        long otherValue = otherEncoder.getValue(flags.flags);
+        otherEncoder.setValue(flags, getValue(flags.flags));
+        setValue(flags, otherValue);
     }
 }

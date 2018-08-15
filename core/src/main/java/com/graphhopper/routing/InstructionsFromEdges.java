@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -98,7 +99,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         // baseNode is the current node and adjNode is the next
         int adjNode = edge.getAdjNode();
         int baseNode = edge.getBaseNode();
-        long flags = edge.getFlags();
+        IntsRef flags = edge.getFlags();
         double adjLat = nodeAccess.getLatitude(adjNode);
         double adjLon = nodeAccess.getLongitude(adjNode);
         double latitude, longitude;
@@ -352,8 +353,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             return sign;
         }
 
-        long flag = edge.getFlags();
-        long prevFlag = prevEdge.getFlags();
+        IntsRef flag = edge.getFlags();
+        IntsRef prevFlag = prevEdge.getFlags();
 
         boolean outgoingEdgesAreSlower = outgoingEdges.outgoingEdgesAreSlowerByFactor(1);
 
@@ -372,8 +373,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             //We are at a fork
             if (!InstructionsHelper.isNameSimilar(name, prevName)
                     || InstructionsHelper.isNameSimilar(otherContinue.getName(), prevName)
-                    || prevFlag != flag
-                    || prevFlag == otherContinue.getFlags()
+                    || prevFlag.flags != flag.flags
+                    || prevFlag.flags == otherContinue.getFlags().flags
                     || !outgoingEdgesAreSlower) {
                 GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(otherContinue, nodeAccess);
                 double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);

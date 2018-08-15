@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -100,12 +101,12 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
-    public long getFlags() {
+    public IntsRef getFlags() {
         return edges.get(current).getFlags();
     }
 
     @Override
-    public EdgeIteratorState setFlags(long flags) {
+    public EdgeIteratorState setFlags(IntsRef flags) {
         return edges.get(current).setFlags(flags);
     }
 

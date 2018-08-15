@@ -18,6 +18,7 @@
 package com.graphhopper.util;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.IntsRef;
 
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
@@ -81,9 +82,10 @@ public interface EdgeIteratorState {
 
     EdgeIteratorState setDistance(double dist);
 
-    long getFlags();
+    // TODO rename to getData
+    IntsRef getFlags();
 
-    EdgeIteratorState setFlags(long flags);
+    EdgeIteratorState setFlags(IntsRef flags);
 
     /**
      * @return the additional field value for this edge
@@ -96,12 +98,12 @@ public interface EdgeIteratorState {
     EdgeIteratorState setAdditionalField(int value);
 
     /**
-     * @see FlagEncoder#isForward(long) and #472
+     * @see FlagEncoder#isForward(IntsRef) and #472
      */
     boolean isForward(FlagEncoder encoder);
 
     /**
-     * @see FlagEncoder#isBackward(long) and #472
+     * @see FlagEncoder#isBackward(IntsRef) and #472
      */
     boolean isBackward(FlagEncoder encoder);
 

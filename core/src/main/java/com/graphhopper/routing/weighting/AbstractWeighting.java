@@ -19,6 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -39,7 +40,7 @@ public abstract class AbstractWeighting implements Weighting {
 
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        long flags = edgeState.getFlags();
+        IntsRef flags = edgeState.getFlags();
         if (reverse && !flagEncoder.isBackward(flags)
                 || !reverse && !flagEncoder.isForward(flags))
             throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "

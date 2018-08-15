@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.storage.IntsRef;
+
 /**
  * Encodes and decodes a turn restriction and turn costs within a integer flag
  * <p>

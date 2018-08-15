@@ -45,7 +45,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
                 setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
         edge.setDistance(100);
 
-        edge.setFlags(encoder.setReverseSpeed(encoder.setProperties(10, true, true), 15));
+        edge.setFlags(encoder.setReverseSpeed(encoder.setAccess(encoder.setSpeed(new IntsRef(), 10), true, true), 15));
         return gs;
     }
 
@@ -56,7 +56,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         encoder.applyWayTags(way, edge);
 
-        long flags = edge.getFlags();
+        IntsRef flags = edge.getFlags();
         // decrease speed
         assertEquals(2, encoder.getSpeed(flags), 1e-1);
         // increase speed but use maximum speed (calculated was 24)
@@ -67,7 +67,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
     public void testUnchangedForStepsBridgeAndTunnel() {
         Graph graph = initExampleGraph();
         EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
-        long oldFlags = edge.getFlags();
+        IntsRef oldFlags = edge.getFlags();
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "steps");
         encoder.applyWayTags(way, edge);
@@ -77,7 +77,11 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
 
     @Test
     public void testSetSpeed0_issue367() {
-        long flags = encoder.setProperties(10, true, true);
+        IntsRef flags = encoder.setAccess(encoder.setReverseSpeed(encoder.setSpeed(new IntsRef(), 10), 10),
+                true, true);
+        assertEquals(10, encoder.getSpeed(flags), .1);
+        assertEquals(10, encoder.getReverseSpeed(flags), .1);
+
         flags = encoder.setSpeed(flags, 0);
 
         assertEquals(0, encoder.getSpeed(flags), .1);
@@ -97,7 +101,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
 
         long includeWay = em.acceptWay(way);
         long relationFlags = 0;
-        long wayFlags = em.handleWayTags(way, includeWay, relationFlags);
+        IntsRef wayFlags = em.handleWayTags(new IntsRef(), way, includeWay, relationFlags);
         graph.edge(0, 1).setDistance(247).setFlags(wayFlags);
 
         assertTrue(isGraphValid(graph, encoder));

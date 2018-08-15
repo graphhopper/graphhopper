@@ -19,6 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -36,7 +37,7 @@ public class ShortFastestWeightingTest {
 
     @Test
     public void testShort() {
-        EdgeIteratorState edge = createEdge(10, encoder.setProperties(50, true, true));
+        EdgeIteratorState edge = createEdge(10, encoder.setAccess(encoder.setSpeed(new IntsRef(), 50), true, true));
         Weighting instance = new ShortFastestWeighting(encoder, 0.03);
         assertEquals(1.02, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
 
@@ -54,7 +55,7 @@ public class ShortFastestWeightingTest {
         }
     }
 
-    EdgeIterator createEdge(final double distance, final long flags) {
+    EdgeIterator createEdge(final double distance, final IntsRef flags) {
         return new GHUtility.DisabledEdgeIterator() {
             @Override
             public double getDistance() {
@@ -62,7 +63,7 @@ public class ShortFastestWeightingTest {
             }
 
             @Override
-            public long getFlags() {
+            public IntsRef getFlags() {
                 return flags;
             }
 

@@ -97,7 +97,7 @@ public class TestAlgoCollector {
         if (Math.abs(rsp.getDistance() - oneRun.getDistance()) > 2) {
             errors.add(algoEntry + " returns path not matching the expected distance of " + oneRun.getDistance()
                     + "\t Returned was " + rsp.getDistance() + "\t (expected points " + oneRun.getLocs()
-                    + ", was " + pointList.getSize() + ") " + queryList);
+                    + ", was " + pointList.getSize() + ") " + "\t (weight " + rsp.getRouteWeight() + ") " + queryList);
         }
 
         // There are real world instances where A-B-C is identical to A-C (in meter precision).

@@ -169,15 +169,17 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 if (directWalkPath != null) {
                     int nextEdgeId = graphWithExtraEdges.getAllEdges().length() + 200; // FIXME: A number bigger than the number of edges QueryGraph adds
                     final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(-1,
-                            nextEdgeId++, originNode, destinationNode, directWalkPath.getDistance(), 0, "", directWalkPath.getPoints());
+                            nextEdgeId++, originNode, destinationNode, directWalkPath.getDistance(), new IntsRef(), "", directWalkPath.getPoints());
                     final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(-1,
-                            nextEdgeId++, destinationNode, originNode, directWalkPath.getDistance(), 0, "", directWalkPath.getPoints());
-                    newEdge.setFlags(flagEncoder.setEdgeType(newEdge.getFlags(), GtfsStorage.EdgeType.HIGHWAY));
+                            nextEdgeId++, destinationNode, originNode, directWalkPath.getDistance(), new IntsRef(), "", directWalkPath.getPoints());
+                    flagEncoder.setEdgeType(newEdge.getFlags(), GtfsStorage.EdgeType.HIGHWAY);
+
                     final long time = directWalkPath.getTime() / 1000;
-                    newEdge.setFlags(flagEncoder.setTime(newEdge.getFlags(), time));
-                    newEdge.setFlags(flagEncoder.setAccess(newEdge.getFlags(), true, false));
-                    newEdge.setFlags(accessEgressWeighting.getFlagEncoder().setAccess(newEdge.getFlags(), true, false));
-                    newEdge.setFlags(accessEgressWeighting.getFlagEncoder().setSpeed(newEdge.getFlags(), 5.0));
+                    flagEncoder.setTime(newEdge.getFlags(), time);
+                    flagEncoder.setAccess(newEdge.getFlags(), true, false);
+                    accessEgressWeighting.getFlagEncoder().setAccess(newEdge.getFlags(), true, false);
+                    accessEgressWeighting.getFlagEncoder().setSpeed(newEdge.getFlags(), 5.0);
+                    newEdge.setFlags(newEdge.getFlags());
 
                     reverseNewEdge.setFlags(newEdge.getFlags());
                     newEdge.setReverseEdge(reverseNewEdge);
@@ -207,19 +209,20 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             int nextNodeId = graphWithExtraEdges.getNodes() + 2 + index; // FIXME: A number bigger than the number of nodes QueryGraph adds
             int nextEdgeId = graphWithExtraEdges.getAllEdges().length() + 100; // FIXME: A number bigger than the number of edges QueryGraph adds
 
-            final List<Label> stationNodes = findStationNodes(graphExplorer, allQueryResults.get(index).getClosestNode(), reverse, allQueryResults.get(1-index).getClosestNode());
+            final List<Label> stationNodes = findStationNodes(graphExplorer, allQueryResults.get(index).getClosestNode(), reverse, allQueryResults.get(1 - index).getClosestNode());
             for (Label stationNode : stationNodes) {
                 final PathWrapper pathWrapper = stationNode.parent.parent != null ?
                         tripFromLabel.parseSolutionIntoPath(reverse, flagEncoder, translation, graphExplorer, accessEgressWeighting, stationNode.parent, new PointList()) :
                         new PathWrapper();
                 final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(stationNode.edge,
-                        nextEdgeId++, reverse ? stationNode.adjNode : nextNodeId, reverse ? nextNodeId : stationNode.adjNode, pathWrapper.getDistance(), 0, "", pathWrapper.getPoints());
+                        nextEdgeId++, reverse ? stationNode.adjNode : nextNodeId, reverse ? nextNodeId : stationNode.adjNode, pathWrapper.getDistance(), new IntsRef(), "", pathWrapper.getPoints());
                 final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(stationNode.edge,
-                        nextEdgeId++, reverse ? nextNodeId : stationNode.adjNode, reverse ? stationNode.adjNode : nextNodeId, pathWrapper.getDistance(), 0, "", pathWrapper.getPoints());
-                newEdge.setFlags(flagEncoder.setEdgeType(newEdge.getFlags(), reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT));
+                        nextEdgeId++, reverse ? nextNodeId : stationNode.adjNode, reverse ? stationNode.adjNode : nextNodeId, pathWrapper.getDistance(), new IntsRef(), "", pathWrapper.getPoints());
+                flagEncoder.setEdgeType(newEdge.getFlags(), reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT);
                 final long time = pathWrapper.getTime() / 1000;
-                newEdge.setFlags(flagEncoder.setTime(newEdge.getFlags(), time));
-                newEdge.setFlags(flagEncoder.setValidityId(newEdge.getFlags(), flagEncoder.getValidityId(graphExplorer.getEdgeIteratorState(stationNode.edge, Integer.MIN_VALUE).getFlags())));
+                flagEncoder.setTime(newEdge.getFlags(), time);
+                flagEncoder.setValidityId(newEdge.getFlags(), flagEncoder.getValidityId(graphExplorer.getEdgeIteratorState(stationNode.edge, Integer.MIN_VALUE).getFlags()));
+                newEdge.setFlags(newEdge.getFlags());
                 reverseNewEdge.setFlags(newEdge.getFlags());
                 newEdge.setReverseEdge(reverseNewEdge);
                 reverseNewEdge.setReverseEdge(newEdge);
@@ -311,7 +314,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             if (!arriveBy) {
                 return solution.parent.adjNode;
             } else {
-                while(solution.parent.parent != null) {
+                while (solution.parent.parent != null) {
                     solution = solution.parent;
                 }
                 return solution.adjNode;

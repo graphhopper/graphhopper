@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -239,7 +240,9 @@ public class PrepareRoutingSubnetworks {
             for (int i = 0; i < component.size(); i++) {
                 EdgeIterator edge = explorer.setBaseNode(component.get(i));
                 while (edge.next()) {
-                    edge.setFlags(encoder.setAccess(edge.getFlags(), false, false));
+                    IntsRef flags = edge.getFlags();
+                    encoder.setAccess(flags, false, false);
+                    edge.setFlags(flags);
                     removedEdges++;
                 }
             }

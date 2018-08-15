@@ -21,10 +21,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
@@ -45,7 +42,7 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class PrepareLandmarksTest
-/* extends AbstractRoutingAlgorithmTester */ {
+        /* extends AbstractRoutingAlgorithmTester */ {
     private GraphHopperStorage graph;
     private FlagEncoder encoder;
     private TraversalMode tm;
@@ -72,7 +69,7 @@ public class PrepareLandmarksTest
             for (int wIndex = 0; wIndex < width; wIndex++) {
                 int node = wIndex + hIndex * width;
 
-                long flags = encoder.setProperties(20 + rand.nextDouble() * 30, true, true);
+                IntsRef flags = encoder.setAccess(encoder.setSpeed(new IntsRef(), 20 + rand.nextDouble() * 30), true, true);
                 // do not connect first with last column!
                 if (wIndex + 1 < width)
                     graph.edge(node, node + 1).setFlags(flags);

@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.weighting.PriorityWeighting;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
@@ -172,7 +173,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
      * @return <code>false</code>
      */
     @Override
-    public boolean isTurnRestricted(long flag) {
+    public boolean isTurnRestricted(long flags) {
         return false;
     }
 
@@ -260,7 +261,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
+    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
         int code = 0;
         if (relation.hasTag("route", "hiking") || relation.hasTag("route", "foot")) {
             Integer val = hikingNetworkToCode.get(relation.getTag("network"));
@@ -279,48 +280,47 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
         if (!isAccept(allowed))
-            return 0;
+            return edgeFlags;
 
-        long flags = 0;
         if (!isFerry(allowed)) {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null) {
                 if ("hiking".equals(sacScale))
-                    flags = speedEncoder.setDoubleValue(flags, MEAN_SPEED);
+                    speedEncoder.setDoubleValue(edgeFlags, MEAN_SPEED);
                 else
-                    flags = speedEncoder.setDoubleValue(flags, SLOW_SPEED);
+                    speedEncoder.setDoubleValue(edgeFlags, SLOW_SPEED);
             } else {
-                flags = speedEncoder.setDoubleValue(flags, MEAN_SPEED);
+                speedEncoder.setDoubleValue(edgeFlags, MEAN_SPEED);
             }
-            flags |= directionBitMask;
+            edgeFlags.flags |= directionBitMask;
 
             boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
             if (isRoundabout)
-                flags = setBool(flags, K_ROUNDABOUT, true);
+                setBool(edgeFlags, K_ROUNDABOUT, true);
 
         } else {
             double ferrySpeed = getFerrySpeed(way);
-            flags = setSpeed(flags, ferrySpeed);
-            flags |= directionBitMask;
+            setSpeed(edgeFlags, ferrySpeed);
+            edgeFlags.flags |= directionBitMask;
         }
 
         int priorityFromRelation = 0;
         if (relationFlags != 0)
             priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
-        flags = priorityWayEncoder.setValue(flags, handlePriority(way, priorityFromRelation));
-        return flags;
+        priorityWayEncoder.setValue(edgeFlags, handlePriority(way, priorityFromRelation));
+        return edgeFlags;
     }
 
     @Override
-    public double getDouble(long flags, int key) {
+    public double getDouble(IntsRef edgeFlags, int key) {
         switch (key) {
             case PriorityWeighting.KEY:
-                return (double) priorityWayEncoder.getValue(flags) / BEST.getValue();
+                return (double) priorityWayEncoder.getValue(edgeFlags) / BEST.getValue();
             default:
-                return super.getDouble(flags, key);
+                return super.getDouble(edgeFlags, key);
         }
     }
 
@@ -381,8 +381,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
      * This method is a current hack, to allow ferries to be actually faster than our current storable maxSpeed.
      */
     @Override
-    public double getSpeed(long flags) {
-        double speed = super.getSpeed(flags);
+    public double getSpeed(IntsRef edgeFlags) {
+        double speed = super.getSpeed(edgeFlags);
         if (speed == getMaxSpeed()) {
             // We cannot be sure if it was a long or a short trip
             return SHORT_TRIP_FERRY_SPEED;

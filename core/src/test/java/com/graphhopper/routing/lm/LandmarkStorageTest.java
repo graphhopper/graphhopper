@@ -112,7 +112,7 @@ public class LandmarkStorageTest {
         ghStorage.edge(0, 1, 10, true);
         ghStorage.edge(1, 2, 10, true);
 
-        ghStorage.edge(2, 4).setFlags(encoder.setAccess(0, false, false));
+        ghStorage.edge(2, 4).setFlags(encoder.setAccess(new IntsRef(), false, false));
         ghStorage.edge(4, 5, 10, true);
         ghStorage.edge(5, 6, 10, false);
 
@@ -164,7 +164,7 @@ public class LandmarkStorageTest {
     public void testWeightingConsistence() {
         // create an indifferent problem: shortest weighting can pass the speed==0 edge but fastest cannot (?)
         ghStorage.edge(0, 1, 10, true);
-        ghStorage.edge(1, 2).setDistance(10).setFlags(encoder.setProperties(0.9, true, true));
+        ghStorage.edge(1, 2).setDistance(10).setFlags(encoder.setAccess(encoder.setSpeed(new IntsRef(), 0.9), true, true));
         ghStorage.edge(2, 3, 10, true);
 
         LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new FastestWeighting(encoder), 2);

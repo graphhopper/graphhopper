@@ -83,7 +83,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
         // create shortcuts
         ghStorage.freeze();
         FlagEncoder car = encodingManager.getEncoder("car");
-        long flags = car.setProperties(60, true, true);
+        IntsRef flags = car.setAccess(car.setSpeed(new IntsRef(), 60), true, true);
         CHEdgeIteratorState iter5 = lg.shortcut(0, 2);
         iter5.setDistance(20).setFlags(flags);
         iter5.setSkippedEdges(iter1.getEdge(), iter2.getEdge());

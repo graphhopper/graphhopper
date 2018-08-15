@@ -141,7 +141,7 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testPropertiesWithNoInit() {
         graph = createGHStorage();
-        assertEquals(0, graph.edge(0, 1).getFlags());
+        assertEquals(0, graph.edge(0, 1).getFlags().flags);
         assertEquals(0, graph.edge(0, 2).getDistance(), 1e-6);
     }
 
@@ -701,16 +701,20 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testFlags() {
         graph = createGHStorage();
-        graph.edge(0, 1).setDistance(10).setFlags(carEncoder.setProperties(100, true, true));
-        graph.edge(2, 3).setDistance(10).setFlags(carEncoder.setProperties(10, true, false));
+        GHUtility.setProperties(graph.edge(0, 1), carEncoder, 100, true, true).setDistance(10);
+        GHUtility.setProperties(graph.edge(2, 3), carEncoder, 10, true, false).setDistance(10);
 
         EdgeIterator iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(carEncoder.setProperties(100, true, true), iter.getFlags());
+        assertEquals(100, carEncoder.getSpeed(iter.getFlags()), 1);
+        assertTrue(carEncoder.isForward(iter.getFlags()));
+        assertTrue(carEncoder.isBackward(iter.getFlags()));
 
         iter = carAllExplorer.setBaseNode(2);
         assertTrue(iter.next());
-        assertEquals(carEncoder.setProperties(10, true, false), iter.getFlags());
+        assertEquals(10, carEncoder.getSpeed(iter.getFlags()), 1);
+        assertTrue(carEncoder.isForward(iter.getFlags()));
+        assertFalse(carEncoder.isBackward(iter.getFlags()));
 
         try {
             graph.edge(0, 1).setDistance(-1);
@@ -818,10 +822,12 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testEdgeReturn() {
         graph = createGHStorage();
-        EdgeIteratorState iter = graph.edge(4, 10).setDistance(100).setFlags(carEncoder.setProperties(10, true, false));
+        EdgeIteratorState iter = graph.edge(4, 10).setDistance(100);
+        GHUtility.setProperties(iter, carEncoder, 10, true, false);
         assertEquals(4, iter.getBaseNode());
         assertEquals(10, iter.getAdjNode());
-        iter = graph.edge(14, 10).setDistance(100).setFlags(carEncoder.setProperties(10, true, false));
+        iter = graph.edge(14, 10).setDistance(100);
+        GHUtility.setProperties(iter, carEncoder, 10, true, false);
         assertEquals(14, iter.getBaseNode());
         assertEquals(10, iter.getAdjNode());
     }
@@ -836,11 +842,14 @@ public abstract class AbstractGraphStorageTester {
         na.setNode(10, 0.99, 0.99);
 
         PointList pointList = Helper.createPointList(1, 1, 1, 2, 1, 3);
-        graph.edge(0, 4).setDistance(100).setFlags(carEncoder.setProperties(10, true, false)).setWayGeometry(pointList);
+        EdgeIteratorState edge = graph.edge(0, 4).setDistance(100).setWayGeometry(pointList);
+        GHUtility.setProperties(edge, carEncoder, 10, true, false);
         pointList = Helper.createPointList(1, 5, 1, 6, 1, 7, 1, 8, 1, 9);
-        graph.edge(4, 10).setDistance(100).setFlags(carEncoder.setProperties(10, true, false)).setWayGeometry(pointList);
+        edge = graph.edge(4, 10).setDistance(100).setWayGeometry(pointList);
+        GHUtility.setProperties(edge, carEncoder, 10, true, false);
         pointList = Helper.createPointList(1, 13, 1, 12, 1, 11);
-        graph.edge(14, 0).setDistance(100).setFlags(carEncoder.setProperties(10, true, false)).setWayGeometry(pointList);
+        edge = graph.edge(14, 0).setDistance(100).setWayGeometry(pointList);
+        GHUtility.setProperties(edge, carEncoder, 10, true, false);
 
         EdgeIterator iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
@@ -878,9 +887,11 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testFootMix() {
         graph = createGHStorage();
-        graph.edge(0, 1).setDistance(10).setFlags(footEncoder.setProperties(10, true, true));
-        graph.edge(0, 2).setDistance(10).setFlags(carEncoder.setProperties(10, true, true));
-        graph.edge(0, 3).setDistance(10).setFlags(footEncoder.setProperties(10, true, true) | carEncoder.setProperties(10, true, true));
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(10), footEncoder, 10, true, true);
+        GHUtility.setProperties(graph.edge(0, 2).setDistance(10), carEncoder, 10, true, true);
+        EdgeIteratorState edge = graph.edge(0, 3).setDistance(10);
+        GHUtility.setProperties(edge, footEncoder, 10, true, true);
+        GHUtility.setProperties(edge, carEncoder, 10, true, true);
         EdgeExplorer footOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(footEncoder));
         assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(footOutExplorer.setBaseNode(0)));
         assertEquals(GHUtility.asSet(3, 2), GHUtility.getNeighbors(carOutExplorer.setBaseNode(0)));
@@ -977,23 +988,25 @@ public abstract class AbstractGraphStorageTester {
         graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         EdgeIteratorState edge = graph.edge(0, 1);
-        edge.setFlags(Long.MAX_VALUE / 3);
+        IntsRef intsRef = new IntsRef();
+        intsRef.flags = Long.MAX_VALUE / 3;
+        edge.setFlags(intsRef);
         // System.out.println(BitUtil.LITTLE.toBitString(Long.MAX_VALUE / 3) + "\n" + BitUtil.LITTLE.toBitString(edge.getFlags()));
-        assertEquals(Long.MAX_VALUE / 3, edge.getFlags());
+        assertEquals(Long.MAX_VALUE / 3, edge.getFlags().flags);
         graph.close();
 
         graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         edge = graph.edge(0, 1);
-        edge.setFlags(list.get(0).setProperties(99.123, true, true));
+        GHUtility.setProperties(edge, list.get(0), 99.123, true, true);
         assertEquals(99.123, list.get(0).getSpeed(edge.getFlags()), 1e-3);
         EdgeIteratorState edgeIter = GHUtility.getEdge(graph, 1, 0);
-        long flags = edgeIter.getFlags();
+        IntsRef flags = edgeIter.getFlags();
         assertEquals(99.123, list.get(0).getSpeed(flags), 1e-3);
         assertTrue(edgeIter.isForward(list.get(0)));
         assertTrue(edgeIter.isBackward(list.get(0)));
         edge = graph.edge(2, 3);
-        edge.setFlags(list.get(1).setProperties(44.123, true, false));
+        GHUtility.setProperties(edge, list.get(1), 44.123, true, false);
         assertEquals(44.123, list.get(1).getSpeed(edge.getFlags()), 1e-3);
 
         edgeIter = GHUtility.getEdge(graph, 3, 2);
@@ -1051,8 +1064,8 @@ public abstract class AbstractGraphStorageTester {
     public void testDetachEdge() {
         graph = createGHStorage();
         graph.edge(0, 1, 2, true);
-        long flags = carEncoder.setProperties(10, true, false);
-        graph.edge(0, 2, 2, true).setWayGeometry(Helper.createPointList(1, 2, 3, 4)).setFlags(flags);
+        GHUtility.setProperties(graph.edge(0, 2, 2, true).setWayGeometry(Helper.createPointList(1, 2, 3, 4)),
+                carEncoder, 10, true, false);
         graph.edge(1, 2, 2, true);
 
         EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(0);
@@ -1088,7 +1101,7 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(3, edgeState20.fetchWayGeometry(0).getLatitude(0), 1e-1);
 
         // #162 a directed self referencing edge should be able to reverse its state too
-        graph.edge(3, 3, 2, true).setFlags(flags);
+        GHUtility.setProperties(graph.edge(3, 3, 2, true), carEncoder, 10, true, false);
         EdgeIterator edgeState33 = graph.createEdgeExplorer().setBaseNode(3);
         edgeState33.next();
         assertEquals(3, edgeState33.getBaseNode());

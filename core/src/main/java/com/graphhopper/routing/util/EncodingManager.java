@@ -22,6 +22,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.EdgeIteratorState;
@@ -247,10 +248,10 @@ public class EncodingManager {
         return includeWay;
     }
 
-    public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
+    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
         long flags = 0;
         for (AbstractFlagEncoder encoder : edgeEncoders) {
-            flags |= encoder.handleRelationTags(relation, oldRelationFlags);
+            flags |= encoder.handleRelationTags(oldRelationFlags, relation);
         }
 
         return flags;
@@ -259,18 +260,14 @@ public class EncodingManager {
     /**
      * Processes way properties of different kind to determine speed and direction. Properties are
      * directly encoded in 8 bytes.
-     * <p>
      *
      * @param relationFlags The preprocessed relation flags is used to influence the way properties.
-     * @return the encoded flags
      */
-    public long handleWayTags(ReaderWay way, long includeWay, long relationFlags) {
-        long flags = 0;
+    public IntsRef handleWayTags(IntsRef edgeInts, ReaderWay way, long includeWay, long relationFlags) {
         for (AbstractFlagEncoder encoder : edgeEncoders) {
-            flags |= encoder.handleWayTags(way, includeWay, relationFlags & encoder.getRelBitMask());
+            encoder.handleWayTags(edgeInts, way, includeWay, relationFlags & encoder.getRelBitMask());
         }
-
-        return flags;
+        return edgeInts;
     }
 
     @Override
@@ -302,12 +299,12 @@ public class EncodingManager {
         return str.toString();
     }
 
-    public long flagsDefault(boolean forward, boolean backward) {
-        long flags = 0;
+    public IntsRef flagsDefault(boolean forward, boolean backward) {
+        IntsRef intsRef = new IntsRef();
         for (AbstractFlagEncoder encoder : edgeEncoders) {
-            flags |= encoder.flagsDefault(forward, backward);
+            encoder.flagsDefault(intsRef, forward, backward);
         }
-        return flags;
+        return intsRef;
     }
 
     /**

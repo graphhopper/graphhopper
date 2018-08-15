@@ -33,7 +33,7 @@ abstract class EdgeAccess {
     final DataAccess edges;
     private final BitUtil bitUtil;
     int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS;
-    private boolean flagsSizeIsLong;
+    private int edgeDataSizeInBytes;
 
     EdgeAccess(DataAccess edges, BitUtil bitUtil) {
         this.edges = edges;
@@ -47,7 +47,7 @@ abstract class EdgeAccess {
         this.E_LINKB = E_LINKB;
         this.E_DIST = E_DIST;
         this.E_FLAGS = E_FLAGS;
-        this.flagsSizeIsLong = flagsSizeIsLong;
+        this.edgeDataSizeInBytes = flagsSizeIsLong ? 8 : 4;
     }
 
     abstract BaseGraph.EdgeIterable createSingleEdge(EdgeFilter edgeFilter);
@@ -96,24 +96,27 @@ abstract class EdgeAccess {
 
     final long getFlags_(long edgePointer, boolean reverse) {
         int low = edges.getInt(edgePointer + E_FLAGS);
-        long resFlags = low;
-        if (flagsSizeIsLong) {
+        long edgeFlags = low;
+        if (edgeDataSizeInBytes > 4) {
             int high = edges.getInt(edgePointer + E_FLAGS + 4);
-            resFlags = bitUtil.combineIntsToLong(low, high);
+            edgeFlags = bitUtil.combineIntsToLong(low, high);
         }
-        if (reverse)
-            resFlags = reverseFlags(edgePointer, resFlags);
 
-        return resFlags;
+        if (reverse)
+            edgeFlags = reverseFlags(edgePointer, edgeFlags);
+
+        return edgeFlags;
     }
 
     final long setFlags_(long edgePointer, boolean reverse, long flags) {
+        // TODO BIG PROBLEM: we swap direction of IntsRef to match internal direction "2-3"
+        // but externally we use it for the opposite direction 3-2
         if (reverse)
             flags = reverseFlags(edgePointer, flags);
 
         edges.setInt(edgePointer + E_FLAGS, bitUtil.getIntLow(flags));
 
-        if (flagsSizeIsLong)
+        if (edgeDataSizeInBytes > 4)
             edges.setInt(edgePointer + E_FLAGS + 4, bitUtil.getIntHigh(flags));
 
         return flags;

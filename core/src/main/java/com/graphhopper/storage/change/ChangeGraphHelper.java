@@ -26,15 +26,14 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.EdgeIteratorState;
-
-import java.util.Collection;
-import java.util.Iterator;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -110,7 +109,9 @@ public class ChangeGraphHelper {
                 updates++;
                 if (enableLogging)
                     logger.info(encoder.toString() + " - access change via feature " + jsonFeature.getId());
-                edge.setFlags(encoder.setAccess(edge.getFlags(), value, value));
+                IntsRef edgeInts = edge.getFlags();
+                encoder.setAccess(edgeInts, value, value);
+                edge.setFlags(edgeInts);
 
             } else if (props.containsKey("speed")) {
                 // TODO use different speed for the different directions (see e.g. Bike2WeightFlagEncoder)
@@ -120,7 +121,9 @@ public class ChangeGraphHelper {
                     updates++;
                     if (enableLogging)
                         logger.info(encoder.toString() + " - speed change via feature " + jsonFeature.getId() + ". Old: " + oldSpeed + ", new:" + value);
-                    edge.setFlags(encoder.setSpeed(edge.getFlags(), value));
+                    IntsRef edgeInts = edge.getFlags();
+                    encoder.setSpeed(edgeInts, value);
+                    edge.setFlags(edgeInts);
                 }
             }
         }

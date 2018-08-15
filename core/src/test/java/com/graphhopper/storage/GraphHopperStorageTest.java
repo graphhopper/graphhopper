@@ -19,6 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -219,6 +220,31 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         GraphHopperStorage store = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension());
         assertEquals(store.getNodes(), store.getGraph(Graph.class).getNodes());
         assertEquals(store.getAllEdges().length(), store.getGraph(Graph.class).getAllEdges().length());
+    }
+
+    @Test
+    public void testMultipleDecoupledEdges() {
+        // a typical usage where we create independent EdgeIteratorState's BUT due to the IntsRef reference they are no more independent
+        IntsRef intsRef = new IntsRef();
+
+        GraphHopperStorage storage = createGHStorage();
+        BaseGraph graph = (BaseGraph) storage.getGraph(Graph.class);
+        graph.edge(0, 1, 10, true);
+        graph.edge(1, 2, 10, true);
+
+        EdgeIteratorState edge0 = graph.getEdgeIteratorState(0, Integer.MIN_VALUE);
+        EdgeIteratorState edge1 = graph.getEdgeIteratorState(1, Integer.MIN_VALUE);
+        edge0.setFlags(carEncoder.setAccess(intsRef, true, false));
+        edge1.setFlags(carEncoder.setAccess(intsRef, false, true));
+
+        assertFalse(edge1.isForward(carEncoder));
+        assertTrue(edge1.isBackward(carEncoder));
+
+        // obviously this should pass but as the reference is shared and freshFlags=false the edge1 flags are returned!
+        // So we do not set the reference for _setFlags but just the value
+        // A better solution would be if we do not allow to create IntsRef outside of the EdgeIterator API
+        assertTrue(edge0.isForward(carEncoder));
+        assertFalse(edge0.isBackward(carEncoder));
     }
 
     public void testAdditionalEdgeField() {

@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.weighting.PriorityWeighting;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Translation;
 import org.junit.Before;
@@ -57,7 +58,7 @@ public abstract class AbstractBikeFlagEncoderTester {
 
     protected double getSpeedFromFlags(ReaderWay way) {
         long allowed = encoder.acceptBit;
-        long flags = encoder.handleWayTags(way, allowed, 0);
+        IntsRef flags = encoder.handleWayTags(new IntsRef(), way, allowed, 0);
         return encoder.getSpeed(flags);
     }
 
@@ -67,7 +68,7 @@ public abstract class AbstractBikeFlagEncoderTester {
 
     protected String getWayTypeFromFlags(ReaderWay way, long relationFlags) {
         long allowed = encoder.acceptBit;
-        long flags = encoder.handleWayTags(way, allowed, relationFlags);
+        IntsRef flags = encoder.handleWayTags(new IntsRef(), way, allowed, relationFlags);
         Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
         return encoder.getAnnotation(flags, enMap).getMessage();
     }
@@ -218,21 +219,21 @@ public abstract class AbstractBikeFlagEncoderTester {
 
         way = new ReaderWay(1);
         way.setTag("railway", "platform");
-        long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
-        assertNotEquals(0, flags);
+        IntsRef flags = encoder.handleWayTags(new IntsRef(), way, encoder.acceptWay(way), 0);
+        assertNotEquals(0, flags.flags);
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
-        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
-        assertNotEquals(0, flags);
+        flags = encoder.handleWayTags(new IntsRef(), way, encoder.acceptWay(way), 0);
+        assertNotEquals(0, flags.flags);
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
         way.setTag("bicycle", "no");
-        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
-        assertEquals(0, flags);
+        flags = encoder.handleWayTags(new IntsRef(), way, encoder.acceptWay(way), 0);
+        assertEquals(0, flags.flags);
     }
 
     @Test
@@ -392,7 +393,9 @@ public abstract class AbstractBikeFlagEncoderTester {
     public void testPreferenceForSlowSpeed() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
-        assertEquals(30, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(osmWay, 49))), 1e-1);
+        IntsRef intsRef = new IntsRef();
+        encoder.setSpeed(intsRef, encoder.applyMaxSpeed(osmWay, 49));
+        assertEquals(30, encoder.getSpeed(intsRef), 1e-1);
         assertPriority(PREFER.getValue(), osmWay);
     }
 
@@ -400,7 +403,7 @@ public abstract class AbstractBikeFlagEncoderTester {
     public void testHandleWayTagsCallsHandlePriority() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "cycleway");
-        long encoded = encoder.handleWayTags(osmWay, encoder.acceptBit, 0);
+        IntsRef encoded = encoder.handleWayTags(new IntsRef(), osmWay, encoder.acceptBit, 0);
         assertEquals((double) VERY_NICE.getValue() / BEST.getValue(), encoder.getDouble(encoded, PriorityWeighting.KEY), 1e-3);
     }
 
@@ -414,10 +417,12 @@ public abstract class AbstractBikeFlagEncoderTester {
 
     @Test
     public void testPriority() {
-        long flags = encoder.priorityWayEncoder.setValue(0, PriorityCode.BEST.getValue());
+        IntsRef flags = new IntsRef();
+        encoder.priorityWayEncoder.setValue(flags, PriorityCode.BEST.getValue());
         assertEquals(1, encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
 
-        flags = encoder.priorityWayEncoder.setValue(0, PriorityCode.AVOID_IF_POSSIBLE.getValue());
+        flags = new IntsRef();
+        encoder.priorityWayEncoder.setValue(flags, PriorityCode.AVOID_IF_POSSIBLE.getValue());
         assertEquals(3d / 7d, encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
     }
 

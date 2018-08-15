@@ -335,7 +335,7 @@ public abstract class AbstractLocationIndexTester {
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
         CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
         while (iter.next()) {
-            iter.setFlags(carEncoder.setProperties(50, true, true));
+            iter.setFlags(carEncoder.setAccess(carEncoder.setSpeed(new IntsRef(), 50), true, true));
         }
         idx.close();
 

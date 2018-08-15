@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -183,7 +184,7 @@ class InstructionsOutgoingEdges {
         boolean checkFlag = currentEdge.getFlags() != prevEdge.getFlags();
         for (EdgeIteratorState edge : allowedOutgoingEdges) {
             String edgeName = edge.getName();
-            long edgeFlag = edge.getFlags();
+            IntsRef edgeFlag = edge.getFlags();
             // leave the current street || enter a different street
             if (isTheSameStreet(prevName, prevEdge.getFlags(), edgeName, edgeFlag, checkFlag)
                     || isTheSameStreet(name, currentEdge.getFlags(), edgeName, edgeFlag, checkFlag)) {
@@ -193,9 +194,9 @@ class InstructionsOutgoingEdges {
         return false;
     }
 
-    private boolean isTheSameStreet(String name1, long flags1, String name2, long flags2, boolean checkFlag) {
+    private boolean isTheSameStreet(String name1, IntsRef flags1, String name2, IntsRef flags2, boolean checkFlag) {
         if (InstructionsHelper.isNameSimilar(name1, name2)) {
-            if (!checkFlag || flags1 == flags2) {
+            if (!checkFlag || flags1.flags == flags2.flags) {
                 return true;
             }
         }

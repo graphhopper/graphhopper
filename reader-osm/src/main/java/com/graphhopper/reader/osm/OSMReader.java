@@ -349,8 +349,9 @@ public class OSMReader implements DataReader {
             }
         }
 
-        long wayFlags = encodingManager.handleWayTags(way, includeWay, relationFlags);
-        if (wayFlags == 0)
+        IntsRef edgeFlags = new IntsRef();
+        encodingManager.handleWayTags(edgeFlags, way, includeWay, relationFlags);
+        if (edgeFlags.flags == 0)
             return;
 
         List<EdgeIteratorState> createdEdges = new ArrayList<>();
@@ -362,7 +363,7 @@ public class OSMReader implements DataReader {
             long nodeFlags = getNodeFlagsMap().get(nodeId);
             // barrier was spotted and way is otherwise passable for that mode of travel
             if (nodeFlags > 0) {
-                if ((nodeFlags & wayFlags) > 0) {
+                if ((nodeFlags & edgeFlags.flags) > 0) {
                     // remove barrier to avoid duplicates
                     getNodeFlagsMap().put(nodeId, 0);
 
@@ -378,13 +379,13 @@ public class OSMReader implements DataReader {
                         LongArrayList partNodeIds = new LongArrayList();
                         partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
                         partNodeIds.set(length - 1, newNodeId);
-                        createdEdges.addAll(addOSMWay(partNodeIds, wayFlags, wayOsmId));
+                        createdEdges.addAll(addOSMWay(partNodeIds, edgeFlags, wayOsmId));
 
                         // create zero length edge for barrier
-                        createdEdges.addAll(addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId));
+                        createdEdges.addAll(addBarrierEdge(newNodeId, nodeId, edgeFlags, nodeFlags, wayOsmId));
                     } else {
                         // run edge from real first node to shadow node
-                        createdEdges.addAll(addBarrierEdge(nodeId, newNodeId, wayFlags, nodeFlags, wayOsmId));
+                        createdEdges.addAll(addBarrierEdge(nodeId, newNodeId, edgeFlags, nodeFlags, wayOsmId));
 
                         // exchange first node for created barrier node
                         osmNodeIds.set(0, newNodeId);
@@ -400,11 +401,11 @@ public class OSMReader implements DataReader {
             if (lastBarrier < size - 1) {
                 LongArrayList partNodeIds = new LongArrayList();
                 partNodeIds.add(osmNodeIds.buffer, lastBarrier, size - lastBarrier);
-                createdEdges.addAll(addOSMWay(partNodeIds, wayFlags, wayOsmId));
+                createdEdges.addAll(addOSMWay(partNodeIds, edgeFlags, wayOsmId));
             }
         } else {
             // no barriers - simply add the whole way
-            createdEdges.addAll(addOSMWay(way.getNodes(), wayFlags, wayOsmId));
+            createdEdges.addAll(addOSMWay(way.getNodes(), edgeFlags, wayOsmId));
         }
 
         for (EdgeIteratorState edge : createdEdges) {
@@ -412,7 +413,7 @@ public class OSMReader implements DataReader {
         }
     }
 
-    public void processRelation(ReaderRelation relation) throws XMLStreamException {
+    public void processRelation(ReaderRelation relation) {
         if (relation.hasTag("type", "restriction")) {
             OSMTurnRelation turnRelation = createTurnRelation(relation);
             if (turnRelation != null) {
@@ -553,7 +554,7 @@ public class OSMReader implements DataReader {
 
     void prepareWaysWithRelationInfo(ReaderRelation osmRelation) {
         // is there at least one tag interesting for the registed encoders?
-        if (encodingManager.handleRelationTags(osmRelation, 0) == 0)
+        if (encodingManager.handleRelationTags(0, osmRelation) == 0)
             return;
 
         for (ReaderRelation.Member member : osmRelation.getMembers()) {
@@ -564,7 +565,7 @@ public class OSMReader implements DataReader {
             long oldRelationFlags = getRelFlagsMap().get(osmId);
 
             // Check if our new relation data is better comparated to the the last one
-            long newRelationFlags = encodingManager.handleRelationTags(osmRelation, oldRelationFlags);
+            long newRelationFlags = encodingManager.handleRelationTags(oldRelationFlags, osmRelation);
             if (oldRelationFlags != newRelationFlags)
                 getRelFlagsMap().put(osmId, newRelationFlags);
         }
@@ -598,7 +599,7 @@ public class OSMReader implements DataReader {
     /**
      * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
      */
-    Collection<EdgeIteratorState> addOSMWay(final LongIndexedContainer osmNodeIds, final long flags, final long wayOsmId) {
+    Collection<EdgeIteratorState> addOSMWay(final LongIndexedContainer osmNodeIds, final IntsRef flags, final long wayOsmId) {
         PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
         List<EdgeIteratorState> newEdges = new ArrayList<>(5);
         int firstNode = -1;
@@ -669,7 +670,7 @@ public class OSMReader implements DataReader {
         return newEdges;
     }
 
-    EdgeIteratorState addEdge(int fromIndex, int toIndex, PointList pointList, long flags, long wayOsmId) {
+    EdgeIteratorState addEdge(int fromIndex, int toIndex, PointList pointList, IntsRef flags, long wayOsmId) {
         // sanity checks
         if (fromIndex < 0 || toIndex < 0)
             throw new AssertionError("to or from index is invalid for this edge " + fromIndex + "->" + toIndex + ", points:" + pointList);
@@ -811,14 +812,16 @@ public class OSMReader implements DataReader {
     /**
      * Add a zero length edge with reduced routing options to the graph.
      */
-    Collection<EdgeIteratorState> addBarrierEdge(long fromId, long toId, long flags, long nodeFlags, long wayOsmId) {
-        // clear barred directions from routing flags
-        flags &= ~nodeFlags;
+    Collection<EdgeIteratorState> addBarrierEdge(long fromId, long toId, IntsRef inEdgeFlags, long nodeFlags, long wayOsmId) {
+        // TODO Similar to GraphHopperStorageTest#testMultipleDecoupledEdges)
+        IntsRef edgeFlags = inEdgeFlags.copy();
+        // clear blocked directions from flags
+        edgeFlags.flags &= ~nodeFlags;
         // add edge
         barrierNodeIds.clear();
         barrierNodeIds.add(fromId);
         barrierNodeIds.add(toId);
-        return addOSMWay(barrierNodeIds, flags, wayOsmId);
+        return addOSMWay(barrierNodeIds, edgeFlags, wayOsmId);
     }
 
     /**

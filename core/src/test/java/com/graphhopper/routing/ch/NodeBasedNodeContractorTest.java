@@ -173,20 +173,22 @@ public class NodeBasedNodeContractorTest {
         graph.freeze();
 
         CHEdgeIteratorState sc1to4 = lg.shortcut(1, 4);
-        sc1to4.setFlags(PrepareEncoder.getScDirMask());
+        IntsRef chFlags = new IntsRef();
+        chFlags.flags = PrepareEncoder.getScDirMask();
+        sc1to4.setFlags(chFlags);
         sc1to4.setWeight(2);
         sc1to4.setDistance(2);
         sc1to4.setSkippedEdges(iter1to3.getEdge(), iter3to4.getEdge());
 
-        long f = PrepareEncoder.getScFwdDir();
+        chFlags.flags = PrepareEncoder.getScFwdDir();
         CHEdgeIteratorState sc4to6 = lg.shortcut(4, 6);
-        sc4to6.setFlags(f);
+        sc4to6.setFlags(chFlags);
         sc4to6.setWeight(2);
         sc4to6.setDistance(2);
         sc4to6.setSkippedEdges(iter4to5.getEdge(), iter5to6.getEdge());
 
         CHEdgeIteratorState sc6to4 = lg.shortcut(6, 4);
-        sc6to4.setFlags(f);
+        sc6to4.setFlags(chFlags);
         sc6to4.setWeight(3);
         sc6to4.setDistance(3);
         sc6to4.setSkippedEdges(iter6to8.getEdge(), iter8to4.getEdge());

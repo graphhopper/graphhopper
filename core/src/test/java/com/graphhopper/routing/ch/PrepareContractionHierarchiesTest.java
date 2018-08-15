@@ -19,7 +19,9 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -36,7 +38,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
@@ -285,7 +287,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     void initUnpackingGraph(GraphHopperStorage ghStorage, CHGraph g, Weighting w) {
-        final long flags = carEncoder.setProperties(30, true, false);
+        final IntsRef flags = carEncoder.setAccess(carEncoder.setSpeed(new IntsRef(), 30), true, false);
         double dist = 1;
         g.edge(10, 0).setDistance(dist).setFlags(flags);
         EdgeIteratorState edgeState01 = g.edge(0, 1);
@@ -295,7 +297,8 @@ public class PrepareContractionHierarchiesTest {
         EdgeIteratorState edgeState34 = g.edge(3, 4).setDistance(dist).setFlags(flags);
         EdgeIteratorState edgeState45 = g.edge(4, 5).setDistance(dist).setFlags(flags);
         EdgeIteratorState edgeState56 = g.edge(5, 6).setDistance(dist).setFlags(flags);
-        long oneDirFlags = PrepareEncoder.getScFwdDir();
+        IntsRef oneDirFlags = new IntsRef();
+        oneDirFlags.flags = PrepareEncoder.getScFwdDir();
 
         int tmpEdgeId = edgeState01.getEdge();
         ghStorage.freeze();

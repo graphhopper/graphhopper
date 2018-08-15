@@ -42,7 +42,7 @@ public class PathTest {
     private final DataFlagEncoder dataFlagEncoder = new DataFlagEncoder();
     private final EncodingManager carManager = new EncodingManager(encoder);
     private final EncodingManager dataFlagManager = new EncodingManager(dataFlagEncoder);
-    private final EncodingManager mixedEncoders = new EncodingManager(new CarFlagEncoder());
+    private final EncodingManager mixedEncoders = new EncodingManager(new CarFlagEncoder(), new FootFlagEncoder());
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
     private final RoundaboutGraph roundaboutGraph = new RoundaboutGraph();
@@ -66,9 +66,9 @@ public class PathTest {
         na.setNode(1, 1.0, 0.1);
         na.setNode(2, 2.0, 0.1);
 
-        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).setFlags(encoder.setProperties(10, true, true));
+        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).setFlags(encoder.setAccess(encoder.setSpeed(new IntsRef(), 10), true, true));
         edge1.setWayGeometry(Helper.createPointList(8, 1, 9, 1));
-        EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).setFlags(encoder.setProperties(50, true, true));
+        EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).setFlags(encoder.setAccess(encoder.setSpeed(new IntsRef(), 50), true, true));
         edge2.setWayGeometry(Helper.createPointList(11, 1, 10, 1));
 
         Path path = new Path(g, new FastestWeighting(encoder));
@@ -98,7 +98,7 @@ public class PathTest {
         // force minor change for instructions
         edge2.setName("2");
         na.setNode(3, 1.0, 1.0);
-        EdgeIteratorState edge3 = g.edge(1, 3).setDistance(1000).setFlags(encoder.setProperties(10, true, true));
+        g.edge(1, 3).setDistance(1000).setFlags(encoder.setAccess(encoder.setSpeed(new IntsRef(), 10), true, true));
 
         path = new Path(g, new FastestWeighting(encoder));
         e1 = new SPTEntry(edge2.getEdge(), 2, 1);
@@ -162,22 +162,22 @@ public class PathTest {
         na.setNode(5, 5.0, 1.0);
 
 
-        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).setFlags(encoder.setProperties(50, true, true));
+        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).setFlags(encoder.setAccess(encoder.setSpeed(new IntsRef(), 50), true, true));
         edge1.setWayGeometry(Helper.createPointList());
         edge1.setName("Street 1");
-        EdgeIteratorState edge2 = g.edge(1, 2).setDistance(1000).setFlags(encoder.setProperties(50, true, true));
+        EdgeIteratorState edge2 = g.edge(1, 2).setDistance(1000).setFlags(encoder.setAccess(encoder.setSpeed(new IntsRef(), 50), true, true));
         edge2.setWayGeometry(Helper.createPointList());
         edge2.setName("Street 2");
-        EdgeIteratorState edge3 = g.edge(2, 3).setDistance(1000).setFlags(encoder.setProperties(50, true, true));
+        EdgeIteratorState edge3 = g.edge(2, 3).setDistance(1000).setFlags(encoder.setAccess(encoder.setSpeed(new IntsRef(), 50), true, true));
         edge3.setWayGeometry(Helper.createPointList());
         edge3.setName("Street 3");
-        EdgeIteratorState edge4 = g.edge(3, 4).setDistance(500).setFlags(encoder.setProperties(50, true, true));
+        EdgeIteratorState edge4 = g.edge(3, 4).setDistance(500).setFlags(encoder.setAccess(encoder.setSpeed(new IntsRef(), 50), true, true));
         edge4.setWayGeometry(Helper.createPointList());
         edge4.setName("Street 4");
 
-        g.edge(1, 5).setDistance(10000).setFlags(encoder.setProperties(50, true, true));
-        g.edge(2, 5).setDistance(10000).setFlags(encoder.setProperties(50, true, true));
-        g.edge(3, 5).setDistance(100000).setFlags(encoder.setProperties(50, true, true));
+        g.edge(1, 5).setDistance(10000).setFlags(encoder.setAccess(encoder.setSpeed(new IntsRef(), 50), true, true));
+        g.edge(2, 5).setDistance(10000).setFlags(encoder.setAccess(encoder.setSpeed(new IntsRef(), 50), true, true));
+        g.edge(3, 5).setDistance(100000).setFlags(encoder.setAccess(encoder.setSpeed(new IntsRef(), 50), true, true));
 
         Path path = new Path(g, new FastestWeighting(encoder));
         SPTEntry e1 = new SPTEntry(edge4.getEdge(), 4, 1);
@@ -218,6 +218,7 @@ public class PathTest {
             Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
                     .calcPath(1, 8);
             assertTrue(p.isFound());
+            assertEquals("[1, 2, 3, 4, 5, 8]", p.calcNodes().toString());
             InstructionList wayList = p.calcInstructions(tr);
             // Test instructions
             List<String> tmpList = pick("text", wayList.createJson());
@@ -490,15 +491,6 @@ public class PathTest {
         double delta = roundaboutGraph.getAngle(1, 2, 5, 8);
         RoundaboutInstruction instr = (RoundaboutInstruction) wayList.get(1);
         assertEquals(delta, instr.getTurnAngle(), 0.01);
-    }
-
-    List<String> pick(String key, List<Map<String, Object>> instructionJson) {
-        List<String> list = new ArrayList<>();
-
-        for (Map<String, Object> json : instructionJson) {
-            list.add(json.get(key).toString());
-        }
-        return list;
     }
 
     @Test
@@ -794,9 +786,9 @@ public class PathTest {
         ReaderWay w = new ReaderWay(1);
         w.setTag("highway", "tertiary");
 
-        g.edge(1, 2, 5, true).setFlags(dataFlagEncoder.handleWayTags(w, 1, 0));
-        g.edge(2, 4, 5, true).setFlags(dataFlagEncoder.handleWayTags(w, 1, 0));
-        g.edge(2, 3, 5, true).setFlags(dataFlagEncoder.handleWayTags(w, 1, 0));
+        g.edge(1, 2, 5, true).setFlags(dataFlagEncoder.handleWayTags(new IntsRef(), w, 1, 0));
+        g.edge(2, 4, 5, true).setFlags(dataFlagEncoder.handleWayTags(new IntsRef(), w, 1, 0));
+        g.edge(2, 3, 5, true).setFlags(dataFlagEncoder.handleWayTags(new IntsRef(), w, 1, 0));
 
         Path p = new Dijkstra(g, new GenericWeighting(dataFlagEncoder, new HintsMap()), TraversalMode.NODE_BASED).calcPath(1, 3);
         assertTrue(p.isFound());
@@ -858,6 +850,15 @@ public class PathTest {
         assertEquals(2, wayList.size());
     }
 
+    List<String> pick(String key, List<Map<String, Object>> instructionJson) {
+        List<String> list = new ArrayList<>();
+
+        for (Map<String, Object> json : instructionJson) {
+            list.add(json.get(key).toString());
+        }
+        return list;
+    }
+
     private Graph generatePathDetailsGraph() {
         final Graph g = new GraphBuilder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
@@ -874,17 +875,17 @@ public class PathTest {
 
         EdgeIteratorState tmpEdge;
         tmpEdge = g.edge(1, 2, 5, true).setName("1-2");
-        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
+        tmpEdge.setFlags(carManager.handleWayTags(new IntsRef(), w, carManager.acceptWay(w), 0));
         tmpEdge = g.edge(4, 5, 5, true).setName("4-5");
-        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
+        tmpEdge.setFlags(carManager.handleWayTags(new IntsRef(), w, carManager.acceptWay(w), 0));
 
         w.setTag("maxspeed", "100");
         tmpEdge = g.edge(2, 3, 5, true).setName("2-3");
-        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
+        tmpEdge.setFlags(carManager.handleWayTags(new IntsRef(), w, carManager.acceptWay(w), 0));
 
         w.setTag("maxspeed", "10");
         tmpEdge = g.edge(3, 4, 10, true).setName("3-4");
-        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
+        tmpEdge.setFlags(carManager.handleWayTags(new IntsRef(), w, carManager.acceptWay(w), 0));
 
         return g;
     }
@@ -954,10 +955,8 @@ public class PathTest {
             g.edge(17, 18, 5, true);
             g.edge(17, 19, 5, true);
 
-
             setRoundabout(clockwise);
             inverse3to9();
-
         }
 
         public void setRoundabout(boolean clockwise) {
@@ -972,14 +971,14 @@ public class PathTest {
 
         public void inverse3to9() {
             for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders()) {
-                long flags = edge3to9.getFlags();
+                IntsRef flags = edge3to9.getFlags();
                 edge3to9.setFlags(encoder.setAccess(flags, !edge3to9.isForward(encoder), false));
             }
         }
 
         public void inverse3to6() {
             for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders()) {
-                long flags = edge3to6.getFlags();
+                IntsRef flags = edge3to6.getFlags();
                 edge3to6.setFlags(encoder.setAccess(flags, !edge3to6.isForward(encoder), true));
             }
         }

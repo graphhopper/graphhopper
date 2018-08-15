@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.storage.IntsRef;
+
 /**
  * Encapsulates a bit-encoded value.
  * <p>
@@ -34,21 +36,21 @@ public class EncodedDoubleValue extends EncodedValue {
     }
 
     @Override
-    public long setValue(long flags, long value) {
+    public void setValue(IntsRef flags, long value) {
         throw new IllegalStateException("Use setDoubleValue instead");
     }
 
     @Override
-    public long getValue(long flags) {
+    public long getValue(IntsRef flags) {
         throw new IllegalStateException("Use setDoubleValue instead");
     }
 
     @Override
-    public long setDefaultValue(long flags) {
-        return setDoubleValue(flags, defaultValue);
+    public void setDefaultValue(IntsRef flags) {
+        setDoubleValue(flags, defaultValue);
     }
 
-    public long setDoubleValue(long flags, double value) {
+    public void setDoubleValue(IntsRef intsRef, double value) {
         if (Double.isNaN(value))
             throw new IllegalArgumentException("Value cannot be NaN");
 
@@ -58,14 +60,15 @@ public class EncodedDoubleValue extends EncodedValue {
         tmpValue <<= shift;
 
         // clear value bits
-        flags &= ~mask;
+        intsRef.flags &= ~mask;
 
         // set value
-        return flags | tmpValue;
+        intsRef.flags |= tmpValue;
     }
 
-    public double getDoubleValue(long flags) {
+    public double getDoubleValue(IntsRef intsRef) {
         // find value
+        long flags = intsRef.flags;
         flags &= mask;
         flags >>>= shift;
         return flags * factor;

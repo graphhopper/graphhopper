@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
@@ -33,8 +34,10 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
 
     @Test
     public void testGetSpeed() {
-        long result = encoder.setProperties(10, true, true);
-        assertEquals(10, encoder.getSpeed(result), 1e-1);
+        IntsRef intsRef = new IntsRef();
+        encoder.setAccess(intsRef, true, true);
+        encoder.setSpeed(intsRef, 10);
+        assertEquals(10, encoder.getSpeed(intsRef), 1e-1);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         assertEquals(18, encoder.getSpeed(way));
@@ -154,9 +157,9 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         long allowed = encoder.acceptBit;
 
         ReaderRelation osmRel = new ReaderRelation(1);
-        long relFlags = encoder.handleRelationTags(osmRel, 0);
+        long relFlags = encoder.handleRelationTags(0, osmRel);
         // unchanged
-        long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
+        IntsRef flags = encoder.handleWayTags(new IntsRef(), osmWay, allowed, relFlags);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
         assertEquals("small way, unpaved", getWayTypeFromFlags(osmWay));
@@ -164,23 +167,23 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        relFlags = encoder.handleRelationTags(osmRel, 0);
-        flags = encoder.handleWayTags(osmWay, allowed, relFlags);
+        relFlags = encoder.handleRelationTags(0, osmRel);
+        flags = encoder.handleWayTags(new IntsRef(), osmWay, allowed, relFlags);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
         assertEquals("small way, unpaved", getWayTypeFromFlags(osmWay));
 
         // relation code is PREFER
         osmRel.setTag("network", "rcn");
-        relFlags = encoder.handleRelationTags(osmRel, 0);
-        flags = encoder.handleWayTags(osmWay, allowed, relFlags);
+        relFlags = encoder.handleRelationTags(0, osmRel);
+        flags = encoder.handleWayTags(new IntsRef(), osmWay, allowed, relFlags);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
 
         // relation code is PREFER
         osmRel.setTag("network", "ncn");
-        relFlags = encoder.handleRelationTags(osmRel, 0);
-        flags = encoder.handleWayTags(osmWay, allowed, relFlags);
+        relFlags = encoder.handleRelationTags(0, osmRel);
+        flags = encoder.handleWayTags(new IntsRef(), osmWay, allowed, relFlags);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
 
@@ -191,8 +194,8 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        relFlags = encoder.handleRelationTags(osmRel, 0);
-        flags = encoder.handleWayTags(osmWay, allowed, relFlags);
+        relFlags = encoder.handleRelationTags(0, osmRel);
+        flags = encoder.handleWayTags(new IntsRef(), osmWay, allowed, relFlags);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
         assertEquals("", getWayTypeFromFlags(osmWay));

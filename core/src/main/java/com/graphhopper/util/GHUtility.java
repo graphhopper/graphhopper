@@ -177,7 +177,7 @@ public class GHUtility {
         String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
         while (iter.next()) {
             str += "  ->" + iter.getAdjNode() + "(" + iter.getSkippedEdge1() + "," + iter.getSkippedEdge2() + ") "
-                    + iter.getEdge() + " \t" + BitUtil.BIG.toBitString(iter.getFlags(), 8) + "\n";
+                    + iter.getEdge() + " \t" + BitUtil.BIG.toBitString(iter.getFlags().flags, 8) + "\n";
         }
         return str;
     }
@@ -189,7 +189,7 @@ public class GHUtility {
         while (iter.next()) {
             str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
                     + iter.fetchWayGeometry(0).getSize() + ", edgeId:" + iter.getEdge()
-                    + "\t" + BitUtil.BIG.toBitString(iter.getFlags(), 8) + "\n";
+                    + "\t" + BitUtil.BIG.toBitString(iter.getFlags().flags, 8) + "\n";
         }
         return str;
     }
@@ -315,7 +315,7 @@ public class GHUtility {
         return adjNode;
     }
 
-    public static EdgeIteratorState createMockedEdgeIteratorState(final double distance, final long flags) {
+    public static EdgeIteratorState createMockedEdgeIteratorState(final double distance, final IntsRef flags) {
         return new GHUtility.DisabledEdgeIterator() {
             @Override
             public double getDistance() {
@@ -323,7 +323,7 @@ public class GHUtility {
             }
 
             @Override
-            public long getFlags() {
+            public IntsRef getFlags() {
                 return flags;
             }
 
@@ -380,6 +380,20 @@ public class GHUtility {
         return edgeKey / 2;
     }
 
+    public static EdgeIteratorState setProperties(EdgeIteratorState edge, FlagEncoder encoder, double averageSpeed, boolean fwd, boolean bwd) {
+        if (averageSpeed < 0.0001 && (fwd || bwd))
+            throw new IllegalStateException("Zero speed is only allowed if edge will get inaccessible. Otherwise Weighting can produce inconsistent results");
+
+        IntsRef intsRef = edge.getFlags();
+        encoder.setAccess(intsRef, fwd, bwd);
+        if (fwd)
+            encoder.setSpeed(intsRef, averageSpeed);
+        if (bwd)
+            encoder.setReverseSpeed(intsRef, averageSpeed);
+        edge.setFlags(intsRef);
+        return edge;
+    }
+
     /**
      * This edge iterator can be used in tests to mock specific iterator behaviour via overloading
      * certain methods.
@@ -396,7 +410,7 @@ public class GHUtility {
         }
 
         @Override
-        public EdgeIteratorState setFlags(long flags) {
+        public EdgeIteratorState setFlags(IntsRef flags) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
@@ -426,7 +440,7 @@ public class GHUtility {
         }
 
         @Override
-        public long getFlags() {
+        public IntsRef getFlags() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

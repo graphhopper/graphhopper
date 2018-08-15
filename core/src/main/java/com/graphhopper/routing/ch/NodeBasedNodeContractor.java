@@ -245,7 +245,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                     }
 
                     // note: flags overwrite weight => call first
-                    iter.setFlags(sc.flags);
+                    IntsRef intsRef = new IntsRef();
+                    intsRef.flags = sc.flags;
+                    iter.setFlags(intsRef);
                     iter.setWeight(sc.weight);
                     iter.setDistance(sc.dist);
                     iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
@@ -258,7 +260,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             if (!updatedInGraph) {
                 CHEdgeIteratorState edgeState = prepareGraph.shortcut(sc.from, sc.to);
                 // note: flags overwrite weight => call first
-                edgeState.setFlags(sc.flags);
+                IntsRef intsRef = new IntsRef();
+                intsRef.flags = sc.flags;
+                edgeState.setFlags(intsRef);
                 edgeState.setWeight(sc.weight);
                 edgeState.setDistance(sc.dist);
                 edgeState.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);

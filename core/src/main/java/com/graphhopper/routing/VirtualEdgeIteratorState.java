@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -36,13 +37,13 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     private final int adjNode;
     private final int originalTraversalKey;
     private double distance;
-    private long flags;
+    private IntsRef flags;
     private String name;
     // indication if edges are dispreferred as start/stop edge 
     private boolean unfavored;
     private EdgeIteratorState reverseEdge;
 
-    public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance, long flags, String name, PointList pointList) {
+    public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance, IntsRef flags, String name, PointList pointList) {
         this.originalTraversalKey = originalTraversalKey;
         this.edgeId = edgeId;
         this.baseNode = baseNode;
@@ -115,12 +116,12 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public long getFlags() {
+    public IntsRef getFlags() {
         return flags;
     }
 
     @Override
-    public EdgeIteratorState setFlags(long flags) {
+    public EdgeIteratorState setFlags(IntsRef flags) {
         this.flags = flags;
         return this;
     }

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.InstructionAnnotation;
 import com.graphhopper.util.Translation;
 
@@ -31,7 +32,7 @@ public interface FlagEncoder extends TurnCostEncoder {
     /**
      * Reports whether this edge is part of a roundabout.
      */
-    static final int K_ROUNDABOUT = 2;
+    int K_ROUNDABOUT = 2;
 
     /**
      * @return the version of this FlagEncoder to enforce none-compatibility when new attributes are
@@ -47,51 +48,41 @@ public interface FlagEncoder extends TurnCostEncoder {
     /**
      * @return the speed in km/h for this direction, for backward direction use getReverseSpeed
      */
-    double getSpeed(long flags);
+    double getSpeed(IntsRef intsRef);
 
     /**
      * Sets the speed in km/h.
-     * <p>
      *
      * @return modified setProperties
      */
-    long setSpeed(long flags, double speed);
+    IntsRef setSpeed(IntsRef intsRef, double speed);
 
     /**
      * @return the speed of the reverse direction in km/h
      */
-    double getReverseSpeed(long flags);
+    double getReverseSpeed(IntsRef intsRef);
 
     /**
-     * Sets the reverse speed in the flags.
+     * Sets the reverse speed in the intsRef.
      */
-    long setReverseSpeed(long flags, double speed);
+    IntsRef setReverseSpeed(IntsRef intsRef, double speed);
 
     /**
      * Sets the access of the edge.
-     * <p>
      *
-     * @return modified flags
+     * @return modified intsRef
      */
-    long setAccess(long flags, boolean forward, boolean backward);
-
-    /**
-     * Sets speed and access properties.
-     * <p>
-     *
-     * @return created flags
-     */
-    long setProperties(double speed, boolean forward, boolean backward);
+    IntsRef setAccess(IntsRef intsRef, boolean forward, boolean backward);
 
     /**
      * Reports whether the edge is available in forward direction (i.e. from base node to adj node)
      * for a certain vehicle.
      */
-    boolean isForward(long flags);
+    boolean isForward(IntsRef intsRef);
 
     /*
      * Simple rules for every subclass which introduces a new key. It has to use the prefix K_ and
-     * uses a minimum value which is two magnitudes higher than in the super class. 
+     * uses a minimum value which is two magnitudes higher than in the super class.
      * Currently this means starting from 100, and subclasses of this class start from 10000 and so on.
      */
 
@@ -99,30 +90,30 @@ public interface FlagEncoder extends TurnCostEncoder {
      * Reports whether the edge is available in backward direction (i.e. from adj node to base node)
      * for a certain vehicle.
      */
-    boolean isBackward(long flags);
+    boolean isBackward(IntsRef intsRef);
 
     /**
      * Returns arbitrary boolean value identified by the specified key.
      */
-    boolean isBool(long flags, int key);
+    boolean isBool(IntsRef intsRef, int key);
 
-    long setBool(long flags, int key, boolean value);
+    IntsRef setBool(IntsRef intsRef, int key, boolean value);
 
     /**
      * Returns arbitrary long value identified by the specified key. E.g. can be used to return the
      * way or surface type of an edge
      */
-    long getLong(long flags, int key);
+    long getLong(IntsRef intsRef, int key);
 
-    long setLong(long flags, int key, long value);
+    IntsRef setLong(IntsRef intsRef, int key, long value);
 
     /**
      * Returns arbitrary double value identified by the specified key. E.g. can be used to return
      * the maximum width or height allowed for an edge.
      */
-    double getDouble(long flags, int key);
+    double getDouble(IntsRef intsRef, int key);
 
-    long setDouble(long flags, int key, double value);
+    IntsRef setDouble(IntsRef intsRef, int key, double value);
 
     /**
      * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.
@@ -132,7 +123,7 @@ public interface FlagEncoder extends TurnCostEncoder {
     /**
      * @return additional cost or warning information for an instruction like ferry or road charges.
      */
-    InstructionAnnotation getAnnotation(long flags, Translation tr);
+    InstructionAnnotation getAnnotation(IntsRef intsRef, Translation tr);
 
     /**
      * @return true if already registered in an EncodingManager
