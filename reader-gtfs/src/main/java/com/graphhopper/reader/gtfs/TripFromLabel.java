@@ -120,6 +120,17 @@ class TripFromLabel {
     }
 
     List<Trip.Leg> getTrip(boolean arriveBy, PtFlagEncoder encoder, Translation tr, GraphExplorer queryGraph, Weighting weighting, Label solution) {
+        List<Label.Transition> transitions = getTransitions(arriveBy, encoder, queryGraph, solution);
+        return getTrip(tr, queryGraph, weighting, transitions);
+    }
+
+    List<Trip.Leg> getTrip(Translation tr, GraphExplorer queryGraph, Weighting weighting, List<Label.Transition> transitions) {
+        final List<List<Label.Transition>> partitions = getPartitions(transitions);
+        final List<Trip.Leg> legs = getLegs(tr, queryGraph, weighting, partitions);
+        return legs;
+    }
+
+    List<Label.Transition> getTransitions(boolean arriveBy, PtFlagEncoder encoder, GraphExplorer queryGraph, Label solution) {
         List<Label.Transition> transitions = new ArrayList<>();
         if (arriveBy) {
             reverseEdges(solution, queryGraph, encoder, false)
@@ -129,11 +140,7 @@ class TripFromLabel {
                     .forEach(transitions::add);
             Collections.reverse(transitions);
         }
-
-
-        final List<List<Label.Transition>> partitions = getPartitions(transitions);
-        final List<Trip.Leg> legs = getLegs(tr, queryGraph, weighting, partitions);
-        return legs;
+        return transitions;
     }
 
     private List<List<Label.Transition>> getPartitions(List<Label.Transition> transitions) {

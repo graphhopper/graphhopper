@@ -80,7 +80,7 @@ public class GraphHopperMultimodalIT {
         ghRequest.getHints().put(Parameters.PT.PROFILE_QUERY, true);
 
         GHResponse response = graphHopper.route(ghRequest);
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(310);
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(247);
 
         PathWrapper firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
         assertThat(firstTransitSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
@@ -98,9 +98,10 @@ public class GraphHopperMultimodalIT {
                 36.91260259593356,-116.76149368286134
         );
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,40,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put("beta_walk_time", 2.0); // I somewhat dislike walking
 
         GHResponse response = graphHopper.route(ghRequest);
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(204);
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(178);
 
         PathWrapper firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
         assertThat(firstTransitSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
@@ -124,7 +125,7 @@ public class GraphHopperMultimodalIT {
         // Now, the walk solution dominates, and we get no transit solution.
         ghRequest.getHints().put("beta_walk_time",1.0);
         response = graphHopper.route(ghRequest);
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(201);
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(139);
         assertThat(response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst()).isEmpty();
     }
 
@@ -160,7 +161,7 @@ public class GraphHopperMultimodalIT {
 
         GHResponse response = graphHopper.route(ghRequest);
 
-        PathWrapper walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
+        PathWrapper walkSolution = response.getAll().get(0);
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:40"));
         assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
