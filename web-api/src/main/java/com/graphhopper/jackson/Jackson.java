@@ -18,13 +18,16 @@
 package com.graphhopper.jackson;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 
 public class Jackson {
     public static ObjectMapper newObjectMapper() {
         ObjectMapper objectMapper = io.dropwizard.jackson.Jackson.newObjectMapper();
         objectMapper.registerModule(new GraphHopperModule());
         objectMapper.registerModule(new JtsModule());
+        // See https://github.com/FasterXML/jackson-modules-base/issues/37
+        objectMapper.registerModule(new AfterburnerModule().setUseValueClassLoader(false));
         return objectMapper;
     }
 }
