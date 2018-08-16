@@ -22,12 +22,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 
 public class Jackson {
-    public static ObjectMapper newObjectMapper() {
-        ObjectMapper objectMapper = io.dropwizard.jackson.Jackson.newObjectMapper();
+    public static ObjectMapper initObjectMapper(ObjectMapper objectMapper) {
         objectMapper.registerModule(new GraphHopperModule());
         objectMapper.registerModule(new JtsModule());
         // See https://github.com/FasterXML/jackson-modules-base/issues/37
         objectMapper.registerModule(new AfterburnerModule().setUseValueClassLoader(false));
         return objectMapper;
+    }
+
+    public static ObjectMapper newObjectMapper() {
+        return initObjectMapper(io.dropwizard.jackson.Jackson.newObjectMapper());
     }
 }

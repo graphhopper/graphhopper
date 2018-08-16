@@ -18,7 +18,6 @@
 
 package com.graphhopper.http;
 
-import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.BeanDescription;
@@ -33,7 +32,7 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.http.health.GraphHopperStorageHealthCheck;
 import com.graphhopper.isochrone.algorithm.RasterHullBuilder;
-import com.graphhopper.jackson.GraphHopperModule;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
@@ -55,10 +54,7 @@ import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.ext.WriterInterceptor;
-import javax.ws.rs.ext.WriterInterceptorContext;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -163,8 +159,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
         bootstrap.getObjectMapper().setDateFormat(new ISO8601DateFormat());
-        bootstrap.getObjectMapper().registerModule(new JtsModule());
-        bootstrap.getObjectMapper().registerModule(new GraphHopperModule());
+        Jackson.initObjectMapper(bootstrap.getObjectMapper());
         bootstrap.getObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
         // Because VirtualEdgeIteratorState has getters which throw Exceptions.
         // http://stackoverflow.com/questions/35359430/how-to-make-jackson-ignore-properties-if-the-getters-throw-exceptions
