@@ -1132,7 +1132,9 @@ class BaseGraph implements Graph {
 
         final IntsRef getDirectFlags() {
             if (!freshFlags) {
-                cachedIntsRef = new IntsRef();
+                // TODO on setBaseNode force clearing cache?
+                if (cachedIntsRef == null)
+                    cachedIntsRef = new IntsRef();
                 cachedIntsRef.flags = edgeAccess.getFlags_(edgePointer, reverse);
                 freshFlags = true;
             }

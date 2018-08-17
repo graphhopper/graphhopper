@@ -19,7 +19,6 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -245,6 +244,28 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         // A better solution would be if we do not allow to create IntsRef outside of the EdgeIterator API
         assertTrue(edge0.isForward(carEncoder));
         assertFalse(edge0.isBackward(carEncoder));
+    }
+
+    @Test
+    public void testDecoupledEdgeIteratorStates() {
+        GraphHopperStorage storage = createGHStorage();
+        BaseGraph graph = (BaseGraph) storage.getGraph(Graph.class);
+        IntsRef ref = new IntsRef();
+        ref.flags = 12;
+        graph.edge(1, 2, 10, true).setFlags(ref);
+        ref.flags = 13;
+        graph.edge(1, 3, 10, true).setFlags(ref);
+
+        EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(1);
+        assertTrue(iter.next());
+        EdgeIteratorState edge1 = iter.detach(false);
+
+        assertTrue(iter.next());
+        ref.flags = 44;
+        iter.setFlags(ref);
+
+        assertEquals(44, iter.getFlags().flags);
+        assertEquals(13, edge1.getFlags().flags);
     }
 
     public void testAdditionalEdgeField() {
