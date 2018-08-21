@@ -5,7 +5,7 @@ nbactions*.xml
 maven/
 */nbactions.xml
 .idea/
-*iml
+*.iml
 .*#
 /nbactions.xml
 tools/nb-configuration.xml

@@ -76,16 +76,13 @@ public class MapboxResource {
             @QueryParam("geometries") @DefaultValue("polyline") String geometries,
             @QueryParam("language") @DefaultValue("en") String localeStr,
             @QueryParam("heading") List<Double> favoredHeadings,
-            @PathParam("profile") String profile,
-            @PathParam("coordinatesArray") String coordinates) {
+            @PathParam("profile") String profile) {
 
         /*
             Mapbox always uses fastest or priority weighting, except for walking, it's shortest
             https://www.mapbox.com/api-documentation/#directions
          */
         final String weighting = "fastest";
-
-        System.out.println(coordinates);
 
         /*
             Currently, the MapboxResponseConverter is pretty limited.
