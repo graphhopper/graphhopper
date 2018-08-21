@@ -57,7 +57,7 @@ public class EncodingManagerTest {
 
         try {
             new EncodingManager("car,car");
-            assertTrue("do not allow duplicate flag encoders", false);
+            fail("do not allow duplicate flag encoders");
         } catch (Exception ex) {
         }
     }
@@ -80,14 +80,14 @@ public class EncodingManagerTest {
         try {
             FootFlagEncoder foot = new FootFlagEncoder();
             new EncodingManager(foot, foot);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertEquals("You must not register a FlagEncoder (foot) twice!", ex.getMessage());
         }
 
         try {
             new EncodingManager(new FootFlagEncoder(), new CarFlagEncoder(), new BikeFlagEncoder(), new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder());
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoders are requesting 44 bits, more than 32 bits of way flags. Decrease the"));
         }
