@@ -1,0 +1,16 @@
+target/
+*~
+TODO.txt
+nbactions*.xml
+maven/
+*/nbactions.xml
+.idea/
+*iml
+.*#
+/nbactions.xml
+tools/nb-configuration.xml
+.settings/
+.classpath
+.project
+.DS_Store
+package-lock.json
