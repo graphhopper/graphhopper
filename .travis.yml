@@ -1,0 +1,8 @@
+language: java
+sudo: false
+dist: trusty
+
+install: true
+
+script:
+  - "mvn -Dkey=$API_KEY clean test"

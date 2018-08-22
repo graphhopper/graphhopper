@@ -7,6 +7,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-navigation</artifactId>
     <version>0.11-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
     <licenses>
         <license>
