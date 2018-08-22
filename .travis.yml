@@ -2,7 +2,47 @@ language: java
 sudo: false
 dist: trusty
 
+env:
+  global:
+    - GPG_EXECUTABLE=gpg
+ matrix:
+  include:
+    - jdk: openjdk8
+    - env: JDK='OpenJDK 10'
+      install: . ./install-jdk.sh -F 10 -C
+    - env: JDK='OpenJDK 11'
+      install: . ./install-jdk.sh -F 11 -C
+
+# avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
 
+# store them into travis via https://dracoblue.net/dev/uploading-snapshots-and-releases-to-maven-central-with-travis/
+# gpg -a --export-secret-keys your@email.org | base64 -w 0
+# gpg --export-ownertrust | base64 -w 0
+before_install:
+  - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
+  - if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
+  - 'wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh'
+
+# Undo `_JAVA_OPTIONS` environment variable; see https://github.com/travis-ci/travis-ci/issues/8408
+before_script:
+  - _JAVA_OPTIONS=
+  - "mvn --version"
+
 script:
-  - "mvn -Dkey=$API_KEY clean test"
+  - "mvn clean test verify -B"
+
+after_success:
+  - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_TAG" != "" ]; then
+        echo "release to maven central";
+        mvn versions:set -DnewVersion=$TRAVIS_TAG -DgenerateBackupPoms=false;
+        mvn deploy -P release --settings settings.xml -DskipTests=true -B;
+    else
+        echo "Not deploying artifacts for $TRAVIS_BRANCH";
+    fi
+ notifications:
+  email:
+    - secure: $EMAIL
+ cache:
+  directories:
+  - $HOME/.m2
