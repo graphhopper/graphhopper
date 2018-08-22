@@ -5,7 +5,7 @@ dist: trusty
 env:
   global:
     - GPG_EXECUTABLE=gpg
- matrix:
+matrix:
   include:
     - jdk: openjdk8
     - env: JDK='OpenJDK 10'
@@ -40,9 +40,9 @@ after_success:
     else
         echo "Not deploying artifacts for $TRAVIS_BRANCH";
     fi
- notifications:
+notifications:
   email:
     - secure: $EMAIL
- cache:
+cache:
   directories:
   - $HOME/.m2
