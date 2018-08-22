@@ -26,6 +26,7 @@ public class MapboxResponseConverterTest {
     private static final String importVehicles = "car";
     private static GraphHopper hopper;
     private final String tmpGraphFile = "target/graphhopperIT-tmp";
+    private final String vehicle = "car";
 
     private final TranslationMap trMap = new TranslationMap().doImport();
 
@@ -62,7 +63,7 @@ public class MapboxResponseConverterTest {
     public void basicTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setVehicle("car"));
+                setVehicle(vehicle));
 
         ObjectNode json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH);
 
@@ -136,7 +137,7 @@ public class MapboxResponseConverterTest {
         request.addPoint(new GHPoint(42.504776, 1.527209));
         request.addPoint(new GHPoint(42.505144, 1.526113));
         request.addPoint(new GHPoint(42.50529, 1.527218));
-        request.setVehicle("car");
+        request.setVehicle(vehicle);
 
         GHResponse rsp = hopper.route(request);
 
@@ -161,7 +162,7 @@ public class MapboxResponseConverterTest {
     @Test
     public void testError() {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 111.536198, 42.510071, 1.548128).
-                setVehicle("car"));
+                setVehicle(vehicle));
 
         ObjectNode json = MapboxResponseConverter.convertFromGHResponseError(rsp);
 
