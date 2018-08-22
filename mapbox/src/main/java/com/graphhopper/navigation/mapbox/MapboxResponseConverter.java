@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.http.WebHelper;
 import com.graphhopper.util.*;
 
 import java.util.List;
