@@ -4,10 +4,34 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <name>GraphHopper Navigation Parent Project</name>
+
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-navigation</artifactId>
     <version>0.11-SNAPSHOT</version>
     <packaging>pom</packaging>
+
+    <url>https://www.graphhopper.com</url>
+    <description>Super pom of GraphHopper Navigation</description>
+
+    <scm>
+        <connection>scm:git:git@github.com:graphhopper/graphhopper-navigation.git</connection>
+        <developerConnection>scm:git:git@github.com:graphhopper/graphhopper-navigation.git</developerConnection>
+        <url>git@github.com:graphhopper/graphhopper-navigation.git</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>karussell</id>
+            <name>Peter</name>
+            <email>my.name@graphhopper.com</email>
+        </developer>
+        <developer>
+            <id>boldtrn</id>
+            <name>Robin</name>
+            <email>see.github@something.com</email>
+        </developer>
+    </developers>
 
     <licenses>
         <license>
