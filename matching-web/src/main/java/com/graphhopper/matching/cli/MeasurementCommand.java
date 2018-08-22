@@ -116,7 +116,7 @@ public class MeasurementCommand extends Command {
         } finally {
             properties.put("measurement.count", "" + count);
             properties.put("measurement.seed", "" + seed);
-            properties.put("measurement.time", "" + sw.stop().getTime());
+            properties.put("measurement.time", "" + sw.stop().getMillis());
             System.gc();
             properties.put("measurement.totalMB", "" + Helper.getTotalMB());
             properties.put("measurement.usedMB", "" + Helper.getUsedMB());
