@@ -2,9 +2,6 @@ language: java
 sudo: false
 dist: trusty
 
-env:
-  global:
-    - GPG_EXECUTABLE=gpg
 matrix:
   include:
     - jdk: openjdk8
