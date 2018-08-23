@@ -206,7 +206,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 if (label.adjNode == startNode) {
                     stationLabels.add(label);
                     break;
-                } else if (label.edge != -1 && flagEncoder.getEdgeType(accessEgressGraphExplorer.getEdgeIteratorState(label.edge, label.adjNode).getFlags()) == edgeType) {
+                } else if (label.edge != -1 && flagEncoder.getEdgeType(accessEgressGraphExplorer.getEdgeIteratorState(label.edge, label.parent.adjNode).getFlags()) == edgeType) {
                     stationLabels.add(label);
                 }
             }

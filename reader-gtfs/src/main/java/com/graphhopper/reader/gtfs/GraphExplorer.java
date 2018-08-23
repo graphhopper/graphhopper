@@ -168,9 +168,19 @@ final class GraphExplorer {
         if (edgeId == -1) {
             throw new RuntimeException();
         }
-        return extraEdges.stream()
-                .filter(edge -> edge.getEdge() == edgeId)
-                .findFirst().orElseGet(() -> graph.getEdgeIteratorState(edgeId, adjNode));
+        for (EdgeIteratorState extraEdge : extraEdges) {
+            if (extraEdge.getEdge() == edgeId) {
+                if (extraEdge.getAdjNode() != adjNode) {
+                    throw new IllegalStateException();
+                }
+                return extraEdge;
+            }
+        }
+        EdgeIteratorState edge = graph.getEdgeIteratorState(edgeId, adjNode);
+        if (edge.getAdjNode() != adjNode) {
+            throw new IllegalStateException();
+        }
+        return edge;
     }
 
     NodeAccess getNodeAccess() {
