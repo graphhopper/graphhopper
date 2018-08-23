@@ -211,7 +211,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 }
             }
             visitedNodes += stationRouter.getVisitedNodes();
-            List<List<Label.Transition>> pathsFromStations = stationLabels.stream().map(l -> new TripFromLabel(gtfsStorage, realtimeFeed).getTransitions(!arriveBy, flagEncoder, accessEgressGraphExplorer, l)).collect(Collectors.toList());
 
             Map<Integer, Label> reverseSettledSet = new HashMap<>();
             for (Label stationLabel : stationLabels) {
@@ -247,7 +246,11 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                         if (discoveredSolutions.size() < limitSolutions) {
                             discoveredSolutions.add(combinedSolution);
                             originalSolutions.put(combinedSolution, label);
-                            highestWeightForDominationTest = discoveredSolutions.stream().filter(s -> ignoreTransfers || s.nTransfers == 0).mapToLong(router::weight).max().orElse(Long.MAX_VALUE);
+                            if (profileQuery) {
+                                highestWeightForDominationTest = router.weight(discoveredSolutions.get(discoveredSolutions.size()-1));
+                            } else {
+                                highestWeightForDominationTest = discoveredSolutions.stream().filter(s -> !s.impossible && (ignoreTransfers || s.nTransfers <= 1)).mapToLong(router::weight).min().orElse(Long.MAX_VALUE);
+                            }
                         }
                     }
                 }
@@ -260,7 +263,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             List<List<Label.Transition>> paths = pathsToStations.stream().map(p -> {
                 if (arriveBy) {
                     List<Label.Transition> pp = new ArrayList<>(p.subList(1, p.size()));
-                    List<Label.Transition> pathFromStation = pathsFromStations.stream().filter(pfs -> pfs.get(pfs.size() - 1).label.adjNode == p.get(0).label.adjNode).findFirst().get();
+                    List<Label.Transition> pathFromStation = pathFromStation(accessEgressGraphExplorer, reverseSettledSet.get(p.get(0).label.adjNode));
                     long diff = p.get(0).label.currentTime - pathFromStation.get(pathFromStation.size() - 1).label.currentTime;
                     List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
                         return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.nWalkDistanceConstraintViolations, t.label.walkDistanceOnCurrentLeg, t.label.departureTime, t.label.walkTime, t.label.residualDelay, t.label.impossible, null), t.edge);
@@ -269,7 +272,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     return pp;
                 } else {
                     List<Label.Transition> pp = new ArrayList<>(p);
-                    List<Label.Transition> pathFromStation = pathsFromStations.stream().filter(pfs -> pfs.get(0).label.adjNode == p.get(p.size() - 1).label.adjNode).findFirst().get();
+                    List<Label.Transition> pathFromStation = pathFromStation(accessEgressGraphExplorer, reverseSettledSet.get(p.get(p.size() - 1).label.adjNode));
                     long diff = p.get(p.size() - 1).label.currentTime - pathFromStation.get(0).label.currentTime;
                     List<Label.Transition> patchedPathFromStation = pathFromStation.subList(1, pathFromStation.size()).stream().map(t -> {
                         return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.nWalkDistanceConstraintViolations, t.label.walkDistanceOnCurrentLeg, t.label.departureTime, t.label.walkTime, t.label.residualDelay, t.label.impossible, null), t.edge);
@@ -290,6 +293,10 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 response.addError(new RuntimeException("No route found"));
             }
             return paths;
+        }
+
+        private List<Label.Transition> pathFromStation(GraphExplorer accessEgressGraphExplorer, Label l) {
+            return new TripFromLabel(gtfsStorage, realtimeFeed).getTransitions(!arriveBy, flagEncoder, accessEgressGraphExplorer, l);
         }
     }
 

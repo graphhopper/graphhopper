@@ -68,11 +68,10 @@ class MultiCriteriaLabelSetting {
         this.profileQuery = profileQuery;
         this.targetLabels = solutions;
 
-        queueComparator = Comparator.<Label>comparingLong(l2 -> l2.impossible ? 1 : 0)
-                .thenComparing(Comparator.comparingLong(l2 -> weight(l2)))
+        queueComparator = Comparator.<Label>comparingLong(l2 -> weight(l2))
                 .thenComparing(Comparator.comparingLong(l1 -> l1.nTransfers))
-                .thenComparing(Comparator.comparingLong(l1 -> l1.nWalkDistanceConstraintViolations))
-                .thenComparing(Comparator.comparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0));
+                .thenComparing(Comparator.comparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0))
+                .thenComparing(Comparator.comparingLong(l2 -> l2.impossible ? 1 : 0));
         fromHeap = new PriorityQueue<>(queueComparator);
         fromMap = ArrayListMultimap.create();
     }

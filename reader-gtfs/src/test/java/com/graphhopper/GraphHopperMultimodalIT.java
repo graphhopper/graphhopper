@@ -101,7 +101,7 @@ public class GraphHopperMultimodalIT {
         ghRequest.getHints().put("beta_walk_time", 2.0); // I somewhat dislike walking
 
         GHResponse response = graphHopper.route(ghRequest);
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(178);
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(130);
 
         PathWrapper firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
         assertThat(firstTransitSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
@@ -168,6 +168,31 @@ public class GraphHopperMultimodalIT {
                 .isEqualTo(LocalTime.parse("06:41:07.031"));
         assertThat(walkSolution.getLegs().size()).isEqualTo(1);
         assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
+    }
+
+    @Test
+    public void testProfileQueryDoesntEndPrematurely() {
+        GHRequest ghRequest = new GHRequest(
+                36.91311729030539,-116.76769495010377,
+                36.91260259593356,-116.76149368286134
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,40,0).atZone(zoneId).toInstant());
+        // Provoke a situation where solutions which are later dominated will be found early.
+        // If everything is right, the n-th solution should be the same, no matter if I ask for n, or for n+m solutions.
+        ghRequest.getHints().put(Parameters.PT.WALK_SPEED, 1); // No, I cannot walk very fast, 1 km/h. Problem?
+        ghRequest.getHints().put(Parameters.PT.PROFILE_QUERY, true);
+
+        ghRequest.getHints().put(Parameters.PT.LIMIT_SOLUTIONS, 1);
+        GHResponse response1 = graphHopper.route(ghRequest);
+        assertThat(response1.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(143);
+        ghRequest.getHints().put(Parameters.PT.LIMIT_SOLUTIONS, 3);
+        GHResponse response3 = graphHopper.route(ghRequest);
+        assertThat(response3.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(248);
+        assertThat(response1.getAll().get(0).getTime()).isEqualTo(response3.getAll().get(0).getTime());
+        ghRequest.getHints().put(Parameters.PT.LIMIT_SOLUTIONS, 5);
+        GHResponse response5 = graphHopper.route(ghRequest);
+        assertThat(response5.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(362);
+        assertThat(response3.getAll().get(2).getTime()).isEqualTo(response5.getAll().get(2).getTime());
     }
 
     @Test
