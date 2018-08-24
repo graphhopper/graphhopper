@@ -298,8 +298,8 @@ public class RealtimeIT {
                 .setStopSequence(5)
                 .setScheduleRelationship(SKIPPED);
 
-        // Add a few more trips (but we only need the first one)
-        for (int i=0; i<3; i++){
+        // Add a few more trips (but we only need the first one; add more because there used to be a bug with something like an index overflow)
+        for (int i=0; i<100; i++){
             final GtfsRealtime.TripUpdate.Builder extraTripUpdate = feedMessageBuilder.addEntityBuilder()
                     .setId("2")
                     .getTripUpdateBuilder()
@@ -308,14 +308,14 @@ public class RealtimeIT {
                     .addStopTimeUpdateBuilder()
                     .setStopSequence(1)
                     .setStopId("NADAV")
-                    .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45+i).atZone(zoneId).toEpochSecond()))
-                    .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45+i).atZone(zoneId).toEpochSecond()));
+                    .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45).plusMinutes(i).atZone(zoneId).toEpochSecond()))
+                    .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45).plusMinutes(i).atZone(zoneId).toEpochSecond()));
             extraTripUpdate
                     .addStopTimeUpdateBuilder()
                     .setStopSequence(2)
                     .setStopId("BEATTY_AIRPORT")
-                    .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,15+i).atZone(zoneId).toEpochSecond()))
-                    .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,15+i).atZone(zoneId).toEpochSecond()));
+                    .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,15).plusMinutes(i).atZone(zoneId).toEpochSecond()))
+                    .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,15).plusMinutes(i).atZone(zoneId).toEpochSecond()));
 
         }
 
