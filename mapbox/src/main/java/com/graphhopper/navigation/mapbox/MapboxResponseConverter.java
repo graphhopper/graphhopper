@@ -50,31 +50,37 @@ public class MapboxResponseConverter {
             PathWrapper path = paths.get(i);
             ObjectNode pathJson = routesJson.addObject();
 
+            InstructionList instructions = path.getInstructions();
+
             pathJson.put("geometry", WebHelper.encodePolyline(path.getPoints(), false, 1e6));
             ArrayNode legsJson = pathJson.putArray("legs");
 
-            //TODO: support multiple legs (=> multiple waypoints...)
             ObjectNode legJson = legsJson.addObject();
-
-            // TODO: Improve path descriptions, so that every path has a description, not just alternative routes
-            String summary;
-            if (!path.getDescription().isEmpty())
-                summary = String.join(",", path.getDescription());
-            else
-                summary = "GraphHopper Route " + i;
-            legJson.put("summary", summary);
-
-            // Copied from below
-            legJson.put("weight", Helper.round(path.getRouteWeight(), 1));
-            legJson.put("duration", convertToSeconds(path.getTime()));
-            legJson.put("distance", Helper.round(path.getDistance(), 1));
-
             ArrayNode steps = legJson.putArray("steps");
-            InstructionList instructions = path.getInstructions();
+
+            long time = 0;
+            double distance = 0;
+            boolean isFirstInstructionOfLeg = true;
 
             for (int j = 0; j < instructions.size(); j++) {
                 ObjectNode instructionJson = steps.addObject();
-                putInstruction(instructions, j, locale, translationMap, instructionJson);
+                putInstruction(instructions, j, locale, translationMap, instructionJson, isFirstInstructionOfLeg);
+                Instruction instruction = instructions.get(j);
+                time += instruction.getTime();
+                distance += instruction.getDistance();
+                isFirstInstructionOfLeg = false;
+                if (instruction.getSign() == Instruction.REACHED_VIA || instruction.getSign() == Instruction.FINISH) {
+                    putLegInformation(legJson, path, i, time, distance);
+                    isFirstInstructionOfLeg = true;
+                    time = 0;
+                    distance = 0;
+
+                    if (instruction.getSign() == Instruction.REACHED_VIA) {
+                        // Create new leg and steps after a via points
+                        legJson = legsJson.addObject();
+                        steps = legJson.putArray("steps");
+                    }
+                }
             }
 
             pathJson.put("weight_name", "routability");
@@ -99,7 +105,22 @@ public class MapboxResponseConverter {
         return json;
     }
 
-    private static ObjectNode putInstruction(InstructionList instructions, int index, Locale locale, TranslationMap translationMap, ObjectNode instructionJson) {
+    private static void putLegInformation(ObjectNode legJson, PathWrapper path, int i, long time, double distance) {
+        // TODO: Improve path descriptions, so that every path has a description, not just alternative routes
+        String summary;
+        if (!path.getDescription().isEmpty())
+            summary = String.join(",", path.getDescription());
+        else
+            summary = "GraphHopper Route " + i;
+        legJson.put("summary", summary);
+
+        // TODO there is no weight per instruction, let's use time
+        legJson.put("weight", convertToSeconds(time));
+        legJson.put("duration", convertToSeconds(time));
+        legJson.put("distance", Helper.round(distance, 1));
+    }
+
+    private static ObjectNode putInstruction(InstructionList instructions, int index, Locale locale, TranslationMap translationMap, ObjectNode instructionJson, boolean isFirstInstructionOfLeg) {
         Instruction instruction = instructions.get(index);
         ArrayNode intersections = instructionJson.putArray("intersections");
         ObjectNode intersection = intersections.addObject();
@@ -116,7 +137,7 @@ public class MapboxResponseConverter {
         // TODO: how about other modes?
         instructionJson.put("mode", "driving");
 
-        putManeuver(instruction, instructionJson, index, locale, translationMap);
+        putManeuver(instruction, instructionJson, locale, translationMap, isFirstInstructionOfLeg);
 
         // TODO distance = weight, is weight even important?
         double distance = Helper.round(instruction.getDistance(), 1);
@@ -200,7 +221,7 @@ public class MapboxResponseConverter {
         component.put("text", bannerInstructionName);
         component.put("type", "text");
 
-        primary.put("type", getTurnType(nextInstruction, index + 1));
+        primary.put("type", getTurnType(nextInstruction, false));
         String modifier = getModifier(nextInstruction);
         if (modifier != null)
             primary.put("modifier", modifier);
@@ -210,7 +231,7 @@ public class MapboxResponseConverter {
         bannerInstruction.putNull("secondary");
     }
 
-    private static void putManeuver(Instruction instruction, ObjectNode instructionJson, int index, Locale locale, TranslationMap translationMap) {
+    private static void putManeuver(Instruction instruction, ObjectNode instructionJson, Locale locale, TranslationMap translationMap, boolean isFirstInstructionOfLeg) {
         ObjectNode maneuver = instructionJson.putObject("maneuver");
         maneuver.put("bearing_after", 0);
         maneuver.put("bearing_before", 0);
@@ -222,7 +243,7 @@ public class MapboxResponseConverter {
         if (modifier != null)
             maneuver.put("modifier", modifier);
 
-        maneuver.put("type", getTurnType(instruction, index));
+        maneuver.put("type", getTurnType(instruction, isFirstInstructionOfLeg));
         // exit number
         if (instruction instanceof RoundaboutInstruction)
             maneuver.put("exit", ((RoundaboutInstruction) instruction).getExitNumber());
@@ -240,8 +261,8 @@ public class MapboxResponseConverter {
      *
      * You can find all at: https://www.mapbox.com/api-documentation/#maneuver-types
      */
-    private static String getTurnType(Instruction instruction, int index) {
-        if (index == 0) {
+    private static String getTurnType(Instruction instruction, boolean isFirstInstructionOfLeg) {
+        if (isFirstInstructionOfLeg) {
             return "depart";
         } else {
             switch (instruction.getSign()) {
