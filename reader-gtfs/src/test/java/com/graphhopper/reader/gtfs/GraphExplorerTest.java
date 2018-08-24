@@ -27,7 +27,9 @@ import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
+import com.graphhopper.util.DistanceCalc2D;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PointList;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -36,6 +38,7 @@ import java.util.List;
 
 import static org.hamcrest.collection.IsEmptyIterable.emptyIterable;
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
+import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -194,13 +197,13 @@ public class GraphExplorerTest {
         point2.calcSnappedPoint(new DistanceCalc2D());
         queryGraph.lookup(point1, point2);
 
-        GraphExplorer testee = new GraphExplorer(graph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, extraEdges, false, 5.0);
+        GraphExplorer testee = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, extraEdges, false, 5.0);
         assertThat(() -> testee.exploreEdgesAround(new Label(0, -1, 0, 0, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
                 contains(e.toString()));
         assertThat(() -> testee.exploreEdgesAround(new Label(0, -1, 1, 0, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
                 contains(f.toString(), g.toString()));
         assertThat(() -> testee.exploreEdgesAround(new Label(0, -1, 4, 0, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
-                contains(d.toString(), c.toString(), h.toString()));
+                contains(containsString("4->8"), containsString("4->9"), containsString("4->7")));
         assertThat((Iterable<String>) () -> testee.exploreEdgesAround(new Label(0, -1, 7, 0, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
                 emptyIterable());
 
