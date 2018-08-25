@@ -61,6 +61,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.NO_DATA;
@@ -112,7 +113,6 @@ public class RealtimeFeed {
         final IntLongHashMap delaysForAlightEdges = new IntLongHashMap();
         final LinkedList<VirtualEdgeIteratorState> additionalEdges = new LinkedList<>();
         final Graph overlayGraph = new Graph() {
-            int nNodes = 0;
             int firstEdge = graphHopperStorage.getAllEdges().length();
             final NodeAccess nodeAccess = new NodeAccess() {
                 IntIntHashMap additionalNodeFields = new IntIntHashMap();
@@ -189,7 +189,10 @@ public class RealtimeFeed {
 
             @Override
             public int getNodes() {
-                return graphHopperStorage.getNodes() + nNodes;
+                return IntStream.concat(
+                        IntStream.of(graphHopperStorage.getNodes()-1),
+                        additionalEdges.stream().flatMapToInt(edge -> IntStream.of(edge.getBaseNode(), edge.getAdjNode())))
+                        .max().getAsInt()+1;
             }
 
             @Override
