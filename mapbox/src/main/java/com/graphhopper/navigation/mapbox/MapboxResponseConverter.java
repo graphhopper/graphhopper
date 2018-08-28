@@ -167,8 +167,22 @@ public class MapboxResponseConverter {
                 ssmlAnnouncement: "<speak><amazon:effect name="drc"><prosody rate="1.08">Exit the traffic circle</prosody></amazon:effect></speak>",
             }
         */
-        ObjectNode voiceInstruction = voiceInstructions.addObject();
         Instruction nextInstruction = instructions.get(index + 1);
+        String turnDescription = nextInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
+
+        double far = 2000;
+        double mid = 1000;
+        double close = 400;
+
+        if (distance > far) {
+            putSingleVoiceInstruction(far, "In 2 kilometers " + turnDescription, voiceInstructions);
+        }
+        if (distance > mid) {
+            putSingleVoiceInstruction(mid, "In 1 kilometer " + turnDescription, voiceInstructions);
+        }
+        if (distance > close) {
+            putSingleVoiceInstruction(close, "In 400 meters " + turnDescription, voiceInstructions);
+        }
 
         // Speak 80m instructions 80 before the turn
         // Note: distanceAlongGeometry: "how far from the upcoming maneuver the voice instruction should begin"
@@ -178,9 +192,13 @@ public class MapboxResponseConverter {
         if (index + 2 == instructions.size())
             distanceAlongGeometry = Helper.round(Math.min(distance, 25), 1);
 
+        putSingleVoiceInstruction(distanceAlongGeometry, turnDescription, voiceInstructions);
+    }
+
+    private static void putSingleVoiceInstruction(double distanceAlongGeometry, String turnDescription, ArrayNode voiceInstructions) {
+        ObjectNode voiceInstruction = voiceInstructions.addObject();
         voiceInstruction.put("distanceAlongGeometry", distanceAlongGeometry);
         //TODO: ideally, we would even generate instructions including the instructions after the next like turn left **then** turn right
-        String turnDescription = nextInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
         voiceInstruction.put("announcement", turnDescription);
         voiceInstruction.put("ssmlAnnouncement", "<speak><amazon:effect name=\"drc\"><prosody rate=\"1.08\">" + turnDescription + "</prosody></amazon:effect></speak>");
     }
