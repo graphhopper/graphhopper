@@ -246,7 +246,7 @@ echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 if [[ "$ACTION" = "web" ]]; then
   export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
   if [[ "$RUN_BACKGROUND" == "true" ]]; then
-    exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
+    exec "$JAVA" -javaagent:newrelic.jar -Dnewrelic.environment=production $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
                  $GH_WEB_OPTS -jar "$JAR" server $CONFIG <&- &
     
     if [[ "$GH_PID_FILE" != "" ]]; then
@@ -255,7 +255,7 @@ if [[ "$ACTION" = "web" ]]; then
     exit $?
   else
     # TODO how to avoid duplicative command for foreground and background?
-    exec "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
+    exec "$JAVA" -javaagent:newrelic.jar -Dnewrelic.environment=production $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
                  $GH_WEB_OPTS -jar "$JAR" server $CONFIG
     # foreground => we never reach this here
   fi
