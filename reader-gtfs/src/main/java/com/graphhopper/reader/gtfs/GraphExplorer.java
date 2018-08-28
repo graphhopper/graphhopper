@@ -69,7 +69,7 @@ final class GraphExplorer {
                 throw new RuntimeException();
             }
             extraEdgesBySource.put(extraEdge.getBaseNode(), extraEdge);
-            extraEdgesByDestination.put(extraEdge.getAdjNode(), new VirtualEdgeIteratorState(extraEdge.getOriginalTraversalKey(), extraEdge.getEdge(), extraEdge.getAdjNode(), extraEdge.getBaseNode(), extraEdge.getDistance(), extraEdge.getFlags(), extraEdge.getName(), extraEdge.fetchWayGeometry(3)));
+            extraEdgesByDestination.put(extraEdge.getAdjNode(), new VirtualEdgeIteratorState(extraEdge.getOriginalTraversalKey(), extraEdge.getEdge(), extraEdge.getAdjNode(), extraEdge.getBaseNode(), extraEdge.getDistance(), extraEdge.getFlags(), extraEdge.getName(), extraEdge.fetchWayGeometry(3), false));
         }
         this.walkOnly = walkOnly;
         this.walkSpeedKmH = walkSpeedKmh;
@@ -194,9 +194,9 @@ final class GraphExplorer {
             final GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator.getFlags());
             if (edgeType == GtfsStorage.EdgeType.HIGHWAY) {
                 if (reverse) {
-                    return accessEgressWeighting.getFlagEncoder().isBackward(edgeIterator.getFlags());
+                    return edgeIterator.getReverse(accessEgressWeighting.getFlagEncoder().getAccessEnc());
                 } else {
-                    return accessEgressWeighting.getFlagEncoder().isForward(edgeIterator.getFlags());
+                    return edgeIterator.get(accessEgressWeighting.getFlagEncoder().getAccessEnc());
                 }
             }
             if (walkOnly && edgeType != (reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT)) {

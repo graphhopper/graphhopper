@@ -19,6 +19,8 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraOneToMany;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -37,6 +39,13 @@ import java.util.Set;
 import static org.junit.Assert.*;
 
 public class NodeBasedNodeContractorTest {
+    // TODO NOW integrate this into CHGraphImpl somehow
+    public final static BooleanEncodedValue SC_ACCESS = new BooleanEncodedValue("sc_access", true);
+
+    static {
+        SC_ACCESS.init(new EncodedValue.InitializerConfig());
+    }
+
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = new EncodingManager(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
@@ -79,7 +88,6 @@ public class NodeBasedNodeContractorTest {
         createExampleGraph();
         final double normalDist = new Dijkstra(graph, weighting, traversalMode).calcPath(4, 2).getDistance();
         DijkstraOneToMany algo = new DijkstraOneToMany(graph, weighting, traversalMode);
-        CHGraph lg = graph.getGraph(CHGraph.class);
 
         setMaxLevelOnAllNodes();
 
@@ -153,7 +161,7 @@ public class NodeBasedNodeContractorTest {
         NodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(1);
         checkShortcuts(
-                expectedShortcut(2, 3, edge1to3, edge2to1bidirected, true, true),
+                expectedShortcut(3, 2, edge1to3, edge2to1bidirected, true, true),
                 expectedShortcut(2, 3, edge2to1directed, edge1to3, true, false)
         );
     }
@@ -173,14 +181,14 @@ public class NodeBasedNodeContractorTest {
         graph.freeze();
 
         CHEdgeIteratorState sc1to4 = lg.shortcut(1, 4);
-        IntsRef chFlags = new IntsRef();
-        chFlags.flags = PrepareEncoder.getScDirMask();
+        IntsRef chFlags = encodingManager.createEdgeFlags();
+        chFlags.ints[0] = PrepareEncoder.getScDirMask();
         sc1to4.setFlags(chFlags);
         sc1to4.setWeight(2);
         sc1to4.setDistance(2);
         sc1to4.setSkippedEdges(iter1to3.getEdge(), iter3to4.getEdge());
 
-        chFlags.flags = PrepareEncoder.getScFwdDir();
+        chFlags.ints[0] = PrepareEncoder.getScFwdDir();
         CHEdgeIteratorState sc4to6 = lg.shortcut(4, 6);
         sc4to6.setFlags(chFlags);
         sc4to6.setWeight(2);
@@ -202,7 +210,7 @@ public class NodeBasedNodeContractorTest {
 
         Shortcut manualSc1 = expectedShortcut(1, 4, iter1to3, iter3to4, true, true);
         Shortcut manualSc2 = expectedShortcut(4, 6, iter4to5, iter5to6, true, false);
-        Shortcut manualSc3 = expectedShortcut(4, 6, iter6to8, iter8to4, false, true);
+        Shortcut manualSc3 = expectedShortcut(6, 4, iter6to8, iter8to4, true, false);
         checkShortcuts(manualSc1, manualSc2, manualSc3);
 
         // after 'manual contraction' of nodes 3, 5, 8 the graph looks like:
@@ -216,10 +224,9 @@ public class NodeBasedNodeContractorTest {
         checkShortcuts(manualSc1, manualSc2, manualSc3,
                 // there should be two different shortcuts for both directions!
                 expectedShortcut(1, 6, sc1to4, sc4to6, true, false),
-                expectedShortcut(1, 6, sc6to4, sc1to4, false, true)
+                expectedShortcut(6, 1, sc6to4, sc1to4, true, false)
         );
     }
-
 
     @Test
     public void testShortcutMergeBug() {
@@ -239,7 +246,7 @@ public class NodeBasedNodeContractorTest {
         NodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(2);
         checkShortcuts(
-                expectedShortcut(1, 3, edge2to3, edge1to2bidirected, false, true),
+                expectedShortcut(3, 1, edge2to3, edge1to2bidirected, true, false),
                 expectedShortcut(1, 3, edge1to2directed, edge2to3, true, false)
         );
     }
@@ -263,7 +270,7 @@ public class NodeBasedNodeContractorTest {
         graph.freeze();
         setMaxLevelOnAllNodes();
         createNodeContractor().contractNode(1);
-        checkShortcuts(expectedShortcut(0, 2, edge1, edge2, false, true));
+        checkShortcuts(expectedShortcut(2, 0, edge1, edge2, true, false));
     }
 
     @Test
@@ -274,7 +281,7 @@ public class NodeBasedNodeContractorTest {
         graph.freeze();
         setMaxLevelOnAllNodes();
         createNodeContractor().contractNode(1);
-        checkShortcuts(expectedShortcut(0, 2, edge2, edge1, true, true));
+        checkShortcuts(expectedShortcut(2, 0, edge2, edge1, true, true));
     }
 
     @Test
@@ -304,7 +311,7 @@ public class NodeBasedNodeContractorTest {
             if (iter.isShortcut()) {
                 given.add(new Shortcut(
                         iter.getBaseNode(), iter.getAdjNode(), iter.getWeight(), iter.getDistance(),
-                        iter.isForward(encoder), iter.isBackward(encoder),
+                        iter.get(SC_ACCESS), iter.getReverse(SC_ACCESS),
                         iter.getSkippedEdge1(), iter.getSkippedEdge2()));
             }
         }

@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util.details;
 
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -29,18 +31,19 @@ import static com.graphhopper.util.Parameters.DETAILS.AVERAGE_SPEED;
  */
 public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
 
-    private final FlagEncoder encoder;
+    private final DecimalEncodedValue avSpeedEnc;
     private double curAvgSpeed = -1;
 
     public AverageSpeedDetails(FlagEncoder encoder) {
         super(AVERAGE_SPEED);
-        this.encoder = encoder;
+        this.avSpeedEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "average_speed"));
     }
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        if (Math.abs(encoder.getSpeed(edge.getFlags()) - curAvgSpeed) > 0.0001) {
-            this.curAvgSpeed = this.encoder.getSpeed(edge.getFlags());
+        double tmpSpeed = edge.get(avSpeedEnc);
+        if (Math.abs(tmpSpeed - curAvgSpeed) > 0.0001) {
+            curAvgSpeed = tmpSpeed;
             return true;
         }
         return false;
@@ -48,6 +51,6 @@ public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public Object getCurrentValue() {
-        return this.curAvgSpeed;
+        return curAvgSpeed;
     }
 }

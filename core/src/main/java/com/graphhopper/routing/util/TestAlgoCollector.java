@@ -45,7 +45,7 @@ public class TestAlgoCollector {
         this.name = name;
     }
 
-    public TestAlgoCollector assertDistance(AlgoHelperEntry algoEntry, List<QueryResult> queryList,
+    public TestAlgoCollector assertDistance(EncodingManager encodingManager, AlgoHelperEntry algoEntry, List<QueryResult> queryList,
                                             OneRun oneRun) {
         List<Path> altPaths = new ArrayList<>();
         QueryGraph queryGraph = new QueryGraph(algoEntry.getForQueryGraph());
@@ -78,7 +78,7 @@ public class TestAlgoCollector {
                 setSimplifyResponse(false).
                 setEnableInstructions(true);
         PathWrapper rsp = new PathWrapper();
-        pathMerger.doWork(rsp, altPaths, trMap.getWithFallBack(Locale.US));
+        pathMerger.doWork(rsp, altPaths, encodingManager, trMap.getWithFallBack(Locale.US));
 
         if (rsp.hasErrors()) {
             errors.add("response for " + algoEntry + " contains errors. Expected distance: " + oneRun.getDistance()

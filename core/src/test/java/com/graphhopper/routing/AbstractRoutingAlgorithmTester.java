@@ -19,6 +19,8 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -45,6 +47,8 @@ public abstract class AbstractRoutingAlgorithmTester {
     protected static final EncodingManager encodingManager = new EncodingManager("car,foot");
     private static final DistanceCalc distCalc = new DistanceCalcEarth();
     protected FlagEncoder carEncoder;
+    protected DecimalEncodedValue carAvSpeedEnc;
+    protected BooleanEncodedValue carAccessEnc;
     protected FlagEncoder footEncoder;
     protected AlgorithmOptions defaultOpts;
 
@@ -147,6 +151,8 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Before
     public void setUp() {
         carEncoder = encodingManager.getEncoder("car");
+        carAccessEnc = carEncoder.getAccessEnc();
+        carAvSpeedEnc = carEncoder.getAverageSpeedEnc();
         footEncoder = encodingManager.getEncoder("foot");
         defaultOpts = createAlgoOptions();
     }
@@ -798,12 +804,10 @@ public abstract class AbstractRoutingAlgorithmTester {
         GraphHopperStorage graph = createGHStorage(false);
         EdgeIteratorState edge01 = graph.edge(0, 1).setDistance(10);
         EdgeIteratorState edge12 = graph.edge(1, 2).setDistance(10);
-        carEncoder.setSpeed(edge01.getFlags(), 0);
-        carEncoder.setAccess(edge01.getFlags(), true, true);
+        edge01.set(carAvSpeedEnc, 0.0).set(carAccessEnc, true).setReverse(carAccessEnc, true);
         edge01.setFlags(edge01.getFlags());
 
-        carEncoder.setSpeed(edge12.getFlags(), 0);
-        carEncoder.setAccess(edge12.getFlags(), true, true);
+        edge12.set(carAvSpeedEnc, 0.0).set(carAccessEnc, true).setReverse(carAccessEnc, true);
         edge12.setFlags(edge12.getFlags());
 
 

@@ -35,7 +35,7 @@ public enum PriorityCode {
     BEST(7);
     private final int value;
 
-    private PriorityCode(int value) {
+    PriorityCode(int value) {
         this.value = value;
     }
 

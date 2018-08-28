@@ -65,7 +65,7 @@ public class Path4CH extends PathBidirRef {
             to = tmp;
         }
 
-        // getEdgeProps could possibly return an empty edge if the shortcut is available for both directions
+        // getEdgeIteratorState could possibly return an empty edge if the shortcut is available for both directions
         if (reverseOrder) {
             CHEdgeIteratorState edgeState = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, to);
             boolean empty = edgeState == null;

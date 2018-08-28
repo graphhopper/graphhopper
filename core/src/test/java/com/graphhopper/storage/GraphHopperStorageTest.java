@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static org.junit.Assert.*;
 
 /**
@@ -43,7 +44,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     }
 
     @Test
-    public void testNoCreateCalled() throws IOException {
+    public void testNoCreateCalled() {
         GraphHopperStorage gs = new GraphBuilder(encodingManager).build();
         try {
             ((BaseGraph) gs.getGraph(Graph.class)).ensureNodeIndex(123);
@@ -160,8 +161,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(explorer.setBaseNode(0)));
         assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
         // remove edge "1-2" but only from 1 not from 2
-        graph.edgeAccess.internalEdgeDisconnect(iter2.getEdge(), -1,
-                iter2.getBaseNode(), iter2.getAdjNode());
+        graph.edgeAccess.internalEdgeDisconnect(iter2.getEdge(), -1, iter2.getBaseNode());
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
         assertEquals(GHUtility.asSet(1), GHUtility.getNeighbors(explorer.setBaseNode(2)));
         // let 0 unchanged -> no side effects
@@ -169,7 +169,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         // remove edge "0-1" but only from 0
         graph.edgeAccess.internalEdgeDisconnect(iter0.getEdge(), (long) iter3.getEdge() * graph.edgeEntryBytes,
-                iter0.getBaseNode(), iter0.getAdjNode());
+                iter0.getBaseNode());
         assertEquals(GHUtility.asSet(3), GHUtility.getNeighbors(explorer.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(3)));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
@@ -224,36 +224,49 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     @Test
     public void testMultipleDecoupledEdges() {
         // a typical usage where we create independent EdgeIteratorState's BUT due to the IntsRef reference they are no more independent
-        IntsRef intsRef = new IntsRef();
-
         GraphHopperStorage storage = createGHStorage();
+        IntsRef intsRef = encodingManager.createEdgeFlags();
         BaseGraph graph = (BaseGraph) storage.getGraph(Graph.class);
         graph.edge(0, 1, 10, true);
         graph.edge(1, 2, 10, true);
 
         EdgeIteratorState edge0 = graph.getEdgeIteratorState(0, Integer.MIN_VALUE);
         EdgeIteratorState edge1 = graph.getEdgeIteratorState(1, Integer.MIN_VALUE);
-        edge0.setFlags(carEncoder.setAccess(intsRef, true, false));
-        edge1.setFlags(carEncoder.setAccess(intsRef, false, true));
+        edge0.set(carAccessEnc, true).setReverse(carAccessEnc, false);
+        edge1.set(carAccessEnc, false).setReverse(carAccessEnc, true);
 
-        assertFalse(edge1.isForward(carEncoder));
-        assertTrue(edge1.isBackward(carEncoder));
+        assertFalse(edge1.get(carAccessEnc));
+        assertTrue(edge1.getReverse(carAccessEnc));
 
         // obviously this should pass but as the reference is shared and freshFlags=false the edge1 flags are returned!
         // So we do not set the reference for _setFlags but just the value
         // A better solution would be if we do not allow to create IntsRef outside of the EdgeIterator API
-        assertTrue(edge0.isForward(carEncoder));
-        assertFalse(edge0.isBackward(carEncoder));
+        assertTrue(edge0.get(carAccessEnc));
+        assertFalse(edge0.getReverse(carAccessEnc));
+    }
+
+    @Test
+    public void testInternalReverse() {
+        GraphHopperStorage storage = createGHStorage();
+        EdgeIteratorState edge = storage.edge(1, 2);
+        assertFalse(edge.get(REVERSE_STATE));
+        assertTrue(edge.getReverse(REVERSE_STATE));
+        edge = storage.getEdgeIteratorState(edge.getEdge(), Integer.MIN_VALUE);
+        assertFalse(edge.get(REVERSE_STATE));
+
+        edge = storage.getEdgeIteratorState(edge.getEdge(), 1);
+        assertTrue(edge.get(REVERSE_STATE));
+        assertFalse(edge.getReverse(REVERSE_STATE));
     }
 
     @Test
     public void testDecoupledEdgeIteratorStates() {
         GraphHopperStorage storage = createGHStorage();
         BaseGraph graph = (BaseGraph) storage.getGraph(Graph.class);
-        IntsRef ref = new IntsRef();
-        ref.flags = 12;
+        IntsRef ref = encodingManager.createEdgeFlags();
+        ref.ints[0] = 12;
         graph.edge(1, 2, 10, true).setFlags(ref);
-        ref.flags = 13;
+        ref.ints[0] = 13;
         graph.edge(1, 3, 10, true).setFlags(ref);
 
         EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(1);
@@ -261,13 +274,14 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         EdgeIteratorState edge1 = iter.detach(false);
 
         assertTrue(iter.next());
-        ref.flags = 44;
+        ref.ints[0] = 44;
         iter.setFlags(ref);
 
-        assertEquals(44, iter.getFlags().flags);
-        assertEquals(13, edge1.getFlags().flags);
+        assertEquals(44, iter.getFlags().ints[0]);
+        assertEquals(13, edge1.getFlags().ints[0]);
     }
 
+    @Test
     public void testAdditionalEdgeField() {
         GraphExtension extStorage = new GraphExtension() {
             @Override

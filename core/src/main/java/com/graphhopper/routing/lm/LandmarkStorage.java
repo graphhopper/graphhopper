@@ -24,6 +24,7 @@ import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.MapEntry;
 import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjansSCCAlgorithm;
 import com.graphhopper.routing.util.*;
@@ -253,7 +254,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         if (ruleLookup != null && ruleLookup.size() > 0) {
             StopWatch sw = new StopWatch().start();
             blockedEdges = findBorderEdgeIds(ruleLookup);
-            tarjanFilter = new BlockedEdgesFilter(encoder, false, true, blockedEdges);
+            tarjanFilter = new BlockedEdgesFilter(encoder.getAccessEnc(), false, true, blockedEdges);
             if (logDetails)
                 LOGGER.info("Made " + blockedEdges.size() + " edges inaccessible. Calculated country cut in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
         }
@@ -738,7 +739,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         }
 
         public void setFilter(IntHashSet set, boolean bwd, boolean fwd) {
-            EdgeFilter ef = new BlockedEdgesFilter(flagEncoder, bwd, fwd, set);
+            EdgeFilter ef = new BlockedEdgesFilter(flagEncoder.getAccessEnc(), bwd, fwd, set);
             outEdgeExplorer = graph.createEdgeExplorer(ef);
             inEdgeExplorer = graph.createEdgeExplorer(ef);
         }
@@ -844,26 +845,26 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
     final static class RequireBothDirectionsEdgeFilter implements EdgeFilter {
 
-        private FlagEncoder flagEncoder;
+        private BooleanEncodedValue accessEnc;
 
         public RequireBothDirectionsEdgeFilter(FlagEncoder flagEncoder) {
-            this.flagEncoder = flagEncoder;
+            this.accessEnc = flagEncoder.getAccessEnc();
         }
 
         @Override
         public boolean accept(EdgeIteratorState edgeState) {
-            return flagEncoder.isForward(edgeState.getFlags()) && flagEncoder.isBackward(edgeState.getFlags());
+            return edgeState.get(accessEnc) && edgeState.getReverse(accessEnc);
         }
     }
 
     private static class BlockedEdgesFilter implements EdgeFilter {
         private final IntHashSet blockedEdges;
-        private final FlagEncoder encoder;
+        private final BooleanEncodedValue accessEnc;
         private final boolean fwd;
         private final boolean bwd;
 
-        public BlockedEdgesFilter(FlagEncoder encoder, boolean bwd, boolean fwd, IntHashSet blockedEdges) {
-            this.encoder = encoder;
+        public BlockedEdgesFilter(BooleanEncodedValue accessEnc, boolean bwd, boolean fwd, IntHashSet blockedEdges) {
+            this.accessEnc = accessEnc;
             this.bwd = bwd;
             this.fwd = fwd;
             this.blockedEdges = blockedEdges;
@@ -872,7 +873,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         @Override
         public final boolean accept(EdgeIteratorState iter) {
             boolean blocked = blockedEdges.contains(iter.getEdge());
-            return fwd && iter.isForward(encoder) && !blocked || bwd && iter.isBackward(encoder) && !blocked;
+            return fwd && iter.get(accessEnc) && !blocked || bwd && iter.getReverse(accessEnc) && !blocked;
         }
 
         public boolean acceptsBackward() {
@@ -885,7 +886,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         @Override
         public String toString() {
-            return encoder.toString() + ", bwd:" + bwd + ", fwd:" + fwd;
+            return accessEnc + ", bwd:" + bwd + ", fwd:" + fwd;
         }
     }
 }

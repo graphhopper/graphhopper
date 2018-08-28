@@ -25,6 +25,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -82,8 +83,8 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
 
         // create shortcuts
         ghStorage.freeze();
-        FlagEncoder car = encodingManager.getEncoder("car");
-        IntsRef flags = car.setAccess(car.setSpeed(new IntsRef(), 60), true, true);
+        FlagEncoder carEncoder = encodingManager.getEncoder("car");
+        IntsRef flags = GHUtility.setProperties(encodingManager.createEdgeFlags(), carEncoder, 60, true, true);
         CHEdgeIteratorState iter5 = lg.shortcut(0, 2);
         iter5.setDistance(20).setFlags(flags);
         iter5.setSkippedEdges(iter1.getEdge(), iter2.getEdge());
@@ -154,7 +155,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
         index.findNetworkEntries(0.51, 0.2, set, 0);
         index.findNetworkEntries(0.51, 0.2, set, 1);
         IntSet expectedSet = new GHIntHashSet();
-        expectedSet.add(0);
+        expectedSet.add(1);
         expectedSet.add(2);
         assertEquals(expectedSet, set);
 

@@ -22,7 +22,6 @@ import com.graphhopper.util.PMap;
 
 /**
  * Specifies the settings for cycletouring/trekking
- * <p>
  *
  * @author ratrun
  * @author Peter Karich

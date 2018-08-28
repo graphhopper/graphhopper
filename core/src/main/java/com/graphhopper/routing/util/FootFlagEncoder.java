@@ -19,6 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
@@ -48,8 +50,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     final Map<String, Integer> hikingNetworkToCode = new HashMap<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
-    private EncodedValue priorityWayEncoder;
-    private EncodedValue relationCodeEncoder;
+    private DecimalEncodedValue priorityWayEncoder;
+    private EncodedValueOld relationCodeEncoder;
 
     /**
      * Should be only instantiated via EncodingManager
@@ -136,25 +138,24 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 4;
+        return 5;
     }
 
     @Override
-    public int defineWayBits(int index, int shift) {
+    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
         // first two bits are reserved for route handling in superclass
-        shift = super.defineWayBits(index, shift);
+        super.createEncodedValues(registerNewEncodedValue, prefix, index);
         // larger value required - ferries are faster than pedestrians
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, MEAN_SPEED, maxPossibleSpeed);
-        shift += speedEncoder.getBits();
+        // TODO NOW Max == 7
+        registerNewEncodedValue.add(speedEncoder = new DecimalEncodedValue(prefix + "average_speed", speedBits, MEAN_SPEED, speedFactor, false));
 
-        priorityWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 0, 7);
-        shift += priorityWayEncoder.getBits();
-        return shift;
+        // TODO NOW Max == 7
+        registerNewEncodedValue.add(priorityWayEncoder = new DecimalEncodedValue(prefix + "priority", 3, 0, 1.0 / PriorityCode.BEST.getValue(), false));
     }
 
     @Override
     public int defineRelationBits(int index, int shift) {
-        relationCodeEncoder = new EncodedValue("RelationCode", shift, 3, 1, 0, 7);
+        relationCodeEncoder = new EncodedValueOld("RelationCode", shift, 3, 1, 0, 7);
         return shift + relationCodeEncoder.getBits();
     }
 
@@ -288,40 +289,32 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null) {
                 if ("hiking".equals(sacScale))
-                    speedEncoder.setDoubleValue(edgeFlags, MEAN_SPEED);
+                    speedEncoder.setInt(false, edgeFlags, MEAN_SPEED);
                 else
-                    speedEncoder.setDoubleValue(edgeFlags, SLOW_SPEED);
+                    speedEncoder.setInt(false, edgeFlags, SLOW_SPEED);
             } else {
-                speedEncoder.setDoubleValue(edgeFlags, MEAN_SPEED);
+                speedEncoder.setInt(false, edgeFlags, MEAN_SPEED);
             }
-            edgeFlags.flags |= directionBitMask;
+            accessEnc.setBool(false, edgeFlags, true);
+            accessEnc.setBool(true, edgeFlags, true);
 
             boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
             if (isRoundabout)
-                setBool(edgeFlags, K_ROUNDABOUT, true);
+                roundaboutEnc.setBool(false, edgeFlags, true);
 
         } else {
             double ferrySpeed = getFerrySpeed(way);
-            setSpeed(edgeFlags, ferrySpeed);
-            edgeFlags.flags |= directionBitMask;
+            setSpeed(false, edgeFlags, ferrySpeed);
+            accessEnc.setBool(false, edgeFlags, true);
+            accessEnc.setBool(true, edgeFlags, true);
         }
 
         int priorityFromRelation = 0;
         if (relationFlags != 0)
             priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
-        priorityWayEncoder.setValue(edgeFlags, handlePriority(way, priorityFromRelation));
+        priorityWayEncoder.setInt(false, edgeFlags, handlePriority(way, priorityFromRelation));
         return edgeFlags;
-    }
-
-    @Override
-    public double getDouble(IntsRef edgeFlags, int key) {
-        switch (key) {
-            case PriorityWeighting.KEY:
-                return (double) priorityWayEncoder.getValue(edgeFlags) / BEST.getValue();
-            default:
-                return super.getDouble(edgeFlags, key);
-        }
     }
 
     protected int handlePriority(ReaderWay way, int priorityFromRelation) {
@@ -381,8 +374,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
      * This method is a current hack, to allow ferries to be actually faster than our current storable maxSpeed.
      */
     @Override
-    public double getSpeed(IntsRef edgeFlags) {
-        double speed = super.getSpeed(edgeFlags);
+    double getSpeed(boolean reverse, IntsRef edgeFlags) {
+        double speed = super.getSpeed(reverse, edgeFlags);
         if (speed == getMaxSpeed()) {
             // We cannot be sure if it was a long or a short trip
             return SHORT_TRIP_FERRY_SPEED;

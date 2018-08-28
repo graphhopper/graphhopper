@@ -19,10 +19,13 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
@@ -38,49 +41,64 @@ import static org.junit.Assert.*;
 public class FootFlagEncoderTest {
     private final EncodingManager encodingManager = new EncodingManager("car,bike,foot");
     private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
+    private final BooleanEncodedValue roundaboutEnc = encodingManager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
+    private final DecimalEncodedValue footAvSpeedEnc = footEncoder.getAverageSpeedEnc();
+    private final BooleanEncodedValue footAccessEnc = footEncoder.getAccessEnc();
+    private final DecimalEncodedValue carAvSpeedEnc = encodingManager.getEncoder("car").getAverageSpeedEnc();
+    private final BooleanEncodedValue carAccessEnc = encodingManager.getEncoder("car").getAccessEnc();
 
     @Test
     public void testGetSpeed() {
-        IntsRef fl = footEncoder.setAccess(footEncoder.setSpeed(new IntsRef(), 10), true, true);
+        IntsRef fl = encodingManager.createEdgeFlags();
+        footAccessEnc.setBool(false, fl, true);
+        footAccessEnc.setBool(true, fl, true);
+        footAvSpeedEnc.setDecimal(false, fl, 10);
         assertEquals(10, footEncoder.getSpeed(fl), 1e-1);
     }
 
     @Test
     public void testBasics() {
-        IntsRef edgeFlags = new IntsRef();
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
         footEncoder.flagsDefault(edgeFlags, true, true);
         assertEquals(FootFlagEncoder.MEAN_SPEED, footEncoder.getSpeed(edgeFlags), 1e-1);
 
-        IntsRef ef1 = new IntsRef();
+        IntsRef ef1 = encodingManager.createEdgeFlags();
         footEncoder.flagsDefault(ef1, true, false);
-        IntsRef ef2 = new IntsRef();
-        footEncoder.flagsDefault(ef2, true, false);
-        ef2.flags = footEncoder.reverseFlags(ef2.flags);
+        IntsRef ef2 = encodingManager.createEdgeFlags();
+        footEncoder.flagsDefault(ef2, false, true);
+        assertEquals(footAccessEnc.getBool(false, ef1), footAccessEnc.getBool(true, ef2));
         assertEquals(footEncoder.getSpeed(ef1), footEncoder.getSpeed(ef1), 1e-1);
     }
 
     @Test
     public void testCombined() {
+        Graph g = new GraphBuilder(encodingManager).create();
         FlagEncoder carEncoder = encodingManager.getEncoder("car");
-        IntsRef fl = footEncoder.setAccess(footEncoder.setSpeed(new IntsRef(), 10), true, true);
-        carEncoder.setAccess(carEncoder.setSpeed(fl, 100), true, false);
-        assertEquals(10, footEncoder.getSpeed(fl), 1e-1);
-        assertTrue(footEncoder.isForward(fl));
-        assertTrue(footEncoder.isBackward(fl));
+        EdgeIteratorState edge = g.edge(0, 1);
+        edge.set(footAvSpeedEnc, 10.0).set(footAccessEnc, true).setReverse(footAccessEnc, true);
+        edge.set(carAvSpeedEnc, 100.0).set(carAccessEnc, true).setReverse(carAccessEnc, false);
 
-        assertEquals(100, carEncoder.getSpeed(fl), 1e-1);
-        assertTrue(carEncoder.isForward(fl));
-        assertFalse(carEncoder.isBackward(fl));
+        assertEquals(10, edge.get(footAvSpeedEnc), 1e-1);
+        assertTrue(edge.get(footAccessEnc));
+        assertTrue(edge.getReverse(footAccessEnc));
 
-        assertEquals(0, carEncoder.getSpeed(footEncoder.setAccess(footEncoder.setSpeed(new IntsRef(), 10), true, true)), 1e-1);
+        assertEquals(100, edge.get(carAvSpeedEnc), 1e-1);
+        assertTrue(edge.get(carAccessEnc));
+        assertFalse(edge.getReverse(carAccessEnc));
+
+        IntsRef raw = encodingManager.createEdgeFlags();
+        footAvSpeedEnc.setDecimal(false, raw, 10);
+        footAccessEnc.setBool(false, raw, true);
+        footAccessEnc.setBool(true, raw, true);
+        assertEquals(0, carAvSpeedEnc.getDecimal(false, raw), 1e-1);
     }
 
     @Test
     public void testGraph() {
         Graph g = new GraphBuilder(encodingManager).create();
-        g.edge(0, 1).setDistance(10).setFlags(footEncoder.setAccess(footEncoder.setSpeed(new IntsRef(), 10), true, true));
-        g.edge(0, 2).setDistance(10).setFlags(footEncoder.setAccess(footEncoder.setSpeed(new IntsRef(), 5), true, true));
-        g.edge(1, 3).setDistance(10).setFlags(footEncoder.setAccess(footEncoder.setSpeed(new IntsRef(), 10), true, true));
+        g.edge(0, 1).setDistance(10).set(footAvSpeedEnc, 10.0).set(footAccessEnc, true).setReverse(footAccessEnc, true);
+        g.edge(0, 2).setDistance(10).set(footAvSpeedEnc, 5.0).set(footAccessEnc, true).setReverse(footAccessEnc, true);
+        g.edge(1, 3).setDistance(10).set(footAvSpeedEnc, 10.0).set(footAccessEnc, true).setReverse(footAccessEnc, true);
         EdgeExplorer out = g.createEdgeExplorer(DefaultEdgeFilter.outEdges(footEncoder));
         assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
@@ -191,28 +209,28 @@ public class FootFlagEncoderTest {
     public void testRailPlatformIssue366() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("railway", "platform");
-        IntsRef flags = footEncoder.handleWayTags(new IntsRef(), way, footEncoder.acceptWay(way), 0);
-        assertNotEquals(0, flags.flags);
+        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.acceptWay(way), 0);
+        assertNotEquals(0, flags.ints[0]);
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
-        flags = footEncoder.handleWayTags(new IntsRef(), way, footEncoder.acceptWay(way), 0);
-        assertNotEquals(0, flags.flags);
+        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.acceptWay(way), 0);
+        assertNotEquals(0, flags.ints[0]);
 
         way.clearTags();
         // only tram, no highway => no access
         way.setTag("railway", "tram");
-        flags = footEncoder.handleWayTags(new IntsRef(), way, footEncoder.acceptWay(way), 0);
-        assertEquals(0, flags.flags);
+        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.acceptWay(way), 0);
+        assertEquals(0, flags.ints[0]);
     }
 
     @Test
     public void testPier() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("man_made", "pier");
-        IntsRef flags = footEncoder.handleWayTags(new IntsRef(), way, footEncoder.acceptWay(way), 0);
-        assertNotEquals(0, flags.flags);
+        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.acceptWay(way), 0);
+        assertNotEquals(0, flags.ints[0]);
     }
 
     @Test
@@ -221,7 +239,7 @@ public class FootFlagEncoderTest {
         way.setTag("route", "ferry");
         // a bit longer than an hour
         way.setTag("duration:seconds", "4000");
-        IntsRef flags = footEncoder.handleWayTags(new IntsRef(), way, footEncoder.acceptWay(way), 0);
+        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.acceptWay(way), 0);
         assertTrue(footEncoder.getSpeed(flags) > footEncoder.getMaxSpeed());
         assertEquals(20, footEncoder.getSpeed(flags), .1);
     }
@@ -230,16 +248,16 @@ public class FootFlagEncoderTest {
     public void testMixSpeedAndSafe() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
-        IntsRef flags = footEncoder.handleWayTags(new IntsRef(), way, footEncoder.acceptWay(way), 0);
-        assertEquals(0, flags.flags);
+        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.acceptWay(way), 0);
+        assertEquals(0, flags.ints[0]);
 
         way.setTag("sidewalk", "yes");
-        flags = footEncoder.handleWayTags(new IntsRef(), way, footEncoder.acceptWay(way), 0);
+        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.acceptWay(way), 0);
         assertEquals(5, footEncoder.getSpeed(flags), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "track");
-        flags = footEncoder.handleWayTags(new IntsRef(), way, footEncoder.acceptWay(way), 0);
+        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.acceptWay(way), 0);
         assertEquals(5, footEncoder.getSpeed(flags), 1e-1);
     }
 
@@ -299,12 +317,12 @@ public class FootFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("sac_scale", "hiking");
-        IntsRef flags = footEncoder.handleWayTags(new IntsRef(), way, footEncoder.acceptWay(way), 0);
+        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.acceptWay(way), 0);
         assertEquals(FootFlagEncoder.MEAN_SPEED, footEncoder.getSpeed(flags), 1e-1);
 
         way.setTag("highway", "track");
         way.setTag("sac_scale", "mountain_hiking");
-        flags = footEncoder.handleWayTags(new IntsRef(), way, footEncoder.acceptWay(way), 0);
+        flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.acceptWay(way), 0);
         assertEquals(FootFlagEncoder.SLOW_SPEED, footEncoder.getSpeed(flags), 1e-1);
     }
 
@@ -370,8 +388,8 @@ public class FootFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("junction", "roundabout");
         way.setTag("highway", "tertiary");
-        IntsRef flags = footEncoder.handleWayTags(new IntsRef(), way, footEncoder.acceptWay(way), 0);
-        assertTrue(footEncoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.acceptWay(way), 0);
+        assertTrue(roundaboutEnc.getBool(false, flags));
     }
 
     @Test
@@ -379,8 +397,8 @@ public class FootFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("junction", "circular");
         way.setTag("highway", "tertiary");
-        IntsRef flags = footEncoder.handleWayTags(new IntsRef(), way, footEncoder.acceptWay(way), 0);
-        assertTrue(footEncoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.acceptWay(way), 0);
+        assertTrue(roundaboutEnc.getBool(false, flags));
     }
 
     public void testFord() {

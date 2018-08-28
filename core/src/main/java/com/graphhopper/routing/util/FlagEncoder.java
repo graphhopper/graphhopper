@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.InstructionAnnotation;
 import com.graphhopper.util.Translation;
@@ -28,11 +31,7 @@ import com.graphhopper.util.Translation;
  *
  * @author Peter Karich
  */
-public interface FlagEncoder extends TurnCostEncoder {
-    /**
-     * Reports whether this edge is part of a roundabout.
-     */
-    int K_ROUNDABOUT = 2;
+public interface FlagEncoder extends TurnCostEncoder, EncodedValueLookup {
 
     /**
      * @return the version of this FlagEncoder to enforce none-compatibility when new attributes are
@@ -46,77 +45,19 @@ public interface FlagEncoder extends TurnCostEncoder {
     double getMaxSpeed();
 
     /**
-     * @return the speed in km/h for this direction, for backward direction use getReverseSpeed
+     * This method returns the EncodedValue used for the direction-dependent access properties of this encoder.
      */
-    double getSpeed(IntsRef intsRef);
+    BooleanEncodedValue getAccessEnc();
 
     /**
-     * Sets the speed in km/h.
-     *
-     * @return modified setProperties
+     * This method returns the EncodedValue used for the average speed of this encoder.
      */
-    IntsRef setSpeed(IntsRef intsRef, double speed);
-
-    /**
-     * @return the speed of the reverse direction in km/h
-     */
-    double getReverseSpeed(IntsRef intsRef);
-
-    /**
-     * Sets the reverse speed in the intsRef.
-     */
-    IntsRef setReverseSpeed(IntsRef intsRef, double speed);
-
-    /**
-     * Sets the access of the edge.
-     *
-     * @return modified intsRef
-     */
-    IntsRef setAccess(IntsRef intsRef, boolean forward, boolean backward);
-
-    /**
-     * Reports whether the edge is available in forward direction (i.e. from base node to adj node)
-     * for a certain vehicle.
-     */
-    boolean isForward(IntsRef intsRef);
-
-    /*
-     * Simple rules for every subclass which introduces a new key. It has to use the prefix K_ and
-     * uses a minimum value which is two magnitudes higher than in the super class.
-     * Currently this means starting from 100, and subclasses of this class start from 10000 and so on.
-     */
-
-    /**
-     * Reports whether the edge is available in backward direction (i.e. from adj node to base node)
-     * for a certain vehicle.
-     */
-    boolean isBackward(IntsRef intsRef);
-
-    /**
-     * Returns arbitrary boolean value identified by the specified key.
-     */
-    boolean isBool(IntsRef intsRef, int key);
-
-    IntsRef setBool(IntsRef intsRef, int key, boolean value);
-
-    /**
-     * Returns arbitrary long value identified by the specified key. E.g. can be used to return the
-     * way or surface type of an edge
-     */
-    long getLong(IntsRef intsRef, int key);
-
-    IntsRef setLong(IntsRef intsRef, int key, long value);
-
-    /**
-     * Returns arbitrary double value identified by the specified key. E.g. can be used to return
-     * the maximum width or height allowed for an edge.
-     */
-    double getDouble(IntsRef intsRef, int key);
-
-    IntsRef setDouble(IntsRef intsRef, int key, double value);
+    DecimalEncodedValue getAverageSpeedEnc();
 
     /**
      * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.
+     *
+     * @deprecated use support(String)
      */
     boolean supports(Class<?> feature);
 

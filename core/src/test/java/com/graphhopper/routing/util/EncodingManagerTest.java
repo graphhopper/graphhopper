@@ -19,7 +19,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.BitUtil;
 import org.junit.Rule;
@@ -90,7 +89,7 @@ public class EncodingManagerTest {
             new EncodingManager(new FootFlagEncoder(), new CarFlagEncoder(), new BikeFlagEncoder(), new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder());
             assertTrue(false);
         } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoders are requesting 44 bits, more than 32 bits of way flags. Decrease the"));
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoders are requesting 36 bits, more than 32 bits of edge flags"));
         }
     }
 
@@ -143,7 +142,7 @@ public class EncodingManagerTest {
         BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder() {
             @Override
             public int defineRelationBits(int index, int shift) {
-                relationCodeEncoder = new EncodedValue("RelationCode2", shift, 2, 1, 0, 3);
+                relationCodeEncoder = new EncodedValueOld("RelationCode2", shift, 2, 1, 0, 3);
                 return shift + 2;
             }
 
@@ -171,10 +170,10 @@ public class EncodingManagerTest {
         osmRel.setTag("network", "lcn");
         long relFlags = manager.handleRelationTags(0, osmRel);
         long allow = defaultBike.acceptBit | lessRelationCodes.acceptBit;
-        IntsRef edgeFlags = manager.handleWayTags(new IntsRef(), osmWay, allow, relFlags);
+        IntsRef edgeFlags = manager.handleWayTags(osmWay, allow, relFlags);
 
-        assertTrue(defaultBike.getDouble(edgeFlags, PriorityWeighting.KEY)
-                > lessRelationCodes.getDouble(edgeFlags, PriorityWeighting.KEY));
+        assertTrue(defaultBike.relationCodeEncoder.getValue(edgeFlags.ints[0])
+                > lessRelationCodes.relationCodeEncoder.getValue(edgeFlags.ints[0]));
     }
 
     @Test
@@ -194,12 +193,12 @@ public class EncodingManagerTest {
         osmRel.setTag("network", "rcn");
         long relFlags = manager.handleRelationTags(0, osmRel);
         long allow = bikeEncoder.acceptBit | mtbEncoder.acceptBit;
-        IntsRef flags = manager.handleWayTags(new IntsRef(), osmWay, allow, relFlags);
+        IntsRef flags = manager.handleWayTags(osmWay, allow, relFlags);
 
         // bike: uninfluenced speed for grade but via network => VERY_NICE                
         // mtb: uninfluenced speed only PREFER
-        assertTrue(bikeEncoder.getDouble(flags, PriorityWeighting.KEY)
-                > mtbEncoder.getDouble(flags, PriorityWeighting.KEY));
+        assertTrue(bikeEncoder.relationCodeEncoder.getValue(flags.ints[0])
+                > mtbEncoder.relationCodeEncoder.getValue(flags.ints[0]));
     }
 
     public void testFullBitMask() {
@@ -226,22 +225,22 @@ public class EncodingManagerTest {
         osmWay.setTag("name", "test");
 
         BikeFlagEncoder singleBikeEnc = (BikeFlagEncoder) manager2.getEncoder("bike2");
-        IntsRef flags = manager2.handleWayTags(new IntsRef(), osmWay, singleBikeEnc.acceptBit, 0);
+        IntsRef flags = manager2.handleWayTags(osmWay, singleBikeEnc.acceptBit, 0);
         double singleSpeed = singleBikeEnc.getSpeed(flags);
         assertEquals(4, singleSpeed, 1e-3);
-        assertEquals(singleSpeed, singleBikeEnc.getReverseSpeed(flags), 1e-3);
+        assertEquals(singleSpeed, singleBikeEnc.getSpeed(true, flags), 1e-3);
 
         EncodingManager manager = new EncodingManager(FlagEncoderFactory.DEFAULT, "bike2,bike,foot", 8);
         FootFlagEncoder foot = (FootFlagEncoder) manager.getEncoder("foot");
         BikeFlagEncoder bike = (BikeFlagEncoder) manager.getEncoder("bike2");
 
         long acceptBits = foot.acceptBit | bike.acceptBit;
-        flags = manager.handleWayTags(new IntsRef(), osmWay, acceptBits, 0);
+        flags = manager.handleWayTags(osmWay, acceptBits, 0);
         assertEquals(singleSpeed, bike.getSpeed(flags), 1e-2);
-        assertEquals(singleSpeed, bike.getReverseSpeed(flags), 1e-2);
+        assertEquals(singleSpeed, bike.getSpeed(true, flags), 1e-2);
 
         assertEquals(5, foot.getSpeed(flags), 1e-2);
-        assertEquals(5, foot.getReverseSpeed(flags), 1e-2);
+        assertEquals(5, foot.getSpeed(true, flags), 1e-2);
     }
 
     @Test

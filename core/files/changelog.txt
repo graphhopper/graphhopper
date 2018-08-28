@@ -138,9 +138,9 @@
         graphhopper: use maps from 0.2 path; updated maps
         mapsforge: use mapsforge-map dependency; merged #461; avoid duplicates otherwise mapsforge-core would be duplicate (?)
     refactored/renamed classes and methods:
-        refactor 'flags' from int to long (still only int is stored)
-        replacing Graph.edge(a,b,dist,flags) by Graph.edge(a,b).setDistance().setFlags()
-        FlagEncoder.flags => use FlagEncoder.setProperties or separate setAccess and setSpeed method
+        refactor 'edgeFlags' from int to long (still only int is stored)
+        replacing Graph.edge(a,b,dist,edgeFlags) by Graph.edge(a,b).setDistance().setFlags()
+        FlagEncoder.edgeFlags => use FlagEncoder.setProperties or separate setAccess and setSpeed method
         renamed LocationIDResult to QueryResult and Location2NodesNtree to LocationIndexTree
         renamed Location2IDIndex to LocationIndex
         renamed WeightCalculation to Weighting and getWeight to calcWeight        

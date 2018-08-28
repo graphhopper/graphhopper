@@ -19,6 +19,7 @@ package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -364,12 +365,12 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         graph.edge(4, 5, 10, true);
         graph.edge(6, 7, 10, true);
 
-        graph.edge(8, 2, 10, true);
-        graph.edge(9, 2, 10, true);
-        graph.edge(10, 3, 10, true);
-        graph.edge(11, 4, 10, true);
-        graph.edge(12, 5, 10, true);
-        graph.edge(13, 6, 10, true);
+        graph.edge(2, 8, 10, true);
+        graph.edge(2, 9, 10, true);
+        graph.edge(3, 10, 10, true);
+        graph.edge(4, 11, 10, true);
+        graph.edge(5, 12, 10, true);
+        graph.edge(6, 13, 10, true);
 
         graph.edge(1, 14, 10, true);
         graph.edge(2, 15, 10, true);
@@ -454,11 +455,12 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
 
         // reduce access for bike to two edges only
         AllEdgesIterator iter = graph.getAllEdges();
+        BooleanEncodedValue accessEnc = bikeEncoder.getAccessEnc();
         while (iter.next()) {
-            iter.setFlags(bikeEncoder.setAccess(iter.getFlags(), false, false));
+            iter.set(accessEnc, false).setReverse(accessEnc, false);
         }
         for (EdgeIteratorState edge : Arrays.asList(GHUtility.getEdge(graph, 0, 1), GHUtility.getEdge(graph, 1, 2))) {
-            edge.setFlags(bikeEncoder.setAccess(edge.getFlags(), true, true));
+            edge.set(accessEnc, true).setReverse(accessEnc, true);
         }
 
         LocationIndexTree index = createIndexNoPrepare(graph, 500);

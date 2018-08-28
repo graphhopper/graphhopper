@@ -45,13 +45,15 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     protected final GHResponse ghResponse;
     protected final PathWrapper altResponse = new PathWrapper();
     private final LocationIndex locationIndex;
+    protected final EncodingManager encodingManager;
     // result from route
     protected List<Path> pathList;
 
-    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex) {
+    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex, EncodingManager encodingManager) {
         this.locationIndex = locationIndex;
         this.ghRequest = ghRequest;
         this.ghResponse = ghRsp;
+        this.encodingManager = encodingManager;
     }
 
     @Override
@@ -151,7 +153,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
 
         altResponse.setWaypoints(getWaypoints());
         ghResponse.add(altResponse);
-        pathMerger.doWork(altResponse, pathList, tr);
+        pathMerger.doWork(altResponse, pathList, encodingManager, tr);
         return true;
     }
 

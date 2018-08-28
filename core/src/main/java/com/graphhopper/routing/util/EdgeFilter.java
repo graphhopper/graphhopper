@@ -21,12 +21,11 @@ import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Class used to traverse a graph.
- * <p>
  *
  * @author Peter Karich
  */
 public interface EdgeFilter {
-    static final EdgeFilter ALL_EDGES = new EdgeFilter() {
+    EdgeFilter ALL_EDGES = new EdgeFilter() {
         @Override
         public final boolean accept(EdgeIteratorState edgeState) {
             return true;

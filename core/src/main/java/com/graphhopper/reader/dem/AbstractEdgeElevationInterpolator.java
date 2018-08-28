@@ -101,7 +101,7 @@ public abstract class AbstractEdgeElevationInterpolator {
         final GHIntHashSet innerNodeIds = new GHIntHashSet();
         gatherOuterAndInnerNodeIds(edgeExplorer, interpolatableEdge, visitedEdgeIds, outerNodeIds,
                 innerNodeIds);
-        nodeElevationInterpolator.interpolateElevationsOfInnerNodes(outerNodeIds.toArray(),
+            nodeElevationInterpolator.interpolateElevationsOfInnerNodes(outerNodeIds.toArray(),
                 innerNodeIds.toArray());
     }
 

@@ -19,7 +19,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
@@ -32,102 +31,33 @@ import static com.graphhopper.util.Helper.keepIn;
  * @author Peter Karich
  */
 public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
-    private EncodedDoubleValue reverseSpeedEncoder;
 
     public Bike2WeightFlagEncoder() {
-        super();
+        this(new PMap());
     }
 
     public Bike2WeightFlagEncoder(String propertiesStr) {
-        super(new PMap(propertiesStr));
+        this(new PMap(propertiesStr));
     }
 
     public Bike2WeightFlagEncoder(PMap properties) {
         super(properties);
+        speedTwoDirections = true;
     }
 
     public Bike2WeightFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
+        speedTwoDirections = true;
     }
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
-    @Override
-    public int defineWayBits(int index, int shift) {
-        shift = super.defineWayBits(index, shift);
-        reverseSpeedEncoder = new EncodedDoubleValue("Reverse Speed", shift, speedBits, speedFactor,
-                getHighwaySpeed("cycleway"), maxPossibleSpeed);
-        shift += reverseSpeedEncoder.getBits();
-        return shift;
-    }
-
-    @Override
-    public double getReverseSpeed(IntsRef edgeFlags) {
-        return reverseSpeedEncoder.getDoubleValue(edgeFlags);
-    }
-
-    @Override
-    public IntsRef setReverseSpeed(IntsRef edgeFlags, double speed) {
-        if (speed < 0)
-            throw new IllegalArgumentException("Speed cannot be negative: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(edgeFlags.flags));
-
-        if (speed < speedEncoder.factor / 2) {
-            setLowSpeed(edgeFlags, speed, true);
-            return edgeFlags;
-        }
-
-        if (speed > getMaxSpeed())
-            speed = getMaxSpeed();
-
-        reverseSpeedEncoder.setDoubleValue(edgeFlags, speed);
-        return edgeFlags;
-    }
-
-    @Override
-    public void handleSpeed(IntsRef edgeFlags, ReaderWay way, double speed) {
-        // handle oneways
+    protected void handleSpeed(IntsRef edgeFlags, ReaderWay way, double speed) {
+        speedEncoder.setDecimal(true, edgeFlags, speed);
         super.handleSpeed(edgeFlags, way, speed);
-        if (isBackward(edgeFlags))
-            setReverseSpeed(edgeFlags, speed);
-
-        if (isForward(edgeFlags))
-            setSpeed(edgeFlags, speed);
-    }
-
-    @Override
-    protected void setLowSpeed(IntsRef intsRef, double speed, boolean reverse) {
-        if (reverse) {
-            reverseSpeedEncoder.setDoubleValue(intsRef, 0);
-            setBool(intsRef, K_BACKWARD, false);
-            return;
-        }
-
-        speedEncoder.setDoubleValue(intsRef, 0);
-        setBool(intsRef, K_FORWARD, false);
-    }
-
-    @Override
-    public void flagsDefault(IntsRef edgeFlags, boolean forward, boolean backward) {
-        super.flagsDefault(edgeFlags, forward, backward);
-        if (backward)
-            reverseSpeedEncoder.setDefaultValue(edgeFlags);
-    }
-
-    @Override
-    public long reverseFlags(long flags) {
-        // swap access
-        // TODO see comments in MotorcycleFlagEncoder#reverseFlags()
-        IntsRef intsRef = new IntsRef();
-        intsRef.flags = super.reverseFlags(flags);
-
-        // swap speeds 
-        double otherValue = reverseSpeedEncoder.getDoubleValue(intsRef);
-        setReverseSpeed(intsRef, speedEncoder.getDoubleValue(intsRef));
-        setSpeed(intsRef, otherValue);
-        return intsRef.flags;
     }
 
     @Override
@@ -174,25 +104,25 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
             double fwdDecline = decDist2DSum > 1 ? decEleSum / decDist2DSum : 0;
             double restDist2D = fullDist2D - incDist2DSum - decDist2DSum;
             double maxSpeed = getHighwaySpeed("cycleway");
-            if (isForward(intsRef)) {
+            if (accessEnc.getBool(false, intsRef)) {
                 // use weighted mean so that longer incline influences speed more than shorter
-                double speed = getSpeed(intsRef);
+                double speed = getSpeed(false, intsRef);
                 double fwdFaster = 1 + 2 * keepIn(fwdDecline, 0, 0.2);
                 fwdFaster = fwdFaster * fwdFaster;
                 double fwdSlower = 1 - 5 * keepIn(fwdIncline, 0, 0.2);
                 fwdSlower = fwdSlower * fwdSlower;
                 speed = speed * (fwdSlower * incDist2DSum + fwdFaster * decDist2DSum + 1 * restDist2D) / fullDist2D;
-                setSpeed(intsRef, keepIn(speed, PUSHING_SECTION_SPEED / 2, maxSpeed));
+                setSpeed(false, intsRef, keepIn(speed, PUSHING_SECTION_SPEED / 2, maxSpeed));
             }
 
-            if (isBackward(intsRef)) {
-                double speedReverse = getReverseSpeed(intsRef);
+            if (accessEnc.getBool(true, intsRef)) {
+                double speedReverse = getSpeed(true, intsRef);
                 double bwFaster = 1 + 2 * keepIn(fwdIncline, 0, 0.2);
                 bwFaster = bwFaster * bwFaster;
                 double bwSlower = 1 - 5 * keepIn(fwdDecline, 0, 0.2);
                 bwSlower = bwSlower * bwSlower;
                 speedReverse = speedReverse * (bwFaster * incDist2DSum + bwSlower * decDist2DSum + 1 * restDist2D) / fullDist2D;
-                setReverseSpeed(intsRef, keepIn(speedReverse, PUSHING_SECTION_SPEED / 2, maxSpeed));
+                setSpeed(true, intsRef, keepIn(speedReverse, PUSHING_SECTION_SPEED / 2, maxSpeed));
             }
         }
         edge.setFlags(intsRef);

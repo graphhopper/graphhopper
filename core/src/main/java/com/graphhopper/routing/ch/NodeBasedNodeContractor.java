@@ -245,8 +245,8 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                     }
 
                     // note: flags overwrite weight => call first
-                    IntsRef intsRef = new IntsRef();
-                    intsRef.flags = sc.flags;
+                    IntsRef intsRef = new IntsRef(1);
+                    intsRef.ints[0] = sc.flags;
                     iter.setFlags(intsRef);
                     iter.setWeight(sc.weight);
                     iter.setDistance(sc.dist);
@@ -260,8 +260,8 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             if (!updatedInGraph) {
                 CHEdgeIteratorState edgeState = prepareGraph.shortcut(sc.from, sc.to);
                 // note: flags overwrite weight => call first
-                IntsRef intsRef = new IntsRef();
-                intsRef.flags = sc.flags;
+                IntsRef intsRef = new IntsRef(1);
+                intsRef.ints[0] = sc.flags;
                 edgeState.setFlags(intsRef);
                 edgeState.setWeight(sc.weight);
                 edgeState.setDistance(sc.dist);
@@ -315,7 +315,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         double dist;
         double weight;
         int originalEdges;
-        long flags = PrepareEncoder.getScFwdDir();
+        int flags = PrepareEncoder.getScFwdDir();
 
         public Shortcut(int from, int to, double weight, double dist) {
             this.from = from;

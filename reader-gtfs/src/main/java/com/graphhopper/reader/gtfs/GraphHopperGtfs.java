@@ -168,10 +168,11 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 PathWrapper directWalkPath = walkPaths.get(realDestinationNode);
                 if (directWalkPath != null) {
                     int nextEdgeId = graphWithExtraEdges.getAllEdges().length() + 200; // FIXME: A number bigger than the number of edges QueryGraph adds
+                    IntsRef edgeFlags = graphHopperStorage.getEncodingManager().createEdgeFlags();
                     final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(-1,
-                            nextEdgeId++, originNode, destinationNode, directWalkPath.getDistance(), new IntsRef(), "", directWalkPath.getPoints());
+                            nextEdgeId++, originNode, destinationNode, directWalkPath.getDistance(), edgeFlags, "", directWalkPath.getPoints(), false);
                     final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(-1,
-                            nextEdgeId++, destinationNode, originNode, directWalkPath.getDistance(), new IntsRef(), "", directWalkPath.getPoints());
+                            nextEdgeId++, destinationNode, originNode, directWalkPath.getDistance(), edgeFlags, "", directWalkPath.getPoints(), true);
                     flagEncoder.setEdgeType(newEdge.getFlags(), GtfsStorage.EdgeType.HIGHWAY);
 
                     final long time = directWalkPath.getTime() / 1000;

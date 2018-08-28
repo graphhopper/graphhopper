@@ -24,6 +24,7 @@ import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.reader.osm.OSMTurnRelation.TurnCostTableEntry;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -349,9 +350,8 @@ public class OSMReader implements DataReader {
             }
         }
 
-        IntsRef edgeFlags = new IntsRef();
-        encodingManager.handleWayTags(edgeFlags, way, includeWay, relationFlags);
-        if (edgeFlags.flags == 0)
+        IntsRef edgeFlags = encodingManager.handleWayTags(way, includeWay, relationFlags);
+        if (edgeFlags.isEmpty())
             return;
 
         List<EdgeIteratorState> createdEdges = new ArrayList<>();
@@ -361,9 +361,9 @@ public class OSMReader implements DataReader {
         for (int i = 0; i < size; i++) {
             long nodeId = osmNodeIds.get(i);
             long nodeFlags = getNodeFlagsMap().get(nodeId);
-            // barrier was spotted and way is otherwise passable for that mode of travel
+            // barrier was spotted and the way is passable for that mode of travel
             if (nodeFlags > 0) {
-                if ((nodeFlags & edgeFlags.flags) > 0) {
+                if (isOnePassable(encodingManager.getAccessEncFromNodeFlags(nodeFlags), edgeFlags)) {
                     // remove barrier to avoid duplicates
                     getNodeFlagsMap().put(nodeId, 0);
 
@@ -546,6 +546,18 @@ public class OSMReader implements DataReader {
             nextPillarId++;
         }
         return true;
+    }
+
+    /**
+     * The nodeFlags store the encoders to check for accessibility in edgeFlags. E.g. if nodeFlags==3, then the
+     * accessibility of the first two encoders will be check in edgeFlags
+     */
+    private static boolean isOnePassable(List<BooleanEncodedValue> checkEncoders, IntsRef edgeFlags) {
+        for (BooleanEncodedValue accessEnc : checkEncoders) {
+            if (accessEnc.getBool(false, edgeFlags) || accessEnc.getBool(true, edgeFlags))
+                return true;
+        }
+        return false;
     }
 
     protected double getElevation(ReaderNode node) {
@@ -813,10 +825,12 @@ public class OSMReader implements DataReader {
      * Add a zero length edge with reduced routing options to the graph.
      */
     Collection<EdgeIteratorState> addBarrierEdge(long fromId, long toId, IntsRef inEdgeFlags, long nodeFlags, long wayOsmId) {
-        // TODO Similar to GraphHopperStorageTest#testMultipleDecoupledEdges)
-        IntsRef edgeFlags = inEdgeFlags.copy();
+        IntsRef edgeFlags = IntsRef.deepCopyOf(inEdgeFlags);
         // clear blocked directions from flags
-        edgeFlags.flags &= ~nodeFlags;
+        for (BooleanEncodedValue accessEnc : encodingManager.getAccessEncFromNodeFlags(nodeFlags)) {
+            accessEnc.setBool(false, edgeFlags, false);
+            accessEnc.setBool(true, edgeFlags, false);
+        }
         // add edge
         barrierNodeIds.clear();
         barrierNodeIds.add(fromId);

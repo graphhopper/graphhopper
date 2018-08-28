@@ -17,19 +17,30 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.storage.IntsRef;
 
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
- * <p>
  *
  * @author Peter Karich
  * @see EdgeIterator
  * @see EdgeExplorer
  */
 public interface EdgeIteratorState {
-    int K_UNFAVORED_EDGE = -1;
+    BooleanEncodedValue UNFAVORED_EDGE = new BooleanEncodedValue("unfavored");
+    /**
+     * This method can be used to fetch the internal reverse state of an edge.
+     */
+    BooleanEncodedValue REVERSE_STATE = new BooleanEncodedValue("reverse") {
+        @Override
+        public boolean getBool(boolean reverse, IntsRef ref) {
+            return reverse;
+        }
+    };
 
     /**
      * @return the edge id of the current edge. Do not make any assumptions about the concrete
@@ -82,10 +93,16 @@ public interface EdgeIteratorState {
 
     EdgeIteratorState setDistance(double dist);
 
-    // TODO rename to getData
+    /**
+     * Returns edge properties stored in direction of the raw database layout. So do not use it directly, instead
+     * use the appropriate set/get methods with its EncodedValue object.
+     */
     IntsRef getFlags();
 
-    EdgeIteratorState setFlags(IntsRef flags);
+    /**
+     * Stores the specified edgeFlags down to the DataAccess
+     */
+    EdgeIteratorState setFlags(IntsRef edgeFlags);
 
     /**
      * @return the additional field value for this edge
@@ -97,24 +114,37 @@ public interface EdgeIteratorState {
      */
     EdgeIteratorState setAdditionalField(int value);
 
-    /**
-     * @see FlagEncoder#isForward(IntsRef) and #472
-     */
-    boolean isForward(FlagEncoder encoder);
+    boolean get(BooleanEncodedValue property);
 
-    /**
-     * @see FlagEncoder#isBackward(IntsRef) and #472
-     */
-    boolean isBackward(FlagEncoder encoder);
+    EdgeIteratorState set(BooleanEncodedValue property, boolean value);
 
-    /**
-     * Get additional boolean information of the edge.
-     * <p>
-     *
-     * @param key      direction or vehicle dependent integer key
-     * @param _default default value if key is not found
-     */
-    boolean getBool(int key, boolean _default);
+    boolean getReverse(BooleanEncodedValue property);
+
+    EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value);
+
+    int get(IntEncodedValue property);
+
+    EdgeIteratorState set(IntEncodedValue property, int value);
+
+    int getReverse(IntEncodedValue property);
+
+    EdgeIteratorState setReverse(IntEncodedValue property, int value);
+
+    double get(DecimalEncodedValue property);
+
+    EdgeIteratorState set(DecimalEncodedValue property, double value);
+
+    double getReverse(DecimalEncodedValue property);
+
+    EdgeIteratorState setReverse(DecimalEncodedValue property, double value);
+
+    String get(StringEncodedValue property);
+
+    EdgeIteratorState set(StringEncodedValue property, String value);
+
+    String getReverse(StringEncodedValue property);
+
+    EdgeIteratorState setReverse(StringEncodedValue property, String value);
 
     String getName();
 
@@ -122,19 +152,17 @@ public interface EdgeIteratorState {
 
     /**
      * Clones this EdgeIteratorState.
-     * <p>
      *
      * @param reverse if true a detached edgeState with reversed properties is created where base
      *                and adjacent nodes, flags and wayGeometry are in reversed order. See #162 for more details
-     *                about why we need the new reverse parameter.
+     *                about why we need the reverse parameter.
      */
     EdgeIteratorState detach(boolean reverse);
 
     /**
-     * Copies the properties of this edge into the specified edge. Does not change nodes!
-     * <p>
+     * Copies the properties of the specified edge into this edge. Does not change nodes!
      *
      * @return the specified edge e
      */
-    EdgeIteratorState copyPropertiesTo(EdgeIteratorState e);
+    EdgeIteratorState copyPropertiesFrom(EdgeIteratorState e);
 }

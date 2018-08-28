@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -25,20 +26,24 @@ import com.graphhopper.util.EdgeIteratorState;
 public class DefaultEdgeFilter implements EdgeFilter {
     private final boolean bwd;
     private final boolean fwd;
-    private FlagEncoder encoder;
+    protected final BooleanEncodedValue accessEnc;
 
-    protected DefaultEdgeFilter(FlagEncoder encoder, boolean fwd, boolean bwd) {
-        this.encoder = encoder;
-        this.bwd = bwd;
+    protected DefaultEdgeFilter(BooleanEncodedValue accessEnc, boolean fwd, boolean bwd) {
+        this.accessEnc = accessEnc;
         this.fwd = fwd;
+        this.bwd = bwd;
+    }
+
+    public static DefaultEdgeFilter outEdges(BooleanEncodedValue accessEnc) {
+        return new DefaultEdgeFilter(accessEnc, true, false);
     }
 
     public static DefaultEdgeFilter outEdges(FlagEncoder flagEncoder) {
-        return new DefaultEdgeFilter(flagEncoder, true, false);
+        return new DefaultEdgeFilter(flagEncoder.getAccessEnc(), true, false);
     }
 
     public static DefaultEdgeFilter inEdges(FlagEncoder flagEncoder) {
-        return new DefaultEdgeFilter(flagEncoder, false, true);
+        return new DefaultEdgeFilter(flagEncoder.getAccessEnc(), false, true);
     }
 
     /**
@@ -47,12 +52,12 @@ public class DefaultEdgeFilter implements EdgeFilter {
      * regardless of their encoding use {@link EdgeFilter#ALL_EDGES} instead.
      */
     public static DefaultEdgeFilter allEdges(FlagEncoder flagEncoder) {
-        return new DefaultEdgeFilter(flagEncoder, true, true);
+        return new DefaultEdgeFilter(flagEncoder.getAccessEnc(), true, true);
     }
 
     @Override
     public final boolean accept(EdgeIteratorState iter) {
-        return fwd && iter.isForward(encoder) || bwd && iter.isBackward(encoder);
+        return fwd && iter.get(accessEnc) || bwd && iter.getReverse(accessEnc);
     }
 
     public boolean acceptsBackward() {
@@ -65,6 +70,6 @@ public class DefaultEdgeFilter implements EdgeFilter {
 
     @Override
     public String toString() {
-        return encoder.toString() + ", bwd:" + bwd + ", fwd:" + fwd;
+        return accessEnc.toString() + ", bwd:" + bwd + ", fwd:" + fwd;
     }
 }

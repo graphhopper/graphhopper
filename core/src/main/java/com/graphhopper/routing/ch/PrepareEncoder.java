@@ -25,28 +25,28 @@ package com.graphhopper.routing.ch;
  */
 public class PrepareEncoder {
     // shortcut goes in one or both directions is also possible if weight is identical    
-    private static final long scFwdDir = 0x1;
-    private static final long scBwdDir = 0x2;
-    private static final long scDirMask = 0x3;
+    private static final int scFwdDir = 0x1;
+    private static final int scBwdDir = 0x2;
+    private static final int scDirMask = 0x3;
 
     /**
      * A bitmask for two directions
      */
-    public static final long getScDirMask() {
+    public static final int getScDirMask() {
         return scDirMask;
     }
 
     /**
      * The bit for forward direction
      */
-    public static final long getScFwdDir() {
+    public static final int getScFwdDir() {
         return scFwdDir;
     }
 
     /**
      * The bit for backward direction
      */
-    public static final long getScBwdDir() {
+    public static final int getScBwdDir() {
         return scBwdDir;
     }
 

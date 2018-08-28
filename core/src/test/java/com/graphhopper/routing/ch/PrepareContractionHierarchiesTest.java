@@ -287,18 +287,21 @@ public class PrepareContractionHierarchiesTest {
     }
 
     void initUnpackingGraph(GraphHopperStorage ghStorage, CHGraph g, Weighting w) {
-        final IntsRef flags = carEncoder.setAccess(carEncoder.setSpeed(new IntsRef(), 30), true, false);
+        final IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        carEncoder.getAccessEnc().setBool(false, edgeFlags, true);
+        carEncoder.getAccessEnc().setBool(true, edgeFlags, false);
+        carEncoder.getAverageSpeedEnc().setDecimal(false, edgeFlags, 30.0);
         double dist = 1;
-        g.edge(10, 0).setDistance(dist).setFlags(flags);
+        g.edge(10, 0).setDistance(dist).setFlags(edgeFlags);
         EdgeIteratorState edgeState01 = g.edge(0, 1);
-        edgeState01.setDistance(dist).setFlags(flags);
-        EdgeIteratorState edgeState12 = g.edge(1, 2).setDistance(dist).setFlags(flags);
-        EdgeIteratorState edgeState23 = g.edge(2, 3).setDistance(dist).setFlags(flags);
-        EdgeIteratorState edgeState34 = g.edge(3, 4).setDistance(dist).setFlags(flags);
-        EdgeIteratorState edgeState45 = g.edge(4, 5).setDistance(dist).setFlags(flags);
-        EdgeIteratorState edgeState56 = g.edge(5, 6).setDistance(dist).setFlags(flags);
-        IntsRef oneDirFlags = new IntsRef();
-        oneDirFlags.flags = PrepareEncoder.getScFwdDir();
+        edgeState01.setDistance(dist).setFlags(edgeFlags);
+        EdgeIteratorState edgeState12 = g.edge(1, 2).setDistance(dist).setFlags(edgeFlags);
+        EdgeIteratorState edgeState23 = g.edge(2, 3).setDistance(dist).setFlags(edgeFlags);
+        EdgeIteratorState edgeState34 = g.edge(3, 4).setDistance(dist).setFlags(edgeFlags);
+        EdgeIteratorState edgeState45 = g.edge(4, 5).setDistance(dist).setFlags(edgeFlags);
+        EdgeIteratorState edgeState56 = g.edge(5, 6).setDistance(dist).setFlags(edgeFlags);
+        IntsRef oneDirFlags = encodingManager.createEdgeFlags();
+        oneDirFlags.ints[0] = PrepareEncoder.getScFwdDir();
 
         int tmpEdgeId = edgeState01.getEdge();
         ghStorage.freeze();
@@ -471,8 +474,8 @@ public class PrepareContractionHierarchiesTest {
         List<Weighting> chWeightings = Arrays.asList(carWeighting, bikeWeighting);
         GraphHopperStorage ghStorage = new GraphHopperStorage(chWeightings, dir, tmpEncodingManager, false, new GraphExtension.NoOpExtension()).create(1000);
         initShortcutsGraph(ghStorage);
-        EdgeIteratorState edge = GHUtility.getEdge(ghStorage, 9, 14);
-        edge.setFlags(tmpBikeEncoder.setAccess(edge.getFlags(), false, false));
+        EdgeIteratorState edge = GHUtility.getEdge(ghStorage, 9, 14).
+                set(tmpBikeEncoder.getAccessEnc(), false).setReverse(tmpBikeEncoder.getAccessEnc(), false);
 
         ghStorage.freeze();
 

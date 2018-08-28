@@ -47,7 +47,6 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * Try algorithms, indices and graph storages with real data
- * <p>
  *
  * @author Peter Karich
  */
@@ -554,7 +553,7 @@ public class RoutingAlgorithmWithOSMIT {
                 for (OneRun oneRun : forEveryAlgo) {
                     tmpOneRun = oneRun;
                     List<QueryResult> list = oneRun.getList(idx, edgeFilter);
-                    testCollector.assertDistance(algoEntry, list, oneRun);
+                    testCollector.assertDistance(hopper.getEncodingManager(), algoEntry, list, oneRun);
                 }
             }
 
@@ -609,7 +608,7 @@ public class RoutingAlgorithmWithOSMIT {
                         public void run() {
                             OneRun oneRun = instances.get(instanceIndex);
                             AlgorithmOptions opts = AlgorithmOptions.start().weighting(weighting).algorithm(algoStr).build();
-                            testCollector.assertDistance(new AlgoHelperEntry(g, opts, idx, algoStr + "|" + weighting),
+                            testCollector.assertDistance(encodingManager, new AlgoHelperEntry(g, opts, idx, algoStr + "|" + weighting),
                                     oneRun.getList(idx, filter), oneRun);
                             integ.addAndGet(1);
                         }
