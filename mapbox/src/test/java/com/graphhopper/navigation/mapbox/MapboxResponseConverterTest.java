@@ -137,7 +137,7 @@ public class MapboxResponseConverterTest {
 
         ObjectNode json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH);
 
-        JsonNode steps= json.get("routes").get(0).get("legs").get(0).get("steps");
+        JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
         // Step 15 is over 3km long
         JsonNode step = steps.get(15);
@@ -151,6 +151,26 @@ public class MapboxResponseConverterTest {
 
         voiceInstruction = voiceInstructions.get(3);
         assertEquals("keep right", voiceInstruction.get("announcement").asText());
+    }
+
+    @Test
+    public void roundaboutDegreesTest() {
+
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
+                setVehicle(vehicle));
+
+        ObjectNode json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH);
+
+        JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+
+        JsonNode step = steps.get(5);
+        JsonNode bannerInstructions = step.get("bannerInstructions");
+        JsonNode primary = bannerInstructions.get(0).get("primary");
+
+        assertEquals("roundabout", primary.get("type").asText());
+        assertEquals("right", primary.get("modifier").asText());
+        assertEquals(220, primary.get("degrees").asDouble(), 1);
+
     }
 
     @Test

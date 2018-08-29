@@ -176,6 +176,8 @@ public class MapboxResponseConverter {
             double tmpDistance = distance - 250;
             int spokenDistance = (int) (tmpDistance / 1000);
             String continueDescription = translationMap.getWithFallBack(locale).tr("continue") + " for " + spokenDistance + " kilometers";
+            // TODO In the worst case scenario it might be over 1km after merging onto the road until this instruction is spoken (e.g. (5249-250/1000)*1000=4000 - because java is rounding down)
+            // TODO this might be annoying for unnecessary keeps on the motorway, especially if they happen more often then every 10km
             putSingleVoiceInstruction(spokenDistance * 1000, continueDescription, voiceInstructions);
         }
 
@@ -253,7 +255,17 @@ public class MapboxResponseConverter {
         if (modifier != null)
             primary.put("modifier", modifier);
 
-        // TODO might be missing information for roundabouts or other advanced turns
+        if (nextInstruction.getSign() == Instruction.USE_ROUNDABOUT) {
+            if (nextInstruction instanceof RoundaboutInstruction) {
+                double turnAngle = ((RoundaboutInstruction) nextInstruction).getTurnAngle();
+                if (Double.isNaN(turnAngle)) {
+                    primary.putNull("degrees");
+                } else {
+                    double degree = (Math.abs(turnAngle) * 180) / Math.PI;
+                    primary.put("degrees", degree);
+                }
+            }
+        }
 
         bannerInstruction.putNull("secondary");
     }
@@ -332,8 +344,8 @@ public class MapboxResponseConverter {
             case Instruction.TURN_SHARP_RIGHT:
                 return "sharp right";
             case Instruction.USE_ROUNDABOUT:
-                // TODO: We should calculate this (maybe via angle?)
-                return "straight";
+                // TODO: This might be an issue in left-handed traffic, because there it schould be left
+                return "right";
             default:
                 return null;
         }
