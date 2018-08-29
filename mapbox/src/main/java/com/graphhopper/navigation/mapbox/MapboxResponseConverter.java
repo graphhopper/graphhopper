@@ -170,7 +170,7 @@ public class MapboxResponseConverter {
         Instruction nextInstruction = instructions.get(index + 1);
         String turnDescription = nextInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
 
-        double distanceForInitialStayInstruction = 5500;
+        double distanceForInitialStayInstruction = 4500;
         if (distance > distanceForInitialStayInstruction) {
             // The instruction should not be spoken straight away, but wait until the user merged on the new road and can listen to instructions again
             double tmpDistance = distance - 500;
