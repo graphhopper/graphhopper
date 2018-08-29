@@ -184,6 +184,7 @@ public class MapboxResponseConverter {
         double far = 2000;
         double mid = 1000;
         double close = 400;
+        double veryClose = 200;
 
         if (distance > far) {
             putSingleVoiceInstruction(far, "In 2 kilometers " + turnDescription, voiceInstructions);
@@ -193,6 +194,9 @@ public class MapboxResponseConverter {
         }
         if (distance > close) {
             putSingleVoiceInstruction(close, "In 400 meters " + turnDescription, voiceInstructions);
+        } else if (distance > veryClose) {
+            // This is an edge case when turning on narrow roads in cities, too close for the close turn, but too far for the direct turn
+            putSingleVoiceInstruction(veryClose, "In 200 meters " + turnDescription, voiceInstructions);
         }
 
         // Speak 80m instructions 80 before the turn
