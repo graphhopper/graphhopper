@@ -28,7 +28,7 @@
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
-            <version>1.3.2</version>
+            <version>${dropwizard.version}</version>
         </dependency>
         <dependency>
             <groupId>com.graphhopper</groupId>
@@ -38,12 +38,12 @@
         <dependency>
             <groupId>io.dropwizard-bundles</groupId>
             <artifactId>dropwizard-configurable-assets-bundle</artifactId>
-            <version>1.2.2</version>
+            <version>${dropwizard.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-testing</artifactId>
-            <version>1.3.2</version>
+            <version>${dropwizard.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -57,7 +57,7 @@
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>directions-api-client</artifactId>
-            <version>0.10.1-2</version>
+            <version>${directions-api-client.version}</version>
             <scope>test</scope>
         </dependency>
 

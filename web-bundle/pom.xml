@@ -49,17 +49,17 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>21.0</version>
+            <version>24.0-jre</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
-            <version>1.3.2</version>
+            <version>${dropwizard.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-testing</artifactId>
-            <version>1.3.2</version>
+            <version>${dropwizard.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -73,7 +73,7 @@
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>directions-api-client</artifactId>
-            <version>0.10.0</version>
+            <version>${directions-api-client.version}</version>
             <scope>test</scope>
         </dependency>
 
