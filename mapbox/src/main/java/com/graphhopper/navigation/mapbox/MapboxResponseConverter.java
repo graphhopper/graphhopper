@@ -247,9 +247,16 @@ public class MapboxResponseConverter {
 
         ObjectNode primary = bannerInstruction.putObject("primary");
         String bannerInstructionName = nextInstruction.getName();
-        if (bannerInstructionName == null || bannerInstructionName.isEmpty())
+        if (bannerInstructionName == null || bannerInstructionName.isEmpty()) {
             // Fix for final instruction and for instructions without name
             bannerInstructionName = nextInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
+
+            // Uppercase first letter
+            // TODO: should we do this for all cases? Then we might change the spelling of street names though
+            if (bannerInstructionName != null && bannerInstructionName.length() > 1)
+                bannerInstructionName = bannerInstructionName.substring(0, 1).toUpperCase() + bannerInstructionName.substring(1);
+        }
+
         primary.put("text", bannerInstructionName);
 
         ArrayNode components = primary.putArray("components");

@@ -120,7 +120,7 @@ public class MapboxResponseConverterTest {
         bannerInstructions = step.get("bannerInstructions");
         assertEquals(1, bannerInstructions.size());
         bannerInstruction = bannerInstructions.get(0).get("primary");
-        assertEquals("arrive at destination", bannerInstruction.get("text").asText());
+        assertEquals("Arrive at destination", bannerInstruction.get("text").asText());
 
         JsonNode waypointsJson = json.get("waypoints");
         assertEquals(2, waypointsJson.size());
