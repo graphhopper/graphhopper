@@ -167,8 +167,37 @@ public class MapboxResponseConverter {
                 ssmlAnnouncement: "<speak><amazon:effect name="drc"><prosody rate="1.08">Exit the traffic circle</prosody></amazon:effect></speak>",
             }
         */
-        ObjectNode voiceInstruction = voiceInstructions.addObject();
         Instruction nextInstruction = instructions.get(index + 1);
+        String turnDescription = nextInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
+
+        double distanceForInitialStayInstruction = 4250;
+        if (distance > distanceForInitialStayInstruction) {
+            // The instruction should not be spoken straight away, but wait until the user merged on the new road and can listen to instructions again
+            double tmpDistance = distance - 250;
+            int spokenDistance = (int) (tmpDistance / 1000);
+            String continueDescription = translationMap.getWithFallBack(locale).tr("continue") + " for " + spokenDistance + " kilometers";
+            // TODO In the worst case scenario it might be over 1km after merging onto the road until this instruction is spoken (e.g. (5249-250/1000)*1000=4000 - because java is rounding down)
+            // TODO this might be annoying for unnecessary keeps on the motorway, especially if they happen more often then every 10km
+            putSingleVoiceInstruction(spokenDistance * 1000, continueDescription, voiceInstructions);
+        }
+
+        double far = 2000;
+        double mid = 1000;
+        double close = 400;
+        double veryClose = 200;
+
+        if (distance > far) {
+            putSingleVoiceInstruction(far, "In 2 kilometers " + turnDescription, voiceInstructions);
+        }
+        if (distance > mid) {
+            putSingleVoiceInstruction(mid, "In 1 kilometer " + turnDescription, voiceInstructions);
+        }
+        if (distance > close) {
+            putSingleVoiceInstruction(close, "In 400 meters " + turnDescription, voiceInstructions);
+        } else if (distance > veryClose) {
+            // This is an edge case when turning on narrow roads in cities, too close for the close turn, but too far for the direct turn
+            putSingleVoiceInstruction(veryClose, "In 200 meters " + turnDescription, voiceInstructions);
+        }
 
         // Speak 80m instructions 80 before the turn
         // Note: distanceAlongGeometry: "how far from the upcoming maneuver the voice instruction should begin"
@@ -178,9 +207,13 @@ public class MapboxResponseConverter {
         if (index + 2 == instructions.size())
             distanceAlongGeometry = Helper.round(Math.min(distance, 25), 1);
 
+        putSingleVoiceInstruction(distanceAlongGeometry, turnDescription, voiceInstructions);
+    }
+
+    private static void putSingleVoiceInstruction(double distanceAlongGeometry, String turnDescription, ArrayNode voiceInstructions) {
+        ObjectNode voiceInstruction = voiceInstructions.addObject();
         voiceInstruction.put("distanceAlongGeometry", distanceAlongGeometry);
         //TODO: ideally, we would even generate instructions including the instructions after the next like turn left **then** turn right
-        String turnDescription = nextInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
         voiceInstruction.put("announcement", turnDescription);
         voiceInstruction.put("ssmlAnnouncement", "<speak><amazon:effect name=\"drc\"><prosody rate=\"1.08\">" + turnDescription + "</prosody></amazon:effect></speak>");
     }
@@ -226,7 +259,17 @@ public class MapboxResponseConverter {
         if (modifier != null)
             primary.put("modifier", modifier);
 
-        // TODO might be missing information for roundabouts or other advanced turns
+        if (nextInstruction.getSign() == Instruction.USE_ROUNDABOUT) {
+            if (nextInstruction instanceof RoundaboutInstruction) {
+                double turnAngle = ((RoundaboutInstruction) nextInstruction).getTurnAngle();
+                if (Double.isNaN(turnAngle)) {
+                    primary.putNull("degrees");
+                } else {
+                    double degree = (Math.abs(turnAngle) * 180) / Math.PI;
+                    primary.put("degrees", degree);
+                }
+            }
+        }
 
         bannerInstruction.putNull("secondary");
     }
@@ -305,8 +348,8 @@ public class MapboxResponseConverter {
             case Instruction.TURN_SHARP_RIGHT:
                 return "sharp right";
             case Instruction.USE_ROUNDABOUT:
-                // TODO: We should calculate this (maybe via angle?)
-                return "straight";
+                // TODO: This might be an issue in left-handed traffic, because there it schould be left
+                return "right";
             default:
                 return null;
         }

@@ -130,6 +130,60 @@ public class MapboxResponseConverterTest {
     }
 
     @Test
+    public void voiceInstructionsTest() {
+
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
+                setVehicle(vehicle));
+
+        ObjectNode json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH);
+
+        JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+
+        // Step 4 is about 240m long
+        JsonNode step = steps.get(4);
+        JsonNode maneuver = step.get("maneuver");
+
+        JsonNode voiceInstructions = step.get("voiceInstructions");
+        assertEquals(2, voiceInstructions.size());
+        JsonNode voiceInstruction = voiceInstructions.get(0);
+        assertEquals(200, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
+        assertEquals("In 200 meters At roundabout, take exit 2 onto CS-340", voiceInstruction.get("announcement").asText());
+
+        // Step 15 is over 3km long
+        step = steps.get(15);
+        maneuver = step.get("maneuver");
+
+        voiceInstructions = step.get("voiceInstructions");
+        assertEquals(4, voiceInstructions.size());
+        voiceInstruction = voiceInstructions.get(0);
+        assertEquals(2000, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
+        assertEquals("In 2 kilometers keep right", voiceInstruction.get("announcement").asText());
+
+        voiceInstruction = voiceInstructions.get(3);
+        assertEquals("keep right", voiceInstruction.get("announcement").asText());
+    }
+
+    @Test
+    public void roundaboutDegreesTest() {
+
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
+                setVehicle(vehicle));
+
+        ObjectNode json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH);
+
+        JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+
+        JsonNode step = steps.get(5);
+        JsonNode bannerInstructions = step.get("bannerInstructions");
+        JsonNode primary = bannerInstructions.get(0).get("primary");
+
+        assertEquals("roundabout", primary.get("type").asText());
+        assertEquals("right", primary.get("modifier").asText());
+        assertEquals(220, primary.get("degrees").asDouble(), 1);
+
+    }
+
+    @Test
     public void testMultipleWaypoints() {
 
         GHRequest request = new GHRequest();
