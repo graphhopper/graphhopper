@@ -37,7 +37,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author svantulden
  */
-public class NearestResourceWithEleIT {
+public class NearestResourceWithEleTest {
     private static final String dir = "./target/monaco-gh/";
 
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();

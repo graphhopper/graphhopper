@@ -31,11 +31,11 @@ import java.io.File;
 import static org.junit.Assert.*;
 
 /**
- * Tests the DataFlagencoder with the SpatialRuleLookup enabled
+ * Tests the DataFlagEncoder with the SpatialRuleLookup enabled
  *
  * @author Robin Boldt
  */
-public class GraphHopperDataflagEncoderSpatialRulesIT {
+public class GraphHopperDataFlagEncoderSpatialRulesTest {
     private static final String DIR = "./target/north-bayreuth-gh/";
 
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();

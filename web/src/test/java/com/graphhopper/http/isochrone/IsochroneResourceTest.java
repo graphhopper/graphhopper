@@ -21,7 +21,7 @@ import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
-public class IsochroneResourceIT {
+public class IsochroneResourceTest {
     private static final String DIR = "./target/andorra-gh/";
 
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
