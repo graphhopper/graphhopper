@@ -40,6 +40,7 @@ import java.util.stream.StreamSupport;
 class MultiCriteriaLabelSetting {
 
     private final Comparator<Label> queueComparator;
+    private final List<Label> targetLabels;
     private long startTime;
     private int blockedRouteTypes;
     private final PtFlagEncoder flagEncoder;
@@ -56,7 +57,7 @@ class MultiCriteriaLabelSetting {
     private double betaTransfers;
     private double betaWalkTime = 1.0;
 
-    MultiCriteriaLabelSetting(GraphExplorer explorer, PtFlagEncoder flagEncoder, boolean reverse, double maxWalkDistancePerLeg, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes) {
+    MultiCriteriaLabelSetting(GraphExplorer explorer, PtFlagEncoder flagEncoder, boolean reverse, double maxWalkDistancePerLeg, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes, List<Label> solutions) {
         this.flagEncoder = flagEncoder;
         this.maxVisitedNodes = maxVisitedNodes;
         this.explorer = explorer;
@@ -65,12 +66,12 @@ class MultiCriteriaLabelSetting {
         this.ptOnly = ptOnly;
         this.mindTransfers = mindTransfers;
         this.profileQuery = profileQuery;
+        this.targetLabels = solutions;
 
-        queueComparator = Comparator.<Label>comparingLong(l2 -> l2.impossible ? 1 : 0)
-                .thenComparing(Comparator.comparingLong(l2 -> weight(l2)))
+        queueComparator = Comparator.<Label>comparingLong(l2 -> weight(l2))
                 .thenComparing(Comparator.comparingLong(l1 -> l1.nTransfers))
-                .thenComparing(Comparator.comparingLong(l1 -> l1.nWalkDistanceConstraintViolations))
-                .thenComparing(Comparator.comparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0));
+                .thenComparing(Comparator.comparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0))
+                .thenComparing(Comparator.comparingLong(l2 -> l2.impossible ? 1 : 0));
         fromHeap = new PriorityQueue<>(queueComparator);
         fromMap = ArrayListMultimap.create();
     }
@@ -97,19 +98,14 @@ class MultiCriteriaLabelSetting {
 
         private final int from;
         private final int to;
-        private final Collection<Label> targetLabels;
 
         MultiCriteriaLabelSettingSpliterator(int from, int to) {
             super(0, 0);
             this.from = from;
             this.to = to;
-            targetLabels = new ArrayList<>();
             Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0, 0.0, null, 0, 0,false,null);
             fromMap.put(from, label);
             fromHeap.add(label);
-            if (to == from) {
-                targetLabels.add(label);
-            }
         }
 
         @Override
@@ -121,8 +117,8 @@ class MultiCriteriaLabelSetting {
                 action.accept(label);
                 explorer.exploreEdgesAround(label).forEach(edge -> {
                     GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
-                    if (edgeType == GtfsStorage.EdgeType.ENTER_PT && ((reverse?edge.getAdjNode():edge.getBaseNode()) != (reverse?to:from)) && ptOnly) return;
-                    if (edgeType == GtfsStorage.EdgeType.EXIT_PT && ((reverse?edge.getBaseNode():edge.getAdjNode()) != (reverse?from:to)) && ptOnly) return;
+                    if (edgeType == GtfsStorage.EdgeType.ENTER_PT && reverse && ptOnly) return;
+                    if (edgeType == GtfsStorage.EdgeType.EXIT_PT && !reverse && ptOnly) return;
                     if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << flagEncoder.getValidityId(edge.getFlags()))) != 0) return;
                     long nextTime;
                     if (reverse) {
@@ -143,7 +139,7 @@ class MultiCriteriaLabelSetting {
                     }
                     double walkDistanceOnCurrentLeg = (!reverse && edgeType == GtfsStorage.EdgeType.BOARD || reverse && edgeType == GtfsStorage.EdgeType.ALIGHT) ? 0 : (label.walkDistanceOnCurrentLeg + edge.getDistance());
                     boolean isTryingToReEnterPtAfterWalking = (!reverse && edgeType == GtfsStorage.EdgeType.ENTER_PT || reverse && edgeType == GtfsStorage.EdgeType.EXIT_PT) && label.nTransfers > 0;
-                    long walkTime = label.walkTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? nextTime - label.currentTime : 0);
+                    long walkTime = label.walkTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? ((reverse ? -1 : 1) * (nextTime - label.currentTime)) : 0);
                     int nWalkDistanceConstraintViolations = Math.min(1, label.nWalkDistanceConstraintViolations + (
                             isTryingToReEnterPtAfterWalking ? 1 : (label.walkDistanceOnCurrentLeg <= maxWalkDistancePerLeg && walkDistanceOnCurrentLeg > maxWalkDistancePerLeg ? 1 : 0)));
                     Collection<Label> sptEntries = fromMap.get(edge.getAdjNode());
@@ -185,22 +181,18 @@ class MultiCriteriaLabelSetting {
             }
         }
 
-        private void insertIfNotDominated(EdgeIteratorState edge, Collection<Label> sptEntries, Label nEdge) {
-            if (isNotDominatedByAnyOf(nEdge, sptEntries) && isNotDominatedByAnyOf(nEdge, targetLabels)) {
-                removeDominated(nEdge, sptEntries);
-                if (to == edge.getAdjNode()) {
-                    removeDominated(nEdge, targetLabels);
+        private void insertIfNotDominated(EdgeIteratorState edge, Collection<Label> sptEntries, Label label) {
+            if (isNotDominatedByAnyOf(label, sptEntries)) {
+                if (isNotDominatedByAnyOf(label, targetLabels)) {
+                    removeDominated(label, sptEntries);
+                    fromMap.put(edge.getAdjNode(), label);
+                    fromHeap.add(label);
                 }
-                fromMap.put(edge.getAdjNode(), nEdge);
-                if (to == edge.getAdjNode()) {
-                    targetLabels.add(nEdge);
-                }
-                fromHeap.add(nEdge);
             }
         }
     }
 
-    private boolean isNotDominatedByAnyOf(Label me, Collection<Label> sptEntries) {
+    boolean isNotDominatedByAnyOf(Label me, Collection<Label> sptEntries) {
         if (me.nWalkDistanceConstraintViolations > 0) {
             return false;
         }
@@ -213,7 +205,7 @@ class MultiCriteriaLabelSetting {
     }
 
 
-    private void removeDominated(Label me, Collection<Label> sptEntries) {
+    void removeDominated(Label me, Collection<Label> sptEntries) {
         for (Iterator<Label> iterator = sptEntries.iterator(); iterator.hasNext();) {
             Label sptEntry = iterator.next();
             if (dominates(me, sptEntry)) {
@@ -267,7 +259,7 @@ class MultiCriteriaLabelSetting {
         return label.departureTime == null ? null : reverse ? label.departureTime : -label.departureTime;
     }
 
-    private long weight(Label label) {
+    long weight(Label label) {
         return (reverse ? -1 : 1) * (label.currentTime - startTime) + (long) (label.nTransfers * betaTransfers) + (long) (label.walkTime * (betaWalkTime - 1.0));
     }
 

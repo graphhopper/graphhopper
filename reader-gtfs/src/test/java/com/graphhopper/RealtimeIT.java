@@ -113,14 +113,12 @@ public class RealtimeIT {
                 .setScheduleRelationship(SKIPPED);
 
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build(), agencyId).route(ghRequest);
-        assertEquals(2, response.getAll().size());
 
-        PathWrapper possibleAlternative = response.getAll().get(0);
-        assertFalse(possibleAlternative.isImpossible());
+        PathWrapper possibleAlternative = response.getAll().stream().filter(a -> !a.isImpossible()).findFirst().get();
         assertFalse(((Trip.PtLeg) possibleAlternative.getLegs().get(0)).stops.get(0).departureCancelled);
         assertEquals("I have to wait half an hour for the next one (and ride 5 minutes)", time(0, 35), possibleAlternative.getTime(), 0.1);
 
-        PathWrapper impossibleAlternative = response.getAll().get(1);
+        PathWrapper impossibleAlternative = response.getAll().stream().filter(a -> a.isImpossible()).findFirst().get();
         assertTrue(impossibleAlternative.isImpossible());
         assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(0)).stops.get(0).departureCancelled);
     }
@@ -300,8 +298,8 @@ public class RealtimeIT {
                 .setStopSequence(5)
                 .setScheduleRelationship(SKIPPED);
 
-        // Add a few more trips (but we only need the first one)
-        for (int i=0; i<3; i++){
+        // Add a few more trips (but we only need the first one; add more because there used to be a bug with something like an index overflow)
+        for (int i=0; i<100; i++){
             final GtfsRealtime.TripUpdate.Builder extraTripUpdate = feedMessageBuilder.addEntityBuilder()
                     .setId("2")
                     .getTripUpdateBuilder()
@@ -310,14 +308,14 @@ public class RealtimeIT {
                     .addStopTimeUpdateBuilder()
                     .setStopSequence(1)
                     .setStopId("NADAV")
-                    .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45+i).atZone(zoneId).toEpochSecond()))
-                    .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45+i).atZone(zoneId).toEpochSecond()));
+                    .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45).plusMinutes(i).atZone(zoneId).toEpochSecond()))
+                    .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45).plusMinutes(i).atZone(zoneId).toEpochSecond()));
             extraTripUpdate
                     .addStopTimeUpdateBuilder()
                     .setStopSequence(2)
                     .setStopId("BEATTY_AIRPORT")
-                    .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,15+i).atZone(zoneId).toEpochSecond()))
-                    .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,15+i).atZone(zoneId).toEpochSecond()));
+                    .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,15).plusMinutes(i).atZone(zoneId).toEpochSecond()))
+                    .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,15).plusMinutes(i).atZone(zoneId).toEpochSecond()));
 
         }
 

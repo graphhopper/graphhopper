@@ -105,7 +105,7 @@ Embed GraphHopper with OpenStreetMap support into your Java application via the 
 <dependency>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-reader-osm</artifactId>
-    <version>[LATEST-VERSION]/version>
+    <version>[LATEST-VERSION]</version>
 </dependency>
 ```
 

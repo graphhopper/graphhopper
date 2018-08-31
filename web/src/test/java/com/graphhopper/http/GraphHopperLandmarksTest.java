@@ -36,7 +36,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Robin Boldt
  */
-public class GraphHopperLandmarksIT {
+public class GraphHopperLandmarksTest {
     private static final String DIR = "./target/landmark-test-gh/";
 
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();

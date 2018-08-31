@@ -134,12 +134,13 @@ final class GraphExplorer {
     }
 
     private long waitingTime(EdgeIteratorState edge, long earliestStartTime) {
-        return flagEncoder.getTime(edge.getFlags()) * 1000 - millisOnTravelDay(edge, earliestStartTime);
-    }
-
-    private int secondsOnTrafficDay(EdgeIteratorState edge, long instant) {
-        final ZoneId zoneId = gtfsStorage.getTimeZones().get(flagEncoder.getValidityId(edge.getFlags())).zoneId;
-        return Instant.ofEpochMilli(instant).atZone(zoneId).toLocalTime().toSecondOfDay();
+        long l = flagEncoder.getTime(edge.getFlags()) * 1000 - millisOnTravelDay(edge, earliestStartTime);
+        if (!reverse) {
+            if (l < 0) l = l + 24*60*60*1000;
+        } else {
+            if (l > 0) l = l - 24*60*60*1000;
+        }
+        return l;
     }
 
     private long millisOnTravelDay(EdgeIteratorState edge, long instant) {
@@ -167,9 +168,19 @@ final class GraphExplorer {
         if (edgeId == -1) {
             throw new RuntimeException();
         }
-        return extraEdges.stream()
-                .filter(edge -> edge.getEdge() == edgeId)
-                .findFirst().orElseGet(() -> graph.getEdgeIteratorState(edgeId, adjNode));
+        for (EdgeIteratorState extraEdge : extraEdges) {
+            if (extraEdge.getEdge() == edgeId) {
+                if (extraEdge.getAdjNode() != adjNode) {
+                    throw new IllegalStateException();
+                }
+                return extraEdge;
+            }
+        }
+        EdgeIteratorState edge = graph.getEdgeIteratorState(edgeId, adjNode);
+        if (edge.getAdjNode() != adjNode) {
+            throw new IllegalStateException();
+        }
+        return edge;
     }
 
     NodeAccess getNodeAccess() {
@@ -207,15 +218,6 @@ final class GraphExplorer {
             }
             if (edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL && !reverse) {
                 return false;
-            }
-            if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK && !reverse) {
-                if (secondsOnTrafficDay(edgeIterator, label.currentTime) > flagEncoder.getTime(edgeIterator.getFlags())) {
-                    return false;
-                }
-            } else if (edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && reverse) {
-                if (secondsOnTrafficDay(edgeIterator, label.currentTime) < flagEncoder.getTime(edgeIterator.getFlags())) {
-                    return false;
-                }
             }
             return true;
         }

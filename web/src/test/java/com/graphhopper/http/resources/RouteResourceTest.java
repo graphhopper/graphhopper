@@ -46,7 +46,7 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class RouteResourceIT {
+public class RouteResourceTest {
     private static final String DIR = "./target/andorra-gh/";
 
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
