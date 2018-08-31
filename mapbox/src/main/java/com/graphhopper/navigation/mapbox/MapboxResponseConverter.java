@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import static com.graphhopper.navigation.mapbox.SimpleTranslationMap.TranslationKeys;
+
 public class MapboxResponseConverter {
 
     /**
@@ -187,16 +189,17 @@ public class MapboxResponseConverter {
         double veryClose = 200;
 
         if (distance > far) {
-            putSingleVoiceInstruction(far, "In 2 kilometers " + turnDescription, voiceInstructions);
+            putSingleVoiceInstruction(far, SimpleTranslationMap.tr(locale, TranslationKeys.IN_KM, 2) + turnDescription, voiceInstructions);
         }
         if (distance > mid) {
-            putSingleVoiceInstruction(mid, "In 1 kilometer " + turnDescription, voiceInstructions);
+            putSingleVoiceInstruction(mid, SimpleTranslationMap.tr(locale, TranslationKeys.IN_KM_SINGULAR) + turnDescription, voiceInstructions);
         }
         if (distance > close) {
-            putSingleVoiceInstruction(close, "In 400 meters " + turnDescription, voiceInstructions);
+            putSingleVoiceInstruction(close, SimpleTranslationMap.tr(locale, TranslationKeys.IN_M, 400) + turnDescription, voiceInstructions);
         } else if (distance > veryClose) {
             // This is an edge case when turning on narrow roads in cities, too close for the close turn, but too far for the direct turn
-            putSingleVoiceInstruction(veryClose, "In 200 meters " + turnDescription, voiceInstructions);
+            putSingleVoiceInstruction(veryClose, SimpleTranslationMap.tr(locale, TranslationKeys.IN_M, 200) + turnDescription, voiceInstructions)
+            ;
         }
 
         // Speak 80m instructions 80 before the turn

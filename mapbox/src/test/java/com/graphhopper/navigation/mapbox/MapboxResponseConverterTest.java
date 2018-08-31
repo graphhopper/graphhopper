@@ -164,6 +164,28 @@ public class MapboxResponseConverterTest {
     }
 
     @Test
+    public void voiceInstructionTranslationTest() {
+
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
+                setVehicle(vehicle));
+
+        ObjectNode json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH);
+
+        JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+        JsonNode voiceInstruction = steps.get(15).get("voiceInstructions").get(0);
+        assertEquals("In 2 kilometers keep right", voiceInstruction.get("announcement").asText());
+
+        rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
+                setVehicle(vehicle).setLocale(Locale.GERMAN));
+        json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, Locale.GERMAN);
+
+        steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+        voiceInstruction = steps.get(15).get("voiceInstructions").get(0);
+        assertEquals("In 2 Kilometern rechts halten", voiceInstruction.get("announcement").asText());
+
+    }
+
+    @Test
     public void roundaboutDegreesTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
