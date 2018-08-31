@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.*;
 
 public class Jackson {
     public static ObjectMapper newObjectMapper() {
-        ObjectMapper objectMapper = io.dropwizard.jackson.Jackson.newObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new GraphHopperModule());
         objectMapper.registerModule(new JtsModule());
         return objectMapper;
