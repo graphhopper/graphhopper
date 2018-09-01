@@ -19,9 +19,12 @@
 package com.graphhopper.reader.gtfs;
 
 import com.graphhopper.routing.VirtualEdgeIteratorState;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.IntsRef;
@@ -52,9 +55,9 @@ public class WrapperGraph implements Graph {
     @Override
     public int getNodes() {
         return IntStream.concat(
-                IntStream.of(baseGraph.getNodes()-1),
+                IntStream.of(baseGraph.getNodes() - 1),
                 extraEdges.stream().flatMapToInt(edge -> IntStream.of(edge.getBaseNode(), edge.getAdjNode())))
-                .max().getAsInt()+1;
+                .max().getAsInt() + 1;
     }
 
     @Override
@@ -154,17 +157,82 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public boolean isForward(FlagEncoder encoder) {
+            public boolean get(BooleanEncodedValue property) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public boolean isBackward(FlagEncoder encoder) {
+            public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public boolean getBool(int key, boolean _default) {
+            public boolean getReverse(BooleanEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int get(IntEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int getReverse(IntEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState set(IntEncodedValue property, int value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public double get(DecimalEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public double getReverse(DecimalEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState set(DecimalEncodedValue property, double value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState setReverse(DecimalEncodedValue property, double value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public String get(StringEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public String getReverse(StringEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState set(StringEncodedValue property, String value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
                 throw new UnsupportedOperationException();
             }
 
@@ -184,7 +252,7 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public EdgeIteratorState copyPropertiesTo(EdgeIteratorState e) {
+            public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState e) {
                 throw new UnsupportedOperationException();
             }
         };

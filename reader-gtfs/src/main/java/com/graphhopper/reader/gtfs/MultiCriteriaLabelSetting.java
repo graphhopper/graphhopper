@@ -1,6 +1,6 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
  *  GraphHopper GmbH licenses this file to you under the Apache License,
@@ -104,7 +104,7 @@ class MultiCriteriaLabelSetting {
             this.from = from;
             this.to = to;
             targetLabels = new ArrayList<>();
-            Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0, 0.0, null, 0, 0,false,null);
+            Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0, 0.0, null, 0, 0, false, null);
             fromMap.put(from, label);
             fromHeap.add(label);
             if (to == from) {
@@ -120,10 +120,13 @@ class MultiCriteriaLabelSetting {
                 Label label = fromHeap.poll();
                 action.accept(label);
                 explorer.exploreEdgesAround(label).forEach(edge -> {
-                    GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
-                    if (edgeType == GtfsStorage.EdgeType.ENTER_PT && ((reverse?edge.getAdjNode():edge.getBaseNode()) != (reverse?to:from)) && ptOnly) return;
-                    if (edgeType == GtfsStorage.EdgeType.EXIT_PT && ((reverse?edge.getBaseNode():edge.getAdjNode()) != (reverse?from:to)) && ptOnly) return;
-                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << flagEncoder.getValidityId(edge.getFlags()))) != 0) return;
+                    GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge);
+                    if (edgeType == GtfsStorage.EdgeType.ENTER_PT && ((reverse ? edge.getAdjNode() : edge.getBaseNode()) != (reverse ? to : from)) && ptOnly)
+                        return;
+                    if (edgeType == GtfsStorage.EdgeType.EXIT_PT && ((reverse ? edge.getBaseNode() : edge.getAdjNode()) != (reverse ? from : to)) && ptOnly)
+                        return;
+                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << edge.get(flagEncoder.getValidityIdEnc()))) != 0)
+                        return;
                     long nextTime;
                     if (reverse) {
                         nextTime = label.currentTime - explorer.calcTravelTimeMillis(edge, label.currentTime);
@@ -214,7 +217,7 @@ class MultiCriteriaLabelSetting {
 
 
     private void removeDominated(Label me, Collection<Label> sptEntries) {
-        for (Iterator<Label> iterator = sptEntries.iterator(); iterator.hasNext();) {
+        for (Iterator<Label> iterator = sptEntries.iterator(); iterator.hasNext(); ) {
             Label sptEntry = iterator.next();
             if (dominates(me, sptEntry)) {
                 fromHeap.remove(sptEntry);
@@ -239,7 +242,7 @@ class MultiCriteriaLabelSetting {
 
         if (mindTransfers && me.nTransfers > they.nTransfers)
             return false;
-        if (me.nWalkDistanceConstraintViolations  > they.nWalkDistanceConstraintViolations)
+        if (me.nWalkDistanceConstraintViolations > they.nWalkDistanceConstraintViolations)
             return false;
         if (me.impossible && !they.impossible)
             return false;
@@ -255,12 +258,12 @@ class MultiCriteriaLabelSetting {
                     return true;
             }
         }
-        if (mindTransfers && me.nTransfers  < they.nTransfers)
+        if (mindTransfers && me.nTransfers < they.nTransfers)
             return true;
         if (me.nWalkDistanceConstraintViolations < they.nWalkDistanceConstraintViolations)
             return true;
 
-        return queueComparator.compare(me,they) <= 0;
+        return queueComparator.compare(me, they) <= 0;
     }
 
     private Long departureTimeCriterion(Label label) {

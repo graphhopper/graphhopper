@@ -82,7 +82,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     private boolean blockByDefault = true;
     private boolean blockFords = true;
     private boolean registered;
-    private EncodedValueLookup encodedValueLookup;
+    protected EncodedValueLookup encodedValueLookup;
 
     // Speeds from CarFlagEncoder
     protected static final double UNKNOWN_DURATION_FERRY_SPEED = 5;

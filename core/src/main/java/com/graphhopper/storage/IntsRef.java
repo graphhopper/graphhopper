@@ -20,9 +20,6 @@ import java.util.Arrays;
 
 /**
  * Idea and most of the code is from Lucene. But the variables are final, except for the array content.
- * <p>
- * TODO should all variables of this class really be final? Then we could not implement a IntsRef-cache over multiple
- * edges that is reused after edgeIterator.next() as the offset cannot be changed.
  */
 public final class IntsRef implements Comparable<IntsRef> {
     /**
@@ -67,18 +64,6 @@ public final class IntsRef implements Comparable<IntsRef> {
         this.offset = offset;
         this.length = length;
         assert isValid();
-    }
-
-    /**
-     * Returns a shallow clone of this instance (the underlying ints are
-     * <b>not</b> copied and will be shared by both the returned object and this
-     * object.
-     *
-     * @see #deepCopyOf
-     */
-    @Override
-    public IntsRef clone() {
-        return new IntsRef(ints, offset, length);
     }
 
     @Override

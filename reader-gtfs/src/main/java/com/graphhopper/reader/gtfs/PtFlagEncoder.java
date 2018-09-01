@@ -20,27 +20,29 @@ package com.graphhopper.reader.gtfs;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.EdgeIteratorState;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PtFlagEncoder extends AbstractFlagEncoder {
 
     private final FootFlagEncoder footFlagEncoder;
-    private IntEncodedValue time;
-    private IntEncodedValue transfers;
-    private IntEncodedValue validityId;
-    private IntEncodedValue type;
+    private IntEncodedValue timeEnc;
+    private IntEncodedValue transfersEnc;
+    private IntEncodedValue validityIdEnc;
+    private IntEncodedValue typeEnc;
 
     public PtFlagEncoder() {
         super(0, 1, 0);
 
-        // Use the foot flag encoder only as a delegate to filter by OSM tags, not to encode flags.
+        // TODO is this true?
+        // Use the foot flag encoder only as a delegate to filter by OSM tags, not to encode flags
         footFlagEncoder = new FootFlagEncoder();
         // Do this as otherwise 'acceptWay' returns 0 even though it wants to accept. Basically, I have to tell it what 'true' means.
         footFlagEncoder.defineRelationBits(1, 0);
@@ -48,14 +50,23 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public void createEncodedValues(List<EncodedValue> list, String prefix, int index) {
-        footFlagEncoder.createEncodedValues(list, "foot", index + 1);
+        // initialization of internal FootFlagEncoder
+        // TODO is the bit position important to be identical to PtFlagEncoder bits? E.g. for the access bits?
+        footFlagEncoder.setEncodedValueLookup(encodedValueLookup);
+        List<EncodedValue> tmpList = new ArrayList<>();
+        footFlagEncoder.createEncodedValues(tmpList, "foot.", index);
+        EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
+        for (EncodedValue ev : tmpList) {
+            ev.init(config);
+        }
 
+        // do we really need 2 bits for pt.access?
         super.createEncodedValues(list, prefix, index);
-        list.add(speedEncoder = new DecimalEncodedValue(prefix + "average_speed", speedBits, 0, speedFactor, false));
-        list.add(time = new IntEncodedValue(prefix + "time", 17, 0, false));
-        list.add(transfers = new IntEncodedValue(prefix + "transfers", 1, 0, false));
-        list.add(validityId = new IntEncodedValue(prefix + "validity_id", 20, 0, false));
-        list.add(type = new IntEncodedValue(prefix + "type", 4, GtfsStorage.EdgeType.HIGHWAY.ordinal(), false));
+
+        list.add(validityIdEnc = new IntEncodedValue(prefix + "validity_id", 20, 0, false));
+        list.add(transfersEnc = new IntEncodedValue(prefix + "transfers", 1, 0, false));
+        list.add(typeEnc = new IntEncodedValue(prefix + "type", 4, GtfsStorage.EdgeType.HIGHWAY.ordinal(), false));
+        list.add(timeEnc = new IntEncodedValue(prefix + "time", 17, 0, false));
     }
 
     @Override
@@ -73,36 +84,24 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
         return footFlagEncoder.handleWayTags(edgeFlags, way, allowed, relationFlags);
     }
 
-    long getTime(IntsRef flags) {
-        return time.getInt(false, flags);
+    public IntEncodedValue getTimeEnc() {
+        return timeEnc;
     }
 
-    void setTime(IntsRef flags, long time) {
-        this.time.setInt(false, flags, (int) time);
+    public IntEncodedValue getTransfersEnc() {
+        return transfersEnc;
     }
 
-    int getTransfers(IntsRef flags) {
-        return transfers.getInt(false, flags);
+    public IntEncodedValue getValidityIdEnc() {
+        return validityIdEnc;
     }
 
-    void setTransfers(IntsRef flags, int transfers) {
-        this.transfers.setInt(false, flags, transfers);
+    GtfsStorage.EdgeType getEdgeType(EdgeIteratorState edge) {
+        return GtfsStorage.EdgeType.values()[edge.get(typeEnc)];
     }
 
-    int getValidityId(IntsRef flags) {
-        return validityId.getInt(false, flags);
-    }
-
-    void setValidityId(IntsRef flags, int validityId) {
-        this.validityId.setInt(false, flags, validityId);
-    }
-
-    GtfsStorage.EdgeType getEdgeType(IntsRef flags) {
-        return GtfsStorage.EdgeType.values()[type.getInt(false, flags)];
-    }
-
-    void setEdgeType(IntsRef flags, GtfsStorage.EdgeType edgeType) {
-        type.setInt(false, flags, edgeType.ordinal());
+    void setEdgeType(EdgeIteratorState edge, GtfsStorage.EdgeType edgeType) {
+        edge.set(typeEnc, edgeType.ordinal());
     }
 
     public String toString() {
@@ -111,6 +110,6 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 0;
+        return 1;
     }
 }

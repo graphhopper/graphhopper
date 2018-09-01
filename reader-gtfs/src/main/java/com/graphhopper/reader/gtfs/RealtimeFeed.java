@@ -30,6 +30,7 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
@@ -110,6 +111,7 @@ public class RealtimeFeed {
         final LinkedList<VirtualEdgeIteratorState> additionalEdges = new LinkedList<>();
         final Graph overlayGraph = new Graph() {
             int nNodes = 0;
+            EncodingManager encodingManager = graphHopperStorage.getEncodingManager();
             int firstEdge = graphHopperStorage.getAllEdges().length();
             final NodeAccess nodeAccess = new NodeAccess() {
                 IntIntHashMap additionalNodeFields = new IntIntHashMap();
@@ -203,9 +205,9 @@ public class RealtimeFeed {
             public EdgeIteratorState edge(int a, int b) {
                 int edge = firstEdge++;
                 final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(-1,
-                        edge, a, b, 0.0, new IntsRef(), "", new PointList());
+                        edge, a, b, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), false);
                 final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(-1,
-                        edge, b, a, 0.0, new IntsRef(), "", new PointList());
+                        edge, b, a, 0.0, encodingManager.createEdgeFlags(), "", new PointList(), true);
                 newEdge.setReverseEdge(reverseNewEdge);
                 reverseNewEdge.setReverseEdge(newEdge);
                 additionalEdges.push(newEdge);

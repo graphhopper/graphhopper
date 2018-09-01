@@ -274,15 +274,8 @@ public class PrepareRoutingSubnetworks {
 
     static class PrepEdgeFilter extends DefaultEdgeFilter {
 
-        private DecimalEncodedValue avSpeedEnc;
-
         public PrepEdgeFilter(FlagEncoder encoder) {
             super(encoder.getAccessEnc(), true, true);
-            this.avSpeedEnc = encoder.getAverageSpeedEnc();
-        }
-
-        public DecimalEncodedValue getAvSpeedEnc() {
-            return avSpeedEnc;
         }
 
         public BooleanEncodedValue getAccessEnc() {

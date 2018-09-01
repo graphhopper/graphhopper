@@ -26,10 +26,7 @@ import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -414,7 +411,7 @@ public class QueryGraph implements Graph {
         VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origTraversalKey,
                 virtEdgeId, prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints, reverse);
         VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevTraversalKey,
-                virtEdgeId, nodeId, prevNodeId, baseDistance, closestEdge.getFlags(), closestEdge.getName(), baseReversePoints, !reverse);
+                virtEdgeId, nodeId, prevNodeId, baseDistance, IntsRef.deepCopyOf(closestEdge.getFlags()), closestEdge.getName(), baseReversePoints, !reverse);
 
         baseEdge.setReverseEdge(baseReverseEdge);
         baseReverseEdge.setReverseEdge(baseEdge);
