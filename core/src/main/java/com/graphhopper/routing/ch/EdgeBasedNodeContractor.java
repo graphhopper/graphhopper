@@ -102,9 +102,9 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         super.initFromGraph();
         witnessPathSearcher = new WitnessPathSearcher(ghStorage, prepareGraph, turnWeighting,
                 config.getWitnessPathSearcherConfig());
-        DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
-        DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
-        DefaultEdgeFilter allEdgeFilter = new DefaultEdgeFilter(encoder, true, true);
+        DefaultEdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(encoder);
+        DefaultEdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(encoder);
+        DefaultEdgeFilter allEdgeFilter = DefaultEdgeFilter.allEdges(encoder);
         inEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
         outEdgeExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
         allEdgeExplorer = prepareGraph.createEdgeExplorer(allEdgeFilter);

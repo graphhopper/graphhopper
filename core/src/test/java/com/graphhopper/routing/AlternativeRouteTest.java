@@ -127,7 +127,7 @@ public class AlternativeRouteTest {
 
         // Note: here plateau is longer, even longer than optimum, but path is longer
         // so which alternative is better? longer plateau.weight with bigger path.weight or smaller path.weight with smaller plateau.weight
-        // assertEquals(Helper.createTList(5, 1, 9, 2, 3, 4), secondAlt.calcNodes());
+        // assertEquals(IntArrayList.from(5, 1, 9, 2, 3, 4), secondAlt.calcNodes());
         assertEquals(IntArrayList.from(new int[]{5, 6, 7, 8, 4}), secondAlt.calcNodes());
         assertEquals(1667.9, secondAlt.getWeight(), .1);
     }

@@ -84,14 +84,14 @@ public class CHQueryWithTurnCostsTest {
         setLevelEqualToNodeIdForAllNodes();
 
         for (int i = 0; i < 3; ++i) {
-            testPathCalculation(i, i, 0, Helper.createTList(i));
+            testPathCalculation(i, i, 0, IntArrayList.from(i));
         }
-        testPathCalculation(1, 2, 11, Helper.createTList(1, 0, 2));
-        testPathCalculation(2, 1, 8, Helper.createTList(2, 0, 1));
-        testPathCalculation(0, 1, 3, Helper.createTList(0, 1));
-        testPathCalculation(0, 2, 5, Helper.createTList(0, 2));
-        testPathCalculation(1, 0, 3, Helper.createTList(1, 0));
-        testPathCalculation(2, 0, 5, Helper.createTList(2, 0));
+        testPathCalculation(1, 2, 11, IntArrayList.from(1, 0, 2));
+        testPathCalculation(2, 1, 8, IntArrayList.from(2, 0, 1));
+        testPathCalculation(0, 1, 3, IntArrayList.from(0, 1));
+        testPathCalculation(0, 2, 5, IntArrayList.from(0, 2));
+        testPathCalculation(1, 0, 3, IntArrayList.from(1, 0));
+        testPathCalculation(2, 0, 5, IntArrayList.from(2, 0));
     }
 
     @Test
@@ -112,11 +112,11 @@ public class CHQueryWithTurnCostsTest {
         // contraction yields no shortcuts
         setLevelEqualToNodeIdForAllNodes();
 
-        testPathCalculation(0, 1, 40, Helper.createTList(0, 2, 4, 6, 5, 3, 1));
-        testPathCalculation(1, 0, 28, Helper.createTList(1, 3, 5, 6, 4, 2, 0));
-        testPathCalculation(4, 3, 23, Helper.createTList(4, 6, 5, 3));
-        testPathCalculation(0, 0, 0, Helper.createTList(0));
-        testPathCalculation(4, 4, 0, Helper.createTList(4));
+        testPathCalculation(0, 1, 40, IntArrayList.from(0, 2, 4, 6, 5, 3, 1));
+        testPathCalculation(1, 0, 28, IntArrayList.from(1, 3, 5, 6, 4, 2, 0));
+        testPathCalculation(4, 3, 23, IntArrayList.from(4, 6, 5, 3));
+        testPathCalculation(0, 0, 0, IntArrayList.from(0));
+        testPathCalculation(4, 4, 0, IntArrayList.from(4));
     }
 
     @Test
@@ -139,13 +139,13 @@ public class CHQueryWithTurnCostsTest {
         setLevelEqualToNodeIdForAllNodes();
 
         // when we are searching a path to the highest level node, the backward search will not expand any edges
-        testPathCalculation(1, 4, 19, Helper.createTList(1, 2, 0, 3, 4));
-        testPathCalculation(2, 4, 10, Helper.createTList(2, 0, 3, 4));
-        testPathCalculation(0, 4, 6, Helper.createTList(0, 3, 4));
+        testPathCalculation(1, 4, 19, IntArrayList.from(1, 2, 0, 3, 4));
+        testPathCalculation(2, 4, 10, IntArrayList.from(2, 0, 3, 4));
+        testPathCalculation(0, 4, 6, IntArrayList.from(0, 3, 4));
 
         // when we search a path to or start the search from a low level node both forward and backward searches run
-        testPathCalculation(1, 0, 11, Helper.createTList(1, 2, 0));
-        testPathCalculation(0, 4, 6, Helper.createTList(0, 3, 4));
+        testPathCalculation(1, 0, 11, IntArrayList.from(1, 2, 0));
+        testPathCalculation(0, 4, 6, IntArrayList.from(0, 3, 4));
     }
 
     @Test
@@ -166,7 +166,7 @@ public class CHQueryWithTurnCostsTest {
         addShortcut(3, 2, 1, 2, 1, 2, 4);
         setLevelEqualToNodeIdForAllNodes();
 
-        testPathCalculation(1, 4, 15, Helper.createTList(1, 3, 0, 2, 4));
+        testPathCalculation(1, 4, 15, IntArrayList.from(1, 3, 0, 2, 4));
     }
 
     @Test
@@ -190,11 +190,11 @@ public class CHQueryWithTurnCostsTest {
         setLevelEqualToNodeIdForAllNodes();
 
         // the turn costs have to be accounted for also when the shortcuts are used
-        testPathCalculation(2, 4, 19, Helper.createTList(2, 3, 1, 0, 4));
-        testPathCalculation(1, 4, 6, Helper.createTList(1, 0, 4));
-        testPathCalculation(2, 0, 16, Helper.createTList(2, 3, 1, 0));
-        testPathCalculation(3, 4, 10, Helper.createTList(3, 1, 0, 4));
-        testPathCalculation(2, 1, 11, Helper.createTList(2, 3, 1));
+        testPathCalculation(2, 4, 19, IntArrayList.from(2, 3, 1, 0, 4));
+        testPathCalculation(1, 4, 6, IntArrayList.from(1, 0, 4));
+        testPathCalculation(2, 0, 16, IntArrayList.from(2, 3, 1, 0));
+        testPathCalculation(3, 4, 10, IntArrayList.from(3, 1, 0, 4));
+        testPathCalculation(2, 1, 11, IntArrayList.from(2, 3, 1));
     }
 
     @Test
@@ -213,7 +213,7 @@ public class CHQueryWithTurnCostsTest {
 
         // no shortcuts here
         setLevelEqualToNodeIdForAllNodes();
-        testPathCalculation(0, 1, 18, Helper.createTList(0, 2, 3, 1));
+        testPathCalculation(0, 1, 18, IntArrayList.from(0, 2, 3, 1));
     }
 
     @Test
@@ -235,7 +235,7 @@ public class CHQueryWithTurnCostsTest {
 
         // no shortcuts here
         setLevelEqualToNodeIdForAllNodes();
-        testPathCalculation(0, 4, 17, Helper.createTList(0, 1, 5, 4));
+        testPathCalculation(0, 4, 17, IntArrayList.from(0, 1, 5, 4));
     }
 
     @Test
@@ -252,7 +252,7 @@ public class CHQueryWithTurnCostsTest {
 
         //no shortcuts
         setLevelEqualToNodeIdForAllNodes();
-        testPathCalculation(3, 0, 20, Helper.createTList(3, 2, 1, 0));
+        testPathCalculation(3, 0, 20, IntArrayList.from(3, 2, 1, 0));
     }
 
     @Test
@@ -268,7 +268,7 @@ public class CHQueryWithTurnCostsTest {
         graph.freeze();
         addShortcut(1, 3, 0, 1, 0, 1, 23);
         setLevelEqualToNodeIdForAllNodes();
-        testPathCalculation(0, 2, 23, Helper.createTList(0, 3, 2));
+        testPathCalculation(0, 2, 23, IntArrayList.from(0, 3, 2));
     }
 
     @Test
@@ -289,7 +289,7 @@ public class CHQueryWithTurnCostsTest {
         setLevelEqualToNodeIdForAllNodes();
 
         // without u-turns no path can be found
-        testPathCalculation(0, 1, -1, Helper.createTList());
+        testPathCalculation(0, 1, -1, IntArrayList.from());
     }
 
     @Test
@@ -331,7 +331,7 @@ public class CHQueryWithTurnCostsTest {
         setLevelEqualToNodeIdForAllNodes();
 
         // without u-turns the only 'possible' path 0-3-A-3-B-2 is forbidden
-        testPathCalculation(0, 2, -1, Helper.createTList());
+        testPathCalculation(0, 2, -1, IntArrayList.from());
     }
 
     @Test
@@ -352,10 +352,10 @@ public class CHQueryWithTurnCostsTest {
         setLevelEqualToNodeIdForAllNodes();
 
         // without u-turns we need to take the loop
-        testPathCalculation(0, 1, 18, Helper.createTList(0, 2, 3, 2, 1));
+        testPathCalculation(0, 1, 18, IntArrayList.from(0, 2, 3, 2, 1));
 
         // additional check
-        testPathCalculation(3, 1, 4, Helper.createTList(3, 2, 1));
+        testPathCalculation(3, 1, 4, IntArrayList.from(3, 2, 1));
     }
 
     @Test
@@ -381,7 +381,7 @@ public class CHQueryWithTurnCostsTest {
 
         // going via 2, 3 and 4 is possible, but we want the shortest path taking into account turn costs also at
         // the bridge node
-        testPathCalculation(0, 1, 7, Helper.createTList(0, 3, 1));
+        testPathCalculation(0, 1, 7, IntArrayList.from(0, 3, 1));
     }
 
     @Test
@@ -403,7 +403,7 @@ public class CHQueryWithTurnCostsTest {
         // at node 3 we cannot go from 0 to 2 directly, but we need to take the loop at 3 first. when the backward 
         // search arrives at 3 it checks if 3 could be reached by the forward search and therefore its crucial that
         // the ('forward') loop at 3 is recognized as an incoming edge at node 3
-        testPathCalculation(0, 1, 4, Helper.createTList(0, 3, 3, 2, 1));
+        testPathCalculation(0, 1, 4, IntArrayList.from(0, 3, 3, 2, 1));
     }
     
     @Test
@@ -429,7 +429,7 @@ public class CHQueryWithTurnCostsTest {
         addShortcut(4, 4, 1, 3, 5, 3, 9);
         setLevelEqualToNodeIdForAllNodes();
 
-        testPathCalculation(3, 2, 15, Helper.createTList(3, 4, 0, 1, 4, 2));
+        testPathCalculation(3, 2, 15, IntArrayList.from(3, 4, 0, 1, 4, 2));
     }
 
     @Test
@@ -473,7 +473,7 @@ public class CHQueryWithTurnCostsTest {
         addShortcut(5, 5, 2, 5, 9, 8, 6);
         setLevelEqualToNodeIdForAllNodes();
 
-        testPathCalculation(4, 7, 12, Helper.createTList(4, nodeA, 5, 2, 3, 1, 5, nodeB, 7));
+        testPathCalculation(4, 7, 12, IntArrayList.from(4, nodeA, 5, 2, 3, 1, 5, nodeB, 7));
     }
 
     @Test
@@ -522,8 +522,8 @@ public class CHQueryWithTurnCostsTest {
         addShortcut(7, 7, 6, 6, 14, 6, 19);
         setLevelEqualToNodeIdForAllNodes();
 
-        testPathCalculation(4, 5, 24, Helper.createTList(4, 7, 6, 0, 1, 6, 2, 3, 6, 7, 5));
-        testPathCalculation(5, 4, 24, Helper.createTList(5, 7, 6, 0, 1, 6, 2, 3, 6, 7, 4));
+        testPathCalculation(4, 5, 24, IntArrayList.from(4, 7, 6, 0, 1, 6, 2, 3, 6, 7, 5));
+        testPathCalculation(5, 4, 24, IntArrayList.from(5, 7, 6, 0, 1, 6, 2, 3, 6, 7, 4));
     }
 
     @Test

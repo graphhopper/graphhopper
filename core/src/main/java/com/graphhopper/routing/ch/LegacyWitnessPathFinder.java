@@ -58,7 +58,7 @@ public abstract class LegacyWitnessPathFinder {
         this.weighting = weighting;
         this.traversalMode = traversalMode;
         this.maxLevel = maxLevel;
-        outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(weighting.getFlagEncoder(), false, true));
+        outEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(weighting.getFlagEncoder()));
     }
 
     public void setInitialEntries(IntObjectMap<WitnessSearchEntry> initialEntries) {

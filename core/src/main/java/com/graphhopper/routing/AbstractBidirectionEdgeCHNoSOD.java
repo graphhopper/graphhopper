@@ -41,8 +41,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         super(graph, weighting, TraversalMode.EDGE_BASED_2DIR);
         this.turnWeighting = weighting;
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
-        innerInExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
-        innerOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
+        innerInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder));
+        innerOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder));
     }
 
     @Override

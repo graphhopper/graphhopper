@@ -92,7 +92,7 @@ public class CHTurnCostTest {
         addTurnCost(2, 1, 0, 2);
         addTurnCost(0, 3, 4, 4);
 
-        final IntArrayList expectedPath = Helper.createTList(2, 1, 0, 3, 4);
+        final IntArrayList expectedPath = IntArrayList.from(2, 1, 0, 3, 4);
         final int expectedWeight = 15;
 
         int from = 2;
@@ -238,7 +238,7 @@ public class CHTurnCostTest {
         addTurnCost(4, 2, 3, 4);
         addTurnCost(3, 2, 4, 2);
 
-        final IntArrayList expectedPath = Helper.createTList(0, 4, 3, 2, 4, 1);
+        final IntArrayList expectedPath = IntArrayList.from(0, 4, 3, 2, 4, 1);
         final int expectedWeight = 9;
 
         checkPathUsingRandomContractionOrder(expectedPath, expectedWeight, 0, 1);
@@ -265,7 +265,7 @@ public class CHTurnCostTest {
         addRestriction(7, 5, 6);
         addTurnCost(0, 2, 1, 2);
 
-        final IntArrayList expectedPath = Helper.createTList(3, 7, 5, 0, 2, 1, 5, 6, 4);
+        final IntArrayList expectedPath = IntArrayList.from(3, 7, 5, 0, 2, 1, 5, 6, 4);
         final int roadCosts = 12;
         final int turnCosts = 2;
 
@@ -294,7 +294,7 @@ public class CHTurnCostTest {
         addTurnCost(3, 4, 2, 2);
         addTurnCost(2, 4, 3, 4);
 
-        final IntArrayList expectedPath = Helper.createTList(0, 1, 2, 3, 4, 2, 5, 6);
+        final IntArrayList expectedPath = IntArrayList.from(0, 1, 2, 3, 4, 2, 5, 6);
         final int roadCosts = 10;
         final int turnCosts = 2;
 
@@ -350,7 +350,7 @@ public class CHTurnCostTest {
         addTurnCost(4, 9, 14, 3);
         addTurnCost(3, 4, 9, 3);
 
-        final IntArrayList expectedPath = Helper.createTList(0, 1, 6, 7, 8, 3, 2, 7, 12, 13, 14);
+        final IntArrayList expectedPath = IntArrayList.from(0, 1, 6, 7, 8, 3, 2, 7, 12, 13, 14);
         final int roadCosts = 15;
         final int turnCosts = 2;
 
@@ -443,7 +443,7 @@ public class CHTurnCostTest {
         addTurnCost(7, 13, 14, 2);
 
         // expected costs of the shortest path
-        final IntArrayList expectedPath = Helper.createTList(
+        final IntArrayList expectedPath = IntArrayList.from(
                 0, 1, 7, 8, 3, 2, 7, 12, 11, 6, 7, 13, 14, 9, 10, 5, 4, 9, 14, 19, 24, 23, 22, 21, 16, 17, 18, 19, 20, 25, 26);
         final int roadCosts = 49;
         final int turnCosts = 4;
@@ -469,7 +469,7 @@ public class CHTurnCostTest {
         graph.freeze();
         addRestriction(5, 6, 1);
 
-        final IntArrayList expectedPath = Helper.createTList(5, 6, 4, 0, 3, 2, 4, 6, 1);
+        final IntArrayList expectedPath = IntArrayList.from(5, 6, 4, 0, 3, 2, 4, 6, 1);
         checkPath(expectedPath, 8, 5, 1, Arrays.asList(0, 1, 2, 3, 4, 5, 6));
     }
 
@@ -494,7 +494,7 @@ public class CHTurnCostTest {
         graph.freeze();
         addRestriction(5, 6, 7);
 
-        final IntArrayList expectedPath = Helper.createTList(5, 6, 1, 4, 0, 3, 2, 4, 1, 6, 7);
+        final IntArrayList expectedPath = IntArrayList.from(5, 6, 1, 4, 0, 3, 2, 4, 1, 6, 7);
         checkPath(expectedPath, 10, 5, 7, Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7));
     }
 
@@ -558,8 +558,8 @@ public class CHTurnCostTest {
             }
         }
         graph.freeze();
-        EdgeExplorer inExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
-        EdgeExplorer outExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+        EdgeExplorer inExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
+        EdgeExplorer outExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
 
         // add turn costs or restrictions
         for (int node = 0; node < size * size; ++node) {
@@ -620,7 +620,7 @@ public class CHTurnCostTest {
         addTurnCost(edge0, edge1, 1, 1);
         addRestriction(edge0, edge2, 1);
         graph.freeze();
-        final IntArrayList expectedPath = Helper.createTList(0, 1, 1, 2, 3);
+        final IntArrayList expectedPath = IntArrayList.from(0, 1, 1, 2, 3);
         checkPath(expectedPath, 5, 0, 3, Arrays.asList(0, 2, 1, 3));
     }
 
@@ -671,8 +671,8 @@ public class CHTurnCostTest {
         // aggressive search cannot handle such zero weight loops, they should probably be filtered out 
         graph.freeze();
         compareCHWithDijkstra(100, Arrays.asList(0, 3, 1, 4, 5, 2));
-    } 
-    
+    }
+
     private int nextCost(Random rnd) {
         // choose bound above max cost such that turn restrictions are likely
         return rnd.nextInt(3 * maxCost);

@@ -283,8 +283,8 @@ public class CHMeasurement {
 
         Random rnd = new Random(seed);
         LOGGER.info("Adding random turn costs and restrictions");
-        EdgeExplorer inExplorer = ghStorage.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
-        EdgeExplorer outExplorer = ghStorage.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+        EdgeExplorer inExplorer = ghStorage.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
+        EdgeExplorer outExplorer = ghStorage.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
         for (int node = 0; node < ghStorage.getNodes(); ++node) {
             if (rnd.nextDouble() < pNodeHasTurnCosts) {
                 EdgeIterator inIter = inExplorer.setBaseNode(node);

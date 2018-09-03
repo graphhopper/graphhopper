@@ -85,7 +85,7 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
                     "contraction order size (%d) must be equal to number of nodes in graph (%d)",
                     contractionOrder.size(), prepareGraph.getNodes()));
         }
-        final EdgeFilter allFilter = new DefaultEdgeFilter(prepareWeighting.getFlagEncoder(), true, true);
+        final EdgeFilter allFilter = DefaultEdgeFilter.allEdges(prepareWeighting.getFlagEncoder());
         CHEdgeExplorer explorer = prepareGraph.createEdgeExplorer(allFilter);
         CHEdgeExplorer discExplorer = prepareGraph.createEdgeExplorer(allFilter);
         final int nodesToContract = (int) (contractionOrder.size() * nodesContractedPercentage / 100);

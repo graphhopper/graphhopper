@@ -2,25 +2,17 @@
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
 <log4j:configuration>
     <appender name="stdout" class="org.apache.log4j.ConsoleAppender">
-        <layout class="org.apache.log4j.EnhancedPatternLayout">
-            <param name="ConversionPattern" value="%d{YYYY-MM-dd HH:mm:ss} %-5p %c{1} - %m%n"/>
-        </layout>
-    </appender>
-    <appender name="FILE" class="org.apache.log4j.FileAppender">
-        <param name="file" value="./tools.log"/>
-        <param name="append" value="true"/>
-        <layout class="org.apache.log4j.EnhancedPatternLayout">
-            <param name="ConversionPattern" value="%d{YYY-MM-dd HH:mm:ss} %-5p %c{1} - %m%n"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d [%t] %-5p %c - %m%n"/>
         </layout>
     </appender>
     <appender name="ASYNC" class="org.apache.log4j.AsyncAppender">
         <param name="BufferSize" value="500"/>
-        <appender-ref ref="FILE"/>
         <appender-ref ref="stdout"/>
-    </appender>
+    </appender>   
     <logger name="com.graphhopper" additivity="false">
-        <level value="info"/>
-        <appender-ref ref="ASYNC"/>
+        <level value="info" />
+        <appender-ref ref="ASYNC" />
     </logger>
     <!-- order important otherwise we'll get a warning -->
     <root>

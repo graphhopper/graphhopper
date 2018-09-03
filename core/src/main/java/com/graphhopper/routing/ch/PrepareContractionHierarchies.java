@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Locale;
 import java.util.Random;
 
-import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED_2DIR;
 import static com.graphhopper.util.Helper.nf;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
@@ -194,7 +193,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         contractNodes();
     }
 
-    private void initFromGraph() {
+    @Override
+    public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
         AbstractBidirAlgo algo = doCreateAlgo(graph, opts);
         algo.setEdgeFilter(new LevelEdgeFilter(prepareGraph));
         algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
@@ -210,6 +210,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private AbstractBidirAlgo createAlgoEdgeBased(Graph graph, AlgorithmOptions opts) {
+        if (ASTAR_BI.equals(opts.getAlgorithm())) {
             return new AStarBidirectionEdgeCHNoSOD(graph, createTurnWeightingForEdgeBased(graph))
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
@@ -236,6 +237,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     public boolean isEdgeBased() {
         return traversalMode.isEdgeBased();
+    }
+
+    private void initFromGraph() {
         ghStorage.freeze();
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
         final EdgeFilter allFilter = DefaultEdgeFilter.allEdges(prepareFlagEncoder);

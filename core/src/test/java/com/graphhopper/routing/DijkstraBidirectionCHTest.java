@@ -27,7 +27,6 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
-import com.graphhopper.util.*;
 import org.junit.Test;
 
 import java.util.Arrays;

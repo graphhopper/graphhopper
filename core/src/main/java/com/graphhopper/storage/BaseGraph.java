@@ -30,9 +30,9 @@ import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Locale;
-
 import static com.graphhopper.util.Helper.nf;
+
+import java.util.Locale;
 
 /**
  * The base graph handles nodes and edges file format. It can be used with different Directory
