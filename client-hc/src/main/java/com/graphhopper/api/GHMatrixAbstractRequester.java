@@ -61,18 +61,24 @@ public abstract class GHMatrixAbstractRequester {
 
     protected String getJson(String url) throws IOException {
         Request okRequest = new Request.Builder().url(url).build();
-        ResponseBody body = downloader.newCall(okRequest).execute().body();
-        String str = body.string();
-        body.close();
-        return str;
+        ResponseBody body = null;
+        try {
+            body = downloader.newCall(okRequest).execute().body();
+            return body.string();
+        } finally {
+            Helper.close(body);
+        }
     }
 
     protected String postJson(String url, JsonNode data) throws IOException {
         Request okRequest = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, data.toString())).build();
-        ResponseBody body = downloader.newCall(okRequest).execute().body();
-        String str = body.string();
-        body.close();
-        return str;
+        ResponseBody body = null;
+        try {
+            body = downloader.newCall(okRequest).execute().body();
+            return body.string();
+        } finally {
+            Helper.close(body);
+        }
     }
 
     protected JsonNode toJSON(String url, String str) {
