@@ -17,8 +17,7 @@
  */
 package com.graphhopper.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
@@ -138,7 +137,7 @@ public class InstructionListTest {
 
         p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(6, 2);
         assertEquals(42000, p.getDistance(), 1e-2);
-        assertEquals(Helper.createTList(6, 7, 8, 5, 2), p.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{6, 7, 8, 5, 2}), p.calcNodes());
 
         wayList = p.calcInstructions(usTR);
         tmpList = pick("text", wayList.createJson());
@@ -315,7 +314,7 @@ public class InstructionListTest {
         assertEquals(15.1, wayList.get(2).getFirstLat(), 1e-3);
         assertEquals(9.9, wayList.get(2).getFirstLon(), 1e-3);
 
-        String gpxStr = wayList.createGPX("test", 0);
+        String gpxStr = wayList.createGPX("test", 0, Constants.VERSION);
         verifyGPX(gpxStr);
 
         assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T00:00:00Z</time>"));
@@ -329,62 +328,6 @@ public class InstructionListTest {
         assertTrue(gpxStr, gpxStr.contains("<gh:azimuth>0.0</gh:azimuth>"));
 
         assertFalse(gpxStr, gpxStr.contains("NaN"));
-    }
-
-    @Test
-    public void testRoundaboutJsonIntegrity() {
-        InstructionList il = new InstructionList(usTR);
-
-        PointList pl = new PointList();
-        pl.add(52.514, 13.349);
-        pl.add(52.5135, 13.35);
-        pl.add(52.514, 13.351);
-        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname",
-                new InstructionAnnotation(0, ""), pl)
-                .setDirOfRotation(-0.1)
-                .setRadian(-Math.PI + 1)
-                .setExitNumber(2)
-                .setExited();
-        il.add(instr);
-
-        Map<String, Object> json = il.createJson().get(0);
-        // assert that all information is present in map for JSON
-        assertEquals("At roundabout, take exit 2 onto streetname", json.get("text").toString());
-        assertEquals(-1, (Double) json.get("turn_angle"), 0.01);
-        assertEquals("2", json.get("exit_number").toString());
-        // assert that a valid JSON object can be written
-        assertNotNull(write(json));
-    }
-
-    private String write(Map<String, Object> json) {
-        try {
-            return new ObjectMapper().writeValueAsString(json);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    // Roundabout with unknown dir of rotation
-    @Test
-    public void testRoundaboutJsonNaN() {
-        InstructionList il = new InstructionList(usTR);
-
-        PointList pl = new PointList();
-        pl.add(52.514, 13.349);
-        pl.add(52.5135, 13.35);
-        pl.add(52.514, 13.351);
-        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname",
-                new InstructionAnnotation(0, ""), pl)
-                .setRadian(-Math.PI + 1)
-                .setExitNumber(2)
-                .setExited();
-        il.add(instr);
-
-        Map<String, Object> json = il.createJson().get(0);
-        assertEquals("At roundabout, take exit 2 onto streetname", json.get("text").toString());
-        assertNull(json.get("turn_angle"));
-        // assert that a valid JSON object can be written
-        assertNotNull(write(json));
     }
 
     @Test
@@ -403,7 +346,7 @@ public class InstructionListTest {
         instructions.add(instr);
         instructions.add(new FinishInstruction(52.555619423589, 13.43886994061328, 0));
 
-        String gpxStr = instructions.createGPX("test", 0, true, true, false, false);
+        String gpxStr = instructions.createGPX("test", 0, true, true, false, false, Constants.VERSION);
 
         assertTrue(gpxStr, gpxStr.contains("<gh:exit_number>3</gh:exit_number>"));
         verifyGPX(gpxStr);
@@ -420,7 +363,7 @@ public class InstructionListTest {
         instructions.add(instruction);
         instructions.add(new FinishInstruction(0.000852, 0.000852, 0));
 
-        String gpxStr = instructions.createGPX("test", 0, true, true, true, true);
+        String gpxStr = instructions.createGPX("test", 0, true, true, true, true, Constants.VERSION);
 
         assertFalse(gpxStr, gpxStr.contains("E-"));
         assertTrue(gpxStr, gpxStr.contains("0.000001"));
@@ -439,7 +382,7 @@ public class InstructionListTest {
                 return fakeList;
             }
         };
-        String gpxStr = il.createGPX("test", 0);
+        String gpxStr = il.createGPX("test", 0, Constants.VERSION);
         verifyGPX(gpxStr);
         assertFalse(gpxStr, gpxStr.contains("NaN"));
         assertFalse(gpxStr, gpxStr.contains("<ele>"));
@@ -447,7 +390,7 @@ public class InstructionListTest {
         fakeList.clear();
         fakeList.add(new GPXEntry(12, 13, 11, 0));
         fakeList.add(new GPXEntry(12.5, 13, 10, 1000));
-        gpxStr = il.createGPX("test", 0, true, true, true, true);
+        gpxStr = il.createGPX("test", 0, true, true, true, true, Constants.VERSION);
 
         assertTrue(gpxStr, gpxStr.contains("<ele>11.0</ele>"));
         assertFalse(gpxStr, gpxStr.contains("NaN"));
@@ -480,7 +423,7 @@ public class InstructionListTest {
         assertEquals(19000, result.get(3).getTime());
         assertEquals(22000, result.get(4).getTime());
 
-        verifyGPX(instructions.createGPX());
+        verifyGPX(instructions.createGPX(Constants.VERSION));
     }
 
     private long flagsForSpeed(EncodingManager encodingManager, int speedKmPerHour) {

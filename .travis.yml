@@ -1,5 +1,5 @@
 language: java
-sudo: false
+sudo: true
 dist: trusty
 
 env:
@@ -11,16 +11,17 @@ env:
 
 matrix:
   include:
-    - jdk: oraclejdk8
     - jdk: openjdk8
     - env: JDK='OpenJDK 10'
       install: . ./install-jdk.sh -F 10 -C
+    - env: JDK='OpenJDK 11'
+      install: . ./install-jdk.sh -F 11 -C
     
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
 
 # store them into travis via https://dracoblue.net/dev/uploading-snapshots-and-releases-to-maven-central-with-travis/
-# gpg -a --export-secret-keys your@email.org | base64 -w 0
+# gpg --export-secret-keys <keyID> | base64 -w 0
 # gpg --export-ownertrust | base64 -w 0
 before_install:
   - if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
@@ -53,7 +54,7 @@ after_success:
 
 notifications:
   email:
-    - secure: l7/fjqL0c/9UcULXdhaKxsroZMg07nfNDiOHRBf7YKf8wrKdH52Z5kP7E10+a8iD/ieLD+ZaZPlom1bE7HymE1bVkp3d17Ezha47W5sdyOOb3NBDpg8olS4TkehOKo3AQhLXSfF6QGtipxY8Iy9QknXHngQOrcoGYiOlzCZ3BTQ=
+    - $EMAIL
 
 cache:
   directories:

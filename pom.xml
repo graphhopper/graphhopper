@@ -17,8 +17,10 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.25</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
-        <commons-compress.version>1.12</commons-compress.version>
-        <jackson.version>2.9.1</jackson.version>
+        <commons-compress.version>1.15</commons-compress.version>
+        <jackson.version>2.9.6</jackson.version>
+        <dropwizard.version>1.3.5</dropwizard.version>
+        <directions-api-client.version>0.10.1-3</directions-api-client.version>
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>4</org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>
@@ -76,8 +78,10 @@
         <module>reader-osm</module>
         <module>isochrone</module>
         <module>reader-gtfs</module>
-        <module>reader-json</module>
         <module>tools</module>
+        <module>web-bundle</module>
+        <module>api</module>
+        <module>web-api</module>
         <module>web</module>
         <module>client-hc</module>
     </modules>
@@ -128,7 +132,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.1.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -189,10 +193,6 @@
                         <bundledSignature>jdk-non-portable</bundledSignature>
                     </bundledSignatures>
                     <excludes>
-                        <!-- Excluded because of "Helper7#getBeanMemInfo" -->
-                        <exclude>
-                            com/graphhopper/util/Helper7.class
-                        </exclude>
                         <exclude>
                             com/graphhopper/storage/UnsafeDataAccess.class
                         </exclude>

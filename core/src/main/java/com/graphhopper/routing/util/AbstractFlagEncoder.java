@@ -70,9 +70,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     // This value determines the maximal possible speed of any road regardless the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected int maxPossibleSpeed;
-    /* processing properties (to be initialized lazy when needed) */
-    protected EdgeExplorer edgeOutExplorer;
-    protected EdgeExplorer edgeInExplorer;
     /* Edge Flag Encoder fields */
     private long nodeBitMask;
     private long wayBitMask;

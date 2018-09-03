@@ -62,7 +62,9 @@ Various topics are explained in more detail separately:
  * [Create new FlagEncoder](./core/create-new-flagencoder.md): Documentation to create new routing profiles to influence which ways to favor and how the track-time is calculated.
  * [Spatial Rules](./core/spatial-rules.md): Instruction on how to use and create new SpatialRules. SpatialRules are used to enforce country-specific routing rules.
  * [Turn Restrictions](./core/turn-restrictions.md): Details on how to enable and use turn restrictions.
- * [Postgis query script](../core/files/postgis)
+ * [Isochrone generation in Java](./isochrone/java.md): Instruction on how to create isochrones using the low-level Java API.
+ * [Postgis query script](./core/files/postgis)
+
 
 #### Other links
 

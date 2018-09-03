@@ -18,6 +18,7 @@
 
 package com.graphhopper.http.cli;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.http.GraphHopperManaged;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import io.dropwizard.cli.ConfiguredCommand;
@@ -26,13 +27,16 @@ import net.sourceforge.argparse4j.inf.Namespace;
 
 public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfiguration> {
 
-    public ImportCommand() {
+    private final ObjectMapper objectMapper;
+
+    public ImportCommand(ObjectMapper objectMapper) {
         super("import", "creates the graphhopper files used for later (faster) starts");
+        this.objectMapper = objectMapper;
     }
 
     @Override
-    protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace namespace, GraphHopperServerConfiguration configuration) throws Exception {
-        final GraphHopperManaged graphHopper = new GraphHopperManaged(configuration.getGraphHopperConfiguration());
+    protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace namespace, GraphHopperServerConfiguration configuration) {
+        final GraphHopperManaged graphHopper = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), objectMapper);
         graphHopper.start();
         graphHopper.stop();
     }

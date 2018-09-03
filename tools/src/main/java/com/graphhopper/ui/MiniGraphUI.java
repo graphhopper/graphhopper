@@ -370,7 +370,7 @@ public class MiniGraphUI {
 //
 ////        System.out.println("path " + from + "->" + to);
 //        return algo.calcPath(from, to);
-        // System.out.println(GraphUtility.getNodeInfo(graph, 60139, new DefaultEdgeFilter(new CarFlagEncoder()).direction(false, true)));
+        // System.out.println(GraphUtility.getNodeInfo(graph, 60139, DefaultEdgeFilter.allEdges(new CarFlagEncoder()).direction(false, true)));
         // System.out.println(((GraphStorage) graph).debug(202947, 10));
 //        GraphUtility.printInfo(graph, 106511, 10);
         return algo.calcPath(162810, 35120);

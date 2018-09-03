@@ -568,7 +568,7 @@ public class RoutingAlgorithmWithOSMIT {
 
             Collection<AlgoHelperEntry> prepares = RoutingAlgorithmIT.createAlgos(hopper, hints, tMode);
 
-            EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
+            EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
             for (AlgoHelperEntry entry : prepares) {
                 if (entry.getExpectedAlgo().startsWith("astarbi|ch")) {
                     continue;
@@ -619,7 +619,7 @@ public class RoutingAlgorithmWithOSMIT {
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
         final Weighting weighting = new ShortestWeighting(encodingManager.getEncoder("car"));
-        final EdgeFilter filter = new DefaultEdgeFilter(carEncoder);
+        final EdgeFilter filter = DefaultEdgeFilter.allEdges(carEncoder);
         for (int no = 0; no < MAX; no++) {
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++) {
                 String[] algos = new String[]{

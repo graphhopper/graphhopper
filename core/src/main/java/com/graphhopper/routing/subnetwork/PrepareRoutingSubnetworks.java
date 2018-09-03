@@ -205,7 +205,7 @@ public class PrepareRoutingSubnetworks {
      */
     int removeDeadEndUnvisitedNetworks(final PrepEdgeFilter bothFilter) {
         StopWatch sw = new StopWatch(bothFilter.getEncoder() + " findComponents").start();
-        final EdgeFilter outFilter = new DefaultEdgeFilter(bothFilter.getEncoder(), false, true);
+        final EdgeFilter outFilter = DefaultEdgeFilter.outEdges(bothFilter.getEncoder());
 
         // partition graph into strongly connected components using Tarjan's algorithm        
         TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, outFilter, true);
@@ -288,7 +288,7 @@ public class PrepareRoutingSubnetworks {
         FlagEncoder encoder;
 
         public PrepEdgeFilter(FlagEncoder encoder) {
-            super(encoder);
+            super(encoder, true, true);
             this.encoder = encoder;
         }
 

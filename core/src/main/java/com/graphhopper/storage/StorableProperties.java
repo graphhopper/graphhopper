@@ -19,10 +19,10 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -34,6 +34,9 @@ import static com.graphhopper.util.Helper.*;
  * @author Peter Karich
  */
 public class StorableProperties implements Storable<StorableProperties> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(StorableProperties.class);
+
     private final Map<String, String> map = new LinkedHashMap<>();
     private final DataAccess da;
 
@@ -188,5 +191,33 @@ public class StorableProperties implements Storable<StorableProperties> {
     @Override
     public synchronized String toString() {
         return da.toString();
+    }
+
+    static void loadProperties(Map<String, String> map, Reader tmpReader) throws IOException {
+        BufferedReader reader = new BufferedReader(tmpReader);
+        String line;
+        try {
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("//") || line.startsWith("#")) {
+                    continue;
+                }
+
+                if (Helper.isEmpty(line)) {
+                    continue;
+                }
+
+                int index = line.indexOf("=");
+                if (index < 0) {
+                    LOGGER.warn("Skipping configuration at line:" + line);
+                    continue;
+                }
+
+                String field = line.substring(0, index);
+                String value = line.substring(index + 1);
+                map.put(field.trim(), value.trim());
+            }
+        } finally {
+            reader.close();
+        }
     }
 }

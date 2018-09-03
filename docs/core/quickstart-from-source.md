@@ -30,6 +30,12 @@ $ ./graphhopper.sh -a web -i north-america_us_new-york.pbf -o new-york-gh
 # the format follows the link structure at http://download.geofabrik.de
 ```
 
+For larger maps you might need to allow the JVM to access more memory. For example for 2GB you can do this using:
+```bash
+$ export JAVA_OPTS="-Xmx2g -Xms2g"
+```
+before running `graphhopper.sh`.
+
 ## Start Development
 
 Open the project in your IDE, first class IDEs are NetBeans and IntelliJ where no further setup is required.

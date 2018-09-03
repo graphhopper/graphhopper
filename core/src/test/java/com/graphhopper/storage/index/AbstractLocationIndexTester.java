@@ -341,7 +341,7 @@ public abstract class AbstractLocationIndexTester {
 
         idx = createIndex(g, -1);
         FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
-        assertEquals(2, idx.findClosest(1, -1, new DefaultEdgeFilter(footEncoder)).getClosestNode());
+        assertEquals(2, idx.findClosest(1, -1, DefaultEdgeFilter.allEdges(footEncoder)).getClosestNode());
         Helper.close((Closeable) g);
     }
 }

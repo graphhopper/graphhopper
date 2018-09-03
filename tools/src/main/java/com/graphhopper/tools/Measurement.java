@@ -100,6 +100,13 @@ public class Measurement {
             }
 
             @Override
+            protected void loadOrPrepareLM() {
+                StopWatch sw = new StopWatch().start();
+                super.loadOrPrepareLM();
+                put(Parameters.Landmark.PREPARE + "time", sw.stop().getMillis());
+            }
+
+            @Override
             protected DataReader importData() throws IOException {
                 StopWatch sw = new StopWatch().start();
                 DataReader dr = super.importData();
@@ -260,7 +267,7 @@ public class Measurement {
             print("unit_testsCH.get_weight", miniPerf);
         }
 
-        EdgeFilter outFilter = new DefaultEdgeFilter(encoder, false, true);
+        EdgeFilter outFilter = DefaultEdgeFilter.outEdges(encoder);
         final EdgeExplorer outExplorer = graph.createEdgeExplorer(outFilter);
         MiniPerfTest miniPerf = new MiniPerfTest() {
             @Override

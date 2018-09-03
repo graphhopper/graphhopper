@@ -48,8 +48,8 @@ abstract class AbstractNodeContractor implements NodeContractor {
 
     @Override
     public void initFromGraph() {
-        inEdgeExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
-        outEdgeExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+        inEdgeExplorer = prepareGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
+        outEdgeExplorer = prepareGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
         maxLevel = prepareGraph.getNodes();
         maxEdgesCount = ghStorage.getAllEdges().length();
     }

@@ -77,7 +77,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
 
         TourStrategy strategy = new MultiPointTour(new Random(seed), distanceInMeter, roundTripPointCount, initialHeading);
         queryResults = new ArrayList<>(2 + strategy.getNumberOfGeneratedPoints());
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
+        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         QueryResult startQR = locationIndex.findClosest(start.lat, start.lon, edgeFilter);
         if (!startQR.isValid())
             throw new PointNotFoundException("Cannot find point 0: " + start, 0);

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.template;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.*;
@@ -27,7 +28,6 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
@@ -94,8 +94,8 @@ public class RoundTripRoutingTemplateTest {
                 queryGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         // make sure the resulting paths are connected and form a round trip starting and ending at the start node 0
         assertEquals(2, paths.size());
-        assertEquals(Helper.createTList(0, 7, 6, 5), paths.get(0).calcNodes());
-        assertEquals(Helper.createTList(5, 4, 3, 2, 1, 0), paths.get(1).calcNodes());
+        assertEquals(IntArrayList.from(new int[]{0, 7, 6, 5}), paths.get(0).calcNodes());
+        assertEquals(IntArrayList.from(new int[]{5, 4, 3, 2, 1, 0}), paths.get(1).calcNodes());
     }
 
     @Test
@@ -120,8 +120,8 @@ public class RoundTripRoutingTemplateTest {
         List<Path> paths = rTripRouting.calcPaths(qGraph, new RoutingAlgorithmFactorySimple(),
                 new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         assertEquals(2, paths.size());
-        assertEquals(Helper.createTList(5, 6, 3, 4), paths.get(0).calcNodes());
-        assertEquals(Helper.createTList(4, 8, 7, 6, 5), paths.get(1).calcNodes());
+        assertEquals(IntArrayList.from(new int[]{5, 6, 3, 4}), paths.get(0).calcNodes());
+        assertEquals(IntArrayList.from(new int[]{4, 8, 7, 6, 5}), paths.get(1).calcNodes());
 
         qGraph = new QueryGraph(g);
         qGraph.lookup(qr4, qr6);
@@ -129,8 +129,8 @@ public class RoundTripRoutingTemplateTest {
         paths = rTripRouting.calcPaths(qGraph, new RoutingAlgorithmFactorySimple(),
                 new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         assertEquals(2, paths.size());
-        assertEquals(Helper.createTList(6, 3, 4), paths.get(0).calcNodes());
-        assertEquals(Helper.createTList(4, 8, 7, 6), paths.get(1).calcNodes());
+        assertEquals(IntArrayList.from(new int[]{6, 3, 4}), paths.get(0).calcNodes());
+        assertEquals(IntArrayList.from(new int[]{4, 8, 7, 6}), paths.get(1).calcNodes());
     }
 
     private Graph createTestGraph(boolean fullGraph) {

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage.index;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Directory;
@@ -108,7 +109,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         LocationIndexTree index = createIndexNoPrepare(graph, 50000);
         index.prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
-        assertEquals(Helper.createTList(4, 4), index.getEntries());
+        assertEquals(IntArrayList.from(new int[]{4, 4}), index.getEntries());
 
         assertEquals(4, inMemIndex.getEntriesOf(0).size());
         assertEquals(10, inMemIndex.getEntriesOf(1).size());
@@ -155,7 +156,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         LocationIndexTree index = createIndexNoPrepare(graph, 500);
         index.prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
-        assertEquals(Helper.createTList(4, 4), index.getEntries());
+        assertEquals(IntArrayList.from(new int[]{4, 4}), index.getEntries());
         assertEquals(3, inMemIndex.getEntriesOf(0).size());
         assertEquals(5, inMemIndex.getEntriesOf(1).size());
         assertEquals(0, inMemIndex.getEntriesOf(2).size());
@@ -194,7 +195,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         LocationIndexTree index = createIndexNoPrepare(createTestGraph(encodingManager), 10000);
         index.prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
-        assertEquals(Helper.createTList(64, 4), index.getEntries());
+        assertEquals(IntArrayList.from(new int[]{64, 4}), index.getEntries());
 
         assertEquals(33, inMemIndex.getEntriesOf(0).size());
         assertEquals(69, inMemIndex.getEntriesOf(1).size());
@@ -211,7 +212,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     @Test
     public void testReverseSpatialKey() {
         LocationIndexTree index = createIndex(createTestGraph(encodingManager), 200);
-        assertEquals(Helper.createTList(64, 64, 64, 4), index.getEntries());
+        assertEquals(IntArrayList.from(new int[]{64, 64, 64, 4}), index.getEntries());
 
         // 10111110111110101010
         String str44 = "00000000000000000000000000000000000000000000";
@@ -464,12 +465,12 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         index.prepareIndex();
         index.setMaxRegionSearch(8);
 
-        EdgeFilter carFilter = new DefaultEdgeFilter(carEncoder, true, true);
+        EdgeFilter carFilter = DefaultEdgeFilter.allEdges(carEncoder);
         QueryResult qr = index.findClosest(0.03, 0.03, carFilter);
         assertTrue(qr.isValid());
         assertEquals(33, qr.getClosestNode());
 
-        EdgeFilter bikeFilter = new DefaultEdgeFilter(bikeEncoder, true, true);
+        EdgeFilter bikeFilter = DefaultEdgeFilter.allEdges(bikeEncoder);
         qr = index.findClosest(0.03, 0.03, bikeFilter);
         assertTrue(qr.isValid());
         assertEquals(2, qr.getClosestNode());

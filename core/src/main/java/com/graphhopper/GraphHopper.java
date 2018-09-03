@@ -933,7 +933,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (hintsMap.has(Routing.BLOCK_AREA)) {
             String blockAreaStr = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
             GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(graph, locationIndex).
-                    parseBlockArea(blockAreaStr, new DefaultEdgeFilter(encoder), hintsMap.getDouble("block_area.edge_id_max_area", 1000 * 1000));
+                    parseBlockArea(blockAreaStr, DefaultEdgeFilter.allEdges(encoder), hintsMap.getDouble("block_area.edge_id_max_area", 1000 * 1000));
             return new BlockAreaWeighting(weighting, blockArea);
         }
 
@@ -978,8 +978,7 @@ public class GraphHopper implements GraphHopperAPI {
         readLock.lock();
         try {
             if (!encodingManager.supports(vehicle))
-                throw new IllegalArgumentException("Vehicle " + vehicle + " unsupported. "
-                        + "Supported are: " + getEncodingManager());
+                throw new IllegalArgumentException("Vehicle not supported: " + vehicle + ". Supported are: " + encodingManager.toString());
 
             HintsMap hints = request.getHints();
             String tModeStr = hints.get("traversal_mode", traversalMode.toString());

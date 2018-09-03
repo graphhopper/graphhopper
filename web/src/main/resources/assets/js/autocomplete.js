@@ -104,7 +104,6 @@ AutoComplete.prototype.showListForIndex = function (ghRequest, routeIfAllResolve
 
     var options = {
         containerClass: "autocomplete",
-        /* as we use can potentially use jsonp we need to set the timeout to a small value */
         timeout: 1000,
         /* avoid too many requests when typing quickly */
         deferRequestBy: 5,

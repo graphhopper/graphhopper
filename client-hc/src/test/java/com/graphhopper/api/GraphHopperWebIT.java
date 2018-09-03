@@ -34,9 +34,8 @@ public class GraphHopperWebIT {
 
     @Before
     public void setUp() {
-        String key = System.getProperty("graphhopper.key", KEY);
-        gh.setKey(key);
-        ghMatrix.setKey(key);
+        gh.setKey(KEY);
+        ghMatrix.setKey(KEY);
     }
 
     @Test
@@ -56,7 +55,6 @@ public class GraphHopperWebIT {
         isBetween(240, 270, alt.getAscend());
         isBetween(180, 200, alt.getDescend());
         isBetween(1000, 1500, alt.getRouteWeight());
-
 
         // change vehicle
         res = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180).
@@ -169,7 +167,6 @@ public class GraphHopperWebIT {
         assertTrue(res.getErrors().get(0) instanceof PointNotFoundException);
     }
 
-
     @Test
     public void testOutOfBoundsException() {
         GHRequest req = new GHRequest().
@@ -247,7 +244,7 @@ public class GraphHopperWebIT {
         req.getHints().put("instructions", true);
         req.getHints().put("calc_points", true);
         GHResponse ghResponse = gh.route(req);
-        String gpx = ghResponse.getBest().getInstructions().createGPX();
+        String gpx = ghResponse.getBest().getInstructions().createGPX("wurst");
         assertTrue(gpx.contains("<gpx"));
         assertTrue(gpx.contains("<rtept lat="));
         assertTrue(gpx.contains("<trk><name>"));
@@ -311,7 +308,7 @@ public class GraphHopperWebIT {
         // Actual path for the request: point=48.354413%2C8.676335&point=48.35442%2C8.676345
         // Modified the sign though
         JsonNode json = new ObjectMapper().readTree("{\"instructions\":[{\"distance\":1.073,\"sign\":741,\"interval\":[0,1],\"text\":\"Continue onto A 81\",\"time\":32,\"street_name\":\"A 81\"},{\"distance\":0,\"sign\":4,\"interval\":[1,1],\"text\":\"Finish!\",\"time\":0,\"street_name\":\"\"}],\"descend\":0,\"ascend\":0,\"distance\":1.073,\"bbox\":[8.676286,48.354446,8.676297,48.354453],\"weight\":0.032179,\"time\":32,\"points_encoded\":true,\"points\":\"gfcfHwq}s@}c~AAA?\",\"snapped_waypoints\":\"gfcfHwq}s@}c~AAA?\"}");
-        PathWrapper wrapper = new GraphHopperWeb().createPathWrapper(json, true, true, true, true, false);
+        PathWrapper wrapper = new GraphHopperWeb().createPathWrapper(json, true, true);
 
         assertEquals(741, wrapper.getInstructions().get(0).getSign());
         assertEquals("Continue onto A 81", wrapper.getInstructions().get(0).getName());
@@ -331,5 +328,16 @@ public class GraphHopperWebIT {
         assertFalse(details.isEmpty());
         assertTrue((Double) details.get(0).getValue() > 20);
         assertTrue((Double) details.get(0).getValue() < 70);
+    }
+
+    @Test
+    public void testPointHints() {
+        GHRequest ghRequest = new GHRequest();
+        ghRequest.addPoint(new GHPoint(52.50977, 13.371971));
+        ghRequest.addPoint(new GHPoint(52.509842, 13.369761));
+
+        ghRequest.setPointHints(Arrays.asList("Ben-Gurion", ""));
+        GHResponse response = gh.route(ghRequest);
+        assertTrue(response.getBest().getDistance() + "m", response.getBest().getDistance() < 500);
     }
 }

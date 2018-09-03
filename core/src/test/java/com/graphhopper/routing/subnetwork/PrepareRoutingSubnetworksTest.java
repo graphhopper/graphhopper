@@ -26,7 +26,6 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -104,10 +103,10 @@ public class PrepareRoutingSubnetworksTest {
         assertEquals(3, components.size());
 
         // start is at 0 => large network
-        assertEquals(Helper.createTList(0, 7, 3, 13, 5), components.get(0));
+        assertEquals(IntArrayList.from(0, 7, 3, 13, 5), components.get(0));
         // next smallest and unvisited node is 1 => big network
-        assertEquals(Helper.createTList(1, 8, 4, 2, 11, 12, 9, 15), components.get(1));
-        assertEquals(Helper.createTList(6, 14, 10), components.get(2));
+        assertEquals(IntArrayList.from(1, 8, 4, 2, 11, 12, 9, 15), components.get(1));
+        assertEquals(IntArrayList.from(6, 14, 10), components.get(2));
     }
 
     @Test
@@ -190,9 +189,9 @@ public class PrepareRoutingSubnetworksTest {
         // remove nothing because of two vehicles with different subnetworks
         assertEquals(9, g.getNodes());
 
-        EdgeExplorer carExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(carEncoder));
+        EdgeExplorer carExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(carEncoder));
         assertEquals(GHUtility.asSet(7, 2, 1), GHUtility.getNeighbors(carExplorer.setBaseNode(3)));
-        EdgeExplorer bikeExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(bikeEncoder));
+        EdgeExplorer bikeExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(bikeEncoder));
         assertEquals(GHUtility.asSet(7, 2, 1, 4), GHUtility.getNeighbors(bikeExplorer.setBaseNode(3)));
 
         GHUtility.getEdge(g, 3, 4).setFlags(carEncoder.setProperties(10, false, false) | bikeEncoder.setProperties(5, false, false));
@@ -284,7 +283,7 @@ public class PrepareRoutingSubnetworksTest {
         GraphHopperStorage g = createSubnetworkTestStorage();
 
         // Requires a single vehicle type, otherwise we throw.
-        final EdgeFilter filter = new DefaultEdgeFilter(carFlagEncoder, false, true);
+        final EdgeFilter filter = DefaultEdgeFilter.outEdges(carFlagEncoder);
         TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(g, filter, false);
 
         List<IntArrayList> components = tarjan.findComponents();

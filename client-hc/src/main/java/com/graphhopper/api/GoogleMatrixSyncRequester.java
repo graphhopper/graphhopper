@@ -13,11 +13,6 @@ import java.util.List;
  */
 public class GoogleMatrixSyncRequester extends GHMatrixAbstractRequester {
 
-    public GoogleMatrixSyncRequester() {
-        super();
-        initIgnore();
-    }
-
     public GoogleMatrixSyncRequester(String serviceUrl) {
         super(serviceUrl);
         initIgnore();

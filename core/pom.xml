@@ -37,9 +37,14 @@
     </licenses>
     <dependencies>
         <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-api</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.carrotsearch</groupId>
             <artifactId>hppc</artifactId>
-            <version>0.7.2</version>
+            <version>0.8.1</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -51,32 +56,13 @@
         <dependency>
             <groupId>org.apache.xmlgraphics</groupId>
             <artifactId>xmlgraphics-commons</artifactId>
-            <version>2.1</version>
+            <version>2.3</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.vividsolutions</groupId>
-            <artifactId>jts-core</artifactId>
-            <version>1.14.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -97,28 +83,22 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-web-api</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <pluginManagement>
             <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <version>2.6</version>
-                    <configuration>
-                        <!-- for usage on android -->
-                        <descriptors>
-                            <descriptor>src/main/assembly/android.xml</descriptor>
-                        </descriptors>
-                    </configuration>
-                </plugin>
-
                 <!-- create jar with test classes to be reused in other projects like external or our reader-osm -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.0.2</version>
+                    <version>3.1.0</version>
                     <executions>
                         <execution>
                             <goals>
