@@ -45,7 +45,7 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class PrepareLandmarksTest
-/* extends AbstractRoutingAlgorithmTester */ {
+        /* extends AbstractRoutingAlgorithmTester */ {
     private GraphHopperStorage graph;
     private FlagEncoder encoder;
     private TraversalMode tm;

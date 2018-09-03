@@ -484,7 +484,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             }
 
         if (durationInHours == 0) {
-            if(estimatedLength != null && estimatedLength.doubleValue() <= 300)
+            if (estimatedLength != null && estimatedLength.doubleValue() <= 300)
                 return speedEncoder.factor / 2;
             // unknown speed -> put penalty on ferry transport
             return UNKNOWN_DURATION_FERRY_SPEED;

@@ -437,7 +437,7 @@ public class QueryGraphTest {
         int nodeB = 1;
 
         /* init test graph: one directional edge going from A to B, via virtual nodes C and D
-         * 
+         *
          *   (C)-(D)
          *  /       \
          * A         B

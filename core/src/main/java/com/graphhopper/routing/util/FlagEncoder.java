@@ -91,7 +91,7 @@ public interface FlagEncoder extends TurnCostEncoder {
 
     /*
      * Simple rules for every subclass which introduces a new key. It has to use the prefix K_ and
-     * uses a minimum value which is two magnitudes higher than in the super class. 
+     * uses a minimum value which is two magnitudes higher than in the super class.
      * Currently this means starting from 100, and subclasses of this class start from 10000 and so on.
      */
 

@@ -110,7 +110,7 @@ public abstract class ShapeFileReader implements DataReader {
     }
 
     /*
-	 * Get latitude using the current long-lat order convention
+     * Get latitude using the current long-lat order convention
      */
     protected double lat(Coordinate coordinate) {
         return coordinate.getOrdinate(1);

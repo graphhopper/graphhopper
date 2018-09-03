@@ -46,7 +46,7 @@ public class BBox implements Shape, Cloneable {
     public double maxEle;
 
     public BBox(double[] coords) {
-        this(coords[0],coords[2],coords[1],coords[3]);
+        this(coords[0], coords[2], coords[1], coords[3]);
     }
 
     public BBox(double minLon, double maxLon, double minLat, double maxLat) {

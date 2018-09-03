@@ -68,7 +68,7 @@ public class LinearKeyAlgoTest {
     }
 
     /*
-    * Test if different constructors yield same results
+     * Test if different constructors yield same results
      */
     @Test
     public void testInstantiation() {

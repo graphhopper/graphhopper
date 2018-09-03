@@ -177,10 +177,10 @@ public class EdgeBasedRoutingAlgorithmTest {
         initGraph(g);
         TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
         blockNode3(g, tcs, carEncoder);
-        for (int i=0; i<=7; i++) {
-            if (i==3) continue;
-            for (int j=0; j<=7; j++) {
-                if (j==3) continue;
+        for (int i = 0; i <= 7; i++) {
+            if (i == 3) continue;
+            for (int j = 0; j <= 7; j++) {
+                if (j == 3) continue;
                 Path p = createAlgo(g, AlgorithmOptions.start().
                         weighting(createWeighting(carEncoder, tcs, 40)).
                         traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).

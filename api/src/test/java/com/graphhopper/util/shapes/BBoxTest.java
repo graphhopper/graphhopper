@@ -99,8 +99,8 @@ public class BBoxTest {
         assertNull(b1.calculateIntersection(b2));
 
         //Real Example
-        b1 = new BBox(8.8591,9.9111,48.3145,48.8518);
-        b2 = new BBox(5.8524,17.1483,46.3786,55.0653);
+        b1 = new BBox(8.8591, 9.9111, 48.3145, 48.8518);
+        b2 = new BBox(5.8524, 17.1483, 46.3786, 55.0653);
 
         assertEquals(b1, b1.calculateIntersection(b2));
     }

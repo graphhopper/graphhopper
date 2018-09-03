@@ -30,7 +30,6 @@ import java.util.*;
 import java.util.Map.Entry;
 
 /**
- *
  * @author Peter Karich
  */
 public class Helper {
@@ -62,11 +61,11 @@ public class Helper {
         return new Locale(param.substring(0, index), param.substring(index + 1));
     }
 
-    public static String toLowerCase(String string){
+    public static String toLowerCase(String string) {
         return string.toLowerCase(Locale.ROOT);
     }
 
-    public static String toUpperCase(String string){
+    public static String toUpperCase(String string) {
         return string.toUpperCase(Locale.ROOT);
     }
 

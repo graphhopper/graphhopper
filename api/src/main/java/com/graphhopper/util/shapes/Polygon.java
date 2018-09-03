@@ -235,8 +235,8 @@ public class Polygon implements Shape {
 
         if (arr.length % 2 == 1) throw new IllegalArgumentException("incorrect polygon specified");
 
-        double[] lats = new double[arr.length /2];
-        double[] lons = new double[arr.length /2];
+        double[] lats = new double[arr.length / 2];
+        double[] lons = new double[arr.length / 2];
 
         for (int j = 0; j < arr.length; j++) {
             if (j % 2 == 0) {

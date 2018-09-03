@@ -53,13 +53,13 @@ public class BridgeElevationInterpolatorTest extends AbstractEdgeElevationInterp
         // @formatter:off
         /*
          * Graph structure:
-		 * 0-----1-----2-----3-----4
-		 *        \    |    /
-		 *         \   |   /
-		 *          T  T  T
-		 *           \ | /
-		 *            \|/
-		 * 5-----6--T--7--T--8-----9
+         * 0-----1-----2-----3-----4
+         *        \    |    /
+         *         \   |   /
+         *          T  T  T
+         *           \ | /
+         *            \|/
+         * 5-----6--T--7--T--8-----9
          */
         // @formatter:on
         NodeAccess na = graph.getNodeAccess();

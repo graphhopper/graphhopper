@@ -93,7 +93,7 @@ public class GraphHopperStorageForDataFlagEncoderTest {
         FlagEncoder flagEncoder = em.fetchEdgeEncoders().get(0);
         assertTrue(flagEncoder instanceof DataFlagEncoder);
 
-        DataFlagEncoder dataFlagEncoder = (DataFlagEncoder)flagEncoder;
+        DataFlagEncoder dataFlagEncoder = (DataFlagEncoder) flagEncoder;
         assertTrue(dataFlagEncoder.isStoreHeight());
         assertTrue(dataFlagEncoder.isStoreWeight());
         assertFalse(dataFlagEncoder.isStoreWidth());

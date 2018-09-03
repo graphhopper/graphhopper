@@ -148,8 +148,8 @@ public class SRTMProviderTest {
     public void testDownloadIssue_1274() {
         instance = new SRTMProvider();
         // The file is incorrectly named on the sever: N55W061hgt.zip (it should be N55W061.hgt.zip)
-        assertEquals("North_America/N55W061", instance.getFileName(55.055,-60.541));
-        assertEquals(204, instance.getEle(55.055,-60.541), .1);
+        assertEquals("North_America/N55W061", instance.getFileName(55.055, -60.541));
+        assertEquals(204, instance.getEle(55.055, -60.541), .1);
     }
 
 }

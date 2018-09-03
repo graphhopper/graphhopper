@@ -24,26 +24,26 @@ public class GraphElevationSmoothing {
         for (int i = 1; i < geometry.size() - 1; i++) {
 
             int start = i;
-            for (int j = i-1; j >= 0 ; j--) {
+            for (int j = i - 1; j >= 0; j--) {
                 if (MAX_SEARCH_DISTANCE > Helper.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
                     start = j;
-                }else{
+                } else {
                     break;
                 }
             }
 
             int end = i;
-            for (int j = i+1; j < geometry.size(); j++) {
+            for (int j = i + 1; j < geometry.size(); j++) {
                 if (MAX_SEARCH_DISTANCE > Helper.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
                     // +1 because the end is exclusive
-                    end = j+1;
-                }else{
+                    end = j + 1;
+                } else {
                     break;
                 }
             }
 
             // In this case we cannot find any points withing the max search distance, so we simply skip this point
-            if(start == end)
+            if (start == end)
                 continue;
 
             double sum = 0;
@@ -53,7 +53,7 @@ public class GraphElevationSmoothing {
                     sum += geometry.getEle(j);
                 }
             }
-            double smoothed = sum / (end-start);
+            double smoothed = sum / (end - start);
             geometry.setElevation(i, smoothed);
         }
         return geometry;

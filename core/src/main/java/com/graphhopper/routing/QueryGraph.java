@@ -486,8 +486,8 @@ public class QueryGraph implements Graph {
      * the other adjacent node of virtualNodeId.
      * <p>
      *
-     * @param virtualNodeId  virtual node at which edges get unfavored
-     * @param virtualEdgeId  this edge and the reverse virtual edge become unfavored
+     * @param virtualNodeId virtual node at which edges get unfavored
+     * @param virtualEdgeId this edge and the reverse virtual edge become unfavored
      */
     public void unfavorVirtualEdgePair(int virtualNodeId, int virtualEdgeId) {
         if (!isVirtualNode(virtualNodeId)) {

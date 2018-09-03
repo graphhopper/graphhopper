@@ -526,7 +526,7 @@ public class OSMReaderTest {
         int nb = AbstractGraphStorageTester.getIdOf(graph, 12, 51);
         int nc = AbstractGraphStorageTester.getIdOf(graph, 11.2, 52);
         int nd = AbstractGraphStorageTester.getIdOf(graph, 11.3, 51);
-        int ne = AbstractGraphStorageTester.getIdOf( graph, 10, 51 );
+        int ne = AbstractGraphStorageTester.getIdOf(graph, 10, 51);
 
         EdgeIteratorState edge_ab = GHUtility.getEdge(graph, na, nb);
         EdgeIteratorState edge_ad = GHUtility.getEdge(graph, na, nd);

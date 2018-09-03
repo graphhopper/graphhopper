@@ -627,7 +627,7 @@ public class CarFlagEncoderTest {
         way.setTag("estimated_distance", 257);
 
         CarFlagEncoder lowFactorCar = new CarFlagEncoder(10, 1, 0);
-        lowFactorCar.defineWayBits(0,0);
+        lowFactorCar.defineWayBits(0, 0);
         assertEquals(2.5, encoder.getFerrySpeed(way), .1);
         assertEquals(.5, lowFactorCar.getFerrySpeed(way), .1);
     }

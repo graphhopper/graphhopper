@@ -51,8 +51,8 @@ public class TunnelElevationInterpolatorTest extends AbstractEdgeElevationInterp
         // @formatter:off
         /*
          * Graph structure:
-		 * 0--T--1--T--2     3--T--4
-		 * Tunnel 0-1-2 has a single outer node 2.
+         * 0--T--1--T--2     3--T--4
+         * Tunnel 0-1-2 has a single outer node 2.
          */
         // @formatter:on
         NodeAccess na = graph.getNodeAccess();
@@ -90,8 +90,8 @@ public class TunnelElevationInterpolatorTest extends AbstractEdgeElevationInterp
 
         // @formatter:off
         /*
-		 * Graph structure:
-		 * 0--T--1--T--2-----3--T--4
+         * Graph structure:
+         * 0--T--1--T--2-----3--T--4
          */
         // @formatter:on
         NodeAccess na = graph.getNodeAccess();
@@ -131,8 +131,8 @@ public class TunnelElevationInterpolatorTest extends AbstractEdgeElevationInterp
 
         // @formatter:off
         /*
-		 * Graph structure:
-		 * 0-----1--T--2--T--3-----4
+         * Graph structure:
+         * 0-----1--T--2--T--3-----4
          */
         // @formatter:on
         NodeAccess na = graph.getNodeAccess();
@@ -172,14 +172,14 @@ public class TunnelElevationInterpolatorTest extends AbstractEdgeElevationInterp
 
         // @formatter:off
         /*
-		 * Graph structure:
-		 * 0-----1--T--2--T--3-----4
-		 *             |
-		 *             |
-		 *             T
-		 *             |
-		 *             |
-		 *             5--T--6-----7
+         * Graph structure:
+         * 0-----1--T--2--T--3-----4
+         *             |
+         *             |
+         *             T
+         *             |
+         *             |
+         *             5--T--6-----7
          */
         // @formatter:on
         NodeAccess na = graph.getNodeAccess();
@@ -231,14 +231,14 @@ public class TunnelElevationInterpolatorTest extends AbstractEdgeElevationInterp
 
         // @formatter:off
         /*
-            * Graph structure:
-            * 0-----1--T--2--T--3-----4
-            *             |
-            *             |
-            *             T
-            *             |
-            *             |
-            * 5-----6--T--7--T--8-----9
+         * Graph structure:
+         * 0-----1--T--2--T--3-----4
+         *             |
+         *             |
+         *             T
+         *             |
+         *             |
+         * 5-----6--T--7--T--8-----9
          */
         // @formatter:on
         NodeAccess na = graph.getNodeAccess();

@@ -330,10 +330,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         // Very certain, this is a turn
         if (Math.abs(sign) > 1) {
-                        /*
-                         * Don't show an instruction if the user is following a street, even though the street is
-                         * bending. We should only do this, if following the street is the obvious choice.
-                         */
+            /*
+             * Don't show an instruction if the user is following a street, even though the street is
+             * bending. We should only do this, if following the street is the obvious choice.
+             */
             if (InstructionsHelper.isNameSimilar(name, prevName) && outgoingEdges.outgoingEdgesAreSlowerByFactor(2)) {
                 return returnForcedInstructionOrIgnore(forceInstruction, sign);
             }

@@ -274,7 +274,7 @@ public class PrepareRoutingSubnetworksTest {
         assertEquals(8, g.getNodes());
 
         assertTrue(isConsistent(g));
-        g.edge(7,8);
+        g.edge(7, 8);
         assertTrue(isConsistent(g));
     }
 
@@ -339,8 +339,8 @@ public class PrepareRoutingSubnetworksTest {
     public static boolean isConsistent(GraphHopperStorage storage) {
         EdgeExplorer edgeExplorer = storage.createEdgeExplorer();
         int nNodes = storage.getNodes();
-        for(int i=0; i<nNodes; i++) {
-            if(!check(storage, edgeExplorer, i)) return false;
+        for (int i = 0; i < nNodes; i++) {
+            if (!check(storage, edgeExplorer, i)) return false;
         }
         return true;
     }
@@ -349,7 +349,7 @@ public class PrepareRoutingSubnetworksTest {
         List<Integer> toNodes = new ArrayList<>();
         List<Integer> edges = new ArrayList<>();
         EdgeIterator edgeIterator = edgeExplorer.setBaseNode(node);
-        while(edgeIterator.next()) {
+        while (edgeIterator.next()) {
             if (edgeIterator.getBaseNode() < 0 || edgeIterator.getAdjNode() < 0) {
                 return false;
             }
@@ -357,13 +357,13 @@ public class PrepareRoutingSubnetworksTest {
             edges.add(edgeIterator.getEdge());
         }
 
-        for(int i=0;i<toNodes.size();i++) {
+        for (int i = 0; i < toNodes.size(); i++) {
             EdgeIteratorState edgeIteratorState = storage.getEdgeIteratorState(edges.get(i), toNodes.get(i));
-            if(edgeIteratorState == null) {
+            if (edgeIteratorState == null) {
                 return false;
             }
             EdgeIteratorState edgeIteratorState2 = storage.getEdgeIteratorState(edges.get(i), node);
-            if(edgeIteratorState2 == null) {
+            if (edgeIteratorState2 == null) {
                 return false;
             }
         }
