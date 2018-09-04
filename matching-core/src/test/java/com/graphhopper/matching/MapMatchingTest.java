@@ -44,12 +44,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import static org.junit.Assert.*;
 
 /**
  *
@@ -206,6 +206,7 @@ public class MapMatchingTest {
                 new GHPoint(51.342328, 12.3613358));
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
 
+        assertFalse(mr.getEdgeMatches().isEmpty());
         assertEquals(3, mr.getMatchLength(), 1);
         assertEquals(284, mr.getMatchMillis(), 1);
     }

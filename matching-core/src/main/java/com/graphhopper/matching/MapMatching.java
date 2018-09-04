@@ -546,24 +546,17 @@ public class MapMatching {
                                 + edgeIteratorState.getEdge());
                     }
                     if (currentEdge == null || !equalEdges(directedRealEdge, currentEdge)) {
-                        EdgeMatch edgeMatch = new EdgeMatch(directedRealEdge, gpxExtensions);
-                        edgeMatches.add(edgeMatch);
-                        gpxExtensions = new ArrayList<>();
+                        if (currentEdge != null) {
+                            EdgeMatch edgeMatch = new EdgeMatch(currentEdge, gpxExtensions);
+                            edgeMatches.add(edgeMatch);
+                            gpxExtensions = new ArrayList<>();
+                        }
                         currentEdge = directedRealEdge;
                     }
                 }
                 gpxExtensions.add(queryResult);
             }
-        }
-
-        MatchResult matchResult = new MatchResult(edgeMatches);
-        if (!edgeMatches.isEmpty()) {
-            EdgeMatch lastEdgeMatch = edgeMatches.get(edgeMatches.size() - 1);
-            if (!gpxExtensions.isEmpty() && !equalEdges(currentEdge, lastEdgeMatch.getEdgeState())) {
-                edgeMatches.add(new EdgeMatch(currentEdge, gpxExtensions));
-            } else {
-                lastEdgeMatch.getGpxExtensions().addAll(gpxExtensions);
-            }
+            edgeMatches.add(new EdgeMatch(currentEdge, gpxExtensions));
         }
 
         List<EdgeIteratorState> edges = new ArrayList<>();
@@ -573,6 +566,8 @@ public class MapMatching {
             }
         }
         Path mergedPath = new MapMatchedPath(queryGraph.getBaseGraph(), weighting, edges);
+
+        MatchResult matchResult = new MatchResult(edgeMatches);
         matchResult.setMergedPath(mergedPath);
         matchResult.setMatchMillis(time);
         matchResult.setMatchLength(distance);

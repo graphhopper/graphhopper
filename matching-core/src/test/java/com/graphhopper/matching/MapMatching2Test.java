@@ -21,11 +21,14 @@ import com.graphhopper.matching.MapMatchingTest.TestGraphHopper;
 import static com.graphhopper.matching.MapMatchingTest.fetchStreets;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GPXEntry;
 import java.util.Arrays;
 import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import org.junit.Test;
 
 /**
@@ -54,6 +57,7 @@ public class MapMatching2Test {
         for (EdgeMatch em : mr.getEdgeMatches()) {
             assertTrue("result contains virtual edges:" + em.getEdgeState().toString(),
                     em.getEdgeState().getEdge() < edgeCount);
+            validateEdgeMatch(em);
         }
 
         // create street names
@@ -83,5 +87,25 @@ public class MapMatching2Test {
         		"Бранка Радичевића", "Бранка Радичевића", "Здравка Челара"),
                 fetchStreets(mr.getEdgeMatches()));
         // TODO: length/time
+
+        for (EdgeMatch edgeMatch : mr.getEdgeMatches()) {
+            validateEdgeMatch(edgeMatch);
+        }
     }
+
+    private void validateEdgeMatch(EdgeMatch edgeMatch) {
+        for (GPXExtension gpxExtension : edgeMatch.getGpxExtensions()) {
+            if (gpxExtension.getQueryResult().getSnappedPosition() == QueryResult.Position.TOWER) {
+                if (gpxExtension.getQueryResult().getClosestNode() != edgeMatch.getEdgeState().getAdjNode()
+                        && gpxExtension.getQueryResult().getClosestNode() != edgeMatch.getEdgeState().getAdjNode()) {
+                    fail();
+                }
+            } else {
+                if (gpxExtension.getQueryResult().getClosestEdge().getEdge() != edgeMatch.getEdgeState().getEdge()) {
+                    fail();
+                }
+            }
+        }
+    }
+
 }
