@@ -339,7 +339,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     throw new RuntimeException(e);
                 }
             }
-            new PrepareRoutingSubnetworks(graphHopperStorage, Collections.singletonList(ptFlagEncoder)).doWork();
+            new PrepareRoutingSubnetworks(graphHopperStorage, Collections.singletonList(encodingManager.getEncoder("foot"))).doWork();
 
             int id = 0;
             for (String gtfsFile : gtfsFiles) {

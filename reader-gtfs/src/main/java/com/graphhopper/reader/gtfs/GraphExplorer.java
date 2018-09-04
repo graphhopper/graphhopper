@@ -21,6 +21,7 @@ package com.graphhopper.reader.gtfs;
 import com.google.common.collect.ArrayListMultimap;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -58,7 +59,13 @@ final class GraphExplorer {
     GraphExplorer(Graph graph, Weighting accessEgressWeighting, PtFlagEncoder flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, List<VirtualEdgeIteratorState> extraEdges, boolean walkOnly, double walkSpeedKmh) {
         this.graph = graph;
         this.accessEgressWeighting = accessEgressWeighting;
-        this.edgeExplorer = graph.createEdgeExplorer(reverse ? DefaultEdgeFilter.inEdges(flagEncoder) : DefaultEdgeFilter.outEdges(flagEncoder));
+        DefaultEdgeFilter accessEgressIn = DefaultEdgeFilter.inEdges(accessEgressWeighting.getFlagEncoder());
+        DefaultEdgeFilter accessEgressOut = DefaultEdgeFilter.outEdges(accessEgressWeighting.getFlagEncoder());
+        DefaultEdgeFilter ptIn = DefaultEdgeFilter.inEdges(flagEncoder);
+        DefaultEdgeFilter ptOut = DefaultEdgeFilter.outEdges(flagEncoder);
+        EdgeFilter in = edgeState -> accessEgressIn.accept(edgeState) || ptIn.accept(edgeState);
+        EdgeFilter out = edgeState -> accessEgressOut.accept(edgeState) || ptOut.accept(edgeState);
+        this.edgeExplorer = graph.createEdgeExplorer(reverse ? in : out);
         this.flagEncoder = flagEncoder;
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
