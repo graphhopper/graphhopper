@@ -9,8 +9,15 @@ import static com.graphhopper.util.Helper.getLocale;
 
 public class MapboxResponseConverterTranslationMap extends TranslationMap {
 
-    public MapboxResponseConverterTranslationMap() {
+    public static MapboxResponseConverterTranslationMap INSTANCE;
+
+    private MapboxResponseConverterTranslationMap() {
         super();
+    }
+
+    static {
+        INSTANCE = new MapboxResponseConverterTranslationMap();
+        INSTANCE.doImport();
     }
 
     @Override

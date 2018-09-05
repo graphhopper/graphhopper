@@ -53,14 +53,11 @@ public class MapboxResource {
 
     private final GraphHopperAPI graphHopper;
     private final TranslationMap translationMap;
-    private final MapboxResponseConverterTranslationMap mapboxResponseConverterTranslationMap;
 
     @Inject
     public MapboxResource(GraphHopperAPI graphHopper, TranslationMap translationMap) {
         this.graphHopper = graphHopper;
         this.translationMap = translationMap;
-        mapboxResponseConverterTranslationMap = new MapboxResponseConverterTranslationMap();
-        mapboxResponseConverterTranslationMap.doImport();
     }
 
     @GET
@@ -139,7 +136,7 @@ public class MapboxResource {
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         } else {
-            return Response.ok(MapboxResponseConverter.convertFromGHResponse(ghResponse, translationMap, mapboxResponseConverterTranslationMap, request.getLocale())).
+            return Response.ok(MapboxResponseConverter.convertFromGHResponse(ghResponse, translationMap, request.getLocale())).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         }
