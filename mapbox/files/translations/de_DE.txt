@@ -1,0 +1,4 @@
+in_km_singular=In 1 Kilometer
+in_km=In %1$s Kilometern
+in_m=In %1$s Metern
+for_km=für %1$s Kilometer
