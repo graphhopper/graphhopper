@@ -6,7 +6,7 @@ import java.util.Locale;
 
 import static org.junit.Assert.assertEquals;
 
-public class SimpleTranslationMapTest {
+public class MapboxResponseConverterTranslationMapTest {
 
     @Test
     public void basicTest() {
