@@ -251,8 +251,7 @@ public class MapboxResponseConverter {
 
             // Uppercase first letter
             // TODO: should we do this for all cases? Then we might change the spelling of street names though
-            if (bannerInstructionName != null && bannerInstructionName.length() > 1)
-                bannerInstructionName = bannerInstructionName.substring(0, 1).toUpperCase() + bannerInstructionName.substring(1);
+            bannerInstructionName = Helper.firstBig(bannerInstructionName);
         }
 
         primary.put("text", bannerInstructionName);
