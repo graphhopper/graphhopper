@@ -34,7 +34,7 @@ public class MapboxResponseConverter {
     /**
      * Converts a GHResponse into Mapbox compatible json
      */
-    public static ObjectNode convertFromGHResponse(GHResponse ghResponse, TranslationMap translationMap, Locale locale) {
+    public static ObjectNode convertFromGHResponse(GHResponse ghResponse, TranslationMap translationMap, TranslationMap mapboxResponseConverterTranslationMap, Locale locale) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
         if (ghResponse.hasErrors())
@@ -64,7 +64,7 @@ public class MapboxResponseConverter {
 
             for (int j = 0; j < instructions.size(); j++) {
                 ObjectNode instructionJson = steps.addObject();
-                putInstruction(instructions, j, locale, translationMap, instructionJson, isFirstInstructionOfLeg);
+                putInstruction(instructions, j, locale, translationMap, mapboxResponseConverterTranslationMap, instructionJson, isFirstInstructionOfLeg);
                 Instruction instruction = instructions.get(j);
                 time += instruction.getTime();
                 distance += instruction.getDistance();
@@ -120,7 +120,7 @@ public class MapboxResponseConverter {
         legJson.put("distance", Helper.round(distance, 1));
     }
 
-    private static ObjectNode putInstruction(InstructionList instructions, int index, Locale locale, TranslationMap translationMap, ObjectNode instructionJson, boolean isFirstInstructionOfLeg) {
+    private static ObjectNode putInstruction(InstructionList instructions, int index, Locale locale, TranslationMap translationMap, TranslationMap mapboxResponseConverterTranslationMap, ObjectNode instructionJson, boolean isFirstInstructionOfLeg) {
         Instruction instruction = instructions.get(index);
         ArrayNode intersections = instructionJson.putArray("intersections");
         ObjectNode intersection = intersections.addObject();
@@ -151,14 +151,14 @@ public class MapboxResponseConverter {
 
         // Voice and banner instructions are empty for the last element
         if (index + 1 < instructions.size()) {
-            putVoiceInstructions(instructions, distance, index, locale, translationMap, voiceInstructions);
+            putVoiceInstructions(instructions, distance, index, locale, translationMap, mapboxResponseConverterTranslationMap, voiceInstructions);
             putBannerInstruction(instructions, distance, index, locale, translationMap, bannerInstructions);
         }
 
         return instructionJson;
     }
 
-    private static void putVoiceInstructions(InstructionList instructions, double distance, int index, Locale locale, TranslationMap translationMap, ArrayNode voiceInstructions) {
+    private static void putVoiceInstructions(InstructionList instructions, double distance, int index, Locale locale, TranslationMap translationMap, TranslationMap mapboxResponseConverterTranslationMap, ArrayNode voiceInstructions) {
         /*
             A VoiceInstruction Object looks like this
             {
@@ -175,7 +175,7 @@ public class MapboxResponseConverter {
             // The instruction should not be spoken straight away, but wait until the user merged on the new road and can listen to instructions again
             double tmpDistance = distance - 250;
             int spokenDistance = (int) (tmpDistance / 1000);
-            String continueDescription = translationMap.getWithFallBack(locale).tr("continue") + " for " + spokenDistance + " kilometers";
+            String continueDescription = translationMap.getWithFallBack(locale).tr("continue") + " " + mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("for_km", spokenDistance);
             // TODO In the worst case scenario it might be over 1km after merging onto the road until this instruction is spoken (e.g. (5249-250/1000)*1000=4000 - because java is rounding down)
             // TODO this might be annoying for unnecessary keeps on the motorway, especially if they happen more often then every 10km
             putSingleVoiceInstruction(spokenDistance * 1000, continueDescription, voiceInstructions);
@@ -187,16 +187,17 @@ public class MapboxResponseConverter {
         double veryClose = 200;
 
         if (distance > far) {
-            putSingleVoiceInstruction(far, "In 2 kilometers " + turnDescription, voiceInstructions);
+            putSingleVoiceInstruction(far, mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("in_km", 2) + " " + turnDescription, voiceInstructions);
         }
         if (distance > mid) {
-            putSingleVoiceInstruction(mid, "In 1 kilometer " + turnDescription, voiceInstructions);
+            putSingleVoiceInstruction(mid, mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("in_km_singular") + " " + turnDescription, voiceInstructions);
         }
         if (distance > close) {
-            putSingleVoiceInstruction(close, "In 400 meters " + turnDescription, voiceInstructions);
+            putSingleVoiceInstruction(close, mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("in_m", 400) + " " + turnDescription, voiceInstructions);
         } else if (distance > veryClose) {
             // This is an edge case when turning on narrow roads in cities, too close for the close turn, but too far for the direct turn
-            putSingleVoiceInstruction(veryClose, "In 200 meters " + turnDescription, voiceInstructions);
+            putSingleVoiceInstruction(veryClose, mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("in_m", 200) + " " + turnDescription, voiceInstructions)
+            ;
         }
 
         // Speak 80m instructions 80 before the turn
@@ -244,9 +245,15 @@ public class MapboxResponseConverter {
 
         ObjectNode primary = bannerInstruction.putObject("primary");
         String bannerInstructionName = nextInstruction.getName();
-        if (bannerInstructionName == null || bannerInstructionName.isEmpty())
+        if (bannerInstructionName == null || bannerInstructionName.isEmpty()) {
             // Fix for final instruction and for instructions without name
             bannerInstructionName = nextInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
+
+            // Uppercase first letter
+            // TODO: should we do this for all cases? Then we might change the spelling of street names though
+            bannerInstructionName = Helper.firstBig(bannerInstructionName);
+        }
+
         primary.put("text", bannerInstructionName);
 
         ArrayNode components = primary.putArray("components");
