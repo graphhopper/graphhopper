@@ -7,23 +7,21 @@ import java.util.Arrays;
 
 import static com.graphhopper.util.Helper.getLocale;
 
+/**
+ * Simple class that extends the TranslationMap to add new translations.
+ *
+ * @author Robin Boldt
+ */
 public class MapboxResponseConverterTranslationMap extends TranslationMap {
 
-    public static MapboxResponseConverterTranslationMap INSTANCE;
-
-    private MapboxResponseConverterTranslationMap() {
+    public MapboxResponseConverterTranslationMap() {
         super();
     }
 
-    static {
-        INSTANCE = new MapboxResponseConverterTranslationMap();
-        INSTANCE.doImport();
-    }
-
-    @Override
     /**
      * This loads the translation files from the specified folder.
      */
+    @Override
     public TranslationMap doImport() {
 
         File folder = new File("files/translations/");
