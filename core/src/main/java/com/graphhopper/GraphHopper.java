@@ -514,9 +514,8 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Reads configuration from a CmdArgs object. Which can be manually filled, or via main(String[]
-     * args) ala CmdArgs.read(args) or via configuration file ala
-     * CmdArgs.readFromConfig("config.properties", "graphhopper.config")
+     * Reads the configuration from a CmdArgs object which can be manually filled, or via 
+     * CmdArgs.read(String[] args)
      */
     public GraphHopper init(CmdArgs args) {
         args.merge(CmdArgs.readFromSystemProperties());

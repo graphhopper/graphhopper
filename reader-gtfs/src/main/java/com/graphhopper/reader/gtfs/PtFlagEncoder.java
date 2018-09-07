@@ -23,11 +23,9 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.EncodedDoubleValue;
 import com.graphhopper.routing.util.EncodedValue;
-import com.graphhopper.routing.util.FootFlagEncoder;
 
 public class PtFlagEncoder extends AbstractFlagEncoder {
 
-	private final FootFlagEncoder footFlagEncoder;
 	private EncodedValue time;
 	private EncodedValue transfers;
 	private EncodedValue validityId;
@@ -35,14 +33,6 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
 
 	public PtFlagEncoder() {
 		super(0, 1, 0);
-
-		// I use the foot flag encoder only as a delegate to filter by OSM tags,
-		// not to encode flags.
-		footFlagEncoder = new FootFlagEncoder();
-		// Still, I have to do this. Otherwise 'acceptWay' returns 0 even though
-		// it wants to accept. Basically, I have to tell it what 'true' means.
-		footFlagEncoder.defineWayBits(1, 0);
-		footFlagEncoder.defineRelationBits(1, 0);
 	}
 
 	@Override
@@ -68,17 +58,17 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
 
 	@Override
 	public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
-		return footFlagEncoder.handleRelationTags(relation, oldRelationFlags);
+		return oldRelationFlags;
 	}
 
 	@Override
 	public long acceptWay(ReaderWay way) {
-		return footFlagEncoder.acceptWay(way);
+		return 0;
 	}
 
 	@Override
 	public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
-		return footFlagEncoder.handleWayTags(way, allowed, relationFlags);
+		return 0;
 	}
 
 	long getTime(long flags) {
