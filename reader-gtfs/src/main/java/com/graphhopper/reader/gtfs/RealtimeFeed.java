@@ -31,7 +31,10 @@ import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphExtension;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
@@ -40,25 +43,11 @@ import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.NO_DATA;
@@ -110,9 +99,8 @@ public class RealtimeFeed {
         final IntLongHashMap delaysForAlightEdges = new IntLongHashMap();
         final LinkedList<VirtualEdgeIteratorState> additionalEdges = new LinkedList<>();
         final Graph overlayGraph = new Graph() {
-            int nNodes = 0;
-            EncodingManager encodingManager = graphHopperStorage.getEncodingManager();
             int firstEdge = graphHopperStorage.getAllEdges().length();
+            EncodingManager encodingManager = graphHopperStorage.getEncodingManager();
             final NodeAccess nodeAccess = new NodeAccess() {
                 IntIntHashMap additionalNodeFields = new IntIntHashMap();
 
@@ -181,6 +169,7 @@ public class RealtimeFeed {
                     return 0;
                 }
             };
+
             @Override
             public Graph getBaseGraph() {
                 return graphHopperStorage;
@@ -188,7 +177,10 @@ public class RealtimeFeed {
 
             @Override
             public int getNodes() {
-                return graphHopperStorage.getNodes() + nNodes;
+                return IntStream.concat(
+                        IntStream.of(graphHopperStorage.getNodes() - 1),
+                        additionalEdges.stream().flatMapToInt(edge -> IntStream.of(edge.getBaseNode(), edge.getAdjNode())))
+                        .max().getAsInt() + 1;
             }
 
             @Override
@@ -348,8 +340,8 @@ public class RealtimeFeed {
                                 });
                         GtfsReader.TripWithStopTimes tripWithStopTimes = toTripWithStopTimes(feed, tripUpdate);
                         tripWithStopTimes.stopTimes.forEach(stopTime -> {
-                            if (stopTime.stop_sequence > leaveEdges.length-1) {
-                                logger.warn("Stop sequence number too high {} vs {}",stopTime.stop_sequence, leaveEdges.length);
+                            if (stopTime.stop_sequence > leaveEdges.length - 1) {
+                                logger.warn("Stop sequence number too high {} vs {}", stopTime.stop_sequence, leaveEdges.length);
                                 return;
                             }
                             final StopTime originalStopTime = feed.stop_times.get(new Fun.Tuple2(tripUpdate.getTrip().getTripId(), stopTime.stop_sequence));
@@ -450,8 +442,8 @@ public class RealtimeFeed {
         ) + 1;
         stopTimeUpdateListWithSentinel.add(GtfsRealtime.TripUpdate.StopTimeUpdate.newBuilder().setStopSequence(stopSequenceCeiling).setScheduleRelationship(NO_DATA).build());
         for (GtfsRealtime.TripUpdate.StopTimeUpdate stopTimeUpdate : stopTimeUpdateListWithSentinel) {
-            int nextStopSequence = stopTimes.isEmpty() ? 1 : stopTimes.get(stopTimes.size()-1).stop_sequence+1;
-            for (int i=nextStopSequence; i<stopTimeUpdate.getStopSequence(); i++) {
+            int nextStopSequence = stopTimes.isEmpty() ? 1 : stopTimes.get(stopTimes.size() - 1).stop_sequence + 1;
+            for (int i = nextStopSequence; i < stopTimeUpdate.getStopSequence(); i++) {
                 StopTime previousOriginalStopTime = feed.stop_times.get(new Fun.Tuple2(tripUpdate.getTrip().getTripId(), i));
                 if (previousOriginalStopTime == null) {
                     continue; // This can and does happen. Stop sequence numbers can be left out.
@@ -558,7 +550,7 @@ public class RealtimeFeed {
     public StopTime getStopTime(GTFSFeed staticFeed, GtfsRealtime.TripDescriptor tripDescriptor, Label.Transition t, Instant boardTime, int stopSequence) {
         StopTime stopTime = staticFeed.stop_times.get(new Fun.Tuple2<>(tripDescriptor.getTripId(), stopSequence));
         if (stopTime == null) {
-            return getTripUpdate(staticFeed, tripDescriptor, t, boardTime).get().stopTimes.get(stopSequence-1);
+            return getTripUpdate(staticFeed, tripDescriptor, t, boardTime).get().stopTimes.get(stopSequence - 1);
         } else {
             return stopTime;
         }

@@ -15,7 +15,7 @@ import java.io.File;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class I18nResourceIT {
+public class I18nResourceTest {
     private static final String DIR = "./target/andorra-gh/";
 
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();

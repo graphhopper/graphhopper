@@ -1,7 +1,7 @@
 # Elevation
 
 Per default elevation is disabled. But you can easily enable it e.g. via
-`graph.elevation.provider=cgiar`. Or use other possibilities `srtm`, `gmted`
+`graph.elevation.provider: cgiar`. Or use other possibilities `srtm`, `gmted`
 or `multi` (combined cgiar and gmted).
 
 Then GraphHopper will automatically download the necessary data for the area and include elevation 
@@ -9,7 +9,7 @@ for all vehicles - making also the distances a bit more precise.
 
 The default cache directory `/tmp/<provider name>` will be used. For large areas it is highly recommended to 
 use a SSD disc, thus you need to specify the cache directory:
-`graph.elevation.cache_dir=/myssd/ele_cache/`
+`graph.elevation.cache_dir: /myssd/ele_cache/`
 
 ## What to download and where to store it? 
 
@@ -23,7 +23,7 @@ where the last one is only accessibly if you specify the
 [full zip file](http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff/srtm_01_02.zip)
 
 If the geographical area is small and you need a faster import you can change the default MMAP setting to:
-`graph.elevation.dataaccess=RAM_STORE`
+`graph.elevation.dataaccess: RAM_STORE`
 
 ## CGIAR vs. SRTM
 

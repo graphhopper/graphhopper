@@ -102,16 +102,20 @@ public class WebHelper {
     }
 
     public static String encodePolyline(PointList poly, boolean includeElevation) {
+        return encodePolyline(poly, includeElevation, 1e5);
+    }
+
+    public static String encodePolyline(PointList poly, boolean includeElevation, double precision) {
         StringBuilder sb = new StringBuilder();
         int size = poly.getSize();
         int prevLat = 0;
         int prevLon = 0;
         int prevEle = 0;
         for (int i = 0; i < size; i++) {
-            int num = (int) Math.floor(poly.getLatitude(i) * 1e5);
+            int num = (int) Math.floor(poly.getLatitude(i) * precision);
             encodeNumber(sb, num - prevLat);
             prevLat = num;
-            num = (int) Math.floor(poly.getLongitude(i) * 1e5);
+            num = (int) Math.floor(poly.getLongitude(i) * precision);
             encodeNumber(sb, num - prevLon);
             prevLon = num;
             if (includeElevation) {

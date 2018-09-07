@@ -36,7 +36,7 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class RouteResourceWithEleIT {
+public class RouteResourceWithEleTest {
     private static final String dir = "./target/monaco-gh/";
 
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();

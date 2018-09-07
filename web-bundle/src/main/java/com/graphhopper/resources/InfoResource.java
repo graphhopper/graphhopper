@@ -1,6 +1,6 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
  *  GraphHopper GmbH licenses this file to you under the Apache License,
@@ -65,7 +65,8 @@ public class InfoResource {
     @GET
     public Info getInfo() {
         final Info info = new Info();
-        info.bbox = storage.getBounds();
+        // use bbox always without elevation (for backward compatibility)
+        info.bbox = new BBox(storage.getBounds().minLon, storage.getBounds().maxLon, storage.getBounds().minLat, storage.getBounds().maxLat);
         info.supported_vehicles = storage.getEncodingManager().toString().split(",");
         for (String v : info.supported_vehicles) {
             Info.PerVehicle perVehicleJson = new Info.PerVehicle();

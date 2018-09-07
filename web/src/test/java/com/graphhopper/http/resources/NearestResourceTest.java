@@ -36,7 +36,7 @@ import static org.junit.Assert.assertThat;
 /**
  * @author svantulden
  */
-public class NearestResourceIT {
+public class NearestResourceTest {
     private static final String dir = "./target/andorra-gh/";
 
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();

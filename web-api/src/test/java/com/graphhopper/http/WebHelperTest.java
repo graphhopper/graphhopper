@@ -74,4 +74,9 @@ public class WebHelperTest {
         assertEquals("_p~iF~ps|Uo}@_ulLnnqC_anF_mqNvxq`@?", WebHelper.encodePolyline(
                 Helper.createPointList3D(38.5, -120.2, 10, 40.7, -120.95, 1234, 43.252, -126.453, 1234)));
     }
+
+    @Test
+    public void testEncode1e6() throws Exception {
+        assertEquals("ohdfzAgt}bVoEL", WebHelper.encodePolyline(Helper.createPointList(47.827608, 12.123476, 47.827712, 12.123469), false, 1e6));
+    }
 }

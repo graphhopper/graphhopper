@@ -23,16 +23,13 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
-import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class PtFlagEncoder extends AbstractFlagEncoder {
 
-    private final FootFlagEncoder footFlagEncoder;
     private IntEncodedValue timeEnc;
     private IntEncodedValue transfersEnc;
     private IntEncodedValue validityIdEnc;
@@ -40,26 +37,10 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
 
     public PtFlagEncoder() {
         super(0, 1, 0);
-
-        // TODO is this true?
-        // Use the foot flag encoder only as a delegate to filter by OSM tags, not to encode flags
-        footFlagEncoder = new FootFlagEncoder();
-        // Do this as otherwise 'acceptWay' returns 0 even though it wants to accept. Basically, I have to tell it what 'true' means.
-        footFlagEncoder.defineRelationBits(1, 0);
     }
 
     @Override
     public void createEncodedValues(List<EncodedValue> list, String prefix, int index) {
-        // initialization of internal FootFlagEncoder
-        // TODO is the bit position important to be identical to PtFlagEncoder bits? E.g. for the access bits?
-        footFlagEncoder.setEncodedValueLookup(encodedValueLookup);
-        List<EncodedValue> tmpList = new ArrayList<>();
-        footFlagEncoder.createEncodedValues(tmpList, "foot.", index);
-        EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
-        for (EncodedValue ev : tmpList) {
-            ev.init(config);
-        }
-
         // do we really need 2 bits for pt.access?
         super.createEncodedValues(list, prefix, index);
 
@@ -71,17 +52,17 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
-        return footFlagEncoder.handleRelationTags(oldRelationFlags, relation);
+        return oldRelationFlags;
     }
 
     @Override
     public long acceptWay(ReaderWay way) {
-        return footFlagEncoder.acceptWay(way);
+        return 0;
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
-        return footFlagEncoder.handleWayTags(edgeFlags, way, allowed, relationFlags);
+        return edgeFlags;
     }
 
     public IntEncodedValue getTimeEnc() {
