@@ -39,7 +39,7 @@ import java.util.Set;
 import static org.junit.Assert.*;
 
 public class NodeBasedNodeContractorTest {
-    // TODO NOW integrate this into CHGraphImpl somehow
+    // TODO integrate this into CHGraphImpl somehow
     public final static BooleanEncodedValue SC_ACCESS = new BooleanEncodedValue("sc_access", true);
 
     static {

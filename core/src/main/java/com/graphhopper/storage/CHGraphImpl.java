@@ -449,7 +449,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public boolean get(BooleanEncodedValue property) {
-            // TODO NOW assert equality of "access boolean encoded value" that is specifically created for CHGraph to make it possible we can use other BooleanEncodedValue objects for CH too!
+            // TODO assert equality of "access boolean encoded value" that is specifically created for CHGraph to make it possible we can use other BooleanEncodedValue objects for CH too!
             if (isShortcut())
                 return (getDirectFlags().ints[0] & (reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir())) != 0;
 
@@ -554,7 +554,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public boolean get(BooleanEncodedValue property) {
-            // TODO NOW assert equality of "access boolean encoded value" that is specifically created for CHGraph!
+            // TODO assert equality of "access boolean encoded value" that is specifically created for CHGraph!
             if (isShortcut())
                 return (getDirectFlags().ints[0] & (reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir())) != 0;
 

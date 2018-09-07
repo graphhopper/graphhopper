@@ -215,10 +215,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
         registerNewEncodedValue.add(speedEncoder = new DecimalEncodedValue(prefix + "average_speed", speedBits, 0, speedFactor, speedTwoDirections));
         registerNewEncodedValue.add(unpavedEncoder = new BooleanEncodedValue(prefix + "paved", false));
-
         registerNewEncodedValue.add(wayTypeEncoder = new IntEncodedValue(prefix + "waytype", 2, 0, false));
-
-        // TODO NOW max == 7
         registerNewEncodedValue.add(priorityWayEncoder = new DecimalEncodedValue(prefix + "priority", 3, 0, 1.0 / PriorityCode.BEST.getValue(), false));
     }
 

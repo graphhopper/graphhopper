@@ -146,10 +146,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
         // larger value required - ferries are faster than pedestrians
-        // TODO NOW Max == 7
         registerNewEncodedValue.add(speedEncoder = new DecimalEncodedValue(prefix + "average_speed", speedBits, MEAN_SPEED, speedFactor, false));
-
-        // TODO NOW Max == 7
         registerNewEncodedValue.add(priorityWayEncoder = new DecimalEncodedValue(prefix + "priority", 3, 0, 1.0 / PriorityCode.BEST.getValue(), false));
     }
 

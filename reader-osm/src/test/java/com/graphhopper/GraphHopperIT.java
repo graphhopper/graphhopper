@@ -661,7 +661,6 @@ public class GraphHopperIT {
                 .setVehicle(vehicle).setWeighting(weightCalcStr));
         PathWrapper arsp = rsp.getBest( );
         // Without interpolation: 356.5
-        // TODO NOW is changed edge orientation the only reason of this change? before it was 351.4, also pointList.getEle(0) was 17
         assertEquals(350.9, arsp.getDistance(), .1);
         PointList pointList = arsp.getPoints();
         assertEquals(6, pointList.getSize());

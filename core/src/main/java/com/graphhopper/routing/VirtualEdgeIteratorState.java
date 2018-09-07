@@ -281,7 +281,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     public EdgeIteratorState detach(boolean reverse) {
         if (reverse) {
             // update properties of reverse edge
-            // TODO NOW use copy to include wayGeometry changes too
+            // TODO copy wayGeometry too
             reverseEdge.setFlags(getFlags());
             reverseEdge.setName(getName());
             reverseEdge.setDistance(getDistance());
@@ -299,7 +299,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
 
     @Override
     public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState fromEdge) {
-        throw new RuntimeException("TODO NOW implement");
+        throw new RuntimeException("Not supported.");
     }
 
     @Override
