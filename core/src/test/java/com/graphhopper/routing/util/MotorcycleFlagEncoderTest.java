@@ -138,44 +138,6 @@ public class MotorcycleFlagEncoderTest {
     }
 
     @Test
-    public void testRoundabout() {
-        BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
-        IntsRef edgeFlags = em.createEdgeFlags();
-        accessEnc.setBool(false, edgeFlags, true);
-        accessEnc.setBool(true, edgeFlags, true);
-        roundaboutEnc.setBool(false, edgeFlags, true);
-        assertTrue(roundaboutEnc.getBool(false, edgeFlags));
-        assertTrue(accessEnc.getBool(false, edgeFlags));
-        assertTrue(accessEnc.getBool(true, edgeFlags));
-
-        roundaboutEnc.setBool(false, edgeFlags, false);
-        assertFalse(roundaboutEnc.getBool(false, edgeFlags));
-        assertTrue(accessEnc.getBool(false, edgeFlags));
-        assertTrue(accessEnc.getBool(true, edgeFlags));
-
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "motorway");
-        edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way, encoder.acceptBit, 0);
-        assertTrue(accessEnc.getBool(false, edgeFlags));
-        assertTrue(accessEnc.getBool(true, edgeFlags));
-        assertFalse(roundaboutEnc.getBool(false, edgeFlags));
-
-        way.setTag("junction", "roundabout");
-        edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way, encoder.acceptBit, 0);
-        assertTrue(accessEnc.getBool(false, edgeFlags));
-        assertFalse(accessEnc.getBool(true, edgeFlags));
-        assertTrue(roundaboutEnc.getBool(false, edgeFlags));
-
-        way.clearTags();
-        way.setTag("highway", "motorway");
-        way.setTag("junction", "circular");
-        edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way, encoder.acceptBit, 0);
-        assertTrue(accessEnc.getBool(false, edgeFlags));
-        assertFalse(accessEnc.getBool(true, edgeFlags));
-        assertTrue(roundaboutEnc.getBool(false, edgeFlags));
-    }
-
-    @Test
     public void testSetSpeed0_issue367() {
         IntsRef edgeFlags = em.createEdgeFlags();
         accessEnc.setBool(false, edgeFlags, true);

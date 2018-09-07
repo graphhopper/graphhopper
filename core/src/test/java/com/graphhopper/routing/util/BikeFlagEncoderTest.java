@@ -289,18 +289,6 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("tracktype", "grade2");
         wayType = getWayTypeFromFlags(way);
         assertEquals("get off the bike, unpaved", wayType);
-
-        way.clearTags();
-        way.setTag("junction", "roundabout");
-        way.setTag("highway", "tertiary");
-        IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.acceptWay(way), 0);
-        assertTrue(roundaboutEnc.getBool(false, flags));
-
-        way.clearTags();
-        way.setTag("junction", "circular");
-        way.setTag("highway", "tertiary");
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.acceptWay(way), 0);
-        assertTrue(roundaboutEnc.getBool(false, flags));
     }
 
     @Test

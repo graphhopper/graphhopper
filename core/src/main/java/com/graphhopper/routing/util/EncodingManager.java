@@ -46,6 +46,7 @@ public class EncodingManager implements EncodedValueLookup {
     private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via graph.bytes_for_flags: 8";
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
     private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
+    private final Map<EncodedValue, OSMTagParser> sharedEncodedValueMap = new LinkedHashMap<>();
     private final int bitsForEdgeFlags;
     private final int bitsForTurnFlags = 8 * 4;
     private int nextNodeBit = 0;
@@ -98,7 +99,19 @@ public class EncodingManager implements EncodedValueLookup {
 
         this.bitsForEdgeFlags = bytesForEdgeFlags * 8;
         this.config = new EncodedValue.InitializerConfig();
-        addEncodedValue(new BooleanEncodedValue("roundabout", false));
+        final BooleanEncodedValue roundaboutEnc = new BooleanEncodedValue("roundabout", false);
+        sharedEncodedValueMap.put(roundaboutEnc, new OSMTagParser() {
+            @Override
+            public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
+                boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
+                if (isRoundabout)
+                    roundaboutEnc.setBool(false, edgeFlags, true);
+                return edgeFlags;
+            }
+        });
+        for (EncodedValue ev : sharedEncodedValueMap.keySet()) {
+            addEncodedValue(ev);
+        }
         for (FlagEncoder flagEncoder : flagEncoders) {
             registerEncoder((AbstractFlagEncoder) flagEncoder);
         }
@@ -276,6 +289,9 @@ public class EncodingManager implements EncodedValueLookup {
      */
     public IntsRef handleWayTags(ReaderWay way, long includeWay, long relationFlags) {
         IntsRef edgeFlags = createEdgeFlags();
+        for (OSMTagParser parser : sharedEncodedValueMap.values()) {
+            parser.handleWayTags(edgeFlags, way, includeWay, relationFlags);
+        }
         for (AbstractFlagEncoder encoder : edgeEncoders) {
             encoder.handleWayTags(edgeFlags, way, includeWay, relationFlags & encoder.getRelBitMask());
         }
@@ -462,5 +478,10 @@ public class EncodingManager implements EncodedValueLookup {
      */
     public static final String getKey(FlagEncoder encoder, String str) {
         return encoder.toString() + "." + str;
+    }
+
+    // for now keep private as public IntsRef is too ugly and relationFlags is unclear
+    interface OSMTagParser {
+        IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags);
     }
 }

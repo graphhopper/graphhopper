@@ -41,7 +41,6 @@ import static org.junit.Assert.*;
 public class FootFlagEncoderTest {
     private final EncodingManager encodingManager = new EncodingManager("car,bike,foot");
     private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
-    private final BooleanEncodedValue roundaboutEnc = encodingManager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
     private final DecimalEncodedValue footAvSpeedEnc = footEncoder.getAverageSpeedEnc();
     private final BooleanEncodedValue footAccessEnc = footEncoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnc = encodingManager.getEncoder("car").getAverageSpeedEnc();
@@ -384,23 +383,6 @@ public class FootFlagEncoderTest {
     }
 
     @Test
-    public void handleWayTagsRoundabout() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("junction", "roundabout");
-        way.setTag("highway", "tertiary");
-        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.acceptWay(way), 0);
-        assertTrue(roundaboutEnc.getBool(false, flags));
-    }
-
-    @Test
-    public void handleWayTagsCircularJunction() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("junction", "circular");
-        way.setTag("highway", "tertiary");
-        IntsRef flags = footEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, footEncoder.acceptWay(way), 0);
-        assertTrue(roundaboutEnc.getBool(false, flags));
-    }
-
     public void testFord() {
         // by default deny access through fords!
         ReaderNode node = new ReaderNode(1, -1, -1);

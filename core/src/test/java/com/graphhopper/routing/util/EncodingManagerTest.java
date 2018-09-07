@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.BitUtil;
 import org.junit.Rule;
@@ -268,5 +269,34 @@ public class EncodingManagerTest {
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
         assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+    }
+
+    @Test
+    public void testSharedEncodedValues() {
+        EncodingManager manager = new EncodingManager("car,foot,bike,motorcycle,mtb", 8);
+
+        for (FlagEncoder tmp : manager.fetchEdgeEncoders()) {
+            AbstractFlagEncoder encoder = (AbstractFlagEncoder) tmp;
+            BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+            BooleanEncodedValue roundaboutEnc = manager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
+
+            ReaderWay way = new ReaderWay(1);
+            way.setTag("highway", "primary");
+            way.setTag("junction", "roundabout");
+            IntsRef edgeFlags = manager.handleWayTags(way, encoder.acceptBit, 0);
+            assertTrue(accessEnc.getBool(false, edgeFlags));
+            if (!encoder.toString().equals("foot"))
+                assertFalse(encoder.toString(), accessEnc.getBool(true, edgeFlags));
+            assertTrue(encoder.toString(), roundaboutEnc.getBool(false, edgeFlags));
+
+            way.clearTags();
+            way.setTag("highway", "tertiary");
+            way.setTag("junction", "circular");
+            edgeFlags = manager.handleWayTags(way, encoder.acceptBit, 0);
+            assertTrue(accessEnc.getBool(false, edgeFlags));
+            if (!encoder.toString().equals("foot"))
+                assertFalse(encoder.toString(), accessEnc.getBool(true, edgeFlags));
+            assertTrue(encoder.toString(), roundaboutEnc.getBool(false, edgeFlags));
+        }
     }
 }

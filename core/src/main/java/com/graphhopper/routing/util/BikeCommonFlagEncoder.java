@@ -349,11 +349,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
             handleSpeed(edgeFlags, way, wayTypeSpeed);
             handleBikeRelated(edgeFlags, way, relationFlags > UNCHANGED.getValue());
-
-            boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
-            if (isRoundabout)
-                roundaboutEnc.setBool(false, edgeFlags, true);
-
         } else {
             double ferrySpeed = getFerrySpeed(way);
             handleSpeed(edgeFlags, way, ferrySpeed);
@@ -641,7 +636,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 || way.hasTag("vehicle:forward")
                 || way.hasTag("bicycle:forward");
 
-        if ((isOneway || way.hasTag("junction", "roundabout"))
+        if ((isOneway || roundaboutEnc.getBool(false, edgeFlags))
                 && !way.hasTag("oneway:bicycle", "no")
                 && !way.hasTag("bicycle:backward")
                 && !way.hasTag("cycleway", oppositeLanes)

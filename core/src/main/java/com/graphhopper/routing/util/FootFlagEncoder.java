@@ -294,11 +294,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             }
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
-
-            boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
-            if (isRoundabout)
-                roundaboutEnc.setBool(false, edgeFlags, true);
-
         } else {
             double ferrySpeed = getFerrySpeed(way);
             setSpeed(false, edgeFlags, ferrySpeed);

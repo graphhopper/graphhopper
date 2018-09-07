@@ -251,10 +251,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             setSpeed(false, edgeFlags, speed);
             setSpeed(true, edgeFlags, speed);
 
-            boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
-            if (isRoundabout)
-                roundaboutEnc.setBool(false, edgeFlags, true);
-
+            boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
             if (isOneway(way) || isRoundabout) {
                 if (isForwardOneway(way))
                     accessEnc.setBool(false, edgeFlags, true);

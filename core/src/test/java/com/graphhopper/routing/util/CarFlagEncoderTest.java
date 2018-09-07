@@ -401,20 +401,6 @@ public class CarFlagEncoderTest {
         assertTrue(accessEnc.getBool(false, edgeFlags));
         assertTrue(accessEnc.getBool(true, edgeFlags));
         assertFalse(roundaboutEnc.getBool(false, edgeFlags));
-
-        way.setTag("junction", "roundabout");
-        edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way, encoder.acceptBit, 0);
-        assertTrue(accessEnc.getBool(false, edgeFlags));
-        assertFalse(accessEnc.getBool(true, edgeFlags));
-        assertTrue(roundaboutEnc.getBool(false, edgeFlags));
-
-        way.clearTags();
-        way.setTag("highway", "motorway");
-        way.setTag("junction", "circular");
-        edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way, encoder.acceptBit, 0);
-        assertTrue(accessEnc.getBool(false, edgeFlags));
-        assertFalse(accessEnc.getBool(true, edgeFlags));
-        assertTrue(roundaboutEnc.getBool(false, edgeFlags));
     }
 
     @Test

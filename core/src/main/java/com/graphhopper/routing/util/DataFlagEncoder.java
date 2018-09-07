@@ -371,11 +371,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             }
             transportModeEncoder.setInt(false, edgeFlags, tmValue);
 
-            // ROUNDABOUT
-            boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
-            if (isRoundabout)
-                roundaboutEnc.setBool(false, edgeFlags, true);
-
+            boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
             // ONEWAY (currently car only)
             boolean isOneway = way.hasTag("oneway", oneways)
                     || way.hasTag("vehicle:backward")
@@ -616,11 +612,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             res[integ] = e.getValue();
         }
         return res;
-    }
-
-    public boolean isRoundabout(EdgeIteratorState edge) {
-        // use direct call instead of isBool
-        return roundaboutEnc.getBool(false, edge.getFlags());
     }
 
     public int getAccessType(String accessStr) {
