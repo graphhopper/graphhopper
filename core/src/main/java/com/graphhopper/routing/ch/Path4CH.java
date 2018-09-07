@@ -92,7 +92,7 @@ public class Path4CH extends PathBidirRef {
                 expandEdge(sk1, !reverse);
             }
         }
-    } 
+    }
 
     private CHEdgeIteratorState getEdge(int edgeId, int adjNode) {
         return (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(edgeId, adjNode);

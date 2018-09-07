@@ -31,6 +31,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -659,6 +660,7 @@ public class CHTurnCostTest {
     }
 
     @Test
+    @Ignore("not sure how to handle zero distance loops yet, c.f. #1355")
     public void testFindPath_compareWithDijkstra_zeroWeightLoops() {
         graph.edge(5, 3, 21.329000, false);
         graph.edge(4, 5, 29.126000, false);
