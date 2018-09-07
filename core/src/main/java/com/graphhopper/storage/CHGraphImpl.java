@@ -302,9 +302,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         if (weight > MAX_WEIGHT)
             weightLong = MAX_WEIGHT_LONG;
         else
-            // todo: rounding instead of truncating prevents small deviations between ch and dijkstra
-//            weightLong =  (Math.round(weight * WEIGHT_FACTOR)) << 2;
-            weightLong = ((long) (weight * WEIGHT_FACTOR)) << 2;
+            weightLong =  (Math.round(weight * WEIGHT_FACTOR)) << 2;
 
         long accessFlags = edge.getDirectFlags() & scDirMask;
         edge.setFlags(weightLong | accessFlags);
