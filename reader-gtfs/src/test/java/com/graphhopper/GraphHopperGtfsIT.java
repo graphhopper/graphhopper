@@ -220,7 +220,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,23,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 1, 23, 0).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.PROFILE_QUERY, true);
         ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
         ghRequest.getHints().put(Parameters.PT.LIMIT_SOLUTIONS, 21);

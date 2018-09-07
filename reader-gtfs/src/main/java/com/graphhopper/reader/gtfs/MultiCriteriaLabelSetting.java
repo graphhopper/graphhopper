@@ -207,7 +207,6 @@ class MultiCriteriaLabelSetting {
         return true;
     }
 
-
     void removeDominated(Label me, Collection<Label> sptEntries) {
         for (Iterator<Label> iterator = sptEntries.iterator(); iterator.hasNext(); ) {
             Label sptEntry = iterator.next();
