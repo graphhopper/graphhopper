@@ -86,8 +86,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         };
 
         this.baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, extendedStorage);
-        // todo: do we need to cover the case where we use node based CH for some weightings and edge based CH for
-        // others ?
         for (Weighting w : chWeightings) {
             chGraphs.add(new CHGraphImpl(w, dir, this.baseGraph, withEdgeBasedCH));
         }

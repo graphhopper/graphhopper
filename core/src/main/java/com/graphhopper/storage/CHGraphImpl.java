@@ -302,7 +302,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         if (weight > MAX_WEIGHT)
             weightLong = MAX_WEIGHT_LONG;
         else
-            weightLong =  (Math.round(weight * WEIGHT_FACTOR)) << 2;
+            weightLong = (Math.round(weight * WEIGHT_FACTOR)) << 2;
 
         long accessFlags = edge.getDirectFlags() & scDirMask;
         edge.setFlags(weightLong | accessFlags);
@@ -360,8 +360,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         S_SKIP_EDGE1 = ea.E_FLAGS + 4;
         S_SKIP_EDGE2 = S_SKIP_EDGE1 + 4;
         if (forEdgeBasedTraversal) {
-            // todo: possible optimization: since the number of turn restrictions on each node is limited we can
-            // store both first/last orig into one int or even into E_FLAGS (?)
             S_ORIG_FIRST = S_SKIP_EDGE2 + 4;
             S_ORIG_LAST = S_ORIG_FIRST + 4;
             shortcutEntryBytes = S_ORIG_LAST + 4;

@@ -55,8 +55,6 @@ import static org.junit.Assert.assertTrue;
 public class CHTurnCostTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHTurnCostTest.class);
     private int maxCost;
-    // todo: maybe support other encoders ? especially ones that differentiate weights depending on direction, like
-    // bike2 and motorcycle (need to set some fwd/bwd speeds in some tests to test this)
     private CarFlagEncoder encoder;
     private Weighting weighting;
     private GraphHopperStorage graph;
@@ -761,9 +759,7 @@ public class CHTurnCostTest {
         Path dijkstraPath = findPathUsingDijkstra(from, to);
         RoutingAlgorithm chAlgo = factory.createAlgo(chGraph, AlgorithmOptions.start().build());
         Path chPath = chAlgo.calcPath(from, to);
-        // todo: for increased precision some tests fail. this is because the weight is truncated, not rounded
-        // when storing shortcut edges. should we fix this ?
-        boolean algosAgree = Math.abs(dijkstraPath.getWeight() - chPath.getWeight()) < 1.e-2;
+        boolean algosAgree = Math.abs(dijkstraPath.getWeight() - chPath.getWeight()) < 1.e-6;
         if (!algosAgree) {
             System.out.println("Graph that produced error:");
             GHUtility.printGraphForUnitTest(graph, encoder);
