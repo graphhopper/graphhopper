@@ -39,12 +39,19 @@ a Routing API via GraphHopper, a Route Optimization API via [jsprit](http://jspr
 and an address search via [Photon](https://github.com/komoot/photon). Additionally, map tiles from various providers are used 
 where the default is [Omniscale](http://omniscale.com/). All of these are available for free, via encrypted connections and from German servers for a nice and private route planning experience!
 
+## For Public Transit
+
+[Get started](./reader-gtfs/README.md#quick-start)
+
+[![Realtime Demo](https://www.graphhopper.com/wp-content/uploads/2018/05/Screen-Shot-2018-05-16-at-21.23.25-600x538.png)](./reader-gtfs/README.md#quick-start)
 
 ## For Mobile Apps
 
 There are subprojects to make GraphHopper working offline
-on [Android](https://github.com/graphhopper/graphhopper/tree/master/android)
+on [Android](./android/README.md)
 and [iOS](http://github.com/graphhopper/graphhopper-ios)
+
+[![simple routing](https://www.graphhopper.com/wp-content/uploads/2016/10/android-demo-screenshot-2.png)](./android/README.md)
 
 ## For Analysis
 
