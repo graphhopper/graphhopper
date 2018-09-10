@@ -978,7 +978,7 @@ public abstract class AbstractGraphStorageTester {
     }
 
     @Test
-    public void test8BytesFlags() {
+    public void test8AndMoreBytesForEdgeFlags() {
         Directory dir = new RAMDirectory();
         List<FlagEncoder> list = new ArrayList<>();
         list.add(new TmpCarFlagEncoder(29, 0.001, 0) {
@@ -1022,6 +1022,26 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(44.123, edgeIter.getReverse(avSpeed1Enc), 1e-3);
         assertFalse(edgeIter.get(access1Enc));
         assertTrue(edgeIter.getReverse(access1Enc));
+
+        list.clear();
+        list.add(new TmpCarFlagEncoder(29, 0.001, 0) {
+            @Override
+            public String toString() {
+                return "car0";
+            }
+        });
+        list.add(new TmpCarFlagEncoder(29, 0.001, 0));
+        list.add(new TmpCarFlagEncoder(30, 0.001, 0){
+            @Override
+            public String toString() {
+                return "car2";
+            }
+        });
+        manager = new EncodingManager(list, 20);
+        graph = new GraphHopperStorage(new RAMDirectory(), manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
+        edgeIter = graph.edge(0, 1).set(access0Enc, true).setReverse(access0Enc, false);
+        assertTrue(edgeIter.get(access0Enc));
+        assertFalse(edgeIter.getReverse(access0Enc));
     }
 
     @Test

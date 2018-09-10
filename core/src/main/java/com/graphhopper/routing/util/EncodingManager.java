@@ -94,8 +94,8 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public EncodingManager(List<? extends FlagEncoder> flagEncoders, int bytesForEdgeFlags) {
-        if (bytesForEdgeFlags != 4 && bytesForEdgeFlags != 8)
-            throw new IllegalStateException("For 'edge flags' currently only 4 or 8 bytes supported");
+        if (bytesForEdgeFlags <= 0 || (bytesForEdgeFlags / 4) * 4 != bytesForEdgeFlags)
+            throw new IllegalStateException("For 'edge flags' only a multiple of 4 is supported");
 
         this.bitsForEdgeFlags = bytesForEdgeFlags * 8;
         this.config = new EncodedValue.InitializerConfig();
@@ -230,7 +230,6 @@ public class EncodingManager implements EncodedValueLookup {
 
     private void addEncodedValue(EncodedValue ev) {
         ev.init(config);
-//            System.out.println(ev.getName() + " " + config.getRequiredBits());
         if (config.getRequiredBits() > getBytesForFlags() * 8)
             throw new IllegalArgumentException(String.format(Locale.ROOT, ERR + "(Attempt to add EncodedValue " + ev.getName() + ") ", config.getRequiredBits(), bitsForEdgeFlags, "edge") + WAY_ERR);
 
