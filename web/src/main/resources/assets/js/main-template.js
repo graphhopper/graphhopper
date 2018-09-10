@@ -183,7 +183,7 @@ $(document).ready(function (e) {
                 mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, urlParams.layer, urlParams.use_miles);
             });
 
-    var language_code = urlParams.locale.split('-', 1)[0];
+    var language_code = urlParams.locale && urlParams.locale.split('-', 1)[0];
     if (language_code != 'en') {
         // A few language codes are different in GraphHopper and Flatpickr.
         var flatpickr_locale;

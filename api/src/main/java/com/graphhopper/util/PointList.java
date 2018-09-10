@@ -29,9 +29,7 @@ import java.util.NoSuchElementException;
 
 /**
  * Slim list to store several points (without the need for a point object). Be aware that the PointList is closely
- * coupled with the {@link ShallowImmutablePointList} if you change it or extend it, you should make sure that your
- * changes play well with the ShallowImmutablePointList to avoid unexpected issues.
- * <p>
+ * coupled with the {@link ShallowImmutablePointList} both are not designed for inheritance (but final is not possible if we keep it simple).
  *
  * @author Peter Karich
  */
@@ -119,11 +117,6 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
 
         @Override
         public double getEle(int index) {
-            throw new UnsupportedOperationException("cannot access EMPTY PointList");
-        }
-
-        @Override
-        public LineString toLineString(boolean includeElevation) {
             throw new UnsupportedOperationException("cannot access EMPTY PointList");
         }
 
@@ -407,7 +400,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
 
     public LineString toLineString(boolean includeElevation) {
         GeometryFactory gf = new GeometryFactory();
-        Coordinate[] coordinates = new Coordinate[getSize()];
+        Coordinate[] coordinates = new Coordinate[getSize() == 1 ? 2 : getSize()];
         for (int i = 0; i < getSize(); i++) {
             coordinates[i] = includeElevation ?
                     new Coordinate(
@@ -418,6 +411,10 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
                             round6(getLongitude(i)),
                             round6(getLatitude(i)));
         }
+
+        // special case as just 1 point is not supported in the specification #1412
+        if (getSize() == 1)
+            coordinates[1] = coordinates[0];
         return gf.createLineString(coordinates);
     }
 
@@ -495,28 +492,34 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         if (from < 0 || end > getSize())
             throw new IllegalArgumentException("Illegal interval: " + from + ", " + end + ", size:" + getSize());
 
-        PointList copyPL = new PointList(end - from, is3D());
-        if (is3D())
-            for (int i = from; i < end; i++) {
-                copyPL.add(getLatitude(i), getLongitude(i), getElevation(i));
-            }
-        else
-            for (int i = from; i < end; i++) {
-                copyPL.add(getLatitude(i), getLongitude(i), Double.NaN);
-            }
 
+        PointList thisPL = this;
+        if (this instanceof ShallowImmutablePointList) {
+            ShallowImmutablePointList spl = (ShallowImmutablePointList) this;
+            thisPL = spl.wrappedPointList;
+            from = spl.fromOffset + from;
+            end = spl.fromOffset + end;
+        }
+
+        int len = end - from;
+        PointList copyPL = new PointList(len, is3D());
+        copyPL.size = len;
+        copyPL.isImmutable = isImmutable();
+        System.arraycopy(thisPL.latitudes, from, copyPL.latitudes, 0, len);
+        System.arraycopy(thisPL.longitudes, from, copyPL.longitudes, 0, len);
+        if (is3D())
+            System.arraycopy(thisPL.elevations, from, copyPL.elevations, 0, len);
         return copyPL;
     }
 
     /**
      * Create a shallow copy of this Pointlist from from to end, excluding end.
-     * <p>
-     * The <code>ensureConsistency</code> parameter makes this PointList immutable, so the shallow copy will stay
-     * consistent with this object. If you don't ensure the consistency it might happen that due to changes of this
-     * object, the shallow copy might contain incorrect or corrupt data.
+     *
+     * @param makeImmutable makes this PointList immutable. If you don't ensure the consistency it might happen that due to changes of this
+     *                      object, the shallow copy might contain incorrect or corrupt data.
      */
-    public PointList shallowCopy(final int from, final int end, boolean ensureConsistency) {
-        if (ensureConsistency)
+    public PointList shallowCopy(final int from, final int end, boolean makeImmutable) {
+        if (makeImmutable)
             this.makeImmutable();
         return new ShallowImmutablePointList(from, end, this);
     }

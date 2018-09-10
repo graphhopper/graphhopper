@@ -1,6 +1,6 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
  *  GraphHopper GmbH licenses this file to you under the Apache License,
@@ -44,11 +44,14 @@ public class I18NResource {
     public static class Response {
         public String locale;
         public Map<String, String> en;
-        @JsonProperty("default") public Map<String, String> defaultTr;
+        @JsonProperty("default")
+        public Map<String, String> defaultTr;
     }
 
     @GET
     public Response getFromHeader(@HeaderParam("Accept-Language") String acceptLang) {
+        if (acceptLang == null)
+            return get("");
         return get(acceptLang.split(",")[0]);
     }
 

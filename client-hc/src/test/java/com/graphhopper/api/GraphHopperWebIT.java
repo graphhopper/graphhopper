@@ -34,9 +34,8 @@ public class GraphHopperWebIT {
 
     @Before
     public void setUp() {
-        String key = System.getProperty("graphhopper.key", KEY);
-        gh.setKey(key);
-        ghMatrix.setKey(key);
+        gh.setKey(KEY);
+        ghMatrix.setKey(KEY);
     }
 
     @Test
@@ -56,7 +55,6 @@ public class GraphHopperWebIT {
         isBetween(240, 270, alt.getAscend());
         isBetween(180, 200, alt.getDescend());
         isBetween(1000, 1500, alt.getRouteWeight());
-
 
         // change vehicle
         res = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180).
@@ -168,7 +166,6 @@ public class GraphHopperWebIT {
         assertTrue("no erros found?", res.hasErrors());
         assertTrue(res.getErrors().get(0) instanceof PointNotFoundException);
     }
-
 
     @Test
     public void testOutOfBoundsException() {
@@ -331,5 +328,16 @@ public class GraphHopperWebIT {
         assertFalse(details.isEmpty());
         assertTrue((Double) details.get(0).getValue() > 20);
         assertTrue((Double) details.get(0).getValue() < 70);
+    }
+
+    @Test
+    public void testPointHints() {
+        GHRequest ghRequest = new GHRequest();
+        ghRequest.addPoint(new GHPoint(52.50977, 13.371971));
+        ghRequest.addPoint(new GHPoint(52.509842, 13.369761));
+
+        ghRequest.setPointHints(Arrays.asList("Ben-Gurion", ""));
+        GHResponse response = gh.route(ghRequest);
+        assertTrue(response.getBest().getDistance() + "m", response.getBest().getDistance() < 500);
     }
 }

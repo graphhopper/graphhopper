@@ -17,7 +17,6 @@
  */
 package com.graphhopper.util.shapes;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.graphhopper.util.NumHelper;
 import com.vividsolutions.jts.geom.Point;
 
@@ -48,14 +47,16 @@ public class GHPoint {
         return fromString(str, true);
     }
 
-    @JsonCreator
     public static GHPoint fromJson(double[] xy) {
         return new GHPoint(xy[1], xy[0]);
     }
 
     private static GHPoint fromString(String str, boolean lonLatOrder) {
         String[] fromStrs = str.split(",");
-        if (fromStrs.length == 2) {
+        if (fromStrs.length != 2)
+            throw new IllegalArgumentException("Cannot parse point '" + str + "'");
+
+        try {
             double fromLat = Double.parseDouble(fromStrs[0]);
             double fromLon = Double.parseDouble(fromStrs[1]);
             if (lonLatOrder) {
@@ -63,8 +64,8 @@ public class GHPoint {
             } else {
                 return new GHPoint(fromLat, fromLon);
             }
-        } else {
-            throw new IllegalArgumentException(str);
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Cannot parse point '" + str + "'");
         }
     }
 
@@ -93,8 +94,7 @@ public class GHPoint {
         if (obj == null)
             return false;
 
-        @SuppressWarnings("unchecked")
-        final GHPoint other = (GHPoint) obj;
+        @SuppressWarnings("unchecked") final GHPoint other = (GHPoint) obj;
         return NumHelper.equalsEps(lat, other.lat) && NumHelper.equalsEps(lon, other.lon);
     }
 

@@ -21,7 +21,9 @@ package com.graphhopper;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
@@ -29,7 +31,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.Parameters;
 import org.junit.AfterClass;
-import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -47,6 +49,7 @@ import java.util.stream.Stream;
 import static com.graphhopper.reader.gtfs.GtfsHelper.time;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class GraphHopperGtfsIT {
 
@@ -61,11 +64,14 @@ public class GraphHopperGtfsIT {
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
+        final CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
+        final FootFlagEncoder footFlagEncoder = new FootFlagEncoder();
+
+        EncodingManager encodingManager = new EncodingManager(Arrays.asList(carFlagEncoder, footFlagEncoder, ptFlagEncoder), 8);
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
         gtfsStorage = GraphHopperGtfs.createGtfsStorage();
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, false, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
-        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage, ptFlagEncoder);
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
+        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
                 .createWithoutRealtimeFeed();
     }
@@ -119,6 +125,7 @@ public class GraphHopperGtfsIT {
         );
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,7,44).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
+        ghRequest.getHints().put(Parameters.PT.BLOCKED_ROUTE_TYPES, 1); // Blocking trams shouldn't matter, this is a bus.
 
         GHResponse response = graphHopper.route(ghRequest);
 
@@ -126,7 +133,21 @@ public class GraphHopperGtfsIT {
         assertEquals("Expected travel time == scheduled arrival time", time(0, 5), response.getBest().getTime(), 0.1);
     }
 
+    @Test
+    public void testNoSolutionIfIDontLikeBusses() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,7,44).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.BLOCKED_ROUTE_TYPES, 8);
 
+        GHResponse response = graphHopper.route(ghRequest);
+
+        assertTrue("When I block busses, there is no solution", response.getAll().isEmpty());
+    }
 
     @Test
     public void testRoute1ArriveBy() {
@@ -177,6 +198,31 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.PROFILE_QUERY, true);
+        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
+        ghRequest.getHints().put(Parameters.PT.LIMIT_SOLUTIONS, 21);
+
+        GHResponse response = graphHopper.route(ghRequest);
+        List<LocalTime> actualDepartureTimes = response.getAll().stream()
+                .map(path -> LocalTime.from(((Trip.PtLeg) path.getLegs().get(0)).getDepartureTime().toInstant().atZone(zoneId)))
+                .collect(Collectors.toList());
+        List<LocalTime> expectedDepartureTimes = Stream.of(
+                "06:44", "07:14", "07:44", "08:14", "08:44", "08:54", "09:04", "09:14", "09:24", "09:34", "09:44", "09:54",
+                "10:04", "10:14", "10:24", "10:34", "10:44", "11:14", "11:44", "12:14", "12:44")
+                .map(LocalTime::parse)
+                .collect(Collectors.toList());
+        assertEquals(expectedDepartureTimes, actualDepartureTimes);
+    }
+
+    @Test
+    public void testRoute1ProfileOvernight() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,23,0).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.PROFILE_QUERY, true);
         ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
         ghRequest.getHints().put(Parameters.PT.LIMIT_SOLUTIONS, 21);
@@ -446,7 +492,7 @@ public class GraphHopperGtfsIT {
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         GHResponse route = graphHopper.route(ghRequest);
-        Assert.assertTrue(route.getAll().isEmpty());
+        assertTrue(route.getAll().isEmpty());
     }
 
     @Test
@@ -469,6 +515,43 @@ public class GraphHopperGtfsIT {
         assertEquals("Arrive at 7:20", LocalDateTime.parse("2007-01-01T07:20:00").atZone(zoneId).toInstant(), lastStop.plannedArrivalTime.toInstant());
     }
 
+    @Test
+    public void testCustomObjectiveFunction() {
+        GHRequest ghRequest = new GHRequest(
+                36.868446,-116.784582,  // BEATTY_AIRPORT stop
+                36.425288,-117.133162       // FUR_CREEK_RES stop
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,14,0,0).atZone(zoneId).toInstant());
 
+        GHResponse response = graphHopper.route(ghRequest);
+
+        PathWrapper solutionWithTransfer = response.getAll().get(0);
+        PathWrapper solutionWithoutTransfer = response.getAll().get(1);
+
+        Assume.assumeTrue("First solution has one transfer",solutionWithTransfer.getNumChanges() == 1);
+        Assume.assumeTrue("Second solution has no transfers", solutionWithoutTransfer.getNumChanges() == 0);
+        Assume.assumeTrue("With transfers is faster than without", solutionWithTransfer.getTime() < solutionWithoutTransfer.getTime());
+
+        // If one transfer is worth beta_transfers milliseconds of travel time savings
+        // to me, I will be indifferent when choosing between the two routes.
+        // Wiggle it by epsilon, and I should prefer one over the other.
+        double betaTransfers = solutionWithoutTransfer.getTime() - solutionWithTransfer.getTime();
+
+        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
+        // Well, not actually ignore them, but don't do multi-criteria search
+
+        ghRequest.getHints().put("beta_transfers", betaTransfers - 10);
+        response = graphHopper.route(ghRequest);
+
+        assertEquals("Get exactly one solution",1, response.getAll().size());
+        assertEquals("Prefer solution with transfers when I give the smaller beta", solutionWithTransfer.getTime(), response.getBest().getTime());
+
+        ghRequest.getHints().put("beta_transfers", betaTransfers + 10);
+
+        response = graphHopper.route(ghRequest);
+
+        assertEquals("Get exactly one solution",1, response.getAll().size());
+        assertEquals("Prefer solution without transfers when I give the higher beta", solutionWithoutTransfer.getTime(), response.getBest().getTime());
+    }
 
 }

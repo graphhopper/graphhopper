@@ -17,8 +17,6 @@
  */
 package com.graphhopper.util;
 
-import java.util.List;
-
 /**
  * This is a shallow copy of a PointList. This class can be used to create a memory efficient copy of a PointList.
  * You have to be aware, that if the wrapped PointList changes, the shallow copy will change as well. This can lead to
@@ -30,9 +28,9 @@ public final class ShallowImmutablePointList extends PointList {
 
     private final static String IMMUTABLE_ERR = "This class is immutable, you are not allowed to change it";
 
-    private final int fromOffset;
-    private final int toOffset;
-    private final PointList wrappedPointList;
+    final int fromOffset;
+    final int toOffset;
+    final PointList wrappedPointList;
 
     public ShallowImmutablePointList(int fromOffset, int toOffset, PointList wrappedPointList) {
         if (fromOffset > toOffset)

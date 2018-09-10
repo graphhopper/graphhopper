@@ -20,9 +20,12 @@ package com.graphhopper.resources;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
+import com.graphhopper.MultiException;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Constants;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
@@ -33,8 +36,12 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.util.Parameters.Routing.*;
 
@@ -51,13 +58,11 @@ public class RouteResource {
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
     private final GraphHopperAPI graphHopper;
-    private final EncodingManager encodingManager;
     private final Boolean hasElevation;
 
     @Inject
-    public RouteResource(GraphHopperAPI graphHopper, EncodingManager encodingManager, @Named("hasElevation") Boolean hasElevation) {
+    public RouteResource(GraphHopperAPI graphHopper, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
-        this.encodingManager = encodingManager;
         this.hasElevation = hasElevation;
     }
 
@@ -66,6 +71,7 @@ public class RouteResource {
     public Response doGet(
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
+            @Context ContainerRequestContext rc,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
             @QueryParam("point") List<GHPoint> requestPoints,
             @QueryParam("type") @DefaultValue("json") String type,
@@ -90,22 +96,15 @@ public class RouteResource {
 
         StopWatch sw = new StopWatch().start();
 
-        if(requestPoints.isEmpty()) {
-            throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("You have to pass at least one point"), writeGPX));
-        }
-
-        if (!encodingManager.supports(vehicleStr)) {
-            throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("Vehicle not supported: " + vehicleStr), writeGPX));
-        } else if (enableElevation && !hasElevation) {
-            throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("Elevation not supported!"), writeGPX));
-        } else if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size()) {
-            throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
-                    + "or equal to the number of points (" + requestPoints.size() + ")"), writeGPX));
-        }
-
-        if (pointHints.size() > 0 && pointHints.size() != requestPoints.size()) {
-            throw new WebApplicationException(WebHelper.errorResponse(new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty hints will be ignored"), writeGPX));
-        }
+        if (requestPoints.isEmpty())
+            throw new IllegalArgumentException("You have to pass at least one point");
+        if (enableElevation && !hasElevation)
+            throw new IllegalArgumentException("Elevation not supported!");
+        if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size())
+            throw new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
+                    + "or equal to the number of points (" + requestPoints.size() + ")");
+        if (pointHints.size() > 0 && pointHints.size() != requestPoints.size())
+            throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty hints will be ignored");
 
         GHRequest request;
         if (favoredHeadings.size() > 0) {
@@ -121,8 +120,8 @@ public class RouteResource {
             request = new GHRequest(requestPoints);
         }
 
-        WebHelper.initHints(request.getHints(), uriInfo.getQueryParameters());
-        request.setVehicle(encodingManager.getEncoder(vehicleStr).toString()).
+        initHints(request.getHints(), uriInfo.getQueryParameters());
+        request.setVehicle(vehicleStr).
                 setWeighting(weighting).
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
@@ -143,21 +142,54 @@ public class RouteResource {
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
-            throw new WebApplicationException(WebHelper.errorResponse(ghResponse.getErrors(), writeGPX));
+            throw new MultiException(ghResponse.getErrors());
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
                     + ", distance0: " + ghResponse.getBest().getDistance()
+                    + ", weight0: " + ghResponse.getBest().getRouteWeight()
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
                     + ", points0: " + ghResponse.getBest().getPoints().getSize()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
             return writeGPX ?
-                    WebHelper.gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
+                    gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
                             header("X-GH-Took", "" + Math.round(took * 1000)).
                             build()
                     :
                     Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                             header("X-GH-Took", "" + Math.round(took * 1000)).
                             build();
+        }
+    }
+
+    private static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String
+            trackName, boolean enableElevation, boolean withRoute, boolean withTrack, boolean withWayPoints, String version) {
+        if (ghRsp.getAll().size() > 1) {
+            throw new IllegalArgumentException("Alternatives are currently not yet supported for GPX");
+        }
+
+        long time = timeString != null ? Long.parseLong(timeString) : System.currentTimeMillis();
+        return Response.ok(ghRsp.getBest().getInstructions().createGPX(trackName, time, enableElevation, withRoute, withTrack, withWayPoints, version), "application/gpx+xml").
+                header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
+    }
+
+    static void initHints(HintsMap m, MultivaluedMap<String, String> parameterMap) {
+        for (Map.Entry<String, List<String>> e : parameterMap.entrySet()) {
+            if (e.getValue().size() == 1) {
+                m.put(e.getKey(), e.getValue().get(0));
+            } else {
+                // Do nothing.
+                // TODO: this is dangerous: I can only silently swallow
+                // the forbidden multiparameter. If I comment-in the line below,
+                // I get an exception, because "point" regularly occurs
+                // multiple times.
+                // I think either unknown parameters (hints) should be allowed
+                // to be multiparameters, too, or we shouldn't use them for
+                // known parameters either, _or_ known parameters
+                // must be filtered before they come to this code point,
+                // _or_ we stop passing unknown parameters alltogether..
+                //
+                // throw new WebApplicationException(String.format("This query parameter (hint) is not allowed to occur multiple times: %s", e.getKey()));
+            }
         }
     }
 

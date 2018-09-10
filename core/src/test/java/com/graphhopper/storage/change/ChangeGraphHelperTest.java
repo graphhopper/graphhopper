@@ -1,6 +1,5 @@
 package com.graphhopper.storage.change;
 
-import com.graphhopper.util.ObjectMapperFactory;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -13,6 +12,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
+import com.graphhopper.jackson.Jackson;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -63,7 +63,7 @@ public class ChangeGraphHelperTest {
 
         Reader reader = new InputStreamReader(getClass().getResourceAsStream("overlaydata1.json"), Helper.UTF_CS);
         ChangeGraphHelper instance = new ChangeGraphHelper(graph, locationIndex);
-        JsonFeatureCollection collection = ObjectMapperFactory.create().readValue(reader, JsonFeatureCollection.class);
+        JsonFeatureCollection collection = Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class);
         long updates = instance.applyChanges(encodingManager, collection.getFeatures());
         assertEquals(2, updates);
 

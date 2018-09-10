@@ -117,7 +117,14 @@ class Label {
                             return new Transition(label, null);
                         } else {
                             EdgeIteratorState edgeIteratorState = label.parent == null ? null :
-                                    graph.getEdgeIteratorState(label.edge, label.parent.adjNode).detach(reverseEdgeFlags);
+                                    graph.getEdgeIteratorState(label.edge, reverseEdgeFlags ? label.adjNode : label.parent.adjNode).detach(false);
+                            if (reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getBaseNode() != label.parent.adjNode || edgeIteratorState.getAdjNode() != label.adjNode)) {
+                                throw new IllegalStateException();
+                            }
+                            if (!reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getAdjNode() != label.parent.adjNode || edgeIteratorState.getBaseNode() != label.adjNode)) {
+                                throw new IllegalStateException();
+                            }
+
                             Transition transition;
                             if (reverseEdgeFlags) {
                                 transition = new Transition(label, edgeIteratorState != null ? getEdgeLabel(edgeIteratorState, flagEncoder) : null);

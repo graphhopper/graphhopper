@@ -59,7 +59,7 @@ class TripFromLabel {
         this.realtimeFeed = realtimeFeed;
     }
 
-    PathWrapper parseSolutionIntoPath(boolean arriveBy, PtFlagEncoder encoder, Translation tr, GraphExplorer queryGraph, PtTravelTimeWeighting weighting, Label solution, PointList waypoints) {
+    PathWrapper parseSolutionIntoPath(boolean arriveBy, PtFlagEncoder encoder, Translation tr, GraphExplorer queryGraph, Weighting weighting, Label solution, PointList waypoints) {
         final List<Trip.Leg> legs = getTrip(arriveBy, encoder, tr, queryGraph, weighting, solution);
         return createPathWrapper(tr, waypoints, legs);
     }
@@ -119,7 +119,18 @@ class TripFromLabel {
         return path;
     }
 
-    List<Trip.Leg> getTrip(boolean arriveBy, PtFlagEncoder encoder, Translation tr, GraphExplorer queryGraph, PtTravelTimeWeighting weighting, Label solution) {
+    List<Trip.Leg> getTrip(boolean arriveBy, PtFlagEncoder encoder, Translation tr, GraphExplorer queryGraph, Weighting weighting, Label solution) {
+        List<Label.Transition> transitions = getTransitions(arriveBy, encoder, queryGraph, solution);
+        return getTrip(tr, queryGraph, weighting, transitions);
+    }
+
+    List<Trip.Leg> getTrip(Translation tr, GraphExplorer queryGraph, Weighting weighting, List<Label.Transition> transitions) {
+        final List<List<Label.Transition>> partitions = getPartitions(transitions);
+        final List<Trip.Leg> legs = getLegs(tr, queryGraph, weighting, partitions);
+        return legs;
+    }
+
+    List<Label.Transition> getTransitions(boolean arriveBy, PtFlagEncoder encoder, GraphExplorer queryGraph, Label solution) {
         List<Label.Transition> transitions = new ArrayList<>();
         if (arriveBy) {
             reverseEdges(solution, queryGraph, encoder, false)
@@ -129,11 +140,7 @@ class TripFromLabel {
                     .forEach(transitions::add);
             Collections.reverse(transitions);
         }
-
-
-        final List<List<Label.Transition>> partitions = getPartitions(transitions);
-        final List<Trip.Leg> legs = getLegs(tr, queryGraph, weighting, partitions);
-        return legs;
+        return transitions;
     }
 
     private List<List<Label.Transition>> getPartitions(List<Label.Transition> transitions) {
@@ -154,7 +161,7 @@ class TripFromLabel {
         return partitions;
     }
 
-    private List<Trip.Leg> getLegs(Translation tr, GraphExplorer queryGraph, PtTravelTimeWeighting weighting, List<List<Label.Transition>> partitions) {
+    private List<Trip.Leg> getLegs(Translation tr, GraphExplorer queryGraph, Weighting weighting, List<List<Label.Transition>> partitions) {
         return partitions.stream().flatMap(partition -> parsePathIntoLegs(partition, queryGraph, weighting, tr).stream()).collect(Collectors.toList());
     }
 
@@ -375,6 +382,9 @@ class TripFromLabel {
                     weighting, weighting.getFlagEncoder(), graph.getNodeAccess(), tr, instructions);
             int prevEdgeId = -1;
             for (int i = 1; i < path.size(); i++) {
+                if (path.get(i).edge.edgeType != GtfsStorage.EdgeType.HIGHWAY) {
+                    throw new IllegalStateException("Got a transit edge where I think I must be on a road.");
+                }
                 EdgeIteratorState edge = path.get(i).edge.edgeIteratorState;
                 instructionsFromEdges.next(edge, i, prevEdgeId);
                 prevEdgeId = edge.getEdge();

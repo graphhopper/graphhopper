@@ -63,19 +63,15 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         queryResults = new ArrayList<>(points.size());
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
             GHPoint point = points.get(placeIndex);
-            QueryResult res;
-            if (ghRequest.hasPointHints()) {
-                res = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(edgeFilter, ghRequest.getPointHints().get(placeIndex)));
-                if (!res.isValid()) {
-                    res = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
-                }
-            } else {
-                res = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
-            }
-            if (!res.isValid())
+            QueryResult qr = null;
+            if (ghRequest.hasPointHints())
+                qr = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(edgeFilter, ghRequest.getPointHints().get(placeIndex)));
+            if (qr == null || !qr.isValid())
+                qr = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
+            if (!qr.isValid())
                 ghResponse.addError(new PointNotFoundException("Cannot find point " + placeIndex + ": " + point, placeIndex));
 
-            queryResults.add(res);
+            queryResults.add(qr);
         }
 
         return queryResults;
