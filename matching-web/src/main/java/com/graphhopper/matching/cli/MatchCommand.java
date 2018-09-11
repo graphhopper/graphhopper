@@ -2,7 +2,7 @@ package com.graphhopper.matching.cli;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.matching.GPXFile;
+import com.graphhopper.gpx.Trk;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -16,7 +16,9 @@ import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.util.Collections;
 import java.util.List;
 
@@ -82,7 +84,7 @@ public class MatchCommand extends Command {
         for (File gpxFile : args.<File>getList("gpx")) {
             try {
                 importSW.start();
-                List<GPXEntry> inputGPXEntries = new GPXFile().doImport(gpxFile.getAbsolutePath()).getEntries();
+                List<GPXEntry> inputGPXEntries = Trk.doImport(gpxFile.getAbsolutePath()).getEntries();
                 importSW.stop();
                 matchSW.start();
                 MatchResult mr = mapMatching.doWork(inputGPXEntries);
@@ -103,8 +105,9 @@ public class MatchCommand extends Command {
                     new PathMerger().doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), tr);
                     il = matchGHRsp.getInstructions();
                 }
-
-                new GPXFile(mr, il).doExport(outFile);
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(outFile))) {
+                    writer.append(il.createGPX("", 0, true, true, true, true, Constants.VERSION));
+                }
             } catch (Exception ex) {
                 importSW.stop();
                 matchSW.stop();

@@ -20,6 +20,8 @@ package com.graphhopper.matching;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.gpx.Trk;
+import com.graphhopper.gpx.Trkpnt;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
@@ -219,7 +221,7 @@ public class MapMatchingTest {
      */
     @Test
     public void testSmallSeparatedSearchDistance() {
-        List<GPXEntry> inputGPXEntries = new GPXFile()
+        List<GPXEntry> inputGPXEntries = new Trk()
                 .doImport("./src/test/resources/tour3-with-long-edge.gpx").getEntries();
         MapMatching mapMatching = new MapMatching(hopper, algoOptions);
         mapMatching.setMeasurementErrorSigma(20);
@@ -241,7 +243,7 @@ public class MapMatchingTest {
         // Need to reduce GPS accuracy because too many GPX are filtered out otherwise.
         mapMatching.setMeasurementErrorSigma(40);
 
-        List<GPXEntry> inputGPXEntries = new GPXFile()
+        List<GPXEntry> inputGPXEntries = new Trk()
                 .doImport("./src/test/resources/tour2-with-loop.gpx").getEntries();
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
         assertEquals(
@@ -263,7 +265,7 @@ public class MapMatchingTest {
         MapMatching mapMatching = new MapMatching(hopper, algoOptions);
         // TODO smaller sigma like 40m leads to U-turn at Tschaikowskistraße
         mapMatching.setMeasurementErrorSigma(50);
-        List<GPXEntry> inputGPXEntries = new GPXFile()
+        List<GPXEntry> inputGPXEntries = new Trk()
                 .doImport("./src/test/resources/tour-with-loop.gpx").getEntries();
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
         assertEquals(Arrays.asList("Jahnallee, B 87, B 181", "Jahnallee, B 87, B 181",
@@ -286,7 +288,7 @@ public class MapMatchingTest {
                 .build();
 
         MapMatching mapMatching = new MapMatching(hopper, algoOptions);
-        List<GPXEntry> inputGPXEntries = new GPXFile()
+        List<GPXEntry> inputGPXEntries = new Trk()
                 .doImport("./src/test/resources/tour4-with-uturn.gpx").getEntries();
 
         // with large measurement error, we expect no U-turn

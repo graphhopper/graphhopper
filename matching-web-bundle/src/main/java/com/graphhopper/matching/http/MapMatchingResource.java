@@ -24,14 +24,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.gpx.Gpx;
 import com.graphhopper.http.WebHelper;
-import com.graphhopper.matching.*;
+import com.graphhopper.matching.EdgeMatch;
+import com.graphhopper.matching.GPXExtension;
+import com.graphhopper.matching.MapMatching;
+import com.graphhopper.matching.MatchResult;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -66,7 +69,7 @@ public class MapMatchingResource {
     @Consumes({MediaType.APPLICATION_XML, "application/gpx+xml"})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
     public Response doGet(
-            Document body,
+            Gpx gpx,
             @Context HttpServletRequest request,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
             @QueryParam("type") @DefaultValue("json") String outType,
@@ -87,12 +90,9 @@ public class MapMatchingResource {
             @QueryParam("gps_accuracy") @DefaultValue("40") double gpsAccuracy) {
 
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
-        if (body.getElementsByTagName("trk").getLength() == 0) {
+        if (gpx.trk == null) {
             throw new IllegalArgumentException("No tracks found in GPX document. Are you using waypoints or routes instead?");
         }
-
-        GPXFile file = new GPXFile();
-        GPXFile gpxFile = file.doImport(body, 20);
 
         instructions = writeGPX || instructions;
 
@@ -105,12 +105,12 @@ public class MapMatchingResource {
                 .build();
         MapMatching matching = new MapMatching(graphHopper, opts);
         matching.setMeasurementErrorSigma(gpsAccuracy);
-        MatchResult matchResult = matching.doWork(gpxFile.getEntries());
+        MatchResult matchResult = matching.doWork(gpx.trk.getEntries());
 
         // TODO: Request logging and timing should perhaps be done somewhere outside
         float took = sw.stop().getSeconds();
         String infoStr = request.getRemoteAddr() + " " + request.getLocale() + " " + request.getHeader("User-Agent");
-        String logStr = request.getQueryString() + ", " + infoStr + ", took:" + took + ", entries:" + gpxFile.getEntries().size();
+        String logStr = request.getQueryString() + ", " + infoStr + ", took:" + took + ", entries:" + gpx.trk.getEntries().size();
         logger.info(logStr);
 
         if ("extended_json".equals(outType)) {

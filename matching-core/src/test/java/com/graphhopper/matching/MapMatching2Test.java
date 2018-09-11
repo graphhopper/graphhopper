@@ -17,6 +17,8 @@
  */
 package com.graphhopper.matching;
 
+import com.graphhopper.gpx.Trk;
+import com.graphhopper.gpx.Trkpnt;
 import com.graphhopper.matching.MapMatchingTest.TestGraphHopper;
 import static com.graphhopper.matching.MapMatchingTest.fetchStreets;
 import com.graphhopper.routing.AlgorithmOptions;
@@ -48,7 +50,7 @@ public class MapMatching2Test {
         AlgorithmOptions opts = AlgorithmOptions.start().build();
         MapMatching mapMatching = new MapMatching(hopper, opts);
 
-        List<GPXEntry> inputGPXEntries = new GPXFile().
+        List<GPXEntry> inputGPXEntries = new Trk().
                 doImport("./src/test/resources/issue-13.gpx").getEntries();
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
 
@@ -79,7 +81,7 @@ public class MapMatching2Test {
         AlgorithmOptions opts = AlgorithmOptions.start().build();
         MapMatching mapMatching = new MapMatching(hopper, opts);
 
-        List<GPXEntry> inputGPXEntries = new GPXFile().
+        List<GPXEntry> inputGPXEntries = new Trk().
                 doImport("./src/test/resources/issue-70.gpx").getEntries();
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
         

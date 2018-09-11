@@ -1,6 +1,6 @@
 package com.graphhopper.matching.cli;
 
-import com.graphhopper.matching.GPXFile;
+import com.graphhopper.gpx.Trk;
 import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.shapes.BBox;
 import io.dropwizard.cli.Command;
@@ -30,7 +30,7 @@ public class GetBoundsCommand extends Command {
     public void run(Bootstrap bootstrap, Namespace args) {
         BBox bbox = BBox.createInverse(false);
         for (File gpxFile : args.<File>getList("gpx")) {
-            List<GPXEntry> inputGPXEntries = new GPXFile().doImport(gpxFile.getAbsolutePath()).getEntries();
+            List<GPXEntry> inputGPXEntries = new Trk().doImport(gpxFile.getAbsolutePath()).getEntries();
             for (GPXEntry entry : inputGPXEntries) {
                 bbox.update(entry.getLat(), entry.getLon());
             }

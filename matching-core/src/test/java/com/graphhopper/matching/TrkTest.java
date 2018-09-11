@@ -17,23 +17,24 @@
  */
 package com.graphhopper.matching;
 
+import com.graphhopper.gpx.Trk;
+import com.graphhopper.gpx.Trkpnt;
 import com.graphhopper.util.GPXEntry;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.List;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  *
  * @author Peter Karich
  */
-public class GPXFileTest {
+public class TrkTest {
 
     @Test
     public void testDoImport() {
-        GPXFile instance = new GPXFile();
-        instance.doImport("./src/test/resources/test1.gpx");
+        Trk instance = Trk.doImport("./src/test/resources/test1.gpx");
         List<GPXEntry> res = instance.getEntries();
         assertEquals(264, res.size());
 
@@ -43,26 +44,18 @@ public class GPXFileTest {
 
     @Test
     public void testDoImport2() {
-        GPXFile instance = new GPXFile();
-        instance.doImport("./src/test/resources/test2.gpx");
+        Trk instance = Trk.doImport("./src/test/resources/test2.gpx");
         List<GPXEntry> res = instance.getEntries();
         assertEquals(2, res.size());
     }
 
     @Test
     public void testDoImportNoMillis() {
-        GPXFile instance = new GPXFile();
-        instance.doImport("./src/test/resources/test2_no_millis.gpx");
+        Trk instance = Trk.doImport("./src/test/resources/test2_no_millis.gpx");
         List<GPXEntry> res = instance.getEntries();
         assertEquals(3, res.size());
-        assertEquals(0, res.get(0).getTime());
-        assertEquals(18000, res.get(1).getTime(), 1000);
-        assertEquals(32000, res.get(2).getTime(), 1000);
+        assertEquals(51.377719, res.get(0).lat, 0.0);
+        assertEquals(12.338217, res.get(0).lon, 0.0);
     }
 
-    @Test
-    public void testParseDate() throws ParseException {
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-        assertEquals(1412700604000L, df.parse("2014-10-07T16:50:04+0000").getTime());
-    }
 }

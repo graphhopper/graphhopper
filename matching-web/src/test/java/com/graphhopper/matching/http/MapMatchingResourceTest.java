@@ -21,6 +21,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import io.dropwizard.logging.DefaultLoggingFactory;
+import io.dropwizard.logging.ExternalLoggingFactory;
+import io.dropwizard.server.DefaultServerFactory;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
@@ -29,7 +32,6 @@ import org.junit.Test;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
-import java.io.InputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -44,6 +46,7 @@ public class MapMatchingResourceTest {
     private static final MapMatchingServerConfiguration config = new MapMatchingServerConfiguration();
 
     static {
+        ((DefaultLoggingFactory) config.getLoggingFactory()).setLevel("DEBUG");
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "car").
                 put("prepare.ch.weightings", "no").
@@ -75,6 +78,15 @@ public class MapMatchingResourceTest {
         assertEquals(106.15, json.get("map_matching").get("time").asLong() / 1000f, 0.1);
         assertEquals(811.56, path.get("distance").asDouble(), 1);
         assertEquals(811.56, json.get("map_matching").get("distance").asDouble(), 1);
+    }
+
+    @Test
+    public void testGPX10() {
+        final Response response = app.client().target("http://localhost:8080/match")
+                .request()
+                .buildPost(Entity.xml(getClass().getResourceAsStream("gpxv1_0.gpx")))
+                .invoke();
+        assertEquals(200, response.getStatus());
     }
 
     @Test
