@@ -139,7 +139,6 @@ public class MapMatchingResource {
                     time = measurements.get(0).getTime();
                 }
                 return Response.ok(rsp.getBest().getInstructions().createGPX(gpx.trk.name != null ? gpx.trk.name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION), "application/gpx+xml").
-                        header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx").
                         header("X-GH-Took", "" + Math.round(took * 1000)).
                         build();
             } else {
