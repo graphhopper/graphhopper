@@ -18,33 +18,19 @@
 
 package com.graphhopper.gpx;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.Date;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Trkpnt {
 
-    @XmlElement
     public double ele;
 
-    @XmlElement
     public Date time;
 
-    @XmlAttribute
     public double lat;
 
-    @XmlAttribute
     public double lon;
-
-    public Trkpnt() {
-
-    }
-
-    Trkpnt(double lat, double lon, double ele, long millis) {
-        this.lat = lat;
-        this.lon = lon;
-        this.ele = ele;
-        this.time = new Date(millis);
-    }
 
 }

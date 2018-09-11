@@ -17,73 +17,46 @@
  */
 package com.graphhopper.gpx;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.databind.util.Converter;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.graphhopper.util.GPXEntry;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlType;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import javax.xml.stream.util.StreamReaderDelegate;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
-@XmlType
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Trk {
 
-    @XmlElementWrapper(name="trkseg")
-    @XmlElement(name="trkpt")
-    @XmlJavaTypeAdapter(Adapter.class)
-    public List<GPXEntry> trkpt;
-    static class Adapter extends XmlAdapter<Trkpnt, GPXEntry> {
-        @Override
-        public GPXEntry unmarshal(Trkpnt trkpnt) {
-            return new GPXEntry(trkpnt.lat, trkpnt.lon, trkpnt.ele, trkpnt.time != null ? trkpnt.time.getTime() : 0);
-        }
-
-        @Override
-        public Trkpnt marshal(GPXEntry gpxEntry) {
-            return new Trkpnt(gpxEntry.lat, gpxEntry.lon, gpxEntry.getEle(), gpxEntry.getTime());
-        }
-    }
-
+    @JacksonXmlElementWrapper(localName="trkseg")
+    @JsonDeserialize(contentAs = Trkpnt.class)
+    private List<Trkpnt> trkpt;
 
     public List<GPXEntry> getEntries() {
-        return trkpt;
-    }
-
-    // Pretend that everyone is declaring the correct namespace in their XML.
-    static class XMLReaderWithFakeNamespace extends StreamReaderDelegate {
-        public XMLReaderWithFakeNamespace(XMLStreamReader reader) {
-            super(reader);
+        ArrayList<GPXEntry> gpxEntries = new ArrayList<>();
+        for (Trkpnt trkpnt : trkpt) {
+            gpxEntries.add(new GPXEntry(trkpnt.lat, trkpnt.lon, trkpnt.ele, trkpnt.time != null ? trkpnt.time.getTime() : 0));
         }
-        @Override
-        public String getAttributeNamespace(int arg0) {
-            return null;
-        }
-        @Override
-        public String getNamespaceURI() {
-            return "http://www.topografix.com/GPX/1/1";
-        }
+        return gpxEntries;
     }
 
     public static Trk doImport(String fileStr) {
         try (InputStream is = new FileInputStream(fileStr)) {
+            XmlMapper xmlMapper = new XmlMapper();
             XMLStreamReader xsr = XMLInputFactory.newFactory().createXMLStreamReader(is);
-            XMLReaderWithFakeNamespace xr = new XMLReaderWithFakeNamespace(xsr);
-            JAXBContext jaxbContext = JAXBContext.newInstance(Gpx.class);
-            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-            Gpx gpx = (Gpx) jaxbUnmarshaller.unmarshal(xr);
+            Gpx gpx = xmlMapper.readValue(xsr, Gpx.class);
             return gpx.trk;
-        } catch (IOException | JAXBException | XMLStreamException e) {
+        } catch (IOException | XMLStreamException e) {
             throw new RuntimeException(e);
         }
     }

@@ -18,10 +18,9 @@
 
 package com.graphhopper.gpx;
 
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-@XmlRootElement(name="gpx")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Gpx {
 
     public Trk trk;
