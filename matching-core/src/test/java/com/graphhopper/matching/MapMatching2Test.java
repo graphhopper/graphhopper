@@ -17,29 +17,30 @@
  */
 package com.graphhopper.matching;
 
-import com.graphhopper.gpx.Trk;
-import com.graphhopper.gpx.Trkpnt;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.graphhopper.gpx.Gpx;
 import com.graphhopper.matching.MapMatchingTest.TestGraphHopper;
-import static com.graphhopper.matching.MapMatchingTest.fetchStreets;
 import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.GPXEntry;
-import java.util.Arrays;
-import java.util.List;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import org.junit.Test;
+
+import java.io.IOException;
+import java.util.Arrays;
+
+import static com.graphhopper.matching.MapMatchingTest.fetchStreets;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
 public class MapMatching2Test {
 
+    private XmlMapper xmlMapper = new XmlMapper();
+
     @Test
-    public void testIssue13() {
+    public void testIssue13() throws IOException {
         CarFlagEncoder encoder = new CarFlagEncoder();
         TestGraphHopper hopper = new TestGraphHopper();
         hopper.setDataReaderFile("../map-data/map-issue13.osm.gz");
@@ -50,9 +51,8 @@ public class MapMatching2Test {
         AlgorithmOptions opts = AlgorithmOptions.start().build();
         MapMatching mapMatching = new MapMatching(hopper, opts);
 
-        List<GPXEntry> inputGPXEntries = new Trk().
-                doImport("./src/test/resources/issue-13.gpx").getEntries();
-        MatchResult mr = mapMatching.doWork(inputGPXEntries);
+        Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-13.gpx"), Gpx.class);
+        MatchResult mr = mapMatching.doWork(gpx.trk.getEntries());
 
         // make sure no virtual edges are returned
         int edgeCount = hopper.getGraphHopperStorage().getAllEdges().length();
@@ -70,7 +70,7 @@ public class MapMatching2Test {
     }
     
     @Test
-    public void testIssue70() {
+    public void testIssue70() throws IOException {
         CarFlagEncoder encoder = new CarFlagEncoder();
         TestGraphHopper hopper = new TestGraphHopper();
         hopper.setDataReaderFile("../map-data/issue-70.osm.gz");
@@ -81,9 +81,8 @@ public class MapMatching2Test {
         AlgorithmOptions opts = AlgorithmOptions.start().build();
         MapMatching mapMatching = new MapMatching(hopper, opts);
 
-        List<GPXEntry> inputGPXEntries = new Trk().
-                doImport("./src/test/resources/issue-70.gpx").getEntries();
-        MatchResult mr = mapMatching.doWork(inputGPXEntries);
+        Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-70.gpx"), Gpx.class);
+        MatchResult mr = mapMatching.doWork(gpx.trk.getEntries());
         
         assertEquals(Arrays.asList("Милана Видака", "Милана Видака", "Милана Видака",
         		"Бранка Радичевића", "Бранка Радичевића", "Здравка Челара"),

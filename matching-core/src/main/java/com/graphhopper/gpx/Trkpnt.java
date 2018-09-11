@@ -26,11 +26,8 @@ import java.util.Date;
 public class Trkpnt {
 
     public double ele;
-
     public Date time;
-
     public double lat;
-
     public double lon;
 
 }

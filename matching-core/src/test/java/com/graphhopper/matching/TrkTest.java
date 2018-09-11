@@ -17,11 +17,12 @@
  */
 package com.graphhopper.matching;
 
-import com.graphhopper.gpx.Trk;
-import com.graphhopper.gpx.Trkpnt;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.graphhopper.gpx.Gpx;
 import com.graphhopper.util.GPXEntry;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -32,30 +33,31 @@ import static org.junit.Assert.assertEquals;
  */
 public class TrkTest {
 
-    @Test
-    public void testDoImport() {
-        Trk instance = Trk.doImport("./src/test/resources/test1.gpx");
-        List<GPXEntry> res = instance.getEntries();
-        assertEquals(264, res.size());
+    private XmlMapper xmlMapper = new XmlMapper();
 
-        assertEquals(new GPXEntry(51.377719, 12.338217, 0), res.get(0));
-        assertEquals(new GPXEntry(51.371482, 12.363795, 235000), res.get(50));
+    @Test
+    public void testDoImport() throws IOException {
+        Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/test1.gpx"), Gpx.class);
+        List<GPXEntry> gpxEntries = gpx.trk.getEntries();
+        assertEquals(264, gpxEntries.size());
+        assertEquals(new GPXEntry(51.377719, 12.338217, 0), gpxEntries.get(0));
+        assertEquals(new GPXEntry(51.371482, 12.363795, 235000), gpxEntries.get(50));
     }
 
     @Test
-    public void testDoImport2() {
-        Trk instance = Trk.doImport("./src/test/resources/test2.gpx");
-        List<GPXEntry> res = instance.getEntries();
-        assertEquals(2, res.size());
+    public void testDoImport2() throws IOException {
+        Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/test2.gpx"), Gpx.class);
+        List<GPXEntry> gpxEntries = gpx.trk.getEntries();
+        assertEquals(2, gpxEntries.size());
     }
 
     @Test
-    public void testDoImportNoMillis() {
-        Trk instance = Trk.doImport("./src/test/resources/test2_no_millis.gpx");
-        List<GPXEntry> res = instance.getEntries();
-        assertEquals(3, res.size());
-        assertEquals(51.377719, res.get(0).lat, 0.0);
-        assertEquals(12.338217, res.get(0).lon, 0.0);
+    public void testDoImportNoMillis() throws IOException {
+        Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/test2_no_millis.gpx"), Gpx.class);
+        List<GPXEntry> gpxEntries = gpx.trk.getEntries();
+        assertEquals(3, gpxEntries.size());
+        assertEquals(51.377719, gpxEntries.get(0).lat, 0.0);
+        assertEquals(12.338217, gpxEntries.get(0).lon, 0.0);
     }
 
 }

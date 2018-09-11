@@ -1,8 +1,9 @@
 package com.graphhopper.matching.cli;
 
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.gpx.Trk;
+import com.graphhopper.gpx.Gpx;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -80,11 +81,13 @@ public class MatchCommand extends Command {
         StopWatch matchSW = new StopWatch();
 
         Translation tr = new TranslationMap().doImport().get(args.getString("instructions"));
+        XmlMapper xmlMapper = new XmlMapper();
 
         for (File gpxFile : args.<File>getList("gpx")) {
             try {
                 importSW.start();
-                List<GPXEntry> inputGPXEntries = Trk.doImport(gpxFile.getAbsolutePath()).getEntries();
+                Gpx gpx = xmlMapper.readValue(gpxFile, Gpx.class);
+                List<GPXEntry> inputGPXEntries = gpx.trk.getEntries();
                 importSW.stop();
                 matchSW.start();
                 MatchResult mr = mapMatching.doWork(inputGPXEntries);

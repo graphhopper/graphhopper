@@ -50,15 +50,4 @@ public class Trk {
         return gpxEntries;
     }
 
-    public static Trk doImport(String fileStr) {
-        try (InputStream is = new FileInputStream(fileStr)) {
-            XmlMapper xmlMapper = new XmlMapper();
-            XMLStreamReader xsr = XMLInputFactory.newFactory().createXMLStreamReader(is);
-            Gpx gpx = xmlMapper.readValue(xsr, Gpx.class);
-            return gpx.trk;
-        } catch (IOException | XMLStreamException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 }
