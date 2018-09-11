@@ -80,7 +80,8 @@ public class MatchCommand extends Command {
         StopWatch importSW = new StopWatch();
         StopWatch matchSW = new StopWatch();
 
-        Translation tr = new TranslationMap().doImport().get(args.getString("instructions"));
+        Translation tr = new TranslationMap().doImport().getWithFallBack(Helper.getLocale(args.getString("instructions")));
+        final boolean withRoute = !args.getString("instructions").isEmpty();
         XmlMapper xmlMapper = new XmlMapper();
 
         for (File gpxFile : args.<File>getList("gpx")) {
@@ -100,16 +101,10 @@ public class MatchCommand extends Command {
                 String outFile = gpxFile.getAbsolutePath() + ".res.gpx";
                 System.out.println("\texport results to:" + outFile);
 
-                InstructionList il;
-                if (args.getString("instructions").isEmpty()) {
-                    il = new InstructionList(null);
-                } else {
-                    PathWrapper matchGHRsp = new PathWrapper();
-                    new PathMerger().doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), tr);
-                    il = matchGHRsp.getInstructions();
-                }
+                PathWrapper pathWrapper = new PathWrapper();
+                new PathMerger().doWork(pathWrapper, Collections.singletonList(mr.getMergedPath()), tr);
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter(outFile))) {
-                    writer.append(il.createGPX("", 0, true, true, true, true, Constants.VERSION));
+                    writer.append(pathWrapper.getInstructions().createGPX("", 0, true, withRoute, true, true, Constants.VERSION));
                 }
             } catch (Exception ex) {
                 importSW.stop();
