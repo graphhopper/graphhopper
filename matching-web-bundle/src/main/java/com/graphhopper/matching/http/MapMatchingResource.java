@@ -83,7 +83,6 @@ public class MapMatchingResource {
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute /* default to false for the route part in next API version, see #437 */,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
-            @QueryParam("gpx.trackname") @DefaultValue("GraphHopper Track") String trackName,
             @QueryParam("gpx.millis") String timeString,
             @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
             @QueryParam(MAX_VISITED_NODES) @DefaultValue("3000") int maxVisitedNodes,
@@ -136,7 +135,7 @@ public class MapMatchingResource {
 
             if (writeGPX) {
                 long time = timeString != null ? Long.parseLong(timeString) : System.currentTimeMillis();
-                return Response.ok(rsp.getBest().getInstructions().createGPX(trackName, time, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION), "application/gpx+xml").
+                return Response.ok(rsp.getBest().getInstructions().createGPX(gpx.trk.name != null ? gpx.trk.name : "", time, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION), "application/gpx+xml").
                         header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx").
                         header("X-GH-Took", "" + Math.round(took * 1000)).
                         build();

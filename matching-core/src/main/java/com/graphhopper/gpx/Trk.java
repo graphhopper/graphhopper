@@ -18,20 +18,10 @@
 package com.graphhopper.gpx;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.fasterxml.jackson.databind.util.Converter;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.graphhopper.util.GPXEntry;
 
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +31,8 @@ public class Trk {
     @JacksonXmlElementWrapper(localName="trkseg")
     @JsonDeserialize(contentAs = Trkpnt.class)
     private List<Trkpnt> trkpt;
+
+    public String name;
 
     public List<GPXEntry> getEntries() {
         ArrayList<GPXEntry> gpxEntries = new ArrayList<>();
