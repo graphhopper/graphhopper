@@ -57,7 +57,7 @@ Start via:
 java -jar matching-web/target/graphhopper-map-matching-web-0.11-SNAPSHOT.jar server config.yml
 ```
 
-Access the simple UI via localhost:8989.
+Access the simple UI via `localhost:8989`.
 
 You can post GPX files and get back snapped results as GPX or as compatible GraphHopper JSON. An example curl request is:
 ```bash
