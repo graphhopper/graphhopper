@@ -88,13 +88,19 @@ public class MatchCommand extends Command {
             try {
                 importSW.start();
                 Gpx gpx = xmlMapper.readValue(gpxFile, Gpx.class);
-                List<GPXEntry> inputGPXEntries = gpx.trk.get(0).getEntries();
+                if (gpx.trk == null) {
+                    throw new IllegalArgumentException("No tracks found in GPX document. Are you using waypoints or routes instead?");
+                }
+                if (gpx.trk.size() > 1) {
+                    throw new IllegalArgumentException("GPX documents with multiple tracks not supported yet.");
+                }
+                List<GPXEntry> measurements = gpx.trk.get(0).getEntries();
                 importSW.stop();
                 matchSW.start();
-                MatchResult mr = mapMatching.doWork(inputGPXEntries);
+                MatchResult mr = mapMatching.doWork(measurements);
                 matchSW.stop();
                 System.out.println(gpxFile);
-                System.out.println("\tmatches:\t" + mr.getEdgeMatches().size() + ", gps entries:" + inputGPXEntries.size());
+                System.out.println("\tmatches:\t" + mr.getEdgeMatches().size() + ", gps entries:" + measurements.size());
                 System.out.println("\tgpx length:\t" + (float) mr.getGpxEntriesLength() + " vs " + (float) mr.getMatchLength());
                 System.out.println("\tgpx time:\t" + mr.getGpxEntriesMillis() / 1000f + " vs " + mr.getMatchMillis() / 1000f);
 
@@ -104,7 +110,11 @@ public class MatchCommand extends Command {
                 PathWrapper pathWrapper = new PathWrapper();
                 new PathMerger().doWork(pathWrapper, Collections.singletonList(mr.getMergedPath()), tr);
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter(outFile))) {
-                    writer.append(pathWrapper.getInstructions().createGPX(gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", 0, hopper.hasElevation(), withRoute, true, false, Constants.VERSION));
+                    long time = System.currentTimeMillis();
+                    if (!measurements.isEmpty()) {
+                        time = measurements.get(0).getTime();
+                    }
+                    writer.append(pathWrapper.getInstructions().createGPX(gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, hopper.hasElevation(), withRoute, true, false, Constants.VERSION));
                 }
             } catch (Exception ex) {
                 importSW.stop();

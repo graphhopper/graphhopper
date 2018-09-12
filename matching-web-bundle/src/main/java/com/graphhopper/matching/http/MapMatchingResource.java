@@ -90,6 +90,9 @@ public class MapMatchingResource {
         if (gpx.trk == null) {
             throw new IllegalArgumentException("No tracks found in GPX document. Are you using waypoints or routes instead?");
         }
+        if (gpx.trk.size() > 1) {
+            throw new IllegalArgumentException("GPX documents with multiple tracks not supported yet.");
+        }
 
         instructions = writeGPX || instructions;
 
