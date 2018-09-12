@@ -103,7 +103,7 @@ public class MapMatchingResource {
         MapMatching matching = new MapMatching(graphHopper, opts);
         matching.setMeasurementErrorSigma(gpsAccuracy);
 
-        List<GPXEntry> measurements = gpx.trk.getEntries();
+        List<GPXEntry> measurements = gpx.trk.get(0).getEntries();
         MatchResult matchResult = matching.doWork(measurements);
 
         // TODO: Request logging and timing should perhaps be done somewhere outside
@@ -138,7 +138,7 @@ public class MapMatchingResource {
                 if (!measurements.isEmpty()) {
                     time = measurements.get(0).getTime();
                 }
-                return Response.ok(rsp.getBest().getInstructions().createGPX(gpx.trk.name != null ? gpx.trk.name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION), "application/gpx+xml").
+                return Response.ok(rsp.getBest().getInstructions().createGPX(gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION), "application/gpx+xml").
                         header("X-GH-Took", "" + Math.round(took * 1000)).
                         build();
             } else {

@@ -214,7 +214,7 @@ public class MapMatchingTest {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour3-with-long-edge.gpx"), Gpx.class);
         MapMatching mapMatching = new MapMatching(hopper, algoOptions);
         mapMatching.setMeasurementErrorSigma(20);
-        MatchResult mr = mapMatching.doWork(gpx.trk.getEntries());
+        MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
         assertEquals(Arrays.asList("Weinligstraße", "Weinligstraße", "Weinligstraße",
                 "Fechnerstraße", "Fechnerstraße"), fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 11); // TODO: this should be around 300m according to Google ... need to check
@@ -233,7 +233,7 @@ public class MapMatchingTest {
         mapMatching.setMeasurementErrorSigma(40);
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour2-with-loop.gpx"), Gpx.class);
-        MatchResult mr = mapMatching.doWork(gpx.trk.getEntries());
+        MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
         assertEquals(
                 Arrays.asList("Gustav-Adolf-Straße", "Gustav-Adolf-Straße", "Gustav-Adolf-Straße",
                         "Leibnizstraße", "Hinrichsenstraße", "Hinrichsenstraße",
@@ -254,7 +254,7 @@ public class MapMatchingTest {
         // TODO smaller sigma like 40m leads to U-turn at Tschaikowskistraße
         mapMatching.setMeasurementErrorSigma(50);
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour-with-loop.gpx"), Gpx.class);
-        MatchResult mr = mapMatching.doWork(gpx.trk.getEntries());
+        MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
         assertEquals(Arrays.asList("Jahnallee, B 87, B 181", "Jahnallee, B 87, B 181",
                 "Jahnallee, B 87, B 181", "Jahnallee, B 87, B 181", "Funkenburgstraße",
                 "Gustav-Adolf-Straße", "Tschaikowskistraße", "Jahnallee, B 87, B 181",
@@ -279,14 +279,14 @@ public class MapMatchingTest {
 
         // with large measurement error, we expect no U-turn
         mapMatching.setMeasurementErrorSigma(50);
-        MatchResult mr = mapMatching.doWork(gpx.trk.getEntries());
+        MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
 
         assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Gustav-Adolf-Straße", "Funkenburgstraße",
                 "Funkenburgstraße"), fetchStreets(mr.getEdgeMatches()));
 
         // with small measurement error, we expect the U-turn
         mapMatching.setMeasurementErrorSigma(10);
-        mr = mapMatching.doWork(gpx.trk.getEntries());
+        mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
 
         assertEquals(
                 Arrays.asList("Gustav-Adolf-Straße", "Gustav-Adolf-Straße", "Funkenburgstraße",

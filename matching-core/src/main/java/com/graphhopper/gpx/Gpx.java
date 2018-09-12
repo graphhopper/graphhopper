@@ -19,10 +19,14 @@
 package com.graphhopper.gpx;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Gpx {
 
-    public Trk trk;
+    @JacksonXmlElementWrapper(useWrapping = false)
+    public List<Trk> trk;
 
 }

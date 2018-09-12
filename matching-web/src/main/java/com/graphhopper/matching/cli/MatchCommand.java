@@ -88,7 +88,7 @@ public class MatchCommand extends Command {
             try {
                 importSW.start();
                 Gpx gpx = xmlMapper.readValue(gpxFile, Gpx.class);
-                List<GPXEntry> inputGPXEntries = gpx.trk.getEntries();
+                List<GPXEntry> inputGPXEntries = gpx.trk.get(0).getEntries();
                 importSW.stop();
                 matchSW.start();
                 MatchResult mr = mapMatching.doWork(inputGPXEntries);
@@ -104,7 +104,7 @@ public class MatchCommand extends Command {
                 PathWrapper pathWrapper = new PathWrapper();
                 new PathMerger().doWork(pathWrapper, Collections.singletonList(mr.getMergedPath()), tr);
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter(outFile))) {
-                    writer.append(pathWrapper.getInstructions().createGPX(gpx.trk.name != null ? gpx.trk.name : "", 0, hopper.hasElevation(), withRoute, true, false, Constants.VERSION));
+                    writer.append(pathWrapper.getInstructions().createGPX(gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", 0, hopper.hasElevation(), withRoute, true, false, Constants.VERSION));
                 }
             } catch (Exception ex) {
                 importSW.stop();

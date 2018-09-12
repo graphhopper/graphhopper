@@ -15,30 +15,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package com.graphhopper.gpx;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.graphhopper.util.GPXEntry;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Trk {
+public class Trkseg {
 
     @JacksonXmlElementWrapper(useWrapping = false)
-    public List<Trkseg> trkseg;
-    public String name;
-
-    public List<GPXEntry> getEntries() {
-        ArrayList<GPXEntry> gpxEntries = new ArrayList<>();
-        for (Trkseg t : trkseg) {
-            for (Trkpt trkpt : t.trkpt) {
-                gpxEntries.add(new GPXEntry(trkpt.lat, trkpt.lon, trkpt.ele, trkpt.time != null ? trkpt.time.getTime() : 0));
-            }
-        }
-        return gpxEntries;
-    }
+    public List<Trkpt> trkpt;
 
 }
