@@ -115,6 +115,10 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         this.subnetworkStorage = new SubnetworkStorage(dir, "landmarks_" + name);
     }
 
+    public int getVersion() {
+        return 1;
+    }
+
     /**
      * Specify the maximum possible value for your used area. With this maximum weight value you can influence the storage
      * precision for your weights that help A* finding its way to the goal. The same value is used for all subnetworks.
@@ -300,12 +304,14 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             }
         }
 
-        landmarkWeightDA.setHeader(0 * 4, graph.getNodes());
+        // make backward incompatible to force rebuilt (pre 0.11 releases had nodes count at 0)
+        landmarkWeightDA.setHeader(0 * 4, getVersion());
         landmarkWeightDA.setHeader(1 * 4, landmarks);
         landmarkWeightDA.setHeader(2 * 4, subnetworkCount);
         if (factor * DOUBLE_MLTPL > Integer.MAX_VALUE)
             throw new UnsupportedOperationException("landmark weight factor cannot be bigger than Integer.MAX_VALUE " + factor * DOUBLE_MLTPL);
         landmarkWeightDA.setHeader(3 * 4, (int) Math.round(factor * DOUBLE_MLTPL));
+        landmarkWeightDA.setHeader(4 * 4, graph.getNodes());
 
         // serialize fast byte[] into DataAccess
         subnetworkStorage.create(graph.getNodes());
@@ -697,9 +703,13 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             if (!subnetworkStorage.loadExisting())
                 throw new IllegalStateException("landmark weights loaded but not the subnetworks!?");
 
-            int nodes = landmarkWeightDA.getHeader(0 * 4);
+            int version = landmarkWeightDA.getHeader(0 * 4);
+            if (version != getVersion())
+                throw new IllegalArgumentException("Cannot load landmark data due to incompatible version. Storage used version: " + version + ", expected: " + getVersion());
+            int nodes = landmarkWeightDA.getHeader(4 * 4);
             if (nodes != graph.getNodes())
                 throw new IllegalArgumentException("Cannot load landmark data as written for different graph storage with " + nodes + " nodes, not " + graph.getNodes());
+
             landmarks = landmarkWeightDA.getHeader(1 * 4);
             int subnetworks = landmarkWeightDA.getHeader(2 * 4);
             factor = landmarkWeightDA.getHeader(3 * 4) / DOUBLE_MLTPL;
