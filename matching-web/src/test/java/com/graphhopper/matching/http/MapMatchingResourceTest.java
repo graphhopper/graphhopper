@@ -22,8 +22,6 @@ import com.graphhopper.http.WebHelper;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.logging.DefaultLoggingFactory;
-import io.dropwizard.logging.ExternalLoggingFactory;
-import io.dropwizard.server.DefaultServerFactory;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
