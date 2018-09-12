@@ -20,6 +20,7 @@ package com.graphhopper.matching;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -51,17 +52,18 @@ public class MapMatchingTest {
 
     // non-CH / CH test parameters
     private final String parameterName;
-    private final TestGraphHopper hopper;
+    private final GraphHopper hopper;
     private final AlgorithmOptions algoOptions;
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> algoOptions() {
         // create hopper instance with CH enabled
         CarFlagEncoder encoder = new CarFlagEncoder();
-        TestGraphHopper hopper = new TestGraphHopper();
+        GraphHopper hopper = new GraphHopperOSM();
         hopper.setDataReaderFile("../map-data/leipzig_germany.osm.pbf");
         hopper.setGraphHopperLocation("../target/mapmatchingtest-ch");
         hopper.setEncodingManager(new EncodingManager(encoder));
+        hopper.getCHFactoryDecorator().setDisablingAllowed(true);
         hopper.importOrLoad();
 
         // force CH
@@ -82,7 +84,7 @@ public class MapMatchingTest {
         });
     }
 
-    public MapMatchingTest(String parameterName, TestGraphHopper hopper,
+    public MapMatchingTest(String parameterName, GraphHopper hopper,
                            AlgorithmOptions algoOption) {
         this.parameterName = parameterName;
         this.algoOptions = algoOption;
@@ -313,30 +315,10 @@ public class MapMatchingTest {
     }
 
     private List<GPXEntry> createRandomGPXEntries(GHPoint start, GHPoint end) {
-        hopper.route(new GHRequest(start, end).setWeighting("fastest"));
-        return hopper.getEdges(0);
+        List<Path> paths = hopper.calcPaths(new GHRequest(start, end).setWeighting("fastest"), new GHResponse());
+        Translation tr = hopper.getTranslationMap().get("en");
+        InstructionList instr = paths.get(0).calcInstructions(tr);
+        return instr.createGPXList();
     }
 
-    // use a workaround to get access to paths
-    static class TestGraphHopper extends GraphHopperOSM {
-
-        TestGraphHopper() {
-            super();
-            getCHFactoryDecorator().setDisablingAllowed(true);
-        }
-        private List<Path> paths;
-
-        List<GPXEntry> getEdges(int index) {
-            Path path = paths.get(index);
-            Translation tr = getTranslationMap().get("en");
-            InstructionList instr = path.calcInstructions(tr);
-            return instr.createGPXList();
-        }
-
-        @Override
-        public List<Path> calcPaths(GHRequest request, GHResponse rsp) {
-            paths = super.calcPaths(request, rsp);
-            return paths;
-        }
-    }
 }
