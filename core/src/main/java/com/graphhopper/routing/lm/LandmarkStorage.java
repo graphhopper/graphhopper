@@ -867,10 +867,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             });
 
             if ((double) maxedout.get() / map.size() > 0.1) {
-                // for "from" values one needs to decrease the maximum, but if "delta" values are maxed out one needs to increase the maximum
                 LOGGER.warn("landmark " + lmIdx + " (" + nodeAccess.getLatitude(lmNodeId) + "," + nodeAccess.getLongitude(lmNodeId) + "): " +
-                        "too many " + (from ? "backward" : "delta") + " weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Factor is " + lms.factor
-                        + ". E.g. in config.yml do: prepare.lm.weighting: " + weighting.getName() + "|maximum=" + finalMaxWeight.getValue() * (from ? 0.8 : 1.2));
+                        "too many " + (from ? "backward" : "delta") + " weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Factor is too small " + lms.factor
+                        + ". To fix this increase maximum in config.yml: prepare.lm.weighting: " + weighting.getName() + "|maximum=" + finalMaxWeight.getValue() * 1.2);
             }
         }
     }
