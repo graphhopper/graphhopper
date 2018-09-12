@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.gpx.Gpx;
+import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.GPXExtension;

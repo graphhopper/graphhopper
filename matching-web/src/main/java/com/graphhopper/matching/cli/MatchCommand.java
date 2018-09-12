@@ -3,7 +3,7 @@ package com.graphhopper.matching.cli;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.gpx.Gpx;
+import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.reader.osm.GraphHopperOSM;

@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.gpx;
+package com.graphhopper.matching.gpx;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;

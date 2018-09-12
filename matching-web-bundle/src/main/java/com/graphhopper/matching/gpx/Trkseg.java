@@ -16,18 +16,17 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.gpx;
+package com.graphhopper.matching.gpx;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 
-import java.util.Date;
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Trkpt {
+public class Trkseg {
 
-    public double ele;
-    public Date time;
-    public double lat;
-    public double lon;
+    @JacksonXmlElementWrapper(useWrapping = false)
+    public List<Trkpt> trkpt;
 
 }

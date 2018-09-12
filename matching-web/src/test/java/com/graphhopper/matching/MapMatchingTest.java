@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,16 +21,12 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.gpx.Gpx;
+import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
@@ -319,33 +315,6 @@ public class MapMatchingTest {
     private List<GPXEntry> createRandomGPXEntries(GHPoint start, GHPoint end) {
         hopper.route(new GHRequest(start, end).setWeighting("fastest"));
         return hopper.getEdges(0);
-    }
-
-    private void printOverview(GraphHopperStorage graph, LocationIndex locationIndex,
-                               final double lat, final double lon, final double length) {
-        final NodeAccess na = graph.getNodeAccess();
-        int node = locationIndex.findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
-        final EdgeExplorer explorer = graph.createEdgeExplorer();
-        new BreadthFirstSearch() {
-
-            double currDist = 0;
-
-            @Override
-            protected boolean goFurther(int nodeId) {
-                double currLat = na.getLat(nodeId);
-                double currLon = na.getLon(nodeId);
-                currDist = Helper.DIST_PLANE.calcDist(currLat, currLon, lat, lon);
-                return currDist < length;
-            }
-
-            @Override
-            protected boolean checkAdjacent(EdgeIteratorState edge) {
-                System.out.println(edge.getBaseNode() + "->" + edge.getAdjNode() + " ("
-                        + Math.round(edge.getDistance()) + "): " + edge.getName() + "\t\t , distTo:"
-                        + currDist);
-                return true;
-            }
-        }.start(explorer, node);
     }
 
     // use a workaround to get access to paths
