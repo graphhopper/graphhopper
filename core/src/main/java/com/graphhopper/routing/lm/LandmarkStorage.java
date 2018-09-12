@@ -77,10 +77,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private List<LandmarkSuggestion> landmarkSuggestions = Collections.emptyList();
     private SpatialRuleLookup ruleLookup;
     private boolean logDetails = false;
-    /**
-     * 'to' and 'from' fit into 32 bit => 16 bit for each of them => 65536
-     */
-    static final long PRECISION = 1 << 16;
 
     public LandmarkStorage(GraphHopperStorage graph, Directory dir, final Weighting weighting, int landmarks) {
         this.graph = graph;
@@ -134,8 +130,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             if (Double.isInfinite(factor) || Double.isNaN(factor))
                 throw new IllegalStateException("Illegal factor " + factor + " calculated from maximum weight " + maxWeight);
         }
-        if (this.factor < 0.1)
-            this.factor = 0.1;
         return this;
     }
 
@@ -515,6 +509,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         return res;
     }
 
+    // 'to' and 'from' fit into 32 bit => 16 bit for each of them => 65536
+    static final long PRECISION = 1 << 16;
     /* This value sets the amount of bits used to store the backward weight.
     The rest of overall 32 bits stores the difference between forward and backward weight*/
     private static final int FROM_WEIGHT_BITS = 18;
@@ -861,9 +857,10 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             });
 
             if ((double) maxedout.get() / map.size() > 0.1) {
+                // for "from" values one needs to decrease the maximum, but if "delta" values are maxed out one needs to increase the maximum
                 LOGGER.warn("landmark " + lmIdx + " (" + nodeAccess.getLatitude(lmNodeId) + "," + nodeAccess.getLongitude(lmNodeId) + "): " +
-                        "too many " + (from ? "backward" : "delta") + " weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Use a bigger factor than " + lms.factor
-                        + ". For example use the following in the config.yml: weighting: " + weighting.getName() + "|maximum=" + finalMaxWeight.getValue() * 1.2);
+                        "too many " + (from ? "backward" : "delta") + " weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Factor is " + lms.factor
+                        + ". E.g. in config.yml do: prepare.lm.weighting: " + weighting.getName() + "|maximum=" + finalMaxWeight.getValue() * (from ? 0.8 : 1.2));
             }
         }
     }
