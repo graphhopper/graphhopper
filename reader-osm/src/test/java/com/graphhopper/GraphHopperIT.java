@@ -83,7 +83,7 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testMonacoWithInstructions() throws Exception {
+    public void testMonacoWithInstructions() {
         GHResponse rsp = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
@@ -952,7 +952,7 @@ public class GraphHopperIT {
                 setDisablingAllowed(true);
 
         tmpHopper.getLMFactoryDecorator().setEnabled(true).
-                setWeightingsAsStrings(Arrays.asList("fastest")).
+                setWeightingsAsStrings(Arrays.asList("fastest|maximum=2000")).
                 setDisablingAllowed(true);
 
         tmpHopper.importOrLoad();
