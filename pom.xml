@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-map-matching-parent</artifactId>
     <name>GraphHopper Map Matching Parent Project</name>
-    <version>0.11-SNAPSHOT</version>
+    <version>0.12-SNAPSHOT</version>
     <packaging>pom</packaging> 
     <url>https://www.graphhopper.com</url> 
     <inceptionYear>2012</inceptionYear>
