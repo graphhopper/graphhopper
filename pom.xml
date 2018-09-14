@@ -153,13 +153,13 @@
             </plugin>
 
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.5</version>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>3.1.6</version>
                 <configuration>
                     <maxRank>4</maxRank>
                     <failOnError>true</failOnError>
-                    <excludeFilterFile>core/files/findbugs-exclude.xml</excludeFilterFile>
+                    <excludeFilterFile>core/files/spotbugs-exclude.xml</excludeFilterFile>
                 </configuration>
             </plugin>
             <plugin>
