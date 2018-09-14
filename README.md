@@ -4,5 +4,5 @@
 
 This repository makes a GraphHopper backend compatible with the [Mapbox Navigation SDK](https://github.com/mapbox/mapbox-navigation-android) and provides the server side part of a navigation application.
 
-On the client side you can just use the Mapbox Navigation SDK like we do in [this repository](https://github.com/graphhopper/graphhopper-navigation-example) and works on Android.
+On the client side (currently only tested for Android) you can just use the Mapbox Navigation SDK like we do in [this repository](https://github.com/graphhopper/graphhopper-navigation-example).
 
