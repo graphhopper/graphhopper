@@ -170,7 +170,7 @@ docker-compose up -d
 If you don't want to use docker-compose you can do the following:
 ```bash
 docker build -t graphhopper:master .
-docker run -d --name graphhopper -v <path_data_directory>/data:/data -p 11111:11111 graphhopper:master
+docker run -d --name graphhopper -v <path_data_directory>/data:/data -p 8989:8989 graphhopper:master
 ```
 
 
