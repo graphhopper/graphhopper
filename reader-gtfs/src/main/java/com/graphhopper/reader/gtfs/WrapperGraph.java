@@ -89,7 +89,7 @@ public class WrapperGraph implements Graph {
                 return IntStream.concat(
                         IntStream.of(baseGraph.getAllEdges().length() - 1),
                         extraEdges.stream().mapToInt(VirtualEdgeIteratorState::getEdge))
-                        .max().getAsInt();
+                        .max().getAsInt()+1;
             }
 
             @Override
