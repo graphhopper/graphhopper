@@ -110,8 +110,7 @@ public class MapMatching2Test {
         AlgorithmOptions opts = AlgorithmOptions.start().build();
         MapMatching mapMatching = new MapMatching(hopper, opts);
 
-        // two points
-        // TODO either do the match or throw only IllegalArgumentException like we do if just a single point is snapped
+        // query with two identical points
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-127.gpx"), Gpx.class);
         MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
 
