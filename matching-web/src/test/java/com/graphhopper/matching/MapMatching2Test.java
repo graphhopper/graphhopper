@@ -70,7 +70,7 @@ public class MapMatching2Test {
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 2.5);
         assertEquals(28790, mr.getMatchMillis(), 50);
     }
-    
+
     @Test
     public void testIssue70() throws IOException {
         CarFlagEncoder encoder = new CarFlagEncoder();
@@ -86,15 +86,44 @@ public class MapMatching2Test {
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-70.gpx"), Gpx.class);
         MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
-        
+
         assertEquals(Arrays.asList("Милана Видака", "Милана Видака", "Милана Видака",
-        		"Бранка Радичевића", "Бранка Радичевића", "Здравка Челара"),
+                "Бранка Радичевића", "Бранка Радичевића", "Здравка Челара"),
                 fetchStreets(mr.getEdgeMatches()));
         // TODO: length/time
 
         for (EdgeMatch edgeMatch : mr.getEdgeMatches()) {
             validateEdgeMatch(edgeMatch);
         }
+    }
+
+    @Test
+    public void testIssue127() throws IOException {
+        CarFlagEncoder encoder = new CarFlagEncoder();
+        GraphHopper hopper = new GraphHopperOSM();
+        hopper.setDataReaderFile("../map-data/map-issue13.osm.gz");
+        hopper.setGraphHopperLocation("../target/mapmatchingtest-127");
+        hopper.setEncodingManager(new EncodingManager(encoder));
+        hopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        hopper.importOrLoad();
+
+        AlgorithmOptions opts = AlgorithmOptions.start().build();
+        MapMatching mapMatching = new MapMatching(hopper, opts);
+
+        // two points
+        // TODO either do the match or throw only IllegalArgumentException like we do if just a single point is snapped
+        Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-127.gpx"), Gpx.class);
+        MatchResult mr = mapMatching.doWork(gpx.trk.get(0).getEntries());
+
+        // make sure no virtual edges are returned
+        int edgeCount = hopper.getGraphHopperStorage().getAllEdges().length();
+        for (EdgeMatch em : mr.getEdgeMatches()) {
+            assertTrue("result contains virtual edges:" + em.getEdgeState().toString(),
+                    em.getEdgeState().getEdge() < edgeCount);
+            validateEdgeMatch(em);
+        }
+
+        assertEquals(0, mr.getMatchMillis(), 50);
     }
 
     private void validateEdgeMatch(EdgeMatch edgeMatch) {
