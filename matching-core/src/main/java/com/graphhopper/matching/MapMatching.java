@@ -440,13 +440,13 @@ public class MapMatching {
         for (GPXExtension from : prevTimeStep.candidates) {
             for (GPXExtension to : timeStep.candidates) {
                 // enforce heading if required:
-                if (from.isDirected()) {
+                if (from.isOnDirectedEdge()) {
                     // Make sure that the path starting at the "from" candidate goes through
                     // the outgoing edge.
                     queryGraph.unfavorVirtualEdgePair(from.getQueryResult().getClosestNode(),
                             from.getIncomingVirtualEdge().getEdge());
                 }
-                if (to.isDirected()) {
+                if (to.isOnDirectedEdge()) {
                     // Make sure that the path ending at "to" candidate goes through
                     // the incoming edge.
                     queryGraph.unfavorVirtualEdgePair(to.getQueryResult().getClosestNode(),
@@ -525,38 +525,13 @@ public class MapMatching {
 
     private MatchResult computeMatchResult(List<SequenceState<GPXExtension, GPXEntry, Path>> seq,
                                            Map<String, EdgeIteratorState> virtualEdgesMap, List<GPXEntry> gpxList, QueryGraph queryGraph) {
-        List<EdgeMatch> edgeMatches = new ArrayList<>();
         double distance = 0.0;
         long time = 0;
-        EdgeIteratorState currentEdge = null;
-        List<GPXExtension> gpxExtensions = new ArrayList<>();
-        if (!seq.isEmpty()) {
-            GPXExtension queryResult = seq.get(0).state;
-            gpxExtensions.add(queryResult);
-            for (int j = 1; j < seq.size(); j++) {
-                queryResult = seq.get(j).state;
-                Path path = seq.get(j).transitionDescriptor;
-                distance += path.getDistance();
-                time += path.getTime();
-                for (EdgeIteratorState edgeIteratorState : path.calcEdges()) {
-                    EdgeIteratorState directedRealEdge = resolveToRealEdge(virtualEdgesMap,
-                            edgeIteratorState);
-                    if (directedRealEdge == null) {
-                        throw new RuntimeException("Did not find real edge for "
-                                + edgeIteratorState.getEdge());
-                    }
-                    if (currentEdge == null || !equalEdges(directedRealEdge, currentEdge)) {
-                        if (currentEdge != null) {
-                            EdgeMatch edgeMatch = new EdgeMatch(currentEdge, gpxExtensions);
-                            edgeMatches.add(edgeMatch);
-                            gpxExtensions = new ArrayList<>();
-                        }
-                        currentEdge = directedRealEdge;
-                    }
-                }
-                gpxExtensions.add(queryResult);
+        for (SequenceState<GPXExtension, GPXEntry, Path> transitionAndState : seq) {
+            if (transitionAndState.transitionDescriptor != null) {
+                distance += transitionAndState.transitionDescriptor.getDistance();
+                time += transitionAndState.transitionDescriptor.getTime();
             }
-            edgeMatches.add(new EdgeMatch(currentEdge, gpxExtensions));
         }
 
         List<EdgeIteratorState> edges = new ArrayList<>();
@@ -567,6 +542,7 @@ public class MapMatching {
         }
         Path mergedPath = new MapMatchedPath(queryGraph.getBaseGraph(), weighting, edges);
 
+        List<EdgeMatch> edgeMatches = computeEdgeMatches(seq, virtualEdgesMap);
         MatchResult matchResult = new MatchResult(edgeMatches);
         matchResult.setMergedPath(mergedPath);
         matchResult.setMatchMillis(time);
@@ -574,6 +550,63 @@ public class MapMatching {
         matchResult.setGPXEntriesMillis(durationMillis(gpxList));
         matchResult.setGPXEntriesLength(gpxLength(gpxList));
         return matchResult;
+    }
+
+    private List<EdgeMatch> computeEdgeMatches(List<SequenceState<GPXExtension, GPXEntry, Path>> seq, Map<String, EdgeIteratorState> virtualEdgesMap) {
+        // This creates a list of directed edges (EdgeIteratorState instances turned the right way),
+        // each associated with 0 or more of the observations.
+        // These directed edges are edges of the real street graph, where nodes are intersections.
+        // So in _this_ representation, the path that you get when you just look at the edges goes from
+        // an intersection to an intersection.
+
+        // Implementation note: We have to look at both states _and_ transitions, since we can have e.g. just one state,
+        // or two states with a transition that is an empty path (observations snapped to the same node in the query graph),
+        // but these states still happen on an edge, and for this representation, we want to have that edge.
+        // (Whereas in the PathWrapper representation, we would just see an empty path.)
+
+        // Note that the result can be empty, even when the input is not. Observations can be on nodes as well as on
+        // edges, and when all observations are on the same node, we get no edge at all.
+        // But apart from that corner case, all observations that go in here are also in the result.
+
+        // (Consider totally forbidding candidate states to be snapped to a point, and make them all be on directed
+        // edges, then that corner case goes away.)
+        List<EdgeMatch> edgeMatches = new ArrayList<>();
+        List<GPXExtension> states = new ArrayList<>();
+        EdgeIteratorState currentDirectedRealEdge = null;
+        for (SequenceState<GPXExtension, GPXEntry, Path> transitionAndState : seq) {
+            // transition (except before the first state)
+            if (transitionAndState.transitionDescriptor != null) {
+                for (EdgeIteratorState edge : transitionAndState.transitionDescriptor.calcEdges()) {
+                    EdgeIteratorState newDirectedRealEdge = resolveToRealEdge(virtualEdgesMap, edge);
+                    if (currentDirectedRealEdge != null) {
+                        if (!equalEdges(currentDirectedRealEdge, newDirectedRealEdge)) {
+                            EdgeMatch edgeMatch = new EdgeMatch(currentDirectedRealEdge, states);
+                            edgeMatches.add(edgeMatch);
+                            states = new ArrayList<>();
+                        }
+                    }
+                    currentDirectedRealEdge = newDirectedRealEdge;
+                }
+            }
+            // state
+            if (transitionAndState.state.isOnDirectedEdge()) { // as opposed to on a node
+                EdgeIteratorState newDirectedRealEdge = resolveToRealEdge(virtualEdgesMap, transitionAndState.state.getOutgoingVirtualEdge());
+                if (currentDirectedRealEdge != null) {
+                    if (!equalEdges(currentDirectedRealEdge, newDirectedRealEdge)) {
+                        EdgeMatch edgeMatch = new EdgeMatch(currentDirectedRealEdge, states);
+                        edgeMatches.add(edgeMatch);
+                        states = new ArrayList<>();
+                    }
+                }
+                currentDirectedRealEdge = newDirectedRealEdge;
+            }
+            states.add(transitionAndState.state);
+        }
+        if (currentDirectedRealEdge != null) {
+            EdgeMatch edgeMatch = new EdgeMatch(currentDirectedRealEdge, states);
+            edgeMatches.add(edgeMatch);
+        }
+        return edgeMatches;
     }
 
     private double gpxLength(List<GPXEntry> gpxList) {

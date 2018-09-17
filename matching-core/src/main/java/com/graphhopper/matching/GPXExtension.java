@@ -81,7 +81,7 @@ public class GPXExtension {
      * Returns whether this GPXExtension is directed. This is true if the snapped point
      * is a virtual node, otherwise the snapped node is a real (tower) node and false is returned.
      */
-    public boolean isDirected() {
+    public boolean isOnDirectedEdge() {
         return isDirected;
     }
 
