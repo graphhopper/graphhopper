@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-map-matching-parent</artifactId>
     <name>GraphHopper Map Matching Parent Project</name>
-    <version>0.11-SNAPSHOT</version>
+    <version>0.12-SNAPSHOT</version>
     <packaging>pom</packaging> 
     <url>https://www.graphhopper.com</url> 
     <inceptionYear>2012</inceptionYear>
@@ -20,6 +20,8 @@
         <slf4j.version>1.7.21</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
         <gh.version>0.11.0</gh.version>
+        <jackson.version>2.9.6</jackson.version>
+        <dropwizard.version>1.3.5</dropwizard.version>
 	
         <org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>4</org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>
         <org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>4</org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>
