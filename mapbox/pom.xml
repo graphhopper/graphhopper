@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>graphhopper-navigation-mapbox</artifactId>
-    <version>0.11-SNAPSHOT</version>
+    <version>0.12-SNAPSHOT</version>
     <build>
         <plugins>
             <plugin>
@@ -22,14 +22,14 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-navigation</artifactId>
-        <version>0.11-SNAPSHOT</version>
+        <version>0.12-SNAPSHOT</version>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-web</artifactId>
-            <version>0.11-SNAPSHOT</version>
+            <version>0.11.0</version>
         </dependency>
 
         <dependency>
