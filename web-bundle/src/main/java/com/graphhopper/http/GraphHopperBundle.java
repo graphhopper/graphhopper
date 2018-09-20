@@ -209,7 +209,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
         final GHDirectory ghDirectory = GraphHopperGtfs.createGHDirectory(configuration.get("graph.location", "target/tmp"));
         final GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
-        final EncodingManager encodingManager = EncodingManager.start(8).add(ptFlagEncoder).add(new FootFlagEncoder()).add(new CarFlagEncoder()).build();
+        final EncodingManager encodingManager = new EncodingManager.Builder(8).add(ptFlagEncoder).add(new FootFlagEncoder()).add(new CarFlagEncoder()).build();
         final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, ptFlagEncoder, gtfsStorage,
                 configuration.has("gtfs.file") ? Arrays.asList(configuration.get("gtfs.file", "").split(",")) : Collections.emptyList(),
                 configuration.has("datareader.file") ? Arrays.asList(configuration.get("datareader.file", "").split(",")) : Collections.emptyList());
