@@ -179,8 +179,10 @@ public class EncodingManager implements EncodedValueLookup {
                     + dir.getLocation());
 
         int bytesForFlags = 4;
-        if ("8".equals(properties.get("graph.bytes_for_flags")))
-            bytesForFlags = 8;
+        try {
+            bytesForFlags = Integer.parseInt(properties.get("graph.bytes_for_flags"));
+        } catch (NumberFormatException ex) {
+        }
         return new EncodingManager(factory, acceptStr, bytesForFlags);
     }
 
