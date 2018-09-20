@@ -95,7 +95,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public static EncodingManager create(List<? extends FlagEncoder> flagEncoders, int bytesForEdgeFlags) {
-        Builder builder = start(bytesForEdgeFlags);
+        Builder builder = new Builder(bytesForEdgeFlags);
         for (FlagEncoder flagEncoder : flagEncoders) {
             builder.add(flagEncoder);
         }
@@ -135,6 +135,9 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private EncodingManager(int bytes) {
+        if (bytes <= 0 || (bytes / 4) * 4 != bytes)
+            throw new IllegalStateException("bytesForEdgeFlags can be only a multiple of 4");
+
         this.bitsForEdgeFlags = bytes * 8;
         this.config = new EncodedValue.InitializerConfig();
     }
@@ -171,8 +174,6 @@ public class EncodingManager implements EncodedValueLookup {
         public EncodingManager build() {
             if (buildCalled)
                 throw new IllegalStateException("Cannot call Builder.build() twice");
-            if (em.bitsForEdgeFlags <= 0 || (em.bitsForEdgeFlags / 32) * 32 != em.bitsForEdgeFlags)
-                throw new IllegalStateException("bytesForEdgeFlags can be only a multiple of 4");
             if (em.encodedValueMap.isEmpty())
                 throw new IllegalStateException("No EncodedValues found");
 
