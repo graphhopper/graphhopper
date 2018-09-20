@@ -102,7 +102,7 @@ public abstract class AbstractElevationProvider implements ElevationProvider {
     }
 
     /**
-     * Return the local file name without file ending, has to be lower case, because DataAccess only hasEncoder lower case names.
+     * Return the local file name without file ending, has to be lower case, because DataAccess only supports lower case names.
      */
     abstract String getFileName(double lat, double lon);
 

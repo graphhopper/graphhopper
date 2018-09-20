@@ -36,7 +36,7 @@ import static com.graphhopper.util.Helper.toLowerCase;
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
  * during parsing. Create one via:
- *
+ * <p>
  * EncodingManager.start(4).add(new CarFlagEncoder()).build();
  *
  * @author Peter Karich
@@ -130,8 +130,8 @@ public class EncodingManager implements EncodedValueLookup {
     /**
      * Starts the build process of an EncodingManager
      */
-    public static Builder start(int bytesPerEdgeFlags) {
-        return new Builder(bytesPerEdgeFlags);
+    public static Builder start() {
+        return new Builder(4);
     }
 
     private EncodingManager(int bytes) {

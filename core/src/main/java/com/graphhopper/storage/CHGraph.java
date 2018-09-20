@@ -23,10 +23,9 @@ import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIteratorState;
 
 /**
- * Extended graph interface which hasEncoder Contraction Hierarchies. Ie. storing and retrieving the
+ * Extended graph interface which supports Contraction Hierarchies. Ie. storing and retrieving the
  * levels for a node and creating shortcuts, which are additional 'artificial' edges to speedup
  * traversal in certain cases.
- * <p>
  *
  * @author Peter Karich
  */
