@@ -35,8 +35,9 @@ import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
- * during parsing.
- * <p>
+ * during parsing. Create one via:
+ *
+ * EncodingManager.start(4).add(new CarFlagEncoder()).build();
  *
  * @author Peter Karich
  * @author Nop
@@ -63,25 +64,16 @@ public class EncodingManager implements EncodedValueLookup {
      *
      * @param flagEncodersStr comma delimited list of encoders. The order does not matter.
      */
-    public EncodingManager(String flagEncodersStr) {
-        this(flagEncodersStr, 4);
+    public static EncodingManager create(String flagEncodersStr) {
+        return create(flagEncodersStr, 4);
     }
 
-    public EncodingManager(String flagEncodersStr, int bytesForEdgeFlags) {
-        this(FlagEncoderFactory.DEFAULT, flagEncodersStr, bytesForEdgeFlags);
+    public static EncodingManager create(String flagEncodersStr, int bytesForEdgeFlags) {
+        return create(FlagEncoderFactory.DEFAULT, flagEncodersStr, bytesForEdgeFlags);
     }
 
-    public EncodingManager(FlagEncoderFactory factory, String flagEncodersStr, int bytesForEdgeFlags) {
-        this(parseEncoderString(factory, flagEncodersStr), bytesForEdgeFlags);
-    }
-
-    /**
-     * Instantiate manager with the given list of encoders.
-     *
-     * @param flagEncoders comma delimited list of encoders. The order does not matter.
-     */
-    public EncodingManager(FlagEncoder... flagEncoders) {
-        this(Arrays.asList(flagEncoders));
+    public static EncodingManager create(FlagEncoderFactory factory, String flagEncodersStr, int bytesForEdgeFlags) {
+        return create(parseEncoderString(factory, flagEncodersStr), bytesForEdgeFlags);
     }
 
     /**
@@ -89,35 +81,104 @@ public class EncodingManager implements EncodedValueLookup {
      *
      * @param flagEncoders comma delimited list of encoders. The order does not matter.
      */
-    public EncodingManager(List<? extends FlagEncoder> flagEncoders) {
-        this(flagEncoders, 4);
+    public static EncodingManager create(FlagEncoder... flagEncoders) {
+        return create(Arrays.asList(flagEncoders));
     }
 
-    public EncodingManager(List<? extends FlagEncoder> flagEncoders, int bytesForEdgeFlags) {
-        if (bytesForEdgeFlags <= 0 || (bytesForEdgeFlags / 4) * 4 != bytesForEdgeFlags)
-            throw new IllegalStateException("For 'edge flags' only a multiple of 4 is supported");
+    /**
+     * Instantiate manager with the given list of encoders.
+     *
+     * @param flagEncoders comma delimited list of encoders. The order does not matter.
+     */
+    public static EncodingManager create(List<? extends FlagEncoder> flagEncoders) {
+        return create(flagEncoders, 4);
+    }
 
-        this.bitsForEdgeFlags = bytesForEdgeFlags * 8;
-        this.config = new EncodedValue.InitializerConfig();
-        final BooleanEncodedValue roundaboutEnc = new BooleanEncodedValue("roundabout", false);
-        sharedEncodedValueMap.put(roundaboutEnc, new OSMTagParser() {
-            @Override
-            public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
-                boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
-                if (isRoundabout)
-                    roundaboutEnc.setBool(false, edgeFlags, true);
-                return edgeFlags;
-            }
-        });
-        for (EncodedValue ev : sharedEncodedValueMap.keySet()) {
-            addEncodedValue(ev);
-        }
+    public static EncodingManager create(List<? extends FlagEncoder> flagEncoders, int bytesForEdgeFlags) {
+        Builder builder = start(bytesForEdgeFlags);
         for (FlagEncoder flagEncoder : flagEncoders) {
-            registerEncoder((AbstractFlagEncoder) flagEncoder);
+            builder.add(flagEncoder);
+        }
+        return builder.build();
+    }
+
+    /**
+     * Create the EncodingManager from the provided GraphHopper location. Throws an
+     * IllegalStateException if it fails. Used if no EncodingManager specified on load.
+     */
+    public static EncodingManager create(FlagEncoderFactory factory, String ghLoc) {
+        Directory dir = new RAMDirectory(ghLoc, true);
+        StorableProperties properties = new StorableProperties(dir);
+        if (!properties.loadExisting())
+            throw new IllegalStateException("Cannot load properties to fetch EncodingManager configuration at: "
+                    + dir.getLocation());
+
+        // check encoding for compatibility
+        properties.checkVersions(false);
+        String acceptStr = properties.get("graph.flag_encoders");
+
+        if (acceptStr.isEmpty())
+            throw new IllegalStateException("EncodingManager was not configured. And no one was found in the graph: "
+                    + dir.getLocation());
+
+        int bytesForFlags = 4;
+        if ("8".equals(properties.get("graph.bytes_for_flags")))
+            bytesForFlags = 8;
+        return create(factory, acceptStr, bytesForFlags);
+    }
+
+    /**
+     * Starts the build process of an EncodingManager
+     */
+    public static Builder start(int bytesPerEdgeFlags) {
+        return new Builder(bytesPerEdgeFlags);
+    }
+
+    private EncodingManager(int bytes) {
+        this.bitsForEdgeFlags = bytes * 8;
+        this.config = new EncodedValue.InitializerConfig();
+    }
+
+    public static class Builder {
+        private final EncodingManager em;
+        private boolean buildCalled = false;
+
+        public Builder(int bytes) {
+            em = new EncodingManager(bytes);
+            final BooleanEncodedValue roundaboutEnc = new BooleanEncodedValue("roundabout", false);
+            em.sharedEncodedValueMap.put(roundaboutEnc, new OSMTagParser() {
+                @Override
+                public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
+                    boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
+                    if (isRoundabout)
+                        roundaboutEnc.setBool(false, edgeFlags, true);
+                    return edgeFlags;
+                }
+            });
+            em.addEncodedValue(roundaboutEnc);
         }
 
-        if (edgeEncoders.isEmpty())
-            throw new IllegalStateException("No vehicles found");
+        public Builder add(FlagEncoder encoder) {
+            em.addEncoder((AbstractFlagEncoder) encoder);
+            return this;
+        }
+
+        public Builder add(EncodedValue encodedValue) {
+            em.addEncodedValue(encodedValue);
+            return this;
+        }
+
+        public EncodingManager build() {
+            if (buildCalled)
+                throw new IllegalStateException("Cannot call Builder.build() twice");
+            if (em.bitsForEdgeFlags <= 0 || (em.bitsForEdgeFlags / 32) * 32 != em.bitsForEdgeFlags)
+                throw new IllegalStateException("bytesForEdgeFlags can be only a multiple of 4");
+            if (em.encodedValueMap.isEmpty())
+                throw new IllegalStateException("No EncodedValues found");
+
+            buildCalled = true;
+            return em;
+        }
     }
 
     static List<FlagEncoder> parseEncoderString(FlagEncoderFactory factory, String encoderList) {
@@ -159,36 +220,11 @@ public class EncodingManager implements EncodedValueLookup {
         return str.replaceAll(";[ ]*", ", ");
     }
 
-    /**
-     * Create the EncodingManager from the provided GraphHopper location. Throws an
-     * IllegalStateException if it fails. Used if no EncodingManager specified on load.
-     */
-    public static EncodingManager create(FlagEncoderFactory factory, String ghLoc) {
-        Directory dir = new RAMDirectory(ghLoc, true);
-        StorableProperties properties = new StorableProperties(dir);
-        if (!properties.loadExisting())
-            throw new IllegalStateException("Cannot load properties to fetch EncodingManager configuration at: "
-                    + dir.getLocation());
-
-        // check encoding for compatibility
-        properties.checkVersions(false);
-        String acceptStr = properties.get("graph.flag_encoders");
-
-        if (acceptStr.isEmpty())
-            throw new IllegalStateException("EncodingManager was not configured. And no one was found in the graph: "
-                    + dir.getLocation());
-
-        int bytesForFlags = 4;
-        if ("8".equals(properties.get("graph.bytes_for_flags")))
-            bytesForFlags = 8;
-        return new EncodingManager(factory, acceptStr, bytesForFlags);
-    }
-
     public int getBytesForFlags() {
         return bitsForEdgeFlags / 8;
     }
 
-    private void registerEncoder(AbstractFlagEncoder encoder) {
+    private void addEncoder(AbstractFlagEncoder encoder) {
         if (encoder.isRegistered())
             throw new IllegalStateException("You must not register a FlagEncoder (" + encoder.toString() + ") twice!");
 
@@ -241,7 +277,7 @@ public class EncodingManager implements EncodedValueLookup {
     /**
      * @return true if the specified encoder is found
      */
-    public boolean supports(String encoder) {
+    public boolean hasEncoder(String encoder) {
         return getEncoder(encoder, false) != null;
     }
 
@@ -466,7 +502,7 @@ public class EncodingManager implements EncodedValueLookup {
     public <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType) {
         EncodedValue ev = encodedValueMap.get(key);
         if (ev == null)
-            throw new IllegalArgumentException("Cannot find encoded value " + key + " in collection: " + ev);
+            throw new IllegalArgumentException("Cannot find EncodedValue " + key + " in collection: " + ev);
         return (T) ev;
     }
 

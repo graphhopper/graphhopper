@@ -42,12 +42,12 @@ import static org.junit.Assert.*;
 public class PathTest {
     private final FlagEncoder encoder = new CarFlagEncoder();
     private final DataFlagEncoder dataFlagEncoder = new DataFlagEncoder();
-    private final EncodingManager carManager = new EncodingManager(encoder);
+    private final EncodingManager carManager = EncodingManager.create(encoder);
     private final BooleanEncodedValue carManagerRoundabout = carManager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
     private final BooleanEncodedValue carAccessEnc = encoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnv = encoder.getAverageSpeedEnc();
-    private final EncodingManager dataFlagManager = new EncodingManager(dataFlagEncoder);
-    private final EncodingManager mixedEncoders = new EncodingManager(new CarFlagEncoder(), new FootFlagEncoder());
+    private final EncodingManager dataFlagManager = EncodingManager.create(dataFlagEncoder);
+    private final EncodingManager mixedEncoders = EncodingManager.create(new CarFlagEncoder(), new FootFlagEncoder());
     private final BooleanEncodedValue mixedManagerRoundabout = mixedEncoders.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);

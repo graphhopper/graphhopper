@@ -48,7 +48,7 @@ public abstract class AbstractBikeFlagEncoderTester {
 
     @Before
     public void setUp() {
-        encodingManager = new EncodingManager(encoder = createBikeEncoder());
+        encodingManager = EncodingManager.create(encoder = createBikeEncoder());
         roundaboutEnc = encodingManager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
         priorityEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
         avSpeedEnc = encoder.getAverageSpeedEnc();

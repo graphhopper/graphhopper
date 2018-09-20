@@ -519,7 +519,7 @@ public class RoutingAlgorithmWithOSMIT {
                     setCHEnabled(false).
                     setDataReaderFile(osmFile).
                     setGraphHopperLocation(graphFile).
-                    setEncodingManager(new EncodingManager(importVehicles));
+                    setEncodingManager(EncodingManager.create(importVehicles));
 
             if (osmFile.contains("krautsand"))
                 hopper.setMinNetworkSize(0, 0);
@@ -574,7 +574,7 @@ public class RoutingAlgorithmWithOSMIT {
         System.out.println("testMonacoParallel takes a bit time...");
         String graphFile = "target/monaco-gh";
         Helper.removeDir(new File(graphFile));
-        final EncodingManager encodingManager = new EncodingManager("car");
+        final EncodingManager encodingManager = EncodingManager.create("car");
         final GraphHopper hopper = new GraphHopperOSM().
                 setStoreOnFlush(true).
                 setEncodingManager(encodingManager).setCHEnabled(false).

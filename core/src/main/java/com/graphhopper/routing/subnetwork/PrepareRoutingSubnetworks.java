@@ -257,7 +257,7 @@ public class PrepareRoutingSubnetworks {
      */
     boolean detectNodeRemovedForAllEncoders(EdgeExplorer edgeExplorerAllEdges, int nodeIndex) {
         // we could implement a 'fast check' for several previously marked removed nodes via GHBitSet 
-        // removedNodesPerVehicle. The problem is that we would need long-indices but BitSet only supports int (due to nodeIndex*numberOfEncoders)
+        // removedNodesPerVehicle. The problem is that we would need long-indices but BitSet only hasEncoder int (due to nodeIndex*numberOfEncoders)
 
         // if no edges are reachable return true
         EdgeIterator iter = edgeExplorerAllEdges.setBaseNode(nodeIndex);

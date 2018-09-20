@@ -33,7 +33,7 @@ import static org.junit.Assert.*;
  */
 public class GHUtilityTest {
     private final FlagEncoder carEncoder = new CarFlagEncoder();
-    private final EncodingManager encodingManager = new EncodingManager(carEncoder);
+    private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
     private final BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
 
     Graph createGraph() {

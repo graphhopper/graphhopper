@@ -25,7 +25,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class IsochroneTest {
 
-    private final EncodingManager encodingManager = new EncodingManager("car");
+    private final EncodingManager encodingManager = EncodingManager.create("car");
     private final FlagEncoder carEncoder = encodingManager.getEncoder("car");
     private GraphHopperStorage graph;
 

@@ -23,7 +23,7 @@ public class DecimalEncodedValueTest {
     @Test
     public void testMaxValue() {
         CarFlagEncoder carEncoder = new CarFlagEncoder(10, 0.5, 0);
-        EncodingManager em = new EncodingManager(carEncoder);
+        EncodingManager em = EncodingManager.create(carEncoder);
         DecimalEncodedValue carAverageSpeedEnc = em.getDecimalEncodedValue(EncodingManager.getKey(carEncoder, "average_speed"));
 
         ReaderWay way = new ReaderWay(1);

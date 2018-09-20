@@ -65,7 +65,7 @@ public class IsochroneResource {
 
         StopWatch sw = new StopWatch().start();
 
-        if (!encodingManager.supports(vehicle))
+        if (!encodingManager.hasEncoder(vehicle))
             throw new IllegalArgumentException("vehicle not supported:" + vehicle);
 
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
