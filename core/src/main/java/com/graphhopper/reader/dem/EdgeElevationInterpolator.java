@@ -21,14 +21,16 @@ import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.routing.profiles.parsers.RoadEnvironmentParser;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.RoadEnvironmentEncodedValue;
+import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 
 /**
- * Abstract base class for tunnel/bridge edge elevation interpolators. This
+ * Class for tunnel/bridge edge elevation interpolators. This
  * class estimates elevation of inner nodes of a tunnel/bridge based on
  * elevations of entry nodes. See #713 for more information.
  * <p>
@@ -50,20 +52,24 @@ import com.graphhopper.util.*;
  *
  * @author Alexey Valikov
  */
-public abstract class AbstractEdgeElevationInterpolator {
+public class EdgeElevationInterpolator {
 
     private final GraphHopperStorage storage;
-    protected final RoadEnvironmentParser roadEnvironmentParser;
     private final NodeElevationInterpolator nodeElevationInterpolator;
     private final ElevationInterpolator elevationInterpolator = new ElevationInterpolator();
+    private final int tunnelOrBridgeIdx;
+    private final IntEncodedValue encodedValue;
 
-    public AbstractEdgeElevationInterpolator(GraphHopperStorage storage, RoadEnvironmentParser roadEnvironmentParser) {
+    public EdgeElevationInterpolator(GraphHopperStorage storage, StringEncodedValue roadEnvironmentEnc, RoadEnvironmentEncodedValue.Key tunnelOrBridge) {
         this.storage = storage;
-        this.roadEnvironmentParser = roadEnvironmentParser;
         this.nodeElevationInterpolator = new NodeElevationInterpolator(storage);
+        tunnelOrBridgeIdx = tunnelOrBridge.ordinal();
+        encodedValue = roadEnvironmentEnc;
     }
 
-    protected abstract boolean isInterpolatableEdge(EdgeIteratorState edge);
+    protected boolean isInterpolatableEdge(EdgeIteratorState edge) {
+        return edge.get(encodedValue) == tunnelOrBridgeIdx;
+    }
 
     public GraphHopperStorage getStorage() {
         return storage;

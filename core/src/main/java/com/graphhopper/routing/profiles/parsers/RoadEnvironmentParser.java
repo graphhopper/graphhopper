@@ -1,12 +1,28 @@
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.routing.profiles.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.RoadEnvironmentEncodedValue;
 import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -15,18 +31,11 @@ import java.util.List;
 public class RoadEnvironmentParser extends AbstractTagParser {
     private final StringEncodedValue roadEnvEnc;
     private final List<String> roadEnvList;
-    private final int transportModeTunnelValue;
-    private final int transportModeBridgeValue;
-    private final int transportModeFordValue;
 
     public RoadEnvironmentParser() {
         super(EncodingManager.ROAD_ENV);
-        roadEnvList = Arrays.asList("_default", "bridge", "tunnel", "ford", "aerialway");
-        roadEnvEnc = new StringEncodedValue(EncodingManager.ROAD_ENV, roadEnvList, "_default");
-
-        transportModeTunnelValue = roadEnvEnc.indexOf("tunnel");
-        transportModeBridgeValue = roadEnvEnc.indexOf("bridge");
-        transportModeFordValue = roadEnvEnc.indexOf("ford");
+        roadEnvEnc = new RoadEnvironmentEncodedValue();
+        roadEnvList = RoadEnvironmentEncodedValue.getKeysAsStrings();
     }
 
     public StringEncodedValue getEnc() {
@@ -45,17 +54,5 @@ public class RoadEnvironmentParser extends AbstractTagParser {
 
         roadEnvEnc.setString(false, edgeFlags, roadEnv);
         return edgeFlags;
-    }
-
-    public boolean isTransportModeTunnel(EdgeIteratorState edge) {
-        return roadEnvEnc.getInt(false, edge.getFlags()) == transportModeTunnelValue;
-    }
-
-    public boolean isTransportModeBridge(EdgeIteratorState edge) {
-        return roadEnvEnc.getInt(false, edge.getFlags()) == transportModeBridgeValue;
-    }
-
-    public boolean isTransportModeFord(IntsRef edgeFlags) {
-        return roadEnvEnc.getInt(false, edgeFlags) == transportModeFordValue;
     }
 }

@@ -169,8 +169,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public static class Builder {
-        private final EncodingManager em;
-        private boolean buildCalled = false;
+        private EncodingManager em;
 
         public Builder(int bytes) {
             em = new EncodingManager(bytes);
@@ -180,6 +179,7 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         public Builder addSurface() {
+            check();
             SurfaceParser sParser = new SurfaceParser();
             em.putEncodedValue(sParser.getEnc());
             em.putParser(sParser);
@@ -187,6 +187,7 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         public Builder addRoadEnvironment() {
+            check();
             RoadEnvironmentParser reParser = new RoadEnvironmentParser();
             em.putEncodedValue(reParser.getEnc());
             em.putParser(reParser);
@@ -194,6 +195,7 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         public Builder addRoadClass() {
+            check();
             RoadClassParser rcParser = new RoadClassParser();
             em.putEncodedValue(rcParser.getEnc());
             em.putParser(rcParser);
@@ -201,31 +203,38 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         public Builder add(FlagEncoder encoder) {
+            check();
             if (encoder instanceof DataFlagEncoder) {
-                addRoadClass();
-                addRoadEnvironment();
-                addSurface();
-                DataFlagEncoder dfe = (DataFlagEncoder) encoder;
-                dfe.setRoadClassParser(em.getParser(ROAD_CLASS, RoadClassParser.class));
-                dfe.setRoadEnvironmentParser(em.getParser(ROAD_ENV, RoadEnvironmentParser.class));
+                addRoadClass().addRoadEnvironment().addSurface();
+                ((DataFlagEncoder) encoder).setRoadClassParser(em.getParser(ROAD_CLASS, RoadClassParser.class));
             }
             em.putEncoder((AbstractFlagEncoder) encoder);
             return this;
         }
 
         public Builder add(EncodedValue encodedValue) {
+            check();
             em.putEncodedValue(encodedValue);
             return this;
         }
 
+        public void check() {
+            if (em == null)
+                throw new IllegalArgumentException("After calling build no further action is possible");
+        }
+
         public EncodingManager build() {
-            if (buildCalled)
+            if (em == null)
                 throw new IllegalStateException("Cannot call Builder.build() twice");
             if (em.encodedValueMap.isEmpty())
                 throw new IllegalStateException("No EncodedValues found");
 
-            buildCalled = true;
-            return em;
+            // make it possible to garbage collect the Builder object
+            try {
+                return em;
+            } finally {
+                em = null;
+            }
         }
     }
 

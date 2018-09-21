@@ -47,10 +47,8 @@ public class RoadClassParser extends AbstractTagParser {
 
     public RoadClassParser() {
         super(EncodingManager.ROAD_CLASS);
-        List<String> roadClasses = Arrays.asList("_default", "motorway", "motorway_link", "motorroad", "trunk", "trunk_link",
-                "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
-                "residential", "unclassified", "service", "track", "road", "cycleway", "bridleway", "forestry",
-                "footway", "path", "steps", "pedestrian", "living_street");
+        List<String> roadClasses = new ArrayList<>(CAR_SPEEDS.keySet());
+        roadClasses.add(0, "_default");
         enc = new StringEncodedValue(EncodingManager.ROAD_CLASS, roadClasses, "_default");
     }
 

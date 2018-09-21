@@ -19,6 +19,7 @@ package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,7 @@ import java.util.Map;
  * This class holds a string array and stores only a number (typically the array index via IntEncodedValue)
  * to restore this information.
  */
-public final class StringEncodedValue extends IntEncodedValue {
+public class StringEncodedValue extends IntEncodedValue {
     private final Map<String, Integer> map;
     private final String[] arr;
 

@@ -41,7 +41,7 @@ public class GenericWeighting extends AbstractWeighting {
     protected final long headingPenaltyMillis;
     protected final double maxSpeed;
     protected final DataFlagEncoder gEncoder;
-    protected RoadClassParser.WeightingConfig weightingConfig;
+    protected final RoadClassParser.WeightingConfig weightingConfig;
     protected final int accessType;
     protected final int uncertainAccessiblePenalty = 10;
 

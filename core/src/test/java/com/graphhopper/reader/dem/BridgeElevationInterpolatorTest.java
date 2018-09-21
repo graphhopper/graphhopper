@@ -19,6 +19,7 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.RoadEnvironmentEncodedValue;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
@@ -30,7 +31,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Alexey Valikov
  */
-public class BridgeElevationInterpolatorTest extends AbstractEdgeElevationInterpolatorTest {
+public class BridgeElevationInterpolatorTest extends EdgeElevationInterpolatorTest {
 
     @Override
     protected ReaderWay createInterpolatableWay() {
@@ -41,8 +42,8 @@ public class BridgeElevationInterpolatorTest extends AbstractEdgeElevationInterp
     }
 
     @Override
-    protected AbstractEdgeElevationInterpolator createEdgeElevationInterpolator() {
-        return new BridgeElevationInterpolator(graph, parser);
+    protected EdgeElevationInterpolator createEdgeElevationInterpolator() {
+        return new EdgeElevationInterpolator(graph, encodedValue, RoadEnvironmentEncodedValue.Key.BRIDGE);
     }
 
     @Test

@@ -22,8 +22,8 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.profiles.parsers.RoadClassParser;
-import com.graphhopper.routing.profiles.parsers.RoadEnvironmentParser;
 import com.graphhopper.routing.util.spatialrules.AccessValue;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
@@ -70,7 +70,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private boolean storeWidth = false;
     private IntEncodedValue spatialEncoder;
     private SpatialRuleLookup spatialRuleLookup = SpatialRuleLookup.EMPTY;
-    private RoadEnvironmentParser roadEnvironmentParser;
+    private IntEncodedValue roadEnvEnc;
+    private int fordIdx;
     private RoadClassParser roadClassParser;
 
     public DataFlagEncoder() {
@@ -85,14 +86,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         this.setStoreHeight(properties.getBool("store_height", false));
         this.setStoreWeight(properties.getBool("store_weight", false));
         this.setStoreWidth(properties.getBool("store_width", false));
-    }
-
-    public void setRoadClassParser(RoadClassParser roadClassParser) {
-        this.roadClassParser = roadClassParser;
-    }
-
-    public void setRoadEnvironmentParser(RoadEnvironmentParser roadEnvironmentParser) {
-        this.roadEnvironmentParser = roadEnvironmentParser;
     }
 
     public DataFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
@@ -127,6 +120,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         // accessMap.put("forestry", accessMap.get("agricultural"));
     }
 
+    public void setRoadClassParser(RoadClassParser roadClassParser) {
+        this.roadClassParser = roadClassParser;
+    }
+
     @Override
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
         // TODO support different vehicle types, currently just roundabout and fwd&bwd for one vehicle type
@@ -155,6 +152,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
         // workaround to init AbstractWeighting.avSpeedEnc variable that GenericWeighting does not need
         speedEncoder = carMaxspeedEncoder;
+
+        StringEncodedValue tmp = getEncodedValue(EncodingManager.ROAD_ENV, StringEncodedValue.class);
+        fordIdx = tmp.indexOf("ford");
+        roadEnvEnc = tmp;
     }
 
     protected void flagsDefault(IntsRef edgeFlags, boolean forward, boolean backward) {
@@ -532,7 +533,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public InstructionAnnotation getAnnotation(IntsRef flags, Translation tr) {
-        if (roadEnvironmentParser.isTransportModeFord(flags)) {
+        if (roadEnvEnc.getInt(false, flags) == fordIdx) {
             return new InstructionAnnotation(1, tr.tr("way_contains_ford"));
         }
 

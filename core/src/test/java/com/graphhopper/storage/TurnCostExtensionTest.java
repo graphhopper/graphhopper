@@ -32,7 +32,7 @@ public class TurnCostExtensionTest {
         FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 3);
         FlagEncoder bikeEncoder = new BikeFlagEncoder(5, 5, 3);
 
-        EncodingManager manager = new EncodingManager.Builder(4).add(carEncoder).add(bikeEncoder).build();
+        EncodingManager manager = EncodingManager.create(carEncoder, bikeEncoder);
         GraphHopperStorage g = new GraphBuilder(manager).create();
         initGraph(g);
         TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
