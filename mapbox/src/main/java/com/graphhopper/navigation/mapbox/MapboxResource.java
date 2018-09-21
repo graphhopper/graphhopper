@@ -20,6 +20,7 @@ package com.graphhopper.navigation.mapbox;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
@@ -35,6 +36,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.util.Parameters.Routing.*;
@@ -75,8 +77,8 @@ public class MapboxResource {
             @QueryParam("voice_units") @DefaultValue("metric") String voiceUnits,
             @QueryParam("overview") @DefaultValue("simplified") String overview,
             @QueryParam("geometries") @DefaultValue("polyline") String geometries,
+            @QueryParam("bearings") @DefaultValue("") String bearings,
             @QueryParam("language") @DefaultValue("en") String localeStr,
-            @QueryParam("heading") List<Double> favoredHeadings,
             @PathParam("profile") String profile) {
 
         /*
@@ -109,19 +111,29 @@ public class MapboxResource {
         String vehicleStr = convertProfileToGraphHopperVehicleString(profile);
         List<GHPoint> requestPoints = getPointsFromRequest(httpReq, profile);
 
+        List<Double> favoredHeadings = getBearing(bearings);
+        if (favoredHeadings.size() > 0 && favoredHeadings.size() != requestPoints.size()) {
+            throw new IllegalArgumentException("Number of bearings and waypoints did not match");
+        }
+
         StopWatch sw = new StopWatch().start();
 
-        // TODO: initialization with heading/bearings
-        // TODO: how should we use the "continue_straight" parameter? This is analog to pass_through, would require disabling CH
+        GHRequest request;
+        if (favoredHeadings.size() > 0) {
+            request = new GHRequest(requestPoints, favoredHeadings);
+        } else {
+            request = new GHRequest(requestPoints);
+        }
 
-        GHRequest request = new GHRequest(requestPoints);
         request.setVehicle(vehicleStr).
                 setWeighting(weighting).
                 setLocale(localeStr).
                 getHints().
                 put(CALC_POINTS, true).
                 put(INSTRUCTIONS, enableInstructions).
-                put(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+                put(WAY_POINT_MAX_DISTANCE, minPathPrecision).
+                put(Parameters.CH.DISABLE, true).
+                put(Parameters.Routing.PASS_THROUGH, false);
 
         GHResponse ghResponse = graphHopper.route(request);
 
@@ -178,5 +190,31 @@ public class MapboxResource {
             default:
                 throw new IllegalArgumentException("Not supported profile: " + profile);
         }
+    }
+
+    static List<Double> getBearing(String bearingString) {
+        if (bearingString == null || bearingString.isEmpty())
+            return Collections.EMPTY_LIST;
+
+        String[] bearingArray = bearingString.split(";", -1);
+        List<Double> bearings = new ArrayList<>(bearingArray.length);
+
+        for (int i = 0; i < bearingArray.length; i++) {
+            String singleBearing = bearingArray[i];
+            if (singleBearing.isEmpty()) {
+                bearings.add(Double.NaN);
+            } else {
+                if (!singleBearing.contains(",")) {
+                    throw new IllegalArgumentException("You passed an invalid bearings parameter " + bearingString);
+                }
+                String[] singleBearingArray = singleBearing.split(",");
+                try {
+                    bearings.add(Double.parseDouble(singleBearingArray[0]));
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("You passed an invalid bearings parameter " + bearingString);
+                }
+            }
+        }
+        return bearings;
     }
 }
