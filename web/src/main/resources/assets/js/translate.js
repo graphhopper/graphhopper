@@ -57,12 +57,14 @@ function initI18N() {
         var location_points = $("#locationpoints > div.pointDiv > input.pointInput");
         var l = location_points.size;
         $(location_points).each(function (index) {
-            if (index === 0)
+            if (index === 0) {
                 $(this).attr("placeholder", tr("from_hint"));
-            else if (index === (l - 1))
+                $(this).focus();
+            } else if (index === (l - 1)) {
                 $(this).attr("placeholder", tr("to_hint"));
-            else
+            } else {
                 $(this).attr("placeholder", tr("via_hint"));
+            }
         });
         $('.pointFlag').each(function () {
             $(this).attr('title', tr('drag_to_reorder'));

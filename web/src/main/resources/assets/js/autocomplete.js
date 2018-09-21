@@ -159,15 +159,6 @@ AutoComplete.prototype.showListForIndex = function (ghRequest, routeIfAllResolve
     };
 
     myAutoDiv.autocomplete(options);
-
-    // with the following more stable code we cannot click on suggestions any longer
-//    $("#" + fromOrTo + "Input").focusout(function() {
-//        myAutoDiv.autocomplete().disable();
-//        myAutoDiv.autocomplete().hide();
-//    });
-//    $("#" + fromOrTo + "Input").focusin(function() {
-//        myAutoDiv.autocomplete().enable();
-//    });
 };
 
 AutoComplete.prototype.createStub = function () {
