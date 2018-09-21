@@ -24,6 +24,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
+import com.graphhopper.routing.profiles.parsers.RoadEnvironmentParser;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -514,7 +515,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Reads the configuration from a CmdArgs object which can be manually filled, or via 
+     * Reads the configuration from a CmdArgs object which can be manually filled, or via
      * CmdArgs.read(String[] args)
      */
     public GraphHopper init(CmdArgs args) {
@@ -873,22 +874,14 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void interpolateBridgesAndOrTunnels() {
-        if (ghStorage.getEncodingManager().hasEncoder("generic")) {
-            final FlagEncoder genericFlagEncoder = ghStorage.getEncodingManager()
-                    .getEncoder("generic");
-            if (!(genericFlagEncoder instanceof DataFlagEncoder)) {
-                throw new IllegalStateException("'generic' flag encoder for elevation interpolation of "
-                        + "bridges and tunnels is enabled but does not have the expected type "
-                        + DataFlagEncoder.class.getName() + ".");
-            }
-            final DataFlagEncoder dataFlagEncoder = (DataFlagEncoder) genericFlagEncoder;
+        if (ghStorage.getEncodingManager().hasParser(EncodingManager.ROAD_ENV)) {
+            RoadEnvironmentParser parser = ghStorage.getEncodingManager().getParser(EncodingManager.ROAD_ENV, RoadEnvironmentParser.class);
             StopWatch sw = new StopWatch().start();
-            new TunnelElevationInterpolator(ghStorage, dataFlagEncoder).execute();
+            new TunnelElevationInterpolator(ghStorage, parser).execute();
             float tunnel = sw.stop().getSeconds();
             sw = new StopWatch().start();
-            new BridgeElevationInterpolator(ghStorage, dataFlagEncoder).execute();
-            logger.info("Bridge interpolation " + (int) sw.stop().getSeconds() + "s, "
-                    + "tunnel interpolation " + (int) tunnel + "s");
+            new BridgeElevationInterpolator(ghStorage, parser).execute();
+            logger.info("Bridge interpolation " + (int) sw.stop().getSeconds() + "s, " + "tunnel interpolation " + (int) tunnel + "s");
         }
     }
 

@@ -26,6 +26,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.util.Arrays;
+
 import static org.junit.Assert.*;
 
 /**
@@ -37,7 +39,7 @@ public class EncodingManagerTest {
 
     @Test
     public void testCompatibility() {
-        EncodingManager manager = EncodingManager.create("car,bike,foot");
+        EncodingManager manager = EncodingManager.create("car,bike,foot",8);
         BikeFlagEncoder bike = (BikeFlagEncoder) manager.getEncoder("bike");
         CarFlagEncoder car = (CarFlagEncoder) manager.getEncoder("car");
         FootFlagEncoder foot = (FootFlagEncoder) manager.getEncoder("foot");
@@ -284,10 +286,10 @@ public class EncodingManagerTest {
             way.setTag("highway", "primary");
             way.setTag("junction", "roundabout");
             IntsRef edgeFlags = manager.handleWayTags(way, encoder.acceptBit, 0);
+            assertTrue(encoder.toString(), roundaboutEnc.getBool(false, edgeFlags));
             assertTrue(accessEnc.getBool(false, edgeFlags));
             if (!encoder.toString().equals("foot"))
                 assertFalse(encoder.toString(), accessEnc.getBool(true, edgeFlags));
-            assertTrue(encoder.toString(), roundaboutEnc.getBool(false, edgeFlags));
 
             way.clearTags();
             way.setTag("highway", "tertiary");

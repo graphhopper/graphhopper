@@ -26,7 +26,7 @@ import static org.junit.Assert.fail;
  * @author Peter Karich
  * @author ratrun
  */
-public class OSMTagParserTest {
+public class TagParserTest {
     @Test
     public void testParseDuration() {
         assertEquals(10 * 60, OSMTagParser.parseDuration("00:10"));

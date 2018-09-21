@@ -17,22 +17,19 @@
  */
 package com.graphhopper.reader.dem;
 
-import java.util.Arrays;
-
-import org.junit.After;
-import org.junit.Before;
-
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.profiles.parsers.RoadEnvironmentParser;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import org.junit.After;
+import org.junit.Before;
 
 /**
  * @author Alexey Valikov
@@ -44,17 +41,17 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
     protected ReaderWay normalWay;
 
     protected GraphHopperStorage graph;
-    protected DataFlagEncoder dataFlagEncoder;
+    protected EncodingManager encodingManager;
+    protected RoadEnvironmentParser parser;
     protected AbstractEdgeElevationInterpolator edgeElevationInterpolator;
 
     @SuppressWarnings("resource")
     @Before
     public void setUp() {
-        dataFlagEncoder = new DataFlagEncoder();
-        graph = new GraphHopperStorage(new RAMDirectory(),
-                EncodingManager.create(Arrays.asList(dataFlagEncoder, new FootFlagEncoder()),
-                        8),
-                true, new GraphExtension.NoOpExtension()).create(100);
+        CarFlagEncoder flagEncoder = new CarFlagEncoder();
+        encodingManager = EncodingManager.start().add(flagEncoder).addRoadEnvironment().build();
+        graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension()).create(100);
+        parser = encodingManager.getParser(EncodingManager.ROAD_ENV, RoadEnvironmentParser.class);
 
         edgeElevationInterpolator = createEdgeElevationInterpolator();
 
@@ -71,7 +68,7 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
     protected abstract ReaderWay createInterpolatableWay();
 
     protected AbstractEdgeElevationInterpolator createEdgeElevationInterpolator() {
-        return new BridgeElevationInterpolator(graph, dataFlagEncoder);
+        return new BridgeElevationInterpolator(graph, parser);
     }
 
     protected void gatherOuterAndInnerNodeIdsOfStructure(EdgeIteratorState edge,

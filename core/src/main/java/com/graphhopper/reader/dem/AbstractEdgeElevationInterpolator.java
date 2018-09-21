@@ -21,15 +21,11 @@ import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.routing.profiles.parsers.RoadEnvironmentParser;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.BreadthFirstSearch;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 
 /**
  * Abstract base class for tunnel/bridge edge elevation interpolators. This
@@ -57,14 +53,13 @@ import com.graphhopper.util.PointList;
 public abstract class AbstractEdgeElevationInterpolator {
 
     private final GraphHopperStorage storage;
-    protected final DataFlagEncoder dataFlagEncoder;
+    protected final RoadEnvironmentParser roadEnvironmentParser;
     private final NodeElevationInterpolator nodeElevationInterpolator;
     private final ElevationInterpolator elevationInterpolator = new ElevationInterpolator();
 
-    public AbstractEdgeElevationInterpolator(GraphHopperStorage storage,
-                                             DataFlagEncoder dataFlagEncoder) {
+    public AbstractEdgeElevationInterpolator(GraphHopperStorage storage, RoadEnvironmentParser roadEnvironmentParser) {
         this.storage = storage;
-        this.dataFlagEncoder = dataFlagEncoder;
+        this.roadEnvironmentParser = roadEnvironmentParser;
         this.nodeElevationInterpolator = new NodeElevationInterpolator(storage);
     }
 
@@ -101,7 +96,7 @@ public abstract class AbstractEdgeElevationInterpolator {
         final GHIntHashSet innerNodeIds = new GHIntHashSet();
         gatherOuterAndInnerNodeIds(edgeExplorer, interpolatableEdge, visitedEdgeIds, outerNodeIds,
                 innerNodeIds);
-            nodeElevationInterpolator.interpolateElevationsOfInnerNodes(outerNodeIds.toArray(),
+        nodeElevationInterpolator.interpolateElevationsOfInnerNodes(outerNodeIds.toArray(),
                 innerNodeIds.toArray());
     }
 

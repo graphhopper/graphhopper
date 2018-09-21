@@ -407,6 +407,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     public void testShortcutCreationAndAccessForManyVehicles() {
         FlagEncoder tmpCar = new CarFlagEncoder();
         FlagEncoder tmpBike = new Bike2WeightFlagEncoder();
+
         EncodingManager em = EncodingManager.create(tmpCar, tmpBike);
         List<Weighting> chWeightings = new ArrayList<>();
         chWeightings.add(new FastestWeighting(tmpCar));

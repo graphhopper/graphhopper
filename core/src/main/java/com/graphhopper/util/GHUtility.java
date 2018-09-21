@@ -351,6 +351,16 @@ public class GHUtility {
             public double getReverse(DecimalEncodedValue property) {
                 return property.getDecimal(true, flags);
             }
+
+            @Override
+            public String get(StringEncodedValue property) {
+                return property.getString(false, flags);
+            }
+
+            @Override
+            public String getReverse(StringEncodedValue property) {
+                return property.getString(true, flags);
+            }
         };
     }
 

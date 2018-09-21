@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.profiles.parsers.RoadClassParser;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -40,7 +41,7 @@ public class GenericWeighting extends AbstractWeighting {
     protected final long headingPenaltyMillis;
     protected final double maxSpeed;
     protected final DataFlagEncoder gEncoder;
-    protected final DataFlagEncoder.WeightingConfig weightingConfig;
+    protected RoadClassParser.WeightingConfig weightingConfig;
     protected final int accessType;
     protected final int uncertainAccessiblePenalty = 10;
 

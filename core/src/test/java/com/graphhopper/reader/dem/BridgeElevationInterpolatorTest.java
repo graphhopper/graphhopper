@@ -18,16 +18,14 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHIntHashSet;
-
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
-
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Alexey Valikov
@@ -44,7 +42,7 @@ public class BridgeElevationInterpolatorTest extends AbstractEdgeElevationInterp
 
     @Override
     protected AbstractEdgeElevationInterpolator createEdgeElevationInterpolator() {
-        return new BridgeElevationInterpolator(graph, dataFlagEncoder);
+        return new BridgeElevationInterpolator(graph, parser);
     }
 
     @Test
@@ -53,13 +51,13 @@ public class BridgeElevationInterpolatorTest extends AbstractEdgeElevationInterp
         // @formatter:off
         /*
          * Graph structure:
-		 * 0-----1-----2-----3-----4
-		 *        \    |    /
-		 *         \   |   /
-		 *          T  T  T
-		 *           \ | /
-		 *            \|/
-		 * 5-----6--T--7--T--8-----9
+         * 0-----1-----2-----3-----4
+         *        \    |    /
+         *         \   |   /
+         *          T  T  T
+         *           \ | /
+         *            \|/
+         * 5-----6--T--7--T--8-----9
          */
         // @formatter:on
         NodeAccess na = graph.getNodeAccess();
@@ -74,33 +72,33 @@ public class BridgeElevationInterpolatorTest extends AbstractEdgeElevationInterp
         na.setNode(8, 30, 10, 10);
         na.setNode(9, 40, 10, 0);
 
-        EdgeIteratorState edge01 = graph.edge(0, 1, 10, true);
-        EdgeIteratorState edge12 = graph.edge(1, 2, 10, true);
-        EdgeIteratorState edge23 = graph.edge(2, 3, 10, true);
-        EdgeIteratorState edge34 = graph.edge(3, 4, 10, true);
-        EdgeIteratorState edge56 = graph.edge(5, 6, 10, true);
-        EdgeIteratorState edge67 = graph.edge(6, 7, 10, true);
-        EdgeIteratorState edge78 = graph.edge(7, 8, 10, true);
-        EdgeIteratorState edge89 = graph.edge(8, 9, 10, true);
-        EdgeIteratorState edge17 = graph.edge(1, 7, 10, true);
-        EdgeIteratorState edge27 = graph.edge(2, 7, 10, true);
-        EdgeIteratorState edge37 = graph.edge(3, 7, 10, true);
+        EdgeIteratorState edge01 = graph.edge(0, 1).setDistance(10);
+        EdgeIteratorState edge12 = graph.edge(1, 2).setDistance(10);
+        EdgeIteratorState edge23 = graph.edge(2, 3).setDistance(10);
+        EdgeIteratorState edge34 = graph.edge(3, 4).setDistance(10);
+        EdgeIteratorState edge56 = graph.edge(5, 6).setDistance(10);
+        EdgeIteratorState edge67 = graph.edge(6, 7).setDistance(10);
+        EdgeIteratorState edge78 = graph.edge(7, 8).setDistance(10);
+        EdgeIteratorState edge89 = graph.edge(8, 9).setDistance(10);
+        EdgeIteratorState edge17 = graph.edge(1, 7).setDistance(10);
+        EdgeIteratorState edge27 = graph.edge(2, 7).setDistance(10);
+        EdgeIteratorState edge37 = graph.edge(3, 7).setDistance(10);
         edge17.setWayGeometry(
                 Helper.createPointList3D(12, 2, 200, 14, 4, 400, 16, 6, 600, 18, 8, 800));
 
-        edge01.setFlags(dataFlagEncoder.handleWayTags(edge01.getFlags(),normalWay, 1, 0));
-        edge12.setFlags(dataFlagEncoder.handleWayTags(edge12.getFlags(), normalWay, 1, 0));
-        edge23.setFlags(dataFlagEncoder.handleWayTags(edge23.getFlags(), normalWay, 1, 0));
-        edge34.setFlags(dataFlagEncoder.handleWayTags(edge34.getFlags(), normalWay, 1, 0));
+        edge01.setFlags(encodingManager.handleWayTags(normalWay, 1, 0));
+        edge12.setFlags(encodingManager.handleWayTags(normalWay, 1, 0));
+        edge23.setFlags(encodingManager.handleWayTags(normalWay, 1, 0));
+        edge34.setFlags(encodingManager.handleWayTags(normalWay, 1, 0));
 
-        edge56.setFlags(dataFlagEncoder.handleWayTags(edge56.getFlags(), normalWay, 1, 0));
-        edge67.setFlags(dataFlagEncoder.handleWayTags(edge67.getFlags(), interpolatableWay, 1, 0));
-        edge78.setFlags(dataFlagEncoder.handleWayTags(edge78.getFlags(), interpolatableWay, 1, 0));
-        edge89.setFlags(dataFlagEncoder.handleWayTags(edge89.getFlags(), normalWay, 1, 0));
+        edge56.setFlags(encodingManager.handleWayTags(normalWay, 1, 0));
+        edge67.setFlags(encodingManager.handleWayTags(interpolatableWay, 1, 0));
+        edge78.setFlags(encodingManager.handleWayTags(interpolatableWay, 1, 0));
+        edge89.setFlags(encodingManager.handleWayTags(normalWay, 1, 0));
 
-        edge17.setFlags(dataFlagEncoder.handleWayTags(edge17.getFlags(), interpolatableWay, 1, 0));
-        edge27.setFlags(dataFlagEncoder.handleWayTags(edge27.getFlags(), interpolatableWay, 1, 0));
-        edge37.setFlags(dataFlagEncoder.handleWayTags(edge37.getFlags(), interpolatableWay, 1, 0));
+        edge17.setFlags(encodingManager.handleWayTags(interpolatableWay, 1, 0));
+        edge27.setFlags(encodingManager.handleWayTags(interpolatableWay, 1, 0));
+        edge37.setFlags(encodingManager.handleWayTags(interpolatableWay, 1, 0));
 
         final GHIntHashSet outerNodeIds = new GHIntHashSet();
         final GHIntHashSet innerNodeIds = new GHIntHashSet();

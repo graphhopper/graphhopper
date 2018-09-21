@@ -31,7 +31,8 @@ public class TurnCostExtensionTest {
     public void testMultipleTurnCosts() {
         FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 3);
         FlagEncoder bikeEncoder = new BikeFlagEncoder(5, 5, 3);
-        EncodingManager manager = EncodingManager.create(carEncoder, bikeEncoder);
+
+        EncodingManager manager = new EncodingManager.Builder(4).add(carEncoder).add(bikeEncoder).build();
         GraphHopperStorage g = new GraphBuilder(manager).create();
         initGraph(g);
         TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
@@ -98,6 +99,7 @@ public class TurnCostExtensionTest {
     public void testMergeFlagsBeforeAdding() {
         FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 3);
         FlagEncoder bikeEncoder = new BikeFlagEncoder(5, 5, 3);
+
         EncodingManager manager = EncodingManager.create(carEncoder, bikeEncoder);
         GraphHopperStorage g = new GraphBuilder(manager).create();
         initGraph(g);

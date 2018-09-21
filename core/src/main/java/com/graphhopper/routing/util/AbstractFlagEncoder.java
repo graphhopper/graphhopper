@@ -226,7 +226,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
             if (node.hasTag("locked", "yes"))
                 locked = true;
 
-             for (String res : restrictions) {
+            for (String res : restrictions) {
                 if (!locked && node.hasTag(res, intendedValues))
                     return 0;
 

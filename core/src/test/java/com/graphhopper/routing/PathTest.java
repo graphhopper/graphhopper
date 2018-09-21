@@ -801,9 +801,9 @@ public class PathTest {
         ReaderWay w = new ReaderWay(1);
         w.setTag("highway", "tertiary");
 
-        g.edge(1, 2, 5, true).setFlags(dataFlagEncoder.handleWayTags(dataFlagManager.createEdgeFlags(), w, 1, 0));
-        g.edge(2, 4, 5, true).setFlags(dataFlagEncoder.handleWayTags(dataFlagManager.createEdgeFlags(), w, 1, 0));
-        g.edge(2, 3, 5, true).setFlags(dataFlagEncoder.handleWayTags(dataFlagManager.createEdgeFlags(), w, 1, 0));
+        g.edge(1, 2, 5, true).setFlags(dataFlagManager.handleWayTags(w, 1, 0));
+        g.edge(2, 4, 5, true).setFlags(dataFlagManager.handleWayTags(w, 1, 0));
+        g.edge(2, 3, 5, true).setFlags(dataFlagManager.handleWayTags(w, 1, 0));
 
         Path p = new Dijkstra(g, new GenericWeighting(dataFlagEncoder, new HintsMap()), TraversalMode.NODE_BASED).calcPath(1, 3);
         assertTrue(p.isFound());
