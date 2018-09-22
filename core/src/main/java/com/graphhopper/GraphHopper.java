@@ -24,8 +24,8 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
-import com.graphhopper.routing.profiles.RoadEnvironmentEncodedValue;
-import com.graphhopper.routing.profiles.StringEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -876,12 +876,12 @@ public class GraphHopper implements GraphHopperAPI {
 
     private void interpolateBridgesAndOrTunnels() {
         if (ghStorage.getEncodingManager().hasEncodedValue(EncodingManager.ROAD_ENV)) {
-            StringEncodedValue encodedValue = ghStorage.getEncodingManager().getEncodedValue(EncodingManager.ROAD_ENV, StringEncodedValue.class);
+            EnumEncodedValue encodedValue = ghStorage.getEncodingManager().getEncodedValue(EncodingManager.ROAD_ENV, EnumEncodedValue.class);
             StopWatch sw = new StopWatch().start();
-            new EdgeElevationInterpolator(ghStorage, encodedValue, RoadEnvironmentEncodedValue.Key.TUNNEL).execute();
+            new EdgeElevationInterpolator(ghStorage, encodedValue, RoadEnvironment.TUNNEL).execute();
             float tunnel = sw.stop().getSeconds();
             sw = new StopWatch().start();
-            new EdgeElevationInterpolator(ghStorage, encodedValue, RoadEnvironmentEncodedValue.Key.BRIDGE).execute();
+            new EdgeElevationInterpolator(ghStorage, encodedValue, RoadEnvironment.BRIDGE).execute();
             logger.info("Bridge interpolation " + (int) sw.stop().getSeconds() + "s, " + "tunnel interpolation " + (int) tunnel + "s");
         }
     }

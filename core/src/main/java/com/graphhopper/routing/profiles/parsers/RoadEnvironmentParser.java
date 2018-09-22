@@ -18,41 +18,39 @@
 package com.graphhopper.routing.profiles.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.RoadEnvironmentEncodedValue;
-import com.graphhopper.routing.profiles.StringEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 /**
  * Stores the environment of the road like bridge or tunnel. Previously called "transport_mode" in DataFlagEncoder.
  */
 public class RoadEnvironmentParser extends AbstractTagParser {
-    private final StringEncodedValue roadEnvEnc;
-    private final List<String> roadEnvList;
+    private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
+    private final RoadEnvironment[] roadEnvList;
 
     public RoadEnvironmentParser() {
         super(EncodingManager.ROAD_ENV);
-        roadEnvEnc = new RoadEnvironmentEncodedValue();
-        roadEnvList = RoadEnvironmentEncodedValue.getKeysAsStrings();
+        roadEnvEnc = RoadEnvironment.create();
+        roadEnvList = roadEnvEnc.getEnums();
     }
 
-    public StringEncodedValue getEnc() {
+    public EnumEncodedValue<RoadEnvironment> getEnc() {
         return roadEnvEnc;
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
-        String roadEnv = roadEnvList.get(0);
-        for (String tm : roadEnvList) {
-            if (way.hasTag(tm)) {
+        RoadEnvironment roadEnv = roadEnvList[0];
+        for (RoadEnvironment tm : roadEnvList) {
+            if (way.hasTag(tm.toString())) {
                 roadEnv = tm;
                 break;
             }
         }
 
-        roadEnvEnc.setString(false, edgeFlags, roadEnv);
+        roadEnvEnc.setEnum(false, edgeFlags, roadEnv);
         return edgeFlags;
     }
 }

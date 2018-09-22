@@ -19,7 +19,7 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.RoadEnvironmentEncodedValue;
+import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Test;
@@ -41,7 +41,7 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
 
     @Override
     protected EdgeElevationInterpolator createEdgeElevationInterpolator() {
-        return new EdgeElevationInterpolator(graph, encodedValue, RoadEnvironmentEncodedValue.Key.TUNNEL);
+        return new EdgeElevationInterpolator(graph, encodedValue, RoadEnvironment.TUNNEL);
     }
 
     @Test

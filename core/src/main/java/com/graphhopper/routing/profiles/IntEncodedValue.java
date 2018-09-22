@@ -33,7 +33,7 @@ import java.util.Locale;
  * How could you then implement e.g. a 'priority' value going from [-3, 3] that maps to [0,7] but should
  * have a default value of 3 instead of 0? Either you waste space and map this to [1,7], which means that 0 and 3 both
  * refer to the same 0 value (currently the preferred method due to its simplicity) or you could create a
- * MappedIntEncodedValue class that holds an array or a Map with the raw integers similarly to what StringEncodedValue does:
+ * MappedIntEncodedValue class that holds an array or a Map with the raw integers similarly to what EnumEncodedValue does:
  * {0: 0, 1: -3, 2: -2, 3: -1, 4: 1, 5: 2, 6: 3}
  */
 public class IntEncodedValue implements EncodedValue {

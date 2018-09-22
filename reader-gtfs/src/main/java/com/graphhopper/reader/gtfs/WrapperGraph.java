@@ -21,8 +21,8 @@ package com.graphhopper.reader.gtfs;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
-import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
@@ -93,7 +93,7 @@ public class WrapperGraph implements Graph {
                 return IntStream.concat(
                         IntStream.of(baseGraph.getAllEdges().length() - 1),
                         extraEdges.stream().mapToInt(VirtualEdgeIteratorState::getEdge))
-                        .max().getAsInt()+1;
+                        .max().getAsInt() + 1;
             }
 
             @Override
@@ -217,22 +217,22 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public String get(StringEncodedValue property) {
+            public <T extends Enum> T get(EnumEncodedValue<T> property) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public String getReverse(StringEncodedValue property) {
+            public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public EdgeIteratorState set(StringEncodedValue property, String value) {
+            public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
+            public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
                 throw new UnsupportedOperationException();
             }
 

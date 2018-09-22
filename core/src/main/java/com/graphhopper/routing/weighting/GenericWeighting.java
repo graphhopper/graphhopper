@@ -17,8 +17,10 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.parsers.RoadClassParser;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Routing;
@@ -41,7 +43,7 @@ public class GenericWeighting extends AbstractWeighting {
     protected final long headingPenaltyMillis;
     protected final double maxSpeed;
     protected final DataFlagEncoder gEncoder;
-    protected final RoadClassParser.WeightingConfig weightingConfig;
+    protected final RoadClass.SpeedConfig speedConfig;
     protected final int accessType;
     protected final int uncertainAccessiblePenalty = 10;
 
@@ -55,8 +57,9 @@ public class GenericWeighting extends AbstractWeighting {
         headingPenalty = hintsMap.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         headingPenaltyMillis = Math.round(headingPenalty * 1000);
 
-        weightingConfig = encoder.createWeightingConfig(hintsMap);
-        double maxSpecifiedSpeed = weightingConfig.getMaxSpecifiedSpeed();
+        EnumEncodedValue<RoadClass> roadClass = encoder.getEnumEncodedValue(EncodingManager.ROAD_CLASS);
+        speedConfig = RoadClass.createSpeedConfig(roadClass, hintsMap);
+        double maxSpecifiedSpeed = speedConfig.getMaxSpecifiedSpeed();
         if (maxSpecifiedSpeed > encoder.getMaxPossibleSpeed())
             throw new IllegalArgumentException("Some specified speed value bigger than maximum possible speed: " + maxSpecifiedSpeed + " > " + encoder.getMaxPossibleSpeed());
 
@@ -110,7 +113,7 @@ public class GenericWeighting extends AbstractWeighting {
         // TODO to avoid expensive reverse flags include oneway accessibility
         // but how to include e.g. maxspeed as it depends on direction? Does highway depend on direction?
         // reverse = edge.isReverse()? !reverse : reverse;
-        double speed = weightingConfig.getSpeed(edgeState);
+        double speed = speedConfig.getSpeed(edgeState);
         if (speed == 0)
             return Long.MAX_VALUE;
 

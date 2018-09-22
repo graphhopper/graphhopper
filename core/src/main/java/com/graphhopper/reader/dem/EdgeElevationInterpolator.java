@@ -21,9 +21,8 @@ import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.routing.profiles.IntEncodedValue;
-import com.graphhopper.routing.profiles.RoadEnvironmentEncodedValue;
-import com.graphhopper.routing.profiles.StringEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
@@ -57,18 +56,18 @@ public class EdgeElevationInterpolator {
     private final GraphHopperStorage storage;
     private final NodeElevationInterpolator nodeElevationInterpolator;
     private final ElevationInterpolator elevationInterpolator = new ElevationInterpolator();
-    private final int tunnelOrBridgeIdx;
-    private final IntEncodedValue encodedValue;
+    private final RoadEnvironment tunnelOrBridge;
+    private final EnumEncodedValue roadEnvEnc;
 
-    public EdgeElevationInterpolator(GraphHopperStorage storage, StringEncodedValue roadEnvironmentEnc, RoadEnvironmentEncodedValue.Key tunnelOrBridge) {
+    public EdgeElevationInterpolator(GraphHopperStorage storage, EnumEncodedValue roadEnvironmentEnc, RoadEnvironment tunnelOrBridge) {
         this.storage = storage;
         this.nodeElevationInterpolator = new NodeElevationInterpolator(storage);
-        tunnelOrBridgeIdx = tunnelOrBridge.ordinal();
-        encodedValue = roadEnvironmentEnc;
+        this.tunnelOrBridge = tunnelOrBridge;
+        this.roadEnvEnc = roadEnvironmentEnc;
     }
 
     protected boolean isInterpolatableEdge(EdgeIteratorState edge) {
-        return edge.get(encodedValue) == tunnelOrBridgeIdx;
+        return edge.get(roadEnvEnc).equals(tunnelOrBridge);
     }
 
     public GraphHopperStorage getStorage() {

@@ -1,14 +1,30 @@
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.routing.profiles.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.IntEncodedValue;
-import com.graphhopper.routing.profiles.StringEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Stores the class of the road like motorway or primary. Previously called "highway" in DataFlagEncoder.
@@ -16,43 +32,15 @@ import java.util.*;
 public class RoadClassParser extends AbstractTagParser {
 
     private static final List<String> FERRIES = Arrays.asList("shuttle_train", "ferry");
-    private static final Map<String, Double> CAR_SPEEDS = new LinkedHashMap<String, Double>() {
-        {
-            put("motorway", 100d);
-            put("motorway_link", 70d);
-            put("motorroad", 90d);
-            put("trunk", 70d);
-            put("trunk_link", 65d);
-            put("primary", 65d);
-            put("primary_link", 60d);
-            put("secondary", 60d);
-            put("secondary_link", 50d);
-            put("tertiary", 50d);
-            put("tertiary_link", 40d);
-            put("residential", 30d);
-            put("unclassified", 30d);
-            put("service", 20d);
-            put("road", 20d);
-            put("track", 15d);
-            put("forestry", 15d);
-            put("living_street", 5d);
-            // TODO how to handle roads that are not allowed per default but could be allowed via explicit tagging?
-            // put("cycleway", 15d);
-            // put("bridleway", 10d);
-            // put("path", 10d);
-        }
-    };
 
-    private final StringEncodedValue enc;
+    private final EnumEncodedValue enc;
 
     public RoadClassParser() {
         super(EncodingManager.ROAD_CLASS);
-        List<String> roadClasses = new ArrayList<>(CAR_SPEEDS.keySet());
-        roadClasses.add(0, "_default");
-        enc = new StringEncodedValue(EncodingManager.ROAD_CLASS, roadClasses, "_default");
+        enc = RoadClass.create();
     }
 
-    public StringEncodedValue getEnc() {
+    public EnumEncodedValue<RoadClass> getEnc() {
         return enc;
     }
 
@@ -85,63 +73,5 @@ public class RoadClassParser extends AbstractTagParser {
             }
         }
         return hwValue;
-    }
-
-    double[] getHighwaySpeedMap(Map<String, Double> map) {
-        if (map == null)
-            throw new IllegalArgumentException("Map cannot be null when calling getHighwaySpeedMap");
-
-        double[] res = new double[enc.getMapSize()];
-        for (Map.Entry<String, Double> e : map.entrySet()) {
-            int integ = enc.indexOf(e.getKey());
-            if (integ == 0)
-                throw new IllegalArgumentException("Graph not prepared for highway=" + e.getKey());
-
-            if (e.getValue() < 0)
-                throw new IllegalArgumentException("Negative speed " + e.getValue() + " not allowed. highway=" + e.getKey());
-
-            res[integ] = e.getValue();
-        }
-        return res;
-    }
-
-    /**
-     * This method creates a Config map out of the PMap. Later on this conversion should not be
-     * necessary when we read JSON.
-     */
-    public WeightingConfig createWeightingConfig(PMap pMap) {
-        HashMap<String, Double> map = new HashMap<>(CAR_SPEEDS.size());
-        for (Map.Entry<String, Double> e : CAR_SPEEDS.entrySet()) {
-            map.put(e.getKey(), pMap.getDouble(e.getKey(), e.getValue()));
-        }
-
-        return new WeightingConfig(getHighwaySpeedMap(map));
-    }
-
-    public class WeightingConfig {
-        private final double[] speedArray;
-
-        public WeightingConfig(double[] speedArray) {
-            this.speedArray = speedArray;
-        }
-
-        public double getSpeed(EdgeIteratorState edgeState) {
-            int highwayKey = edgeState.get((IntEncodedValue) enc);
-            // ensure before (in createResult) that all highways that were specified in the request are known
-            double speed = speedArray[highwayKey];
-            if (speed < 0)
-                throw new IllegalStateException("speed was negative? " + edgeState.getEdge()
-                        + ", highway:" + highwayKey);
-            return speed;
-        }
-
-        public double getMaxSpecifiedSpeed() {
-            double tmpSpeed = 0;
-            for (double speed : speedArray) {
-                if (speed > tmpSpeed)
-                    tmpSpeed = speed;
-            }
-            return tmpSpeed;
-        }
     }
 }

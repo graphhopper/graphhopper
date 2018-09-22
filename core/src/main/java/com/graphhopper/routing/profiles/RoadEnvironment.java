@@ -15,31 +15,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.profiles.parsers;
+package com.graphhopper.routing.profiles;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.Surface;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.IntsRef;
 
-public class SurfaceParser extends AbstractTagParser {
-    private final EnumEncodedValue<Surface> enc;
+public enum RoadEnvironment {
 
-    public SurfaceParser() {
-        super(EncodingManager.SURFACE);
-        enc = Surface.create();
-    }
+    DEFAULT("_default"), BRIDGE("bridge"), TUNNEL("tunnel"), FORD("ford"), AERIALWAY("aerialway");
 
-    public EnumEncodedValue<Surface> getEnc() {
-        return enc;
+    private final String name;
+
+    RoadEnvironment(String name) {
+        this.name = name;
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
-        String surfaceValue = way.getTag("surface");
-        int intValue = enc.indexOf(surfaceValue);
-        enc.setInt(false, edgeFlags, intValue);
-        return edgeFlags;
+    public String toString() {
+        return name;
+    }
+
+    public static EnumEncodedValue<RoadEnvironment> create() {
+        return new EnumEncodedValue<>(EncodingManager.ROAD_ENV, values(), DEFAULT);
     }
 }

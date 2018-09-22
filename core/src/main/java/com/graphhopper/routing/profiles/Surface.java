@@ -17,17 +17,24 @@
  */
 package com.graphhopper.routing.profiles;
 
-public interface EncodedValueLookup {
+import com.graphhopper.routing.util.EncodingManager;
 
-    <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType);
+public enum Surface {
+    DEFAULT("_default"), ASPHALT("asphalt"), UNPAVED("unpaved"), PAVED("paved"), GRAVEL("gravel"), GROUND("ground"),
+    DIRT("dirt"), GRASS("grass"), CONCRETE("concrete"), PAVING_STONES("paving_stones"), SAND("sand"),
+    COMPACTED("compacted"), COBBLESTONE("cobblestone"), MUD("mud"), ICE("ice");
+    String name;
 
-    BooleanEncodedValue getBooleanEncodedValue(String key);
+    Surface(String name) {
+        this.name = name;
+    }
 
-    IntEncodedValue getIntEncodedValue(String key);
+    @Override
+    public String toString() {
+        return name;
+    }
 
-    DecimalEncodedValue getDecimalEncodedValue(String key);
-
-    EnumEncodedValue getEnumEncodedValue(String key);
-
-    boolean hasEncoder(String key);
+    public static EnumEncodedValue<Surface> create() {
+        return new EnumEncodedValue<>(EncodingManager.SURFACE, values(), DEFAULT);
+    }
 }

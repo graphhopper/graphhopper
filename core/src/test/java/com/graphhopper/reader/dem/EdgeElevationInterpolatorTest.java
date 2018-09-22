@@ -20,8 +20,8 @@ package com.graphhopper.reader.dem;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.RoadEnvironmentEncodedValue;
-import com.graphhopper.routing.profiles.StringEncodedValue;
+import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphExtension;
@@ -43,7 +43,7 @@ public abstract class EdgeElevationInterpolatorTest {
 
     protected GraphHopperStorage graph;
     protected EncodingManager encodingManager;
-    protected StringEncodedValue encodedValue;
+    protected EnumEncodedValue encodedValue;
     protected EdgeElevationInterpolator edgeElevationInterpolator;
 
     @SuppressWarnings("resource")
@@ -52,7 +52,7 @@ public abstract class EdgeElevationInterpolatorTest {
         CarFlagEncoder flagEncoder = new CarFlagEncoder();
         encodingManager = EncodingManager.start().add(flagEncoder).addRoadEnvironment().build();
         graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension()).create(100);
-        encodedValue = encodingManager.getEncodedValue(EncodingManager.ROAD_ENV, StringEncodedValue.class);
+        encodedValue = encodingManager.getEncodedValue(EncodingManager.ROAD_ENV, EnumEncodedValue.class);
 
         edgeElevationInterpolator = createEdgeElevationInterpolator();
 
@@ -69,7 +69,7 @@ public abstract class EdgeElevationInterpolatorTest {
     protected abstract ReaderWay createInterpolatableWay();
 
     protected EdgeElevationInterpolator createEdgeElevationInterpolator() {
-        return new EdgeElevationInterpolator(graph, encodedValue, RoadEnvironmentEncodedValue.Key.BRIDGE);
+        return new EdgeElevationInterpolator(graph, encodedValue, RoadEnvironment.BRIDGE);
     }
 
     protected void gatherOuterAndInnerNodeIdsOfStructure(EdgeIteratorState edge,

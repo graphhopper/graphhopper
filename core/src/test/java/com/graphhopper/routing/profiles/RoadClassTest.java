@@ -1,5 +1,6 @@
-package com.graphhopper.routing.profiles.parsers;
+package com.graphhopper.routing.profiles;
 
+import com.graphhopper.routing.profiles.parsers.RoadClassParser;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
 
@@ -8,7 +9,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
-public class RoadClassParserTest {
+public class RoadClassTest {
 
     @Test
     public void testHighwaySpeed() {
@@ -20,7 +21,7 @@ public class RoadClassParserTest {
         map.put("trunk_link", 90d);
 
         RoadClassParser roadClassParser = new RoadClassParser();
-        double[] arr = roadClassParser.getHighwaySpeedMap(map);
+        double[] arr = RoadClass.getHighwaySpeedMap(roadClassParser.getEnc(), map);
         assertEquals("[0.0, 100.0, 100.0, 90.0, 90.0, 90.0]", Helper.createDoubleList(arr).subList(0, 6).toString());
     }
 }

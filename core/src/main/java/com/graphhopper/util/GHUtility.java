@@ -23,8 +23,8 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
-import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -353,13 +353,13 @@ public class GHUtility {
             }
 
             @Override
-            public String get(StringEncodedValue property) {
-                return property.getString(false, flags);
+            public Enum get(EnumEncodedValue property) {
+                return property.getEnum(false, flags);
             }
 
             @Override
-            public String getReverse(StringEncodedValue property) {
-                return property.getString(true, flags);
+            public Enum getReverse(EnumEncodedValue property) {
+                return property.getEnum(true, flags);
             }
         };
     }
@@ -597,22 +597,22 @@ public class GHUtility {
         }
 
         @Override
-        public String get(StringEncodedValue property) {
+        public Enum get(EnumEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public EdgeIteratorState set(StringEncodedValue property, String value) {
+        public EdgeIteratorState set(EnumEncodedValue property, Enum value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public String getReverse(StringEncodedValue property) {
+        public Enum getReverse(EnumEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
+        public EdgeIteratorState setReverse(EnumEncodedValue property, Enum value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
