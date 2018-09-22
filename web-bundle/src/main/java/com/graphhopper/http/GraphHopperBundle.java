@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
+import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
@@ -159,7 +160,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
-        bootstrap.getObjectMapper().setDateFormat(new ISO8601DateFormat());
+        bootstrap.getObjectMapper().setDateFormat(new StdDateFormat());
         bootstrap.getObjectMapper().registerModule(new JtsModule());
         bootstrap.getObjectMapper().registerModule(new GraphHopperModule());
         bootstrap.getObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);

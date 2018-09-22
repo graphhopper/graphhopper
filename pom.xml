@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>0.11-SNAPSHOT</version>
+    <version>0.12-SNAPSHOT</version>
     <packaging>pom</packaging>
     <url>https://www.graphhopper.com</url>
     <inceptionYear>2012</inceptionYear>
@@ -153,13 +153,21 @@
             </plugin>
 
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.5</version>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>3.1.6</version>
+                <!-- required as 3.1.7 is not yet released for the plugin but we hit problem spotbugs#711 -->
+                <dependencies>
+		    <dependency>
+		      <groupId>com.github.spotbugs</groupId>
+		      <artifactId>spotbugs</artifactId>
+		      <version>3.1.7</version>
+		    </dependency>
+		</dependencies>
                 <configuration>
                     <maxRank>4</maxRank>
                     <failOnError>true</failOnError>
-                    <excludeFilterFile>core/files/findbugs-exclude.xml</excludeFilterFile>
+                    <excludeFilterFile>core/files/spotbugs-exclude.xml</excludeFilterFile>
                 </configuration>
             </plugin>
             <plugin>

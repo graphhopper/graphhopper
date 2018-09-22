@@ -13,11 +13,12 @@ We have a prospering community and welcome everyone. Let us know your problems, 
 
 To get started, read through our documentation and install the GraphHopper Web Service locally:
 
- * unstable: [docs](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md), [zip](https://oss.sonatype.org/content/groups/public/com/graphhopper/graphhopper-web/0.11-SNAPSHOT/), [Android APK](https://oss.sonatype.org/content/groups/public/com/graphhopper/graphhopper-android/0.11-SNAPSHOT/)
- * 0.10.0 latest stable: [announcement](https://www.graphhopper.com/blog/2018/03/08/graphhopper-routing-engine-0-10-released/), [docs](https://github.com/graphhopper/graphhopper/blob/0.10/docs/index.md), [zip](https://graphhopper.com/public/releases/graphhopper-web-0.10.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.10.0.apk)
- * 0.9.0: [announcement](https://www.graphhopper.com/blog/2017/05/31/graphhopper-routing-engine-0-9-released/), [docs](https://github.com/graphhopper/graphhopper/blob/0.9/docs/index.md), [zip](https://graphhopper.com/public/releases/graphhopper-web-0.9.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.9.0.apk)
- * 0.8.2: [announcement](https://www.graphhopper.com/blog/2016/10/18/graphhopper-routing-engine-0-8-released/), [docs](https://github.com/graphhopper/graphhopper/blob/0.8/docs/index.md), [zip](https://graphhopper.com/public/releases/graphhopper-web-0.8.2-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.8.2.apk)
- * 0.7.0: [announcement](https://www.graphhopper.com/blog/2016/06/15/graphhopper-routing-engine-0-7-released/), [docs](https://github.com/graphhopper/graphhopper/blob/0.7/docs/index.md), [zip](https://graphhopper.com/public/releases/graphhopper-web-0.7.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.7.0.apk)
+ * unstable: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md), [web service jar](https://oss.sonatype.org/content/groups/public/com/graphhopper/graphhopper-web/0.12-SNAPSHOT/), [Android APK](https://oss.sonatype.org/content/groups/public/com/graphhopper/graphhopper-android/0.12-SNAPSHOT/)
+ * 0.11.0 latest stable: [announcement](https://www.graphhopper.com/blog/2018/09/17/graphhopper-routing-engine-0-11-release-open-sourcing-the-isochrone-module/), [documentation](https://github.com/graphhopper/graphhopper/blob/0.11/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-0.11.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.11.0.apk)
+ * 0.10.0: [announcement](https://www.graphhopper.com/blog/2018/03/08/graphhopper-routing-engine-0-10-released/), [documentation](https://github.com/graphhopper/graphhopper/blob/0.10/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.10.3-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.10.3.apk)
+ * 0.9.0: [announcement](https://www.graphhopper.com/blog/2017/05/31/graphhopper-routing-engine-0-9-released/), [documentation](https://github.com/graphhopper/graphhopper/blob/0.9/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.9.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.9.0.apk)
+ * 0.8.2: [announcement](https://www.graphhopper.com/blog/2016/10/18/graphhopper-routing-engine-0-8-released/), [documentation](https://github.com/graphhopper/graphhopper/blob/0.8/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.8.2-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.8.2.apk)
+ * 0.7.0: [announcement](https://www.graphhopper.com/blog/2016/06/15/graphhopper-routing-engine-0-7-released/), [documentation](https://github.com/graphhopper/graphhopper/blob/0.7/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.7.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.7.0.apk)
 
 ## Questions
 
@@ -39,12 +40,19 @@ a Routing API via GraphHopper, a Route Optimization API via [jsprit](http://jspr
 and an address search via [Photon](https://github.com/komoot/photon). Additionally, map tiles from various providers are used 
 where the default is [Omniscale](http://omniscale.com/). All of these are available for free, via encrypted connections and from German servers for a nice and private route planning experience!
 
+## For Public Transit
+
+[Get started](./reader-gtfs/README.md#quick-start)
+
+[![Realtime Demo](https://www.graphhopper.com/wp-content/uploads/2018/05/Screen-Shot-2018-05-16-at-21.23.25-600x538.png)](./reader-gtfs/README.md#quick-start)
 
 ## For Mobile Apps
 
 There are subprojects to make GraphHopper working offline
-on [Android](https://github.com/graphhopper/graphhopper/tree/master/android)
+on [Android](./android/README.md)
 and [iOS](http://github.com/graphhopper/graphhopper-ios)
+
+[![simple routing](https://www.graphhopper.com/wp-content/uploads/2016/10/android-demo-screenshot-2.png)](./android/README.md)
 
 ## For Analysis
 
@@ -162,7 +170,7 @@ docker-compose up -d
 If you don't want to use docker-compose you can do the following:
 ```bash
 docker build -t graphhopper:master .
-docker run -d --name graphhopper -v <path_data_directory>/data:/data -p 11111:11111 graphhopper:master
+docker run -d --name graphhopper -v <path_data_directory>/data:/data -p 8989:8989 graphhopper:master
 ```
 
 
