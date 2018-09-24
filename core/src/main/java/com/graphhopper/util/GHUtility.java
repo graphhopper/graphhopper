@@ -158,7 +158,7 @@ public class GHUtility {
                 "graph.edge(%d, %d, %f, %s);\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false");
     }
 
-    public static void buildRandomGraph(Graph graph, long seed, int numNodes, double meanDegree, boolean allowLoops, double pBothDir) {
+    public static void buildRandomGraph(Graph graph, long seed, int numNodes, double meanDegree, boolean allowLoops, boolean allowZeroDistance, double pBothDir) {
         Random random = new Random(seed);
         for (int i = 0; i < numNodes; ++i) {
             double lat = 49.4 + (random.nextDouble() * 0.01);
@@ -175,8 +175,9 @@ public class GHUtility {
                 continue;
             }
             double distance = GHUtility.getDistance(from, to, graph.getNodeAccess());
-            // there should be no edges with zero weight, not even loop shortcuts
-            distance = Math.max(0.001, distance);
+            if (!allowZeroDistance) {
+                distance = Math.max(0.001, distance);
+            }
             // add some random offset for most cases, but also allow duplicate edges with same weight
             if (random.nextDouble() < 0.8)
                 distance += random.nextDouble() * distance * 0.01;
