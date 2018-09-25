@@ -44,6 +44,10 @@ public class DistanceCalc2D extends DistanceCalcEarth {
         return dist * dist;
     }
 
+    double calcShrinkFactor(double a_lat_deg, double b_lat_deg) {
+        return 1.;
+    }
+
     /**
      * Calculates in normalized meter
      */
