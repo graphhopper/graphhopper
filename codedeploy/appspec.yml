@@ -24,6 +24,6 @@ hooks:
       runas: ubuntu
   ValidateService:
     - location: validate_service.sh
-      timeout: 120
+      timeout: 360
       runas: ubuntu
 

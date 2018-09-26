@@ -15,7 +15,7 @@ do
   if [ "$result" == "200" ]; then
     break
   fi
-  sleep 5
+  sleep 10
 done
 
 
