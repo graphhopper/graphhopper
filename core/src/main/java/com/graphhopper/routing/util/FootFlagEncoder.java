@@ -93,6 +93,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         sidewalkValues.add("right");
 
         setBlockByDefault(false);
+        absoluteBarriers.add("fence");
         potentialBarriers.add("gate");
 
         safeHighwayTags.add("footway");

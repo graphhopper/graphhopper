@@ -377,6 +377,7 @@ public class FootFlagEncoderTest {
         assertTrue(footEncoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
     }
 
+    @Test
     public void testFord() {
         // by default deny access through fords!
         ReaderNode node = new ReaderNode(1, -1, -1);
@@ -401,5 +402,39 @@ public class FootFlagEncoderTest {
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "yes");
         assertTrue(footEncoder.handleNodeTags(node) == 0);
+    }
+
+    @Test
+    public void testBlockByDefault() {
+        FootFlagEncoder tmpFootEncoder = new FootFlagEncoder();
+        new EncodingManager(tmpFootEncoder);
+
+        ReaderNode node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        // potential barriers are no barrier by default
+        assertTrue(tmpFootEncoder.handleNodeTags(node) == 0);
+        node.setTag("access", "no");
+        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+
+        // absolute barriers always block
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "fence");
+        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+        node.setTag("barrier", "fence");
+        node.setTag("access", "yes");
+        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+
+        // Now let's block potential barriers per default (if no other access tag exists)
+        tmpFootEncoder.setBlockByDefault(true);
+
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+        node.setTag("access", "yes");
+        assertTrue(tmpFootEncoder.handleNodeTags(node) == 0);
+
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "fence");
+        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
     }
 }
