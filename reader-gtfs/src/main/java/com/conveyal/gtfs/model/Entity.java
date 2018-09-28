@@ -398,7 +398,7 @@ public abstract class Entity implements Serializable {
             secsSinceMidnight -= minutes;
 
             // integer divide is fine as we've subtracted off remainders
-            return String.format("%02d:%02d:%02d", secsSinceMidnight / 3600, minutes / 60, seconds);
+            return String.format(Locale.getDefault(), "%02d:%02d:%02d", secsSinceMidnight / 3600, minutes / 60, seconds);
         }
 
         protected void writeIntField (Integer val) throws IOException {
@@ -437,8 +437,8 @@ public abstract class Entity implements Serializable {
 
     // shared code between reading and writing
     private static final String human (long n) {
-        if (n >= 1000000) return String.format("%.1fM", n/1000000.0);
-        if (n >= 1000) return String.format("%.1fk", n/1000.0);
-        else return String.format("%d", n);
+        if (n >= 1000000) return String.format(Locale.getDefault(), "%.1fM", n/1000000.0);
+        if (n >= 1000) return String.format(Locale.getDefault(), "%.1fk", n/1000.0);
+        else return String.format(Locale.getDefault(), "%d", n);
     }
 }

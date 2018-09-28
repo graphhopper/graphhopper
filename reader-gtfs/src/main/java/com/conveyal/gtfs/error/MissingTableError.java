@@ -1,6 +1,7 @@
 package com.conveyal.gtfs.error;
 
 import java.io.Serializable;
+import java.util.Locale;
 
 /** Indicates that a table marked as required is not present in a GTFS feed. */
 public class MissingTableError extends GTFSError implements Serializable {
@@ -11,7 +12,7 @@ public class MissingTableError extends GTFSError implements Serializable {
     }
 
     @Override public String getMessage() {
-        return String.format("This table is required by the GTFS specification but is missing.");
+        return String.format(Locale.getDefault(), "This table is required by the GTFS specification but is missing.");
     }
 
 }

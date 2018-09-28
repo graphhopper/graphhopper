@@ -1,6 +1,7 @@
 package com.conveyal.gtfs.error;
 
 import java.io.Serializable;
+import java.util.Locale;
 
 /** Indicates that a column marked as required is entirely missing from a GTFS feed. */
 public class MissingColumnError extends GTFSError implements Serializable {
@@ -11,7 +12,7 @@ public class MissingColumnError extends GTFSError implements Serializable {
     }
 
     @Override public String getMessage() {
-        return String.format("Missing required column.");
+        return String.format(Locale.getDefault(), "Missing required column.");
     }
 
 }

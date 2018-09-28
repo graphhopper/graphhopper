@@ -19,6 +19,7 @@
 package com.conveyal.gtfs.error;
 
 import java.io.Serializable;
+import java.util.Locale;
 
 /**
  * Created by landon on 10/14/16.
@@ -35,6 +36,6 @@ public class TableInSubdirectoryError extends GTFSError implements Serializable 
     }
 
     @Override public String getMessage() {
-        return String.format("All GTFS files (including %s.txt) should be at root of zipfile, not nested in subdirectory (%s)", file, directory);
+        return String.format(Locale.getDefault(), "All GTFS files (including %s.txt) should be at root of zipfile, not nested in subdirectory (%s)", file, directory);
     }
 }

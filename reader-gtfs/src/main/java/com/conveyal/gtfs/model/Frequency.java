@@ -23,6 +23,7 @@ import org.mapdb.Fun;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Locale;
 
 import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 
@@ -42,7 +43,7 @@ public class Frequency extends Entity implements Comparable<Frequency> {
          sb.append("_to_");
          sb.append(convertToGtfsTime(end_time));
          sb.append("_every_");
-         sb.append(String.format("%dm%02ds", headway_secs / 60, headway_secs % 60));
+         sb.append(String.format(Locale.getDefault(), "%dm%02ds", headway_secs / 60, headway_secs % 60));
          if (exact_times == 1) sb.append("_exact");
          return sb.toString();
      }

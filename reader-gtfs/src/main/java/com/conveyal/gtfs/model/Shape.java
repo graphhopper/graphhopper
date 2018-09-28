@@ -1,8 +1,8 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.util.Util;
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import org.mapdb.Fun;
 
@@ -12,6 +12,7 @@ import java.util.Map;
  * Represents a collection of GTFS shape points. Never saved in MapDB but constructed on the fly.
  */
 public class Shape {
+    public static GeometryFactory geometryFactory = new GeometryFactory();
     /** The shape itself */
     public LineString geometry;
 
@@ -25,7 +26,7 @@ public class Shape {
         Coordinate[] coords = points.values().stream()
                 .map(point -> new Coordinate(point.shape_pt_lon, point.shape_pt_lat))
                 .toArray(i -> new Coordinate[i]);
-        geometry = Util.geometryFactory.createLineString(coords);
+        geometry = geometryFactory.createLineString(coords);
         shape_dist_traveled = points.values().stream().mapToDouble(point -> point.shape_dist_traveled).toArray();
     }
 }
