@@ -64,7 +64,6 @@ import java.util.zip.ZipFile;
 public class GTFSFeed implements Cloneable, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(GTFSFeed.class);
-    private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private DB db;
 
@@ -415,7 +414,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         if (startDate == 0)
             return null;
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd", Locale.getDefault());
         return LocalDate.parse(String.valueOf(startDate), formatter);
     }
 
@@ -447,7 +446,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         if (endDate == 0)
             return null;
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd", Locale.getDefault());
         return LocalDate.parse(String.valueOf(endDate), formatter);
     }
 
