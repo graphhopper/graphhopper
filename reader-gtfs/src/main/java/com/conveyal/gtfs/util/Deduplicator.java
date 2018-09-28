@@ -45,14 +45,4 @@ public class Deduplicator implements Serializable {
         canonicalStrings.clear();
     }
 
-    public String deduplicateString(String original) {
-        if (original == null) return null;
-        String canonical = canonicalStrings.get(original);
-        if (canonical == null) {
-            canonical = new String(original.toCharArray()); // Trim String if necessary (older JDKs)
-            canonicalStrings.put(canonical, canonical);
-        }
-        return canonical;
-    }
-
 }

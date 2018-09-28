@@ -28,7 +28,6 @@ package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.error.*;
-import com.conveyal.gtfs.util.Deduplicator;
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 import org.apache.commons.io.input.BOMInputStream;
@@ -65,7 +64,6 @@ public abstract class Entity implements Serializable {
     public static abstract class Loader<E extends Entity> {
 
         private static final Logger LOG = LoggerFactory.getLogger(Loader.class);
-        private static final Deduplicator deduplicator = new Deduplicator();
 
         protected final GTFSFeed feed;    // the feed into which we are loading the entities
         protected final String tableName; // name of corresponding table without .txt
@@ -115,9 +113,7 @@ public abstract class Entity implements Serializable {
 
         /** @return the given column from the current row as a deduplicated String. */
         protected String getStringField(String column, boolean required) throws IOException {
-            String str = getFieldCheckRequired(column, required);
-            str = deduplicator.deduplicateString(str);
-            return str;
+            return getFieldCheckRequired(column, required);
         }
 
         protected int getIntField(String column, boolean required, int min, int max) throws IOException {
