@@ -50,44 +50,7 @@ public class MapboxResponseConverter {
             PathWrapper path = paths.get(i);
             ObjectNode pathJson = routesJson.addObject();
 
-            InstructionList instructions = path.getInstructions();
-
-            pathJson.put("geometry", WebHelper.encodePolyline(path.getPoints(), false, 1e6));
-            ArrayNode legsJson = pathJson.putArray("legs");
-
-            ObjectNode legJson = legsJson.addObject();
-            ArrayNode steps = legJson.putArray("steps");
-
-            long time = 0;
-            double distance = 0;
-            boolean isFirstInstructionOfLeg = true;
-
-            for (int j = 0; j < instructions.size(); j++) {
-                ObjectNode instructionJson = steps.addObject();
-                putInstruction(instructions, j, locale, translationMap, mapboxResponseConverterTranslationMap, instructionJson, isFirstInstructionOfLeg);
-                Instruction instruction = instructions.get(j);
-                time += instruction.getTime();
-                distance += instruction.getDistance();
-                isFirstInstructionOfLeg = false;
-                if (instruction.getSign() == Instruction.REACHED_VIA || instruction.getSign() == Instruction.FINISH) {
-                    putLegInformation(legJson, path, i, time, distance);
-                    isFirstInstructionOfLeg = true;
-                    time = 0;
-                    distance = 0;
-
-                    if (instruction.getSign() == Instruction.REACHED_VIA) {
-                        // Create new leg and steps after a via points
-                        legJson = legsJson.addObject();
-                        steps = legJson.putArray("steps");
-                    }
-                }
-            }
-
-            pathJson.put("weight_name", "routability");
-            pathJson.put("weight", Helper.round(path.getRouteWeight(), 1));
-            pathJson.put("duration", convertToSeconds(path.getTime()));
-            pathJson.put("distance", Helper.round(path.getDistance(), 1));
-            pathJson.put("voiceLocale", locale.toLanguageTag());
+            putRouteInformation(pathJson, path, i, translationMap, mapboxResponseConverterTranslationMap, locale);
         }
 
         final ArrayNode waypointsJson = json.putArray("waypoints");
@@ -103,6 +66,47 @@ public class MapboxResponseConverter {
         json.put("uuid", UUID.randomUUID().toString().replaceAll("-", ""));
 
         return json;
+    }
+
+    private static void putRouteInformation(ObjectNode pathJson, PathWrapper path, int routeNr, TranslationMap translationMap, TranslationMap mapboxResponseConverterTranslationMap, Locale locale) {
+        InstructionList instructions = path.getInstructions();
+
+        pathJson.put("geometry", WebHelper.encodePolyline(path.getPoints(), false, 1e6));
+        ArrayNode legsJson = pathJson.putArray("legs");
+
+        ObjectNode legJson = legsJson.addObject();
+        ArrayNode steps = legJson.putArray("steps");
+
+        long time = 0;
+        double distance = 0;
+        boolean isFirstInstructionOfLeg = true;
+
+        for (int i = 0; i < instructions.size(); i++) {
+            ObjectNode instructionJson = steps.addObject();
+            putInstruction(instructions, i, locale, translationMap, mapboxResponseConverterTranslationMap, instructionJson, isFirstInstructionOfLeg);
+            Instruction instruction = instructions.get(i);
+            time += instruction.getTime();
+            distance += instruction.getDistance();
+            isFirstInstructionOfLeg = false;
+            if (instruction.getSign() == Instruction.REACHED_VIA || instruction.getSign() == Instruction.FINISH) {
+                putLegInformation(legJson, path, routeNr, time, distance);
+                isFirstInstructionOfLeg = true;
+                time = 0;
+                distance = 0;
+
+                if (instruction.getSign() == Instruction.REACHED_VIA) {
+                    // Create new leg and steps after a via points
+                    legJson = legsJson.addObject();
+                    steps = legJson.putArray("steps");
+                }
+            }
+        }
+
+        pathJson.put("weight_name", "routability");
+        pathJson.put("weight", Helper.round(path.getRouteWeight(), 1));
+        pathJson.put("duration", convertToSeconds(path.getTime()));
+        pathJson.put("distance", Helper.round(path.getDistance(), 1));
+        pathJson.put("voiceLocale", locale.toLanguageTag());
     }
 
     private static void putLegInformation(ObjectNode legJson, PathWrapper path, int i, long time, double distance) {

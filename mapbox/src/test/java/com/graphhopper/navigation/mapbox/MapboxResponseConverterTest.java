@@ -8,6 +8,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.*;
@@ -162,6 +163,23 @@ public class MapboxResponseConverterTest {
 
         voiceInstruction = voiceInstructions.get(3);
         assertEquals("keep right", voiceInstruction.get("announcement").asText());
+    }
+
+    @Test
+    public void alternativeRoutesTest() {
+
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
+                setVehicle(vehicle).setAlgorithm(Parameters.Algorithms.ALT_ROUTE));
+
+        assertEquals(2, rsp.getAll().size());
+
+        ObjectNode json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
+
+        JsonNode routes = json.get("routes");
+        assertEquals(2, routes.size());
+
+        assertEquals("GraphHopper Route 0", routes.get(0).get("legs").get(0).get("summary").asText());
+        assertEquals("Avinguda Sant Antoni, CG-3", routes.get(1).get("legs").get(0).get("summary").asText());
     }
 
     @Test

@@ -20,6 +20,7 @@ package com.graphhopper.navigation.mapbox;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.TranslationMap;
@@ -118,6 +119,35 @@ public class MapboxResource {
 
         StopWatch sw = new StopWatch().start();
 
+        GHResponse ghResponse = calcRoute(favoredHeadings, requestPoints, vehicleStr, weighting, localeStr, enableInstructions, minPathPrecision);
+
+        // Only do this, when there are more than 2 points, otherwise we use alternative routes
+        if (!ghResponse.hasErrors() && favoredHeadings.size() > 0) {
+            GHResponse noHeadingResponse = calcRoute(Collections.EMPTY_LIST, requestPoints, vehicleStr, weighting, localeStr, enableInstructions, minPathPrecision);
+            if (ghResponse.getBest().getDistance() != noHeadingResponse.getBest().getDistance()) {
+                ghResponse.getAll().add(noHeadingResponse.getBest());
+            }
+        }
+
+        float took = sw.stop().getSeconds();
+        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
+        String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
+                + took + ", " + weighting + ", " + vehicleStr;
+
+        if (ghResponse.hasErrors()) {
+            logger.error(logStr + ", errors:" + ghResponse.getErrors());
+            // Mapbox specifies 422 return type for input errors
+            return Response.status(422).entity(MapboxResponseConverter.convertFromGHResponseError(ghResponse)).
+                    header("X-GH-Took", "" + Math.round(took * 1000)).
+                    build();
+        } else {
+            return Response.ok(MapboxResponseConverter.convertFromGHResponse(ghResponse, translationMap, mapboxResponseConverterTranslationMap, Helper.getLocale(localeStr))).
+                    header("X-GH-Took", "" + Math.round(took * 1000)).
+                    build();
+        }
+    }
+
+    private GHResponse calcRoute(List<Double> favoredHeadings, List<GHPoint> requestPoints, String vehicleStr, String weighting, String localeStr, boolean enableInstructions, double minPathPrecision) {
         GHRequest request;
         if (favoredHeadings.size() > 0) {
             request = new GHRequest(requestPoints, favoredHeadings);
@@ -135,24 +165,7 @@ public class MapboxResource {
                 put(Parameters.CH.DISABLE, true).
                 put(Parameters.Routing.PASS_THROUGH, false);
 
-        GHResponse ghResponse = graphHopper.route(request);
-
-        float took = sw.stop().getSeconds();
-        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
-        String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
-                + took + ", " + weighting + ", " + vehicleStr;
-
-        if (ghResponse.hasErrors()) {
-            logger.error(logStr + ", errors:" + ghResponse.getErrors());
-            // Mapbox specifies 422 return type for input errors
-            return Response.status(422).entity(MapboxResponseConverter.convertFromGHResponseError(ghResponse)).
-                    header("X-GH-Took", "" + Math.round(took * 1000)).
-                    build();
-        } else {
-            return Response.ok(MapboxResponseConverter.convertFromGHResponse(ghResponse, translationMap, mapboxResponseConverterTranslationMap, request.getLocale())).
-                    header("X-GH-Took", "" + Math.round(took * 1000)).
-                    build();
-        }
+        return graphHopper.route(request);
     }
 
     /**
