@@ -18,7 +18,6 @@
 
 package com.graphhopper.http;
 
-import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.BeanDescription;
@@ -27,7 +26,6 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
-import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
@@ -56,10 +54,7 @@ import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.ext.WriterInterceptor;
-import javax.ws.rs.ext.WriterInterceptorContext;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -164,7 +159,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
         bootstrap.getObjectMapper().setDateFormat(new StdDateFormat());
-        bootstrap.getObjectMapper().registerModule(new JtsModule());
         bootstrap.getObjectMapper().registerModule(new GraphHopperModule());
         bootstrap.getObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
         // Because VirtualEdgeIteratorState has getters which throw Exceptions.

@@ -18,7 +18,7 @@
 package com.graphhopper.json.geo;
 
 import com.graphhopper.util.shapes.BBox;
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import java.util.Map;
 

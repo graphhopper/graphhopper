@@ -92,7 +92,7 @@
             <version>${vtm.version}</version>
             <exclusions>
               <exclusion>
-                <groupId>com.vividsolutions</groupId>
+                <groupId>org.locationtech</groupId>
                 <artifactId>jts</artifactId>
               </exclusion>
             </exclusions>
