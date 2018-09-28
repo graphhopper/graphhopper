@@ -17,12 +17,14 @@
  */
 package com.graphhopper.jackson;
 
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.*;
 
 public class Jackson {
     public static ObjectMapper newObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new GraphHopperModule());
+        objectMapper.registerModule(new JtsModule());
         return objectMapper;
     }
 }
