@@ -40,7 +40,7 @@ public class ContourBuilder {
         this.triangulation = triangulation;
     }
 
-    public Geometry computeIsoline(double z0) {
+    public MultiPolygon computeIsoline(double z0) {
         Set<QuadEdge> processed = new HashSet<>();
         List<LinearRing> rings = new ArrayList<>();
 
