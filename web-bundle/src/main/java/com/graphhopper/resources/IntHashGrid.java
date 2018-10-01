@@ -31,17 +31,11 @@
 
 package com.graphhopper.resources;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.LineString;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.TLongObjectMap;
-import gnu.trove.map.hash.TLongObjectHashMap;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.TLongSet;
-import gnu.trove.set.hash.TIntHashSet;
-import gnu.trove.set.hash.TLongHashSet;
+import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.procedures.LongProcedure;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.LineString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +72,7 @@ public class IntHashGrid implements Serializable {
     private final int xBinSize, yBinSize;
 
     /* The map of all bins. Please see visit() and xKey/yKey for details on the key. */
-    private final TLongObjectMap<TIntList> bins;
+    private final LongObjectHashMap<IntArrayList> bins;
 
     private int nBins = 0;
 
@@ -94,7 +88,7 @@ public class IntHashGrid implements Serializable {
             throw new IllegalStateException("bin size must be positive.");
         }
         // For 200m bins, 500x500 = 100x100km = 250000 bins
-        bins = new TLongObjectHashMap<>();
+        bins = new LongObjectHashMap<>();
     }
 
     /** Create a HashGrid with the default grid dimensions. */
@@ -130,7 +124,7 @@ public class IntHashGrid implements Serializable {
      */
     public final void insert(LineString geom, final int item) {
         Coordinate[] coord = geom.getCoordinates();
-        final TLongSet keys = new TLongHashSet(coord.length * 8);
+        final LongSet keys = new LongHashSet(coord.length * 8);
         for (int i = 0; i < coord.length - 1; i++) {
             // Cut the segment if longer than bin size to reduce the number of wrong bins
             double dX = coord[i].x - coord[i + 1].x;
@@ -162,17 +156,16 @@ public class IntHashGrid implements Serializable {
                 });
             }
         }
-        keys.forEach(key -> {
+        keys.forEach((LongProcedure) key -> {
             // Note: bins have been initialized in the previous visit
             bins.get(key).add(item);
             nEntries++;
-            return true;
         });
         nObjects++;
     }
 
-    public final TIntSet query(Envelope envelope) {
-        final TIntSet ret = new TIntHashSet();
+    public final IntSet query(Envelope envelope) {
+        final IntHashSet ret = new IntHashSet();
         visit(envelope, false, (bin, mapKey) -> {
             ret.addAll(bin);
             return false;
@@ -183,12 +176,15 @@ public class IntHashGrid implements Serializable {
     public final boolean remove(Envelope envelope, final int item) {
         final AtomicInteger removedCount = new AtomicInteger();
         visit(envelope, false, (bin, mapKey) -> {
-            boolean removed = bin.remove(item);
-            if (removed) {
+            int removed = bin.removeAll(item);
+            if (removed > 1) throw new RuntimeException();
+            if (removed == 1) {
                 nEntries--;
                 removedCount.addAndGet(1);
+                return true;
+            } else {
+                return false;
             }
-            return removed;
         });
         if (removedCount.get() > 0) {
             nObjects--;
@@ -201,7 +197,7 @@ public class IntHashGrid implements Serializable {
     /** Defines a callback that will be called on a range of bins. */
     private interface BinVisitor {
         /** @return true if something has been removed from the bin. */
-        abstract boolean visit(TIntList bin, long mapKey);
+        abstract boolean visit(IntArrayList bin, long mapKey);
     }
 
     /**
@@ -232,9 +228,9 @@ public class IntHashGrid implements Serializable {
                  * default implementation is: hashInt = (int)(value ^ (value >>> 32));
                  */
                 long mapKey = (yKey << 32) | ((xKey & 0xFFFF) << 16) | ((xKey >> 16) & 0xFFFF);
-                TIntList bin = bins.get(mapKey);
+                IntArrayList bin = bins.get(mapKey);
                 if (createIfEmpty && bin == null) {
-                    bin = new TIntArrayList();
+                    bin = new IntArrayList();
                     bins.put(mapKey, bin);
                     nBins++;
                 }

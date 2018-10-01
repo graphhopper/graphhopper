@@ -18,6 +18,8 @@
 
 package com.graphhopper.resources;
 
+import com.carrotsearch.hppc.IntSet;
+import com.carrotsearch.hppc.procedures.IntProcedure;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.reader.gtfs.*;
 import com.graphhopper.routing.QueryGraph;
@@ -32,15 +34,13 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.triangulate.ConformingDelaunayTriangulator;
-import com.vividsolutions.jts.triangulate.ConstraintVertex;
-import com.vividsolutions.jts.triangulate.DelaunayTriangulationBuilder;
-import com.vividsolutions.jts.triangulate.quadedge.QuadEdgeSubdivision;
-import com.vividsolutions.jts.triangulate.quadedge.Vertex;
-import gnu.trove.set.TIntSet;
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
+import org.locationtech.jts.triangulate.ConstraintVertex;
+import org.locationtech.jts.triangulate.DelaunayTriangulationBuilder;
+import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
+import org.locationtech.jts.triangulate.quadedge.Vertex;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -107,13 +107,13 @@ public class PtIsochroneResource {
 
         PtFlagEncoder ptFlagEncoder = (PtFlagEncoder) encodingManager.getEncoder("pt");
         GraphExplorer graphExplorer = new GraphExplorer(queryGraph, new FastestWeighting(encodingManager.getEncoder("foot")), ptFlagEncoder, gtfsStorage, RealtimeFeed.empty(gtfsStorage), reverseFlow, Collections.emptyList(), false, 5.0);
-        MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptFlagEncoder, reverseFlow, Double.MAX_VALUE, false, false, false, 1000000);
+        MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptFlagEncoder, reverseFlow, Double.MAX_VALUE, false, false, false, 1000000, Collections.emptyList());
 
         Map<Coordinate, Double> z1 = new HashMap<>();
         NodeAccess nodeAccess = queryGraph.getNodeAccess();
 
         MultiCriteriaLabelSetting.SPTVisitor sptVisitor = nodeLabel -> {
-            Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(nodeLabel.node), nodeAccess.getLatitude(nodeLabel.node));
+            Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(nodeLabel.adjNode), nodeAccess.getLatitude(nodeLabel.adjNode));
             z1.merge(nodeCoordinate, this.z.apply(nodeLabel), Math::min);
         };
         router.calcLabelsAndNeighbors(queryResult.getClosestNode(), -1, initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
@@ -124,14 +124,13 @@ public class PtIsochroneResource {
                 IntHashGrid.floatingDegreesToFixed(realBbox.getMaxX()),
                 IntHashGrid.floatingDegreesToFixed(realBbox.getMinY()),
                 IntHashGrid.floatingDegreesToFixed(realBbox.getMaxY()));
-        TIntSet allEdgesInBbox = spatialIndex.query(bbox);
-        allEdgesInBbox.forEach(edge -> {
+        IntSet allEdgesInBbox = spatialIndex.query(bbox);
+        allEdgesInBbox.forEach((IntProcedure) edge -> {
             EdgeIteratorState e = graphHopperStorage.getEdgeIteratorState(edge, Integer.MIN_VALUE);
             Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(e.getBaseNode()), nodeAccess.getLatitude(e.getBaseNode()));
             z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
             nodeCoordinate = new Coordinate(nodeAccess.getLongitude(e.getAdjNode()), nodeAccess.getLatitude(e.getAdjNode()));
             z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
-            return true;
         });
 
         exploredPoints = geometryFactory.createMultiPoint(z1.keySet().toArray(new Coordinate[0]));

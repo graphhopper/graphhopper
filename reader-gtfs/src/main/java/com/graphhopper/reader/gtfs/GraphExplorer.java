@@ -83,15 +83,15 @@ public final class GraphExplorer {
     }
 
     Stream<EdgeIteratorState> exploreEdgesAround(Label label) {
-        final List<VirtualEdgeIteratorState> extraEdges = reverse ? extraEdgesByDestination.get(label.node) : extraEdgesBySource.get(label.node);
+        final List<VirtualEdgeIteratorState> extraEdges = reverse ? extraEdgesByDestination.get(label.adjNode) : extraEdgesBySource.get(label.adjNode);
         return Stream.concat(
-                label.node < graph.getNodes() ? mainEdgesAround(label) : Stream.empty(),
+                label.adjNode < graph.getNodes() ? mainEdgesAround(label) : Stream.empty(),
                 extraEdges.stream()).filter(new EdgeIteratorStatePredicate(label));
     }
 
     private Stream<EdgeIteratorState> mainEdgesAround(Label label) {
         return StreamSupport.stream(new Spliterators.AbstractSpliterator<EdgeIteratorState>(0, 0) {
-            EdgeIterator edgeIterator = edgeExplorer.setBaseNode(label.node);
+            EdgeIterator edgeIterator = edgeExplorer.setBaseNode(label.adjNode);
 
             @Override
             public boolean tryAdvance(Consumer<? super EdgeIteratorState> action) {

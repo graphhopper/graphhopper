@@ -62,7 +62,7 @@ public class MultiCriteriaLabelSetting {
     private double betaTransfers;
     private double betaWalkTime = 1.0;
 
-    MultiCriteriaLabelSetting(GraphExplorer explorer, PtFlagEncoder flagEncoder, boolean reverse, double maxWalkDistancePerLeg, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes, List<Label> solutions) {
+    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtFlagEncoder flagEncoder, boolean reverse, double maxWalkDistancePerLeg, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes, List<Label> solutions) {
         this.flagEncoder = flagEncoder;
         this.maxVisitedNodes = maxVisitedNodes;
         this.explorer = explorer;
