@@ -29,6 +29,11 @@
         </dependency>
         <dependency>
             <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-reader-postgis</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-reader-gtfs</artifactId>
             <version>${project.parent.version}</version>
         </dependency>

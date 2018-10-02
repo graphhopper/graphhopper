@@ -3,6 +3,15 @@ graphhopper:
   # OpenStreetMap input file
   # datareader.file: some.pbf
 
+  ##### PostGIS Connection Parameters #####
+  
+  # db.host: localhost
+  # db.port: 5432
+  # db.database: eraseme
+  # db.schema: public
+  # db.user: mbasa
+  # db.passwd: xx
+
   ##### Vehicles #####
 
 

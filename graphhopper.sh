@@ -238,7 +238,7 @@ fi
 : "${JAR:=web/target/graphhopper-web-$VERSION.jar}"
 : "${GRAPH:=$DATADIR/$NAME-gh}"
 
-ensureOsm
+#ensureOsm
 packageJar
 
 echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
