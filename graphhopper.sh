@@ -217,7 +217,7 @@ elif [ ${FILE: -4} == ".ghz" ]; then
    fi
 else
    # no known end -> no import
-   OSM_FILE=
+   OSM_FILE=$FILE
 fi
 
 LINK=$(echo $NAME | tr '_' '/')
