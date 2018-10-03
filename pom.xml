@@ -106,11 +106,11 @@
             </plugin>
         </plugins>
         <extensions>
-            <extension>
-                <groupId>io.packagecloud.maven.wagon</groupId>
-                <artifactId>maven-packagecloud-wagon</artifactId>
-                <version>0.0.4</version>
-            </extension>
+           <extension>
+              <groupId>io.packagecloud.maven.wagon</groupId>
+              <artifactId>maven-packagecloud-wagon</artifactId>
+              <version>0.0.6</version>
+           </extension>
         </extensions>
     </build>    
 
@@ -143,6 +143,13 @@
             </activation>
             <build>
                 <plugins>
+                    <plugin>
+		      <groupId>io.packagecloud.maven.wagon</groupId>
+                      <artifactId>maven-packagecloud-wagon</artifactId>
+                      <configuration>
+		        <skip>true</skip>
+		      </configuration>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
