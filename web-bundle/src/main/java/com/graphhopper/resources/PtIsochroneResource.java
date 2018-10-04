@@ -118,7 +118,7 @@ public class PtIsochroneResource {
         };
         router.calcLabelsAndNeighbors(queryResult.getClosestNode(), -1, initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
 
-        MultiPoint exploredPoints = geometryFactory.createMultiPoint(z1.keySet().toArray(new Coordinate[0]));
+        MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
         Envelope realBbox = exploredPoints.getEnvelopeInternal();
         Envelope bbox = new Envelope(IntHashGrid.floatingDegreesToFixed(realBbox.getMinX()),
                 IntHashGrid.floatingDegreesToFixed(realBbox.getMaxX()),
@@ -133,9 +133,9 @@ public class PtIsochroneResource {
             z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
         });
 
-        exploredPoints = geometryFactory.createMultiPoint(z1.keySet().toArray(new Coordinate[0]));
+        exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
         CoordinateList siteCoords = DelaunayTriangulationBuilder.extractUniqueCoordinates(exploredPoints);
-        List<ConstraintVertex> constraintVertices = new ArrayList();
+        List<ConstraintVertex> constraintVertices = new ArrayList<>();
         for (Object siteCoord : siteCoords) {
             Coordinate coord = (Coordinate) siteCoord;
             constraintVertices.add(new ConstraintVertex(coord));
