@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
+import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
@@ -125,15 +126,15 @@ public class IsochroneResource {
                     .header("X-GH-Took", "" + sw.stop().getSeconds() * 1000)
                     .build();
         } else if ("polygon".equalsIgnoreCase(resultStr)) {
-            ArrayList<Map<String, Object>> features = new ArrayList<>();
+            ArrayList<JsonFeature> features = new ArrayList<>();
             List<Coordinate[]> polygonShells = delaunayTriangulationIsolineBuilder.calcList(buckets, buckets.size() - 1);
             for (Coordinate[] polygonShell : polygonShells) {
-                HashMap<String, Object> feature = new HashMap<>();
-                feature.put("type", "Feature");
+                JsonFeature feature = new JsonFeature();
+                feature.setType("Feature"); // What else would it be?
                 HashMap<String, Object> properties = new HashMap<>();
                 properties.put("bucket", features.size());
-                feature.put("properties", properties);
-                feature.put("geometry", geometryFactory.createPolygon(polygonShell));
+                feature.setProperties(properties);
+                feature.setGeometry(geometryFactory.createPolygon(polygonShell));
                 features.add(feature);
             }
             logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
