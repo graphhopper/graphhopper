@@ -295,7 +295,7 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testNorthBayreuthBlockeEdges() {
+    public void testNorthBayreuthBlockedEdges() {
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).

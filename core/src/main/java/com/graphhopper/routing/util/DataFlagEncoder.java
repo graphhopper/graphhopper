@@ -71,11 +71,12 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private EnumEncodedValue<RoadEnvironment> roadEnvEnc;
 
     public DataFlagEncoder() {
-        this(5, 5, 0);
+        this("generic", 5, 5, 0);
     }
 
     public DataFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 5),
+        this(properties.get("name", "generic"),
+                (int) properties.getLong("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
         this.properties = properties;
@@ -84,9 +85,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         this.setStoreWidth(properties.getBool("store_width", false));
     }
 
-    public DataFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
+    public DataFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
         // TODO include turn information
-        super(speedBits, speedFactor, maxTurnCosts);
+        super(name, speedBits, speedFactor, maxTurnCosts);
 
         maxPossibleSpeed = 140;
         //
@@ -539,10 +540,5 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     @Override
     public int getVersion() {
         return 3;
-    }
-
-    @Override
-    public String toString() {
-        return "generic";
     }
 }

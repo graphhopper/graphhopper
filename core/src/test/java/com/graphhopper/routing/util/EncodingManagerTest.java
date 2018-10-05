@@ -26,8 +26,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.util.Arrays;
-
 import static org.junit.Assert.*;
 
 /**
@@ -98,15 +96,10 @@ public class EncodingManagerTest {
 
     @Test
     public void testToDetailsStringIncludesEncoderVersionNumber() {
-        FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 3) {
+        FlagEncoder encoder = new AbstractFlagEncoder("new_encoder", 1, 2.0, 3) {
             @Override
             public int getVersion() {
                 return 10;
-            }
-
-            @Override
-            public String toString() {
-                return "new_encoder";
             }
 
             @Override
@@ -142,7 +135,7 @@ public class EncodingManagerTest {
         ReaderRelation osmRel = new ReaderRelation(1);
 
         BikeFlagEncoder defaultBike = new BikeFlagEncoder();
-        BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder() {
+        BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder("name=less_relations_bits") {
             @Override
             public int defineRelationBits(int index, int shift) {
                 relationCodeEncoder = new EncodedValueOld("RelationCode2", shift, 2, 1, 0, 3);
@@ -159,11 +152,6 @@ public class EncodingManagerTest {
             @Override
             protected int handlePriority(ReaderWay way, double wayTypeSpeed, int priorityFromRelation) {
                 return priorityFromRelation;
-            }
-
-            @Override
-            public String toString() {
-                return "less_relations_bits";
             }
         };
         EncodingManager manager = EncodingManager.create(defaultBike, lessRelationCodes);

@@ -1,0 +1,12 @@
+# this yml is for import or query time
+name: wheelchair
+base: foot
+
+# required attribute
+max_speed: 6
+
+# if this is specified then lower visited nodes to 1/4
+no_access:
+  road_class:
+  - steps
+  max_width: 0.7

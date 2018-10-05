@@ -23,6 +23,8 @@ import com.fasterxml.jackson.databind.*;
 public class Jackson {
     public static ObjectMapper newObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
         objectMapper.registerModule(new GraphHopperModule());
         objectMapper.registerModule(new JtsModule());
         return objectMapper;

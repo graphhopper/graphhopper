@@ -17,12 +17,17 @@
  */
 package com.graphhopper;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.flex.FlexModel;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadEnvironment;
@@ -119,6 +124,7 @@ public class GraphHopper implements GraphHopperAPI {
     private FlagEncoderFactory flagEncoderFactory = FlagEncoderFactory.DEFAULT;
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
+    private Map<String, FlexModel> importVehicleModels = new HashMap<>();
 
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
@@ -546,9 +552,39 @@ public class GraphHopper implements GraphHopperAPI {
         sortGraph = args.getBool("graph.do_sort", sortGraph);
         removeZipped = args.getBool("graph.remove_zipped", removeZipped);
         int bytesForFlags = args.getInt("graph.bytes_for_flags", 4);
-        String flagEncodersStr = args.get("graph.flag_encoders", "");
-        if (!flagEncodersStr.isEmpty())
-            setEncodingManager(EncodingManager.create(flagEncoderFactory, flagEncodersStr, bytesForFlags));
+        String encodingManagerStr = args.get("graph.encoding_manager", "");
+        if (encodingManagerStr.isEmpty()) {
+            String flagEncodersStr = args.get("graph.flag_encoders", "");
+            if (!flagEncodersStr.isEmpty())
+                setEncodingManager(EncodingManager.create(flagEncoderFactory, flagEncodersStr, bytesForFlags));
+        } else {
+            try {
+                Map<String, FlagEncoder> flagEncoderSet = new HashMap();
+                String flagEncodersStr = args.get("graph.flag_encoders", "");
+                for (String feStr : flagEncodersStr.split(","))
+                    flagEncoderSet.put(feStr, flagEncoderFactory.createFlagEncoder(feStr, new PMap()));
+
+                ObjectMapper om = new ObjectMapper(new YAMLFactory());
+                om.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+                om.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+                for (String str : encodingManagerStr.split(",")) {
+                    FlexModel importVehicleModel = om.readValue(new File(str), FlexModel.class);
+                    importVehicleModels.put(importVehicleModel.getName(), importVehicleModel);
+                    if (!flagEncoderSet.containsKey(importVehicleModel.getBase())) {
+                        FlagEncoder baseFlagEncoder = flagEncoderFactory.createFlagEncoder(importVehicleModel.getBase(), new PMap().put("name", importVehicleModel.getName()));
+                        flagEncoderSet.put(baseFlagEncoder.toString(), baseFlagEncoder);
+                    }
+                }
+
+                EncodingManager.Builder em = EncodingManager.start(bytesForFlags).addRoadEnvironment().addRoadClass();
+                for (FlagEncoder fe : flagEncoderSet.values())
+                    em.add(fe);
+
+                setEncodingManager(em.build());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         if (args.get("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -953,6 +989,10 @@ public class GraphHopper implements GraphHopperAPI {
      * This method calculates the alternative path list using the low level Path objects.
      */
     public List<Path> calcPaths(GHRequest request, GHResponse ghRsp) {
+        return calcPaths(request, null, ghRsp);
+    }
+
+    public List<Path> calcPaths(GHRequest request, FlexModel vehicleModel, GHResponse ghRsp) {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
 
@@ -1042,7 +1082,14 @@ public class GraphHopper implements GraphHopperAPI {
                     checkNonChMaxWaypointDistance(points);
                     queryGraph = new QueryGraph(ghStorage);
                     queryGraph.lookup(qResults);
-                    weighting = createWeighting(hints, encoder, queryGraph);
+                    if (vehicleModel != null) {
+                        // TODO vehicleModel.merge(importVehicleModel)
+                        weighting = new FlexWeighting(encodingManager, vehicleModel);
+                    } else if (hints.getWeighting().equals("flex")) {
+                        weighting = new FlexWeighting(encodingManager, importVehicleModels.get(encoder.toString()));
+                    } else {
+                        weighting = createWeighting(hints, encoder, queryGraph);
+                    }
                     ghRsp.addDebugInfo("tmode:" + tMode.toString());
                 }
 

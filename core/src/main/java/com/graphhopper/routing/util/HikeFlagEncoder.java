@@ -35,11 +35,12 @@ public class HikeFlagEncoder extends FootFlagEncoder {
      * Should be only instantiated via EncodingManager
      */
     public HikeFlagEncoder() {
-        this(4, 1);
+        this("hike", 4, 1);
     }
 
     public HikeFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speedBits", 4),
+        this(properties.get("name", "hike"),
+                (int) properties.getLong("speedBits", 4),
                 properties.getDouble("speedFactor", 1));
         this.properties = properties;
         this.setBlockFords(properties.getBool("block_fords", false));
@@ -49,8 +50,8 @@ public class HikeFlagEncoder extends FootFlagEncoder {
         this(new PMap(propertiesStr));
     }
 
-    public HikeFlagEncoder(int speedBits, double speedFactor) {
-        super(speedBits, speedFactor);
+    public HikeFlagEncoder(String name, int speedBits, double speedFactor) {
+        super(name, speedBits, speedFactor);
 
         hikingNetworkToCode.put("iwn", BEST.getValue());
         hikingNetworkToCode.put("nwn", BEST.getValue());
@@ -154,10 +155,5 @@ public class HikeFlagEncoder extends FootFlagEncoder {
             return true;
 
         return PriorityWeighting.class.isAssignableFrom(feature);
-    }
-
-    @Override
-    public String toString() {
-        return "hike";
     }
 }

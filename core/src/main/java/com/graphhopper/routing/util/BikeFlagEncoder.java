@@ -36,7 +36,8 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     public BikeFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 4),
+        this(properties.get("name", "bike"),
+                (int) properties.getLong("speed_bits", 4),
                 properties.getLong("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
         this.properties = properties;
@@ -44,7 +45,11 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
+        this("bike", speedBits, speedFactor, maxTurnCosts);
+    }
+
+    public BikeFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
+        super(name, speedBits, speedFactor, maxTurnCosts);
         addPushingSection("path");
         addPushingSection("footway");
         addPushingSection("pedestrian");
@@ -80,10 +85,5 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
         String highway = way.getTag("highway");
         String trackType = way.getTag("tracktype");
         return super.isPushingSection(way) || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
-    }
-
-    @Override
-    public String toString() {
-        return "bike";
     }
 }

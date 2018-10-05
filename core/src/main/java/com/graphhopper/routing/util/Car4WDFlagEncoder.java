@@ -28,7 +28,7 @@ import com.graphhopper.util.PMap;
 public class Car4WDFlagEncoder extends CarFlagEncoder {
 
     public Car4WDFlagEncoder() {
-        this(5, 5, 0);
+        this("car4wd",5, 5, 0);
     }
 
     public Car4WDFlagEncoder(PMap properties) {
@@ -39,8 +39,8 @@ public class Car4WDFlagEncoder extends CarFlagEncoder {
         this(new PMap(propertiesStr));
     }
 
-    public Car4WDFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
+    public Car4WDFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
+        super(name, speedBits, speedFactor, maxTurnCosts);
 
         init();
 
@@ -92,10 +92,5 @@ public class Car4WDFlagEncoder extends CarFlagEncoder {
             return 0;
         else
             return acceptBit;
-    }
-
-    @Override
-    public String toString() {
-        return "car4wd";
     }
 }

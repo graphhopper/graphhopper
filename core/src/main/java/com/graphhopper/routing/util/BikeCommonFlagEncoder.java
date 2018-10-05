@@ -70,8 +70,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     // This is the specific bicycle class
     private String classBicycleKey;
 
-    protected BikeCommonFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
+    protected BikeCommonFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
+        super(name, speedBits, speedFactor, maxTurnCosts);
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
         restrictions.addAll(Arrays.asList("bicycle", "vehicle", "access"));
         restrictedValues.add("private");

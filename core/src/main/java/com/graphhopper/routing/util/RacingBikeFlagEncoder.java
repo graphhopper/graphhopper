@@ -33,11 +33,11 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  */
 public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     public RacingBikeFlagEncoder() {
-        this(4, 2, 0);
+        this("racingbike", 4, 2, 0);
     }
 
     public RacingBikeFlagEncoder(PMap properties) {
-        this(
+        this(properties.get("name", "racingbike"),
                 (int) properties.getLong("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0
@@ -50,8 +50,8 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
         this(new PMap(propertiesStr));
     }
 
-    public RacingBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
+    public RacingBikeFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
+        super(name, speedBits, speedFactor, maxTurnCosts);
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");
         preferHighwayTags.add("secondary_link");
@@ -165,10 +165,5 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     boolean isSacScaleAllowed(String sacScale) {
         // for racing bike it is only allowed if empty
         return false;
-    }
-
-    @Override
-    public String toString() {
-        return "racingbike";
     }
 }

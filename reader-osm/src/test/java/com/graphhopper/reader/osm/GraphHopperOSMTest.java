@@ -874,8 +874,8 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testGetWeightingForCH() {
-        TestEncoder truck = new TestEncoder("truck");
-        TestEncoder simpleTruck = new TestEncoder("simple_truck");
+        CarFlagEncoder truck = new CarFlagEncoder("name=truck");
+        CarFlagEncoder simpleTruck = new CarFlagEncoder("name=simple_truck");
 
         // use simple truck first
         EncodingManager em = EncodingManager.create(simpleTruck, truck);
@@ -915,18 +915,5 @@ public class GraphHopperOSMTest {
         tmpGH.getCHFactoryDecorator().setWeightingsAsStrings("fastest", "shortest");
 
         assertEquals(2, tmpGH.getCHFactoryDecorator().getWeightingsAsStrings().size());
-    }
-
-    class TestEncoder extends CarFlagEncoder {
-        private final String name;
-
-        public TestEncoder(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return name;
-        }
     }
 }

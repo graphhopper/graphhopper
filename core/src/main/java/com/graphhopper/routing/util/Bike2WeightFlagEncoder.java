@@ -45,8 +45,8 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
         speedTwoDirections = true;
     }
 
-    public Bike2WeightFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
+    public Bike2WeightFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts) {
+        super(name, speedBits, speedFactor, maxTurnCosts);
         speedTwoDirections = true;
     }
 
@@ -126,10 +126,5 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
             }
         }
         edge.setFlags(intsRef);
-    }
-
-    @Override
-    public String toString() {
-        return "bike2";
     }
 }

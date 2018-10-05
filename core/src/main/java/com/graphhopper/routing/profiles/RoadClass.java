@@ -5,60 +5,58 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public enum RoadClass {
-    DEFAULT("_default", 0),
-    MOTORWAY("motorway", 100d), MOTORWAY_LINK("motorway_link", 70d), MOTORROAD("motorroad", 90d),
-    TRUNK("trunk", 70d), TRUNK_LINK("trunk_link", 65d),
-    PRIMARY("primary", 65d), PRIMARY_LINK("primary_link", 60d),
-    SECONDARY("secondary", 60d), SECONDARY_LINK("secondary_link", 50d),
-    TERTIARY("tertiary", 50d), TERTIARY_LINK("tertiary_link", 40d),
-    RESIDENTIAL("residential", 30d),
-    UNCLASSIFIED("unclassified", 30d),
-    SERVICE("service", 20d),
-    ROAD("road", 20d),
-    TRACK("track", 15d),
-    FORESTRY("forestry", 15d),
-    LIVING_STREET("living_street", 5d);
+    DEFAULT("_default"),
+    MOTORWAY("motorway"), MOTORWAY_LINK("motorway_link"), MOTORROAD("motorroad"),
+    TRUNK("trunk"), TRUNK_LINK("trunk_link"),
+    PRIMARY("primary"), PRIMARY_LINK("primary_link"),
+    SECONDARY("secondary"), SECONDARY_LINK("secondary_link"),
+    TERTIARY("tertiary"), TERTIARY_LINK("tertiary_link"),
+    RESIDENTIAL("residential"),
+    UNCLASSIFIED("unclassified"),
+    SERVICE("service"),
+    ROAD("road"),
+    TRACK("track"),
+    FORESTRY("forestry"),
+    STEPS("steps"),
+    CYCLEWAY("cycleway"),
+    PATH("path"),
+    LIVING_STREET("living_street");
 
-    //    private static final Map<String, Double> CAR_SPEEDS = new LinkedHashMap<String, Double>() {
-//        {
-//            put("motorway", 100d);
-//            put("motorway_link", 70d);
-//            put("motorroad", 90d);
-//            put("trunk", 70d);
-//            put("trunk_link", 65d);
-//            put("primary", 65d);
-//            put("primary_link", 60d);
-//            put("secondary", 60d);
-//            put("secondary_link", 50d);
-//            put("tertiary", 50d);
-//            put("tertiary_link", 40d);
-//            put("residential", 30d);
-//            put("unclassified", 30d);
-//            put("service", 20d);
-//            put("road", 20d);
-//            put("track", 15d);
-//            put("forestry", 15d);
-//            put("living_street", 5d);
-//            // TODO how to handle roads that are not allowed per default but could be allowed via explicit tagging?
-//            // put("cycleway", 15d);
-//            // put("bridleway", 10d);
-//            // put("path", 10d);
-//        }
-//    };
+    private static final Map<RoadClass, Double> CAR_SPEEDS = new LinkedHashMap<RoadClass, Double>() {
+        {
+            put(MOTORWAY, 100d);
+            put(MOTORWAY_LINK, 70d);
+            put(MOTORROAD, 90d);
+            put(TRUNK, 70d);
+            put(TRUNK_LINK, 65d);
+            put(PRIMARY, 65d);
+            put(PRIMARY_LINK, 60d);
+            put(SECONDARY, 60d);
+            put(SECONDARY_LINK, 50d);
+            put(TERTIARY, 50d);
+            put(TERTIARY_LINK, 40d);
+            put(RESIDENTIAL, 30d);
+            put(UNCLASSIFIED, 30d);
+            put(SERVICE, 20d);
+            put(ROAD, 20d);
+            put(TRACK, 15d);
+            put(FORESTRY, 15d);
+            put(LIVING_STREET, 5d);
+            // TODO how to handle roads that are not allowed per default but could be allowed via explicit tagging?
+            // put("cycleway", 15d);
+            // put("bridleway", 10d);
+            // put("path", 10d);
+        }
+    };
 
     String name;
-    double speed;
 
-    RoadClass(String name, double speed) {
+    RoadClass(String name) {
         this.name = name;
-        this.speed = speed;
-    }
-
-    public double getSpeed() {
-        return speed;
     }
 
     @Override
@@ -78,8 +76,11 @@ public enum RoadClass {
     public static SpeedConfig createSpeedConfig(EnumEncodedValue<RoadClass> enumEnc, PMap pMap) {
         HashMap<String, Double> map = new HashMap<>(RoadClass.values().length);
         for (RoadClass e : RoadClass.values()) {
-            if (e != RoadClass.DEFAULT)
-                map.put(e.toString(), pMap.getDouble(e.toString(), e.getSpeed()));
+            if (e != RoadClass.DEFAULT) {
+                Double speed = CAR_SPEEDS.get(e);
+                if (speed != null)
+                    map.put(e.toString(), pMap.getDouble(e.toString(), speed));
+            }
         }
 
         return new SpeedConfig(getHighwaySpeedMap(enumEnc, map), enumEnc);

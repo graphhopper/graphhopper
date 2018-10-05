@@ -64,6 +64,10 @@ public class EncodingManager implements EncodedValueLookup {
      * road environment EncodedValue
      */
     public static final String ROAD_ENV = "road_environment";
+    /**
+     * maximum weight
+     */
+    public static final String MAX_WEIGHT = "max_weight";
 
     private static final String ERR = "Encoders are requesting %s bits, more than %s bits of %s flags. ";
     private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via graph.bytes_for_flags: 8";

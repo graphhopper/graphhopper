@@ -57,11 +57,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
      * Should be only instantiated via EncodingManager
      */
     public FootFlagEncoder() {
-        this(4, 1);
+        this("foot", 4, 1);
     }
 
     public FootFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speedBits", 4),
+        this(properties.get("name", "foot"),
+                (int) properties.getLong("speedBits", 4),
                 properties.getDouble("speedFactor", 1));
         this.properties = properties;
         this.setBlockFords(properties.getBool("block_fords", true));
@@ -71,8 +72,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         this(new PMap(propertiesStr));
     }
 
-    public FootFlagEncoder(int speedBits, double speedFactor) {
-        super(speedBits, speedFactor, 0);
+    public FootFlagEncoder(String name, int speedBits, double speedFactor) {
+        super(name, speedBits, speedFactor, 0);
         restrictions.addAll(Arrays.asList("foot", "access"));
         restrictedValues.add("private");
         restrictedValues.add("no");
@@ -355,11 +356,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             return true;
 
         return PriorityWeighting.class.isAssignableFrom(feature);
-    }
-
-    @Override
-    public String toString() {
-        return "foot";
     }
 
     /*

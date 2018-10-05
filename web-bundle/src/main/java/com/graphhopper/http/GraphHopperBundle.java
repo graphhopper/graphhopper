@@ -21,13 +21,10 @@ package com.graphhopper.http;
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.SerializationConfig;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
-import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
@@ -160,10 +157,14 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
-        bootstrap.getObjectMapper().setDateFormat(new StdDateFormat());
-        bootstrap.getObjectMapper().registerModule(new JtsModule());
-        bootstrap.getObjectMapper().registerModule(new GraphHopperModule());
-        bootstrap.getObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        ObjectMapper om = bootstrap.getObjectMapper();
+        om.setDateFormat(new StdDateFormat());
+        // TODO use Jackson helper class somehow
+        om.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+        om.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+        om.registerModule(new JtsModule());
+        om.registerModule(new GraphHopperModule());
+        om.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         // Because VirtualEdgeIteratorState has getters which throw Exceptions.
         // http://stackoverflow.com/questions/35359430/how-to-make-jackson-ignore-properties-if-the-getters-throw-exceptions
         bootstrap.getObjectMapper().registerModule(new SimpleModule().setSerializerModifier(new BeanSerializerModifier() {
@@ -171,7 +172,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
                 return beanProperties.stream().map(bpw -> new BeanPropertyWriter(bpw) {
                     @Override
-                    public void serializeAsField(Object bean, JsonGenerator gen, SerializerProvider prov) throws Exception {
+                    public void serializeAsField(Object bean, JsonGenerator gen, SerializerProvider prov) {
                         try {
                             super.serializeAsField(bean, gen, prov);
                         } catch (Exception e) {
@@ -232,6 +233,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         });
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(RouteResource.class);
+        environment.jersey().register(FlexResource.class);
         environment.jersey().register(IsochroneResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
@@ -284,6 +286,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             environment.jersey().register(ChangeGraphResource.class);
         }
         environment.jersey().register(NearestResource.class);
+        environment.jersey().register(FlexResource.class);
         environment.jersey().register(RouteResource.class);
         environment.jersey().register(IsochroneResource.class);
         environment.jersey().register(I18NResource.class);

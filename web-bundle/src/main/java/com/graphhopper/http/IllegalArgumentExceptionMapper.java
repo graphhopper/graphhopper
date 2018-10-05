@@ -1,6 +1,7 @@
 package com.graphhopper.http;
 
 import com.graphhopper.MultiException;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;

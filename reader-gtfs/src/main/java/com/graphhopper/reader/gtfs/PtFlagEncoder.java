@@ -36,7 +36,7 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
     private IntEncodedValue typeEnc;
 
     public PtFlagEncoder() {
-        super(0, 1, 0);
+        super("pt", 0, 1, 0);
     }
 
     @Override
@@ -83,10 +83,6 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
 
     void setEdgeType(EdgeIteratorState edge, GtfsStorage.EdgeType edgeType) {
         edge.set(typeEnc, edgeType.ordinal());
-    }
-
-    public String toString() {
-        return "pt";
     }
 
     @Override
