@@ -1,0 +1,36 @@
+# this yml is for import or query time
+name: fire_truck
+base: car
+
+# required attribute
+max_speed: 80
+
+consider_oneway: false
+
+# average speed
+speed:
+  road_class:
+    motorway: 80
+    motorway_link: 80
+
+time_offset:
+  road_environment:
+    ferry: 20
+
+factor:
+  road_class:
+    motorway: 2
+  road_environment:
+    tunnel: 2
+  reverse_oneway: 3
+
+# if this is specified then lower visited nodes to 1/4
+no_access:
+  #network: ferry, railway
+  road_class:
+  - living_street
+  road_environment:
+  - ford
+  max_height: 3.1
+  max_weight: 10
+  max_width: 3.5

@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 
 /**
  * Calculates the best route according to a configurable weighting.
@@ -52,8 +53,8 @@ public class FlexWeighting implements Weighting {
             throw new IllegalArgumentException("Vehicle model not found");
         this.model = vehicleModel;
         this.maxSpeed = vehicleModel.getMaxSpeed();
-        // TODO return base or name? name can be empty if flex request
-        String vehicle = vehicleModel.getBase();
+        // name can be empty if flex request
+        String vehicle = vehicleModel.getName().isEmpty() ? vehicleModel.getBase() : vehicleModel.getName();
 
         // TODO deprecated. only used for getFlagEncoder method
         encoder = encodingManager.getEncoder(vehicle);

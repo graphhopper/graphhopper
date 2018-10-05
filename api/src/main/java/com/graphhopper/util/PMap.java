@@ -64,6 +64,12 @@ public class PMap {
         return this;
     }
 
+    public PMap putIfAbsent(String key, Object str) {
+        if (!has(key))
+            put(key, str);
+        return this;
+    }
+
     public PMap put(String key, Object str) {
         if (str == null)
             throw new NullPointerException("Value cannot be null. Use remove instead.");

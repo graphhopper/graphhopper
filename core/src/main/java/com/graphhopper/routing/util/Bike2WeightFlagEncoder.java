@@ -41,7 +41,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
     }
 
     public Bike2WeightFlagEncoder(PMap properties) {
-        super(properties);
+        super(properties.putIfAbsent("name", "bike2"));
         speedTwoDirections = true;
     }
 

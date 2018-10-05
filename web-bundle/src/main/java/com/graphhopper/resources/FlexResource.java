@@ -33,19 +33,22 @@ public class FlexResource {
         this.hasElevation = hasElevation;
     }
 
-
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
     public Response doPost(FlexRequest flex) {
+        if (flex == null)
+            throw new IllegalArgumentException("FlexRequest cannot be empty");
+
         FlexModel model = flex.getModel();
         GHRequest request = flex.getRequest();
         request.setVehicle(model.getBase());
+        request.getHints().put("ch.disable", true);
 
         // TODO read from FlexRequest? like query.getInstructions()
         boolean instructions = true;
         boolean calcPoints = true;
-        boolean enableElevation = hasElevation;
+        boolean enableElevation = false;
         boolean pointsEncoded = true;
 
         StopWatch sw = new StopWatch().start();

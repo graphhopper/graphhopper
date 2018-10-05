@@ -211,7 +211,12 @@ public class EncodingManager implements EncodedValueLookup {
         public Builder add(FlagEncoder encoder) {
             check();
             if (encoder instanceof DataFlagEncoder) {
-                addRoadClass().addRoadEnvironment().addSurface();
+                if (!em.hasEncodedValue(ROAD_CLASS))
+                    addRoadClass();
+                if (!em.hasEncodedValue(ROAD_ENV))
+                    addRoadEnvironment();
+                if (!em.hasEncodedValue(SURFACE))
+                    addSurface();
                 ((DataFlagEncoder) encoder).setRoadClassParser(em.getParser(ROAD_CLASS, RoadClassParser.class));
             }
             em.putEncoder((AbstractFlagEncoder) encoder);

@@ -42,6 +42,7 @@ var gpxExport = require('./gpxexport.js');
 var messages = require('./messages.js');
 var translate = require('./translate.js');
 
+var graphhopperTools = require('./graphhopper/tools.js');
 var format = require('./tools/format.js');
 var urlTools = require('./tools/url.js');
 var vehicleTools = require('./tools/vehicle.js');
@@ -70,6 +71,40 @@ $(document).ready(function (e) {
     jQuery.support.cors = true;
 
     gpxExport.addGpxExport(ghRequest);
+
+    $("#flex-input-link").click(function() {
+        $("#regular-input").toggle();
+        $("#flex-input").toggle();
+    });
+
+    $("#flex-search-button").click(function() {
+        mapLayer.clearLayers();
+
+        var infoDiv = $("#info");
+        infoDiv.empty();
+        infoDiv.show();
+        var routeResultsDiv = $("<div class='route_results'/>");
+        infoDiv.append(routeResultsDiv);
+        routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
+
+        // flex endpoint is currently fixed to this
+        ghRequest.api_params.elevation = false;
+
+        var jsonData = $("#flex-input-text").val();
+        $.ajax({
+            dataType: 'json',
+            url: "/flex",
+            type: "POST",
+            contentType: 'application/json; charset=utf-8',
+            dataType: "json",
+            data: jsonData,
+            success: createRouteCallback(ghRequest, routeResultsDiv, "", true, true),
+            error: function(err) {
+                var json = JSON.parse(err.responseText);
+                createRouteCallback(ghRequest, routeResultsDiv, "", true, true)(json);
+            }
+         });
+    })
 
     if (isProduction())
         $('#hosting').show();
@@ -534,7 +569,11 @@ function routeLatLng(request, doQuery) {
 
     var urlForAPI = request.createURL();
     routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
-    request.doRequest(urlForAPI, function (json) {
+    request.doRequest(urlForAPI, createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom, false));
+}
+
+function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom, todoConvert) {
+    return function (json) {
         routeResultsDiv.html("");
         if (json.message) {
             var tmpErrors = json.message;
@@ -577,6 +616,10 @@ function routeLatLng(request, doQuery) {
                 tabHeader.addClass("current");
                 oneTab.addClass("current");
             };
+        }
+
+        if (todoConvert && json.paths) {
+            request.decodeJson(json);
         }
 
         var headerTabs = $("<ul id='route_result_tabs'/>");
@@ -725,7 +768,7 @@ function routeLatLng(request, doQuery) {
         $('.defaulting').each(function (index, element) {
             $(element).css("color", "black");
         });
-    });
+    }
 }
 
 function mySubmit() {

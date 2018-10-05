@@ -229,32 +229,36 @@ GHRequest.prototype.flatParameter = function (key, val) {
     return "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val);
 };
 
+GHRequest.prototype.decodeJson = function (json) {
+    if (json.paths) {
+        for (var i = 0; i < json.paths.length; i++) {
+            var path = json.paths[i];
+            // convert encoded polyline to geo json
+            if (path.points_encoded) {
+                var tmpArray = graphhopperTools.decodePath(path.points, this.hasElevation());
+                path.points = {
+                    "type": "LineString",
+                    "coordinates": tmpArray
+                };
+
+                var tmpSnappedArray = graphhopperTools.decodePath(path.snapped_waypoints, this.hasElevation());
+                path.snapped_waypoints = {
+                    "type": "MultiPoint",
+                    "coordinates": tmpSnappedArray
+                };
+            }
+        }
+    }
+    return json;
+}
+
 GHRequest.prototype.doRequest = function (url, callback) {
     var that = this;
     $.ajax({
         timeout: 30000,
         url: url,
         success: function (json) {
-            if (json.paths) {
-                for (var i = 0; i < json.paths.length; i++) {
-                    var path = json.paths[i];
-                    // convert encoded polyline to geo json
-                    if (path.points_encoded) {
-                        var tmpArray = graphhopperTools.decodePath(path.points, that.hasElevation());
-                        path.points = {
-                            "type": "LineString",
-                            "coordinates": tmpArray
-                        };
-
-                        var tmpSnappedArray = graphhopperTools.decodePath(path.snapped_waypoints, that.hasElevation());
-                        path.snapped_waypoints = {
-                            "type": "MultiPoint",
-                            "coordinates": tmpSnappedArray
-                        };
-                    }
-                }
-            }
-            callback(json);
+            callback(that.decodeJson(json));
         },
         error: function (err) {
             var msg = "API did not respond! ";

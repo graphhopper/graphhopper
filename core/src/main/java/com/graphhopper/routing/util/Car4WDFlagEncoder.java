@@ -28,11 +28,11 @@ import com.graphhopper.util.PMap;
 public class Car4WDFlagEncoder extends CarFlagEncoder {
 
     public Car4WDFlagEncoder() {
-        this("car4wd",5, 5, 0);
+        this("car4wd", 5, 5, 0);
     }
 
     public Car4WDFlagEncoder(PMap properties) {
-        super(properties);
+        super(properties.putIfAbsent("name", "car4wd"));
     }
 
     public Car4WDFlagEncoder(String propertiesStr) {

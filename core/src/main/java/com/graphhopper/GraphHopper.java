@@ -552,38 +552,37 @@ public class GraphHopper implements GraphHopperAPI {
         sortGraph = args.getBool("graph.do_sort", sortGraph);
         removeZipped = args.getBool("graph.remove_zipped", removeZipped);
         int bytesForFlags = args.getInt("graph.bytes_for_flags", 4);
-        String encodingManagerStr = args.get("graph.encoding_manager", "");
-        if (encodingManagerStr.isEmpty()) {
+
+        try {
+            Map<String, FlagEncoder> flagEncoderSet = new LinkedHashMap();
             String flagEncodersStr = args.get("graph.flag_encoders", "");
-            if (!flagEncodersStr.isEmpty())
-                setEncodingManager(EncodingManager.create(flagEncoderFactory, flagEncodersStr, bytesForFlags));
-        } else {
-            try {
-                Map<String, FlagEncoder> flagEncoderSet = new HashMap();
-                String flagEncodersStr = args.get("graph.flag_encoders", "");
-                for (String feStr : flagEncodersStr.split(","))
-                    flagEncoderSet.put(feStr, flagEncoderFactory.createFlagEncoder(feStr, new PMap()));
+            for (String feStr : flagEncodersStr.split(","))
+                flagEncoderSet.put(feStr, flagEncoderFactory.createFlagEncoder(feStr, new PMap()));
 
-                ObjectMapper om = new ObjectMapper(new YAMLFactory());
-                om.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
-                om.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-                for (String str : encodingManagerStr.split(",")) {
-                    FlexModel importVehicleModel = om.readValue(new File(str), FlexModel.class);
-                    importVehicleModels.put(importVehicleModel.getName(), importVehicleModel);
-                    if (!flagEncoderSet.containsKey(importVehicleModel.getBase())) {
-                        FlagEncoder baseFlagEncoder = flagEncoderFactory.createFlagEncoder(importVehicleModel.getBase(), new PMap().put("name", importVehicleModel.getName()));
-                        flagEncoderSet.put(baseFlagEncoder.toString(), baseFlagEncoder);
-                    }
+            ObjectMapper om = new ObjectMapper(new YAMLFactory());
+            om.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+            om.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+            String encodingManagerStr = args.get("graph.encoding_manager", "");
+            for (String str : encodingManagerStr.split(",")) {
+                str = str.trim();
+                if (str.isEmpty())
+                    continue;
+                FlexModel importVehicleModel = om.readValue(new File(str), FlexModel.class);
+                importVehicleModels.put(importVehicleModel.getName(), importVehicleModel);
+                if (!flagEncoderSet.containsKey(importVehicleModel.getName())) {
+                    FlagEncoder baseFlagEncoder = flagEncoderFactory.createFlagEncoder(importVehicleModel.getBase(), new PMap().put("name", importVehicleModel.getName()));
+                    flagEncoderSet.put(baseFlagEncoder.toString(), baseFlagEncoder);
                 }
-
-                EncodingManager.Builder em = EncodingManager.start(bytesForFlags).addRoadEnvironment().addRoadClass();
-                for (FlagEncoder fe : flagEncoderSet.values())
-                    em.add(fe);
-
-                setEncodingManager(em.build());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
+
+            // TODO disable adding both EncodedValues for backward compatibility?
+            EncodingManager.Builder em = EncodingManager.start(bytesForFlags).addRoadEnvironment().addRoadClass();
+            for (FlagEncoder fe : flagEncoderSet.values())
+                em.add(fe);
+
+            setEncodingManager(em.build());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
         if (args.get("graph.locktype", "native").equals("simple"))
