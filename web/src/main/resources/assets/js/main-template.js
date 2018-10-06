@@ -75,6 +75,9 @@ $(document).ready(function (e) {
     $("#flex-input-link").click(function() {
         $("#regular-input").toggle();
         $("#flex-input").toggle();
+        // avoid default action, so use a different search button
+        $("#searchButton").toggle();
+        mapLayer.adjustMapSize();
     });
 
     $("#flex-search-button").click(function() {
@@ -90,14 +93,37 @@ $(document).ready(function (e) {
         // flex endpoint is currently fixed to this
         ghRequest.api_params.elevation = false;
 
+        // "request": { "points":[[13.289337, 52.520399], [13.445892, 52.5687]] }
         var jsonData = $("#flex-input-text").val();
+        if(jsonData.length < 5) {
+         routeResultsDiv.html("JSON too short");
+         return;
+        }
+        var jsonModel;
+        try {
+         jsonModel = JSON.parse(jsonData);
+        } catch(ex) {
+         routeResultsDiv.html("Cannot parse JSON " + ex);
+         return;
+        }
+        var points = [];
+        var jsonRequest = {"model": jsonModel, "request" : {"points": points}};
+        for(var idx = 0; idx < ghRequest.route.size(); idx++) {
+            var point = ghRequest.route.getIndex(idx);
+            if (point.isResolved()) {
+                points.push([point.lng, point.lat]);
+            } else {
+                routeResultsDiv.html("Unresolved points");
+                return;
+            }
+        }
         $.ajax({
             dataType: 'json',
             url: "/flex",
             type: "POST",
             contentType: 'application/json; charset=utf-8',
             dataType: "json",
-            data: jsonData,
+            data: JSON.stringify(jsonRequest),
             success: createRouteCallback(ghRequest, routeResultsDiv, "", true, true),
             error: function(err) {
                 var json = JSON.parse(err.responseText);

@@ -90,9 +90,9 @@ public class FlexWeighting implements Weighting {
         } else if (!edgeState.get(accessEnc)) {
             return Double.POSITIVE_INFINITY;
         }
-        if (model.getNoAccess().getRoadClass().contains(edgeState.get(roadClassEnc)))
+        if (model.getNoAccess().getRoadClass().contains(edgeState.get(roadClassEnc).toString()))
             return Double.POSITIVE_INFINITY;
-        if (model.getNoAccess().getRoadEnvironment().contains(edgeState.get(roadEnvEnc)))
+        if (model.getNoAccess().getRoadEnvironment().contains(edgeState.get(roadEnvEnc).toString()))
             return Double.POSITIVE_INFINITY;
 
 //        if (edgeState.get(weightEnc) > model.getNoAccess().getMaxWeight())
@@ -105,11 +105,11 @@ public class FlexWeighting implements Weighting {
         // TODO make it pluggable like in a WeightingPipeline to avoid this calculation if non-existent and to make this method shorter
         // TODO avoid map access and use e.g. fast array
         // TODO do call edgeState.get only once, currently we do this here and in calcMillis
-        Double tmp = model.getFactor().getRoadClass().get(edgeState.get(roadClassEnc));
+        Double tmp = model.getFactor().getRoadClass().get(edgeState.get(roadClassEnc).toString());
         if (tmp != null)
             time *= tmp;
 
-        tmp = model.getFactor().getRoadClass().get(edgeState.get(roadEnvEnc));
+        tmp = model.getFactor().getRoadEnvironment().get(edgeState.get(roadEnvEnc).toString());
         if (tmp != null)
             time *= tmp;
 
@@ -124,11 +124,11 @@ public class FlexWeighting implements Weighting {
             return Long.MAX_VALUE;
         long timeInMillis = (long) (edgeState.getDistance() / speed * SPEED_CONV);
 
-        Double tmp = model.getTimeOffset().getRoadClass().get(edgeState.get(roadClassEnc));
+        Double tmp = model.getTimeOffset().getRoadClass().get(edgeState.get(roadClassEnc).toString());
         if (tmp != null)
             timeInMillis += tmp;
 
-        tmp = model.getTimeOffset().getRoadEnvironment().get(edgeState.get(roadEnvEnc));
+        tmp = model.getTimeOffset().getRoadEnvironment().get(edgeState.get(roadEnvEnc).toString());
         if (tmp != null)
             timeInMillis += tmp;
 
