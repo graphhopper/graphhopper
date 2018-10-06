@@ -89,6 +89,17 @@ public class MultiCriteriaLabelSetting {
                 .peek(label -> visitedNodes++);
     }
 
+    public void calcLabels(int from, int to, Instant startTime, int blockedRouteTypes, SPTVisitor visitor, Predicate<Label> predicate) {
+        this.startTime = startTime.toEpochMilli();
+        this.blockedRouteTypes = blockedRouteTypes;
+        Iterator<Label> iterator = StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false).iterator();
+        Label l;
+        while (iterator.hasNext() && predicate.test(l = iterator.next())) {
+            visitor.visit(l);
+        }
+    }
+
+
     public void calcLabelsAndNeighbors(int from, int to, Instant startTime, int blockedRouteTypes, SPTVisitor visitor, Predicate<Label> predicate) {
         this.startTime = startTime.toEpochMilli();
         this.blockedRouteTypes = blockedRouteTypes;

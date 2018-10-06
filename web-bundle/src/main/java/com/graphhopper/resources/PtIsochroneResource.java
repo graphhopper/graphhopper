@@ -21,6 +21,7 @@ package com.graphhopper.resources;
 import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
+import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.gtfs.*;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -35,6 +36,7 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
+import jdk.nashorn.internal.objects.annotations.Getter;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
@@ -79,14 +81,23 @@ public class PtIsochroneResource {
         System.out.println("Finished. ");
     }
 
+    public static class Response {
+        public static class Info {
+            public List<String> copyrights = new ArrayList<>();
+        }
+        public List<JsonFeature> polygons = new ArrayList<>();
+        public Info info = new Info();
+    }
+
     @GET
     @Produces({MediaType.APPLICATION_JSON})
-    public Geometry doGet(
+    public Response doGet(
             @QueryParam("point") GHPoint source,
             @QueryParam("time_limit") @DefaultValue("600") long seconds,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam(Parameters.PT.EARLIEST_DEPARTURE_TIME) String departureTimeString,
-            @QueryParam(Parameters.PT.BLOCKED_ROUTE_TYPES) @DefaultValue("0") int blockedRouteTypes) {
+            @QueryParam(Parameters.PT.BLOCKED_ROUTE_TYPES) @DefaultValue("0") int blockedRouteTypes,
+            @QueryParam("result") @DefaultValue("multipolygon") String format) {
         Instant initialTime;
         try {
             initialTime = Instant.parse(departureTimeString);
@@ -116,52 +127,76 @@ public class PtIsochroneResource {
             Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(nodeLabel.adjNode), nodeAccess.getLatitude(nodeLabel.adjNode));
             z1.merge(nodeCoordinate, this.z.apply(nodeLabel), Math::min);
         };
-        router.calcLabelsAndNeighbors(queryResult.getClosestNode(), -1, initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
 
-        MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
-        Envelope realBbox = exploredPoints.getEnvelopeInternal();
-        Envelope bbox = new Envelope(IntHashGrid.floatingDegreesToFixed(realBbox.getMinX()),
-                IntHashGrid.floatingDegreesToFixed(realBbox.getMaxX()),
-                IntHashGrid.floatingDegreesToFixed(realBbox.getMinY()),
-                IntHashGrid.floatingDegreesToFixed(realBbox.getMaxY()));
-        IntSet allEdgesInBbox = spatialIndex.query(bbox);
-        allEdgesInBbox.forEach((IntProcedure) edge -> {
-            EdgeIteratorState e = graphHopperStorage.getEdgeIteratorState(edge, Integer.MIN_VALUE);
-            Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(e.getBaseNode()), nodeAccess.getLatitude(e.getBaseNode()));
-            z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
-            nodeCoordinate = new Coordinate(nodeAccess.getLongitude(e.getAdjNode()), nodeAccess.getLatitude(e.getAdjNode()));
-            z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
-        });
+        if (format.equals("multipoint")) {
+            router.calcLabels(queryResult.getClosestNode(), -1, initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
+            MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
+            return wrap(exploredPoints);
+        } else {
+            router.calcLabelsAndNeighbors(queryResult.getClosestNode(), -1, initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
+            MultiPoint exploredPointsAndNeighbors = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
+            Envelope realBbox = exploredPointsAndNeighbors.getEnvelopeInternal();
+            Envelope bbox = new Envelope(IntHashGrid.floatingDegreesToFixed(realBbox.getMinX()),
+                    IntHashGrid.floatingDegreesToFixed(realBbox.getMaxX()),
+                    IntHashGrid.floatingDegreesToFixed(realBbox.getMinY()),
+                    IntHashGrid.floatingDegreesToFixed(realBbox.getMaxY()));
+            IntSet allEdgesInBbox = spatialIndex.query(bbox);
+            allEdgesInBbox.forEach((IntProcedure) edge -> {
+                EdgeIteratorState e = graphHopperStorage.getEdgeIteratorState(edge, Integer.MIN_VALUE);
+                Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(e.getBaseNode()), nodeAccess.getLatitude(e.getBaseNode()));
+                z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
+                nodeCoordinate = new Coordinate(nodeAccess.getLongitude(e.getAdjNode()), nodeAccess.getLatitude(e.getAdjNode()));
+                z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
+            });
 
-        exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
-        CoordinateList siteCoords = DelaunayTriangulationBuilder.extractUniqueCoordinates(exploredPoints);
-        List<ConstraintVertex> constraintVertices = new ArrayList<>();
-        for (Object siteCoord : siteCoords) {
-            Coordinate coord = (Coordinate) siteCoord;
-            constraintVertices.add(new ConstraintVertex(coord));
-        }
+            exploredPointsAndNeighbors = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
+            CoordinateList siteCoords = DelaunayTriangulationBuilder.extractUniqueCoordinates(exploredPointsAndNeighbors);
+            List<ConstraintVertex> constraintVertices = new ArrayList<>();
+            for (Object siteCoord : siteCoords) {
+                Coordinate coord = (Coordinate) siteCoord;
+                constraintVertices.add(new ConstraintVertex(coord));
+            }
 
-        ConformingDelaunayTriangulator cdt = new ConformingDelaunayTriangulator(constraintVertices, JTS_TOLERANCE);
-        cdt.setConstraints(new ArrayList(), new ArrayList());
-        cdt.formInitialDelaunay();
+            ConformingDelaunayTriangulator cdt = new ConformingDelaunayTriangulator(constraintVertices, JTS_TOLERANCE);
+            cdt.setConstraints(new ArrayList(), new ArrayList());
+            cdt.formInitialDelaunay();
 
-        QuadEdgeSubdivision tin = cdt.getSubdivision();
+            QuadEdgeSubdivision tin = cdt.getSubdivision();
 
-        for (Vertex vertex : (Collection<Vertex>) tin.getVertices(true)) {
-            if (tin.isFrameVertex(vertex)) {
-                vertex.setZ(Double.MAX_VALUE);
-            } else {
-                Double aDouble = z1.get(vertex.getCoordinate());
-                if (aDouble != null) {
-                    vertex.setZ(aDouble);
-                } else {
+            for (Vertex vertex : (Collection<Vertex>) tin.getVertices(true)) {
+                if (tin.isFrameVertex(vertex)) {
                     vertex.setZ(Double.MAX_VALUE);
+                } else {
+                    Double aDouble = z1.get(vertex.getCoordinate());
+                    if (aDouble != null) {
+                        vertex.setZ(aDouble);
+                    } else {
+                        vertex.setZ(Double.MAX_VALUE);
+                    }
                 }
             }
+
+            ContourBuilder contourBuilder = new ContourBuilder(tin);
+            MultiPolygon isoline = contourBuilder.computeIsoline(targetZ);
+
+            return wrap(isoline);
         }
 
-        ContourBuilder contourBuilder = new ContourBuilder(tin);
-        return contourBuilder.computeIsoline(targetZ);
+    }
+
+    private Response wrap(Geometry isoline) {
+        JsonFeature feature = new JsonFeature();
+        feature.setType("Feature");
+        feature.setGeometry(isoline);
+        HashMap<String, Object> properties = new HashMap<>();
+        properties.put("bucket", 0);
+        feature.setProperties(properties);
+
+        Response response = new Response();
+        response.polygons.add(feature);
+        response.info.copyrights.add("GraphHopper");
+        response.info.copyrights.add("OpenStreetMap contributors");
+        return response;
     }
 
 }
