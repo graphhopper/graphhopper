@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.Helper.nf;
 
 class NodeBasedNodeContractor extends AbstractNodeContractor {
@@ -35,6 +36,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<>();
     private final AddShortcutHandler addScHandler = new AddShortcutHandler();
     private final CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
+    private final Params params = new Params();
     private CHEdgeExplorer remainingEdgeExplorer;
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany prepareAlgo;
@@ -45,9 +47,27 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     // each edge can exist in both directions
     private double meanDegree;
 
-    NodeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting) {
+    NodeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting, PMap pMap) {
         super(dir, ghStorage, prepareGraph, weighting);
         this.prepareWeighting = new PreparationWeighting(weighting);
+        extractParams(pMap);
+    }
+
+    private void extractParams(PMap pMap) {
+        Float edgeDifferenceWeight = pMap.getFloatOrNull(EDGE_DIFFERENCE_WEIGHT);
+        if (edgeDifferenceWeight != null) {
+            params.edgeDifferenceWeight = edgeDifferenceWeight;
+        }
+
+        Float originalEdgeCountWeight = pMap.getFloatOrNull(ORIGINAL_EDGE_COUNT_WEIGHT);
+        if (originalEdgeCountWeight != null) {
+            params.contractedNeighborsWeight = originalEdgeCountWeight;
+        }
+
+        Float contractedNeighborsWeight = pMap.getFloatOrNull(CONTRACTED_NEIGHBORS_WEIGHT);
+        if (contractedNeighborsWeight != null) {
+            params.contractedNeighborsWeight = contractedNeighborsWeight;
+        }
     }
 
     @Override
@@ -120,8 +140,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         int edgeDifference = calcShortcutsResult.shortcutsCount - degree;
 
         // according to the paper do a simple linear combination of the properties to get the priority.
-        // this is the current optimum for unterfranken:
-        return 10 * edgeDifference + originalEdgesCount + contractedNeighbors;
+        return params.edgeDifferenceWeight * edgeDifference +
+                params.originalEdgesCountWeight * originalEdgesCount +
+                params.contractedNeighborsWeight * contractedNeighbors;
     }
 
     @Override
@@ -436,6 +457,13 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     private static class CalcShortcutsResult {
         int originalEdgesCount;
         int shortcutsCount;
+    }
+
+    public static class Params {
+        // default values were optimized for Unterfranken
+        private float edgeDifferenceWeight = 10;
+        private float originalEdgesCountWeight = 1;
+        private float contractedNeighborsWeight = 1;
     }
 
 }

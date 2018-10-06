@@ -28,7 +28,7 @@ public class PMapTest {
     public void singleStringPropertyCanBeRetrieved() {
         PMap subject = new PMap("foo=bar");
 
-        Assert.assertEquals("bar", subject.get("foo"));
+        Assert.assertEquals("bar", subject.get("foo", ""));
     }
 
     @Test
@@ -59,6 +59,17 @@ public class PMapTest {
         PMap subject = new PMap("foo=123.45|bar=56.78");
 
         assertEquals(123.45, subject.getDouble("foo", 0), 1e-4);
+    }
+
+    @Test
+    public void numericPropertiesCanBeRetrievedWithNull() {
+        PMap subject = new PMap("x=123|y=26.3|z=6garble");
+        assertEquals(123, (int) subject.getIntOrNull("x"));
+        assertNull(subject.getIntOrNull("y"));
+        assertNull(subject.getIntOrNull("z"));
+        assertNull(subject.getIntOrNull("xyz"));
+        assertEquals(123, subject.getDoubleOrNull("x"), 1.e-4);
+        assertNull(subject.getLongOrNull("y"));
     }
 
     @Test
