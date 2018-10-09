@@ -54,20 +54,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private void extractParams(PMap pMap) {
-        Float edgeDifferenceWeight = pMap.getFloatOrNull(EDGE_DIFFERENCE_WEIGHT);
-        if (edgeDifferenceWeight != null) {
-            params.edgeDifferenceWeight = edgeDifferenceWeight;
-        }
-
-        Float originalEdgeCountWeight = pMap.getFloatOrNull(ORIGINAL_EDGE_COUNT_WEIGHT);
-        if (originalEdgeCountWeight != null) {
-            params.contractedNeighborsWeight = originalEdgeCountWeight;
-        }
-
-        Float contractedNeighborsWeight = pMap.getFloatOrNull(CONTRACTED_NEIGHBORS_WEIGHT);
-        if (contractedNeighborsWeight != null) {
-            params.contractedNeighborsWeight = contractedNeighborsWeight;
-        }
+        params.edgeDifferenceWeight = pMap.getFloat(EDGE_DIFFERENCE_WEIGHT, params.edgeDifferenceWeight);
+        params.originalEdgesCountWeight = pMap.getFloat(ORIGINAL_EDGE_COUNT_WEIGHT, params.originalEdgesCountWeight);
+        params.contractedNeighborsWeight = pMap.getFloat(CONTRACTED_NEIGHBORS_WEIGHT, params.contractedNeighborsWeight);
     }
 
     @Override

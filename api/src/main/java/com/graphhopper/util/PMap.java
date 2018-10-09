@@ -85,101 +85,78 @@ public class PMap {
     }
 
     public long getLong(String key, long _default) {
-        Long longOrNull = getLongOrNull(key);
-        return longOrNull != null ? longOrNull : _default;
-    }
-
-    public Long getLongOrNull(String key) {
-        String str = getStringOrNull(key);
-        if (str == null) {
-            return null;
+        String str = get(key);
+        if (!Helper.isEmpty(str)) {
+            try {
+                return Long.parseLong(str);
+            } catch (Exception ex) {
+            }
         }
-        try {
-            return Long.parseLong(str);
-        } catch (NumberFormatException ex) {
-            return null;
-        }
+        return _default;
     }
 
     public int getInt(String key, int _default) {
-        Integer intOrNull = getIntOrNull(key);
-        return intOrNull != null ? intOrNull : _default;
-    }
-
-    public Integer getIntOrNull(String key) {
-        String str = getStringOrNull(key);
-        if (str == null) {
-            return null;
+        String str = get(key);
+        if (!Helper.isEmpty(str)) {
+            try {
+                return Integer.parseInt(str);
+            } catch (Exception ex) {
+            }
         }
-        try {
-            return Integer.parseInt(str);
-        } catch (NumberFormatException e) {
-            return null;
-        }
+        return _default;
     }
 
     public boolean getBool(String key, boolean _default) {
-        Boolean boolOrNull = getBoolOrNull(key);
-        return boolOrNull != null ? boolOrNull : _default;
-    }
-
-    public Boolean getBoolOrNull(String key) {
-        String str = getStringOrNull(key);
-        if (str == null) {
-            return null;
+        String str = get(key);
+        if (!Helper.isEmpty(str)) {
+            try {
+                return Boolean.parseBoolean(str);
+            } catch (Exception ex) {
+            }
         }
-        try {
-            return Boolean.parseBoolean(str);
-        } catch (NumberFormatException ex) {
-            return null;
-        }
-    }
-
-    public float getFloat(String key, float _default) {
-        Float floatOrNull = getFloatOrNull(key);
-        return floatOrNull != null ? floatOrNull : _default;
-    }
-
-    public Float getFloatOrNull(String key) {
-        String str = getStringOrNull(key);
-        if (str == null) {
-            return null;
-        }
-        try {
-            return Float.parseFloat(str);
-        } catch (NumberFormatException ex) {
-            return null;
-        }
+        return _default;
     }
 
     public double getDouble(String key, double _default) {
-        Double doubleOrNull = getDoubleOrNull(key);
-        return doubleOrNull != null ? doubleOrNull : _default;
+        String str = get(key);
+        if (!Helper.isEmpty(str)) {
+            try {
+                return Double.parseDouble(str);
+            } catch (Exception ex) {
+            }
+        }
+        return _default;
     }
 
-    public Double getDoubleOrNull(String key) {
-        String str = getStringOrNull(key);
-        if (str == null) {
-            return null;
+    public float getFloat(String key, float _default) {
+        String str = get(key);
+        if (!Helper.isEmpty(str)) {
+            try {
+                return Float.parseFloat(str);
+            } catch (Exception ex) {
+            }
         }
-        try {
-            return Double.parseDouble(str);
-        } catch (NumberFormatException ex) {
-            return null;
-        }
+        return _default;
     }
 
     public String get(String key, String _default) {
-        String str = getStringOrNull(key);
-        return str != null ? str : _default;
+        String str = get(key);
+        if (Helper.isEmpty(str))
+            return _default;
+
+        return str;
     }
 
-    public String getStringOrNull(String key) {
-        if (Helper.isEmpty(key)) {
-            return null;
-        }
+    String get(String key) {
+        if (Helper.isEmpty(key))
+            return "";
+
         // query accepts camelCase and under_score
-        return map.get(Helper.camelCaseToUnderScore(key));
+        String val = map.get(Helper.camelCaseToUnderScore(key));
+        if (val == null)
+            return "";
+
+        return val;
     }
 
     /**
