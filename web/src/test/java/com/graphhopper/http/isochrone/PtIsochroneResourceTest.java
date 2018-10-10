@@ -18,14 +18,8 @@
 
 package com.graphhopper.http.isochrone;
 
-import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.model.Stop;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.graphhopper.http.GHPointConverterProvider;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
@@ -52,9 +46,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 
-import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class PtIsochroneResourceTest {
 
@@ -62,7 +56,6 @@ public class PtIsochroneResourceTest {
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopperStorage graphHopperStorage;
     private static LocationIndex locationIndex;
-    private static GtfsStorage gtfsStorage;
     private static PtIsochroneResource isochroneResource;
     private GeometryFactory geometryFactory = new GeometryFactory();
 
@@ -74,7 +67,7 @@ public class PtIsochroneResourceTest {
 
         EncodingManager encodingManager = new EncodingManager(Arrays.asList(carFlagEncoder, footFlagEncoder, ptFlagEncoder), 8);
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
-        gtfsStorage = GraphHopperGtfs.createGtfsStorage();
+        GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Collections.singleton("../reader-gtfs/files/sample-feed.zip"), Collections.emptyList());
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         isochroneResource = new PtIsochroneResource(gtfsStorage, graphHopperStorage.getEncodingManager(), graphHopperStorage, locationIndex);
@@ -89,49 +82,31 @@ public class PtIsochroneResourceTest {
 
 
     @Test
-    public void testIsoline() throws JsonProcessingException {
+    public void testIsoline() {
         WebTarget webTarget = resources
                 .target("/isochrone")
-                .queryParam("point", "36.914893,-116.76821")
+                .queryParam("point", "36.914893,-116.76821") // NADAV
                 .queryParam("pt.earliest_departure_time", LocalDateTime.of(2007, 1, 1, 0, 0, 0).atZone(zoneId).toInstant())
-                .queryParam("time_limit", 6 * 60 * 60 + 49 * 60)
-                .queryParam("result", "multipoint");
+                .queryParam("time_limit", 6 * 60 * 60 + 49 * 60); // exactly the time I should arrive at NANAA
         Invocation.Builder request = webTarget.request();
         PtIsochroneResource.Response isochroneResponse = request.get(PtIsochroneResource.Response.class);
-        JsonFeature feature1 = isochroneResponse.polygons.get(0);
-        Geometry isoline = feature1.getGeometry();
-        System.out.println(Jackson.newObjectMapper().writeValueAsString(feature1));
-//        assertTrue(isoline.contains(geometryFactory.createPoint(new Coordinate(-116.761472, 36.914944))));
+        Geometry isoline = isochroneResponse.polygons.get(0).getGeometry();
+        // NADAV is in
+        assertTrue(isoline.covers(geometryFactory.createPoint(makePrecise(new Coordinate(-116.76821, 36.914893)))));
+        // NANAA is in
+        assertTrue(isoline.covers(geometryFactory.createPoint(makePrecise(new Coordinate(-116.761472, 36.914944)))));
+        // DADAN is in
+        assertTrue(isoline.covers(geometryFactory.createPoint(makePrecise(new Coordinate(-116.768242, 36.909489)))));
+        // EMSI is in
+        assertTrue(isoline.covers(geometryFactory.createPoint(makePrecise(new Coordinate(-116.76218, 36.905697)))));
+        // STAGECOACH is out
+        assertFalse(isoline.covers(geometryFactory.createPoint(makePrecise(new Coordinate(-116.751677, 36.915682)))));
+    }
 
-        WebTarget webTarget2 = resources
-                .target("/isochrone")
-                .queryParam("point", "36.914893,-116.76821")
-                .queryParam("pt.earliest_departure_time", LocalDateTime.of(2007, 1, 1, 0, 0, 0).atZone(zoneId).toInstant())
-                .queryParam("time_limit", 6 * 60 * 60 + 49 * 60);
-//                .queryParam("result", "multipoint");
-        Invocation.Builder request2 = webTarget2.request();
-        PtIsochroneResource.Response isochroneResponse2 = request2.get(PtIsochroneResource.Response.class);
-
-        JsonFeature feature2 = isochroneResponse2.polygons.get(0);
-        System.out.println(Jackson.newObjectMapper().writeValueAsString(feature2));
-
-        JsonFeatureCollection jsonFeatureCollection = new JsonFeatureCollection();
-        jsonFeatureCollection.getFeatures().add(feature1);
-        jsonFeatureCollection.getFeatures().add(feature2);
-
-//        GTFSFeed feed = gtfsStorage.getGtfsFeeds().values().iterator().next();
-//        for (Stop stop : feed.stops.values()) {
-//            JsonFeature stopFeature = new JsonFeature();
-//            stopFeature.setType("Feature");
-//            stopFeature.setGeometry(geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)));
-//            HashMap<String, Object> properties = new HashMap<>();
-//            properties.put("stop_id", stop.stop_id);
-//            stopFeature.setProperties(properties);
-//            jsonFeatureCollection.getFeatures().add(stopFeature);
-//        }
-
-        System.out.println(Jackson.newObjectMapper().writeValueAsString(jsonFeatureCollection));
-
+    // Snap coordinate to GraphHopper's implicit grid of allowable points.
+    // Otherwise, we can't reliably use coordinates from input data in tests.
+    private Coordinate makePrecise(Coordinate coordinate) {
+        return new Coordinate(Helper.intToDegree(Helper.degreeToInt(coordinate.x)), Helper.intToDegree(Helper.degreeToInt(coordinate.y)));
     }
 
     @AfterClass

@@ -36,11 +36,11 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
-import jdk.nashorn.internal.objects.annotations.Getter;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
 import org.locationtech.jts.triangulate.DelaunayTriangulationBuilder;
+import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 
@@ -68,7 +68,6 @@ public class PtIsochroneResource {
         this.encodingManager = encodingManager;
         this.graphHopperStorage = graphHopperStorage;
         this.locationIndex = locationIndex;
-        System.out.println("Initializing index..");
         spatialIndex = new IntHashGrid();
         PtFlagEncoder ptFlagEncoder = (PtFlagEncoder) encodingManager.getEncoder("pt");
         AllEdgesIterator allEdges = graphHopperStorage.getAllEdges();
@@ -78,7 +77,6 @@ public class PtIsochroneResource {
                 spatialIndex.insert(geom, allEdges.getEdge());
             }
         }
-        System.out.println("Finished. ");
     }
 
     public static class Response {
@@ -179,7 +177,39 @@ public class PtIsochroneResource {
             ContourBuilder contourBuilder = new ContourBuilder(tin);
             MultiPolygon isoline = contourBuilder.computeIsoline(targetZ);
 
-            return wrap(isoline);
+            // debugging tool
+            if (format.equals("triangulation")) {
+                Response response = new Response();
+                for (Vertex vertex : (Collection<Vertex>) tin.getVertices(true)) {
+                    JsonFeature feature = new JsonFeature();
+                    feature.setType("Feature");
+                    feature.setGeometry(geometryFactory.createPoint(vertex.getCoordinate()));
+                    HashMap<String, Object> properties = new HashMap<>();
+                    properties.put("z", vertex.getZ());
+                    feature.setProperties(properties);
+                    response.polygons.add(feature);
+                }
+                for (QuadEdge edge : (Collection<QuadEdge>) tin.getPrimaryEdges(false)) {
+                    JsonFeature feature = new JsonFeature();
+                    feature.setType("Feature");
+                    feature.setGeometry(edge.toLineSegment().toGeometry(geometryFactory));
+                    HashMap<String, Object> properties = new HashMap<>();
+                    feature.setProperties(properties);
+                    response.polygons.add(feature);
+                }
+                JsonFeature feature = new JsonFeature();
+                feature.setType("Feature");
+                feature.setGeometry(isoline);
+                HashMap<String, Object> properties = new HashMap<>();
+                properties.put("z", targetZ);
+                feature.setProperties(properties);
+                response.polygons.add(feature);
+                response.info.copyrights.add("GraphHopper");
+                response.info.copyrights.add("OpenStreetMap contributors");
+                return response;
+            } else {
+                return wrap(isoline);
+            }
         }
 
     }
