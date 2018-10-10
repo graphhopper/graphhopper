@@ -27,12 +27,12 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
-import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
+import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.http.health.GraphHopperStorageHealthCheck;
-import com.graphhopper.isochrone.algorithm.RasterHullBuilder;
+import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
 import com.graphhopper.jackson.GraphHopperModule;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
@@ -55,10 +55,7 @@ import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.ext.WriterInterceptor;
-import javax.ws.rs.ext.WriterInterceptorContext;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -146,23 +143,23 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
-    static class RasterHullBuilderFactory implements Factory<RasterHullBuilder> {
+    static class RasterHullBuilderFactory implements Factory<DelaunayTriangulationIsolineBuilder> {
 
-        RasterHullBuilder builder = new RasterHullBuilder();
+        DelaunayTriangulationIsolineBuilder builder = new DelaunayTriangulationIsolineBuilder();
 
         @Override
-        public RasterHullBuilder provide() {
+        public DelaunayTriangulationIsolineBuilder provide() {
             return builder;
         }
 
         @Override
-        public void dispose(RasterHullBuilder rasterHullBuilder) {
+        public void dispose(DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder) {
         }
     }
 
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
-        bootstrap.getObjectMapper().setDateFormat(new ISO8601DateFormat());
+        bootstrap.getObjectMapper().setDateFormat(new StdDateFormat());
         bootstrap.getObjectMapper().registerModule(new JtsModule());
         bootstrap.getObjectMapper().registerModule(new GraphHopperModule());
         bootstrap.getObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -229,7 +226,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(translationMap).to(TranslationMap.class);
                 bind(encodingManager).to(EncodingManager.class);
                 bind(graphHopperStorage).to(GraphHopperStorage.class);
-                bindFactory(RasterHullBuilderFactory.class).to(RasterHullBuilder.class);
+                bindFactory(RasterHullBuilderFactory.class).to(DelaunayTriangulationIsolineBuilder.class);
             }
         });
         environment.jersey().register(NearestResource.class);
@@ -278,7 +275,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
                 bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
                 bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
-                bindFactory(RasterHullBuilderFactory.class).to(RasterHullBuilder.class);
+                bindFactory(RasterHullBuilderFactory.class).to(DelaunayTriangulationIsolineBuilder.class);
             }
         });
 

@@ -20,7 +20,7 @@ package com.graphhopper.json.geo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.util.PointList;
-import com.vividsolutions.jts.geom.LineString;
+import org.locationtech.jts.geom.LineString;
 import org.junit.Assert;
 import org.junit.Test;
 

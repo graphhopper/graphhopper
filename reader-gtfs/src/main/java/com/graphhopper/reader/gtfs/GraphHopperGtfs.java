@@ -420,14 +420,22 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, flagEncoder, gtfsStorage, realtimeFeed, false, Collections.emptyList(), true, 5.0);
 
                     MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, flagEncoder, false, Double.MAX_VALUE, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
-                    final Stream<Label> labels = router.calcLabels(fromnode, tonode, Instant.ofEpochMilli(0), 0);
-                    List<Label> solutions = labels
-                            .filter(current -> tonode == current.adjNode)
-                            .collect(Collectors.toList());
+                    Iterator<Label> iterator = router.calcLabels(fromnode, tonode, Instant.ofEpochMilli(0), 0).iterator();
+                    Label solution = null;
+                    while (iterator.hasNext()) {
+                        Label label = iterator.next();
+                        if (tonode == label.adjNode) {
+                            solution = label;
+                            break;
+                        }
+                    }
+                    if (solution == null) {
+                        throw new RuntimeException("Can't find a transfer walk route.");
+                    }
                     TransferWithTime transferWithTime = new TransferWithTime();
                     transferWithTime.id = e.getKey();
                     transferWithTime.transfer = e.getValue();
-                    transferWithTime.time = solutions.get(0).currentTime;
+                    transferWithTime.time = solution.currentTime;
                     return transferWithTime;
                 });
     }

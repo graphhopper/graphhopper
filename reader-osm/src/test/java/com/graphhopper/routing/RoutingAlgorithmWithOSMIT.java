@@ -548,8 +548,8 @@ public class RoutingAlgorithmWithOSMIT {
             // avoid that path.getDistance is too different to path.getPoint.calcDistance
             hopper.setWayPointMaxDistance(0);
 
-            // always enable landmarks
-            hopper.getLMFactoryDecorator().addWeighting(weightStr).
+            // always enable landmarks, add maximum information to reduce warnings
+            hopper.getLMFactoryDecorator().addWeighting(weightStr+"|maximum=60000").
                     setEnabled(true).setDisablingAllowed(true);
 
             if (withCH)

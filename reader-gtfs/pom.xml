@@ -5,14 +5,14 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-reader-gtfs</artifactId>
-    <version>0.11-SNAPSHOT</version>
+    <version>0.12-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>GraphHopper Reader for Gtfs Data</name>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.11-SNAPSHOT</version>
+        <version>0.12-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -27,23 +27,24 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.conveyal</groupId>
-            <artifactId>gtfs-lib</artifactId>
-            <version>2.1.0</version>
-            <exclusions>
-                <exclusion> 
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.vividsolutions</groupId>
-                    <artifactId>jts</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.amazonaws</groupId>
-                    <artifactId>aws-java-sdk-s3</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>24.0-jre</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.javacsv</groupId>
+            <artifactId>javacsv</artifactId>
+            <version>2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mapdb</groupId>
+            <artifactId>mapdb</artifactId>
+            <version>1.0.8</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

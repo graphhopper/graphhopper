@@ -327,7 +327,7 @@ public class RealtimeFeed {
             Instant timestamp = Instant.ofEpochSecond(feedMessage.getHeader().getTimestamp());
             LocalDate dateToChange = timestamp.atZone(timezone).toLocalDate(); //FIXME
             BitSet validOnDay = new BitSet();
-            LocalDate startDate = feed.calculateStats().getStartDate();
+            LocalDate startDate = feed.getStartDate();
             validOnDay.set((int) DAYS.between(startDate, dateToChange));
             feedMessage.getEntityList().stream()
                     .filter(GtfsRealtime.FeedEntity::hasTripUpdate)

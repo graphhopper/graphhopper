@@ -19,14 +19,9 @@
 package com.graphhopper.reader.gtfs;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntIntHashMap;
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.model.Frequency;
-import com.conveyal.gtfs.model.Route;
-import com.conveyal.gtfs.model.Service;
-import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.StopTime;
-import com.conveyal.gtfs.model.Transfer;
-import com.conveyal.gtfs.model.Trip;
+import com.conveyal.gtfs.model.*;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.google.transit.realtime.GtfsRealtime;
@@ -42,28 +37,13 @@ import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-import gnu.trove.map.hash.TIntIntHashMap;
 import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.Spliterators;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -117,7 +97,7 @@ class GtfsReader {
     private final String id;
     private int i;
     private GTFSFeed feed;
-    private final TIntIntHashMap times = new TIntIntHashMap();
+    private final IntIntHashMap times = new IntIntHashMap();
     private final SetMultimap<String, TimelineNodeIdWithTripId> departureTimelineNodes = HashMultimap.create();
     private final SetMultimap<String, TimelineNodeIdWithTripId> arrivalTimelineNodes = HashMultimap.create();
     private final PtFlagEncoder encoder;
@@ -132,8 +112,8 @@ class GtfsReader {
         this.feed = this.gtfsStorage.getGtfsFeeds().get(id);
         this.transfers = this.gtfsStorage.getTransfers().get(id);
         this.i = graph.getNodes();
-        this.startDate = feed.calculateStats().getStartDate();
-        this.endDate = feed.calculateStats().getEndDate();
+        this.startDate = feed.getStartDate();
+        this.endDate = feed.getEndDate();
     }
 
     void readGraph() {
