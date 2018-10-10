@@ -103,14 +103,14 @@ public class GraphHopperOSMTest {
         closableInstance.close();
         try {
             rsp = closableInstance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertEquals("You need to create a new GraphHopper instance as it is already closed", ex.getMessage());
         }
 
         try {
             closableInstance.getLocationIndex().findClosest(51.2492152, 9.4317166, EdgeFilter.ALL_EDGES);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertEquals("You need to create a new LocationIndex instance as it is already closed", ex.getMessage());
         }
@@ -166,7 +166,7 @@ public class GraphHopperOSMTest {
                 setEncodingManager(new EncodingManager("car"));
         try {
             gh.load(ghLoc);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.ch.weightings:"));
         }
@@ -188,7 +188,7 @@ public class GraphHopperOSMTest {
                 setEncodingManager(new EncodingManager("car"));
         try {
             gh.load(ghLoc);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.ch.weightings:"));
         }
@@ -257,7 +257,7 @@ public class GraphHopperOSMTest {
             latch2.await(3, TimeUnit.SECONDS);
             // now importOrLoad should have create a lock which this load call does not like
             instance2.load(ghLoc);
-            assertTrue(false);
+            fail();
         } catch (RuntimeException ex) {
             assertNotNull(ex);
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("To avoid reading partial data"));
@@ -384,7 +384,7 @@ public class GraphHopperOSMTest {
                             put(Parameters.CH.PREPARE + "weightings", "no")).
                     setDataReaderFile(testOsm3);
             tmpGH.load(ghLoc);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match"));
         }
@@ -400,7 +400,7 @@ public class GraphHopperOSMTest {
                 setDataReaderFile(testOsm3);
         try {
             instance.load(ghLoc);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.bytes_for_flags (8) is not equal to loaded 4"));
         }
@@ -414,7 +414,7 @@ public class GraphHopperOSMTest {
                     put("graph.flag_encoders", "car,foot")).
                     setDataReaderFile(testOsm3);
             tmpGH.load(ghLoc);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match"));
         }
@@ -430,7 +430,7 @@ public class GraphHopperOSMTest {
             new File(ghLoc).mkdirs();
             assertFalse(instance.load(ghLoc));
             instance.route(new GHRequest(10, 40, 12, 32));
-            assertTrue(false);
+            fail();
         } catch (IllegalStateException ex) {
             assertEquals("Do a successful call to load or importOrLoad before routing", ex.getMessage());
         }
@@ -459,7 +459,7 @@ public class GraphHopperOSMTest {
         try {
             tmp.setDataReaderFile(testOsm);
             tmp.importData();
-            assertTrue(false);
+            fail();
         } catch (IllegalStateException ex) {
             assertEquals("Load graph before importing OSM data", ex.getMessage());
         }
@@ -480,7 +480,7 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc);
         try {
             instance.importOrLoad();
-            assertTrue(false);
+            fail();
         } catch (IllegalStateException ex) {
             assertEquals("Couldn't load from existing folder: " + ghLoc
                     + " but also cannot use file for DataReader as it wasn't specified!", ex.getMessage());
@@ -505,7 +505,7 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc);
         try {
             instance.importOrLoad();
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
             assertEquals("Couldn't load from existing folder: " + ghLoc
                     + " but also cannot use file for DataReader as it wasn't specified!", ex.getMessage());
@@ -756,7 +756,7 @@ public class GraphHopperOSMTest {
         });
         instance.importOrLoad();
 
-        assertTrue(af == instance.getAlgorithmFactory(null));
+        assertSame(af, instance.getAlgorithmFactory(null));
 
         // test that hints are passed to algorithm opts
         final AtomicInteger cnt = new AtomicInteger(0);
@@ -886,8 +886,8 @@ public class GraphHopperOSMTest {
         GraphHopperStorage storage = new GraphHopperStorage(Arrays.asList(fwSimpleTruck, fwTruck), ramDir, em, false, new GraphExtension.NoOpExtension());
         decorator.addWeighting(fwSimpleTruck);
         decorator.addWeighting(fwTruck);
-        decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck), fwSimpleTruck, TraversalMode.NODE_BASED));
-        decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwTruck), fwTruck, TraversalMode.NODE_BASED));
+        decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck), TraversalMode.NODE_BASED));
+        decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwTruck), TraversalMode.NODE_BASED));
 
         HintsMap wMap = new HintsMap("fastest");
         wMap.put("vehicle", "truck");
@@ -899,8 +899,8 @@ public class GraphHopperOSMTest {
         decorator.addWeighting(fwTruck);
         decorator.addWeighting(fwSimpleTruck);
         try {
-            decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck), fwSimpleTruck, TraversalMode.NODE_BASED));
-            assertTrue(false);
+            decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck), TraversalMode.NODE_BASED));
+            fail();
         } catch (Exception ex) {
         }
     }
