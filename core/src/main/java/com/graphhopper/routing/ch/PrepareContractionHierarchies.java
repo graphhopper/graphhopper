@@ -73,13 +73,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int initSize;
     private int checkCounter;
 
-    public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph,
-                                         Weighting weighting, TraversalMode traversalMode) {
+    public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
         this.dir = dir;
         this.ghStorage = ghStorage;
         this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
-        this.weighting = weighting;
+        this.weighting = ((CHGraphImpl) chGraph).getWeighting();
         prepareWeighting = new PreparationWeighting(weighting);
         this.params = Params.forTraversalMode(traversalMode);
     }
