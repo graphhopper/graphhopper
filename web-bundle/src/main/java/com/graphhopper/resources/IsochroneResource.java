@@ -130,7 +130,6 @@ public class IsochroneResource {
             List<Coordinate[]> polygonShells = delaunayTriangulationIsolineBuilder.calcList(buckets, buckets.size() - 1);
             for (Coordinate[] polygonShell : polygonShells) {
                 JsonFeature feature = new JsonFeature();
-                feature.setType("Feature"); // What else would it be?
                 HashMap<String, Object> properties = new HashMap<>();
                 properties.put("bucket", features.size());
                 feature.setProperties(properties);

@@ -179,7 +179,6 @@ public class PtIsochroneResource {
                 Response response = new Response();
                 for (Vertex vertex : (Collection<Vertex>) tin.getVertices(true)) {
                     JsonFeature feature = new JsonFeature();
-                    feature.setType("Feature");
                     feature.setGeometry(geometryFactory.createPoint(vertex.getCoordinate()));
                     HashMap<String, Object> properties = new HashMap<>();
                     properties.put("z", vertex.getZ());
@@ -188,14 +187,12 @@ public class PtIsochroneResource {
                 }
                 for (QuadEdge edge : (Collection<QuadEdge>) tin.getPrimaryEdges(false)) {
                     JsonFeature feature = new JsonFeature();
-                    feature.setType("Feature");
                     feature.setGeometry(edge.toLineSegment().toGeometry(geometryFactory));
                     HashMap<String, Object> properties = new HashMap<>();
                     feature.setProperties(properties);
                     response.polygons.add(feature);
                 }
                 JsonFeature feature = new JsonFeature();
-                feature.setType("Feature");
                 feature.setGeometry(isoline);
                 HashMap<String, Object> properties = new HashMap<>();
                 properties.put("z", targetZ);
@@ -213,7 +210,6 @@ public class PtIsochroneResource {
 
     private Response wrap(Geometry isoline) {
         JsonFeature feature = new JsonFeature();
-        feature.setType("Feature");
         feature.setGeometry(isoline);
         HashMap<String, Object> properties = new HashMap<>();
         properties.put("bucket", 0);
