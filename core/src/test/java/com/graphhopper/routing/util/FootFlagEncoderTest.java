@@ -436,5 +436,12 @@ public class FootFlagEncoderTest {
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
         assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+
+        // Let's stop block potential barriers to test if barrier:cattle_grid is non blocking
+        tmpFootEncoder.setBlockByDefault(false);
+
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "cattle_grid");
+        assertTrue(tmpFootEncoder.handleNodeTags(node) == 0);
     }
 }
