@@ -83,6 +83,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         potentialBarriers.add("lift_gate");
         potentialBarriers.add("kissing_gate");
         potentialBarriers.add("swing_gate");
+        potentialBarriers.add("cattle_grid");
 
         absoluteBarriers.add("fence");
         absoluteBarriers.add("bollard");
