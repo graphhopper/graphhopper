@@ -19,6 +19,7 @@ package com.graphhopper;
 
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
@@ -1078,6 +1079,7 @@ public class GraphHopperIT {
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("car|turn_costs=true"));
         tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        tmpHopper.getCHFactoryDecorator().setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_AND_NODE);
         tmpHopper.importOrLoad();
 
         // without turn costs

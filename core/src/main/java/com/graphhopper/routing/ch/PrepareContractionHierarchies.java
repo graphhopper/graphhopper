@@ -185,7 +185,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new float[prepareGraph.getNodes()];
-        nodeContractor = createNodeContractor(ghStorage, traversalMode, pMap);
+        nodeContractor = createNodeContractor(ghStorage, traversalMode);
         nodeContractor.initFromGraph();
     }
 
@@ -310,7 +310,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     neighborUpdateSW.start();
                     float oldPrio = oldPriorities[nn];
                     float priority = oldPriorities[nn] = calculatePriority(nn);
-                    if (Float.compare(oldPrio, priority) != 0) {
+                    if (priority != oldPrio) {
                         sortedNodes.update(nn, oldPrio, priority);
                         updatedNeighors.add(nn);
                     }
@@ -393,7 +393,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return traversalMode.isEdgeBased() ? "prepare|dijkstrabi|edge|ch" : "prepare|dijkstrabi|ch";
     }
 
-    private NodeContractor createNodeContractor(Graph graph, TraversalMode traversalMode, PMap pMap) {
+    private NodeContractor createNodeContractor(Graph graph, TraversalMode traversalMode) {
         if (traversalMode.isEdgeBased()) {
             TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased(graph);
             return new EdgeBasedNodeContractor(dir, ghStorage, prepareGraph, chTurnWeighting, pMap);

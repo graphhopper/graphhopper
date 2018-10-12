@@ -23,7 +23,6 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
 import java.util.List;
@@ -44,14 +43,13 @@ public class AStarBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTester {
     @Override
     protected GraphHopperStorage createGHStorage(
             EncodingManager em, List<? extends Weighting> weightings, boolean is3D) {
-        return new GraphHopperStorage(weightings, new RAMDirectory(),
-                em, is3D, true, new TurnCostExtension()).create(1000);
+        return new GraphHopperStorage(weightings, new RAMDirectory(), em, is3D, new TurnCostExtension()).create(1000);
     }
 
     @Override
     public RoutingAlgorithmFactory createFactory(GraphHopperStorage ghStorage, AlgorithmOptions opts) {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies(
-                new GHDirectory("", DAType.RAM_INT), ghStorage, getGraph(ghStorage, opts.getWeighting()),
+                new GHDirectory("", DAType.RAM_INT), ghStorage, getGraph(ghStorage, opts.getWeighting()), 
                 TraversalMode.EDGE_BASED_2DIR);
         ch.doWork();
         return ch;

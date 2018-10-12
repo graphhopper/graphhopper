@@ -92,8 +92,8 @@ public abstract class AbstractWeighting implements Weighting {
     /**
      * Replaces all characters which are not numbers, characters or underscores with underscores
      */
-    public static String weightingToFileName(Weighting w) {
-        return toLowerCase(w.toString()).replaceAll("\\|", "_");
+    public static String weightingToFileName(Weighting w, boolean edgeBased) {
+        return toLowerCase(w.toString()).replaceAll("\\|", "_") + (edgeBased ? "_edge" : "_node");
     }
 
     @Override

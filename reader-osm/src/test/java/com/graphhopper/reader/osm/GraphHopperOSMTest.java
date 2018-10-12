@@ -32,7 +32,10 @@ import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.Instruction;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
@@ -465,7 +468,7 @@ public class GraphHopperOSMTest {
         instance = new GraphHopperOSM();
         try {
             instance.importOrLoad();
-            assertTrue(false);
+            fail();
         } catch (IllegalStateException ex) {
             assertEquals("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before", ex.getMessage());
         }
@@ -490,7 +493,7 @@ public class GraphHopperOSMTest {
                 setDataReaderFile(testOsm3);
         try {
             instance.importOrLoad();
-            assertTrue(false);
+            fail();
         } catch (IllegalStateException ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Cannot load properties to fetch EncodingManager"));
         }
@@ -806,7 +809,7 @@ public class GraphHopperOSMTest {
                 PrepareContractionHierarchies pch = (PrepareContractionHierarchies) raf;
                 assertTrue("Preparation wasn't run! [" + threadCount + "]", pch.isPrepared());
 
-                String name = AbstractWeighting.weightingToFileName(pch.getWeighting());
+                String name = AbstractWeighting.weightingToFileName(pch.getWeighting(), pch.isEdgeBased());
                 Long singleThreadShortcutCount = shortcutCountMap.get(name);
                 if (singleThreadShortcutCount == null)
                     shortcutCountMap.put(name, pch.getShortcuts());
@@ -850,7 +853,7 @@ public class GraphHopperOSMTest {
             for (PrepareLandmarks prepLM : tmpGH.getLMFactoryDecorator().getPreparations()) {
                 assertTrue("Preparation wasn't run! [" + threadCount + "]", prepLM.isPrepared());
 
-                String name = AbstractWeighting.weightingToFileName(prepLM.getWeighting());
+                String name = AbstractWeighting.weightingToFileName(prepLM.getWeighting(), false);
                 Integer singleThreadShortcutCount = landmarkCount.get(name);
                 if (singleThreadShortcutCount == null)
                     landmarkCount.put(name, prepLM.getSubnetworksWithLandmarks());
@@ -881,10 +884,10 @@ public class GraphHopperOSMTest {
         Weighting fwTruck = new FastestWeighting(truck);
         RAMDirectory ramDir = new RAMDirectory();
         GraphHopperStorage storage = new GraphHopperStorage(Arrays.asList(fwSimpleTruck, fwTruck), ramDir, em, false, new GraphExtension.NoOpExtension());
-        decorator.addWeighting(fwSimpleTruck);
-        decorator.addWeighting(fwTruck);
-        decorator.addPreparation(createPrepareContractionHierarchies(ramDir, storage, fwSimpleTruck));
-        decorator.addPreparation(createPrepareContractionHierarchies(ramDir, storage, fwTruck));
+        decorator.addNodeBasedWeighting(fwSimpleTruck);
+        decorator.addNodeBasedWeighting(fwTruck);
+        decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck), TraversalMode.NODE_BASED));
+        decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwTruck), TraversalMode.NODE_BASED));
 
         HintsMap wMap = new HintsMap("fastest");
         wMap.put("vehicle", "truck");
@@ -893,18 +896,13 @@ public class GraphHopperOSMTest {
         assertEquals("fastest|simple_truck", ((PrepareContractionHierarchies) decorator.getDecoratedAlgorithmFactory(null, wMap)).getWeighting().toString());
 
         // make sure weighting cannot be mixed
-        decorator.addWeighting(fwTruck);
-        decorator.addWeighting(fwSimpleTruck);
+        decorator.addNodeBasedWeighting(fwTruck);
+        decorator.addNodeBasedWeighting(fwSimpleTruck);
         try {
-            decorator.addPreparation(createPrepareContractionHierarchies(ramDir, storage, fwSimpleTruck));
-            assertTrue(false);
+            decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck), TraversalMode.NODE_BASED));
+            fail();
         } catch (Exception ex) {
         }
-    }
-
-    private PrepareContractionHierarchies createPrepareContractionHierarchies(RAMDirectory ramDir, GraphHopperStorage storage, Weighting weighting) {
-        return new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, weighting),
-                TraversalMode.NODE_BASED);
     }
 
     @Test

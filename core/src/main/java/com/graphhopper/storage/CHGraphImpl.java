@@ -52,7 +52,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     final DataAccess shortcuts;
     final DataAccess nodesCH;
     final long scDirMask = PrepareEncoder.getScDirMask();
-    private final boolean forEdgeBasedTraversal;
+    private final boolean edgeBased;
     private final BaseGraph baseGraph;
     private final EdgeAccess chEdgeAccess;
     private final Weighting weighting;
@@ -65,14 +65,14 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private int S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_FIRST, S_ORIG_LAST;
     private int shortcutCount = 0;
 
-    CHGraphImpl(Weighting w, Directory dir, final BaseGraph baseGraph, boolean forEdgeBasedTraversal) {
+    CHGraphImpl(Weighting w, Directory dir, final BaseGraph baseGraph, boolean edgeBased) {
         if (w == null)
             throw new IllegalStateException("Weighting for CHGraph cannot be null");
 
         this.weighting = w;
         this.baseGraph = baseGraph;
-        final String name = AbstractWeighting.weightingToFileName(w);
-        this.forEdgeBasedTraversal = forEdgeBasedTraversal;
+        final String name = AbstractWeighting.weightingToFileName(w, edgeBased);
+        this.edgeBased = edgeBased;
         this.nodesCH = dir.find("nodes_ch_" + name);
         this.shortcuts = dir.find("shortcuts_" + name);
         this.chEdgeAccess = new EdgeAccess(shortcuts, baseGraph.bitUtil) {
@@ -359,7 +359,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         // shortcuts
         S_SKIP_EDGE1 = ea.E_FLAGS + 4;
         S_SKIP_EDGE2 = S_SKIP_EDGE1 + 4;
-        if (forEdgeBasedTraversal) {
+        if (edgeBased) {
             S_ORIG_FIRST = S_SKIP_EDGE2 + 4;
             S_ORIG_LAST = S_ORIG_FIRST + 4;
             shortcutEntryBytes = S_ORIG_LAST + 4;
@@ -581,7 +581,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         private void checkShortcutAndEdgeBased(String method) {
             checkShortcut(true, method);
-            if (!forEdgeBasedTraversal) {
+            if (!edgeBased) {
                 throw new IllegalStateException("Method " + method + " only allowed when CH graph is configured for edge based traversal");
             }
         }
@@ -749,7 +749,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         private void checkShortcutAndEdgeBased(String method) {
             checkShortcut(true, method);
-            if (!forEdgeBasedTraversal) {
+            if (!edgeBased) {
                 throw new IllegalStateException("Method " + method + " not supported when turn costs are disabled");
             }
         }

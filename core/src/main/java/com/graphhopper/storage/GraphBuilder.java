@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * For now this is just a helper class to quickly create a {@link GraphHopperStorage}
@@ -107,7 +108,9 @@ public class GraphBuilder {
 
         return singleCHWeighting == null ?
                 new GraphHopperStorage(dir, encodingManager, elevation, graphExtension) :
-                new GraphHopperStorage(Arrays.asList(singleCHWeighting), dir, encodingManager, elevation, edgeBasedCH, graphExtension);
+                edgeBasedCH ?
+                        new GraphHopperStorage(Collections.<Weighting>emptyList(), Arrays.asList(singleCHWeighting), dir, encodingManager, elevation, graphExtension) :
+                        new GraphHopperStorage(Arrays.asList(singleCHWeighting), Collections.<Weighting>emptyList(), dir, encodingManager, elevation, graphExtension);
     }
 
     /**

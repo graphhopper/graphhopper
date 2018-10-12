@@ -40,7 +40,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     private CHEdgeExplorer remainingEdgeExplorer;
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany prepareAlgo;
-    private long addedShortcutsCount;
+    private int addedShortcutsCount;
     private long dijkstraCount;
     private StopWatch dijkstraSW = new StopWatch();
     // meanDegree is the number of edges / number of nodes ratio of the graph, not really the average degree, because
@@ -147,6 +147,11 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     public String getStatisticsString() {
         return String.format(Locale.ROOT, "meanDegree: %.2f, dijkstras: %10s, mem: %10s",
                 meanDegree, nf(dijkstraCount), prepareAlgo.getMemoryUsageAsString());
+    }
+
+    @Override
+    boolean isEdgeBased() {
+        return false;
     }
 
     /**

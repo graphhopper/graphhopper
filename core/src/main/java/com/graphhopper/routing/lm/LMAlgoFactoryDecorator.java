@@ -277,7 +277,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         for (final PrepareLandmarks plm : preparations) {
             counter++;
             final int tmpCounter = counter;
-            final String name = AbstractWeighting.weightingToFileName(plm.getWeighting());
+            final String name = AbstractWeighting.weightingToFileName(plm.getWeighting(), false);
             completionService.submit(new Runnable() {
                 @Override
                 public void run() {

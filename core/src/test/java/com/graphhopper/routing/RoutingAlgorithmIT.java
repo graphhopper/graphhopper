@@ -93,14 +93,15 @@ public class RoutingAlgorithmIT {
             chHints.put(Parameters.CH.DISABLE, false);
             chHints.put(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
             Weighting pickedWeighting = null;
-            for (Weighting tmpWeighting : hopper.getCHFactoryDecorator().getWeightings()) {
+            for (Weighting tmpWeighting : hopper.getCHFactoryDecorator().getNodeBasedWeightings()) {
+                // todo: maybe add some test for edge based weightings as well ?
                 if (tmpWeighting.equals(weighting)) {
                     pickedWeighting = tmpWeighting;
                     break;
                 }
             }
             if (pickedWeighting == null)
-                throw new IllegalStateException("Didn't find weighting " + hints.getWeighting() + " in " + hopper.getCHFactoryDecorator().getWeightings());
+                throw new IllegalStateException("Didn't find weighting " + hints.getWeighting() + " in " + hopper.getCHFactoryDecorator().getNodeBasedWeightings());
 
             prepare.add(new AlgoHelperEntry(ghStorage.getGraph(CHGraph.class, pickedWeighting),
                     AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + hints.getWeighting()) {

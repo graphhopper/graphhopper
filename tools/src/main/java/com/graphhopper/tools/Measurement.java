@@ -93,7 +93,7 @@ public class Measurement {
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 int edges = getGraphHopperStorage().getAllEdges().length();
                 if (getCHFactoryDecorator().hasWeightings()) {
-                    Weighting weighting = getCHFactoryDecorator().getWeightings().get(0);
+                    Weighting weighting = getCHFactoryDecorator().getNodeBasedWeightings().get(0);
                     int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getAllEdges().length();
                     put(Parameters.CH.PREPARE + "shortcuts", edgesAndShortcuts - edges);
                 }
@@ -163,7 +163,7 @@ public class Measurement {
 
                 isLM = false;
                 System.gc();
-                Weighting weighting = hopper.getCHFactoryDecorator().getWeightings().get(0);
+                Weighting weighting = hopper.getCHFactoryDecorator().getNodeBasedWeightings().get(0);
                 CHGraph lg = g.getGraph(CHGraph.class, weighting);
                 fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                 printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);

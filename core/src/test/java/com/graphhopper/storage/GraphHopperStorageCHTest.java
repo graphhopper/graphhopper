@@ -53,7 +53,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
     private GraphHopperStorage newGHStorage(Directory dir, boolean is3D, boolean forEdgeBasedTraversal) {
         return new GraphHopperStorage(Arrays.asList(new FastestWeighting(carEncoder)), dir, encodingManager, is3D,
-                forEdgeBasedTraversal, new GraphExtension.NoOpExtension());
+                new GraphExtension.NoOpExtension());
     }
 
     @Test

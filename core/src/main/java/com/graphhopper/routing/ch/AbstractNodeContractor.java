@@ -42,7 +42,7 @@ abstract class AbstractNodeContractor implements NodeContractor {
         this.ghStorage = ghStorage;
         this.prepareGraph = prepareGraph;
         this.encoder = weighting.getFlagEncoder();
-        originalEdges = dir.find("original_edges_" + AbstractWeighting.weightingToFileName(weighting));
+        originalEdges = dir.find("original_edges_" + AbstractWeighting.weightingToFileName(weighting, isEdgeBased()));
         originalEdges.create(1000);
     }
 
@@ -88,4 +88,6 @@ abstract class AbstractNodeContractor implements NodeContractor {
         originalEdges.ensureCapacity(tmp + 4);
         return originalEdges.getInt(tmp);
     }
+
+    abstract boolean isEdgeBased();
 }
