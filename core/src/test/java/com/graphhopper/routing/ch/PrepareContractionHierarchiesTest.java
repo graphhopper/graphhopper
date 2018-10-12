@@ -487,7 +487,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHGraph lg) {
-        return new PrepareContractionHierarchies(dir, g, lg, weighting, tMode, new PrepareContractionHierarchies.Config());
+        return new PrepareContractionHierarchies(dir, g, lg, tMode);
     }
     
     void checkPath(GraphHopperStorage ghStorage, Weighting w, int expShortcuts, double expDistance, IntIndexedContainer expNodes) {

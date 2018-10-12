@@ -46,9 +46,8 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
     private List<Stats> stats = new ArrayList<>();
     private long lastShortcutCount;
 
-    public ManualPrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph, Weighting weighting,
-                                               TraversalMode traversalMode, Config config) {
-        super(dir, ghStorage, chGraph, weighting, traversalMode, config);
+    public ManualPrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
+        super(dir, ghStorage, chGraph, traversalMode);
     }
 
     public ManualPrepareContractionHierarchies setContractionOrder(List<Integer> contractionOrder) {
@@ -88,8 +87,8 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
         final EdgeFilter allFilter = DefaultEdgeFilter.allEdges(prepareWeighting.getFlagEncoder());
         CHEdgeExplorer explorer = prepareGraph.createEdgeExplorer(allFilter);
         CHEdgeExplorer discExplorer = prepareGraph.createEdgeExplorer(allFilter);
-        final int nodesToContract = (int) (contractionOrder.size() * nodesContractedPercentage / 100);
-        final long logSize = Math.round(Math.max(10, contractionOrder.size() * logMessagesPercentage / 100));
+        final int nodesToContract = contractionOrder.size();
+        final long logSize = 10;
         StopWatch stopWatch = new StopWatch();
         for (int i = 0; i < nodesToContract; ++i) {
             stopWatch.start();

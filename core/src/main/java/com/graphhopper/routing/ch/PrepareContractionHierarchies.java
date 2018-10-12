@@ -185,7 +185,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new float[prepareGraph.getNodes()];
-        nodeContractor = createNodeContractor(ghStorage, traversalMode);
+        nodeContractor = createNodeContractor(ghStorage, traversalMode, pMap);
         nodeContractor.initFromGraph();
     }
 
@@ -393,13 +393,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return traversalMode.isEdgeBased() ? "prepare|dijkstrabi|edge|ch" : "prepare|dijkstrabi|ch";
     }
 
-    private NodeContractor createNodeContractor(Graph graph, TraversalMode traversalMode) {
+    private NodeContractor createNodeContractor(Graph graph, TraversalMode traversalMode, PMap pMap) {
         if (traversalMode.isEdgeBased()) {
             TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased(graph);
-            return new EdgeBasedNodeContractor(dir, ghStorage, prepareGraph, chTurnWeighting,
-                    config.getEdgeBasedNodeContractorConfig());
+            return new EdgeBasedNodeContractor(dir, ghStorage, prepareGraph, chTurnWeighting, pMap);
         } else {
-            return new NodeBasedNodeContractor(dir, ghStorage, prepareGraph, weighting);
+            return new NodeBasedNodeContractor(dir, ghStorage, prepareGraph, weighting, pMap);
         }
     }
 
@@ -411,7 +410,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             throw new IllegalArgumentException("For edge-based CH you need a turn cost extension");
         }
         TurnCostExtension turnCostExtension = (TurnCostExtension) extension;
-        return new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension);
+        return new TurnWeighting(prepareWeighting, turnCostExtension);
     }
 
     private void logStats(int updateCounter) {
@@ -453,7 +452,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         static Params forTraversalMode(TraversalMode traversalMode) {
             if (traversalMode.isEdgeBased()) {
-                throw new IllegalArgumentException("Contraction Hierarchies are not supported for edge-based traversal yet");
+                // todo: optimize
+                return new Params(0, 100, 0, 100, 5);
             } else {
                 return new Params(20, 10, 20, 100, 20);
             }

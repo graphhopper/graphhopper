@@ -30,6 +30,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -1390,7 +1391,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void buildRandomGraph(long seed) {
-        GHUtility.buildRandomGraph(graph, seed, 10, 2, true, 0.9);
+        GHUtility.buildRandomGraph(graph, seed, 10, 2, true, true, 0.9);
         graph.freeze();
         setMaxLevelOnAllNodes();
     }
@@ -1426,10 +1427,10 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private EdgeBasedNodeContractor createNodeContractor(SearchType searchType) {
-        EdgeBasedNodeContractor.Config config = new EdgeBasedNodeContractor.Config();
-        config.setSearchType(searchType);
+        PMap pMap = new PMap();
+        pMap.put("prepare.ch.edge.search_type", searchType);
         Directory dir = new GHDirectory("", DAType.RAM_INT);
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(dir, graph, chGraph, chTurnWeighting, config);
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(dir, graph, chGraph, chTurnWeighting, pMap);
         nodeContractor.initFromGraph();
         return nodeContractor;
     }

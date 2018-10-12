@@ -93,7 +93,7 @@ public class CHMeasurement {
         ghStorage.freeze();
 
         EdgeBasedNodeContractor contractor = new EdgeBasedNodeContractor(dir, ghStorage, chGraph,
-                new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension), new EdgeBasedNodeContractor.Config());
+                new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension), new PMap());
         contractor.initFromGraph();
         int maxLevel = chGraph.getNodes();
         for (int i = 0; i < chGraph.getNodes(); ++i) {
@@ -171,12 +171,13 @@ public class CHMeasurement {
             throw new IllegalArgumentException("Could not read graph: " + osmFile + ", the error was: " + e.getMessage());
         }
 
-        PrepareContractionHierarchies.Config config = new PrepareContractionHierarchies.Config();
-        config.getEdgeBasedNodeContractorConfig().setSearchType(searchType);
+        PMap pMap = new PMap();
+        pMap.put("prepare.ch.edge.search_type", searchType.toString());
+        pMap.put("prepare.ch.edge.contracted_nodes", 50);
         ManualPrepareContractionHierarchies pch = new ManualPrepareContractionHierarchies(
-                dir, ghStorage, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR, config);
+                dir, ghStorage, chGraph, TraversalMode.EDGE_BASED_2DIR);
+        pch.setParams(pMap);
         pch.setSeed(seed);
-        pch.setContractedNodes(50);
         pch.doWork();
         return pch.getStats();
     }
@@ -190,8 +191,6 @@ public class CHMeasurement {
      */
     private void testPerformanceFixedNodeOrdering() {
         osmFile = "local/maps/bremen-latest.osm.pbf";
-        PrepareContractionHierarchies.Config config = new PrepareContractionHierarchies.Config();
-        config.getEdgeBasedNodeContractorConfig().setSearchType(SearchType.AGGRESSIVE);
         maxTurnCost = 100;
         seed = 123;
         pNodeHasTurnCosts = 0.3;
@@ -205,9 +204,9 @@ public class CHMeasurement {
         int numRepeats = 5;
         totalElapsed = 0;
         for (int i = 0; i < numRepeats - 1; ++i) {
-            contractGraphWithRandomTurnCosts(config);
+            contractGraphWithRandomTurnCosts();
         }
-        ManualPrepareContractionHierarchies pch = contractGraphWithRandomTurnCosts(config);
+        ManualPrepareContractionHierarchies pch = contractGraphWithRandomTurnCosts();
         int numNodes = ghStorage.getNodes();
         int numShortcuts = chGraph.getAllEdges().length() - ghStorage.getAllEdges().length();
         LOGGER.info("### Average contraction time: {} ms, time per node: {} micros, time per shortcut: {} micros",
@@ -250,7 +249,7 @@ public class CHMeasurement {
         LOGGER.info("errors: {}, max error: {}, min error: {}", errorCount, maxError, minError);
     }
 
-    private ManualPrepareContractionHierarchies contractGraphWithRandomTurnCosts(PrepareContractionHierarchies.Config config) {
+    private ManualPrepareContractionHierarchies contractGraphWithRandomTurnCosts() {
         FlagEncoder encoder = new CarFlagEncoder(5, 5, maxTurnCost);
         EncodingManager encodingManager = new EncodingManager(encoder);
         // todo: are there any performance differences between fastest and shortest routes ? this should be the case
@@ -315,10 +314,12 @@ public class CHMeasurement {
                 Helper.nf(ghStorage.getAllEdges().length()), Helper.nf(chGraph.getAllEdges().length() - ghStorage.getAllEdges().length()));
         long start = nanoTime();
         ManualPrepareContractionHierarchies pch = new ManualPrepareContractionHierarchies(
-                dir, ghStorage, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR, config);
+                dir, ghStorage, chGraph, TraversalMode.EDGE_BASED_2DIR);
+        PMap pMap = new PMap();
+        pMap.put("prepare.ch.contracted_nodes", nodesContractedPercentage);
+        pMap.put("prepare.ch.log_messages", 10);
+        pch.setParams(pMap);
         pch.setSeed(seed);
-        pch.setContractedNodes(nodesContractedPercentage);
-        pch.setLogMessages(10);
 
         // load a previously stored contraction order, for analysis purposes only, remove before merge
 //        List<Integer> contractionOrder = new ArrayList<>();
@@ -373,11 +374,12 @@ public class CHMeasurement {
         }
         CHAlgoFactoryDecorator chDecorator = graphHopper.getCHFactoryDecorator();
         chDecorator.setDisablingAllowed(true);
-        chDecorator.setPreparationPeriodicUpdates(periodicUpdates);
-        chDecorator.setPreparationLazyUpdates(lazyUpdates);
-        chDecorator.setPreparationNeighborUpdates(neighborUpdates);
-        chDecorator.setPreparationContractedNodes(contractedNodes);
-        chDecorator.setPreparationLogMessages(logMessages);
+
+        cmdArgs.put("prepare.ch.updates.periodic", periodicUpdates);
+        cmdArgs.put("prepare.ch.updates.lazy", lazyUpdates);
+        cmdArgs.put("prepare.ch.updates.neighbor", neighborUpdates);
+        cmdArgs.put("prepare.ch.contracted_nodes", contractedNodes);
+        cmdArgs.put("prepare.ch.log_messages", logMessages);
 
         LMAlgoFactoryDecorator lmDecorator = graphHopper.getLMFactoryDecorator();
         lmDecorator.setEnabled(true);

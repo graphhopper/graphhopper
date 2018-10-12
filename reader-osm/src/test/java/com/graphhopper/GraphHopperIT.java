@@ -1010,13 +1010,16 @@ public class GraphHopperIT {
                 .setGraphHopperLocation(tmpGraphFile)
                 .setEncodingManager(new EncodingManager("car|turn_costs=true"));
         graphHopper
-                .getCHFactoryDecorator().setDisablingAllowed(true)
+                .getCHFactoryDecorator().setDisablingAllowed(true);
                 // the problem does not occur when using default settings (?!), but when running server and it also
                 // occurs (?!)
-                .setPreparationPeriodicUpdates(0)
-                .setPreparationLazyUpdates(100)
-                .setPreparationNeighborUpdates(0)
-                .setPreparationContractedNodes(100);
+        CmdArgs cmdArgs = new CmdArgs();
+        cmdArgs.put("prepare.ch.updates.periodic", 0);
+        cmdArgs.put("prepare.ch.updates.lazy", 100);
+        cmdArgs.put("prepare.ch.updates.neighbor", 0);
+        cmdArgs.put("prepare.ch.contracted_nodes", 100);
+
+        graphHopper.init(cmdArgs);
 
         graphHopper.importOrLoad();
         GHRequest request = new GHRequest();

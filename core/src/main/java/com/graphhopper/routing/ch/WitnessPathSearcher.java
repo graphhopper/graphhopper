@@ -25,10 +25,7 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.*;
 
 import java.util.Arrays;
 
@@ -73,7 +70,7 @@ public class WitnessPathSearcher {
     private final int maxLevel;
 
     // general parameters affecting the number of found witnesses and the search time
-    private final Config config;
+    private final Params params = new Params();
 
     // variables of the current search
     private int sourceEdge;
@@ -107,10 +104,10 @@ public class WitnessPathSearcher {
     private final Stats currentBatchStats = new Stats();
     private final Stats totalStats = new Stats();
 
-    public WitnessPathSearcher(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting, Config config) {
+    public WitnessPathSearcher(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting, PMap pMap) {
         this.chGraph = chGraph;
         this.turnWeighting = turnWeighting;
-        this.config = config;
+        extractParams(pMap);
 
         DefaultEdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(turnWeighting.getFlagEncoder());
         DefaultEdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(turnWeighting.getFlagEncoder());
@@ -118,10 +115,14 @@ public class WitnessPathSearcher {
         origInEdgeExplorer = graph.createEdgeExplorer(inEdgeFilter);
         maxLevel = chGraph.getNodes();
 
-        maxSettledEdges = config.minimumMaxSettledEdges;
+        maxSettledEdges = params.minimumMaxSettledEdges;
         int numOriginalEdges = graph.getBaseGraph().getAllEdges().length();
         initStorage(2 * numOriginalEdges);
         initCollections();
+    }
+
+    private void extractParams(PMap pMap) {
+        // todo: use pMap to change default parameters
     }
 
     /**
@@ -389,11 +390,11 @@ public class WitnessPathSearcher {
         // we use the statistics of settled edges of a batch of previous witness path searches to dynamically 
         // approximate the number of settled edges in the next batch
         settledEdgesStats.addObservation(numSettledEdges);
-        if (settledEdgesStats.getCount() == config.getSettledEdgeStatsResetInterval()) {
+        if (settledEdgesStats.getCount() == params.settledEdgeStatsResetInterval) {
             maxSettledEdges = Math.max(
-                    config.getMinimumMaxSettledEdges(),
+                    params.minimumMaxSettledEdges,
                     (int) (settledEdgesStats.getMean() +
-                            config.getSigmaFactor() * Math.sqrt(settledEdgesStats.getVariance()))
+                            params.sigmaFactor * Math.sqrt(settledEdgesStats.getVariance()))
             );
             settledEdgesStats.reset();
         }
@@ -482,7 +483,7 @@ public class WitnessPathSearcher {
         return chGraph.getLevel(node) != maxLevel;
     }
 
-    static class Config {
+    static class Params {
         /**
          * Determines the maximum number of settled edges for the next search based on the mean number of settled edges and
          * the fluctuation in the previous searches. The higher this number the longer the search will last and the more
@@ -492,30 +493,6 @@ public class WitnessPathSearcher {
         private double sigmaFactor = 3.0;
         private int minimumMaxSettledEdges = 100;
         private int settledEdgeStatsResetInterval = 10_000;
-
-        public double getSigmaFactor() {
-            return sigmaFactor;
-        }
-
-        public void setSigmaFactor(double sigmaFactor) {
-            this.sigmaFactor = sigmaFactor;
-        }
-
-        public int getMinimumMaxSettledEdges() {
-            return minimumMaxSettledEdges;
-        }
-
-        public void setMinimumMaxSettledEdges(int minimumMaxSettledEdges) {
-            this.minimumMaxSettledEdges = minimumMaxSettledEdges;
-        }
-
-        public int getSettledEdgeStatsResetInterval() {
-            return settledEdgeStatsResetInterval;
-        }
-
-        public void setSettledEdgeStatsResetInterval(int settledEdgeStatsResetInterval) {
-            this.settledEdgeStatsResetInterval = settledEdgeStatsResetInterval;
-        }
     }
 
     static class Stats {

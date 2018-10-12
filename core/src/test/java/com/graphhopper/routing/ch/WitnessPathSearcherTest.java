@@ -28,6 +28,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -126,7 +127,7 @@ public class WitnessPathSearcherTest {
     }
 
     private WitnessPathSearcher createFinder() {
-        return new WitnessPathSearcher(graph, chGraph, chTurnWeighting, new WitnessPathSearcher.Config());
+        return new WitnessPathSearcher(graph, chGraph, chTurnWeighting, new PMap());
     }
 
     private void setMaxLevelOnAllNodes() {

@@ -28,7 +28,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -36,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+import static com.graphhopper.routing.ch.CHParameters.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -752,19 +752,21 @@ public class CHTurnCostTest {
     private RoutingAlgorithmFactory prepareCH(List<Integer> contractionOrder) {
         LOGGER.debug("Calculating CH with contraction order {}", contractionOrder);
         ManualPrepareContractionHierarchies ch = new ManualPrepareContractionHierarchies(
-                new RAMDirectory(""), graph, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR, new PrepareContractionHierarchies.Config())
+                new RAMDirectory(""), graph, chGraph, TraversalMode.EDGE_BASED_2DIR)
                 .setContractionOrder(contractionOrder);
         ch.doWork();
         return ch;
     }
 
     private RoutingAlgorithmFactory automaticPrepareCH() {
+        PMap pMap = new PMap();
+        pMap.put(PERIODIC_UPDATES, 20);
+        pMap.put(LAST_LAZY_NODES_UPDATES, 100);
+        pMap.put(NEIGHBOR_UPDATES, 4);
+        pMap.put(LOG_MESSAGES, 10);
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies(
-                new RAMDirectory(""), graph, chGraph, weighting, TraversalMode.EDGE_BASED_2DIR, new PrepareContractionHierarchies.Config());
-        ch.setPeriodicUpdates(20);
-        ch.setLazyUpdates(100);
-        ch.setNeighborUpdates(4);
-        ch.setLogMessages(10);
+                new RAMDirectory(""), graph, chGraph, TraversalMode.EDGE_BASED_2DIR);
+        ch.setParams(pMap);
         ch.doWork();
         return ch;
     }
