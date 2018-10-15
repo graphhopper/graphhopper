@@ -160,11 +160,8 @@ public class MiniGraphUI {
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algoOpts:" + algoOpts);
         mg = new GraphicsWrapper(graph);
 
-        // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
-//         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
         this.index = (LocationIndexTree) hopper.getLocationIndex();
 //        this.algo = new DebugDijkstraBidirection(graph, mg);
-        // this.algo = new DijkstraBidirection(graph);
 //        this.algo = new DebugAStar(graph, mg);
 //        this.algo = new AStar(graph);
 //        this.algo = new DijkstraSimple(graph);
@@ -294,12 +291,6 @@ public class MiniGraphUI {
                     @Override
                     public void plotNode(int node) {
                         mg.plotNode(g2, node, Color.BLUE);
-                    }
-
-                    @Override
-                    public void plotWarn(double lat, double lon, int width) {
-                        g2.setColor(Color.RED);
-                        mg.plot(g2, lat, lon, width);
                     }
                 });
 
