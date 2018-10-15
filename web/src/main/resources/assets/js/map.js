@@ -68,6 +68,20 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
             map.panTo(e.latlng);
         },
         index: 12
+    }, {
+         text: translate.tr('bbox'),
+         callback: function (e) {
+             $.ajax({
+                 timeout: 10000,
+                 url: "http://localhost:8989/index?bbox=52.531887,13.405724," + e.latlng.lat + "," + e.latlng.lng,
+                 success: function (json) {
+                     console.log("bbox start")
+                     routingLayer.clearLayers();
+                     routingLayer.addData(json);
+                     console.log("end bbox success")
+                 }})
+         },
+         index: 12
     }];
 
     // default

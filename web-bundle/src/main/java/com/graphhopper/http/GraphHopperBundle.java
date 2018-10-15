@@ -44,7 +44,9 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
 import io.dropwizard.ConfiguredBundle;
@@ -117,8 +119,8 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         GraphHopper graphHopper;
 
         @Override
-        public LocationIndex provide() {
-            return graphHopper.getLocationIndex();
+        public LocationIndexTree provide() {
+            return (LocationIndexTree) graphHopper.getLocationIndex();
         }
 
         @Override
@@ -268,10 +270,11 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(configuration).to(CmdArgs.class);
                 bind(graphHopperManaged).to(GraphHopperManaged.class);
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopper.class);
+                bind(graphHopperManaged.getGraphHopper().getGraphHopperStorage().getNodeAccess()).to(NodeAccess.class);
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopperAPI.class);
 
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
-                bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
+                bindFactory(LocationIndexFactory.class).to(LocationIndexTree.class);
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
                 bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
                 bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
@@ -284,6 +287,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(RouteResource.class);
+        environment.jersey().register(LocationIndexResource.class);
         environment.jersey().register(IsochroneResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
