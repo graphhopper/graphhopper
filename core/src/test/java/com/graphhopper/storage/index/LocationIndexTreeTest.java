@@ -195,11 +195,12 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         LocationIndexTree index = createIndexNoPrepare(createTestGraph(encodingManager), 10000);
         index.prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
-        assertEquals(IntArrayList.from(new int[]{64, 4}), index.getEntries());
+        assertEquals(IntArrayList.from(new int[]{16, 4, 4}), index.getEntries());
 
-        assertEquals(33, inMemIndex.getEntriesOf(0).size());
-        assertEquals(69, inMemIndex.getEntriesOf(1).size());
-        assertEquals(0, inMemIndex.getEntriesOf(2).size());
+        assertEquals(13, inMemIndex.getEntriesOf(0).size());
+        assertEquals(33, inMemIndex.getEntriesOf(1).size());
+        assertEquals(69, inMemIndex.getEntriesOf(2).size());
+        assertEquals(0, inMemIndex.getEntriesOf(3).size());
 
         index.dataAccess.create(1024);
         inMemIndex.store(inMemIndex.root, LocationIndexTree.START_POINTER);
@@ -212,7 +213,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     @Test
     public void testReverseSpatialKey() {
         LocationIndexTree index = createIndex(createTestGraph(encodingManager), 200);
-        assertEquals(IntArrayList.from(new int[]{64, 64, 64, 4}), index.getEntries());
+        assertEquals(IntArrayList.from(new int[]{16, 16, 16, 16, 4, 4}), index.getEntries());
 
         // 10111110111110101010
         String str44 = "00000000000000000000000000000000000000000000";

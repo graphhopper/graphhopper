@@ -153,9 +153,7 @@ public class LocationIndexTree implements LocationIndex {
         tmp /= 4;
         while (tmp > 1) {
             int tmpNo;
-            if (tmp >= 64) {
-                tmpNo = 64;
-            } else if (tmp >= 16) {
+            if (tmp >= 16) {
                 tmpNo = 16;
             } else if (tmp >= 4) {
                 tmpNo = 4;
