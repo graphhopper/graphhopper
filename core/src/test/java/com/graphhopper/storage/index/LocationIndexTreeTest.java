@@ -25,15 +25,14 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -151,6 +150,16 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     }
 
     @Test
+    public void testQuery() {
+        Graph graph = createTestGraph2();
+        LocationIndexTree index = createIndex(graph, 500);
+        Collection<Integer> list = index.query(new BBox(11.957514, 11.957814, 49.94553, 49.94853));
+        assertEquals(17, list.size());
+        assertTrue(list.containsAll(Arrays.asList(2, 3, 4, 5, 6)));
+        assertFalse(list.containsAll(Arrays.asList(17, 18, 25, 30)));
+    }
+
+    @Test
     public void testInMemIndex2() {
         Graph graph = createTestGraph2();
         LocationIndexTree index = createIndexNoPrepare(graph, 500);
@@ -195,11 +204,12 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         LocationIndexTree index = createIndexNoPrepare(createTestGraph(encodingManager), 10000);
         index.prepareAlgo();
         LocationIndexTree.InMemConstructionIndex inMemIndex = index.getPrepareInMemIndex();
-        assertEquals(IntArrayList.from(new int[]{64, 4}), index.getEntries());
+        assertEquals(IntArrayList.from(new int[]{16, 4, 4}), index.getEntries());
 
-        assertEquals(33, inMemIndex.getEntriesOf(0).size());
-        assertEquals(69, inMemIndex.getEntriesOf(1).size());
-        assertEquals(0, inMemIndex.getEntriesOf(2).size());
+        assertEquals(13, inMemIndex.getEntriesOf(0).size());
+        assertEquals(33, inMemIndex.getEntriesOf(1).size());
+        assertEquals(69, inMemIndex.getEntriesOf(2).size());
+        assertEquals(0, inMemIndex.getEntriesOf(3).size());
 
         index.dataAccess.create(1024);
         inMemIndex.store(inMemIndex.root, LocationIndexTree.START_POINTER);
@@ -212,7 +222,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     @Test
     public void testReverseSpatialKey() {
         LocationIndexTree index = createIndex(createTestGraph(encodingManager), 200);
-        assertEquals(IntArrayList.from(new int[]{64, 64, 64, 4}), index.getEntries());
+        assertEquals(IntArrayList.from(new int[]{16, 16, 16, 16, 4, 4}), index.getEntries());
 
         // 10111110111110101010
         String str44 = "00000000000000000000000000000000000000000000";

@@ -193,7 +193,7 @@ public class MiniGraphUI {
             Random rand = new Random();
 
             @Override
-            public void paintComponent(Graphics2D g2) {
+            public void paintComponent(final Graphics2D g2) {
                 clearGraphics(g2);
                 int locs = graph.getNodes();
                 Rectangle d = getBounds();
@@ -269,39 +269,68 @@ public class MiniGraphUI {
                     boolean fwd = encoder.isForward(edge.getFlags());
                     boolean bwd = encoder.isBackward(edge.getFlags());
                     float width = speed > 90 ? 1f : 0.8f;
-                    if (fwd && !bwd) {
-                        mg.plotDirectedEdge(g2, lat, lon, lat2, lon2, width);
-                    } else {
-                        mg.plotEdge(g2, lat, lon, lat2, lon2, width);
+                    PointList pl = edge.fetchWayGeometry(3);
+                    for (int i = 1; i < pl.size(); i++) {
+//                        if (fwd && !bwd) {
+//                            mg.plotDirectedEdge(g2, pl.getLat(i - 1), pl.getLon(i - 1), pl.getLat(i), pl.getLon(i), width);
+//                        } else {
+                            mg.plotEdge(g2, pl.getLat(i - 1), pl.getLon(i - 1), pl.getLat(i), pl.getLon(i), width);
+//                        }
                     }
+
+                    mg.plotNode(g2, edge.getBaseNode(), Color.BLACK, 2);
+                    mg.plotNode(g2, edge.getAdjNode(), Color.BLACK, 2);
                 }
 
-                g2.setColor(Color.WHITE);
-                g2.fillRect(0, 0, 1000, 20);
-                for (int i = 4; i < speedColors.length; i++) {
-                    g2.setColor(speedColors[i]);
-                    g2.drawString("" + (i * 10), i * 30 - 100, 10);
-                }
+                index.visualize(new LocationIndexTree.Plotter() {
+                    public void plotBBox(BBox bbox, int width) {
+                        g2.setColor(Color.GRAY);
+                        mg.plotEdge(g2, bbox.minLat, bbox.minLon, bbox.minLat, bbox.maxLon, width);
+                        mg.plotEdge(g2, bbox.minLat, bbox.maxLon, bbox.maxLat, bbox.maxLon, width);
+                        mg.plotEdge(g2, bbox.maxLat, bbox.maxLon, bbox.maxLat, bbox.minLon, width);
+                        mg.plotEdge(g2, bbox.maxLat, bbox.minLon, bbox.minLat, bbox.minLon, width);
+                    }
 
-                g2.setColor(Color.BLACK);
+                    @Override
+                    public void plotNode(int node) {
+                        mg.plotNode(g2, node, Color.BLUE);
+                    }
+
+                    @Override
+                    public void plotWarn(double lat, double lon, int width) {
+                        g2.setColor(Color.RED);
+                        mg.plot(g2, lat, lon, width);
+                    }
+                });
+
+//                g2.setColor(Color.WHITE);
+//                g2.fillRect(0, 0, 1000, 20);
+//                for (int i = 4; i < speedColors.length; i++) {
+//                    g2.setColor(speedColors[i]);
+//                    g2.drawString("" + (i * 10), i * 30 - 100, 10);
+//                }
+//
+//                g2.setColor(Color.BLACK);
             }
         });
 
-        mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
-            @Override
-            public void paintComponent(final Graphics2D g2) {
-                if (fromRes == null || toRes == null)
-                    return;
+        mainPanel.addLayer(pathLayer = new
 
-                makeTransparent(g2);
-                QueryGraph qGraph = new QueryGraph(routingGraph).lookup(fromRes, toRes);
-                RoutingAlgorithm algo = algoFactory.createAlgo(qGraph, algoOpts);
-                if (algo instanceof DebugAlgo) {
-                    ((DebugAlgo) algo).setGraphics2D(g2);
-                }
+                DefaultMapLayer() {
+                    @Override
+                    public void paintComponent(final Graphics2D g2) {
+                        if (fromRes == null || toRes == null)
+                            return;
 
-                StopWatch sw = new StopWatch().start();
-                logger.info("start searching with " + algo + " from:" + fromRes + " to:" + toRes + " " + weighting);
+                        makeTransparent(g2);
+                        QueryGraph qGraph = new QueryGraph(routingGraph).lookup(fromRes, toRes);
+                        RoutingAlgorithm algo = algoFactory.createAlgo(qGraph, algoOpts);
+                        if (algo instanceof DebugAlgo) {
+                            ((DebugAlgo) algo).setGraphics2D(g2);
+                        }
+
+                        StopWatch sw = new StopWatch().start();
+                        logger.info("start searching with " + algo + " from:" + fromRes + " to:" + toRes + " " + weighting);
 
 //                GHPoint qp = fromRes.getQueryPoint();
 //                TIntHashSet set = index.findNetworkEntries(qp.lat, qp.lon, 1);
@@ -317,28 +346,28 @@ public class MiniGraphUI {
 //                    mg.plotText(g2, lat, lon, nodeId + ": " + dist);
 //                    mg.plotNode(g2, nodeId, Color.red);
 //                }
-                Color red = Color.red.brighter();
-                g2.setColor(red);
-                mg.plotNode(g2, qGraph.getNodeAccess(), fromRes.getClosestNode(), red, 10, "");
-                mg.plotNode(g2, qGraph.getNodeAccess(), toRes.getClosestNode(), red, 10, "");
+                        Color red = Color.red.brighter();
+                        g2.setColor(red);
+                        mg.plotNode(g2, qGraph.getNodeAccess(), fromRes.getClosestNode(), red, 10, "");
+                        mg.plotNode(g2, qGraph.getNodeAccess(), toRes.getClosestNode(), red, 10, "");
 
-                g2.setColor(Color.blue.brighter().brighter());
-                path = algo.calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
-                sw.stop();
+                        g2.setColor(Color.blue.brighter().brighter());
+                        path = algo.calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
+                        sw.stop();
 
-                // if directed edges
-                if (!path.isFound()) {
-                    logger.warn("path not found! direction not valid?");
-                    return;
-                }
+                        // if directed edges
+                        if (!path.isFound()) {
+                            logger.warn("path not found! direction not valid?");
+                            return;
+                        }
 
-                logger.info("found path in " + sw.getSeconds() + "s with nodes:"
-                        + path.calcNodes().size() + ", millis: " + path.getTime()
-                        + ", visited nodes:" + algo.getVisitedNodes());
-                g2.setColor(red);
-                plotPath(path, g2, 4);
-            }
-        });
+                        logger.info("found path in " + sw.getSeconds() + "s with nodes:"
+                                + path.calcNodes().size() + ", millis: " + path.getTime()
+                                + ", visited nodes:" + algo.getVisitedNodes());
+                        g2.setColor(red);
+                        plotPath(path, g2, 4);
+                    }
+                });
 
         if (debug) {
             // disable double buffering for debugging drawing - nice! when do we need DebugGraphics then?
@@ -557,7 +586,7 @@ public class MiniGraphUI {
     }
 
     void repaintRoads() {
-        // avoid threading as there should be no updated to scale or offset while painting 
+        // avoid threading as there should be no updated to scale or offset while painting
         // (would to lead to artifacts)
         StopWatch sw = new StopWatch().start();
         pathLayer.repaint();

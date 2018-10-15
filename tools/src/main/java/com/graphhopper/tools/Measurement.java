@@ -88,22 +88,22 @@ public class Measurement {
         GraphHopper hopper = new GraphHopperOSM() {
             @Override
             protected void prepareCH() {
-                StopWatch sw = new StopWatch().start();
-                super.prepareCH();
-                put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
-                int edges = getGraphHopperStorage().getAllEdges().length();
-                if (getCHFactoryDecorator().hasWeightings()) {
-                    Weighting weighting = getCHFactoryDecorator().getWeightings().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getAllEdges().length();
-                    put(Parameters.CH.PREPARE + "shortcuts", edgesAndShortcuts - edges);
-                }
+//                StopWatch sw = new StopWatch().start();
+//                super.prepareCH();
+//                put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
+//                int edges = getGraphHopperStorage().getAllEdges().length();
+//                if (getCHFactoryDecorator().hasWeightings()) {
+//                    Weighting weighting = getCHFactoryDecorator().getWeightings().get(0);
+//                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getAllEdges().length();
+//                    put(Parameters.CH.PREPARE + "shortcuts", edgesAndShortcuts - edges);
+//                }
             }
 
             @Override
             protected void loadOrPrepareLM() {
-                StopWatch sw = new StopWatch().start();
-                super.loadOrPrepareLM();
-                put(Parameters.Landmark.PREPARE + "time", sw.stop().getMillis());
+//                StopWatch sw = new StopWatch().start();
+//                super.loadOrPrepareLM();
+//                put(Parameters.Landmark.PREPARE + "time", sw.stop().getMillis());
             }
 
             @Override
@@ -135,42 +135,42 @@ public class Measurement {
             boolean isCH = false;
             boolean isLM = false;
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
-            printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
+//            printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
-            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1, true);
-
-            if (hopper.getLMFactoryDecorator().isEnabled()) {
-                System.gc();
-                isLM = true;
-                int activeLMCount = 12;
-                for (; activeLMCount > 3; activeLMCount -= 4) {
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount, true);
-                }
-
-                // compareRouting(hopper, vehicleStr, count / 5);
-            }
-
-            if (hopper.getCHFactoryDecorator().isEnabled()) {
-                isCH = true;
-//                compareCHWithAndWithoutSOD(hopper, vehicleStr, count/5);
-                if (hopper.getLMFactoryDecorator().isEnabled()) {
-                    isLM = true;
-                    System.gc();
-                    // try just one constellation, often ~4-6 is best
-                    int lmCount = 5;
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr, true, lmCount, true);
-                }
-
-                isLM = false;
-                System.gc();
-                Weighting weighting = hopper.getCHFactoryDecorator().getWeightings().get(0);
-                CHGraph lg = g.getGraph(CHGraph.class, weighting);
-                fillAllowedEdges(lg.getAllEdges(), allowedEdges);
-                printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1, true);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr, true, -1, false);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1, true);
-            }
+//            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1, true);
+//
+//            if (hopper.getLMFactoryDecorator().isEnabled()) {
+//                System.gc();
+//                isLM = true;
+//                int activeLMCount = 12;
+//                for (; activeLMCount > 3; activeLMCount -= 4) {
+//                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount, true);
+//                }
+//
+//                // compareRouting(hopper, vehicleStr, count / 5);
+//            }
+//
+//            if (hopper.getCHFactoryDecorator().isEnabled()) {
+//                isCH = true;
+////                compareCHWithAndWithoutSOD(hopper, vehicleStr, count/5);
+//                if (hopper.getLMFactoryDecorator().isEnabled()) {
+//                    isLM = true;
+//                    System.gc();
+//                    // try just one constellation, often ~4-6 is best
+//                    int lmCount = 5;
+//                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr, true, lmCount, true);
+//                }
+//
+//                isLM = false;
+//                System.gc();
+//                Weighting weighting = hopper.getCHFactoryDecorator().getWeightings().get(0);
+//                CHGraph lg = g.getGraph(CHGraph.class, weighting);
+//                fillAllowedEdges(lg.getAllEdges(), allowedEdges);
+//                printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
+//                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1, true);
+//                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr, true, -1, false);
+//                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1, true);
+//            }
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
             put("error", ex.toString());
