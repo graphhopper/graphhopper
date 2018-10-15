@@ -228,12 +228,6 @@
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
-            <!-- this exception is valid for jdk8 profile below too -->
-            <modules>
-                <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518
-                Currently works for jdk8 only -->
-                <module>reader-shp</module>
-            </modules>
             <build>
                 <plugins>
                     <plugin>
