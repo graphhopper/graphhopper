@@ -25,16 +25,13 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -101,6 +98,16 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         assertTrue(res.isValid());
         assertEquals(26936, res.getQueryDistance(), 1);
         assertEquals(new GHPoint(-0.441624, 0.317259), res.getSnappedPoint());
+    }
+    
+    @Test
+    public void testQuery() {
+        Graph graph = createTestGraph2();
+        LocationIndexTree index = createIndex(graph, 500);
+        Collection<Integer> list = index.query(new BBox(11.57314, 11.57614, 49.94553, 49.94853));
+        assertEquals(17, list.size());
+        assertTrue(list.containsAll(Arrays.asList(2, 3, 4, 5, 6)));
+        assertFalse(list.containsAll(Arrays.asList(17, 18, 25, 30)));
     }
 
     @Test
