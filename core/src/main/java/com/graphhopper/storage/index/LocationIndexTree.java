@@ -29,26 +29,25 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-
-import java.util.ArrayList;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
- * This implementation implements an n-tree to get the closest node or edge from GPS coordinates.
- * <p>
- * All leafs are at the same depth, otherwise it is quite complicated to calculate the Bresenham
- * line for different resolutions, especially if a leaf node could be split into a tree-node and
- * resolution changes.
- * <p>
+ * This class implements a Quadtree to get the closest node or edge from GPS coordinates.
+ * The following properties are different to an ordinary implementation:
+ * <ol>
+ * <li>To reduce overall size it can use 16 instead of just 4 cell if required</li>
+ * <li>Still all leafs are at the same depth, otherwise it is too complicated to calculate the Bresenham line for different
+ * resolutions, especially if a leaf node could be split into a tree-node and resolution changes.</li>
+ * <li>To further reduce size this Quadtree avoids storing the bounding box of every cell and calculates this per request instead.</li>
+ * <li>To simplify this querying and avoid a slow down for the most frequent queries ala "lat,lon" it encodes the point
+ * into a reverse spatial key {@see SpatialKeyAlgo} and can the use the resulting raw bits as cell index to recurse
+ * into the subtrees. E.g. if there are 3 layers with 16, 4 and 4 cells each, then
+ * the reverse spatial key has three parts: 4 bits for the cellIndex into the 16 cells, 2 bits for the next layer and 2 bits for the last layer.
+ * It is the reverse spatial key and not the forward spatial key as we need the start of the index for the current layer at index 0</li>
+ * </ol>
  *
  * @author Peter Karich
  */
@@ -443,6 +442,63 @@ public class LocationIndexTree implements LocationIndex {
         return center;
     }
 
+    public interface Visitor {
+        void onCellBBox(BBox bbox, int width);
+
+        void onNode(int node);
+    }
+
+    /**
+     * This method can be used to visualize the cell boundaries and contained nodes of this LocationIndexTree.
+     */
+    public void visualize(Visitor plotter) {
+        BBox bbox = graph.getBounds();
+        visualize(START_POINTER, bbox.minLat, bbox.minLon,
+                (bbox.maxLat - bbox.minLat), (bbox.maxLon - bbox.minLon), plotter, 0);
+    }
+
+    final void visualize(int intPointer,
+                         double minLat, double minLon,
+                         double deltaLatPerDepth, double deltaLonPerDepth,
+                         Visitor plotter, int depth) {
+        long pointer = (long) intPointer * 4;
+        if (depth == entries.length) {
+            int intTmpPointer = dataAccess.getInt(pointer);
+            if (intTmpPointer < 0) {
+                // single data entries
+                plotter.onNode(-(intTmpPointer + 1));
+            } else {
+                long maxPointer = (long) intTmpPointer * 4;
+                // loop through every leaf entry => value is maxPointer
+                for (long leafIndex = pointer + 4; leafIndex < maxPointer; leafIndex += 4) {
+                    plotter.onNode(dataAccess.getInt(leafIndex));
+                }
+            }
+            return;
+        }
+
+        int max = (1 << shifts[depth]);
+        int factor = max == 4 ? 2 : 4;
+        deltaLonPerDepth /= factor;
+        deltaLatPerDepth /= factor;
+        for (int cellIndex = 0; cellIndex < max; cellIndex++) {
+            int nextIntPointer = dataAccess.getInt(pointer + cellIndex * 4);
+            if (nextIntPointer <= 0)
+                continue;
+
+            // this bit magic does two things for the 4 and 16 case:
+            // 1. it assumes the cellIndex is a reversed spatial key and so it reverses it
+            // 2. it picks every second bit (e.g. for just latitudes) and interprets the result as an integer
+            int latCount = max == 4 ? (cellIndex & 1) : (cellIndex & 1) * 2 + ((cellIndex & 4) == 0 ? 0 : 1);
+            int lonCount = max == 4 ? (cellIndex >> 1) : (cellIndex & 2) + ((cellIndex & 8) == 0 ? 0 : 1);
+            double tmpMinLon = minLon + deltaLonPerDepth * lonCount,
+                    tmpMinLat = minLat + deltaLatPerDepth * latCount;
+            BBox cellBBox = new BBox(tmpMinLon, tmpMinLon + deltaLonPerDepth, tmpMinLat, tmpMinLat + deltaLatPerDepth);
+            plotter.onCellBBox(cellBBox, Math.max(1, Math.min(4, 4 - depth)));
+            visualize(nextIntPointer, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, plotter, depth + 1);
+        }
+    }
+
     /**
      * This method collects the node indices from the quad tree data structure in a certain order
      * which makes sure not too many nodes are collected as well as no nodes will be missing. See
@@ -569,13 +625,13 @@ public class LocationIndexTree implements LocationIndex {
 
         return closestMatch;
     }
-    
+
     /**
      * Returns all edges that are within the specified radius around the queried position.
      * Searches at most 9 cells to avoid performance problems. Hence, if the radius is larger than
      * the cell width then not all edges might be returned.
-     * 
-     * TODO: either clarify the method name and description (to only search e.g. 9 tiles) or 
+     * <p>
+     * TODO: either clarify the method name and description (to only search e.g. 9 tiles) or
      * refactor so it can handle a radius larger than 9 tiles. Also remove reference to 'NClosest',
      * which is misleading, and don't always return at least one value. See map-matching #65.
      * TODO: tidy up logic - see comments in graphhopper #994.
@@ -583,7 +639,7 @@ public class LocationIndexTree implements LocationIndex {
      * @param radius in meters
      */
     public List<QueryResult> findNClosest(final double queryLat, final double queryLon,
-            final EdgeFilter edgeFilter, double radius) {
+                                          final EdgeFilter edgeFilter, double radius) {
         // Return ALL results which are very close and e.g. within the GPS signal accuracy.
         // Also important to get all edges if GPS point is close to a junction.
         final double returnAllResultsWithin = distCalc.calcNormalizedDist(radius);
@@ -682,7 +738,7 @@ public class LocationIndexTree implements LocationIndex {
 
         return queryResults;
     }
-    
+
     // make entries static as otherwise we get an additional reference to this class (memory waste)
     interface InMemEntry {
         boolean isLeaf();

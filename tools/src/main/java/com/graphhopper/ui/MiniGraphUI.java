@@ -193,7 +193,7 @@ public class MiniGraphUI {
             Random rand = new Random();
 
             @Override
-            public void paintComponent(Graphics2D g2) {
+            public void paintComponent(final Graphics2D g2) {
                 clearGraphics(g2);
                 int locs = graph.getNodes();
                 Rectangle d = getBounds();
@@ -269,12 +269,31 @@ public class MiniGraphUI {
                     boolean fwd = encoder.isForward(edge.getFlags());
                     boolean bwd = encoder.isBackward(edge.getFlags());
                     float width = speed > 90 ? 1f : 0.8f;
-                    if (fwd && !bwd) {
-                        mg.plotDirectedEdge(g2, lat, lon, lat2, lon2, width);
-                    } else {
-                        mg.plotEdge(g2, lat, lon, lat2, lon2, width);
+                    PointList pl = edge.fetchWayGeometry(3);
+                    for (int i = 1; i < pl.size(); i++) {
+                        if (fwd && !bwd) {
+                            mg.plotDirectedEdge(g2, pl.getLatitude(i - 1), pl.getLongitude(i - 1), pl.getLatitude(i), pl.getLongitude(i), width);
+                        } else {
+                            mg.plotEdge(g2, pl.getLatitude(i - 1), pl.getLongitude(i - 1), pl.getLatitude(i), pl.getLongitude(i), width);
+                        }
                     }
                 }
+
+                index.visualize(new LocationIndexTree.Visitor() {
+                    @Override
+                    public void onCellBBox(BBox bbox, int width) {
+                        g2.setColor(Color.GRAY);
+                        mg.plotEdge(g2, bbox.minLat, bbox.minLon, bbox.minLat, bbox.maxLon, width);
+                        mg.plotEdge(g2, bbox.minLat, bbox.maxLon, bbox.maxLat, bbox.maxLon, width);
+                        mg.plotEdge(g2, bbox.maxLat, bbox.maxLon, bbox.maxLat, bbox.minLon, width);
+                        mg.plotEdge(g2, bbox.maxLat, bbox.minLon, bbox.minLat, bbox.minLon, width);
+                    }
+
+                    @Override
+                    public void onNode(int node) {
+                        // mg.plotNode(g2, node, Color.BLUE);
+                    }
+                });
 
                 g2.setColor(Color.WHITE);
                 g2.fillRect(0, 0, 1000, 20);
