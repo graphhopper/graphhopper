@@ -212,8 +212,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     /**
      * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
-     * strict negative or blocks access (like a barrier), then the value is strict positive.This
+     * strict negative or blocks access (like a barrier), then the value is strictly positive. This
      * method is called in the second parsing step.
+     *
+     * @return encoded values or 0 if not blocking or no value stored
      */
     public long handleNodeTags(ReaderNode node) {
         // absolute barriers always block
@@ -226,7 +228,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
             if (node.hasTag("locked", "yes"))
                 locked = true;
 
-             for (String res : restrictions) {
+            for (String res : restrictions) {
                 if (!locked && node.hasTag(res, intendedValues))
                     return 0;
 

@@ -15,7 +15,7 @@ The core module includes the following software:
  * Apache Commons Collections - we copied parts of the BinaryHeap (Apache License)
  * java-string-similarity - we copied the implementation of JaroWinkler (MIT license)
  * com.fasterxml.jackson.core:jackson-annotations (Apache License)
- * com.vividsolutions:jts (LGPL), see #1039
+ * org.locationtech:jts (EDL), see #1039
 
 reader-osm:
 
@@ -25,7 +25,7 @@ reader-osm:
 
 reader-gtfs:
  
- * com.conveyal:gtfs-lib (BSD 2-clause license)
+ * some files from com.conveyal:gtfs-lib (BSD 2-clause license)
  * com.google.transit:gtfs-realtime-bindings (Apache license)
 
 reader-shp:

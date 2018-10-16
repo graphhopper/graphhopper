@@ -28,6 +28,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -60,7 +61,7 @@ public class NodeBasedNodeContractorTest {
     }
 
     private NodeContractor createNodeContractor() {
-        NodeContractor nodeContractor = new NodeBasedNodeContractor(dir, graph, lg, weighting);
+        NodeContractor nodeContractor = new NodeBasedNodeContractor(dir, graph, lg, weighting, new PMap());
         nodeContractor.initFromGraph();
         nodeContractor.prepareContraction();
         return nodeContractor;

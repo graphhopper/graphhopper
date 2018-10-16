@@ -41,13 +41,13 @@ script:
   - "mvn -Dkey=$API_KEY clean test verify checkstyle:check spotbugs:check forbiddenapis:check -B"
 
 after_success:
-  # deploy snapshot artifacts to sonatype and if tagged deploy then release to maven central
-  - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-        mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
-    elif [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_TAG" != "" ]; then
+  # if tagged deploy then release to maven central or deploy snapshot artifacts to sonatype 
+  - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_TAG" != "" ]; then
         echo "release to maven central";
         mvn versions:set -DnewVersion=$TRAVIS_TAG -DgenerateBackupPoms=false;
         mvn deploy -P release --settings core/files/settings.xml -DskipTests=true -B;
+    elif [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+        mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
     else
         echo "Not deploying artifacts for $TRAVIS_BRANCH";
     fi
