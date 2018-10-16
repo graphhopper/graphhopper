@@ -90,9 +90,9 @@ public class FlexWeighting implements Weighting {
         } else if (!edgeState.get(accessEnc)) {
             return Double.POSITIVE_INFINITY;
         }
-        if (model.getNoAccess().getRoadClass().contains(edgeState.get(roadClassEnc).toString()))
+        if (model.getNoAccess().getRoadClass().contains(edgeState.get(roadClassEnc)))
             return Double.POSITIVE_INFINITY;
-        if (model.getNoAccess().getRoadEnvironment().contains(edgeState.get(roadEnvEnc).toString()))
+        if (model.getNoAccess().getRoadEnvironment().contains(edgeState.get(roadEnvEnc)))
             return Double.POSITIVE_INFINITY;
 
 //        if (edgeState.get(weightEnc) > model.getNoAccess().getMaxWeight())
