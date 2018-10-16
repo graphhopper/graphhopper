@@ -159,24 +159,17 @@ public class GraphHopperOSMTest {
         LocationIndexTree index = (LocationIndexTree) gh.getLocationIndex();
         final EdgeExplorer edgeExplorer = gh.getGraphHopperStorage().createEdgeExplorer();
         final BBox bbox = new BBox(7.422, 7.429, 43.729, 43.734);
-        index.query(bbox, new LocationIndexTree.Visitor() {
+        index.query(bbox, new LocationIndexTree.EdgeVisitor(edgeExplorer) {
             @Override
             public void onCellBBox(BBox bbox, int width) {
             }
 
             @Override
-            public void onNode(int nodeId) {
-                double lat = na.getLatitude(nodeId);
-                double lon = na.getLongitude(nodeId);
-                if (bbox.contains(lat, lon))
-                    indexNodeList.add(nodeId);
-
-                // TODO should be done behind the scene?
-                EdgeIterator iter = edgeExplorer.setBaseNode(nodeId);
-                while (iter.next()) {
-                    nodeId = iter.getAdjNode();
-                    lat = na.getLatitude(nodeId);
-                    lon = na.getLongitude(nodeId);
+            public void onEdge(int edgeId, int nodeA, int nodeB) {
+                for (int i = 0; i < 2; i++) {
+                    int nodeId = i == 0 ? nodeA : nodeB;
+                    double lat = na.getLatitude(nodeId);
+                    double lon = na.getLongitude(nodeId);
                     if (bbox.contains(lat, lon))
                         indexNodeList.add(nodeId);
                 }

@@ -448,10 +448,38 @@ public class LocationIndexTree implements LocationIndex {
         return center;
     }
 
+    /**
+     * This interface allows to visit every node stored in the leafs for a requested area. It makes no guarantee to
+     * visit nodes only once and also it does not guarantee to visit all nodes, it just visits base- or adjacent-nodes
+     * of all edges laying in the requested area.
+     */
     public interface Visitor {
         void onCellBBox(BBox bbox, int width);
 
-        void onNode(int node);
+        void onNode(int nodeId);
+    }
+
+    /**
+     * This abstract class allows to visit every edge from the stored nodes in the leafs of the tree for a requested area.
+     * It guarantees to return all edges but can visit it multiple times. For performance critical methods it might be
+     * better to directly use the Visitor interface.
+     */
+    public static abstract class EdgeVisitor implements Visitor {
+
+        private final EdgeExplorer edgeExplorer;
+
+        public EdgeVisitor(EdgeExplorer edgeExplorer) {
+            this.edgeExplorer = edgeExplorer;
+        }
+
+        public final void onNode(int nodeId) {
+            EdgeIterator iter = edgeExplorer.setBaseNode(nodeId);
+            while (iter.next()) {
+                onEdge(iter.getEdge(), nodeId, iter.getAdjNode());
+            }
+        }
+
+        public abstract void onEdge(int edgeId, int nodeA, int nodeB);
     }
 
     /**
