@@ -427,12 +427,12 @@ public abstract class AbstractBikeFlagEncoderTester {
     @Test
     public void testPriority() {
         IntsRef flags = encodingManager.createEdgeFlags();
-        encoder.priorityWayEncoder.setInt(false, flags, PriorityCode.BEST.getValue());
+        encoder.priorityWayEncoder.setDecimal(false, flags, 1);
         DecimalEncodedValue priorityEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
         assertEquals(1, priorityEnc.getDecimal(false, flags), 1e-3);
 
         flags = encodingManager.createEdgeFlags();
-        encoder.priorityWayEncoder.setInt(false, flags, PriorityCode.AVOID_IF_POSSIBLE.getValue());
+        encoder.priorityWayEncoder.setDecimal(false, flags, (double) PriorityCode.AVOID_IF_POSSIBLE.getValue() / PriorityCode.BEST.getValue());
         assertEquals(3d / 7d, priorityEnc.getDecimal(false, flags), 1e-3);
     }
 

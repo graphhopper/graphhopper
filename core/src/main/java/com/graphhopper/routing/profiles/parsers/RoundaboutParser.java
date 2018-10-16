@@ -19,6 +19,7 @@ package com.graphhopper.routing.profiles.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.BooleanEncodedValueImpl;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 
@@ -27,7 +28,7 @@ public class RoundaboutParser extends AbstractTagParser {
 
     public RoundaboutParser() {
         super(EncodingManager.ROUNDABOUT);
-        this.roundaboutEnc = new BooleanEncodedValue(EncodingManager.ROUNDABOUT, false);
+        this.roundaboutEnc = new BooleanEncodedValueImpl(EncodingManager.ROUNDABOUT, false);
     }
 
     public BooleanEncodedValue getEnc() {

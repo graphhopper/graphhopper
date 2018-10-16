@@ -35,6 +35,6 @@ public enum RoadEnvironment {
     }
 
     public static EnumEncodedValue<RoadEnvironment> create() {
-        return new EnumEncodedValue<>(EncodingManager.ROAD_ENV, values(), DEFAULT);
+        return new EnumEncodedValueImpl<>(EncodingManager.ROAD_ENV, values(), DEFAULT);
     }
 }

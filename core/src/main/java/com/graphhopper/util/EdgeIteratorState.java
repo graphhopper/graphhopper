@@ -17,10 +17,7 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 
 /**
@@ -31,11 +28,26 @@ import com.graphhopper.storage.IntsRef;
  * @see EdgeExplorer
  */
 public interface EdgeIteratorState {
-    BooleanEncodedValue UNFAVORED_EDGE = new BooleanEncodedValue("unfavored");
+    BooleanEncodedValue UNFAVORED_EDGE = new BooleanEncodedValueImpl("unfavored");
     /**
      * This method can be used to fetch the internal reverse state of an edge.
      */
-    BooleanEncodedValue REVERSE_STATE = new BooleanEncodedValue("reverse") {
+    BooleanEncodedValue REVERSE_STATE = new BooleanEncodedValue() {
+        @Override
+        public int init(InitializerConfig init) {
+            throw new IllegalStateException("init cannot be used for REVERSE_STATE");
+        }
+
+        @Override
+        public String getName() {
+            return "reverse";
+        }
+
+        @Override
+        public void setBool(boolean reverse, IntsRef ref, boolean value) {
+            throw new IllegalStateException("setBool cannot be used for REVERSE_STATE");
+        }
+
         @Override
         public boolean getBool(boolean reverse, IntsRef ref) {
             return reverse;

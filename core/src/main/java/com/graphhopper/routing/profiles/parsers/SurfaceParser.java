@@ -39,7 +39,7 @@ public class SurfaceParser extends AbstractTagParser {
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
         String surfaceValue = way.getTag("surface");
         int intValue = enc.indexOf(surfaceValue);
-        enc.setInt(false, edgeFlags, intValue);
+        enc.setEnum(false, edgeFlags, enc.getEnums()[intValue]);
         return edgeFlags;
     }
 }

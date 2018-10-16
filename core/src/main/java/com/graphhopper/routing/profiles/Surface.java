@@ -35,6 +35,6 @@ public enum Surface {
     }
 
     public static EnumEncodedValue<Surface> create() {
-        return new EnumEncodedValue<>(EncodingManager.SURFACE, values(), DEFAULT);
+        return new EnumEncodedValueImpl<>(EncodingManager.SURFACE, values(), DEFAULT);
     }
 }

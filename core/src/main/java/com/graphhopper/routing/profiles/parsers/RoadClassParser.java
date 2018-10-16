@@ -50,7 +50,7 @@ public class RoadClassParser extends AbstractTagParser {
         if (hwValue == 0)
             return edgeFlags;
 
-        enc.setInt(false, edgeFlags, hwValue);
+        enc.setEnum(false, edgeFlags, enc.getEnums()[hwValue]);
         return edgeFlags;
     }
 

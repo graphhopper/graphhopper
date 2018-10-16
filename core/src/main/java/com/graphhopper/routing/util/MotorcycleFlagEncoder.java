@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValueImpl;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.weighting.CurvatureWeighting;
 import com.graphhopper.routing.weighting.PriorityWeighting;
@@ -131,11 +132,9 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
 
-        // TODO max == 7
-        registerNewEncodedValue.add(priorityWayEncoder = new DecimalEncodedValue(prefix + "priority", 3, 0, 1.0 / PriorityCode.BEST.getValue(), false));
+        registerNewEncodedValue.add(priorityWayEncoder = new DecimalEncodedValueImpl(prefix + "priority", 3, 0, 1.0 / PriorityCode.BEST.getValue(), false));
 
-        // TODO max == 10
-        registerNewEncodedValue.add(curvatureEncoder = new DecimalEncodedValue(prefix + "curvature", 4, 0, 0.1, false));
+        registerNewEncodedValue.add(curvatureEncoder = new DecimalEncodedValueImpl(prefix + "curvature", 4, 0, 0.1, false));
     }
 
     @Override
@@ -225,10 +224,10 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
             setSpeed(true, edgeFlags, ferrySpeed);
         }
 
-        priorityWayEncoder.setInt(false, edgeFlags, handlePriority(priorityFromRelation, way));
+        priorityWayEncoder.setDecimal(false, edgeFlags, (double) handlePriority(priorityFromRelation, way) / PriorityCode.BEST.getValue());
 
         // Set the curvature to the Maximum
-        curvatureEncoder.setInt(false, edgeFlags, 10);
+        curvatureEncoder.setDecimal(false, edgeFlags, 1.0);
         return edgeFlags;
     }
 

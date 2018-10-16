@@ -23,7 +23,7 @@ import com.graphhopper.storage.IntsRef;
 
 import java.util.Collection;
 
-public class MappedDecimalEncodedValue extends IntEncodedValue {
+public class MappedDecimalEncodedValueImpl extends IntEncodedValueImpl implements DecimalEncodedValue {
     private final int toValueMap[];
     private final IntIntHashMap toStorageMap;
     private final double precision;
@@ -32,7 +32,7 @@ public class MappedDecimalEncodedValue extends IntEncodedValue {
      * This class allows to store a value efficiently if it can take only a few decimal values that are not necessarily
      * consecutive.
      */
-    public MappedDecimalEncodedValue(String name, Collection<Double> values, double precision, Double defaultValue, boolean storeBothDirections) {
+    public MappedDecimalEncodedValueImpl(String name, Collection<Double> values, double precision, Double defaultValue, boolean storeBothDirections) {
         super(name, 32 - Integer.numberOfLeadingZeros(values.size()), -1, storeBothDirections);
 
         this.precision = precision;
@@ -62,6 +62,7 @@ public class MappedDecimalEncodedValue extends IntEncodedValue {
         return (int) Math.round(val / precision);
     }
 
+    @Override
     public final void setDecimal(boolean reverse, IntsRef ref, double value) {
         int storageInt = toStorageMap.getOrDefault(toInt(value), -1);
         if (storageInt < 0)
@@ -70,6 +71,7 @@ public class MappedDecimalEncodedValue extends IntEncodedValue {
         super.setInt(reverse, ref, storageInt);
     }
 
+    @Override
     public final double getDecimal(boolean reverse, IntsRef ref) {
         int value = getInt(reverse, ref);
         return toValueMap[value] * precision;

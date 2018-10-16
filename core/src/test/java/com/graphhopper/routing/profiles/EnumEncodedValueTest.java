@@ -15,7 +15,7 @@ public class EnumEncodedValueTest {
 
     @Test
     public void testInit() {
-        EnumEncodedValue<TestEnum> prop = new EnumEncodedValue<>("highway", TestEnum.values(), TestEnum.SECONDARY);
+        EnumEncodedValueImpl<TestEnum> prop = new EnumEncodedValueImpl<>("highway", TestEnum.values(), TestEnum.SECONDARY);
         EncodedValue.InitializerConfig init = new EncodedValue.InitializerConfig();
         assertEquals(2, prop.init(init));
         assertEquals(2, prop.bits);

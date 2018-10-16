@@ -19,56 +19,17 @@ package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * This class holds an array of Enums and stores only the array index via IntEncodedValue.
  */
-public class EnumEncodedValue<T extends Enum> extends IntEncodedValue {
-    private final T[] enums;
-    private final Map<String, Integer> enumMap;
+public interface EnumEncodedValue<T extends Enum> extends EncodedValue {
+    int size();
 
-    public EnumEncodedValue(String name, T[] values, T _default) {
-        super(name, 32 - Integer.numberOfLeadingZeros(values.length));
-        enums = values;
-        enumMap = new HashMap<>(values.length);
-        int counter = 0;
-        for (Enum v : values) {
-            enumMap.put(v.toString(), counter++);
-        }
+    int indexOf(String value);
 
-        this.defaultValue = _default.ordinal();
-    }
+    T[] getEnums();
 
-    public final int size() {
-        return enums.length;
-    }
+    void setEnum(boolean reverse, IntsRef ref, T value);
 
-    /**
-     * Provides an index based lookup of the specified value.
-     */
-    public final int indexOf(String value) {
-        if (value == null)
-            return defaultValue;
-        Integer res = enumMap.get(value);
-        if (res == null)
-            return defaultValue;
-        return res;
-    }
-
-    public T[] getEnums() {
-        return enums;
-    }
-
-    public final void setEnum(boolean reverse, IntsRef ref, T value) {
-        super.setInt(reverse, ref, value.ordinal());
-    }
-
-    public final T getEnum(boolean reverse, IntsRef ref) {
-        int value = super.getInt(reverse, ref);
-        if (value < 0 || value >= enums.length)
-            return enums[defaultValue];
-        return enums[value];
-    }
+    T getEnum(boolean reverse, IntsRef ref);
 }

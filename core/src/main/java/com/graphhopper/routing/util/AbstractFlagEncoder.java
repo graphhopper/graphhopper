@@ -173,7 +173,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      */
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
         // define the first 2 speedBits in flags for routing
-        registerNewEncodedValue.add(accessEnc = new BooleanEncodedValue(prefix + "access", true));
+        registerNewEncodedValue.add(accessEnc = new BooleanEncodedValueImpl(prefix + "access", true));
         roundaboutEnc = getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
         encoderBit = 1L << index;
 
