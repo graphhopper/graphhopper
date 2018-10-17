@@ -259,16 +259,33 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     private void checkIfConfiguredAndLoadedWeightingsCompatible() {
         String loadedStr = properties.get("graph.ch.weightings");
-        List<String> loaded = Arrays.asList(loadedStr
-                .substring(1, loadedStr.length() - 1)
-                .split(", "));
+        List<String> loaded = parseList(loadedStr);
         List<Weighting> configured = getCHWeightings();
+        if (configured.isEmpty() && !loaded.isEmpty()) {
+            throw new IllegalStateException("You loaded a CH graph, but you did not specify graph.ch.weightings");
+        }
         for (Weighting w : configured) {
             if (!loaded.contains(w.toString())) {
                 throw new IllegalStateException("Configured weighting: " + w.toString() + " is not contained in loaded weightings " + loadedStr + ".\n" +
                         "You configured graph.ch.weightings: " + configured);
             }
         }
+    }
+
+    /**
+     * parses a string like [a,b,c]
+     */
+    private List<String> parseList(String listStr) {
+        String trimmed = listStr.trim();
+        String[] items = trimmed.substring(1, trimmed.length() - 1).split(",");
+        List<String> result = new ArrayList<>();
+        for (String item : items) {
+            String s = item.trim();
+            if (!s.isEmpty()) {
+                result.add(s);
+            }
+        }
+        return result;
     }
 
     @Override
