@@ -25,10 +25,7 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class manages all storage related methods and delegates the calls to the associated graphs.
@@ -248,10 +245,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             String dim = properties.get("graph.dimension");
             baseGraph.loadExisting(dim);
 
-            String loadedCHWeightings = properties.get("graph.ch.weightings");
-            String configuredCHWeightings = getCHWeightings().toString();
-            if (!loadedCHWeightings.equals(configuredCHWeightings))
-                throw new IllegalStateException("Configured graph.ch.weightings: " + configuredCHWeightings + " is not equal to loaded " + loadedCHWeightings);
+            checkIfConfiguredAndLoadedWeightingsCompatible();
 
             for (CHGraphImpl cg : chGraphs) {
                 if (!cg.loadExisting())
@@ -261,6 +255,20 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             return true;
         }
         return false;
+    }
+
+    private void checkIfConfiguredAndLoadedWeightingsCompatible() {
+        String loadedStr = properties.get("graph.ch.weightings");
+        List<String> loaded = Arrays.asList(loadedStr
+                .substring(1, loadedStr.length() - 1)
+                .split(", "));
+        List<Weighting> configured = getCHWeightings();
+        for (Weighting w : configured) {
+            if (!loaded.contains(w.toString())) {
+                throw new IllegalStateException("Configured weighting: " + w.toString() + " is not contained in loaded weightings " + loadedStr + ".\n" +
+                        "You configured graph.ch.weightings: " + configured);
+            }
+        }
     }
 
     @Override

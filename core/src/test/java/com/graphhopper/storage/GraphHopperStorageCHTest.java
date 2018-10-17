@@ -21,6 +21,7 @@ import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -252,7 +253,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         EdgeExplorer explorer = baseGraph.createEdgeExplorer();
 
         assertTrue(chGraph.getNodes() < qGraph.getNodes());
-        assertTrue(baseGraph.getNodes() == qGraph.getNodes());
+        assertEquals(baseGraph.getNodes(), qGraph.getNodes());
 
         // traverse virtual edges and normal edges but no shortcuts!
         assertEquals(GHUtility.asSet(fromRes.getClosestNode()), GHUtility.getNeighbors(explorer.setBaseNode(0)));
@@ -414,7 +415,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         // throw exception for wrong encoder
         try {
             assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isForward(tmpBike));
-            assertTrue(false);
+            fail();
         } catch (AssertionError ex) {
         }
 
@@ -425,8 +426,60 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         // throw exception for wrong encoder
         try {
             assertFalse(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isBackward(tmpCar));
-            assertTrue(false);
+            fail();
         } catch (AssertionError ex) {
         }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testLoadingWithWrongWeighting_throws() {
+        // we start with one weighting
+        GraphHopperStorage ghStorage = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), false);
+        ghStorage.create(defaultSize);
+        ghStorage.flush();
+
+        // but then configure another weighting and try to load the graph from disk -> error
+        GraphHopperStorage newGHStorage = createStorageWithWeightings(new ShortestWeighting(carEncoder));
+        newGHStorage.loadExisting();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testLoadingWithExtraWeighting_throws() {
+        // we start with one weighting
+        GraphHopperStorage ghStorage = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), false);
+        ghStorage.create(defaultSize);
+        ghStorage.flush();
+
+        // but then add an additional weighting and try to load the graph from disk -> error
+        GraphHopperStorage newGHStorage = createStorageWithWeightings(
+                new FastestWeighting(carEncoder), new ShortestWeighting(carEncoder));
+        newGHStorage.loadExisting();
+    }
+
+    @Test
+    public void testLoadingWithLessWeightings_works() {
+        // we start with a gh storage with two ch weightings and flush it to disk
+        FastestWeighting weighting1 = new FastestWeighting(carEncoder);
+        ShortestWeighting weighting2 = new ShortestWeighting(carEncoder);
+        GraphHopperStorage originalStorage = createStorageWithWeightings(weighting1, weighting2);
+        originalStorage.create(defaultSize);
+        originalStorage.flush();
+
+        // now we create a new storage but only use one of the weightings, which should be ok
+        GraphHopperStorage smallStorage = createStorageWithWeightings(weighting1);
+        smallStorage.loadExisting();
+        assertEquals(1, smallStorage.getCHWeightings().size());
+        smallStorage.flush();
+
+        // now we create yet another storage that uses both weightings again, which still works
+        GraphHopperStorage fullStorage = createStorageWithWeightings(weighting1, weighting2);
+        fullStorage.loadExisting();
+        assertEquals(2, fullStorage.getCHWeightings().size());
+        fullStorage.flush();
+    }
+
+    private GraphHopperStorage createStorageWithWeightings(Weighting... weightings) {
+        return new GraphHopperStorage(Arrays.asList(weightings), new GHDirectory(defaultGraphLoc, DAType.RAM_STORE),
+                encodingManager, false, new GraphExtension.NoOpExtension());
     }
 }
