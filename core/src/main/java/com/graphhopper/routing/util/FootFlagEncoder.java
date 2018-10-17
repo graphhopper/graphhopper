@@ -95,6 +95,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         setBlockByDefault(false);
         absoluteBarriers.add("fence");
         potentialBarriers.add("gate");
+        potentialBarriers.add("cattle_grid");
 
         safeHighwayTags.add("footway");
         safeHighwayTags.add("path");

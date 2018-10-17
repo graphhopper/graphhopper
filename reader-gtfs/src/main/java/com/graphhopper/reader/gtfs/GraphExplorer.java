@@ -32,9 +32,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -96,12 +94,33 @@ final class GraphExplorer {
             @Override
             public boolean tryAdvance(Consumer<? super EdgeIteratorState> action) {
                 if (edgeIterator.next()) {
+                    GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator.getFlags());
+
+                    // Optimization (around 20% in Swiss network):
+                    // Only use the (single) least-wait-time edge to enter the
+                    // time expanded network. Later departures are reached via
+                    // WAIT edges. Algorithmically not necessary, and does not
+                    // reduce total number of relaxed nodes, but takes stress
+                    // off the priority queue.
+                    if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK) {
+                        action.accept(findEnterEdge()); // fully consumes edgeIterator
+                        return true;
+                    }
+
                     action.accept(edgeIterator);
                     return true;
                 }
                 return false;
             }
 
+            private EdgeIteratorState findEnterEdge() {
+                ArrayList<EdgeIteratorState> allEnterEdges = new ArrayList<>();
+                allEnterEdges.add(edgeIterator.detach(false));
+                while (edgeIterator.next()) {
+                    allEnterEdges.add(edgeIterator.detach(false));
+                }
+                return allEnterEdges.stream().min(Comparator.comparingLong(e -> calcTravelTimeMillis(e, label.currentTime))).get();
+            }
 
         }, false);
     }
