@@ -20,19 +20,16 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIterator;
-import com.graphhopper.util.PMap;
 import com.graphhopper.util.StopWatch;
 
 import java.util.*;
 
 import static com.graphhopper.util.Helper.nf;
-import static java.lang.System.nanoTime;
 
 /**
  * Makes it possible to control the node contraction order in contraction hierarchies, which is useful for debugging

@@ -90,12 +90,18 @@ public class Measurement {
             protected void prepareCH() {
                 StopWatch sw = new StopWatch().start();
                 super.prepareCH();
+                // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 int edges = getGraphHopperStorage().getAllEdges().length();
-                if (getCHFactoryDecorator().hasWeightings()) {
+                if (!getCHFactoryDecorator().getNodeBasedWeightings().isEmpty()) {
                     Weighting weighting = getCHFactoryDecorator().getNodeBasedWeightings().get(0);
                     int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getAllEdges().length();
-                    put(Parameters.CH.PREPARE + "shortcuts", edgesAndShortcuts - edges);
+                    put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
+                }
+                if (!getCHFactoryDecorator().getEdgeBasedWeightings().isEmpty()) {
+                    Weighting weighting = getCHFactoryDecorator().getEdgeBasedWeightings().get(0);
+                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getAllEdges().length();
+                    put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
                 }
             }
 
@@ -126,8 +132,12 @@ public class Measurement {
         hopper.importOrLoad();
 
         GraphHopperStorage g = hopper.getGraphHopperStorage();
-        String vehicleStr = args.get("graph.flag_encoders", "car");
-        FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicleStr);
+        EncodingManager encodingManager = hopper.getEncodingManager();
+        if (encodingManager.fetchEdgeEncoders().size() != 1) {
+            throw new IllegalArgumentException("There has to be exactly one encoder for each measurement");
+        }
+        FlagEncoder encoder = encodingManager.fetchEdgeEncoders().get(0);
+        String vehicleStr = encoder.toString();
 
         StopWatch sw = new StopWatch().start();
         try {
@@ -137,14 +147,14 @@ public class Measurement {
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
-            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1, true);
+            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1, true, false);
 
             if (hopper.getLMFactoryDecorator().isEnabled()) {
                 System.gc();
                 isLM = true;
                 int activeLMCount = 12;
                 for (; activeLMCount > 3; activeLMCount -= 4) {
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount, true);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount, true, false);
                 }
 
                 // compareRouting(hopper, vehicleStr, count / 5);
@@ -158,18 +168,24 @@ public class Measurement {
                     System.gc();
                     // try just one constellation, often ~4-6 is best
                     int lmCount = 5;
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr, true, lmCount, true);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr, true, lmCount, true, false);
                 }
 
                 isLM = false;
                 System.gc();
-                Weighting weighting = hopper.getCHFactoryDecorator().getNodeBasedWeightings().get(0);
-                CHGraph lg = g.getGraph(CHGraph.class, weighting);
-                fillAllowedEdges(lg.getAllEdges(), allowedEdges);
-                printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1, true);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr, true, -1, false);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1, true);
+                if (!hopper.getCHFactoryDecorator().getNodeBasedWeightings().isEmpty()) {
+                    Weighting weighting = hopper.getCHFactoryDecorator().getNodeBasedWeightings().get(0);
+                    CHGraph lg = g.getGraph(CHGraph.class, weighting);
+                    fillAllowedEdges(lg.getAllEdges(), allowedEdges);
+                    printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1, true, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr, true, -1, false, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1, true, false);
+                }
+                if (!hopper.getCHFactoryDecorator().getEdgeBasedWeightings().isEmpty()) {
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge", vehicleStr, true, -1, false, true);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge_no_instr", vehicleStr, false, -1, false, true);
+                }
             }
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
@@ -395,7 +411,7 @@ public class Measurement {
 
     private void printTimeOfRouteQuery(final GraphHopper hopper, final boolean ch, final boolean lm,
                                        int count, String prefix, final String vehicle,
-                                       final boolean withInstructions, final int activeLandmarks, final boolean sod) {
+                                       final boolean withInstructions, final int activeLandmarks, final boolean sod, final boolean edgeBased) {
         final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
@@ -427,6 +443,7 @@ public class Measurement {
 
                 req.getHints().put(CH.DISABLE, !ch).
                         put("stall_on_demand", sod).
+                        put(Parameters.Routing.EDGE_BASED, edgeBased).
                         put(Landmark.DISABLE, !lm).
                         put(Landmark.ACTIVE_COUNT, activeLandmarks).
                         put("instructions", withInstructions);
@@ -485,7 +502,7 @@ public class Measurement {
         count -= failedCount.get();
 
         // if using non-bidirectional algorithm make sure you exclude CH routing
-        String algoStr = ch ? Algorithms.DIJKSTRA_BI : Algorithms.ASTAR_BI;
+        String algoStr = (ch && !edgeBased) ? Algorithms.DIJKSTRA_BI : Algorithms.ASTAR_BI;
         if (ch && !sod) {
             algoStr += "_no_sod";
         }

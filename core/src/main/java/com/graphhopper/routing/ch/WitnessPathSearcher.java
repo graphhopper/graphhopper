@@ -29,6 +29,9 @@ import com.graphhopper.util.*;
 
 import java.util.Arrays;
 
+import static com.graphhopper.routing.ch.CHParameters.MIN_MAX_SETTLED_EDGES;
+import static com.graphhopper.routing.ch.CHParameters.SETTLED_EDGES_RESET_INTERVAL;
+import static com.graphhopper.routing.ch.CHParameters.SIGMA_FACTOR;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static java.lang.Double.isInfinite;
 
@@ -122,7 +125,9 @@ public class WitnessPathSearcher {
     }
 
     private void extractParams(PMap pMap) {
-        // todo: use pMap to change default parameters
+        params.sigmaFactor = pMap.getDouble(SIGMA_FACTOR, params.sigmaFactor);
+        params.minimumMaxSettledEdges = pMap.getInt(MIN_MAX_SETTLED_EDGES, params.minimumMaxSettledEdges);
+        params.settledEdgeStatsResetInterval = pMap.getInt(SETTLED_EDGES_RESET_INTERVAL, params.settledEdgeStatsResetInterval);
     }
 
     /**

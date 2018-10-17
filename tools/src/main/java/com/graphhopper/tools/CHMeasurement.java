@@ -38,11 +38,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
+import static com.graphhopper.routing.ch.CHParameters.*;
+import static com.graphhopper.routing.ch.CHParameters.PERIODIC_UPDATES;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static java.lang.System.nanoTime;
@@ -348,22 +349,39 @@ public class CHMeasurement {
      * The queries are compared with a normal AStar search for comparison and to ensure correctness.
      */
     private static void testPerformanceAutomaticNodeOrdering(String[] args) {
+        // example args:
+        // map=berlin.pbf stats_file=stats.dat period_updates=0 lazy_updates=100 neighbor_updates=0 contract_nodes=100 log_messages=20 edge_quotient_weight=1.0 orig_edge_quotient_weight=3.0 hierarchy_depth_weight=2.0 sigma_factor=3.0 min_max_settled_edges=100 reset_interval=10000 landmarks=0 cleanup=true turncosts=true threshold=0.1 seed=456 comp_iterations=10 perf_iterations=100 quick=false
+        long start = nanoTime();
         CmdArgs cmdArgs = CmdArgs.read(args);
         LOGGER.info("Running analysis with parameters {}", cmdArgs);
-        cmdArgs.putIfAbsent("datareader.file", "local/maps/berlin-latest.osm.pbf");
-        int periodicUpdates = cmdArgs.getInt("period_updates", 0);
-        int lazyUpdates = cmdArgs.getInt("lazy_updates", 100);
-        int neighborUpdates = cmdArgs.getInt("neighbor_updates", 0);
-        int contractedNodes = cmdArgs.getInt("contract_nodes", 100);
-        int logMessages = cmdArgs.getInt("log_messages", 5);
-        int landmarks = cmdArgs.getInt("landmarks", 0);
-        boolean cleanup = cmdArgs.getBool("cleanup", true);
-        final boolean withTurnCosts = cmdArgs.getBool("with_turncosts", true);
+        String osmFile = cmdArgs.get("map", "local/maps/unterfranken-latest.osm.pbf");
+        cmdArgs.put("datareader.file", osmFile);
+        final String statsFile = cmdArgs.get("stats_file", null);
+        final int periodicUpdates = cmdArgs.getInt("period_updates", 0);
+        final int lazyUpdates = cmdArgs.getInt("lazy_updates", 100);
+        final int neighborUpdates = cmdArgs.getInt("neighbor_updates", 0);
+        final int contractedNodes = cmdArgs.getInt("contract_nodes", 100);
+        final int logMessages = cmdArgs.getInt("log_messages", 20);
+        final float edgeQuotientWeight = cmdArgs.getFloat("edge_quotient_weight", 1.0f);
+        final float origEdgeQuotientWeight = cmdArgs.getFloat("orig_edge_quotient_weight", 3.0f);
+        final float hierarchyDepthWeight = cmdArgs.getFloat("hierarchy_depth_weight", 2.0f);
+        final double sigmaFactor = cmdArgs.getFloat("sigma_factor", 3.0f);
+        final int minMaxSettledEdges = cmdArgs.getInt("min_max_settled_edges", 100);
+        final int resetInterval = cmdArgs.getInt("reset_interval", 10_000);
+        final int landmarks = cmdArgs.getInt("landmarks", 0);
+        final boolean cleanup = cmdArgs.getBool("cleanup", true);
+        final boolean withTurnCosts = cmdArgs.getBool("turncosts", true);
+        final double errorThreshold = cmdArgs.getDouble("threshold", 0.1);
+        final long seed = cmdArgs.getLong("seed", 456);
+        final int compIterations = cmdArgs.getInt("comp_iterations", 100);
+        final int perfIterations = cmdArgs.getInt("perf_iterations", 1000);
+        final boolean quick = cmdArgs.getBool("quick", false);
 
         final GraphHopper graphHopper = new GraphHopperOSM();
         if (withTurnCosts) {
             cmdArgs.put("graph.flag_encoders", "car|turn_costs=true");
             cmdArgs.put("prepare.ch.weightings", "fastest");
+            cmdArgs.put("prepare.ch.edge_based", "edge_or_node");
             if (landmarks > 0) {
                 cmdArgs.put("prepare.lm.weightings", "fastest");
                 cmdArgs.put("prepare.lm.landmarks", landmarks);
@@ -374,45 +392,104 @@ public class CHMeasurement {
         }
         CHAlgoFactoryDecorator chDecorator = graphHopper.getCHFactoryDecorator();
         chDecorator.setDisablingAllowed(true);
-
-        cmdArgs.put("prepare.ch.updates.periodic", periodicUpdates);
-        cmdArgs.put("prepare.ch.updates.lazy", lazyUpdates);
-        cmdArgs.put("prepare.ch.updates.neighbor", neighborUpdates);
-        cmdArgs.put("prepare.ch.contracted_nodes", contractedNodes);
-        cmdArgs.put("prepare.ch.log_messages", logMessages);
+        cmdArgs.put(PERIODIC_UPDATES, periodicUpdates);
+        cmdArgs.put(LAST_LAZY_NODES_UPDATES, lazyUpdates);
+        cmdArgs.put(NEIGHBOR_UPDATES, neighborUpdates);
+        cmdArgs.put(CONTRACTED_NODES, contractedNodes);
+        cmdArgs.put(LOG_MESSAGES, logMessages);
+        cmdArgs.put(EDGE_QUOTIENT_WEIGHT, edgeQuotientWeight);
+        cmdArgs.put(ORIGINAL_EDGE_QUOTIENT_WEIGHT, origEdgeQuotientWeight);
+        cmdArgs.put(HIERARCHY_DEPTH_WEIGHT, hierarchyDepthWeight);
+        cmdArgs.put(SIGMA_FACTOR, sigmaFactor);
+        cmdArgs.put(MIN_MAX_SETTLED_EDGES, minMaxSettledEdges);
+        cmdArgs.put(SETTLED_EDGES_RESET_INTERVAL, resetInterval);
 
         LMAlgoFactoryDecorator lmDecorator = graphHopper.getLMFactoryDecorator();
-        lmDecorator.setEnabled(true);
+        lmDecorator.setEnabled(landmarks > 0);
         lmDecorator.setDisablingAllowed(true);
 
+        LOGGER.info("Initializing graph hopper with args: {}", cmdArgs);
         graphHopper.init(cmdArgs);
 
         if (cleanup) {
             graphHopper.clean();
         }
 
+        PMap results = new PMap(cmdArgs);
+
         StopWatch sw = new StopWatch();
         sw.start();
         graphHopper.importOrLoad();
         sw.stop();
+        results.put("_prepare_time", sw.getSeconds());
         LOGGER.info("Import and preparation took {}s", sw.getMillis() / 1000);
 
-        long seed = 456;
-        int iterations = 1_000;
-        runCompareTest(DIJKSTRA_BI, graphHopper, withTurnCosts, seed, iterations);
-        runCompareTest(ASTAR_BI, graphHopper, withTurnCosts, seed, iterations);
+        if (!quick) {
+            runCompareTest(DIJKSTRA_BI, graphHopper, withTurnCosts, seed, compIterations, errorThreshold, results);
+            runCompareTest(ASTAR_BI, graphHopper, withTurnCosts, seed, compIterations, errorThreshold, results);
+        }
 
-        runPerformanceTest(DIJKSTRA_BI, graphHopper, withTurnCosts, seed, iterations);
-        runPerformanceTest(ASTAR_BI, graphHopper, withTurnCosts, seed, iterations);
+        if (!quick) {
+            runPerformanceTest(DIJKSTRA_BI, graphHopper, withTurnCosts, seed, perfIterations, results);
+        }
 
-        if (landmarks > 0) {
-            runPerformanceTest("lm", graphHopper, withTurnCosts, seed, iterations);
+        runPerformanceTest(ASTAR_BI, graphHopper, withTurnCosts, seed, perfIterations, results);
+
+        if (!quick && landmarks > 0) {
+            runPerformanceTest("lm", graphHopper, withTurnCosts, seed, perfIterations, results);
         }
 
         graphHopper.close();
+
+        Map<String, String> resultMap = results.toMap();
+        TreeSet<String> sortedKeys = new TreeSet<>(resultMap.keySet());
+        for (String key : sortedKeys) {
+            LOGGER.info(key + "=" + resultMap.get(key));
+        }
+
+        if (statsFile != null) {
+            File f = new File(statsFile);
+            boolean writeHeader = !f.exists();
+            try (FileWriter writer = new FileWriter(f, true)) {
+                if (writeHeader)
+                    writer.write(getHeader(sortedKeys));
+                writer.write(getStatLine(sortedKeys, resultMap));
+            } catch (IOException e) {
+                LOGGER.error("Could not write summary to file '{}'", statsFile, e);
+            }
+        }
+
+        // output to be used by external caller
+        StringBuilder sb = new StringBuilder();
+        for (String key : sortedKeys) {
+            sb.append(key).append(":").append(resultMap.get(key)).append(";");
+        }
+        sb.deleteCharAt(sb.lastIndexOf(";"));
+        System.out.println(sb.toString());
+
+        LOGGER.info("Total time: {}s", fmt((nanoTime() - start) * 1.e-9));
     }
 
-    private static void runCompareTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts, long seed, final int iterations) {
+    private static String getHeader(TreeSet<String> keys) {
+        StringBuilder sb = new StringBuilder("#");
+        for (String key : keys) {
+            sb.append(key).append(";");
+        }
+        sb.append("\n");
+        return sb.toString();
+    }
+
+    private static String getStatLine(TreeSet<String> keys, Map<String, String> results) {
+        StringBuilder sb = new StringBuilder();
+        for (String key : keys) {
+            sb.append(results.get(key)).append(";");
+        }
+        sb.append("\n");
+        return sb.toString();
+    }
+
+    private static void runCompareTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts,
+                                       long seed, final int iterations, final double threshold, final PMap results) {
         LOGGER.info("Running compare test for {}, using seed {}", algo, seed);
         Graph g = graphHopper.getGraphHopperStorage();
         final int numNodes = g.getNodes();
@@ -422,6 +499,9 @@ public class CHMeasurement {
         MiniPerfTest compareTest = new MiniPerfTest() {
             long chTime = 0;
             long noChTime = 0;
+            long chErrors = 0;
+            long noChErrors = 0;
+            long chDeviations = 0;
 
             @Override
             public int doCalc(boolean warmup, int run) {
@@ -429,6 +509,16 @@ public class CHMeasurement {
                     LOGGER.info("Finished {} of {} runs. {}", run, iterations,
                             run > 0 ? String.format(" CH: %6.2fms, without CH: %6.2fms",
                                     chTime * 1.e-6 / run, noChTime * 1.e-6 / run) : "");
+                }
+                if (run == iterations - 1) {
+                    String avgChTime = fmt(chTime * 1.e-6 / run);
+                    String avgNoChTime = fmt(noChTime * 1.e-6 / run);
+                    LOGGER.info("Finished all ({}) runs, CH: {}ms, without CH: {}ms", iterations, avgChTime, avgNoChTime);
+                    results.put("_" + algo + ".time_comp_ch", avgChTime);
+                    results.put("_" + algo + ".time_comp", avgNoChTime);
+                    results.put("_" + algo + ".errors_ch", chErrors);
+                    results.put("_" + algo + ".errors", noChErrors);
+                    results.put("_" + algo + ".deviations", chDeviations);
                 }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
                 req.getHints().put(Parameters.Routing.EDGE_BASED, withTurnCosts);
@@ -453,13 +543,24 @@ public class CHMeasurement {
 
                 if (!chRoute.getErrors().isEmpty() || !nonChRoute.getErrors().isEmpty()) {
                     LOGGER.warn("there were errors for {}: \n with CH: {} \n without CH: {}", algo, chRoute.getErrors(), nonChRoute.getErrors());
+                    if (!chRoute.getErrors().isEmpty()) {
+                        chErrors++;
+                    }
+                    if (!nonChRoute.getErrors().isEmpty()) {
+                        noChErrors++;
+                    }
                     return chRoute.getErrors().size();
                 }
 
+                double chWeight = chRoute.getBest().getRouteWeight();
+                double nonCHWeight = nonChRoute.getBest().getRouteWeight();
+                if (Math.abs(chWeight - nonCHWeight) > threshold) {
+                    LOGGER.warn("error for {}: difference between best paths with and without CH is above threshold ({}), {}",
+                            algo, threshold, getWeightDifferenceString(chWeight, nonCHWeight));
+                    chDeviations++;
+                }
                 if (!chRoute.getBest().getPoints().equals(nonChRoute.getBest().getPoints())) {
                     // small negative deviations are due to weight truncation when shortcuts are stored
-                    double chWeight = chRoute.getBest().getRouteWeight();
-                    double nonCHWeight = nonChRoute.getBest().getRouteWeight();
                     LOGGER.warn("error for {}: found different points for query from {} to {}, {}", algo,
                             req.getPoints().get(0).toShortString(), req.getPoints().get(1).toShortString(),
                             getWeightDifferenceString(chWeight, nonCHWeight));
@@ -470,7 +571,8 @@ public class CHMeasurement {
         compareTest.setIterations(iterations).start();
     }
 
-    private static void runPerformanceTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts, long seed, final int iterations) {
+    private static void runPerformanceTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts,
+                                           long seed, final int iterations, final PMap results) {
         Graph g = graphHopper.getGraphHopperStorage();
         final int numNodes = g.getNodes();
         final NodeAccess nodeAccess = g.getNodeAccess();
@@ -487,6 +589,11 @@ public class CHMeasurement {
                 if (!warmup && run % 100 == 0) {
                     LOGGER.info("Finished {} of {} runs. {}", run, iterations,
                             run > 0 ? String.format(" Time: %6.2fms", queryTime * 1.e-6 / run) : "");
+                }
+                if (run == iterations - 1) {
+                    String avg = fmt(queryTime * 1.e-6 / run);
+                    LOGGER.info("Finished all ({}) runs, avg time: {}ms", iterations, avg);
+                    results.put("_" + algo + ".time_ch", avg);
                 }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
                 req.getHints().put(Parameters.Routing.EDGE_BASED, withTurnCosts);
@@ -514,9 +621,9 @@ public class CHMeasurement {
         LOGGER.info("Visited nodes for {}: {}", algo, Helper.nf(numVisitedNodes[0]));
     }
 
-    private static String getWeightDifferenceString(double weight1, double weight2) {
-        return String.format("route weight: %.6f vs. %.6f (diff = %.6f)",
-                weight1, weight2, (weight1 - weight2));
+    private static String getWeightDifferenceString(double chWeight, double noChWeight) {
+        return String.format("route weight: %.6f (CH) vs. %.6f (no CH) (diff = %.6f)",
+                chWeight, noChWeight, (chWeight - noChWeight));
     }
 
     private static boolean connectionNotFound(GHResponse response) {
@@ -546,6 +653,10 @@ public class CHMeasurement {
         double toLat = nodeAccess.getLat(to);
         double toLon = nodeAccess.getLon(to);
         return new GHRequest(fromLat, fromLon, toLat, toLon);
+    }
+
+    private static String fmt(double number) {
+        return String.format("%.2f", number);
     }
 
 }
