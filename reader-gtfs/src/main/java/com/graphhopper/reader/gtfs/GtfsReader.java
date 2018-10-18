@@ -147,7 +147,7 @@ class GtfsReader {
                             }
                         }
                         ArrayList<StopTime> stopTimes = new ArrayList<>();
-                        getInterpolatedStopTimesForTrip(trip.trip_id).forEach(stopTimes::add);
+                        feed.getInterpolatedStopTimesForTrip(trip.trip_id).forEach(stopTimes::add);
                         return new TripWithStopTimes(trip, stopTimes, validOnDay, Collections.emptySet(), Collections.emptySet());
                     })
                     .sorted(Comparator.comparingInt(trip -> trip.stopTimes.iterator().next().departure_time))
@@ -626,14 +626,6 @@ class GtfsReader {
                 gtfsStorage.getTripDescriptors().put(boardEdge.getEdge(), tripDescriptor.toByteArray());
                 accumulatorValidity.andNot(lastTrip.tripWithStopTimes.validOnDay);
             }
-        }
-    }
-
-    private Iterable<StopTime> getInterpolatedStopTimesForTrip(String trip_id) {
-        try {
-            return feed.getInterpolatedStopTimesForTrip(trip_id);
-        } catch (GTFSFeed.FirstAndLastStopsDoNotHaveTimes e) {
-            throw new RuntimeException(e);
         }
     }
 
