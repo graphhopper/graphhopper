@@ -30,7 +30,7 @@ import java.util.Set;
  * and the speed.
  */
 public class FlexModel {
-    // can be empty if anonym request
+    // is only used for import configuration
     private String name = "";
     private String base;
     private double maxSpeed;

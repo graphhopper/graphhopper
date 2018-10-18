@@ -94,20 +94,13 @@ $(document).ready(function (e) {
         ghRequest.api_params.elevation = false;
 
         // "request": { "points":[[13.289337, 52.520399], [13.445892, 52.5687]] }
-        var jsonData = $("#flex-input-text").val();
-        if(jsonData.length < 5) {
-         routeResultsDiv.html("JSON too short");
+        var inputText = $("#flex-input-text").val();
+        if(inputText.length < 5) {
+         routeResultsDiv.html("JSON/YAML too short");
          return;
         }
-        var jsonModel;
-        try {
-         jsonModel = JSON.parse(jsonData);
-        } catch(ex) {
-         routeResultsDiv.html("Cannot parse JSON " + ex);
-         return;
-        }
+
         var points = [];
-        var jsonRequest = {"model": jsonModel, "request" : {"points": points}};
         for(var idx = 0; idx < ghRequest.route.size(); idx++) {
             var point = ghRequest.route.getIndex(idx);
             if (point.isResolved()) {
@@ -117,13 +110,43 @@ $(document).ready(function (e) {
                 return;
             }
         }
+
+        var request, contentType;
+        if(inputText.indexOf("{") >= 0) {
+            try {
+             contentType = 'application/json; charset=utf-8';
+             var jsonModel = JSON.parse(inputText);
+             var jsonRequest = {"model": jsonModel, "request" : {"points": points}};
+             request = JSON.stringify(jsonRequest);
+            } catch(ex) {
+             routeResultsDiv.html("Cannot parse JSON " + ex);
+             return;
+            }
+        } else {
+            var lines = inputText.split('\n');
+            var modelText = "";
+            for(var i = 0; i < lines.length; i++) {
+                modelText += " "+lines[i] + "\n";
+            }
+            var pointsStr = "";
+            for(var i = 0; i < points.length; i++) {
+                if(i > 0)
+                    pointsStr += ",";
+                pointsStr += "[" + points[i] + "]";
+            }
+
+            contentType = "text/x-yaml";
+            request = "request:\n points: [" + pointsStr + "]\n"
+               + "model:\n" + modelText;
+               console.log(request)
+        }
+
         $.ajax({
-            dataType: 'json',
             url: "/flex",
             type: "POST",
-            contentType: 'application/json; charset=utf-8',
+            contentType: contentType,
             dataType: "json",
-            data: JSON.stringify(jsonRequest),
+            data: request,
             success: createRouteCallback(ghRequest, routeResultsDiv, "", true, true),
             error: function(err) {
                 var json = JSON.parse(err.responseText);

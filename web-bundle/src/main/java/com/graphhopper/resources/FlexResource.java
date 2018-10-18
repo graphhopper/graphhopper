@@ -1,10 +1,13 @@
 package com.graphhopper.resources;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.MultiException;
 import com.graphhopper.http.WebHelper;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.flex.FlexModel;
 import com.graphhopper.routing.flex.FlexRequest;
 import com.graphhopper.util.Helper;
@@ -20,18 +23,28 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 
 @Path("flex")
 public class FlexResource {
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
-    private GraphHopper graphHopper;
-    private Boolean hasElevation;
+    private final GraphHopper graphHopper;
+    private final Boolean hasElevation;
+    private final ObjectMapper yamlOM;
 
     @Inject
     public FlexResource(GraphHopper graphHopper, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
         this.hasElevation = hasElevation;
+        this.yamlOM = Jackson.init(new ObjectMapper(new YAMLFactory()));
+    }
+
+    @POST
+    @Consumes({"text/x-yaml", "application/x-yaml"})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
+    public Response doPost(String yaml) throws IOException {
+        return doPost(yamlOM.readValue(yaml, FlexRequest.class));
     }
 
     @POST
