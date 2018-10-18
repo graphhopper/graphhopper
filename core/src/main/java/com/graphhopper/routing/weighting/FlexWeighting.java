@@ -101,6 +101,8 @@ public class FlexWeighting implements Weighting {
             return Double.POSITIVE_INFINITY;
         if (model.getNoAccess().getRoadEnvironment().contains(edgeState.get(roadEnvEnc)))
             return Double.POSITIVE_INFINITY;
+        if (model.getNoAccess().getToll().contains(edgeState.get(tollEnc)))
+            return Double.POSITIVE_INFINITY;
 
 //        if (edgeState.get(weightEnc) > model.getNoAccess().getMaxWeight())
 //            return Double.POSITIVE_INFINITY;
@@ -140,6 +142,10 @@ public class FlexWeighting implements Weighting {
             timeInMillis += tmp;
 
         tmp = model.getTimeOffset().getRoadEnvironment().get(edgeState.get(roadEnvEnc).toString());
+        if (tmp != null)
+            timeInMillis += tmp;
+
+        tmp = model.getTimeOffset().getToll().get(edgeState.get(tollEnc).toString());
         if (tmp != null)
             timeInMillis += tmp;
 

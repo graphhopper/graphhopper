@@ -17,9 +17,9 @@
  */
 package com.graphhopper.routing.flex;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.profiles.Toll;
 
 import java.util.Collections;
 import java.util.Map;
@@ -114,6 +114,7 @@ public class FlexModel {
     public static class TimeOffset {
         Map<String, Double> roadClass = Collections.emptyMap();
         Map<String, Double> roadEnvironment = Collections.emptyMap();
+        Map<String, Double> toll = Collections.emptyMap();
 
         public Map<String, Double> getRoadClass() {
             return roadClass;
@@ -122,11 +123,16 @@ public class FlexModel {
         public Map<String, Double> getRoadEnvironment() {
             return roadEnvironment;
         }
+
+        public Map<String, Double> getToll() {
+            return toll;
+        }
     }
 
     public static class NoAccess {
         Set<RoadClass> roadClass = Collections.emptySet();
         Set<RoadEnvironment> roadEnvironment = Collections.emptySet();
+        Set<Toll> toll = Collections.emptySet();
         double maxHeight;
         double maxWeight;
         double maxWidth;
@@ -149,6 +155,10 @@ public class FlexModel {
 
         public Set<RoadEnvironment> getRoadEnvironment() {
             return roadEnvironment;
+        }
+
+        public Set<Toll> getToll() {
+            return toll;
         }
     }
 }
