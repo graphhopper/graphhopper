@@ -22,7 +22,7 @@ import com.graphhopper.storage.IntsRef;
 import java.util.HashMap;
 import java.util.Map;
 
-class EnumEncodedValueImpl<T extends Enum> extends IntEncodedValueImpl implements EnumEncodedValue<T> {
+public class EnumEncodedValueImpl<T extends Enum> extends IntEncodedValueImpl implements EnumEncodedValue<T> {
     private final T[] enums;
     private final Map<String, Integer> enumMap;
 

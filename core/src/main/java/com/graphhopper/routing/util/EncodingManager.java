@@ -21,10 +21,7 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.profiles.parsers.RoadClassParser;
-import com.graphhopper.routing.profiles.parsers.RoadEnvironmentParser;
-import com.graphhopper.routing.profiles.parsers.RoundaboutParser;
-import com.graphhopper.routing.profiles.parsers.SurfaceParser;
+import com.graphhopper.routing.profiles.parsers.*;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.IntsRef;
@@ -52,6 +49,10 @@ public class EncodingManager implements EncodedValueLookup {
      * roundabout EncodedValue
      */
     public static final String ROUNDABOUT = "roundabout";
+    /**
+     * toll EncodedValue
+     */
+    public static final String TOLL = "toll";
     /**
      * surface EncodedValue
      */
@@ -182,6 +183,14 @@ public class EncodingManager implements EncodedValueLookup {
             RoundaboutParser roundaboutParser = new RoundaboutParser();
             em.putEncodedValue(roundaboutParser.getEnc());
             em.putParser(roundaboutParser);
+        }
+
+        public Builder addToll() {
+            check();
+            TollParser tollParser = new TollParser();
+            em.putEncodedValue(tollParser.getEnc());
+            em.putParser(tollParser);
+            return this;
         }
 
         public Builder addSurface() {

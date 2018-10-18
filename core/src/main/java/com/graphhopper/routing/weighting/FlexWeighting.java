@@ -24,7 +24,6 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 
 /**
  * Calculates the best route according to a configurable weighting.
@@ -43,6 +42,7 @@ public class FlexWeighting implements Weighting {
     private final DecimalEncodedValue avSpeedEnc;
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
+    private final EnumEncodedValue<Toll> tollEnc;
     private final FlexModel model;
     private final double maxSpeed;
     private final FlagEncoder encoder;
@@ -63,6 +63,7 @@ public class FlexWeighting implements Weighting {
         avSpeedEnc = encodingManager.getEncodedValue(vehicle + ".average_speed", DecimalEncodedValue.class);
         roadEnvEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_ENV, EnumEncodedValue.class);
         roadClassEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_CLASS, EnumEncodedValue.class);
+        tollEnc = encodingManager.getEncodedValue(EncodingManager.TOLL, EnumEncodedValue.class);
 
         edgeFilter = new EdgeFilter() {
             @Override
@@ -110,6 +111,10 @@ public class FlexWeighting implements Weighting {
             time *= tmp;
 
         tmp = model.getFactor().getRoadEnvironment().get(edgeState.get(roadEnvEnc).toString());
+        if (tmp != null)
+            time *= tmp;
+
+        tmp = model.getFactor().getToll().get(edgeState.get(tollEnc).toString());
         if (tmp != null)
             time *= tmp;
 

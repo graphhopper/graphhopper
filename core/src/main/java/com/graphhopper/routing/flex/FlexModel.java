@@ -90,6 +90,7 @@ public class FlexModel {
     public static class Factor {
         Map<String, Double> roadClass = Collections.emptyMap();
         Map<String, Double> roadEnvironment = Collections.emptyMap();
+        Map<String, Double> toll = Collections.emptyMap();
         boolean reverseOneway;
 
         public Map<String, Double> getRoadClass() {
@@ -98,6 +99,10 @@ public class FlexModel {
 
         public Map<String, Double> getRoadEnvironment() {
             return roadEnvironment;
+        }
+
+        public Map<String, Double> getToll() {
+            return toll;
         }
 
         public boolean isReverseOneway() {

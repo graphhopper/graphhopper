@@ -575,8 +575,8 @@ public class GraphHopper implements GraphHopperAPI {
                 }
             }
 
-            // TODO disable adding both EncodedValues for backward compatibility?
-            EncodingManager.Builder em = EncodingManager.start(bytesForFlags).addRoadEnvironment().addRoadClass();
+            // TODO add dependent on DataFlagEncoder and FlexModel
+            EncodingManager.Builder em = EncodingManager.start(bytesForFlags).addRoadEnvironment().addRoadClass().addToll();
             for (FlagEncoder fe : flagEncoderSet.values())
                 em.add(fe);
 
