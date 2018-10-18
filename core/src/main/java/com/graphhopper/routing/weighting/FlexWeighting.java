@@ -47,20 +47,23 @@ public class FlexWeighting implements Weighting {
     private final FlexModel model;
     private final double maxSpeed;
     private final FlagEncoder encoder;
+    private final double distanceFactor;
     private final EdgeFilter edgeFilter;
 
     public FlexWeighting(EncodingManager encodingManager, FlexModel vehicleModel) {
         if (vehicleModel == null)
             throw new IllegalArgumentException("Vehicle model not found");
         this.model = vehicleModel;
-        this.maxSpeed = vehicleModel.getMaxSpeed();
+
+        if (vehicleModel.getMaxSpeed() < 1)
+            throw new IllegalArgumentException("max_speed too low: " + vehicleModel.getMaxSpeed());
+        this.maxSpeed = vehicleModel.getMaxSpeed() / SPEED_CONV;
+
         // name can be empty if flex request
         String vehicle = vehicleModel.getName().isEmpty() ? vehicleModel.getBase() : vehicleModel.getName();
 
         if (Helper.isEmpty(vehicle))
             throw new IllegalArgumentException("No vehicle 'base' or 'name' was specified");
-        if (maxSpeed < 1)
-            throw new IllegalArgumentException("max_speed too low: " + maxSpeed);
 
         // TODO deprecated. only used for getFlagEncoder method
         encoder = encodingManager.getEncoder(vehicle);
@@ -81,11 +84,12 @@ public class FlexWeighting implements Weighting {
                 return edgeState.get(accessEnc);
             }
         };
+        distanceFactor = model.getDistanceFactor();
     }
 
     @Override
     public double getMinWeight(double distance) {
-        return distance / maxSpeed;
+        return distance / maxSpeed + distance * distanceFactor;
     }
 
     @Override
@@ -125,6 +129,9 @@ public class FlexWeighting implements Weighting {
         tmp = model.getFactor().getToll().get(edgeState.get(tollEnc).toString());
         if (tmp != null)
             time *= tmp;
+
+        if (distanceFactor > 0)
+            return time + edgeState.getDistance() * distanceFactor;
 
         return time;
     }

@@ -39,6 +39,7 @@ public class FlexModel {
     private TimeOffset timeOffset = new TimeOffset();
     private NoAccess noAccess = new NoAccess();
     private boolean considerOneway;
+    private double distanceFactor;
 
     public String getName() {
         return name;
@@ -50,6 +51,10 @@ public class FlexModel {
 
     public double getMaxSpeed() {
         return maxSpeed;
+    }
+
+    public double getDistanceFactor() {
+        return distanceFactor;
     }
 
     public Speed getSpeed() {

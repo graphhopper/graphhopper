@@ -56,7 +56,7 @@ public class FlexResource {
         FlexModel model = flex.getModel();
         GHRequest request = flex.getRequest();
 
-        // TODO move this validiation into FlexModel?
+        // TODO move this validiation into FlexModel
         if (Helper.isEmpty(model.getBase()))
             throw new IllegalArgumentException("'base' cannot be empty");
         if (model.getMaxSpeed() < 1)
@@ -65,7 +65,7 @@ public class FlexResource {
         request.setVehicle(model.getBase());
         request.getHints().put("ch.disable", true);
 
-        // TODO read from FlexRequest? like query.getInstructions()
+        // TODO read via request.getHints().get(Routing.INSTRUCTIONS)
         boolean instructions = true;
         boolean calcPoints = true;
         boolean enableElevation = false;
