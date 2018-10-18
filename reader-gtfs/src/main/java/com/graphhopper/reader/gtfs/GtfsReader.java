@@ -82,7 +82,7 @@ class GtfsReader {
     private int i;
     private GTFSFeed feed;
     private final IntIntHashMap times = new IntIntHashMap();
-    private final Map<String, Map<String, NavigableMap<Integer, Integer>>> departureTimelineNodes = new HashMap<>();
+    private final Map<String, Map<String, NavigableMap<Integer, Integer>>> departureTimelines = new HashMap<>();
     private final Map<String, Map<String, NavigableMap<Integer, Integer>>> arrivalTimelineNodes = new HashMap<>();
     private final PtFlagEncoder encoder;
 
@@ -179,8 +179,13 @@ class GtfsReader {
                 if (arrivalTimelineNodes.containsKey(stop.stop_id)) {
                     final Map<String, NavigableMap<Integer, Integer>> arrivalTimelineNodesByRoute = arrivalTimelineNodes.get(stop.stop_id);
 
-                    arrivalTimelineNodesByRoute.forEach((routeId, timelineNodesWithTripId) -> {
-                        Route route = feed.routes.get(routeId);
+                    arrivalTimelineNodesByRoute.forEach((routeId, arrivalTimeline) -> {
+                        int route_type;
+                        if (routeId.startsWith("wurstpeter")) {
+                            route_type = Integer.parseInt(routeId.substring(10));
+                        } else {
+                            route_type = feed.routes.get(routeId).route_type;
+                        }
                         nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
                         int stopExitNode = i-1;
                         nodeAccess.setAdditionalNodeField(stopExitNode, NodeType.STOP_EXIT_NODE.ordinal());
@@ -188,20 +193,25 @@ class GtfsReader {
                         EdgeIteratorState exitEdge = graph.edge(stopExitNode, streetNode);
                         exitEdge.setFlags(encoder.setAccess(exitEdge.getFlags(), true, false));
                         setEdgeTypeAndClearDistance(exitEdge, GtfsStorage.EdgeType.EXIT_PT);
-                        exitEdge.setFlags(encoder.setValidityId(exitEdge.getFlags(), route.route_type));
+                        exitEdge.setFlags(encoder.setValidityId(exitEdge.getFlags(), route_type));
                         exitEdge.setName(stop.stop_name);
                         gtfsStorage.getRoutes().put(exitEdge.getEdge(), routeId);
 
-                        wireUpAndAndConnectArrivalTimeline(stop, routeId,stopExitNode, timelineNodesWithTripId);
+                        wireUpAndAndConnectArrivalTimeline(stop, stopExitNode, arrivalTimeline);
                     });
 
                 }
 
-                if (departureTimelineNodes.containsKey(stop.stop_id)) {
-                    final Map<String, NavigableMap<Integer, Integer>> departureTimelineNodesByRoute = departureTimelineNodes.get(stop.stop_id);
+                if (departureTimelines.containsKey(stop.stop_id)) {
+                    final Map<String, NavigableMap<Integer, Integer>> departureTimelineNodesByRoute = departureTimelines.get(stop.stop_id);
 
-                    departureTimelineNodesByRoute.forEach((routeId, timelineNodesWithTripId) -> {
-                        Route route = feed.routes.get(routeId);
+                    departureTimelineNodesByRoute.forEach((routeId, departureTimeline) -> {
+                        int route_type;
+                        if (routeId.startsWith("wurstpeter")) {
+                            route_type = Integer.parseInt(routeId.substring(10));
+                        } else {
+                            route_type = feed.routes.get(routeId).route_type;
+                        }
                         nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
                         int stopEnterNode = i-1;
                         nodeAccess.setAdditionalNodeField(stopEnterNode, NodeType.STOP_ENTER_NODE.ordinal());
@@ -209,11 +219,11 @@ class GtfsReader {
                         EdgeIteratorState entryEdge = graph.edge(streetNode, stopEnterNode);
                         entryEdge.setFlags(encoder.setAccess(entryEdge.getFlags(), true, false));
                         setEdgeTypeAndClearDistance(entryEdge, GtfsStorage.EdgeType.ENTER_PT);
-                        entryEdge.setFlags(encoder.setValidityId(entryEdge.getFlags(), route.route_type));
+                        entryEdge.setFlags(encoder.setValidityId(entryEdge.getFlags(), route_type));
                         entryEdge.setName(stop.stop_name);
                         gtfsStorage.getRoutes().put(entryEdge.getEdge(), routeId);
 
-                        wireUpAndAndConnectDepartureTimeline(stop, routeId,stopEnterNode, timelineNodesWithTripId);
+                        wireUpAndAndConnectDepartureTimeline(stop, stopEnterNode, departureTimeline);
                     });
                 }
             }
@@ -224,20 +234,20 @@ class GtfsReader {
     void wireUpAdditionalDepartures(ZoneId zoneId) {
         for (Stop stop : feed.stops.values()) {
             int stationNode = gtfsStorage.getStationNodes().get(stop.stop_id);
-            final Map<String, NavigableMap<Integer, Integer>> departureTimelineNodesByRoute = departureTimelineNodes.getOrDefault(stop.stop_id, Collections.emptyMap());
-            departureTimelineNodesByRoute.forEach((routeId, timeline) -> {
+            final Map<String, NavigableMap<Integer, Integer>> departureTimelinesByRoute = departureTimelines.getOrDefault(stop.stop_id, Collections.emptyMap());
+            departureTimelinesByRoute.forEach((routeId, timeline) -> {
                 int platformNode = findPlatformEnterNode(stationNode, routeId);
                 if (platformNode != -1) {
-                    NavigableMap<Integer, Integer> staticTimelineNodesForRoute = findDepartureTimelineNodesForRoute(stationNode, routeId);
+                    NavigableMap<Integer, Integer> staticDepartureTimelineForRoute = findDepartureTimelineForRoute(stationNode, routeId);
                     timeline.forEach((time, node) -> {
-                        SortedMap<Integer, Integer> headMap = staticTimelineNodesForRoute.headMap(time);
+                        SortedMap<Integer, Integer> headMap = staticDepartureTimelineForRoute.headMap(time);
                         if (!headMap.isEmpty()) {
                             EdgeIteratorState edge = graph.edge(headMap.get(headMap.lastKey()), node);
                             edge.setFlags(encoder.setAccess(edge.getFlags(), true, false));
                             setEdgeTypeAndClearDistance(edge, GtfsStorage.EdgeType.WAIT);
                             edge.setFlags(encoder.setTime(edge.getFlags(), time - headMap.lastKey()));
                         }
-                        SortedMap<Integer, Integer> tailMap = staticTimelineNodesForRoute.tailMap(time);
+                        SortedMap<Integer, Integer> tailMap = staticDepartureTimelineForRoute.tailMap(time);
                         if (!tailMap.isEmpty()) {
                             EdgeIteratorState edge = graph.edge(node, tailMap.get(tailMap.firstKey()));
                             edge.setFlags(encoder.setAccess(edge.getFlags(), true, false));
@@ -259,7 +269,7 @@ class GtfsReader {
                     entryEdge.setFlags(encoder.setAccess(entryEdge.getFlags(), true, false));
                     setEdgeTypeAndClearDistance(entryEdge, GtfsStorage.EdgeType.ENTER_PT);
                     entryEdge.setName(stop.stop_name);
-                    wireUpAndAndConnectDepartureTimeline(stop, routeId,stopEnterNode, timeline);
+                    wireUpAndAndConnectDepartureTimeline(stop, stopEnterNode, timeline);
                 }
             });
             final Map<String, NavigableMap<Integer, Integer>> arrivalTimelineNodesByRoute = arrivalTimelineNodes.getOrDefault(stop.stop_id, Collections.emptyMap());
@@ -281,7 +291,7 @@ class GtfsReader {
                     exitEdge.setFlags(encoder.setAccess(exitEdge.getFlags(), true, false));
                     setEdgeTypeAndClearDistance(exitEdge, GtfsStorage.EdgeType.EXIT_PT);
                     exitEdge.setName(stop.stop_name);
-                    wireUpAndAndConnectArrivalTimeline(stop, routeId,stopExitNode, timeline);
+                    wireUpAndAndConnectArrivalTimeline(stop, stopExitNode, timeline);
                 }
                 final Optional<Transfer> withinStationTransfer = transfers.getTransfersFromStop(stop.stop_id, routeId).stream().filter(t -> t.from_stop_id.equals(stop.stop_id)).findAny();
                 if (!withinStationTransfer.isPresent()) {
@@ -294,7 +304,7 @@ class GtfsReader {
         }
     }
 
-    private NavigableMap<Integer, Integer> findDepartureTimelineNodesForRoute(int stationNode, String routeId) {
+    private NavigableMap<Integer, Integer> findDepartureTimelineForRoute(int stationNode, String routeId) {
         TreeMap<Integer, Integer> result = new TreeMap<>();
         int node = findPlatformEnterNode(stationNode, routeId);
         if (node == -1) {
@@ -336,14 +346,14 @@ class GtfsReader {
     }
 
     void insertTransfers() {
-        departureTimelineNodes.forEach((toStopId, timelineNodesWithTripId) -> {
-            timelineNodesWithTripId.forEach((toRouteId, timelineNodesByRoute) -> {
+        departureTimelines.forEach((toStopId, timelineNodesWithTripId) -> {
+            timelineNodesWithTripId.forEach((toRouteId, departureTimeline) -> {
                 final Optional<Transfer> withinStationTransfer = transfers.getTransfersToStop(toStopId, toRouteId).stream().filter(t -> t.from_stop_id.equals(toStopId)).findAny();
                 if (!withinStationTransfer.isPresent()) {
-                    insertInboundTransfers(toStopId, null, 0, timelineNodesByRoute);
+                    insertInboundTransfers(toStopId, null, 0, departureTimeline);
                 }
                 transfers.getTransfersToStop(toStopId, toRouteId).forEach(transfer -> {
-                    insertInboundTransfers(transfer.from_stop_id, transfer.from_route_id, transfer.min_transfer_time, timelineNodesByRoute);
+                    insertInboundTransfers(transfer.from_stop_id, transfer.from_route_id, transfer.min_transfer_time, departureTimeline);
                 });
             });
         });
@@ -394,8 +404,15 @@ class GtfsReader {
                 edge.setFlags(encoder.setTime(edge.getFlags(), stopTime.arrival_time - prev.departure_time));
                 gtfsStorage.getStopSequences().put(edge.getEdge(), stopTime.stop_sequence);
             }
-            Map<String, NavigableMap<Integer, Integer>> departureTimelineNodesByRoute = departureTimelineNodes.computeIfAbsent(stopTime.stop_id, s -> new HashMap<>());
-            NavigableMap<Integer, Integer> departureTimelineNodes = departureTimelineNodesByRoute.computeIfAbsent(trip.trip.route_id, s -> new TreeMap<>());
+            Route route = feed.routes.get(trip.trip.route_id);
+            Map<String, NavigableMap<Integer, Integer>> departureTimelineNodesByRoute = departureTimelines.computeIfAbsent(stopTime.stop_id, s -> new HashMap<>());
+            String departureKey;
+            if (transfers.hasNoRouteSpecificDepartureTransferRules(stopTime.stop_id)) {
+                departureKey = "wurstpeter" + route.route_type;
+            } else {
+                departureKey = route.route_id;
+            }
+            NavigableMap<Integer, Integer> departureTimelineNodes = departureTimelineNodesByRoute.computeIfAbsent(departureKey, s -> new TreeMap<>());
             int departureTimelineNode = departureTimelineNodes.computeIfAbsent((stopTime.departure_time + time) % (24 * 60 * 60), t -> {
                 final int _departureTimelineNode = i++;
                 nodeAccess.setNode(_departureTimelineNode, stop.stop_lat, stop.stop_lon);
@@ -403,8 +420,15 @@ class GtfsReader {
                 times.put(_departureTimelineNode, stopTime.departure_time + time);
                 return _departureTimelineNode;
             });
+            String arrivalKey;
+            if (transfers.hasNoRouteSpecificArrivalTransferRules(stopTime.stop_id)) {
+                arrivalKey = "wurstpeter" + route.route_type;
+            } else {
+                arrivalKey = route.route_id;
+            }
+
             Map<String, NavigableMap<Integer, Integer>> arrivalTimelineNodesByRoute = arrivalTimelineNodes.computeIfAbsent(stopTime.stop_id, s -> new HashMap<>());
-            NavigableMap<Integer, Integer> arrivalTimelineNodes = arrivalTimelineNodesByRoute.computeIfAbsent(trip.trip.route_id, s -> new TreeMap<>());
+            NavigableMap<Integer, Integer> arrivalTimelineNodes = arrivalTimelineNodesByRoute.computeIfAbsent(arrivalKey, s -> new TreeMap<>());
             int arrivalTimelineNode = arrivalTimelineNodes.computeIfAbsent((stopTime.arrival_time + time) % (24 * 60 * 60), t -> {
                 final int _arrivalTimelineNode = i++;
                 nodeAccess.setNode(_arrivalTimelineNode, stop.stop_lat, stop.stop_lon);
@@ -473,7 +497,7 @@ class GtfsReader {
         Trip trip = feed.trips.get(tripDescriptor.getTripId());
         StopTime stopTime = feed.stop_times.get(new Fun.Tuple2(tripDescriptor.getTripId(), stopSequence));
         Stop stop = feed.stops.get(stopTime.stop_id);
-        Map<String, NavigableMap<Integer, Integer>> departureTimelineNodesByRoute = departureTimelineNodes.computeIfAbsent(stopTime.stop_id, s -> new HashMap<>());
+        Map<String, NavigableMap<Integer, Integer>> departureTimelineNodesByRoute = departureTimelines.computeIfAbsent(stopTime.stop_id, s -> new HashMap<>());
         NavigableMap<Integer, Integer> departureTimelineNodes = departureTimelineNodesByRoute.computeIfAbsent(trip.route_id, s -> new TreeMap<>());
         int departureTimelineNode = departureTimelineNodes.computeIfAbsent(departureTime % (24 * 60 * 60), t -> {
             final int _departureTimelineNode = i++;
@@ -504,8 +528,8 @@ class GtfsReader {
         return boardEdge.getEdge();
     }
 
-    private void wireUpAndAndConnectArrivalTimeline(Stop toStop, String routeId, int stopExitNode, NavigableMap<Integer, Integer> timeNodes) {
-        ZoneId zoneId = ZoneId.of(feed.agency.get(feed.routes.get(routeId).agency_id).agency_timezone);
+    private void wireUpAndAndConnectArrivalTimeline(Stop toStop, int stopExitNode, NavigableMap<Integer, Integer> timeNodes) {
+        ZoneId zoneId = ZoneId.of(feed.agency.values().iterator().next().agency_timezone);
         int time = 0;
         int prev = -1;
         for (Map.Entry<Integer, Integer> e : timeNodes.descendingMap().entrySet()) {
@@ -538,8 +562,8 @@ class GtfsReader {
         leaveTimeExpandedNetworkEdge.setFlags(encoder.setValidityId(leaveTimeExpandedNetworkEdge.getFlags(), validityId));
     }
 
-    private void wireUpAndAndConnectDepartureTimeline(Stop toStop, String toRouteId, int stopEnterNode, NavigableMap<Integer, Integer> timeNodes) {
-        ZoneId zoneId = ZoneId.of(feed.agency.get(feed.routes.get(toRouteId).agency_id).agency_timezone);
+    private void wireUpAndAndConnectDepartureTimeline(Stop toStop, int stopEnterNode, NavigableMap<Integer, Integer> timeNodes) {
+        ZoneId zoneId = ZoneId.of(feed.agency.values().iterator().next().agency_timezone);
         int time = 0;
         int prev = -1;
         for (Map.Entry<Integer, Integer> e : timeNodes.descendingMap().entrySet()) {

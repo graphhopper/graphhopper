@@ -447,15 +447,6 @@ public class GraphHopperGtfsIT {
         request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,7,30).atZone(zoneId).toInstant());
 
         response = graphHopper.route(request);
-        assertEquals("Ignoring transfer rules (free walking): Will be there at 8:10.", time(0, 40), response.getBest().getTime());
-
-        request = new GHRequest(
-                FROM_LAT, FROM_LON,
-                TO2_LAT, TO2_LON
-        );
-        request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,7,30).atZone(zoneId).toInstant());
-
-        response = graphHopper.route(request);
         assertEquals("Will still be there at 8:10 because there is a route-specific exception for this route.", time(0, 40), response.getBest().getTime());
 
         request = new GHRequest(
