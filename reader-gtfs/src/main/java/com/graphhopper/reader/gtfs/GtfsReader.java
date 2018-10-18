@@ -19,7 +19,6 @@
 package com.graphhopper.reader.gtfs;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntIntHashMap;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.*;
 import com.google.common.collect.HashMultimap;
@@ -81,7 +80,6 @@ class GtfsReader {
     private final String id;
     private int i;
     private GTFSFeed feed;
-    private final IntIntHashMap times = new IntIntHashMap();
     private final Map<String, Map<String, NavigableMap<Integer, Integer>>> departureTimelines = new HashMap<>();
     private final Map<String, Map<String, NavigableMap<Integer, Integer>>> arrivalTimelineNodes = new HashMap<>();
     private final PtFlagEncoder encoder;
@@ -375,6 +373,7 @@ class GtfsReader {
     private static class TripWithStopTimeAndArrivalNode {
         TripWithStopTimes tripWithStopTimes;
         int arrivalNode;
+        int arrivalTime;
     }
 
     void addTrip(ZoneId zoneId, int time, List<TripWithStopTimeAndArrivalNode> arrivalNodes, TripWithStopTimes trip, GtfsRealtime.TripDescriptor tripDescriptor, boolean frequencyBased) {
@@ -382,13 +381,14 @@ class GtfsReader {
         IntArrayList alightEdges = new IntArrayList();
         StopTime prev = null;
         int arrivalNode = -1;
+        int arrivalTime = -1;
         int departureNode = -1;
         for (StopTime stopTime : trip.stopTimes) {
             Stop stop = feed.stops.get(stopTime.stop_id);
             arrivalNode = i++;
             nodeAccess.setNode(arrivalNode, stop.stop_lat, stop.stop_lon);
             nodeAccess.setAdditionalNodeField(arrivalNode, NodeType.INTERNAL_PT.ordinal());
-            times.put(arrivalNode, stopTime.arrival_time + time);
+            arrivalTime = stopTime.arrival_time + time;
             if (prev != null) {
                 Stop fromStop = feed.stops.get(prev.stop_id);
                 double distance = distCalc.calcDist(
@@ -417,7 +417,6 @@ class GtfsReader {
                 final int _departureTimelineNode = i++;
                 nodeAccess.setNode(_departureTimelineNode, stop.stop_lat, stop.stop_lon);
                 nodeAccess.setAdditionalNodeField(_departureTimelineNode, NodeType.INTERNAL_PT.ordinal());
-                times.put(_departureTimelineNode, stopTime.departure_time + time);
                 return _departureTimelineNode;
             });
             String arrivalKey;
@@ -433,13 +432,11 @@ class GtfsReader {
                 final int _arrivalTimelineNode = i++;
                 nodeAccess.setNode(_arrivalTimelineNode, stop.stop_lat, stop.stop_lon);
                 nodeAccess.setAdditionalNodeField(_arrivalTimelineNode, NodeType.INTERNAL_PT.ordinal());
-                times.put(_arrivalTimelineNode, stopTime.arrival_time + time);
                 return _arrivalTimelineNode;
             });
             departureNode = i++;
             nodeAccess.setNode(departureNode, stop.stop_lat, stop.stop_lon);
             nodeAccess.setAdditionalNodeField(departureNode, NodeType.INTERNAL_PT.ordinal());
-            times.put(departureNode, stopTime.departure_time + time);
             int dayShift = stopTime.departure_time / (24 * 60 * 60);
             GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(trip.validOnDay, dayShift), zoneId, startDate);
             int validityId;
@@ -481,7 +478,7 @@ class GtfsReader {
             setEdgeTypeAndClearDistance(dwellEdge, GtfsStorage.EdgeType.DWELL);
             dwellEdge.setFlags(encoder.setTime(dwellEdge.getFlags(), stopTime.departure_time - stopTime.arrival_time));
             if (prev == null) {
-                insertInboundBlockTransfers(arrivalNodes, tripDescriptor, departureNode, stopTime, stop, validOn, zoneId);
+                insertInboundBlockTransfers(arrivalNodes, tripDescriptor, departureNode, stopTime.departure_time + time, stopTime, stop, validOn, zoneId);
             }
             prev = stopTime;
         }
@@ -490,6 +487,7 @@ class GtfsReader {
         TripWithStopTimeAndArrivalNode tripWithStopTimeAndArrivalNode = new TripWithStopTimeAndArrivalNode();
         tripWithStopTimeAndArrivalNode.tripWithStopTimes = trip;
         tripWithStopTimeAndArrivalNode.arrivalNode = arrivalNode;
+        tripWithStopTimeAndArrivalNode.arrivalTime = arrivalTime;
         arrivalNodes.add(tripWithStopTimeAndArrivalNode);
     }
 
@@ -503,7 +501,6 @@ class GtfsReader {
             final int _departureTimelineNode = i++;
             nodeAccess.setNode(_departureTimelineNode, stop.stop_lat, stop.stop_lon);
             nodeAccess.setAdditionalNodeField(_departureTimelineNode, NodeType.INTERNAL_PT.ordinal());
-            times.put(_departureTimelineNode, departureTime);
             return _departureTimelineNode;
         });
 
@@ -593,13 +590,13 @@ class GtfsReader {
         }
     }
 
-    private void insertInboundBlockTransfers(List<TripWithStopTimeAndArrivalNode> arrivalNodes, GtfsRealtime.TripDescriptor tripDescriptor, int departureNode, StopTime stopTime, Stop stop, GtfsStorage.Validity validOn, ZoneId zoneId) {
+    private void insertInboundBlockTransfers(List<TripWithStopTimeAndArrivalNode> arrivalNodes, GtfsRealtime.TripDescriptor tripDescriptor, int departureNode, int departureTime, StopTime stopTime, Stop stop, GtfsStorage.Validity validOn, ZoneId zoneId) {
         BitSet accumulatorValidity = new BitSet(validOn.validity.size());
         accumulatorValidity.or(validOn.validity);
         ListIterator<TripWithStopTimeAndArrivalNode> li = arrivalNodes.listIterator(arrivalNodes.size());
         while(li.hasPrevious() && accumulatorValidity.cardinality() > 0) {
             TripWithStopTimeAndArrivalNode lastTrip = li.previous();
-            int dwellTime = times.get(departureNode) - times.get(lastTrip.arrivalNode);
+            int dwellTime = departureTime - lastTrip.arrivalTime;
             if (dwellTime >= 0 && accumulatorValidity.intersects(lastTrip.tripWithStopTimes.validOnDay)) {
                 BitSet blockTransferValidity = new BitSet(validOn.validity.size());
                 blockTransferValidity.or(validOn.validity);
