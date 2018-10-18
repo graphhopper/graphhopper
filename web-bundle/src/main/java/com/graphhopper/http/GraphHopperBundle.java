@@ -18,20 +18,21 @@
 
 package com.graphhopper.http;
 
-import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationConfig;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
-import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.http.health.GraphHopperStorageHealthCheck;
 import com.graphhopper.isochrone.algorithm.RasterHullBuilder;
-import com.graphhopper.jackson.GraphHopperModule;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
@@ -158,12 +159,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
         ObjectMapper om = bootstrap.getObjectMapper();
-        om.setDateFormat(new StdDateFormat());
-        // TODO use Jackson helper class somehow
-        om.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
-        om.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-        om.registerModule(new JtsModule());
-        om.registerModule(new GraphHopperModule());
+        Jackson.init(om);
         om.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         // Because VirtualEdgeIteratorState has getters which throw Exceptions.
         // http://stackoverflow.com/questions/35359430/how-to-make-jackson-ignore-properties-if-the-getters-throw-exceptions
@@ -196,6 +192,9 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(new MultiExceptionMapper());
         environment.jersey().register(new MultiExceptionGPXMessageBodyWriter());
 
+        // disabled by default
+        if (configuration.getGraphHopperConfiguration().getBool("routing.flex.debug", false))
+            environment.jersey().register(new JsonExceptionMapper());
         environment.jersey().register(new IllegalArgumentExceptionMapper());
         environment.jersey().register(new GHPointConverterProvider());
 

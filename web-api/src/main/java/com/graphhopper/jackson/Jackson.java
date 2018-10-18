@@ -18,15 +18,20 @@
 package com.graphhopper.jackson;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 public class Jackson {
-    public static ObjectMapper newObjectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
+    public static ObjectMapper init(ObjectMapper objectMapper) {
         objectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
         objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
         objectMapper.registerModule(new GraphHopperModule());
         objectMapper.registerModule(new JtsModule());
         return objectMapper;
+    }
+
+    public static ObjectMapper newObjectMapper() {
+        return init(new ObjectMapper());
     }
 }
