@@ -32,9 +32,7 @@ import java.util.Set;
 public class FlexModel {
     // can be empty if anonym request
     private String name = "";
-    @JsonProperty(required = true)
     private String base;
-    @JsonProperty(required = true)
     private double maxSpeed;
     private Speed speed = new Speed();
     private Factor factor = new Factor();

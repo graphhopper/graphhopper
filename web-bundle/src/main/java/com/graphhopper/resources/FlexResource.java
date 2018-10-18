@@ -7,6 +7,7 @@ import com.graphhopper.MultiException;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.flex.FlexModel;
 import com.graphhopper.routing.flex.FlexRequest;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,9 +40,15 @@ public class FlexResource {
     public Response doPost(FlexRequest flex) {
         if (flex == null)
             throw new IllegalArgumentException("FlexRequest cannot be empty");
-
         FlexModel model = flex.getModel();
         GHRequest request = flex.getRequest();
+
+        // TODO move this validiation into FlexModel?
+        if (Helper.isEmpty(model.getBase()))
+            throw new IllegalArgumentException("'base' cannot be empty");
+        if (model.getMaxSpeed() < 1)
+            throw new IllegalArgumentException("max_speed too low: " + model.getMaxSpeed());
+
         request.setVehicle(model.getBase());
         request.getHints().put("ch.disable", true);
 
