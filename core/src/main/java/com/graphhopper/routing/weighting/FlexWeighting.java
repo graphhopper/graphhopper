@@ -108,9 +108,6 @@ public class FlexWeighting implements Weighting {
         if (model.getNoAccess().getToll().contains(edgeState.get(tollEnc)))
             return Double.POSITIVE_INFINITY;
 
-//        if (edgeState.get(weightEnc) > model.getNoAccess().getMaxWeight())
-//            return Double.POSITIVE_INFINITY;
-
         long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
