@@ -26,6 +26,8 @@ import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 
+import java.util.ArrayList;
+
 /**
  * Calculates the best route according to a configurable weighting.
  * The formula is:
@@ -49,6 +51,9 @@ public class FlexWeighting implements Weighting {
     private final FlagEncoder encoder;
     private final double distanceFactor;
     private final EdgeFilter edgeFilter;
+    private final ArrayList<TimeOffsetCalc> timeOffsetCalcs;
+    private final ArrayList<FactorCalc> factorCalcs;
+    private final ArrayList<NoAccessCalc> noAccessCalcs;
 
     public FlexWeighting(EncodingManager encodingManager, FlexModel vehicleModel) {
         if (vehicleModel == null)
@@ -85,6 +90,91 @@ public class FlexWeighting implements Weighting {
             }
         };
         distanceFactor = model.getDistanceFactor();
+
+        // TODO avoid map access and use e.g. fast array => roadClasses[edgeState.get(roadClassIntEnc)]
+        // TODO do call edgeState.get(roadClassEnc) only once, currently we do this for all hooks if non-empty
+        timeOffsetCalcs = new ArrayList<>();
+        if (!model.getTimeOffset().getRoadClass().isEmpty())
+            timeOffsetCalcs.add(new TimeOffsetCalc() {
+                @Override
+                public double calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    Double tmp = model.getTimeOffset().getRoadClass().get(edgeState.get(roadClassEnc).toString());
+                    return tmp != null ? tmp : 1;
+                }
+            });
+
+
+        if (!model.getTimeOffset().getRoadEnvironment().isEmpty())
+            timeOffsetCalcs.add(new TimeOffsetCalc() {
+                @Override
+                public double calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    Double tmp = model.getTimeOffset().getRoadEnvironment().get(edgeState.get(roadEnvEnc).toString());
+                    return tmp != null ? tmp : 1;
+                }
+            });
+
+        if (!model.getTimeOffset().getToll().isEmpty())
+            timeOffsetCalcs.add(new TimeOffsetCalc() {
+                @Override
+                public double calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    Double tmp = model.getTimeOffset().getToll().get(edgeState.get(tollEnc).toString());
+                    return tmp != null ? tmp : 1;
+                }
+            });
+
+        noAccessCalcs = new ArrayList<>();
+        if (!model.getNoAccess().getRoadClass().isEmpty())
+            noAccessCalcs.add(new NoAccessCalc() {
+                @Override
+                public boolean blocked(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    return model.getNoAccess().getRoadClass().contains(edgeState.get(roadClassEnc));
+                }
+            });
+
+        if (!model.getNoAccess().getRoadEnvironment().isEmpty())
+            noAccessCalcs.add(new NoAccessCalc() {
+                @Override
+                public boolean blocked(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    return model.getNoAccess().getRoadEnvironment().contains(edgeState.get(roadEnvEnc));
+                }
+            });
+
+        if (!model.getNoAccess().getToll().isEmpty())
+            noAccessCalcs.add(new NoAccessCalc() {
+                @Override
+                public boolean blocked(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    return model.getNoAccess().getToll().contains(edgeState.get(tollEnc));
+                }
+            });
+
+        factorCalcs = new ArrayList<>();
+        if (!model.getFactor().getRoadClass().isEmpty())
+            factorCalcs.add(new FactorCalc() {
+                @Override
+                public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    Double tmp = model.getFactor().getRoadClass().get(edgeState.get(roadClassEnc).toString());
+                    return tmp != null ? tmp : 1;
+                }
+            });
+
+        if (!model.getFactor().getRoadEnvironment().isEmpty())
+            factorCalcs.add(new FactorCalc() {
+                @Override
+                public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    Double tmp = model.getFactor().getRoadEnvironment().get(edgeState.get(roadEnvEnc).toString());
+                    return tmp != null ? tmp : 1;
+                }
+            });
+
+        if (!model.getFactor().getToll().isEmpty()) {
+            factorCalcs.add(new FactorCalc() {
+                @Override
+                public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    Double tmp = model.getFactor().getToll().get(edgeState.get(tollEnc).toString());
+                    return tmp != null ? tmp : 1;
+                }
+            });
+        }
     }
 
     @Override
@@ -101,31 +191,19 @@ public class FlexWeighting implements Weighting {
         } else if (!edgeState.get(accessEnc)) {
             return Double.POSITIVE_INFINITY;
         }
-        if (model.getNoAccess().getRoadClass().contains(edgeState.get(roadClassEnc)))
-            return Double.POSITIVE_INFINITY;
-        if (model.getNoAccess().getRoadEnvironment().contains(edgeState.get(roadEnvEnc)))
-            return Double.POSITIVE_INFINITY;
-        if (model.getNoAccess().getToll().contains(edgeState.get(tollEnc)))
-            return Double.POSITIVE_INFINITY;
+
+        for (int i = 0; i < noAccessCalcs.size(); i++) {
+            if (noAccessCalcs.get(i).blocked(edgeState, reverse, prevOrNextEdgeId))
+                return Double.POSITIVE_INFINITY;
+        }
 
         long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
 
-        // TODO make it pluggable like in a WeightingPipeline to avoid this calculation if non-existent and to make this method shorter
-        // TODO avoid map access and use e.g. fast array
-        // TODO do call edgeState.get only once, currently we do this here and in calcMillis
-        Double tmp = model.getFactor().getRoadClass().get(edgeState.get(roadClassEnc).toString());
-        if (tmp != null)
-            time *= tmp;
-
-        tmp = model.getFactor().getRoadEnvironment().get(edgeState.get(roadEnvEnc).toString());
-        if (tmp != null)
-            time *= tmp;
-
-        tmp = model.getFactor().getToll().get(edgeState.get(tollEnc).toString());
-        if (tmp != null)
-            time *= tmp;
+        for (int i = 0; i < factorCalcs.size(); i++) {
+            time *= factorCalcs.get(i).calcWeight(edgeState, reverse, prevOrNextEdgeId);
+        }
 
         if (distanceFactor > 0)
             return time + edgeState.getDistance() * distanceFactor;
@@ -141,19 +219,23 @@ public class FlexWeighting implements Weighting {
             return Long.MAX_VALUE;
         long timeInMillis = (long) (edgeState.getDistance() / speed * SPEED_CONV);
 
-        Double tmp = model.getTimeOffset().getRoadClass().get(edgeState.get(roadClassEnc).toString());
-        if (tmp != null)
-            timeInMillis += tmp;
-
-        tmp = model.getTimeOffset().getRoadEnvironment().get(edgeState.get(roadEnvEnc).toString());
-        if (tmp != null)
-            timeInMillis += tmp;
-
-        tmp = model.getTimeOffset().getToll().get(edgeState.get(tollEnc).toString());
-        if (tmp != null)
-            timeInMillis += tmp;
+        for (int i = 0; i < timeOffsetCalcs.size(); i++) {
+            timeInMillis += timeOffsetCalcs.get(i).calcMillis(edgeState, reverse, prevOrNextEdgeId);
+        }
 
         return timeInMillis;
+    }
+
+    interface TimeOffsetCalc {
+        double calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
+    }
+
+    interface NoAccessCalc {
+        boolean blocked(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
+    }
+
+    interface FactorCalc {
+        double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
     }
 
     @Override

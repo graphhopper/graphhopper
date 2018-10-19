@@ -21,9 +21,7 @@ import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.profiles.Toll;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Every property like road_environment can influence one or more aspects of the FlexWeighting: the timeOffset, the factor
@@ -41,16 +39,32 @@ public class FlexModel {
     private boolean considerOneway;
     private double distanceFactor;
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public void setBase(String base) {
+        this.base = base;
     }
 
     public String getBase() {
         return base;
     }
 
+    public void setMaxSpeed(double maxSpeed) {
+        this.maxSpeed = maxSpeed;
+    }
+
     public double getMaxSpeed() {
         return maxSpeed;
+    }
+
+    public void setDistanceFactor(double distanceFactor) {
+        this.distanceFactor = distanceFactor;
     }
 
     public double getDistanceFactor() {
@@ -78,8 +92,8 @@ public class FlexModel {
     }
 
     public static class Speed {
-        Map<String, Double> roadClass = Collections.emptyMap();
-        Map<String, Double> roadEnvironment = Collections.emptyMap();
+        Map<String, Double> roadClass = new HashMap<>();
+        Map<String, Double> roadEnvironment = new HashMap<>();
 
         public Map<String, Double> getRoadClass() {
             return roadClass;
@@ -91,9 +105,9 @@ public class FlexModel {
     }
 
     public static class Factor {
-        Map<String, Double> roadClass = Collections.emptyMap();
-        Map<String, Double> roadEnvironment = Collections.emptyMap();
-        Map<String, Double> toll = Collections.emptyMap();
+        Map<String, Double> roadClass = new HashMap<>();
+        Map<String, Double> roadEnvironment = new HashMap<>();
+        Map<String, Double> toll = new HashMap<>();
         boolean reverseOneway;
 
         public Map<String, Double> getRoadClass() {
@@ -117,9 +131,9 @@ public class FlexModel {
      * The time offset in seconds for different road class or environment.
      */
     public static class TimeOffset {
-        Map<String, Double> roadClass = Collections.emptyMap();
-        Map<String, Double> roadEnvironment = Collections.emptyMap();
-        Map<String, Double> toll = Collections.emptyMap();
+        Map<String, Double> roadClass = new HashMap<>();
+        Map<String, Double> roadEnvironment = new HashMap<>();
+        Map<String, Double> toll = new HashMap<>();
 
         public Map<String, Double> getRoadClass() {
             return roadClass;
@@ -135,9 +149,9 @@ public class FlexModel {
     }
 
     public static class NoAccess {
-        Set<RoadClass> roadClass = Collections.emptySet();
-        Set<RoadEnvironment> roadEnvironment = Collections.emptySet();
-        Set<Toll> toll = Collections.emptySet();
+        Set<RoadClass> roadClass = new HashSet<>();
+        Set<RoadEnvironment> roadEnvironment = new HashSet<>();
+        Set<Toll> toll = new HashSet<>();
         double maxHeight;
         double maxWeight;
         double maxWidth;
