@@ -556,14 +556,16 @@ public class GraphHopper implements GraphHopperAPI {
         try {
             Map<String, FlagEncoder> flagEncoderSet = new LinkedHashMap();
             String flagEncodersStr = args.get("graph.flag_encoders", "");
-            for (String feStr : flagEncodersStr.split(","))
-                flagEncoderSet.put(feStr, flagEncoderFactory.createFlagEncoder(feStr, new PMap()));
+            for (String feStr : flagEncodersStr.split(",")) {
+                if (!feStr.isEmpty())
+                    flagEncoderSet.put(feStr, flagEncoderFactory.createFlagEncoder(feStr, new PMap()));
+            }
 
             String encodingManagerStr = args.get("graph.encoding_manager", "");
             ObjectMapper om = encodingManagerStr.contains("json") ? new ObjectMapper() : new ObjectMapper(new YAMLFactory());
             om.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
             om.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-            
+
             for (String str : encodingManagerStr.split(",")) {
                 str = str.trim();
                 if (str.isEmpty())
@@ -938,7 +940,9 @@ public class GraphHopper implements GraphHopperAPI {
         String weightingStr = toLowerCase(hintsMap.getWeighting());
         Weighting weighting = null;
 
-        if (encoder.supports(GenericWeighting.class)) {
+        if (hintsMap.getWeighting().equals("flex")) {
+            weighting = new FlexWeighting(encodingManager, importVehicleModels.get(encoder.toString()));
+        } else if (encoder.supports(GenericWeighting.class)) {
             weighting = new GenericWeighting((DataFlagEncoder) encoder, hintsMap);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(encoder);
@@ -1085,8 +1089,6 @@ public class GraphHopper implements GraphHopperAPI {
                     if (vehicleModel != null) {
                         // TODO vehicleModel.merge(importVehicleModel)
                         weighting = new FlexWeighting(encodingManager, vehicleModel);
-                    } else if (hints.getWeighting().equals("flex")) {
-                        weighting = new FlexWeighting(encodingManager, importVehicleModels.get(encoder.toString()));
                     } else {
                         weighting = createWeighting(hints, encoder, queryGraph);
                     }

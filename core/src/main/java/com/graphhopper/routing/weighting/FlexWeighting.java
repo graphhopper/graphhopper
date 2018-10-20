@@ -62,7 +62,7 @@ public class FlexWeighting implements Weighting {
 
         if (vehicleModel.getMaxSpeed() < 1)
             throw new IllegalArgumentException("max_speed too low: " + vehicleModel.getMaxSpeed());
-        this.maxSpeed = vehicleModel.getMaxSpeed() / SPEED_CONV;
+        this.maxSpeed = vehicleModel.getMaxSpeed() / SPEED_CONV * 1000;
 
         // name can be empty if flex request
         String vehicle = vehicleModel.getName().isEmpty() ? vehicleModel.getBase() : vehicleModel.getName();
