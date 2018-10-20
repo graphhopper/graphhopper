@@ -559,10 +559,11 @@ public class GraphHopper implements GraphHopperAPI {
             for (String feStr : flagEncodersStr.split(","))
                 flagEncoderSet.put(feStr, flagEncoderFactory.createFlagEncoder(feStr, new PMap()));
 
-            ObjectMapper om = new ObjectMapper(new YAMLFactory());
+            String encodingManagerStr = args.get("graph.encoding_manager", "");
+            ObjectMapper om = encodingManagerStr.contains("json") ? new ObjectMapper() : new ObjectMapper(new YAMLFactory());
             om.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
             om.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-            String encodingManagerStr = args.get("graph.encoding_manager", "");
+            
             for (String str : encodingManagerStr.split(",")) {
                 str = str.trim();
                 if (str.isEmpty())
