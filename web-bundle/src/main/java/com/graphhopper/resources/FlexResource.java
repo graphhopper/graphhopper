@@ -10,7 +10,6 @@ import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.flex.FlexModel;
 import com.graphhopper.routing.flex.FlexRequest;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,13 +55,16 @@ public class FlexResource {
         FlexModel model = flex.getModel();
         GHRequest request = flex.getRequest();
 
-        // TODO move this validiation into FlexModel
-        if (Helper.isEmpty(model.getBase()))
-            throw new IllegalArgumentException("'base' cannot be empty");
         if (model.getMaxSpeed() < 1)
             throw new IllegalArgumentException("max_speed too low: " + model.getMaxSpeed());
 
-        request.setVehicle(model.getBase());
+        if (!model.getName().isEmpty())
+            request.setWeighting(model.getName());
+        else if (!model.getBase().isEmpty())
+            request.setWeighting(model.getBase());
+        else
+            throw new IllegalArgumentException("'base' cannot be empty");
+
         request.getHints().put("ch.disable", true);
 
         // TODO read via request.getHints().get(Routing.INSTRUCTIONS)

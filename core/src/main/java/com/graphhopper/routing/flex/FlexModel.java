@@ -21,7 +21,10 @@ import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.profiles.Toll;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Every property like road_environment can influence one or more aspects of the FlexWeighting: the timeOffset, the factor
@@ -30,7 +33,7 @@ import java.util.*;
 public class FlexModel {
     // is only used for import configuration
     private String name = "";
-    private String base;
+    private String base = "";
     private double maxSpeed;
     private Speed speed = new Speed();
     private Factor factor = new Factor();

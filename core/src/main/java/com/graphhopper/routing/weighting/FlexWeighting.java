@@ -41,6 +41,7 @@ import java.util.ArrayList;
 public class FlexWeighting implements Weighting {
 
     private final static double SPEED_CONV = 3600;
+    private final String name;
     private final BooleanEncodedValue accessEnc;
     private final DecimalEncodedValue avSpeedEnc;
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
@@ -64,8 +65,11 @@ public class FlexWeighting implements Weighting {
             throw new IllegalArgumentException("max_speed too low: " + vehicleModel.getMaxSpeed());
         this.maxSpeed = vehicleModel.getMaxSpeed() / SPEED_CONV * 1000;
 
-        // name can be empty if flex request
+        // vehicleModel.name can be empty if flex request
         String vehicle = vehicleModel.getName().isEmpty() ? vehicleModel.getBase() : vehicleModel.getName();
+
+        // TODO how can we make this true for "car fastest" so that landmark preparation is used if just base matches? p.getWeighting().matches(map)
+        name = vehicleModel.getName().isEmpty() ? "flex" : vehicleModel.getName();
 
         if (Helper.isEmpty(vehicle))
             throw new IllegalArgumentException("No vehicle 'base' or 'name' was specified");
@@ -250,6 +254,11 @@ public class FlexWeighting implements Weighting {
 
     @Override
     public String getName() {
-        return "flex";
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

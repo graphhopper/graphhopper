@@ -65,8 +65,7 @@ public class FlexResourceTest {
 
     @Test
     public void testFireTruck() {
-        // TODO this test uses /route endpoint
-        final Response response = app.client().target("http://localhost:8080/route?point=43.740523,7.425524&point=43.744685,7.430556&vehicle=fire_truck&weighting=flex").
+        final Response response = app.client().target("http://localhost:8080/route?point=43.740523,7.425524&point=43.744685,7.430556&vehicle=fire_truck&weighting=fire_truck").
                 request().get();
         JsonNode json = response.readEntity(JsonNode.class);
         System.out.println(json.toString());

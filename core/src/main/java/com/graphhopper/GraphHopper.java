@@ -940,8 +940,9 @@ public class GraphHopper implements GraphHopperAPI {
         String weightingStr = toLowerCase(hintsMap.getWeighting());
         Weighting weighting = null;
 
-        if (hintsMap.getWeighting().equals("flex")) {
-            weighting = new FlexWeighting(encodingManager, importVehicleModels.get(encoder.toString()));
+        FlexModel flexModel = importVehicleModels.get(weightingStr);
+        if (flexModel != null) {
+            weighting = new FlexWeighting(encodingManager, flexModel);
         } else if (encoder.supports(GenericWeighting.class)) {
             weighting = new GenericWeighting((DataFlagEncoder) encoder, hintsMap);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
