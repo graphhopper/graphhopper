@@ -267,11 +267,9 @@ public class GHRequest {
     public String toString() {
         String res = "";
         for (GHPoint point : points) {
-            if (res.isEmpty()) {
-                res = point.toString();
-            } else {
-                res += "; " + point.toString();
-            }
+            if (!res.isEmpty())
+                res += "; ";
+            res += point;
         }
         if (!algo.isEmpty())
             res += " (" + algo + ")";
