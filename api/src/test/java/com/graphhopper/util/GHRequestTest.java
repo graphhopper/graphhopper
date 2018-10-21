@@ -101,6 +101,11 @@ public class GHRequestTest {
             assertEquals(ind + " favored Heading does not match" + expected.get(ind) + " vs ." + favoredHeading,
                     expected.get(ind), favoredHeading, 0.01);
         }
+    }
 
+    @Test
+    public void testSerializationOnNullPoints() {
+        GHRequest ghRequest = new GHRequest(Arrays.asList(null, null, null, null));
+        assertEquals("null; null; null; null", ghRequest.toString());
     }
 }
