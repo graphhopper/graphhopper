@@ -45,6 +45,14 @@
             <artifactId>jaxws-api</artifactId>
             <version>2.3.0</version>
         </dependency>
+
+        <!-- required for ScriptWeighting -->
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
+            <version>3.0.10</version>
+        </dependency>
+
         <!-- required for dropwizard -->
         <dependency>
             <groupId>com.google.guava</groupId>

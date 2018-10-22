@@ -76,7 +76,7 @@ public class QueryGraphTest {
         initGraph(g);
         EdgeExplorer expl = g.createEdgeExplorer();
 
-        // snap directly to tower node => pointList could get of size 1?!?      
+        // snap directly to tower node => pointList could get of size 1?!?
         // a)
         EdgeIterator iter = expl.setBaseNode(2);
         iter.next();

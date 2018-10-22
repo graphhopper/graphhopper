@@ -942,7 +942,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         FlexModel flexModel = importVehicleModels.get(weightingStr);
         if (flexModel != null) {
-            weighting = new FlexWeighting(encodingManager, flexModel);
+            weighting = new FlexWeighting(flexModel).init(encodingManager);
         } else if (encoder.supports(GenericWeighting.class)) {
             weighting = new GenericWeighting((DataFlagEncoder) encoder, hintsMap);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
@@ -994,10 +994,10 @@ public class GraphHopper implements GraphHopperAPI {
      * This method calculates the alternative path list using the low level Path objects.
      */
     public List<Path> calcPaths(GHRequest request, GHResponse ghRsp) {
-        return calcPaths(request, null, ghRsp);
+        return calcPaths(request, ghRsp, null);
     }
 
-    public List<Path> calcPaths(GHRequest request, FlexModel vehicleModel, GHResponse ghRsp) {
+    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp, Weighting weighting) {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
 
@@ -1062,7 +1062,6 @@ public class GraphHopper implements GraphHopperAPI {
                     return Collections.emptyList();
 
                 RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
-                Weighting weighting;
                 QueryGraph queryGraph;
 
                 if (chFactoryDecorator.isEnabled() && !disableCH) {
@@ -1087,9 +1086,12 @@ public class GraphHopper implements GraphHopperAPI {
                     checkNonChMaxWaypointDistance(points);
                     queryGraph = new QueryGraph(ghStorage);
                     queryGraph.lookup(qResults);
-                    if (vehicleModel != null) {
-                        // TODO vehicleModel.merge(importVehicleModel)
-                        weighting = new FlexWeighting(encodingManager, vehicleModel);
+                    if (weighting != null) {
+                        if (weighting instanceof FlexWeighting)
+                            // TODO vehicleModel.merge(importVehicleModel)
+                            ((FlexWeighting) weighting).init(encodingManager);
+                        else if (weighting instanceof ScriptWeighting)
+                            ((ScriptWeighting) weighting).init(encodingManager);
                     } else {
                         weighting = createWeighting(hints, encoder, queryGraph);
                     }

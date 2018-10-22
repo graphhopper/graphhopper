@@ -29,17 +29,60 @@ public class FlexWeightingTest {
         EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_CLASS, EnumEncodedValue.class);
         DecimalEncodedValue avSpeedEnc = encodingManager.getEncodedValue("car.average_speed", DecimalEncodedValue.class);
         BooleanEncodedValue accessEnc = encodingManager.getEncodedValue("car.access", BooleanEncodedValue.class);
-        graphHopperStorage.edge(0, 1).set(roadClassEnc, RoadClass.PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true).setReverse(accessEnc, true);
-        graphHopperStorage.edge(1, 2).set(roadClassEnc, RoadClass.SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true).setReverse(accessEnc, true);
-        graphHopperStorage.edge(2, 3).set(roadClassEnc, RoadClass.SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true).setReverse(accessEnc, true);
-        graphHopperStorage.edge(3, 4).set(roadClassEnc, RoadClass.MOTORWAY).set(avSpeedEnc, 100).set(accessEnc, true).setReverse(accessEnc, true);
+        graphHopperStorage.edge(0, 1).setDistance(10).set(roadClassEnc, RoadClass.PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true).setReverse(accessEnc, true);
+        graphHopperStorage.edge(1, 2).setDistance(10).set(roadClassEnc, RoadClass.SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true).setReverse(accessEnc, true);
+        graphHopperStorage.edge(2, 3).setDistance(10).set(roadClassEnc, RoadClass.SECONDARY).set(avSpeedEnc, 70).set(accessEnc, true).setReverse(accessEnc, true);
+        graphHopperStorage.edge(3, 4).setDistance(10).set(roadClassEnc, RoadClass.MOTORWAY).set(avSpeedEnc, 100).set(accessEnc, true).setReverse(accessEnc, true);
 
 
         FlexModel vehicleModel = new FlexModel();
         vehicleModel.setMaxSpeed(120);
         vehicleModel.setBase("car");
         vehicleModel.getFactor().getRoadClass().put(RoadClass.PRIMARY.toString(), 75.0);
-        final FlexWeighting weighting = new FlexWeighting(encodingManager, vehicleModel);
+        final FlexWeighting weighting = new FlexWeighting(vehicleModel).init(encodingManager);
+//        final ScriptWeighting weighting = new ScriptWeighting(new ScriptInterface() {}).init(encodingManager);
+
+        System.out.println(weighting.calcWeight(graphHopperStorage.getEdgeIteratorState(0, 1), false, -1));
+//        final ScriptInterface scriptInterface;
+//        try {
+//            IClassBodyEvaluator cbe = CompilerFactoryFactory.getDefaultCompilerFactory().newClassBodyEvaluator();
+//            cbe.setNoPermissions();
+//            cbe.setImplementedInterfaces(new Class[]{ScriptInterface.class});
+//            cbe.setDefaultImports(new String[]{"com.graphhopper.util.EdgeIteratorState",
+//                    "com.graphhopper.routing.profiles.EnumEncodedValue",
+//                    "com.graphhopper.routing.profiles.*"});
+//            cbe.setClassName("MyRunner");
+//            cbe.cook("public EnumEncodedValue road_class;\n"
+//                    + "  public double getMaxSpeed() { return 120.0; }\n"
+//                    + "  public String getName() { return \"script\"; }\n"
+//                    + "  public double get(EdgeIteratorState edge, boolean reverse) {\n"
+//                    + "     return edge.get(road_class) == RoadClass.PRIMARY ? 1 : 10;"
+//                    + "  }");
+//            Class<?> c = cbe.getClazz();
+//            scriptInterface = (ScriptInterface) c.newInstance();
+//
+////            System.out.println(scriptInterface.getMaxSpeed());
+//            Field field = scriptInterface.getClass().getDeclaredField("road_class");
+//            field.set(scriptInterface, roadClassEnc);
+//        } catch (Exception ex) {
+//            throw new IllegalArgumentException(ex);
+//        }
+
+//        final ScriptEvaluator script = new ScriptEvaluator();
+//        final SimpleScriptWeighting ti;
+//        try {
+//            script.setNoPermissions();
+//            ti = (SimpleScriptWeighting) script.createFastEvaluator("return Math.min(speed, 40);", SimpleScriptWeighting.class, new String[]{"speed", "edge", "road_class",
+//                    "s1","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11","s12","s13","s14","s15","s16","s17","s18","s19","s20","s21","s22"});
+//            script.setParameters(new String[]{"speed", "road_class", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "s12", "s13", "s14", "s15", "s16", "s17", "s18", "s19", "s20", "s21", "s22", "s23"},
+//                    new Class[]{double.class, String.class, String.class, String.class, String.class,
+//                            String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class,
+//                            String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class});
+//            script.setReturnType(double.class);
+//            script.cook("return Math.max(speed, 40) * road_class.length() * s1.length() * s3.length() * s4.length() * s5.length() * s6.length() * s10.length();");
+//        } catch (Exception ex) {
+//            throw new IllegalArgumentException(ex);
+//        }
 
         final AtomicLong counter = new AtomicLong(0);
         MiniPerfTest perf = new MiniPerfTest() {
@@ -50,10 +93,18 @@ public class FlexWeightingTest {
                 while (iter.next()) {
                     if (!warmup)
                         counter.addAndGet(2);
+//                    sum += (int) scriptInterface.get(iter, false);
+//                    sum += (int) scriptInterface.get(iter, true);
                     sum += (int) weighting.calcWeight(iter, false, EdgeIterator.NO_EDGE);
                     sum += (int) weighting.calcWeight(iter, true, EdgeIterator.NO_EDGE);
                 }
                 return sum;
+//                try {
+//                    return ((Number) script.evaluate(new Object[]{60.0, "test", "a", "ab", "fx", "sdf", "5", "66", "777", "8888", "9999", "10", "11", "12", "1313", "1414", "15", "16", "1716", "18", "1919", "20000", "21", "22", "23232323"})).intValue();
+//                    return (int) ti.get(60, null, null, "a", "ab", "fx", "sdf", "5", "66", "777", "8888", "9999", "10", "11", "12", "1313", "1414", "15", "16", "1716", "18", "1919", "20000", "21", "22");
+//                } catch (Exception ex) {
+//                    throw new IllegalArgumentException(ex);
+//                }
             }
         }.setIterations(10_000_000).start();
 

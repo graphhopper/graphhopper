@@ -10,7 +10,12 @@ import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.flex.FlexModel;
 import com.graphhopper.routing.flex.FlexRequest;
+import com.graphhopper.routing.weighting.FlexWeighting;
+import com.graphhopper.routing.weighting.ScriptInterface;
+import com.graphhopper.routing.weighting.ScriptWeighting;
 import com.graphhopper.util.StopWatch;
+import org.codehaus.commons.compiler.CompilerFactoryFactory;
+import org.codehaus.commons.compiler.IClassBodyEvaluator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +28,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.Arrays;
 
 @Path("flex")
 public class FlexResource {
@@ -75,7 +81,12 @@ public class FlexResource {
 
         StopWatch sw = new StopWatch().start();
         GHResponse ghResponse = new GHResponse();
-        graphHopper.calcPaths(request, model, ghResponse);
+
+        if (model.getScript().isEmpty())
+            graphHopper.calcPaths(request, ghResponse, new FlexWeighting(model));
+        else
+            graphHopper.calcPaths(request, ghResponse, createScriptWeighting(model));
+
         float took = sw.stop().getSeconds();
         if (ghResponse.hasErrors()) {
             logger.error("errors:" + ghResponse.getErrors());
@@ -90,6 +101,33 @@ public class FlexResource {
             return Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
+        }
+    }
+
+    public ScriptWeighting createScriptWeighting(FlexModel model) {
+        String script = model.getScript();
+        for (String chars : Arrays.asList("{", "}", "import", "static", "file", ";"))
+            if (script.contains(chars))
+                throw new IllegalArgumentException("Script contains illegal character " + chars);
+
+        try {
+            IClassBodyEvaluator cbe = CompilerFactoryFactory.getDefaultCompilerFactory().newClassBodyEvaluator();
+            cbe.setNoPermissions();
+            cbe.setImplementedInterfaces(new Class[]{ScriptInterface.class});
+            cbe.setDefaultImports(new String[]{"com.graphhopper.util.EdgeIteratorState",
+                    "com.graphhopper.routing.profiles.*"});
+            cbe.setClassName("MyRunner");
+            cbe.cook("public EnumEncodedValue road_class;\n"
+                    + "  public EnumEncodedValue road_environment;\n"
+                    + "  public IntEncodedValue toll;\n"
+                    + "  public double getMillisFactor(EdgeIteratorState edge, boolean reverse) {\n"
+                    // script="edge.get(road_class) == RoadClass.PRIMARY ? 1 : 10"
+                    + "      return " + script + ";"
+                    + "  }");
+            Class<?> c = cbe.getClazz();
+            return new ScriptWeighting(model.getBase(), model.getMaxSpeed(), (ScriptInterface) c.newInstance());
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(ex);
         }
     }
 }

@@ -152,7 +152,7 @@ public abstract class AbstractLocationIndexTester {
 
         idx = createIndex(g, -1);
         // if we would use less array entries then some points gets the same key so avoid that for this test
-        // e.g. for 16 we get "expected 6 but was 9" i.e 6 was overwritten by node j9 which is a bit closer to the grid center        
+        // e.g. for 16 we get "expected 6 but was 9" i.e 6 was overwritten by node j9 which is a bit closer to the grid center
         // go through every point of the graph if all points are reachable
         NodeAccess na = g.getNodeAccess();
         for (int i = 0; i < locs; i++) {

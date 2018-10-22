@@ -35,6 +35,7 @@ public class FlexModel {
     private String name = "";
     private String base = "";
     private double maxSpeed;
+    private String script = "";
     private Speed speed = new Speed();
     private Factor factor = new Factor();
     private TimeOffset timeOffset = new TimeOffset();
@@ -64,6 +65,14 @@ public class FlexModel {
 
     public double getMaxSpeed() {
         return maxSpeed;
+    }
+
+    public void setScript(String script) {
+        this.script = script;
+    }
+
+    public String getScript() {
+        return script;
     }
 
     public void setDistanceFactor(double distanceFactor) {

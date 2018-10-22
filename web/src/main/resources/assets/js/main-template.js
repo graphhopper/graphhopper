@@ -80,80 +80,87 @@ $(document).ready(function (e) {
         mapLayer.adjustMapSize();
     });
 
-    $("#flex-search-button").click(function() {
-        mapLayer.clearLayers();
+    var sendData = function() {
+       mapLayer.clearLayers();
 
-        var infoDiv = $("#info");
-        infoDiv.empty();
-        infoDiv.show();
-        var routeResultsDiv = $("<div class='route_results'/>");
-        infoDiv.append(routeResultsDiv);
-        routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
+       var infoDiv = $("#info");
+       infoDiv.empty();
+       infoDiv.show();
+       var routeResultsDiv = $("<div class='route_results'/>");
+       infoDiv.append(routeResultsDiv);
+       routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
 
-        // flex endpoint is currently fixed to this
-        ghRequest.api_params.elevation = false;
+       // flex endpoint is currently fixed to this
+       ghRequest.api_params.elevation = false;
 
-        // "request": { "points":[[13.289337, 52.520399], [13.445892, 52.5687]] }
-        var inputText = $("#flex-input-text").val();
-        if(inputText.length < 5) {
-         routeResultsDiv.html("JSON/YAML too short");
-         return;
-        }
+       // "request": { "points":[[13.289337, 52.520399], [13.445892, 52.5687]] }
+       var inputText = $("#flex-input-text").val();
+       if(inputText.length < 5) {
+        routeResultsDiv.html("JSON/YAML too short");
+        return;
+       }
 
-        var points = [];
-        for(var idx = 0; idx < ghRequest.route.size(); idx++) {
-            var point = ghRequest.route.getIndex(idx);
-            if (point.isResolved()) {
-                points.push([point.lng, point.lat]);
-            } else {
-                routeResultsDiv.html("Unresolved points");
-                return;
-            }
-        }
+       var points = [];
+       for(var idx = 0; idx < ghRequest.route.size(); idx++) {
+           var point = ghRequest.route.getIndex(idx);
+           if (point.isResolved()) {
+               points.push([point.lng, point.lat]);
+           } else {
+               routeResultsDiv.html("Unresolved points");
+               return;
+           }
+       }
 
-        var request, contentType;
-        if(inputText.indexOf("{") >= 0) {
-            try {
-             contentType = 'application/json; charset=utf-8';
-             var jsonModel = JSON.parse(inputText);
-             var jsonRequest = {"model": jsonModel, "request" : {"points": points}};
-             request = JSON.stringify(jsonRequest);
-            } catch(ex) {
-             routeResultsDiv.html("Cannot parse JSON " + ex);
-             return;
-            }
-        } else {
-            var lines = inputText.split('\n');
-            var modelText = "";
-            for(var i = 0; i < lines.length; i++) {
-                modelText += " "+lines[i] + "\n";
-            }
-            var pointsStr = "";
-            for(var i = 0; i < points.length; i++) {
-                if(i > 0)
-                    pointsStr += ",";
-                pointsStr += "[" + points[i] + "]";
-            }
+       var request, contentType;
+       if(inputText.indexOf("{") >= 0) {
+           try {
+            contentType = 'application/json; charset=utf-8';
+            var jsonModel = JSON.parse(inputText);
+            var jsonRequest = {"model": jsonModel, "request" : {"points": points}};
+            request = JSON.stringify(jsonRequest);
+           } catch(ex) {
+            routeResultsDiv.html("Cannot parse JSON " + ex);
+            return;
+           }
+       } else {
+           var lines = inputText.split('\n');
+           var modelText = "";
+           for(var i = 0; i < lines.length; i++) {
+               modelText += " "+lines[i] + "\n";
+           }
+           var pointsStr = "";
+           for(var i = 0; i < points.length; i++) {
+               if(i > 0)
+                   pointsStr += ",";
+               pointsStr += "[" + points[i] + "]";
+           }
 
-            contentType = "text/x-yaml";
-            request = "request:\n points: [" + pointsStr + "]\n"
-               + "model:\n" + modelText;
-               console.log(request)
-        }
+           contentType = "text/x-yaml";
+           request = "request:\n points: [" + pointsStr + "]\n"
+              + "model:\n" + modelText;
+              console.log(request)
+       }
 
-        $.ajax({
-            url: "/flex",
-            type: "POST",
-            contentType: contentType,
-            dataType: "json",
-            data: request,
-            success: createRouteCallback(ghRequest, routeResultsDiv, "", true, true),
-            error: function(err) {
-                var json = JSON.parse(err.responseText);
-                createRouteCallback(ghRequest, routeResultsDiv, "", true, true)(json);
-            }
-         });
-    })
+       $.ajax({
+           url: "/flex",
+           type: "POST",
+           contentType: contentType,
+           dataType: "json",
+           data: request,
+           success: createRouteCallback(ghRequest, routeResultsDiv, "", true, true),
+           error: function(err) {
+               routeResultsDiv.html("Cannot process input");
+               var json = JSON.parse(err.responseText);
+               createRouteCallback(ghRequest, routeResultsDiv, "", true, true)(json);
+           }
+        });
+    };
+
+    $("#flex-input-text").keydown(function (e) {
+        // CTRL+Enter
+        if (e.ctrlKey && e.keyCode == 13) sendData();
+    });
+    $("#flex-search-button").click(sendData);
 
     if (isProduction())
         $('#hosting').show();

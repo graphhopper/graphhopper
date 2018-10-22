@@ -19,7 +19,6 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.flex.FlexModel;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
@@ -42,21 +41,20 @@ public class FlexWeighting implements Weighting {
 
     private final static double SPEED_CONV = 3600;
     private final String name;
-    private final BooleanEncodedValue accessEnc;
-    private final DecimalEncodedValue avSpeedEnc;
-    private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
-    private final EnumEncodedValue<RoadClass> roadClassEnc;
-    private final EnumEncodedValue<Toll> tollEnc;
     private final FlexModel model;
     private final double maxSpeed;
-    private final FlagEncoder encoder;
-    private final double distanceFactor;
-    private final EdgeFilter edgeFilter;
     private final ArrayList<TimeOffsetCalc> timeOffsetCalcs;
     private final ArrayList<FactorCalc> factorCalcs;
     private final ArrayList<NoAccessCalc> noAccessCalcs;
+    private BooleanEncodedValue accessEnc;
+    private DecimalEncodedValue avSpeedEnc;
+    private EnumEncodedValue<RoadEnvironment> roadEnvEnc;
+    private EnumEncodedValue<RoadClass> roadClassEnc;
+    private EnumEncodedValue<Toll> tollEnc;
+    private FlagEncoder encoder;
+    private double distanceFactor;
 
-    public FlexWeighting(EncodingManager encodingManager, FlexModel vehicleModel) {
+    public FlexWeighting(FlexModel vehicleModel) {
         if (vehicleModel == null)
             throw new IllegalArgumentException("Vehicle model not found");
         this.model = vehicleModel;
@@ -65,35 +63,8 @@ public class FlexWeighting implements Weighting {
             throw new IllegalArgumentException("max_speed too low: " + vehicleModel.getMaxSpeed());
         this.maxSpeed = vehicleModel.getMaxSpeed() / SPEED_CONV * 1000;
 
-        // vehicleModel.name can be empty if flex request
-        String vehicle = vehicleModel.getName().isEmpty() ? vehicleModel.getBase() : vehicleModel.getName();
-
         // TODO how can we make this true for "car fastest" so that landmark preparation is used if just base matches? p.getWeighting().matches(map)
         name = vehicleModel.getName().isEmpty() ? "flex" : vehicleModel.getName();
-
-        if (Helper.isEmpty(vehicle))
-            throw new IllegalArgumentException("No vehicle 'base' or 'name' was specified");
-
-        // TODO deprecated. only used for getFlagEncoder method
-        encoder = encodingManager.getEncoder(vehicle);
-
-        accessEnc = encodingManager.getEncodedValue(vehicle + ".access", BooleanEncodedValue.class);
-        avSpeedEnc = encodingManager.getEncodedValue(vehicle + ".average_speed", DecimalEncodedValue.class);
-        roadEnvEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_ENV, EnumEncodedValue.class);
-        roadClassEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_CLASS, EnumEncodedValue.class);
-        tollEnc = encodingManager.getEncodedValue(EncodingManager.TOLL, EnumEncodedValue.class);
-
-        edgeFilter = new EdgeFilter() {
-            @Override
-            public boolean accept(EdgeIteratorState edgeState) {
-                if (model.getNoAccess().getRoadClass().contains(edgeState.get(roadClassEnc)))
-                    return false;
-                if (model.getNoAccess().getRoadEnvironment().contains(edgeState.get(roadEnvEnc)))
-                    return false;
-                return edgeState.get(accessEnc);
-            }
-        };
-        distanceFactor = model.getDistanceFactor();
 
         // TODO avoid map access and use e.g. fast array => roadClasses[edgeState.get(roadClassIntEnc)]
         // TODO do call edgeState.get(roadClassEnc) only once, currently we do this for all hooks if non-empty
@@ -179,6 +150,26 @@ public class FlexWeighting implements Weighting {
                 }
             });
         }
+    }
+
+    public FlexWeighting init(EncodingManager encodingManager) {
+        // vehicleModel.name can be empty if flex request
+        String vehicle = model.getName().isEmpty() ? model.getBase() : model.getName();
+
+        if (Helper.isEmpty(vehicle))
+            throw new IllegalArgumentException("No vehicle 'base' or 'name' was specified");
+
+        // TODO deprecated. only used for getFlagEncoder method
+        encoder = encodingManager.getEncoder(vehicle);
+
+        accessEnc = encodingManager.getEncodedValue(vehicle + ".access", BooleanEncodedValue.class);
+        avSpeedEnc = encodingManager.getEncodedValue(vehicle + ".average_speed", DecimalEncodedValue.class);
+        roadEnvEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_ENV, EnumEncodedValue.class);
+        roadClassEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_CLASS, EnumEncodedValue.class);
+        tollEnc = encodingManager.getEncodedValue(EncodingManager.TOLL, EnumEncodedValue.class);
+
+        distanceFactor = model.getDistanceFactor();
+        return this;
     }
 
     @Override
