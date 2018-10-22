@@ -67,7 +67,6 @@ public class FlexResourceTest {
         final Response response = app.client().target("http://localhost:8080/route?point=43.740523,7.425524&point=43.744685,7.430556&vehicle=fire_truck&weighting=fire_truck").
                 request().get();
         JsonNode json = response.readEntity(JsonNode.class);
-        System.out.println(json.toString());
         assertEquals(200, response.getStatus());
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
@@ -87,7 +86,6 @@ public class FlexResourceTest {
         ));
 
         JsonNode json = response.readEntity(JsonNode.class);
-        System.out.println(json.toString());
         assertEquals(200, response.getStatus());
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
@@ -103,7 +101,6 @@ public class FlexResourceTest {
                 + "}"
         )).invoke();
         json = response.readEntity(JsonNode.class);
-        System.out.println(json.toString());
         assertEquals(200, response.getStatus());
         path = json.get("paths").get(0);
         distance = path.get("distance").asDouble();
@@ -127,7 +124,6 @@ public class FlexResourceTest {
         ));
 
         JsonNode json = response.readEntity(JsonNode.class);
-        System.out.println(json.toString());
         assertEquals(200, response.getStatus());
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
@@ -135,5 +131,43 @@ public class FlexResourceTest {
         double distance = path.get("distance").asDouble();
         assertTrue("distance isn't correct:" + distance, distance > 470);
         assertTrue("distance isn't correct:" + distance, distance < 490);
+    }
+
+    @Test
+    public void testMissingCharErrorScript() {
+        Response response = app.client().target("http://localhost:8080/flex").request().post(Entity.entity(
+                "request:\n"
+                        + " points: [[7.421447,43.731681],[7.419602,43.73224]]\n"
+                        + "model:\n"
+                        + " base: foot\n"
+                        + " max_speed: 50.0\n"
+                        + " script: (edge.get(road_class) == RoadClass.STEPS) ? 1.1 : 1\n",
+                "text/x-yaml"
+        ));
+
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertTrue("error message is wrong " + json.get("message").toString(), json.get("message").toString().contains("mapping values are not allowed here"));
+    }
+
+    @Test
+    public void testMultiCommandScript() {
+        Response response = app.client().target("http://localhost:8080/flex").request().post(Entity.entity(
+                "request:\n"
+                        + " points: [[7.421447,43.731681],[7.419602,43.73224]]\n"
+                        + "model:\n"
+                        + " base: foot\n"
+                        + " max_speed: 50.0\n"
+                        + " script: 'Enum tmp = edge.get(road_class); return (tmp == RoadClass.STEPS)? 1.5 : 1.0;'\n",
+                "text/x-yaml"
+        ));
+
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals(200, response.getStatus());
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode path = json.get("paths").get(0);
+        double distance = path.get("distance").asDouble();
+        assertTrue("distance isn't correct:" + distance, distance > 150);
+        assertTrue("distance isn't correct:" + distance, distance < 170);
     }
 }
