@@ -57,7 +57,6 @@ public class FlexResourceTest {
     public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
 
-
     @AfterClass
     public static void cleanUp() {
         Helper.removeDir(new File(dir));
@@ -87,12 +86,6 @@ public class FlexResourceTest {
                 + "}"
         ));
 
-//        String jsonStr = "{" + "\"request\": { \"points\":[[7.421211, 43.731716], [7.419666, 43.732197]] }, "
-//                + "\"model\":   { \"no_access\": { \"road_class\": [\"steps\"]} } }";
-//        ObjectMapper mapper = Jackson.newObjectMapper();
-//        mapper.registerModule(new GraphHopperModule());
-//        FlexRequest val = mapper.readValue(jsonStr, FlexRequest.class);
-
         JsonNode json = response.readEntity(JsonNode.class);
         System.out.println(json.toString());
         assertEquals(200, response.getStatus());
@@ -119,5 +112,28 @@ public class FlexResourceTest {
         assertTrue("distance isn't correct:" + distance, distance < 1500);
 
         // TODO write json parsing error directly in response? Could be a security problem if too much information is provided
+    }
+
+    @Test
+    public void testScript() {
+        Response response = app.client().target("http://localhost:8080/flex").request().post(Entity.entity(
+                "request:\n"
+                        + " points: [[7.421447,43.731681],[7.419602,43.73224]]\n"
+                        + "model:\n"
+                        + " base: foot\n"
+                        + " max_speed: 50.0\n"
+                        + " script: '(edge.get(road_class) == RoadClass.STEPS) ? 10 : 1'\n",
+                "text/x-yaml"
+        ));
+
+        JsonNode json = response.readEntity(JsonNode.class);
+        System.out.println(json.toString());
+        assertEquals(200, response.getStatus());
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode path = json.get("paths").get(0);
+        double distance = path.get("distance").asDouble();
+        assertTrue("distance isn't correct:" + distance, distance > 470);
+        assertTrue("distance isn't correct:" + distance, distance < 490);
     }
 }

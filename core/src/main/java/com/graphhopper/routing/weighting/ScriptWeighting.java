@@ -34,7 +34,7 @@ public class ScriptWeighting implements Weighting {
         this.maxSpeed = maxSpeed / SPEED_CONV * 1000;
     }
 
-    public void init(EncodingManager encodingManager) {
+    public ScriptWeighting init(EncodingManager encodingManager) {
         String vehicle = name;
         // TODO deprecated. only used for getFlagEncoder method
         encoder = encodingManager.getEncoder(vehicle);
@@ -48,6 +48,7 @@ public class ScriptWeighting implements Weighting {
                 Field field = script.getClass().getDeclaredField(key);
                 field.set(script, value);
             }
+            return this;
         } catch (Exception ex) {
             throw new IllegalArgumentException(ex);
         }

@@ -27,7 +27,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.util.Arrays;
 
 @Path("flex")
@@ -48,8 +47,15 @@ public class FlexResource {
     @POST
     @Consumes({"text/x-yaml", "application/x-yaml"})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
-    public Response doPost(String yaml) throws IOException {
-        return doPost(yamlOM.readValue(yaml, FlexRequest.class));
+    public Response doPost(String yaml) {
+        FlexRequest flexRequest;
+        try {
+            flexRequest = yamlOM.readValue(yaml, FlexRequest.class);
+        } catch (Exception ex) {
+            // TODO should we really provide this much details?
+            throw new IllegalArgumentException("Incorrect YAML: " + ex.getMessage(), ex);
+        }
+        return doPost(flexRequest);
     }
 
     @POST
@@ -106,9 +112,14 @@ public class FlexResource {
 
     public ScriptWeighting createScriptWeighting(FlexModel model) {
         String script = model.getScript();
-        for (String chars : Arrays.asList("{", "}", "import", "static", "file", ";"))
+        for (String chars : Arrays.asList("{", "}", "import", "static", "file"))
             if (script.contains(chars))
                 throw new IllegalArgumentException("Script contains illegal character " + chars);
+
+        if (!script.contains("return"))
+            script = "return " + script;
+        if (!script.endsWith(";"))
+            script = script + ";";
 
         try {
             IClassBodyEvaluator cbe = CompilerFactoryFactory.getDefaultCompilerFactory().newClassBodyEvaluator();
@@ -116,13 +127,13 @@ public class FlexResource {
             cbe.setImplementedInterfaces(new Class[]{ScriptInterface.class});
             cbe.setDefaultImports(new String[]{"com.graphhopper.util.EdgeIteratorState",
                     "com.graphhopper.routing.profiles.*"});
-            cbe.setClassName("MyRunner");
+            cbe.setClassName("UserScript");
             cbe.cook("public EnumEncodedValue road_class;\n"
                     + "  public EnumEncodedValue road_environment;\n"
                     + "  public IntEncodedValue toll;\n"
                     + "  public double getMillisFactor(EdgeIteratorState edge, boolean reverse) {\n"
-                    // script="edge.get(road_class) == RoadClass.PRIMARY ? 1 : 10"
-                    + "      return " + script + ";"
+                    // "return edge.get(road_class) == RoadClass.PRIMARY ? 1 : 10;"
+                    + script
                     + "  }");
             Class<?> c = cbe.getClazz();
             return new ScriptWeighting(model.getBase(), model.getMaxSpeed(), (ScriptInterface) c.newInstance());
