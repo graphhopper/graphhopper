@@ -140,11 +140,12 @@ public class FlexResource {
 
         try {
             IClassBodyEvaluator cbe = CompilerFactoryFactory.getDefaultCompilerFactory().newClassBodyEvaluator();
-            cbe.setNoPermissions();
+            // this method would enable the security manager and we would need a policy file: https://gist.github.com/karussell/49f23910e0b763335fe6e338cd0b3ce7
+            // cbe.setPermissions(new Permissions());
             cbe.setImplementedInterfaces(new Class[]{ScriptInterface.class});
             cbe.setDefaultImports(new String[]{"com.graphhopper.util.EdgeIteratorState",
                     "com.graphhopper.routing.profiles.*"});
-            cbe.setClassName("UserScript");
+            cbe.setClassName("GHUserScript");
             cbe.cook("public EnumEncodedValue road_class;\n"
                     + "  public EnumEncodedValue road_environment;\n"
                     + "  public IntEncodedValue toll;\n"
