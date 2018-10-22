@@ -153,7 +153,7 @@ public class FlexResource {
                     + script
                     + "  }");
             Class<?> c = cbe.getClazz();
-            return new ScriptWeighting(model.getBase(), model.getMaxSpeed(), (ScriptInterface) c.newInstance());
+            return new ScriptWeighting(model.getBase(), model.getMaxSpeed(), (ScriptInterface) c.getConstructor().newInstance());
         } catch (Exception ex) {
             throw new IllegalArgumentException(ex);
         }
