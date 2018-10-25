@@ -532,10 +532,10 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("If no graph.location is provided you need to specify an OSM file.");
 
             graphHopperFolder = pruneFileEnd(dataReaderFile) + "-gh";
+            setGraphHopperLocation(graphHopperFolder);
         }
 
         // graph
-        setGraphHopperLocation(graphHopperFolder);
         defaultSegmentSize = args.getInt("graph.dataaccess.segment_size", defaultSegmentSize);
 
         String graphDATypeStr = args.get("graph.dataaccess", "RAM_STORE");
