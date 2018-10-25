@@ -85,8 +85,11 @@ public class IsochroneResource {
         Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, graph);
         Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
 
-        isochrone.setDistanceLimit(distanceInMeter);
-        isochrone.setTimeLimit(timeLimitInSeconds);
+        if (distanceInMeter > 0) {
+            isochrone.setDistanceLimit(distanceInMeter);
+        } else {
+            isochrone.setTimeLimit(timeLimitInSeconds);
+        }
 
         List<List<Coordinate>> buckets = isochrone.searchGPS(qr.getClosestNode(), nBuckets);
         if (isochrone.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
