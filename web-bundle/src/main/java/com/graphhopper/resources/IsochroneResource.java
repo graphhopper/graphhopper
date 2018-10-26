@@ -86,21 +86,8 @@ public class IsochroneResource {
         Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
 
         if (distanceInMeter > 0) {
-            double maxMeter = 50 * 1000;
-            if (distanceInMeter > maxMeter)
-                throw new IllegalArgumentException("Specify a limit of less than " + maxMeter / 1000f + "km");
-            if (nBuckets > (distanceInMeter / 500))
-                throw new IllegalArgumentException("Specify buckets less than the number of explored kilometers");
-
             isochrone.setDistanceLimit(distanceInMeter);
         } else {
-
-            long maxSeconds = 80 * 60;
-            if (timeLimitInSeconds > maxSeconds)
-                throw new IllegalArgumentException("Specify a limit of less than " + maxSeconds + " seconds");
-            if (nBuckets > (timeLimitInSeconds / 60))
-                throw new IllegalArgumentException("Specify buckets less than the number of explored minutes");
-
             isochrone.setTimeLimit(timeLimitInSeconds);
         }
 
