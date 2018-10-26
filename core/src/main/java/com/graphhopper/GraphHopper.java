@@ -533,7 +533,7 @@ public class GraphHopper implements GraphHopperAPI {
                     throw new IllegalArgumentException("If no graph.location is provided you need to specify an OSM file.");
 
                 graphHopperFolder = pruneFileEnd(dataReaderFile) + "-gh";
-        	}
+            }
             setGraphHopperLocation(graphHopperFolder);
         }
 
