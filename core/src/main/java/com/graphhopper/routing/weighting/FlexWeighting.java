@@ -39,7 +39,7 @@ import java.util.ArrayList;
  */
 public class FlexWeighting implements Weighting {
 
-    private final static double SPEED_CONV = 3600;
+    private final static double SPEED_CONV = 3600; // 3.6 <=> meter/s and 3.6*1000 <=> meter/ms
     private final String name;
     private final FlexModel model;
     private final double maxSpeed;
@@ -61,7 +61,7 @@ public class FlexWeighting implements Weighting {
 
         if (vehicleModel.getMaxSpeed() < 1)
             throw new IllegalArgumentException("max_speed too low: " + vehicleModel.getMaxSpeed());
-        this.maxSpeed = vehicleModel.getMaxSpeed() / SPEED_CONV * 1000;
+        this.maxSpeed = vehicleModel.getMaxSpeed() / SPEED_CONV;
 
         // TODO how can we make this true for "car fastest" so that landmark preparation is used if just base matches? p.getWeighting().matches(map)
         name = vehicleModel.getName().isEmpty() ? "flex" : vehicleModel.getName();
@@ -72,7 +72,7 @@ public class FlexWeighting implements Weighting {
         if (!model.getTimeOffset().getRoadClass().isEmpty())
             timeOffsetCalcs.add(new TimeOffsetCalc() {
                 @Override
-                public double calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                public double calcSeconds(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
                     Double tmp = model.getTimeOffset().getRoadClass().get(edgeState.get(roadClassEnc).toString());
                     return tmp != null ? tmp : 1;
                 }
@@ -82,7 +82,7 @@ public class FlexWeighting implements Weighting {
         if (!model.getTimeOffset().getRoadEnvironment().isEmpty())
             timeOffsetCalcs.add(new TimeOffsetCalc() {
                 @Override
-                public double calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                public double calcSeconds(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
                     Double tmp = model.getTimeOffset().getRoadEnvironment().get(edgeState.get(roadEnvEnc).toString());
                     return tmp != null ? tmp : 1;
                 }
@@ -91,7 +91,7 @@ public class FlexWeighting implements Weighting {
         if (!model.getTimeOffset().getToll().isEmpty())
             timeOffsetCalcs.add(new TimeOffsetCalc() {
                 @Override
-                public double calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                public double calcSeconds(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
                     Double tmp = model.getTimeOffset().getToll().get(edgeState.get(tollEnc).toString());
                     return tmp != null ? tmp : 1;
                 }
@@ -192,18 +192,18 @@ public class FlexWeighting implements Weighting {
                 return Double.POSITIVE_INFINITY;
         }
 
-        long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
-        if (time == Long.MAX_VALUE)
+        long timeInMillis = calcMillis(edgeState, reverse, prevOrNextEdgeId);
+        if (timeInMillis == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
 
         for (int i = 0; i < factorCalcs.size(); i++) {
-            time *= factorCalcs.get(i).calcWeight(edgeState, reverse, prevOrNextEdgeId);
+            timeInMillis *= factorCalcs.get(i).calcWeight(edgeState, reverse, prevOrNextEdgeId);
         }
 
         if (distanceFactor > 0)
-            return time + edgeState.getDistance() * distanceFactor;
+            return timeInMillis + edgeState.getDistance() * distanceFactor;
 
-        return time;
+        return timeInMillis;
     }
 
     @Override
@@ -215,14 +215,14 @@ public class FlexWeighting implements Weighting {
         long timeInMillis = (long) (edgeState.getDistance() / speed * SPEED_CONV);
 
         for (int i = 0; i < timeOffsetCalcs.size(); i++) {
-            timeInMillis += timeOffsetCalcs.get(i).calcMillis(edgeState, reverse, prevOrNextEdgeId);
+            timeInMillis += timeOffsetCalcs.get(i).calcSeconds(edgeState, reverse, prevOrNextEdgeId) * 1000;
         }
 
         return timeInMillis;
     }
 
     interface TimeOffsetCalc {
-        double calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
+        double calcSeconds(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
     }
 
     interface NoAccessCalc {
