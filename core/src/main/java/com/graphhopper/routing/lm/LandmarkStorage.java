@@ -234,6 +234,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             additionalInfo = ", maxWeight:" + maxWeight + ", from max distance:" + distanceInMeter / 1000f + "km";
         }
 
+        if (factor * DOUBLE_MLTPL > Integer.MAX_VALUE)
+            throw new UnsupportedOperationException("landmark weight factor cannot be bigger than Integer.MAX_VALUE " + factor * DOUBLE_MLTPL);
+
         if (logDetails)
             LOGGER.info("init landmarks for subnetworks with node count greater than " + minimumNodes + " with factor:" + factor + additionalInfo);
 
@@ -310,8 +313,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         landmarkWeightDA.setHeader(0 * 4, getVersion());
         landmarkWeightDA.setHeader(1 * 4, landmarks);
         landmarkWeightDA.setHeader(2 * 4, subnetworkCount);
-        if (factor * DOUBLE_MLTPL > Integer.MAX_VALUE)
-            throw new UnsupportedOperationException("landmark weight factor cannot be bigger than Integer.MAX_VALUE " + factor * DOUBLE_MLTPL);
         landmarkWeightDA.setHeader(3 * 4, (int) Math.round(factor * DOUBLE_MLTPL));
         landmarkWeightDA.setHeader(4 * 4, graph.getNodes());
 
