@@ -174,7 +174,7 @@ public class FlexWeighting implements Weighting {
 
     @Override
     public double getMinWeight(double distance) {
-        return distance / maxSpeed + distance * distanceFactor;
+        return (distance / maxSpeed + distance * distanceFactor) / 1e6;
     }
 
     @Override
@@ -201,9 +201,9 @@ public class FlexWeighting implements Weighting {
         }
 
         if (distanceFactor > 0)
-            return timeInMillis + edgeState.getDistance() * distanceFactor;
+            timeInMillis += edgeState.getDistance() * distanceFactor;
 
-        return timeInMillis;
+        return timeInMillis / 1e6;
     }
 
     @Override
