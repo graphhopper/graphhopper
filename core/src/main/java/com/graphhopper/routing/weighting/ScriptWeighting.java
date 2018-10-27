@@ -45,7 +45,7 @@ public class ScriptWeighting implements Weighting {
 
         if (maxSpeed < 1)
             throw new IllegalArgumentException("max_speed too low: " + maxSpeed);
-        this.maxSpeed = maxSpeed / SPEED_CONV * 1000;
+        this.maxSpeed = maxSpeed / SPEED_CONV;
         this.script = script;
     }
 
@@ -66,7 +66,7 @@ public class ScriptWeighting implements Weighting {
 
     @Override
     public double getMinWeight(double distance) {
-        return distance / maxSpeed;
+        return distance / maxSpeed / 1e6;
     }
 
     @Override
@@ -79,7 +79,7 @@ public class ScriptWeighting implements Weighting {
         }
 
         double time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
-        return time;
+        return time / 1e6;
     }
 
     @Override
