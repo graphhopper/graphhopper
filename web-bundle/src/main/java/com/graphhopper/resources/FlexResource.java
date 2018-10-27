@@ -30,9 +30,10 @@ import com.graphhopper.routing.flex.FlexRequest;
 import com.graphhopper.routing.weighting.FlexWeighting;
 import com.graphhopper.routing.weighting.ScriptInterface;
 import com.graphhopper.routing.weighting.ScriptWeighting;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.StopWatch;
-import org.codehaus.commons.compiler.CompilerFactoryFactory;
-import org.codehaus.commons.compiler.IClassBodyEvaluator;
+import org.codehaus.commons.compiler.CompileException;
+import org.codehaus.janino.ExpressionEvaluator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +45,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 
 @Path("flex")
@@ -128,34 +130,60 @@ public class FlexResource {
     }
 
     public ScriptWeighting createScriptWeighting(FlexModel model) {
-        String script = model.getScript();
+        final String expressions = model.getScript();
+        if (expressions.isEmpty())
+            throw new IllegalArgumentException("Script cannot be empty");
         for (String chars : Arrays.asList("{", "}", "import", "static", "file"))
-            if (script.contains(chars))
+            if (expressions.contains(chars))
                 throw new IllegalArgumentException("Script contains illegal character " + chars);
 
-        if (!script.contains("return"))
-            script = "return " + script;
-        if (!script.endsWith(";"))
-            script = script + ";";
-
+        ExpressionEvaluator ee = new ExpressionEvaluator();
+        final ScriptInterface.HelperVariables baseClass;
         try {
-            IClassBodyEvaluator cbe = CompilerFactoryFactory.getDefaultCompilerFactory().newClassBodyEvaluator();
-            // this method would enable the security manager and we would need a policy file: https://gist.github.com/karussell/49f23910e0b763335fe6e338cd0b3ce7
-            // cbe.setPermissions(new Permissions());
-            cbe.setImplementedInterfaces(new Class[]{ScriptInterface.class});
-            cbe.setDefaultImports(new String[]{"com.graphhopper.util.EdgeIteratorState",
+            ee.setStaticMethod(false);
+            ee.setDefaultImports(new String[]{"com.graphhopper.util.EdgeIteratorState",
                     "com.graphhopper.routing.profiles.*"});
-            cbe.setClassName("GHUserScript");
-            cbe.cook("public EnumEncodedValue road_class;\n"
-                    + "  public EnumEncodedValue road_environment;\n"
-                    + "  public IntEncodedValue toll;\n"
-                    + "  public double getMillisFactor(EdgeIteratorState edge, boolean reverse) {\n"
-                    + script
-                    + "  }");
-            Class<?> c = cbe.getClazz();
-            return new ScriptWeighting(model.getBase(), model.getMaxSpeed(), (ScriptInterface) c.getConstructor().newInstance());
+            ee.setExtendedClass(ScriptInterface.HelperVariables.class);
+            ee.setParameters(new String[]{"edge", "reverse"}, new Class[]{EdgeIteratorState.class, boolean.class});
+            ee.cook(expressions.split(";"));
+            baseClass = (ScriptInterface.HelperVariables) ee.getMethod().getDeclaringClass().newInstance();
         } catch (Exception ex) {
+            logger.info("script problem: " + ex, ex);
             throw new IllegalArgumentException(ex);
+        }
+
+        ScriptInterface scriptInterface = new Script(ee, baseClass, expressions);
+        return new ScriptWeighting(model.getBase(), model.getMaxSpeed(), scriptInterface);
+    }
+
+    private static class Script implements ScriptInterface {
+        ExpressionEvaluator ee;
+        ScriptInterface.HelperVariables baseClass;
+        String expression;
+
+        public Script(ExpressionEvaluator ee, HelperVariables baseClass, String expression) {
+            this.ee = ee;
+            this.baseClass = baseClass;
+            this.expression = expression;
+        }
+
+        @Override
+        public double getMillisFactor(EdgeIteratorState edge, boolean reverse) {
+            try {
+                return ((Number) ee.getMethod().invoke(baseClass, edge, reverse)).doubleValue();
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new IllegalArgumentException(e);
+            }
+        }
+
+        @Override
+        public ScriptInterface.HelperVariables getHelperVariables() {
+            return baseClass;
+        }
+
+        @Override
+        public String toString() {
+            return expression;
         }
     }
 }

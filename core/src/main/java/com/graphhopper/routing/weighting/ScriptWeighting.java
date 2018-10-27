@@ -17,17 +17,12 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-
-import java.lang.reflect.Field;
-import java.util.Arrays;
 
 /**
  * This class makes it possible to define the time calculation formula inside a yaml.
@@ -43,8 +38,7 @@ public class ScriptWeighting implements Weighting {
     private BooleanEncodedValue accessEnc;
     private DecimalEncodedValue avSpeedEnc;
 
-    public ScriptWeighting(String name, double maxSpeed, ScriptInterface scriptInterface) {
-        this.script = scriptInterface;
+    public ScriptWeighting(String name, double maxSpeed, ScriptInterface script) {
         this.name = name;
         if (Helper.isEmpty(name))
             throw new IllegalArgumentException("No 'base' was specified");
@@ -52,6 +46,7 @@ public class ScriptWeighting implements Weighting {
         if (maxSpeed < 1)
             throw new IllegalArgumentException("max_speed too low: " + maxSpeed);
         this.maxSpeed = maxSpeed / SPEED_CONV * 1000;
+        this.script = script;
     }
 
     public ScriptWeighting init(EncodingManager encodingManager) {
@@ -62,17 +57,11 @@ public class ScriptWeighting implements Weighting {
         accessEnc = encodingManager.getEncodedValue(vehicle + ".access", BooleanEncodedValue.class);
         avSpeedEnc = encodingManager.getEncodedValue(vehicle + ".average_speed", DecimalEncodedValue.class);
 
-        // make same EncodedValues available as variables. At the moment a change here requires a change in FlexResource.createScriptWeighting too
-        try {
-            for (String key : Arrays.asList(EncodingManager.ROAD_ENV, EncodingManager.ROAD_CLASS, EncodingManager.TOLL)) {
-                EncodedValue value = encodingManager.getEncodedValue(key, EncodedValue.class);
-                Field field = script.getClass().getDeclaredField(key);
-                field.set(script, value);
-            }
-            return this;
-        } catch (Exception ex) {
-            throw new IllegalArgumentException(ex);
-        }
+        ScriptInterface.HelperVariables helper = script.getHelperVariables();
+        helper.road_environment = (EnumEncodedValue) encodingManager.getEncodedValue(EncodingManager.ROAD_ENV, EncodedValue.class);
+        helper.road_class = (EnumEncodedValue) encodingManager.getEncodedValue(EncodingManager.ROAD_CLASS, EncodedValue.class);
+        helper.toll = (IntEncodedValue) encodingManager.getEncodedValue(EncodingManager.TOLL, EncodedValue.class);
+        return this;
     }
 
     @Override
@@ -118,4 +107,5 @@ public class ScriptWeighting implements Weighting {
     public boolean matches(HintsMap reqMap) {
         return getName().equals(reqMap.getWeighting());
     }
+
 }

@@ -17,8 +17,18 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
 public interface ScriptInterface {
     double getMillisFactor(EdgeIteratorState edge, boolean reverse);
+
+    HelperVariables getHelperVariables();
+
+    class HelperVariables {
+        public EnumEncodedValue road_environment;
+        public EnumEncodedValue road_class;
+        public IntEncodedValue toll;
+    }
 }

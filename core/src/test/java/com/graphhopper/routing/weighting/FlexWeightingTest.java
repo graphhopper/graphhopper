@@ -1,7 +1,10 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.flex.FlexModel;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -39,9 +42,11 @@ public class FlexWeightingTest {
         vehicleModel.getFactor().getRoadClass().put(RoadClass.PRIMARY.toString(), 75.0);
 //        final FlexWeighting weighting = new FlexWeighting(vehicleModel).init(encodingManager);
         final ScriptWeighting weighting = new ScriptWeighting("car", 120, new ScriptInterface() {
-            EnumEncodedValue road_environment;
-            EnumEncodedValue road_class;
-            IntEncodedValue toll;
+            @Override
+            public HelperVariables getHelperVariables() {
+                return new HelperVariables();
+            }
+
             @Override
             public double getMillisFactor(EdgeIteratorState edge, boolean reverse) {
                 return edge.getDistance();

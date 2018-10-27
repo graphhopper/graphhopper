@@ -26,6 +26,7 @@ import com.graphhopper.util.Parameters;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
@@ -150,6 +151,7 @@ public class FlexResourceTest {
     }
 
     @Test
+    @Ignore
     public void testMultiCommandScript() {
         Response response = app.client().target("http://localhost:8080/flex").request().post(Entity.entity(
                 "request:\n"
