@@ -142,11 +142,13 @@ public class FlexResource {
         try {
             ee.setStaticMethod(false);
             ee.setDefaultImports(new String[]{"com.graphhopper.util.EdgeIteratorState",
+                    "com.graphhopper.util.shapes.BBox",
                     "com.graphhopper.routing.profiles.*"});
             ee.setExtendedClass(ScriptInterface.HelperVariables.class);
             ee.setParameters(new String[]{"edge", "reverse"}, new Class[]{EdgeIteratorState.class, boolean.class});
             ee.cook(expressions.split(";"));
             baseClass = (ScriptInterface.HelperVariables) ee.getMethod().getDeclaringClass().newInstance();
+            baseClass.nodeAccess = graphHopper.getGraphHopperStorage().getNodeAccess();
         } catch (Exception ex) {
             logger.info("script problem: " + ex, ex);
             throw new IllegalArgumentException(ex);

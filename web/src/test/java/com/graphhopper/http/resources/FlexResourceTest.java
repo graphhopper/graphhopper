@@ -23,6 +23,7 @@ import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.shapes.BBox;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
@@ -92,7 +93,7 @@ public class FlexResourceTest {
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
-        assertTrue("distance isn't correct:" + distance, distance > 100);
+        assertTrue("distance isn't correct:" + distance, distance > 150);
         assertTrue("distance isn't correct:" + distance, distance < 200);
 
         // TODO use wheelchair.yml directly
@@ -119,11 +120,34 @@ public class FlexResourceTest {
                         + " points: [[7.421447,43.731681],[7.419602,43.73224]]\n"
                         + "model:\n"
                         + " base: foot\n"
-                        + " max_speed: 50.0\n"
+                        + " max_speed: 10.0\n"
                         + " script: '(edge.get(road_class) == RoadClass.STEPS) ? 10 : 1'\n",
                 "text/x-yaml"
         ));
 
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals(200, response.getStatus());
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode path = json.get("paths").get(0);
+        double distance = path.get("distance").asDouble();
+        assertTrue("distance isn't correct:" + distance, distance > 470);
+        assertTrue("distance isn't correct:" + distance, distance < 490);
+    }
+
+    @Test
+    public void testBBoxScript() {
+        Response response = app.client().target("http://localhost:8080/flex").request().post(Entity.entity(
+                "request:\n"
+                        + " points: [[7.421447,43.731681],[7.419602,43.73224]]\n"
+                        + "model:\n"
+                        + " base: foot\n"
+                        + " max_speed: 5.0\n"
+                        + " script: 'new BBox(7.42076,7.421173,43.731767,43.731837).intersect(getBBox(edge)) ? 10 : 1'\n",
+                "text/x-yaml"
+        ));
+
+        // TODO how to efficiently store variables that should not be created on every createMillis call?
         JsonNode json = response.readEntity(JsonNode.class);
         assertEquals(200, response.getStatus());
         JsonNode infoJson = json.get("info");
@@ -158,7 +182,7 @@ public class FlexResourceTest {
                         + " points: [[7.421447,43.731681],[7.419602,43.73224]]\n"
                         + "model:\n"
                         + " base: foot\n"
-                        + " max_speed: 50.0\n"
+                        + " max_speed: 10.0\n"
                         + " script: 'Enum tmp = edge.get(road_class); return (tmp == RoadClass.STEPS)? 1.5 : 1.0;'\n",
                 "text/x-yaml"
         ));

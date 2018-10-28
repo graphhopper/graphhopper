@@ -19,7 +19,9 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.shapes.BBox;
 
 public interface ScriptInterface {
     double getMillisFactor(EdgeIteratorState edge, boolean reverse);
@@ -30,5 +32,13 @@ public interface ScriptInterface {
         public EnumEncodedValue road_environment;
         public EnumEncodedValue road_class;
         public IntEncodedValue toll;
+        public NodeAccess nodeAccess;
+
+        public BBox getBBox(EdgeIteratorState edge) {
+            BBox bbox = BBox.createInverse(false);
+            bbox.update(nodeAccess.getLatitude(edge.getBaseNode()), nodeAccess.getLongitude(edge.getBaseNode()));
+            bbox.update(nodeAccess.getLatitude(edge.getAdjNode()), nodeAccess.getLongitude(edge.getAdjNode()));
+            return bbox;
+        }
     }
 }

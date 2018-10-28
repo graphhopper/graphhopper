@@ -21,8 +21,10 @@ import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.BBox;
 
 /**
  * This class makes it possible to define the time calculation formula inside a yaml.
