@@ -168,7 +168,7 @@ public class GraphHopperOSMTest {
             gh.load(ghLoc);
             fail();
         } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.ch.weightings:"));
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("You loaded a CH graph, but you did not specify graph.ch.weightings"));
         }
 
         Helper.removeDir(new File(ghLoc));
@@ -190,7 +190,7 @@ public class GraphHopperOSMTest {
             gh.load(ghLoc);
             fail();
         } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.ch.weightings:"));
+            assertTrue(ex.getMessage(), ex.getMessage().contains("is not contained in loaded weightings"));
         }
     }
 
