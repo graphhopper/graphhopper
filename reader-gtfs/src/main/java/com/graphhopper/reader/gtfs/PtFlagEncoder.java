@@ -95,7 +95,7 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
 		return this.validityId.setValue(flags, validityId);
 	}
 
-	GtfsStorage.EdgeType getEdgeType(long flags) {
+	public GtfsStorage.EdgeType getEdgeType(long flags) {
 		return GtfsStorage.EdgeType.values()[(int) type.getValue(flags)];
 	}
 
