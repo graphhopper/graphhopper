@@ -87,6 +87,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         potentialBarriers.add("gate");
         // potentialBarriers.add("lift_gate");
         potentialBarriers.add("swing_gate");
+        potentialBarriers.add("cattle_grid");
 
         absoluteBarriers.add("fence");
         absoluteBarriers.add("stile");

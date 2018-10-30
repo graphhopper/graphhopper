@@ -96,7 +96,7 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 	private Map<Integer, byte[]> tripDescriptors;
 	private Map<Integer, Integer> stopSequences;
 
-	private Map<Integer, String> routes;
+	private Map<Integer, PlatformDescriptor> routes;
 
 	private Map<String, Fare> fares;
 	private Map<String, int[]> boardEdgesForTrip;
@@ -277,7 +277,7 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 	}
 
     @Override
-    public Map<Integer, String> getRoutes() {
+    public Map<Integer, PlatformDescriptor> getRoutes() {
         return routes;
     }
 

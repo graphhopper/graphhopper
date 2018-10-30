@@ -501,6 +501,13 @@ public class CarFlagEncoderTest {
         node.setTag("motorcar", "yes");
         // still barrier!
         assertTrue(encoder.handleNodeTags(node) > 0);
+
+        encoder.setBlockByDefault(false);
+
+        // Test if cattle_grid is not blocking
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "cattle_grid");
+        assertTrue(encoder.handleNodeTags(node) == 0);
     }
 
     @Test

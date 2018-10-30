@@ -330,7 +330,7 @@ public class GTFSFeed implements Cloneable, Closeable {
     }
 
     /** Thrown when we cannot interpolate stop times because the first or last stops do not have times */
-    public class FirstAndLastStopsDoNotHaveTimes extends Exception {
+    public class FirstAndLastStopsDoNotHaveTimes extends RuntimeException {
         /** do nothing */
     }
 
