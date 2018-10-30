@@ -107,8 +107,8 @@ public class ContourBuilder {
     }
 
     private int cut(double za, double zb, double z0) {
-        if (za < z0 && zb > z0) return 1;
-        if (za > z0 && zb < z0) return -1;
+        if (za <= z0 && zb > z0) return 1;
+        if (za > z0 && zb <= z0) return -1;
         return 0;
     }
 

@@ -24,6 +24,7 @@ import com.graphhopper.util.EdgeIterator;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -36,7 +37,11 @@ import java.util.stream.StreamSupport;
  * @author Peter Karich
  * @author Wesam Herbawi
  */
-class MultiCriteriaLabelSetting {
+public class MultiCriteriaLabelSetting {
+
+    public interface SPTVisitor {
+        void visit(Label label);
+    }
 
     private final Comparator<Label> queueComparator;
     private final List<Label> targetLabels;
@@ -56,7 +61,7 @@ class MultiCriteriaLabelSetting {
     private double betaTransfers;
     private double betaWalkTime = 1.0;
 
-    MultiCriteriaLabelSetting(GraphExplorer explorer, PtFlagEncoder flagEncoder, boolean reverse, double maxWalkDistancePerLeg, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes, List<Label> solutions) {
+    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtFlagEncoder flagEncoder, boolean reverse, double maxWalkDistancePerLeg, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes, List<Label> solutions) {
         this.flagEncoder = flagEncoder;
         this.maxVisitedNodes = maxVisitedNodes;
         this.explorer = explorer;
@@ -82,6 +87,30 @@ class MultiCriteriaLabelSetting {
         return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false)
                 .limit(maxVisitedNodes)
                 .peek(label -> visitedNodes++);
+    }
+
+    public void calcLabels(int from, int to, Instant startTime, int blockedRouteTypes, SPTVisitor visitor, Predicate<Label> predicate) {
+        this.startTime = startTime.toEpochMilli();
+        this.blockedRouteTypes = blockedRouteTypes;
+        Iterator<Label> iterator = StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false).iterator();
+        Label l;
+        while (iterator.hasNext() && predicate.test(l = iterator.next())) {
+            visitor.visit(l);
+        }
+    }
+
+
+    public void calcLabelsAndNeighbors(int from, int to, Instant startTime, int blockedRouteTypes, SPTVisitor visitor, Predicate<Label> predicate) {
+        this.startTime = startTime.toEpochMilli();
+        this.blockedRouteTypes = blockedRouteTypes;
+        Iterator<Label> iterator = StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false).iterator();
+        Label l;
+        while (iterator.hasNext() && predicate.test(l = iterator.next())) {
+            visitor.visit(l);
+        }
+        for (Label label : fromHeap) {
+            visitor.visit(label);
+        }
     }
 
     // experimental

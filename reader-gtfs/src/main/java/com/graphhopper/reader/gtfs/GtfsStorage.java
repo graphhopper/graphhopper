@@ -104,7 +104,7 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 
 	private Map<String, Integer> stationNodes;
 
-	enum EdgeType {
+	public enum EdgeType {
 		HIGHWAY, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, ALIGHT, OVERNIGHT, TRANSFER, WAIT, WAIT_ARRIVAL
     }
 
