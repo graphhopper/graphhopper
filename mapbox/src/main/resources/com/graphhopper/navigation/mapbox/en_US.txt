@@ -2,3 +2,4 @@ in_km_singular=In 1 kilometer
 in_km=In %1$s kilometers
 in_m=In %1$s meters
 for_km=for %1$s kilometer
+then=then

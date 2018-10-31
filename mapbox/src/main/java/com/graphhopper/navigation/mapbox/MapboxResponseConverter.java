@@ -31,6 +31,8 @@ import java.util.UUID;
 
 public class MapboxResponseConverter {
 
+    private static final int VOICE_INSTRUCTION_MERGE_TRESHHOLD = 100;
+
     /**
      * Converts a GHResponse into Mapbox compatible json
      */
@@ -156,7 +158,7 @@ public class MapboxResponseConverter {
         // Voice and banner instructions are empty for the last element
         if (index + 1 < instructions.size()) {
             putVoiceInstructions(instructions, distance, index, locale, translationMap, mapboxResponseConverterTranslationMap, voiceInstructions);
-            putBannerInstruction(instructions, distance, index, locale, translationMap, bannerInstructions);
+            putBannerInstructions(instructions, distance, index, locale, translationMap, bannerInstructions);
         }
 
         return instructionJson;
@@ -190,6 +192,8 @@ public class MapboxResponseConverter {
         double close = 400;
         double veryClose = 200;
 
+        String thenVoiceInstruction = getThenVoiceInstructionpart(instructions, index, locale, translationMap, mapboxResponseConverterTranslationMap);
+
         if (distance > far) {
             putSingleVoiceInstruction(far, mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("in_km", 2) + " " + turnDescription, voiceInstructions);
         }
@@ -197,10 +201,10 @@ public class MapboxResponseConverter {
             putSingleVoiceInstruction(mid, mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("in_km_singular") + " " + turnDescription, voiceInstructions);
         }
         if (distance > close) {
-            putSingleVoiceInstruction(close, mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("in_m", 400) + " " + turnDescription, voiceInstructions);
+            putSingleVoiceInstruction(close, mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("in_m", 400) + " " + turnDescription + thenVoiceInstruction, voiceInstructions);
         } else if (distance > veryClose) {
             // This is an edge case when turning on narrow roads in cities, too close for the close turn, but too far for the direct turn
-            putSingleVoiceInstruction(veryClose, mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("in_m", 200) + " " + turnDescription, voiceInstructions)
+            putSingleVoiceInstruction(veryClose, mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("in_m", 200) + " " + turnDescription + thenVoiceInstruction, voiceInstructions)
             ;
         }
 
@@ -212,7 +216,7 @@ public class MapboxResponseConverter {
         if (index + 2 == instructions.size())
             distanceAlongGeometry = Helper.round(Math.min(distance, 25), 1);
 
-        putSingleVoiceInstruction(distanceAlongGeometry, turnDescription, voiceInstructions);
+        putSingleVoiceInstruction(distanceAlongGeometry, turnDescription + thenVoiceInstruction, voiceInstructions);
     }
 
     private static void putSingleVoiceInstruction(double distanceAlongGeometry, String turnDescription, ArrayNode voiceInstructions) {
@@ -223,7 +227,32 @@ public class MapboxResponseConverter {
         voiceInstruction.put("ssmlAnnouncement", "<speak><amazon:effect name=\"drc\"><prosody rate=\"1.08\">" + turnDescription + "</prosody></amazon:effect></speak>");
     }
 
-    private static void putBannerInstruction(InstructionList instructions, double distance, int index, Locale locale, TranslationMap translationMap, ArrayNode bannerInstructions) {
+    /**
+     * For close turns, it is important to announce the next turn in the earlier instruction.
+     * e.g.: instruction i+1= turn right, instruction i+2=turn left, with instruction i+1 distance < VOICE_INSTRUCTION_MERGE_TRESHHOLD
+     * The voice instruction should be like "turn right, then turn left"
+     *
+     * For instruction i+1 distance > VOICE_INSTRUCTION_MERGE_TRESHHOLD an empty String will be returned
+     */
+    private static String getThenVoiceInstructionpart(InstructionList instructions, int index, Locale locale, TranslationMap translationMap, TranslationMap mapboxResponseConverterTranslationMap) {
+        if (instructions.size() > index + 2) {
+            Instruction firstInstruction = instructions.get(index + 1);
+            if (firstInstruction.getDistance() < VOICE_INSTRUCTION_MERGE_TRESHHOLD) {
+                Instruction secondInstruction = instructions.get(index + 2);
+                if (secondInstruction.getSign() != Instruction.REACHED_VIA)
+                    return ", " + mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("then") + " " + secondInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
+            }
+        }
+
+        return "";
+    }
+
+    /**
+     * Banner instructions are the turn instructions that are shown to the user in the top bar.
+     *
+     * Between two instructions we can show multiple banner instructions, you can control when they pop up using distanceAlongGeometry.
+     */
+    private static void putBannerInstructions(InstructionList instructions, double distance, int index, Locale locale, TranslationMap translationMap, ArrayNode bannerInstructions) {
         /*
         A BannerInstruction looks like this
         distanceAlongGeometry: 107,
@@ -242,47 +271,56 @@ public class MapboxResponseConverter {
          */
 
         ObjectNode bannerInstruction = bannerInstructions.addObject();
-        Instruction nextInstruction = instructions.get(index + 1);
 
         //Show from the beginning
         bannerInstruction.put("distanceAlongGeometry", distance);
 
         ObjectNode primary = bannerInstruction.putObject("primary");
-        String bannerInstructionName = nextInstruction.getName();
+        putSingleBannerInstruction(instructions.get(index + 1), locale, translationMap, primary);
+
+        bannerInstruction.putNull("secondary");
+
+        if (instructions.size() > index + 2 && instructions.get(index + 2).getSign() != Instruction.REACHED_VIA) {
+            // Sub shows the instruction after the current one
+            ObjectNode sub = bannerInstruction.putObject("sub");
+            putSingleBannerInstruction(instructions.get(index + 2), locale, translationMap, sub);
+        }
+    }
+
+    private static void putSingleBannerInstruction(Instruction instruction, Locale locale, TranslationMap translationMap, ObjectNode singleBannerInstruction) {
+        String bannerInstructionName = instruction.getName();
         if (bannerInstructionName == null || bannerInstructionName.isEmpty()) {
             // Fix for final instruction and for instructions without name
-            bannerInstructionName = nextInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
+            bannerInstructionName = instruction.getTurnDescription(translationMap.getWithFallBack(locale));
 
             // Uppercase first letter
             // TODO: should we do this for all cases? Then we might change the spelling of street names though
             bannerInstructionName = Helper.firstBig(bannerInstructionName);
         }
 
-        primary.put("text", bannerInstructionName);
+        singleBannerInstruction.put("text", bannerInstructionName);
 
-        ArrayNode components = primary.putArray("components");
+        ArrayNode components = singleBannerInstruction.putArray("components");
         ObjectNode component = components.addObject();
         component.put("text", bannerInstructionName);
         component.put("type", "text");
 
-        primary.put("type", getTurnType(nextInstruction, false));
-        String modifier = getModifier(nextInstruction);
+        singleBannerInstruction.put("type", getTurnType(instruction, false));
+        String modifier = getModifier(instruction);
         if (modifier != null)
-            primary.put("modifier", modifier);
+            singleBannerInstruction.put("modifier", modifier);
 
-        if (nextInstruction.getSign() == Instruction.USE_ROUNDABOUT) {
-            if (nextInstruction instanceof RoundaboutInstruction) {
-                double turnAngle = ((RoundaboutInstruction) nextInstruction).getTurnAngle();
+        if (instruction.getSign() == Instruction.USE_ROUNDABOUT) {
+            if (instruction instanceof RoundaboutInstruction) {
+                double turnAngle = ((RoundaboutInstruction) instruction).getTurnAngle();
                 if (Double.isNaN(turnAngle)) {
-                    primary.putNull("degrees");
+                    singleBannerInstruction.putNull("degrees");
                 } else {
                     double degree = (Math.abs(turnAngle) * 180) / Math.PI;
-                    primary.put("degrees", degree);
+                    singleBannerInstruction.put("degrees", degree);
                 }
             }
         }
-
-        bannerInstruction.putNull("secondary");
     }
 
     private static void putManeuver(Instruction instruction, ObjectNode instructionJson, Locale locale, TranslationMap translationMap, boolean isFirstInstructionOfLeg) {

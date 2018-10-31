@@ -100,7 +100,7 @@ public class MapboxResponseConverterTest {
         assertEquals(1, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertTrue(voiceInstruction.get("distanceAlongGeometry").asDouble() <= instructionDistance);
-        assertEquals("turn sharp left onto la Callisa", voiceInstruction.get("announcement").asText());
+        assertEquals("turn sharp left onto la Callisa, then keep left", voiceInstruction.get("announcement").asText());
 
         JsonNode bannerInstructions = step.get("bannerInstructions");
         assertEquals(1, bannerInstructions.size());
@@ -149,7 +149,7 @@ public class MapboxResponseConverterTest {
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(200, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 200 meters At roundabout, take exit 2 onto CS-340", voiceInstruction.get("announcement").asText());
+        assertEquals("In 200 meters At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3", voiceInstruction.get("announcement").asText());
 
         // Step 15 is over 3km long
         step = steps.get(15);
