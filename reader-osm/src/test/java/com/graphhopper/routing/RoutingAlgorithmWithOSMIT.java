@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
@@ -553,8 +554,11 @@ public class RoutingAlgorithmWithOSMIT {
                     setEnabled(true).setDisablingAllowed(true);
 
             if (withCH)
-                hopper.getCHFactoryDecorator().addWeighting(weightStr).
-                        setEnabled(true).setDisablingAllowed(true);
+                hopper.getCHFactoryDecorator().
+                        addWeighting(weightStr).
+                        setEnabled(true).
+                        setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE).
+                        setDisablingAllowed(true);
 
             if (is3D)
                 hopper.setElevationProvider(new SRTMProvider(DIR));

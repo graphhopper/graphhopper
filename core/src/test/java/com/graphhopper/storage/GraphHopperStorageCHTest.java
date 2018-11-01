@@ -30,6 +30,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -52,8 +53,11 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     }
 
     private GraphHopperStorage newGHStorage(Directory dir, boolean is3D, boolean forEdgeBasedTraversal) {
-        return new GraphHopperStorage(Arrays.asList(new FastestWeighting(carEncoder)), dir, encodingManager, is3D,
-                new GraphExtension.NoOpExtension());
+        if (forEdgeBasedTraversal) {
+            return new GraphHopperStorage(Collections.<Weighting>emptyList(), Arrays.asList(new FastestWeighting(carEncoder)), dir, encodingManager, is3D, new GraphExtension.NoOpExtension());
+        } else {
+            return new GraphHopperStorage(Arrays.asList(new FastestWeighting(carEncoder)), Collections.<Weighting>emptyList(), dir, encodingManager, is3D, new GraphExtension.NoOpExtension());
+        }
     }
 
     @Test

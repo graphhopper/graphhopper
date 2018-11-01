@@ -94,7 +94,14 @@ public class RoutingAlgorithmIT {
             chHints.put(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
             Weighting pickedWeighting = null;
             for (Weighting tmpWeighting : hopper.getCHFactoryDecorator().getNodeBasedWeightings()) {
-                // todo: maybe add some test for edge based weightings as well ?
+                if (tmpWeighting.equals(weighting)) {
+                    pickedWeighting = tmpWeighting;
+                    break;
+                }
+            }
+            // todo: not so sure about this, can the edge based weighting entry overwrite the picked weighting found
+            // in the node based weightings ?
+            for (Weighting tmpWeighting : hopper.getCHFactoryDecorator().getEdgeBasedWeightings()) {
                 if (tmpWeighting.equals(weighting)) {
                     pickedWeighting = tmpWeighting;
                     break;

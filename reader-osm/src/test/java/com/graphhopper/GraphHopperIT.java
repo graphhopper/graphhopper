@@ -1062,7 +1062,9 @@ public class GraphHopperIT {
                 setCHEnabled(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("car|turn_costs=true"));
-        tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        tmpHopper.getCHFactoryDecorator()
+                .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE)
+                .setDisablingAllowed(true);
         tmpHopper.importOrLoad();
 
         // with CH

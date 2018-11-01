@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 
+import java.util.Collections;
 import java.util.List;
 
 public class DijkstraBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTester {
@@ -34,7 +35,7 @@ public class DijkstraBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTeste
     @Override
     protected GraphHopperStorage createGHStorage(
             EncodingManager em, List<? extends Weighting> weightings, boolean is3D) {
-        return new GraphHopperStorage(weightings, new RAMDirectory(),
+        return new GraphHopperStorage(Collections.<Weighting>emptyList(), weightings, new RAMDirectory(),
                 em, is3D, new TurnCostExtension()).create(1000);
     }
 
