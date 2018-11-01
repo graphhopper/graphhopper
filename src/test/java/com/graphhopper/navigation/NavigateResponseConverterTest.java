@@ -1,4 +1,4 @@
-package com.graphhopper.navigation.mapbox;
+package com.graphhopper.navigation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -19,7 +19,7 @@ import java.util.Locale;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class MapboxResponseConverterTest {
+public class NavigateResponseConverterTest {
 
     public static final String DIR = "files";
     private static final String graphFileFoot = "target/graphhopperIT-car";
@@ -30,7 +30,7 @@ public class MapboxResponseConverterTest {
     private final String vehicle = "car";
 
     private final TranslationMap trMap = new TranslationMap().doImport();
-    private final TranslationMap mtrMap = new MapboxResponseConverterTranslationMap().doImport();
+    private final TranslationMap mtrMap = new NavigateResponseConverterTranslationMap().doImport();
 
     @BeforeClass
     public static void beforeClass() {
@@ -67,7 +67,7 @@ public class MapboxResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
                 setVehicle(vehicle));
 
-        ObjectNode json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
 
         JsonNode route = json.get("routes").get(0);
         double routeDistance = route.get("distance").asDouble();
@@ -137,7 +137,7 @@ public class MapboxResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
                 setVehicle(vehicle));
 
-        ObjectNode json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -173,7 +173,7 @@ public class MapboxResponseConverterTest {
 
         assertEquals(2, rsp.getAll().size());
 
-        ObjectNode json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
 
         JsonNode routes = json.get("routes");
         assertEquals(2, routes.size());
@@ -188,7 +188,7 @@ public class MapboxResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
                 setVehicle(vehicle));
 
-        ObjectNode json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
         JsonNode voiceInstruction = steps.get(15).get("voiceInstructions").get(0);
@@ -196,7 +196,7 @@ public class MapboxResponseConverterTest {
 
         rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
                 setVehicle(vehicle).setLocale(Locale.GERMAN));
-        json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.GERMAN);
+        json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.GERMAN);
 
         steps = json.get("routes").get(0).get("legs").get(0).get("steps");
         voiceInstruction = steps.get(15).get("voiceInstructions").get(0);
@@ -210,7 +210,7 @@ public class MapboxResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
                 setVehicle(vehicle));
 
-        ObjectNode json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -236,7 +236,7 @@ public class MapboxResponseConverterTest {
 
         GHResponse rsp = hopper.route(request);
 
-        ObjectNode json = MapboxResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
 
         //Check that all waypoints are there and in the right order
         JsonNode waypointsJson = json.get("waypoints");
@@ -287,7 +287,7 @@ public class MapboxResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 111.536198, 42.510071, 1.548128).
                 setVehicle(vehicle));
 
-        ObjectNode json = MapboxResponseConverter.convertFromGHResponseError(rsp);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponseError(rsp);
 
         assertEquals("InvalidInput", json.get("code").asText());
         assertEquals("Point 0 is out of bounds: 42.554851,111.536198", json.get("message").asText());

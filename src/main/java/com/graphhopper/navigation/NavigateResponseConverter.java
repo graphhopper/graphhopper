@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.navigation.mapbox;
+package com.graphhopper.navigation;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -29,18 +29,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-public class MapboxResponseConverter {
+public class NavigateResponseConverter {
 
     private static final int VOICE_INSTRUCTION_MERGE_TRESHHOLD = 100;
 
     /**
-     * Converts a GHResponse into Mapbox compatible json
+     * Converts a GHResponse into a json that follows the Mapbox API specification
      */
-    public static ObjectNode convertFromGHResponse(GHResponse ghResponse, TranslationMap translationMap, TranslationMap mapboxResponseConverterTranslationMap, Locale locale) {
+    public static ObjectNode convertFromGHResponse(GHResponse ghResponse, TranslationMap translationMap, TranslationMap navigateResponseConverterTranslationMap, Locale locale) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
         if (ghResponse.hasErrors())
-            throw new IllegalStateException("If the response has errors, you should use the method MapboxResponseConverter#convertFromGHResponseError");
+            throw new IllegalStateException("If the response has errors, you should use the method NavigateResponseConverter#convertFromGHResponseError");
 
         PointList waypoints = ghResponse.getBest().getWaypoints();
 
@@ -52,7 +52,7 @@ public class MapboxResponseConverter {
             PathWrapper path = paths.get(i);
             ObjectNode pathJson = routesJson.addObject();
 
-            putRouteInformation(pathJson, path, i, translationMap, mapboxResponseConverterTranslationMap, locale);
+            putRouteInformation(pathJson, path, i, translationMap, navigateResponseConverterTranslationMap, locale);
         }
 
         final ArrayNode waypointsJson = json.putArray("waypoints");
@@ -70,7 +70,7 @@ public class MapboxResponseConverter {
         return json;
     }
 
-    private static void putRouteInformation(ObjectNode pathJson, PathWrapper path, int routeNr, TranslationMap translationMap, TranslationMap mapboxResponseConverterTranslationMap, Locale locale) {
+    private static void putRouteInformation(ObjectNode pathJson, PathWrapper path, int routeNr, TranslationMap translationMap, TranslationMap navigateResponseConverterTranslationMap, Locale locale) {
         InstructionList instructions = path.getInstructions();
 
         pathJson.put("geometry", WebHelper.encodePolyline(path.getPoints(), false, 1e6));
@@ -85,7 +85,7 @@ public class MapboxResponseConverter {
 
         for (int i = 0; i < instructions.size(); i++) {
             ObjectNode instructionJson = steps.addObject();
-            putInstruction(instructions, i, locale, translationMap, mapboxResponseConverterTranslationMap, instructionJson, isFirstInstructionOfLeg);
+            putInstruction(instructions, i, locale, translationMap, navigateResponseConverterTranslationMap, instructionJson, isFirstInstructionOfLeg);
             Instruction instruction = instructions.get(i);
             time += instruction.getTime();
             distance += instruction.getDistance();
@@ -126,7 +126,7 @@ public class MapboxResponseConverter {
         legJson.put("distance", Helper.round(distance, 1));
     }
 
-    private static ObjectNode putInstruction(InstructionList instructions, int index, Locale locale, TranslationMap translationMap, TranslationMap mapboxResponseConverterTranslationMap, ObjectNode instructionJson, boolean isFirstInstructionOfLeg) {
+    private static ObjectNode putInstruction(InstructionList instructions, int index, Locale locale, TranslationMap translationMap, TranslationMap navigateResponseConverterTranslationMap, ObjectNode instructionJson, boolean isFirstInstructionOfLeg) {
         Instruction instruction = instructions.get(index);
         ArrayNode intersections = instructionJson.putArray("intersections");
         ObjectNode intersection = intersections.addObject();
@@ -157,14 +157,14 @@ public class MapboxResponseConverter {
 
         // Voice and banner instructions are empty for the last element
         if (index + 1 < instructions.size()) {
-            putVoiceInstructions(instructions, distance, index, locale, translationMap, mapboxResponseConverterTranslationMap, voiceInstructions);
+            putVoiceInstructions(instructions, distance, index, locale, translationMap, navigateResponseConverterTranslationMap, voiceInstructions);
             putBannerInstructions(instructions, distance, index, locale, translationMap, bannerInstructions);
         }
 
         return instructionJson;
     }
 
-    private static void putVoiceInstructions(InstructionList instructions, double distance, int index, Locale locale, TranslationMap translationMap, TranslationMap mapboxResponseConverterTranslationMap, ArrayNode voiceInstructions) {
+    private static void putVoiceInstructions(InstructionList instructions, double distance, int index, Locale locale, TranslationMap translationMap, TranslationMap navigateResponseConverterTranslationMap, ArrayNode voiceInstructions) {
         /*
             A VoiceInstruction Object looks like this
             {
@@ -181,7 +181,7 @@ public class MapboxResponseConverter {
             // The instruction should not be spoken straight away, but wait until the user merged on the new road and can listen to instructions again
             double tmpDistance = distance - 250;
             int spokenDistance = (int) (tmpDistance / 1000);
-            String continueDescription = translationMap.getWithFallBack(locale).tr("continue") + " " + mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("for_km", spokenDistance);
+            String continueDescription = translationMap.getWithFallBack(locale).tr("continue") + " " + navigateResponseConverterTranslationMap.getWithFallBack(locale).tr("for_km", spokenDistance);
             // TODO In the worst case scenario it might be over 1km after merging onto the road until this instruction is spoken (e.g. (5249-250/1000)*1000=4000 - because java is rounding down)
             // TODO this might be annoying for unnecessary keeps on the motorway, especially if they happen more often then every 10km
             putSingleVoiceInstruction(spokenDistance * 1000, continueDescription, voiceInstructions);
@@ -192,19 +192,19 @@ public class MapboxResponseConverter {
         double close = 400;
         double veryClose = 200;
 
-        String thenVoiceInstruction = getThenVoiceInstructionpart(instructions, index, locale, translationMap, mapboxResponseConverterTranslationMap);
+        String thenVoiceInstruction = getThenVoiceInstructionpart(instructions, index, locale, translationMap, navigateResponseConverterTranslationMap);
 
         if (distance > far) {
-            putSingleVoiceInstruction(far, mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("in_km", 2) + " " + turnDescription, voiceInstructions);
+            putSingleVoiceInstruction(far, navigateResponseConverterTranslationMap.getWithFallBack(locale).tr("in_km", 2) + " " + turnDescription, voiceInstructions);
         }
         if (distance > mid) {
-            putSingleVoiceInstruction(mid, mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("in_km_singular") + " " + turnDescription, voiceInstructions);
+            putSingleVoiceInstruction(mid, navigateResponseConverterTranslationMap.getWithFallBack(locale).tr("in_km_singular") + " " + turnDescription, voiceInstructions);
         }
         if (distance > close) {
-            putSingleVoiceInstruction(close, mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("in_m", 400) + " " + turnDescription + thenVoiceInstruction, voiceInstructions);
+            putSingleVoiceInstruction(close, navigateResponseConverterTranslationMap.getWithFallBack(locale).tr("in_m", 400) + " " + turnDescription + thenVoiceInstruction, voiceInstructions);
         } else if (distance > veryClose) {
             // This is an edge case when turning on narrow roads in cities, too close for the close turn, but too far for the direct turn
-            putSingleVoiceInstruction(veryClose, mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("in_m", 200) + " " + turnDescription + thenVoiceInstruction, voiceInstructions)
+            putSingleVoiceInstruction(veryClose, navigateResponseConverterTranslationMap.getWithFallBack(locale).tr("in_m", 200) + " " + turnDescription + thenVoiceInstruction, voiceInstructions)
             ;
         }
 
@@ -234,13 +234,13 @@ public class MapboxResponseConverter {
      *
      * For instruction i+1 distance > VOICE_INSTRUCTION_MERGE_TRESHHOLD an empty String will be returned
      */
-    private static String getThenVoiceInstructionpart(InstructionList instructions, int index, Locale locale, TranslationMap translationMap, TranslationMap mapboxResponseConverterTranslationMap) {
+    private static String getThenVoiceInstructionpart(InstructionList instructions, int index, Locale locale, TranslationMap translationMap, TranslationMap navigateResponseConverterTranslationMap) {
         if (instructions.size() > index + 2) {
             Instruction firstInstruction = instructions.get(index + 1);
             if (firstInstruction.getDistance() < VOICE_INSTRUCTION_MERGE_TRESHHOLD) {
                 Instruction secondInstruction = instructions.get(index + 2);
                 if (secondInstruction.getSign() != Instruction.REACHED_VIA)
-                    return ", " + mapboxResponseConverterTranslationMap.getWithFallBack(locale).tr("then") + " " + secondInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
+                    return ", " + navigateResponseConverterTranslationMap.getWithFallBack(locale).tr("then") + " " + secondInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
             }
         }
 
@@ -351,7 +351,7 @@ public class MapboxResponseConverter {
      * roundabout (enter roundabout, maneuver contains also the exit number)
      * arrive (last instruction and waypoints)
      *
-     * You can find all at: https://www.mapbox.com/api-documentation/#maneuver-types
+     * You can find all maneuver types at: https://www.mapbox.com/api-documentation/#maneuver-types
      */
     private static String getTurnType(Instruction instruction, boolean isFirstInstructionOfLeg) {
         if (isFirstInstructionOfLeg) {

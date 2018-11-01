@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.navigation.mapbox;
+package com.graphhopper.navigation;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
@@ -43,23 +43,28 @@ import java.util.List;
 import static com.graphhopper.util.Parameters.Routing.*;
 
 /**
- * Provides an endpoint that is compatible with the Mapbox API v5
+ * Provides an endpoint that is consumable with the Mapbox Navigation SDK. The Mapbox Navigation SDK consumes json
+ * responses that follow the specification of the Mapbox API v5.
  *
  * See: https://www.mapbox.com/api-documentation/#directions
  *
+ * The baseurl of this endpoint is: [YOUR-IP/HOST]/navigate
+ * The version of this endpoint is: v5
+ * The user of this endpoint is: gh
+ *
  * @author Robin Boldt
  */
-@Path("mapbox/directions/v5/mapbox")
-public class MapboxResource {
+@Path("navigate/directions/v5/gh")
+public class NavigateResource {
 
-    private static final Logger logger = LoggerFactory.getLogger(MapboxResource.class);
+    private static final Logger logger = LoggerFactory.getLogger(NavigateResource.class);
 
     private final GraphHopperAPI graphHopper;
     private final TranslationMap translationMap;
-    private static final TranslationMap mapboxResponseConverterTranslationMap = new MapboxResponseConverterTranslationMap().doImport();
+    private static final TranslationMap navigateResponseConverterTranslationMap = new NavigateResponseConverterTranslationMap().doImport();
 
     @Inject
-    public MapboxResource(GraphHopperAPI graphHopper, TranslationMap translationMap) {
+    public NavigateResource(GraphHopperAPI graphHopper, TranslationMap translationMap) {
         this.graphHopper = graphHopper;
         this.translationMap = translationMap;
     }
@@ -83,13 +88,13 @@ public class MapboxResource {
             @PathParam("profile") String profile) {
 
         /*
-            Mapbox always uses fastest or priority weighting, except for walking, it's shortest
+            Mapbox always uses fastest or priority weighting, except for walking then it's shortest
             https://www.mapbox.com/api-documentation/#directions
          */
         final String weighting = "fastest";
 
         /*
-            Currently, the MapboxResponseConverter is pretty limited.
+            Currently, the NavigateResponseConverter is pretty limited.
             Therefore, we enforce these values to make sure the client does not receive an unexpected answer.
          */
         if (!geometries.equals("polyline6"))
@@ -137,11 +142,11 @@ public class MapboxResource {
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
             // Mapbox specifies 422 return type for input errors
-            return Response.status(422).entity(MapboxResponseConverter.convertFromGHResponseError(ghResponse)).
+            return Response.status(422).entity(NavigateResponseConverter.convertFromGHResponseError(ghResponse)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         } else {
-            return Response.ok(MapboxResponseConverter.convertFromGHResponse(ghResponse, translationMap, mapboxResponseConverterTranslationMap, Helper.getLocale(localeStr))).
+            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, navigateResponseConverterTranslationMap, Helper.getLocale(localeStr))).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         }
@@ -177,7 +182,7 @@ public class MapboxResource {
     private List<GHPoint> getPointsFromRequest(HttpServletRequest httpServletRequest, String profile) {
 
         String url = httpServletRequest.getRequestURI();
-        url = url.replaceFirst("/mapbox/directions/v5/mapbox/" + profile + "/", "");
+        url = url.replaceFirst("/navigate/directions/v5/gh/" + profile + "/", "");
         url = url.replaceAll("\\?[*]", "");
 
         String[] pointStrings = url.split(";");

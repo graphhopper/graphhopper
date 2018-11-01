@@ -1,4 +1,4 @@
-package com.graphhopper.navigation.mapbox;
+package com.graphhopper.navigation;
 
 import com.graphhopper.util.TranslationMap;
 
@@ -12,9 +12,9 @@ import static com.graphhopper.util.Helper.getLocale;
  *
  * @author Robin Boldt
  */
-public class MapboxResponseConverterTranslationMap extends TranslationMap {
+public class NavigateResponseConverterTranslationMap extends TranslationMap {
 
-    public MapboxResponseConverterTranslationMap() {
+    public NavigateResponseConverterTranslationMap() {
         super();
     }
 
@@ -29,7 +29,7 @@ public class MapboxResponseConverterTranslationMap extends TranslationMap {
         try {
             for (String locale : Arrays.asList("de_DE", "en_US")) {
                 TranslationHashMap trMap = new TranslationHashMap(getLocale(locale));
-                trMap.doImport(MapboxResponseConverterTranslationMap.class.getResourceAsStream(locale + ".txt"));
+                trMap.doImport(NavigateResponseConverterTranslationMap.class.getResourceAsStream(locale + ".txt"));
                 add(trMap);
             }
             //Not accessible, how bad is this?
