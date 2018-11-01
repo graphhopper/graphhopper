@@ -44,16 +44,13 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
     @Test
     public void testNoCreateCalled() throws IOException {
-        GraphHopperStorage gs = new GraphBuilder(encodingManager).build();
-        try {
+        try (GraphHopperStorage gs = new GraphBuilder(encodingManager).build()) {
             ((BaseGraph) gs.getGraph(Graph.class)).ensureNodeIndex(123);
-            assertFalse("AssertionError should be raised", true);
+            fail("AssertionError should be raised");
         } catch (AssertionError err) {
-            assertTrue(true);
+            // ok
         } catch (Exception ex) {
-            assertFalse("AssertionError should be raised, but was " + ex.toString(), true);
-        } finally {
-            gs.close();
+            fail("AssertionError should be raised, but was " + ex.toString());
         }
     }
 
@@ -209,7 +206,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true);
         try {
             graph.loadExisting();
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
         }
     }

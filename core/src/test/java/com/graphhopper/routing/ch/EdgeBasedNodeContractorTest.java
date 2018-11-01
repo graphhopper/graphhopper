@@ -1332,71 +1332,6 @@ public class EdgeBasedNodeContractorTest {
                 nodeContractor.getNumPolledEdges() <= 8);
     }
 
-    @Test
-    public void testNodeContraction_randomGraph_checkStatistics() {
-        int totalNumSearchesL = 0;
-        int totalNumSearchesA = 0;
-        int totalEdgesPolledL = 0;
-        int totalEdgesPolledA = 0;
-        int totalNumShortcutsL = 0;
-        int totalNumShortcutsA = 0;
-        for (int i = 0; i < 1000; ++i) {
-            final long seed = System.nanoTime();
-            System.out.println("Run " + i + ", using seed " + seed);
-            initialize();
-            buildRandomGraph(seed);
-            System.out.println("graph for legacy aggressive search");
-            GHUtility.printGraphForUnitTest(graph, encoder);
-
-            EdgeBasedNodeContractor nodeContractor = createNodeContractor(SearchType.LEGACY_AGGRESSIVE);
-            nodeContractor.contractNode(0);
-            int numEdgesPolledL = nodeContractor.getNumPolledEdges();
-            int numSearchesL = nodeContractor.getNumSearches();
-            int numShortcutsL = getCurrentShortcuts().size();
-
-            graph.close();
-            ((CHGraphImpl) chGraph).close();
-            initialize();
-            buildRandomGraph(seed);
-            System.out.println("graph for aggressive search");
-            GHUtility.printGraphForUnitTest(graph, encoder);
-
-            nodeContractor = createNodeContractor(SearchType.AGGRESSIVE);
-            nodeContractor.contractNode(0);
-            int numEdgesPolledA = nodeContractor.getNumPolledEdges();
-            int numSearchesA = nodeContractor.getNumSearches();
-            int numShortcutsA = getCurrentShortcuts().size();
-
-            if (numEdgesPolledA > numEdgesPolledL) {
-                System.out.println("Warning: legacy aggressive search polled less nodes than aggressive search " +
-                        numEdgesPolledL + " compared to " + numEdgesPolledA);
-                fail();
-            }
-            if (numShortcutsA > numShortcutsL) {
-                System.out.println("Warning: legacy aggressive search introduced less shortcuts than aggressive search " +
-                        numShortcutsL + " compared to " + numShortcutsA);
-                fail();
-            }
-            totalNumSearchesL += numSearchesL;
-            totalNumSearchesA += numSearchesA;
-            totalEdgesPolledL += numEdgesPolledL;
-            totalEdgesPolledA += numEdgesPolledA;
-            totalNumShortcutsL += numShortcutsL;
-            totalNumShortcutsA += numShortcutsA;
-        }
-        System.out.println("            legacy         aggressive");
-        System.out.println("searches    " + totalNumSearchesL + "               " + totalNumSearchesA);
-        System.out.println("polls       " + totalEdgesPolledL + "               " + totalEdgesPolledA);
-        System.out.println("shortcuts   " + totalNumShortcutsL + "                " + totalNumShortcutsA);
-    }
-
-    private void buildRandomGraph(long seed) {
-        GHUtility.buildRandomGraph(graph, seed, 10, 2, true, true, 0.9);
-        graph.freeze();
-        setMaxLevelOnAllNodes();
-    }
-
-
     private void contractNode(NodeContractor nodeContractor, int node, int level) {
         nodeContractor.contractNode(node);
         chGraph.setLevel(node, level);
@@ -1423,14 +1358,8 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private EdgeBasedNodeContractor createNodeContractor() {
-        return createNodeContractor(SearchType.AGGRESSIVE);
-    }
-
-    private EdgeBasedNodeContractor createNodeContractor(SearchType searchType) {
-        PMap pMap = new PMap();
-        pMap.put("prepare.ch.edge.search_type", searchType);
         Directory dir = new GHDirectory("", DAType.RAM_INT);
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(dir, graph, chGraph, chTurnWeighting, pMap);
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(dir, graph, chGraph, chTurnWeighting, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
     }

@@ -190,13 +190,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private boolean prepareNodes() {
-        // todo: this is probably not the best way to check if the graph has been prepared already, but we need
-        // some kind of check like this, to make the tests in AbstractAlgorithmTester work where the preparation
-        // sometimes is started twice on the same graph. without this check the shortcuts remain from the first
-        // preparation, but we reset the node levels, which leads to problems.
-        if (prepareGraph.getAllEdges().length() > ghStorage.getAllEdges().length()) {
-            return false;
-        }
         int nodes = prepareGraph.getNodes();
         for (int node = 0; node < nodes; node++) {
             prepareGraph.setLevel(node, maxLevel);
@@ -208,8 +201,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         }
         periodicUpdateSW.stop();
 
-        // todo: is sortedNodes ever empty ? not sure what this check is good for ? if the graph was already prepared        
-        // it is too late here anyway because we have already reset the node levels (?!)
         return !sortedNodes.isEmpty();
     }
 
@@ -317,21 +308,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     neighborUpdateSW.stop();
                 }
 
-                // todo: does this work for edge-based case ? loop-helper shortcuts are probably not removed,
-                // but does it really matter ?
                 prepareGraph.disconnect(vehicleAllTmpExplorer, iter);
             }
         }
-// print the contraction order to file to reuse it later (added for analysis, remove before merge)
-//        try {
-//            FileOutputStream fos = new FileOutputStream("contraction-order.dat");
-//            ObjectOutputStream oos = new ObjectOutputStream(fos);
-//            oos.writeObject(contractedNodes);
-//            oos.close();
-//            fos.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
 
         logStats(updateCounter);
 

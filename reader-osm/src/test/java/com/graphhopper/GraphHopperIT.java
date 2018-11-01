@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Routing.EDGE_BASED;
 import static org.junit.Assert.*;
 
 /**
@@ -998,47 +997,6 @@ public class GraphHopperIT {
         assertEquals(89, bestPath.getPoints().getSize());
 
         // combining hybrid & speed mode is currently not possible and should be avoided: #1082
-    }
-
-    @Ignore("only added this test temporarily")
-    @Test
-    public void testBremenBug() {
-        // todo: fix this test and when you find out what the problem is make it more specific, smaller map etc.
-        GraphHopper graphHopper = new GraphHopperOSM()
-                .setOSMFile("../local/maps/bremen-latest.osm.pbf")
-                .setStoreOnFlush(true)
-                .setCHEnabled(true)
-                .setGraphHopperLocation(tmpGraphFile)
-                .setEncodingManager(new EncodingManager("car|turn_costs=true"));
-        graphHopper
-                .getCHFactoryDecorator().setDisablingAllowed(true);
-                // the problem does not occur when using default settings (?!), but when running server and it also
-                // occurs (?!)
-        CmdArgs cmdArgs = new CmdArgs();
-        cmdArgs.put("prepare.ch.updates.periodic", 0);
-        cmdArgs.put("prepare.ch.updates.lazy", 100);
-        cmdArgs.put("prepare.ch.updates.neighbor", 0);
-        cmdArgs.put("prepare.ch.contracted_nodes", 100);
-
-        graphHopper.init(cmdArgs);
-
-        graphHopper.importOrLoad();
-        GHRequest request = new GHRequest();
-        request.addPoint(new GHPoint(53.085407, 8.815032));
-        request.addPoint(new GHPoint(53.107244, 8.862107));
-        request.setAlgorithm(ASTAR_BI);
-        request.getHints().put("algorithm", "astarbi");
-        request.getHints().put(EDGE_BASED, true);
-        GHResponse response1 = graphHopper.route(request);
-        request.getHints().put(CH.DISABLE, true);
-        GHResponse response2 = graphHopper.route(request);
-        assertFalse(response1.getErrors().toString(), response1.hasErrors());
-        assertFalse(response2.getErrors().toString(), response2.hasErrors());
-        assertEquals(response1.getBest().getPoints().size(), response2.getBest().getPoints().size());
-        assertEquals(response1.getBest().getRouteWeight(), response2.getBest().getRouteWeight(), 1.e-2);
-        assertNotEquals(
-                response1.getHints().get("visited_nodes.sum", "_"),
-                response2.getHints().get("visited_nodes.sum", "_"));
     }
 
     @Test

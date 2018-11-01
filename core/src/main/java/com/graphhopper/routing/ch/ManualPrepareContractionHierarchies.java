@@ -40,14 +40,12 @@ import static com.graphhopper.util.Helper.nf;
  */
 public class ManualPrepareContractionHierarchies extends PrepareContractionHierarchies {
     private List<Integer> contractionOrder = new ArrayList<>();
-    private List<Stats> stats = new ArrayList<>();
-    private long lastShortcutCount;
 
     public ManualPrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
         super(dir, ghStorage, chGraph, traversalMode);
     }
 
-    public ManualPrepareContractionHierarchies setContractionOrder(List<Integer> contractionOrder) {
+    ManualPrepareContractionHierarchies setContractionOrder(List<Integer> contractionOrder) {
         this.contractionOrder = contractionOrder;
         return this;
     }
@@ -93,12 +91,6 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
             // contract node
             nodeContractor.contractNode(node);
             long shortcutCount = nodeContractor.getAddedShortcutsCount();
-            if (isEdgeBased()) {
-                int numPolled = ((EdgeBasedNodeContractor) nodeContractor).getNumPolledEdges();
-                int numSearches = ((EdgeBasedNodeContractor) nodeContractor).getNumSearches();
-                stats.add(new Stats(shortcutCount - lastShortcutCount, node, numPolled, numSearches));
-                lastShortcutCount = shortcutCount;
-            }
             prepareGraph.setLevel(node, i);
 
             // disconnect neighbors
@@ -117,10 +109,6 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
         }
     }
 
-    public List<Stats> getStats() {
-        return stats;
-    }
-
     private List<Integer> createRandomContractionOrder(long seed) {
         int nodes = prepareGraph.getNodes();
         List<Integer> result = new ArrayList<>(nodes);
@@ -130,20 +118,6 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
         // the shuffle method is the only reason we are using java.util.ArrayList instead of hppc IntArrayList here
         Collections.shuffle(result, new Random(seed));
         return result;
-    }
-
-    public static class Stats {
-        public long shortcutCount;
-        public int nodeId;
-        public int numPolled;
-        public int numSearches;
-
-        public Stats(long shortcutCount, int nodeId, int numPolled, int numSearches) {
-            this.shortcutCount = shortcutCount;
-            this.nodeId = nodeId;
-            this.numPolled = numPolled;
-            this.numSearches = numSearches;
-        }
     }
 
 }
