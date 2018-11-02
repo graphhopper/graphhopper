@@ -4,5 +4,5 @@
 
 This repository converts routes that are calculated with GraphHopper in a JSON that is consumable with the [Navigation SDK](https://github.com/graphhopper/graphhopper-navigation-android) and provides the server side part of a navigation application.
 
-An example app is provided in [this repository](https://github.com/graphhopper/graphhopper-navigation-example).
+An example Android app is provided in [this repository](https://github.com/graphhopper/graphhopper-navigation-example).
 
