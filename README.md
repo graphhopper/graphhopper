@@ -1,4 +1,4 @@
-# GraphHopper Navigation
+# GraphHopper Navigation Web Service
 
 [![Build Status](https://travis-ci.org/graphhopper/graphhopper-navigation.svg?branch=master)](https://travis-ci.org/graphhopper/graphhopper-navigation)
 
