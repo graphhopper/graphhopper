@@ -147,7 +147,7 @@ public class FlexResource {
             ee.setExtendedClass(ScriptInterface.HelperVariables.class);
             ee.setParameters(new String[]{"edge", "reverse"}, new Class[]{EdgeIteratorState.class, boolean.class});
             ee.cook(expressions.split(";"));
-            baseClass = (ScriptInterface.HelperVariables) ee.getMethod().getDeclaringClass().newInstance();
+            baseClass = (ScriptInterface.HelperVariables) ee.getMethod().getDeclaringClass().getDeclaredConstructor().newInstance();
             baseClass.nodeAccess = graphHopper.getGraphHopperStorage().getNodeAccess();
         } catch (Exception ex) {
             logger.info("script problem: " + ex, ex);
