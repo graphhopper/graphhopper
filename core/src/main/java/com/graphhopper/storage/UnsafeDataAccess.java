@@ -114,7 +114,7 @@ public class UnsafeDataAccess extends AbstractDataAccess {
     @Override
     public boolean loadExisting() {
         if (isClosed())
-            throw new IllegalStateException("already closed");
+            throw new IllegalStateException("already closed " + name);
 
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
@@ -154,7 +154,7 @@ public class UnsafeDataAccess extends AbstractDataAccess {
     @Override
     public void flush() {
         if (isClosed())
-            throw new IllegalStateException("already closed");
+            throw new IllegalStateException("already closed " + name);
 
         try {
             RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw");

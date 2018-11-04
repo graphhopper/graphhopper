@@ -76,7 +76,7 @@ public abstract class DataAccessTest {
             da.loadExisting();
             assertTrue(false);
         } catch (Exception ex) {
-            assertEquals("already closed", ex.getMessage());
+            assertEquals("already closed " + name, ex.getMessage());
         }
 
         da = createDataAccess(name);

@@ -871,9 +871,17 @@ public class GraphHopper implements GraphHopperAPI {
         if (lmFactoryDecorator.hasWeightings())
             return;
 
-        for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-            for (String lmWeightingStr : lmFactoryDecorator.getWeightingsAsStrings()) {
-                Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, null);
+        // separate loop for older encoder+weighting approach
+        for (String lmWeightingStr : lmFactoryDecorator.getWeightingsAsStrings()) {
+            // TODO do the same for CH
+            FlexModel flexModel = importVehicleModels.get(lmWeightingStr);
+            if (flexModel == null) {
+                for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
+                    Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, null);
+                    lmFactoryDecorator.addWeighting(weighting);
+                }
+            } else {
+                Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), null, null);
                 lmFactoryDecorator.addWeighting(weighting);
             }
         }

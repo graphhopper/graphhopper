@@ -115,10 +115,10 @@ public class RAMDataAccess extends AbstractDataAccess {
     @Override
     public boolean loadExisting() {
         if (segments.length > 0)
-            throw new IllegalStateException("already initialized");
+            throw new IllegalStateException("already initialized " + getName());
 
         if (isClosed())
-            throw new IllegalStateException("already closed");
+            throw new IllegalStateException("already closed " + getName());
 
         if (!store)
             return false;

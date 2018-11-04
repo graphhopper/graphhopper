@@ -51,7 +51,7 @@ public class FlexWeighting implements Weighting {
     private EnumEncodedValue<RoadEnvironment> roadEnvEnc;
     private EnumEncodedValue<RoadClass> roadClassEnc;
     private EnumEncodedValue<Toll> tollEnc;
-    private FlagEncoder encoder;
+    private FlagEncoder flagEncoder;
     private double distanceFactor;
 
     public FlexWeighting(FlexModel vehicleModel) {
@@ -160,7 +160,7 @@ public class FlexWeighting implements Weighting {
             throw new IllegalArgumentException("No vehicle 'base' or 'name' was specified");
 
         // TODO deprecated. only used for getFlagEncoder method
-        encoder = encodingManager.getEncoder(vehicle);
+        flagEncoder = encodingManager.getEncoder(vehicle);
 
         accessEnc = encodingManager.getEncodedValue(vehicle + ".access", BooleanEncodedValue.class);
         avSpeedEnc = encodingManager.getEncodedValue(vehicle + ".average_speed", DecimalEncodedValue.class);
@@ -235,7 +235,7 @@ public class FlexWeighting implements Weighting {
 
     @Override
     public FlagEncoder getFlagEncoder() {
-        return encoder;
+        return flagEncoder;
     }
 
     @Override

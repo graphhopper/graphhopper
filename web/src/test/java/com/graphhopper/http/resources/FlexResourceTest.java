@@ -23,7 +23,6 @@ import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
-import com.graphhopper.util.shapes.BBox;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
@@ -49,8 +48,11 @@ public class FlexResourceTest {
                 put(Parameters.CH.PREPARE + "weightings", "no").
                 put("prepare.min_one_way_network_size", "0").
                 put("prepare.ch.weightings", "no").
+                put("prepare.lm.weightings", "fire_truck, wheelchair").
                 put("graph.flag_encoders", "foot").
-                put("graph.encoding_manager", FlexResourceTest.class.getResource("fire_truck.yml").getPath()).
+                put("graph.bytes_for_flags", "8").
+                put("graph.encoding_manager", FlexResourceTest.class.getResource("fire_truck.yml").getPath() + ","
+                        + FlexResourceTest.class.getResource("wheelchair.yml").getPath()).
                 put("datareader.file", "../core/files/monaco.osm.gz").
                 put("graph.location", dir));
     }

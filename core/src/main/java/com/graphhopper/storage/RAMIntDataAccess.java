@@ -76,7 +76,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
     @Override
     public RAMIntDataAccess create(long bytes) {
         if (segments.length > 0)
-            throw new IllegalThreadStateException("already created");
+            throw new IllegalThreadStateException("already created " + name);
 
         // initialize transient values
         setSegmentSize(segmentSizeInBytes);
@@ -115,10 +115,10 @@ class RAMIntDataAccess extends AbstractDataAccess {
     @Override
     public boolean loadExisting() {
         if (segments.length > 0)
-            throw new IllegalStateException("already initialized");
+            throw new IllegalStateException("already initialized " + name);
 
         if (isClosed())
-            throw new IllegalStateException("already closed");
+            throw new IllegalStateException("already closed " + name);
 
         if (!store)
             return false;
