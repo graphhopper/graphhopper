@@ -122,10 +122,9 @@
             <plugin>                
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19.1</version>
                 <!-- Currently we need a bit more memory than for other tests -->
                 <configuration>
-                    <argLine>-Xmx2000m -Xms2000m</argLine>
+                    <argLine>-Xmx1200m -Xms1200m</argLine>
                 </configuration>
             </plugin>
         </plugins>
