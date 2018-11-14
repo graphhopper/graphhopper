@@ -29,6 +29,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.Shape;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -533,7 +534,7 @@ public class LocationIndexTree implements LocationIndex {
         }
     }
 
-    public void query(BBox queryBBox, Visitor function) {
+    public void query(Shape queryBBox, Visitor function) {
         BBox bbox = graph.getBounds();
         query(START_POINTER, queryBBox,
                 bbox.minLat, bbox.minLon, bbox.maxLat - bbox.minLat, bbox.maxLon - bbox.minLon,
@@ -555,7 +556,7 @@ public class LocationIndexTree implements LocationIndex {
         return list;
     }
 
-    final void query(int intPointer, BBox queryBBox,
+    final void query(int intPointer, Shape queryBBox,
                      double minLat, double minLon,
                      double deltaLatPerDepth, double deltaLonPerDepth,
                      Visitor function, int depth) {
@@ -590,7 +591,7 @@ public class LocationIndexTree implements LocationIndex {
             int lonCount = max == 4 ? (cellIndex >> 1) : (cellIndex & 2) + ((cellIndex & 8) == 0 ? 0 : 1);
             double tmpMinLon = minLon + deltaLonPerDepth * lonCount,
                     tmpMinLat = minLat + deltaLatPerDepth * latCount;
-            if (queryBBox.intersect(tmpMinLon, tmpMinLon + deltaLonPerDepth, tmpMinLat, tmpMinLat + deltaLatPerDepth)) {
+            if (queryBBox.intersect(new BBox(tmpMinLon, tmpMinLon + deltaLonPerDepth, tmpMinLat, tmpMinLat + deltaLatPerDepth))) {
                 query(nextIntPointer, queryBBox, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, function, depth + 1);
             }
         }
