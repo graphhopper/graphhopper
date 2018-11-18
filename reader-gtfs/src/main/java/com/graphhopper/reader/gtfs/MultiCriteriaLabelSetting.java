@@ -74,9 +74,10 @@ public class MultiCriteriaLabelSetting {
 
         queueComparator = Comparator
                 .comparingLong(this::weight)
-                .thenComparingLong(l1 -> l1.nTransfers)
+                .thenComparingLong(l -> l.nTransfers)
+                .thenComparingLong(l -> l.walkTime)
                 .thenComparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0)
-                .thenComparingLong(l2 -> l2.impossible ? 1 : 0);
+                .thenComparingLong(l -> l.impossible ? 1 : 0);
         fromHeap = new PriorityQueue<>(queueComparator);
         fromMap = new IntObjectHashMap<>();
     }
