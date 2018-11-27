@@ -108,9 +108,10 @@ public class IsochroneResource {
         }
 
         if ("pointlist".equalsIgnoreCase(resultStr)) {
+            sw.stop();
             logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
-            return Response.fromResponse(jsonSuccessResponse(buckets, sw.stop().getSeconds()))
-                    .header("X-GH-Took", "" + sw.stop().getSeconds() * 1000)
+            return Response.fromResponse(jsonSuccessResponse(buckets, sw.getSeconds()))
+                    .header("X-GH-Took", "" + sw.getSeconds() * 1000)
                     .build();
         } else if ("polygon".equalsIgnoreCase(resultStr)) {
             ArrayList<JsonFeature> features = new ArrayList<>();
@@ -123,9 +124,10 @@ public class IsochroneResource {
                 feature.setGeometry(geometryFactory.createPolygon(polygonShell));
                 features.add(feature);
             }
+            sw.stop();
             logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
-            return Response.fromResponse(jsonSuccessResponse(features, sw.stop().getSeconds()))
-                    .header("X-GH-Took", "" + sw.stop().getSeconds() * 1000)
+            return Response.fromResponse(jsonSuccessResponse(features, sw.getSeconds()))
+                    .header("X-GH-Took", "" + sw.getSeconds() * 1000)
                     .build();
         } else {
             throw new IllegalArgumentException("type not supported:" + resultStr);
