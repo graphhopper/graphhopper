@@ -40,9 +40,9 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected int header[] = new int[(HEADER_OFFSET - 20) / 4];
     protected String name;
     protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
-    protected transient int segmentSizePower;
-    protected transient int indexDivisor;
-    protected transient boolean closed = false;
+    protected int segmentSizePower;
+    protected int indexDivisor;
+    protected boolean closed = false;
 
     public AbstractDataAccess(String name, String location, ByteOrder order) {
         byteOrder = order;
