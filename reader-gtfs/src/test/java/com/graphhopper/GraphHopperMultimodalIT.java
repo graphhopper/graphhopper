@@ -78,7 +78,7 @@ public class GraphHopperMultimodalIT {
         ghRequest.getHints().put(Parameters.PT.PROFILE_QUERY, true);
 
         GHResponse response = graphHopper.route(ghRequest);
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(247);
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(243);
 
         PathWrapper firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
         assertThat(firstTransitSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
@@ -99,7 +99,7 @@ public class GraphHopperMultimodalIT {
         ghRequest.getHints().put("beta_walk_time", 2.0); // I somewhat dislike walking
 
         GHResponse response = graphHopper.route(ghRequest);
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(130);
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(129);
 
         PathWrapper firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
         assertThat(firstTransitSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
@@ -123,7 +123,7 @@ public class GraphHopperMultimodalIT {
         // Now, the walk solution dominates, and we get no transit solution.
         ghRequest.getHints().put("beta_walk_time", 1.0);
         response = graphHopper.route(ghRequest);
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(139);
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(138);
         assertThat(response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst()).isEmpty();
     }
 
@@ -182,14 +182,14 @@ public class GraphHopperMultimodalIT {
 
         ghRequest.getHints().put(Parameters.PT.LIMIT_SOLUTIONS, 1);
         GHResponse response1 = graphHopper.route(ghRequest);
-        assertThat(response1.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(143);
+        assertThat(response1.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(142);
         ghRequest.getHints().put(Parameters.PT.LIMIT_SOLUTIONS, 3);
         GHResponse response3 = graphHopper.route(ghRequest);
-        assertThat(response3.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(248);
+        assertThat(response3.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(230);
         assertThat(response1.getAll().get(0).getTime()).isEqualTo(response3.getAll().get(0).getTime());
         ghRequest.getHints().put(Parameters.PT.LIMIT_SOLUTIONS, 5);
         GHResponse response5 = graphHopper.route(ghRequest);
-        assertThat(response5.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(362);
+        assertThat(response5.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(334);
         assertThat(response3.getAll().get(2).getTime()).isEqualTo(response5.getAll().get(2).getTime());
     }
 

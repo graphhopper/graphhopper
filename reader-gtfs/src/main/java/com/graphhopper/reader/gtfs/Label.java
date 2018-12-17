@@ -23,7 +23,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.time.Instant;
 import java.util.Iterator;
 
-class Label {
+public class Label {
 
     static class Transition {
         final Label label;
@@ -62,10 +62,10 @@ class Label {
         }
     }
 
-    final long currentTime;
+    public final long currentTime;
 
     final int edge;
-    final int adjNode;
+    public final int adjNode;
 
     final int nTransfers;
     final int nWalkDistanceConstraintViolations;

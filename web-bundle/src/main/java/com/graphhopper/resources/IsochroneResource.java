@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
+import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
@@ -86,21 +87,8 @@ public class IsochroneResource {
         Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
 
         if (distanceInMeter > 0) {
-            double maxMeter = 50 * 1000;
-            if (distanceInMeter > maxMeter)
-                throw new IllegalArgumentException("Specify a limit of less than " + maxMeter / 1000f + "km");
-            if (nBuckets > (distanceInMeter / 500))
-                throw new IllegalArgumentException("Specify buckets less than the number of explored kilometers");
-
             isochrone.setDistanceLimit(distanceInMeter);
         } else {
-
-            long maxSeconds = 80 * 60;
-            if (timeLimitInSeconds > maxSeconds)
-                throw new IllegalArgumentException("Specify a limit of less than " + maxSeconds + " seconds");
-            if (nBuckets > (timeLimitInSeconds / 60))
-                throw new IllegalArgumentException("Specify buckets less than the number of explored minutes");
-
             isochrone.setTimeLimit(timeLimitInSeconds);
         }
 
@@ -120,25 +108,26 @@ public class IsochroneResource {
         }
 
         if ("pointlist".equalsIgnoreCase(resultStr)) {
+            sw.stop();
             logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
-            return Response.fromResponse(jsonSuccessResponse(buckets, sw.stop().getSeconds()))
-                    .header("X-GH-Took", "" + sw.stop().getSeconds() * 1000)
+            return Response.fromResponse(jsonSuccessResponse(buckets, sw.getSeconds()))
+                    .header("X-GH-Took", "" + sw.getSeconds() * 1000)
                     .build();
         } else if ("polygon".equalsIgnoreCase(resultStr)) {
-            ArrayList<Map<String, Object>> features = new ArrayList<>();
+            ArrayList<JsonFeature> features = new ArrayList<>();
             List<Coordinate[]> polygonShells = delaunayTriangulationIsolineBuilder.calcList(buckets, buckets.size() - 1);
             for (Coordinate[] polygonShell : polygonShells) {
-                HashMap<String, Object> feature = new HashMap<>();
-                feature.put("type", "Feature");
+                JsonFeature feature = new JsonFeature();
                 HashMap<String, Object> properties = new HashMap<>();
                 properties.put("bucket", features.size());
-                feature.put("properties", properties);
-                feature.put("geometry", geometryFactory.createPolygon(polygonShell));
+                feature.setProperties(properties);
+                feature.setGeometry(geometryFactory.createPolygon(polygonShell));
                 features.add(feature);
             }
+            sw.stop();
             logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
-            return Response.fromResponse(jsonSuccessResponse(features, sw.stop().getSeconds()))
-                    .header("X-GH-Took", "" + sw.stop().getSeconds() * 1000)
+            return Response.fromResponse(jsonSuccessResponse(features, sw.getSeconds()))
+                    .header("X-GH-Took", "" + sw.getSeconds() * 1000)
                     .build();
         } else {
             throw new IllegalArgumentException("type not supported:" + resultStr);
