@@ -150,7 +150,7 @@ public class EncodingManager implements EncodedValueLookup {
 
         public Builder(int bytes) {
             em = new EncodingManager(bytes);
-            final BooleanEncodedValue roundaboutEnc = new BooleanEncodedValue("roundabout", false);
+            final BooleanEncodedValue roundaboutEnc = new SimpleBooleanEncodedValue("roundabout", false);
             em.sharedEncodedValueMap.put(roundaboutEnc, new OSMTagParser() {
                 @Override
                 public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
@@ -160,9 +160,9 @@ public class EncodingManager implements EncodedValueLookup {
                     return edgeFlags;
                 }
             });
-          
+
             for (EncodedValue ev : em.sharedEncodedValueMap.keySet()) {
-                addEncodedValue(ev);
+                em.addEncodedValue(ev);
             }
         }
 

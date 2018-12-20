@@ -412,7 +412,7 @@ public class FootFlagEncoderTest {
     @Test
     public void testBlockByDefault() {
         FootFlagEncoder tmpFootEncoder = new FootFlagEncoder();
-        new EncodingManager(tmpFootEncoder);
+        EncodingManager.create(tmpFootEncoder);
 
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
