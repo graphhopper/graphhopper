@@ -17,10 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
-import com.graphhopper.routing.profiles.StringEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
@@ -203,24 +200,24 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public String get(StringEncodedValue property) {
-        return property.getString(reverse, edgeFlags);
+    public EnumAlike get(EnumEncodedValue property) {
+        return property.getEnum(reverse, edgeFlags);
     }
 
     @Override
-    public EdgeIteratorState set(StringEncodedValue property, String value) {
-        property.setString(reverse, edgeFlags, value);
+    public EdgeIteratorState set(EnumEncodedValue property, EnumAlike value) {
+        property.setEnum(reverse, edgeFlags, value);
         return this;
     }
 
     @Override
-    public String getReverse(StringEncodedValue property) {
-        return property.getString(!reverse, edgeFlags);
+    public EnumAlike getReverse(EnumEncodedValue property) {
+        return property.getEnum(!reverse, edgeFlags);
     }
 
     @Override
-    public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
-        property.setString(!reverse, edgeFlags, value);
+    public EdgeIteratorState setReverse(EnumEncodedValue property, EnumAlike value) {
+        property.setEnum(!reverse, edgeFlags, value);
         return this;
     }
 

@@ -22,16 +22,14 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.CHEdgeExplorer;
-import com.graphhopper.util.CHEdgeIterator;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 import java.util.Random;
 
+import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.Helper.nf;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
@@ -63,6 +61,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private final StopWatch lazyUpdateSW = new StopWatch();
     private final StopWatch neighborUpdateSW = new StopWatch();
     private final StopWatch contractionSW = new StopWatch();
+    private final Params params;
     private NodeContractor nodeContractor;
     private CHEdgeExplorer vehicleAllExplorer;
     private CHEdgeExplorer vehicleAllTmpExplorer;
@@ -70,93 +69,27 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     // nodes with highest priority come last
     private GHTreeMapComposed sortedNodes;
     private float oldPriorities[];
-    private int periodicUpdatesPercentage = 20;
-    private int lastNodesLazyUpdatePercentage = 10;
-    private int neighborUpdatePercentage = 20;
-    private double nodesContractedPercentage = 100;
-    private double logMessagesPercentage = 20;
+    private PMap pMap = new PMap();
     private int initSize;
     private int checkCounter;
 
-    public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph,
-                                         Weighting weighting, TraversalMode traversalMode) {
+    public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
         this.dir = dir;
         this.ghStorage = ghStorage;
         this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
-        this.weighting = weighting;
+        this.weighting = ((CHGraphImpl) chGraph).getWeighting();
         prepareWeighting = new PreparationWeighting(weighting);
+        this.params = Params.forTraversalMode(traversalMode);
     }
 
-    /**
-     * The higher the values are the longer the preparation takes but the less shortcuts are
-     * produced.
-     * <p>
-     *
-     * @param periodicUpdates specifies how often periodic updates will happen. Use something less
-     *                        than 10.
-     */
-    public PrepareContractionHierarchies setPeriodicUpdates(int periodicUpdates) {
-        if (periodicUpdates < 0)
-            return this;
-        if (periodicUpdates > 100)
-            throw new IllegalArgumentException("periodicUpdates has to be in [0, 100], to disable it use 0");
-
-        this.periodicUpdatesPercentage = periodicUpdates;
-        return this;
-    }
-
-    /**
-     * @param lazyUpdates specifies when lazy updates will happen, measured relative to all existing
-     *                    nodes. 100 means always.
-     */
-    public PrepareContractionHierarchies setLazyUpdates(int lazyUpdates) {
-        if (lazyUpdates < 0)
-            return this;
-
-        if (lazyUpdates > 100)
-            throw new IllegalArgumentException("lazyUpdates has to be in [0, 100], to disable it use 0");
-
-        this.lastNodesLazyUpdatePercentage = lazyUpdates;
-        return this;
-    }
-
-    /**
-     * @param neighborUpdates specifies how often neighbor updates will happen. 100 means always.
-     */
-    public PrepareContractionHierarchies setNeighborUpdates(int neighborUpdates) {
-        if (neighborUpdates < 0)
-            return this;
-
-        if (neighborUpdates > 100)
-            throw new IllegalArgumentException("neighborUpdates has to be in [0, 100], to disable it use 0");
-
-        this.neighborUpdatePercentage = neighborUpdates;
-        return this;
-    }
-
-    /**
-     * Specifies how often a log message should be printed. Specify something around 20 (20% of the
-     * start nodes).
-     */
-    public PrepareContractionHierarchies setLogMessages(double logMessages) {
-        if (logMessages >= 0)
-            this.logMessagesPercentage = logMessages;
-        return this;
-    }
-
-    /**
-     * Define how many nodes (percentage) should be contracted. Less nodes means slower query but
-     * faster contraction duration.
-     */
-    public PrepareContractionHierarchies setContractedNodes(double nodesContracted) {
-        if (nodesContracted < 0)
-            return this;
-
-        if (nodesContracted > 100)
-            throw new IllegalArgumentException("setNodesContracted can be 100% maximum");
-
-        this.nodesContractedPercentage = nodesContracted;
+    public PrepareContractionHierarchies setParams(PMap pMap) {
+        this.pMap = pMap;
+        params.setPeriodicUpdatesPercentage(pMap.getInt(PERIODIC_UPDATES, params.getPeriodicUpdatesPercentage()));
+        params.setLastNodesLazyUpdatePercentage(pMap.getInt(LAST_LAZY_NODES_UPDATES, params.getLastNodesLazyUpdatePercentage()));
+        params.setNeighborUpdatePercentage(pMap.getInt(NEIGHBOR_UPDATES, params.getNeighborUpdatePercentage()));
+        params.setNodesContractedPercentage(pMap.getInt(CONTRACTED_NODES, params.getNodesContractedPercentage()));
+        params.setLogMessagesPercentage(pMap.getInt(LOG_MESSAGES, params.getLogMessagesPercentage()));
         return this;
     }
 
@@ -170,9 +103,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 + ", new shortcuts: " + nf(nodeContractor.getAddedShortcutsCount())
                 + ", initSize:" + nf(initSize)
                 + ", " + prepareWeighting
-                + ", periodic:" + periodicUpdatesPercentage
-                + ", lazy:" + lastNodesLazyUpdatePercentage
-                + ", neighbor:" + neighborUpdatePercentage
+                + ", periodic:" + params.getPeriodicUpdatesPercentage()
+                + ", lazy:" + params.getLastNodesLazyUpdatePercentage()
+                + ", neighbor:" + params.getNeighborUpdatePercentage()
                 + ", " + getTimesAsString()
                 + ", lazy-overhead: " + (int) (100 * ((checkCounter / (double) initSize) - 1)) + "%"
                 + ", " + Helper.getMemInfo());
@@ -226,7 +159,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new float[prepareGraph.getNodes()];
-        nodeContractor = new NodeBasedNodeContractor(dir, ghStorage, prepareGraph, weighting);
+        nodeContractor = new NodeBasedNodeContractor(dir, ghStorage, prepareGraph, weighting, pMap);
         nodeContractor.initFromGraph();
     }
 
@@ -250,31 +183,31 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         initSize = sortedNodes.getSize();
         int level = 0;
         checkCounter = 0;
-        long logSize = Math.round(Math.max(10, initSize / 100d * logMessagesPercentage));
-        if (logMessagesPercentage == 0)
+        long logSize = Math.round(Math.max(10, initSize / 100d * params.getLogMessagesPercentage()));
+        if (params.getLogMessagesPercentage() == 0)
             logSize = Integer.MAX_VALUE;
 
         // preparation takes longer but queries are slightly faster with preparation
         // => enable it but call not so often
         boolean periodicUpdate = true;
         int updateCounter = 0;
-        long periodicUpdatesCount = Math.round(Math.max(10, sortedNodes.getSize() / 100d * periodicUpdatesPercentage));
-        if (periodicUpdatesPercentage == 0)
+        long periodicUpdatesCount = Math.round(Math.max(10, sortedNodes.getSize() / 100d * params.getPeriodicUpdatesPercentage()));
+        if (params.getPeriodicUpdatesPercentage() == 0)
             periodicUpdate = false;
 
         // disable lazy updates for last x percentage of nodes as preparation is then a lot slower
         // and query time does not really benefit
-        long lastNodesLazyUpdates = Math.round(sortedNodes.getSize() / 100d * lastNodesLazyUpdatePercentage);
+        long lastNodesLazyUpdates = Math.round(sortedNodes.getSize() / 100d * params.getLastNodesLazyUpdatePercentage());
 
         // according to paper "Polynomial-time Construction of Contraction Hierarchies for Multi-criteria Objectives" by Funke and Storandt
         // we don't need to wait for all nodes to be contracted
-        long nodesToAvoidContract = Math.round((100 - nodesContractedPercentage) / 100d * sortedNodes.getSize());
+        long nodesToAvoidContract = Math.round((100 - params.getNodesContractedPercentage()) / 100d * sortedNodes.getSize());
 
         // Recompute priority of uncontracted neighbors.
         // Without neighbor updates preparation is faster but we need them
         // to slightly improve query time. Also if not applied too often it decreases the shortcut number.
         boolean neighborUpdate = true;
-        if (neighborUpdatePercentage == 0)
+        if (params.getNeighborUpdatePercentage() == 0)
             neighborUpdate = false;
 
         while (!sortedNodes.isEmpty()) {
@@ -336,7 +269,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 if (prepareGraph.getLevel(nn) != maxLevel)
                     continue;
 
-                if (neighborUpdate && rand.nextInt(100) < neighborUpdatePercentage) {
+                if (neighborUpdate && rand.nextInt(100) < params.getNeighborUpdatePercentage()) {
                     neighborUpdateSW.start();
                     float oldPrio = oldPriorities[nn];
                     float priority = oldPriorities[nn] = calculatePriority(nn);
@@ -420,5 +353,99 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 getTimesAsString(),
                 nodeContractor.getStatisticsString(),
                 Helper.getMemInfo()));
+    }
+
+    private static class Params {
+        /**
+         * Specifies how often periodic updates will happen. The higher the value the longer the preparation takes
+         * but the less shortcuts are produced.
+         */
+        private int periodicUpdatesPercentage;
+        /**
+         * Specifies when lazy updates will happen, measured relative to all existing nodes. 100 means always.
+         */
+        private int lastNodesLazyUpdatePercentage;
+        /**
+         * Specifies how often neighbor updates will happen. 100 means always.
+         */
+        private int neighborUpdatePercentage;
+        /**
+         * Defines how many nodes (percentage) should be contracted. Less nodes means slower query but
+         * faster contraction.
+         */
+        private int nodesContractedPercentage;
+        /**
+         * Specifies how often a log message should be printed. Specify something around 20 (20% of the
+         * start nodes).
+         */
+        private int logMessagesPercentage;
+
+        static Params forTraversalMode(TraversalMode traversalMode) {
+            if (traversalMode.isEdgeBased()) {
+                throw new IllegalArgumentException("Contraction Hierarchies are not supported for edge-based traversal yet");
+            } else {
+                return new Params(20, 10, 20, 100, 20);
+            }
+        }
+
+        private Params(int periodicUpdatesPercentage, int lastNodesLazyUpdatePercentage, int neighborUpdatePercentage,
+                       int nodesContractedPercentage, int logMessagesPercentage) {
+            setPeriodicUpdatesPercentage(periodicUpdatesPercentage);
+            setLastNodesLazyUpdatePercentage(lastNodesLazyUpdatePercentage);
+            setNeighborUpdatePercentage(neighborUpdatePercentage);
+            setNodesContractedPercentage(nodesContractedPercentage);
+            setLogMessagesPercentage(logMessagesPercentage);
+        }
+
+        int getPeriodicUpdatesPercentage() {
+            return periodicUpdatesPercentage;
+        }
+
+        void setPeriodicUpdatesPercentage(int periodicUpdatesPercentage) {
+            checkPercentage(PERIODIC_UPDATES, periodicUpdatesPercentage);
+            this.periodicUpdatesPercentage = periodicUpdatesPercentage;
+        }
+
+        int getLastNodesLazyUpdatePercentage() {
+            return lastNodesLazyUpdatePercentage;
+        }
+
+        void setLastNodesLazyUpdatePercentage(int lastNodesLazyUpdatePercentage) {
+            checkPercentage(LAST_LAZY_NODES_UPDATES, lastNodesLazyUpdatePercentage);
+            this.lastNodesLazyUpdatePercentage = lastNodesLazyUpdatePercentage;
+        }
+
+        int getNeighborUpdatePercentage() {
+            return neighborUpdatePercentage;
+        }
+
+        void setNeighborUpdatePercentage(int neighborUpdatePercentage) {
+            checkPercentage(NEIGHBOR_UPDATES, neighborUpdatePercentage);
+            this.neighborUpdatePercentage = neighborUpdatePercentage;
+        }
+
+        int getNodesContractedPercentage() {
+            return nodesContractedPercentage;
+        }
+
+        void setNodesContractedPercentage(int nodesContractedPercentage) {
+            checkPercentage(CONTRACTED_NODES, nodesContractedPercentage);
+            this.nodesContractedPercentage = nodesContractedPercentage;
+        }
+
+        int getLogMessagesPercentage() {
+            return logMessagesPercentage;
+        }
+
+        void setLogMessagesPercentage(int logMessagesPercentage) {
+            checkPercentage(LOG_MESSAGES, logMessagesPercentage);
+            this.logMessagesPercentage = logMessagesPercentage;
+        }
+
+        private void checkPercentage(String name, int value) {
+            if (value < 0 || value > 100) {
+                throw new IllegalArgumentException(name + " has to be in [0, 100], to disable it use 0");
+            }
+        }
     }
 }

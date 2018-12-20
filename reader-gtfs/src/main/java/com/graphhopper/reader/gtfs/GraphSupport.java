@@ -18,10 +18,7 @@
 
 package com.graphhopper.reader.gtfs;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
-import com.graphhopper.routing.profiles.StringEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.*;
@@ -245,23 +242,23 @@ class GraphSupport {
                     }
 
                     @Override
-                    public String get(StringEncodedValue property) {
+                    public EnumAlike get(EnumEncodedValue property) {
                         return edge.get(property);
                     }
 
                     @Override
-                    public EdgeIteratorState set(StringEncodedValue property, String value) {
+                    public EdgeIteratorState set(EnumEncodedValue property, EnumAlike value) {
                         edge.set(property, value);
                         return this;
                     }
 
                     @Override
-                    public String getReverse(StringEncodedValue property) {
+                    public EnumAlike getReverse(EnumEncodedValue property) {
                         return edge.getReverse(property);
                     }
 
                     @Override
-                    public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
+                    public EdgeIteratorState setReverse(EnumEncodedValue property, EnumAlike value) {
                         edge.setReverse(property, value);
                         return this;
                     }

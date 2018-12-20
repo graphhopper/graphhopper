@@ -48,9 +48,7 @@ dependencies {
     implementation 'org.mapsforge:vtm-android:0.9.2:natives-arm64-v8a'
     implementation 'org.mapsforge:vtm-android:0.9.2:natives-x86'
     implementation 'org.mapsforge:vtm-android:0.9.2:natives-x86_64'
-    implementation('org.mapsforge:vtm-jts:0.9.2') {
-      exclude group: 'com.vividsolutions', module: 'jts'
-    }
+    implementation 'org.mapsforge:vtm-jts:0.9.2'
     implementation 'org.mapsforge:vtm-themes:0.9.2'
     implementation 'com.caverock:androidsvg:1.2.2-beta-1'
 

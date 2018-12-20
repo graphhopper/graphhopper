@@ -21,6 +21,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.FactorizedDecimalEncodedValue;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
@@ -96,7 +97,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         sidewalkValues.add("right");
 
         setBlockByDefault(false);
+        absoluteBarriers.add("fence");
         potentialBarriers.add("gate");
+        potentialBarriers.add("cattle_grid");
 
         safeHighwayTags.add("footway");
         safeHighwayTags.add("path");
@@ -132,7 +135,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         hikingNetworkToCode.put("lwn", UNCHANGED.getValue());
 
         maxPossibleSpeed = FERRY_SPEED;
-
+        speedDefault = MEAN_SPEED;
         init();
     }
 
@@ -146,8 +149,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
         // larger value required - ferries are faster than pedestrians
-        registerNewEncodedValue.add(speedEncoder = new DecimalEncodedValue(prefix + "average_speed", speedBits, MEAN_SPEED, speedFactor, false));
-        registerNewEncodedValue.add(priorityWayEncoder = new DecimalEncodedValue(prefix + "priority", 3, 0, 1.0 / PriorityCode.BEST.getValue(), false));
+        registerNewEncodedValue.add(speedEncoder = new FactorizedDecimalEncodedValue(prefix + "average_speed", speedBits, speedFactor, false));
+        registerNewEncodedValue.add(priorityWayEncoder = new FactorizedDecimalEncodedValue(prefix + "priority", 3, PriorityCode.getFactor(1), false));
     }
 
     @Override
@@ -286,11 +289,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null) {
                 if ("hiking".equals(sacScale))
-                    speedEncoder.setInt(false, edgeFlags, MEAN_SPEED);
+                    speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED);
                 else
-                    speedEncoder.setInt(false, edgeFlags, SLOW_SPEED);
+                    speedEncoder.setDecimal(false, edgeFlags, SLOW_SPEED);
             } else {
-                speedEncoder.setInt(false, edgeFlags, MEAN_SPEED);
+                speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED);
             }
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
@@ -305,7 +308,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         if (relationFlags != 0)
             priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
-        priorityWayEncoder.setInt(false, edgeFlags, handlePriority(way, priorityFromRelation));
+        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(way, priorityFromRelation)));
         return edgeFlags;
     }
 

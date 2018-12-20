@@ -25,10 +25,7 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class manages all storage related methods and delegates the calls to the associated graphs.
@@ -248,10 +245,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             String dim = properties.get("graph.dimension");
             baseGraph.loadExisting(dim);
 
-            String loadedCHWeightings = properties.get("graph.ch.weightings");
-            String configuredCHWeightings = getCHWeightings().toString();
-            if (!loadedCHWeightings.equals(configuredCHWeightings))
-                throw new IllegalStateException("Configured graph.ch.weightings: " + configuredCHWeightings + " is not equal to loaded " + loadedCHWeightings);
+            checkIfConfiguredAndLoadedWeightingsCompatible();
 
             for (CHGraphImpl cg : chGraphs) {
                 if (!cg.loadExisting())
@@ -261,6 +255,37 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             return true;
         }
         return false;
+    }
+
+    private void checkIfConfiguredAndLoadedWeightingsCompatible() {
+        String loadedStr = properties.get("graph.ch.weightings");
+        List<String> loaded = parseList(loadedStr);
+        List<Weighting> configured = getCHWeightings();
+        if (configured.isEmpty() && !loaded.isEmpty()) {
+            throw new IllegalStateException("You loaded a CH graph, but you did not specify graph.ch.weightings");
+        }
+        for (Weighting w : configured) {
+            if (!loaded.contains(w.toString())) {
+                throw new IllegalStateException("Configured weighting: " + w.toString() + " is not contained in loaded weightings " + loadedStr + ".\n" +
+                        "You configured graph.ch.weightings: " + configured);
+            }
+        }
+    }
+
+    /**
+     * parses a string like [a,b,c]
+     */
+    private List<String> parseList(String listStr) {
+        String trimmed = listStr.trim();
+        String[] items = trimmed.substring(1, trimmed.length() - 1).split(",");
+        List<String> result = new ArrayList<>();
+        for (String item : items) {
+            String s = item.trim();
+            if (!s.isEmpty()) {
+                result.add(s);
+            }
+        }
+        return result;
     }
 
     @Override

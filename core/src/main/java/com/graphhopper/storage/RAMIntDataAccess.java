@@ -34,7 +34,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
     private int[][] segments = new int[0][];
     private boolean closed = false;
     private boolean store;
-    private transient int segmentSizeIntsPower;
+    private int segmentSizeIntsPower;
 
     RAMIntDataAccess(String name, String location, boolean store, ByteOrder order) {
         super(name, location, order);
@@ -78,7 +78,6 @@ class RAMIntDataAccess extends AbstractDataAccess {
         if (segments.length > 0)
             throw new IllegalThreadStateException("already created");
 
-        // initialize transient values
         setSegmentSize(segmentSizeInBytes);
         ensureCapacity(Math.max(10 * 4, bytes));
         return this;

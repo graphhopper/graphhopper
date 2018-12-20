@@ -82,7 +82,7 @@ public class Polygon implements Shape {
     /**
      * Lossy conversion to a GraphHopper Polygon.
      */
-    public static Polygon create(com.vividsolutions.jts.geom.Polygon polygon) {
+    public static Polygon create(org.locationtech.jts.geom.Polygon polygon) {
         double[] lats = new double[polygon.getNumPoints()];
         double[] lons = new double[polygon.getNumPoints()];
         for (int i = 0; i < polygon.getNumPoints(); i++) {

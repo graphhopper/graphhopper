@@ -160,7 +160,10 @@ public class EncodingManager implements EncodedValueLookup {
                     return edgeFlags;
                 }
             });
-            em.addEncodedValue(roundaboutEnc);
+          
+            for (EncodedValue ev : em.sharedEncodedValueMap.keySet()) {
+                addEncodedValue(ev);
+            }
         }
 
         public Builder add(FlagEncoder encoder) {
@@ -497,8 +500,8 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     @Override
-    public StringEncodedValue getStringEncodedValue(String key) {
-        return getEncodedValue(key, StringEncodedValue.class);
+    public EnumEncodedValue getEnumEncodedValue(String key) {
+        return getEncodedValue(key, EnumEncodedValue.class);
     }
 
     @Override

@@ -246,7 +246,7 @@ public class RouteResourceTest {
         int firstLink = edgeIds.get(0).get(2).asInt();
         int lastLink = edgeIds.get(edgeIds.size() - 1).get(2).asInt();
         assertEquals(880, firstLink);
-        assertEquals(1419, lastLink);
+        assertEquals(1420, lastLink);
     }
 
     @Test

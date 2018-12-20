@@ -171,7 +171,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      */
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
         // define the first 2 speedBits in flags for routing
-        registerNewEncodedValue.add(accessEnc = new BooleanEncodedValue(prefix + "access", true));
+        registerNewEncodedValue.add(accessEnc = new SimpleBooleanEncodedValue(prefix + "access", true));
         roundaboutEnc = getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
         encoderBit = 1L << index;
 
@@ -212,8 +212,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     /**
      * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
-     * strict negative or blocks access (like a barrier), then the value is strict positive.This
+     * strict negative or blocks access (like a barrier), then the value is strictly positive. This
      * method is called in the second parsing step.
+     *
+     * @return encoded values or 0 if not blocking or no value stored
      */
     public long handleNodeTags(ReaderNode node) {
         // absolute barriers always block
@@ -226,7 +228,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
             if (node.hasTag("locked", "yes"))
                 locked = true;
 
-             for (String res : restrictions) {
+            for (String res : restrictions) {
                 if (!locked && node.hasTag(res, intendedValues))
                     return 0;
 
@@ -615,8 +617,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     @Override
-    public StringEncodedValue getStringEncodedValue(String key) {
-        return encodedValueLookup.getStringEncodedValue(key);
+    public EnumEncodedValue getEnumEncodedValue(String key) {
+        return encodedValueLookup.getEnumEncodedValue(key);
     }
 
     public void setEncodedValueLookup(EncodedValueLookup encodedValueLookup) {
