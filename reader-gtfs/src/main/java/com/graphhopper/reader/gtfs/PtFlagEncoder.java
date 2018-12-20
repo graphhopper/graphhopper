@@ -21,6 +21,7 @@ package com.graphhopper.reader.gtfs;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.SimpleIntEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.storage.IntsRef;
@@ -44,10 +45,10 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
         // do we really need 2 bits for pt.access?
         super.createEncodedValues(list, prefix, index);
 
-        list.add(validityIdEnc = new IntEncodedValue(prefix + "validity_id", 20, 0, false));
-        list.add(transfersEnc = new IntEncodedValue(prefix + "transfers", 1, 0, false));
-        list.add(typeEnc = new IntEncodedValue(prefix + "type", 4, GtfsStorage.EdgeType.HIGHWAY.ordinal(), false));
-        list.add(timeEnc = new IntEncodedValue(prefix + "time", 17, 0, false));
+        list.add(validityIdEnc = new SimpleIntEncodedValue(prefix + "validity_id", 20, false));
+        list.add(transfersEnc = new SimpleIntEncodedValue(prefix + "transfers", 1, false));
+        list.add(typeEnc = new SimpleIntEncodedValue(prefix + "type", 4, false));
+        list.add(timeEnc = new SimpleIntEncodedValue(prefix + "time", 17, false));
     }
 
     @Override

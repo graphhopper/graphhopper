@@ -524,13 +524,13 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmRel.setTag("network", "icn");
         long relFlags = encoder.handleRelationTags(0, osmRel);
         IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), osmWay, allowed, relFlags);
-        assertEquals(BEST.getValue(), priorityEnc.getInt(false, flags));
+        assertEquals(PriorityCode.getFactor(BEST.getValue()), priorityEnc.getDecimal(false, flags), .1);
 
         // important: UNCHANGED should not get 0 priority!
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "somethingelse");
         flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), osmWay, allowed, 0);
-        assertEquals(UNCHANGED.getValue(), priorityEnc.getInt(false, flags));
+        assertEquals(PriorityCode.getFactor(UNCHANGED.getValue()), priorityEnc.getDecimal(false, flags), .1);
     }
 
     @Test

@@ -99,7 +99,7 @@ public class EncodingManager implements EncodedValueLookup {
 
         this.bitsForEdgeFlags = bytesForEdgeFlags * 8;
         this.config = new EncodedValue.InitializerConfig();
-        final BooleanEncodedValue roundaboutEnc = new BooleanEncodedValue("roundabout", false);
+        final BooleanEncodedValue roundaboutEnc = new SimpleBooleanEncodedValue("roundabout", false);
         sharedEncodedValueMap.put(roundaboutEnc, new OSMTagParser() {
             @Override
             public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
@@ -460,8 +460,8 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     @Override
-    public StringEncodedValue getStringEncodedValue(String key) {
-        return getEncodedValue(key, StringEncodedValue.class);
+    public EnumEncodedValue getStringEncodedValue(String key) {
+        return getEncodedValue(key, EnumEncodedValue.class);
     }
 
     @Override

@@ -17,10 +17,7 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
-import com.graphhopper.routing.profiles.StringEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 
 /**
@@ -31,14 +28,29 @@ import com.graphhopper.storage.IntsRef;
  * @see EdgeExplorer
  */
 public interface EdgeIteratorState {
-    BooleanEncodedValue UNFAVORED_EDGE = new BooleanEncodedValue("unfavored");
+    BooleanEncodedValue UNFAVORED_EDGE = new SimpleBooleanEncodedValue("unfavored");
     /**
      * This method can be used to fetch the internal reverse state of an edge.
      */
-    BooleanEncodedValue REVERSE_STATE = new BooleanEncodedValue("reverse") {
+    BooleanEncodedValue REVERSE_STATE = new BooleanEncodedValue() {
+        @Override
+        public int init(InitializerConfig init) {
+            return 0;
+        }
+
+        @Override
+        public String getName() {
+            return "reverse";
+        }
+
         @Override
         public boolean getBool(boolean reverse, IntsRef ref) {
             return reverse;
+        }
+
+        @Override
+        public void setBool(boolean reverse, IntsRef ref, boolean value) {
+            throw new IllegalStateException("reverse state cannot be modified");
         }
     };
 
@@ -138,13 +150,13 @@ public interface EdgeIteratorState {
 
     EdgeIteratorState setReverse(DecimalEncodedValue property, double value);
 
-    String get(StringEncodedValue property);
+    EnumAlike get(EnumEncodedValue property);
 
-    EdgeIteratorState set(StringEncodedValue property, String value);
+    EdgeIteratorState set(EnumEncodedValue property, EnumAlike value);
 
-    String getReverse(StringEncodedValue property);
+    EnumAlike getReverse(EnumEncodedValue property);
 
-    EdgeIteratorState setReverse(StringEncodedValue property, String value);
+    EdgeIteratorState setReverse(EnumEncodedValue property, EnumAlike value);
 
     String getName();
 

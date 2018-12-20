@@ -21,10 +21,7 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
-import com.graphhopper.routing.profiles.StringEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -587,22 +584,22 @@ public class GHUtility {
         }
 
         @Override
-        public String get(StringEncodedValue property) {
+        public EnumAlike get(EnumEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public EdgeIteratorState set(StringEncodedValue property, String value) {
+        public EdgeIteratorState set(EnumEncodedValue property, EnumAlike value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public String getReverse(StringEncodedValue property) {
+        public EnumAlike getReverse(EnumEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
+        public EdgeIteratorState setReverse(EnumEncodedValue property, EnumAlike value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

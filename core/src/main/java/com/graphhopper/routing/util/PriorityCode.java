@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 /**
  * Used to store a priority value in the way flags of an edge. Used in combination with
  * PriorityWeighting
- * <p>
  *
  * @author Peter Karich
  */
@@ -41,6 +40,13 @@ public enum PriorityCode {
 
     public int getValue() {
         return value;
+    }
+
+    /**
+     * This method returns the priority in a range between 0 and 1 suitable for direct usage in a Weighting.
+     */
+    public static double getFactor(double val) {
+        return val / BEST.getValue();
     }
 
 }

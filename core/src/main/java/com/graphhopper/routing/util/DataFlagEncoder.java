@@ -19,9 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.spatialrules.AccessValue;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
@@ -182,29 +180,29 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         // TODO support different vehicle types, currently just roundabout and fwd&bwd for one vehicle type
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
 
-        registerNewEncodedValue.add(carMaxspeedEncoder = new DecimalEncodedValue(prefix + "car_maxspeed", speedBits, 0, speedFactor, true));
+        registerNewEncodedValue.add(carMaxspeedEncoder = new FactorizedDecimalEncodedValue(prefix + "car_maxspeed", speedBits, speedFactor, true));
 
         /* Value range: [3.0m, 5.4m] */
         if (isStoreHeight())
-            registerNewEncodedValue.add(heightEncoder = new DecimalEncodedValue(prefix + "height", 7, 0, 0.1, false));
+            registerNewEncodedValue.add(heightEncoder = new FactorizedDecimalEncodedValue(prefix + "height", 7, 0.1, false));
 
         /* Value range: [1.0t, 59.5t] */
         if (isStoreWeight())
-            registerNewEncodedValue.add(weightEncoder = new DecimalEncodedValue(prefix + "weight", 10, 0, 0.1, false));
+            registerNewEncodedValue.add(weightEncoder = new FactorizedDecimalEncodedValue(prefix + "weight", 10, 0.1, false));
 
         /* Value range: [2.5m, 3.5m] */
         if (isStoreWidth())
-            registerNewEncodedValue.add(widthEncoder = new DecimalEncodedValue(prefix + "width", 6, 0, 0.1, false));
+            registerNewEncodedValue.add(widthEncoder = new FactorizedDecimalEncodedValue(prefix + "width", 6, 0.1, false));
 
-        registerNewEncodedValue.add(highwayEncoder = new IntEncodedValue(prefix + "highway", 5, 0, false));
-        registerNewEncodedValue.add(surfaceEncoder = new IntEncodedValue(prefix + "surface", 4, 0, false));
-        registerNewEncodedValue.add(transportModeEncoder = new IntEncodedValue(prefix + "transport_mode", 3, 0, false));
-        registerNewEncodedValue.add(dynAccessEncoder = new IntEncodedValue(prefix + "car_dyn_access", 3, 0, false));
+        registerNewEncodedValue.add(highwayEncoder = new SimpleIntEncodedValue(prefix + "highway", 5, false));
+        registerNewEncodedValue.add(surfaceEncoder = new SimpleIntEncodedValue(prefix + "surface", 4, false));
+        registerNewEncodedValue.add(transportModeEncoder = new SimpleIntEncodedValue(prefix + "transport_mode", 3, false));
+        registerNewEncodedValue.add(dynAccessEncoder = new SimpleIntEncodedValue(prefix + "car_dyn_access", 3, false));
 
         int tmpMax = spatialRuleLookup.size() - 1;
         int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
         if (bits > 0)
-            registerNewEncodedValue.add(spatialEncoder = new IntEncodedValue("spatial_location", bits, 0, false));
+            registerNewEncodedValue.add(spatialEncoder = new SimpleIntEncodedValue("spatial_location", bits, false));
 
         // workaround to init AbstractWeighting.avSpeedEnc variable that GenericWeighting does not need
         speedEncoder = carMaxspeedEncoder;

@@ -10,7 +10,7 @@ public class IntEncodedValueTest {
 
     @Test
     public void testInvalidReverseAccess() {
-        IntEncodedValue prop = new IntEncodedValue("test", 10, 50, false);
+        IntEncodedValue prop = new SimpleIntEncodedValue("test", 10, false);
         prop.init(new EncodedValue.InitializerConfig());
         try {
             prop.setInt(true, new IntsRef(1), -1);
@@ -21,7 +21,7 @@ public class IntEncodedValueTest {
 
     @Test
     public void testDirectedValue() {
-        IntEncodedValue prop = new IntEncodedValue("test", 10, 50, true);
+        IntEncodedValue prop = new SimpleIntEncodedValue("test", 10, true);
         prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(1);
         prop.setInt(false, ref, 10);
@@ -32,7 +32,7 @@ public class IntEncodedValueTest {
 
     @Test
     public void multiIntsUsage() {
-        IntEncodedValue prop = new IntEncodedValue("test", 32, 50, true);
+        IntEncodedValue prop = new SimpleIntEncodedValue("test", 32, true);
         prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(2);
         prop.setInt(false, ref, 10);
@@ -43,7 +43,7 @@ public class IntEncodedValueTest {
 
     @Test
     public void padding() {
-        IntEncodedValue prop = new IntEncodedValue("test", 30, 50, true);
+        IntEncodedValue prop = new SimpleIntEncodedValue("test", 30, true);
         prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(2);
         prop.setInt(false, ref, 10);

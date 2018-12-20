@@ -23,7 +23,7 @@ import com.graphhopper.storage.IntsRef;
 
 import java.util.Collection;
 
-public class MappedDecimalEncodedValue extends IntEncodedValue {
+public class MappedDecimalEncodedValue extends SimpleIntEncodedValue implements DecimalEncodedValue {
     private final int toValueMap[];
     private final IntIntHashMap toStorageMap;
     private final double precision;
@@ -32,8 +32,8 @@ public class MappedDecimalEncodedValue extends IntEncodedValue {
      * This class allows to store a value efficiently if it can take only a few decimal values that are not necessarily
      * consecutive.
      */
-    public MappedDecimalEncodedValue(String name, Collection<Double> values, double precision, Double defaultValue, boolean storeBothDirections) {
-        super(name, 32 - Integer.numberOfLeadingZeros(values.size()), -1, storeBothDirections);
+    public MappedDecimalEncodedValue(String name, Collection<Double> values, double precision, boolean storeBothDirections) {
+        super(name, 32 - Integer.numberOfLeadingZeros(values.size()), storeBothDirections);
 
         this.precision = precision;
         // store int-int mapping
@@ -49,27 +49,24 @@ public class MappedDecimalEncodedValue extends IntEncodedValue {
             }
             toValueMap[index] = intVal;
             toStorageMap.put(intVal, index);
-            if (val == defaultValue)
-                this.defaultValue = index;
             index++;
         }
-
-        if (this.defaultValue < 0)
-            throw new IllegalArgumentException("default value " + defaultValue + " not found");
     }
 
     private int toInt(double val) {
         return (int) Math.round(val / precision);
     }
 
+    @Override
     public final void setDecimal(boolean reverse, IntsRef ref, double value) {
         int storageInt = toStorageMap.getOrDefault(toInt(value), -1);
         if (storageInt < 0)
-            throw new IllegalArgumentException("Cannot next value " + value + " (" + toInt(value) + ") in map to store it");
+            throw new IllegalArgumentException("Cannot find value " + value + " (" + toInt(value) + ") in map to store it");
 
         super.setInt(reverse, ref, storageInt);
     }
 
+    @Override
     public final double getDecimal(boolean reverse, IntsRef ref) {
         int value = getInt(reverse, ref);
         return toValueMap[value] * precision;
