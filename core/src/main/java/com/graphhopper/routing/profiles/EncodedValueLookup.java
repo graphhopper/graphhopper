@@ -27,7 +27,7 @@ public interface EncodedValueLookup {
 
     DecimalEncodedValue getDecimalEncodedValue(String key);
 
-    EnumEncodedValue getStringEncodedValue(String key);
+    EnumEncodedValue getEnumEncodedValue(String key);
 
     boolean supports(String key);
 }
