@@ -1154,7 +1154,7 @@ class BaseGraph implements Graph {
 
         @Override
         public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
-            assert cachedIntsRef == null || edgeFlags.ints.length == cachedIntsRef.ints.length : "incompatible flags";
+            assert cachedIntsRef == null || edgeFlags.ints.length == cachedIntsRef.ints.length : "Incompatible flags. Specified: " + edgeFlags.ints.length + " vs. " + cachedIntsRef.ints.length;
             edgeAccess.writeFlags_(edgePointer, edgeFlags);
             if (cachedIntsRef == null)
                 cachedIntsRef = new IntsRef(bytesForFlags / 4);
