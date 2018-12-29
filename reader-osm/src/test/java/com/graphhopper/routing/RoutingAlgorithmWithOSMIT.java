@@ -519,7 +519,8 @@ public class RoutingAlgorithmWithOSMIT {
                     setCHEnabled(false).
                     setDataReaderFile(osmFile).
                     setGraphHopperLocation(graphFile).
-                    setEncodingManager(new EncodingManager(importVehicles));
+                    setEncodingManager(new EncodingManager(importVehicles, 8));
+                    // setEncodingManager(new EncodingManager.Builder(8).addAll(new DefaultFlagEncoderFactory(), importVehicles).build());
 
             if (osmFile.contains("krautsand"))
                 hopper.setMinNetworkSize(0, 0);
@@ -527,7 +528,7 @@ public class RoutingAlgorithmWithOSMIT {
             hopper.setWayPointMaxDistance(0);
 
             // always enable landmarks, add maximum information to reduce warnings
-            hopper.getLMFactoryDecorator().addWeighting(weightStr+"|maximum=60000").
+            hopper.getLMFactoryDecorator().addWeighting(weightStr + "|maximum=60000").
                     setEnabled(true).setDisablingAllowed(true);
 
             if (withCH)

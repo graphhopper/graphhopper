@@ -60,6 +60,8 @@ abstract class EdgeAccess {
 
     abstract int getEntryBytes();
 
+    abstract int getFlagsBytes();
+
     final void invalidateEdge(long edgePointer) {
         edges.setInt(edgePointer + E_NODEB, NO_NODE);
     }

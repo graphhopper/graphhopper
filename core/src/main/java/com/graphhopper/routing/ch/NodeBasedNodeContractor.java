@@ -259,6 +259,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                     intsRef.ints[0] = sc.flags;
                     iter.setFlags(intsRef);
                     iter.setWeight(sc.weight);
+                    // TODO NOW (also below)
+//                    iter.set(shortcutAccessEnc, true).setReverse(shortcutAccessEnc, true);
+//                    iter.set(shortcutWeightEnc, sc.weight);
                     iter.setDistance(sc.dist);
                     iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                     setOrigEdgeCount(iter.getEdge(), sc.originalEdges);
