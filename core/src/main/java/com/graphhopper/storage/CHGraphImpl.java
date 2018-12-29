@@ -57,6 +57,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     int shortcutEntryBytes;
     // the nodesCH storage is limited via baseGraph.nodeCount too
     int nodeCHEntryBytes;
+    final int shortcutBytesForFlags;
     private int N_LEVEL;
     // shortcut memory layout is synced with edges indices until E_FLAGS, then:
     private int S_SKIP_EDGE1, S_SKIP_EDGE2;
@@ -71,6 +72,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         final String name = AbstractWeighting.weightingToFileName(w);
         this.nodesCH = dir.find("nodes_ch_" + name);
         this.shortcuts = dir.find("shortcuts_" + name);
+        this.shortcutBytesForFlags = 4;
+
         this.chEdgeAccess = new EdgeAccess(shortcuts, baseGraph.bitUtil) {
             @Override
             final EdgeIterable createSingleEdge(EdgeFilter edgeFilter) {
@@ -90,6 +93,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             @Override
             final int getEntryBytes() {
                 return shortcutEntryBytes;
+            }
+
+            @Override
+            final int getFlagsBytes() {
+                return shortcutBytesForFlags;
             }
 
             @Override
@@ -479,6 +487,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         protected final void selectEdgeAccess() {
+            cachedIntsRef = null;
             if (nextEdgeId < baseGraph.edgeCount)
                 // iterate over edges
                 edgeAccess = baseGraph.edgeAccess;

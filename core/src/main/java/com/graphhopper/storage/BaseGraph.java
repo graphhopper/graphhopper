@@ -55,7 +55,7 @@ class BaseGraph implements Graph {
     final BitUtil bitUtil;
     final EncodingManager encodingManager;
     final EdgeAccess edgeAccess;
-    final int bytesForFlags;
+    private final int bytesForFlags;
     // length | nodeA | nextNode | ... | nodeB
     // as we use integer index in 'egdes' area => 'geometry' area is limited to 4GB (we use pos&neg values!)
     private final DataAccess wayGeometry;
@@ -118,6 +118,11 @@ class BaseGraph implements Graph {
             @Override
             final int getEntryBytes() {
                 return edgeEntryBytes;
+            }
+
+            @Override
+            final int getFlagsBytes() {
+                return bytesForFlags;
             }
 
             @Override
@@ -1097,22 +1102,20 @@ class BaseGraph implements Graph {
      */
     static abstract class CommonEdgeIterator implements EdgeIteratorState {
         final BaseGraph baseGraph;
-        protected long edgePointer;
-        protected int baseNode;
-        protected int adjNode;
-        protected EdgeAccess edgeAccess;
+        long edgePointer;
+        int baseNode;
+        int adjNode;
+        EdgeAccess edgeAccess;
         // we need reverse if detach is called
         boolean reverse = false;
         boolean freshFlags;
         int edgeId = -1;
-        private IntsRef cachedIntsRef;
-        private final int bytesForFlags;
+        IntsRef cachedIntsRef;
 
         public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph) {
             this.edgePointer = edgePointer;
             this.edgeAccess = edgeAccess;
             this.baseGraph = baseGraph;
-            this.bytesForFlags = baseGraph.bytesForFlags;
         }
 
         @Override
@@ -1140,7 +1143,8 @@ class BaseGraph implements Graph {
             if (!freshFlags) {
                 // TODO on setBaseNode force clearing cache?
                 if (cachedIntsRef == null)
-                    cachedIntsRef = new IntsRef(bytesForFlags / 4);
+                    cachedIntsRef = new IntsRef(edgeAccess.getFlagsBytes() / 4);
+                // TODO NOW make it possible to use arraycopy via new method in DataAccess
                 edgeAccess.readFlags_(edgePointer, cachedIntsRef);
                 freshFlags = true;
             }
@@ -1154,10 +1158,11 @@ class BaseGraph implements Graph {
 
         @Override
         public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
-            assert cachedIntsRef == null || edgeFlags.ints.length == cachedIntsRef.ints.length : "incompatible flags";
+            assert cachedIntsRef == null || edgeFlags.ints.length == cachedIntsRef.ints.length : "incompatible flags " + edgeFlags.ints.length + " vs " + cachedIntsRef.ints.length;
             edgeAccess.writeFlags_(edgePointer, edgeFlags);
             if (cachedIntsRef == null)
-                cachedIntsRef = new IntsRef(bytesForFlags / 4);
+                cachedIntsRef = new IntsRef(edgeAccess.getFlagsBytes() / 4);
+            // Or is arraycopy faster? System.arraycopy(edgeFlags.ints, 0, cachedIntsRef.ints, 0, edgeFlags.ints.length);
             for (int i = 0; i < edgeFlags.ints.length; i++) {
                 cachedIntsRef.ints[i] = edgeFlags.ints[i];
             }
