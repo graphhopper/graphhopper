@@ -150,13 +150,13 @@ public interface EdgeIteratorState {
 
     EdgeIteratorState setReverse(DecimalEncodedValue property, double value);
 
-    EnumAlike get(EnumEncodedValue property);
+    IndexBased get(ObjectEncodedValue property);
 
-    EdgeIteratorState set(EnumEncodedValue property, EnumAlike value);
+    EdgeIteratorState set(ObjectEncodedValue property, IndexBased value);
 
-    EnumAlike getReverse(EnumEncodedValue property);
+    IndexBased getReverse(ObjectEncodedValue property);
 
-    EdgeIteratorState setReverse(EnumEncodedValue property, EnumAlike value);
+    EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value);
 
     String getName();
 

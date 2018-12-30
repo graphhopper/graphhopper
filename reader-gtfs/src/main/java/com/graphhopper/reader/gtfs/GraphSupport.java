@@ -242,23 +242,23 @@ class GraphSupport {
                     }
 
                     @Override
-                    public EnumAlike get(EnumEncodedValue property) {
+                    public IndexBased get(ObjectEncodedValue property) {
                         return edge.get(property);
                     }
 
                     @Override
-                    public EdgeIteratorState set(EnumEncodedValue property, EnumAlike value) {
+                    public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
                         edge.set(property, value);
                         return this;
                     }
 
                     @Override
-                    public EnumAlike getReverse(EnumEncodedValue property) {
+                    public IndexBased getReverse(ObjectEncodedValue property) {
                         return edge.getReverse(property);
                     }
 
                     @Override
-                    public EdgeIteratorState setReverse(EnumEncodedValue property, EnumAlike value) {
+                    public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
                         edge.setReverse(property, value);
                         return this;
                     }

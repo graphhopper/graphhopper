@@ -200,24 +200,24 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public EnumAlike get(EnumEncodedValue property) {
-        return property.getEnum(reverse, edgeFlags);
+    public IndexBased get(ObjectEncodedValue property) {
+        return property.getObject(reverse, edgeFlags);
     }
 
     @Override
-    public EdgeIteratorState set(EnumEncodedValue property, EnumAlike value) {
-        property.setEnum(reverse, edgeFlags, value);
+    public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
+        property.setObject(reverse, edgeFlags, value);
         return this;
     }
 
     @Override
-    public EnumAlike getReverse(EnumEncodedValue property) {
-        return property.getEnum(!reverse, edgeFlags);
+    public IndexBased getReverse(ObjectEncodedValue property) {
+        return property.getObject(!reverse, edgeFlags);
     }
 
     @Override
-    public EdgeIteratorState setReverse(EnumEncodedValue property, EnumAlike value) {
-        property.setEnum(!reverse, edgeFlags, value);
+    public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
+        property.setObject(!reverse, edgeFlags, value);
         return this;
     }
 

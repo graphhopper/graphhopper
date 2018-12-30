@@ -214,22 +214,22 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public EnumAlike get(EnumEncodedValue property) {
+            public IndexBased get(ObjectEncodedValue property) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public EnumAlike getReverse(EnumEncodedValue property) {
+            public IndexBased getReverse(ObjectEncodedValue property) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public EdgeIteratorState set(EnumEncodedValue property, EnumAlike value) {
+            public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public EdgeIteratorState setReverse(EnumEncodedValue property, EnumAlike value) {
+            public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
                 throw new UnsupportedOperationException();
             }
 

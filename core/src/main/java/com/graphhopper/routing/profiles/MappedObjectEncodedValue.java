@@ -22,27 +22,27 @@ import com.graphhopper.storage.IntsRef;
 import java.util.List;
 
 /**
- * This class implements an EnumEncodedValue and holds an array of EnumAlike objects. It stores just the indices
- * of the used EnumAlike objects.
+ * This class implements an ObjectEncodedValue and holds an array of IndexBased objects. It stores just the indices
+ * of the used objects as an integer value.
  */
-public final class MappedEnumEncodedValue extends SimpleIntEncodedValue implements EnumEncodedValue {
-    private final EnumAlike[] map;
+public final class MappedObjectEncodedValue extends SimpleIntEncodedValue implements ObjectEncodedValue {
+    private final IndexBased[] arr;
 
-    public MappedEnumEncodedValue(String name, List<? extends EnumAlike> values) {
+    public MappedObjectEncodedValue(String name, List<? extends IndexBased> values) {
         super(name, 32 - Integer.numberOfLeadingZeros(values.size()));
 
-        map = values.toArray(new EnumAlike[]{});
+        arr = values.toArray(new IndexBased[]{});
     }
 
     @Override
-    public final void setEnum(boolean reverse, IntsRef ref, EnumAlike value) {
+    public final void setObject(boolean reverse, IntsRef ref, IndexBased value) {
         int intValue = value.ordinal();
         super.setInt(reverse, ref, intValue);
     }
 
     @Override
-    public final EnumAlike getEnum(boolean reverse, IntsRef ref) {
+    public final IndexBased getObject(boolean reverse, IntsRef ref) {
         int value = super.getInt(reverse, ref);
-        return map[value];
+        return arr[value];
     }
 }

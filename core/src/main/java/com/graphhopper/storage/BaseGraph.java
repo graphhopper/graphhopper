@@ -121,11 +121,6 @@ class BaseGraph implements Graph {
             }
 
             @Override
-            final int getFlagsBytes() {
-                return bytesForFlags;
-            }
-
-            @Override
             final long toPointer(int edgeId) {
                 assert isInBounds(edgeId) : "edgeId " + edgeId + " not in bounds [0," + edgeCount + ")";
                 return (long) edgeId * edgeEntryBytes;
@@ -1102,22 +1097,22 @@ class BaseGraph implements Graph {
      */
     static abstract class CommonEdgeIterator implements EdgeIteratorState {
         final BaseGraph baseGraph;
-        protected long edgePointer;
-        protected int baseNode;
-        protected int adjNode;
-        protected EdgeAccess edgeAccess;
+        long edgePointer;
+        int baseNode;
+        int adjNode;
+        EdgeAccess edgeAccess;
         // we need reverse if detach is called
         boolean reverse = false;
         boolean freshFlags;
         int edgeId = -1;
-        private IntsRef cachedIntsRef;
-        private final int bytesForFlags;
+        final IntsRef baseIntsRef;
+        IntsRef cachedIntsRef;
 
         public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph) {
             this.edgePointer = edgePointer;
             this.edgeAccess = edgeAccess;
             this.baseGraph = baseGraph;
-            this.bytesForFlags = edgeAccess.getFlagsBytes();
+            this.cachedIntsRef = this.baseIntsRef = new IntsRef(baseGraph.bytesForFlags / 4);
         }
 
         @Override
@@ -1143,9 +1138,6 @@ class BaseGraph implements Graph {
 
         final IntsRef getDirectFlags() {
             if (!freshFlags) {
-                // TODO on setBaseNode force clearing cache?
-                if (cachedIntsRef == null)
-                    cachedIntsRef = new IntsRef(bytesForFlags / 4);
                 // TODO NOW make it possible to use arraycopy via new method in DataAccess
                 edgeAccess.readFlags_(edgePointer, cachedIntsRef);
                 freshFlags = true;
@@ -1160,10 +1152,8 @@ class BaseGraph implements Graph {
 
         @Override
         public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
-            assert cachedIntsRef == null || edgeFlags.ints.length == cachedIntsRef.ints.length : "Incompatible flags. Specified: " + edgeFlags.ints.length + " vs. " + cachedIntsRef.ints.length;
+            assert cachedIntsRef == null || edgeFlags.ints.length == cachedIntsRef.ints.length : "incompatible flags " + edgeFlags.ints.length + " vs " + cachedIntsRef.ints.length;
             edgeAccess.writeFlags_(edgePointer, edgeFlags);
-            if (cachedIntsRef == null)
-                cachedIntsRef = new IntsRef(bytesForFlags / 4);
             // Or is arraycopy faster? System.arraycopy(edgeFlags.ints, 0, cachedIntsRef.ints, 0, edgeFlags.ints.length);
             for (int i = 0; i < edgeFlags.ints.length; i++) {
                 cachedIntsRef.ints[i] = edgeFlags.ints[i];
@@ -1256,25 +1246,25 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public EnumAlike get(EnumEncodedValue property) {
-            return property.getEnum(reverse, getFlags());
+        public IndexBased get(ObjectEncodedValue property) {
+            return property.getObject(reverse, getFlags());
         }
 
         @Override
-        public EdgeIteratorState set(EnumEncodedValue property, EnumAlike value) {
-            property.setEnum(reverse, getFlags(), value);
+        public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
+            property.setObject(reverse, getFlags(), value);
             edgeAccess.writeFlags_(edgePointer, getFlags());
             return this;
         }
 
         @Override
-        public EnumAlike getReverse(EnumEncodedValue property) {
-            return property.getEnum(!reverse, getFlags());
+        public IndexBased getReverse(ObjectEncodedValue property) {
+            return property.getObject(!reverse, getFlags());
         }
 
         @Override
-        public EdgeIteratorState setReverse(EnumEncodedValue property, EnumAlike value) {
-            property.setEnum(!reverse, getFlags(), value);
+        public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
+            property.setObject(!reverse, getFlags(), value);
             edgeAccess.writeFlags_(edgePointer, getFlags());
             return this;
         }
