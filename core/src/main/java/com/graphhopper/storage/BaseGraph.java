@@ -1246,25 +1246,25 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public EnumAlike get(EnumEncodedValue property) {
-            return property.getEnum(reverse, getFlags());
+        public IndexBased get(ObjectEncodedValue property) {
+            return property.getObject(reverse, getFlags());
         }
 
         @Override
-        public EdgeIteratorState set(EnumEncodedValue property, EnumAlike value) {
-            property.setEnum(reverse, getFlags(), value);
+        public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
+            property.setObject(reverse, getFlags(), value);
             edgeAccess.writeFlags_(edgePointer, getFlags());
             return this;
         }
 
         @Override
-        public EnumAlike getReverse(EnumEncodedValue property) {
-            return property.getEnum(!reverse, getFlags());
+        public IndexBased getReverse(ObjectEncodedValue property) {
+            return property.getObject(!reverse, getFlags());
         }
 
         @Override
-        public EdgeIteratorState setReverse(EnumEncodedValue property, EnumAlike value) {
-            property.setEnum(!reverse, getFlags(), value);
+        public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
+            property.setObject(!reverse, getFlags(), value);
             edgeAccess.writeFlags_(edgePointer, getFlags());
             return this;
         }

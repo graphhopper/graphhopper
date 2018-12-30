@@ -460,8 +460,8 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     @Override
-    public EnumEncodedValue getEnumEncodedValue(String key) {
-        return getEncodedValue(key, EnumEncodedValue.class);
+    public ObjectEncodedValue getObjectEncodedValue(String key) {
+        return getEncodedValue(key, ObjectEncodedValue.class);
     }
 
     @Override

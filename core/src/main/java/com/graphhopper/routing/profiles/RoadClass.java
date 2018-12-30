@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class RoadClass implements EnumAlike {
+public class RoadClass implements IndexBased {
     private static final List<RoadClass> values = create("_default",
             "motorway", "motorway_link", "motorroad",
             "trunk", "trunk_link",
