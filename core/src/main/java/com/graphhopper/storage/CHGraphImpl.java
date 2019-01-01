@@ -31,7 +31,6 @@ import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.graphhopper.storage.EdgeAccess.E_FLAGS;
 import static com.graphhopper.util.Helper.nf;
 
 /**
@@ -294,7 +293,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     final double getWeight(CommonEdgeIterator edge) {
         // no need for reverseFlags call (shortcut has identical weight if both dies) and also no need for 64bit
-        long flags32bit = edge.getDirectLine().ints[E_FLAGS / 4];
+        IntsRef intsRef = edge.getDirectFlags();
+        long flags32bit = intsRef.ints[intsRef.offset];
         double weight = (flags32bit >>> 2) / WEIGHT_FACTOR;
         if (weight >= MAX_WEIGHT)
             return Double.POSITIVE_INFINITY;
@@ -339,9 +339,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     void initStorage() {
         EdgeAccess ea = baseGraph.edgeAccess;
-        chEdgeAccess.init(ea.E_NODEA, ea.E_NODEB, ea.E_LINKA, ea.E_LINKB, ea.E_DIST, E_FLAGS);
+        chEdgeAccess.init(ea.E_NODEA, ea.E_NODEB, ea.E_LINKA, ea.E_LINKB, ea.E_DIST, ea.E_FLAGS);
         // shortcuts
-        S_SKIP_EDGE1 = E_FLAGS + 4;
+        S_SKIP_EDGE1 = ea.E_FLAGS + 4;
         S_SKIP_EDGE2 = S_SKIP_EDGE1 + 4;
         shortcutEntryBytes = S_SKIP_EDGE2 + 4;
 
@@ -406,7 +406,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public CHEdgeIteratorImpl(BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter) {
             super(baseGraph, edgeAccess, filter);
             chLine = new IntsRef(shortcutEntryBytes / 4);
-            chFlags = new IntsRef(chLine.ints, E_FLAGS / 4, shortcutBytesForFlags / 4);
+            chFlags = new IntsRef(chLine.ints, edgeAccess.E_FLAGS / 4, shortcutBytesForFlags / 4);
         }
 
         @Override
@@ -458,7 +458,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public final boolean get(BooleanEncodedValue property) {
             // TODO assert equality of "access boolean encoded value" that is specifically created for CHGraph to make it possible we can use other BooleanEncodedValue objects for CH too!
             if (isShortcut())
-                return (getDirectLine().ints[E_FLAGS / 4] & (reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir())) != 0;
+                return (getDirectLine().ints[edgeAccess.E_FLAGS / 4] & (reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir())) != 0;
 
             return property.getBool(reverse, getDirectFlags());
         }
@@ -466,7 +466,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         public final boolean getReverse(BooleanEncodedValue property) {
             if (isShortcut())
-                return (getDirectLine().ints[E_FLAGS / 4] & (reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir())) != 0;
+                return (getDirectLine().ints[edgeAccess.E_FLAGS / 4] & (reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir())) != 0;
 
             return property.getBool(!reverse, getDirectFlags());
         }
@@ -533,7 +533,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public final int getMergeStatus(long flags) {
-            return PrepareEncoder.getScMergeStatus(getDirectLine().ints[E_FLAGS / 4], flags);
+            return PrepareEncoder.getScMergeStatus(getDirectLine().ints[edgeAccess.E_FLAGS / 4], flags);
         }
     }
 
@@ -568,7 +568,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public final boolean get(BooleanEncodedValue property) {
             // TODO assert equality of "access boolean encoded value" that is specifically created for CHGraph!
             if (isShortcut())
-                return (getDirectLine().ints[E_FLAGS / 4] & (reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir())) != 0;
+                return (getDirectLine().ints[edgeAccess.E_FLAGS / 4] & (reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir())) != 0;
 
             return property.getBool(reverse, getDirectFlags());
         }
@@ -576,7 +576,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         public final boolean getReverse(BooleanEncodedValue property) {
             if (isShortcut())
-                return (getDirectLine().ints[E_FLAGS / 4] & (reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir())) != 0;
+                return (getDirectLine().ints[edgeAccess.E_FLAGS / 4] & (reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir())) != 0;
 
             return property.getBool(!reverse, getDirectFlags());
         }
@@ -634,7 +634,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public final int getMergeStatus(long flags) {
-            return PrepareEncoder.getScMergeStatus(getDirectLine().ints[E_FLAGS / 4], flags);
+            return PrepareEncoder.getScMergeStatus(getDirectLine().ints[edgeAccess.E_FLAGS / 4], flags);
         }
 
         final void checkShortcut(boolean shouldBeShortcut, String methodName) {
