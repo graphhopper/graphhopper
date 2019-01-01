@@ -42,17 +42,15 @@ import java.util.StringTokenizer;
 /**
  * A DataAccess implementation using a memory-mapped file, i.e. a facility of the
  * operating system to access a file like an area of RAM.
- *
+ * <p>
  * Java presents the mapped memory as a ByteBuffer, and ByteBuffer is not
  * thread-safe, which means that access to a ByteBuffer must be externally
  * synchronized.
- *
+ * <p>
  * This class itself is intended to be as thread-safe as other DataAccess
  * implementations are.
- *
- * The exact behavior of memory-mapping is reported to be wildly platform-dependent.
- *
  * <p>
+ * The exact behavior of memory-mapping is reported to be wildly platform-dependent.
  *
  * @author Peter Karich
  * @author Michael Zilske
@@ -406,6 +404,16 @@ public final class MMapDataAccess extends AbstractDataAccess {
                 bb2.put(values, length, delta);
             }
         }
+    }
+
+    @Override
+    public void getInts(long bytePos, int[] outValues, int length) {
+        throw new IllegalStateException("not yet implemented");
+    }
+
+    @Override
+    public void setInts(long bytePos, int[] values, int length) {
+        throw new IllegalStateException("not yet implemented");
     }
 
     @Override

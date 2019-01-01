@@ -151,19 +151,19 @@ public final class IntsRef implements Comparable<IntsRef> {
             throw new IllegalStateException("length is negative: " + length);
         }
         if (length > ints.length) {
-            throw new IllegalStateException("length is out of bounds: " + length + ",ints.length=" + ints.length);
+            throw new IllegalStateException("length is out of bounds: " + length + ", ints.length=" + ints.length);
         }
         if (offset < 0) {
             throw new IllegalStateException("offset is negative: " + offset);
         }
         if (offset > ints.length) {
-            throw new IllegalStateException("offset out of bounds: " + offset + ",ints.length=" + ints.length);
+            throw new IllegalStateException("offset out of bounds: " + offset + ", ints.length=" + ints.length);
         }
         if (offset + length < 0) {
-            throw new IllegalStateException("offset+length is negative: offset=" + offset + ",length=" + length);
+            throw new IllegalStateException("offset+length is negative: offset=" + offset + ", length=" + length);
         }
         if (offset + length > ints.length) {
-            throw new IllegalStateException("offset+length out of bounds: offset=" + offset + ",length=" + length + ",ints.length=" + ints.length);
+            throw new IllegalStateException("offset+length out of bounds: offset=" + offset + ", length=" + length + ", ints.length=" + ints.length);
         }
         return true;
     }

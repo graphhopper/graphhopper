@@ -216,7 +216,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
     @Test
     public void testIdentical() {
-        GraphHopperStorage store = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension());
+        GraphHopperStorage store = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension()).create(1000);
         assertEquals(store.getNodes(), store.getGraph(Graph.class).getNodes());
         assertEquals(store.getAllEdges().length(), store.getGraph(Graph.class).getAllEdges().length());
     }
@@ -225,7 +225,6 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     public void testMultipleDecoupledEdges() {
         // a typical usage where we create independent EdgeIteratorState's BUT due to the IntsRef reference they are no more independent
         GraphHopperStorage storage = createGHStorage();
-        IntsRef intsRef = encodingManager.createEdgeFlags();
         BaseGraph graph = (BaseGraph) storage.getGraph(Graph.class);
         graph.edge(0, 1, 10, true);
         graph.edge(1, 2, 10, true);
@@ -238,7 +237,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         assertFalse(edge1.get(carAccessEnc));
         assertTrue(edge1.getReverse(carAccessEnc));
 
-        // obviously this should pass but as the reference is shared and freshFlags=false the edge1 flags are returned!
+        // obviously this should pass but as the reference is shared and freshCacheLine=false the edge1 flags are returned!
         // So we do not set the reference for _setFlags but just the value
         // A better solution would be if we do not allow to create IntsRef outside of the EdgeIterator API
         assertTrue(edge0.get(carAccessEnc));
@@ -277,8 +276,8 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         ref.ints[0] = 44;
         iter.setFlags(ref);
 
-        assertEquals(44, iter.getFlags().ints[0]);
-        assertEquals(13, edge1.getFlags().ints[0]);
+        assertEquals(44, iter.getFlags().ints[iter.getFlags().offset]);
+        assertEquals(13, edge1.getFlags().ints[edge1.getFlags().offset]);
     }
 
     @Test

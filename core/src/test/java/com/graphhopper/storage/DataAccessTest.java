@@ -332,6 +332,33 @@ public abstract class DataAccessTest {
     }
 
     @Test
+    public void testSet_GetInts() {
+        DataAccess da = createDataAccess(name);
+        da.create(300);
+        assertEquals(128, da.getSegmentSize());
+        IntsRef intsRef = new IntsRef(3);
+        intsRef.ints[0] = 12;
+        intsRef.ints[1] = 123;
+        intsRef.ints[2] = 234;
+        da.setInts(8, intsRef.ints, intsRef.ints.length);
+        intsRef = new IntsRef(3);
+        da.getInts(8, intsRef.ints, intsRef.ints.length);
+        assertEquals(12, intsRef.ints[0]);
+        assertEquals(123, intsRef.ints[1]);
+        assertEquals(234, intsRef.ints[2]);
+
+        // properly set ints across segments
+        da.setInts(124, intsRef.ints, intsRef.ints.length);
+        intsRef = new IntsRef(3);
+        da.getInts(8, intsRef.ints, intsRef.ints.length);
+        assertEquals(12, intsRef.ints[0]);
+        assertEquals(123, intsRef.ints[1]);
+        assertEquals(234, intsRef.ints[2]);
+
+        da.close();
+    }
+
+    @Test
     public void testSet_Get_Short_Long() {
         DataAccess da = createDataAccess(name);
         da.create(300);

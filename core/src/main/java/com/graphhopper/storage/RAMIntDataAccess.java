@@ -209,6 +209,46 @@ class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
+    public void setInts(long bytePos, int[] values, int intsLength) {
+        assert intsLength * 4 <= segmentSizeInBytes : "the length (in bytes " + intsLength * 4 + ") has to be smaller or equal to the segment size: " + segmentSizeInBytes;
+        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        assert bytePos % 4 == 0 : "bytesPos must be divisible by 4";
+        bytePos >>>= 2;
+        int bufferIndex = (int) (bytePos >>> segmentSizeIntsPower);
+        int intIndex = (int) (bytePos & indexDivisor);
+        int[] seg = segments[bufferIndex];
+        int intsDelta = intIndex + intsLength - segmentSizeInBytes / 4;
+        if (intsDelta > 0) {
+            intsLength -= intsDelta;
+            System.arraycopy(values, 0, seg, intIndex, intsLength);
+            seg = segments[bufferIndex + 1];
+            System.arraycopy(values, intsLength, seg, 0, intsDelta);
+        } else {
+            System.arraycopy(values, 0, seg, intIndex, intsLength);
+        }
+    }
+
+    @Override
+    public void getInts(long bytePos, int[] values, int intsLength) {
+        assert intsLength <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + intsLength + " vs. " + segmentSizeInBytes;
+        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        assert bytePos % 4 == 0 : "bytesPos must be divisible by 4";
+        bytePos >>>= 2;
+        int bufferIndex = (int) (bytePos >>> segmentSizeIntsPower);
+        int intIndex = (int) (bytePos & indexDivisor);
+        int[] seg = segments[bufferIndex];
+        int intsDelta = intIndex + intsLength - segmentSizeInBytes / 4;
+        if (intsDelta > 0) {
+            intsLength -= intsDelta;
+            System.arraycopy(seg, intIndex, values, 0, intsLength);
+            seg = segments[bufferIndex + 1];
+            System.arraycopy(seg, 0, values, intsLength, intsDelta);
+        } else {
+            System.arraycopy(seg, intIndex, values, 0, intsLength);
+        }
+    }
+
+    @Override
     public final void setShort(long bytePos, short value) {
         assert segmentSizeIntsPower > 0 : "call create or loadExisting before usage!";
         if (bytePos % 4 != 0 && bytePos % 4 != 2)
@@ -241,12 +281,12 @@ class RAMIntDataAccess extends AbstractDataAccess {
 
     @Override
     public void getBytes(long bytePos, byte[] values, int length) {
-        throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
+        throw new UnsupportedOperationException(toString() + " does not support byte based access. Use RAMDataAccess instead");
     }
 
     @Override
     public void setBytes(long bytePos, byte[] values, int length) {
-        throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
+        throw new UnsupportedOperationException(toString() + " does not support byte based access. Use RAMDataAccess instead");
     }
 
     @Override

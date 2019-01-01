@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -29,14 +28,12 @@ abstract class EdgeAccess {
     private static final int NO_NODE = -1;
     // distance of around +-1000 000 meter are ok
     private static final double INT_DIST_FACTOR = 1000d;
+    private final DataAccess edges;
     static double MAX_DIST = (Integer.MAX_VALUE - 1) / INT_DIST_FACTOR;
-    final DataAccess edges;
-    private final BitUtil bitUtil;
-    int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS;
+    static int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS;
 
-    EdgeAccess(DataAccess edges, BitUtil bitUtil) {
+    EdgeAccess(DataAccess edges) {
         this.edges = edges;
-        this.bitUtil = bitUtil;
     }
 
     final void init(int E_NODEA, int E_NODEB, int E_LINKA, int E_LINKB, int E_DIST, int E_FLAGS) {
@@ -94,17 +91,10 @@ abstract class EdgeAccess {
         return val / INT_DIST_FACTOR;
     }
 
-    final void readFlags_(long edgePointer, IntsRef edgeFlags) {
-        int size = edgeFlags.ints.length;
-        for (int i = 0; i < size; i++) {
-            edgeFlags.ints[i] = edges.getInt(edgePointer + E_FLAGS + i * 4);
-        }
-    }
-
     final void writeFlags_(long edgePointer, IntsRef edgeFlags) {
-        int size = edgeFlags.ints.length;
+        int size = edgeFlags.length;
         for (int i = 0; i < size; i++) {
-            edges.setInt(edgePointer + E_FLAGS + i * 4, edgeFlags.ints[i]);
+            edges.setInt(edgePointer + E_FLAGS + i * 4, edgeFlags.ints[edgeFlags.offset + i]);
         }
     }
 
@@ -129,20 +119,8 @@ abstract class EdgeAccess {
         return newEdgeId;
     }
 
-    final int getNodeA(long edgePointer) {
-        return edges.getInt(edgePointer + E_NODEA);
-    }
-
-    final int getNodeB(long edgePointer) {
-        return edges.getInt(edgePointer + E_NODEB);
-    }
-
-    final int getLinkA(long edgePointer) {
-        return edges.getInt(edgePointer + E_LINKA);
-    }
-
-    final int getLinkB(long edgePointer) {
-        return edges.getInt(edgePointer + E_LINKB);
+    final void getLine(long edgePointer, IntsRef intsRef) {
+        edges.getInts(edgePointer, intsRef.ints, intsRef.length);
     }
 
     final long writeEdge(int edgeId, int nodeA, int nodeB, int nextEdgeA, int nextEdgeB) {
@@ -167,12 +145,13 @@ abstract class EdgeAccess {
         long edgeToRemovePointer = toPointer(edgeToRemove);
         // an edge is shared across the two nodes even if the edge is not in both directions
         // so we need to know two edge-pointers pointing to the edge before edgeToRemovePointer
-        int nextEdgeId = getNodeA(edgeToRemovePointer) == baseNode ? getLinkA(edgeToRemovePointer) : getLinkB(edgeToRemovePointer);
+        int nextEdgeId = edges.getInt(edgeToRemovePointer + E_NODEA) == baseNode ?
+                edges.getInt(edgeToRemovePointer + E_LINKA) : edges.getInt(edgeToRemovePointer + E_LINKB);
         if (edgeToUpdatePointer < 0) {
             setEdgeRef(baseNode, nextEdgeId);
         } else {
             // adjNode is different for the edge we want to update with the new link
-            long link = getNodeA(edgeToUpdatePointer) == baseNode ? edgeToUpdatePointer + E_LINKA : edgeToUpdatePointer + E_LINKB;
+            long link = edges.getInt(edgeToUpdatePointer + E_NODEA) == baseNode ? edgeToUpdatePointer + E_LINKA : edgeToUpdatePointer + E_LINKB;
             edges.setInt(link, nextEdgeId);
         }
         return edgeToRemovePointer;

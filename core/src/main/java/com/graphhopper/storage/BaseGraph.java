@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 
+import static com.graphhopper.storage.EdgeAccess.*;
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static com.graphhopper.util.Helper.nf;
 
@@ -99,7 +100,7 @@ class BaseGraph implements Graph {
         this.nodes = dir.find("nodes");
         this.edges = dir.find("edges");
         this.listener = listener;
-        this.edgeAccess = new EdgeAccess(edges, bitUtil) {
+        this.edgeAccess = new EdgeAccess(edges) {
             @Override
             final EdgeIterable createSingleEdge(EdgeFilter filter) {
                 return new EdgeIterable(BaseGraph.this, this, filter);
@@ -389,9 +390,9 @@ class BaseGraph implements Graph {
         System.out.format(Locale.ROOT, formatEdges, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS");
         for (int i = 0; i < Math.min(edgeCount, printMax); ++i) {
             System.out.format(Locale.ROOT, formatEdges, i,
-                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_NODEA),
-                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_NODEB),
-                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_LINKA),
+                    edges.getInt((long) (i * edgeEntryBytes) + E_NODEA),
+                    edges.getInt((long) (i * edgeEntryBytes) + E_NODEB),
+                    edges.getInt((long) (i * edgeEntryBytes) + E_LINKA),
                     edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_LINKB),
                     edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_DIST),
                     edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_FLAGS));
@@ -464,7 +465,7 @@ class BaseGraph implements Graph {
      *
      * @return to
      */
-    EdgeIteratorState copyProperties(EdgeIteratorState from, CommonEdgeIterator to) {
+    EdgeIteratorState copyProperties(IntsRef intsRef, EdgeIteratorState from, CommonEdgeIterator to) {
         boolean reverse = from.get(REVERSE_STATE);
         if (to.reverse)
             reverse = !reverse;
@@ -472,8 +473,9 @@ class BaseGraph implements Graph {
         int nodeA = reverse ? from.getAdjNode() : from.getBaseNode();
         int nodeB = reverse ? from.getBaseNode() : from.getAdjNode();
         long edgePointer = edgeAccess.toPointer(to.getEdge());
-        int linkA = reverse ? edgeAccess.getLinkB(edgePointer) : edgeAccess.getLinkA(edgePointer);
-        int linkB = reverse ? edgeAccess.getLinkA(edgePointer) : edgeAccess.getLinkB(edgePointer);
+        edgeAccess.getLine(edgePointer, intsRef);
+        int linkA = reverse ? intsRef.ints[E_LINKB / 4] : intsRef.ints[E_LINKA / 4];
+        int linkB = reverse ? intsRef.ints[E_LINKA / 4] : intsRef.ints[E_LINKB / 4];
         edgeAccess.writeEdge(to.getEdge(), nodeA, nodeB, linkA, linkB);
         edgeAccess.writeFlags_(edgePointer, from.getFlags());
 
@@ -709,6 +711,7 @@ class BaseGraph implements Graph {
             }
         }
 
+        IntsRef intsRef = new IntsRef(edgeEntryBytes / 4);
         // *rewrites* all edges connected to moved nodes
         // go through all edges and pick the necessary <- this is easier to implement than
         // a more efficient (?) breadth-first search
@@ -731,8 +734,9 @@ class BaseGraph implements Graph {
             // no need to rewrite flags or other properties as they are independent of the node order unlike in <= 0.11
             int edgeId = iter.getEdge();
             long edgePointer = edgeAccess.toPointer(edgeId);
-            int linkA = edgeAccess.getLinkA(edgePointer);
-            int linkB = edgeAccess.getLinkB(edgePointer);
+            edgeAccess.getLine(edgePointer, intsRef);
+            int linkA = intsRef.ints[E_LINKA / 4];
+            int linkB = intsRef.ints[E_LINKB / 4];
             edgeAccess.writeEdge(edgeId, updatedA, updatedB, linkA, linkB);
         }
 
@@ -952,9 +956,10 @@ class BaseGraph implements Graph {
                 this.edgePointer = edgeAccess.toPointer(tmpEdgeId);
             }
 
+            edgeAccess.getLine(edgePointer, cachedLine);
             // expect only edgePointer is properly initialized via setEdgeId            
-            baseNode = edgeAccess.getNodeA(edgePointer);
-            adjNode = edgeAccess.getNodeB(edgePointer);
+            baseNode = cachedLine.ints[E_NODEA / 4];
+            adjNode = cachedLine.ints[E_NODEB / 4];
             if (EdgeAccess.isInvalidNodeB(adjNode))
                 throw new IllegalStateException("content of edgeId " + edgeId + " is marked as invalid - ie. the edge is already removed!");
 
@@ -990,20 +995,21 @@ class BaseGraph implements Graph {
         @Override
         public final boolean next() {
             while (true) {
+                freshCacheLine = false;
                 if (nextEdgeId == EdgeIterator.NO_EDGE)
                     return false;
 
                 selectEdgeAccess();
                 edgePointer = edgeAccess.toPointer(nextEdgeId);
                 edgeId = nextEdgeId;
-                int nodeA = edgeAccess.getNodeA(edgePointer);
+                getDirectLine();
+                int nodeA = cachedLine.ints[E_NODEA / 4];
                 boolean baseNodeIsNodeA = baseNode == nodeA;
-                adjNode = baseNodeIsNodeA ? edgeAccess.getNodeB(edgePointer) : nodeA;
+                adjNode = baseNodeIsNodeA ? cachedLine.ints[E_NODEB / 4] : nodeA;
                 reverse = !baseNodeIsNodeA;
-                freshFlags = false;
 
                 // position to next edge                
-                nextEdgeId = baseNodeIsNodeA ? edgeAccess.getLinkA(edgePointer) : edgeAccess.getLinkB(edgePointer);
+                nextEdgeId = baseNodeIsNodeA ? cachedLine.ints[E_LINKA / 4] : cachedLine.ints[E_LINKB / 4];
                 assert nextEdgeId != edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
                         + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
 
@@ -1049,19 +1055,20 @@ class BaseGraph implements Graph {
 
         @Override
         public boolean next() {
+            freshCacheLine = false;
             while (true) {
                 edgeId++;
                 edgePointer = (long) edgeId * edgeAccess.getEntryBytes();
                 if (!checkRange())
                     return false;
 
-                adjNode = edgeAccess.getNodeB(edgePointer);
+                edgeAccess.getLine(edgePointer, cachedLine);
+                adjNode = cachedLine.ints[E_NODEB / 4];
                 // some edges are deleted and are marked via a negative node
                 if (EdgeAccess.isInvalidNodeB(adjNode))
                     continue;
 
-                baseNode = edgeAccess.getNodeA(edgePointer);
-                freshFlags = false;
+                baseNode = cachedLine.ints[E_NODEA / 4];
                 reverse = false;
                 return true;
             }
@@ -1103,16 +1110,19 @@ class BaseGraph implements Graph {
         EdgeAccess edgeAccess;
         // we need reverse if detach is called
         boolean reverse = false;
-        boolean freshFlags;
+        boolean freshCacheLine;
         int edgeId = -1;
-        final IntsRef baseIntsRef;
-        IntsRef cachedIntsRef;
+        final IntsRef baseLine;
+        final IntsRef baseFlags;
+        IntsRef cachedLine;
+        IntsRef cachedFlags;
 
         public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph) {
             this.edgePointer = edgePointer;
             this.edgeAccess = edgeAccess;
             this.baseGraph = baseGraph;
-            this.cachedIntsRef = this.baseIntsRef = new IntsRef(baseGraph.bytesForFlags / 4);
+            this.cachedLine = this.baseLine = new IntsRef(baseGraph.edgeEntryBytes / 4);
+            this.cachedFlags = this.baseFlags = new IntsRef(cachedLine.ints, E_FLAGS / 4, baseGraph.bytesForFlags / 4);
         }
 
         @Override
@@ -1137,12 +1147,16 @@ class BaseGraph implements Graph {
         }
 
         final IntsRef getDirectFlags() {
-            if (!freshFlags) {
-                // TODO NOW make it possible to use arraycopy via new method in DataAccess
-                edgeAccess.readFlags_(edgePointer, cachedIntsRef);
-                freshFlags = true;
+            getDirectLine();
+            return cachedFlags;
+        }
+
+        final IntsRef getDirectLine() {
+            if (!freshCacheLine) {
+                edgeAccess.getLine(edgePointer, cachedLine);
+                freshCacheLine = true;
             }
-            return cachedIntsRef;
+            return cachedLine;
         }
 
         @Override
@@ -1152,13 +1166,9 @@ class BaseGraph implements Graph {
 
         @Override
         public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
-            assert cachedIntsRef == null || edgeFlags.ints.length == cachedIntsRef.ints.length : "incompatible flags " + edgeFlags.ints.length + " vs " + cachedIntsRef.ints.length;
+            assert edgeFlags.length == cachedFlags.length : "incompatible flags " + edgeFlags.length + " vs " + cachedFlags.length;
             edgeAccess.writeFlags_(edgePointer, edgeFlags);
-            // Or is arraycopy faster? System.arraycopy(edgeFlags.ints, 0, cachedIntsRef.ints, 0, edgeFlags.ints.length);
-            for (int i = 0; i < edgeFlags.ints.length; i++) {
-                cachedIntsRef.ints[i] = edgeFlags.ints[i];
-            }
-            freshFlags = true;
+            freshCacheLine = false;
             return this;
         }
 
@@ -1271,7 +1281,8 @@ class BaseGraph implements Graph {
 
         @Override
         public final EdgeIteratorState copyPropertiesFrom(EdgeIteratorState edge) {
-            return baseGraph.copyProperties(edge, this);
+            freshCacheLine = false;
+            return baseGraph.copyProperties(cachedLine, edge, this);
         }
 
         @Override

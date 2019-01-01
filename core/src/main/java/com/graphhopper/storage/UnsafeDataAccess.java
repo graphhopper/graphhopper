@@ -203,6 +203,16 @@ public class UnsafeDataAccess extends AbstractDataAccess {
     }
 
     @Override
+    public void getInts(long bytePos, int[] outValues, int length) {
+        throw new IllegalStateException("not yet implemented");
+    }
+
+    @Override
+    public void setInts(long bytePos, int[] values, int length) {
+        throw new IllegalStateException("not yet implemented");
+    }
+
+    @Override
     public final void setBytes(long bytePos, byte[] values, int length) {
         for (int offset = 0; offset < length; offset++) {
             UNSAFE.putByte(address + bytePos + offset, values[offset]);

@@ -25,4 +25,9 @@ public class RAMDataAccessTest extends DataAccessTest {
     public DataAccess createDataAccess(String name) {
         return new RAMDataAccess(name, directory, true, defaultOrder).setSegmentSize(128);
     }
+
+    @Override
+    public void testSet_GetInts() {
+        // should we implement this?
+    }
 }

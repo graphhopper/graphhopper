@@ -106,8 +106,8 @@ public interface EdgeIteratorState {
     EdgeIteratorState setDistance(double dist);
 
     /**
-     * Returns edge properties stored in direction of the raw database layout. So do not use it directly, instead
-     * use the appropriate set/get methods with its EncodedValue object.
+     * Returns edge properties stored in direction of the raw database layout. The IntsRef might have a non-zero offset
+     * and is in general not easy to use. Use the appropriate set/get methods with its EncodedValue object instead.
      */
     IntsRef getFlags();
 

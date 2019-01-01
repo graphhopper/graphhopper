@@ -785,7 +785,6 @@ public class GraphHopperIT {
         assertEquals(5, ((RoundaboutInstruction) instr).getExitNumber());
     }
 
-
     @Test
     public void testMultipleVehiclesWithCH() {
         String tmpOsmFile = DIR + "/monaco.osm.gz";

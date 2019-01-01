@@ -996,7 +996,7 @@ public abstract class AbstractGraphStorageTester {
         intsRef.ints[0] = Integer.MAX_VALUE / 3;
         edge.setFlags(intsRef);
         // System.out.println(BitUtil.LITTLE.toBitString(Long.MAX_VALUE / 3) + "\n" + BitUtil.LITTLE.toBitString(edge.getFlags()));
-        assertEquals(Integer.MAX_VALUE / 3, edge.getFlags().ints[0]);
+        assertEquals(Integer.MAX_VALUE / 3, edge.getFlags().ints[edge.getFlags().offset]);
         graph.close();
 
         graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);

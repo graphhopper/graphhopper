@@ -77,7 +77,7 @@ public class RAMDataAccess extends AbstractDataAccess {
     public RAMDataAccess create(long bytes) {
         if (segments.length > 0)
             throw new IllegalThreadStateException("already created");
-        
+
         setSegmentSize(segmentSizeInBytes);
         ensureCapacity(Math.max(10 * 4, bytes));
         return this;
@@ -205,6 +205,16 @@ public class RAMDataAccess extends AbstractDataAccess {
                     + ", segPower:" + segmentSizePower);
         }
         return bitUtil.toInt(segments[bufferIndex], index);
+    }
+
+    @Override
+    public void getInts(long bytePos, int[] values, int intsLength) {
+        throw new UnsupportedOperationException(toString() + " does not support int based acccess. Use RAMIntDataAccess instead");
+    }
+
+    @Override
+    public void setInts(long bytePos, int[] values, int intsLength) {
+        throw new UnsupportedOperationException(toString() + " does not support int based acccess. Use RAMIntDataAccess instead");
     }
 
     @Override
