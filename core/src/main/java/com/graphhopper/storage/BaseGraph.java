@@ -30,9 +30,9 @@ import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.graphhopper.util.Helper.nf;
-
 import java.util.Locale;
+
+import static com.graphhopper.util.Helper.nf;
 
 /**
  * The base graph handles nodes and edges file format. It can be used with different Directory
@@ -94,8 +94,8 @@ class BaseGraph implements Graph {
         this.bitUtil = BitUtil.get(dir.getByteOrder());
         this.wayGeometry = dir.find("geometry");
         this.nameIndex = new NameIndex(dir);
-        this.nodes = dir.find("nodes");
-        this.edges = dir.find("edges");
+        this.nodes = dir.find("nodes", GHDirectory.getPreferredInt(dir.getDefaultType()));
+        this.edges = dir.find("edges", GHDirectory.getPreferredInt(dir.getDefaultType()));
         this.listener = listener;
         this.edgeAccess = new EdgeAccess(edges, bitUtil) {
             @Override

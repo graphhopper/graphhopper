@@ -17,8 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Helper;
-
 import java.io.File;
 import java.nio.ByteOrder;
 import java.util.Collection;
@@ -52,20 +50,15 @@ public class GHDirectory implements Directory {
         File dir = new File(location);
         if (dir.exists() && !dir.isDirectory())
             throw new RuntimeException("file '" + dir + "' exists but is not a directory");
+    }
 
-        // set default access to integer based
-        // improves performance on server side, 10% faster for queries and preparation
-        if (this.defaultType.isInMemory()) {
-            if (isStoring()) {
-                put("location_index", DAType.RAM_INT_STORE);
-                put("edges", DAType.RAM_INT_STORE);
-                put("nodes", DAType.RAM_INT_STORE);
-            } else {
-                put("location_index", DAType.RAM_INT);
-                put("edges", DAType.RAM_INT);
-                put("nodes", DAType.RAM_INT);
-            }
-        }
+    /**
+     * This method returns RAM_INT if the specified type is in-memory.
+     */
+    public static DAType getPreferredInt(DAType type) {
+        if (type.isInMemory())
+            return type.isStoring() ? DAType.RAM_INT_STORE : DAType.RAM_INT;
+        return type;
     }
 
     @Override
