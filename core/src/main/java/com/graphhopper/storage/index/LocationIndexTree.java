@@ -87,7 +87,7 @@ public class LocationIndexTree implements LocationIndex {
         MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
-        dataAccess = dir.find("location_index", GHDirectory.getPreferredInt(dir.getDefaultType()));
+        dataAccess = dir.find("location_index", DAType.getPreferredInt(dir.getDefaultType()));
     }
 
     public int getMinResolutionInMeter() {

@@ -52,15 +52,6 @@ public class GHDirectory implements Directory {
             throw new RuntimeException("file '" + dir + "' exists but is not a directory");
     }
 
-    /**
-     * This method returns RAM_INT if the specified type is in-memory.
-     */
-    public static DAType getPreferredInt(DAType type) {
-        if (type.isInMemory())
-            return type.isStoring() ? DAType.RAM_INT_STORE : DAType.RAM_INT;
-        return type;
-    }
-
     @Override
     public ByteOrder getByteOrder() {
         return byteOrder;
