@@ -96,8 +96,8 @@ class BaseGraph implements Graph {
         this.bitUtil = BitUtil.get(dir.getByteOrder());
         this.wayGeometry = dir.find("geometry");
         this.nameIndex = new NameIndex(dir);
-        this.nodes = dir.find("nodes");
-        this.edges = dir.find("edges");
+        this.nodes = dir.find("nodes", DAType.getPreferredInt(dir.getDefaultType()));
+        this.edges = dir.find("edges", DAType.getPreferredInt(dir.getDefaultType()));
         this.listener = listener;
         this.edgeAccess = new EdgeAccess(edges, bitUtil) {
             @Override
