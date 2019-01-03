@@ -644,7 +644,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
+    protected void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
         throw new RuntimeException("do not call setSpeed");
     }
 

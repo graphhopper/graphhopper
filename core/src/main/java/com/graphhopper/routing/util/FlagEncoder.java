@@ -26,8 +26,7 @@ import com.graphhopper.util.Translation;
 
 /**
  * This class provides methods to define how a value (like speed or direction) converts to a flag
- * (currently an integer value), which is stored in an edge .
- * <p>
+ * (currently an integer value), which is stored in an edge.
  *
  * @author Peter Karich
  */
