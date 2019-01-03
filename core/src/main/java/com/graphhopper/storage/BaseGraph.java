@@ -947,12 +947,11 @@ class BaseGraph implements Graph {
 
         final boolean init(int tmpEdgeId, int expectedAdjNode) {
             setEdgeId(tmpEdgeId);
-            if (tmpEdgeId != EdgeIterator.NO_EDGE) {
-                selectEdgeAccess();
-                this.edgePointer = edgeAccess.toPointer(tmpEdgeId);
-            }
+            if (!EdgeIterator.Edge.isValid(edgeId))
+                throw new IllegalArgumentException("fetching the edge requires a valid edgeId but was " + edgeId);
 
-            // expect only edgePointer is properly initialized via setEdgeId            
+            selectEdgeAccess();
+            edgePointer = edgeAccess.toPointer(tmpEdgeId);
             baseNode = edgeAccess.getNodeA(edgePointer);
             adjNode = edgeAccess.getNodeB(edgePointer);
             if (EdgeAccess.isInvalidNodeB(adjNode))
