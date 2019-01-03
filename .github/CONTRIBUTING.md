@@ -20,7 +20,7 @@ changes please create separate pull requests.
 4. Make the test(s) pass.
 
 5. Push to your fork and [submit a pull request](https://help.github.com/articles/using-pull-requests). A button should
-appear on your fork its github page afterwards.
+appear on your fork's github page afterwards.
 
 ## License Agreement
 
