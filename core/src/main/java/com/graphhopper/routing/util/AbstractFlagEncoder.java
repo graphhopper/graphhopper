@@ -39,7 +39,6 @@ import java.util.Set;
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
  * EncodingManager to be usable. If you want the full long to be stored you need to enable this in
  * the GraphHopperStorage.
- * <p>
  *
  * @author Peter Karich
  * @author Nop
@@ -548,8 +547,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return accessEnc;
     }
 
-    // now all these methods are only for internal use as they all do not consider the direction of the edge if used via edge.getFlags()
-    void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
+    /**
+     * Most use cases do not require this method. Will still keep it accessible so that one can disable it
+     * until the averageSpeedEncodedValue is moved out of the FlagEncoder.
+     *
+     * @Deprecated
+     */
+    protected void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
         if (speed < 0 || Double.isNaN(speed))
             throw new IllegalArgumentException("Speed cannot be negative or NaN: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(edgeFlags));
 
