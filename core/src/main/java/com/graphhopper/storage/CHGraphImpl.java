@@ -70,9 +70,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         this.weighting = w;
         this.baseGraph = baseGraph;
         final String name = AbstractWeighting.weightingToFileName(w);
-        this.nodesCH = dir.find("nodes_ch_" + name);
-        this.shortcuts = dir.find("shortcuts_" + name);
-
+        this.nodesCH = dir.find("nodes_ch_" + name, DAType.getPreferredInt(dir.getDefaultType()));
+        this.shortcuts = dir.find("shortcuts_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         this.chEdgeAccess = new EdgeAccess(shortcuts, baseGraph.bitUtil) {
             @Override
             final EdgeIterable createSingleEdge(EdgeFilter edgeFilter) {
