@@ -57,7 +57,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     public GraphHopperStorage(List<? extends Weighting> nodeBasedCHWeightings, List<? extends Weighting> edgeBasedCHWeightings,
-                              Directory dir, final EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage) {
+                              Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage) {
         if (extendedStorage == null)
             throw new IllegalArgumentException("GraphExtension cannot be null, use NoOpExtension");
 
@@ -265,6 +265,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             String dim = properties.get("graph.dimension");
             baseGraph.loadExisting(dim);
 
+            // todo: after merge: allow less weightings than loaded
             String loadedNodeCHWeightings = properties.get("graph.ch.weightings");
             String configuredNodeCHWeightings = getNodeBasedCHWeightings().toString();
             if (!loadedNodeCHWeightings.equals(configuredNodeCHWeightings))
@@ -283,6 +284,37 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             return true;
         }
         return false;
+    }
+
+    private void checkIfConfiguredAndLoadedWeightingsCompatible() {
+        String loadedStr = properties.get("graph.ch.weightings");
+        List<String> loaded = parseList(loadedStr);
+        List<Weighting> configured = getCHWeightings();
+        if (configured.isEmpty() && !loaded.isEmpty()) {
+            throw new IllegalStateException("You loaded a CH graph, but you did not specify graph.ch.weightings");
+        }
+        for (Weighting w : configured) {
+            if (!loaded.contains(w.toString())) {
+                throw new IllegalStateException("Configured weighting: " + w.toString() + " is not contained in loaded weightings " + loadedStr + ".\n" +
+                        "You configured graph.ch.weightings: " + configured);
+            }
+        }
+    }
+
+    /**
+     * parses a string like [a,b,c]
+     */
+    private List<String> parseList(String listStr) {
+        String trimmed = listStr.trim();
+        String[] items = trimmed.substring(1, trimmed.length() - 1).split(",");
+        List<String> result = new ArrayList<>();
+        for (String item : items) {
+            String s = item.trim();
+            if (!s.isEmpty()) {
+                result.add(s);
+            }
+        }
+        return result;
     }
 
     @Override

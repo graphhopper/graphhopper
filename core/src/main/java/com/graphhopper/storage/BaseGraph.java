@@ -30,9 +30,9 @@ import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.graphhopper.util.Helper.nf;
-
 import java.util.Locale;
+
+import static com.graphhopper.util.Helper.nf;
 
 /**
  * The base graph handles nodes and edges file format. It can be used with different Directory
@@ -94,8 +94,8 @@ class BaseGraph implements Graph {
         this.bitUtil = BitUtil.get(dir.getByteOrder());
         this.wayGeometry = dir.find("geometry");
         this.nameIndex = new NameIndex(dir);
-        this.nodes = dir.find("nodes");
-        this.edges = dir.find("edges");
+        this.nodes = dir.find("nodes", DAType.getPreferredInt(dir.getDefaultType()));
+        this.edges = dir.find("edges", DAType.getPreferredInt(dir.getDefaultType()));
         this.listener = listener;
         this.edgeAccess = new EdgeAccess(edges, bitUtil) {
             @Override
@@ -944,12 +944,11 @@ class BaseGraph implements Graph {
 
         final boolean init(int tmpEdgeId, int expectedAdjNode) {
             setEdgeId(tmpEdgeId);
-            if (tmpEdgeId != EdgeIterator.NO_EDGE) {
-                selectEdgeAccess();
-                this.edgePointer = edgeAccess.toPointer(tmpEdgeId);
-            }
+            if (!EdgeIterator.Edge.isValid(edgeId))
+                throw new IllegalArgumentException("fetching the edge requires a valid edgeId but was " + edgeId);
 
-            // expect only edgePointer is properly initialized via setEdgeId            
+            selectEdgeAccess();
+            edgePointer = edgeAccess.toPointer(tmpEdgeId);
             baseNode = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEA);
             if (baseNode == EdgeAccess.NO_NODE)
                 throw new IllegalStateException("content of edgeId " + edgeId + " is marked as invalid - ie. the edge is already removed!");

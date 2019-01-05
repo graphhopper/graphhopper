@@ -108,4 +108,11 @@ class Transfers {
         return transfersBySpecificity.get(0);
     }
 
+    public boolean hasNoRouteSpecificDepartureTransferRules(String stop_id) {
+        return transfersToStop.getOrDefault(stop_id, Collections.emptyList()).stream().allMatch(transfer -> transfer.to_route_id == null);
+    }
+
+    public boolean hasNoRouteSpecificArrivalTransferRules(String stop_id) {
+        return transfersFromStop.getOrDefault(stop_id, Collections.emptyList()).stream().allMatch(transfer -> transfer.from_route_id == null);
+    }
 }

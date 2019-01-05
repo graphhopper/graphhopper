@@ -27,7 +27,7 @@
         {
             "id": 3,
             "type": "Feature",
-            "bbox": [0.0, 1, 102.0, 103.0],
+            "bbox": [102.0, 0.0, 103.0, 1],
             "properties": {
                 "prop0": "value0",
                 "prop1": {
