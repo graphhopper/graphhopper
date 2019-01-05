@@ -265,16 +265,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             String dim = properties.get("graph.dimension");
             baseGraph.loadExisting(dim);
 
-            // todo: after merge: allow less weightings than loaded
-            String loadedNodeCHWeightings = properties.get("graph.ch.weightings");
-            String configuredNodeCHWeightings = getNodeBasedCHWeightings().toString();
-            if (!loadedNodeCHWeightings.equals(configuredNodeCHWeightings))
-                throw new IllegalStateException("Configured graph.ch.weightings: " + configuredNodeCHWeightings + " is not equal to loaded " + loadedNodeCHWeightings);
-
-            String loadedEdgeCHWeightings = properties.get("graph.ch.edge.weightings");
-            String configuredEdgeCHWeightings = getEdgeBasedCHWeightings().toString();
-            if (!loadedEdgeCHWeightings.equals(configuredEdgeCHWeightings))
-                throw new IllegalStateException("Configured graph.ch.edge.weightings: " + configuredEdgeCHWeightings + " is not equal to loaded " + loadedEdgeCHWeightings);
+            checkIfConfiguredAndLoadedWeightingsCompatible();
 
             for (CHGraphImpl cg : getAllCHGraphs()) {
                 if (!cg.loadExisting())
@@ -287,16 +278,28 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     private void checkIfConfiguredAndLoadedWeightingsCompatible() {
-        String loadedStr = properties.get("graph.ch.weightings");
-        List<String> loaded = parseList(loadedStr);
-        List<Weighting> configured = getCHWeightings();
-        if (configured.isEmpty() && !loaded.isEmpty()) {
+        String loadedStrNode = properties.get("graph.ch.weightings");
+        List<String> loadedNode = parseList(loadedStrNode);
+        String loadedStrEdge = properties.get("graph.ch.edge.weightings");
+        List<String> loadedEdge = parseList(loadedStrEdge);
+        List<Weighting> configuredNode = getNodeBasedCHWeightings();
+        List<Weighting> configuredEdge = getEdgeBasedCHWeightings();
+        // todo: not entirely sure here. when no ch is configured at all (neither edge nor node), but there are any
+        // ch graphs (edge or node) we throw an error ? previously we threw an error when no ch weighting was configured
+        // even though there was a ch graph.
+        if ((configuredNode.isEmpty() && configuredEdge.isEmpty()) && (!loadedNode.isEmpty() || !loadedEdge.isEmpty())) {
             throw new IllegalStateException("You loaded a CH graph, but you did not specify graph.ch.weightings");
         }
-        for (Weighting w : configured) {
-            if (!loaded.contains(w.toString())) {
-                throw new IllegalStateException("Configured weighting: " + w.toString() + " is not contained in loaded weightings " + loadedStr + ".\n" +
-                        "You configured graph.ch.weightings: " + configured);
+        for (Weighting w : configuredNode) {
+            if (!loadedNode.contains(w.toString())) {
+                throw new IllegalStateException("Configured weighting: " + w.toString() + " is not contained in loaded weightings for CH" + loadedStrNode + ".\n" +
+                        "You configured graph.ch.weightings: " + configuredNode);
+            }
+        }
+        for (Weighting w : configuredEdge) {
+            if (!loadedEdge.contains(w.toString())) {
+                throw new IllegalStateException("Configured weighting: " + w.toString() + " is not contained in loaded weightings for edge-based CH" + loadedStrEdge + ".\n" +
+                        "You configured graph.ch.edge.weightings: " + configuredEdge);
             }
         }
     }
