@@ -1027,9 +1027,6 @@ public class GraphHopperIT {
 
     @Test
     public void testTurnCostsOnOffCH() {
-        // todo: make it possible to use turn costs on/off at query time (?)
-        // if not there should be an appropriate error message saying that the graph has not been prepared 
-        // for edge/node based traversal
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(DIR + "/moscow.osm.gz").
                 setStoreOnFlush(true).

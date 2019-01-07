@@ -28,7 +28,6 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIterator;
 import com.graphhopper.util.CHEdgeIteratorState;
-import com.graphhopper.util.Helper;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

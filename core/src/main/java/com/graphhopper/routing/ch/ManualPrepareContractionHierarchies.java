@@ -36,7 +36,7 @@ import static com.graphhopper.util.Helper.nf;
  * and performance analysis.
  * todo: remove this class and move the same functionality into PrepareContractionHierarchies. Also this should be
  * extended to the case where we can save/load the contraction order to/from disk. For example when we use another
- * vehicle profile we still might get reasonable results for a previous contraction order.
+ * vehicle profile we still might get reasonable results for a previous contraction order. see #1509
  */
 public class ManualPrepareContractionHierarchies extends PrepareContractionHierarchies {
     private List<Integer> contractionOrder = new ArrayList<>();
