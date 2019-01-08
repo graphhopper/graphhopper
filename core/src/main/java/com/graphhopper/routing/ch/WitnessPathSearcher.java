@@ -82,7 +82,7 @@ public class WitnessPathSearcher {
     private double bestPathWeight;
     private int bestPathIncEdge;
     private boolean bestPathIsBridgePath;
-    private int numPotentialBridgePaths;
+    private int numPathsToCenter;
     private int numSettledEdges;
     private int numPolledEdges;
 
@@ -93,7 +93,7 @@ public class WitnessPathSearcher {
     private int[] incEdges;
     private int[] parents;
     private int[] adjNodes;
-    private boolean[] isPotentialBridgePaths;
+    private boolean[] isPathToCenters;
     private IntObjectMap<CHEntry> initialEntryParents;
     private IntArrayList changedEdges;
     private IntDoubleBinaryHeap dijkstraHeap;
@@ -147,7 +147,7 @@ public class WitnessPathSearcher {
         this.centerNode = centerNode;
         setInitialEntries(sourceNode, sourceEdge, centerNode);
         // if there is no entry that reaches the center node we won't need to search for any witnesses
-        if (numPotentialBridgePaths < 1) {
+        if (numPathsToCenter < 1) {
             reset();
             return 0;
         }
@@ -197,7 +197,7 @@ public class WitnessPathSearcher {
 
         // run dijkstra to find the optimal path
         while (!dijkstraHeap.isEmpty()) {
-            if (numPotentialBridgePaths < 1 && (!bestPathIsBridgePath || isInfinite(bestPathWeight))) {
+            if (numPathsToCenter < 1 && (!bestPathIsBridgePath || isInfinite(bestPathWeight))) {
                 // we have not found a connection to the target edge yet and there are no entries on the heap anymore 
                 // that could yield a bridge-path
                 break;
@@ -214,12 +214,12 @@ public class WitnessPathSearcher {
             currentBatchStats.numPolledEdges++;
             totalStats.numPolledEdges++;
 
-            if (isPotentialBridgePaths[currKey]) {
-                numPotentialBridgePaths--;
+            if (isPathToCenters[currKey]) {
+                numPathsToCenter--;
             }
 
             // after a certain amount of edges has been settled we only expand entries that might yield a bridge-path
-            if (numSettledEdges > maxSettledEdges && !isPotentialBridgePaths[currKey]) {
+            if (numSettledEdges > maxSettledEdges && !isPathToCenters[currKey]) {
                 continue;
             }
 
@@ -238,20 +238,20 @@ public class WitnessPathSearcher {
                 if (isInfinite(weight)) {
                     continue;
                 }
-                boolean isPotentialBridgePath = this.isPotentialBridgePaths[currKey] && iter.getAdjNode() == centerNode;
+                boolean isPathToCenter = this.isPathToCenters[currKey] && iter.getAdjNode() == centerNode;
                 boolean isZeroWeightLoop = fromNode == targetNode && edgeWeight <= MAX_ZERO_WEIGHT_LOOP;
 
                 // dijkstra expansion: add or update current entries
                 int key = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
                 if (edges[key] == NO_EDGE) {
-                    setEntry(key, iter, weight, currKey, isPotentialBridgePath);
+                    setEntry(key, iter, weight, currKey, isPathToCenter);
                     changedEdges.add(key);
                     dijkstraHeap.insert_(weight, key);
                     if (!isZeroWeightLoop) {
                         updateBestPath(targetNode, targetEdge, key);
                     }
                 } else if (weight < weights[key]) {
-                    updateEntry(key, iter, weight, currKey, isPotentialBridgePath);
+                    updateEntry(key, iter, weight, currKey, isPathToCenter);
                     dijkstraHeap.update_(weight, key);
                     if (!isZeroWeightLoop) {
                         updateBestPath(targetNode, targetEdge, key);
@@ -319,8 +319,8 @@ public class WitnessPathSearcher {
         adjNodes = new int[numEntries];
         Arrays.fill(adjNodes, NO_NODE);
 
-        isPotentialBridgePaths = new boolean[numEntries];
-        Arrays.fill(isPotentialBridgePaths, false);
+        isPathToCenters = new boolean[numEntries];
+        Arrays.fill(isPathToCenters, false);
     }
 
     private void initCollections() {
@@ -341,7 +341,7 @@ public class WitnessPathSearcher {
             }
             double edgeWeight = turnWeighting.calcWeight(outIter, false, NO_EDGE);
             double weight = turnWeight + edgeWeight;
-            boolean isPotentialBridgePath = outIter.getAdjNode() == centerNode;
+            boolean isPathToCenter = outIter.getAdjNode() == centerNode;
             int incEdge = outIter.getLastOrigEdge();
             int adjNode = outIter.getAdjNode();
             int key = getEdgeKey(incEdge, adjNode);
@@ -359,7 +359,7 @@ public class WitnessPathSearcher {
                 adjNodes[key] = adjNode;
                 weights[key] = weight;
                 parents[key] = parentKey;
-                isPotentialBridgePaths[key] = isPotentialBridgePath;
+                isPathToCenters[key] = isPathToCenter;
                 initialEntryParents.put(parentKey, parent);
                 changedEdges.add(key);
             } else if (weight < weights[key]) {
@@ -368,7 +368,7 @@ public class WitnessPathSearcher {
                 edges[key] = outIter.getEdge();
                 weights[key] = weight;
                 parents[key] = parentKey;
-                isPotentialBridgePaths[key] = isPotentialBridgePath;
+                isPathToCenters[key] = isPathToCenter;
                 initialEntryParents.put(parentKey, parent);
             }
         }
@@ -376,8 +376,8 @@ public class WitnessPathSearcher {
         // now that we know which entries are actually needed we add them to the heap
         for (int i = 0; i < changedEdges.size(); ++i) {
             int key = changedEdges.get(i);
-            if (isPotentialBridgePaths[key]) {
-                numPotentialBridgePaths++;
+            if (isPathToCenters[key]) {
+                numPathsToCenter++;
             }
             dijkstraHeap.insert_(weights[key], key);
         }
@@ -387,7 +387,7 @@ public class WitnessPathSearcher {
         updateMaxSettledEdges();
         numSettledEdges = 0;
         numPolledEdges = 0;
-        numPotentialBridgePaths = 0;
+        numPathsToCenter = 0;
         resetShortestPathTree();
     }
 
@@ -421,7 +421,7 @@ public class WitnessPathSearcher {
             // there is a path to the target so we know that there must be some parent. therefore a negative parent key
             // means that the parent is a root parent (a parent of an initial entry) and we did not go via the center
             // node.
-            boolean isBridgePath = parents[edgeKey] >= 0 && isPotentialBridgePaths[parents[edgeKey]];
+            boolean isBridgePath = parents[edgeKey] >= 0 && isPathToCenters[parents[edgeKey]];
             // in case of equal weights we always prefer a witness path over a bridge-path
             double tolerance = isBridgePath ? 0 : 1.e-6;
             if (totalWeight - tolerance < bestPathWeight) {
@@ -432,32 +432,32 @@ public class WitnessPathSearcher {
         }
     }
 
-    private void setEntry(int key, EdgeIteratorState edge, double weight, int parent, boolean isPotentialBridgePath) {
+    private void setEntry(int key, EdgeIteratorState edge, double weight, int parent, boolean isPathToCenter) {
         edges[key] = edge.getEdge();
         incEdges[key] = edge.getLastOrigEdge();
         adjNodes[key] = edge.getAdjNode();
         weights[key] = weight;
         parents[key] = parent;
-        if (isPotentialBridgePath) {
-            isPotentialBridgePaths[key] = true;
-            numPotentialBridgePaths++;
+        if (isPathToCenter) {
+            isPathToCenters[key] = true;
+            numPathsToCenter++;
         }
     }
 
-    private void updateEntry(int key, EdgeIteratorState edge, double weight, int currKey, boolean isPotentialBridgePath) {
+    private void updateEntry(int key, EdgeIteratorState edge, double weight, int currKey, boolean isPathToCenter) {
         edges[key] = edge.getEdge();
         weights[key] = weight;
         parents[key] = currKey;
-        if (isPotentialBridgePath) {
-            if (!isPotentialBridgePaths[key]) {
-                numPotentialBridgePaths++;
+        if (isPathToCenter) {
+            if (!isPathToCenters[key]) {
+                numPathsToCenter++;
             }
         } else {
-            if (isPotentialBridgePaths[key]) {
-                numPotentialBridgePaths--;
+            if (isPathToCenters[key]) {
+                numPathsToCenter--;
             }
         }
-        isPotentialBridgePaths[key] = isPotentialBridgePath;
+        isPathToCenters[key] = isPathToCenter;
     }
 
     private void resetEntry(int key) {
@@ -466,7 +466,7 @@ public class WitnessPathSearcher {
         incEdges[key] = NO_EDGE;
         parents[key] = NO_NODE;
         adjNodes[key] = NO_NODE;
-        isPotentialBridgePaths[key] = false;
+        isPathToCenters[key] = false;
     }
 
     private CHEntry getEntryForKey(int edgeKey) {
