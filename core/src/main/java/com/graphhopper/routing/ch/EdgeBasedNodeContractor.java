@@ -46,7 +46,6 @@ import static com.graphhopper.util.Helper.nf;
  * {@link WitnessPathSearcher}.
  */
 class EdgeBasedNodeContractor extends AbstractNodeContractor {
-    // todo: does logging affect performance ?
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
     private final TurnWeighting turnWeighting;
     private final FlagEncoder encoder;
@@ -512,7 +511,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                                 root = root.getParent();
                             }
                             // todo: removing this 'optimization' improves contraction time significantly, but introduces 
-                            // more shortcuts. why is this so ? any 'duplicate' shortcuts should be detected at time of
+                            // more shortcuts (makes slower queries). why is this so ? any 'duplicate' shortcuts should be detected at time of
                             // insertion !??
                             AddedShortcut addedShortcut = new AddedShortcut(sourceNode, root.getParent().incEdge, targetNode, entry.incEdge);
                             if (addedShortcuts.contains(addedShortcut)) {
