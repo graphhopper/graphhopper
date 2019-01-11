@@ -7,7 +7,6 @@ state this as a comment via a separate, signed commit.
 
 Here is an overview:
 
- * ammagamma, several improvements on core algorithms
  * AnahitaS, docs for Android, Android, Tomcat
  * andreaswolf, flag encoder versioning and more
  * andreylh, polygon for blocked area #1306
@@ -25,6 +24,7 @@ Here is an overview:
  * dos65, bug fixes in routing algo
  * drnextgis, ru translation and JS fixes
  * duongnt, fixes in storage
+ * easbar, several improvements on core algorithms
  * edy, improvements regarding docker #849
  * elibar, fix for alternative route calculation
  * fbonzon, several UI improvements like #615
