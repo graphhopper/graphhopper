@@ -71,7 +71,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     int maxLevel;
     // nodes with highest priority come last
     private GHTreeMapComposed sortedNodes;
-    private float oldPriorities[];
+    private float[] oldPriorities;
     private PMap pMap = new PMap();
     private int initSize;
     private int checkCounter;
@@ -359,8 +359,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // dijkstra time is included in the others
         float dijkstraTime = nodeContractor.getDijkstraSeconds();
         return String.format(Locale.ROOT,
-                "t(total): %6.2f,  t(period): %6.2f, t(lazy): %6.2f, t(neighbor): %6.2f, t(contr): %6.2f, t(other) : %6.2f, t(dijk): %6.2f",
-                totalTime, periodicUpdateTime, lazyUpdateTime, neighborUpdateTime, contractionTime, otherTime, dijkstraTime);
+                "t(total): %6.2f,  t(period): %6.2f, t(lazy): %6.2f, t(neighbor): %6.2f, t(contr): %6.2f, t(other) : %6.2f, dijkstra-ratio: %6.2f%%",
+                totalTime, periodicUpdateTime, lazyUpdateTime, neighborUpdateTime, contractionTime, otherTime, dijkstraTime / totalTime * 100);
     }
 
     private float calculatePriority(int node) {

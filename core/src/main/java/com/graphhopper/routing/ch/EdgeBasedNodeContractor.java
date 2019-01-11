@@ -163,12 +163,10 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
     @Override
     public String getStatisticsString() {
-        String result = String.format("stats(calc): %s, stats(contract): %s, %s",
+        String result = String.format("sc-handler-count: %s, sc-handler-contract: %s, %s",
                 countingShortcutHandler.getStats(), addingShortcutHandler.getStats(),
                 activeStrategy.getStatisticsString()
         );
-        countingShortcutHandler.resetStats();
-        addingShortcutHandler.resetStats();
         activeStrategy.resetStats();
         return result;
     }
@@ -229,8 +227,6 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
             stats().loopsAvoided++;
             return;
         }
-        // todo: note that we do not count loop-helper shortcuts here, but there are not that many usually
-        stats().shortcutsNeeded++;
         activeShortcutHandler.handleShortcut(root, chEntry);
     }
 
@@ -342,8 +338,6 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
         Stats getStats();
 
-        void resetStats();
-
         String getAction();
     }
 
@@ -358,11 +352,6 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         @Override
         public Stats getStats() {
             return stats;
-        }
-
-        @Override
-        public void resetStats() {
-            stats = new Stats();
         }
 
         @Override
@@ -402,11 +391,6 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         }
 
         @Override
-        public void resetStats() {
-            stats = new Stats();
-        }
-
-        @Override
         public String getAction() {
             return "count";
         }
@@ -421,16 +405,13 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
     private static class Stats {
         int nodes;
-        long shortcutsChecked;
-        long shortcutsNeeded;
         long loopsAvoided;
         StopWatch stopWatch = new StopWatch();
 
         @Override
         public String toString() {
-            return String.format("runtime: %7.2f, nodes: %10s, scChecked: %10s, scNeeded: %10s, scNotNeeded: %10s, loopsAvoided: %10s",
-                    stopWatch.getCurrentSeconds(), nf(nodes), nf(shortcutsChecked), nf(shortcutsNeeded),
-                    nf(shortcutsChecked - shortcutsNeeded), nf(loopsAvoided));
+            return String.format("time: %7.2fs, nodes-handled: %10s, loopsAvoided: %10s",
+                    stopWatch.getCurrentSeconds(), nf(nodes), nf(loopsAvoided));
         }
     }
 
