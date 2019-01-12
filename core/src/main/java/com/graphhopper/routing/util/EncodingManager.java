@@ -534,7 +534,6 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public interface TagParser {
-        // TODO NOW instead of "allowed" the access branch needs to be merged
         IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags);
     }
 }

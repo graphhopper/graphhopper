@@ -259,7 +259,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                     intsRef.ints[0] = sc.flags;
                     iter.setFlags(intsRef);
                     iter.setWeight(sc.weight);
-                    // TODO NOW (also below)
+                    // TODO use EncodedValue also for shortcuts (see also below)
 //                    iter.set(shortcutAccessEnc, true).setReverse(shortcutAccessEnc, true);
 //                    iter.set(shortcutWeightEnc, sc.weight);
                     iter.setDistance(sc.dist);
