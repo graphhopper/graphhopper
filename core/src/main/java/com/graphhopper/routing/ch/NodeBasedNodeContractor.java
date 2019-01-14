@@ -47,8 +47,8 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     // each edge can exist in both directions
     private double meanDegree;
 
-    NodeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting, PMap pMap) {
-        super(dir, ghStorage, prepareGraph, weighting);
+    NodeBasedNodeContractor(GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting, PMap pMap) {
+        super(ghStorage, prepareGraph, weighting);
         this.prepareWeighting = new PreparationWeighting(weighting);
         extractParams(pMap);
     }

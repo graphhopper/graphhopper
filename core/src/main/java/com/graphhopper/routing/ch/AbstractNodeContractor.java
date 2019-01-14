@@ -20,12 +20,8 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeExplorer;
 
 abstract class AbstractNodeContractor implements NodeContractor {
@@ -38,11 +34,11 @@ abstract class AbstractNodeContractor implements NodeContractor {
     int maxLevel;
     private int maxEdgesCount;
 
-    public AbstractNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting) {
+    public AbstractNodeContractor(GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting) {
         this.ghStorage = ghStorage;
         this.prepareGraph = prepareGraph;
         this.encoder = weighting.getFlagEncoder();
-        originalEdges = dir.find("original_edges_" + AbstractWeighting.weightingToFileName(weighting, isEdgeBased()));
+        originalEdges = new GHDirectory("", DAType.RAM_INT).find("");
         originalEdges.create(1000);
     }
 

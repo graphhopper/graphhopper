@@ -886,8 +886,8 @@ public class GraphHopperOSMTest {
         GraphHopperStorage storage = new GraphHopperStorage(Arrays.asList(fwSimpleTruck, fwTruck), ramDir, em, false, new GraphExtension.NoOpExtension());
         decorator.addNodeBasedWeighting(fwSimpleTruck);
         decorator.addNodeBasedWeighting(fwTruck);
-        decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck), TraversalMode.NODE_BASED));
-        decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwTruck), TraversalMode.NODE_BASED));
+        decorator.addPreparation(new PrepareContractionHierarchies(storage, storage.getGraph(CHGraph.class, fwSimpleTruck), TraversalMode.NODE_BASED));
+        decorator.addPreparation(new PrepareContractionHierarchies(storage, storage.getGraph(CHGraph.class, fwTruck), TraversalMode.NODE_BASED));
 
         HintsMap wMap = new HintsMap("fastest");
         wMap.put("vehicle", "truck");
@@ -899,7 +899,7 @@ public class GraphHopperOSMTest {
         decorator.addNodeBasedWeighting(fwTruck);
         decorator.addNodeBasedWeighting(fwSimpleTruck);
         try {
-            decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck), TraversalMode.NODE_BASED));
+            decorator.addPreparation(new PrepareContractionHierarchies(storage, storage.getGraph(CHGraph.class, fwSimpleTruck), TraversalMode.NODE_BASED));
             fail();
         } catch (Exception ex) {
         }

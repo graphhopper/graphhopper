@@ -151,7 +151,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     public CHAlgoFactoryDecorator addPreparation(PrepareContractionHierarchies pch) {
-        // we want to make sure that edge- and node-based preparations are added in the same order as their corresponding 
+        // we want to make sure that edge- and node-based preparations are added in the same order as their corresponding
         // weightings, but changing the order between edge- and node-based preparations is accepted
         int index = 0;
         for (PrepareContractionHierarchies p : preparations) {
@@ -313,7 +313,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, Weighting weighting,
                                                               TraversalMode traversalMode) {
         PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
-                new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class, weighting), traversalMode);
+              ghStorage, ghStorage.getGraph(CHGraph.class, weighting), traversalMode);
         tmpPrepareCH.setParams(pMap);
         return tmpPrepareCH;
     }

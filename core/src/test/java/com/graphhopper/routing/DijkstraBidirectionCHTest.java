@@ -56,7 +56,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
     @Override
     public RoutingAlgorithmFactory createFactory(GraphHopperStorage ghStorage, AlgorithmOptions opts) {
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(
                 ghStorage, getGraph(ghStorage, opts.getWeighting()), TraversalMode.NODE_BASED);
         ch.doWork();
         return ch;
@@ -103,7 +103,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.setLevel(0, 7);
 
         AlgorithmOptions opts = new AlgorithmOptions(Parameters.Algorithms.DIJKSTRA_BI, weighting);
-        Path p = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
+        Path p = new PrepareContractionHierarchies(
                 ghStorage, g2, TraversalMode.NODE_BASED).
                 createAlgo(g2, opts).calcPath(0, 7);
 
@@ -259,7 +259,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     }
 
     private RoutingAlgorithm createCHAlgo(GraphHopperStorage graph, CHGraph chGraph, boolean withSOD, AlgorithmOptions algorithmOptions) {
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(
                 graph, chGraph, TraversalMode.NODE_BASED);
         if (!withSOD) {
             algorithmOptions.getHints().put("stall_on_demand", false);

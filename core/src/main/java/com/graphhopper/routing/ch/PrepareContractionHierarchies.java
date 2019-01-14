@@ -52,7 +52,6 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
  */
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
     final Logger logger = LoggerFactory.getLogger(getClass());
-    private final Directory dir;
     final PreparationWeighting prepareWeighting;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
@@ -76,8 +75,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int initSize;
     private int checkCounter;
 
-    public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
-        this.dir = dir;
+    public PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
         this.ghStorage = ghStorage;
         this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
@@ -375,9 +373,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private NodeContractor createNodeContractor(Graph graph, TraversalMode traversalMode) {
         if (traversalMode.isEdgeBased()) {
             TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased(graph);
-            return new EdgeBasedNodeContractor(dir, ghStorage, prepareGraph, chTurnWeighting, pMap);
+            return new EdgeBasedNodeContractor(ghStorage, prepareGraph, chTurnWeighting, pMap);
         } else {
-            return new NodeBasedNodeContractor(dir, ghStorage, prepareGraph, weighting, pMap);
+            return new NodeBasedNodeContractor(ghStorage, prepareGraph, weighting, pMap);
         }
     }
 
