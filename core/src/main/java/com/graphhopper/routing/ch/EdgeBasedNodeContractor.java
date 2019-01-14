@@ -17,7 +17,8 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.IntHashSet;
+import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnWeighting;
@@ -230,6 +231,11 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         activeShortcutHandler.handleShortcut(root, chEntry);
     }
 
+    /**
+     * A given potential loop shortcut is only necessary if there is at least one pair of original in- & out-edges for
+     * which taking the loop is cheaper than doing the direct turn. However this is almost always the case, because
+     * doing a u-turn at any of the incoming edges is forbidden, i.e. he costs of the direct turn will be infinite.
+     */
     private boolean loopShortcutNecessary(int node, int firstOrigEdge, int lastOrigEdge, double loopWeight) {
         EdgeIterator inIter = loopAvoidanceInEdgeExplorer.setBaseNode(node);
         while (inIter.next()) {
