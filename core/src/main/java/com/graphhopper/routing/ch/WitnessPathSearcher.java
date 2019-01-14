@@ -29,9 +29,7 @@ import com.graphhopper.util.*;
 
 import java.util.Arrays;
 
-import static com.graphhopper.routing.ch.CHParameters.MIN_MAX_SETTLED_EDGES;
-import static com.graphhopper.routing.ch.CHParameters.SETTLED_EDGES_RESET_INTERVAL;
-import static com.graphhopper.routing.ch.CHParameters.SIGMA_FACTOR;
+import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static java.lang.Double.isInfinite;
 
@@ -510,7 +508,7 @@ public class WitnessPathSearcher {
         public String toString() {
             return String.format(
                     "limit-exhaustion: %s %%, avg-settled: %s, avg-max-settled: %s, avg-polled-edges: %s",
-                    quotient(numSettledEdges, maxNumSettledEdges * 100),
+                    quotient(numSettledEdges * 100, maxNumSettledEdges),
                     quotient(numSettledEdges, numSearches),
                     quotient(maxNumSettledEdges, numSearches),
                     quotient(numPolledEdges, numSearches));
