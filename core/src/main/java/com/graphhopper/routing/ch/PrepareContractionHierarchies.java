@@ -49,7 +49,6 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
  */
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final Directory dir;
     private final PreparationWeighting prepareWeighting;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
@@ -68,13 +67,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int maxLevel;
     // nodes with highest priority come last
     private GHTreeMapComposed sortedNodes;
-    private float oldPriorities[];
+    private float[] oldPriorities;
     private PMap pMap = new PMap();
     private int initSize;
     private int checkCounter;
 
-    public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
-        this.dir = dir;
+    public PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
         this.ghStorage = ghStorage;
         this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
@@ -159,7 +157,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new float[prepareGraph.getNodes()];
-        nodeContractor = new NodeBasedNodeContractor(dir, ghStorage, prepareGraph, weighting, pMap);
+        nodeContractor = new NodeBasedNodeContractor(ghStorage, prepareGraph, weighting, pMap);
         nodeContractor.initFromGraph();
     }
 
