@@ -51,12 +51,12 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
  * @author Peter Karich
  */
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
-    final Logger logger = LoggerFactory.getLogger(getClass());
-    final PreparationWeighting prepareWeighting;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final PreparationWeighting prepareWeighting;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
     private final GraphHopperStorage ghStorage;
-    final CHGraphImpl prepareGraph;
+    private final CHGraphImpl prepareGraph;
     private final Random rand = new Random(123);
     private final StopWatch allSW = new StopWatch();
     private final StopWatch periodicUpdateSW = new StopWatch();
@@ -64,15 +64,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private final StopWatch neighborUpdateSW = new StopWatch();
     private final StopWatch contractionSW = new StopWatch();
     private final Params params;
-    NodeContractor nodeContractor;
+    private NodeContractor nodeContractor;
+    private NodeOrderingProvider nodeOrderingProvider;
     private CHEdgeExplorer vehicleAllExplorer;
     private CHEdgeExplorer vehicleAllTmpExplorer;
-    int maxLevel;
+    private int maxLevel;
     // nodes with highest priority come last
     private GHTreeMapComposed sortedNodes;
     private float[] oldPriorities;
     private PMap pMap = new PMap();
-    private int initSize;
     private int checkCounter;
 
     public PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
@@ -94,32 +94,45 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return this;
     }
 
+    /**
+     * Instead of heuristically determining a node ordering for the graph contraction it is also possible
+     * to use a fixed ordering. For example this allows re-using a previously calculated node ordering.
+     */
+    public PrepareContractionHierarchies useFixedNodeOrdering(NodeOrderingProvider nodeOrderingProvider) {
+        if (nodeOrderingProvider.getNumNodes() != prepareGraph.getNodes()) {
+            throw new IllegalArgumentException(String.format(Locale.ROOT,
+                    "contraction order size (%d) must be equal to number of nodes in graph (%d)",
+                    nodeOrderingProvider.getNumNodes(), prepareGraph.getNodes()));
+        }
+        this.nodeOrderingProvider = nodeOrderingProvider;
+        return this;
+    }
+
     @Override
     public void doSpecificWork() {
         allSW.start();
         initFromGraph();
         runGraphContraction();
-
-        logger.info("took:" + (int) allSW.stop().getSeconds() + "s "
-                + ", new shortcuts: " + nf(nodeContractor.getAddedShortcutsCount())
-                + ", initSize:" + nf(initSize)
-                + ", " + prepareWeighting
-                + ", periodic:" + params.getPeriodicUpdatesPercentage()
-                + ", lazy:" + params.getLastNodesLazyUpdatePercentage()
-                + ", neighbor:" + params.getNeighborUpdatePercentage()
-                + ", " + getTimesAsString()
-                + ", lazy-overhead: " + (int) (100 * ((checkCounter / (double) initSize) - 1)) + "%"
-                + ", " + Helper.getMemInfo());
-
-        int edgeCount = ghStorage.getAllEdges().length();
-        logger.info("graph now - num edges: {}, num nodes: {}, num shortcuts: {}",
-                nf(edgeCount), nf(ghStorage.getNodes()), nf(prepareGraph.getAllEdges().length() - edgeCount));
+        allSW.stop();
+        logFinalGraphStats();
     }
 
-    protected void runGraphContraction() {
-        if (!prepareNodes())
+    private void logFinalGraphStats() {
+        int edgeCount = ghStorage.getAllEdges().length();
+        logger.info("took: {}s, graph now - num edges: {}, num nodes: {}, num shortcuts: {}",
+                (int) allSW.getSeconds(), nf(edgeCount), nf(ghStorage.getNodes()), nf(prepareGraph.getAllEdges().length() - edgeCount));
+    }
+
+    private void runGraphContraction() {
+        if (prepareGraph.getNodes() < 1)
             return;
-        contractNodes();
+        setMaxLevelOnAllNodes();
+        if (nodeOrderingProvider != null) {
+            contractNodesUsingFixedNodeOrdering();
+        } else {
+            contractNodesUsingHeuristicNodeOrdering();
+        }
+
     }
 
     @Override
@@ -187,24 +200,32 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         nodeContractor.initFromGraph();
     }
 
-    private boolean prepareNodes() {
-        int nodes = prepareGraph.getNodes();
-        for (int node = 0; node < nodes; node++) {
-            prepareGraph.setLevel(node, maxLevel);
-        }
+    private void updatePrioritiesOfRemainingNodes() {
         periodicUpdateSW.start();
+        sortedNodes.clear();
+        final int nodes = prepareGraph.getNodes();
         for (int node = 0; node < nodes; node++) {
+            if (prepareGraph.getLevel(node) != maxLevel)
+                continue;
             float priority = oldPriorities[node] = calculatePriority(node);
             sortedNodes.insert(node, priority);
         }
         periodicUpdateSW.stop();
-
-        return !sortedNodes.isEmpty();
     }
 
-    private void contractNodes() {
+    private void setMaxLevelOnAllNodes() {
+        final int nodes = prepareGraph.getNodes();
+        for (int node = 0; node < nodes; node++) {
+            prepareGraph.setLevel(node, maxLevel);
+        }
+    }
+
+    private void contractNodesUsingHeuristicNodeOrdering() {
+        // note that we update the priorities before preparing the node contractor. this does not make much sense,
+        // but has always been like that and changing it would possibly require retuning the contraction parameters
+        updatePrioritiesOfRemainingNodes();
         nodeContractor.prepareContraction();
-        initSize = sortedNodes.getSize();
+        int initSize = sortedNodes.getSize();
         int level = 0;
         checkCounter = 0;
         long logSize = Math.round(Math.max(10, initSize / 100d * params.getLogMessagesPercentage()));
@@ -237,23 +258,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         while (!sortedNodes.isEmpty()) {
             // periodically update priorities of ALL nodes
             if (periodicUpdate && checkCounter > 0 && checkCounter % periodicUpdatesCount == 0) {
-                periodicUpdateSW.start();
-                sortedNodes.clear();
-                for (int node = 0; node < prepareGraph.getNodes(); node++) {
-                    if (prepareGraph.getLevel(node) != maxLevel)
-                        continue;
-
-                    float priority = oldPriorities[node] = calculatePriority(node);
-                    sortedNodes.insert(node, priority);
-                }
-                periodicUpdateSW.stop();
+                updatePrioritiesOfRemainingNodes();
                 updateCounter++;
                 if (sortedNodes.isEmpty())
                     throw new IllegalStateException("Cannot prepare as no unprepared nodes where found. Called preparation twice?");
             }
 
             if (checkCounter % logSize == 0) {
-                logStats(updateCounter);
+                logHeuristicStats(updateCounter);
             }
 
             checkCounter++;
@@ -272,11 +284,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
 
             // contract node v!
-            contractionSW.start();
-            nodeContractor.contractNode(polledNode);
-            prepareGraph.setLevel(polledNode, level);
+            contractNode(polledNode, level);
             level++;
-            contractionSW.stop();
 
             if (sortedNodes.getSize() < nodesToAvoidContract)
                 // skipped nodes are already set to maxLevel
@@ -310,11 +319,79 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
         }
 
-        logStats(updateCounter);
+        logHeuristicStats(updateCounter);
+
+        logger.info(
+                "new shortcuts: " + nf(nodeContractor.getAddedShortcutsCount())
+                        + ", initSize:" + nf(initSize)
+                        + ", " + prepareWeighting
+                        + ", periodic:" + params.getPeriodicUpdatesPercentage()
+                        + ", lazy:" + params.getLastNodesLazyUpdatePercentage()
+                        + ", neighbor:" + params.getNeighborUpdatePercentage()
+                        + ", " + getTimesAsString()
+                        + ", lazy-overhead: " + (int) (100 * ((checkCounter / (double) initSize) - 1)) + "%"
+                        + ", " + Helper.getMemInfo());
 
         // Preparation works only once so we can release temporary data.
         // The preparation object itself has to be intact to create the algorithm.
         close();
+    }
+
+    private void contractNodesUsingFixedNodeOrdering() {
+        nodeContractor.prepareContraction();
+        final int nodesToContract = nodeOrderingProvider.getNumNodes();
+        final int logSize = Math.max(10, (int) (params.getLogMessagesPercentage() / 100.0 * nodesToContract));
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+        for (int i = 0; i < nodesToContract; ++i) {
+            int node = nodeOrderingProvider.getNodeIdForLevel(i);
+            contractNode(node, i);
+
+            // disconnect neighbors
+            CHEdgeIterator iter = vehicleAllExplorer.setBaseNode(node);
+            while (iter.next()) {
+                if (prepareGraph.getLevel(iter.getAdjNode()) != maxLevel)
+                    continue;
+                prepareGraph.disconnect(vehicleAllTmpExplorer, iter);
+            }
+            if (i % logSize == 0) {
+                stopWatch.stop();
+                logFixedNodeOrderingStats(i, logSize, stopWatch);
+                stopWatch.start();
+            }
+        }
+    }
+
+    private void contractNode(int node, int level) {
+        contractionSW.start();
+        nodeContractor.contractNode(node);
+        prepareGraph.setLevel(node, level);
+        contractionSW.stop();
+    }
+
+    private void logHeuristicStats(int updateCounter) {
+        logger.info(String.format(Locale.ROOT,
+                "nodes: %10s, shortcuts: %10s, updates: %2d, checked-nodes: %10s, %s, %s, %s",
+                nf(sortedNodes.getSize()),
+                nf(nodeContractor.getAddedShortcutsCount()),
+                updateCounter,
+                nf(checkCounter),
+                getTimesAsString(),
+                nodeContractor.getStatisticsString(),
+                Helper.getMemInfo()));
+    }
+
+    private void logFixedNodeOrderingStats(int nodesContracted, int logSize, StopWatch stopWatch) {
+        logger.info(String.format(Locale.ROOT,
+                "nodes: %10s / %10s (%6.2f%%), shortcuts: %10s, speed = %6.2f nodes/ms, %s, %s",
+                nf(nodesContracted),
+                nf(prepareGraph.getNodes()),
+                (100.0 * nodesContracted / prepareGraph.getNodes()),
+                nf(nodeContractor.getAddedShortcutsCount()),
+                nodesContracted == 0 ? 0 : logSize / (double) stopWatch.getMillis(),
+                nodeContractor.getStatisticsString(),
+                Helper.getMemInfo())
+        );
     }
 
     private void close() {
@@ -388,18 +465,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         }
         TurnCostExtension turnCostExtension = (TurnCostExtension) extension;
         return new TurnWeighting(prepareWeighting, turnCostExtension);
-    }
-
-    private void logStats(int updateCounter) {
-        logger.info(String.format(Locale.ROOT,
-                "nodes: %10s, shortcuts: %10s, updates: %2d, checked-nodes: %10s, %s, %s, %s",
-                nf(sortedNodes.getSize()),
-                nf(nodeContractor.getAddedShortcutsCount()),
-                updateCounter,
-                nf(checkCounter),
-                getTimesAsString(),
-                nodeContractor.getStatisticsString(),
-                Helper.getMemInfo()));
     }
 
     private static class Params {

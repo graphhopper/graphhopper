@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -451,6 +452,29 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         if (shortcutCount > printMax) {
             System.out.printf(Locale.ROOT, " ... %d more shortcut edges\n", shortcutCount - printMax);
         }
+    }
+
+    public NodeOrderingProvider getNodeOrderingProvider() {
+        int numNodes = getNodes();
+        final int[] nodeOrdering = new int[numNodes];
+        // the node ordering is the inverse of the ch levels
+        // if we really want to save some memory it could be still reasonable to not create the node ordering here,
+        // but search nodesCH for a given level on demand.
+        for (int i = 0; i < numNodes; ++i) {
+            int level = getLevel(i);
+            nodeOrdering[level] = i;
+        }
+        return new NodeOrderingProvider() {
+            @Override
+            public int getNodeIdForLevel(int level) {
+                return nodeOrdering[level];
+            }
+
+            @Override
+            public int getNumNodes() {
+                return nodeOrdering.length;
+            }
+        };
     }
 
     class CHEdgeIteratorImpl extends EdgeIterable implements CHEdgeExplorer, CHEdgeIterator {
