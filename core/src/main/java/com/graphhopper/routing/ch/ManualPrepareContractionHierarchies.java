@@ -41,8 +41,8 @@ import static com.graphhopper.util.Helper.nf;
 public class ManualPrepareContractionHierarchies extends PrepareContractionHierarchies {
     private List<Integer> contractionOrder = new ArrayList<>();
 
-    public ManualPrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
-        super(dir, ghStorage, chGraph, traversalMode);
+    public ManualPrepareContractionHierarchies(GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
+        super(ghStorage, chGraph, traversalMode);
     }
 
     ManualPrepareContractionHierarchies setContractionOrder(List<Integer> contractionOrder) {

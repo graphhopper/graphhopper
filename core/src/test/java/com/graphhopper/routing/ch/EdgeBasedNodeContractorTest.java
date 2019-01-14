@@ -1358,8 +1358,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private EdgeBasedNodeContractor createNodeContractor() {
-        Directory dir = new GHDirectory("", DAType.RAM_INT);
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(dir, graph, chGraph, chTurnWeighting, new PMap());
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(graph, chGraph, chTurnWeighting, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
     }

@@ -752,7 +752,7 @@ public class CHTurnCostTest {
     private RoutingAlgorithmFactory prepareCH(List<Integer> contractionOrder) {
         LOGGER.debug("Calculating CH with contraction order {}", contractionOrder);
         ManualPrepareContractionHierarchies ch = new ManualPrepareContractionHierarchies(
-                new RAMDirectory(""), graph, chGraph, TraversalMode.EDGE_BASED_2DIR)
+                graph, chGraph, TraversalMode.EDGE_BASED_2DIR)
                 .setContractionOrder(contractionOrder);
         ch.doWork();
         return ch;
@@ -765,7 +765,7 @@ public class CHTurnCostTest {
         pMap.put(NEIGHBOR_UPDATES, 4);
         pMap.put(LOG_MESSAGES, 10);
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies(
-                new RAMDirectory(""), graph, chGraph, TraversalMode.EDGE_BASED_2DIR);
+                graph, chGraph, TraversalMode.EDGE_BASED_2DIR);
         ch.setParams(pMap);
         ch.doWork();
         return ch;

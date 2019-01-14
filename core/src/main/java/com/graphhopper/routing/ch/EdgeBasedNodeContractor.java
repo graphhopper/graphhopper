@@ -78,9 +78,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     // counters used for performance analysis
     private int numPolledEdges;
 
-    public EdgeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph,
+    public EdgeBasedNodeContractor(GraphHopperStorage ghStorage, CHGraph prepareGraph,
                                    TurnWeighting turnWeighting, PMap pMap) {
-        super(dir, ghStorage, prepareGraph, turnWeighting);
+        super(ghStorage, prepareGraph, turnWeighting);
         this.turnWeighting = turnWeighting;
         this.encoder = turnWeighting.getFlagEncoder();
         this.pMap = pMap;
