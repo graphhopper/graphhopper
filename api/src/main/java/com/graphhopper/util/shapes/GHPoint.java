@@ -20,6 +20,8 @@ package com.graphhopper.util.shapes;
 import com.graphhopper.util.NumHelper;
 import org.locationtech.jts.geom.Point;
 
+import java.util.Locale;
+
 /**
  * @author Peter Karich
  */
@@ -104,7 +106,7 @@ public class GHPoint {
     }
 
     public String toShortString() {
-        return String.format("%.8f,%.8f", lat, lon);
+        return String.format(Locale.ROOT, "%.8f,%.8f", lat, lon);
     }
 
     /**
