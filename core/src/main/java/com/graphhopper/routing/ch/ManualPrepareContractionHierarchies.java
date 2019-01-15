@@ -50,11 +50,6 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
         return this;
     }
 
-    public ManualPrepareContractionHierarchies setSeed(long seed) {
-        this.contractionOrder = createRandomContractionOrder(seed);
-        return this;
-    }
-
     @Override
     public String toString() {
         return super.toString() + "|manual";
@@ -107,17 +102,6 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
                         stopWatch.getNanos() / logSize * 1.e-3, nodeContractor.getStatisticsString()));
             }
         }
-    }
-
-    private List<Integer> createRandomContractionOrder(long seed) {
-        int nodes = prepareGraph.getNodes();
-        List<Integer> result = new ArrayList<>(nodes);
-        for (int i = 0; i < nodes; ++i) {
-            result.add(i);
-        }
-        // the shuffle method is the only reason we are using java.util.ArrayList instead of hppc IntArrayList here
-        Collections.shuffle(result, new Random(seed));
-        return result;
     }
 
 }

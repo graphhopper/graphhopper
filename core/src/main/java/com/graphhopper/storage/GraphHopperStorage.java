@@ -457,7 +457,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         // todo: this method is only used to have a 'view' on the two collections. we could also create this only once
         // as long as the graph collections are only modified in the constructor (otherwise we would have to make sure
         // the lists are in sync). another option would be something like guava concat.
-        List<CHGraphImpl> result = new ArrayList<>();
+        List<CHGraphImpl> result = new ArrayList<>(nodeBasedCHGraphs.size() + edgeBasedCHGraphs.size());
         result.addAll(nodeBasedCHGraphs);
         result.addAll(edgeBasedCHGraphs);
         return result;
