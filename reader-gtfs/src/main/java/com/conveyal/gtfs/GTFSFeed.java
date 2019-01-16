@@ -27,6 +27,7 @@
 package com.conveyal.gtfs;
 
 import com.conveyal.gtfs.error.GTFSError;
+import com.conveyal.gtfs.error.GeneralError;
 import com.conveyal.gtfs.model.Calendar;
 import com.conveyal.gtfs.model.*;
 import com.google.common.collect.Iterables;
@@ -140,6 +141,9 @@ public class GTFSFeed implements Cloneable, Closeable {
         db.getAtomicString("feed_id").set(feedId);
 
         new Agency.Loader(this).loadTable(zip);
+        if (agency.isEmpty()) {
+            errors.add(new GeneralError("agency", 0, "agency_id", "Need at least one agency."));
+        }
 
         // calendars and calendar dates are joined into services. This means a lot of manipulating service objects as
         // they are loaded; since mapdb keys/values are immutable, load them in memory then copy them to MapDB once

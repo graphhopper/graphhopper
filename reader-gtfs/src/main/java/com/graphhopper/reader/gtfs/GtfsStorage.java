@@ -19,6 +19,7 @@
 package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.error.GTFSError;
 import com.conveyal.gtfs.model.Fare;
 import com.conveyal.gtfs.model.FareRule;
 import com.google.transit.realtime.GtfsRealtime;
@@ -199,6 +200,9 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 			Files.deleteIfExists(file.toPath());
 			GTFSFeed feed = new GTFSFeed(file);
 			feed.loadFromFile(zip);
+			for (GTFSError error : feed.errors) {
+				System.out.println(error.getMessageWithContext());
+			}
 			fixFares(feed, zip);
 			this.gtfsFeeds.put(id, feed);
 		} catch (IOException e) {
