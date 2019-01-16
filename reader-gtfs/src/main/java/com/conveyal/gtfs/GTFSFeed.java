@@ -171,8 +171,11 @@ public class GTFSFeed implements Cloneable, Closeable {
         loaded = true;
     }
 
-    public void loadFromFile(ZipFile zip) throws IOException {
+    public void loadFromFileAndLogErrors(ZipFile zip) throws IOException {
         loadFromFile(zip, null);
+        for (GTFSError error : errors) {
+            LOG.error(error.getMessageWithContext());
+        }
     }
 
     public boolean hasFeedInfo () {
