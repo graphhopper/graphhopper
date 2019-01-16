@@ -137,9 +137,27 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             } else {
                 return new DijkstraBidirectionCHNoSOD(graph, prepareWeighting, traversalMode);
             }
+        } else if (ALT_ROUTE.equals(opts.getAlgorithm())) {
+            AlternativeRoute alt = new AlternativeRoute(graph, prepareWeighting, traversalMode);
+            alt.setMaxPaths(opts.getHints().getInt(MAX_PATHS, 3));
+            alt.setAdditionalPaths(opts.getHints().getInt(MAX_PATHS, 3));
+            alt.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.25));
+            alt.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.75));
+            alt.setExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1));
+            algo = alt;
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies. Try with ch.disable=true");
         }
+    }
+
+    public PrepareAlternativeRoute createPrepareAlternativeRoute(Graph graph, AlgorithmOptions opts) {
+        PrepareAlternativeRoute prepare = new PrepareAlternativeRoute(graph, prepareWeighting, traversalMode);
+        prepare.setMaxPaths(opts.getHints().getInt(MAX_PATHS, 3));
+        prepare.setAdditionalPaths(opts.getHints().getInt(MAX_PATHS, 3));
+        prepare.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
+        prepare.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
+        prepare.setExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1));
+        return prepare;
     }
 
     private void initFromGraph() {
