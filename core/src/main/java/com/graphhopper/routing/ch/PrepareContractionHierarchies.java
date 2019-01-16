@@ -19,6 +19,8 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.*;
+import com.graphhopper.routing.AlternativeRoute;
+import com.graphhopper.routing.PrepareAlternativeRoute;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -31,7 +33,11 @@ import java.util.Random;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
+import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_PATHS;
+import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_SHARE;
+import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_WEIGHT;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 
 /**
