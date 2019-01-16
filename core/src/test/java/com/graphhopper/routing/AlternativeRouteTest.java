@@ -17,18 +17,13 @@
  */
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.AlternativeRoute.AlternativeBidirSearch;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -38,16 +33,18 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
+import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class AlternativeRouteTest {
-    private final FlagEncoder carFE = new CarFlagEncoder();
-    private final EncodingManager em = new EncodingManager(carFE);
-    private final TraversalMode traversalMode;
+    private final FlagEncoder encoder = new CarFlagEncoder();
+    private final EncodingManager manager = new EncodingManager(encoder);
+    private final Weighting weighting = new FastestWeighting(encoder);
+    private final TraversalMode tMode;
 
     public AlternativeRouteTest(TraversalMode tMode) {
-        this.traversalMode = tMode;
+        this.tMode = tMode;
     }
 
     /**
@@ -70,7 +67,7 @@ public class AlternativeRouteTest {
          1  2-3-4-10
          \   /   \
          5--6-7---8
-        
+
          */
         graph.edge(1, 9, 1, true);
         graph.edge(9, 2, 1, true);
@@ -104,84 +101,158 @@ public class AlternativeRouteTest {
     }
 
     @Test
-    public void testCalcAlternatives() throws Exception {
-        Weighting weighting = new FastestWeighting(carFE);
-        GraphHopperStorage g = createTestGraph(true, em);
-        AlternativeRoute altDijkstra = new AlternativeRoute(g, weighting, traversalMode);
-        altDijkstra.setMaxShareFactor(0.5);
-        altDijkstra.setMaxWeightFactor(2);
-        List<AlternativeRoute.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4);
-        checkAlternatives(pathInfos);
-        assertEquals(2, pathInfos.size());
+    public void GraphPartitionTest() {
+        int areas = 8;
+        GraphPartition partition = new GraphPartition(createTestGraph(true, manager), areas);
+        partition.doWork();
 
-        DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g, weighting, traversalMode);
-        Path bestPath = dijkstra.calcPath(5, 4);
+        assertTrue(partition.getNodes(0).contains(0));
 
-        Path bestAlt = pathInfos.get(0).getPath();
-        Path secondAlt = pathInfos.get(1).getPath();
+        assertTrue(partition.getNodes(1).contains(1));
+        assertTrue(partition.getNodes(1).contains(9));
 
-        assertEquals(bestPath.calcNodes(), bestAlt.calcNodes());
-        assertEquals(bestPath.getWeight(), bestAlt.getWeight(), 1e-3);
+        assertTrue(partition.getNodes(2).contains(2));
+        assertTrue(partition.getNodes(2).contains(3));
 
-        assertEquals(IntArrayList.from(new int[]{5, 6, 3, 4}), bestAlt.calcNodes());
+        assertTrue(partition.getNodes(3).contains(4));
+        assertTrue(partition.getNodes(3).contains(10));
 
-        // Note: here plateau is longer, even longer than optimum, but path is longer
-        // so which alternative is better? longer plateau.weight with bigger path.weight or smaller path.weight with smaller plateau.weight
-        // assertEquals(Helper.createTList(5, 1, 9, 2, 3, 4), secondAlt.calcNodes());
-        assertEquals(IntArrayList.from(new int[]{5, 6, 7, 8, 4}), secondAlt.calcNodes());
-        assertEquals(1667.9, secondAlt.getWeight(), .1);
+        assertTrue(partition.getNodes(4).contains(5));
+
+        assertTrue(partition.getNodes(5).contains(6));
+
+        assertTrue(partition.getNodes(6).contains(7));
+
+        assertTrue(partition.getNodes(7).contains(8));
+
+        for (int i = 0; i < areas; i++)
+            for (int j : partition.getNodes(i))
+                assertEquals(i, partition.getArea(j));
     }
 
+    /**
+     * check that AlternativeRoute.calcPath really is the shortest path
+     */
     @Test
-    public void testCalcAlternatives2() throws Exception {
-        Weighting weighting = new FastestWeighting(carFE);
-        Graph g = createTestGraph(true, em);
-        AlternativeRoute altDijkstra = new AlternativeRoute(g, weighting, traversalMode);
-        altDijkstra.setMaxPaths(3);
-        altDijkstra.setMaxShareFactor(0.7);
-        altDijkstra.setMinPlateauFactor(0.15);
-        altDijkstra.setMaxWeightFactor(2);
-        // edge based traversal requires a bit more exploration than the default of 1
-        altDijkstra.setMaxExplorationFactor(1.2);
-
-        List<AlternativeRoute.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4);
-        checkAlternatives(pathInfos);
-        assertEquals(3, pathInfos.size());
-
-        // result is sorted based on the plateau to full weight ratio
-        assertEquals(IntArrayList.from(new int[]{5, 6, 3, 4}), pathInfos.get(0).getPath().calcNodes());
-        assertEquals(IntArrayList.from(new int[]{5, 6, 7, 8, 4}), pathInfos.get(1).getPath().calcNodes());
-        assertEquals(IntArrayList.from(new int[]{5, 1, 9, 2, 3, 4}), pathInfos.get(2).getPath().calcNodes());
-        assertEquals(2416.0, pathInfos.get(2).getPath().getWeight(), .1);
-    }
-
-    void checkAlternatives(List<AlternativeRoute.AlternativeInfo> alternativeInfos) {
-        assertFalse("alternativeInfos should contain alternatives", alternativeInfos.isEmpty());
-        AlternativeRoute.AlternativeInfo bestInfo = alternativeInfos.get(0);
-        for (int i = 1; i < alternativeInfos.size(); i++) {
-            AlternativeRoute.AlternativeInfo a = alternativeInfos.get(i);
-            if (a.getPath().getWeight() < bestInfo.getPath().getWeight())
-                assertTrue("alternative is not longer -> " + a + " vs " + bestInfo, false);
-
-            if (a.getShareWeight() > bestInfo.getPath().getWeight()
-                    || a.getShareWeight() > a.getPath().getWeight())
-                assertTrue("share or sortby incorrect -> " + a + " vs " + bestInfo, false);
+    public void compareShortestPath() {
+        for (int from = 1; from <= 10; from++) {
+            for (int to = from + 1; to <= 10; to++) {
+                AlternativeRoute altRoute = new AlternativeRoute(createTestGraph(true, manager), weighting, tMode);
+                Dijkstra dijkstra = new Dijkstra(createTestGraph(true, manager), weighting, tMode);
+                assertEquals(altRoute.calcPath(from, to).calcNodes(), dijkstra.calcPath(from, to).calcNodes());
+            }
         }
     }
 
+    /**
+     * check that each alternaive is different to the shortest path and to each other
+     */
+    @Test
+    public void compareAlternatives() {
+        for (int from = 1; from <= 10; from++) {
+            for (int to = from + 1; to <= 10; to++) {
+                AlternativeRoute altRoute = new AlternativeRoute(createTestGraph(true, manager), weighting, tMode);
+                List<Path> paths = altRoute.calcPaths(from, to);
+                if (paths.size() == 2) {
+                    assertNotEquals(paths.get(0).calcNodes(), paths.get(1).calcNodes());
+                    assertTrue(paths.get(0).getWeight() <= paths.get(1).getWeight());
+                } else if (paths.size() == 3) {
+                    assertNotEquals(paths.get(0).calcNodes(), paths.get(1).calcNodes());
+                    assertTrue(paths.get(0).getWeight() <= paths.get(1).getWeight());
+                    assertNotEquals(paths.get(0).calcNodes(), paths.get(2).calcNodes());
+                    assertTrue(paths.get(0).getWeight() <= paths.get(2).getWeight());
+                    assertNotEquals(paths.get(1).calcNodes(), paths.get(2).calcNodes());
+                }
+            }
+        }
+    }
+
+    /**
+     * check that the shortest path contains node 9 and the best alterntive node 5 (the edgebased traversalmode finds
+     * another alternative running over node 8)
+     */
+    @Test
+    public void testNoPrepare_1_10() {
+        AlternativeRoute altRoute = new AlternativeRoute(createTestGraph(true, manager), weighting, tMode);
+        List<Path> paths = altRoute.calcPaths(1, 10);
+        assertTrue(paths.size() > 1);
+        assertTrue(paths.get(0).calcNodes().contains(9));
+        assertTrue(paths.get(1).calcNodes().contains(5));
+        if (paths.size() == 3)
+            assertTrue(paths.get(2).calcNodes().contains(8));
+
+        assertFalse(altRoute.isLongAlgo());
+    }
+
+    /**
+     * check that the prepared algorithm has the same output as the unprepared one
+     */
+    @Test
+    public void testPrepare_1_10() {
+        Graph graph = createTestGraph(true, manager);
+        PrepareAlternativeRoute prepare = new PrepareAlternativeRoute(graph, weighting, tMode);
+        prepare.doWork();
+        assertTrue(prepare.getViaNodes().get(1, 10).contains(7));
+
+        AlternativeRoute altRoute = (AlternativeRoute) prepare.createAlgo(graph, new AlgorithmOptions(ALT_ROUTE, weighting, tMode));
+        List<Path> paths = altRoute.calcPaths(1, 10);
+        assertTrue(paths.size() > 1);
+        assertTrue(paths.get(0).calcNodes().contains(9));
+        assertTrue(paths.get(1).calcNodes().contains(5));
+        if (paths.size() == 3)
+            assertTrue(paths.get(2).calcNodes().contains(8));
+
+        AlternativeRoute altRoute2 = new AlternativeRoute(createTestGraph(true, manager), weighting, tMode);
+        List<Path> paths2 = altRoute2.calcPaths(1, 10);
+        for (int i = 0; i < paths.size(); i++) {
+            assertEquals(paths.get(i).calcNodes(), paths2.get(i).calcNodes());
+        }
+
+        assertTrue(altRoute.isLongAlgo());
+    }
+
+    /**
+     * check that the prepared algorithm has the same output as the unprepared one. In this case the areas of both
+     * nodes are directly connected to each other. This means that the prepared algorithm will be using the unprepared
+     * one (longAlgorithm == false)
+     */
+    @Test
+    public void testPrepare_1_3() {
+        Graph graph = createTestGraph(true, manager);
+        PrepareAlternativeRoute prepare = new PrepareAlternativeRoute(graph, weighting, tMode);
+        prepare.doWork();
+        assertEquals(null, prepare.getViaNodes().get(1, 3));
+
+        AlternativeRoute altRoute = (AlternativeRoute) prepare.createAlgo(graph, new AlgorithmOptions(ALT_ROUTE, weighting, tMode));
+        List<Path> paths = altRoute.calcPaths(1, 3);
+        assertTrue(paths.size() > 1);
+        assertTrue(paths.get(0).calcNodes().contains(9));
+        assertTrue(paths.get(1).calcNodes().contains(5));
+
+        AlternativeRoute altRoute2 = new AlternativeRoute(createTestGraph(true, manager), weighting, tMode);
+        List<Path> paths2 = altRoute2.calcPaths(1, 3);
+        for (int i = 0; i < paths.size(); i++) {
+            assertEquals(paths.get(i).calcNodes(), paths2.get(i).calcNodes());
+        }
+
+        assertFalse(altRoute.isLongAlgo());
+    }
+
+    /**
+     * check that only a small part of the graph is traversed if the nodes lie in disconnected areas
+     */
     @Test
     public void testDisconnectedAreas() {
-        Graph g = createTestGraph(true, em);
+        Graph graph = createTestGraph(true, manager);
 
         // one single disconnected node
-        updateDistancesFor(g, 20, 0.00, -0.01);
+        updateDistancesFor(graph, 20, 0.00, -0.01);
 
-        Weighting weighting = new FastestWeighting(carFE);
-        AlternativeBidirSearch altDijkstra = new AlternativeBidirSearch(g, weighting, traversalMode, 1);
-        Path path = altDijkstra.calcPath(1, 20);
+        AlternativeRoute altRoute = new AlternativeRoute(createTestGraph(true, manager), weighting, tMode);
+        Path path = altRoute.calcPath(1, 20);
         assertFalse(path.isFound());
 
         // make sure not the full graph is traversed!
-        assertEquals(3, altDijkstra.getVisitedNodes());
+        assertEquals(3, altRoute.getVisitedNodes());
     }
 }
