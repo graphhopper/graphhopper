@@ -28,6 +28,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.*;
 
 import java.util.Arrays;
+import java.util.Locale;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
@@ -506,7 +507,7 @@ public class WitnessPathSearcher {
 
         @Override
         public String toString() {
-            return String.format(
+            return String.format(Locale.ROOT,
                     "limit-exhaustion: %s %%, avg-settled: %s, avg-max-settled: %s, avg-polled-edges: %s",
                     quotient(numSettledEdges * 100, maxNumSettledEdges),
                     quotient(numSettledEdges, numSearches),
@@ -515,7 +516,7 @@ public class WitnessPathSearcher {
         }
 
         private String quotient(long a, long b) {
-            return b == 0 ? "NaN" : String.format("%5.1f", a / ((double) b));
+            return b == 0 ? "NaN" : String.format(Locale.ROOT, "%5.1f", a / ((double) b));
         }
 
         void reset() {

@@ -436,7 +436,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         String formatShortcuts = "%12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s\n";
         System.out.format(Locale.ROOT, formatShortcuts, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS", "S_SKIP_EDGE1", "S_SKIP_EDGE2", "S_ORIG_FIRST", "S_ORIG_LAST");
         for (int i = baseGraph.edgeCount; i < baseGraph.edgeCount + Math.min(shortcutCount, printMax); ++i) {
-            System.out.format(formatShortcuts, i,
+            System.out.format(Locale.ROOT, formatShortcuts, i,
                     shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_NODEA),
                     shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_NODEB),
                     shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_LINKA),

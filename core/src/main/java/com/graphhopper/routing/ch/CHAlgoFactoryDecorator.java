@@ -91,7 +91,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             setDisablingAllowed(args.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
 
         String edgeBasedCHStr = args.get(CH.PREPARE + "edge_based", "off");
-        edgeBasedCHMode = EdgeBasedCHMode.valueOf(edgeBasedCHStr.trim().toUpperCase());
+        edgeBasedCHMode = EdgeBasedCHMode.valueOf(edgeBasedCHStr.trim().toUpperCase(Locale.ROOT));
 
         pMap = args;
     }

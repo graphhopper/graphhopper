@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 
@@ -163,10 +164,10 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
     @Override
     public String getStatisticsString() {
-        String result = String.format("sc-handler-count: %s, sc-handler-contract: %s, %s",
-                countingShortcutHandler.getStats(), addingShortcutHandler.getStats(),
-                activeStrategy.getStatisticsString()
-        );
+        String result =
+                "sc-handler-count: " + countingShortcutHandler.getStats() + ", " +
+                        "sc-handler-contract: " + addingShortcutHandler.getStats() + ", " +
+                        activeStrategy.getStatisticsString();
         activeStrategy.resetStats();
         return result;
     }
@@ -415,7 +416,8 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
         @Override
         public String toString() {
-            return String.format("time: %7.2fs, nodes-handled: %10s, loopsAvoided: %10s",
+            return String.format(Locale.ROOT,
+                    "time: %7.2fs, nodes-handled: %10s, loopsAvoided: %10s",
                     stopWatch.getCurrentSeconds(), nf(nodes), nf(loopsAvoided));
         }
     }

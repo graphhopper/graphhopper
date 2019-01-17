@@ -97,9 +97,14 @@ public class ManualPrepareContractionHierarchies extends PrepareContractionHiera
             }
             stopWatch.stop();
             if (i % logSize == 0) {
-                logger.info(String.format("contracted %s / %s nodes, shortcuts: %s, last batch took: %.2f s, time per node: %.2f micros, %s",
-                        nf(i), nf(nodesToContract), nf(shortcutCount), stopWatch.getSeconds(),
-                        stopWatch.getNanos() / logSize * 1.e-3, nodeContractor.getStatisticsString()));
+                logger.info(String.format(Locale.ROOT,
+                        "contracted %s / %s nodes, shortcuts: %s, last batch took: %.2f s, time per node: %.2f micros, %s",
+                        nf(i),
+                        nf(nodesToContract),
+                        nf(shortcutCount),
+                        stopWatch.getSeconds(),
+                        stopWatch.getNanos() / logSize * 1.e-3,
+                        nodeContractor.getStatisticsString()));
             }
         }
     }
