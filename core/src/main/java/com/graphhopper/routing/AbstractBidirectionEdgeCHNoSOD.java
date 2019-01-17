@@ -130,8 +130,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
             }
 
             double turnCostsAtBridgeNode = reverse ?
-                    turnWeighting.calcTurnWeight(iter.getLastOrigEdge(), iter.getBaseNode(), prevOrNextOrigEdgeId) :
-                    turnWeighting.calcTurnWeight(prevOrNextOrigEdgeId, iter.getBaseNode(), iter.getFirstOrigEdge());
+                    turnWeighting.calcTurnWeight(iter.getOrigEdgeLast(), iter.getBaseNode(), prevOrNextOrigEdgeId) :
+                    turnWeighting.calcTurnWeight(prevOrNextOrigEdgeId, iter.getBaseNode(), iter.getOrigEdgeFirst());
 
             double newWeight = entry.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath() + turnCostsAtBridgeNode;
             if (newWeight < bestPath.getWeight()) {
@@ -151,7 +151,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
 
     @Override
     protected int getOrigEdgeId(EdgeIteratorState edge, boolean reverse) {
-        return reverse ? edge.getFirstOrigEdge() : edge.getLastOrigEdge();
+        return reverse ? edge.getOrigEdgeFirst() : edge.getOrigEdgeLast();
     }
 
     @Override

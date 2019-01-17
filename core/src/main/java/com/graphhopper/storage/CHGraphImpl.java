@@ -499,28 +499,28 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public CHEdgeIteratorState setOuterOrigEdges(int firstOrigEdge, int lastOrigEdge) {
-            checkShortcutAndEdgeBased("setOuterOrigEdges");
+        public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
+            checkShortcutAndEdgeBased("setFirstAndLastOrigEdges");
             shortcuts.setInt(edgePointer + S_ORIG_FIRST, firstOrigEdge);
             shortcuts.setInt(edgePointer + S_ORIG_LAST, lastOrigEdge);
             return this;
         }
 
         @Override
-        public int getFirstOrigEdge() {
+        public int getOrigEdgeFirst() {
             if (!isShortcut()) {
                 return getEdge();
             }
-            checkShortcutAndEdgeBased("getFirstOrigEdge");
+            checkShortcutAndEdgeBased("getOrigEdgeFirst");
             return shortcuts.getInt(edgePointer + S_ORIG_FIRST);
         }
 
         @Override
-        public int getLastOrigEdge() {
+        public int getOrigEdgeLast() {
             if (!isShortcut()) {
                 return getEdge();
             }
-            checkShortcutAndEdgeBased("getLastOrigEdge");
+            checkShortcutAndEdgeBased("getOrigEdgeLast");
             return shortcuts.getInt(edgePointer + S_ORIG_LAST);
         }
 
@@ -698,22 +698,22 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public CHEdgeIteratorState setOuterOrigEdges(int firstOrigEdge, int lastOrigEdge) {
-            checkShortcutAndEdgeBased("setOuterOrigEdges");
+        public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
+            checkShortcutAndEdgeBased("setFirstAndLastOrigEdges");
             shortcuts.setInt(edgePointer + S_ORIG_FIRST, firstOrigEdge);
             shortcuts.setInt(edgePointer + S_ORIG_LAST, lastOrigEdge);
             return this;
         }
 
         @Override
-        public int getFirstOrigEdge() {
-            checkShortcutAndEdgeBased("getFirstOrigEdge");
+        public int getOrigEdgeFirst() {
+            checkShortcutAndEdgeBased("getOrigEdgeFirst");
             return shortcuts.getInt(edgePointer + S_ORIG_FIRST);
         }
 
         @Override
-        public int getLastOrigEdge() {
-            checkShortcutAndEdgeBased("getLastOrigEdge");
+        public int getOrigEdgeLast() {
+            checkShortcutAndEdgeBased("getOrigEdgeLast");
             return shortcuts.getInt(edgePointer + S_ORIG_LAST);
         }
 

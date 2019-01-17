@@ -1436,7 +1436,7 @@ public class EdgeBasedNodeContractorTest {
             if (iter.isShortcut()) {
                 shortcuts.add(new Shortcut(
                         iter.getBaseNode(), iter.getAdjNode(),
-                        iter.getFirstOrigEdge(), iter.getLastOrigEdge(), iter.getSkippedEdge1(), iter.getSkippedEdge2(), iter.getWeight(),
+                        iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(), iter.getSkippedEdge1(), iter.getSkippedEdge2(), iter.getWeight(),
                         iter.isForward(encoder), iter.isBackward(encoder)
                 ));
             }

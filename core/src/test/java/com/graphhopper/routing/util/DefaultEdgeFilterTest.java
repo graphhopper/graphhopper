@@ -71,7 +71,7 @@ public class DefaultEdgeFilterTest {
     private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int firstOrigEdge, int lastOrigEdge) {
         CHEdgeIteratorState shortcut = chGraph.shortcut(from, to);
         shortcut.setFlags(fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir());
-        shortcut.setOuterOrigEdges(firstOrigEdge, lastOrigEdge);
+        shortcut.setFirstAndLastOrigEdges(firstOrigEdge, lastOrigEdge);
     }
 
 }

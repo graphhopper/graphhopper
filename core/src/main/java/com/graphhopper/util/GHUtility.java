@@ -584,17 +584,17 @@ public class GHUtility {
         }
 
         @Override
-        public CHEdgeIteratorState setOuterOrigEdges(int firstOrigEdge, int lastOrigEdge) {
+        public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public int getFirstOrigEdge() {
+        public int getOrigEdgeFirst() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public int getLastOrigEdge() {
+        public int getOrigEdgeLast() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

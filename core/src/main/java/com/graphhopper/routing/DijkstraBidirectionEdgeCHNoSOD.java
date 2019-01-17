@@ -34,8 +34,8 @@ public class DijkstraBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoS
     }
 
     @Override
-    protected CHEntry createEntry(EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
-        CHEntry entry = new CHEntry(edge.getEdge(), edgeId, edge.getAdjNode(), weight);
+    protected CHEntry createEntry(EdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse) {
+        CHEntry entry = new CHEntry(edge.getEdge(), incEdge, edge.getAdjNode(), weight);
         entry.parent = parent;
         return entry;
     }

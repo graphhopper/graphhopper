@@ -419,15 +419,15 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         iter.next();
         iter.next();
         iter.next();
-        assertEquals(0, iter.getFirstOrigEdge());
-        assertEquals(1, iter.getLastOrigEdge());
+        assertEquals(0, iter.getOrigEdgeFirst());
+        assertEquals(1, iter.getOrigEdgeLast());
     }
 
     private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int firstOrigEdge, int lastOrigEdge,
                              int skipEdge1, int skipEdge2, int distance) {
         CHEdgeIteratorState shortcut = chGraph.shortcut(from, to);
         shortcut.setFlags(fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir());
-        shortcut.setOuterOrigEdges(firstOrigEdge, lastOrigEdge).setSkippedEdges(skipEdge1, skipEdge2).setDistance(distance);
+        shortcut.setFirstAndLastOrigEdges(firstOrigEdge, lastOrigEdge).setSkippedEdges(skipEdge1, skipEdge2).setDistance(distance);
     }
 
     @Test

@@ -275,14 +275,14 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
             final double existingWeight = turnWeighting.calcWeight(iter, false, EdgeIterator.NO_EDGE);
             if (existingWeight <= edgeTo.weight) {
                 // our shortcut already exists with lower weight --> do nothing
-                CHEntry entry = new CHEntry(iter.getEdge(), iter.getLastOrigEdge(), adjNode, existingWeight);
+                CHEntry entry = new CHEntry(iter.getEdge(), iter.getOrigEdgeLast(), adjNode, existingWeight);
                 entry.parent = edgeFrom.parent;
                 return entry;
             } else {
                 // update weight
                 iter.setSkippedEdges(edgeFrom.edge, edgeTo.edge);
                 iter.setWeight(edgeTo.weight);
-                CHEntry entry = new CHEntry(iter.getEdge(), iter.getLastOrigEdge(), adjNode, edgeTo.weight);
+                CHEntry entry = new CHEntry(iter.getEdge(), iter.getOrigEdgeLast(), adjNode, edgeTo.weight);
                 entry.parent = edgeFrom.parent;
                 return entry;
             }
@@ -297,7 +297,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         shortcut.setFlags(direction);
         shortcut.setSkippedEdges(edgeFrom.edge, edgeTo.edge)
                 // this is a bit of a hack, we misuse incEdge of edgeFrom's parent to store the first orig edge
-                .setOuterOrigEdges(edgeFrom.getParent().incEdge, edgeTo.incEdge)
+                .setFirstAndLastOrigEdges(edgeFrom.getParent().incEdge, edgeTo.incEdge)
                 .setWeight(edgeTo.weight);
         final int origEdgeCount = getOrigEdgeCount(edgeFrom.edge) + getOrigEdgeCount(edgeTo.edge);
         setOrigEdgeCount(shortcut.getEdge(), origEdgeCount);
@@ -311,8 +311,8 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private boolean isSameShortcut(CHEdgeIteratorState iter, int adjNode, int firstOrigEdge, int lastOrigEdge) {
         return iter.isShortcut()
                 && (iter.getAdjNode() == adjNode)
-                && (iter.getFirstOrigEdge() == firstOrigEdge)
-                && (iter.getLastOrigEdge() == lastOrigEdge);
+                && (iter.getOrigEdgeFirst() == firstOrigEdge)
+                && (iter.getOrigEdgeLast() == lastOrigEdge);
     }
 
     private double getTurnCost(int inEdge, int node, int outEdge) {
@@ -463,7 +463,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 // for each source node we need to look at every incoming original edge and find the initial entries
                 EdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
                 while (origInIter.next()) {
-                    int numInitialEntries = witnessPathSearcher.initSearch(node, sourceNode, origInIter.getLastOrigEdge());
+                    int numInitialEntries = witnessPathSearcher.initSearch(node, sourceNode, origInIter.getOrigEdgeLast());
                     if (numInitialEntries < 1) {
                         continue;
                     }
@@ -485,7 +485,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                         // a 'bridge-path'
                         EdgeIterator targetEdgeIter = targetNodeOrigOutEdgeExplorer.setBaseNode(targetNode);
                         while (targetEdgeIter.next()) {
-                            int targetEdge = targetEdgeIter.getFirstOrigEdge();
+                            int targetEdge = targetEdgeIter.getOrigEdgeFirst();
                             dijkstraSW.start();
                             CHEntry entry = witnessPathSearcher.runSearch(targetNode, targetEdge);
                             dijkstraSW.stop();

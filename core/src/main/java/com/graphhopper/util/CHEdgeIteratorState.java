@@ -45,7 +45,7 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
      * <p>
      * x --> u --> v --> w --> y
      */
-    CHEdgeIteratorState setOuterOrigEdges(int firstOrigEdge, int lastOrigEdge);
+    CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge);
 
     /**
      * @return true if this edge is a shortcut, false otherwise.

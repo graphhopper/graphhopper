@@ -179,7 +179,7 @@ public class WitnessPathSearcher {
         // check if we can already reach the target from the shortest path tree we discovered so far
         EdgeIterator inIter = origInEdgeExplorer.setBaseNode(targetNode);
         while (inIter.next()) {
-            final int incEdge = inIter.getLastOrigEdge();
+            final int incEdge = inIter.getOrigEdgeLast();
             final int edgeKey = getEdgeKey(incEdge, targetNode);
             if (edges[edgeKey] != NO_EDGE) {
                 boolean isZeroWeightLoop = parents[edgeKey] >= 0 && targetNode == adjNodes[parents[edgeKey]] &&
@@ -228,7 +228,7 @@ public class WitnessPathSearcher {
                     continue;
                 }
                 // do not allow u-turns
-                if (iter.getFirstOrigEdge() == incEdges[currKey]) {
+                if (iter.getOrigEdgeFirst() == incEdges[currKey]) {
                     continue;
                 }
                 double edgeWeight = turnWeighting.calcWeight(iter, false, incEdges[currKey]);
@@ -240,7 +240,7 @@ public class WitnessPathSearcher {
                 boolean isZeroWeightLoop = fromNode == targetNode && edgeWeight <= MAX_ZERO_WEIGHT_LOOP;
 
                 // dijkstra expansion: add or update current entries
-                int key = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
+                int key = getEdgeKey(iter.getOrigEdgeLast(), iter.getAdjNode());
                 if (edges[key] == NO_EDGE) {
                     setEntry(key, iter, weight, currKey, isPathToCenter);
                     changedEdges.add(key);
@@ -333,14 +333,14 @@ public class WitnessPathSearcher {
             if (isContracted(outIter.getAdjNode())) {
                 continue;
             }
-            double turnWeight = calcTurnWeight(sourceEdge, sourceNode, outIter.getFirstOrigEdge());
+            double turnWeight = calcTurnWeight(sourceEdge, sourceNode, outIter.getOrigEdgeFirst());
             if (isInfinite(turnWeight)) {
                 continue;
             }
             double edgeWeight = turnWeighting.calcWeight(outIter, false, NO_EDGE);
             double weight = turnWeight + edgeWeight;
             boolean isPathToCenter = outIter.getAdjNode() == centerNode;
-            int incEdge = outIter.getLastOrigEdge();
+            int incEdge = outIter.getOrigEdgeLast();
             int adjNode = outIter.getAdjNode();
             int key = getEdgeKey(incEdge, adjNode);
             int parentKey = -key - 1;
@@ -348,7 +348,7 @@ public class WitnessPathSearcher {
             // initial entry
             CHEntry parent = new CHEntry(
                     NO_EDGE,
-                    outIter.getFirstOrigEdge(),
+                    outIter.getOrigEdgeFirst(),
                     sourceNode, turnWeight);
             if (edges[key] == NO_EDGE) {
                 // add new initial entry
@@ -432,7 +432,7 @@ public class WitnessPathSearcher {
 
     private void setEntry(int key, EdgeIteratorState edge, double weight, int parent, boolean isPathToCenter) {
         edges[key] = edge.getEdge();
-        incEdges[key] = edge.getLastOrigEdge();
+        incEdges[key] = edge.getOrigEdgeLast();
         adjNodes[key] = edge.getAdjNode();
         weights[key] = weight;
         parents[key] = parent;

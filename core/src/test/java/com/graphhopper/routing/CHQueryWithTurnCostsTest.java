@@ -608,7 +608,7 @@ public class CHQueryWithTurnCostsTest {
         CHEdgeIteratorState shortcut = chGraph.shortcut(from, to);
         // we need to set flags first because they overwrite weight etc
         shortcut.setFlags(PrepareEncoder.getScFwdDir());
-        shortcut.setOuterOrigEdges(firstOrigEdge, lastOrigEdge).setSkippedEdges(skipped1, skipped2).setWeight(weight);
+        shortcut.setFirstAndLastOrigEdges(firstOrigEdge, lastOrigEdge).setSkippedEdges(skipped1, skipped2).setWeight(weight);
     }
 
     private void setLevelEqualToNodeIdForAllNodes() {

@@ -1199,12 +1199,12 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public int getFirstOrigEdge() {
+        public int getOrigEdgeFirst() {
             return getEdge();
         }
 
         @Override
-        public int getLastOrigEdge() {
+        public int getOrigEdgeLast() {
             return getEdge();
         }
 

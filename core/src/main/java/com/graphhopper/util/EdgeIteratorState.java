@@ -40,12 +40,12 @@ public interface EdgeIteratorState {
      * @return the edge id of the first original edge of the current edge. This is needed for shortcuts
      * in edge-based contraction hierarchies and otherwise simply returns the id of the current edge.
      */
-    int getFirstOrigEdge();
+    int getOrigEdgeFirst();
 
     /**
-     * @see #getFirstOrigEdge()
+     * @see #getOrigEdgeFirst()
      */
-    int getLastOrigEdge();
+    int getOrigEdgeLast();
 
     /**
      * Returns the node used to instantiate the EdgeIterator. Example: "EdgeIterator iter =
