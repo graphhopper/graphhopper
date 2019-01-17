@@ -563,7 +563,7 @@ public class Measurement {
                 "graph.edges",
                 "measurement.seed",
                 CH.PREPARE + "time",
-                CH.PREPARE + "shortcuts",
+                CH.PREPARE + "node.shortcuts",
                 CH.PREPARE + "edge.shortcuts",
                 "routing.distance_mean",
                 "routing.mean",
