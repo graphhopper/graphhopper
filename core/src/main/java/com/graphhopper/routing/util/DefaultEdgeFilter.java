@@ -57,7 +57,7 @@ public class DefaultEdgeFilter implements EdgeFilter {
             // background: we need to explicitly accept shortcut edges that are loops, because if we insert a loop
             // shortcut with the fwd flag a DefaultEdgeFilter with bwd=true and fwd=false does not find it, although 
             // it is also an 'incoming' edge.
-            return true;
+            return iter.isForward(encoder) || iter.isBackward(encoder);
         }
         return fwd && iter.isForward(encoder) || bwd && iter.isBackward(encoder);
     }
