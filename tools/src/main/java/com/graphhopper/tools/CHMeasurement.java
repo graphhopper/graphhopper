@@ -21,21 +21,20 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.ch.*;
+import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static com.graphhopper.routing.ch.CHParameters.PERIODIC_UPDATES;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static java.lang.System.nanoTime;
@@ -155,7 +154,8 @@ public class CHMeasurement {
         if (statsFile != null) {
             File f = new File(statsFile);
             boolean writeHeader = !f.exists();
-            try (FileWriter writer = new FileWriter(f, true)) {
+            try (OutputStream os = new FileOutputStream(f, true);
+                 Writer writer = new OutputStreamWriter(os, StandardCharsets.UTF_8)) {
                 if (writeHeader)
                     writer.write(getHeader(sortedKeys));
                 writer.write(getStatLine(sortedKeys, resultMap));
