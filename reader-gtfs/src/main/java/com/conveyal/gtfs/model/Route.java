@@ -76,11 +76,14 @@ public class Route extends Entity { // implements Entity.Factory<Route>
             Agency agency = getRefField("agency_id", false, feed.agency);
 
             // if there is only one agency, associate with it automatically
-            // TODO: what will this do if the agency and the route have agency_ids but they do not match?
-            if (agency == null && feed.agency.size() == 1)
+            if (agency == null && feed.agency.size() == 1) {
                 agency = feed.agency.values().iterator().next();
+            }
 
-            r.agency_id = agency.agency_id;
+            // If we still haven't got an agency, it's because we have a bad reference, or because there is no agency
+            if (agency != null) {
+                r.agency_id = agency.agency_id;
+            }
 
             r.route_short_name = getStringField("route_short_name", false); // one or the other required, needs a special validator
             r.route_long_name = getStringField("route_long_name", false);

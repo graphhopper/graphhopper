@@ -36,6 +36,7 @@ public class GeneralError extends GTFSError implements Serializable {
 
     public GeneralError(String file, long line, String field, String message) {
         super(file, line, field);
+        this.message = message;
     }
 
     @Override public String getMessage() {
