@@ -93,9 +93,7 @@ public final class GraphPartition extends AbstractAlgoPreparation {
     }
 
     @Override
-    public void doWork() {
-        super.doWork();
-
+    public void doSpecificWork() {
         //First of all the original graph must be transformed, adding all nodes to the node list, all edges to the
         //edge list and creating every item
         createGraph();
