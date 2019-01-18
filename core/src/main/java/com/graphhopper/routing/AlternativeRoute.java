@@ -61,13 +61,13 @@ public class AlternativeRoute extends AlternativeRouteAlgorithm {
     }
 
     @Override
-    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entryCurrent, int traversalId) {
+    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entryCurrent, int traversalId, boolean reverse) {
         if (entryCurrent.parent != null) {
             if (isLongAlgo()) {
                 int node = entryCurrent.adjNode;
                 for (ViaPoint point : viaPoints) {
                     if (node == point.getNode()) {
-                        if (bestWeightMapTo == bestWeightMapOther) {
+                        if (!reverse) {
                             point.addEntryFrom(entryCurrent);
                         } else {
                             point.addEntryTo(entryCurrent);
@@ -85,7 +85,7 @@ public class AlternativeRoute extends AlternativeRouteAlgorithm {
                         int node = entryOther.adjNode;
                         if (entryCurrent.adjNode == node) {
                             contactFound[node] = true;
-                            if (bestWeightMapTo == bestWeightMapOther)
+                            if (!reverse)
                                 contactPoints.add(new ContactPoint(entryCurrent, entryOther));
                             else
                                 contactPoints.add(new ContactPoint(entryOther, entryCurrent));
@@ -94,7 +94,7 @@ public class AlternativeRoute extends AlternativeRouteAlgorithm {
                 }
             }
         }
-        super.updateBestPath(edgeState, entryCurrent, traversalId);
+        super.updateBestPath(edgeState, entryCurrent, traversalId, reverse);
     }
 
     @Override
