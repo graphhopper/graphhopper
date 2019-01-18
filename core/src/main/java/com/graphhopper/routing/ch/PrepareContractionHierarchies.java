@@ -150,7 +150,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             alt.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.25));
             alt.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.75));
             alt.setExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1));
-            algo = alt;
+            return alt;
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies. Try with ch.disable=true");
         }
