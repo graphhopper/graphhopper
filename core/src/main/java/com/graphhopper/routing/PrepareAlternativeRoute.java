@@ -165,8 +165,7 @@ public class PrepareAlternativeRoute extends AbstractAlgoPreparation implements 
     }
 
     @Override
-    public void doWork() {
-        super.doWork();
+    public void doSpecificWork() {
         partition = new GraphPartition(graph.getBaseGraph(), areas);
         partition.doWork();
         viaNodeList = new ArrayList[areas][areas];
@@ -266,7 +265,7 @@ public class PrepareAlternativeRoute extends AbstractAlgoPreparation implements 
         }
 
         @Override
-        protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entryCurrent, int traversalId) {
+        protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entryCurrent, int traversalId, boolean reverse) {
             if (entryCurrent.parent != null) {
                 if (contactFound[entryCurrent.parent.adjNode]) {
                     contactFound[entryCurrent.adjNode] = true;
@@ -281,7 +280,7 @@ public class PrepareAlternativeRoute extends AbstractAlgoPreparation implements 
                     }
                 }
             }
-            super.updateBestPath(edgeState, entryCurrent, traversalId);
+            super.updateBestPath(edgeState, entryCurrent, traversalId, reverse);
         }
 
         private ArrayList<Integer> getContactNodes(int from, int to) {
@@ -311,13 +310,13 @@ public class PrepareAlternativeRoute extends AbstractAlgoPreparation implements 
         }
 
         @Override
-        protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entryCurrent, int traversalId) {
+        protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entryCurrent, int traversalId, boolean reverse) {
             if (entryCurrent.parent != null) {
                 int node = entryCurrent.adjNode;
                 boolean found = false;
                 for (ViaPoint point : viaPoints) {
                     if (node == point.getNode()) {
-                        if (bestWeightMapTo == bestWeightMapOther) {
+                        if (!reverse) {
                             point.addEntryFrom(entryCurrent);
                         } else {
                             point.addEntryTo(entryCurrent);
@@ -329,7 +328,7 @@ public class PrepareAlternativeRoute extends AbstractAlgoPreparation implements 
                 if (!found) {
                     for (ViaPoint point : candidatePoints) {
                         if (node == point.getNode()) {
-                            if (bestWeightMapTo == bestWeightMapOther) {
+                            if (!reverse) {
                                 point.addEntryFrom(entryCurrent);
                             } else {
                                 point.addEntryTo(entryCurrent);
@@ -339,7 +338,7 @@ public class PrepareAlternativeRoute extends AbstractAlgoPreparation implements 
                     }
                 }
             }
-            super.updateBestPath(edgeState, entryCurrent, traversalId);
+            super.updateBestPath(edgeState, entryCurrent, traversalId, reverse);
         }
 
         private void doWork(int from, int to, ArrayList<Integer> viaNodes, ArrayList<Integer> candidateNodes) {
