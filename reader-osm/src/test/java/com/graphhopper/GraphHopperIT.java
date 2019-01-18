@@ -178,6 +178,7 @@ public class GraphHopperIT {
     public void testAlternativeRoutes() {
         GHRequest req = new GHRequest(43.729057, 7.41251, 43.740298, 7.423561).
                 setAlgorithm(ALT_ROUTE).setVehicle(vehicle).setWeighting(weightCalcStr);
+        req.getHints().put("alternative_route.max_paths", "2");
 
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.hasErrors());
@@ -187,14 +188,13 @@ public class GraphHopperIT {
         assertEquals(1356, rsp.getAll().get(1).getTime() / 1000);
 
         req.getHints().put("alternative_route.max_paths", "3");
-        req.getHints().put("alternative_route.min_plateau_factor", "0.1");
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors());
         assertEquals(3, rsp.getAll().size());
 
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
         assertEquals(1356, rsp.getAll().get(1).getTime() / 1000);
-        assertEquals(1416, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(1364, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -229,10 +229,10 @@ public class GraphHopperIT {
         assertEquals(3, rsp.getAll().size());
         // directly via obergräfenthal
         assertEquals(870, rsp.getAll().get(0).getTime() / 1000);
-        // via ramsenthal -> lerchenhof
-        assertEquals(913, rsp.getAll().get(1).getTime() / 1000);
         // via neudrossenfeld
-        assertEquals(958, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(958, rsp.getAll().get(1).getTime() / 1000);
+        // via ramsenthal -> lerchenhof
+        assertEquals(913, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
