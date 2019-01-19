@@ -6,13 +6,11 @@ var mapLayer = require('./map.js');
 var dataToHtml = function (data, query) {
     var element = "";
     if (data.name) {
-        element += "<div class='nameseg'>" + formatTools.formatValue(data.name, query) + "</div>";
-    } else if (data.street) {
-        var streetStr = data.street;
+        var name = data.name;
         if (data.housenumber)
-            streetStr = formatTools.insComma(streetStr, data.housenumber);
+            name = formatTools.insComma(name, data.housenumber);
 
-        element += "<div class='nameseg'>" + formatTools.formatValue(streetStr, query) + "</div>";
+        element += "<div class='nameseg'>" + formatTools.formatValue(name, query) + "</div>";
     }
 
     var addStr = "";
