@@ -531,6 +531,11 @@ public class QueryGraph implements Graph {
     }
 
     @Override
+    public int getEdges() {
+        return virtualEdges.size() + mainEdges;
+    }
+
+    @Override
     public NodeAccess getNodeAccess() {
         return nodeAccess;
     }

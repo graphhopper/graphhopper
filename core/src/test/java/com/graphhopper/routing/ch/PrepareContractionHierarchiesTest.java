@@ -162,10 +162,10 @@ public class PrepareContractionHierarchiesTest {
     public void testAddShortcuts() {
         GraphHopperStorage g = createExampleGraph();
         CHGraph lg = g.getGraph(CHGraph.class);
-        int old = lg.getAllEdges().length();
+        int old = lg.getEdges();
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.doWork();
-        assertEquals(old + 2, lg.getAllEdges().length());
+        assertEquals(old + 2, lg.getEdges());
     }
 
     @Test
@@ -176,8 +176,8 @@ public class PrepareContractionHierarchiesTest {
         int oldCount = g.getAllEdges().length();
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.doWork();
-        assertEquals(oldCount, g.getAllEdges().length());
-        assertEquals(oldCount + 7, lg.getAllEdges().length());
+        assertEquals(oldCount, g.getEdges());
+        assertEquals(oldCount + 7, lg.getEdges());
     }
 
     @Test
@@ -218,7 +218,7 @@ public class PrepareContractionHierarchiesTest {
 
         long numShortcuts = 9;
         assertEquals(numShortcuts, prepare.getShortcuts());
-        assertEquals(oldCount + numShortcuts, lg.getAllEdges().length());
+        assertEquals(oldCount + numShortcuts, lg.getEdges());
         assertEquals(oldCount + numShortcuts, GHUtility.count(lg.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(0, 10);
@@ -285,8 +285,8 @@ public class PrepareContractionHierarchiesTest {
         int oldCount = g.getAllEdges().length();
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.doWork();
-        assertEquals(oldCount, g.getAllEdges().length());
-        assertEquals(oldCount + 23, lg.getAllEdges().length());
+        assertEquals(oldCount, g.getEdges());
+        assertEquals(oldCount + 23, lg.getEdges());
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(4, 7);
         assertEquals(IntArrayList.from(4, 5, 6, 7), p.calcNodes());
@@ -503,7 +503,7 @@ public class PrepareContractionHierarchiesTest {
 
     private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHGraph lg, Weighting w) {
         g.freeze();
-        return new PrepareContractionHierarchies(g, lg, tMode);
+        return new PrepareContractionHierarchies(lg, w, tMode);
     }
 
 }

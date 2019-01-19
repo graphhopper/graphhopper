@@ -221,6 +221,16 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
+    public int getEdges() {
+        return getAllEdges().length();
+    }
+
+    @Override
+    public int getOriginalEdges() {
+        return baseGraph.getEdges();
+    }
+
+    @Override
     public NodeAccess getNodeAccess() {
         return baseGraph.getNodeAccess();
     }
@@ -251,13 +261,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return toString() + ", shortcuts:" + nf(shortcutCount) + ", nodesCH:(" + nodesCH.getCapacity() / Helper.MB + "MB)";
     }
 
-    /**
-     * Disconnects the edges (higher to lower node) via the specified edgeState pointing from lower to
-     * higher node.
-     * <p>
-     *
-     * @param edgeState the edge from lower to higher
-     */
+    @Override
     public void disconnect(CHEdgeExplorer explorer, EdgeIteratorState edgeState) {
         // search edge with opposite direction but we need to know the previousEdge for the internalEdgeDisconnect so we cannot simply do:
         // EdgeIteratorState tmpIter = getEdgeProps(iter.getEdge(), iter.getBaseNode());
