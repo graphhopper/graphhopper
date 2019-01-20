@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.ch.Path4CH;
+import com.graphhopper.routing.ch.PreparationWeighting;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -54,7 +55,7 @@ public class AlternativeRouteAlgorithm extends DijkstraBidirectionRef {
 
     protected AlternativeRouteAlgorithm(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         super(graph, weighting, traversalMode);
-        if (graph.getClass().getName().contains("CHGraph") && weighting.getName().contains("prepare"))
+        if(weighting.getClass() == PreparationWeighting.class)
             CH = true;
         else
             CH = false;
