@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
+import com.graphhopper.routing.ch.PreparationWeighting;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
@@ -61,7 +62,7 @@ public class PrepareAlternativeRoute extends AbstractAlgoPreparation implements 
         this.graph = graph;
         this.weighting = weighting;
         this.traversalMode = traversalMode;
-        if (graph.getClass().getName().contains("CHGraph") && weighting.getName().contains("prepare"))
+        if(weighting.getClass() == PreparationWeighting.class)
             CH = true;
         else
             CH = false;
