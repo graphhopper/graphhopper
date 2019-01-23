@@ -77,6 +77,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private PMap pMap = new PMap();
     private int initSize;
     private int checkCounter;
+    private ViaNodeSet viaNodes;
 
     public PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
         this.ghStorage = ghStorage;
@@ -94,6 +95,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         params.setNeighborUpdatePercentage(pMap.getInt(NEIGHBOR_UPDATES, params.getNeighborUpdatePercentage()));
         params.setNodesContractedPercentage(pMap.getInt(CONTRACTED_NODES, params.getNodesContractedPercentage()));
         params.setLogMessagesPercentage(pMap.getInt(LOG_MESSAGES, params.getLogMessagesPercentage()));
+        params.setPrepareAlternativeRoute(pMap.getBool(PREPARE_ALTERNATIVE_ROUTE, params.getPrepareAlternativeRoute()));
         return this;
     }
 
@@ -102,6 +104,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         allSW.start();
         initFromGraph();
         runGraphContraction();
+        if (params.getPrepareAlternativeRoute())
+            computeViaNodes();
 
         logger.info("took:" + (int) allSW.stop().getSeconds() + "s "
                 + ", new shortcuts: " + nf(nodeContractor.getAddedShortcutsCount())
@@ -124,6 +128,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             return;
         contractNodes();
     }
+    
+    private void computeViaNodes() {
+        PrepareAlternativeRoute prepare = new PrepareAlternativeRoute(prepareGraph, prepareWeighting, traversalMode);
+        prepare.doWork();
+        viaNodes = prepare.getViaNodes();
+    }
 
     @Override
     public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
@@ -145,6 +155,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
         } else if (ALT_ROUTE.equals(opts.getAlgorithm())) {
             AlternativeRoute alt = new AlternativeRoute(graph, prepareWeighting, traversalMode);
+            if (params.getPrepareAlternativeRoute())
+                alt.setViaNodes(viaNodes);
             alt.setMaxPaths(opts.getHints().getInt(MAX_PATHS, 3));
             alt.setAdditionalPaths(opts.getHints().getInt(MAX_PATHS, 3));
             alt.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.25));
