@@ -413,22 +413,27 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
          * start nodes).
          */
         private int logMessagesPercentage;
-
+        /**
+         * Define whether preparations for alternative routes (computation of viaNodes) is done
+         */
+        private boolean prepareAlternativeRoute
+        
         static Params forTraversalMode(TraversalMode traversalMode) {
             if (traversalMode.isEdgeBased()) {
                 throw new IllegalArgumentException("Contraction Hierarchies are not supported for edge-based traversal yet");
             } else {
-                return new Params(20, 10, 20, 100, 20);
+                return new Params(20, 10, 20, 100, 20, true);
             }
         }
 
         private Params(int periodicUpdatesPercentage, int lastNodesLazyUpdatePercentage, int neighborUpdatePercentage,
-                       int nodesContractedPercentage, int logMessagesPercentage) {
+                       int nodesContractedPercentage, int logMessagesPercentage, boolean prepareAlternativeRoute) {
             setPeriodicUpdatesPercentage(periodicUpdatesPercentage);
             setLastNodesLazyUpdatePercentage(lastNodesLazyUpdatePercentage);
             setNeighborUpdatePercentage(neighborUpdatePercentage);
             setNodesContractedPercentage(nodesContractedPercentage);
             setLogMessagesPercentage(logMessagesPercentage);
+            setPrepareAlternativeRoute(prepareAlternativeRoute);
         }
 
         int getPeriodicUpdatesPercentage() {
@@ -474,6 +479,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         void setLogMessagesPercentage(int logMessagesPercentage) {
             checkPercentage(LOG_MESSAGES, logMessagesPercentage);
             this.logMessagesPercentage = logMessagesPercentage;
+        }
+
+        boolean getPrepareAlternativeRoute() {
+            return prepareAlternativeRoute;
+        }
+
+        void setPrepareAlternativeRoute(boolean prepareAlternativeRoute) {
+            this.prepareAlternativeRoute = prepareAlternativeRoute;
         }
 
         private void checkPercentage(String name, int value) {
