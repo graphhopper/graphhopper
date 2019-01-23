@@ -422,7 +422,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             if (traversalMode.isEdgeBased()) {
                 throw new IllegalArgumentException("Contraction Hierarchies are not supported for edge-based traversal yet");
             } else {
-                return new Params(20, 10, 20, 100, 20, true);
+                return new Params(20, 10, 20, 100, 20, false);
             }
         }
 
