@@ -39,7 +39,7 @@ import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
  *
  * @author Maximilian Sturm
  */
-public class PrepareAlternativeRoute extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
+public class PrepareAlternativeRoute extends AbstractAlgoPreparation {
     private final Graph graph;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
@@ -175,23 +175,6 @@ public class PrepareAlternativeRoute extends AbstractAlgoPreparation implements 
                 if (!partition.isDirectlyConnected(area1, area2))
                     viaNodeList[area1][area2] = searchViaNodes(area1, area2);
         viaNodes = createViaNodes();
-    }
-
-    @Override
-    public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-        if (!ALT_ROUTE.equals(opts.getAlgorithm()))
-            throw new IllegalStateException("This class can only create algorithms for alternative routes. Use another RoutingAlgorithmFactory for " + opts.getAlgorithm() + ".");
-        AlternativeRoute algo = new AlternativeRoute(graph, weighting, traversalMode);
-        algo.setViaNodes(viaNodes);
-        algo.setMaxVisitedNodes(maxVisitedNodes);
-        if (isCH())
-            algo.setEdgeFilter(new LevelEdgeFilter((CHGraph) graph));
-        algo.setExplorationFactor(explorationFactor);
-        algo.setMaxWeightFactor(maxWeightFactor);
-        algo.setMaxShareFactor(maxShareFactor);
-        algo.setMaxPaths(maxPaths);
-        algo.setAdditionalPaths(additionalPaths);
-        return algo;
     }
 
     /**
