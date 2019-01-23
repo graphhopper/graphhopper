@@ -416,7 +416,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         /**
          * Define whether preparations for alternative routes (computation of viaNodes) is done
          */
-        private boolean prepareAlternativeRoute
+        private boolean prepareAlternativeRoute;
         
         static Params forTraversalMode(TraversalMode traversalMode) {
             if (traversalMode.isEdgeBased()) {
