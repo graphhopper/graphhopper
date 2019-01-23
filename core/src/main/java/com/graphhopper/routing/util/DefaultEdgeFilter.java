@@ -52,6 +52,7 @@ public class DefaultEdgeFilter implements EdgeFilter {
 
     @Override
     public final boolean accept(EdgeIteratorState iter) {
+        if(iter.getBaseNode() == iter.getAdjNode()) return iter.isForward(encoder) || iter.isBackward(encoder);
         return fwd && iter.isForward(encoder) || bwd && iter.isBackward(encoder);
     }
 
