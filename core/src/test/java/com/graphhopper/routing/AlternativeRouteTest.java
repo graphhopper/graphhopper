@@ -194,7 +194,8 @@ public class AlternativeRouteTest {
         prepare.doWork();
         assertTrue(prepare.getViaNodes().get(1, 10).contains(7));
 
-        AlternativeRoute altRoute = (AlternativeRoute) prepare.createAlgo(graph, new AlgorithmOptions(ALT_ROUTE, weighting, tMode));
+        AlternativeRoute altRoute = new AlternativeRoute(createTestGraph(true, manager), weighting, tMode);
+        altRoute.setViaNodes(prepare.getViaNodes());
         List<Path> paths = altRoute.calcPaths(1, 10);
         assertTrue(paths.size() > 1);
         assertTrue(paths.get(0).calcNodes().contains(9));
@@ -223,7 +224,8 @@ public class AlternativeRouteTest {
         prepare.doWork();
         assertEquals(null, prepare.getViaNodes().get(1, 3));
 
-        AlternativeRoute altRoute = (AlternativeRoute) prepare.createAlgo(graph, new AlgorithmOptions(ALT_ROUTE, weighting, tMode));
+        AlternativeRoute altRoute = new AlternativeRoute(createTestGraph(true, manager), weighting, tMode);
+        altRoute.setViaNodes(prepare.getViaNodes());
         List<Path> paths = altRoute.calcPaths(1, 3);
         assertTrue(paths.size() > 1);
         assertTrue(paths.get(0).calcNodes().contains(9));
