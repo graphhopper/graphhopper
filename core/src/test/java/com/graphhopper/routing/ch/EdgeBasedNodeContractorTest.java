@@ -1358,7 +1358,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private EdgeBasedNodeContractor createNodeContractor() {
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(graph, chGraph, chTurnWeighting, new PMap());
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(chGraph, chTurnWeighting, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
     }

@@ -45,7 +45,7 @@ public class NodeBasedNodeContractorTest {
     private final TraversalMode traversalMode = TraversalMode.NODE_BASED;
 
     private NodeContractor createNodeContractor() {
-        NodeContractor nodeContractor = new NodeBasedNodeContractor(graph, lg, weighting, new PMap());
+        NodeContractor nodeContractor = new NodeBasedNodeContractor(lg, weighting, new PMap());
         nodeContractor.initFromGraph();
         nodeContractor.prepareContraction();
         return nodeContractor;

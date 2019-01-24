@@ -24,7 +24,9 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,8 +57,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     final PreparationWeighting prepareWeighting;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
-    private final GraphHopperStorage ghStorage;
-    final CHGraphImpl prepareGraph;
+    final CHGraph prepareGraph;
     private final Random rand = new Random(123);
     private final StopWatch allSW = new StopWatch();
     private final StopWatch periodicUpdateSW = new StopWatch();
@@ -75,13 +76,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int initSize;
     private int checkCounter;
 
-    public PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
-        this.ghStorage = ghStorage;
-        this.prepareGraph = (CHGraphImpl) chGraph;
+    public PrepareContractionHierarchies(CHGraph chGraph, Weighting weighting, TraversalMode traversalMode) {
+        this.prepareGraph = chGraph;
         this.traversalMode = traversalMode;
-        this.weighting = ((CHGraphImpl) chGraph).getWeighting();
+        this.weighting = weighting;
         prepareWeighting = new PreparationWeighting(weighting);
         this.params = Params.forTraversalMode(traversalMode);
+    }
+
+    public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, Weighting weighting, TraversalMode traversalMode) {
+        return new PrepareContractionHierarchies(ghStorage.getGraph(CHGraph.class, weighting), weighting, traversalMode);
     }
 
     public PrepareContractionHierarchies setParams(PMap pMap) {
@@ -111,9 +115,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 + ", lazy-overhead: " + (int) (100 * ((checkCounter / (double) initSize) - 1)) + "%"
                 + ", " + Helper.getMemInfo());
 
-        int edgeCount = ghStorage.getAllEdges().length();
+        int edgeCount = prepareGraph.getOriginalEdges();
         logger.info("graph now - num edges: {}, num nodes: {}, num shortcuts: {}",
-                nf(edgeCount), nf(ghStorage.getNodes()), nf(prepareGraph.getAllEdges().length() - edgeCount));
+                nf(edgeCount), nf(prepareGraph.getNodes()), nf(prepareGraph.getEdges() - edgeCount));
     }
 
     protected void runGraphContraction() {
@@ -169,7 +173,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private void initFromGraph() {
-        ghStorage.freeze();
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
         final EdgeFilter allFilter = DefaultEdgeFilter.allEdges(prepareFlagEncoder);
         maxLevel = prepareGraph.getNodes();
@@ -183,7 +186,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new float[prepareGraph.getNodes()];
-        nodeContractor = createNodeContractor(ghStorage, traversalMode);
+        nodeContractor = createNodeContractor(prepareGraph, traversalMode);
         nodeContractor.initFromGraph();
     }
 
@@ -344,7 +347,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     public Weighting getWeighting() {
-        return prepareGraph.getWeighting();
+        return weighting;
     }
 
     private String getTimesAsString() {
@@ -373,9 +376,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private NodeContractor createNodeContractor(Graph graph, TraversalMode traversalMode) {
         if (traversalMode.isEdgeBased()) {
             TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased(graph);
-            return new EdgeBasedNodeContractor(ghStorage, prepareGraph, chTurnWeighting, pMap);
+            return new EdgeBasedNodeContractor(prepareGraph, chTurnWeighting, pMap);
         } else {
-            return new NodeBasedNodeContractor(ghStorage, prepareGraph, weighting, pMap);
+            return new NodeBasedNodeContractor(prepareGraph, weighting, pMap);
         }
     }
 

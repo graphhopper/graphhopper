@@ -20,6 +20,7 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -41,8 +42,8 @@ import static com.graphhopper.util.Helper.nf;
 public class ManualPrepareContractionHierarchies extends PrepareContractionHierarchies {
     private List<Integer> contractionOrder = new ArrayList<>();
 
-    public ManualPrepareContractionHierarchies(GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
-        super(ghStorage, chGraph, traversalMode);
+    public ManualPrepareContractionHierarchies(CHGraph chGraph, Weighting weighting, TraversalMode traversalMode) {
+        super(chGraph, weighting, traversalMode);
     }
 
     ManualPrepareContractionHierarchies setContractionOrder(List<Integer> contractionOrder) {

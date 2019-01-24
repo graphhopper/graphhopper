@@ -21,6 +21,8 @@ import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Extended graph interface which supports Contraction Hierarchies. Ie. storing and retrieving the
@@ -31,6 +33,7 @@ import com.graphhopper.util.CHEdgeIteratorState;
  * @author Peter Karich
  */
 public interface CHGraph extends Graph {
+
     /**
      * This methods sets the level of the specified node.
      */
@@ -59,6 +62,24 @@ public interface CHGraph extends Graph {
     @Override
     CHEdgeExplorer createEdgeExplorer(EdgeFilter filter);
 
+    EdgeExplorer createOriginalEdgeExplorer();
+
+    EdgeExplorer createOriginalEdgeExplorer(EdgeFilter filter);
+
     @Override
     AllCHEdgesIterator getAllEdges();
+
+    /**
+     * Disconnects the edges (higher to lower node) via the specified edgeState pointing from lower to
+     * higher node.
+     * <p>
+     *
+     * @param edgeState the edge from lower to higher
+     */
+    void disconnect(CHEdgeExplorer edgeExplorer, EdgeIteratorState edgeState);
+
+    /**
+     * @return the number of original edges in this graph (without shortcuts)
+     */
+    int getOriginalEdges();
 }
