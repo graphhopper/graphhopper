@@ -763,7 +763,7 @@ public class CHTurnCostTest {
                 return contractionOrder.size();
             }
         };
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(graph, chGraph, TraversalMode.EDGE_BASED_2DIR)
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph, weighting, TraversalMode.EDGE_BASED_2DIR)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         ch.doWork();
         return ch;

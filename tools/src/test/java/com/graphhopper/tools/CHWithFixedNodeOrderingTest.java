@@ -58,7 +58,7 @@ public class CHWithFixedNodeOrderingTest {
         NodeOrderingProvider nodeOrderingProvider = chGraph.getNodeOrderingProvider();
         boolean edgeBased = false;
         TraversalMode traversalMode = edgeBased ? TraversalMode.EDGE_BASED_2DIR : TraversalMode.NODE_BASED;
-        PrepareContractionHierarchies pch = new PrepareContractionHierarchies(ghStorage, otherChGraph, traversalMode)
+        PrepareContractionHierarchies pch = new PrepareContractionHierarchies(otherChGraph, otherWeighting, traversalMode)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         pch.doWork();
         runPerformanceTest(ghStorage, otherChGraph, pch, seed, iterations);
@@ -73,7 +73,7 @@ public class CHWithFixedNodeOrderingTest {
 
         // create CH
         CHGraphImpl chGraph = ghStorage.getGraph(CHGraphImpl.class, weighting);
-        PrepareContractionHierarchies pch = new PrepareContractionHierarchies(ghStorage, chGraph, TraversalMode.NODE_BASED);
+        PrepareContractionHierarchies pch = new PrepareContractionHierarchies(chGraph, weighting, TraversalMode.NODE_BASED);
         pch.doWork();
 
         // check performance

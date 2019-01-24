@@ -122,7 +122,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private void logFinalGraphStats() {
         int edgeCount = prepareGraph.getOriginalEdges();
         logger.info("took: {}s, graph now - num edges: {}, num nodes: {}, num shortcuts: {}",
-                (int) allSW.getSeconds(), nf(edgeCount), nf(ghStorage.getNodes()), nf(prepareGraph.getEdges() - edgeCount));
+                (int) allSW.getSeconds(), nf(edgeCount), nf(prepareGraph.getNodes()), nf(prepareGraph.getEdges() - edgeCount));
     }
 
     private void runGraphContraction() {
