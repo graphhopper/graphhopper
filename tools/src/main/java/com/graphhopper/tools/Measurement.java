@@ -94,7 +94,7 @@ public class Measurement {
                 int edges = getGraphHopperStorage().getAllEdges().length();
                 if (getCHFactoryDecorator().hasWeightings()) {
                     Weighting weighting = getCHFactoryDecorator().getWeightings().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getAllEdges().length();
+                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getEdges();
                     put(Parameters.CH.PREPARE + "shortcuts", edgesAndShortcuts - edges);
                 }
             }

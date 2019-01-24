@@ -27,10 +27,10 @@
 package com.conveyal.gtfs;
 
 import com.conveyal.gtfs.error.GTFSError;
-import com.conveyal.gtfs.model.*;
+import com.conveyal.gtfs.error.GeneralError;
 import com.conveyal.gtfs.model.Calendar;
+import com.conveyal.gtfs.model.*;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.ExecutionError;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateList;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -45,13 +45,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.IOError;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentNavigableMap;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import java.util.zip.ZipEntry;
@@ -111,7 +109,7 @@ public class GTFSFeed implements Cloneable, Closeable {
      *
      * Interestingly, all references are resolvable when tables are loaded in alphabetical order.
      */
-    public void loadFromFile(ZipFile zip, String fid) throws Exception {
+    public void loadFromFile(ZipFile zip, String fid) throws IOException {
         if (this.loaded) throw new UnsupportedOperationException("Attempt to load GTFS into existing database");
 
         // NB we don't have a single CRC for the file, so we combine all the CRCs of the component files. NB we are not
@@ -143,6 +141,9 @@ public class GTFSFeed implements Cloneable, Closeable {
         db.getAtomicString("feed_id").set(feedId);
 
         new Agency.Loader(this).loadTable(zip);
+        if (agency.isEmpty()) {
+            errors.add(new GeneralError("agency", 0, "agency_id", "Need at least one agency."));
+        }
 
         // calendars and calendar dates are joined into services. This means a lot of manipulating service objects as
         // they are loaded; since mapdb keys/values are immutable, load them in memory then copy them to MapDB once
@@ -170,8 +171,11 @@ public class GTFSFeed implements Cloneable, Closeable {
         loaded = true;
     }
 
-    public void loadFromFile(ZipFile zip) throws Exception {
+    public void loadFromFileAndLogErrors(ZipFile zip) throws IOException {
         loadFromFile(zip, null);
+        for (GTFSError error : errors) {
+            LOG.error(error.getMessageWithContext());
+        }
     }
 
     public boolean hasFeedInfo () {
@@ -348,26 +352,17 @@ public class GTFSFeed implements Cloneable, Closeable {
     }
 
     /** Create a GTFS feed connected to a particular DB, which will be created if it does not exist. */
-    public GTFSFeed (String dbFile) throws IOException, ExecutionException {
-        this(constructDB(dbFile)); // TODO db.close();
+    public GTFSFeed(File file) {
+        this(constructDB(file));
     }
 
-    private static DB constructDB(String dbFile) {
-        DB db;
-        try{
-            DBMaker dbMaker = DBMaker.newFileDB(new File(dbFile));
-            db = dbMaker
-                    .transactionDisable()
-                    .mmapFileEnable()
-                    .asyncWriteEnable()
-                    .compressionEnable()
-//                     .cacheSize(1024 * 1024) this bloats memory consumption
-                    .make();
-            return db;
-        } catch (ExecutionError | IOError | Exception e) {
-            LOG.error("Could not construct db from file.", e);
-            return null;
-        }
+    private static DB constructDB(File file) {
+        return DBMaker.newFileDB(file)
+                .transactionDisable()
+                .mmapFileEnable()
+                .asyncWriteEnable()
+                .compressionEnable()
+                .make();
     }
 
     private GTFSFeed (DB db) {
