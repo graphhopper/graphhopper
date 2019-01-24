@@ -12,6 +12,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.MiniPerfTest;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,7 @@ public class CHWithFixedNodeOrderingTest {
      * run this first ...
      */
     @Test
+    @Ignore
     public void createCHStorage() throws IOException {
         // you probably want to adjust JVM memory settings in pom.xml maven-surefire-plugin argline, it overwrites intellij settings!
         parseOSMPrepareCHAndBenchmark("../local/maps/unterfranken-140101.osm.pbf");
@@ -52,6 +54,7 @@ public class CHWithFixedNodeOrderingTest {
      * ... then this
      */
     @Test
+    @Ignore
     public void runPreparationWithOtherWeighting() {
         ghStorage.loadExisting();
         CHGraphImpl otherChGraph = ghStorage.getGraph(CHGraphImpl.class, otherWeighting);
