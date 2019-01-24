@@ -58,6 +58,31 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     }
 
     @Test
+    public void testLoop() {
+        GraphHopperStorage storage = createGHStorage();
+        EdgeIteratorState edge00 = storage.edge(0, 0);
+        edge00.setFlags(carEncoder.setAccess(edge00.getFlags(), true, false));
+
+        assertEquals(0, GHUtility.createEdgeKey(0, 0, 0, false));
+        assertEquals(1, GHUtility.createEdgeKey(0, 0, 0, true));
+
+        EdgeExplorer expl = storage.createEdgeExplorer();
+        EdgeIterator iter = expl.setBaseNode(0);
+        // the first returned edge state is with reverse==true which might be a bit illogical
+        assertTrue(iter.next());
+        assertEquals(0, iter.getAdjNode());
+        assertEquals(0, iter.getBaseNode());
+        assertFalse(carEncoder.isForward(iter.getFlags()));
+        assertTrue(carEncoder.isBackward(iter.getFlags()));
+        assertTrue(iter.next());
+        assertEquals(0, iter.getAdjNode());
+        assertEquals(0, iter.getBaseNode());
+        assertTrue(carEncoder.isForward(iter.getFlags()));
+        assertFalse(carEncoder.isBackward(iter.getFlags()));
+        assertFalse(iter.next());
+    }
+
+    @Test
     public void testSave_and_fileFormat() throws IOException {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
