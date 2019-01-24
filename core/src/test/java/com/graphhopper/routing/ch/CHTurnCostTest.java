@@ -751,6 +751,7 @@ public class CHTurnCostTest {
 
     private RoutingAlgorithmFactory prepareCH(final List<Integer> contractionOrder) {
         LOGGER.debug("Calculating CH with contraction order {}", contractionOrder);
+        graph.freeze();
         NodeOrderingProvider nodeOrderingProvider = new NodeOrderingProvider() {
             @Override
             public int getNodeIdForLevel(int level) {
@@ -775,7 +776,7 @@ public class CHTurnCostTest {
         pMap.put(NEIGHBOR_UPDATES, 4);
         pMap.put(LOG_MESSAGES, 10);
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies(
-                graph, chGraph, TraversalMode.EDGE_BASED_2DIR);
+                chGraph, weighting, TraversalMode.EDGE_BASED_2DIR);
         ch.setParams(pMap);
         ch.doWork();
         return ch;

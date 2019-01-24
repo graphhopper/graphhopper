@@ -25,7 +25,10 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This class manages all storage related methods and delegates the calls to the associated graphs.
@@ -401,6 +404,11 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public int getNodes() {
         return baseGraph.getNodes();
+    }
+
+    @Override
+    public int getEdges() {
+        return getAllEdges().length();
     }
 
     @Override

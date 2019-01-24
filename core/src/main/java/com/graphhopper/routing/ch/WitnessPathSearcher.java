@@ -106,7 +106,7 @@ public class WitnessPathSearcher {
     private final Stats currentBatchStats = new Stats();
     private final Stats totalStats = new Stats();
 
-    public WitnessPathSearcher(GraphHopperStorage graph, CHGraph chGraph, TurnWeighting turnWeighting, PMap pMap) {
+    public WitnessPathSearcher(CHGraph chGraph, TurnWeighting turnWeighting, PMap pMap) {
         this.chGraph = chGraph;
         this.turnWeighting = turnWeighting;
         extractParams(pMap);
@@ -114,11 +114,11 @@ public class WitnessPathSearcher {
         DefaultEdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(turnWeighting.getFlagEncoder());
         DefaultEdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(turnWeighting.getFlagEncoder());
         outEdgeExplorer = chGraph.createEdgeExplorer(outEdgeFilter);
-        origInEdgeExplorer = graph.createEdgeExplorer(inEdgeFilter);
+        origInEdgeExplorer = chGraph.createOriginalEdgeExplorer(inEdgeFilter);
         maxLevel = chGraph.getNodes();
 
         maxSettledEdges = params.minimumMaxSettledEdges;
-        int numOriginalEdges = graph.getBaseGraph().getAllEdges().length();
+        int numOriginalEdges = chGraph.getOriginalEdges();
         initStorage(2 * numOriginalEdges);
         initCollections();
     }

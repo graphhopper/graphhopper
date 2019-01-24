@@ -210,6 +210,16 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
+    public EdgeExplorer createOriginalEdgeExplorer() {
+        return createOriginalEdgeExplorer(EdgeFilter.ALL_EDGES);
+    }
+
+    @Override
+    public EdgeExplorer createOriginalEdgeExplorer(EdgeFilter filter) {
+        return baseGraph.createEdgeExplorer(filter);
+    }
+
+    @Override
     public final CHEdgeIteratorState getEdgeIteratorState(int edgeId, int endNode) {
         if (isShortcut(edgeId)) {
             if (!chEdgeAccess.isInBounds(edgeId))
@@ -223,6 +233,16 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     @Override
     public int getNodes() {
         return baseGraph.getNodes();
+    }
+
+    @Override
+    public int getEdges() {
+        return getAllEdges().length();
+    }
+
+    @Override
+    public int getOriginalEdges() {
+        return baseGraph.getEdges();
     }
 
     @Override
@@ -256,13 +276,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return toString() + ", shortcuts:" + nf(shortcutCount) + ", nodesCH:(" + nodesCH.getCapacity() / Helper.MB + "MB)";
     }
 
-    /**
-     * Disconnects the edges (higher to lower node) via the specified edgeState pointing from lower to
-     * higher node.
-     * <p>
-     *
-     * @param edgeState the edge from lower to higher
-     */
+    @Override
     public void disconnect(CHEdgeExplorer explorer, EdgeIteratorState edgeState) {
         // search edge with opposite direction but we need to know the previousEdge for the internalEdgeDisconnect so we cannot simply do:
         // EdgeIteratorState tmpIter = getEdgeProps(iter.getEdge(), iter.getBaseNode());

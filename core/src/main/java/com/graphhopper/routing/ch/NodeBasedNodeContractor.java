@@ -47,8 +47,8 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     // each edge can exist in both directions
     private double meanDegree;
 
-    NodeBasedNodeContractor(GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting, PMap pMap) {
-        super(ghStorage, prepareGraph, weighting);
+    NodeBasedNodeContractor(CHGraph prepareGraph, Weighting weighting, PMap pMap) {
+        super(prepareGraph, weighting);
         this.prepareWeighting = new PreparationWeighting(weighting);
         extractParams(pMap);
     }
@@ -81,7 +81,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         // no witness path can be found. this is not really what we want, but changing it requires re-optimizing the
         // graph contraction parameters, because it affects the node contraction order.
         // when this is done there should be no need for this method any longer.
-        meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
+        meanDegree = prepareGraph.getEdges() / prepareGraph.getNodes();
     }
 
     @Override

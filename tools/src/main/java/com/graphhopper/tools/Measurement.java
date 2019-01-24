@@ -92,15 +92,15 @@ public class Measurement {
                 super.prepareCH();
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
-                int edges = getGraphHopperStorage().getAllEdges().length();
+                int edges = getGraphHopperStorage().getEdges();
                 if (!getCHFactoryDecorator().getNodeBasedWeightings().isEmpty()) {
                     Weighting weighting = getCHFactoryDecorator().getNodeBasedWeightings().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getAllEdges().length();
+                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getEdges();
                     put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
                 }
                 if (!getCHFactoryDecorator().getEdgeBasedWeightings().isEmpty()) {
                     Weighting weighting = getCHFactoryDecorator().getEdgeBasedWeightings().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getAllEdges().length();
+                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getEdges();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
                 }
             }

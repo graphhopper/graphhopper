@@ -131,8 +131,7 @@ public class CHAlgoFactoryDecoratorTest {
 
     private PrepareContractionHierarchies createPreparation(Weighting weighting, boolean edgedBased) {
         TraversalMode traversalMode = edgedBased ? EDGE_BASED_2DIR : NODE_BASED;
-        return new PrepareContractionHierarchies(ghStorage, ghStorage.getGraph(CHGraph.class, weighting), traversalMode);
+        return PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, weighting, traversalMode);
     }
-
 
 }

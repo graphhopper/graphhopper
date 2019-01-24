@@ -78,9 +78,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     // counters used for performance analysis
     private int numPolledEdges;
 
-    public EdgeBasedNodeContractor(GraphHopperStorage ghStorage, CHGraph prepareGraph,
+    public EdgeBasedNodeContractor(CHGraph prepareGraph,
                                    TurnWeighting turnWeighting, PMap pMap) {
-        super(ghStorage, prepareGraph, turnWeighting);
+        super(prepareGraph, turnWeighting);
         this.turnWeighting = turnWeighting;
         this.encoder = turnWeighting.getFlagEncoder();
         this.pMap = pMap;
@@ -96,7 +96,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public void initFromGraph() {
         super.initFromGraph();
-        witnessPathSearcher = new WitnessPathSearcher(ghStorage, prepareGraph, turnWeighting, pMap);
+        witnessPathSearcher = new WitnessPathSearcher(prepareGraph, turnWeighting, pMap);
         DefaultEdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(encoder);
         DefaultEdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(encoder);
         DefaultEdgeFilter allEdgeFilter = DefaultEdgeFilter.allEdges(encoder);
@@ -104,10 +104,10 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         outEdgeExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
         allEdgeExplorer = prepareGraph.createEdgeExplorer(allEdgeFilter);
         existingShortcutExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
-        sourceNodeOrigInEdgeExplorer = ghStorage.createEdgeExplorer(inEdgeFilter);
-        targetNodeOrigOutEdgeExplorer = ghStorage.createEdgeExplorer(outEdgeFilter);
-        loopAvoidanceInEdgeExplorer = ghStorage.createEdgeExplorer(inEdgeFilter);
-        loopAvoidanceOutEdgeExplorer = ghStorage.createEdgeExplorer(outEdgeFilter);
+        sourceNodeOrigInEdgeExplorer = prepareGraph.createOriginalEdgeExplorer(inEdgeFilter);
+        targetNodeOrigOutEdgeExplorer = prepareGraph.createOriginalEdgeExplorer(outEdgeFilter);
+        loopAvoidanceInEdgeExplorer = prepareGraph.createOriginalEdgeExplorer(inEdgeFilter);
+        loopAvoidanceOutEdgeExplorer = prepareGraph.createOriginalEdgeExplorer(outEdgeFilter);
         hierarchyDepths = new int[prepareGraph.getNodes()];
     }
 

@@ -57,6 +57,11 @@ public class WrapperGraph implements Graph {
     }
 
     @Override
+    public int getEdges() {
+        return getAllEdges().length();
+    }
+
+    @Override
     public NodeAccess getNodeAccess() {
         return baseGraph.getNodeAccess();
     }
