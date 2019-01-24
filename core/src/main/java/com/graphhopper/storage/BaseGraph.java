@@ -942,6 +942,34 @@ class BaseGraph implements Graph {
             this.nextEdgeId = this.edgeId = edgeId;
         }
 
+        final void init(int edgeKey) {
+            int tmpEdgeId = GHUtility.getEdgeFromEdgeKey(edgeKey);
+            setEdgeId(tmpEdgeId);
+            if (!EdgeIterator.Edge.isValid(edgeId))
+                throw new IllegalArgumentException("fetching the edge requires a valid edgeId but was " + edgeId);
+
+            selectEdgeAccess();
+            edgePointer = edgeAccess.toPointer(tmpEdgeId);
+            baseNode = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEA);
+            if (baseNode == EdgeAccess.NO_NODE)
+                throw new IllegalStateException("content of edgeId " + edgeId + " is marked as invalid - ie. the edge is already removed!");
+
+            adjNode = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEB);
+            // a next() call should return false
+            nextEdgeId = EdgeIterator.NO_EDGE;
+            if (tmpEdgeId * 2 == edgeKey) {
+                reverse = false;
+            } else {
+                reverse = true;
+                int tmp = baseNode;
+                baseNode = adjNode;
+                adjNode = tmp;
+            }
+        }
+
+        /**
+         * @return false if the edge has not a node equal to expectedAdjNode
+         */
         final boolean init(int tmpEdgeId, int expectedAdjNode) {
             setEdgeId(tmpEdgeId);
             if (!EdgeIterator.Edge.isValid(edgeId))
@@ -993,13 +1021,21 @@ class BaseGraph implements Graph {
                 edgePointer = edgeAccess.toPointer(nextEdgeId);
                 edgeId = nextEdgeId;
                 adjNode = edgeAccess.getOtherNode(baseNode, edgePointer);
-                reverse = baseNode > adjNode;
                 freshFlags = false;
 
-                // position to next edge                
-                nextEdgeId = edgeAccess.getEdgeRef(baseNode, adjNode, edgePointer);
-                assert nextEdgeId != edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
-                        + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
+                // this does not properly work as reverse can be true from a previous edge state
+                // if (baseNode == adjNode && !reverse) reverse = true; else
+
+                if (baseNode == adjNode) {
+                    throw new IllegalStateException("Avoid loops on import");
+                    // nextEdgeId stays the same
+                } else {
+                    reverse = baseNode > adjNode;
+                    // position to next edge
+                    nextEdgeId = edgeAccess.getEdgeRef(baseNode, adjNode, edgePointer);
+                    assert nextEdgeId != edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
+                            + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
+                }
 
                 if (filter.accept(this))
                     return true;

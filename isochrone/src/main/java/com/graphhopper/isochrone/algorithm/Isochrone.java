@@ -198,7 +198,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                 double tmpWeight = weighting.calcWeight(iter, reverseFlow, currEdge.edge) + currEdge.weight;
                 if (Double.isInfinite(tmpWeight))
                     continue;
-                
+
                 double tmpDistance = iter.getDistance() + currEdge.distance;
                 long tmpTime = weighting.calcMillis(iter, reverseFlow, currEdge.edge) + currEdge.time;
                 int tmpNode = iter.getAdjNode();
@@ -228,6 +228,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                 throw new AssertionError("Empty edge cannot happen");
             }
         }
+        System.out.println("map: " + fromMap.size());
     }
 
     private double getExploreValue(IsoLabel label) {
