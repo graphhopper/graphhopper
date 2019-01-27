@@ -60,7 +60,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.graphhopper.tools.Import</mainClass>
+                            <mainClass>com.graphhopper.tools.Measurement</mainClass>
                         </manifest>
                     </archive>
                         	                    

@@ -114,7 +114,7 @@ public class GHUtilityTest {
         CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate(new FastestWeighting(carEncoder));
         GHUtility.copyTo(g, lg);
 
-        assertEquals(g.getAllEdges().length(), lg.getAllEdges().length());
+        assertEquals(g.getAllEdges().length(), lg.getEdges());
     }
 
     @Test

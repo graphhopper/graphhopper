@@ -184,6 +184,11 @@ public class RealtimeFeed {
             }
 
             @Override
+            public int getEdges() {
+                return getAllEdges().length();
+            }
+
+            @Override
             public NodeAccess getNodeAccess() {
                 return nodeAccess;
             }

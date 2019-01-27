@@ -157,7 +157,7 @@ public class PrepareContractionHierarchiesTest {
     public void testReturnsCorrectWeighting() {
         GraphHopperStorage g = createGHStorage();
         CHGraph lg = g.getGraph(CHGraph.class);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, tMode);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         assertSame(weighting, prepare.getWeighting());
     }
 
@@ -165,10 +165,10 @@ public class PrepareContractionHierarchiesTest {
     public void testAddShortcuts() {
         GraphHopperStorage g = createExampleGraph();
         CHGraph lg = g.getGraph(CHGraph.class);
-        int old = lg.getAllEdges().length();
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, tMode);
+        int old = lg.getEdges();
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.doWork();
-        assertEquals(old + 2, lg.getAllEdges().length());
+        assertEquals(old + 2, lg.getEdges());
     }
 
     @Test
@@ -177,10 +177,10 @@ public class PrepareContractionHierarchiesTest {
         CHGraph lg = g.getGraph(CHGraph.class);
         initShortcutsGraph(lg);
         int oldCount = g.getAllEdges().length();
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, tMode);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.doWork();
-        assertEquals(oldCount, g.getAllEdges().length());
-        assertEquals(oldCount + 7, lg.getAllEdges().length());
+        assertEquals(oldCount, g.getEdges());
+        assertEquals(oldCount + 7, lg.getEdges());
     }
 
     @Test
@@ -196,7 +196,7 @@ public class PrepareContractionHierarchiesTest {
         g.freeze();
         int oldCount = GHUtility.count(lg.getAllEdges());
         assertEquals(6, oldCount);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, tMode);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
         assertEquals(oldCount + 2, GHUtility.count(lg.getAllEdges()));
@@ -213,7 +213,7 @@ public class PrepareContractionHierarchiesTest {
         initDirected2(g);
         int oldCount = GHUtility.count(g.getAllEdges());
         assertEquals(19, oldCount);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, tMode);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.doWork();
         // PrepareTowerNodesShortcutsTest.printEdges(g);
         assertEquals(oldCount, g.getAllEdges().length());
@@ -221,7 +221,7 @@ public class PrepareContractionHierarchiesTest {
 
         long numShortcuts = 9;
         assertEquals(numShortcuts, prepare.getShortcuts());
-        assertEquals(oldCount + numShortcuts, lg.getAllEdges().length());
+        assertEquals(oldCount + numShortcuts, lg.getEdges());
         assertEquals(oldCount + numShortcuts, GHUtility.count(lg.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(0, 10);
@@ -286,10 +286,10 @@ public class PrepareContractionHierarchiesTest {
         CHGraph lg = g.getGraph(CHGraph.class);
         initRoundaboutGraph(g);
         int oldCount = g.getAllEdges().length();
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, tMode);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.doWork();
-        assertEquals(oldCount, g.getAllEdges().length());
-        assertEquals(oldCount + 23, lg.getAllEdges().length());
+        assertEquals(oldCount, g.getEdges());
+        assertEquals(oldCount + 23, lg.getEdges());
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(4, 7);
         assertEquals(IntArrayList.from(4, 5, 6, 7), p.calcNodes());
@@ -346,10 +346,10 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testUnpackingOrder() {
-        GraphHopperStorage ghStorage = createGHStorage();
-        CHGraph lg = ghStorage.getGraph(CHGraph.class);
-        initUnpackingGraph(ghStorage, lg, weighting);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, ghStorage, lg, tMode);
+        GraphHopperStorage g = createGHStorage();
+        CHGraph lg = g.getGraph(CHGraph.class);
+        initUnpackingGraph(g, lg, weighting);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.getDistance(), 1e-5);
@@ -358,12 +358,12 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testUnpackingOrder_Fastest() {
-        GraphHopperStorage ghStorage = createGHStorage();
-        CHGraph lg = ghStorage.getGraph(CHGraph.class);
+        GraphHopperStorage g = createGHStorage();
+        CHGraph lg = g.getGraph(CHGraph.class);
         Weighting w = new FastestWeighting(carEncoder);
-        initUnpackingGraph(ghStorage, lg, w);
+        initUnpackingGraph(g, lg, w);
 
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, ghStorage, lg, tMode);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.getDistance(), 1e-1);
@@ -381,7 +381,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(0, 1, 4, true);
         g.edge(0, 2, 10, true);
         g.edge(0, 3, 10, true);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, tMode);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.doWork();
         assertEquals(0, prepare.getShortcuts());
     }
@@ -405,7 +405,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(3, 4, 1, true);
         g.edge(6, 3, 1, true);
 
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, tMode);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
     }
@@ -493,15 +493,24 @@ public class PrepareContractionHierarchiesTest {
         checkPath(ghStorage, bikeWeighting, 9, 5, IntArrayList.from(3, 10, 14, 16, 13, 12));
     }
 
-    void checkPath(GraphHopperStorage ghStorage, Weighting w, int expShortcuts, double expDistance, IntIndexedContainer expNodes) {
-        CHGraph lg = ghStorage.getGraph(CHGraph.class, w);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, ghStorage, lg, tMode);
+    void checkPath(GraphHopperStorage g, Weighting w, int expShortcuts, double expDistance, IntIndexedContainer expNodes) {
+        CHGraph lg = g.getGraph(CHGraph.class, w);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg, w);
         prepare.doWork();
         assertEquals(w.toString(), expShortcuts, prepare.getShortcuts());
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, w, tMode));
         Path p = algo.calcPath(3, 12);
         assertEquals(w.toString(), expDistance, p.getDistance(), 1e-5);
         assertEquals(w.toString(), expNodes, p.calcNodes());
+    }
+
+    private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHGraph lg) {
+        return createPrepareContractionHierarchies(g, lg, weighting);
+    }
+
+    private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHGraph lg, Weighting w) {
+        g.freeze();
+        return new PrepareContractionHierarchies(lg, w, tMode);
     }
 
 }

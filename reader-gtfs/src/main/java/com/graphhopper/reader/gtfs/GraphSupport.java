@@ -57,6 +57,11 @@ class GraphSupport {
             }
 
             @Override
+            public int getEdges() {
+                return baseGraph.getEdges();
+            }
+
+            @Override
             public NodeAccess getNodeAccess() {
                 return baseGraph.getNodeAccess();
             }

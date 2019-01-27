@@ -366,7 +366,11 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                             t.transfer.min_transfer_time = (int) (t.time / 1000L);
                             gtfsFeed.transfers.put(t.id, t.transfer);
                         });
-                gtfsReader.buildPtNetwork();
+                try {
+                    gtfsReader.buildPtNetwork();
+                } catch (Exception e) {
+                    throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
+                }
             }
             graphHopperStorage.flush();
             return graphHopperStorage;
