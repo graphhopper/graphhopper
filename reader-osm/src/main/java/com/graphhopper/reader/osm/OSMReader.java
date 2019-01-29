@@ -660,7 +660,7 @@ public class OSMReader implements DataReader {
                         newEdges.add(addEdge(firstNode, newEndNode, pointList, flags, wayOsmId));
                         pointList.clear();
                         pointList.add(nodeAccess, newEndNode);
-                        tmpNode = firstNode;
+                        firstNode = newEndNode;
                     }
 
                     pointList.add(nodeAccess, tmpNode);

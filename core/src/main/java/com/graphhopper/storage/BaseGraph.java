@@ -1031,16 +1031,11 @@ class BaseGraph implements Graph {
                 // this does not properly work as reverse can be true from a previous edge state
                 // if (baseNode == adjNode && !reverse) reverse = true; else
 
-                if (baseNode == adjNode) {
-                    throw new IllegalStateException("Avoid loops on import");
-                    // nextEdgeId stays the same
-                } else {
-                    reverse = baseNode > adjNode;
-                    // position to next edge
-                    nextEdgeId = edgeAccess.getEdgeRef(baseNode, adjNode, edgePointer);
-                    assert nextEdgeId != edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
-                            + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
-                }
+                reverse = baseNode > adjNode;
+                // position to next edge
+                nextEdgeId = edgeAccess.getEdgeRef(baseNode, adjNode, edgePointer);
+                assert nextEdgeId != edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
+                        + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
 
                 if (filter.accept(this))
                     return true;
