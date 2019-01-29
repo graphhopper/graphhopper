@@ -228,7 +228,6 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                 throw new AssertionError("Empty edge cannot happen");
             }
         }
-        System.out.println("map: " + fromMap.size());
     }
 
     private double getExploreValue(IsoLabel label) {

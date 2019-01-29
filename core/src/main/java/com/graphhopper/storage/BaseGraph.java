@@ -947,31 +947,6 @@ class BaseGraph implements Graph {
             this.nextEdgeId = this.edgeId = edgeId;
         }
 
-        final void init(int edgeKey) {
-            int tmpEdgeId = GHUtility.getEdgeFromEdgeKey(edgeKey);
-            setEdgeId(tmpEdgeId);
-            if (!EdgeIterator.Edge.isValid(edgeId))
-                throw new IllegalArgumentException("fetching the edge requires a valid edgeId but was " + edgeId);
-
-            selectEdgeAccess();
-            edgePointer = edgeAccess.toPointer(tmpEdgeId);
-            baseNode = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEA);
-            if (baseNode == EdgeAccess.NO_NODE)
-                throw new IllegalStateException("content of edgeId " + edgeId + " is marked as invalid - ie. the edge is already removed!");
-
-            adjNode = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEB);
-            // a next() call should return false
-            nextEdgeId = EdgeIterator.NO_EDGE;
-            if (tmpEdgeId * 2 == edgeKey) {
-                reverse = false;
-            } else {
-                reverse = true;
-                int tmp = baseNode;
-                baseNode = adjNode;
-                adjNode = tmp;
-            }
-        }
-
         /**
          * @return false if the edge has not a node equal to expectedAdjNode
          */
