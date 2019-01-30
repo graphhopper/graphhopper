@@ -947,6 +947,9 @@ class BaseGraph implements Graph {
             this.nextEdgeId = this.edgeId = edgeId;
         }
 
+        /**
+         * @return false if the edge has not a node equal to expectedAdjNode
+         */
         final boolean init(int tmpEdgeId, int expectedAdjNode) {
             setEdgeId(tmpEdgeId);
             if (!EdgeIterator.Edge.isValid(edgeId))
@@ -998,10 +1001,13 @@ class BaseGraph implements Graph {
                 edgePointer = edgeAccess.toPointer(nextEdgeId);
                 edgeId = nextEdgeId;
                 adjNode = edgeAccess.getOtherNode(baseNode, edgePointer);
-                reverse = baseNode > adjNode;
                 freshFlags = false;
 
-                // position to next edge                
+                // this does not properly work as reverse can be true from a previous edge state
+                // if (baseNode == adjNode && !reverse) reverse = true; else
+
+                reverse = baseNode > adjNode;
+                // position to next edge
                 nextEdgeId = edgeAccess.getEdgeRef(baseNode, adjNode, edgePointer);
                 assert nextEdgeId != edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
                         + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
