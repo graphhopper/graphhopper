@@ -654,7 +654,7 @@ public class OSMReader implements DataReader {
                     tmpNode = -tmpNode - 3;
 
                     if (firstNode >= 0 && firstNode == tmpNode) {
-                        // loop detected. See #1525. Insert last OSM ID as tower node. Do this for all loops so that users can manipulate loops later arbitrary
+                        // loop detected. See #1525. Insert last OSM ID as tower node. Do this for all loops so that users can manipulate loops later arbitrarily.
                         long lastOsmNodeId = osmNodeIds.get(i - 1);
                         int newEndNode = -handlePillarNode(getNodeMap().get(lastOsmNodeId), lastOsmNodeId, pointList, true) - 3;
                         newEdges.add(addEdge(firstNode, newEndNode, pointList, flags, wayOsmId));
