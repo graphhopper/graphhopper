@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm">
+
+    <!--
+      C - D
+       \ /
+    A - B - E
+    -->
+
+    <node id="1" lat="11" lon="50" uid="A">
+        <tag k="name" v="A"/>
+    </node>
+    <node id="2" lat="12" lon="51" uid="B">
+        <tag k="name" v="B"/>
+    </node>
+    <node id="3" lat="13" lon="52" uid="C">
+        <tag k="name" v="C"/>
+    </node>
+    <node id="4" lat="14" lon="51" uid="D">
+        <tag k="name" v="D"/>
+    </node>
+    <node id="5" lat="15" lon="51" uid="E">
+        <tag k="name" v="E"/>
+    </node>
+
+    <way id="10" uid="85761">
+        <nd ref="1"/>
+        <nd ref="2"/>
+        <nd ref="5"/>
+        <tag k="name" v="A B E"/>
+        <tag k="highway" v="secondary"/>
+    </way>
+
+    <way id="12" uid="85762">
+        <nd ref="2"/>
+        <nd ref="3"/>
+        <nd ref="4"/>
+        <nd ref="2"/>
+        <tag k="name" v="B C D B"/>
+        <tag k="highway" v="secondary"/>
+    </way>
+
+</osm>
