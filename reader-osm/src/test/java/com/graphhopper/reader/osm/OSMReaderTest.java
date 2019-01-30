@@ -395,7 +395,7 @@ public class OSMReaderTest {
 
     @Test
     public void avoidsLoopEdges() {
-        // loops in OSM should be avoided by adding additional tower node (see #1525)
+        // loops in OSM should be avoided by adding additional tower node (see #1525, #1531)
         //     C - D
         //      \ /
         //   A - B - E

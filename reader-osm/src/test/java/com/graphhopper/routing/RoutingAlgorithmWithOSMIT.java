@@ -303,7 +303,7 @@ public class RoutingAlgorithmWithOSMIT {
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
-    // TODO fix later, see #1525
+    // TODO fix later, see #1525, #1531
 //    @Test
 //    public void testLandmarkBug() {
 //        List<OneRun> list = new ArrayList<>();
