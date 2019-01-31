@@ -42,7 +42,9 @@ public abstract class AbstractWeighting implements Weighting {
         long flags = edgeState.getFlags();
         if (reverse && !flagEncoder.isBackward(flags)
                 || !reverse && !flagEncoder.isForward(flags))
-            throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "
+            throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. " +
+                    "(" + edgeState.getBaseNode() + " - " + edgeState.getAdjNode() + ") "
+                    + edgeState.fetchWayGeometry(3) + " " + edgeState.getDistance() + " "
                     + "Reverse:" + reverse + ", fwd:" + flagEncoder.isForward(flags) + ", bwd:" + flagEncoder.isBackward(flags));
 
         double speed = reverse ? flagEncoder.getReverseSpeed(flags) : flagEncoder.getSpeed(flags);
