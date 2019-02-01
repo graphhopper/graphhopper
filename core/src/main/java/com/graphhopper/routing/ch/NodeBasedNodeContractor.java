@@ -149,6 +149,11 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                 meanDegree, nf(dijkstraCount), prepareAlgo.getMemoryUsageAsString());
     }
 
+    @Override
+    boolean isEdgeBased() {
+        return false;
+    }
+
     /**
      * Searches for shortcuts and calls the given handler on each shortcut that is found. The graph is not directly
      * changed by this method.

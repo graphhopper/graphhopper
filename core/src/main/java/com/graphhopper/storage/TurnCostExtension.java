@@ -119,7 +119,7 @@ public class TurnCostExtension implements GraphExtension {
     }
 
     /**
-     * Add a new turn cost entry or clear an existing. See TurnFlagsReadWriteTest for usage examples.
+     * Add a new turn cost entry or clear an existing. See tests for usage examples.
      *
      * @param fromEdge  edge ID
      * @param viaNode   node ID
@@ -135,7 +135,7 @@ public class TurnCostExtension implements GraphExtension {
         long newFlags = turnFlags;
         int next = NO_TURN_ENTRY;
 
-        // determine if we already have an cost entry for this node
+        // determine if we already have a cost entry for this node
         int previousEntryIndex = nodeAccess.getAdditionalNodeField(viaNode);
         if (previousEntryIndex == NO_TURN_ENTRY) {
             // set cost-pointer to this new cost entry

@@ -197,7 +197,7 @@ public class PrepareRoutingSubnetworks {
     /**
      * This method removes networks that will be never be visited by this filter. See #235 for
      * example, small areas like parking lots are sometimes connected to the whole network through a
-     * one-way road. This is clearly an error - but is causes the routing to fail when a point gets
+     * one-way road. This is clearly an error - but it causes the routing to fail when a point gets
      * connected to this small area. This routine removes all these networks from the graph.
      * <p>
      *
@@ -217,7 +217,7 @@ public class PrepareRoutingSubnetworks {
 
     /**
      * This method removes the access to edges available from the nodes contained in the components.
-     * But only if a components' size is smaller then the specified min value.
+     * But only if a components' size is smaller than the specified min value.
      * <p>
      *
      * @return number of removed edges

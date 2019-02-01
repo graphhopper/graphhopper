@@ -65,9 +65,24 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         bestWeightMapTo = new GHIntObjectHashMap<>(size);
     }
 
+    /**
+     * Creates the root shortest path tree entry for the forward or backward search.
+     */
     protected abstract SPTEntry createStartEntry(int node, double weight, boolean reverse);
 
-    protected abstract SPTEntry createEntry(EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse);
+    /**
+     * Creates a new entry of the shortest path tree (a {@link SPTEntry} or one of its subclasses) during a
+     * dijkstra expansion.
+     *
+     * @param edge    the edge that is currently processed for the expansion
+     * @param incEdge the id of the edge that is incoming to the node the edge is pointed at. usually this is the same as
+     *                edge.getEdge(), but for edge-based CH and in case edge is a shortcut incEdge is the original edge
+     *                that is incoming to the node
+     * @param weight  the weight the shortest path three entry should carry
+     * @param parent  the parent entry of in the shortest path tree
+     * @param reverse true if we are currently looking at the backward search, false otherwise
+     */
+    protected abstract SPTEntry createEntry(EdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse);
 
     @Override
     public Path calcPath(int from, int to) {
@@ -190,12 +205,12 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
                 continue;
             SPTEntry entry = bestWeightMap.get(traversalId);
             if (entry == null) {
-                entry = createEntry(iter, weight, currEdge, reverse);
+                entry = createEntry(iter, origEdgeId, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
                 prioQueue.remove(entry);
-                updateEntry(entry, iter, weight, currEdge, reverse);
+                updateEntry(entry, iter, origEdgeId, weight, currEdge, reverse);
                 prioQueue.add(entry);
             } else
                 continue;
@@ -233,7 +248,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         }
     }
 
-    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
+    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
         entry.edge = edge.getEdge();
         entry.weight = weight;
         entry.parent = parent;

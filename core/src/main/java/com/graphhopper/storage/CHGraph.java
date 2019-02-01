@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -60,6 +61,10 @@ public interface CHGraph extends Graph {
 
     @Override
     CHEdgeExplorer createEdgeExplorer(EdgeFilter filter);
+
+    EdgeExplorer createOriginalEdgeExplorer();
+
+    EdgeExplorer createOriginalEdgeExplorer(EdgeFilter filter);
 
     @Override
     AllCHEdgesIterator getAllEdges();

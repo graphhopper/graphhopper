@@ -82,4 +82,6 @@ abstract class AbstractNodeContractor implements NodeContractor {
         originalEdges.ensureCapacity(tmp + 4);
         return originalEdges.getInt(tmp);
     }
+
+    abstract boolean isEdgeBased();
 }

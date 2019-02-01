@@ -1210,6 +1210,16 @@ class BaseGraph implements Graph {
         }
 
         @Override
+        public int getOrigEdgeFirst() {
+            return getEdge();
+        }
+
+        @Override
+        public int getOrigEdgeLast() {
+            return getEdge();
+        }
+
+        @Override
         public String getName() {
             int nameIndexRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_NAME);
             return baseGraph.nameIndex.get(nameIndexRef);

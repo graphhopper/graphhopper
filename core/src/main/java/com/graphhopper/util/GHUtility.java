@@ -21,12 +21,11 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
-import com.graphhopper.routing.util.AllCHEdgesIterator;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.shapes.BBox;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Peter Karich
  */
 public class GHUtility {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GHUtility.class);
     /**
      * This method could throw exception if uncatched problems like index out of bounds etc
      */
@@ -156,6 +156,80 @@ public class GHUtility {
         int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
         System.out.printf(Locale.ROOT,
                 "graph.edge(%d, %d, %f, %s);\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false");
+    }
+
+    public static void buildRandomGraph(Graph graph, long seed, int numNodes, double meanDegree, boolean allowLoops, boolean allowZeroDistance, double pBothDir) {
+        Random random = new Random(seed);
+        for (int i = 0; i < numNodes; ++i) {
+            double lat = 49.4 + (random.nextDouble() * 0.01);
+            double lon = 9.7 + (random.nextDouble() * 0.01);
+            graph.getNodeAccess().setNode(i, lat, lon);
+        }
+        double minDist = Double.MAX_VALUE;
+        double maxDist = Double.MIN_VALUE;
+        int numEdges = (int) (0.5 * meanDegree * numNodes);
+        for (int i = 0; i < numEdges; ++i) {
+            int from = random.nextInt(numNodes);
+            int to = random.nextInt(numNodes);
+            if (!allowLoops && from == to) {
+                continue;
+            }
+            double distance = GHUtility.getDistance(from, to, graph.getNodeAccess());
+            if (!allowZeroDistance) {
+                distance = Math.max(0.001, distance);
+            }
+            // add some random offset for most cases, but also allow duplicate edges with same weight
+            if (random.nextDouble() < 0.8)
+                distance += random.nextDouble() * distance * 0.01;
+            minDist = Math.min(minDist, distance);
+            maxDist = Math.max(maxDist, distance);
+            // using bidirectional edges will increase mean degree of graph above given value
+            boolean bothDirections = random.nextDouble() < pBothDir;
+            graph.edge(from, to, distance, bothDirections);
+        }
+        LOGGER.debug(String.format(Locale.ROOT, "Finished building random graph" +
+                        ", nodes: %d, edges: %d , min distance: %.2f, max distance: %.2f\n",
+                graph.getNodes(), graph.getAllEdges().length(), minDist, maxDist));
+    }
+
+    private static double getDistance(int from, int to, NodeAccess nodeAccess) {
+        double fromLat = nodeAccess.getLat(from);
+        double fromLon = nodeAccess.getLon(from);
+        double toLat = nodeAccess.getLat(to);
+        double toLon = nodeAccess.getLon(to);
+        return Helper.DIST_PLANE.calcDist(fromLat, fromLon, toLat, toLon);
+    }
+
+    public static void addRandomTurnCosts(Graph graph, long seed, FlagEncoder encoder, int maxTurnCost, TurnCostExtension turnCostExtension) {
+        Random random = new Random(seed);
+        double pNodeHasTurnCosts = 0.3;
+        double pEdgePairHasTurnCosts = 0.6;
+        double pCostIsRestriction = 0.1;
+        EdgeExplorer inExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
+        EdgeExplorer outExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+        for (int node = 0; node < graph.getNodes(); ++node) {
+            if (random.nextDouble() < pNodeHasTurnCosts) {
+                EdgeIterator inIter = inExplorer.setBaseNode(node);
+                while (inIter.next()) {
+                    EdgeIterator outIter = outExplorer.setBaseNode(node);
+                    while (outIter.next()) {
+                        if (inIter.getEdge() == outIter.getEdge()) {
+                            // leave u-turns as they are
+                            continue;
+                        }
+                        if (random.nextDouble() < pEdgePairHasTurnCosts) {
+                            boolean restricted = false;
+                            if (random.nextDouble() < pCostIsRestriction) {
+                                restricted = true;
+                            }
+                            double cost = restricted ? 0 : random.nextDouble() * maxTurnCost;
+                            turnCostExtension.addTurnInfo(inIter.getEdge(), node, outIter.getEdge(),
+                                    encoder.getTurnFlags(restricted, cost));
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public static void printInfo(final Graph g, int startNode, final int counts, final EdgeFilter filter) {
@@ -302,7 +376,7 @@ public class GHUtility {
         Directory outdir = guessDirectory(store);
         boolean is3D = store.getNodeAccess().is3D();
 
-        return new GraphHopperStorage(store.getCHWeightings(), outdir, store.getEncodingManager(),
+        return new GraphHopperStorage(store.getNodeBasedCHWeightings(), store.getEdgeBasedCHWeightings(), outdir, store.getEncodingManager(),
                 is3D, store.getExtension()).
                 create(store.getNodes());
     }
@@ -378,6 +452,15 @@ public class GHUtility {
      */
     public static int getEdgeFromEdgeKey(int edgeKey) {
         return edgeKey / 2;
+    }
+
+    /**
+     * Returns the edge key for a given edge id and adjacent node. This is needed in a few places where
+     * the base node is not known.
+     */
+    public static int getEdgeKey(Graph graph, int edgeId, int node, boolean reverse) {
+        EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(edgeId, node);
+        return GHUtility.createEdgeKey(edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode(), edgeId, reverse);
     }
 
     /**
@@ -496,7 +579,22 @@ public class GHUtility {
         }
 
         @Override
-        public void setSkippedEdges(int edge1, int edge2) {
+        public CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int getOrigEdgeFirst() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int getOrigEdgeLast() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
