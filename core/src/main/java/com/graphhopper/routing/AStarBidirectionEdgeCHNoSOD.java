@@ -24,6 +24,9 @@ import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 
+/**
+ * @author easbar
+ */
 public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD {
     private final boolean useHeuristicForNodeOrder = false;
     private ConsistentWeightApproximator weightApprox;

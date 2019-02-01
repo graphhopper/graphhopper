@@ -30,6 +30,9 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
+/**
+ * @author easbar
+ */
 public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     private int from;
     private int to;

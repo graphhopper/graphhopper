@@ -45,6 +45,8 @@ import static com.graphhopper.util.Helper.nf;
  * This class is mostly concerned with triggering the required local searches and introducing the necessary shortcuts
  * or calculating the node priority, while the actual searches for witness paths are delegated to
  * {@link WitnessPathSearcher}.
+ *
+ * @author easbar
  */
 class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
