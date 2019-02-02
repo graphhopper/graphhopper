@@ -18,7 +18,9 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.flex.FlexModel;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
@@ -51,6 +53,7 @@ public class FlexWeighting implements Weighting {
     private ObjectEncodedValue roadEnvEnc;
     private ObjectEncodedValue roadClassEnc;
     private ObjectEncodedValue tollEnc;
+    private ObjectEncodedValue surfaceEnc;
     private FlagEncoder flagEncoder;
     private double distanceFactor;
 
@@ -97,6 +100,15 @@ public class FlexWeighting implements Weighting {
                 }
             });
 
+        if (!model.getTimeOffset().getSurface().isEmpty())
+            timeOffsetCalcs.add(new TimeOffsetCalc() {
+                @Override
+                public double calcSeconds(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    Double tmp = model.getTimeOffset().getSurface().get(edgeState.get(surfaceEnc).toString());
+                    return tmp != null ? tmp : 1;
+                }
+            });
+
         noAccessCalcs = new ArrayList<>();
         if (!model.getNoAccess().getRoadClass().isEmpty())
             noAccessCalcs.add(new NoAccessCalc() {
@@ -121,6 +133,13 @@ public class FlexWeighting implements Weighting {
                     return model.getNoAccess().getToll().contains(edgeState.get(tollEnc));
                 }
             });
+        if (!model.getNoAccess().getSurface().isEmpty())
+            noAccessCalcs.add(new NoAccessCalc() {
+                @Override
+                public boolean blocked(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    return model.getNoAccess().getSurface().contains(edgeState.get(surfaceEnc));
+                }
+            });
 
         factorCalcs = new ArrayList<>();
         if (!model.getFactor().getRoadClass().isEmpty())
@@ -141,7 +160,7 @@ public class FlexWeighting implements Weighting {
                 }
             });
 
-        if (!model.getFactor().getToll().isEmpty()) {
+        if (!model.getFactor().getToll().isEmpty())
             factorCalcs.add(new FactorCalc() {
                 @Override
                 public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
@@ -149,7 +168,15 @@ public class FlexWeighting implements Weighting {
                     return tmp != null ? tmp : 1;
                 }
             });
-        }
+
+        if (!model.getFactor().getSurface().isEmpty())
+            factorCalcs.add(new FactorCalc() {
+                @Override
+                public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    Double tmp = model.getFactor().getSurface().get(edgeState.get(surfaceEnc).toString());
+                    return tmp != null ? tmp : 1;
+                }
+            });
     }
 
     public FlexWeighting init(EncodingManager encodingManager) {
@@ -167,6 +194,7 @@ public class FlexWeighting implements Weighting {
         roadEnvEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_ENV, ObjectEncodedValue.class);
         roadClassEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_CLASS, ObjectEncodedValue.class);
         tollEnc = encodingManager.getEncodedValue(EncodingManager.TOLL, ObjectEncodedValue.class);
+        surfaceEnc = encodingManager.getEncodedValue(EncodingManager.SURFACE, ObjectEncodedValue.class);
 
         distanceFactor = model.getDistanceFactor();
         return this;

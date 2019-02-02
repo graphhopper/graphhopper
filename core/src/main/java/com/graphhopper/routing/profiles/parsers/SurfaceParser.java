@@ -31,7 +31,7 @@ public class SurfaceParser extends AbstractTagParser<ObjectEncodedValue> {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
-        String surfaceValue = way.getTag("surface");
+        String surfaceValue = way.getTag("surface", "");
         int intValue = encodedValue.indexOf(surfaceValue);
         encodedValue.setObject(false, edgeFlags, encodedValue.getObjects()[intValue]);
         return edgeFlags;

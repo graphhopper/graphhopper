@@ -33,6 +33,7 @@ import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.profiles.parsers.RoadClassParser;
 import com.graphhopper.routing.profiles.parsers.RoadEnvironmentParser;
+import com.graphhopper.routing.profiles.parsers.SurfaceParser;
 import com.graphhopper.routing.profiles.parsers.TollParser;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
@@ -582,7 +583,8 @@ public class GraphHopper implements GraphHopperAPI {
             }
 
             // TODO add dependent on DataFlagEncoder and FlexModel
-            EncodingManager.Builder em = EncodingManager.start(bytesForFlags).put(new RoadEnvironmentParser()).put(new RoadClassParser()).put(new TollParser());
+            EncodingManager.Builder em = EncodingManager.start(bytesForFlags).
+                    put(new RoadEnvironmentParser()).put(new RoadClassParser()).put(new TollParser()).put(new SurfaceParser());
             for (FlagEncoder fe : flagEncoderSet.values())
                 em.add(fe);
 

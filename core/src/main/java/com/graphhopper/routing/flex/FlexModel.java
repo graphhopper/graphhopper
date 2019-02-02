@@ -19,6 +19,7 @@ package com.graphhopper.routing.flex;
 
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.profiles.Surface;
 import com.graphhopper.routing.profiles.Toll;
 
 import java.util.HashMap;
@@ -119,6 +120,7 @@ public class FlexModel {
     public static class Factor {
         Map<String, Double> roadClass = new HashMap<>();
         Map<String, Double> roadEnvironment = new HashMap<>();
+        Map<String, Double> surface = new HashMap<>();
         Map<String, Double> toll = new HashMap<>();
         boolean reverseOneway;
 
@@ -134,6 +136,10 @@ public class FlexModel {
             return toll;
         }
 
+        public Map<String, Double> getSurface() {
+            return surface;
+        }
+
         public boolean isReverseOneway() {
             return reverseOneway;
         }
@@ -146,6 +152,7 @@ public class FlexModel {
         Map<String, Double> roadClass = new HashMap<>();
         Map<String, Double> roadEnvironment = new HashMap<>();
         Map<String, Double> toll = new HashMap<>();
+        Map<String, Double> surface = new HashMap<>();
 
         public Map<String, Double> getRoadClass() {
             return roadClass;
@@ -158,12 +165,17 @@ public class FlexModel {
         public Map<String, Double> getToll() {
             return toll;
         }
+
+        public Map<String, Double> getSurface() {
+            return surface;
+        }
     }
 
     public static class NoAccess {
         Set<RoadClass> roadClass = new HashSet<>();
         Set<RoadEnvironment> roadEnvironment = new HashSet<>();
         Set<Toll> toll = new HashSet<>();
+        Set<Surface> surface = new HashSet<>();
         double maxHeight;
         double maxWeight;
         double maxWidth;
@@ -190,6 +202,10 @@ public class FlexModel {
 
         public Set<Toll> getToll() {
             return toll;
+        }
+
+        public Set<Surface> getSurface() {
+            return surface;
         }
     }
 }
