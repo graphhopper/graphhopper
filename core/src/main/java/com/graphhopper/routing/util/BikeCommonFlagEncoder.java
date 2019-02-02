@@ -90,7 +90,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         potentialBarriers.add("gate");
         // potentialBarriers.add("lift_gate");
         potentialBarriers.add("swing_gate");
+        potentialBarriers.add("cattle_grid");
 
+        absoluteBarriers.add("fence");
         absoluteBarriers.add("stile");
         absoluteBarriers.add("turnstile");
 
@@ -210,10 +212,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
-        registerNewEncodedValue.add(speedEncoder = new DecimalEncodedValueImpl(prefix + "average_speed", speedBits, 0, speedFactor, speedTwoDirections));
-        registerNewEncodedValue.add(unpavedEncoder = new BooleanEncodedValueImpl(prefix + "paved", false));
-        registerNewEncodedValue.add(wayTypeEncoder = new IntEncodedValueImpl(prefix + "waytype", 2, 0, false));
-        registerNewEncodedValue.add(priorityWayEncoder = new DecimalEncodedValueImpl(prefix + "priority", 3, 0, 1.0 / PriorityCode.BEST.getValue(), false));
+        registerNewEncodedValue.add(speedEncoder = new FactorizedDecimalEncodedValue(prefix + "average_speed", speedBits, speedFactor, speedTwoDirections));
+        registerNewEncodedValue.add(unpavedEncoder = new SimpleBooleanEncodedValue(prefix + "paved", false));
+        registerNewEncodedValue.add(wayTypeEncoder = new SimpleIntEncodedValue(prefix + "waytype", 2, false));
+        registerNewEncodedValue.add(priorityWayEncoder = new FactorizedDecimalEncodedValue(prefix + "priority", 3, PriorityCode.getFactor(1), false));
     }
 
     @Override
@@ -356,7 +358,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         if (relationFlags != 0)
             priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
-        priorityWayEncoder.setDecimal(false, edgeFlags, (double) handlePriority(way, wayTypeSpeed, priorityFromRelation) / PriorityCode.BEST.getValue());
+        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(way, wayTypeSpeed, priorityFromRelation)));
         return edgeFlags;
     }
 

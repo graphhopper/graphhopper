@@ -96,7 +96,7 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 	private Map<Integer, byte[]> tripDescriptors;
 	private Map<Integer, Integer> stopSequences;
 
-	private Map<Integer, String> routes;
+	private Map<Integer, PlatformDescriptor> routes;
 
 	private Map<String, Fare> fares;
 	private Map<String, int[]> boardEdgesForTrip;
@@ -104,7 +104,7 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 
 	private Map<String, Integer> stationNodes;
 
-	enum EdgeType {
+	public enum EdgeType {
 		HIGHWAY, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, ALIGHT, OVERNIGHT, TRANSFER, WAIT, WAIT_ARRIVAL
     }
 
@@ -277,7 +277,7 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 	}
 
     @Override
-    public Map<Integer, String> getRoutes() {
+    public Map<Integer, PlatformDescriptor> getRoutes() {
         return routes;
     }
 

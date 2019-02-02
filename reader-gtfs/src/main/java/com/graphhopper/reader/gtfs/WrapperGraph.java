@@ -21,8 +21,8 @@ package com.graphhopper.reader.gtfs;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
@@ -217,22 +217,22 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public <T extends Enum> T get(EnumEncodedValue<T> property) {
+            public IndexBased get(ObjectEncodedValue property) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
+            public IndexBased getReverse(ObjectEncodedValue property) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
+            public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
+            public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
                 throw new UnsupportedOperationException();
             }
 

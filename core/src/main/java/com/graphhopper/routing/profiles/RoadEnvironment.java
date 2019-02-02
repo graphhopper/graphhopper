@@ -17,24 +17,32 @@
  */
 package com.graphhopper.routing.profiles;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.graphhopper.routing.util.EncodingManager;
 
-public enum RoadEnvironment {
+import java.util.Arrays;
+import java.util.List;
 
-    DEFAULT("_default"), BRIDGE("bridge"), TUNNEL("tunnel"), FORD("ford"), AERIALWAY("aerialway");
+public class RoadEnvironment extends AbstractIndexBased {
+    public static final RoadEnvironment BRIDGE = new RoadEnvironment("bridge", 1),
+            TUNNEL = new RoadEnvironment("tunnel", 2), FORD = new RoadEnvironment("ford", 3);
+    private static final RoadEnvironment AERIALWAY = new RoadEnvironment("aerialway", 4);
+    private static final List<RoadEnvironment> values = Arrays.asList(new RoadEnvironment("_default", 0), BRIDGE, TUNNEL, FORD, AERIALWAY);
 
-    private final String name;
-
-    RoadEnvironment(String name) {
-        this.name = name;
+    private RoadEnvironment(String name, int ordinal) {
+        super(name, ordinal);
     }
 
-    @Override
-    public String toString() {
-        return name;
+    @JsonCreator
+    static RoadEnvironment deserialize(String name) {
+        for (RoadEnvironment rc : values) {
+            if (rc.toString().equals(name))
+                return rc;
+        }
+        throw new IllegalArgumentException("Cannot find RoadEnvironment " + name);
     }
 
-    public static EnumEncodedValue<RoadEnvironment> create() {
-        return new EnumEncodedValueImpl<>(EncodingManager.ROAD_ENV, values(), DEFAULT);
+    public static ObjectEncodedValue create() {
+        return new MappedObjectEncodedValue(EncodingManager.ROAD_ENV, values);
     }
 }

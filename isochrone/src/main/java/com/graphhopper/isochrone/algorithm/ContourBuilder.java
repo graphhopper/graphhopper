@@ -13,10 +13,10 @@
 
 package com.graphhopper.isochrone.algorithm;
 
-import com.vividsolutions.jts.algorithm.CGAlgorithms;
-import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.triangulate.quadedge.QuadEdge;
-import com.vividsolutions.jts.triangulate.quadedge.QuadEdgeSubdivision;
+import org.locationtech.jts.algorithm.CGAlgorithms;
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.triangulate.quadedge.QuadEdge;
+import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 
 import java.util.*;
 
@@ -40,7 +40,7 @@ public class ContourBuilder {
         this.triangulation = triangulation;
     }
 
-    public Geometry computeIsoline(double z0) {
+    public MultiPolygon computeIsoline(double z0) {
         Set<QuadEdge> processed = new HashSet<>();
         List<LinearRing> rings = new ArrayList<>();
 
@@ -107,8 +107,8 @@ public class ContourBuilder {
     }
 
     private int cut(double za, double zb, double z0) {
-        if (za < z0 && zb > z0) return 1;
-        if (za > z0 && zb < z0) return -1;
+        if (za <= z0 && zb > z0) return 1;
+        if (za > z0 && zb <= z0) return -1;
         return 0;
     }
 

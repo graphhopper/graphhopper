@@ -17,52 +17,56 @@
  */
 package com.graphhopper.routing.profiles;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
-public enum RoadClass {
-    DEFAULT("_default"),
-    MOTORWAY("motorway"), MOTORWAY_LINK("motorway_link"), MOTORROAD("motorroad"),
-    TRUNK("trunk"), TRUNK_LINK("trunk_link"),
-    PRIMARY("primary"), PRIMARY_LINK("primary_link"),
-    SECONDARY("secondary"), SECONDARY_LINK("secondary_link"),
-    TERTIARY("tertiary"), TERTIARY_LINK("tertiary_link"),
-    RESIDENTIAL("residential"),
-    UNCLASSIFIED("unclassified"),
-    SERVICE("service"),
-    ROAD("road"),
-    TRACK("track"),
-    FORESTRY("forestry"),
-    STEPS("steps"),
-    CYCLEWAY("cycleway"),
-    PATH("path"),
-    LIVING_STREET("living_street");
+public class RoadClass extends AbstractIndexBased {
+    public static final RoadClass DEFAULT = new RoadClass("_default", 0),
+            MOTORWAY = new RoadClass("motorway", 1), MOTORWAY_LINK = new RoadClass("motorway_link", 2),
+            MOTORROAD = new RoadClass("motorroad", 3),
+            TRUNK = new RoadClass("trunk", 4), TRUNK_LINK = new RoadClass("trunk_link", 5),
+            PRIMARY = new RoadClass("primary", 6), PRIMARY_LINK = new RoadClass("primary_link", 7),
+            SECONDARY = new RoadClass("secondary", 8), SECONDARY_LINK = new RoadClass("secondary_link", 9),
+            TERTIARY = new RoadClass("tertiary", 10), TERTIARY_LINK = new RoadClass("tertiary_link", 11),
+            RESIDENTIAL = new RoadClass("residential", 12),
+            UNCLASSIFIED = new RoadClass("unclassified", 13),
+            SERVICE = new RoadClass("service", 14),
+            ROAD = new RoadClass("road", 15),
+            TRACK = new RoadClass("track", 16),
+            FORESTRY = new RoadClass("forestry", 17),
+            STEPS = new RoadClass("steps", 18),
+            CYCLEWAY = new RoadClass("cycleway", 19),
+            PATH = new RoadClass("path", 20),
+            LIVING_STREET = new RoadClass("living_street", 21);
 
-    private static final Map<RoadClass, Double> CAR_SPEEDS = new LinkedHashMap<RoadClass, Double>() {
+    private static final List<RoadClass> values = Arrays.asList(DEFAULT, MOTORWAY, MOTORWAY_LINK, MOTORROAD, TRUNK, TRUNK_LINK,
+            PRIMARY, PRIMARY_LINK, SECONDARY, SECONDARY_LINK, TERTIARY, TERTIARY_LINK, RESIDENTIAL, UNCLASSIFIED,
+            SERVICE, ROAD, TRACK, FORESTRY, STEPS, CYCLEWAY, PATH, LIVING_STREET);
+
+    private static final Map<String, Double> CAR_SPEEDS = new LinkedHashMap<String, Double>() {
         {
-            put(MOTORWAY, 100d);
-            put(MOTORWAY_LINK, 70d);
-            put(MOTORROAD, 90d);
-            put(TRUNK, 70d);
-            put(TRUNK_LINK, 65d);
-            put(PRIMARY, 65d);
-            put(PRIMARY_LINK, 60d);
-            put(SECONDARY, 60d);
-            put(SECONDARY_LINK, 50d);
-            put(TERTIARY, 50d);
-            put(TERTIARY_LINK, 40d);
-            put(RESIDENTIAL, 30d);
-            put(UNCLASSIFIED, 30d);
-            put(SERVICE, 20d);
-            put(ROAD, 20d);
-            put(TRACK, 15d);
-            put(FORESTRY, 15d);
-            put(LIVING_STREET, 5d);
+            put("motorway", 100d);
+            put("motorway_link", 70d);
+            put("motorroad", 90d);
+            put("trunk", 70d);
+            put("trunk_link", 65d);
+            put("primary", 65d);
+            put("primary_link", 60d);
+            put("secondary", 60d);
+            put("secondary_link", 50d);
+            put("tertiary", 50d);
+            put("tertiary_link", 40d);
+            put("residential", 30d);
+            put("unclassified", 30d);
+            put("service", 20d);
+            put("road", 20d);
+            put("track", 15d);
+            put("forestry", 15d);
+            put("living_street", 5d);
             // TODO how to handle roads that are not allowed per default but could be allowed via explicit tagging?
             // put("cycleway", 15d);
             // put("bridleway", 10d);
@@ -70,43 +74,44 @@ public enum RoadClass {
         }
     };
 
-    String name;
-
-    RoadClass(String name) {
-        this.name = name;
+    public static ObjectEncodedValue create() {
+        return new MappedObjectEncodedValue(EncodingManager.ROAD_CLASS, values);
     }
 
-    @Override
-    public String toString() {
-        return name;
+    public RoadClass(String name, int ordinal) {
+        super(name, ordinal);
     }
 
-    public static EnumEncodedValue<RoadClass> create() {
-        return new EnumEncodedValueImpl<>(EncodingManager.ROAD_CLASS, values(), DEFAULT);
+    @JsonCreator
+    static RoadClass deserialize(String name) {
+        for (RoadClass rc : values) {
+            if (rc.toString().equals(name))
+                return rc;
+        }
+        throw new IllegalArgumentException("Cannot find RoadClass " + name);
     }
 
     /**
      * This method creates a Config map out of the PMap. Later on this conversion should not be
      * necessary when we read JSON.
      */
-    public static SpeedConfig createSpeedConfig(EnumEncodedValue<RoadClass> enumEnc, PMap pMap) {
-        HashMap<String, Double> map = new HashMap<>(RoadClass.values().length);
-        for (RoadClass e : RoadClass.values()) {
-            if (e != RoadClass.DEFAULT) {
-                Double speed = CAR_SPEEDS.get(e);
-                if (speed != null)
-                    map.put(e.toString(), pMap.getDouble(e.toString(), speed));
-            }
+    public static SpeedConfig createSpeedConfig(ObjectEncodedValue enumEnc, PMap pMap) {
+        HashMap<String, Double> map = new HashMap<>(values.size());
+        for (int i = 1; i < values.size(); i++) {
+            RoadClass e = values.get(i);
+            Double speed = CAR_SPEEDS.get(e);
+            if (speed != null)
+                map.put(e.toString(), pMap.getDouble(e.toString(), speed));
         }
 
         return new SpeedConfig(getHighwaySpeedMap(enumEnc, map), enumEnc);
     }
 
-    static double[] getHighwaySpeedMap(EnumEncodedValue<RoadClass> enumEnc, Map<String, Double> map) {
+    static double[] getHighwaySpeedMap(ObjectEncodedValue enumEnc, Map<String, Double> map) {
         if (map == null)
             throw new IllegalArgumentException("Map cannot be null when calling getHighwaySpeedMap");
 
-        double[] res = new double[enumEnc.size()];
+        double[] res = new double[enumEnc.getObjects().length];
         for (Map.Entry<String, Double> e : map.entrySet()) {
             int integ = enumEnc.indexOf(e.getKey());
             if (integ == 0)
@@ -122,9 +127,9 @@ public enum RoadClass {
 
     public static class SpeedConfig {
         private final double[] speedArray;
-        private final EnumEncodedValue<RoadClass> enc;
+        private final ObjectEncodedValue enc;
 
-        public SpeedConfig(double[] speedArray, EnumEncodedValue<RoadClass> enc) {
+        public SpeedConfig(double[] speedArray, ObjectEncodedValue enc) {
             this.speedArray = speedArray;
             this.enc = enc;
         }
@@ -146,5 +151,14 @@ public enum RoadClass {
             }
             return tmpSpeed;
         }
+
+    }
+
+    public static List<RoadClass> create(String... values) {
+        List<RoadClass> list = new ArrayList<>(values.length);
+        for (int i = 0; i < values.length; i++) {
+            list.add(new RoadClass(values[i], i));
+        }
+        return Collections.unmodifiableList(list);
     }
 }

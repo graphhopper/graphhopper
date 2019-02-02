@@ -18,7 +18,7 @@
 package com.graphhopper.routing.profiles.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
@@ -29,19 +29,12 @@ import java.util.List;
 /**
  * Stores the class of the road like motorway or primary. Previously called "highway" in DataFlagEncoder.
  */
-public class RoadClassParser extends AbstractTagParser {
+public class RoadClassParser extends AbstractTagParser<ObjectEncodedValue> {
 
     private static final List<String> FERRIES = Arrays.asList("shuttle_train", "ferry");
 
-    private final EnumEncodedValue enc;
-
     public RoadClassParser() {
-        super(EncodingManager.ROAD_CLASS);
-        enc = RoadClass.create();
-    }
-
-    public EnumEncodedValue<RoadClass> getEnc() {
-        return enc;
+        super(EncodingManager.ROAD_CLASS, RoadClass.create());
     }
 
     @Override
@@ -50,7 +43,7 @@ public class RoadClassParser extends AbstractTagParser {
         if (hwValue == 0)
             return edgeFlags;
 
-        enc.setEnum(false, edgeFlags, enc.getEnums()[hwValue]);
+        encodedValue.setObject(false, edgeFlags, encodedValue.getObjects()[hwValue]);
         return edgeFlags;
     }
 
@@ -60,8 +53,8 @@ public class RoadClassParser extends AbstractTagParser {
      * @return 0 for default
      */
     public int getHighwayValue(ReaderWay way) {
-        String highwayValue = way.getTag("highway");
-        int hwValue = enc.indexOf(highwayValue);
+        String highwayValue = way.getTag("highway", "");
+        int hwValue = encodedValue.indexOf(highwayValue);
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable")) {
             hwValue = 0;
         } else if (hwValue == 0) {
@@ -69,7 +62,7 @@ public class RoadClassParser extends AbstractTagParser {
                 String ferryValue = way.getFirstPriorityTag(FERRIES);
                 if (ferryValue == null)
                     ferryValue = "service";
-                hwValue = enc.indexOf(ferryValue);
+                hwValue = encodedValue.indexOf(ferryValue);
             }
         }
         return hwValue;

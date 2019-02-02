@@ -1,11 +1,13 @@
 0.12
     refactoring of EncodingManager to use builder pattern. Migration should be simple. Replace new EncodingManager with EncodingManager.create
     EncodingManager.supports renames to hasEncoder
-
+    moved shp-reader into separate repository: https://github.com/graphhopper/graphhopper-reader-shp    
+    
 0.11
     web resources for dropwizard web framework (no servlets anymore)
     prefix -Dgraphhopper. for command line arguments necessary, see docs/web/quickstart.md or docs/core/quickstart-from-source.md#running--debbuging-with-intellij for details
     delegated reading properties to dropwizard, i.e. the new format yml is not read again in GraphHopper.init
+    changed file format for landmarks #1376
 
 0.9
     remove war bundling support #297

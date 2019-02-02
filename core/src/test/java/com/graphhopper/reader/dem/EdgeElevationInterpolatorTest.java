@@ -20,8 +20,9 @@ package com.graphhopper.reader.dem;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.profiles.RoadEnvironment;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.parsers.RoadEnvironmentParser;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphExtension;
@@ -43,16 +44,16 @@ public abstract class EdgeElevationInterpolatorTest {
 
     protected GraphHopperStorage graph;
     protected EncodingManager encodingManager;
-    protected EnumEncodedValue encodedValue;
+    protected ObjectEncodedValue encodedValue;
     protected EdgeElevationInterpolator edgeElevationInterpolator;
 
     @SuppressWarnings("resource")
     @Before
     public void setUp() {
         CarFlagEncoder flagEncoder = new CarFlagEncoder();
-        encodingManager = EncodingManager.start().add(flagEncoder).addRoadEnvironment().build();
+        encodingManager = EncodingManager.start().add(flagEncoder).put(new RoadEnvironmentParser()).build();
         graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension()).create(100);
-        encodedValue = encodingManager.getEncodedValue(EncodingManager.ROAD_ENV, EnumEncodedValue.class);
+        encodedValue = encodingManager.getEncodedValue(EncodingManager.ROAD_ENV, ObjectEncodedValue.class);
 
         edgeElevationInterpolator = createEdgeElevationInterpolator();
 

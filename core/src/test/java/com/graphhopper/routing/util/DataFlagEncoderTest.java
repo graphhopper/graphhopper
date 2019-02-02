@@ -33,8 +33,8 @@ public class DataFlagEncoderTest {
     private final BooleanEncodedValue accessEnc;
     private final EncodingManager encodingManager;
     private final int motorVehicleInt;
-    private final EnumEncodedValue roadClassEnc;
-    private final EnumEncodedValue roadEnvEnc;
+    private final ObjectEncodedValue roadClassEnc;
+    private final ObjectEncodedValue roadEnvEnc;
     private final double DELTA = 0.1;
 
     public DataFlagEncoderTest() {
@@ -45,8 +45,8 @@ public class DataFlagEncoderTest {
         encoder = new DataFlagEncoder(properties);
         encodingManager = EncodingManager.start(8).add(encoder).build();
         accessEnc = encoder.getAccessEnc();
-        roadClassEnc = encodingManager.getEnumEncodedValue(EncodingManager.ROAD_CLASS);
-        roadEnvEnc = encodingManager.getEnumEncodedValue(EncodingManager.ROAD_ENV);
+        roadClassEnc = encodingManager.getObjectEncodedValue(EncodingManager.ROAD_CLASS);
+        roadEnvEnc = encodingManager.getObjectEncodedValue(EncodingManager.ROAD_ENV);
         motorVehicleInt = encoder.getAccessType("motor_vehicle");
     }
 
@@ -74,7 +74,7 @@ public class DataFlagEncoderTest {
         IntsRef flags = encodingManager.handleWayTags(osmWay, 1, 0);
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
         assertEquals(RoadClass.PRIMARY, edge.get(roadClassEnc));
-        assertEquals(Surface.SAND, edge.get(encoder.getEnumEncodedValue("surface")));
+        assertEquals(Surface.SAND, edge.get(encoder.getObjectEncodedValue("surface")));
         assertEquals(RoadEnvironment.TUNNEL, edge.get(roadEnvEnc));
         assertTrue(edge.get(accessEnc));
         assertTrue(edge.getReverse(accessEnc));

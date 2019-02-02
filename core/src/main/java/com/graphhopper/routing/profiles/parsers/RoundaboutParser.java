@@ -23,23 +23,17 @@ import com.graphhopper.routing.profiles.BooleanEncodedValueImpl;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 
-public class RoundaboutParser extends AbstractTagParser {
-    private final BooleanEncodedValue roundaboutEnc;
+public class RoundaboutParser extends AbstractTagParser<BooleanEncodedValue> {
 
     public RoundaboutParser() {
-        super(EncodingManager.ROUNDABOUT);
-        this.roundaboutEnc = new BooleanEncodedValueImpl(EncodingManager.ROUNDABOUT, false);
-    }
-
-    public BooleanEncodedValue getEnc() {
-        return roundaboutEnc;
+        super(EncodingManager.ROUNDABOUT, new BooleanEncodedValueImpl(EncodingManager.ROUNDABOUT, false));
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
         boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
         if (isRoundabout)
-            roundaboutEnc.setBool(false, edgeFlags, true);
+            encodedValue.setBool(false, edgeFlags, true);
         return edgeFlags;
     }
 }

@@ -3,8 +3,11 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.flex.FlexModel;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.profiles.RoadClass;
+import com.graphhopper.routing.profiles.parsers.RoadClassParser;
+import com.graphhopper.routing.profiles.parsers.RoadEnvironmentParser;
+import com.graphhopper.routing.profiles.parsers.TollParser;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -24,10 +27,10 @@ public class FlexWeightingTest {
 
     private void measure() {
         EncodingManager encodingManager = EncodingManager.start(4).
-                addRoadClass().addRoadEnvironment().addToll().
+                put(new RoadClassParser()).put(new RoadEnvironmentParser()).put(new TollParser()).
                 add(new CarFlagEncoder()).build();
         final GraphHopperStorage graphHopperStorage = new GraphHopperStorage(new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension()).create(100);
-        EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_CLASS, EnumEncodedValue.class);
+        ObjectEncodedValue roadClassEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_CLASS, ObjectEncodedValue.class);
         DecimalEncodedValue avSpeedEnc = encodingManager.getEncodedValue("car.average_speed", DecimalEncodedValue.class);
         BooleanEncodedValue accessEnc = encodingManager.getEncodedValue("car.access", BooleanEncodedValue.class);
         graphHopperStorage.edge(0, 1).setDistance(10).set(roadClassEnc, RoadClass.PRIMARY).set(avSpeedEnc, 80).set(accessEnc, true).setReverse(accessEnc, true);

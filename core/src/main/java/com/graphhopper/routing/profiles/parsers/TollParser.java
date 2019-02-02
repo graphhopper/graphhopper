@@ -18,29 +18,23 @@
 package com.graphhopper.routing.profiles.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.profiles.Toll;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 
-public class TollParser extends AbstractTagParser {
-    private final EnumEncodedValue<Toll> tollEnc;
+public class TollParser extends AbstractTagParser<ObjectEncodedValue> {
 
     public TollParser() {
-        super(EncodingManager.TOLL);
-        this.tollEnc = Toll.create();
-    }
-
-    public EnumEncodedValue<Toll> getEnc() {
-        return tollEnc;
+        super(EncodingManager.TOLL, Toll.create());
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
         if (way.hasTag("toll", "yes"))
-            tollEnc.setEnum(false, edgeFlags, Toll.ALL);
+            encodedValue.setObject(false, edgeFlags, Toll.ALL);
         if (way.hasTag("toll:hgv", "yes"))
-            tollEnc.setEnum(false, edgeFlags, Toll.HGV);
+            encodedValue.setObject(false, edgeFlags, Toll.HGV);
 
         return edgeFlags;
     }

@@ -18,28 +18,22 @@
 package com.graphhopper.routing.profiles.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.profiles.Surface;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 
-public class SurfaceParser extends AbstractTagParser {
-    private final EnumEncodedValue<Surface> enc;
+public class SurfaceParser extends AbstractTagParser<ObjectEncodedValue> {
 
     public SurfaceParser() {
-        super(EncodingManager.SURFACE);
-        enc = Surface.create();
-    }
-
-    public EnumEncodedValue<Surface> getEnc() {
-        return enc;
+        super(EncodingManager.SURFACE, Surface.create());
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
         String surfaceValue = way.getTag("surface");
-        int intValue = enc.indexOf(surfaceValue);
-        enc.setEnum(false, edgeFlags, enc.getEnums()[intValue]);
+        int intValue = encodedValue.indexOf(surfaceValue);
+        encodedValue.setObject(false, edgeFlags, encodedValue.getObjects()[intValue]);
         return edgeFlags;
     }
 }

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -57,7 +57,7 @@ public class GenericWeighting extends AbstractWeighting {
         headingPenalty = hintsMap.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         headingPenaltyMillis = Math.round(headingPenalty * 1000);
 
-        EnumEncodedValue<RoadClass> roadClass = encoder.getEnumEncodedValue(EncodingManager.ROAD_CLASS);
+        ObjectEncodedValue roadClass = encoder.getObjectEncodedValue(EncodingManager.ROAD_CLASS);
         speedConfig = RoadClass.createSpeedConfig(roadClass, hintsMap);
         double maxSpecifiedSpeed = speedConfig.getMaxSpecifiedSpeed();
         if (maxSpecifiedSpeed > encoder.getMaxPossibleSpeed())

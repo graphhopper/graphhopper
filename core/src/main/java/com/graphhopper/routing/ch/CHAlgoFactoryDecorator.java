@@ -22,12 +22,10 @@ import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.BlockAreaWeighting;
-import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.CH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,11 +54,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private boolean enabled = true;
     private int preparationThreads;
     private ExecutorService threadPool;
-    private int preparationPeriodicUpdates = -1;
-    private int preparationLazyUpdates = -1;
-    private int preparationNeighborUpdates = -1;
-    private int preparationContractedNodes = -1;
-    private double preparationLogMessages = -1;
+    private PMap pMap = new PMap();
 
     public CHAlgoFactoryDecorator() {
         setPreparationThreads(1);
@@ -81,7 +75,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         String chWeightingsStr = args.get(CH.PREPARE + "weightings", "");
 
         if ("no".equals(chWeightingsStr) || "false".equals(chWeightingsStr)) {
-            // default is fastest and we need to clear this explicitely
+            // default is fastest and we need to clear this explicitly
             weightingsAsStrings.clear();
         } else if (!chWeightingsStr.isEmpty()) {
             List<String> tmpCHWeightingList = Arrays.asList(chWeightingsStr.split(","));
@@ -93,56 +87,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (enableThis)
             setDisablingAllowed(args.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
 
-        setPreparationPeriodicUpdates(args.getInt(CH.PREPARE + "updates.periodic", getPreparationPeriodicUpdates()));
-        setPreparationLazyUpdates(args.getInt(CH.PREPARE + "updates.lazy", getPreparationLazyUpdates()));
-        setPreparationNeighborUpdates(args.getInt(CH.PREPARE + "updates.neighbor", getPreparationNeighborUpdates()));
-        setPreparationContractedNodes(args.getInt(CH.PREPARE + "contracted_nodes", getPreparationContractedNodes()));
-        setPreparationLogMessages(args.getDouble(CH.PREPARE + "log_messages", getPreparationLogMessages()));
-    }
-
-    public int getPreparationPeriodicUpdates() {
-        return preparationPeriodicUpdates;
-    }
-
-    public CHAlgoFactoryDecorator setPreparationPeriodicUpdates(int preparePeriodicUpdates) {
-        this.preparationPeriodicUpdates = preparePeriodicUpdates;
-        return this;
-    }
-
-    public int getPreparationContractedNodes() {
-        return preparationContractedNodes;
-    }
-
-    public CHAlgoFactoryDecorator setPreparationContractedNodes(int prepareContractedNodes) {
-        this.preparationContractedNodes = prepareContractedNodes;
-        return this;
-    }
-
-    public int getPreparationLazyUpdates() {
-        return preparationLazyUpdates;
-    }
-
-    public CHAlgoFactoryDecorator setPreparationLazyUpdates(int prepareLazyUpdates) {
-        this.preparationLazyUpdates = prepareLazyUpdates;
-        return this;
-    }
-
-    public double getPreparationLogMessages() {
-        return preparationLogMessages;
-    }
-
-    public CHAlgoFactoryDecorator setPreparationLogMessages(double prepareLogMessages) {
-        this.preparationLogMessages = prepareLogMessages;
-        return this;
-    }
-
-    public int getPreparationNeighborUpdates() {
-        return preparationNeighborUpdates;
-    }
-
-    public CHAlgoFactoryDecorator setPreparationNeighborUpdates(int prepareNeighborUpdates) {
-        this.preparationNeighborUpdates = prepareNeighborUpdates;
-        return this;
+        pMap = args;
     }
 
     @Override
@@ -319,13 +264,8 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
         for (Weighting weighting : getWeightings()) {
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
-                    new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class, weighting),
-                    weighting, traversalMode);
-            tmpPrepareCH.setPeriodicUpdates(preparationPeriodicUpdates).
-                    setLazyUpdates(preparationLazyUpdates).
-                    setNeighborUpdates(preparationNeighborUpdates).
-                    setLogMessages(preparationLogMessages);
-
+                    new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class, weighting), traversalMode);
+            tmpPrepareCH.setParams(pMap);
             addPreparation(tmpPrepareCH);
         }
     }

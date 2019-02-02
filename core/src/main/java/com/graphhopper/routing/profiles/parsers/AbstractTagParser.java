@@ -17,19 +17,31 @@
  */
 package com.graphhopper.routing.profiles.parsers;
 
+import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 
-public abstract class AbstractTagParser implements EncodingManager.TagParser {
+public abstract class AbstractTagParser<T extends EncodedValue> implements EncodingManager.TagParser {
 
     private final String name;
+    protected final T encodedValue;
 
-    public AbstractTagParser(String name) {
+    public AbstractTagParser(String name, T ev) {
         this.name = name;
+        this.encodedValue = ev;
+    }
+
+    public T getEnc() {
+        return encodedValue;
     }
 
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 + name.hashCode();
     }
 
     @Override

@@ -31,7 +31,8 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.http.health.GraphHopperStorageHealthCheck;
-import com.graphhopper.isochrone.algorithm.RasterHullBuilder;
+import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
+import com.graphhopper.jackson.GraphHopperModule;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
@@ -142,17 +143,17 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
-    static class RasterHullBuilderFactory implements Factory<RasterHullBuilder> {
+    static class RasterHullBuilderFactory implements Factory<DelaunayTriangulationIsolineBuilder> {
 
-        RasterHullBuilder builder = new RasterHullBuilder();
+        DelaunayTriangulationIsolineBuilder builder = new DelaunayTriangulationIsolineBuilder();
 
         @Override
-        public RasterHullBuilder provide() {
+        public DelaunayTriangulationIsolineBuilder provide() {
             return builder;
         }
 
         @Override
-        public void dispose(RasterHullBuilder rasterHullBuilder) {
+        public void dispose(DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder) {
         }
     }
 
@@ -227,13 +228,13 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(translationMap).to(TranslationMap.class);
                 bind(encodingManager).to(EncodingManager.class);
                 bind(graphHopperStorage).to(GraphHopperStorage.class);
-                bindFactory(RasterHullBuilderFactory.class).to(RasterHullBuilder.class);
+                bindFactory(RasterHullBuilderFactory.class).to(DelaunayTriangulationIsolineBuilder.class);
             }
         });
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(RouteResource.class);
         environment.jersey().register(FlexResource.class);
-        environment.jersey().register(IsochroneResource.class);
+        environment.jersey().register(new PtIsochroneResource(gtfsStorage, encodingManager, graphHopperStorage, locationIndex));
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
         // Say we only support pt, even though we now have several flag encoders. Yes, I know, we're almost there.
@@ -277,7 +278,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
                 bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
                 bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
-                bindFactory(RasterHullBuilderFactory.class).to(RasterHullBuilder.class);
+                bindFactory(RasterHullBuilderFactory.class).to(DelaunayTriangulationIsolineBuilder.class);
             }
         });
 

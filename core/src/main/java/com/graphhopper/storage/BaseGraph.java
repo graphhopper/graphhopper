@@ -20,10 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -58,7 +55,7 @@ class BaseGraph implements Graph {
     final BitUtil bitUtil;
     final EncodingManager encodingManager;
     final EdgeAccess edgeAccess;
-    final int bytesForFlags;
+    private final int bytesForFlags;
     // length | nodeA | nextNode | ... | nodeB
     // as we use integer index in 'egdes' area => 'geometry' area is limited to 4GB (we use pos&neg values!)
     private final DataAccess wayGeometry;
@@ -99,8 +96,8 @@ class BaseGraph implements Graph {
         this.bitUtil = BitUtil.get(dir.getByteOrder());
         this.wayGeometry = dir.find("geometry");
         this.nameIndex = new NameIndex(dir);
-        this.nodes = dir.find("nodes");
-        this.edges = dir.find("edges");
+        this.nodes = dir.find("nodes", DAType.getPreferredInt(dir.getDefaultType()));
+        this.edges = dir.find("edges", DAType.getPreferredInt(dir.getDefaultType()));
         this.listener = listener;
         this.edgeAccess = new EdgeAccess(edges, bitUtil) {
             @Override
@@ -950,12 +947,11 @@ class BaseGraph implements Graph {
 
         final boolean init(int tmpEdgeId, int expectedAdjNode) {
             setEdgeId(tmpEdgeId);
-            if (tmpEdgeId != EdgeIterator.NO_EDGE) {
-                selectEdgeAccess();
-                this.edgePointer = edgeAccess.toPointer(tmpEdgeId);
-            }
+            if (!EdgeIterator.Edge.isValid(edgeId))
+                throw new IllegalArgumentException("fetching the edge requires a valid edgeId but was " + edgeId);
 
-            // expect only edgePointer is properly initialized via setEdgeId            
+            selectEdgeAccess();
+            edgePointer = edgeAccess.toPointer(tmpEdgeId);
             baseNode = edgeAccess.getNodeA(edgePointer);
             adjNode = edgeAccess.getNodeB(edgePointer);
             if (EdgeAccess.isInvalidNodeB(adjNode))
@@ -1100,22 +1096,22 @@ class BaseGraph implements Graph {
      */
     static abstract class CommonEdgeIterator implements EdgeIteratorState {
         final BaseGraph baseGraph;
-        protected long edgePointer;
-        protected int baseNode;
-        protected int adjNode;
-        protected EdgeAccess edgeAccess;
+        long edgePointer;
+        int baseNode;
+        int adjNode;
+        EdgeAccess edgeAccess;
         // we need reverse if detach is called
         boolean reverse = false;
         boolean freshFlags;
         int edgeId = -1;
-        private IntsRef cachedIntsRef;
-        private final int bytesForFlags;
+        final IntsRef baseIntsRef;
+        IntsRef cachedIntsRef;
 
         public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph) {
             this.edgePointer = edgePointer;
             this.edgeAccess = edgeAccess;
             this.baseGraph = baseGraph;
-            this.bytesForFlags = baseGraph.bytesForFlags;
+            this.cachedIntsRef = this.baseIntsRef = new IntsRef(baseGraph.bytesForFlags / 4);
         }
 
         @Override
@@ -1141,9 +1137,6 @@ class BaseGraph implements Graph {
 
         final IntsRef getDirectFlags() {
             if (!freshFlags) {
-                // TODO on setBaseNode force clearing cache?
-                if (cachedIntsRef == null)
-                    cachedIntsRef = new IntsRef(bytesForFlags / 4);
                 edgeAccess.readFlags_(edgePointer, cachedIntsRef);
                 freshFlags = true;
             }
@@ -1157,10 +1150,9 @@ class BaseGraph implements Graph {
 
         @Override
         public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
-            assert cachedIntsRef == null || edgeFlags.ints.length == cachedIntsRef.ints.length : "incompatible flags";
+            assert cachedIntsRef == null || edgeFlags.ints.length == cachedIntsRef.ints.length : "incompatible flags " + edgeFlags.ints.length + " vs " + cachedIntsRef.ints.length;
             edgeAccess.writeFlags_(edgePointer, edgeFlags);
-            if (cachedIntsRef == null)
-                cachedIntsRef = new IntsRef(bytesForFlags / 4);
+            // Or is arraycopy faster? System.arraycopy(edgeFlags.ints, 0, cachedIntsRef.ints, 0, edgeFlags.ints.length);
             for (int i = 0; i < edgeFlags.ints.length; i++) {
                 cachedIntsRef.ints[i] = edgeFlags.ints[i];
             }
@@ -1252,25 +1244,25 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public <T extends Enum> T get(EnumEncodedValue<T> property) {
-            return property.getEnum(reverse, getFlags());
+        public IndexBased get(ObjectEncodedValue property) {
+            return property.getObject(reverse, getFlags());
         }
 
         @Override
-        public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
-            property.setEnum(reverse, getFlags(), value);
+        public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
+            property.setObject(reverse, getFlags(), value);
             edgeAccess.writeFlags_(edgePointer, getFlags());
             return this;
         }
 
         @Override
-        public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
-            return property.getEnum(!reverse, getFlags());
+        public IndexBased getReverse(ObjectEncodedValue property) {
+            return property.getObject(!reverse, getFlags());
         }
 
         @Override
-        public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
-            property.setEnum(!reverse, getFlags(), value);
+        public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
+            property.setObject(!reverse, getFlags(), value);
             edgeAccess.writeFlags_(edgePointer, getFlags());
             return this;
         }

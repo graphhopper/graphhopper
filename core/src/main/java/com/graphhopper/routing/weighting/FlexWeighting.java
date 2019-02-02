@@ -48,9 +48,9 @@ public class FlexWeighting implements Weighting {
     private final ArrayList<NoAccessCalc> noAccessCalcs;
     private BooleanEncodedValue accessEnc;
     private DecimalEncodedValue avSpeedEnc;
-    private EnumEncodedValue<RoadEnvironment> roadEnvEnc;
-    private EnumEncodedValue<RoadClass> roadClassEnc;
-    private EnumEncodedValue<Toll> tollEnc;
+    private ObjectEncodedValue roadEnvEnc;
+    private ObjectEncodedValue roadClassEnc;
+    private ObjectEncodedValue tollEnc;
     private FlagEncoder flagEncoder;
     private double distanceFactor;
 
@@ -164,9 +164,9 @@ public class FlexWeighting implements Weighting {
 
         accessEnc = encodingManager.getEncodedValue(vehicle + ".access", BooleanEncodedValue.class);
         avSpeedEnc = encodingManager.getEncodedValue(vehicle + ".average_speed", DecimalEncodedValue.class);
-        roadEnvEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_ENV, EnumEncodedValue.class);
-        roadClassEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_CLASS, EnumEncodedValue.class);
-        tollEnc = encodingManager.getEncodedValue(EncodingManager.TOLL, EnumEncodedValue.class);
+        roadEnvEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_ENV, ObjectEncodedValue.class);
+        roadClassEnc = encodingManager.getEncodedValue(EncodingManager.ROAD_CLASS, ObjectEncodedValue.class);
+        tollEnc = encodingManager.getEncodedValue(EncodingManager.TOLL, ObjectEncodedValue.class);
 
         distanceFactor = model.getDistanceFactor();
         return this;

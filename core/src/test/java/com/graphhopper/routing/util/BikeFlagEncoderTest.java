@@ -524,13 +524,13 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmRel.setTag("network", "icn");
         long relFlags = encoder.handleRelationTags(0, osmRel);
         IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), osmWay, allowed, relFlags);
-        assertEquals(1, priorityEnc.getDecimal(false, flags), .1);
+        assertEquals(PriorityCode.getFactor(BEST.getValue()), priorityEnc.getDecimal(false, flags), .1);
 
         // important: UNCHANGED should not get 0 priority!
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "somethingelse");
         flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), osmWay, allowed, 0);
-        assertEquals((double) UNCHANGED.getValue() / BEST.getValue(), priorityEnc.getDecimal(false, flags), .1);
+        assertEquals(PriorityCode.getFactor(UNCHANGED.getValue()), priorityEnc.getDecimal(false, flags), .1);
     }
 
     @Test
@@ -643,6 +643,11 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         node.setTag("bicycle", "yes");
         // barrier!
         assertFalse(encoder.handleNodeTags(node) == 0);
+
+        // Test if cattle_grid is non blocking
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "cattle_grid");
+        assertTrue(encoder.handleNodeTags(node) == 0);
     }
 
     @Test

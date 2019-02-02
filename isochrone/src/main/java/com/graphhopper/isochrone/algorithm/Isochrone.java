@@ -29,6 +29,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import org.locationtech.jts.geom.Coordinate;
 
 import java.util.*;
 
@@ -102,14 +103,14 @@ public class Isochrone extends AbstractRoutingAlgorithm {
         this.finishLimit = limit + Math.max(limit * 0.14, 2_000);
     }
 
-    public List<List<Double[]>> searchGPS(int from, final int bucketCount) {
+    public List<List<Coordinate>> searchGPS(int from, final int bucketCount) {
         searchInternal(from);
 
         final double bucketSize = limit / bucketCount;
-        final List<List<Double[]>> buckets = new ArrayList<>(bucketCount);
+        final List<List<Coordinate>> buckets = new ArrayList<>(bucketCount);
 
         for (int i = 0; i < bucketCount + 1; i++) {
-            buckets.add(new ArrayList<Double[]>());
+            buckets.add(new ArrayList<Coordinate>());
         }
         final NodeAccess na = graph.getNodeAccess();
         fromMap.forEach(new IntObjectProcedure<IsoLabel>() {
@@ -125,14 +126,14 @@ public class Isochrone extends AbstractRoutingAlgorithm {
 
                 double lat = na.getLatitude(nodeId);
                 double lon = na.getLongitude(nodeId);
-                buckets.get(bucketIndex).add(new Double[]{lon, lat});
+                buckets.get(bucketIndex).add(new Coordinate(lon, lat));
 
                 // guess center of road to increase precision a bit for longer roads
                 if (label.parent != null) {
                     nodeId = label.parent.adjNode;
                     double lat2 = na.getLatitude(nodeId);
                     double lon2 = na.getLongitude(nodeId);
-                    buckets.get(bucketIndex).add(new Double[]{(lon + lon2) / 2, (lat + lat2) / 2});
+                    buckets.get(bucketIndex).add(new Coordinate((lon + lon2) / 2, (lat + lat2) / 2));
                 }
             }
         });

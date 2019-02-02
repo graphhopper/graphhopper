@@ -57,6 +57,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     int shortcutEntryBytes;
     // the nodesCH storage is limited via baseGraph.nodeCount too
     int nodeCHEntryBytes;
+    final int shortcutBytesForFlags  = 4;
     private int N_LEVEL;
     // shortcut memory layout is synced with edges indices until E_FLAGS, then:
     private int S_SKIP_EDGE1, S_SKIP_EDGE2;
@@ -69,8 +70,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         this.weighting = w;
         this.baseGraph = baseGraph;
         final String name = AbstractWeighting.weightingToFileName(w);
-        this.nodesCH = dir.find("nodes_ch_" + name);
-        this.shortcuts = dir.find("shortcuts_" + name);
+        this.nodesCH = dir.find("nodes_ch_" + name, DAType.getPreferredInt(dir.getDefaultType()));
+        this.shortcuts = dir.find("shortcuts_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         this.chEdgeAccess = new EdgeAccess(shortcuts, baseGraph.bitUtil) {
             @Override
             final EdgeIterable createSingleEdge(EdgeFilter edgeFilter) {
@@ -398,8 +399,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     class CHEdgeIteratorImpl extends EdgeIterable implements CHEdgeExplorer, CHEdgeIterator {
+        final IntsRef chIntsRef;
+
         public CHEdgeIteratorImpl(BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter) {
             super(baseGraph, edgeAccess, filter);
+            chIntsRef = new IntsRef(shortcutBytesForFlags / 4);
         }
 
         @Override
@@ -479,12 +483,15 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         protected final void selectEdgeAccess() {
-            if (nextEdgeId < baseGraph.edgeCount)
+            if (nextEdgeId < baseGraph.edgeCount) {
                 // iterate over edges
                 edgeAccess = baseGraph.edgeAccess;
-            else
+                cachedIntsRef = baseIntsRef;
+            } else {
                 // ... or shortcuts
                 edgeAccess = chEdgeAccess;
+                cachedIntsRef = chIntsRef;
+            }
         }
 
         public void checkShortcut(boolean shouldBeShortcut, String methodName) {

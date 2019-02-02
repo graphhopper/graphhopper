@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
@@ -29,8 +29,8 @@ public interface ScriptInterface {
     HelperVariables getHelperVariables();
 
     class HelperVariables {
-        public EnumEncodedValue road_environment;
-        public EnumEncodedValue road_class;
+        public ObjectEncodedValue road_environment;
+        public ObjectEncodedValue road_class;
         public IntEncodedValue toll;
         public NodeAccess nodeAccess;
 

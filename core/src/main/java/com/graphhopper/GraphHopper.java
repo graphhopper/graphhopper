@@ -29,8 +29,11 @@ import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.flex.FlexModel;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.profiles.parsers.RoadClassParser;
+import com.graphhopper.routing.profiles.parsers.RoadEnvironmentParser;
+import com.graphhopper.routing.profiles.parsers.TollParser;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -579,7 +582,7 @@ public class GraphHopper implements GraphHopperAPI {
             }
 
             // TODO add dependent on DataFlagEncoder and FlexModel
-            EncodingManager.Builder em = EncodingManager.start(bytesForFlags).addRoadEnvironment().addRoadClass().addToll();
+            EncodingManager.Builder em = EncodingManager.start(bytesForFlags).put(new RoadEnvironmentParser()).put(new RoadClassParser()).put(new TollParser());
             for (FlagEncoder fe : flagEncoderSet.values())
                 em.add(fe);
 
@@ -922,7 +925,7 @@ public class GraphHopper implements GraphHopperAPI {
 
     private void interpolateBridgesAndOrTunnels() {
         if (ghStorage.getEncodingManager().hasEncodedValue(EncodingManager.ROAD_ENV)) {
-            EnumEncodedValue encodedValue = ghStorage.getEncodingManager().getEncodedValue(EncodingManager.ROAD_ENV, EnumEncodedValue.class);
+            ObjectEncodedValue encodedValue = ghStorage.getEncodingManager().getEncodedValue(EncodingManager.ROAD_ENV, ObjectEncodedValue.class);
             StopWatch sw = new StopWatch().start();
             new EdgeElevationInterpolator(ghStorage, encodedValue, RoadEnvironment.TUNNEL).execute();
             float tunnel = sw.stop().getSeconds();

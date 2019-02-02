@@ -958,7 +958,6 @@ public class PathTest {
             edge3to6 = g.edge(3, 6, 5, true).setName("3-6");
             edge3to9 = g.edge(3, 9, 5, false).setName("3-9");
 
-            // Don't set names
             g.edge(7, 10, 5, true);
             g.edge(10, 11, 5, true);
             g.edge(11, 12, 5, true);

@@ -18,7 +18,8 @@
 package com.graphhopper.routing.profiles.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.IndexBased;
+import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
@@ -26,31 +27,26 @@ import com.graphhopper.storage.IntsRef;
 /**
  * Stores the environment of the road like bridge or tunnel. Previously called "transport_mode" in DataFlagEncoder.
  */
-public class RoadEnvironmentParser extends AbstractTagParser {
-    private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
-    private final RoadEnvironment[] roadEnvList;
+public class RoadEnvironmentParser extends AbstractTagParser<ObjectEncodedValue> {
+
+    final IndexBased[] objects;
 
     public RoadEnvironmentParser() {
-        super(EncodingManager.ROAD_ENV);
-        roadEnvEnc = RoadEnvironment.create();
-        roadEnvList = roadEnvEnc.getEnums();
-    }
-
-    public EnumEncodedValue<RoadEnvironment> getEnc() {
-        return roadEnvEnc;
+        super(EncodingManager.ROAD_ENV, RoadEnvironment.create());
+        objects = encodedValue.getObjects();
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
-        RoadEnvironment roadEnv = roadEnvList[0];
-        for (RoadEnvironment tm : roadEnvList) {
+        IndexBased roadEnv = objects[0];
+        for (IndexBased tm : objects) {
             if (way.hasTag(tm.toString())) {
                 roadEnv = tm;
                 break;
             }
         }
 
-        roadEnvEnc.setEnum(false, edgeFlags, roadEnv);
+        encodedValue.setObject(false, edgeFlags, roadEnv);
         return edgeFlags;
     }
 }

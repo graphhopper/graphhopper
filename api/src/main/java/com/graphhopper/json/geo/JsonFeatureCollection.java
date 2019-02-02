@@ -17,14 +17,15 @@
  */
 package com.graphhopper.json.geo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Peter Karich
  */
 public class JsonFeatureCollection {
-    String type;
-    List<JsonFeature> features;
+    String type = "FeatureCollection";
+    List<JsonFeature> features = new ArrayList<>();
 
     public String getType() {
         return type;

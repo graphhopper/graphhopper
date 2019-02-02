@@ -44,13 +44,13 @@ public interface EdgeIteratorState {
         }
 
         @Override
-        public void setBool(boolean reverse, IntsRef ref, boolean value) {
-            throw new IllegalStateException("setBool cannot be used for REVERSE_STATE");
+        public boolean getBool(boolean reverse, IntsRef ref) {
+            return reverse;
         }
 
         @Override
-        public boolean getBool(boolean reverse, IntsRef ref) {
-            return reverse;
+        public void setBool(boolean reverse, IntsRef ref, boolean value) {
+            throw new IllegalStateException("reverse state cannot be modified");
         }
     };
 
@@ -150,13 +150,13 @@ public interface EdgeIteratorState {
 
     EdgeIteratorState setReverse(DecimalEncodedValue property, double value);
 
-    <T extends Enum> T get(EnumEncodedValue<T> property);
+    IndexBased get(ObjectEncodedValue property);
 
-    <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value);
+    EdgeIteratorState set(ObjectEncodedValue property, IndexBased value);
 
-    <T extends Enum> T getReverse(EnumEncodedValue<T> property);
+    IndexBased getReverse(ObjectEncodedValue property);
 
-    <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value);
+    EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value);
 
     String getName();
 

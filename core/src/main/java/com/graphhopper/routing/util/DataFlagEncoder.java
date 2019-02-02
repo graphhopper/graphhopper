@@ -68,7 +68,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private IntEncodedValue spatialEncoder;
     private SpatialRuleLookup spatialRuleLookup = SpatialRuleLookup.EMPTY;
     private RoadClassParser roadClassParser;
-    private EnumEncodedValue<RoadEnvironment> roadEnvEnc;
+    private ObjectEncodedValue roadEnvEnc;
 
     public DataFlagEncoder() {
         this("generic", 5, 5, 0);
@@ -122,31 +122,34 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         // TODO support different vehicle types, currently just roundabout and fwd&bwd for one vehicle type
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
 
-        registerNewEncodedValue.add(carMaxspeedEncoder = new DecimalEncodedValueImpl(prefix + "car_maxspeed", speedBits, 0, speedFactor, true));
+        registerNewEncodedValue.add(carMaxspeedEncoder = new FactorizedDecimalEncodedValue(prefix + "car_maxspeed", speedBits, speedFactor, true));
 
         /* Value range: [3.0m, 5.4m] */
         if (isStoreHeight())
-            registerNewEncodedValue.add(heightEncoder = new DecimalEncodedValueImpl(prefix + "height", 7, 0, 0.1, false));
+            registerNewEncodedValue.add(heightEncoder = new FactorizedDecimalEncodedValue(prefix + "height", 7, 0.1, false));
 
         /* Value range: [1.0t, 59.5t] */
         if (isStoreWeight())
-            registerNewEncodedValue.add(weightEncoder = new DecimalEncodedValueImpl(prefix + "weight", 10, 0, 0.1, false));
+            registerNewEncodedValue.add(weightEncoder = new FactorizedDecimalEncodedValue(prefix + "weight", 10, 0.1, false));
 
         /* Value range: [2.5m, 3.5m] */
         if (isStoreWidth())
-            registerNewEncodedValue.add(widthEncoder = new DecimalEncodedValueImpl(prefix + "width", 6, 0, 0.1, false));
+            registerNewEncodedValue.add(widthEncoder = new FactorizedDecimalEncodedValue(prefix + "width", 6, 0.1, false));
 
-        registerNewEncodedValue.add(dynAccessEncoder = new IntEncodedValueImpl(prefix + "car_dyn_access", 3, 0, false));
+//        registerNewEncodedValue.add(highwayEncoder = new SimpleIntEncodedValue(prefix + "highway", 5, false));
+//        registerNewEncodedValue.add(surfaceEncoder = new SimpleIntEncodedValue(prefix + "surface", 4, false));
+//        registerNewEncodedValue.add(transportModeEncoder = new SimpleIntEncodedValue(prefix + "transport_mode", 3, false));
+        registerNewEncodedValue.add(dynAccessEncoder = new SimpleIntEncodedValue(prefix + "car_dyn_access", 3, false));
 
         int tmpMax = spatialRuleLookup.size() - 1;
         int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
         if (bits > 0)
-            registerNewEncodedValue.add(spatialEncoder = new IntEncodedValueImpl("spatial_location", bits, 0, false));
+            registerNewEncodedValue.add(spatialEncoder = new SimpleIntEncodedValue("spatial_location", bits, false));
 
         // workaround to init AbstractWeighting.avSpeedEnc variable that GenericWeighting does not need
         speedEncoder = carMaxspeedEncoder;
 
-        roadEnvEnc = getEnumEncodedValue(EncodingManager.ROAD_ENV);
+        roadEnvEnc = getObjectEncodedValue(EncodingManager.ROAD_ENV);
     }
 
     protected void flagsDefault(IntsRef edgeFlags, boolean forward, boolean backward) {
@@ -454,7 +457,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
+    protected void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
         throw new RuntimeException("do not call setSpeed");
     }
 
@@ -521,7 +524,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public InstructionAnnotation getAnnotation(IntsRef flags, Translation tr) {
-        if (roadEnvEnc.getEnum(false, flags).equals(RoadEnvironment.FORD)) {
+        if (roadEnvEnc.getObject(false, flags).equals(RoadEnvironment.FORD)) {
             return new InstructionAnnotation(1, tr.tr("way_contains_ford"));
         }
 

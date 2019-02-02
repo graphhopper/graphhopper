@@ -39,7 +39,6 @@ import java.util.Set;
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
  * EncodingManager to be usable. If you want the full long to be stored you need to enable this in
  * the GraphHopperStorage.
- * <p>
  *
  * @author Peter Karich
  * @author Nop
@@ -173,7 +172,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      */
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
         // define the first 2 speedBits in flags for routing
-        registerNewEncodedValue.add(accessEnc = new BooleanEncodedValueImpl(prefix + "access", true));
+        registerNewEncodedValue.add(accessEnc = new SimpleBooleanEncodedValue(prefix + "access", true));
         roundaboutEnc = getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
         encoderBit = 1L << index;
 
@@ -214,8 +213,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     /**
      * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
-     * strict negative or blocks access (like a barrier), then the value is strict positive.This
+     * strict negative or blocks access (like a barrier), then the value is strictly positive. This
      * method is called in the second parsing step.
+     *
+     * @return encoded values or 0 if not blocking or no value stored
      */
     public long handleNodeTags(ReaderNode node) {
         // absolute barriers always block
@@ -311,7 +312,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     /**
      * @return the speed in km/h
      */
-    protected double parseSpeed(String str) {
+    public static double parseSpeed(String str) {
         if (Helper.isEmpty(str))
             return -1;
 
@@ -538,18 +539,23 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     public final DecimalEncodedValue getAverageSpeedEnc() {
         if (speedEncoder == null)
-            throw new NullPointerException("FlagEncoder not yet initialized");
+            throw new NullPointerException("FlagEncoder " + toString() + " not yet initialized");
         return speedEncoder;
     }
 
     public final BooleanEncodedValue getAccessEnc() {
         if (accessEnc == null)
-            throw new NullPointerException("FlagEncoder not yet initialized");
+            throw new NullPointerException("FlagEncoder " + toString() + " not yet initialized");
         return accessEnc;
     }
 
-    // now all these methods are only for internal use as they all do not consider the direction of the edge if used via edge.getFlags()
-    void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
+    /**
+     * Most use cases do not require this method. Will still keep it accessible so that one can disable it
+     * until the averageSpeedEncodedValue is moved out of the FlagEncoder.
+     *
+     * @Deprecated
+     */
+    protected void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
         if (speed < 0 || Double.isNaN(speed))
             throw new IllegalArgumentException("Speed cannot be negative or NaN: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(edgeFlags));
 
@@ -617,8 +623,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     @Override
-    public EnumEncodedValue getEnumEncodedValue(String key) {
-        return encodedValueLookup.getEnumEncodedValue(key);
+    public ObjectEncodedValue getObjectEncodedValue(String key) {
+        return encodedValueLookup.getObjectEncodedValue(key);
     }
 
     public void setEncodedValueLookup(EncodedValueLookup encodedValueLookup) {

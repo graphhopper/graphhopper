@@ -17,14 +17,15 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.BBox;
 
 /**
  * This class makes it possible to define the time calculation formula inside a yaml.
@@ -60,9 +61,9 @@ public class ScriptWeighting implements Weighting {
         avSpeedEnc = encodingManager.getEncodedValue(vehicle + ".average_speed", DecimalEncodedValue.class);
 
         ScriptInterface.HelperVariables helper = script.getHelperVariables();
-        helper.road_environment = (EnumEncodedValue) encodingManager.getEncodedValue(EncodingManager.ROAD_ENV, EncodedValue.class);
-        helper.road_class = (EnumEncodedValue) encodingManager.getEncodedValue(EncodingManager.ROAD_CLASS, EncodedValue.class);
-        helper.toll = (IntEncodedValue) encodingManager.getEncodedValue(EncodingManager.TOLL, EncodedValue.class);
+        helper.road_environment = encodingManager.getEncodedValue(EncodingManager.ROAD_ENV, ObjectEncodedValue.class);
+        helper.road_class = encodingManager.getEncodedValue(EncodingManager.ROAD_CLASS, ObjectEncodedValue.class);
+        helper.toll = encodingManager.getEncodedValue(EncodingManager.TOLL, IntEncodedValue.class);
         return this;
     }
 

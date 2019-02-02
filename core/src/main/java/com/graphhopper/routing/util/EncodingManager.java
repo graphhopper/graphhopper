@@ -21,7 +21,10 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.profiles.parsers.*;
+import com.graphhopper.routing.profiles.parsers.AbstractTagParser;
+import com.graphhopper.routing.profiles.parsers.RoadClassParser;
+import com.graphhopper.routing.profiles.parsers.RoadEnvironmentParser;
+import com.graphhopper.routing.profiles.parsers.SurfaceParser;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.IntsRef;
@@ -74,7 +77,7 @@ public class EncodingManager implements EncodedValueLookup {
     private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via graph.bytes_for_flags: 8";
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
     private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
-    private final Map<EncodedValue, TagParser> parserMap = new LinkedHashMap<>();
+    private final Map<EncodedValue, TagParser> sharedEncodedValueMap = new LinkedHashMap<>();
     private final int bitsForEdgeFlags;
     private final int bitsForTurnFlags = 8 * 4;
     private int nextNodeBit = 0;
@@ -180,40 +183,29 @@ public class EncodingManager implements EncodedValueLookup {
 
         public Builder(int bytes) {
             em = new EncodingManager(bytes);
-            RoundaboutParser roundaboutParser = new RoundaboutParser();
-            em.putEncodedValue(roundaboutParser.getEnc());
-            em.putParser(roundaboutParser);
+            final BooleanEncodedValue roundaboutEnc = new SimpleBooleanEncodedValue("roundabout", false);
+            put(roundaboutEnc, new TagParser() {
+                public String getName() {
+                    return "roundabout";
+                }
+
+                @Override
+                public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
+                    boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
+                    if (isRoundabout)
+                        roundaboutEnc.setBool(false, edgeFlags, true);
+                    return edgeFlags;
+                }
+            });
         }
 
-        public Builder addToll() {
-            check();
-            TollParser tollParser = new TollParser();
-            em.putEncodedValue(tollParser.getEnc());
-            em.putParser(tollParser);
-            return this;
-        }
-
-        public Builder addSurface() {
-            check();
-            SurfaceParser sParser = new SurfaceParser();
-            em.putEncodedValue(sParser.getEnc());
-            em.putParser(sParser);
-            return this;
-        }
-
-        public Builder addRoadEnvironment() {
-            check();
-            RoadEnvironmentParser reParser = new RoadEnvironmentParser();
-            em.putEncodedValue(reParser.getEnc());
-            em.putParser(reParser);
-            return this;
-        }
-
-        public Builder addRoadClass() {
-            check();
-            RoadClassParser rcParser = new RoadClassParser();
-            em.putEncodedValue(rcParser.getEnc());
-            em.putParser(rcParser);
+        /**
+         * For backward compatibility provide a way to add multiple FlagEncoders
+         */
+        public Builder addAll(FlagEncoderFactory factory, String flagEncodersStr) {
+            for (FlagEncoder fe : parseEncoderString(factory, flagEncodersStr)) {
+                add(fe);
+            }
             return this;
         }
 
@@ -221,11 +213,11 @@ public class EncodingManager implements EncodedValueLookup {
             check();
             if (encoder instanceof DataFlagEncoder) {
                 if (!em.hasEncodedValue(ROAD_CLASS))
-                    addRoadClass();
+                    put(new RoadClassParser());
                 if (!em.hasEncodedValue(ROAD_ENV))
-                    addRoadEnvironment();
+                    put(new RoadEnvironmentParser());
                 if (!em.hasEncodedValue(SURFACE))
-                    addSurface();
+                    put(new SurfaceParser());
                 ((DataFlagEncoder) encoder).setRoadClassParser(em.getParser(ROAD_CLASS, RoadClassParser.class));
             }
             em.putEncoder((AbstractFlagEncoder) encoder);
@@ -243,6 +235,17 @@ public class EncodingManager implements EncodedValueLookup {
                 throw new IllegalArgumentException("After calling build no further action is possible");
         }
 
+        public Builder put(AbstractTagParser tagParser) {
+            put(tagParser.getEnc(), tagParser);
+            return this;
+        }
+
+        public Builder put(EncodedValue encodedValue, TagParser tagParser) {
+            add(encodedValue);
+            em.sharedEncodedValueMap.put(encodedValue, tagParser);
+            return this;
+        }
+
         public EncodingManager build() {
             if (em == null)
                 throw new IllegalStateException("Cannot call Builder.build() twice");
@@ -258,26 +261,12 @@ public class EncodingManager implements EncodedValueLookup {
         }
     }
 
-    /**
-     * Trigger a way parsing step for a previously added EncodedValue
-     *
-     * @return old parser or null
-     */
-    TagParser putParser(TagParser parser) {
-        EncodedValue ev = encodedValueMap.get(parser.getName());
-        if (ev == null)
-            throw new IllegalArgumentException("Cannot find EncodedValue " + parser.getName());
-        TagParser oldParser = parserMap.get(ev);
-        parserMap.put(ev, parser);
-        return oldParser;
-    }
-
     public <T extends TagParser> T getParser(String key, Class<T> clazz) {
         EncodedValue ev = encodedValueMap.get(key);
         if (ev == null)
             throw new IllegalArgumentException("Cannot find EncodedValue " + key);
 
-        TagParser parser = parserMap.get(ev);
+        TagParser parser = sharedEncodedValueMap.get(ev);
         if (parser == null)
             throw new IllegalArgumentException("Cannot find TagParser " + key + " - maybe a missing call addGlobalParsers?");
         return (T) parser;
@@ -394,7 +383,7 @@ public class EncodingManager implements EncodedValueLookup {
         EncodedValue ev = encodedValueMap.get(parser);
         if (ev == null)
             return false;
-        return parserMap.containsKey(ev);
+        return sharedEncodedValueMap.containsKey(ev);
     }
 
     public FlagEncoder getEncoder(String name) {
@@ -440,7 +429,7 @@ public class EncodingManager implements EncodedValueLookup {
      */
     public IntsRef handleWayTags(ReaderWay way, long includeWay, long relationFlags) {
         IntsRef edgeFlags = createEdgeFlags();
-        for (TagParser parser : parserMap.values()) {
+        for (TagParser parser : sharedEncodedValueMap.values()) {
             parser.handleWayTags(edgeFlags, way, includeWay, relationFlags);
         }
         for (AbstractFlagEncoder encoder : edgeEncoders) {
@@ -610,8 +599,8 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     @Override
-    public EnumEncodedValue getEnumEncodedValue(String key) {
-        return getEncodedValue(key, EnumEncodedValue.class);
+    public ObjectEncodedValue getObjectEncodedValue(String key) {
+        return getEncodedValue(key, ObjectEncodedValue.class);
     }
 
     @Override
@@ -629,7 +618,6 @@ public class EncodingManager implements EncodedValueLookup {
         return encoder.toString() + "." + str;
     }
 
-    // for now keep private as public IntsRef is too ugly and relationFlags is unclear
     public interface TagParser {
         String getName();
 

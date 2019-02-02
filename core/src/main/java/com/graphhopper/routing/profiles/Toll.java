@@ -2,21 +2,18 @@ package com.graphhopper.routing.profiles;
 
 import com.graphhopper.routing.util.EncodingManager;
 
-public enum Toll {
-    DEFAULT("no"), ALL("all"), HGV("hgv");
+import java.util.Arrays;
+import java.util.List;
 
-    String name;
+public class Toll extends AbstractIndexBased {
+    public final static Toll ALL = new Toll("all", 1), HGV = new Toll("hgv", 2);
+    private static List<Toll> values = Arrays.asList(new Toll("no", 0), ALL, HGV);
 
-    Toll(String name) {
-        this.name = name;
+    public Toll(String name, int ordinal) {
+        super(name, ordinal);
     }
 
-    @Override
-    public String toString() {
-        return name;
-    }
-
-    public static EnumEncodedValue<Toll> create() {
-        return new EnumEncodedValueImpl<>(EncodingManager.TOLL, values(), DEFAULT);
+    public static ObjectEncodedValue create() {
+        return new MappedObjectEncodedValue(EncodingManager.TOLL, values);
     }
 }

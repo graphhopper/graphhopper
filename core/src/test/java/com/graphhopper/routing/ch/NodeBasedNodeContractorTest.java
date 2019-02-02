@@ -22,6 +22,7 @@ import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.BooleanEncodedValueImpl;
 import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -29,6 +30,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,7 +43,7 @@ import static org.junit.Assert.*;
 
 public class NodeBasedNodeContractorTest {
     // TODO integrate this into CHGraphImpl somehow
-    public final static BooleanEncodedValue SC_ACCESS = new BooleanEncodedValueImpl("sc_access", true);
+    public final static BooleanEncodedValue SC_ACCESS = new SimpleBooleanEncodedValue("sc_access", true);
 
     static {
         SC_ACCESS.init(new EncodedValue.InitializerConfig());
@@ -61,7 +63,7 @@ public class NodeBasedNodeContractorTest {
     }
 
     private NodeContractor createNodeContractor() {
-        NodeContractor nodeContractor = new NodeBasedNodeContractor(dir, graph, lg, weighting);
+        NodeContractor nodeContractor = new NodeBasedNodeContractor(dir, graph, lg, weighting, new PMap());
         nodeContractor.initFromGraph();
         nodeContractor.prepareContraction();
         return nodeContractor;
