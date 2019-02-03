@@ -175,7 +175,12 @@ public class NameSimilarityEdgeFilterTest {
     }
 
     private NameSimilarityEdgeFilter createNameSimilarityEdgeFilter(String s) {
-        return new NameSimilarityEdgeFilter(DefaultEdgeFilter.allEdges(new CarFlagEncoder()), s);
+        return new NameSimilarityEdgeFilter(new EdgeFilter() {
+            @Override
+            public boolean accept(EdgeIteratorState edgeState) {
+                return true;
+            }
+        }, s);
     }
 
     private EdgeIteratorState createTestEdgeIterator(final String name) {
@@ -184,28 +189,6 @@ public class NameSimilarityEdgeFilterTest {
             @Override
             public String getName() {
                 return name;
-            }
-
-            @Override
-            public int getBaseNode() {
-                //needed because of the loop-check in DefaultEdgeFilter is removed again
-                return 0;
-            }
-
-            @Override
-            public int getAdjNode() {
-                //needed because of the loop-check in DefaultEdgeFilter is removed again
-                return 0;
-            }
-
-            @Override
-            public boolean isForward(FlagEncoder encoder) {
-                return true;
-            }
-
-            @Override
-            public boolean isBackward(FlagEncoder encoder) {
-                return true;
             }
         };
     }

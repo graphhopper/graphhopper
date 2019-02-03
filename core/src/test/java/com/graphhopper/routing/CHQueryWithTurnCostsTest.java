@@ -404,6 +404,32 @@ public class CHQueryWithTurnCostsTest {
         // the ('forward') loop at 3 is recognized as an incoming edge at node 3
         testPathCalculation(0, 1, 4, IntArrayList.from(0, 3, 3, 2, 1));
     }
+
+    @Test
+    public void testFindPath_shortcutLoopIsRecognizedAsIncomingEdge() {
+        //          -0-
+        //          \ /
+        // 3 -- 4 -- 2 -- 1
+        EdgeIteratorState edge0 = graph.edge(3, 4, 1, true);
+        EdgeIteratorState edge1 = graph.edge(4, 2, 1, true);
+        EdgeIteratorState edge2 = graph.edge(2, 0, 1, false);
+        EdgeIteratorState edge3 = graph.edge(0, 2, 1, false);
+        EdgeIteratorState edge4 = graph.edge(2, 1, 1, false);
+        addRestriction(edge1, edge4, 2);
+        graph.freeze();
+
+        // contracting node 0 yields (the only) shortcut - and its a loop
+        addShortcut(2, 2, edge2.getEdge(), edge3.getEdge(), edge2.getEdge(), edge3.getEdge(), 2);
+        setLevelEqualToNodeIdForAllNodes();
+
+        // node 2 is the bridge node where the forward and backward searches meet (highest level). since there is a turn restriction
+        // at node 2 we cannot go from 4 to 1 directly, but we need to take the loop at 2 first. when the backward
+        // search arrives at 2 it is crucial that the ('forward') loop-shortcut at 2 is recognized as an incoming edge
+        // at node 2, otherwise the backward search ends at node 2. the forward search can never reach node 2 at all,
+        // because it never goes to a lower level. so when the backward search does not see the 'forward' loop shortcut
+        // no path between 3 and 1 will be found even though there is one.
+        testPathCalculation(3, 1, 5, IntArrayList.from(3, 4, 2, 0, 2, 1));
+    }
     
     @Test
     public void testFindPathWithTurnRestriction_single_loop() {

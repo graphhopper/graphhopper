@@ -59,6 +59,9 @@ import static java.lang.Double.isInfinite;
  * only stop this when it is guaranteed that no bridge-path exists. Here we limit the maximum number of settled
  * edges during the search and determine this maximum number based on the statistics we collected during previous
  * searches.
+ *
+ * @author easbar
+ *
  */
 public class WitnessPathSearcher {
     private static final int NO_NODE = -1;
