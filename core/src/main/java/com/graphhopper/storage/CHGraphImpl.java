@@ -65,7 +65,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     // shortcut memory layout is synced with edges indices until E_FLAGS, then:
     private int S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_FIRST, S_ORIG_LAST;
     private int shortcutCount = 0;
-    private boolean frozen;
+    private boolean isReadyForContraction;
 
     CHGraphImpl(Weighting w, Directory dir, final BaseGraph baseGraph, boolean edgeBased) {
         if (w == null)
@@ -258,11 +258,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     @Override
     public boolean isReadyForContraction() {
-        return frozen;
+        return isReadyForContraction;
     }
 
-    void _freeze() {
-        if (frozen) {
+    void _prepareForContraction() {
+        if (isReadyForContraction) {
             return;
         }
         long maxCapacity = ((long) getNodes()) * nodeCHEntryBytes;
@@ -279,7 +279,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
             nodesCH.setInt(pointer, baseGraph.nodes.getInt(basePointer));
         }
-        frozen = true;
+        isReadyForContraction = true;
     }
 
     String toDetailsString() {
@@ -346,11 +346,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     void loadNodesHeader() {
-        frozen = nodesCH.getHeader(0 * 4) == 1;
+        isReadyForContraction = nodesCH.getHeader(0 * 4) == 1;
     }
 
     void setNodesHeader() {
-        nodesCH.setHeader(0 * 4, frozen ? 1 : 0);
+        nodesCH.setHeader(0 * 4, isReadyForContraction ? 1 : 0);
     }
 
     protected int loadEdgesHeader() {
