@@ -13,7 +13,7 @@
     <node id="2" lat="12" lon="51" uid="B">
         <tag k="name" v="B"/>
     </node>
-    <node id="2" lat="12" lon="51" uid="B2">
+    <node id="6" lat="12" lon="51" uid="B2">
         <tag k="name" v="B2"/>
     </node>
     <node id="3" lat="13" lon="52" uid="C">
