@@ -38,8 +38,8 @@ import static org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class TrafficChangeWithNodeOrderingReusingTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrafficChangeWithNodeOrderingReusingTest.class);
-    // make sure to increase xmx/xms for surefire plugin in main pom.xml
-    private static final String OSM_FILE = "../local/maps/germany-140101.osm.pbf";
+    // make sure to increase xmx/xms for the JVM created by the surefire plugin in parent pom.xml
+    private static final String OSM_FILE = "../local/maps/berlin-latest.osm.pbf";
 
     private final Weighting baseWeighting;
     private final Weighting trafficWeighting;
