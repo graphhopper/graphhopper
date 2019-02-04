@@ -397,9 +397,8 @@ public class PrepareContractionHierarchiesTest {
                 });
         prepare.doWork();
         CHEdgeExplorer explorer = lg.createEdgeExplorer();
-        // shortcuts leading to or coming from higher level nodes should be disconnected
-        // note that we do not disconnect original edges, because we are re-using the base graph for different profiles,
-        // even though this is not optimal from a speed performance point of view.
+        // shortcuts (and edges) leading to or coming from higher level nodes should be disconnected
+        // so far we are only disconnecting shortcuts however, see comments in CHGraphImpl.
         assertEquals(buildSet(7, 8, 0, 1, 2, 3), GHUtility.getNeighbors(explorer.setBaseNode(6)));
         assertEquals(buildSet(6, 0), GHUtility.getNeighbors(explorer.setBaseNode(4)));
         assertEquals(buildSet(6, 1), GHUtility.getNeighbors(explorer.setBaseNode(5)));

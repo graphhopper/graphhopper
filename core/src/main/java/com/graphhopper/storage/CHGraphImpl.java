@@ -293,6 +293,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         CHEdgeIterator tmpIter = explorer.setBaseNode(edgeState.getAdjNode());
         int tmpPrevEdge = EdgeIterator.NO_EDGE;
         while (tmpIter.next()) {
+            // note that we do not disconnect original edges, because we are re-using the base graph for different profiles,
+            // even though this is not optimal from a speed performance point of view.
             if (tmpIter.isShortcut() && tmpIter.getEdge() == edgeState.getEdge()) {
                 // TODO this is ugly, move this somehow into the underlying iteration logic
                 long edgePointer = tmpPrevEdge == EdgeIterator.NO_EDGE ? -1
