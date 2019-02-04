@@ -65,7 +65,6 @@ public class OSMReaderTest {
     private final String fileBarriers = "test-barriers.xml";
     private final String fileTurnRestrictions = "test-restrictions.xml";
     private final String fileRoadAttributes = "test-road-attributes.xml";
-    private final String fileAvoidLoops = "test-avoid-loops.xml";
     private final String dir = "./target/tmp/test-db";
     private CarFlagEncoder carEncoder;
     private BikeFlagEncoder bikeEncoder;
@@ -394,12 +393,16 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void avoidsLoopEdges() {
+    public void avoidsLoopEdges_1525() {
         // loops in OSM should be avoided by adding additional tower node (see #1525, #1531)
         //     C - D
         //      \ /
         //   A - B - E
-        GraphHopper hopper = new GraphHopperFacade(fileAvoidLoops).importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops.xml").importOrLoad();
+        checkLoop(hopper);
+    }
+
+    void checkLoop(GraphHopper hopper) {
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
 
         // A, B, E and one of C or D should be tower nodes, in any case C and D should not be collapsed entirely
@@ -411,14 +414,31 @@ public class OSMReaderTest {
         while (iter.next()) {
             assertTrue("found a loop", iter.getAdjNode() != iter.getBaseNode());
         }
-        int nodeB = -1;
-        for (int i = 0; i < graph.getNodes(); i++) {
-            if (Math.abs(graph.getNodeAccess().getLat(i) - 12) < 1.e-3) {
-                nodeB = i;
-            }
-        }
+        int nodeB = AbstractGraphStorageTester.getIdOf(graph, 12);
         assertTrue("could not find OSM node B", nodeB > -1);
-        assertEquals(3, GHUtility.getNeighbors(graph.createEdgeExplorer().setBaseNode(nodeB)).size());
+        assertEquals(4, GHUtility.count(graph.createEdgeExplorer().setBaseNode(nodeB)));
+    }
+
+    @Test
+    public void avoidsLoopEdgesIdenticalLatLon_1533() {
+        checkLoop(new GraphHopperFacade("test-avoid-loops2.xml").importOrLoad());
+    }
+
+    @Test
+    public void avoidsLoopEdgesIdenticalNodeIds_1533() {
+        // We can handle the following case with the proper result:
+        checkLoop(new GraphHopperFacade("test-avoid-loops3.xml").importOrLoad());
+        // We cannot handle the following case, i.e. no loop is created. so we only check that there are no loops
+        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops4.xml").importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        AllEdgesIterator iter = graph.getAllEdges();
+        assertEquals(2, iter.length());
+        while (iter.next()) {
+            assertTrue("found a loop", iter.getAdjNode() != iter.getBaseNode());
+        }
+        int nodeB = AbstractGraphStorageTester.getIdOf(graph, 12);
+        assertTrue("could not find OSM node B", nodeB > -1);
+        assertEquals(2, GHUtility.count(graph.createEdgeExplorer().setBaseNode(nodeB)));
     }
 
     @Test
@@ -555,7 +575,7 @@ public class OSMReaderTest {
         int nb = AbstractGraphStorageTester.getIdOf(graph, 12, 51);
         int nc = AbstractGraphStorageTester.getIdOf(graph, 11.2, 52);
         int nd = AbstractGraphStorageTester.getIdOf(graph, 11.3, 51);
-        int ne = AbstractGraphStorageTester.getIdOf( graph, 10, 51 );
+        int ne = AbstractGraphStorageTester.getIdOf(graph, 10, 51);
 
         EdgeIteratorState edge_ab = GHUtility.getEdge(graph, na, nb);
         EdgeIteratorState edge_ad = GHUtility.getEdge(graph, na, nd);
