@@ -20,10 +20,7 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.util.BikeFlagEncoder;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -34,8 +31,10 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 
 /**
@@ -484,6 +483,57 @@ public class PrepareContractionHierarchiesTest {
         checkPath(ghStorage, carWeighting, 7, 5, IntArrayList.from(3, 9, 14, 16, 13, 12));
         // detour around blocked 9,14
         checkPath(ghStorage, bikeWeighting, 9, 5, IntArrayList.from(3, 10, 14, 16, 13, 12));
+    }
+
+    @Test
+    public void testReusingNodeOrdering() {
+        CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
+        MotorcycleFlagEncoder motorCycleEncoder = new MotorcycleFlagEncoder();
+        EncodingManager em = new EncodingManager(carFlagEncoder, motorCycleEncoder);
+        Weighting carWeighting = new FastestWeighting(carFlagEncoder);
+        Weighting motorCycleWeighting = new FastestWeighting(motorCycleEncoder);
+        Directory dir = new RAMDirectory();
+        GraphHopperStorage ghStorage = new GraphHopperStorage(Arrays.asList(carWeighting, motorCycleWeighting), dir, em, false, new GraphExtension.NoOpExtension());
+        ghStorage.create(1000);
+
+        int numNodes = 5_000;
+        int numQueries = 100;
+        long seed = System.nanoTime();
+        GHUtility.buildRandomGraph(ghStorage, seed, numNodes, 1.3, false, false, 0.9);
+        ghStorage.freeze();
+
+        // create CH for cars
+        StopWatch sw = new StopWatch().start();
+        CHGraph carCH = ghStorage.getGraph(CHGraphImpl.class, carWeighting);
+        TraversalMode traversalMode = TraversalMode.NODE_BASED;
+        PrepareContractionHierarchies carPch = new PrepareContractionHierarchies(carCH, carWeighting, traversalMode);
+        carPch.doWork();
+        long timeCar = sw.stop().getMillis();
+
+        // create CH for motorcycles, re-use car contraction order
+        // this speeds up contraction significantly, but can lead to slower queries
+        sw = new StopWatch().start();
+        CHGraph motorCycleCH = ghStorage.getGraph(CHGraphImpl.class, motorCycleWeighting);
+        NodeOrderingProvider nodeOrderingProvider = carCH.getNodeOrderingProvider();
+        PrepareContractionHierarchies motorCyclePch = new PrepareContractionHierarchies(motorCycleCH, motorCycleWeighting, traversalMode)
+                .useFixedNodeOrdering(nodeOrderingProvider);
+        motorCyclePch.doWork();
+
+        // run a few sample queries to check correctness
+        Random rnd = new Random(seed);
+        for (int i = 0; i < numQueries; ++i) {
+            Dijkstra dijkstra = new Dijkstra(ghStorage, motorCycleWeighting, traversalMode);
+            RoutingAlgorithm chAlgo = motorCyclePch.createAlgo(motorCycleCH, AlgorithmOptions.start().weighting(motorCycleWeighting).build());
+
+            int from = rnd.nextInt(numNodes);
+            int to = rnd.nextInt(numNodes);
+            double dijkstraWeight = dijkstra.calcPath(from, to).getWeight();
+            double chWeight = chAlgo.calcPath(from, to).getWeight();
+            assertEquals(dijkstraWeight, chWeight, 1.e-1);
+        }
+        long timeMotorCycle = sw.getMillis();
+
+        assertTrue("reusing node ordering should speed up ch contraction", timeMotorCycle < 0.5 * timeCar);
     }
 
     void checkPath(GraphHopperStorage g, Weighting w, int expShortcuts, double expDistance, IntIndexedContainer expNodes) {
