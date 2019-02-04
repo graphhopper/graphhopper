@@ -197,7 +197,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
                     return baseWeight;
                 }
             }
-            if (Double.isNaN(baseWeight)) {
+            if (Double.isInfinite(baseWeight)) {
                 // we are not touching this, might happen when speed is 0 ?
                 return baseWeight;
             }
