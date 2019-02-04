@@ -106,9 +106,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
      */
     public PrepareContractionHierarchies useFixedNodeOrdering(NodeOrderingProvider nodeOrderingProvider) {
         if (nodeOrderingProvider.getNumNodes() != prepareGraph.getNodes()) {
-            throw new IllegalArgumentException(String.format(Locale.ROOT,
-                    "contraction order size (%d) must be equal to number of nodes in graph (%d)",
-                    nodeOrderingProvider.getNumNodes(), prepareGraph.getNodes()));
+            throw new IllegalArgumentException(
+                    "contraction order size (" + nodeOrderingProvider.getNumNodes() + ")" +
+                            " must be equal to number of nodes in graph (" + prepareGraph.getNodes() + ").");
         }
         this.nodeOrderingProvider = nodeOrderingProvider;
         return this;
