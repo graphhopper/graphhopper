@@ -75,9 +75,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int checkCounter;
 
     public PrepareContractionHierarchies(CHGraph chGraph, Weighting weighting, TraversalMode traversalMode) {
-        if (!chGraph.isFrozen()) {
-            throw new IllegalStateException("Given CHGraph has not been frozen yet");
-        }
         this.prepareGraph = chGraph;
         this.traversalMode = traversalMode;
         this.weighting = weighting;
@@ -116,6 +113,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     @Override
     public void doSpecificWork() {
+        if (!prepareGraph.isFrozen()) {
+            throw new IllegalStateException("Given CHGraph has not been frozen yet");
+        }
         allSW.start();
         initFromGraph();
         runGraphContraction();

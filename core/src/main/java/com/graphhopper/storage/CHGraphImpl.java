@@ -256,6 +256,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return baseGraph.getBounds();
     }
 
+    @Override
     public boolean isFrozen() {
         return frozen;
     }
