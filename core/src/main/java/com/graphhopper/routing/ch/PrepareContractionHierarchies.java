@@ -113,7 +113,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     @Override
     public void doSpecificWork() {
-        if (!prepareGraph.isFrozen()) {
+        if (!prepareGraph.isReadyForContraction()) {
             throw new IllegalStateException("Given CHGraph has not been frozen yet");
         }
         allSW.start();

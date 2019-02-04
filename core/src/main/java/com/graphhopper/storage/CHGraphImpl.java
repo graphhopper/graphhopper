@@ -257,7 +257,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
-    public boolean isFrozen() {
+    public boolean isReadyForContraction() {
         return frozen;
     }
 

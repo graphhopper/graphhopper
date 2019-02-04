@@ -29,9 +29,7 @@ import com.graphhopper.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static junit.framework.TestCase.assertTrue;
@@ -360,6 +358,57 @@ public class PrepareContractionHierarchiesTest {
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.getDistance(), 1e-1);
         assertEquals(IntArrayList.from(10, 0, 1, 2, 3, 4, 5, 6), p.calcNodes());
+    }
+
+    @Test
+    public void testDisconnects() {
+        final GraphHopperStorage g = createGHStorage();
+        CHGraph lg = g.getGraph(CHGraph.class);
+        //            4
+        //            v
+        //            0
+        //            v
+        //  8 -> 3 -> 6 -> 1 -> 5
+        //            v
+        //            2
+        //            v
+        //            7
+        g.edge(8, 3, 1, false);
+        g.edge(3, 6, 1, false);
+        g.edge(6, 1, 1, false);
+        g.edge(1, 5, 1, false);
+        g.edge(4, 0, 1, false);
+        g.edge(0, 6, 1, false);
+        g.edge(6, 2, 1, false);
+        g.edge(2, 7, 1, false);
+        g.freeze();
+
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg)
+                .useFixedNodeOrdering(new NodeOrderingProvider() {
+                    @Override
+                    public int getNodeIdForLevel(int level) {
+                        return level;
+                    }
+
+                    @Override
+                    public int getNumNodes() {
+                        return g.getNodes();
+                    }
+                });
+        prepare.doWork();
+        CHEdgeExplorer explorer = lg.createEdgeExplorer();
+        // shortcuts leading to or coming from higher level nodes should be disconnected
+        // note that we do not disconnect original edges, because we are re-using the base graph for different profiles,
+        // even though this is not optimal from a speed performance point of view.
+        assertEquals(buildSet(7, 8, 0, 1, 2, 3), GHUtility.getNeighbors(explorer.setBaseNode(6)));
+        assertEquals(buildSet(6, 0), GHUtility.getNeighbors(explorer.setBaseNode(4)));
+        assertEquals(buildSet(6, 1), GHUtility.getNeighbors(explorer.setBaseNode(5)));
+        assertEquals(buildSet(8, 2), GHUtility.getNeighbors(explorer.setBaseNode(7)));
+        assertEquals(buildSet(3), GHUtility.getNeighbors(explorer.setBaseNode(8)));
+    }
+
+    private Set<Integer> buildSet(Integer... values) {
+        return new HashSet<>(Arrays.asList(values));
     }
 
     @Test
