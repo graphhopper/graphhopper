@@ -38,20 +38,23 @@ import static org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class TrafficChangeWithNodeOrderingReusingTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrafficChangeWithNodeOrderingReusingTest.class);
-    private static final String OSM_FILE = "../local/maps/berlin-140101.osm.pbf";
+    // make sure to increase xmx/xms for surefire plugin in main pom.xml
+    private static final String OSM_FILE = "../local/maps/germany-140101.osm.pbf";
 
     private final Weighting baseWeighting;
     private final Weighting trafficWeighting;
     private final GraphHopperStorage ghStorage;
     private final CHGraphImpl baseCHGraph;
     private final CHGraphImpl trafficCHGraph;
+    private int maxDeviationPercentage;
 
     @Parameters(name = "maxDeviationPercentage = {0}")
     public static Object[] data() {
-        return new Object[]{0, 1, 3, 5, 10};
+        return new Object[]{0, 1, 5, 10, 50};
     }
 
     public TrafficChangeWithNodeOrderingReusingTest(int maxDeviationPercentage) {
+        this.maxDeviationPercentage = maxDeviationPercentage;
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = new EncodingManager(encoder);
         baseWeighting = new FastestWeighting(encoder);
@@ -67,6 +70,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         final long seed = 2139960664L;
         final int numQueries = 50_000;
 
+        LOGGER.info("Running performance test, max deviation percentage: " + this.maxDeviationPercentage);
         // read osm
         OSMReader reader = new OSMReader(ghStorage);
         reader.setFile(new File(OSM_FILE));
@@ -127,12 +131,12 @@ public class TrafficChangeWithNodeOrderingReusingTest {
             @Override
             public int doCalc(boolean warmup, int run) {
                 if (!warmup && run % 1000 == 0) {
-                    LOGGER.info("Finished {} of {} runs. {}", run, iterations,
+                    LOGGER.debug("Finished {} of {} runs. {}", run, iterations,
                             run > 0 ? String.format(Locale.ROOT, " Time: %6.2fms", queryTime * 1.e-6 / run) : "");
                 }
                 if (run == iterations - 1) {
                     String avg = fmt(queryTime * 1.e-6 / run);
-                    LOGGER.info("Finished all ({}) runs, avg time: {}ms", iterations, avg);
+                    LOGGER.debug("Finished all ({}) runs, avg time: {}ms", iterations, avg);
                 }
                 int from = random.nextInt(numNodes);
                 int to = random.nextInt(numNodes);
@@ -180,7 +184,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
         @Override
         public double getMinWeight(double distance) {
-            // left as is, ok for now, but do not use with astar!!
+            // left as is, ok for now, but do not use with astar, at least as long as deviations can be negative!!
             return this.baseWeighting.getMinWeight(distance);
         }
 
@@ -192,6 +196,10 @@ public class TrafficChangeWithNodeOrderingReusingTest {
                 if (((CHEdgeIteratorState) edgeState).isShortcut()) {
                     return baseWeight;
                 }
+            }
+            if (Double.isNaN(baseWeight)) {
+                // we are not touching this, might happen when speed is 0 ?
+                return baseWeight;
             }
             // apply a random (but deterministic) weight deviation - deviation may not depend on reverse flag!
             long seed = edgeState.getEdge();
