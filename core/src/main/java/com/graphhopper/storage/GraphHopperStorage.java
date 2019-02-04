@@ -326,6 +326,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public void flush() {
         for (CHGraphImpl cg : getAllCHGraphs()) {
+            cg.setNodesHeader();
             cg.setEdgesHeader();
             cg.flush();
         }

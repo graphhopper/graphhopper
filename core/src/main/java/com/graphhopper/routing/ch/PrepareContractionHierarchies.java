@@ -75,6 +75,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int checkCounter;
 
     public PrepareContractionHierarchies(CHGraph chGraph, Weighting weighting, TraversalMode traversalMode) {
+        if (!chGraph.isFrozen()) {
+            throw new IllegalStateException("Given CHGraph has not been frozen yet");
+        }
         this.prepareGraph = chGraph;
         this.traversalMode = traversalMode;
         this.weighting = weighting;
@@ -99,6 +102,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     /**
      * Instead of heuristically determining a node ordering for the graph contraction it is also possible
      * to use a fixed ordering. For example this allows re-using a previously calculated node ordering.
+     * This will speed up CH preparation, but might lead to slower queries.
      */
     public PrepareContractionHierarchies useFixedNodeOrdering(NodeOrderingProvider nodeOrderingProvider) {
         if (nodeOrderingProvider.getNumNodes() != prepareGraph.getNodes()) {
@@ -201,6 +205,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         nodeContractor.initFromGraph();
     }
 
+    private void setMaxLevelOnAllNodes() {
+        final int nodes = prepareGraph.getNodes();
+        for (int node = 0; node < nodes; node++) {
+            prepareGraph.setLevel(node, maxLevel);
+        }
+    }
+
     private void updatePrioritiesOfRemainingNodes() {
         periodicUpdateSW.start();
         sortedNodes.clear();
@@ -212,13 +223,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             sortedNodes.insert(node, priority);
         }
         periodicUpdateSW.stop();
-    }
-
-    private void setMaxLevelOnAllNodes() {
-        final int nodes = prepareGraph.getNodes();
-        for (int node = 0; node < nodes; node++) {
-            prepareGraph.setLevel(node, maxLevel);
-        }
     }
 
     private void contractNodesUsingHeuristicNodeOrdering() {
