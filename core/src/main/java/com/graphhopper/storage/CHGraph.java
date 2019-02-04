@@ -87,7 +87,7 @@ public interface CHGraph extends Graph {
     NodeOrderingProvider getNodeOrderingProvider();
 
     /**
-     * true contraction can be started (add shortcuts and set levels), false otherwise
+     * @return true if contraction can be started (add shortcuts and set levels), false otherwise
      */
     boolean isReadyForContraction();
 }
