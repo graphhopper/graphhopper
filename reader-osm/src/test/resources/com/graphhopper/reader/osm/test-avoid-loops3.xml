@@ -5,6 +5,8 @@
       C - D
        \ /
     A - B - E
+       / \
+       ~~~
     -->
 
     <node id="1" lat="11" lon="50" uid="A">
