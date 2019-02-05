@@ -39,6 +39,13 @@ graphhopper:
   # graph but less for every request. You can also setup multiple weightings, by providing a comma separated list.
   prepare.ch.weightings: fastest
 
+  # To enable turn-costs in speed mode (contraction hierarchies) edge-based graph traversal and a more elaborate
+  # pre-processing is required. Using this option you can either turn off the edge-based pre-processing (choose 'off'),
+  # use edge-based pre-processing for all encoders/vehicles with turn_costs=true (choose 'edge_or_node') or use node-based
+  # pre-processing for all encoders/vehicles and additional edge-based pre-processing for all encoders/vehicles with
+  # turn_costs=true (choose 'edge_and_node').
+  prepare.ch.edge_based: off
+
 
   # Disable the speed mode. Should be used only with routing.max_visited_nodes or when the hybrid mode is enabled instead
   # prepare.ch.weightings: no

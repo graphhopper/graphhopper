@@ -256,8 +256,23 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
-    public void setSkippedEdges(int edge1, int edge2) {
+    public CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
         throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
+    public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
+        throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
+    public int getOrigEdgeFirst() {
+        return edges.get(current).getOrigEdgeFirst();
+    }
+
+    @Override
+    public int getOrigEdgeLast() {
+        return edges.get(current).getOrigEdgeLast();
     }
 
     @Override

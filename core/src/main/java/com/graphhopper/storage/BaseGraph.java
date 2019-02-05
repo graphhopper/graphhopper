@@ -465,9 +465,8 @@ class BaseGraph implements Graph {
     }
 
     /**
-     * This method copies the
-     *
-     * @return to
+     * This method copies the properties of one {@link EdgeIteratorState} to another.
+     * @return the updated iterator the properties where copied to.
      */
     EdgeIteratorState copyProperties(EdgeIteratorState from, CommonEdgeIterator to) {
         boolean reverse = from.get(REVERSE_STATE);
@@ -950,6 +949,9 @@ class BaseGraph implements Graph {
             this.nextEdgeId = this.edgeId = edgeId;
         }
 
+        /**
+         * @return false if the edge has not a node equal to expectedAdjNode
+         */
         final boolean init(int tmpEdgeId, int expectedAdjNode) {
             setEdgeId(tmpEdgeId);
             if (!EdgeIterator.Edge.isValid(edgeId))
@@ -1003,10 +1005,15 @@ class BaseGraph implements Graph {
                 int nodeA = edgeAccess.getNodeA(edgePointer);
                 boolean baseNodeIsNodeA = baseNode == nodeA;
                 adjNode = baseNodeIsNodeA ? edgeAccess.getNodeB(edgePointer) : nodeA;
+
+                // TODO NOW, comment from master, do we still need this ?
+                // this does not properly work as reverse can be true from a previous edge state
+                // if (baseNode == adjNode && !reverse) reverse = true; else
+
                 reverse = !baseNodeIsNodeA;
                 freshFlags = false;
 
-                // position to next edge                
+                // position to next edge
                 nextEdgeId = baseNodeIsNodeA ? edgeAccess.getLinkA(edgePointer) : edgeAccess.getLinkB(edgePointer);
                 assert nextEdgeId != edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
                         + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
@@ -1292,6 +1299,16 @@ class BaseGraph implements Graph {
         @Override
         public int getEdge() {
             return edgeId;
+        }
+
+        @Override
+        public int getOrigEdgeFirst() {
+            return getEdge();
+        }
+
+        @Override
+        public int getOrigEdgeLast() {
+            return getEdge();
         }
 
         @Override

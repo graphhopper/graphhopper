@@ -48,7 +48,9 @@ public abstract class AbstractWeighting implements Weighting {
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         if (reverse && !edgeState.getReverse(accessEnc) || !reverse && !edgeState.get(accessEnc))
             throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "
-                    + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc));
+                    "(" + edgeState.getBaseNode() + " - " + edgeState.getAdjNode() + ") "
+                            + edgeState.fetchWayGeometry(3) + " " + edgeState.getDistance() + " "
+                            + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc));
 
         double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
@@ -96,8 +98,8 @@ public abstract class AbstractWeighting implements Weighting {
     /**
      * Replaces all characters which are not numbers, characters or underscores with underscores
      */
-    public static String weightingToFileName(Weighting w) {
-        return toLowerCase(w.toString()).replaceAll("\\|", "_");
+    public static String weightingToFileName(Weighting w, boolean edgeBased) {
+        return toLowerCase(w.toString()).replaceAll("\\|", "_") + (edgeBased ? "_edge" : "_node");
     }
 
     @Override

@@ -19,6 +19,7 @@ package com.graphhopper;
 
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
@@ -1008,7 +1009,7 @@ public class GraphHopperIT {
                 setEncodingManager(new EncodingManager("car|turn_costs=true"));
         tmpHopper.importOrLoad();
 
-        // with turn costs (default if none-CH and turn cost enabled)
+        // with turn costs (default if non-CH and turn cost enabled)
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
         GHResponse rsp = tmpHopper.route(req);
         assertEquals(1044, rsp.getBest().getDistance(), 1);
@@ -1025,25 +1026,59 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testCHAndTurnCostsWithFlexmode() {
+    public void testTurnCostsOnOffCH() {
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(DIR + "/moscow.osm.gz").
                 setStoreOnFlush(true).
+                setCHEnabled(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("car|turn_costs=true"));
         tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        tmpHopper.getCHFactoryDecorator().setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_AND_NODE);
         tmpHopper.importOrLoad();
 
-        // without turn costs (default for CH)
+        // without turn costs
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
+        req.getHints().put(Routing.EDGE_BASED, "false");
         GHResponse rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(400, rsp.getBest().getDistance(), 1);
 
         // with turn costs                
-        req.getHints().put(CH.DISABLE, "true");
         req.getHints().put(Routing.EDGE_BASED, "true");
         rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(1044, rsp.getBest().getDistance(), 1);
+    }
+
+    @Test
+    public void testCHOnOffWithTurnCosts() {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/moscow.osm.gz").
+                setStoreOnFlush(true).
+                setCHEnabled(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car|turn_costs=true"));
+        tmpHopper.getCHFactoryDecorator()
+                .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE)
+                .setDisablingAllowed(true);
+        tmpHopper.importOrLoad();
+
+        // with CH
+        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
+        req.getHints().put(Routing.EDGE_BASED, "true");
+        req.getHints().put(CH.DISABLE, "false");
+        GHResponse rsp1 = tmpHopper.route(req);
+        assertFalse(rsp1.getErrors().toString(), rsp1.hasErrors());
+        assertEquals(1044, rsp1.getBest().getDistance(), 1);
+
+        // without CH      
+        req.getHints().put(Routing.EDGE_BASED, "true");
+        req.getHints().put(CH.DISABLE, "true");
+        GHResponse rsp2 = tmpHopper.route(req);
+        assertFalse(rsp2.getErrors().toString(), rsp2.hasErrors());
+        assertEquals(1044, rsp2.getBest().getDistance(), 1);
+        // just a quick check that we did not run the same algorithm twice
+        assertNotEquals(rsp1.getHints().get("visited_nodes.sum", "_"), rsp2.getHints().get("visited_nodes.sum", "_"));
     }
 }

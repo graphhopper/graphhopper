@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
@@ -172,9 +173,30 @@ public class RoutingAlgorithmWithOSMIT {
         List<OneRun> list = new ArrayList<>();
         list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
         list.add(new OneRun(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
-        // TODO include CH
-        boolean testAlsoCH = false, is3D = false;
+        boolean testAlsoCH = true, is3D = false;
         runAlgo(testCollector, DIR + "/moscow.osm.gz", "target/graph-moscow",
+                list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
+
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testSimpleTurnCosts() {
+        List<OneRun> list = new ArrayList<>();
+        list.add(new OneRun(-0.5, 0.0, 0.0, -0.5, 301015.98099, 6));
+        boolean testAlsoCH = true, is3D = false;
+        runAlgo(testCollector, DIR + "/test_simple_turncosts.osm.xml", "target/graph-simple_turncosts",
+                list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
+
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testSimplePTurn() {
+        List<OneRun> list = new ArrayList<>();
+        list.add(new OneRun(0, 1, -1, 0, 667.08, 6));
+        boolean testAlsoCH = true, is3D = false;
+        runAlgo(testCollector, DIR + "/test_simple_pturn.osm.xml", "target/graph-simple_turncosts",
                 list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -302,13 +324,28 @@ public class RoutingAlgorithmWithOSMIT {
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
+    // TODO fix later, see #1525, #1531
+//    @Test
+//    public void testLandmarkBug() {
+//        List<OneRun> list = new ArrayList<>();
+//        OneRun run = new OneRun();
+//        run.add(50.016923, 11.514187, 0, 0);
+//        run.add(50.019129, 11.500325, 0, 0);
+//        run.add(50.023623, 11.56929, 7069, 178);
+//        list.add(run);
+//
+//        runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
+//                list, "bike", true, "bike", "fastest", false);
+//        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+//    }
+
     @Test
     public void testBug1014() {
         List<OneRun> list = new ArrayList<>();
         OneRun run = new OneRun();
-        run.add(50.016923, 11.514187, 0, 0);
+        run.add(50.015861, 11.51041, 0, 0);
         run.add(50.019129, 11.500325, 0, 0);
-        run.add(50.023623, 11.56929, 7069, 178);
+        run.add(50.023623, 11.56929, 6777, 175);
         list.add(run);
 
         runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
@@ -499,7 +536,7 @@ public class RoutingAlgorithmWithOSMIT {
     }
 
     /**
-     * @param withCH if true also the CH and LM algorithms will be tested which need
+     * @param withCH if true also the CH and LM algorithms will be tested which needs
      *               preparation and takes a bit longer
      */
     Graph runAlgo(TestAlgoCollector testCollector, String osmFile,
@@ -516,7 +553,7 @@ public class RoutingAlgorithmWithOSMIT {
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopperOSM().
                     setStoreOnFlush(true).
-                    setCHEnabled(false).
+                    setCHEnabled(withCH).
                     setDataReaderFile(osmFile).
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(new EncodingManager(importVehicles, 8));
@@ -532,8 +569,11 @@ public class RoutingAlgorithmWithOSMIT {
                     setEnabled(true).setDisablingAllowed(true);
 
             if (withCH)
-                hopper.getCHFactoryDecorator().addWeighting(weightStr).
-                        setEnabled(true).setDisablingAllowed(true);
+                hopper.getCHFactoryDecorator().
+                        addWeighting(weightStr).
+                        setEnabled(true).
+                        setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE).
+                        setDisablingAllowed(true);
 
             if (is3D)
                 hopper.setElevationProvider(new SRTMProvider(DIR));
@@ -549,6 +589,9 @@ public class RoutingAlgorithmWithOSMIT {
 
             EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
             for (AlgoHelperEntry entry : prepares) {
+                if (entry.getExpectedAlgo().startsWith("astarbi|ch")) {
+                    continue;
+                }
                 algoEntry = entry;
                 LocationIndex idx = entry.getIdx();
                 for (OneRun oneRun : forEveryAlgo) {

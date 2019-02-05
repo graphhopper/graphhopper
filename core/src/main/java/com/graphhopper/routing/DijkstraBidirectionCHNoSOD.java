@@ -23,11 +23,8 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 
 public class DijkstraBidirectionCHNoSOD extends DijkstraBidirectionRef {
-    public DijkstraBidirectionCHNoSOD(Graph graph, Weighting weighting, TraversalMode traversalMode) {
-        super(graph, weighting, traversalMode);
-        if (traversalMode.isEdgeBased()) {
-            throw new IllegalArgumentException("Edge based traversal is not supported for CH");
-        }
+    public DijkstraBidirectionCHNoSOD(Graph graph, Weighting weighting) {
+        super(graph, weighting, TraversalMode.NODE_BASED);
     }
 
     @Override

@@ -32,6 +32,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.routing.ch.NodeBasedNodeContractorTest.SC_ACCESS;
@@ -47,12 +48,24 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
     @Override
     public GraphHopperStorage newGHStorage(Directory dir, boolean is3D) {
-        return new GraphHopperStorage(Arrays.asList(new FastestWeighting(carEncoder)), dir, encodingManager, is3D, new GraphExtension.NoOpExtension());
+        return newGHStorage(dir, is3D, false);
+    }
+
+    private GraphHopperStorage newGHStorage(boolean is3D, boolean forEdgeBasedTraversal) {
+        return newGHStorage(new RAMDirectory(defaultGraphLoc, true), is3D, forEdgeBasedTraversal).create(defaultSize);
+    }
+
+    private GraphHopperStorage newGHStorage(Directory dir, boolean is3D, boolean forEdgeBasedTraversal) {
+        if (forEdgeBasedTraversal) {
+            return new GraphHopperStorage(Collections.<Weighting>emptyList(), Arrays.asList(new FastestWeighting(carEncoder)), dir, encodingManager, is3D, new GraphExtension.NoOpExtension());
+        } else {
+            return new GraphHopperStorage(Arrays.asList(new FastestWeighting(carEncoder)), Collections.<Weighting>emptyList(), dir, encodingManager, is3D, new GraphExtension.NoOpExtension());
+        }
     }
 
     @Test
     public void testCannotBeLoadedWithNormalGraphHopperStorageClass() {
-        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
+        graph = newGHStorage(false, false);
         graph.flush();
         graph.close();
 
@@ -298,8 +311,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph.close();
 
         // test freeze and shortcut creation & loading
-        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).
-                create(defaultSize);
+        graph = newGHStorage(true, false);
         graph.edge(1, 0);
         graph.edge(8, 9);
         graph.freeze();
@@ -404,6 +416,39 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertEquals(edge2.getEdge(), iter.getSkippedEdge2());
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testAddShortcut_edgeBased_throwsIfNotConfiguredForEdgeBased() {
+        graph = newGHStorage(false, false);
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.freeze();
+        addShortcut(getGraph(graph), 0, 2, true, 0, 1, 0, 1, 2);
+    }
+
+    @Test
+    public void testAddShortcut_edgeBased() {
+        // 0 -> 1 -> 2
+        graph = newGHStorage(false, true);
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 3, false);
+        graph.freeze();
+        CHGraph lg = getGraph(this.graph);
+        addShortcut(lg, 0, 2, true, 0, 1, 0, 1, 4);
+        AllCHEdgesIterator iter = lg.getAllEdges();
+        iter.next();
+        iter.next();
+        iter.next();
+        assertEquals(0, iter.getOrigEdgeFirst());
+        assertEquals(1, iter.getOrigEdgeLast());
+    }
+
+    private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int firstOrigEdge, int lastOrigEdge,
+                             int skipEdge1, int skipEdge2, int distance) {
+        CHEdgeIteratorState shortcut = chGraph.shortcut(from, to);
+        shortcut.setFlags(fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir());
+        shortcut.setFirstAndLastOrigEdges(firstOrigEdge, lastOrigEdge).setSkippedEdges(skipEdge1, skipEdge2).setDistance(distance);
+    }
+
     @Test
     public void testShortcutCreationAndAccessForManyVehicles() {
         FlagEncoder tmpCar = new CarFlagEncoder();
@@ -458,14 +503,23 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testLoadingWithWrongWeighting_throws() {
+    public void testLoadingWithWrongWeighting_node_throws() {
+        testLoadingWithWrongWeighting_throws(false);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testLoadingWithWrongWeighting_edge_throws() {
+        testLoadingWithWrongWeighting_throws(true);
+    }
+
+    private void testLoadingWithWrongWeighting_throws(boolean edgeBased) {
         // we start with one weighting
-        GraphHopperStorage ghStorage = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), false);
+        GraphHopperStorage ghStorage = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), false, edgeBased);
         ghStorage.create(defaultSize);
         ghStorage.flush();
 
         // but then configure another weighting and try to load the graph from disk -> error
-        GraphHopperStorage newGHStorage = createStorageWithWeightings(new ShortestWeighting(carEncoder));
+        GraphHopperStorage newGHStorage = createStorageWithWeightings(edgeBased, new ShortestWeighting(carEncoder));
         newGHStorage.loadExisting();
     }
 
@@ -477,35 +531,80 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         ghStorage.flush();
 
         // but then add an additional weighting and try to load the graph from disk -> error
-        GraphHopperStorage newGHStorage = createStorageWithWeightings(
+        GraphHopperStorage newGHStorage = createStorageWithWeightings(false,
                 new FastestWeighting(carEncoder), new ShortestWeighting(carEncoder));
         newGHStorage.loadExisting();
     }
 
     @Test
-    public void testLoadingWithLessWeightings_works() {
+    public void testLoadingWithLessWeightings_node_works() {
+        testLoadingWithLessWeightings_works(false);
+    }
+
+    @Test
+    public void testLoadingWithLessWeightings_edge_works() {
+        testLoadingWithLessWeightings_works(true);
+    }
+
+    private void testLoadingWithLessWeightings_works(boolean edgeBased) {
         // we start with a gh storage with two ch weightings and flush it to disk
         FastestWeighting weighting1 = new FastestWeighting(carEncoder);
         ShortestWeighting weighting2 = new ShortestWeighting(carEncoder);
-        GraphHopperStorage originalStorage = createStorageWithWeightings(weighting1, weighting2);
+        GraphHopperStorage originalStorage = createStorageWithWeightings(edgeBased, weighting1, weighting2);
         originalStorage.create(defaultSize);
         originalStorage.flush();
 
         // now we create a new storage but only use one of the weightings, which should be ok
-        GraphHopperStorage smallStorage = createStorageWithWeightings(weighting1);
+        GraphHopperStorage smallStorage = createStorageWithWeightings(edgeBased, weighting1);
         smallStorage.loadExisting();
-        assertEquals(1, smallStorage.getCHWeightings().size());
+        assertEquals(edgeBased ? 0 : 1, smallStorage.getNodeBasedCHWeightings().size());
+        assertEquals(edgeBased ? 1 : 0, smallStorage.getEdgeBasedCHWeightings().size());
         smallStorage.flush();
 
         // now we create yet another storage that uses both weightings again, which still works
-        GraphHopperStorage fullStorage = createStorageWithWeightings(weighting1, weighting2);
+        GraphHopperStorage fullStorage = createStorageWithWeightings(edgeBased, weighting1, weighting2);
         fullStorage.loadExisting();
-        assertEquals(2, fullStorage.getCHWeightings().size());
+        assertEquals(edgeBased ? 0 : 2, fullStorage.getNodeBasedCHWeightings().size());
+        assertEquals(edgeBased ? 2 : 0, fullStorage.getEdgeBasedCHWeightings().size());
         fullStorage.flush();
     }
 
-    private GraphHopperStorage createStorageWithWeightings(Weighting... weightings) {
-        return new GraphHopperStorage(Arrays.asList(weightings), new GHDirectory(defaultGraphLoc, DAType.RAM_STORE),
-                encodingManager, false, new GraphExtension.NoOpExtension());
+    @Test
+    public void testLoadingWithLessWeightings_nodeAndEdge_works() {
+        // we start with a gh storage with two node-based and one edge-based ch weighting and flush it to disk
+        FastestWeighting weighting1 = new FastestWeighting(carEncoder);
+        ShortestWeighting weighting2 = new ShortestWeighting(carEncoder);
+        GraphHopperStorage originalStorage = createStorageWithWeightings(
+                Arrays.<Weighting>asList(weighting1, weighting2),
+                Arrays.<Weighting>asList(weighting2));
+        originalStorage.create(defaultSize);
+        originalStorage.flush();
+
+        // now we create a new storage but only use the edge weighting, which should be ok
+        GraphHopperStorage edgeStorage = createStorageWithWeightings(true, weighting2);
+        edgeStorage.loadExisting();
+        assertEquals(0, edgeStorage.getNodeBasedCHWeightings().size());
+        assertEquals(1, edgeStorage.getEdgeBasedCHWeightings().size());
+        edgeStorage.flush();
+
+        // now we create yet another storage that uses one of the node and the edge weighting, which still works
+        GraphHopperStorage mixedStorage = createStorageWithWeightings(
+                Arrays.<Weighting>asList(weighting1),
+                Arrays.<Weighting>asList(weighting2));
+        mixedStorage.loadExisting();
+        assertEquals(1, mixedStorage.getNodeBasedCHWeightings().size());
+        assertEquals(1, mixedStorage.getNodeBasedCHWeightings().size());
+        mixedStorage.flush();
+    }
+
+    private GraphHopperStorage createStorageWithWeightings(boolean edgeBased, Weighting... weightings) {
+        List<Weighting> nodeBasedCHWeightings = edgeBased ? Collections.<Weighting>emptyList() : Arrays.asList(weightings);
+        List<Weighting> edgeBasedCHWeightings = edgeBased ? Arrays.asList(weightings) : Collections.<Weighting>emptyList();
+        return createStorageWithWeightings(nodeBasedCHWeightings, edgeBasedCHWeightings);
+    }
+
+    private GraphHopperStorage createStorageWithWeightings(List<Weighting> nodeBasedCHWeightings, List<Weighting> edgeBasedCHWeightings) {
+        return new GraphHopperStorage(nodeBasedCHWeightings, edgeBasedCHWeightings,
+                new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), encodingManager, false, new GraphExtension.NoOpExtension());
     }
 }
