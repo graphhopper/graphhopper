@@ -60,7 +60,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     int shortcutEntryBytes;
     // the nodesCH storage is limited via baseGraph.nodeCount too
     int nodeCHEntryBytes;
-    final int shortcutBytesForFlags  = 4;
+    final int shortcutBytesForFlags = 4;
     private int N_LEVEL;
     // shortcut memory layout is synced with edges indices until E_FLAGS, then:
     private int S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_FIRST, S_ORIG_LAST;
@@ -434,23 +434,36 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             System.out.format(Locale.ROOT, " ... %d more nodes", baseGraph.getNodes() - printMax);
         }
         System.out.println("shortcuts:");
-        String formatShortcuts = "%12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s\n";
-        System.out.format(Locale.ROOT, formatShortcuts, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS", "S_SKIP_EDGE1", "S_SKIP_EDGE2", "S_ORIG_FIRST", "S_ORIG_LAST");
-        for (int i = baseGraph.edgeCount; i < baseGraph.edgeCount + Math.min(shortcutCount, printMax); ++i) {
-            System.out.format(Locale.ROOT, formatShortcuts, i,
-                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_NODEA),
-                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_NODEB),
-                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_LINKA),
-                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_LINKB),
-                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_DIST),
-                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_FLAGS),
-                    shortcuts.getInt(chEdgeAccess.toPointer(i) + S_SKIP_EDGE1),
-                    shortcuts.getInt(chEdgeAccess.toPointer(i) + S_SKIP_EDGE2),
-                    shortcuts.getInt(chEdgeAccess.toPointer(i) + S_ORIG_FIRST),
-                    shortcuts.getInt(chEdgeAccess.toPointer(i) + S_ORIG_LAST));
+        String formatShortcutsBase = "%12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s";
+        String formatShortcutExt = " | %12s | %12s";
+        String header = String.format(Locale.ROOT, formatShortcutsBase, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS", "S_SKIP_EDGE1", "S_SKIP_EDGE2");
+        if (edgeBased) {
+            header += String.format(Locale.ROOT, formatShortcutExt, "S_ORIG_FIRST", "S_ORIG_LAST");
         }
-        if (shortcutCount > printMax) {
-            System.out.printf(Locale.ROOT, " ... %d more shortcut edges\n", shortcutCount - printMax);
+        System.out.println(header);
+        IntsRef intsRef = new IntsRef(shortcutBytesForFlags / 4);
+        for (int i = baseGraph.edgeCount; i < baseGraph.edgeCount + Math.min(shortcutCount, printMax); ++i) {
+            long edgePointer = chEdgeAccess.toPointer(i);
+            chEdgeAccess.readFlags_(edgePointer, intsRef);
+            String edgeString = String.format(Locale.ROOT, formatShortcutsBase,
+                    i,
+                    chEdgeAccess.getNodeA(edgePointer),
+                    chEdgeAccess.getNodeB(edgePointer),
+                    chEdgeAccess.getLinkA(edgePointer),
+                    chEdgeAccess.getLinkB(edgePointer),
+                    chEdgeAccess.getDist(edgePointer),
+                    intsRef,
+                    shortcuts.getInt(edgePointer + S_SKIP_EDGE1),
+                    shortcuts.getInt(edgePointer + S_SKIP_EDGE2));
+            if (edgeBased) {
+                edgeString += String.format(Locale.ROOT, formatShortcutExt,
+                        shortcuts.getInt(edgePointer + S_ORIG_FIRST),
+                        shortcuts.getInt(edgePointer + S_ORIG_LAST));
+                System.out.println(edgeString);
+            }
+            if (shortcutCount > printMax) {
+                System.out.printf(Locale.ROOT, " ... %d more shortcut edges\n", shortcutCount - printMax);
+            }
         }
     }
 

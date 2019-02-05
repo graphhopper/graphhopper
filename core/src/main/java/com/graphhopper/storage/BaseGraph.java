@@ -392,14 +392,17 @@ class BaseGraph implements Graph {
         System.out.println("edges:");
         String formatEdges = "%12s | %12s | %12s | %12s | %12s | %12s | %12s \n";
         System.out.format(Locale.ROOT, formatEdges, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS");
+        IntsRef intsRef = new IntsRef(bytesForFlags / 4);
         for (int i = 0; i < Math.min(edgeCount, printMax); ++i) {
+            long edgePointer = edgeAccess.toPointer(i);
+            edgeAccess.readFlags_(edgePointer, intsRef);
             System.out.format(Locale.ROOT, formatEdges, i,
-                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_NODEA),
-                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_NODEB),
-                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_LINKA),
-                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_LINKB),
-                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_DIST),
-                    edges.getInt((long) (i * edgeEntryBytes) + edgeAccess.E_FLAGS));
+                    edgeAccess.getNodeA(edgePointer),
+                    edgeAccess.getNodeB(edgePointer),
+                    edgeAccess.getLinkA(edgePointer),
+                    edgeAccess.getLinkB(edgePointer),
+                    edgeAccess.getDist(edgePointer),
+                    intsRef);
         }
         if (edgeCount > printMax) {
             System.out.printf(Locale.ROOT, " ... %d more edges", edgeCount - printMax);
@@ -466,6 +469,7 @@ class BaseGraph implements Graph {
 
     /**
      * This method copies the properties of one {@link EdgeIteratorState} to another.
+     *
      * @return the updated iterator the properties where copied to.
      */
     EdgeIteratorState copyProperties(EdgeIteratorState from, CommonEdgeIterator to) {
