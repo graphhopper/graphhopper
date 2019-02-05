@@ -25,6 +25,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIterator;
 import com.graphhopper.util.CHEdgeIteratorState;
@@ -70,7 +71,10 @@ public class DefaultEdgeFilterTest {
 
     private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int firstOrigEdge, int lastOrigEdge) {
         CHEdgeIteratorState shortcut = chGraph.shortcut(from, to);
-        shortcut.setFlags(fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir());
+        // TODO NOW is this the way to go ?
+        IntsRef intsRef = new IntsRef(1);
+        intsRef.ints[0] = fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir();
+        shortcut.setFlags(intsRef);
         shortcut.setFirstAndLastOrigEdges(firstOrigEdge, lastOrigEdge);
     }
 

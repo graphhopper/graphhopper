@@ -27,10 +27,7 @@ import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -633,7 +630,10 @@ public class CHQueryWithTurnCostsTest {
     private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight) {
         CHEdgeIteratorState shortcut = chGraph.shortcut(from, to);
         // we need to set flags first because they overwrite weight etc
-        shortcut.setFlags(PrepareEncoder.getScFwdDir());
+        // TODO NOW: is this the way to go ?
+        IntsRef intsRef = new IntsRef(1);
+        intsRef.ints[0] = PrepareEncoder.getScFwdDir();
+        shortcut.setFlags(intsRef);
         shortcut.setFirstAndLastOrigEdges(firstOrigEdge, lastOrigEdge).setSkippedEdges(skipped1, skipped2).setWeight(weight);
     }
 

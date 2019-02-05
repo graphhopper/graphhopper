@@ -19,11 +19,13 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -189,21 +191,22 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private void countPreviousEdges(int node) {
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         CHEdgeIterator iter = allEdgeExplorer.setBaseNode(node);
         while (iter.next()) {
             if (isContracted(iter.getAdjNode()))
                 continue;
-            if (iter.isForward(encoder)) {
+            if (iter.get(accessEnc)) {
                 numPrevEdges++;
             }
-            if (iter.isBackward(encoder)) {
+            if (iter.getReverse(accessEnc)) {
                 numPrevEdges++;
             }
             if (!iter.isShortcut()) {
-                if (iter.isForward(encoder)) {
+                if (iter.get(accessEnc)) {
                     numPrevOrigEdges++;
                 }
-                if (iter.isBackward(encoder)) {
+                if (iter.getReverse(accessEnc)) {
                     numPrevOrigEdges++;
                 }
             } else {
@@ -295,9 +298,12 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         LOGGER.trace("Adding shortcut from {} to {}, weight: {}, firstOrigEdge: {}, lastOrigEdge: {}",
                 from, adjNode, edgeTo.weight, edgeFrom.getParent().incEdge, edgeTo.incEdge);
         CHEdgeIteratorState shortcut = prepareGraph.shortcut(from, adjNode);
-        long direction = PrepareEncoder.getScFwdDir();
+        int direction = PrepareEncoder.getScFwdDir();
         // we need to set flags first because they overwrite weight etc
-        shortcut.setFlags(direction);
+        // TODO NOW creating a new intsref every time here is probably not efficient ?
+        IntsRef intsRef = new IntsRef(1);
+        intsRef.ints[0] = direction;
+        shortcut.setFlags(intsRef);
         shortcut.setSkippedEdges(edgeFrom.edge, edgeTo.edge)
                 // this is a bit of a hack, we misuse incEdge of edgeFrom's parent to store the first orig edge
                 .setFirstAndLastOrigEdges(edgeFrom.getParent().incEdge, edgeTo.incEdge)
