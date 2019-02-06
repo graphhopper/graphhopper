@@ -109,7 +109,7 @@ abstract class EdgeAccess {
     }
 
     /**
-     * Write new edge between nodes fromNodeId, and toNodeId both to nodes index and edges index
+     * Writes a new edge to the array of edges and adds it to the linked list of edges at nodeA and nodeB
      */
     final int internalEdgeAdd(int newEdgeId, int nodeA, int nodeB) {
         writeEdge(newEdgeId, nodeA, nodeB, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
@@ -145,6 +145,9 @@ abstract class EdgeAccess {
         return edges.getInt(edgePointer + E_LINKB);
     }
 
+    /**
+     * Writes plain edge information to the edges index
+     */
     final long writeEdge(int edgeId, int nodeA, int nodeB, int nextEdgeA, int nextEdgeB) {
         if (edgeId < 0 || edgeId == EdgeIterator.NO_EDGE)
             throw new IllegalStateException("Cannot write edge with illegal ID:" + edgeId + "; nodeA:" + nodeA + ", nodeB:" + nodeB);

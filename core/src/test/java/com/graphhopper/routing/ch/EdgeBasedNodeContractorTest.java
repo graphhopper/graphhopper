@@ -1402,13 +1402,9 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private Shortcut createShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipEdge1, int skipEdge2, double weight) {
-        // when the shortcuts are compared with the existing ones the all edge iterator in checkShortcuts()
-        // will always use the smaller node id as base
-        boolean fwd = from <= to;
-        boolean bwd = !fwd;
-        int baseNode = from <= to ? from : to;
-        int adjNode = from <= to ? to : from;
-        return new Shortcut(baseNode, adjNode, firstOrigEdge, lastOrigEdge, skipEdge1, skipEdge2, weight, fwd, bwd);
+        boolean fwd = true;
+        boolean bwd = false;
+        return new Shortcut(from, to, firstOrigEdge, lastOrigEdge, skipEdge1, skipEdge2, weight, fwd, bwd);
     }
 
     /**
