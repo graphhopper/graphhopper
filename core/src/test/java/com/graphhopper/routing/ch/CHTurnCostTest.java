@@ -749,12 +749,22 @@ public class CHTurnCostTest {
         return chAlgo.calcPath(from, to);
     }
 
-    private RoutingAlgorithmFactory prepareCH(List<Integer> contractionOrder) {
+    private RoutingAlgorithmFactory prepareCH(final List<Integer> contractionOrder) {
         LOGGER.debug("Calculating CH with contraction order {}", contractionOrder);
         graph.freeze();
-        ManualPrepareContractionHierarchies ch = new ManualPrepareContractionHierarchies(
-                chGraph, weighting, TraversalMode.EDGE_BASED_2DIR)
-                .setContractionOrder(contractionOrder);
+        NodeOrderingProvider nodeOrderingProvider = new NodeOrderingProvider() {
+            @Override
+            public int getNodeIdForLevel(int level) {
+                return contractionOrder.get(level);
+            }
+
+            @Override
+            public int getNumNodes() {
+                return contractionOrder.size();
+            }
+        };
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph, weighting, TraversalMode.EDGE_BASED_2DIR)
+                .useFixedNodeOrdering(nodeOrderingProvider);
         ch.doWork();
         return ch;
     }
