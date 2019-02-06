@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.CHEdgeExplorer;
@@ -82,4 +83,11 @@ public interface CHGraph extends Graph {
      * @return the number of original edges in this graph (without shortcuts)
      */
     int getOriginalEdges();
+
+    NodeOrderingProvider getNodeOrderingProvider();
+
+    /**
+     * @return true if contraction can be started (add shortcuts and set levels), false otherwise
+     */
+    boolean isReadyForContraction();
 }

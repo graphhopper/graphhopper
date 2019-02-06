@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
@@ -65,6 +66,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     // shortcut memory layout is synced with edges indices until E_FLAGS, then:
     private int S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_FIRST, S_ORIG_LAST;
     private int shortcutCount = 0;
+    private boolean isReadyForContraction;
 
     CHGraphImpl(Weighting w, Directory dir, final BaseGraph baseGraph, boolean edgeBased) {
         if (w == null)
@@ -240,7 +242,15 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return baseGraph.getBounds();
     }
 
-    void _freeze() {
+    @Override
+    public boolean isReadyForContraction() {
+        return isReadyForContraction;
+    }
+
+    void _prepareForContraction() {
+        if (isReadyForContraction) {
+            return;
+        }
         long maxCapacity = ((long) getNodes()) * nodeCHEntryBytes;
         nodesCH.ensureCapacity(maxCapacity);
         long baseCapacity = baseGraph.nodes.getCapacity();
@@ -255,6 +265,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
             nodesCH.setInt(pointer, baseGraph.nodes.getInt(basePointer));
         }
+        isReadyForContraction = true;
     }
 
     String toDetailsString() {
@@ -268,6 +279,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         CHEdgeIterator tmpIter = explorer.setBaseNode(edgeState.getAdjNode());
         int tmpPrevEdge = EdgeIterator.NO_EDGE;
         while (tmpIter.next()) {
+            // note that we do not disconnect original edges, because we are re-using the base graph for different profiles,
+            // even though this is not optimal from a speed performance point of view.
             if (tmpIter.isShortcut() && tmpIter.getEdge() == edgeState.getEdge()) {
                 // TODO this is ugly, move this somehow into the underlying iteration logic
                 long edgePointer = tmpPrevEdge == EdgeIterator.NO_EDGE ? -1
@@ -317,6 +330,14 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             return Double.POSITIVE_INFINITY;
 
         return weight;
+    }
+
+    void loadNodesHeader() {
+        isReadyForContraction = nodesCH.getHeader(0 * 4) == 1;
+    }
+
+    void setNodesHeader() {
+        nodesCH.setHeader(0 * 4, isReadyForContraction ? 1 : 0);
     }
 
     protected int loadEdgesHeader() {
@@ -391,6 +412,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         if (!nodesCH.loadExisting() || !shortcuts.loadExisting())
             return false;
 
+        loadNodesHeader();
         loadEdgesHeader();
         return true;
     }
@@ -465,6 +487,29 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         if (shortcutCount > printMax) {
             System.out.printf(Locale.ROOT, " ... %d more shortcut edges\n", shortcutCount - printMax);
         }
+    }
+
+    public NodeOrderingProvider getNodeOrderingProvider() {
+        int numNodes = getNodes();
+        final int[] nodeOrdering = new int[numNodes];
+        // the node ordering is the inverse of the ch levels
+        // if we really want to save some memory it could be still reasonable to not create the node ordering here,
+        // but search nodesCH for a given level on demand.
+        for (int i = 0; i < numNodes; ++i) {
+            int level = getLevel(i);
+            nodeOrdering[level] = i;
+        }
+        return new NodeOrderingProvider() {
+            @Override
+            public int getNodeIdForLevel(int level) {
+                return nodeOrdering[level];
+            }
+
+            @Override
+            public int getNumNodes() {
+                return nodeOrdering.length;
+            }
+        };
     }
 
     class CHEdgeIteratorImpl extends EdgeIterable implements CHEdgeExplorer, CHEdgeIterator {
