@@ -81,7 +81,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             @Override
             public void freeze() {
                 for (CHGraphImpl cg : getAllCHGraphs()) {
-                    cg._freeze();
+                    cg._prepareForContraction();
                 }
             }
         };
@@ -326,6 +326,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public void flush() {
         for (CHGraphImpl cg : getAllCHGraphs()) {
+            cg.setNodesHeader();
             cg.setEdgesHeader();
             cg.flush();
         }
