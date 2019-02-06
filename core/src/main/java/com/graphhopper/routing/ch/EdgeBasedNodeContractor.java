@@ -24,8 +24,6 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -298,21 +296,15 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         LOGGER.trace("Adding shortcut from {} to {}, weight: {}, firstOrigEdge: {}, lastOrigEdge: {}",
                 from, adjNode, edgeTo.weight, edgeFrom.getParent().incEdge, edgeTo.incEdge);
         CHEdgeIteratorState shortcut = prepareGraph.shortcut(from, adjNode);
-        int direction = PrepareEncoder.getScFwdDir();
-        // we need to set flags first because they overwrite weight etc
-        // TODO NOW creating a new intsref every time here is probably not efficient ?
-        IntsRef intsRef = new IntsRef(1);
-        intsRef.ints[0] = direction;
-        shortcut.setFlags(intsRef);
         shortcut.setSkippedEdges(edgeFrom.edge, edgeTo.edge)
                 // this is a bit of a hack, we misuse incEdge of edgeFrom's parent to store the first orig edge
                 .setFirstAndLastOrigEdges(edgeFrom.getParent().incEdge, edgeTo.incEdge)
-                .setWeight(edgeTo.weight);
+                .setWeight(edgeTo.weight)
+                .set(PrepareEncoder.SC_ACCESS_ENC, true);
         final int origEdgeCount = getOrigEdgeCount(edgeFrom.edge) + getOrigEdgeCount(edgeTo.edge);
         setOrigEdgeCount(shortcut.getEdge(), origEdgeCount);
         addedShortcutsCount++;
-        CHEntry entry = new CHEntry(
-                shortcut.getEdge(), shortcut.getEdge(), edgeTo.adjNode, edgeTo.weight);
+        CHEntry entry = new CHEntry(shortcut.getEdge(), shortcut.getEdge(), edgeTo.adjNode, edgeTo.weight);
         entry.parent = edgeFrom.parent;
         return entry;
     }

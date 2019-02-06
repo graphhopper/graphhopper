@@ -57,9 +57,8 @@ public class DefaultEdgeFilter implements EdgeFilter {
 
     @Override
     public final boolean accept(EdgeIteratorState iter) {
-        // TODO NOW - do we need (to change) this ?
         if (iter.getBaseNode() == iter.getAdjNode()) {
-            // this is needed for edge-based CH
+            // this is needed for edge-based CH, see #1525
             // background: we need to explicitly accept shortcut edges that are loops, because if we insert a loop
             // shortcut with the fwd flag a DefaultEdgeFilter with bwd=true and fwd=false does not find it, although
             // it is also an 'incoming' edge.

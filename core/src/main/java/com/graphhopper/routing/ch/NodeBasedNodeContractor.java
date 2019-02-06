@@ -20,7 +20,10 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 
 import java.util.Collection;
@@ -237,7 +240,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             CHEdgeIterator iter = outEdgeExplorer.setBaseNode(sc.from);
             while (iter.next()) {
                 if (iter.isShortcut() && iter.getAdjNode() == sc.to) {
-                    int status = iter.getMergeStatus(sc.flags);
+                    int status = iter.getMergeStatus(sc.fwd, sc.bwd);
                     if (status == 0)
                         continue;
 
@@ -260,13 +263,11 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                                 + ", neighbors:" + GHUtility.getNeighbors(iter));
                     }
 
-                    // note: flags overwrite weight => call first
-                    intsRef.ints[0] = sc.flags;
-                    iter.setFlags(intsRef);
+                    if (sc.fwd)
+                        iter.set(PrepareEncoder.SC_ACCESS_ENC, true);
+                    if (sc.bwd)
+                        iter.setReverse(PrepareEncoder.SC_ACCESS_ENC, true);
                     iter.setWeight(sc.weight);
-                    // TODO NOW (also below)
-//                    iter.set(shortcutAccessEnc, true).setReverse(shortcutAccessEnc, true);
-//                    iter.set(shortcutWeightEnc, sc.weight);
                     iter.setDistance(sc.dist);
                     iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                     setOrigEdgeCount(iter.getEdge(), sc.originalEdges);
@@ -277,9 +278,10 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
 
             if (!updatedInGraph) {
                 CHEdgeIteratorState edgeState = prepareGraph.shortcut(sc.from, sc.to);
-                // note: flags overwrite weight => call first
-                intsRef.ints[0] = sc.flags;
-                edgeState.setFlags(intsRef);
+                if (sc.fwd)
+                    edgeState.set(PrepareEncoder.SC_ACCESS_ENC, true);
+                if (sc.bwd)
+                    edgeState.setReverse(PrepareEncoder.SC_ACCESS_ENC, true);
                 edgeState.setWeight(sc.weight);
                 edgeState.setDistance(sc.dist);
                 edgeState.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
@@ -332,7 +334,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         double dist;
         double weight;
         int originalEdges;
-        int flags = PrepareEncoder.getScFwdDir();
+        boolean fwd = true, bwd;
 
         public Shortcut(int from, int to, double weight, double dist) {
             this.from = from;
@@ -363,11 +365,12 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
 
         @Override
         public String toString() {
-            String str;
-            if (flags == PrepareEncoder.getScDirMask())
-                str = from + "<->";
-            else
-                str = from + "->";
+            String str = from + "";
+            if (bwd)
+                str += "<-";
+
+            if (fwd)
+                str += "->";
 
             return str + to + ", weight:" + weight + " (" + skippedEdge1 + "," + skippedEdge2 + ")";
         }
@@ -440,7 +443,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             Shortcut tmpRetSc = shortcuts.get(tmpSc);
             // overwrite flags only if skipped edges are identical
             if (tmpRetSc != null && tmpRetSc.skippedEdge2 == incomingEdge && tmpRetSc.skippedEdge1 == outgoingEdge) {
-                tmpRetSc.flags = PrepareEncoder.getScDirMask();
+                tmpRetSc.bwd = true;
                 return;
             }
 

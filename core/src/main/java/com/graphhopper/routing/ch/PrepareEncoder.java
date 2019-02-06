@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.routing.profiles.*;
+
 /**
  * The flags are stored differently for shortcuts: just one weight and the two direction bits which is handled by this
  * class for now as static methods.
@@ -24,7 +26,7 @@ package com.graphhopper.routing.ch;
  * @author Peter Karich
  */
 public class PrepareEncoder {
-    // shortcut goes in one or both directions is also possible if weight is identical    
+    // shortcut goes in one or both directions is also possible if weight is identical
     private static final int scFwdDir = 0x1;
     private static final int scBwdDir = 0x2;
     private static final int scDirMask = 0x3;
@@ -32,22 +34,31 @@ public class PrepareEncoder {
     /**
      * A bitmask for two directions
      */
-    public static final int getScDirMask() {
+    static final int getScDirMask() {
         return scDirMask;
     }
 
     /**
      * The bit for forward direction
      */
-    public static final int getScFwdDir() {
+    static final int getScFwdDir() {
         return scFwdDir;
     }
 
     /**
-     * The bit for backward direction
+     * The EncodedValue for access property of the shortcut
      */
-    public static final int getScBwdDir() {
-        return scBwdDir;
+    public static final BooleanEncodedValue SC_ACCESS_ENC = new SimpleBooleanEncodedValue("access", true);
+    /**
+     * The EncodedValue for the weight property of the shortcut
+     */
+    // low level integer value instead of decimal, to make same safety conversions when setting the value
+    public static final IntEncodedValue WEIGHT_ENC = new SimpleIntEncodedValue("weight", 30);
+
+    static {
+        EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
+        SC_ACCESS_ENC.init(config);
+        WEIGHT_ENC.init(config);
     }
 
     /**
@@ -66,12 +77,13 @@ public class PrepareEncoder {
      * @return 1 if newScFlags is identical to existingScFlags for the two direction bits and 0 otherwise.
      * There are two special cases when it returns 2.
      */
-    public static final int getScMergeStatus(long existingScFlags, long newScFlags) {
-        if ((existingScFlags & scDirMask) == (newScFlags & scDirMask))
-            return 1;
-        else if ((newScFlags & scDirMask) == scDirMask)
-            return 2;
-
-        return 0;
+    public static final int getScMergeStatus(int existingScFlags, boolean newFwd, boolean newBwd) {
+        if (newFwd) {
+            if (!newBwd)
+                return (existingScFlags & scBwdDir) == 0 ? 1 : 0;
+        } else if (newBwd) {
+            return (existingScFlags & scFwdDir) == 0 ? 1 : 0;
+        }
+        return (existingScFlags & scDirMask) == scDirMask ? 1 : 2;
     }
 }

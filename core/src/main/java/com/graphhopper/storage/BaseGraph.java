@@ -1009,11 +1009,6 @@ class BaseGraph implements Graph {
                 int nodeA = edgeAccess.getNodeA(edgePointer);
                 boolean baseNodeIsNodeA = baseNode == nodeA;
                 adjNode = baseNodeIsNodeA ? edgeAccess.getNodeB(edgePointer) : nodeA;
-
-                // TODO NOW, comment from master, do we still need this ?
-                // this does not properly work as reverse can be true from a previous edge state
-                // if (baseNode == adjNode && !reverse) reverse = true; else
-
                 reverse = !baseNodeIsNodeA;
                 freshFlags = false;
 
@@ -1153,7 +1148,6 @@ class BaseGraph implements Graph {
 
         final IntsRef getDirectFlags() {
             if (!freshFlags) {
-                // TODO NOW make it possible to use arraycopy via new method in DataAccess
                 edgeAccess.readFlags_(edgePointer, cachedIntsRef);
                 freshFlags = true;
             }
@@ -1169,7 +1163,6 @@ class BaseGraph implements Graph {
         public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
             assert cachedIntsRef == null || edgeFlags.ints.length == cachedIntsRef.ints.length : "incompatible flags " + edgeFlags.ints.length + " vs " + cachedIntsRef.ints.length;
             edgeAccess.writeFlags_(edgePointer, edgeFlags);
-            // Or is arraycopy faster? System.arraycopy(edgeFlags.ints, 0, cachedIntsRef.ints, 0, edgeFlags.ints.length);
             for (int i = 0; i < edgeFlags.ints.length; i++) {
                 cachedIntsRef.ints[i] = edgeFlags.ints[i];
             }
@@ -1190,97 +1183,97 @@ class BaseGraph implements Graph {
 
         @Override
         public boolean get(BooleanEncodedValue property) {
-            return property.getBool(reverse, getFlags());
+            return property.getBool(reverse, getDirectFlags());
         }
 
         @Override
         public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
-            property.setBool(reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            property.setBool(reverse, getDirectFlags(), value);
+            edgeAccess.writeFlags_(edgePointer, getDirectFlags());
             return this;
         }
 
         @Override
         public boolean getReverse(BooleanEncodedValue property) {
-            return property.getBool(!reverse, getFlags());
+            return property.getBool(!reverse, getDirectFlags());
         }
 
         @Override
         public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
-            property.setBool(!reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            property.setBool(!reverse, getDirectFlags(), value);
+            edgeAccess.writeFlags_(edgePointer, getDirectFlags());
             return this;
         }
 
         @Override
         public int get(IntEncodedValue property) {
-            return property.getInt(reverse, getFlags());
+            return property.getInt(reverse, getDirectFlags());
         }
 
         @Override
         public EdgeIteratorState set(IntEncodedValue property, int value) {
-            property.setInt(reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            property.setInt(reverse, getDirectFlags(), value);
+            edgeAccess.writeFlags_(edgePointer, getDirectFlags());
             return this;
         }
 
         @Override
         public int getReverse(IntEncodedValue property) {
-            return property.getInt(!reverse, getFlags());
+            return property.getInt(!reverse, getDirectFlags());
         }
 
         @Override
         public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
-            property.setInt(!reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            property.setInt(!reverse, getDirectFlags(), value);
+            edgeAccess.writeFlags_(edgePointer, getDirectFlags());
             return this;
         }
 
         @Override
         public double get(DecimalEncodedValue property) {
-            return property.getDecimal(reverse, getFlags());
+            return property.getDecimal(reverse, getDirectFlags());
         }
 
         @Override
         public EdgeIteratorState set(DecimalEncodedValue property, double value) {
-            property.setDecimal(reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            property.setDecimal(reverse, getDirectFlags(), value);
+            edgeAccess.writeFlags_(edgePointer, getDirectFlags());
             return this;
         }
 
         @Override
         public double getReverse(DecimalEncodedValue property) {
-            return property.getDecimal(!reverse, getFlags());
+            return property.getDecimal(!reverse, getDirectFlags());
         }
 
         @Override
         public EdgeIteratorState setReverse(DecimalEncodedValue property, double value) {
-            property.setDecimal(!reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            property.setDecimal(!reverse, getDirectFlags(), value);
+            edgeAccess.writeFlags_(edgePointer, getDirectFlags());
             return this;
         }
 
         @Override
         public IndexBased get(ObjectEncodedValue property) {
-            return property.getObject(reverse, getFlags());
+            return property.getObject(reverse, getDirectFlags());
         }
 
         @Override
         public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
-            property.setObject(reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            property.setObject(reverse, getDirectFlags(), value);
+            edgeAccess.writeFlags_(edgePointer, getDirectFlags());
             return this;
         }
 
         @Override
         public IndexBased getReverse(ObjectEncodedValue property) {
-            return property.getObject(!reverse, getFlags());
+            return property.getObject(!reverse, getDirectFlags());
         }
 
         @Override
         public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
-            property.setObject(!reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            property.setObject(!reverse, getDirectFlags(), value);
+            edgeAccess.writeFlags_(edgePointer, getDirectFlags());
             return this;
         }
 

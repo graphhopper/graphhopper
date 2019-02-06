@@ -37,6 +37,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.graphhopper.routing.ch.PrepareEncoder.SC_ACCESS_ENC;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static junit.framework.TestCase.assertSame;
 import static org.junit.Assert.assertEquals;
@@ -310,7 +311,7 @@ public class PrepareContractionHierarchiesTest {
         EdgeIteratorState edgeState45 = g.edge(4, 5).setDistance(dist).setFlags(edgeFlags);
         EdgeIteratorState edgeState56 = g.edge(5, 6).setDistance(dist).setFlags(edgeFlags);
         IntsRef oneDirFlags = encodingManager.createEdgeFlags();
-        oneDirFlags.ints[0] = PrepareEncoder.getScFwdDir();
+        SC_ACCESS_ENC.setBool(false, oneDirFlags, true);
 
         int tmpEdgeId = edgeState01.getEdge();
         ghStorage.freeze();

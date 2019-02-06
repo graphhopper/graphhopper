@@ -55,9 +55,9 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
     /**
      * This method is only used on preparation.
      *
-     * @see PrepareEncoder#getScMergeStatus(long, long)
+     * @see PrepareEncoder#getScMergeStatus(int, boolean, boolean)
      */
-    int getMergeStatus(long flags);
+    int getMergeStatus(boolean fwd, boolean bwd);
 
     /**
      * Returns the weight of this shortcut.

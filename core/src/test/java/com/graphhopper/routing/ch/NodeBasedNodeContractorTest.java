@@ -19,13 +19,13 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraOneToMany;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -37,16 +37,10 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.graphhopper.routing.ch.PrepareEncoder.SC_ACCESS_ENC;
 import static org.junit.Assert.*;
 
 public class NodeBasedNodeContractorTest {
-    // TODO integrate this into CHGraphImpl somehow
-    public final static BooleanEncodedValue SC_ACCESS = new SimpleBooleanEncodedValue("sc_access", true);
-
-    static {
-        SC_ACCESS.init(new EncodedValue.InitializerConfig());
-    }
-
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = new EncodingManager(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
@@ -176,22 +170,19 @@ public class NodeBasedNodeContractorTest {
         graph.freeze();
 
         CHEdgeIteratorState sc1to4 = lg.shortcut(1, 4);
-        IntsRef chFlags = encodingManager.createEdgeFlags();
-        chFlags.ints[0] = PrepareEncoder.getScDirMask();
-        sc1to4.setFlags(chFlags);
+        sc1to4.set(SC_ACCESS_ENC, true).setReverse(SC_ACCESS_ENC, true);
         sc1to4.setWeight(2);
         sc1to4.setDistance(2);
         sc1to4.setSkippedEdges(iter1to3.getEdge(), iter3to4.getEdge());
 
-        chFlags.ints[0] = PrepareEncoder.getScFwdDir();
         CHEdgeIteratorState sc4to6 = lg.shortcut(4, 6);
-        sc4to6.setFlags(chFlags);
+        sc4to6.set(SC_ACCESS_ENC, true);
         sc4to6.setWeight(2);
         sc4to6.setDistance(2);
         sc4to6.setSkippedEdges(iter4to5.getEdge(), iter5to6.getEdge());
 
         CHEdgeIteratorState sc6to4 = lg.shortcut(6, 4);
-        sc6to4.setFlags(chFlags);
+        sc6to4.set(SC_ACCESS_ENC, true);
         sc6to4.setWeight(3);
         sc6to4.setDistance(3);
         sc6to4.setSkippedEdges(iter6to8.getEdge(), iter8to4.getEdge());
@@ -306,7 +297,7 @@ public class NodeBasedNodeContractorTest {
             if (iter.isShortcut()) {
                 given.add(new Shortcut(
                         iter.getBaseNode(), iter.getAdjNode(), iter.getWeight(), iter.getDistance(),
-                        iter.get(SC_ACCESS), iter.getReverse(SC_ACCESS),
+                        iter.get(SC_ACCESS_ENC), iter.getReverse(SC_ACCESS_ENC),
                         iter.getSkippedEdge1(), iter.getSkippedEdge2()));
             }
         }

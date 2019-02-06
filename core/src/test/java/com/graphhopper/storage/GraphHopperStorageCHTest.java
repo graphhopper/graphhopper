@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.QueryGraph;
-import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -35,7 +34,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.graphhopper.routing.ch.NodeBasedNodeContractorTest.SC_ACCESS;
+import static com.graphhopper.routing.ch.PrepareEncoder.SC_ACCESS_ENC;
 import static org.junit.Assert.*;
 
 /**
@@ -110,7 +109,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph.freeze();
         CHEdgeIteratorState tmpIter = g.shortcut(3, 4);
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        edgeFlags.ints[0] = PrepareEncoder.getScDirMask();
+        SC_ACCESS_ENC.setBool(false, edgeFlags, true);
+        SC_ACCESS_ENC.setBool(true, edgeFlags, true);
         tmpIter.setDistance(40).setFlags(edgeFlags);
         assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge1());
         assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge2());
@@ -143,12 +143,12 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         // only remove edges
 
         IntsRef flags = encodingManager.createEdgeFlags();
-        SC_ACCESS.setBool(false, flags, true);
-        SC_ACCESS.setBool(true, flags, true);
+        SC_ACCESS_ENC.setBool(false, flags, true);
+        SC_ACCESS_ENC.setBool(true, flags, true);
 
         IntsRef flags2 = encodingManager.createEdgeFlags();
-        SC_ACCESS.setBool(false, flags2, true);
-        SC_ACCESS.setBool(true, flags2, false);
+        SC_ACCESS_ENC.setBool(false, flags2, true);
+        SC_ACCESS_ENC.setBool(true, flags2, false);
 
         lg.edge(4, 1, 30, true);
         graph.freeze();
@@ -199,8 +199,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         // only remove edges
         IntsRef flags = encodingManager.createEdgeFlags();
-        SC_ACCESS.setBool(false, flags, true);
-        SC_ACCESS.setBool(true, flags, true);
+        SC_ACCESS_ENC.setBool(false, flags, true);
+        SC_ACCESS_ENC.setBool(true, flags, true);
         CHEdgeIteratorState sc1 = g.shortcut(0, 1);
         assertTrue(sc1.isShortcut());
         sc1.setWeight(2.001);
@@ -210,25 +210,31 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         sc1.setWeight(Double.MAX_VALUE);
         assertTrue(Double.isInfinite(sc1.getWeight()));
 
+        sc1.setWeight((Integer.MAX_VALUE / 2.0) / 1000);
+        assertTrue(Double.isInfinite(sc1.getWeight()));
+
+        sc1.setWeight((Integer.MAX_VALUE / 2.0 - 1) / 1000);
+        assertEquals((Integer.MAX_VALUE / 2 - 1) / 1000d, sc1.getWeight(), .001);
+
         sc1.setFlags(flags);
         sc1.setWeight(100.123);
         assertEquals(100.123, sc1.getWeight(), 1e-3);
-        assertTrue(sc1.get(SC_ACCESS));
-        assertTrue(sc1.getReverse(SC_ACCESS));
+        assertTrue(sc1.get(SC_ACCESS_ENC));
+        assertTrue(sc1.getReverse(SC_ACCESS_ENC));
 
         flags = encodingManager.createEdgeFlags();
-        SC_ACCESS.setBool(false, flags, false);
-        SC_ACCESS.setBool(true, flags, true);
+        SC_ACCESS_ENC.setBool(false, flags, false);
+        SC_ACCESS_ENC.setBool(true, flags, true);
         sc1.setFlags(flags);
         sc1.setWeight(100.123);
         assertEquals(100.123, sc1.getWeight(), 1e-3);
-        assertFalse(sc1.get(SC_ACCESS));
-        assertTrue(sc1.getReverse(SC_ACCESS));
+        assertFalse(sc1.get(SC_ACCESS_ENC));
+        assertTrue(sc1.getReverse(SC_ACCESS_ENC));
 
         // check min weight
         sc1.setFlags(flags);
         sc1.setWeight(1e-5);
-        assertEquals(1e-3, sc1.getWeight(), 1e-10);
+        assertEquals(1e-3, sc1.getWeight(), 1e-4);
     }
 
     @Test
@@ -254,7 +260,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         sc1 = lg.shortcut(1, 0);
         assertTrue(sc1.isShortcut());
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        edgeFlags.ints[0] = PrepareEncoder.getScDirMask();
+        SC_ACCESS_ENC.setBool(false, edgeFlags, true);
+        SC_ACCESS_ENC.setBool(true, edgeFlags, true);
         sc1.setFlags(flags);
         sc1.setWeight(1.011011);
         assertEquals(1.011011, sc1.getWeight(), 1e-3);
@@ -367,7 +374,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         CHGraph lg = graph.getGraph(CHGraph.class);
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        edgeFlags.ints[0] = PrepareEncoder.getScFwdDir();
+        SC_ACCESS_ENC.setBool(false, edgeFlags, true);
         lg.shortcut(1, 4).setWeight(3).setFlags(edgeFlags);
 
         EdgeExplorer vehicleOutExplorer = lg.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
@@ -445,10 +452,10 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int firstOrigEdge, int lastOrigEdge,
                              int skipEdge1, int skipEdge2, int distance) {
         CHEdgeIteratorState shortcut = chGraph.shortcut(from, to);
-        // TODO NOW is this the way to go ?
-        IntsRef intsRef = new IntsRef(1);
-        intsRef.ints[0] = fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir();
-        shortcut.setFlags(intsRef);
+        if (fwd)
+            shortcut.set(SC_ACCESS_ENC, true);
+        else
+            shortcut.setReverse(SC_ACCESS_ENC, true);
         shortcut.setFirstAndLastOrigEdges(firstOrigEdge, lastOrigEdge).setSkippedEdges(skipEdge1, skipEdge2).setDistance(distance);
     }
 
@@ -472,12 +479,13 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         CHGraph carCHGraph = graph.getGraph(CHGraph.class, chWeightings.get(0));
         // enable forward directions for car
         edgeFlags = encodingManager.createEdgeFlags();
-        edgeFlags.ints[0] = PrepareEncoder.getScFwdDir();
+        SC_ACCESS_ENC.setBool(false, edgeFlags, true);
         EdgeIteratorState carSC02 = carCHGraph.shortcut(0, 2).setWeight(10).setFlags(edgeFlags).setDistance(20);
 
         CHGraph bikeCHGraph = graph.getGraph(CHGraph.class, chWeightings.get(1));
         // enable both directions for bike
-        edgeFlags.ints[0] = PrepareEncoder.getScDirMask();
+        SC_ACCESS_ENC.setBool(false, edgeFlags, true);
+        SC_ACCESS_ENC.setBool(true, edgeFlags, true);
         EdgeIteratorState bikeSC02 = bikeCHGraph.shortcut(0, 2).setWeight(10).setFlags(edgeFlags).setDistance(20);
 
         // assert car CH graph

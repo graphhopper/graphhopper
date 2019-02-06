@@ -479,8 +479,8 @@ public class GHUtility {
      * Returns the edge key for a given edge id and adjacent node. This is needed in a few places where
      * the base node is not known.
      */
-    public static int getEdgeKey(Graph graph, int edgeId, int node, boolean reverse) {
-        EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(edgeId, node);
+    public static int getEdgeKey(Graph graph, int edgeId, int adjNode, boolean reverse) {
+        EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(edgeId, adjNode);
         return GHUtility.createEdgeKey(edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode(), edgeId, reverse);
     }
 
@@ -741,7 +741,7 @@ public class GHUtility {
         }
 
         @Override
-        public int getMergeStatus(long flags) {
+        public int getMergeStatus(boolean fwd, boolean bwd) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
     }

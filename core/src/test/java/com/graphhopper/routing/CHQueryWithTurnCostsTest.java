@@ -20,14 +20,16 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PreparationWeighting;
-import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -39,6 +41,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import static com.graphhopper.routing.ch.PrepareEncoder.SC_ACCESS_ENC;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
@@ -427,7 +430,7 @@ public class CHQueryWithTurnCostsTest {
         // no path between 3 and 1 will be found even though there is one.
         testPathCalculation(3, 1, 5, IntArrayList.from(3, 4, 2, 0, 2, 1));
     }
-    
+
     @Test
     public void testFindPathWithTurnRestriction_single_loop() {
         //     0
@@ -629,11 +632,7 @@ public class CHQueryWithTurnCostsTest {
 
     private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight) {
         CHEdgeIteratorState shortcut = chGraph.shortcut(from, to);
-        // we need to set flags first because they overwrite weight etc
-        // TODO NOW: is this the way to go ?
-        IntsRef intsRef = new IntsRef(1);
-        intsRef.ints[0] = PrepareEncoder.getScFwdDir();
-        shortcut.setFlags(intsRef);
+        shortcut.set(SC_ACCESS_ENC, true);
         shortcut.setFirstAndLastOrigEdges(firstOrigEdge, lastOrigEdge).setSkippedEdges(skipped1, skipped2).setWeight(weight);
     }
 
