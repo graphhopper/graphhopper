@@ -284,6 +284,10 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                 edgeState.setDistance(sc.dist);
                 edgeState.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                 setOrigEdgeCount(edgeState.getEdge(), sc.originalEdges);
+
+//                int scId = prepareGraph.shortcut(sc.from, sc.to, sc.flags, sc.weight, sc.dist, sc.skippedEdge1, sc.skippedEdge2);
+//                setOrigEdgeCount(scId, sc.originalEdges);
+
                 tmpNewShortcuts++;
             }
         }

@@ -1151,7 +1151,7 @@ class BaseGraph implements Graph {
             return this;
         }
 
-        final IntsRef getDirectFlags() {
+        IntsRef getDirectFlags() {
             if (!freshFlags) {
                 // TODO NOW make it possible to use arraycopy via new method in DataAccess
                 edgeAccess.readFlags_(edgePointer, cachedIntsRef);
