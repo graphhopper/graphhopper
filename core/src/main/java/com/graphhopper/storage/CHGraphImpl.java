@@ -123,7 +123,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
-    public int shortcut(int a, int b, int flags, double weight, double dist, int skip1, int skip2) {
+    public int shortcut(int a, int b, int accessFlags, double weight, double distance, int skippedEdge1, int skippedEdge2) {
         if (!baseGraph.isFrozen())
             throw new IllegalStateException("Cannot create shortcut if graph is not yet frozen");
 
@@ -133,12 +133,18 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         int scId = chEdgeAccess.internalEdgeAdd(nextShortcutId(), a, b);
         long edgePointer = chEdgeAccess.toPointer(scId);
 
-        // note: flags overwrite weight => call first
-        chEdgeAccess.setShortcutFlags(edgePointer, flags);
-        chEdgeAccess.setShortcutWeight(edgePointer, weight);
+        chEdgeAccess.setAccessAndWeight(edgePointer, accessFlags & scDirMask, weight);
 
-        chEdgeAccess.setDist(edgePointer, dist);
-        chEdgeAccess.setSkippedEdges(edgePointer, skip1, skip2);
+        chEdgeAccess.setDist(edgePointer, distance);
+        chEdgeAccess.setSkippedEdges(edgePointer, skippedEdge1, skippedEdge2);
+        return scId;
+    }
+
+    @Override
+    public int shortcutEdgeBased(int a, int b, int accessFlags, double weight, double distance, int skippedEdge1, int skippedEdge2, int origFirst, int origLast) {
+        assert edgeBased : "Edge-based shortcuts should only be added when CHGraph is edge-based";
+        int scId = shortcut(a, b, accessFlags, weight, distance, skippedEdge1, skippedEdge2);
+        chEdgeAccess.setFirstAndLastOrigEdges(chEdgeAccess.toPointer(scId), origFirst, origLast);
         return scId;
     }
 
@@ -437,8 +443,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                 edgeString += String.format(Locale.ROOT, formatShortcutExt,
                         shortcuts.getInt(edgePointer + S_ORIG_FIRST),
                         shortcuts.getInt(edgePointer + S_ORIG_LAST));
-                System.out.println(edgeString);
             }
+            System.out.println(edgeString);
         }
         if (shortcutCount > printMax) {
             System.out.printf(Locale.ROOT, " ... %d more shortcut edges\n", shortcutCount - printMax);
@@ -520,8 +526,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
             checkShortcutAndEdgeBased("setFirstAndLastOrigEdges");
-            shortcuts.setInt(edgePointer + S_ORIG_FIRST, firstOrigEdge);
-            shortcuts.setInt(edgePointer + S_ORIG_LAST, lastOrigEdge);
+            chEdgeAccess.setFirstAndLastOrigEdges(edgePointer, firstOrigEdge, lastOrigEdge);
             return this;
         }
 
@@ -807,34 +812,44 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         void setShortcutFlags(long edgePointer, int flags) {
-            shortcuts.setInt(edgePointer, flags);
+            edges.setInt(edgePointer + E_FLAGS, flags);
         }
 
         int getShortcutFlags(long edgePointer) {
-            return shortcuts.getInt(edgePointer + E_FLAGS);
+            return edges.getInt(edgePointer + E_FLAGS);
         }
 
         void setShortcutWeight(long edgePointer, double weight) {
+            int accessFlags = getShortcutFlags(edgePointer) & scDirMask;
+            setAccessAndWeight(edgePointer, accessFlags, weight);
+        }
+
+        void setAccessAndWeight(long edgePointer, int accessFlags, double weight) {
+            int weightFlags = weightToWeightFlags(edgePointer, weight);
+            setShortcutFlags(edgePointer, weightFlags | accessFlags);
+        }
+
+        int weightToWeightFlags(long edgePointer, double weight) {
             if (weight < 0)
                 throw new IllegalArgumentException("weight cannot be negative but was " + weight);
 
             int weightInt;
 
             if (weight < MIN_WEIGHT) {
-                // todo
-//                NodeAccess nodeAccess = getNodeAccess();
-//                LOGGER.warn("Setting weights smaller than " + MIN_WEIGHT + " is not allowed in CHGraphImpl#setWeight. " +
-//                        "You passed: " + weight + " for the edge " + edge.getEdge() + " from " + nodeAccess.getLat(edge.getBaseNode()) + "," + nodeAccess.getLon(edge.getBaseNode()) +
-//                        " to " + nodeAccess.getLat(edge.getAdjNode()) + "," + nodeAccess.getLon(edge.getAdjNode()));
+                NodeAccess nodeAccess = getNodeAccess();
+                // todo: how to get edge id
+                int edgeId = -1;
+                LOGGER.warn("Setting weights smaller than " + MIN_WEIGHT + " is not allowed in CHGraphImpl#setWeight. " +
+                        "You passed: " + weight + " for the edge " + edgeId +
+                        " nodeA " + nodeAccess.getLat(chEdgeAccess.getNodeA(edgePointer)) + "," + nodeAccess.getLon(chEdgeAccess.getNodeA(edgePointer)) +
+                        " nodeB " + nodeAccess.getLat(chEdgeAccess.getNodeB(edgePointer)) + "," + nodeAccess.getLon(chEdgeAccess.getNodeB(edgePointer)));
                 weight = MIN_WEIGHT;
             }
             if (weight > MAX_WEIGHT)
                 weightInt = MAX_WEIGHT_32;
             else
                 weightInt = ((int) (weight * WEIGHT_FACTOR)) << 2;
-
-            int accessFlags = chEdgeAccess.getShortcutFlags(edgePointer) & scDirMask;
-            chEdgeAccess.setShortcutFlags(edgePointer, weightInt | accessFlags);
+            return weightInt;
         }
 
         double getShortcutWeight(long edgePointer) {
@@ -856,6 +871,10 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             shortcuts.setInt(edgePointer + S_SKIP_EDGE2, edge2);
         }
 
+        public void setFirstAndLastOrigEdges(long edgePointer, int origFirst, int origLast) {
+            shortcuts.setInt(edgePointer + S_ORIG_FIRST, origFirst);
+            shortcuts.setInt(edgePointer + S_ORIG_LAST, origLast);
+        }
 
         @Override
         final long toPointer(int shortcutId) {

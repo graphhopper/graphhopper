@@ -276,17 +276,17 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             }
 
             if (!updatedInGraph) {
-                CHEdgeIteratorState edgeState = prepareGraph.shortcut(sc.from, sc.to);
+//                CHEdgeIteratorState edgeState = prepareGraph.shortcut(sc.from, sc.to);
                 // note: flags overwrite weight => call first
-                intsRef.ints[0] = sc.flags;
-                edgeState.setFlags(intsRef);
-                edgeState.setWeight(sc.weight);
-                edgeState.setDistance(sc.dist);
-                edgeState.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
-                setOrigEdgeCount(edgeState.getEdge(), sc.originalEdges);
+//                intsRef.ints[0] = sc.flags;
+//                edgeState.setFlags(intsRef);
+//                edgeState.setWeight(sc.weight);
+//                edgeState.setDistance(sc.dist);
+//                edgeState.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
+//                setOrigEdgeCount(edgeState.getEdge(), sc.originalEdges);
 
-//                int scId = prepareGraph.shortcut(sc.from, sc.to, sc.flags, sc.weight, sc.dist, sc.skippedEdge1, sc.skippedEdge2);
-//                setOrigEdgeCount(scId, sc.originalEdges);
+                int scId = prepareGraph.shortcut(sc.from, sc.to, sc.flags, sc.weight, sc.dist, sc.skippedEdge1, sc.skippedEdge2);
+                setOrigEdgeCount(scId, sc.originalEdges);
 
                 tmpNewShortcuts++;
             }
