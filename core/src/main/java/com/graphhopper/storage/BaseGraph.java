@@ -55,7 +55,7 @@ class BaseGraph implements Graph {
     final BitUtil bitUtil;
     final EncodingManager encodingManager;
     final EdgeAccess edgeAccess;
-    private final int bytesForFlags;
+    final int bytesForFlags;
     // length | nodeA | nextNode | ... | nodeB
     // as we use integer index in 'egdes' area => 'geometry' area is limited to 4GB (we use pos&neg values!)
     private final DataAccess wayGeometry;
@@ -102,7 +102,7 @@ class BaseGraph implements Graph {
         this.edgeAccess = new EdgeAccess(edges, bitUtil) {
             @Override
             final EdgeIterable createSingleEdge(EdgeFilter filter) {
-                return new EdgeIterable(BaseGraph.this, this, filter);
+                return new EdgeIterable(BaseGraph.this, this, filter, true);
             }
 
             @Override
@@ -507,7 +507,7 @@ class BaseGraph implements Graph {
 
         ensureNodeIndex(Math.max(nodeA, nodeB));
         int edgeId = edgeAccess.internalEdgeAdd(nextEdgeId(), nodeA, nodeB);
-        EdgeIterable iter = new EdgeIterable(this, edgeAccess, EdgeFilter.ALL_EDGES);
+        EdgeIterable iter = new EdgeIterable(this, edgeAccess, EdgeFilter.ALL_EDGES, true);
         boolean ret = iter.init(edgeId, nodeB);
         assert ret;
         if (extStorage.isRequireEdgeField())
@@ -551,7 +551,7 @@ class BaseGraph implements Graph {
 
     @Override
     public EdgeExplorer createEdgeExplorer(EdgeFilter filter) {
-        return new EdgeIterable(this, edgeAccess, filter);
+        return new EdgeIterable(this, edgeAccess, filter, true);
     }
 
     @Override
@@ -941,8 +941,8 @@ class BaseGraph implements Graph {
         final EdgeFilter filter;
         int nextEdgeId;
 
-        public EdgeIterable(BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter) {
-            super(-1, edgeAccess, baseGraph);
+        public EdgeIterable(BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter, boolean createIntsRef) {
+            super(-1, edgeAccess, baseGraph, createIntsRef);
 
             if (filter == null)
                 throw new IllegalArgumentException("Instead null filter use EdgeFilter.ALL_EDGES");
@@ -1049,7 +1049,7 @@ class BaseGraph implements Graph {
         }
 
         private AllEdgeIterator(BaseGraph baseGraph, EdgeAccess edgeAccess) {
-            super(-1, edgeAccess, baseGraph);
+            super(-1, edgeAccess, baseGraph, true);
         }
 
         @Override
@@ -1115,14 +1115,15 @@ class BaseGraph implements Graph {
         boolean reverse = false;
         boolean freshFlags;
         int edgeId = -1;
-        final IntsRef baseIntsRef;
+        IntsRef baseIntsRef;
         IntsRef cachedIntsRef;
 
-        public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph) {
+        public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph, boolean createIntsRef) {
             this.edgePointer = edgePointer;
             this.edgeAccess = edgeAccess;
             this.baseGraph = baseGraph;
-            this.cachedIntsRef = this.baseIntsRef = new IntsRef(baseGraph.bytesForFlags / 4);
+            if (createIntsRef)
+                this.cachedIntsRef = this.baseIntsRef = new IntsRef(baseGraph.bytesForFlags / 4);
         }
 
         @Override

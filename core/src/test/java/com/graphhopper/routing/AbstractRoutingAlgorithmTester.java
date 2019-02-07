@@ -810,7 +810,6 @@ public abstract class AbstractRoutingAlgorithmTester {
         edge12.set(carAvSpeedEnc, 0.0).set(carAccessEnc, true).setReverse(carAccessEnc, true);
         edge12.setFlags(edge12.getFlags());
 
-
         RoutingAlgorithm algo = createAlgo(graph);
         try {
             Path p = algo.calcPath(0, 2);

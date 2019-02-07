@@ -504,11 +504,13 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     class CHEdgeIteratorImpl extends EdgeIterable implements CHEdgeExplorer, CHEdgeIterator {
-        final IntsRef chIntsRef;
+        IntsRef chIntsRef;
 
+        //        /**
+//         * @param createBaseIntsRef for creating shortcuts or detaching them we do never need the base IntsRef object
+//         */
         public CHEdgeIteratorImpl(BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter) {
-            super(baseGraph, edgeAccess, filter);
-            chIntsRef = new IntsRef(shortcutBytesForFlags / 4);
+            super(baseGraph, edgeAccess, filter, false);
         }
 
         @Override
@@ -618,10 +620,16 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         protected final void selectEdgeAccess() {
             if (nextEdgeId < baseGraph.edgeCount) {
+                if (baseIntsRef == null)
+                    baseIntsRef = new IntsRef(baseGraph.bytesForFlags / 4);
+
                 // iterate over edges
                 edgeAccess = baseGraph.edgeAccess;
                 cachedIntsRef = baseIntsRef;
             } else {
+                if (chIntsRef == null)
+                    chIntsRef = new IntsRef(shortcutBytesForFlags / 4);
+
                 // ... or shortcuts
                 edgeAccess = chEdgeAccess;
                 cachedIntsRef = chIntsRef;
@@ -687,7 +695,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             if (super.checkRange())
                 return true;
 
-            // iterate over shortcuts
+            // now start iterating over shortcuts
             edgeAccess = chEdgeAccess;
             edgeId = 0;
             edgePointer = (long) edgeId * shortcutEntryBytes;
