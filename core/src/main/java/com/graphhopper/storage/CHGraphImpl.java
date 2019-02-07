@@ -780,7 +780,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                 throw new IllegalStateException("Method " + method + " not supported when turn costs are disabled");
             }
         }
-
     }
 
     private class CHEdgeAccess extends EdgeAccess {
@@ -841,8 +840,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                 int edgeId = -1;
                 LOGGER.warn("Setting weights smaller than " + MIN_WEIGHT + " is not allowed in CHGraphImpl#setWeight. " +
                         "You passed: " + weight + " for the edge " + edgeId +
-                        " nodeA " + nodeAccess.getLat(chEdgeAccess.getNodeA(edgePointer)) + "," + nodeAccess.getLon(chEdgeAccess.getNodeA(edgePointer)) +
-                        " nodeB " + nodeAccess.getLat(chEdgeAccess.getNodeB(edgePointer)) + "," + nodeAccess.getLon(chEdgeAccess.getNodeB(edgePointer)));
+                        " nodeA " + nodeAccess.getLat(getNodeA(edgePointer)) + "," + nodeAccess.getLon(getNodeA(edgePointer)) +
+                        " nodeB " + nodeAccess.getLat(getNodeB(edgePointer)) + "," + nodeAccess.getLon(getNodeB(edgePointer)));
                 weight = MIN_WEIGHT;
             }
             if (weight > MAX_WEIGHT)
@@ -854,7 +853,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         double getShortcutWeight(long edgePointer) {
             // no need for reverseFlags call (shortcut has identical weight if both dies) and also no need for 64bit
-            long flags32bit = chEdgeAccess.getShortcutFlags(edgePointer);
+            long flags32bit = getShortcutFlags(edgePointer);
             double weight = (flags32bit >>> 2) / WEIGHT_FACTOR;
             if (weight >= MAX_WEIGHT)
                 return Double.POSITIVE_INFINITY;
