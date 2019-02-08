@@ -201,6 +201,7 @@ public class WrapperGraph implements Graph {
             public EdgeIteratorState copyPropertiesTo(EdgeIteratorState e) {
                 throw new UnsupportedOperationException();
             }
+
         };
     }
 
@@ -222,5 +223,10 @@ public class WrapperGraph implements Graph {
     @Override
     public GraphExtension getExtension() {
         return baseGraph.getExtension();
+    }
+
+    @Override
+    public int getBaseNode(int edge, int adjNode) {
+        return baseGraph.getBaseNode(edge, adjNode);
     }
 }

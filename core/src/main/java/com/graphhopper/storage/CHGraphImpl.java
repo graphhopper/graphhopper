@@ -266,8 +266,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         EdgeAccess edgeAccess = isShortcut(edge) ? chEdgeAccess : baseGraph.edgeAccess;
         long edgePointer = edgeAccess.toPointer(edge);
         int nodeA = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEA);
-        int baseNode = nodeA != adjNode ? nodeA : edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEB);
-        return GHUtility.createEdgeKey(baseNode, adjNode, edge, false);
+        return nodeA != adjNode ? nodeA : edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEB);
     }
 
     void _prepareForContraction() {

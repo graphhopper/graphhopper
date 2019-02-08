@@ -257,6 +257,11 @@ public class RealtimeFeed {
             public GraphExtension getExtension() {
                 throw new RuntimeException();
             }
+
+            @Override
+            public int getBaseNode(int edge, int adjNode) {
+                return 0;
+            }
         };
 
         Map<GtfsStorage.Validity, Integer> operatingDayPatterns = new HashMap<>(staticGtfs.getOperatingDayPatterns());

@@ -58,7 +58,7 @@ public class CHMeasurement {
         long start = nanoTime();
         CmdArgs cmdArgs = CmdArgs.read(args);
         LOGGER.info("Running analysis with parameters {}", cmdArgs);
-        String osmFile = cmdArgs.get("map", "local/maps/unterfranken-latest.osm.pbf");
+        String osmFile = cmdArgs.get("map", "local/maps/berlin-140101.osm.pbf");
         cmdArgs.put("datareader.file", osmFile);
         final String statsFile = cmdArgs.get("stats_file", null);
         final int periodicUpdates = cmdArgs.getInt("period_updates", 0);

@@ -117,4 +117,6 @@ public interface Graph {
      * @return the graph extension like a TurnCostExtension
      */
     GraphExtension getExtension();
+
+    int getBaseNode(int edge, int adjNode);
 }

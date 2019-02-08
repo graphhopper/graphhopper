@@ -91,5 +91,4 @@ public interface CHGraph extends Graph {
      */
     boolean isReadyForContraction();
 
-    int getBaseNode(int edge, int adjNode);
 }
