@@ -23,7 +23,8 @@ import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
@@ -32,7 +33,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
 
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.CH.DISABLE;
@@ -90,8 +92,9 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (enableThis)
             setDisablingAllowed(args.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
 
-        String edgeBasedCHStr = args.get(CH.PREPARE + "edge_based", "off");
-        edgeBasedCHMode = EdgeBasedCHMode.valueOf(edgeBasedCHStr.trim().toUpperCase(Locale.ROOT));
+        String edgeBasedCHStr = args.get(CH.PREPARE + "edge_based", "off").trim();
+        edgeBasedCHStr = edgeBasedCHStr.equals("false") ? "off" : edgeBasedCHStr;
+        edgeBasedCHMode = EdgeBasedCHMode.valueOf(edgeBasedCHStr.toUpperCase(Locale.ROOT));
 
         pMap = args;
     }
