@@ -320,6 +320,11 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
+    public void setFlagsAndWeight(int flags, double weight) {
+        throw new UnsupportedOperationException("Not supported");
+    }
+
+    @Override
     public double getWeight() {
         throw new UnsupportedOperationException("Not supported.");
     }

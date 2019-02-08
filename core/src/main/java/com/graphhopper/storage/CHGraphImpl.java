@@ -294,6 +294,10 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return chEdgeAccess.getShortcutWeight(edgePointer);
     }
 
+    final void setFlagsAndWeight(long edgePointer, int flags, double weight) {
+        chEdgeAccess.setAccessAndWeight(edgePointer, flags, weight);
+    }
+
     void loadNodesHeader() {
         isReadyForContraction = nodesCH.getHeader(0 * 4) == 1;
     }
@@ -475,11 +479,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     class CHEdgeIteratorImpl extends EdgeIterable implements CHEdgeExplorer, CHEdgeIterator {
-        final IntsRef chIntsRef;
-
         public CHEdgeIteratorImpl(BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter) {
             super(baseGraph, edgeAccess, filter);
-            chIntsRef = new IntsRef(shortcutBytesForFlags / 4);
         }
 
         @Override
@@ -579,6 +580,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
+        public void setFlagsAndWeight(int flags, double weight) {
+            checkShortcut(true, "setFlagsAndWeight");
+            CHGraphImpl.this.setFlagsAndWeight(edgePointer, flags, weight);
+        }
+
+        @Override
         public final double getWeight() {
             checkShortcut(true, "getWeight");
             return CHGraphImpl.this.getWeight(edgePointer);
@@ -593,7 +600,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             } else {
                 // ... or shortcuts
                 edgeAccess = chEdgeAccess;
-                cachedIntsRef = chIntsRef;
             }
         }
 
@@ -754,6 +760,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public final CHEdgeIteratorState setWeight(double weight) {
             CHGraphImpl.this.setWeight(edgePointer, weight);
             return this;
+        }
+
+        @Override
+        public void setFlagsAndWeight(int flags, double weight) {
+            CHGraphImpl.this.setFlagsAndWeight(edgePointer, flags, weight);
         }
 
         @Override

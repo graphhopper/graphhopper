@@ -260,10 +260,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                                 + ", neighbors:" + GHUtility.getNeighbors(iter));
                     }
 
-                    // note: flags overwrite weight => call first
-                    intsRef.ints[0] = sc.flags;
-                    iter.setFlags(intsRef);
-                    iter.setWeight(sc.weight);
+                    iter.setFlagsAndWeight(sc.flags, sc.weight);
                     // TODO NOW (also below)
 //                    iter.set(shortcutAccessEnc, true).setReverse(shortcutAccessEnc, true);
 //                    iter.set(shortcutWeightEnc, sc.weight);
