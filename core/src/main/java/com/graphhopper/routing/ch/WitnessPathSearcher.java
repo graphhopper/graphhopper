@@ -24,7 +24,6 @@ import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.*;
 
 import java.util.Arrays;
@@ -61,7 +60,6 @@ import static java.lang.Double.isInfinite;
  * searches.
  *
  * @author easbar
- *
  */
 public class WitnessPathSearcher {
     private static final int NO_NODE = -1;
@@ -476,7 +474,7 @@ public class WitnessPathSearcher {
     }
 
     private int getEdgeKey(int edge, int adjNode) {
-        return GHUtility.getEdgeKey(chGraph, edge, adjNode, false);
+        return chGraph.getBaseNode(edge, adjNode);
     }
 
     private double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
