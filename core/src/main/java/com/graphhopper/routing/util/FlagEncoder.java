@@ -55,8 +55,7 @@ public interface FlagEncoder extends TurnCostEncoder, EncodedValueLookup {
 
     /**
      * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.
-     *
-     * @deprecated use support(String)
+     * Use support(String) instead.
      */
     boolean supports(Class<?> feature);
 

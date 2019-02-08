@@ -131,14 +131,11 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
         int flags;
         if (reverse && storeBothDirections) {
             flags = ref.ints[bwdDataIndex + ref.offset];
-            flags &= bwdMask;
-            flags >>>= bwdShift;
+            return (flags & bwdMask) >>> bwdShift;
         } else {
             flags = ref.ints[fwdDataIndex + ref.offset];
-            flags &= fwdMask;
-            flags >>>= fwdShift;
+            return (flags & fwdMask) >>> fwdShift;
         }
-        return flags;
     }
 
     @Override

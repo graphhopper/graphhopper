@@ -1009,11 +1009,6 @@ class BaseGraph implements Graph {
                 int nodeA = edgeAccess.getNodeA(edgePointer);
                 boolean baseNodeIsNodeA = baseNode == nodeA;
                 adjNode = baseNodeIsNodeA ? edgeAccess.getNodeB(edgePointer) : nodeA;
-
-                // TODO NOW, comment from master, do we still need this ?
-                // this does not properly work as reverse can be true from a previous edge state
-                // if (baseNode == adjNode && !reverse) reverse = true; else
-
                 reverse = !baseNodeIsNodeA;
                 freshFlags = false;
 
@@ -1153,7 +1148,6 @@ class BaseGraph implements Graph {
 
         final IntsRef getDirectFlags() {
             if (!freshFlags) {
-                // TODO NOW make it possible to use arraycopy via new method in DataAccess
                 edgeAccess.readFlags_(edgePointer, cachedIntsRef);
                 freshFlags = true;
             }
@@ -1169,7 +1163,6 @@ class BaseGraph implements Graph {
         public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
             assert cachedIntsRef == null || edgeFlags.ints.length == cachedIntsRef.ints.length : "incompatible flags " + edgeFlags.ints.length + " vs " + cachedIntsRef.ints.length;
             edgeAccess.writeFlags_(edgePointer, edgeFlags);
-            // Or is arraycopy faster? System.arraycopy(edgeFlags.ints, 0, cachedIntsRef.ints, 0, edgeFlags.ints.length);
             for (int i = 0; i < edgeFlags.ints.length; i++) {
                 cachedIntsRef.ints[i] = edgeFlags.ints[i];
             }

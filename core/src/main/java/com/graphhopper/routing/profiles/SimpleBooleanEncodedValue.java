@@ -59,10 +59,10 @@ public class SimpleBooleanEncodedValue extends SimpleIntEncodedValue implements 
         int flags;
         if (storeBothDirections && reverse) {
             flags = ref.ints[bwdDataIndex + ref.offset];
-            return (((flags & bwdMask) >>> bwdShift) & 0x1) == 0x1;
+            return (flags & bwdMask) >>> bwdShift == 1;
         }
 
         flags = ref.ints[fwdDataIndex + ref.offset];
-        return (((flags & fwdMask) >>> fwdShift) & 0x1) == 0x1;
+        return (flags & fwdMask) >>> fwdShift == 1;
     }
 }
