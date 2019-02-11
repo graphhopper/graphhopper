@@ -1,4 +1,4 @@
-Submit a new issue only if you are sure it is a missing feature or a bug. Otherwise, [discuss the topic](http://graphhopper.com/#developers) first. 
+Submit a new issue only if you are sure it is a missing feature or a bug. Otherwise, [discuss the topic](https://discuss.graphhopper.com/c/graphhopper) first. 
 For new translations or fixes to existing translations,
 please refer to [this documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/core/translations.md).
 
@@ -33,6 +33,8 @@ keep in mind that this requires storing your Email there. The same applies if yo
 
 Note, our CLA does not influence your rights on your contribution but it makes sure for others that you agree to the Apache License, Version 2.
 After this you'll appear in the <a href="CONTRIBUTORS.md">contributors list</a> and your pull request can also be discussed technically.
+
+Read more in [this issue](https://github.com/graphhopper/graphhopper/pull/1129#issuecomment-375820168) why it is not that easy to make this CLA-signing process simpler for first-time contributors and maintainers.
 
 For companies that would like that their developers work for us, we need an additional [corporate CLA signed](https://graphhopper.com/agreements/corporate-cla.html).
 

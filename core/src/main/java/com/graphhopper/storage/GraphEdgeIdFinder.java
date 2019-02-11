@@ -19,6 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.util.shapes.Polygon;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.BreadthFirstSearch;
@@ -28,7 +29,7 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.Shape;
-import com.vividsolutions.jts.geom.*;
+import org.locationtech.jts.geom.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,22 +78,35 @@ public class GraphEdgeIdFinder {
         if (shape.contains(qr.getSnappedPoint().lat, qr.getSnappedPoint().lon))
             edgeIds.add(qr.getClosestEdge().getEdge());
 
+        final boolean isPolygon = shape instanceof Polygon;
+
         BreadthFirstSearch bfs = new BreadthFirstSearch() {
             final NodeAccess na = graph.getNodeAccess();
             final Shape localShape = shape;
 
             @Override
             protected boolean goFurther(int nodeId) {
+                if (isPolygon) return isInsideBBox(nodeId);
+
                 return localShape.contains(na.getLatitude(nodeId), na.getLongitude(nodeId));
             }
 
             @Override
             protected boolean checkAdjacent(EdgeIteratorState edge) {
-                if (localShape.contains(na.getLatitude(edge.getAdjNode()), na.getLongitude(edge.getAdjNode()))) {
+                int adjNodeId = edge.getAdjNode();
+
+                if (localShape.contains(na.getLatitude(adjNodeId), na.getLongitude(adjNodeId))) {
                     edgeIds.add(edge.getEdge());
                     return true;
                 }
-                return false;
+                return isPolygon && isInsideBBox(adjNodeId);
+            }
+
+            private boolean isInsideBBox(int nodeId) {
+                BBox bbox = localShape.getBounds();
+                double lat = na.getLatitude(nodeId);
+                double lon = na.getLongitude(nodeId);
+                return lat <= bbox.maxLat && lat >= bbox.minLat && lon <= bbox.maxLon && lon >= bbox.minLon;
             }
         };
         bfs.start(graph.createEdgeExplorer(filter), qr.getClosestNode());
@@ -103,10 +117,10 @@ public class GraphEdgeIdFinder {
      */
     public void fillEdgeIDs(GHIntHashSet edgeIds, Geometry geometry, EdgeFilter filter) {
         if (geometry instanceof Point) {
-            GHPoint point = GHPoint.from((Point) geometry);
+            GHPoint point = GHPoint.create((Point) geometry);
             findClosestEdgeToPoint(edgeIds, point, filter);
         } else if (geometry instanceof LineString) {
-            PointList pl = PointList.from((LineString) geometry);
+            PointList pl = PointList.fromLineString((LineString) geometry);
             // TODO do map matching or routing
             int lastIdx = pl.size() - 1;
             if (pl.size() >= 2) {
@@ -123,12 +137,11 @@ public class GraphEdgeIdFinder {
 
     /**
      * This method reads the blockAreaString and creates a Collection of Shapes or a set of found edges if area is small enough.
+     * @param useEdgeIdsUntilAreaSize until the specified area (specified in m²) use the findEdgesInShape method
      */
-    public BlockArea parseBlockArea(String blockAreaString, EdgeFilter filter) {
+    public BlockArea parseBlockArea(String blockAreaString, EdgeFilter filter, double useEdgeIdsUntilAreaSize) {
         final String objectSeparator = ";";
         final String innerObjSep = ",";
-        // use shapes if bigger than 1km^2
-        final double shapeArea = 1000 * 1000;
         BlockArea blockArea = new BlockArea(graph);
 
         // Add blocked circular areas or points
@@ -137,9 +150,12 @@ public class GraphEdgeIdFinder {
             for (int i = 0; i < blockedCircularAreasArr.length; i++) {
                 String objectAsString = blockedCircularAreasArr[i];
                 String[] splittedObject = objectAsString.split(innerObjSep);
-                if (splittedObject.length == 4) {
+                if (splittedObject.length > 4) {
+                    final Polygon polygon = Polygon.parsePoints(objectAsString, 0.003);
+                    findEdgesInShape(blockArea.blockedEdges, polygon, filter);
+                } else if (splittedObject.length == 4) {
                     final BBox bbox = BBox.parseTwoPoints(objectAsString);
-                    if (bbox.calculateArea() > shapeArea)
+                    if (bbox.calculateArea() > useEdgeIdsUntilAreaSize)
                         blockArea.add(bbox);
                     else
                         findEdgesInShape(blockArea.blockedEdges, bbox, filter);
@@ -148,7 +164,7 @@ public class GraphEdgeIdFinder {
                     double lon = Double.parseDouble(splittedObject[1]);
                     int radius = Integer.parseInt(splittedObject[2]);
                     Circle circle = new Circle(lat, lon, radius);
-                    if (circle.calculateArea() > shapeArea) {
+                    if (circle.calculateArea() > useEdgeIdsUntilAreaSize) {
                         blockArea.add(circle);
                     } else {
                         findEdgesInShape(blockArea.blockedEdges, circle, filter);

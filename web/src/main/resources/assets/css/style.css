@@ -1,0 +1,456 @@
+body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    line-height: 1.4;
+    color: #111;
+    background-color: white;
+    margin: 0;
+    min-width: 300px;
+}
+#map {
+    /* set size via JS */
+    cursor: default;
+}
+
+#input {
+    float: left;
+    margin-left: 10px;
+    /*padding-right: 15px; */
+}
+
+#info {
+    margin-top: 10px;
+    display: none;
+    padding: 5px;
+}
+
+#info a {
+    padding-right: 5px;
+}
+
+.route_results {
+    max-height: 40%;
+}
+
+#input {
+    min-height: 300px;
+    max-width: 270px;
+}
+
+.instructions_info {
+    overflow: auto;
+    width: 100%;
+}
+
+.route_description {
+    padding: 7px 5px;
+}
+
+#input, #instructions, #footer {
+    width: 280px;
+}
+
+.pointInput {
+    width: 215px;
+    float: left;
+}
+
+.pointResolveFound a {
+    background-color: white;
+    padding-left: 4px;
+    padding-right: 3px;
+}
+.pointResolveFound {
+    overflow: hidden;
+    max-height: 24px;
+    font-size: 10px;
+    color: blue;
+    float: right;
+    cursor: pointer;
+    margin-top: -20px;
+    margin-right: 2px;
+}
+
+.pointResolveError {
+    float: left;
+    font-size: 12px;
+    padding-bottom: 4px;
+    width: 100%;
+    text-align: right;
+}
+
+.time_input {
+    display: none;
+    float: right;
+    padding-right: 20px;
+}
+
+.time_input input {
+    float: left;
+    margin-left: 10px;
+    width: 220px;
+}
+
+.boxSizingBorder {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+.warn {
+    color: orange;
+}
+.error, .pointResolveError {
+    color: red;
+}
+#moreattribution a {
+    text-decoration: none;
+    color: black
+}
+#moreattribution {
+    padding-top: 20px;
+    color: #666666
+}
+#locationpoints {
+    padding-bottom: 10px;
+    float: left;
+}
+.pointDiv {
+    margin: 6px 0;
+}
+.pointDiv > img {
+    margin-top: 4px;
+    padding-left: 3px;
+    padding-right: 3px;
+    float: left;
+}
+.left {
+    float: left;
+}
+.right {
+    float: right;
+}
+#routeDetails {
+    padding: 15px;
+    font-size: 12px;
+    padding-bottom: 4px;
+}
+#versionDetails {
+    font-size: 10px;
+    padding-top: 4px;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+.hidden {
+    display: none;
+}
+.no_link {
+    text-decoration: none;
+    color: black;
+}
+.no_link img {
+    margin-bottom: -10px;
+}
+.small_text {
+    font-size: small;
+}
+#options {
+    padding-bottom: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+.vehicle-info-link {
+    padding-top: 3px;
+    float: right;
+    text-decoration: none;
+}
+.bold {
+    font-weight: bold;
+}
+#header_img {
+    padding-top: 15px;
+    padding-left: 20px;
+    padding-bottom: 15px;
+}
+#header_img img {
+    width: 230px;
+}
+
+#gpx_dialog {
+    display: none;
+}
+
+#gpxExportButton {
+    margin-top: -3px;
+}
+#gpxExportButton img {
+    padding-left: 6px;
+}
+#searchButton {
+    float: right;
+    margin-bottom: 5px;
+    margin-right: 5px;
+}
+
+#searchButton:hover {
+    cursor: pointer;
+}
+.clear {
+    clear: both;
+}
+#hosting {
+    clear: both;
+    display: none;
+    /* float: left;*/
+    padding-top: 4px;
+    padding-bottom: 10px;
+    /* color: #666666; */
+    font-size: smaller;
+    opacity: 0.8;
+}
+
+#footer {
+    position: fixed;
+    bottom: 5px;
+    left: 30px;
+}
+
+#hosting a, .footer-link {
+    text-decoration: none;
+    color: #00cc33;
+}
+.footer-link {
+    padding-right: 12px;
+    font-size: 12px;
+}
+
+#export-link {
+    padding-left: 3px;
+    padding-top: 3px;
+    float: left;
+}
+
+tr.instruction {
+    cursor: pointer;
+    border-bottom: #dadada dashed thin;
+}
+
+.instructions {
+    table-layout:fixed;
+    border-collapse: collapse;
+    padding-top: 10px;
+    width: 98%;
+    font-size: smaller;
+}
+
+.instructions td {
+    padding: 7px 5px;
+}
+
+td.instr_title {
+    width: 130px;
+}
+td.instr_distance {
+    min-width: 50px;
+    float: right;
+    color: gray;
+    text-align: right;
+}
+
+.instructions tr .instr_pic {
+    width: 20px;
+}
+td img.pic {
+    max-height: 24px;
+    max-width: 16px;
+}
+
+.vehicle-btn {
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    -moz-border-radius: 0px;
+    -webkit-border-radius: 0px;
+    background-image: linear-gradient(to bottom, white, #e7e7e7);
+}
+
+.vehicle-btn img {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+}
+
+.selectvehicle {
+    background-color: #bbb;
+    -moz-border-radius: 0px;
+    -webkit-border-radius: 0px;
+    background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);
+}
+
+#more-vehicle-btn {
+    cursor: pointer;
+}
+
+.autocomplete {
+    border: 1px solid #999;
+    background: #FFF;
+    overflow: auto;
+}
+.autocomplete strong {
+    font-weight: normal;
+    color: #04B431;
+}
+.autocomplete-suggestion {
+    padding: 5px 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    font-size: small;
+    background-image: linear-gradient(to bottom, white, #e7e7e7);
+}
+.autocomplete-selected {
+    padding: 5px 5px;
+    background: #e7e7e7;
+    background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);
+}
+.light { font-weight: lighter; color: #9f9f9f; font-size: smaller }
+.wikilink { float: right; }
+.wikilink img { max-width: 16px; }
+
+/* .nameseg { border-top: #dadada dashed thin; } */
+.cityseg { float: left; font-size: 10px; }
+.moreseg { float: right; font-size: 9px; }
+
+.pointFlag {
+    width: 16px;
+    height: 16px;
+}
+.pointFlag:hover { cursor: ns-resize; }
+.pointAdd {
+    padding-left: 3px;
+}
+.pointDelete {
+    float: left;
+    padding-left: 2px;
+}
+.pointDelete:hover, .pointAdd:hover { cursor: pointer; }
+.pointDelete:disabled {
+    background: red;
+}
+
+.expandDetails {
+    color: gray;
+    font-size:11px;
+    float: right;
+    font-weight: bold;
+    width: 20px;
+    height: 20px;
+    height: 20px;
+    margin: 0 10px;
+    padding: 0;
+    background-image: linear-gradient(to bottom, white, #e7e7e7);
+}
+#moreButton {
+    background-image: linear-gradient(to bottom, white, #e7e7e7);
+}
+
+.ui-dialog {
+    /* Must be > 700, the z-index of .leaflet-popup-pane */
+    z-index: 1000;
+}
+
+.ui-dialog > .ui-widget-header {
+    padding: 1em;
+    border: 1px solid black;
+}
+
+.ui-dialog .ui-dialog-content {
+    padding: 1em;
+}
+
+.ui-dialog .ui-widget-content {
+    background: white;
+}
+
+.ui-widget-content {
+    background-image: none;
+}
+
+.ui-dialog .ui-dialog-titlebar {
+    padding: 10px;
+    background: #00cc33;
+}
+
+.alt_route_img {
+    padding-left: 2px;
+    margin-bottom: -3px;
+}
+
+#route_result_tabs {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#route_result_tabs li {
+    background-color: #FFF;
+    cursor: pointer;
+    float: left;
+    padding: 5px 10px;
+}
+
+#route_result_tabs li.current {
+    font-weight: bold;
+    background-image: linear-gradient(to bottom, #e7e7e7, white);
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.route_result_tab {
+    border: lightgray groove thin;
+    display: none;
+}
+
+.route_result_tab.current {
+    display: block;
+}
+
+#donate_form {
+    padding: 0;
+}
+
+#donate_form_button {
+    background: none;
+    border: none;
+    padding-left: 0;
+    margin-top: 5px;
+    cursor: pointer;
+    float: left;
+}
+
+.gray {
+    color: gray;
+}
+
+.plain_text_button {
+    font-size: small;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.fullscreen-reverse-btn, .fullscreen-btn {
+    cursor:pointer;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    background-repeat: no-repeat;
+    box-shadow: none;
+    border: 2px solid rgba(0,0,0,0.2);
+}
+
+.fullscreen-btn {
+    background-image: url("../img/full.png");
+}
+
+.fullscreen-reverse-btn {
+    background-image: url("../img/full-reverse.png");
+}

@@ -9,6 +9,7 @@ import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.Polygon;
 import org.junit.Test;
 
 import com.graphhopper.reader.ReaderWay;
@@ -139,6 +140,16 @@ public class DataFlagEncoderTest {
         assertEquals("ford", encoder.getTransportModeAsString(edge));
         assertTrue(encoder.isTransportModeFord(edge.getFlags()));
         assertTrue(encoder.getAnnotation(edge.getFlags(), TranslationMapTest.SINGLETON.get("en")).getMessage().contains("ford"));
+    }
+
+    @Test
+    public void testCircularJunction() {
+        ReaderWay osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "unclassified");
+        osmWay.setTag("junction", "circular");
+        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertTrue(encoder.isRoundabout(edge));
     }
 
     @Test

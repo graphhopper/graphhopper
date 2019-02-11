@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -107,44 +107,82 @@ public class TurnCostExtension implements GraphExtension {
     }
 
     /**
-     * This method adds a new entry which is a turn restriction or cost information via the
-     * turnFlags.
+     * Add an entry which is a turn restriction or cost information via the turnFlags. Overwrite existing information
+     * if it is the same edges and node.
      */
     public void addTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags) {
         // no need to store turn information
         if (turnFlags == EMPTY_FLAGS)
             return;
 
-        // append
-        int newEntryIndex = turnCostsCount;
-        turnCostsCount++;
-        ensureTurnCostIndex(newEntryIndex);
+        mergeOrOverwriteTurnInfo(fromEdge, viaNode, toEdge, turnFlags, true);
+    }
 
-        // determine if we already have an cost entry for this node
+    /**
+     * Add a new turn cost entry or clear an existing. See tests for usage examples.
+     *
+     * @param fromEdge  edge ID
+     * @param viaNode   node ID
+     * @param toEdge    edge ID
+     * @param turnFlags flags to be written
+     * @param merge     If true don't overwrite existing entries with the new flag but do a bitwise OR of the old and
+     *                  new flags and write this merged flag.
+     */
+    public void mergeOrOverwriteTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags, boolean merge) {
+        int newEntryIndex = turnCostsCount;
+        ensureTurnCostIndex(newEntryIndex);
+        boolean oldEntryFound = false;
+        long newFlags = turnFlags;
+        int next = NO_TURN_ENTRY;
+
+        // determine if we already have a cost entry for this node
         int previousEntryIndex = nodeAccess.getAdditionalNodeField(viaNode);
         if (previousEntryIndex == NO_TURN_ENTRY) {
             // set cost-pointer to this new cost entry
             nodeAccess.setAdditionalNodeField(viaNode, newEntryIndex);
         } else {
             int i = 0;
-            int tmp = previousEntryIndex;
-            while ((tmp = turnCosts.getInt((long) tmp * turnCostsEntryBytes + TC_NEXT)) != NO_TURN_ENTRY) {
-                previousEntryIndex = tmp;
+            next = turnCosts.getInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT);
+            long existingFlags = 0;
+            while (true) {
+                long costsIdx = (long) previousEntryIndex * turnCostsEntryBytes;
+                if (fromEdge == turnCosts.getInt(costsIdx + TC_FROM)
+                        && toEdge == turnCosts.getInt(costsIdx + TC_TO)) {
+                    // there is already an entry for this turn
+                    oldEntryFound = true;
+                    existingFlags = turnCosts.getInt(costsIdx + TC_FLAGS);
+                    break;
+                } else if (next == NO_TURN_ENTRY) {
+                    break;
+                }
+                previousEntryIndex = next;
                 // search for the last added cost entry
                 if (i++ > 1000) {
                     throw new IllegalStateException("Something unexpected happened. A node probably will not have 1000+ relations.");
                 }
+                // get index of next turn cost entry
+                next = turnCosts.getInt((long) next * turnCostsEntryBytes + TC_NEXT);
             }
-            // set next-pointer to this new cost entry
-            turnCosts.setInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT, newEntryIndex);
+            if (!oldEntryFound) {
+                // set next-pointer to this new cost entry
+                turnCosts.setInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT, newEntryIndex);
+            } else if (merge) {
+                newFlags = existingFlags | newFlags;
+            } else {
+                // overwrite!
+            }
         }
-        // add entry
-        long costsBase = (long) newEntryIndex * turnCostsEntryBytes;
+        long costsBase; // where to (over)write
+        if (!oldEntryFound) {
+            costsBase = (long) newEntryIndex * turnCostsEntryBytes;
+            turnCostsCount++;
+        } else {
+            costsBase = (long) previousEntryIndex * turnCostsEntryBytes;
+        }
         turnCosts.setInt(costsBase + TC_FROM, fromEdge);
         turnCosts.setInt(costsBase + TC_TO, toEdge);
-        turnCosts.setInt(costsBase + TC_FLAGS, (int) turnFlags);
-        // next-pointer is NO_TURN_ENTRY
-        turnCosts.setInt(costsBase + TC_NEXT, NO_TURN_ENTRY);
+        turnCosts.setInt(costsBase + TC_FLAGS, (int) newFlags);
+        turnCosts.setInt(costsBase + TC_NEXT, next);
     }
 
     /**
@@ -232,3 +270,4 @@ public class TurnCostExtension implements GraphExtension {
         return "turn_cost";
     }
 }
+

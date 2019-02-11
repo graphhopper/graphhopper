@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -325,7 +325,7 @@ public class OSMReaderTest {
         assertEquals(GHUtility.asSet(n10, n30, n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n20)));
         assertEquals(GHUtility.asSet(n30, n40), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n20)));
 
-        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
+        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(footEncoder));
         assertEquals(GHUtility.asSet(n20, n50), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n10)));
         assertEquals(GHUtility.asSet(n20, n50), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n30)));
         assertEquals(GHUtility.asSet(n10, n30), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n20)));
@@ -390,6 +390,55 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals(n30, iter.getAdjNode());
         assertFalse(iter.next());
+    }
+
+    @Test
+    public void avoidsLoopEdges_1525() {
+        // loops in OSM should be avoided by adding additional tower node (see #1525, #1531)
+        //     C - D
+        //      \ /
+        //   A - B - E
+        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops.xml").importOrLoad();
+        checkLoop(hopper);
+    }
+
+    void checkLoop(GraphHopper hopper) {
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+
+        // A, B, E and one of C or D should be tower nodes, in any case C and D should not be collapsed entirely
+        // into a loop edge from B to B.
+        assertEquals(4, graph.getNodes());
+        // two edges going to A and E and two edges going to C or D
+        AllEdgesIterator iter = graph.getAllEdges();
+        assertEquals(4, iter.length());
+        while (iter.next()) {
+            assertTrue("found a loop", iter.getAdjNode() != iter.getBaseNode());
+        }
+        int nodeB = AbstractGraphStorageTester.getIdOf(graph, 12);
+        assertTrue("could not find OSM node B", nodeB > -1);
+        assertEquals(4, GHUtility.count(graph.createEdgeExplorer().setBaseNode(nodeB)));
+    }
+
+    @Test
+    public void avoidsLoopEdgesIdenticalLatLon_1533() {
+        checkLoop(new GraphHopperFacade("test-avoid-loops2.xml").importOrLoad());
+    }
+
+    @Test
+    public void avoidsLoopEdgesIdenticalNodeIds_1533() {
+        // We can handle the following case with the proper result:
+        checkLoop(new GraphHopperFacade("test-avoid-loops3.xml").importOrLoad());
+        // We cannot handle the following case, i.e. no loop is created. so we only check that there are no loops
+        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops4.xml").importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        AllEdgesIterator iter = graph.getAllEdges();
+        assertEquals(2, iter.length());
+        while (iter.next()) {
+            assertTrue("found a loop", iter.getAdjNode() != iter.getBaseNode());
+        }
+        int nodeB = AbstractGraphStorageTester.getIdOf(graph, 12);
+        assertTrue("could not find OSM node B", nodeB > -1);
+        assertEquals(2, GHUtility.count(graph.createEdgeExplorer().setBaseNode(nodeB)));
     }
 
     @Test
@@ -526,7 +575,7 @@ public class OSMReaderTest {
         int nb = AbstractGraphStorageTester.getIdOf(graph, 12, 51);
         int nc = AbstractGraphStorageTester.getIdOf(graph, 11.2, 52);
         int nd = AbstractGraphStorageTester.getIdOf(graph, 11.3, 51);
-        int ne = AbstractGraphStorageTester.getIdOf( graph, 10, 51 );
+        int ne = AbstractGraphStorageTester.getIdOf(graph, 10, 51);
 
         EdgeIteratorState edge_ab = GHUtility.getEdge(graph, na, nb);
         EdgeIteratorState edge_ad = GHUtility.getEdge(graph, na, nd);
@@ -575,8 +624,8 @@ public class OSMReaderTest {
         };
         EncodingManager manager = new EncodingManager(encoder);
         GraphHopperStorage ghStorage = newGraph(dir, manager, false, false);
-        final Map<Integer, Double> latMap = new HashMap<Integer, Double>();
-        final Map<Integer, Double> lonMap = new HashMap<Integer, Double>();
+        final Map<Integer, Double> latMap = new HashMap<>();
+        final Map<Integer, Double> lonMap = new HashMap<>();
         latMap.put(1, 1.1d);
         latMap.put(2, 1.2d);
 
@@ -647,8 +696,7 @@ public class OSMReaderTest {
     public void testReadEleFromDataProvider() {
         GraphHopper hopper = new GraphHopperFacade("test-osm5.xml");
         // get N10E046.hgt.zip
-        ElevationProvider provider = new SRTMProvider();
-        provider.setCacheDir(new File(GraphHopperIT.DIR));
+        ElevationProvider provider = new SRTMProvider(GraphHopperIT.DIR);
         hopper.setElevationProvider(provider);
         hopper.importOrLoad();
 
@@ -848,8 +896,8 @@ public class OSMReaderTest {
                 throw new RuntimeException(e);
             }
             osmReader.readGraph();
-            carOutExplorer = getGraphHopperStorage().createEdgeExplorer(new DefaultEdgeFilter(carEncoder, false, true));
-            carAllExplorer = getGraphHopperStorage().createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, true));
+            carOutExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
+            carAllExplorer = getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.allEdges(carEncoder));
             return osmReader;
         }
     }

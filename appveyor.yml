@@ -8,8 +8,6 @@ environment:
 branches:
   only:
     - master
-  except:
-    - gh-pages
 os: Windows Server 2012
 install:
   - ps: |
@@ -24,9 +22,9 @@ install:
   - cmd: mvn --version
   - cmd: java -version
 build_script:
-  - mvn clean package -DskipTest
+  - mvn clean install -DskipTests=true -B
 test_script:
-  - mvn clean install verify
+  - mvn test verify -B && mvn checkstyle:check spotbugs:check forbiddenapis:check -B
 cache:
   - C:\maven\
   - C:\Users\appveyor\.m2

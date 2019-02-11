@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,16 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
     /**
      * Sets the edges that this shortcut skips. Those skipped edges can be shortcuts too.
      */
-    void setSkippedEdges(int edge1, int edge2);
+    CHEdgeIteratorState setSkippedEdges(int edge1, int edge2);
+
+    /**
+     * Sets the first and last original edges that are skipped by this shortcut. For example for the following shortcut
+     * edge from x to y, which itself skips the shortcuts x->v and v->y the first original edge would be x->u and the
+     * last original edge would be w->y
+     * <p>
+     * x --> u --> v --> w --> y
+     */
+    CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge);
 
     /**
      * @return true if this edge is a shortcut, false otherwise.

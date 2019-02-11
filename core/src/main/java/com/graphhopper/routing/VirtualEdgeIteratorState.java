@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -193,13 +193,31 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public void setSkippedEdges(int edge1, int edge2) {
+    public CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
         throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
+    public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
+        throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
+    public int getOrigEdgeFirst() {
+        return getEdge();
+    }
+
+    @Override
+    public int getOrigEdgeLast() {
+        return getEdge();
     }
 
     @Override
     public EdgeIteratorState detach(boolean reverse) {
         if (reverse) {
+            reverseEdge.setFlags(getFlags());
+            reverseEdge.setName(getName());
+            reverseEdge.setDistance(getDistance());
             return reverseEdge;
         } else {
             return this;
@@ -226,7 +244,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         throw new UnsupportedOperationException("Not supported.");
     }
 
-    void setReverseEdge(EdgeIteratorState reverseEdge) {
+    public void setReverseEdge(EdgeIteratorState reverseEdge) {
         this.reverseEdge = reverseEdge;
     }
 

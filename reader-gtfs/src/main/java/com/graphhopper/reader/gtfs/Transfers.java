@@ -19,7 +19,6 @@
 package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.Transfer;
 
 import java.util.*;
@@ -27,11 +26,13 @@ import java.util.stream.Collectors;
 
 class Transfers {
 
-    private final Map<String, List<Transfer>> transfers;
+    private final Map<String, List<Transfer>> transfersFromStop;
+    private final Map<String, List<Transfer>> transfersToStop;
     private final Map<String, Set<String>> routesByStop;
 
     Transfers(GTFSFeed feed) {
-        this.transfers = feed.transfers.values().stream().collect(Collectors.groupingBy(t -> t.to_stop_id));
+        this.transfersToStop = feed.transfers.values().stream().collect(Collectors.groupingBy(t -> t.to_stop_id));
+        this.transfersFromStop = feed.transfers.values().stream().collect(Collectors.groupingBy(t -> t.from_stop_id));
         this.routesByStop = feed.stop_times.values().stream()
                 .collect(Collectors.groupingBy(stopTime -> stopTime.stop_id,
                         Collectors.mapping(stopTime -> feed.trips.get(stopTime.trip_id).route_id, Collectors.toSet())));
@@ -39,10 +40,10 @@ class Transfers {
 
     // Starts implementing the proposed GTFS extension for route and trip specific transfer rules.
     // So far, only the route is supported.
-    List<Transfer> getTransfersToStop(Stop to, String toRouteId) {
-        final List<Transfer> allInboundTransfers = transfers.getOrDefault(to.stop_id, Collections.emptyList());
+    List<Transfer> getTransfersToStop(String toStopId, String toRouteId) {
+        final List<Transfer> allInboundTransfers = transfersToStop.getOrDefault(toStopId, Collections.emptyList());
         final Map<String, List<Transfer>> byFromStop = allInboundTransfers.stream()
-                .filter(t -> t.transfer_type == 2)
+                .filter(t -> t.transfer_type == 0 || t.transfer_type == 2)
                 .filter(t -> t.to_route_id == null || toRouteId.equals(t.to_route_id))
                 .collect(Collectors.groupingBy(t -> t.from_stop_id));
         final List<Transfer> result = new ArrayList<>();
@@ -52,6 +53,31 @@ class Transfers {
                 final Transfer myRule = new Transfer();
                 myRule.to_route_id = toRouteId;
                 myRule.from_route_id = fromRoute;
+                myRule.to_stop_id = mostSpecificRule.to_stop_id;
+                myRule.from_stop_id = mostSpecificRule.from_stop_id;
+                myRule.transfer_type = mostSpecificRule.transfer_type;
+                myRule.min_transfer_time = mostSpecificRule.min_transfer_time;
+                myRule.from_trip_id = mostSpecificRule.from_trip_id;
+                myRule.to_trip_id = mostSpecificRule.to_trip_id;
+                result.add(myRule);
+            });
+        });
+        return result;
+    }
+
+    List<Transfer> getTransfersFromStop(String fromStopId, String fromRouteId) {
+        final List<Transfer> allOutboundTransfers = transfersFromStop.getOrDefault(fromStopId, Collections.emptyList());
+        final Map<String, List<Transfer>> byToStop = allOutboundTransfers.stream()
+                .filter(t -> t.transfer_type == 0 || t.transfer_type == 2)
+                .filter(t -> t.from_route_id == null || fromRouteId.equals(t.from_route_id))
+                .collect(Collectors.groupingBy(t -> t.to_stop_id));
+        final List<Transfer> result = new ArrayList<>();
+        byToStop.forEach((toStop, transfers) -> {
+            routesByStop.getOrDefault(toStop, Collections.emptySet()).forEach(toRouteId -> {
+                final Transfer mostSpecificRule = findMostSpecificRule(transfers, fromRouteId, toRouteId);
+                final Transfer myRule = new Transfer();
+                myRule.to_route_id = toRouteId;
+                myRule.from_route_id = fromRouteId;
                 myRule.to_stop_id = mostSpecificRule.to_stop_id;
                 myRule.from_stop_id = mostSpecificRule.from_stop_id;
                 myRule.transfer_type = mostSpecificRule.transfer_type;
@@ -82,4 +108,11 @@ class Transfers {
         return transfersBySpecificity.get(0);
     }
 
+    public boolean hasNoRouteSpecificDepartureTransferRules(String stop_id) {
+        return transfersToStop.getOrDefault(stop_id, Collections.emptyList()).stream().allMatch(transfer -> transfer.to_route_id == null);
+    }
+
+    public boolean hasNoRouteSpecificArrivalTransferRules(String stop_id) {
+        return transfersFromStop.getOrDefault(stop_id, Collections.emptyList()).stream().allMatch(transfer -> transfer.from_route_id == null);
+    }
 }

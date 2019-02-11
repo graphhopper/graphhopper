@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,8 @@ package com.graphhopper.util;
 import java.io.*;
 import java.util.*;
 import java.util.Map.Entry;
+
+import static com.graphhopper.util.Helper.*;
 
 /**
  * A class which manages the translations in-memory. See here for more information:
@@ -35,10 +37,10 @@ public class TranslationMap {
             "fr_FR", "fr_CH", "gl", "he", "hr_HR", "hsb", "hu_HU", "it", "ja", "ko", "lt_LT", "ne",
             "nl", "pl_PL", "pt_BR", "pt_PT", "ro", "ru", "sk", "sl_SI", "sr_RS", "sv_SE", "tr", "uk",
             "vi_VI", "zh_CN", "zh_HK");
-    private final Map<String, Translation> translations = new HashMap<String, Translation>();
+    private final Map<String, Translation> translations = new HashMap<>();
 
     public static int countOccurence(String phrase, String splitter) {
-        if (Helper.isEmpty(phrase))
+        if (isEmpty(phrase))
             return 0;
         return phrase.trim().split(splitter).length;
     }
@@ -49,7 +51,7 @@ public class TranslationMap {
     public TranslationMap doImport(File folder) {
         try {
             for (String locale : LOCALES) {
-                TranslationHashMap trMap = new TranslationHashMap(Helper.getLocale(locale));
+                TranslationHashMap trMap = new TranslationHashMap(getLocale(locale));
                 trMap.doImport(new FileInputStream(new File(folder, locale + ".txt")));
                 add(trMap);
             }
@@ -66,7 +68,7 @@ public class TranslationMap {
     public TranslationMap doImport() {
         try {
             for (String locale : LOCALES) {
-                TranslationHashMap trMap = new TranslationHashMap(Helper.getLocale(locale));
+                TranslationHashMap trMap = new TranslationHashMap(getLocale(locale));
                 trMap.doImport(TranslationMap.class.getResourceAsStream(locale + ".txt"));
                 add(trMap);
             }
@@ -129,7 +131,7 @@ public class TranslationMap {
             Map<String, String> trMap = tr.asMap();
             for (Entry<String, String> enEntry : enMap.entrySet()) {
                 String value = trMap.get(enEntry.getKey());
-                if (Helper.isEmpty(value)) {
+                if (isEmpty(value)) {
                     trMap.put(enEntry.getKey(), enEntry.getValue());
                     continue;
                 }
@@ -144,7 +146,7 @@ public class TranslationMap {
                     Object[] strs = new String[expectedCount];
                     Arrays.fill(strs, "tmp");
                     try {
-                        String.format(value, strs);
+                        String.format(Locale.ROOT, value, strs);
                     } catch (Exception ex) {
                         sb.append(tr.getLocale()).append(" - error ").append(ex.getMessage()).append("in ").
                                 append(enEntry.getKey()).append("->").
@@ -167,7 +169,7 @@ public class TranslationMap {
 
     public static class TranslationHashMap implements Translation {
         final Locale locale;
-        private final Map<String, String> map = new HashMap<String, String>();
+        private final Map<String, String> map = new HashMap<>();
 
         public TranslationHashMap(Locale locale) {
             this.locale = locale;
@@ -189,15 +191,15 @@ public class TranslationMap {
 
         @Override
         public String tr(String key, Object... params) {
-            String val = map.get(key.toLowerCase());
-            if (Helper.isEmpty(val))
+            String val = map.get(toLowerCase(key));
+            if (isEmpty(val))
                 return key;
 
-            return String.format(val, params);
+            return String.format(Locale.ROOT, val, params);
         }
 
         public TranslationHashMap put(String key, String val) {
-            String existing = map.put(key.toLowerCase(), val);
+            String existing = map.put(toLowerCase(key), val);
             if (existing != null)
                 throw new IllegalStateException("Cannot overwrite key " + key + " with " + val + ", was: " + existing);
             return this;
@@ -217,7 +219,7 @@ public class TranslationMap {
             if (is == null)
                 throw new IllegalStateException("No input stream found in class path!?");
             try {
-                for (String line : Helper.readFile(new InputStreamReader(is, Helper.UTF_CS))) {
+                for (String line : readFile(new InputStreamReader(is, UTF_CS))) {
                     if (line.isEmpty() || line.startsWith("//") || line.startsWith("#"))
                         continue;
 

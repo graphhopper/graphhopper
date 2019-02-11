@@ -5,25 +5,20 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-tools</artifactId>
-    <version>0.10-SNAPSHOT</version>
+    <version>0.12-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>GraphHopper Tools</name>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.10-SNAPSHOT</version>
+        <version>0.12-SNAPSHOT</version>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-reader-osm</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-reader-json</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
@@ -49,6 +44,13 @@
             <version>${log4j.version}</version>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>
@@ -58,7 +60,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.graphhopper.tools.Import</mainClass>
+                            <mainClass>com.graphhopper.tools.Measurement</mainClass>
                         </manifest>
                     </archive>
                         	                    

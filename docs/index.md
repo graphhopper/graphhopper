@@ -27,11 +27,11 @@ The web module provides a web API for other programming languages as well as sta
 
  * [Routing API](./web/api-doc.md): Documentation of the Web API to communicate with any GraphHopper server via http.
  * [Deployment Guide](./core/deploy.md): Details about deploying GraphHopper 
- * There are official API clients in [Java](https://github.com/graphhopper/directions-api-java-client/) and [JavaScript](https://github.com/graphhopper/directions-api-js-client).
+ * There are official API clients in [Java](https://github.com/graphhopper/graphhopper/tree/master/client-hc) and [JavaScript](https://github.com/graphhopper/directions-api-js-client).
 
 #### Configuration
 
-You can configure several aspects either programmatically or just via the [config.properties](../config-example.properties).
+You can configure several aspects either programmatically or just via a [configuration](../config-example.yml).
 
 The elevation configuration is separately documented [here](./core/elevation.md).
 
@@ -61,8 +61,11 @@ Various topics are explained in more detail separately:
  * [Low level API](./core/low-level-api.md): Instructions how to use GraphHopper as a Java library.
  * [Create new FlagEncoder](./core/create-new-flagencoder.md): Documentation to create new routing profiles to influence which ways to favor and how the track-time is calculated.
  * [Spatial Rules](./core/spatial-rules.md): Instruction on how to use and create new SpatialRules. SpatialRules are used to enforce country-specific routing rules.
+ * [Turn Restrictions](./core/turn-restrictions.md): Details on how to enable and use turn restrictions.
+ * [Isochrone generation in Java](./isochrone/java.md): Instruction on how to create isochrones using the low-level Java API.
  * [Change Graph](./core/change-graph.md): Details about changing values of the graph without restarting GraphHopper.
- * [Postgis query script](../core/files/postgis)
+ * [Postgis query script](./core/files/postgis)
+
 
 #### Other links
 

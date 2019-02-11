@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.Map.Entry;
+
+import static com.graphhopper.util.Helper.*;
 
 /**
  * This encoder tries to store all way information into a 32 or 64bit value. Later extendable to
@@ -377,7 +379,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             flags = transportModeEncoder.setValue(flags, tmValue);
 
             // ROUNDABOUT
-            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
             if (isRoundabout)
                 flags = setBool(flags, K_ROUNDABOUT, true);
 
@@ -426,7 +428,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     private long extractMeter(ReaderWay way, long flags, EncodedDoubleValue valueEncoder, List<String> keys) {
         String value = way.getFirstPriorityTag(keys);
-        if (Helper.isEmpty(value)) return flags;
+        if (isEmpty(value)) return flags;
 
         double val;
         try {
@@ -447,7 +449,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     private long extractTons(ReaderWay way, long flags, EncodedDoubleValue valueEncoder, List<String> keys) {
         String value = way.getFirstPriorityTag(keys);
-        if (Helper.isEmpty(value)) return flags;
+        if (isEmpty(value)) return flags;
 
         double val;
         try {
@@ -467,7 +469,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     public static double stringToTons(String value) {
-        value = value.toLowerCase().replaceAll(" ", "").replaceAll("(tons|ton)", "t");
+        value = toLowerCase(value).replaceAll(" ", "").replaceAll("(tons|ton)", "t");
         value = value.replace("mgw", "").trim();
         double factor = 1;
         if (value.endsWith("t")) {
@@ -481,7 +483,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     public static double stringToMeter(String value) {
-        value = value.toLowerCase().replaceAll(" ", "").replaceAll("(meters|meter|mtrs|mtr|mt|m\\.)", "m");
+        value = toLowerCase(value).replaceAll(" ", "").replaceAll("(meters|meter|mtrs|mtr|mt|m\\.)", "m");
         double factor = 1;
         double offset = 0;
         value = value.replaceAll("(\\\"|\'\')", "in").replaceAll("(\'|feet)", "ft");

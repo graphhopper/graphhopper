@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
@@ -26,7 +28,6 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -37,8 +38,7 @@ import java.util.Collection;
 
 import static com.graphhopper.util.GHUtility.getEdge;
 import static com.graphhopper.util.Parameters.Algorithms.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -140,20 +140,57 @@ public class EdgeBasedRoutingAlgorithmTest {
                 weighting(createWeighting(carEncoder, tcs, 40)).
                 traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
                 calcPath(5, 1);
-        assertEquals(Helper.createTList(5, 2, 3, 4, 7, 6, 3, 1), p.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{5, 2, 3, 4, 7, 6, 3, 1}), p.calcNodes());
 
         // test 7-6-5 and reverse
         p = createAlgo(g, AlgorithmOptions.start().
                 weighting(createWeighting(carEncoder, tcs, 40)).
                 traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
                 calcPath(5, 7);
-        assertEquals(Helper.createTList(5, 6, 7), p.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{5, 6, 7}), p.calcNodes());
 
         p = createAlgo(g, AlgorithmOptions.start().
                 weighting(createWeighting(carEncoder, tcs, 40)).
                 traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
                 calcPath(7, 5);
-        assertEquals(Helper.createTList(7, 6, 3, 2, 5), p.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{7, 6, 3, 2, 5}), p.calcNodes());
+    }
+
+
+    private void blockNode3(Graph g, TurnCostExtension tcs, TurnCostEncoder tEncoder) {
+        // Totally block this node (all 9 turn relations)
+        final long BLOCK = tEncoder.getTurnFlags(true, 0);
+        tcs.addTurnInfo(getEdge(g, 2, 3).getEdge(), 3, getEdge(g, 3, 1).getEdge(), BLOCK);
+        tcs.addTurnInfo(getEdge(g, 2, 3).getEdge(), 3, getEdge(g, 3, 4).getEdge(), BLOCK);
+        tcs.addTurnInfo(getEdge(g, 4, 3).getEdge(), 3, getEdge(g, 3, 1).getEdge(), BLOCK);
+        tcs.addTurnInfo(getEdge(g, 4, 3).getEdge(), 3, getEdge(g, 3, 2).getEdge(), BLOCK);
+        tcs.addTurnInfo(getEdge(g, 6, 3).getEdge(), 3, getEdge(g, 3, 1).getEdge(), BLOCK);
+        tcs.addTurnInfo(getEdge(g, 6, 3).getEdge(), 3, getEdge(g, 3, 4).getEdge(), BLOCK);
+        tcs.addTurnInfo(getEdge(g, 1, 3).getEdge(), 3, getEdge(g, 3, 6).getEdge(), BLOCK);
+        tcs.addTurnInfo(getEdge(g, 1, 3).getEdge(), 3, getEdge(g, 3, 2).getEdge(), BLOCK);
+        tcs.addTurnInfo(getEdge(g, 1, 3).getEdge(), 3, getEdge(g, 3, 4).getEdge(), BLOCK);
+    }
+
+    @Test
+    public void testBlockANode() {
+        GraphHopperStorage g = createStorage(createEncodingManager(true));
+        initGraph(g);
+        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
+        blockNode3(g, tcs, carEncoder);
+        for (int i=0; i<=7; i++) {
+            if (i==3) continue;
+            for (int j=0; j<=7; j++) {
+                if (j==3) continue;
+                Path p = createAlgo(g, AlgorithmOptions.start().
+                        weighting(createWeighting(carEncoder, tcs, 40)).
+                        traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
+                        calcPath(i, j);
+                assertTrue(p.isFound()); // We can go from everywhere to everywhere else without using node 3
+                for (IntCursor node : p.calcNodes()) {
+                    assertNotEquals(p.calcNodes().toString(), 3, node.value);
+                }
+            }
+        }
     }
 
     @Test
@@ -177,7 +214,7 @@ public class EdgeBasedRoutingAlgorithmTest {
                 traversalMode(TraversalMode.EDGE_BASED_2DIR_UTURN).build();
         Path p = createAlgo(g, opts).calcPath(7, 5);
 
-        assertEquals(Helper.createTList(7, 6, 3, 6, 5), p.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{7, 6, 3, 6, 5}), p.calcNodes());
 
         // no u-turn for 6-3
         opts = AlgorithmOptions.start().
@@ -186,7 +223,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         tcs.addTurnInfo(getEdge(g, 6, 3).getEdge(), 3, getEdge(g, 3, 6).getEdge(), tflags);
         p = createAlgo(g, opts).calcPath(7, 5);
 
-        assertEquals(Helper.createTList(7, 6, 3, 2, 5), p.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{7, 6, 3, 2, 5}), p.calcNodes());
     }
 
     @Test
@@ -202,7 +239,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         // no restriction and costs
         EdgeIteratorState e3_6 = getEdge(g, 5, 6);
         e3_6.setDistance(2);
-        assertEquals(Helper.createTList(5, 2, 3, 1), p.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{5, 2, 3, 1}), p.calcNodes());
 
         // now introduce some turn costs
         long tflags = carEncoder.getTurnFlags(false, 2);
@@ -212,7 +249,7 @@ public class EdgeBasedRoutingAlgorithmTest {
                 weighting(createWeighting(carEncoder, tcs, 40)).
                 traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
                 calcPath(5, 1);
-        assertEquals(Helper.createTList(5, 6, 3, 1), p.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{5, 6, 3, 1}), p.calcNodes());
     }
 
     @Test
@@ -242,7 +279,7 @@ public class EdgeBasedRoutingAlgorithmTest {
                 }.setDefaultUTurnCost(40)).
                 traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
                 calcPath(5, 1);
-        assertEquals(Helper.createTList(5, 6, 7, 4, 3, 1), p.calcNodes());
+        assertEquals(IntArrayList.from(new int[]{5, 6, 7, 4, 3, 1}), p.calcNodes());
         assertEquals(301, p.getTime(), .1);
     }
 }

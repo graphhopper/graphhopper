@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,9 @@ import com.graphhopper.util.PMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+
+import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
@@ -41,8 +44,8 @@ import java.util.List;
  */
 public class EncodingManager {
     private static final String ERR = "Encoders are requesting %s bits, more than %s bits of %s flags. ";
-    private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via graph.bytes_for_flags=8";
-    private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
+    private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via graph.bytes_for_flags: 8";
+    private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
     private final int bitsForEdgeFlags;
     private final int bitsForTurnFlags = 8 * 4;
     private int nextWayBit = 0;
@@ -108,14 +111,14 @@ public class EncodingManager {
         if (encoderList.contains(":"))
             throw new IllegalArgumentException("EncodingManager does no longer use reflection instantiate encoders directly.");
 
-        if (!encoderList.equals(encoderList.toLowerCase()))
+        if (!encoderList.equals(toLowerCase(encoderList)))
             throw new IllegalArgumentException("Since 0.7 EncodingManager does no longer accept upper case profiles: " + encoderList);
 
         String[] entries = encoderList.split(",");
-        List<FlagEncoder> resultEncoders = new ArrayList<FlagEncoder>();
+        List<FlagEncoder> resultEncoders = new ArrayList<>();
 
         for (String entry : entries) {
-            entry = entry.trim().toLowerCase();
+            entry = toLowerCase(entry.trim());
             if (entry.isEmpty())
                 continue;
 
@@ -186,26 +189,26 @@ public class EncodingManager {
         int encoderCount = edgeEncoders.size();
         int usedBits = encoder.defineNodeBits(encoderCount, nextNodeBit);
         if (usedBits > bitsForEdgeFlags)
-            throw new IllegalArgumentException(String.format(ERR, usedBits, bitsForEdgeFlags, "node"));
+            throw new IllegalArgumentException(String.format(Locale.ROOT, ERR, usedBits, bitsForEdgeFlags, "node"));
         encoder.setNodeBitMask(usedBits - nextNodeBit, nextNodeBit);
         nextNodeBit = usedBits;
 
         usedBits = encoder.defineWayBits(encoderCount, nextWayBit);
         if (usedBits > bitsForEdgeFlags)
-            throw new IllegalArgumentException(String.format(ERR, usedBits, bitsForEdgeFlags, "way") + WAY_ERR);
+            throw new IllegalArgumentException(String.format(Locale.ROOT, ERR, usedBits, bitsForEdgeFlags, "way") + WAY_ERR);
         encoder.setWayBitMask(usedBits - nextWayBit, nextWayBit);
         nextWayBit = usedBits;
 
         usedBits = encoder.defineRelationBits(encoderCount, nextRelBit);
         if (usedBits > bitsForEdgeFlags)
-            throw new IllegalArgumentException(String.format(ERR, usedBits, bitsForEdgeFlags, "relation"));
+            throw new IllegalArgumentException(String.format(Locale.ROOT, ERR, usedBits, bitsForEdgeFlags, "relation"));
         encoder.setRelBitMask(usedBits - nextRelBit, nextRelBit);
         nextRelBit = usedBits;
 
         // turn flag bits are independent from edge encoder bits
         usedBits = encoder.defineTurnBits(encoderCount, nextTurnBit);
         if (usedBits > bitsForTurnFlags)
-            throw new IllegalArgumentException(String.format(ERR, usedBits, bitsForTurnFlags, "turn"));
+            throw new IllegalArgumentException(String.format(Locale.ROOT, ERR, usedBits, bitsForTurnFlags, "turn"));
         nextTurnBit = usedBits;
 
         edgeEncoders.add(encoder);
@@ -398,9 +401,7 @@ public class EncodingManager {
      * The returned list is never empty.
      */
     public List<FlagEncoder> fetchEdgeEncoders() {
-        List<FlagEncoder> list = new ArrayList<FlagEncoder>();
-        list.addAll(edgeEncoders);
-        return list;
+        return new ArrayList<FlagEncoder>(edgeEncoders);
     }
 
     public boolean needsTurnCostsSupport() {

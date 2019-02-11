@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,18 +29,10 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-
-import java.util.ArrayList;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * This implementation implements an n-tree to get the closest node or edge from GPS coordinates.
@@ -95,7 +87,7 @@ public class LocationIndexTree implements LocationIndex {
         MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
-        dataAccess = dir.find("location_index");
+        dataAccess = dir.find("location_index", DAType.getPreferredInt(dir.getDefaultType()));
     }
 
     public int getMinResolutionInMeter() {
@@ -571,13 +563,13 @@ public class LocationIndexTree implements LocationIndex {
 
         return closestMatch;
     }
-    
+
     /**
      * Returns all edges that are within the specified radius around the queried position.
      * Searches at most 9 cells to avoid performance problems. Hence, if the radius is larger than
      * the cell width then not all edges might be returned.
-     * 
-     * TODO: either clarify the method name and description (to only search e.g. 9 tiles) or 
+     * <p>
+     * TODO: either clarify the method name and description (to only search e.g. 9 tiles) or
      * refactor so it can handle a radius larger than 9 tiles. Also remove reference to 'NClosest',
      * which is misleading, and don't always return at least one value. See map-matching #65.
      * TODO: tidy up logic - see comments in graphhopper #994.
@@ -585,13 +577,13 @@ public class LocationIndexTree implements LocationIndex {
      * @param radius in meters
      */
     public List<QueryResult> findNClosest(final double queryLat, final double queryLon,
-            final EdgeFilter edgeFilter, double radius) {
+                                          final EdgeFilter edgeFilter, double radius) {
         // Return ALL results which are very close and e.g. within the GPS signal accuracy.
         // Also important to get all edges if GPS point is close to a junction.
         final double returnAllResultsWithin = distCalc.calcNormalizedDist(radius);
 
         // implement a cheap priority queue via List, sublist and Collections.sort
-        final List<QueryResult> queryResults = new ArrayList<QueryResult>();
+        final List<QueryResult> queryResults = new ArrayList<>();
         GHIntHashSet set = new GHIntHashSet();
 
         // Doing 2 iterations means searching 9 tiles.
@@ -684,7 +676,7 @@ public class LocationIndexTree implements LocationIndex {
 
         return queryResults;
     }
-    
+
     // make entries static as otherwise we get an additional reference to this class (memory waste)
     interface InMemEntry {
         boolean isLeaf();
@@ -756,7 +748,7 @@ public class LocationIndexTree implements LocationIndex {
         }
 
         public Collection<InMemEntry> getSubEntriesForDebug() {
-            List<InMemEntry> list = new ArrayList<InMemEntry>();
+            List<InMemEntry> list = new ArrayList<>();
             for (InMemEntry e : subEntries) {
                 if (e != null) {
                     list.add(e);
@@ -858,7 +850,7 @@ public class LocationIndexTree implements LocationIndex {
         }
 
         Collection<InMemEntry> getEntriesOf(int selectDepth) {
-            List<InMemEntry> list = new ArrayList<InMemEntry>();
+            List<InMemEntry> list = new ArrayList<>();
             fillLayer(list, selectDepth, 0, ((InMemTreeEntry) root).getSubEntriesForDebug());
             return list;
         }

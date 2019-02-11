@@ -66,12 +66,16 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private double doublePrevLat, doublePrevLon; // Lat and Lon of node t-2
     private int prevNode;
     private double prevOrientation;
+    private double prevInstructionPrevOrientation = Double.NaN;
     private Instruction prevInstruction;
     private boolean prevInRoundabout;
     private String prevName;
+    private String prevInstructionName;
     private InstructionAnnotation prevAnnotation;
     private EdgeExplorer outEdgeExplorer;
     private EdgeExplorer crossingExplorer;
+
+    private final int MAX_U_TURN_DISTANCE = 35;
 
     public InstructionsFromEdges(int tmpNode, Graph graph, Weighting weighting, FlagEncoder encoder, NodeAccess nodeAccess, Translation tr, InstructionList ways) {
         this.weighting = weighting;
@@ -84,8 +88,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevNode = -1;
         prevInRoundabout = false;
         prevName = null;
-        outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(this.encoder, false, true));
-        crossingExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, true));
+        outEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+        crossingExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder));
     }
 
 
@@ -119,6 +123,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         {
             int sign = Instruction.CONTINUE_ON_STREET;
             prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+            double startLat = nodeAccess.getLat(baseNode);
+            double startLon = nodeAccess.getLon(baseNode);
+            double heading = Helper.ANGLE_CALC.calcAzimuth(startLat, startLon, latitude, longitude);
+            prevInstruction.setExtraInfo("heading", Helper.round(heading, 2));
             ways.add(prevInstruction);
             prevName = name;
             prevAnnotation = annotation;
@@ -130,6 +138,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 int sign = Instruction.USE_ROUNDABOUT;
                 RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(sign, name,
                         annotation, new PointList(10, nodeAccess.is3D()));
+                prevInstructionPrevOrientation = prevOrientation;
                 if (prevName != null) {
                     // check if there is an exit at the same node the roundabout was entered
                     EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
@@ -192,6 +201,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     .setDirOfRotation(deltaOut)
                     .setExited();
 
+            prevInstructionName = prevName;
             prevName = name;
             prevAnnotation = annotation;
 
@@ -199,9 +209,56 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             int sign = getTurn(edge, baseNode, prevNode, adjNode, annotation, name);
 
             if (sign != Instruction.IGNORE) {
-                prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
-                ways.add(prevInstruction);
-                prevAnnotation = annotation;
+                /*
+                    Check if the next instruction is likely to only be a short connector to execute a u-turn
+                    --A->--
+                           |    <-- This is the short connector
+                    --B-<--
+                    Road A and Road B have to have the same name and roughly the same, but opposite orientation, otherwise we are assuming this is no u-turn.
+
+                    Note: This approach only works if there a turn instruction fro A->Connector and Connector->B.
+                    Currently we don't create a turn instruction if there is no other possible turn
+                    We only create a u-turn if edge B is a one-way, see #1073 for more details.
+                  */
+
+                boolean isUTurn = false;
+                int uTurnType = Instruction.U_TURN_UNKNOWN;
+                if (!Double.isNaN(prevInstructionPrevOrientation)
+                        && prevInstruction.getDistance() < MAX_U_TURN_DISTANCE
+                        && (sign < 0) == (prevInstruction.getSign() < 0)
+                        && (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT)
+                        && (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT)
+                        && edge.isForward(encoder) != edge.isBackward(encoder)
+                        && InstructionsHelper.isNameSimilar(prevInstructionName, name)) {
+                    // Chances are good that this is a u-turn, we only need to check if the orientation matches
+                    GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
+                    double lat = point.getLat();
+                    double lon = point.getLon();
+                    double currentOrientation = Helper.ANGLE_CALC.calcOrientation(prevLat, prevLon, lat, lon, false);
+
+                    double diff = Math.abs(prevInstructionPrevOrientation - currentOrientation);
+                    if (diff > (Math.PI * .9) && diff < (Math.PI * 1.1)) {
+                        isUTurn = true;
+                        if (sign < 0) {
+                            uTurnType = Instruction.U_TURN_LEFT;
+                        } else {
+                            uTurnType = Instruction.U_TURN_RIGHT;
+                        }
+                    }
+
+                }
+
+                if (isUTurn) {
+                    prevInstruction.setSign(uTurnType);
+                    prevInstruction.setName(name);
+                } else {
+                    prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                    // Remember the Orientation and name of the road, before doing this maneuver
+                    prevInstructionPrevOrientation = prevOrientation;
+                    prevInstructionName = prevName;
+                    ways.add(prevInstruction);
+                    prevAnnotation = annotation;
+                }
             }
             // Updated the prevName, since we don't always create an instruction on name changes the previous
             // name can be an old name. This leads to incorrect turn instructions due to name changes
@@ -236,7 +293,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             ((RoundaboutInstruction) prevInstruction).setRadian(delta);
 
         }
-        ways.add(new FinishInstruction(nodeAccess, prevEdge.getAdjNode()));
+
+        Instruction finishInstruction = new FinishInstruction(nodeAccess, prevEdge.getAdjNode());
+        // This is the heading how the edge ended
+        finishInstruction.setExtraInfo("last_heading", Helper.ANGLE_CALC.calcAzimuth(doublePrevLat, doublePrevLon, prevLat, prevLon));
+        ways.add(finishInstruction);
     }
 
     private int getTurn(EdgeIteratorState edge, int baseNode, int prevNode, int adjNode, InstructionAnnotation annotation, String name) {
@@ -252,11 +313,18 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             forceInstruction = true;
         }
 
-        InstructionsSurroundingEdges surroundingEdges = new InstructionsSurroundingEdges(prevEdge, edge, encoder, crossingExplorer, nodeAccess, prevNode, baseNode, adjNode);
-        int nrOfPossibleTurns = surroundingEdges.nrOfPossibleTurns();
+        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, encoder, crossingExplorer, nodeAccess, prevNode, baseNode, adjNode);
+        int nrOfPossibleTurns = outgoingEdges.nrOfAllowedOutgoingEdges();
 
         // there is no other turn possible
         if (nrOfPossibleTurns <= 1) {
+            if (Math.abs(sign) > 1 && outgoingEdges.nrOfAllOutgoingEdges() > 1) {
+                // This is an actual turn because |sign| > 1
+                // There could be some confusion, if we would not create a turn instruction, even though it is the only
+                // possible turn, also see #1048
+                // TODO if we see issue with this approach we could consider checking if the edge is a oneway
+                return sign;
+            }
             return returnForcedInstructionOrIgnore(forceInstruction, sign);
         }
 
@@ -266,7 +334,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                          * Don't show an instruction if the user is following a street, even though the street is
                          * bending. We should only do this, if following the street is the obvious choice.
                          */
-            if (InstructionsHelper.isNameSimilar(name, prevName) && surroundingEdges.surroundingStreetsAreSlowerByFactor(2)) {
+            if (InstructionsHelper.isNameSimilar(name, prevName) && outgoingEdges.outgoingEdgesAreSlowerByFactor(2)) {
                 return returnForcedInstructionOrIgnore(forceInstruction, sign);
             }
 
@@ -287,12 +355,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         long flag = edge.getFlags();
         long prevFlag = prevEdge.getFlags();
 
-        boolean surroundingStreetsAreSlower = surroundingEdges.surroundingStreetsAreSlowerByFactor(1);
+        boolean outgoingEdgesAreSlower = outgoingEdges.outgoingEdgesAreSlowerByFactor(1);
 
         // There is at least one other possibility to turn, and we are almost going straight
         // Check the other turns if one of them is also going almost straight
         // If not, we don't need a turn instruction
-        EdgeIteratorState otherContinue = surroundingEdges.getOtherContinue(prevLat, prevLon, prevOrientation);
+        EdgeIteratorState otherContinue = outgoingEdges.getOtherContinue(prevLat, prevLon, prevOrientation);
 
         // Signs provide too less detail, so we use the delta for a precise comparision
         double delta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, lat, lon, prevOrientation);
@@ -306,31 +374,28 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     || InstructionsHelper.isNameSimilar(otherContinue.getName(), prevName)
                     || prevFlag != flag
                     || prevFlag == otherContinue.getFlags()
-                    || !surroundingStreetsAreSlower) {
+                    || !outgoingEdgesAreSlower) {
                 GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(otherContinue, nodeAccess);
                 double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);
 
+                // This is required to avoid keep left/right on the motorway at off-ramps/motorway_links
                 if (Math.abs(delta) < .1 && Math.abs(otherDelta) > .15 && InstructionsHelper.isNameSimilar(name, prevName)) {
                     return Instruction.CONTINUE_ON_STREET;
                 }
 
                 if (otherDelta < delta) {
-                    // TODO Use keeps once we have a robust client
-                    //return Instruction.KEEP_LEFT;
-                    return Instruction.TURN_SLIGHT_LEFT;
+                    return Instruction.KEEP_LEFT;
                 } else {
-                    // TODO Use keeps once we have a robust client
-                    //return Instruction.KEEP_RIGHT;
-                    return Instruction.TURN_SLIGHT_RIGHT;
+                    return Instruction.KEEP_RIGHT;
                 }
 
 
             }
         }
 
-        if (!surroundingStreetsAreSlower) {
+        if (!outgoingEdgesAreSlower) {
             if (Math.abs(delta) > .4
-                    || surroundingEdges.isLeavingCurrentStreet(prevName, name)) {
+                    || outgoingEdges.isLeavingCurrentStreet(prevName, name)) {
                 // Leave the current road -> create instruction
                 return sign;
 

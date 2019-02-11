@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,14 +47,20 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     private final StorableProperties properties;
     private final BaseGraph baseGraph;
     // same flush order etc
-    private final Collection<CHGraphImpl> chGraphs = new ArrayList<CHGraphImpl>(5);
+    private final Collection<CHGraphImpl> nodeBasedCHGraphs = new ArrayList<>(5);
+    private final Collection<CHGraphImpl> edgeBasedCHGraphs = new ArrayList<>(5);
 
     public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage) {
-        this(Collections.<Weighting>emptyList(), dir, encodingManager, withElevation, extendedStorage);
+        this(Collections.<Weighting>emptyList(), Collections.<Weighting>emptyList(), dir, encodingManager, withElevation, extendedStorage);
     }
 
-    public GraphHopperStorage(List<? extends Weighting> chWeightings, Directory dir, final EncodingManager encodingManager,
+    public GraphHopperStorage(List<? extends Weighting> nodeBasedCHWeightings, Directory dir, EncodingManager encodingManager,
                               boolean withElevation, GraphExtension extendedStorage) {
+        this(nodeBasedCHWeightings, Collections.<Weighting>emptyList(), dir, encodingManager, withElevation, extendedStorage);
+    }
+
+    public GraphHopperStorage(List<? extends Weighting> nodeBasedCHWeightings, List<? extends Weighting> edgeBasedCHWeightings,
+                              Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage) {
         if (extendedStorage == null)
             throw new IllegalArgumentException("GraphExtension cannot be null, use NoOpExtension");
 
@@ -67,22 +73,25 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         InternalGraphEventListener listener = new InternalGraphEventListener() {
             @Override
             public void initStorage() {
-                for (CHGraphImpl cg : chGraphs) {
+                for (CHGraphImpl cg : getAllCHGraphs()) {
                     cg.initStorage();
                 }
             }
 
             @Override
             public void freeze() {
-                for (CHGraphImpl cg : chGraphs) {
-                    cg._freeze();
+                for (CHGraphImpl cg : getAllCHGraphs()) {
+                    cg._prepareForContraction();
                 }
             }
         };
 
         this.baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, extendedStorage);
-        for (Weighting w : chWeightings) {
-            chGraphs.add(new CHGraphImpl(w, dir, this.baseGraph));
+        for (Weighting w : nodeBasedCHWeightings) {
+            nodeBasedCHGraphs.add(new CHGraphImpl(w, dir, this.baseGraph, false));
+        }
+        for (Weighting w : edgeBasedCHWeightings) {
+            edgeBasedCHGraphs.add(new CHGraphImpl(w, dir, this.baseGraph, true));
         }
     }
 
@@ -94,13 +103,14 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         if (clazz.equals(Graph.class))
             return (T) baseGraph;
 
+        Collection<CHGraphImpl> chGraphs = getAllCHGraphs();
         if (chGraphs.isEmpty())
             throw new IllegalStateException("Cannot find graph implementation for " + clazz);
 
         if (weighting == null)
             throw new IllegalStateException("Cannot find CHGraph with null weighting");
 
-        List<Weighting> existing = new ArrayList<Weighting>();
+        List<Weighting> existing = new ArrayList<>();
         for (CHGraphImpl cg : chGraphs) {
             if (cg.getWeighting() == weighting)
                 return (T) cg;
@@ -115,6 +125,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         if (clazz.equals(Graph.class))
             return (T) baseGraph;
 
+        Collection<CHGraphImpl> chGraphs = getAllCHGraphs();
         if (chGraphs.isEmpty())
             throw new IllegalStateException("Cannot find graph implementation for " + clazz);
 
@@ -123,12 +134,20 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     public boolean isCHPossible() {
-        return !chGraphs.isEmpty();
+        return !getAllCHGraphs().isEmpty();
     }
 
-    public List<Weighting> getCHWeightings() {
-        List<Weighting> list = new ArrayList<Weighting>(chGraphs.size());
-        for (CHGraphImpl cg : chGraphs) {
+    public List<Weighting> getNodeBasedCHWeightings() {
+        return getWeightingsFromGraphs(nodeBasedCHGraphs);
+    }
+
+    public List<Weighting> getEdgeBasedCHWeightings() {
+        return getWeightingsFromGraphs(edgeBasedCHGraphs);
+    }
+
+    private List<Weighting> getWeightingsFromGraphs(Collection<CHGraphImpl> graphs) {
+        List<Weighting> list = new ArrayList<>(graphs.size());
+        for (CHGraphImpl cg : graphs) {
             list.add(cg.getWeighting());
         }
         return list;
@@ -146,7 +165,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     public void setSegmentSize(int bytes) {
         baseGraph.setSegmentSize(bytes);
 
-        for (CHGraphImpl cg : chGraphs) {
+        for (CHGraphImpl cg : getAllCHGraphs()) {
             cg.setSegmentSize(bytes);
         }
     }
@@ -173,11 +192,12 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
         baseGraph.create(initSize);
 
-        for (CHGraphImpl cg : chGraphs) {
+        for (CHGraphImpl cg : getAllCHGraphs()) {
             cg.create(byteCount);
         }
 
-        properties.put("graph.ch.weightings", getCHWeightings().toString());
+        properties.put("graph.ch.weightings", getNodeBasedCHWeightings().toString());
+        properties.put("graph.ch.edge.weightings", getEdgeBasedCHWeightings().toString());
         return this;
     }
 
@@ -227,12 +247,14 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         baseGraph.checkInit();
         if (properties.loadExisting()) {
             properties.checkVersions(false);
-            // check encoding for compatiblity
+            // check encoding for compatibility
             String flagEncodersStr = properties.get("graph.flag_encoders");
 
             if (!flagEncodersStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(flagEncodersStr)) {
-                throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.toDetailsString()
-                        + "\nGraph: " + flagEncodersStr + ", dir:" + dir.getLocation());
+                throw new IllegalStateException("Encoding does not match:"
+                        + "\nGraphhopper config: " + encodingManager.toDetailsString()
+                        + "\nGraph: " + flagEncodersStr
+                        + "\nChange configuration to match the graph or delete " + dir.getLocation());
             }
 
             String byteOrder = properties.get("graph.byte_order");
@@ -246,12 +268,9 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             String dim = properties.get("graph.dimension");
             baseGraph.loadExisting(dim);
 
-            String loadedCHWeightings = properties.get("graph.ch.weightings");
-            String configuredCHWeightings = getCHWeightings().toString();
-            if (!loadedCHWeightings.equals(configuredCHWeightings))
-                throw new IllegalStateException("Configured graph.ch.weightings: " + configuredCHWeightings + " is not equal to loaded " + loadedCHWeightings);
+            checkIfConfiguredAndLoadedWeightingsCompatible();
 
-            for (CHGraphImpl cg : chGraphs) {
+            for (CHGraphImpl cg : getAllCHGraphs()) {
                 if (!cg.loadExisting())
                     throw new IllegalStateException("Cannot load " + cg);
             }
@@ -261,9 +280,53 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         return false;
     }
 
+    private void checkIfConfiguredAndLoadedWeightingsCompatible() {
+        String loadedStrNode = properties.get("graph.ch.weightings");
+        List<String> loadedNode = parseList(loadedStrNode);
+        String loadedStrEdge = properties.get("graph.ch.edge.weightings");
+        List<String> loadedEdge = parseList(loadedStrEdge);
+        List<Weighting> configuredNode = getNodeBasedCHWeightings();
+        List<Weighting> configuredEdge = getEdgeBasedCHWeightings();
+        // todo: not entirely sure here. when no ch is configured at all (neither edge nor node), but there are any
+        // ch graphs (edge or node) we throw an error ? previously we threw an error when no ch weighting was configured
+        // even though there was a ch graph.
+        if ((configuredNode.isEmpty() && configuredEdge.isEmpty()) && (!loadedNode.isEmpty() || !loadedEdge.isEmpty())) {
+            throw new IllegalStateException("You loaded a CH graph, but you did not specify graph.ch.weightings");
+        }
+        for (Weighting w : configuredNode) {
+            if (!loadedNode.contains(w.toString())) {
+                throw new IllegalStateException("Configured weighting: " + w.toString() + " is not contained in loaded weightings for CH" + loadedStrNode + ".\n" +
+                        "You configured graph.ch.weightings: " + configuredNode);
+            }
+        }
+        for (Weighting w : configuredEdge) {
+            if (!loadedEdge.contains(w.toString())) {
+                throw new IllegalStateException("Configured weighting: " + w.toString() + " is not contained in loaded weightings for edge-based CH" + loadedStrEdge + ".\n" +
+                        "You configured graph.ch.edge.weightings: " + configuredEdge);
+            }
+        }
+    }
+
+    /**
+     * parses a string like [a,b,c]
+     */
+    private List<String> parseList(String listStr) {
+        String trimmed = listStr.trim();
+        String[] items = trimmed.substring(1, trimmed.length() - 1).split(",");
+        List<String> result = new ArrayList<>();
+        for (String item : items) {
+            String s = item.trim();
+            if (!s.isEmpty()) {
+                result.add(s);
+            }
+        }
+        return result;
+    }
+
     @Override
     public void flush() {
-        for (CHGraphImpl cg : chGraphs) {
+        for (CHGraphImpl cg : getAllCHGraphs()) {
+            cg.setNodesHeader();
             cg.setEdgesHeader();
             cg.flush();
         }
@@ -277,7 +340,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         properties.close();
         baseGraph.close();
 
-        for (CHGraphImpl cg : chGraphs) {
+        for (CHGraphImpl cg : getAllCHGraphs()) {
             cg.close();
         }
     }
@@ -291,7 +354,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     public long getCapacity() {
         long cnt = baseGraph.getCapacity() + properties.getCapacity();
 
-        for (CHGraphImpl cg : chGraphs) {
+        for (CHGraphImpl cg : getAllCHGraphs()) {
             cnt += cg.getCapacity();
         }
         return cnt;
@@ -299,7 +362,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     /**
      * Avoid that edges and nodes of the base graph are further modified. Necessary as hook for e.g.
-     * ch graphs on top to initilize themself
+     * ch graphs on top to initialize themselves
      */
     public synchronized void freeze() {
         if (!baseGraph.isFrozen())
@@ -313,7 +376,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public String toDetailsString() {
         String str = baseGraph.toDetailsString();
-        for (CHGraphImpl cg : chGraphs) {
+        for (CHGraphImpl cg : getAllCHGraphs()) {
             str += ", " + cg.toDetailsString();
         }
 
@@ -342,6 +405,11 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public int getNodes() {
         return baseGraph.getNodes();
+    }
+
+    @Override
+    public int getEdges() {
+        return getAllEdges().length();
     }
 
     @Override
@@ -392,5 +460,15 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public GraphExtension getExtension() {
         return baseGraph.getExtension();
+    }
+
+    private Collection<CHGraphImpl> getAllCHGraphs() {
+        // todo: this method is only used to have a 'view' on the two collections. we could also create this only once
+        // as long as the graph collections are only modified in the constructor (otherwise we would have to make sure
+        // the lists are in sync). another option would be something like guava concat.
+        List<CHGraphImpl> result = new ArrayList<>(nodeBasedCHGraphs.size() + edgeBasedCHGraphs.size());
+        result.addAll(nodeBasedCHGraphs);
+        result.addAll(edgeBasedCHGraphs);
+        return result;
     }
 }

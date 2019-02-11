@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-android</artifactId>
-    <version>0.10-SNAPSHOT</version>
+    <version>0.12-SNAPSHOT</version>
     <name>GraphHopper Android</name>
     <packaging>apk</packaging>    
     <organization>
@@ -16,10 +16,10 @@
         <relativePath>../..</relativePath>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.10-SNAPSHOT</version>
+        <version>0.12-SNAPSHOT</version>
     </parent>
     <properties>
-        <vtm.version>0.8.0</vtm.version>
+        <vtm.version>0.10.0</vtm.version>
         <!-- do not put the properties here as it differs from dev to dev <android.sdk.path>/home/peterk/Programme/android-sdk-linux_x86</android.sdk.path>
         instead use your IDE to set it up or specify android sdk via command line
         using -Dandroid.sdk.path=... or by setting environment variable ANDROID_HOME
@@ -55,12 +55,6 @@
             <version>${vtm.version}</version>
         </dependency>
         
-        <dependency>
-            <groupId>org.mapsforge</groupId>            
-            <artifactId>vtm-android</artifactId>
-            <version>${vtm.version}</version>
-            <classifier>natives-armeabi</classifier>
-        </dependency>  
          <dependency>
             <groupId>org.mapsforge</groupId>            
             <artifactId>vtm-android</artifactId>
@@ -68,12 +62,24 @@
             <classifier>natives-armeabi-v7a</classifier>
         </dependency>  
          <dependency>
+            <groupId>org.mapsforge</groupId>
+            <artifactId>vtm-android</artifactId>
+            <version>${vtm.version}</version>
+            <classifier>natives-arm64-v8a</classifier>
+        </dependency>
+         <dependency>
             <groupId>org.mapsforge</groupId>            
             <artifactId>vtm-android</artifactId>
             <version>${vtm.version}</version>
             <classifier>natives-x86</classifier>
         </dependency>        
-        
+         <dependency>
+            <groupId>org.mapsforge</groupId>
+            <artifactId>vtm-android</artifactId>
+            <version>${vtm.version}</version>
+            <classifier>natives-x86_64</classifier>
+        </dependency>
+
         <dependency>
             <groupId>org.mapsforge</groupId>            
             <artifactId>vtm-jts</artifactId>
@@ -87,26 +93,15 @@
         <dependency>
             <groupId>com.caverock</groupId>            
             <artifactId>androidsvg</artifactId>
-            <version>1.2.2-beta-1</version>
-        </dependency> 
-        <dependency>
-            <groupId>com.vividsolutions</groupId>            
-            <artifactId>jts</artifactId>
-            <version>1.13</version>            
+            <version>1.3</version>
         </dependency> 
         
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-android</artifactId>
-            <version>1.7.12</version>
+            <version>${slf4j.version}</version>
         </dependency>
         
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.12</version>
-        </dependency>
-
         <!-- Make sure this is above (!) the android dependencies -->
         <!--
         <dependency>
@@ -148,7 +143,7 @@
                 <configuration>
                     <sdk>
                         <!-- platform or api level (api level 8 = platform 2.2) -->                        
-                        <platform>25</platform>
+                        <platform>27</platform>
                     </sdk>
                     <deleteConflictingFiles>true</deleteConflictingFiles>
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>

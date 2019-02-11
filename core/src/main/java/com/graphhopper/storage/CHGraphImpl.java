@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -30,6 +31,8 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Locale;
 
 import static com.graphhopper.util.Helper.nf;
 
@@ -50,6 +53,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     final DataAccess shortcuts;
     final DataAccess nodesCH;
     final long scDirMask = PrepareEncoder.getScDirMask();
+    private final boolean edgeBased;
     private final BaseGraph baseGraph;
     private final EdgeAccess chEdgeAccess;
     private final Weighting weighting;
@@ -59,18 +63,20 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     int nodeCHEntryBytes;
     private int N_LEVEL;
     // shortcut memory layout is synced with edges indices until E_FLAGS, then:
-    private int S_SKIP_EDGE1, S_SKIP_EDGE2;
+    private int S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_FIRST, S_ORIG_LAST;
     private int shortcutCount = 0;
+    private boolean isReadyForContraction;
 
-    CHGraphImpl(Weighting w, Directory dir, final BaseGraph baseGraph) {
+    CHGraphImpl(Weighting w, Directory dir, final BaseGraph baseGraph, boolean edgeBased) {
         if (w == null)
             throw new IllegalStateException("Weighting for CHGraph cannot be null");
 
         this.weighting = w;
         this.baseGraph = baseGraph;
-        final String name = AbstractWeighting.weightingToFileName(w);
-        this.nodesCH = dir.find("nodes_ch_" + name);
-        this.shortcuts = dir.find("shortcuts_" + name);
+        final String name = AbstractWeighting.weightingToFileName(w, edgeBased);
+        this.edgeBased = edgeBased;
+        this.nodesCH = dir.find("nodes_ch_" + name, DAType.getPreferredInt(dir.getDefaultType()));
+        this.shortcuts = dir.find("shortcuts_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         this.chEdgeAccess = new EdgeAccess(shortcuts, baseGraph.bitUtil) {
             @Override
             final EdgeIterable createSingleEdge(EdgeFilter edgeFilter) {
@@ -205,6 +211,16 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
+    public EdgeExplorer createOriginalEdgeExplorer() {
+        return createOriginalEdgeExplorer(EdgeFilter.ALL_EDGES);
+    }
+
+    @Override
+    public EdgeExplorer createOriginalEdgeExplorer(EdgeFilter filter) {
+        return baseGraph.createEdgeExplorer(filter);
+    }
+
+    @Override
     public final CHEdgeIteratorState getEdgeIteratorState(int edgeId, int endNode) {
         if (isShortcut(edgeId)) {
             if (!chEdgeAccess.isInBounds(edgeId))
@@ -221,6 +237,16 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
+    public int getEdges() {
+        return getAllEdges().length();
+    }
+
+    @Override
+    public int getOriginalEdges() {
+        return baseGraph.getEdges();
+    }
+
+    @Override
     public NodeAccess getNodeAccess() {
         return baseGraph.getNodeAccess();
     }
@@ -230,7 +256,15 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return baseGraph.getBounds();
     }
 
-    void _freeze() {
+    @Override
+    public boolean isReadyForContraction() {
+        return isReadyForContraction;
+    }
+
+    void _prepareForContraction() {
+        if (isReadyForContraction) {
+            return;
+        }
         long maxCapacity = ((long) getNodes()) * nodeCHEntryBytes;
         nodesCH.ensureCapacity(maxCapacity);
         long baseCapacity = baseGraph.nodes.getCapacity();
@@ -245,25 +279,22 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
             nodesCH.setInt(pointer, baseGraph.nodes.getInt(basePointer));
         }
+        isReadyForContraction = true;
     }
 
     String toDetailsString() {
         return toString() + ", shortcuts:" + nf(shortcutCount) + ", nodesCH:(" + nodesCH.getCapacity() / Helper.MB + "MB)";
     }
 
-    /**
-     * Disconnects the edges (higher to lower node) via the specified edgeState pointing from lower to
-     * higher node.
-     * <p>
-     *
-     * @param edgeState the edge from lower to higher
-     */
+    @Override
     public void disconnect(CHEdgeExplorer explorer, EdgeIteratorState edgeState) {
         // search edge with opposite direction but we need to know the previousEdge for the internalEdgeDisconnect so we cannot simply do:
         // EdgeIteratorState tmpIter = getEdgeProps(iter.getEdge(), iter.getBaseNode());
         CHEdgeIterator tmpIter = explorer.setBaseNode(edgeState.getAdjNode());
         int tmpPrevEdge = EdgeIterator.NO_EDGE;
         while (tmpIter.next()) {
+            // note that we do not disconnect original edges, because we are re-using the base graph for different profiles,
+            // even though this is not optimal from a speed performance point of view.
             if (tmpIter.isShortcut() && tmpIter.getEdge() == edgeState.getEdge()) {
                 // TODO this is ugly, move this somehow into the underlying iteration logic
                 long edgePointer = tmpPrevEdge == EdgeIterator.NO_EDGE ? -1
@@ -314,6 +345,14 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return weight;
     }
 
+    void loadNodesHeader() {
+        isReadyForContraction = nodesCH.getHeader(0 * 4) == 1;
+    }
+
+    void setNodesHeader() {
+        nodesCH.setHeader(0 * 4, isReadyForContraction ? 1 : 0);
+    }
+
     protected int loadEdgesHeader() {
         shortcutCount = shortcuts.getHeader(0 * 4);
         shortcutEntryBytes = shortcuts.getHeader(1 * 4);
@@ -355,7 +394,13 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         // shortcuts
         S_SKIP_EDGE1 = ea.E_FLAGS + 4;
         S_SKIP_EDGE2 = S_SKIP_EDGE1 + 4;
-        shortcutEntryBytes = S_SKIP_EDGE2 + 4;
+        if (edgeBased) {
+            S_ORIG_FIRST = S_SKIP_EDGE2 + 4;
+            S_ORIG_LAST = S_ORIG_FIRST + 4;
+            shortcutEntryBytes = S_ORIG_LAST + 4;
+        } else {
+            shortcutEntryBytes = S_SKIP_EDGE2 + 4;
+        }
 
         // node based data:
         N_LEVEL = 0;
@@ -380,6 +425,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         if (!nodesCH.loadExisting() || !shortcuts.loadExisting())
             return false;
 
+        loadNodesHeader();
         loadEdgesHeader();
         return true;
     }
@@ -411,6 +457,61 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return "CHGraph|" + getWeighting().toString();
     }
 
+    public void debugPrint() {
+        final int printMax = 100;
+        System.out.println("nodesCH:");
+        String formatNodes = "%12s | %12s | %12s \n";
+        System.out.format(Locale.ROOT, formatNodes, "#", "N_CH_REF", "N_LEVEL");
+        for (int i = 0; i < Math.min(baseGraph.getNodes(), printMax); ++i) {
+            System.out.format(Locale.ROOT, formatNodes, i, chEdgeAccess.getEdgeRef(i), getLevel(i));
+        }
+        if (baseGraph.getNodes() > printMax) {
+            System.out.format(Locale.ROOT, " ... %d more nodes", baseGraph.getNodes() - printMax);
+        }
+        System.out.println("shortcuts:");
+        String formatShortcuts = "%12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s\n";
+        System.out.format(Locale.ROOT, formatShortcuts, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS", "S_SKIP_EDGE1", "S_SKIP_EDGE2", "S_ORIG_FIRST", "S_ORIG_LAST");
+        for (int i = baseGraph.edgeCount; i < baseGraph.edgeCount + Math.min(shortcutCount, printMax); ++i) {
+            System.out.format(Locale.ROOT, formatShortcuts, i,
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_NODEA),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_NODEB),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_LINKA),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_LINKB),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_DIST),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_FLAGS),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + S_SKIP_EDGE1),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + S_SKIP_EDGE2),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + S_ORIG_FIRST),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + S_ORIG_LAST));
+        }
+        if (shortcutCount > printMax) {
+            System.out.printf(Locale.ROOT, " ... %d more shortcut edges\n", shortcutCount - printMax);
+        }
+    }
+
+    public NodeOrderingProvider getNodeOrderingProvider() {
+        int numNodes = getNodes();
+        final int[] nodeOrdering = new int[numNodes];
+        // the node ordering is the inverse of the ch levels
+        // if we really want to save some memory it could be still reasonable to not create the node ordering here,
+        // but search nodesCH for a given level on demand.
+        for (int i = 0; i < numNodes; ++i) {
+            int level = getLevel(i);
+            nodeOrdering[level] = i;
+        }
+        return new NodeOrderingProvider() {
+            @Override
+            public int getNodeIdForLevel(int level) {
+                return nodeOrdering[level];
+            }
+
+            @Override
+            public int getNumNodes() {
+                return nodeOrdering.length;
+            }
+        };
+    }
+
     class CHEdgeIteratorImpl extends EdgeIterable implements CHEdgeExplorer, CHEdgeIterator {
         public CHEdgeIteratorImpl(BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter) {
             super(baseGraph, edgeAccess, filter);
@@ -433,7 +534,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public final void setSkippedEdges(int edge1, int edge2) {
+        public final CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
             checkShortcut(true, "setSkippedEdges");
             if (EdgeIterator.Edge.isValid(edge1) != EdgeIterator.Edge.isValid(edge2)) {
                 throw new IllegalStateException("Skipped edges of a shortcut needs "
@@ -441,6 +542,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             }
             shortcuts.setInt(edgePointer + S_SKIP_EDGE1, edge1);
             shortcuts.setInt(edgePointer + S_SKIP_EDGE2, edge2);
+            return this;
         }
 
         @Override
@@ -453,6 +555,32 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public final int getSkippedEdge2() {
             checkShortcut(true, "getSkippedEdge2");
             return shortcuts.getInt(edgePointer + S_SKIP_EDGE2);
+        }
+
+        @Override
+        public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
+            checkShortcutAndEdgeBased("setFirstAndLastOrigEdges");
+            shortcuts.setInt(edgePointer + S_ORIG_FIRST, firstOrigEdge);
+            shortcuts.setInt(edgePointer + S_ORIG_LAST, lastOrigEdge);
+            return this;
+        }
+
+        @Override
+        public int getOrigEdgeFirst() {
+            if (!isShortcut()) {
+                return getEdge();
+            }
+            checkShortcutAndEdgeBased("getOrigEdgeFirst");
+            return shortcuts.getInt(edgePointer + S_ORIG_FIRST);
+        }
+
+        @Override
+        public int getOrigEdgeLast() {
+            if (!isShortcut()) {
+                return getEdge();
+            }
+            checkShortcutAndEdgeBased("getOrigEdgeLast");
+            return shortcuts.getInt(edgePointer + S_ORIG_LAST);
         }
 
         @Override
@@ -508,6 +636,13 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     throw new IllegalStateException("Cannot call " + methodName + " on shortcut " + getEdge());
             } else if (shouldBeShortcut)
                 throw new IllegalStateException("Method " + methodName + " only for shortcuts " + getEdge());
+        }
+
+        private void checkShortcutAndEdgeBased(String method) {
+            checkShortcut(true, method);
+            if (!edgeBased) {
+                throw new IllegalStateException("Method " + method + " only allowed when CH graph is configured for edge based traversal");
+            }
         }
 
         @Override
@@ -593,24 +728,52 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public int getMaxId() {
-            return super.getMaxId() + shortcutCount;
+        public int length() {
+            return super.length() + shortcutCount;
         }
 
         @Override
-        public final void setSkippedEdges(int edge1, int edge2) {
-            baseGraph.edges.setInt(edgePointer + S_SKIP_EDGE1, edge1);
-            baseGraph.edges.setInt(edgePointer + S_SKIP_EDGE2, edge2);
+        public final CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
+            checkShortcut(true, "setSkippedEdges");
+            if (EdgeIterator.Edge.isValid(edge1) != EdgeIterator.Edge.isValid(edge2)) {
+                throw new IllegalStateException("Skipped edges of a shortcut needs "
+                        + "to be both valid or invalid but they were not " + edge1 + ", " + edge2);
+            }
+            shortcuts.setInt(edgePointer + S_SKIP_EDGE1, edge1);
+            shortcuts.setInt(edgePointer + S_SKIP_EDGE2, edge2);
+            return this;
         }
 
         @Override
         public final int getSkippedEdge1() {
-            return baseGraph.edges.getInt(edgePointer + S_SKIP_EDGE1);
+            checkShortcut(true, "getSkippedEdge1");
+            return shortcuts.getInt(edgePointer + S_SKIP_EDGE1);
         }
 
         @Override
         public final int getSkippedEdge2() {
-            return baseGraph.edges.getInt(edgePointer + S_SKIP_EDGE2);
+            checkShortcut(true, "getSkippedEdge2");
+            return shortcuts.getInt(edgePointer + S_SKIP_EDGE2);
+        }
+
+        @Override
+        public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
+            checkShortcutAndEdgeBased("setFirstAndLastOrigEdges");
+            shortcuts.setInt(edgePointer + S_ORIG_FIRST, firstOrigEdge);
+            shortcuts.setInt(edgePointer + S_ORIG_LAST, lastOrigEdge);
+            return this;
+        }
+
+        @Override
+        public int getOrigEdgeFirst() {
+            checkShortcutAndEdgeBased("getOrigEdgeFirst");
+            return shortcuts.getInt(edgePointer + S_ORIG_FIRST);
+        }
+
+        @Override
+        public int getOrigEdgeLast() {
+            checkShortcutAndEdgeBased("getOrigEdgeLast");
+            return shortcuts.getInt(edgePointer + S_ORIG_LAST);
         }
 
         @Override
@@ -634,5 +797,21 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public int getMergeStatus(long flags) {
             return PrepareEncoder.getScMergeStatus(getDirectFlags(), flags);
         }
+
+        void checkShortcut(boolean shouldBeShortcut, String methodName) {
+            if (isShortcut()) {
+                if (!shouldBeShortcut)
+                    throw new IllegalStateException("Cannot call " + methodName + " on shortcut " + getEdge());
+            } else if (shouldBeShortcut)
+                throw new IllegalStateException("Method " + methodName + " only for shortcuts " + getEdge());
+        }
+
+        private void checkShortcutAndEdgeBased(String method) {
+            checkShortcut(true, method);
+            if (!edgeBased) {
+                throw new IllegalStateException("Method " + method + " not supported when turn costs are disabled");
+            }
+        }
+
     }
 }

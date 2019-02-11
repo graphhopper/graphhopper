@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -91,18 +91,18 @@ public class MiniGraphUI {
         boolean ch = true;
         if (ch) {
             map.put(Parameters.Landmark.DISABLE, true);
-            weighting = hopper.getCHFactoryDecorator().getWeightings().get(0);
+            weighting = hopper.getCHFactoryDecorator().getNodeBasedWeightings().get(0);
             routingGraph = hopper.getGraphHopperStorage().getGraph(CHGraph.class, weighting);
 
             final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
             algoFactory = new RoutingAlgorithmFactory() {
 
-                class TmpAlgo extends PrepareContractionHierarchies.DijkstraBidirectionCH implements DebugAlgo {
+                class TmpAlgo extends DijkstraBidirectionCH implements DebugAlgo {
                     private final GraphicsWrapper mg;
                     private Graphics2D g2;
 
-                    public TmpAlgo(Graph graph, Weighting type, TraversalMode tMode, GraphicsWrapper mg) {
-                        super(graph, type, tMode);
+                    public TmpAlgo(Graph graph, Weighting type, GraphicsWrapper mg) {
+                        super(graph, type);
                         this.mg = mg;
                     }
 
@@ -112,11 +112,11 @@ public class MiniGraphUI {
                     }
 
                     @Override
-                    public void updateBestPath(EdgeIteratorState es, SPTEntry bestEE, int currLoc) {
+                    public void updateBestPath(EdgeIteratorState es, SPTEntry entry, int traversalId, boolean reverse) {
                         if (g2 != null)
-                            mg.plotNode(g2, currLoc, Color.YELLOW, 6);
+                            mg.plotNode(g2, traversalId, Color.YELLOW, 6);
 
-                        super.updateBestPath(es, bestEE, currLoc);
+                        super.updateBestPath(es, entry, traversalId, reverse);
                     }
                 }
 
@@ -124,7 +124,7 @@ public class MiniGraphUI {
                 public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
                     // doable but ugly
                     Weighting w = ((PrepareContractionHierarchies) tmpFactory).getWeighting();
-                    return new TmpAlgo(g, new PreparationWeighting(w), TraversalMode.NODE_BASED, mg).
+                    return new TmpAlgo(g, new PreparationWeighting(w), mg).
                             setEdgeFilter(new LevelEdgeFilter((CHGraph) routingGraph));
                 }
             };
@@ -268,7 +268,7 @@ public class MiniGraphUI {
                     g2.setColor(color);
                     boolean fwd = encoder.isForward(edge.getFlags());
                     boolean bwd = encoder.isBackward(edge.getFlags());
-                    float width = speed > 90? 1f : 0.8f;
+                    float width = speed > 90 ? 1f : 0.8f;
                     if (fwd && !bwd) {
                         mg.plotDirectedEdge(g2, lat, lon, lat2, lon2, width);
                     } else {
@@ -370,7 +370,7 @@ public class MiniGraphUI {
 //
 ////        System.out.println("path " + from + "->" + to);
 //        return algo.calcPath(from, to);
-        // System.out.println(GraphUtility.getNodeInfo(graph, 60139, new DefaultEdgeFilter(new CarFlagEncoder()).direction(false, true)));
+        // System.out.println(GraphUtility.getNodeInfo(graph, 60139, DefaultEdgeFilter.allEdges(new CarFlagEncoder()).direction(false, true)));
         // System.out.println(((GraphStorage) graph).debug(202947, 10));
 //        GraphUtility.printInfo(graph, 106511, 10);
         return algo.calcPath(162810, 35120);

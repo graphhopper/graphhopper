@@ -5,14 +5,14 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-reader-osm</artifactId>
-    <version>0.10-SNAPSHOT</version>
+    <version>0.12-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>GraphHopper Reader for OpenStreetMap Data</name>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.10-SNAPSHOT</version>
+        <version>0.12-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -25,15 +25,8 @@
         <dependency>
             <groupId>org.openstreetmap.osmosis</groupId>
             <artifactId>osmosis-osm-binary</artifactId>
-            <version>0.45</version>
+            <version>0.46</version>
         </dependency>
-        <!-- 
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>${commons-compress.version}</version>
-        </dependency>
-        -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -51,7 +44,12 @@
             <version>${log4j.version}</version>
             <scope>test</scope>
         </dependency>
-        
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-core</artifactId>
@@ -60,24 +58,4 @@
             <scope>test</scope>
         </dependency>        
     </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>                
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.graphhopper.import.osm.Import</mainClass>
-                        </manifest>
-                    </archive>
-                        	                    
-                    <!-- for standalone usage -->
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>

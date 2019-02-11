@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,28 +54,44 @@ public class DouglasPeucker {
     }
 
     /**
-     * This method removes points which are close to the line (defined by maxDist).
+     * Simplifies the <code>points</code>, from index 0 to size-1.
      * <p>
+     * It is a wrapper method for {@link DouglasPeucker#simplify(PointList, int, int)}.
      *
-     * @return removed nodes
+     * @return The number removed points
      */
     public int simplify(PointList points) {
+        return simplify(points, 0, points.size() - 1);
+    }
+
+    /**
+     * Simplifies a part of the <code>points</code>. The <code>fromIndex</code> and <code>lastIndex</code>
+     * are guaranteed to be kept.
+     *
+     * @param points    The PointList to simplify
+     * @param fromIndex Start index to simplify, should be >= <code>lastIndex</code>
+     * @param lastIndex Simplify up to this index
+     * @return The number of removed points
+     */
+    public int simplify(PointList points, int fromIndex, int lastIndex) {
         int removed = 0;
-        int size = points.getSize();
+        int size = lastIndex - fromIndex;
         if (approx) {
             int delta = 500;
             int segments = size / delta + 1;
-            int start = 0;
+            int start = fromIndex;
             for (int i = 0; i < segments; i++) {
                 // start of next is end of last segment, except for the last
-                removed += simplify(points, start, Math.min(size - 1, start + delta));
+                removed += subSimplify(points, start, Math.min(lastIndex, start + delta));
                 start += delta;
             }
         } else {
-            removed = simplify(points, 0, size - 1);
+            removed = subSimplify(points, fromIndex, lastIndex);
         }
 
-        compressNew(points, removed);
+        if (removed > 0)
+            compressNew(points, removed);
+
         return removed;
     }
 
@@ -111,7 +127,7 @@ public class DouglasPeucker {
     }
 
     // keep the points of fromIndex and lastIndex
-    int simplify(PointList points, int fromIndex, int lastIndex) {
+    int subSimplify(PointList points, int fromIndex, int lastIndex) {
         if (lastIndex - fromIndex < 2) {
             return 0;
         }
@@ -145,8 +161,8 @@ public class DouglasPeucker {
                 counter++;
             }
         } else {
-            counter = simplify(points, fromIndex, indexWithMaxDist);
-            counter += simplify(points, indexWithMaxDist, lastIndex);
+            counter = subSimplify(points, fromIndex, indexWithMaxDist);
+            counter += subSimplify(points, indexWithMaxDist, lastIndex);
         }
         return counter;
     }

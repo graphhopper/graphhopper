@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,16 +18,14 @@
 package com.graphhopper.util;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
-import com.carrotsearch.hppc.LongArrayList;
-import com.carrotsearch.hppc.LongIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
-import com.graphhopper.routing.util.AllCHEdgesIterator;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
+import com.graphhopper.util.shapes.BBox;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,11 +38,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Peter Karich
  */
 public class GHUtility {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GHUtility.class);
     /**
      * This method could throw exception if uncatched problems like index out of bounds etc
      */
     public static List<String> getProblems(Graph g) {
-        List<String> problems = new ArrayList<String>();
+        List<String> problems = new ArrayList<>();
         int nodes = g.getNodes();
         int nodeIndex = 0;
         NodeAccess na = g.getNodeAccess();
@@ -91,7 +90,7 @@ public class GHUtility {
     }
 
     public static Set<Integer> asSet(int... values) {
-        Set<Integer> s = new HashSet<Integer>();
+        Set<Integer> s = new HashSet<>();
         for (int v : values) {
             s.add(v);
         }
@@ -100,7 +99,7 @@ public class GHUtility {
 
     public static Set<Integer> getNeighbors(EdgeIterator iter) {
         // make iteration order over set static => linked
-        Set<Integer> list = new LinkedHashSet<Integer>();
+        Set<Integer> list = new LinkedHashSet<>();
         while (iter.next()) {
             list.add(iter.getAdjNode());
         }
@@ -108,7 +107,7 @@ public class GHUtility {
     }
 
     public static List<Integer> getEdgeIds(EdgeIterator iter) {
-        List<Integer> list = new ArrayList<Integer>();
+        List<Integer> list = new ArrayList<>();
         while (iter.next()) {
             list.add(iter.getEdge());
         }
@@ -116,17 +115,120 @@ public class GHUtility {
     }
 
     public static void printEdgeInfo(final Graph g, FlagEncoder encoder) {
-        System.out.println("-- Graph n:" + g.getNodes() + " e:" + g.getAllEdges().getMaxId() + " ---");
+        System.out.println("-- Graph nodes:" + g.getNodes() + " edges:" + g.getAllEdges().length() + " ---");
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next()) {
-            String sc = "";
-            if (iter instanceof AllCHEdgesIterator) {
-                AllCHEdgesIterator aeSkip = (AllCHEdgesIterator) iter;
-                sc = aeSkip.isShortcut() ? "sc" : "  ";
-            }
+            String prefix = (iter instanceof AllCHEdgesIterator && ((AllCHEdgesIterator) iter).isShortcut()) ? "sc" : "  ";
             String fwdStr = iter.isForward(encoder) ? "fwd" : "   ";
-            String bckStr = iter.isBackward(encoder) ? "bckwd" : "";
-            System.out.println(sc + " " + iter + " " + fwdStr + " " + bckStr);
+            String bwdStr = iter.isBackward(encoder) ? "bwd" : "   ";
+            System.out.println(prefix + " " + iter + " " + fwdStr + " " + bwdStr + " " + iter.getDistance());
+        }
+    }
+
+    public static void printGraphForUnitTest(Graph g, FlagEncoder encoder) {
+        printGraphForUnitTest(g, encoder, new BBox(
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
+    }
+
+    public static void printGraphForUnitTest(Graph g, FlagEncoder encoder, BBox bBox) {
+        NodeAccess na = g.getNodeAccess();
+        for (int node = 0; node < g.getNodes(); ++node) {
+            if (bBox.contains(na.getLat(node), na.getLon(node))) {
+                System.out.printf(Locale.ROOT, "na.setNode(%d, %f, %f);\n", node, na.getLat(node), na.getLon(node));
+            }
+        }
+        AllEdgesIterator iter = g.getAllEdges();
+        while (iter.next()) {
+            if (bBox.contains(na.getLat(iter.getBaseNode()), na.getLon(iter.getBaseNode())) &&
+                    bBox.contains(na.getLat(iter.getAdjNode()), na.getLon(iter.getAdjNode()))) {
+                printUnitTestEdge(encoder, iter);
+            }
+        }
+    }
+
+    private static void printUnitTestEdge(FlagEncoder flagEncoder, EdgeIteratorState edge) {
+        boolean fwd = edge.isForward(flagEncoder);
+        boolean bwd = edge.isBackward(flagEncoder);
+        if (!fwd && !bwd) {
+            return;
+        }
+        int from = fwd ? edge.getBaseNode() : edge.getAdjNode();
+        int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
+        System.out.printf(Locale.ROOT,
+                "graph.edge(%d, %d, %f, %s);\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false");
+    }
+
+    public static void buildRandomGraph(Graph graph, long seed, int numNodes, double meanDegree, boolean allowLoops, boolean allowZeroDistance, double pBothDir) {
+        Random random = new Random(seed);
+        for (int i = 0; i < numNodes; ++i) {
+            double lat = 49.4 + (random.nextDouble() * 0.01);
+            double lon = 9.7 + (random.nextDouble() * 0.01);
+            graph.getNodeAccess().setNode(i, lat, lon);
+        }
+        double minDist = Double.MAX_VALUE;
+        double maxDist = Double.MIN_VALUE;
+        int numEdges = (int) (0.5 * meanDegree * numNodes);
+        for (int i = 0; i < numEdges; ++i) {
+            int from = random.nextInt(numNodes);
+            int to = random.nextInt(numNodes);
+            if (!allowLoops && from == to) {
+                continue;
+            }
+            double distance = GHUtility.getDistance(from, to, graph.getNodeAccess());
+            if (!allowZeroDistance) {
+                distance = Math.max(0.001, distance);
+            }
+            // add some random offset for most cases, but also allow duplicate edges with same weight
+            if (random.nextDouble() < 0.8)
+                distance += random.nextDouble() * distance * 0.01;
+            minDist = Math.min(minDist, distance);
+            maxDist = Math.max(maxDist, distance);
+            // using bidirectional edges will increase mean degree of graph above given value
+            boolean bothDirections = random.nextDouble() < pBothDir;
+            graph.edge(from, to, distance, bothDirections);
+        }
+        LOGGER.debug(String.format(Locale.ROOT, "Finished building random graph" +
+                        ", nodes: %d, edges: %d , min distance: %.2f, max distance: %.2f\n",
+                graph.getNodes(), graph.getAllEdges().length(), minDist, maxDist));
+    }
+
+    private static double getDistance(int from, int to, NodeAccess nodeAccess) {
+        double fromLat = nodeAccess.getLat(from);
+        double fromLon = nodeAccess.getLon(from);
+        double toLat = nodeAccess.getLat(to);
+        double toLon = nodeAccess.getLon(to);
+        return Helper.DIST_PLANE.calcDist(fromLat, fromLon, toLat, toLon);
+    }
+
+    public static void addRandomTurnCosts(Graph graph, long seed, FlagEncoder encoder, int maxTurnCost, TurnCostExtension turnCostExtension) {
+        Random random = new Random(seed);
+        double pNodeHasTurnCosts = 0.3;
+        double pEdgePairHasTurnCosts = 0.6;
+        double pCostIsRestriction = 0.1;
+        EdgeExplorer inExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
+        EdgeExplorer outExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+        for (int node = 0; node < graph.getNodes(); ++node) {
+            if (random.nextDouble() < pNodeHasTurnCosts) {
+                EdgeIterator inIter = inExplorer.setBaseNode(node);
+                while (inIter.next()) {
+                    EdgeIterator outIter = outExplorer.setBaseNode(node);
+                    while (outIter.next()) {
+                        if (inIter.getEdge() == outIter.getEdge()) {
+                            // leave u-turns as they are
+                            continue;
+                        }
+                        if (random.nextDouble() < pEdgePairHasTurnCosts) {
+                            boolean restricted = false;
+                            if (random.nextDouble() < pCostIsRestriction) {
+                                restricted = true;
+                            }
+                            double cost = restricted ? 0 : random.nextDouble() * maxTurnCost;
+                            turnCostExtension.addTurnInfo(inIter.getEdge(), node, outIter.getEdge(),
+                                    encoder.getTurnFlags(restricted, cost));
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -137,10 +239,7 @@ public class GHUtility {
             @Override
             protected boolean goFurther(int nodeId) {
                 System.out.println(getNodeInfo(g, nodeId, filter));
-                if (counter++ > counts) {
-                    return false;
-                }
-                return true;
+                return counter++ <= counts;
             }
         }.start(g.createEdgeExplorer(), startNode);
     }
@@ -262,15 +361,12 @@ public class GHUtility {
     }
 
     static Directory guessDirectory(GraphStorage store) {
-        String location = store.getDirectory().getLocation();
-        Directory outdir;
         if (store.getDirectory() instanceof MMapDirectory) {
             throw new IllegalStateException("not supported yet: mmap will overwrite existing storage at the same location");
-        } else {
-            boolean isStoring = ((GHDirectory) store.getDirectory()).isStoring();
-            outdir = new RAMDirectory(location, isStoring);
         }
-        return outdir;
+        String location = store.getDirectory().getLocation();
+        boolean isStoring = ((GHDirectory) store.getDirectory()).isStoring();
+        return new RAMDirectory(location, isStoring);
     }
 
     /**
@@ -280,7 +376,7 @@ public class GHUtility {
         Directory outdir = guessDirectory(store);
         boolean is3D = store.getNodeAccess().is3D();
 
-        return new GraphHopperStorage(store.getCHWeightings(), outdir, store.getEncodingManager(),
+        return new GraphHopperStorage(store.getNodeBasedCHWeightings(), store.getEdgeBasedCHWeightings(), outdir, store.getEncodingManager(),
                 is3D, store.getExtension()).
                 create(store.getNodes());
     }
@@ -311,8 +407,6 @@ public class GHUtility {
             }
         };
     }
-
-    ;
 
     /**
      * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if
@@ -358,6 +452,15 @@ public class GHUtility {
      */
     public static int getEdgeFromEdgeKey(int edgeKey) {
         return edgeKey / 2;
+    }
+
+    /**
+     * Returns the edge key for a given edge id and adjacent node. This is needed in a few places where
+     * the base node is not known.
+     */
+    public static int getEdgeKey(Graph graph, int edgeId, int node, boolean reverse) {
+        EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(edgeId, node);
+        return GHUtility.createEdgeKey(edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode(), edgeId, reverse);
     }
 
     /**
@@ -476,7 +579,22 @@ public class GHUtility {
         }
 
         @Override
-        public void setSkippedEdges(int edge1, int edge2) {
+        public CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int getOrigEdgeFirst() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int getOrigEdgeLast() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

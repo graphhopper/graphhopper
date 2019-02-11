@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,8 +85,8 @@ public class QueryTorture {
         }
 
         // there should be enough feed available for the workers in the queue
-        queryQueue = new LinkedBlockingQueue<Query>(workers * 100);
-        noDuplicate = new HashSet<Query>();
+        queryQueue = new LinkedBlockingQueue<>(workers * 100);
+        noDuplicate = new HashSet<>();
         successfullQueries = new AtomicInteger(0);
         httpErrorCounter = new AtomicInteger(0);
         routingErrorCounter = new AtomicInteger(0);
@@ -120,7 +120,7 @@ public class QueryTorture {
         Thread mainThread = new Thread("mainThread") {
             @Override
             public void run() {
-                Collection<Callable<Object>> workerCollection = new ArrayList<Callable<Object>>(workers);
+                Collection<Callable<Object>> workerCollection = new ArrayList<>(workers);
                 for (int i = 0; i < workers; i++) {
                     final int workerNo = i;
                     workerCollection.add(new Callable<Object>() {
@@ -239,8 +239,8 @@ public class QueryTorture {
         GHPoint start;
         GHPoint end;
         long realCount;
-        List<String> points = new ArrayList<String>();
-        Map<String, String> params = new HashMap<String, String>();
+        List<String> points = new ArrayList<>();
+        Map<String, String> params = new HashMap<>();
 
         static Query parse(String logLine) {
             String START = "GHBaseServlet - ";
@@ -269,7 +269,7 @@ public class QueryTorture {
                 }
 
                 value = value.replace("%2C", ",");
-                GHPoint point = GHPoint.parse(value);
+                GHPoint point = GHPoint.fromString(value);
                 if (point == null)
                     continue;
 

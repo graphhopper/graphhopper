@@ -1,0 +1,36 @@
+engines:
+  checkstyle:
+    enabled: true
+    checks:
+      com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.imports.CustomImportOrderCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.sizes.LineLengthCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.naming.AbbreviationAsWordInNameCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.whitespace.SeparatorWrapCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.whitespace.EmptyLineSeparatorCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.blocks.NeedBracesCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.whitespace.OperatorWrapCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.naming.LocalVariableNameCheck:
+        enabled: false
+  duplication:
+    enabled: true
+    config:
+      languages:
+      # it's not yet available for Java :)
+      - java
+  pmd:
+    enabled: true
+ratings:
+  paths:
+  - "**.java"
+exclude_paths:
+- "web/src/main/resources/assets/"
+- "**.js"

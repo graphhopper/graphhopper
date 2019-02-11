@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,6 +35,17 @@ public interface EdgeIteratorState {
      * values, except that for an implementation it is recommended that they'll be contiguous.
      */
     int getEdge();
+
+    /**
+     * @return the edge id of the first original edge of the current edge. This is needed for shortcuts
+     * in edge-based contraction hierarchies and otherwise simply returns the id of the current edge.
+     */
+    int getOrigEdgeFirst();
+
+    /**
+     * @see #getOrigEdgeFirst()
+     */
+    int getOrigEdgeLast();
 
     /**
      * Returns the node used to instantiate the EdgeIterator. Example: "EdgeIterator iter =

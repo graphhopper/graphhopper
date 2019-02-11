@@ -1,0 +1,10 @@
+{
+    "status": "finished",
+    "solution": {
+        "info": {
+            "took": 0.049935993,
+            "copyrights": ["GraphHopper", "OpenStreetMap contributors"]
+        },
+        "weights": [[0.0, 885.867, 605.35, 1130.857], [847.623, 0.0, 807.167, 927.171], [561.04, 777.33, 0.0, 660.491], [1102.729, 905.987, 662.747, 0.0]]        
+    }
+}

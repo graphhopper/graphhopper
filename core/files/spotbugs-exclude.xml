@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- documentation about findbug's rule match clauses can be found here:
+         http://findbugs.sourceforge.net/manual/filter.html -->
+         
+</FindBugsFilter>

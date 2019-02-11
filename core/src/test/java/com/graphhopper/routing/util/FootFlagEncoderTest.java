@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,7 @@ public class FootFlagEncoderTest {
         g.edge(0, 1).setDistance(10).setFlags(footEncoder.setProperties(10, true, true));
         g.edge(0, 2).setDistance(10).setFlags(footEncoder.setProperties(5, true, true));
         g.edge(1, 3).setDistance(10).setFlags(footEncoder.setProperties(10, true, true));
-        EdgeExplorer out = g.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
+        EdgeExplorer out = g.createEdgeExplorer(DefaultEdgeFilter.outEdges(footEncoder));
         assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(out.setBaseNode(2)));
@@ -368,6 +368,16 @@ public class FootFlagEncoderTest {
         assertTrue(footEncoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
     }
 
+    @Test
+    public void handleWayTagsCircularJunction() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("junction", "circular");
+        way.setTag("highway", "tertiary");
+        long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
+        assertTrue(footEncoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+    }
+
+    @Test
     public void testFord() {
         // by default deny access through fords!
         ReaderNode node = new ReaderNode(1, -1, -1);
@@ -392,5 +402,46 @@ public class FootFlagEncoderTest {
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "yes");
         assertTrue(footEncoder.handleNodeTags(node) == 0);
+    }
+
+    @Test
+    public void testBlockByDefault() {
+        FootFlagEncoder tmpFootEncoder = new FootFlagEncoder();
+        new EncodingManager(tmpFootEncoder);
+
+        ReaderNode node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        // potential barriers are no barrier by default
+        assertTrue(tmpFootEncoder.handleNodeTags(node) == 0);
+        node.setTag("access", "no");
+        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+
+        // absolute barriers always block
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "fence");
+        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+        node.setTag("barrier", "fence");
+        node.setTag("access", "yes");
+        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+
+        // Now let's block potential barriers per default (if no other access tag exists)
+        tmpFootEncoder.setBlockByDefault(true);
+
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+        node.setTag("access", "yes");
+        assertTrue(tmpFootEncoder.handleNodeTags(node) == 0);
+
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "fence");
+        assertTrue(tmpFootEncoder.handleNodeTags(node) > 0);
+
+        // Let's stop block potential barriers to test if barrier:cattle_grid is non blocking
+        tmpFootEncoder.setBlockByDefault(false);
+
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "cattle_grid");
+        assertTrue(tmpFootEncoder.handleNodeTags(node) == 0);
     }
 }

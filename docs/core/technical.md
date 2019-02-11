@@ -9,11 +9,11 @@ There are mainly three parts:
 ### 1. Data Import
 
 The default import is done via OSMReader which imports OpenStreetMap data. You can configure it via API 
-or use the `graphhopper.sh` script which utilizes the config.properties where you can specify if it should 
+or use the `graphhopper.sh` script which utilizes the config.yml where you can specify if it should 
 read `car`, `foot` or all vehicles at once. You'll have to make sure that you allocate enough memory for your 
 specific graph (E.g. ~2GB for Germany) e.g. `export JAVA_OPTS="-Xmx2g"`. The import process is fast e.g. 
 complete Germany takes roughly 10 minutes. Additionally it will take time if you choose 
-`prepare.ch.weightings=fastest` in the config.properties which will dramatically improve query time
+`prepare.ch.weightings=fastest` in the config.yml which will dramatically improve query time
 but requires more RAM on import.
 
 ### 2. The Graph
@@ -31,7 +31,7 @@ it is currently the case.
 
 The data layout for the DataAccess objects in GraphHopperStorage called 'nodes' and 'edges' is the following:
 
-![storage layout](http://karussell.files.wordpress.com/2013/08/wiki-graph.png)
+![storage layout](https://karussell.files.wordpress.com/2018/09/wiki-graph.png)
 
 Some explanations:
  * One 'node row' consists of latitude,longitude (not shown) and the first edgeID
@@ -60,7 +60,7 @@ An algorithm needs the path extraction: from the shortest-path-tree one needs to
 can be determined. For bidirectional algorithms this is a bit more complicated and done in PathBidirRef. 
 For [_Contraction Hierarchies_](http://ad-wiki.informatik.uni-freiburg.de/teaching/EfficientRoutePlanningSS2012)
  we use the _CHGraph_ which additionally holds shortcuts. While path extraction we need to identify those
- shortcuts and get the edges recursivly, this is done in Path4CH.
+ shortcuts and get the edges recursively, this is done in Path4CH.
 
 ## 3.1 Base Graph
 

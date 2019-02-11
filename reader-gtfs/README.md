@@ -1,6 +1,6 @@
 # GraphHopper GTFS
 
-Here is a screenshot of a public transport query. The route with the earliest arrival time is highlighted in green. The three 
+Here is a screenshot of a public transport query. The route with the earliest arrival time is highlighted in green. The three
 non-highlighted alternatives have fewer transfers. They include a walk-only route (no vehicle boardings at all).
 
 ![gtfs preview](https://www.graphhopper.com/wp-content/uploads/2017/01/gtfs-preview.png)
@@ -13,11 +13,17 @@ cd graphhopper
 # download GTFS from Berlin & Brandenburg in Germany (VBB) and the 'surrounding' OpenStreetMap data for the walk network
 wget -O gtfs-vbb.zip http://transitfeeds.com/p/verkehrsverbund-berlin-brandenburg/213/latest/download
 wget http://download.geofabrik.de/europe/germany/brandenburg-latest.osm.pbf
-./graphhopper.sh buildweb
+./graphhopper.sh build
 # The following process will take roughly 5 minutes on a modern laptop when it is executed for the first time.
 # It imports the previously downloaded OSM data of the Brandenburg area as well as the GTFS.
-java -Xmx5g -Xms5g -jar web/target/graphhopper-web-*-with-dep.jar datareader.file=brandenburg-latest.osm.pbf gtfs.file=gtfs-vbb.zip jetty.port=8989 jetty.resourcebase=./web/src/main/webapp graph.flag_encoders=pt prepare.ch.weightings=no graph.location=./graph-cache
-# view the web UI e.g. via: 
+java -Xmx8g -Xms8g \
+  -Dgraphhopper.datareader.file=brandenburg-latest.osm.pbf \
+  -Dgraphhopper.gtfs.file=gtfs-vbb.zip \
+  -Dgraphhopper.graph.flag_encoders=pt \
+  -Dgraphhopper.prepare.ch.weightings=no \
+  -Dgraphhopper.graph.location=./graph-cache \
+  -jar web/target/graphhopper-web-*.jar server config.yml
+# view the web UI e.g. via:
 firefox http://localhost:8989
 ```
 

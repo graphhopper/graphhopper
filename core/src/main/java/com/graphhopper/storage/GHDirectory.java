@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,13 +17,13 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Helper;
-
 import java.io.File;
 import java.nio.ByteOrder;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.graphhopper.util.Helper.*;
 
 /**
  * Implements some common methods for the subclasses.
@@ -35,12 +35,12 @@ public class GHDirectory implements Directory {
     protected final String location;
     private final DAType defaultType;
     private final ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
-    protected Map<String, DataAccess> map = new HashMap<String, DataAccess>();
-    protected Map<String, DAType> types = new HashMap<String, DAType>();
+    protected Map<String, DataAccess> map = new HashMap<>();
+    protected Map<String, DAType> types = new HashMap<>();
 
     public GHDirectory(String _location, DAType defaultType) {
         this.defaultType = defaultType;
-        if (Helper.isEmpty(_location))
+        if (isEmpty(_location))
             _location = new File("").getAbsolutePath();
 
         if (!_location.endsWith("/"))
@@ -50,20 +50,6 @@ public class GHDirectory implements Directory {
         File dir = new File(location);
         if (dir.exists() && !dir.isDirectory())
             throw new RuntimeException("file '" + dir + "' exists but is not a directory");
-
-        // set default access to integer based
-        // improves performance on server side, 10% faster for queries and preparation
-        if (this.defaultType.isInMemory()) {
-            if (isStoring()) {
-                put("location_index", DAType.RAM_INT_STORE);
-                put("edges", DAType.RAM_INT_STORE);
-                put("nodes", DAType.RAM_INT_STORE);
-            } else {
-                put("location_index", DAType.RAM_INT);
-                put("edges", DAType.RAM_INT);
-                put("nodes", DAType.RAM_INT);
-            }
-        }
     }
 
     @Override
@@ -72,7 +58,7 @@ public class GHDirectory implements Directory {
     }
 
     public Directory put(String name, DAType type) {
-        if (!name.equals(name.toLowerCase()))
+        if (!name.equals(toLowerCase(name)))
             throw new IllegalArgumentException("Since 0.7 DataAccess objects does no longer accept upper case names");
 
         types.put(name, type);
@@ -90,7 +76,7 @@ public class GHDirectory implements Directory {
 
     @Override
     public DataAccess find(String name, DAType type) {
-        if (!name.equals(name.toLowerCase()))
+        if (!name.equals(toLowerCase(name)))
             throw new IllegalArgumentException("Since 0.7 DataAccess objects does no longer accept upper case names");
 
         DataAccess da = map.get(name);
@@ -135,7 +121,7 @@ public class GHDirectory implements Directory {
             removeDA(da, da.getName(), false);
         }
         if (mmapDA != null)
-            Helper.cleanHack();
+            cleanHack();
         map.clear();
     }
 
@@ -152,7 +138,7 @@ public class GHDirectory implements Directory {
             da.close();
 
         if (da.getType().isStoring())
-            Helper.removeDir(new File(location + name));
+            removeDir(new File(location + name));
     }
 
     void removeFromMap(String name) {

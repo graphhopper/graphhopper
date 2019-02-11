@@ -1,4 +1,4 @@
-For general questions or discussion about GraphHopper, please use our [forum](https://discuss.graphhopper.com).
+For questions or discussion please use our [forum](https://discuss.graphhopper.com).
 
 Before creating an issue make sure to read our [contributing guide](https://github.com/graphhopper/graphhopper/blob/master/.github/CONTRIBUTING.md).
 

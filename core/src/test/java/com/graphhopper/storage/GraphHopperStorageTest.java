@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,16 +44,13 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
     @Test
     public void testNoCreateCalled() throws IOException {
-        GraphHopperStorage gs = new GraphBuilder(encodingManager).build();
-        try {
+        try (GraphHopperStorage gs = new GraphBuilder(encodingManager).build()) {
             ((BaseGraph) gs.getGraph(Graph.class)).ensureNodeIndex(123);
-            assertFalse("AssertionError should be raised", true);
+            fail("AssertionError should be raised");
         } catch (AssertionError err) {
-            assertTrue(true);
+            // ok
         } catch (Exception ex) {
-            assertFalse("AssertionError should be raised, but was " + ex.toString(), true);
-        } finally {
-            gs.close();
+            fail("AssertionError should be raised, but was " + ex.toString());
         }
     }
 
@@ -181,7 +178,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         Directory dir = new RAMDirectory();
         graph = newGHStorage(dir, false).create(defaultSize);
         int roughEdgeRowLength = 4 * 8;
-        int testIndex = dir.find("edges").getSegmentSize() * 3 / roughEdgeRowLength;
+        int testIndex = dir.find("edges", DAType.RAM_INT).getSegmentSize() * 3 / roughEdgeRowLength;
         // we need a big node index to trigger multiple segments, but low enough to avoid OOM
         graph.edge(0, testIndex, 10, true);
 
@@ -209,7 +206,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true);
         try {
             graph.loadExisting();
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
         }
     }
@@ -218,7 +215,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     public void testIdentical() {
         GraphHopperStorage store = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension());
         assertEquals(store.getNodes(), store.getGraph(Graph.class).getNodes());
-        assertEquals(store.getAllEdges().getMaxId(), store.getGraph(Graph.class).getAllEdges().getMaxId());
+        assertEquals(store.getAllEdges().length(), store.getGraph(Graph.class).getAllEdges().length());
     }
 
     public void testAdditionalEdgeField() {

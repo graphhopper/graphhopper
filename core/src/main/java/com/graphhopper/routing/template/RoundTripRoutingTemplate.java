@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,24 +67,24 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
 
     @Override
     public List<QueryResult> lookup(List<GHPoint> points, FlagEncoder encoder) {
-        if (points.isEmpty())
-            throw new IllegalStateException("For round trip calculation one point is required");
+        if (points.size() != 1 || ghRequest.getPoints().size() != 1)
+            throw new IllegalArgumentException("For round trip calculation exactly one point is required");
         final double distanceInMeter = ghRequest.getHints().getDouble(RoundTrip.DISTANCE, 10000);
         final long seed = ghRequest.getHints().getLong(RoundTrip.SEED, 0L);
-        final double initialHeading = ghRequest.getHints().getDouble(RoundTrip.HEADING, Double.NaN);
-        final int roundTripPointCount = Math.min(20, ghRequest.getHints().getInt(Algorithms.ROUND_TRIP + ".points", 2 + (int) (distanceInMeter / 50000)));
-        final GHPoint start = ghRequest.getPoints().get(0);
+        double initialHeading = ghRequest.getFavoredHeading(0);
+        final int roundTripPointCount = Math.min(20, ghRequest.getHints().getInt(RoundTrip.POINTS, 2 + (int) (distanceInMeter / 50000)));
+        final GHPoint start = points.get(0);
 
         TourStrategy strategy = new MultiPointTour(new Random(seed), distanceInMeter, roundTripPointCount, initialHeading);
         queryResults = new ArrayList<>(2 + strategy.getNumberOfGeneratedPoints());
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
+        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         QueryResult startQR = locationIndex.findClosest(start.lat, start.lon, edgeFilter);
         if (!startQR.isValid())
             throw new PointNotFoundException("Cannot find point 0: " + start, 0);
 
         queryResults.add(startQR);
 
-        GHPoint last = points.get(0);
+        GHPoint last = start;
         for (int i = 0; i < strategy.getNumberOfGeneratedPoints(); i++) {
             double heading = strategy.getHeadingForIteration(i);
             QueryResult result = generateValidPoint(last, strategy.getDistanceForIteration(i), heading, edgeFilter);

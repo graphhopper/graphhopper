@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -124,9 +124,9 @@ abstract class EdgeAccess {
      */
     final int internalEdgeAdd(int newEdgeId, int fromNodeId, int toNodeId) {
         writeEdge(newEdgeId, fromNodeId, toNodeId, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
-        connectNewEdge(fromNodeId, newEdgeId);
+        connectNewEdge(fromNodeId, toNodeId, newEdgeId);
         if (fromNodeId != toNodeId)
-            connectNewEdge(toNodeId, newEdgeId);
+            connectNewEdge(toNodeId, fromNodeId, newEdgeId);
         return newEdgeId;
     }
 
@@ -147,11 +147,10 @@ abstract class EdgeAccess {
         return edges.getInt(_getLinkPosInEdgeArea(nodeThis, nodeOther, edgePointer));
     }
 
-    final void connectNewEdge(int fromNode, int newOrExistingEdge) {
+    final void connectNewEdge(int fromNode, int otherNode, int newOrExistingEdge) {
         int edge = getEdgeRef(fromNode);
         if (edge > EdgeIterator.NO_EDGE) {
             long edgePointer = toPointer(newOrExistingEdge);
-            int otherNode = getOtherNode(fromNode, edgePointer);
             long lastLink = _getLinkPosInEdgeArea(fromNode, otherNode, edgePointer);
             edges.setInt(lastLink, edge);
         }

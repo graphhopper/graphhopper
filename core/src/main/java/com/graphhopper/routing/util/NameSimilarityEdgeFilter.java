@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,14 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.apache.commons.lang3.StringUtils;
 import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 import java.util.regex.Pattern;
+
+import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
  * This class defines the basis for NameSimilarity matching using an EdgeFilter.
@@ -43,34 +45,64 @@ import java.util.regex.Pattern;
  */
 public class NameSimilarityEdgeFilter implements EdgeFilter {
 
-    private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{L}]+");
-    private final double JARO_WINKLER_ACCEPT_FACTOR = .79;
-    private final JaroWinkler jaroWinkler = new JaroWinkler();
 
+    private static final Map<String, String> DEFAULT_REWRITE_MAP = new HashMap<String, String>() {{
+        // two char words will be ignored but ignore certain longer phrases (or rename them)
+        for (String remove : Arrays.asList(
+                "ally", "alley",
+                "arc", "arcade",
+                "bvd", "bvd.", "boulevard",
+                "av.", "avenue", "avenida",
+                "calle",
+                "cl.", "close",
+                "crescend", "cres", "cres.",
+                "rd.", "road",
+                "ln.", "lane",
+                "pde.", "pde", "parade",
+                "pl.", "place", "plaza",
+                "str.", "str", "straße", "strasse", "st.", "street", "strada",
+                "sq.", "square",
+                "tr.", "track",
+                "via")) {
+            put(remove, "");
+        }
+    }};
+    private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{L}]+");
+    private static final JaroWinkler jaroWinkler = new JaroWinkler();
+    private static final double JARO_WINKLER_ACCEPT_FACTOR = .9;
     private final EdgeFilter edgeFilter;
     private final String pointHint;
+    private final Map<String, String> rewriteMap;
 
     public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint) {
+        this(edgeFilter, pointHint, DEFAULT_REWRITE_MAP);
+    }
+
+    /**
+     * @param rewriteMap maps abreviations to its longer form
+     */
+    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint, Map<String, String> rewriteMap) {
         this.edgeFilter = edgeFilter;
-        this.pointHint = prepareName(pointHint == null ? "" : pointHint);
+        this.rewriteMap = rewriteMap;
+        this.pointHint = prepareName(removeRelation(pointHint == null ? "" : pointHint));
     }
 
     /**
      * Removes any characters in the String that we don't care about in the matching procedure
-     * TODO: Remove common street names like: street, road, avenue?
+     * TODO Currently limited to certain 'western' languages
      */
     private String prepareName(String name) {
-        // TODO make this better, also split at ',' and others?
-        // TODO This limits the approach to certain 'western' languages
         // \s = A whitespace character: [ \t\n\x0B\f\r]
         String[] arr = name.split("\\s");
-        String tmp;
         List<String> list = new ArrayList<>(arr.length);
         for (int i = 0; i < arr.length; i++) {
-            tmp = NON_WORD_CHAR.matcher(arr[i].toLowerCase()).replaceAll("");
-            // Ignore matching short frases like, de, rue, st, etc.
-            if (!tmp.isEmpty() && tmp.length() > 3) {
-                list.add(tmp);
+            String rewrite = NON_WORD_CHAR.matcher(toLowerCase(arr[i])).replaceAll("");
+            String tmp = rewriteMap.get(rewrite);
+            if (tmp != null)
+                rewrite = tmp;
+            // Ignore matching short frases like de, la, ...
+            if (!rewrite.isEmpty() && rewrite.length() > 2) {
+                list.add(rewrite);
             }
         }
         return listToString(list);

@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ import java.util.Stack;
  * http://www.timl.id.au/?p=327 and http://homepages.ecs.vuw.ac.nz/~djp/files/P05.pdf
  */
 public class TarjansSCCAlgorithm {
-    private final ArrayList<IntArrayList> components = new ArrayList<IntArrayList>();
+    private final ArrayList<IntArrayList> components = new ArrayList<>();
     // TODO use just the Graph interface here
     private final GraphHopperStorage graph;
     private final IntArrayDeque nodeStack;
@@ -103,7 +103,7 @@ public class TarjansSCCAlgorithm {
      * @param firstNode start search of SCC at this node
      */
     private void strongConnect(int firstNode) {
-        final Stack<TarjanState> stateStack = new Stack<TarjanState>();
+        final Stack<TarjanState> stateStack = new Stack<>();
         stateStack.push(TarjanState.startState(firstNode));
 
         // nextState label is equivalent to the function entry point in the recursive Tarjan's algorithm.

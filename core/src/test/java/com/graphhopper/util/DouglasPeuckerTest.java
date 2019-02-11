@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,6 +67,21 @@ public class DouglasPeuckerTest {
         dp.simplify(pointList);
         assertEquals(20, pointList.getSize());
         assertFalse(pointList.toString(), pointList.toString().contains("NaN"));
+
+        pointList.clear();
+        pointList.parse2DJSON(points1);
+        dp.simplify(pointList, 0, pointList.size() -1);
+        assertEquals(20, pointList.getSize());
+
+        pointList.clear();
+        pointList.parse2DJSON(points1);
+        int removed1 = dp.simplify(pointList.copy(10, 20));
+
+        pointList.clear();
+        pointList.parse2DJSON(points1);
+        int removed2 = dp.simplify(pointList, 10, 19);
+
+        assertEquals(removed1, removed2);
     }
 
     @Test

@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,8 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
+
+import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
  * @author Peter Karich
@@ -40,7 +42,9 @@ public abstract class AbstractWeighting implements Weighting {
         long flags = edgeState.getFlags();
         if (reverse && !flagEncoder.isBackward(flags)
                 || !reverse && !flagEncoder.isForward(flags))
-            throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "
+            throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. " +
+                    "(" + edgeState.getBaseNode() + " - " + edgeState.getAdjNode() + ") "
+                    + edgeState.fetchWayGeometry(3) + " " + edgeState.getDistance() + " "
                     + "Reverse:" + reverse + ", fwd:" + flagEncoder.isForward(flags) + ", bwd:" + flagEncoder.isBackward(flags));
 
         double speed = reverse ? flagEncoder.getReverseSpeed(flags) : flagEncoder.getSpeed(flags);
@@ -90,8 +94,8 @@ public abstract class AbstractWeighting implements Weighting {
     /**
      * Replaces all characters which are not numbers, characters or underscores with underscores
      */
-    public static String weightingToFileName(Weighting w) {
-        return w.toString().toLowerCase().replaceAll("\\|", "_");
+    public static String weightingToFileName(Weighting w, boolean edgeBased) {
+        return toLowerCase(w.toString()).replaceAll("\\|", "_") + (edgeBased ? "_edge" : "_node");
     }
 
     @Override

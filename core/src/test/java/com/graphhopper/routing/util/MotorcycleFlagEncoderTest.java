@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -132,6 +132,41 @@ public class MotorcycleFlagEncoderTest {
         long result = encoder.handleWayTags(way, flags, 0);
         assertEquals(20, encoder.getSpeed(result), .1);
         assertEquals(20, encoder.getReverseSpeed(result), .1);
+    }
+
+    @Test
+    public void testRoundabout() {
+        long flags = encoder.setAccess(0, true, true);
+        long resFlags = encoder.setBool(flags, FlagEncoder.K_ROUNDABOUT, true);
+        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_ROUNDABOUT));
+        assertTrue(encoder.isForward(resFlags));
+        assertTrue(encoder.isBackward(resFlags));
+
+        resFlags = encoder.setBool(flags, FlagEncoder.K_ROUNDABOUT, false);
+        assertFalse(encoder.isBool(resFlags, FlagEncoder.K_ROUNDABOUT));
+        assertTrue(encoder.isForward(resFlags));
+        assertTrue(encoder.isBackward(resFlags));
+
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "motorway");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        assertFalse(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+
+        way.setTag("junction", "roundabout");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertTrue(encoder.isForward(flags));
+        assertFalse(encoder.isBackward(flags));
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+
+        way.clearTags();
+        way.setTag("highway", "motorway");
+        way.setTag("junction", "circular");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertTrue(encoder.isForward(flags));
+        assertFalse(encoder.isBackward(flags));
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
     }
 
     @Test

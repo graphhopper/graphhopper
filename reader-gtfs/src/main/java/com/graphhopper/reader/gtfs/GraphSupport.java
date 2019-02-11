@@ -59,6 +59,11 @@ class GraphSupport {
             }
 
             @Override
+            public int getEdges() {
+                return baseGraph.getEdges();
+            }
+
+            @Override
             public NodeAccess getNodeAccess() {
                 return baseGraph.getNodeAccess();
             }
@@ -88,8 +93,8 @@ class GraphSupport {
                 final AllEdgesIterator edge = baseGraph.getAllEdges();
                 return new AllEdgesIterator() {
                     @Override
-                    public int getMaxId() {
-                        return edge.getMaxId();
+                    public int length() {
+                        return edge.length();
                     }
 
                     @Override
@@ -105,6 +110,16 @@ class GraphSupport {
                     @Override
                     public int getEdge() {
                         return edge.getEdge();
+                    }
+
+                    @Override
+                    public int getOrigEdgeFirst() {
+                        return getEdge();
+                    }
+
+                    @Override
+                    public int getOrigEdgeLast() {
+                        return getEdge();
                     }
 
                     @Override

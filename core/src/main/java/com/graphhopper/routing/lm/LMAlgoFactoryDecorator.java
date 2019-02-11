@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +43,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.graphhopper.util.Helper.*;
 
 /**
  * This class implements the A*, landmark and triangulation (ALT) decorator.
@@ -148,7 +150,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
         weightingsAsStrings.clear();
         for (String strWeighting : weightingList) {
-            strWeighting = strWeighting.toLowerCase();
+            strWeighting = toLowerCase(strWeighting);
             strWeighting = strWeighting.trim();
             addWeighting(strWeighting);
         }
@@ -275,18 +277,18 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         for (final PrepareLandmarks plm : preparations) {
             counter++;
             final int tmpCounter = counter;
-            final String name = AbstractWeighting.weightingToFileName(plm.getWeighting());
+            final String name = AbstractWeighting.weightingToFileName(plm.getWeighting(), false);
             completionService.submit(new Runnable() {
                 @Override
                 public void run() {
                     if (plm.loadExisting())
                         return;
 
-                    LOGGER.info(tmpCounter + "/" + getPreparations().size() + " calling LM prepare.doWork for " + plm.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
+                    LOGGER.info(tmpCounter + "/" + getPreparations().size() + " calling LM prepare.doWork for " + plm.getWeighting() + " ... (" + getMemInfo() + ")");
                     prepared.set(true);
                     Thread.currentThread().setName(name);
                     plm.doWork();
-                    properties.put(Landmark.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
+                    properties.put(Landmark.PREPARE + "date." + name, createFormatter().format(new Date()));
                 }
             }, name);
         }
