@@ -235,7 +235,7 @@ class GraphSupport {
             }
 
             @Override
-            public int getBaseNode(int edge, int adjNode) {
+            public int getOtherNode(int edge, int node) {
                 throw new UnsupportedOperationException();
             }
         };

@@ -226,7 +226,7 @@ public class WrapperGraph implements Graph {
     }
 
     @Override
-    public int getBaseNode(int edge, int adjNode) {
-        return baseGraph.getBaseNode(edge, adjNode);
+    public int getOtherNode(int edge, int node) {
+        return baseGraph.getOtherNode(edge, node);
     }
 }

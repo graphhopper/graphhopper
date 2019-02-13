@@ -463,8 +463,8 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     @Override
-    public int getBaseNode(int edge, int adjNode) {
-        return baseGraph.getBaseNode(edge, adjNode);
+    public int getOtherNode(int edge, int node) {
+        return baseGraph.getOtherNode(edge, node);
     }
 
     private Collection<CHGraphImpl> getAllCHGraphs() {

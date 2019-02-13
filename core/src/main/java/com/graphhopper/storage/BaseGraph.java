@@ -789,10 +789,9 @@ class BaseGraph implements Graph {
     }
 
     @Override
-    public int getBaseNode(int edge, int adjNode) {
+    public int getOtherNode(int edge, int node) {
         long edgePointer = edgeAccess.toPointer(edge);
-        int nodeA = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEA);
-        return nodeA != adjNode ? nodeA : edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEB);
+        return edgeAccess.getOtherNode(node, edgePointer);
     }
 
     public void setAdditionalEdgeField(long edgePointer, int value) {

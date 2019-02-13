@@ -23,7 +23,6 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
@@ -160,7 +159,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
 
     @Override
     protected int getTraversalId(EdgeIteratorState edge, int origEdgeId, boolean reverse) {
-        int baseNode = graph.getBaseNode(origEdgeId, edge.getAdjNode());
+        int baseNode = graph.getOtherNode(origEdgeId, edge.getAdjNode());
         return GHUtility.createEdgeKey(baseNode, edge.getAdjNode(), origEdgeId, reverse);
     }
 

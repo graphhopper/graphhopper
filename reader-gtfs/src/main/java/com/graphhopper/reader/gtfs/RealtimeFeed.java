@@ -259,8 +259,8 @@ public class RealtimeFeed {
             }
 
             @Override
-            public int getBaseNode(int edge, int adjNode) {
-                return 0;
+            public int getOtherNode(int edge, int node) {
+                throw new UnsupportedOperationException();
             }
         };
 

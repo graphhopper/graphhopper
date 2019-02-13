@@ -262,11 +262,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
-    public int getBaseNode(int edge, int adjNode) {
+    public int getOtherNode(int edge, int node) {
         EdgeAccess edgeAccess = isShortcut(edge) ? chEdgeAccess : baseGraph.edgeAccess;
         long edgePointer = edgeAccess.toPointer(edge);
         int nodeA = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEA);
-        return nodeA != adjNode ? nodeA : edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEB);
+        return nodeA != node ? nodeA : edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEB);
     }
 
     void _prepareForContraction() {

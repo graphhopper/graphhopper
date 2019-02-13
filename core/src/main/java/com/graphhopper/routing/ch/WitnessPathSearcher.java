@@ -474,7 +474,7 @@ public class WitnessPathSearcher {
     }
 
     private int getEdgeKey(int edge, int adjNode) {
-        int baseNode = chGraph.getBaseNode(edge, adjNode);
+        int baseNode = chGraph.getOtherNode(edge, adjNode);
         return GHUtility.createEdgeKey(baseNode, adjNode, edge, false);
     }
 

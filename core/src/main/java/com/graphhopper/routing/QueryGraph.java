@@ -749,11 +749,11 @@ public class QueryGraph implements Graph {
     }
 
     @Override
-    public int getBaseNode(int edge, int adjNode) {
+    public int getOtherNode(int edge, int node) {
         if (isVirtualEdge(edge)) {
-            return getEdgeIteratorState(edge, adjNode).getBaseNode();
+            return getEdgeIteratorState(edge, node).getBaseNode();
         }
-        return mainGraph.getBaseNode(edge, adjNode);
+        return mainGraph.getOtherNode(edge, node);
     }
 
     private UnsupportedOperationException exc() {
