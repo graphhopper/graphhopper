@@ -265,8 +265,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     public int getOtherNode(int edge, int node) {
         EdgeAccess edgeAccess = isShortcut(edge) ? chEdgeAccess : baseGraph.edgeAccess;
         long edgePointer = edgeAccess.toPointer(edge);
-        int nodeA = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEA);
-        return nodeA != node ? nodeA : edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEB);
+        return edgeAccess.getOtherNode(node, edgePointer);
     }
 
     void _prepareForContraction() {
