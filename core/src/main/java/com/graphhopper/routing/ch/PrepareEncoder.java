@@ -66,7 +66,7 @@ public class PrepareEncoder {
      * @return 1 if newScFlags is identical to existingScFlags for the two direction bits and 0 otherwise.
      * There are two special cases when it returns 2.
      */
-    public static final int getScMergeStatus(long existingScFlags, long newScFlags) {
+    public static final int getScMergeStatus(int existingScFlags, int newScFlags) {
         if ((existingScFlags & scDirMask) == (newScFlags & scDirMask))
             return 1;
         else if ((newScFlags & scDirMask) == scDirMask)

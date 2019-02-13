@@ -1121,13 +1121,12 @@ class BaseGraph implements Graph {
         boolean freshFlags;
         int edgeId = -1;
         final IntsRef baseIntsRef;
-        IntsRef cachedIntsRef;
 
         public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph) {
             this.edgePointer = edgePointer;
             this.edgeAccess = edgeAccess;
             this.baseGraph = baseGraph;
-            this.cachedIntsRef = this.baseIntsRef = new IntsRef(baseGraph.bytesForFlags / 4);
+            this.baseIntsRef = new IntsRef(baseGraph.bytesForFlags / 4);
         }
 
         @Override
@@ -1151,27 +1150,21 @@ class BaseGraph implements Graph {
             return this;
         }
 
-        IntsRef getDirectFlags() {
-            if (!freshFlags) {
-                // TODO NOW make it possible to use arraycopy via new method in DataAccess
-                edgeAccess.readFlags_(edgePointer, cachedIntsRef);
-                freshFlags = true;
-            }
-            return cachedIntsRef;
-        }
-
         @Override
         public IntsRef getFlags() {
-            return getDirectFlags();
+            if (!freshFlags) {
+                edgeAccess.readFlags_(edgePointer, baseIntsRef);
+                freshFlags = true;
+            }
+            return baseIntsRef;
         }
 
         @Override
         public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
-            assert cachedIntsRef == null || edgeFlags.ints.length == cachedIntsRef.ints.length : "incompatible flags " + edgeFlags.ints.length + " vs " + cachedIntsRef.ints.length;
+            assert baseIntsRef == null || edgeFlags.ints.length == baseIntsRef.ints.length : "incompatible flags " + edgeFlags.ints.length + " vs " + baseIntsRef.ints.length;
             edgeAccess.writeFlags_(edgePointer, edgeFlags);
-            // Or is arraycopy faster? System.arraycopy(edgeFlags.ints, 0, cachedIntsRef.ints, 0, edgeFlags.ints.length);
             for (int i = 0; i < edgeFlags.ints.length; i++) {
-                cachedIntsRef.ints[i] = edgeFlags.ints[i];
+                baseIntsRef.ints[i] = edgeFlags.ints[i];
             }
             freshFlags = true;
             return this;

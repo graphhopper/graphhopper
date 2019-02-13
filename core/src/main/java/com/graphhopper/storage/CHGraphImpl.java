@@ -286,18 +286,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return new AllCHEdgesIteratorImpl(baseGraph);
     }
 
-    final void setWeight(long edgePointer, double weight) {
-        chEdgeAccess.setShortcutWeight(edgePointer, weight);
-    }
-
-    final double getWeight(long edgePointer) {
-        return chEdgeAccess.getShortcutWeight(edgePointer);
-    }
-
-    final void setFlagsAndWeight(long edgePointer, int flags, double weight) {
-        chEdgeAccess.setAccessAndWeight(edgePointer, flags, weight);
-    }
-
     void loadNodesHeader() {
         isReadyForContraction = nodesCH.getHeader(0 * 4) == 1;
     }
@@ -486,14 +474,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         public final IntsRef getFlags() {
             checkShortcut(false, "getFlags");
-            return super.getDirectFlags();
+            return super.getFlags();
         }
 
-        @Override
-        public final IntsRef getDirectFlags() {
-            checkShortcut(false, "getDirectFlags");
-            return super.getDirectFlags();
-        }
 
         @Override
         public final CHEdgeIterator setBaseNode(int baseNode) {
@@ -561,7 +544,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             if (isShortcut())
                 return (chEdgeAccess.getShortcutFlags(edgePointer) & (reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir())) != 0;
 
-            return property.getBool(reverse, getDirectFlags());
+            return property.getBool(reverse, getFlags());
         }
 
         @Override
@@ -569,38 +552,32 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             if (isShortcut())
                 return (chEdgeAccess.getShortcutFlags(edgePointer) & (reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir())) != 0;
 
-            return property.getBool(!reverse, getDirectFlags());
+            return property.getBool(!reverse, getFlags());
         }
 
         @Override
         public final CHEdgeIteratorState setWeight(double weight) {
             checkShortcut(true, "setWeight");
-            CHGraphImpl.this.setWeight(edgePointer, weight);
+            chEdgeAccess.setShortcutWeight(edgePointer, weight);
             return this;
         }
 
         @Override
         public void setFlagsAndWeight(int flags, double weight) {
             checkShortcut(true, "setFlagsAndWeight");
-            CHGraphImpl.this.setFlagsAndWeight(edgePointer, flags, weight);
+            chEdgeAccess.setAccessAndWeight(edgePointer, flags, weight);
         }
 
         @Override
         public final double getWeight() {
             checkShortcut(true, "getWeight");
-            return CHGraphImpl.this.getWeight(edgePointer);
+            return chEdgeAccess.getShortcutWeight(edgePointer);
         }
 
         @Override
         protected final void selectEdgeAccess() {
-            if (nextEdgeId < baseGraph.edgeCount) {
-                // iterate over edges
-                edgeAccess = baseGraph.edgeAccess;
-                cachedIntsRef = baseIntsRef;
-            } else {
-                // ... or shortcuts
-                edgeAccess = chEdgeAccess;
-            }
+            // iterate over edges or shortcuts
+            edgeAccess = nextEdgeId < baseGraph.edgeCount ? baseGraph.edgeAccess : chEdgeAccess;
         }
 
         public void checkShortcut(boolean shouldBeShortcut, String methodName) {
@@ -643,7 +620,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public int getMergeStatus(long flags) {
+        public int getMergeStatus(int flags) {
             return PrepareEncoder.getScMergeStatus(chEdgeAccess.getShortcutFlags(edgePointer), flags);
         }
     }
@@ -681,7 +658,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             if (isShortcut())
                 return (chEdgeAccess.getShortcutFlags(edgePointer) & (reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir())) != 0;
 
-            return property.getBool(reverse, getDirectFlags());
+            return property.getBool(reverse, getFlags());
         }
 
         @Override
@@ -689,21 +666,14 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             if (isShortcut())
                 return (chEdgeAccess.getShortcutFlags(edgePointer) & (reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir())) != 0;
 
-            return property.getBool(!reverse, getDirectFlags());
+            return property.getBool(!reverse, getFlags());
         }
 
         @Override
         public final IntsRef getFlags() {
             if (isShortcut())
                 throw new IllegalStateException("Shortcut should not need to return raw flags!");
-            return getDirectFlags();
-        }
-
-        @Override
-        IntsRef getDirectFlags() {
-            if (isShortcut())
-                throw new IllegalStateException("Shortcut should not need to return direct flags, use shortcut flags instead!");
-            return super.getDirectFlags();
+            return getFlags();
         }
 
         @Override
@@ -758,22 +728,22 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public final CHEdgeIteratorState setWeight(double weight) {
-            CHGraphImpl.this.setWeight(edgePointer, weight);
+            chEdgeAccess.setShortcutWeight(edgePointer, weight);
             return this;
         }
 
         @Override
         public void setFlagsAndWeight(int flags, double weight) {
-            CHGraphImpl.this.setFlagsAndWeight(edgePointer, flags, weight);
+            chEdgeAccess.setAccessAndWeight(edgePointer, flags, weight);
         }
 
         @Override
         public final double getWeight() {
-            return CHGraphImpl.this.getWeight(edgePointer);
+            return chEdgeAccess.getShortcutWeight(edgePointer);
         }
 
         @Override
-        public int getMergeStatus(long flags) {
+        public int getMergeStatus(int flags) {
             return PrepareEncoder.getScMergeStatus(chEdgeAccess.getShortcutFlags(edgePointer), flags);
         }
 
