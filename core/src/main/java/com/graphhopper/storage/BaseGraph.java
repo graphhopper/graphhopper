@@ -1121,6 +1121,7 @@ class BaseGraph implements Graph {
         boolean freshFlags;
         int edgeId = -1;
         final IntsRef baseIntsRef;
+        int chFlags;
 
         public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph) {
             this.edgePointer = edgePointer;
@@ -1161,7 +1162,7 @@ class BaseGraph implements Graph {
 
         @Override
         public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
-            assert baseIntsRef == null || edgeFlags.ints.length == baseIntsRef.ints.length : "incompatible flags " + edgeFlags.ints.length + " vs " + baseIntsRef.ints.length;
+            assert edgeId < baseGraph.edgeCount : "must be edge but was shortcut: " + edgeId + " >= " + baseGraph.edgeCount + ". Use setFlagsAndWeight";
             edgeAccess.writeFlags_(edgePointer, edgeFlags);
             for (int i = 0; i < edgeFlags.ints.length; i++) {
                 baseIntsRef.ints[i] = edgeFlags.ints[i];
