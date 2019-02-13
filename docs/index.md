@@ -63,6 +63,7 @@ Various topics are explained in more detail separately:
  * [Spatial Rules](./core/spatial-rules.md): Instruction on how to use and create new SpatialRules. SpatialRules are used to enforce country-specific routing rules.
  * [Turn Restrictions](./core/turn-restrictions.md): Details on how to enable and use turn restrictions.
  * [Isochrone generation in Java](./isochrone/java.md): Instruction on how to create isochrones using the low-level Java API.
+ * [Change Graph](./core/change-graph.md): Details about changing values of the graph without restarting GraphHopper.
  * [Postgis query script](./core/files/postgis)
 
 
