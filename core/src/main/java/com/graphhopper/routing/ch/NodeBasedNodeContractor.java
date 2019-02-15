@@ -228,7 +228,6 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
      * @return the actual number of shortcuts that were added to the graph
      */
     private int addShortcuts(Collection<Shortcut> shortcuts) {
-        IntsRef intsRef = new IntsRef(1);
         int tmpNewShortcuts = 0;
         NEXT_SC:
         for (Shortcut sc : shortcuts) {
