@@ -109,7 +109,7 @@ public class Measurement {
             protected void loadOrPrepareLM() {
                 StopWatch sw = new StopWatch().start();
                 super.loadOrPrepareLM();
-                put(Parameters.Landmark.PREPARE + "time", sw.stop().getMillis());
+                put(Landmark.PREPARE + "time", sw.stop().getMillis());
             }
 
             @Override
@@ -560,10 +560,11 @@ public class Measurement {
         String[] properties = {
                 "graph.nodes",
                 "graph.edges",
-                "measurement.seed",
+                "graph.import_time",
                 CH.PREPARE + "time",
                 CH.PREPARE + "node.shortcuts",
                 CH.PREPARE + "edge.shortcuts",
+                Landmark.PREPARE + "time",
                 "routing.distance_mean",
                 "routing.mean",
                 "routing.visited_nodes_mean",
@@ -578,6 +579,7 @@ public class Measurement {
                 "routingLM8.distance_mean",
                 "routingLM8.mean",
                 "routingLM8.visited_nodes_mean",
+                "measurement.seed",
                 "measurement.gitinfo",
                 "measurement.timestamp"
         };
