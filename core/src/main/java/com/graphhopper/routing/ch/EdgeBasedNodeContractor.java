@@ -295,24 +295,18 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         }
 
         // our shortcut is new --> add it
+        // this is a bit of a hack, we misuse incEdge of edgeFrom's parent to store the first orig edge
+        int origFirst = edgeFrom.getParent().incEdge;
         LOGGER.trace("Adding shortcut from {} to {}, weight: {}, firstOrigEdge: {}, lastOrigEdge: {}",
                 from, adjNode, edgeTo.weight, edgeFrom.getParent().incEdge, edgeTo.incEdge);
-        CHEdgeIteratorState shortcut = prepareGraph.shortcut(from, adjNode);
-        int direction = PrepareEncoder.getScFwdDir();
-        // we need to set flags first because they overwrite weight etc
-        // TODO NOW creating a new intsref every time here is probably not efficient ?
-        IntsRef intsRef = new IntsRef(1);
-        intsRef.ints[0] = direction;
-        shortcut.setFlags(intsRef);
-        shortcut.setSkippedEdges(edgeFrom.edge, edgeTo.edge)
-                // this is a bit of a hack, we misuse incEdge of edgeFrom's parent to store the first orig edge
-                .setFirstAndLastOrigEdges(edgeFrom.getParent().incEdge, edgeTo.incEdge)
-                .setWeight(edgeTo.weight);
+        // todo: so far we are not using the distance in edge based CH
+        double distance = 0.0;
+        int accessFlags = PrepareEncoder.getScFwdDir();
+        int shortcutId = prepareGraph.shortcutEdgeBased(from, adjNode, accessFlags, edgeTo.weight, distance, edgeFrom.edge, edgeTo.edge, origFirst, edgeTo.incEdge);
         final int origEdgeCount = getOrigEdgeCount(edgeFrom.edge) + getOrigEdgeCount(edgeTo.edge);
-        setOrigEdgeCount(shortcut.getEdge(), origEdgeCount);
+        setOrigEdgeCount(shortcutId, origEdgeCount);
         addedShortcutsCount++;
-        CHEntry entry = new CHEntry(
-                shortcut.getEdge(), shortcut.getEdge(), edgeTo.adjNode, edgeTo.weight);
+        CHEntry entry = new CHEntry(shortcutId, shortcutId, edgeTo.adjNode, edgeTo.weight);
         entry.parent = edgeFrom.parent;
         return entry;
     }

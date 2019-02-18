@@ -741,7 +741,12 @@ public class GHUtility {
         }
 
         @Override
-        public int getMergeStatus(long flags) {
+        public void setFlagsAndWeight(int flags, double weight) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty");
+        }
+
+        @Override
+        public int getMergeStatus(int flags) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
     }

@@ -228,7 +228,6 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
      * @return the actual number of shortcuts that were added to the graph
      */
     private int addShortcuts(Collection<Shortcut> shortcuts) {
-        IntsRef intsRef = new IntsRef(1);
         int tmpNewShortcuts = 0;
         NEXT_SC:
         for (Shortcut sc : shortcuts) {
@@ -260,13 +259,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                                 + ", neighbors:" + GHUtility.getNeighbors(iter));
                     }
 
-                    // note: flags overwrite weight => call first
-                    intsRef.ints[0] = sc.flags;
-                    iter.setFlags(intsRef);
-                    iter.setWeight(sc.weight);
-                    // TODO NOW (also below)
-//                    iter.set(shortcutAccessEnc, true).setReverse(shortcutAccessEnc, true);
-//                    iter.set(shortcutWeightEnc, sc.weight);
+                    iter.setFlagsAndWeight(sc.flags, sc.weight);
                     iter.setDistance(sc.dist);
                     iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                     setOrigEdgeCount(iter.getEdge(), sc.originalEdges);
@@ -276,14 +269,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             }
 
             if (!updatedInGraph) {
-                CHEdgeIteratorState edgeState = prepareGraph.shortcut(sc.from, sc.to);
-                // note: flags overwrite weight => call first
-                intsRef.ints[0] = sc.flags;
-                edgeState.setFlags(intsRef);
-                edgeState.setWeight(sc.weight);
-                edgeState.setDistance(sc.dist);
-                edgeState.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
-                setOrigEdgeCount(edgeState.getEdge(), sc.originalEdges);
+                int scId = prepareGraph.shortcut(sc.from, sc.to, sc.flags, sc.weight, sc.dist, sc.skippedEdge1, sc.skippedEdge2);
+                setOrigEdgeCount(scId, sc.originalEdges);
+
                 tmpNewShortcuts++;
             }
         }

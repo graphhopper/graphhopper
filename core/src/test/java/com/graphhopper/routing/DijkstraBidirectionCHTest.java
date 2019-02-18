@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.NodeBasedNodeContractorTest;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -92,13 +93,12 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         ghStorage.freeze();
         // simulate preparation
         CHEdgeIteratorState iter2_1 = g2.shortcut(0, 5);
-        IntsRef edgeFlags = em.createEdgeFlags();
-        SC_ACCESS.setBool(false, edgeFlags, true);
-        SC_ACCESS.setBool(true, edgeFlags, false);
-        iter2_1.setDistance(2.8).setFlags(edgeFlags);
+        iter2_1.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 1);
+        iter2_1.setDistance(2.8);
         iter2_1.setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());
         CHEdgeIteratorState tmp = g2.shortcut(0, 7);
-        tmp.setDistance(4.2).setFlags(edgeFlags);
+        tmp.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 1);
+        tmp.setDistance(4.2);
         tmp.setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
         g2.setLevel(1, 0);
         g2.setLevel(3, 1);

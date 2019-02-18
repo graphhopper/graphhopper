@@ -255,7 +255,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public int getMergeStatus(long flags) {
+    public int getMergeStatus(int flags) {
         throw new UnsupportedOperationException("Not supported.");
     }
 
@@ -317,6 +317,11 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     @Override
     public CHEdgeIteratorState setWeight(double weight) {
         throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
+    public void setFlagsAndWeight(int flags, double weight) {
+        throw new UnsupportedOperationException("Not supported");
     }
 
     @Override

@@ -25,7 +25,9 @@ import com.graphhopper.routing.profiles.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -176,23 +178,17 @@ public class NodeBasedNodeContractorTest {
         graph.freeze();
 
         CHEdgeIteratorState sc1to4 = lg.shortcut(1, 4);
-        IntsRef chFlags = encodingManager.createEdgeFlags();
-        chFlags.ints[0] = PrepareEncoder.getScDirMask();
-        sc1to4.setFlags(chFlags);
-        sc1to4.setWeight(2);
+        sc1to4.setFlagsAndWeight(PrepareEncoder.getScDirMask(), 2);
         sc1to4.setDistance(2);
         sc1to4.setSkippedEdges(iter1to3.getEdge(), iter3to4.getEdge());
 
-        chFlags.ints[0] = PrepareEncoder.getScFwdDir();
         CHEdgeIteratorState sc4to6 = lg.shortcut(4, 6);
-        sc4to6.setFlags(chFlags);
-        sc4to6.setWeight(2);
+        sc4to6.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 2);
         sc4to6.setDistance(2);
         sc4to6.setSkippedEdges(iter4to5.getEdge(), iter5to6.getEdge());
 
         CHEdgeIteratorState sc6to4 = lg.shortcut(6, 4);
-        sc6to4.setFlags(chFlags);
-        sc6to4.setWeight(3);
+        sc6to4.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 3);
         sc6to4.setDistance(3);
         sc6to4.setSkippedEdges(iter6to8.getEdge(), iter8to4.getEdge());
 
