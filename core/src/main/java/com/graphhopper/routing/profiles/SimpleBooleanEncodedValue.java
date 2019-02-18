@@ -22,7 +22,7 @@ import com.graphhopper.storage.IntsRef;
 /**
  * This class implements a simple Boolean storage via a FactoredIntEncodedValue with 1 bit.
  */
-public class SimpleBooleanEncodedValue extends SimpleIntEncodedValue implements BooleanEncodedValue {
+public final class SimpleBooleanEncodedValue extends SimpleIntEncodedValue implements BooleanEncodedValue {
 
     private SimpleBooleanEncodedValue() {
     }

@@ -29,7 +29,7 @@ import java.util.Collection;
  *
  * @see FactorizedDecimalEncodedValue
  */
-public class MappedDecimalEncodedValue extends SimpleIntEncodedValue implements DecimalEncodedValue {
+public final class MappedDecimalEncodedValue extends SimpleIntEncodedValue implements DecimalEncodedValue {
     private final int toValueMap[];
     private final IntIntHashMap toStorageMap;
     private final double precision;

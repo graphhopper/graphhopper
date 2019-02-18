@@ -23,7 +23,7 @@ import com.graphhopper.storage.IntsRef;
  * This class holds a decimal value and stores it as an integer value via a conversion factor and a maximum number
  * of bits.
  */
-public class FactorizedDecimalEncodedValue extends SimpleIntEncodedValue implements DecimalEncodedValue {
+public final class FactorizedDecimalEncodedValue extends SimpleIntEncodedValue implements DecimalEncodedValue {
     private final double factor;
 
     public FactorizedDecimalEncodedValue(String name, int bits, double factor, boolean store2DirectedValues) {
