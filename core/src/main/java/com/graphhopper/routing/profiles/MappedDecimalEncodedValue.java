@@ -23,6 +23,12 @@ import com.graphhopper.storage.IntsRef;
 
 import java.util.Collection;
 
+/**
+ * For certain values it can be more efficient to store the mapping instead of the value and a factor. E.g. for
+ * "maximum height of a road" there might be only a few distinct values where we need full precision.
+ *
+ * @see FactorizedDecimalEncodedValue
+ */
 public class MappedDecimalEncodedValue extends SimpleIntEncodedValue implements DecimalEncodedValue {
     private final int toValueMap[];
     private final IntIntHashMap toStorageMap;

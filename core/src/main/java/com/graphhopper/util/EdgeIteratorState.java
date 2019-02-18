@@ -35,7 +35,7 @@ public interface EdgeIteratorState {
     BooleanEncodedValue REVERSE_STATE = new BooleanEncodedValue() {
         @Override
         public int init(InitializerConfig init) {
-            return 0;
+            throw new IllegalStateException("Cannot happen for this BooleanEncodedValue");
         }
 
         @Override

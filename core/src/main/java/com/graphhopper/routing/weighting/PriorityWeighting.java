@@ -20,12 +20,14 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
+import static com.graphhopper.routing.util.PriorityCode.BEST;
+
 /**
  * Special weighting for (motor)bike
- * <p>
  *
  * @author Peter Karich
  */
@@ -37,7 +39,7 @@ public class PriorityWeighting extends FastestWeighting {
     public PriorityWeighting(FlagEncoder encoder, PMap pMap) {
         super(encoder, pMap);
         priorityEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
-        double maxPriority = 1; // BEST / BEST
+        double maxPriority = PriorityCode.getFactor(BEST.getValue());
         minFactor = 1 / (0.5 + maxPriority);
     }
 

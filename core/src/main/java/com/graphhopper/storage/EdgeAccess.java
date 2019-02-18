@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -31,12 +30,10 @@ abstract class EdgeAccess {
     private static final double INT_DIST_FACTOR = 1000d;
     static double MAX_DIST = (Integer.MAX_VALUE - 1) / INT_DIST_FACTOR;
     final DataAccess edges;
-    private final BitUtil bitUtil;
     int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS;
 
-    EdgeAccess(DataAccess edges, BitUtil bitUtil) {
+    EdgeAccess(DataAccess edges) {
         this.edges = edges;
-        this.bitUtil = bitUtil;
     }
 
     final void init(int E_NODEA, int E_NODEB, int E_LINKA, int E_LINKB, int E_DIST, int E_FLAGS) {
@@ -94,14 +91,14 @@ abstract class EdgeAccess {
         return val / INT_DIST_FACTOR;
     }
 
-    final void readFlags_(long edgePointer, IntsRef edgeFlags) {
+    final void readFlags(long edgePointer, IntsRef edgeFlags) {
         int size = edgeFlags.ints.length;
         for (int i = 0; i < size; i++) {
             edgeFlags.ints[i] = edges.getInt(edgePointer + E_FLAGS + i * 4);
         }
     }
 
-    final void writeFlags_(long edgePointer, IntsRef edgeFlags) {
+    final void writeFlags(long edgePointer, IntsRef edgeFlags) {
         int size = edgeFlags.ints.length;
         for (int i = 0; i < size; i++) {
             edges.setInt(edgePointer + E_FLAGS + i * 4, edgeFlags.ints[i]);

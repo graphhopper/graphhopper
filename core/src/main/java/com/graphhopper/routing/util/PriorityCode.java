@@ -43,10 +43,10 @@ public enum PriorityCode {
     }
 
     /**
-     * This method returns the priority in a range between 0 and 1 suitable for direct usage in a Weighting.
+     * This method returns the PriorityCode.value in a range between 0 and 1 suitable for direct usage in a Weighting.
      */
-    public static double getFactor(double val) {
-        return val / BEST.getValue();
+    public static double getFactor(int val) {
+        return (double) val / BEST.getValue();
     }
 
 }

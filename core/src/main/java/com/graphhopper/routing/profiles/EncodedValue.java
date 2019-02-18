@@ -18,7 +18,9 @@
 package com.graphhopper.routing.profiles;
 
 /**
- * This class defines how to store and read values from an edge.
+ * This interface defines how to store and read values from a list of integers
+ *
+ * @see com.graphhopper.storage.IntsRef
  */
 public interface EncodedValue {
 

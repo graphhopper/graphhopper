@@ -99,7 +99,7 @@ class BaseGraph implements Graph {
         this.nodes = dir.find("nodes", DAType.getPreferredInt(dir.getDefaultType()));
         this.edges = dir.find("edges", DAType.getPreferredInt(dir.getDefaultType()));
         this.listener = listener;
-        this.edgeAccess = new EdgeAccess(edges, bitUtil) {
+        this.edgeAccess = new EdgeAccess(edges) {
             @Override
             final EdgeIterable createSingleEdge(EdgeFilter filter) {
                 return new EdgeIterable(BaseGraph.this, this, filter);
@@ -395,7 +395,7 @@ class BaseGraph implements Graph {
         IntsRef intsRef = new IntsRef(bytesForFlags / 4);
         for (int i = 0; i < Math.min(edgeCount, printMax); ++i) {
             long edgePointer = edgeAccess.toPointer(i);
-            edgeAccess.readFlags_(edgePointer, intsRef);
+            edgeAccess.readFlags(edgePointer, intsRef);
             System.out.format(Locale.ROOT, formatEdges, i,
                     edgeAccess.getNodeA(edgePointer),
                     edgeAccess.getNodeB(edgePointer),
@@ -483,7 +483,7 @@ class BaseGraph implements Graph {
         int linkA = reverse ? edgeAccess.getLinkB(edgePointer) : edgeAccess.getLinkA(edgePointer);
         int linkB = reverse ? edgeAccess.getLinkA(edgePointer) : edgeAccess.getLinkB(edgePointer);
         edgeAccess.writeEdge(to.getEdge(), nodeA, nodeB, linkA, linkB);
-        edgeAccess.writeFlags_(edgePointer, from.getFlags());
+        edgeAccess.writeFlags(edgePointer, from.getFlags());
 
         // copy the rest with higher level API
         to.setDistance(from.getDistance()).
@@ -1115,7 +1115,7 @@ class BaseGraph implements Graph {
         boolean reverse = false;
         boolean freshFlags;
         int edgeId = -1;
-        final IntsRef baseIntsRef;
+        private final IntsRef baseIntsRef;
         int chFlags;
 
         public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph) {
@@ -1149,7 +1149,7 @@ class BaseGraph implements Graph {
         @Override
         public IntsRef getFlags() {
             if (!freshFlags) {
-                edgeAccess.readFlags_(edgePointer, baseIntsRef);
+                edgeAccess.readFlags(edgePointer, baseIntsRef);
                 freshFlags = true;
             }
             return baseIntsRef;
@@ -1158,7 +1158,7 @@ class BaseGraph implements Graph {
         @Override
         public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
             assert edgeId < baseGraph.edgeCount : "must be edge but was shortcut: " + edgeId + " >= " + baseGraph.edgeCount + ". Use setFlagsAndWeight";
-            edgeAccess.writeFlags_(edgePointer, edgeFlags);
+            edgeAccess.writeFlags(edgePointer, edgeFlags);
             for (int i = 0; i < edgeFlags.ints.length; i++) {
                 baseIntsRef.ints[i] = edgeFlags.ints[i];
             }
@@ -1185,7 +1185,7 @@ class BaseGraph implements Graph {
         @Override
         public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
             property.setBool(reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            edgeAccess.writeFlags(edgePointer, getFlags());
             return this;
         }
 
@@ -1197,7 +1197,7 @@ class BaseGraph implements Graph {
         @Override
         public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
             property.setBool(!reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            edgeAccess.writeFlags(edgePointer, getFlags());
             return this;
         }
 
@@ -1209,7 +1209,7 @@ class BaseGraph implements Graph {
         @Override
         public EdgeIteratorState set(IntEncodedValue property, int value) {
             property.setInt(reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            edgeAccess.writeFlags(edgePointer, getFlags());
             return this;
         }
 
@@ -1221,7 +1221,7 @@ class BaseGraph implements Graph {
         @Override
         public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
             property.setInt(!reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            edgeAccess.writeFlags(edgePointer, getFlags());
             return this;
         }
 
@@ -1233,7 +1233,7 @@ class BaseGraph implements Graph {
         @Override
         public EdgeIteratorState set(DecimalEncodedValue property, double value) {
             property.setDecimal(reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            edgeAccess.writeFlags(edgePointer, getFlags());
             return this;
         }
 
@@ -1245,7 +1245,7 @@ class BaseGraph implements Graph {
         @Override
         public EdgeIteratorState setReverse(DecimalEncodedValue property, double value) {
             property.setDecimal(!reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            edgeAccess.writeFlags(edgePointer, getFlags());
             return this;
         }
 
@@ -1257,7 +1257,7 @@ class BaseGraph implements Graph {
         @Override
         public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
             property.setObject(reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            edgeAccess.writeFlags(edgePointer, getFlags());
             return this;
         }
 
@@ -1269,7 +1269,7 @@ class BaseGraph implements Graph {
         @Override
         public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
             property.setObject(!reverse, getFlags(), value);
-            edgeAccess.writeFlags_(edgePointer, getFlags());
+            edgeAccess.writeFlags(edgePointer, getFlags());
             return this;
         }
 

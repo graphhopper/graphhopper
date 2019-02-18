@@ -45,8 +45,8 @@ import static com.graphhopper.util.Helper.nf;
 public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHGraphImpl.class);
     private static final double WEIGHT_FACTOR = 1000f;
-    // 2 bits for access, for now only 32bit => not Long.MAX
-    private static final int MAX_WEIGHT_32 = (Integer.MAX_VALUE >> 2) << 2;
+    // 2 bits for access, 29 bits for weight (See #1544 on how to improve this to 30 bits)
+    private static final int MAX_WEIGHT_31 = (Integer.MAX_VALUE >> 2) << 2;
     private static final double MAX_WEIGHT = (Integer.MAX_VALUE >> 2) / WEIGHT_FACTOR;
     private static final double MIN_WEIGHT = 1 / WEIGHT_FACTOR;
     final DataAccess shortcuts;
@@ -77,7 +77,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         this.edgeBased = edgeBased;
         this.nodesCH = dir.find("nodes_ch_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         this.shortcuts = dir.find("shortcuts_" + name, DAType.getPreferredInt(dir.getDefaultType()));
-        this.chEdgeAccess = new CHEdgeAccess(baseGraph, name);
+        this.chEdgeAccess = new CHEdgeAccess(name);
     }
 
     public final Weighting getWeighting() {
@@ -131,10 +131,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         checkNodeId(b);
 
         int scId = chEdgeAccess.internalEdgeAdd(nextShortcutId(), a, b);
+        // do not create CHEdgeIteratorImpl object
         long edgePointer = chEdgeAccess.toPointer(scId);
-
         chEdgeAccess.setAccessAndWeight(edgePointer, accessFlags & scDirMask, weight);
-
         chEdgeAccess.setDist(edgePointer, distance);
         chEdgeAccess.setSkippedEdges(edgePointer, skippedEdge1, skippedEdge2);
         return scId;
@@ -420,7 +419,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         IntsRef intsRef = new IntsRef(shortcutBytesForFlags / 4);
         for (int i = baseGraph.edgeCount; i < baseGraph.edgeCount + Math.min(shortcutCount, printMax); ++i) {
             long edgePointer = chEdgeAccess.toPointer(i);
-            chEdgeAccess.readFlags_(edgePointer, intsRef);
+            chEdgeAccess.readFlags(edgePointer, intsRef);
             String edgeString = String.format(Locale.ROOT, formatShortcutsBase,
                     i,
                     chEdgeAccess.getNodeA(edgePointer),
@@ -785,8 +784,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private class CHEdgeAccess extends EdgeAccess {
         private final String name;
 
-        public CHEdgeAccess(BaseGraph baseGraph, String name) {
-            super(shortcuts, baseGraph.bitUtil);
+        public CHEdgeAccess(String name) {
+            super(shortcuts);
             this.name = name;
         }
 
@@ -845,7 +844,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                 weight = MIN_WEIGHT;
             }
             if (weight > MAX_WEIGHT)
-                weightInt = MAX_WEIGHT_32;
+                weightInt = MAX_WEIGHT_31;
             else
                 weightInt = ((int) (weight * WEIGHT_FACTOR)) << 2;
             return weightInt;

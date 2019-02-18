@@ -25,11 +25,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.BreadthFirstSearch;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 
 /**
  * Abstract base class for tunnel/bridge edge elevation interpolators. This
@@ -101,7 +97,7 @@ public abstract class AbstractEdgeElevationInterpolator {
         final GHIntHashSet innerNodeIds = new GHIntHashSet();
         gatherOuterAndInnerNodeIds(edgeExplorer, interpolatableEdge, visitedEdgeIds, outerNodeIds,
                 innerNodeIds);
-            nodeElevationInterpolator.interpolateElevationsOfInnerNodes(outerNodeIds.toArray(),
+        nodeElevationInterpolator.interpolateElevationsOfInnerNodes(outerNodeIds.toArray(),
                 innerNodeIds.toArray());
     }
 

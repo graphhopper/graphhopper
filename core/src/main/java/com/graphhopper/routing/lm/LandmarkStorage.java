@@ -912,8 +912,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         public BlockedEdgesFilter(BooleanEncodedValue accessEnc, boolean fwd, boolean bwd, IntHashSet blockedEdges) {
             this.accessEnc = accessEnc;
-            this.bwd = bwd;
             this.fwd = fwd;
+            this.bwd = bwd;
             this.blockedEdges = blockedEdges;
         }
 
