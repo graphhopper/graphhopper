@@ -52,7 +52,7 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
     public void setUp() {
         dataFlagEncoder = new DataFlagEncoder();
         graph = new GraphHopperStorage(new RAMDirectory(),
-                new EncodingManager(Arrays.asList(dataFlagEncoder, new FootFlagEncoder()),
+                EncodingManager.create(Arrays.asList(dataFlagEncoder, new FootFlagEncoder()),
                         8),
                 true, new GraphExtension.NoOpExtension()).create(100);
 

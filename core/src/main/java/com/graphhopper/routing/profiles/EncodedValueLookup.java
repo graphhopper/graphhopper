@@ -29,5 +29,5 @@ public interface EncodedValueLookup {
 
     ObjectEncodedValue getObjectEncodedValue(String key);
 
-    boolean supports(String key);
+    boolean hasEncoder(String key);
 }

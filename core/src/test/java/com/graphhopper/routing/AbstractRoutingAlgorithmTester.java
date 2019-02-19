@@ -44,7 +44,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public abstract class AbstractRoutingAlgorithmTester {
-    protected static final EncodingManager encodingManager = new EncodingManager("car,foot");
+    protected static final EncodingManager encodingManager = EncodingManager.create("car,foot");
     private static final DistanceCalc distCalc = new DistanceCalcEarth();
     protected FlagEncoder carEncoder;
     protected DecimalEncodedValue carAvSpeedEnc;
@@ -782,7 +782,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test
     public void testTwoWeightsPerEdge() {
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
-        EncodingManager em = new EncodingManager(encoder);
+        EncodingManager em = EncodingManager.create(encoder);
         AlgorithmOptions opts = AlgorithmOptions.start().
                 weighting(new FastestWeighting(encoder)).build();
         GraphHopperStorage graph = createGHStorage(em, Arrays.asList(opts.getWeighting()), true);

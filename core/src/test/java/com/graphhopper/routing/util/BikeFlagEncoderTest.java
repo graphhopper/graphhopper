@@ -597,7 +597,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     @Test
     public void testTurnFlagEncoding_withCosts() {
         encoder = new BikeFlagEncoder(4, 2, 127);
-        new EncodingManager(encoder);
+        EncodingManager.create(encoder);
 
         long flags_r0 = encoder.getTurnFlags(true, 0);
         long flags_0 = encoder.getTurnFlags(false, 0);

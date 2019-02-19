@@ -136,7 +136,7 @@ public class RoutingAlgorithmIT {
         int noJvmWarming = N / 4;
 
         Random rand = new Random(0);
-        final EncodingManager eManager = new EncodingManager("car");
+        final EncodingManager eManager = EncodingManager.create("car");
         final GraphHopperStorage graph = new GraphBuilder(eManager).create();
 
         String bigFile = "10000EWD.txt.gz";

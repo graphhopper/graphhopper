@@ -32,7 +32,8 @@ import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class WitnessPathSearcherTest {
 
@@ -43,7 +44,7 @@ public class WitnessPathSearcherTest {
     @Before
     public void setup() {
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
-        EncodingManager encodingManager = new EncodingManager(encoder);
+        EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new ShortestWeighting(encoder);
         PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
         graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();

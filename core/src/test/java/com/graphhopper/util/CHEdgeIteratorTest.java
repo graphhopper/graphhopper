@@ -40,7 +40,7 @@ public class CHEdgeIteratorTest {
     @Test
     public void testUpdateFlags() {
         CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager(carFlagEncoder);
+        EncodingManager encodingManager = EncodingManager.create(carFlagEncoder);
         FastestWeighting weighting = new FastestWeighting(carFlagEncoder);
         EdgeFilter carOutFilter = DefaultEdgeFilter.outEdges(carFlagEncoder);
         GraphHopperStorage ghStorage = new GraphBuilder(encodingManager).setCHGraph(weighting).create();

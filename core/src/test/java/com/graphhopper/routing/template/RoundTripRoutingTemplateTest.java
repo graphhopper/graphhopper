@@ -48,7 +48,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class RoundTripRoutingTemplateTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
-    private final EncodingManager em = new EncodingManager(carFE);
+    private final EncodingManager em = EncodingManager.create(carFE);
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED_2DIR;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private final GHPoint ghPoint1 = new GHPoint(0, 0);

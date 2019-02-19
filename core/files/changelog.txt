@@ -1,4 +1,6 @@
 0.12
+    refactoring of EncodingManager to use builder pattern. Migration should be simple. Replace new EncodingManager with EncodingManager.create
+    EncodingManager.supports renames to hasEncoder
     big refactoring #1447: to increase 64bit limit of flags, make reverse direction handling easier, to allow shared EncodedValues,
         remove reverseFlags method, much simpler property access, simplify FlagEncoder (maybe even deprecate this interface at a later stage)
     moved shp-reader into separate repository: https://github.com/graphhopper/graphhopper-reader-shp    
