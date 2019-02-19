@@ -5,6 +5,7 @@ import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.GPXExtension;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GPXEntry;
@@ -67,7 +68,7 @@ public class ExtendedJsonResponseTest {
         PointList pointList = new PointList();
         pointList.add(-3.4445, -38.9990);
         pointList.add(-3.5550, -38.7990);
-        return new VirtualEdgeIteratorState(0, 0, 0, 1, 10, 0, "test of iterator", pointList);
+        return new VirtualEdgeIteratorState(0, 0, 0, 1, 10,  new IntsRef(1), "test of iterator", pointList, false);
     }
 
 }

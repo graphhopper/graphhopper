@@ -116,7 +116,7 @@ public class MapMatchingTest {
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
 
         PathWrapper matchGHRsp = new PathWrapper();
-        new PathMerger().doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), translationMap.get("en"));
+        new PathMerger().doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), translationMap.get("en"));
         InstructionList il = matchGHRsp.getInstructions();
 
         assertEquals(il.toString(), 2, il.size());
@@ -133,7 +133,7 @@ public class MapMatchingTest {
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis(), 1);
 
         matchGHRsp = new PathWrapper();
-        new PathMerger().doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), translationMap.get("en"));
+        new PathMerger().doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), translationMap.get("en"));
         il = matchGHRsp.getInstructions();
 
         assertEquals(il.toString(), 3, il.size());
@@ -317,7 +317,7 @@ public class MapMatchingTest {
     private List<GPXEntry> createRandomGPXEntries(GHPoint start, GHPoint end) {
         List<Path> paths = hopper.calcPaths(new GHRequest(start, end).setWeighting("fastest"), new GHResponse());
         Translation tr = hopper.getTranslationMap().get("en");
-        InstructionList instr = paths.get(0).calcInstructions(tr);
+        InstructionList instr = paths.get(0).calcInstructions(hopper.getEncodingManager().getBooleanEncodedValue(EncodingManager.ROUNDABOUT), tr);
         return instr.createGPXList();
     }
 

@@ -108,7 +108,7 @@ public class MatchCommand extends Command {
                 System.out.println("\texport results to:" + outFile);
 
                 PathWrapper pathWrapper = new PathWrapper();
-                new PathMerger().doWork(pathWrapper, Collections.singletonList(mr.getMergedPath()), tr);
+                new PathMerger().doWork(pathWrapper, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), tr);
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter(outFile))) {
                     long time = System.currentTimeMillis();
                     if (!measurements.isEmpty()) {
