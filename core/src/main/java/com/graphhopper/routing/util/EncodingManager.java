@@ -153,7 +153,9 @@ public class EncodingManager implements EncodedValueLookup {
             final BooleanEncodedValue roundaboutEnc = new SimpleBooleanEncodedValue("roundabout", false);
             put(roundaboutEnc, new TagParser() {
                 @Override
-                public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
+                public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, Access access, long relationFlags) {
+                    if (access.canSkip())
+                        return edgeFlags;
                     boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
                     if (isRoundabout)
                         roundaboutEnc.setBool(false, edgeFlags, true);
@@ -315,14 +317,80 @@ public class EncodingManager implements EncodedValueLookup {
 
     /**
      * Determine whether a way is routable for one of the added encoders.
+     *
+     * @return if at least one encoder consumes the specified way. Additionally the specified acceptWay is changed
+     * to provide more details.
      */
-    public long acceptWay(ReaderWay way) {
-        long includeWay = 0;
+    public boolean acceptWay(ReaderWay way, AcceptWay acceptWay) {
+        if (!acceptWay.isEmpty())
+            throw new IllegalArgumentException("AcceptWay must be empty");
+
         for (AbstractFlagEncoder encoder : edgeEncoders) {
-            includeWay |= encoder.acceptWay(way);
+            acceptWay.put(encoder.toString(), encoder.getAccess(way));
+        }
+        return acceptWay.hasAccepted();
+    }
+
+    public static class AcceptWay {
+        private Map<String, Access> accessMap;
+        boolean hasAccepted = false;
+
+        public AcceptWay() {
+            this.accessMap = new HashMap<>(5);
         }
 
-        return includeWay;
+        private Access get(String key) {
+            Access res = accessMap.get(key);
+            if (res == null)
+                throw new IllegalArgumentException("Couldn't fetch access value for key " + key);
+
+            return res;
+        }
+
+        private AcceptWay put(String key, Access access) {
+            accessMap.put(key, access);
+            if (access != Access.CAN_SKIP)
+                hasAccepted = true;
+            return this;
+        }
+
+        public boolean isEmpty() {
+            return accessMap.isEmpty();
+        }
+
+        public boolean hasAccepted() {
+            return hasAccepted;
+        }
+
+        private boolean has(String key) {
+            return accessMap.containsKey(key);
+        }
+
+        public Access getAccess() {
+            if (accessMap.isEmpty())
+                throw new IllegalStateException("Cannot determine Access if map is empty");
+            return accessMap.values().iterator().next();
+        }
+    }
+
+    public enum Access {
+        WAY, FERRY, OTHER, CAN_SKIP;
+
+        boolean isFerry() {
+            return this.ordinal() == FERRY.ordinal();
+        }
+
+        boolean isWay() {
+            return this.ordinal() == WAY.ordinal();
+        }
+
+        boolean isOther() {
+            return this.ordinal() == OTHER.ordinal();
+        }
+
+        boolean canSkip() {
+            return this.ordinal() == CAN_SKIP.ordinal();
+        }
     }
 
     public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
@@ -340,13 +408,14 @@ public class EncodingManager implements EncodedValueLookup {
      *
      * @param relationFlags The preprocessed relation flags is used to influence the way properties.
      */
-    public IntsRef handleWayTags(ReaderWay way, long includeWay, long relationFlags) {
+    public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, long relationFlags) {
         IntsRef edgeFlags = createEdgeFlags();
+        Access access = acceptWay.getAccess();
         for (TagParser parser : sharedEncodedValueMap.values()) {
-            parser.handleWayTags(edgeFlags, way, includeWay, relationFlags);
+            parser.handleWayTags(edgeFlags, way, access, relationFlags);
         }
         for (AbstractFlagEncoder encoder : edgeEncoders) {
-            encoder.handleWayTags(edgeFlags, way, includeWay, relationFlags & encoder.getRelBitMask());
+            encoder.handleWayTags(edgeFlags, way, acceptWay.get(encoder.toString()), relationFlags & encoder.getRelBitMask());
         }
         return edgeFlags;
     }
@@ -532,6 +601,6 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public interface TagParser {
-        IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags);
+        IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, Access access, long relationFlags);
     }
 }

@@ -222,9 +222,7 @@ public class OSMReader implements DataReader {
     }
 
     /**
-     * Filter ways but do not analyze properties wayNodes will be filled with participating node
-     * ids.
-     * <p>
+     * Filter ways but do not analyze properties wayNodes will be filled with participating node ids.
      *
      * @return true the current xml entry is a way entry and has nodes
      */
@@ -237,7 +235,7 @@ public class OSMReader implements DataReader {
         if (!item.hasTags())
             return false;
 
-        return encodingManager.acceptWay(item) > 0;
+        return encodingManager.acceptWay(item, new EncodingManager.AcceptWay());
     }
 
     /**
@@ -318,8 +316,8 @@ public class OSMReader implements DataReader {
 
         long wayOsmId = way.getId();
 
-        long includeWay = encodingManager.acceptWay(way);
-        if (includeWay == 0)
+        EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
+        if (!encodingManager.acceptWay(way, acceptWay))
             return;
 
         long relationFlags = getRelFlagsMap().get(way.getId());
@@ -350,7 +348,7 @@ public class OSMReader implements DataReader {
             }
         }
 
-        IntsRef edgeFlags = encodingManager.handleWayTags(way, includeWay, relationFlags);
+        IntsRef edgeFlags = encodingManager.handleWayTags(way, acceptWay, relationFlags);
         if (edgeFlags.isEmpty())
             return;
 

@@ -96,9 +96,10 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
         ReaderWay way = new ReaderWay(0);
         way.setTag("route", "ferry");
 
-        long includeWay = encodingManager.acceptWay(way);
+        EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
+        assertTrue(encodingManager.acceptWay(way, map));
         long relationFlags = 0;
-        IntsRef wayFlags = encodingManager.handleWayTags(way, includeWay, relationFlags);
+        IntsRef wayFlags = encodingManager.handleWayTags(way, map, relationFlags);
         graph.edge(0, 1).setDistance(247).setFlags(wayFlags);
 
         assertTrue(isGraphValid(graph, encoder));

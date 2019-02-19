@@ -91,9 +91,9 @@ public class GenericWeighting extends AbstractWeighting {
             return Double.POSITIVE_INFINITY;
 
         switch (gEncoder.getAccessValue(edgeState.getFlags())) {
-            case NOT_ACCESSIBLE:
+            case NO:
                 return Double.POSITIVE_INFINITY;
-            case EVENTUALLY_ACCESSIBLE:
+            case CONDITIONAL:
                 time = time * uncertainAccessiblePenalty;
         }
 
