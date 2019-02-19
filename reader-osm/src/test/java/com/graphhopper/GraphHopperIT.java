@@ -64,7 +64,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(graphFileFoot).
-                setEncodingManager(new EncodingManager(importVehicles)).
+                setEncodingManager(EncodingManager.create(importVehicles)).
                 importOrLoad();
     }
 
@@ -152,7 +152,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/monaco.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(EncodingManager.create("car"));
         tmpHopper.importOrLoad();
 
         GHRequest request = new GHRequest();
@@ -204,7 +204,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("bike, car"));
+                setEncodingManager(EncodingManager.create("bike, car"));
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(50.028917, 11.496506, 49.985228, 11.600876).
@@ -242,7 +242,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/Laufamholzstrasse.osm.xml").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(EncodingManager.create("car"));
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.46553, 11.154669, 49.465244, 11.152577).
@@ -277,7 +277,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car,generic", 8));
+                setEncodingManager(EncodingManager.create("car,generic", 8));
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
@@ -301,7 +301,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("generic,car", 8));
+                setEncodingManager(EncodingManager.create("generic,car", 8));
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202).
@@ -576,7 +576,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager(importVehicles));
+                setEncodingManager(EncodingManager.create(importVehicles));
 
         tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();
@@ -626,7 +626,7 @@ public class GraphHopperIT {
     public void testSRTMWithoutTunnelInterpolation() throws Exception {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
-                .setEncodingManager(new EncodingManager(importVehicles, 8));
+                .setEncodingManager(EncodingManager.create(importVehicles, 8));
 
         tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();
@@ -652,7 +652,7 @@ public class GraphHopperIT {
     public void testSRTMWithTunnelInterpolation() {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
-                .setEncodingManager(new EncodingManager(genericImportVehicles, 8));
+                .setEncodingManager(EncodingManager.create(genericImportVehicles, 8));
 
         tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();
@@ -660,7 +660,7 @@ public class GraphHopperIT {
         GHResponse rsp = tmpHopper.route(new GHRequest(43.74056471749763, 7.4299266210693755,
                 43.73790260334179, 7.427984089259056).setAlgorithm(ASTAR)
                 .setVehicle(vehicle).setWeighting(weightCalcStr));
-        PathWrapper arsp = rsp.getBest( );
+        PathWrapper arsp = rsp.getBest();
         // Without interpolation: 356.5
         assertEquals(350.9, arsp.getDistance(), .1);
         PointList pointList = arsp.getPoints();
@@ -687,7 +687,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager(tmpImportVehicles)).
+                setEncodingManager(EncodingManager.create(tmpImportVehicles)).
                 importOrLoad();
 
         GHResponse rsp = tmpHopper.route(new GHRequest(48.410987, 15.599492, 48.383419, 15.659294).
@@ -731,7 +731,7 @@ public class GraphHopperIT {
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager(tmpImportVehicles)).
+                setEncodingManager(EncodingManager.create(tmpImportVehicles)).
                 importOrLoad();
 
         assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle().toString());
@@ -771,7 +771,7 @@ public class GraphHopperIT {
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager(tmpImportVehicles)).
+                setEncodingManager(EncodingManager.create(tmpImportVehicles)).
                 importOrLoad();
 
         assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle().toString());
@@ -794,7 +794,7 @@ public class GraphHopperIT {
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("bike,car")).
+                setEncodingManager(EncodingManager.create("bike,car")).
                 importOrLoad();
         assertEquals("bike", tmpHopper.getDefaultVehicle().toString());
         checkMultiVehiclesWithCH(tmpHopper);
@@ -806,7 +806,7 @@ public class GraphHopperIT {
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car,bike")).
+                setEncodingManager(EncodingManager.create("car,bike")).
                 importOrLoad();
         assertEquals("car", tmpHopper.getDefaultVehicle().toString());
         checkMultiVehiclesWithCH(tmpHopper);
@@ -859,7 +859,7 @@ public class GraphHopperIT {
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager(tmpImportVehicles));
+                setEncodingManager(EncodingManager.create(tmpImportVehicles));
         tmpHopper.getCHFactoryDecorator().setWeightingsAsStrings(weightCalcStr);
         tmpHopper.importOrLoad();
 
@@ -902,7 +902,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(EncodingManager.create("car"));
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest().
@@ -924,7 +924,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(EncodingManager.create("car"));
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest().
@@ -946,7 +946,7 @@ public class GraphHopperIT {
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(EncodingManager.create("car"));
 
         tmpHopper.getCHFactoryDecorator().setEnabled(true).
                 setWeightingsAsStrings(Arrays.asList("fastest")).
@@ -1006,7 +1006,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car|turn_costs=true"));
+                setEncodingManager(EncodingManager.create("car|turn_costs=true"));
         tmpHopper.importOrLoad();
 
         // with turn costs (default if non-CH and turn cost enabled)
@@ -1032,7 +1032,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setCHEnabled(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car|turn_costs=true"));
+                setEncodingManager(EncodingManager.create("car|turn_costs=true"));
         tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);
         tmpHopper.getCHFactoryDecorator().setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_AND_NODE);
         tmpHopper.importOrLoad();
@@ -1058,7 +1058,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setCHEnabled(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car|turn_costs=true"));
+                setEncodingManager(EncodingManager.create("car|turn_costs=true"));
         tmpHopper.getCHFactoryDecorator()
                 .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE)
                 .setDisablingAllowed(true);

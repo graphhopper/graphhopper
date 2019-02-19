@@ -41,7 +41,7 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class LocationIndexTreeTest extends AbstractLocationIndexTester {
-    protected final EncodingManager encodingManager = new EncodingManager("car");
+    protected final EncodingManager encodingManager = EncodingManager.create("car");
 
     @Override
     public LocationIndexTree createIndex(Graph g, int resolution) {
@@ -222,7 +222,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
 
     @Test
     public void testMoreReal() {
-        Graph graph = createGHStorage(new EncodingManager("car"));
+        Graph graph = createGHStorage(EncodingManager.create("car"));
         NodeAccess na = graph.getNodeAccess();
         na.setNode(1, 51.2492152, 9.4317166);
         na.setNode(0, 52, 9);
@@ -435,7 +435,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
 
-        EncodingManager tmpEM = new EncodingManager(carEncoder, bikeEncoder);
+        EncodingManager tmpEM = EncodingManager.create(carEncoder, bikeEncoder);
         Graph graph = createGHStorage(new RAMDirectory(), tmpEM, false);
         NodeAccess na = graph.getNodeAccess();
 

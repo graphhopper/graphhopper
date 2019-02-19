@@ -57,7 +57,7 @@ public class PrepareLandmarksTest
     public void setUp() {
         encoder = new CarFlagEncoder();
         tm = TraversalMode.NODE_BASED;
-        encodingManager = new EncodingManager(encoder);
+        encodingManager = EncodingManager.create(encoder);
         GraphHopperStorage tmp = new GraphHopperStorage(new RAMDirectory(),
                 encodingManager, false, new GraphExtension.NoOpExtension());
         tmp.create(1000);

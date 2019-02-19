@@ -27,7 +27,10 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -37,7 +40,10 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
@@ -67,7 +73,7 @@ public class EdgeBasedNodeContractorTest {
 
     private void initialize() {
         encoder = new CarFlagEncoder(5, 5, maxCost);
-        EncodingManager encodingManager = new EncodingManager(encoder);
+        EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new ShortestWeighting(encoder);
         PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
         graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
@@ -1314,7 +1320,7 @@ public class EdgeBasedNodeContractorTest {
         contractNodes(2);
         checkNumShortcuts(1);
     }
-    
+
     @Test
     public void testNodeContraction_numPolledEdges() {
         graph.edge(3, 2, 71.203000, false);

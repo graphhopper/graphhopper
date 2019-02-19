@@ -60,7 +60,7 @@ public class InstructionListTest {
     @Before
     public void setUp() {
         carEncoder = new CarFlagEncoder();
-        carManager = new EncodingManager(carEncoder);
+        carManager = EncodingManager.create(carEncoder);
         roundaboutEnc = carManager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
     }
 

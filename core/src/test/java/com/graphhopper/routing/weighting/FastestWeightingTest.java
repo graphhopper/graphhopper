@@ -35,7 +35,7 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class FastestWeightingTest {
-    EncodingManager encodingManager = new EncodingManager("car");
+    EncodingManager encodingManager = EncodingManager.create("car");
     private final FlagEncoder encoder = encodingManager.getEncoder("car");
 
     @Test
@@ -86,7 +86,7 @@ public class FastestWeightingTest {
     @Test
     public void testTime() {
         FlagEncoder tmpEnc = new Bike2WeightFlagEncoder();
-        GraphHopperStorage g = new GraphBuilder(new EncodingManager(tmpEnc)).create();
+        GraphHopperStorage g = new GraphBuilder(EncodingManager.create(tmpEnc)).create();
         Weighting w = new FastestWeighting(tmpEnc);
 
         IntsRef edgeFlags = GHUtility.setProperties(g.getEncodingManager().createEdgeFlags(), tmpEnc, 15, true, true);

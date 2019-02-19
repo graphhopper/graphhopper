@@ -47,7 +47,7 @@ public abstract class AbstractGraphStorageTester {
     private final String locationParent = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraphLoc = "./target/graphstorage/default";
-    protected EncodingManager encodingManager = new EncodingManager("car,foot");
+    protected EncodingManager encodingManager = EncodingManager.create("car,foot");
     protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
     protected BooleanEncodedValue carAccessEnc = carEncoder.getAccessEnc();
     protected DecimalEncodedValue carAvSpeedEnc = carEncoder.getAverageSpeedEnc();
@@ -988,7 +988,7 @@ public abstract class AbstractGraphStorageTester {
             }
         });
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
-        EncodingManager manager = new EncodingManager(list, 8);
+        EncodingManager manager = EncodingManager.create(list, 8);
         graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         EdgeIteratorState edge = graph.edge(0, 1);
@@ -1037,7 +1037,7 @@ public abstract class AbstractGraphStorageTester {
                 return "car2";
             }
         });
-        manager = new EncodingManager(list, 20);
+        manager = EncodingManager.create(list, 20);
         graph = new GraphHopperStorage(new RAMDirectory(), manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
         edgeIter = graph.edge(0, 1).set(access0Enc, true).setReverse(access0Enc, false);
         assertTrue(edgeIter.get(access0Enc));

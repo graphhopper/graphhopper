@@ -27,7 +27,10 @@ import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -51,7 +54,7 @@ import static org.junit.Assert.assertFalse;
 public class CHQueryWithTurnCostsTest {
     private final int maxCost = 10;
     private final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost);
-    private final EncodingManager encodingManager = new EncodingManager(encoder);
+    private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
     private final TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
@@ -427,7 +430,7 @@ public class CHQueryWithTurnCostsTest {
         // no path between 3 and 1 will be found even though there is one.
         testPathCalculation(3, 1, 5, IntArrayList.from(3, 4, 2, 0, 2, 1));
     }
-    
+
     @Test
     public void testFindPathWithTurnRestriction_single_loop() {
         //     0

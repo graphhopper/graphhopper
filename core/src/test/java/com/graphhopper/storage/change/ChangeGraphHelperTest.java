@@ -33,7 +33,7 @@ public class ChangeGraphHelperTest {
 
     @Before
     public void setUp() {
-        encodingManager = new EncodingManager("car");
+        encodingManager = EncodingManager.create("car");
         graph = new GraphBuilder(encodingManager).create();
     }
 

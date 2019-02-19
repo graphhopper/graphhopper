@@ -50,7 +50,7 @@ public class NodeBasedNodeContractorTest {
     }
 
     private final CarFlagEncoder encoder = new CarFlagEncoder();
-    private final EncodingManager encodingManager = new EncodingManager(encoder);
+    private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
     private final CHGraph lg = graph.getGraph(CHGraph.class);

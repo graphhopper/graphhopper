@@ -39,7 +39,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class FootFlagEncoderTest {
-    private final EncodingManager encodingManager = new EncodingManager("car,bike,foot");
+    private final EncodingManager encodingManager = EncodingManager.create("car,bike,foot");
     private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
     private final DecimalEncodedValue footAvSpeedEnc = footEncoder.getAverageSpeedEnc();
     private final BooleanEncodedValue footAccessEnc = footEncoder.getAccessEnc();
@@ -412,7 +412,7 @@ public class FootFlagEncoderTest {
     @Test
     public void testBlockByDefault() {
         FootFlagEncoder tmpFootEncoder = new FootFlagEncoder();
-        new EncodingManager(tmpFootEncoder);
+        EncodingManager.create(tmpFootEncoder);
 
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");

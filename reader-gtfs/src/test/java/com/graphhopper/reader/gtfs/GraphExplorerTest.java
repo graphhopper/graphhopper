@@ -51,7 +51,7 @@ public class GraphExplorerTest {
     public GraphExplorerTest() {
         pt = new PtFlagEncoder();
         foot = new FootFlagEncoder();
-        encodingManager = new EncodingManager(Arrays.asList(pt, foot), 8);
+        encodingManager = EncodingManager.create(Arrays.asList(pt, foot), 8);
     }
 
     @Test

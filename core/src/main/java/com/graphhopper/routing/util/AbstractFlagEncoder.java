@@ -310,7 +310,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     /**
      * @return the speed in km/h
      */
-    protected double parseSpeed(String str) {
+    public static double parseSpeed(String str) {
         if (Helper.isEmpty(str))
             return -1;
 
@@ -537,13 +537,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     public final DecimalEncodedValue getAverageSpeedEnc() {
         if (speedEncoder == null)
-            throw new NullPointerException("FlagEncoder not yet initialized");
+            throw new NullPointerException("FlagEncoder " + toString() + " not yet initialized");
         return speedEncoder;
     }
 
     public final BooleanEncodedValue getAccessEnc() {
         if (accessEnc == null)
-            throw new NullPointerException("FlagEncoder not yet initialized");
+            throw new NullPointerException("FlagEncoder " + toString() + " not yet initialized");
         return accessEnc;
     }
 
@@ -638,7 +638,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     @Override
-    public boolean supports(String key) {
-        return encodedValueLookup.supports(key);
+    public boolean hasEncoder(String key) {
+        return encodedValueLookup.hasEncoder(key);
     }
 }

@@ -57,7 +57,7 @@ public class PathSimplificationTest {
     @Before
     public void setUp() {
         carEncoder = new CarFlagEncoder();
-        carManager = new EncodingManager(carEncoder);
+        carManager = EncodingManager.create(carEncoder);
     }
 
     @Test
