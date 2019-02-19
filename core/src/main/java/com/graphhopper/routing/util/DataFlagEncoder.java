@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.spatialrules.AccessValue;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
@@ -37,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.Map.Entry;
 
+import static com.graphhopper.routing.util.spatialrules.SpatialRule.Access.*;
 import static com.graphhopper.util.Helper.isEmpty;
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -155,7 +155,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
 
         // Ordered in increasingly restrictive order
-        // Note: if you update this list you have to update the method getAccessValue too
+        // Note: if you update this list you have to update the method getAccess too
         List<String> accessList = Arrays.asList(
                 //"designated", "permissive", "customers", "delivery",
                 "yes", "destination", "private", "no"
@@ -219,13 +219,13 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public long acceptWay(ReaderWay way) {
+    public EncodingManager.Access getAccess(ReaderWay way) {
         // important to skip unsupported highways, otherwise too many have to be removed after graph creation
         // and node removal is not yet designed for that
         if (getHighwayValue(way) == 0)
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
 
-        return acceptBit;
+        return EncodingManager.Access.WAY;
     }
 
     int getHighwayValue(ReaderWay way) {
@@ -261,14 +261,14 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
         if (accessValue == 0) {
             // TODO Fix transportation mode when adding other forms of transportation
-            switch (getSpatialRule(way).getAccessValue(way.getTag("highway", ""), TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE)) {
-                case ACCESSIBLE:
+            switch (getSpatialRule(way).getAccess(way.getTag("highway", ""), TransportationMode.MOTOR_VEHICLE, YES)) {
+                case YES:
                     accessValue = accessMap.get("yes");
                     break;
-                case EVENTUALLY_ACCESSIBLE:
+                case CONDITIONAL:
                     accessValue = accessMap.get("destination");
                     break;
-                case NOT_ACCESSIBLE:
+                case NO:
                     accessValue = accessMap.get("no");
                     break;
             }
@@ -277,22 +277,22 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return accessValue;
     }
 
-    public AccessValue getAccessValue(IntsRef flags) {
+    public SpatialRule.Access getAccessValue(IntsRef flags) {
         int accessValue = dynAccessEncoder.getInt(false, flags);
         switch (accessValue) {
             case 0:
-                return AccessValue.ACCESSIBLE;
+                return YES;
             // NOT_ACCESSIBLE_KEY
             case 3:
-                return AccessValue.NOT_ACCESSIBLE;
+                return NO;
             default:
-                return AccessValue.EVENTUALLY_ACCESSIBLE;
+                return CONDITIONAL;
         }
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
-        if (!isAccept(allowed))
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+        if (access.canSkip())
             return edgeFlags;
 
         try {
@@ -302,9 +302,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             if (hwValue == 0)
                 return edgeFlags;
 
-            if (isFerry(allowed)) {
+            if (access.isFerry())
                 hwValue = highwayMap.get("ferry");
-            }
 
             highwayEncoder.setInt(false, edgeFlags, hwValue);
 

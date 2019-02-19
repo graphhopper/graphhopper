@@ -225,71 +225,71 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public long acceptWay(ReaderWay way) {
+    public EncodingManager.Access getAccess(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
-            long acceptPotentially = 0;
+            EncodingManager.Access accept = EncodingManager.Access.CAN_SKIP;
 
             if (way.hasTag("route", ferries)) {
                 // if bike is NOT explicitly tagged allow bike but only if foot is not specified
                 String bikeTag = way.getTag("bicycle");
                 if (bikeTag == null && !way.hasTag("foot") || "yes".equals(bikeTag))
-                    acceptPotentially = acceptBit | ferryBit;
+                    accept = EncodingManager.Access.FERRY;
             }
 
             // special case not for all acceptedRailways, only platform
             if (way.hasTag("railway", "platform"))
-                acceptPotentially = acceptBit;
+                accept = EncodingManager.Access.WAY;
 
             if (way.hasTag("man_made", "pier"))
-                acceptPotentially = acceptBit;
+                accept = EncodingManager.Access.WAY;
 
-            if (acceptPotentially != 0) {
+            if (!accept.canSkip()) {
                 if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-                    return 0;
-                return acceptPotentially;
+                    return EncodingManager.Access.CAN_SKIP;
+                return accept;
             }
 
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
         }
 
         if (!highwaySpeeds.containsKey(highwayValue))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
 
         String sacScale = way.getTag("sac_scale");
         if (sacScale != null) {
             if ((way.hasTag("highway", "cycleway"))
                     && (way.hasTag("sac_scale", "hiking")))
-                return acceptBit;
+                return EncodingManager.Access.WAY;
             if (!isSacScaleAllowed(sacScale))
-                return 0;
+                return EncodingManager.Access.CAN_SKIP;
         }
 
         // use the way if it is tagged for bikes
         if (way.hasTag("bicycle", intendedValues) ||
                 way.hasTag("bicycle", "dismount") ||
                 way.hasTag("highway", "cycleway"))
-            return acceptBit;
+            return EncodingManager.Access.WAY;
 
         // accept only if explicitly tagged for bike usage
         if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
 
         if (way.hasTag("motorroad", "yes"))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
 
         // do not use fords with normal bikes, flagged fords are in included above
         if (isBlockFords() && (way.hasTag("highway", "ford") || way.hasTag("ford")))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
 
         // check access restrictions
         if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
 
         if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
         else
-            return acceptBit;
+            return EncodingManager.Access.WAY;
     }
 
     boolean isSacScaleAllowed(String sacScale) {
@@ -339,12 +339,12 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
-        if (!isAccept(allowed))
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+        if (access.canSkip())
             return edgeFlags;
 
         double wayTypeSpeed = getSpeed(way);
-        if (!isFerry(allowed)) {
+        if (!access.isFerry()) {
             wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
             handleSpeed(edgeFlags, way, wayTypeSpeed);
             handleBikeRelated(edgeFlags, way, relationFlags > UNCHANGED.getValue());

@@ -21,9 +21,10 @@ package com.graphhopper.reader.gtfs;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.SimpleIntEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.SimpleIntEncodedValue;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -57,12 +58,12 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public long acceptWay(ReaderWay way) {
-        return 0;
+    public EncodingManager.Access getAccess(ReaderWay way) {
+        return EncodingManager.Access.CAN_SKIP;
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
         return edgeFlags;
     }
 
