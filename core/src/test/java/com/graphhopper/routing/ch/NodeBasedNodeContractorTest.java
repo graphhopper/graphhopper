@@ -177,20 +177,9 @@ public class NodeBasedNodeContractorTest {
         graph.edge(6, 7, 1, true);
         graph.freeze();
 
-        CHEdgeIteratorState sc1to4 = lg.shortcut(1, 4);
-        sc1to4.setFlagsAndWeight(PrepareEncoder.getScDirMask(), 2);
-        sc1to4.setDistance(2);
-        sc1to4.setSkippedEdges(iter1to3.getEdge(), iter3to4.getEdge());
-
-        CHEdgeIteratorState sc4to6 = lg.shortcut(4, 6);
-        sc4to6.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 2);
-        sc4to6.setDistance(2);
-        sc4to6.setSkippedEdges(iter4to5.getEdge(), iter5to6.getEdge());
-
-        CHEdgeIteratorState sc6to4 = lg.shortcut(6, 4);
-        sc6to4.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 3);
-        sc6to4.setDistance(3);
-        sc6to4.setSkippedEdges(iter6to8.getEdge(), iter8to4.getEdge());
+        int sc1to4 = lg.shortcut(1, 4, PrepareEncoder.getScDirMask(), 2, 2, iter1to3.getEdge(), iter3to4.getEdge());
+        int sc4to6 = lg.shortcut(4, 6, PrepareEncoder.getScFwdDir(), 2, 2, iter4to5.getEdge(), iter5to6.getEdge());
+        int sc6to4 = lg.shortcut(6, 4, PrepareEncoder.getScFwdDir(), 3, 3, iter6to8.getEdge(), iter8to4.getEdge());
 
         setMaxLevelOnAllNodes();
 
@@ -214,8 +203,8 @@ public class NodeBasedNodeContractorTest {
         nodeContractor.contractNode(4);
         checkShortcuts(manualSc1, manualSc2, manualSc3,
                 // there should be two different shortcuts for both directions!
-                expectedShortcut(1, 6, sc1to4, sc4to6, true, false),
-                expectedShortcut(6, 1, sc6to4, sc1to4, true, false)
+                expectedShortcut(1, 6, lg.getEdgeIteratorState(sc1to4, 4), lg.getEdgeIteratorState(sc4to6, 6), true, false),
+                expectedShortcut(6, 1, lg.getEdgeIteratorState(sc6to4, 4), lg.getEdgeIteratorState(sc1to4, 6), true, false)
         );
     }
 

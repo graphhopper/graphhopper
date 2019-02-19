@@ -92,14 +92,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
         ghStorage.freeze();
         // simulate preparation
-        CHEdgeIteratorState iter2_1 = g2.shortcut(0, 5);
-        iter2_1.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 1);
-        iter2_1.setDistance(2.8);
-        iter2_1.setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());
-        CHEdgeIteratorState tmp = g2.shortcut(0, 7);
-        tmp.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 1);
-        tmp.setDistance(4.2);
-        tmp.setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
+        int sc2_1 = g2.shortcut(0, 5, PrepareEncoder.getScFwdDir(), 1, 2.8, iter1_1.getEdge(), iter1_2.getEdge());
+        g2.shortcut(0, 7, PrepareEncoder.getScFwdDir(), 1, 4.2, sc2_1, iter2_2.getEdge());
         g2.setLevel(1, 0);
         g2.setLevel(3, 1);
         g2.setLevel(4, 2);

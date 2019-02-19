@@ -68,10 +68,10 @@ public class DefaultEdgeFilterTest {
         assertEquals("Wrong incoming edges", IntHashSet.from(2, 3), inEdges);
     }
 
-    private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int firstOrigEdge, int lastOrigEdge) {
-        CHEdgeIteratorState shortcut = chGraph.shortcut(from, to);
-        shortcut.setFlagsAndWeight(fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir(), 0);
-        shortcut.setFirstAndLastOrigEdges(firstOrigEdge, lastOrigEdge);
+    private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int skip1, int skip2) {
+        int accessFlags = fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir();
+        // todo: check if test fails without fix
+        chGraph.shortcut(from, to, accessFlags, 5, 5, skip1, skip2);
     }
 
 }

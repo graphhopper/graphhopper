@@ -83,21 +83,16 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
         // create shortcuts
         ghStorage.freeze();
         int flags = PrepareEncoder.getScDirMask();
-        CHEdgeIteratorState iter5 = lg.shortcut(0, 2);
-        iter5.setFlagsAndWeight(flags, 0);
-        iter5.setDistance(20);
-        iter5.setSkippedEdges(iter1.getEdge(), iter2.getEdge());
-        CHEdgeIteratorState iter6 = lg.shortcut(2, 4);
-        iter6.setFlagsAndWeight(flags, 0);
-        iter6.setDistance(28);
-        iter6.setSkippedEdges(iter3.getEdge(), iter4.getEdge());
-        CHEdgeIteratorState tmp = lg.shortcut(0, 4);
-        tmp.setFlagsAndWeight(flags, 0);
-        tmp.setDistance(40);
-        tmp.setSkippedEdges(iter5.getEdge(), iter6.getEdge());
+        int sc1 = addShortcut(lg, 0, 2, 20, iter1.getEdge(), iter2.getEdge(), flags);
+        int sc2 = addShortcut(lg, 2, 4, 28, iter3.getEdge(), iter4.getEdge(), flags);
+        addShortcut(lg, 0, 4, 40, sc1, sc2, flags);
 
         LocationIndex index = createIndex(ghStorage, -1);
         assertEquals(2, findID(index, 0, 0.5));
+    }
+
+    private int addShortcut(CHGraph lg, int from, int to, double distance, int skip1, int skip2, int direction) {
+        return lg.shortcut(from, to, direction, 0, distance, skip1, skip2);
     }
 
     @Test

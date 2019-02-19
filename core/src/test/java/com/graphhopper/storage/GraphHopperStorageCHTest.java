@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.routing.ch.NodeBasedNodeContractorTest.SC_ACCESS;
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.Assert.*;
 
 /**
@@ -108,15 +109,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         g.edge(10, 11, 1, true);
 
         graph.freeze();
-        CHEdgeIteratorState tmpIter = g.shortcut(3, 4);
-        tmpIter.setFlagsAndWeight(PrepareEncoder.getScDirMask(), 0);
-        tmpIter.setDistance(40);
-        assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge1());
-        assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge2());
-
-        tmpIter = g.shortcut(0, 4);
-        tmpIter.setFlagsAndWeight(PrepareEncoder.getScDirMask(), 0);
-        tmpIter.setDistance(40);
+        g.shortcut(3, 4, PrepareEncoder.getScDirMask(), 0, 40, NO_EDGE, NO_EDGE);
+        g.shortcut(0, 4, PrepareEncoder.getScDirMask(), 0, 40, NO_EDGE, NO_EDGE);
         g.setLevel(0, 1);
         g.setLevel(4, 1);
 
@@ -125,8 +119,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         iter = g.createEdgeExplorer().setBaseNode(2);
         assertEquals(2, GHUtility.count(iter));
 
-        tmpIter = g.shortcut(5, 6);
-        tmpIter.setSkippedEdges(1, 2);
+        int sc = g.shortcut(5, 6, PrepareEncoder.getScDirMask(), 0, 40, 1, 2);
+        CHEdgeIteratorState tmpIter = g.getEdgeIteratorState(sc, 6);
         assertEquals(1, tmpIter.getSkippedEdge1());
         assertEquals(2, tmpIter.getSkippedEdge2());
     }
@@ -144,18 +138,9 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         // only remove edges
         lg.edge(4, 1, 30, true);
         graph.freeze();
-        CHEdgeIteratorState tmp = lg.shortcut(1, 2);
-        tmp.setFlagsAndWeight(PrepareEncoder.getScDirMask(), 0);
-        tmp.setDistance(10);
-        tmp.setSkippedEdges(10, 11);
-        tmp = lg.shortcut(1, 0);
-        tmp.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 0);
-        tmp.setDistance(20);
-        tmp.setSkippedEdges(12, 13);
-        tmp = lg.shortcut(3, 1);
-        tmp.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 0);
-        tmp.setDistance(30);
-        tmp.setSkippedEdges(14, 15);
+        lg.shortcut(1, 2, PrepareEncoder.getScDirMask(), 0, 10, 10, 11);
+        lg.shortcut(1, 0, PrepareEncoder.getScFwdDir(), 0, 20, 12, 13);
+        lg.shortcut(3, 1, PrepareEncoder.getScFwdDir(), 0, 30, 14, 15);
         // create everytime a new independent iterator for disconnect method
         EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(1);
         iter.next();
@@ -194,7 +179,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         // only remove edges
         int flags = PrepareEncoder.getScDirMask();
-        CHEdgeIteratorState sc1 = g.shortcut(0, 1);
+        int sc = g.shortcut(0, 1, flags, 5, 5, NO_EDGE, NO_EDGE);
+        CHEdgeIteratorState sc1 = g.getEdgeIteratorState(sc, 1);
         assertTrue(sc1.isShortcut());
         sc1.setWeight(2.001);
         assertEquals(2.001, sc1.getWeight(), 1e-3);
@@ -229,7 +215,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         ghStorage.freeze();
 
         CHGraphImpl lg = (CHGraphImpl) ghStorage.getGraph(CHGraph.class, weighting);
-        CHEdgeIteratorState sc1 = lg.shortcut(0, 1);
+        lg.shortcut(0, 1, PrepareEncoder.getScFwdDir(), 100.123)
         sc1.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 100.123);
 
         assertEquals(100.123, lg.getEdgeIteratorState(sc1.getEdge(), sc1.getAdjNode()).getWeight(), 1e-3);
@@ -449,36 +435,32 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         CHGraph carCHGraph = graph.getGraph(CHGraph.class, chWeightings.get(0));
         // enable forward directions for car
-        CHEdgeIteratorState carSC02 = carCHGraph.shortcut(0, 2);
-        carSC02.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 10);
-        carSC02.setDistance(20);
+        int carSC02 = carCHGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 10, 20, NO_EDGE, NO_EDGE);
 
         CHGraph bikeCHGraph = graph.getGraph(CHGraph.class, chWeightings.get(1));
-        CHEdgeIteratorState bikeSC02 = bikeCHGraph.shortcut(0, 2);
         // enable both directions for bike
-        bikeSC02.setFlagsAndWeight(PrepareEncoder.getScDirMask(), 10);
-        bikeSC02.setDistance(20);
+        int bikeSC02 = bikeCHGraph.shortcut(0, 2, PrepareEncoder.getScDirMask(), 10, 20, NO_EDGE, NO_EDGE);
 
         // assert car CH graph
-        assertTrue(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).get(tmpCarAccessEnc));
-        assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).getReverse(tmpCarAccessEnc));
+        assertTrue(carCHGraph.getEdgeIteratorState(carSC02, 2).get(tmpCarAccessEnc));
+        assertFalse(carCHGraph.getEdgeIteratorState(carSC02, 2).getReverse(tmpCarAccessEnc));
 
         BooleanEncodedValue tmpBikeAccessEnc = tmpBike.getAccessEnc();
 
         // throw exception for wrong encoder
         try {
-            assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).get(tmpBikeAccessEnc));
+            assertFalse(carCHGraph.getEdgeIteratorState(carSC02, 2).get(tmpBikeAccessEnc));
             fail();
         } catch (AssertionError ex) {
         }
 
         // assert bike CH graph
-        assertTrue(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).get(tmpBikeAccessEnc));
-        assertTrue(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).getReverse(tmpBikeAccessEnc));
+        assertTrue(bikeCHGraph.getEdgeIteratorState(bikeSC02, 2).get(tmpBikeAccessEnc));
+        assertTrue(bikeCHGraph.getEdgeIteratorState(bikeSC02, 2).getReverse(tmpBikeAccessEnc));
 
         // throw exception for wrong encoder
         try {
-            assertFalse(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).getReverse(tmpCarAccessEnc));
+            assertFalse(bikeCHGraph.getEdgeIteratorState(bikeSC02, 2).getReverse(tmpCarAccessEnc));
             fail();
         } catch (AssertionError ex) {
         }

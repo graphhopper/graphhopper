@@ -305,34 +305,30 @@ public class PrepareContractionHierarchiesTest {
         EdgeIteratorState edgeState34 = g.edge(3, 4).setDistance(dist).setFlags(edgeFlags);
         EdgeIteratorState edgeState45 = g.edge(4, 5).setDistance(dist).setFlags(edgeFlags);
         EdgeIteratorState edgeState56 = g.edge(5, 6).setDistance(dist).setFlags(edgeFlags);
+        int oneDirFlags = PrepareEncoder.getScFwdDir();
 
         int tmpEdgeId = edgeState01.getEdge();
         ghStorage.freeze();
-        CHEdgeIteratorState sc0_2 = g.shortcut(0, 2);
         int x = EdgeIterator.NO_EDGE;
-        sc0_2.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), w.calcWeight(edgeState01, false, x) + w.calcWeight(edgeState12, false, x));
-        sc0_2.setDistance(2 * dist);
-        sc0_2.setSkippedEdges(tmpEdgeId, edgeState12.getEdge());
-        tmpEdgeId = sc0_2.getEdge();
-        CHEdgeIteratorState sc0_3 = g.shortcut(0, 3);
-        sc0_3.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), sc0_2.getWeight() + w.calcWeight(edgeState23, false, x));
-        sc0_3.setDistance(3 * dist);
-        sc0_3.setSkippedEdges(tmpEdgeId, edgeState23.getEdge());
-        tmpEdgeId = sc0_3.getEdge();
-        CHEdgeIteratorState sc0_4 = g.shortcut(0, 4);
-        sc0_4.setDistance(4);
-        sc0_4.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), sc0_3.getWeight() + w.calcWeight(edgeState34, false, x));
-        sc0_4.setSkippedEdges(tmpEdgeId, edgeState34.getEdge());
-        tmpEdgeId = sc0_4.getEdge();
-        CHEdgeIteratorState sc0_5 = g.shortcut(0, 5);
-        sc0_5.setDistance(5);
-        sc0_5.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), sc0_4.getWeight() + w.calcWeight(edgeState45, false, x));
-        sc0_5.setSkippedEdges(tmpEdgeId, edgeState45.getEdge());
-        tmpEdgeId = sc0_5.getEdge();
-        CHEdgeIteratorState sc0_6 = g.shortcut(0, 6);
-        sc0_6.setDistance(6);
-        sc0_6.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), sc0_5.getWeight() + w.calcWeight(edgeState56, false, x));
-        sc0_6.setSkippedEdges(tmpEdgeId, edgeState56.getEdge());
+        double weight = w.calcWeight(edgeState01, false, x) + w.calcWeight(edgeState12, false, x);
+        int sc0_2 = g.shortcut(0, 2, oneDirFlags, w.calcWeight(edgeState01, false, x) + w.calcWeight(edgeState12, false, x), 2 * dist, tmpEdgeId, edgeState12.getEdge());
+
+        tmpEdgeId = sc0_2;
+        weight += w.calcWeight(edgeState23, false, x);
+        int sc0_3 = g.shortcut(0, 3, oneDirFlags, weight, 3 * dist, tmpEdgeId, edgeState23.getEdge());
+
+        tmpEdgeId = sc0_3;
+        weight += w.calcWeight(edgeState34, false, x);
+        int sc0_4 = g.shortcut(0, 4, oneDirFlags, weight, 4, tmpEdgeId, edgeState34.getEdge());
+
+        tmpEdgeId = sc0_4;
+        weight += w.calcWeight(edgeState45, false, x);
+        int sc0_5 = g.shortcut(0, 5, oneDirFlags, weight, 5, tmpEdgeId, edgeState45.getEdge());
+
+        tmpEdgeId = sc0_5;
+        weight += w.calcWeight(edgeState56, false, x);
+        int sc0_6 = g.shortcut(0, 6, oneDirFlags, weight, 6, tmpEdgeId, edgeState56.getEdge());
+
         g.setLevel(0, 10);
         g.setLevel(6, 9);
         g.setLevel(5, 8);

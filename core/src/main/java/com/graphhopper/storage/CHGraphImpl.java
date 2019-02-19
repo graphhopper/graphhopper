@@ -107,22 +107,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
-    public CHEdgeIteratorState shortcut(int a, int b) {
-        if (!baseGraph.isFrozen())
-            throw new IllegalStateException("Cannot create shortcut if graph is not yet frozen");
-
-        checkNodeId(a);
-        checkNodeId(b);
-
-        int scId = chEdgeAccess.internalEdgeAdd(nextShortcutId(), a, b);
-        CHEdgeIteratorImpl iter = new CHEdgeIteratorImpl(baseGraph, chEdgeAccess, EdgeFilter.ALL_EDGES);
-        boolean ret = iter.init(scId, b);
-        assert ret;
-        iter.setSkippedEdges(EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
-        return iter;
-    }
-
-    @Override
     public int shortcut(int a, int b, int accessFlags, double weight, double distance, int skippedEdge1, int skippedEdge2) {
         if (!baseGraph.isFrozen())
             throw new IllegalStateException("Cannot create shortcut if graph is not yet frozen");
