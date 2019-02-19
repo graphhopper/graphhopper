@@ -150,11 +150,11 @@ public class EncodingManager implements EncodedValueLookup {
 
         public Builder(int bytes) {
             em = new EncodingManager(bytes);
-            final BooleanEncodedValue roundaboutEnc = new SimpleBooleanEncodedValue("roundabout", false);
+            final BooleanEncodedValue roundaboutEnc = new SimpleBooleanEncodedValue(ROUNDABOUT, false);
             put(roundaboutEnc, new TagParser() {
                 @Override
                 public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, Access access, long relationFlags) {
-                    if (access.canSkip())
+                    if (!access.isWay())
                         return edgeFlags;
                     boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
                     if (isRoundabout)
@@ -410,6 +410,7 @@ public class EncodingManager implements EncodedValueLookup {
      */
     public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, long relationFlags) {
         IntsRef edgeFlags = createEdgeFlags();
+        // return if way or ferry
         Access access = acceptWay.getAccess();
         for (TagParser parser : sharedEncodedValueMap.values()) {
             parser.handleWayTags(edgeFlags, way, access, relationFlags);
@@ -598,9 +599,5 @@ public class EncodingManager implements EncodedValueLookup {
      */
     public static final String getKey(FlagEncoder encoder, String str) {
         return encoder.toString() + "." + str;
-    }
-
-    public interface TagParser {
-        IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, Access access, long relationFlags);
     }
 }
