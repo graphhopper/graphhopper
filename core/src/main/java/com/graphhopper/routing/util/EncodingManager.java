@@ -376,19 +376,19 @@ public class EncodingManager implements EncodedValueLookup {
     public enum Access {
         WAY, FERRY, OTHER, CAN_SKIP;
 
-        boolean isFerry() {
+        public boolean isFerry() {
             return this.ordinal() == FERRY.ordinal();
         }
 
-        boolean isWay() {
+        public boolean isWay() {
             return this.ordinal() == WAY.ordinal();
         }
 
-        boolean isOther() {
+        public boolean isOther() {
             return this.ordinal() == OTHER.ordinal();
         }
 
-        boolean canSkip() {
+        public boolean canSkip() {
             return this.ordinal() == CAN_SKIP.ordinal();
         }
     }
