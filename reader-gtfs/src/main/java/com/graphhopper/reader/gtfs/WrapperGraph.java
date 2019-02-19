@@ -267,7 +267,6 @@ public class WrapperGraph implements Graph {
             public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState e) {
                 throw new UnsupportedOperationException();
             }
-
         };
     }
 
