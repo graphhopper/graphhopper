@@ -42,7 +42,7 @@ public class NavigateResponseConverterTest {
                 setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(graphFileFoot).
-                setEncodingManager(new EncodingManager(importVehicles)).
+                setEncodingManager(EncodingManager.create(importVehicles)).
                 importOrLoad();
     }
 
