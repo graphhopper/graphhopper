@@ -434,7 +434,9 @@ public class InstructionListTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
         way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
-        return encodingManager.handleWayTags(way, 1, 0);
+        EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
+        encodingManager.acceptWay(way, map);
+        return encodingManager.handleWayTags(way, map, 0);
     }
 
     @Test
