@@ -55,9 +55,9 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
     /**
      * This method is only used on preparation.
      *
-     * @see PrepareEncoder#getScMergeStatus(long, long)
+     * @see PrepareEncoder#getScMergeStatus(int, int)
      */
-    int getMergeStatus(long flags);
+    int getMergeStatus(int flags);
 
     /**
      * Returns the weight of this shortcut.
@@ -68,4 +68,6 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
      * Sets the weight calculated from Weighting.calcWeight, only applicable if isShortcut is true.
      */
     CHEdgeIteratorState setWeight(double weight);
+
+    void setFlagsAndWeight(int flags, double weight);
 }

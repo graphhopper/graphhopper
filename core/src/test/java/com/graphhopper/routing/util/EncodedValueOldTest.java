@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -24,25 +25,17 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Peter Karich
  */
-public class EncodedValueTest {
+public class EncodedValueOldTest {
     @Test
     public void testSetValue() {
-        EncodedValue instance = new EncodedValue("test", 6, 4, 1, 5, 10);
+        EncodedValueOld instance = new EncodedValueOld("test", 6, 4, 1, 5, 10);
         assertEquals(10, instance.getValue(instance.setValue(0, 10)));
 
-        instance = new EncodedValue("test", 0, 4, 1, 5, 10);
+        instance = new EncodedValueOld("test", 0, 4, 1, 5, 10);
         assertEquals(10, instance.getValue(instance.setValue(0, 10)));
 
-        instance = new EncodedValue("test", 0, 4, 1, 5, 10);
-        assertEquals(5, instance.getValue(instance.setDefaultValue(0)));
-    }
-
-    @Test
-    public void testSwap() {
-        EncodedValue instance1 = new EncodedValue("test1", 0, 10, 1, 5, 1000);
-        EncodedValue instance2 = new EncodedValue("test2", 10, 10, 1, 5, 1000);
-        long flags = instance2.setValue(instance1.setValue(0, 13), 874);
-        long swappedFlags = instance1.setValue(instance2.setValue(0, 13), 874);
-        assertEquals(swappedFlags, instance1.swap(flags, instance2));
+        instance = new EncodedValueOld("test", 0, 4, 1, 5, 10);
+        long flags = instance.setDefaultValue(0);
+        assertEquals(5, instance.getValue(flags));
     }
 }

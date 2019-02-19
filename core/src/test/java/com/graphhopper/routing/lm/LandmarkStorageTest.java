@@ -27,6 +27,7 @@ import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
@@ -43,12 +44,14 @@ import static org.junit.Assert.*;
 public class LandmarkStorageTest {
     private GraphHopperStorage ghStorage;
     private FlagEncoder encoder;
+    private EncodingManager encodingManager;
 
     @Before
     public void setUp() {
         encoder = new CarFlagEncoder();
+        encodingManager = new EncodingManager(encoder);
         ghStorage = new GraphHopperStorage(new RAMDirectory(),
-                new EncodingManager(encoder), false, new GraphExtension.NoOpExtension());
+                encodingManager, false, new GraphExtension.NoOpExtension());
         ghStorage.create(1000);
     }
 
@@ -124,7 +127,7 @@ public class LandmarkStorageTest {
         ghStorage.edge(0, 1, 10, true);
         ghStorage.edge(1, 2, 10, true);
 
-        ghStorage.edge(2, 4).setFlags(encoder.setAccess(0, false, false));
+        ghStorage.edge(2, 4).set(encoder.getAccessEnc(), false).setReverse(encoder.getAccessEnc(), false);
         ghStorage.edge(4, 5, 10, true);
         ghStorage.edge(5, 6, 10, false);
 
@@ -176,7 +179,7 @@ public class LandmarkStorageTest {
     public void testWeightingConsistence() {
         // create an indifferent problem: shortest weighting can pass the speed==0 edge but fastest cannot (?)
         ghStorage.edge(0, 1, 10, true);
-        ghStorage.edge(1, 2).setDistance(10).setFlags(encoder.setProperties(0.9, true, true));
+        GHUtility.setProperties(ghStorage.edge(1, 2).setDistance(10), encoder, 0.9, true, true);
         ghStorage.edge(2, 3, 10, true);
 
         LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new FastestWeighting(encoder), 2);

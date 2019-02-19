@@ -20,17 +20,16 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -42,18 +41,20 @@ import static com.graphhopper.util.Helper.toLowerCase;
  * @author Peter Karich
  * @author Nop
  */
-public class EncodingManager {
+public class EncodingManager implements EncodedValueLookup {
     private static final String ERR = "Encoders are requesting %s bits, more than %s bits of %s flags. ";
     private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via graph.bytes_for_flags: 8";
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
+    private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
+    private final Map<EncodedValue, OSMTagParser> sharedEncodedValueMap = new LinkedHashMap<>();
     private final int bitsForEdgeFlags;
     private final int bitsForTurnFlags = 8 * 4;
-    private int nextWayBit = 0;
     private int nextNodeBit = 0;
     private int nextRelBit = 0;
     private int nextTurnBit = 0;
     private boolean enableInstructions = true;
     private String preferredLanguage = "";
+    private EncodedValue.InitializerConfig config;
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
@@ -76,7 +77,6 @@ public class EncodingManager {
 
     /**
      * Instantiate manager with the given list of encoders.
-     * <p>
      *
      * @param flagEncoders comma delimited list of encoders. The order does not matter.
      */
@@ -86,7 +86,6 @@ public class EncodingManager {
 
     /**
      * Instantiate manager with the given list of encoders.
-     * <p>
      *
      * @param flagEncoders comma delimited list of encoders. The order does not matter.
      */
@@ -95,10 +94,24 @@ public class EncodingManager {
     }
 
     public EncodingManager(List<? extends FlagEncoder> flagEncoders, int bytesForEdgeFlags) {
-        if (bytesForEdgeFlags != 4 && bytesForEdgeFlags != 8)
-            throw new IllegalStateException("For 'edge flags' currently only 4 or 8 bytes supported");
+        if (bytesForEdgeFlags <= 0 || (bytesForEdgeFlags / 4) * 4 != bytesForEdgeFlags)
+            throw new IllegalStateException("For 'edge flags' only a multiple of 4 is supported");
 
         this.bitsForEdgeFlags = bytesForEdgeFlags * 8;
+        this.config = new EncodedValue.InitializerConfig();
+        final BooleanEncodedValue roundaboutEnc = new SimpleBooleanEncodedValue("roundabout", false);
+        sharedEncodedValueMap.put(roundaboutEnc, new OSMTagParser() {
+            @Override
+            public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
+                boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
+                if (isRoundabout)
+                    roundaboutEnc.setBool(false, edgeFlags, true);
+                return edgeFlags;
+            }
+        });
+        for (EncodedValue ev : sharedEncodedValueMap.keySet()) {
+            addEncodedValue(ev);
+        }
         for (FlagEncoder flagEncoder : flagEncoders) {
             registerEncoder((AbstractFlagEncoder) flagEncoder);
         }
@@ -166,8 +179,10 @@ public class EncodingManager {
                     + dir.getLocation());
 
         int bytesForFlags = 4;
-        if ("8".equals(properties.get("graph.bytes_for_flags")))
-            bytesForFlags = 8;
+        try {
+            bytesForFlags = Integer.parseInt(properties.get("graph.bytes_for_flags"));
+        } catch (NumberFormatException ex) {
+        }
         return new EncodingManager(factory, acceptStr, bytesForFlags);
     }
 
@@ -193,11 +208,12 @@ public class EncodingManager {
         encoder.setNodeBitMask(usedBits - nextNodeBit, nextNodeBit);
         nextNodeBit = usedBits;
 
-        usedBits = encoder.defineWayBits(encoderCount, nextWayBit);
-        if (usedBits > bitsForEdgeFlags)
-            throw new IllegalArgumentException(String.format(Locale.ROOT, ERR, usedBits, bitsForEdgeFlags, "way") + WAY_ERR);
-        encoder.setWayBitMask(usedBits - nextWayBit, nextWayBit);
-        nextWayBit = usedBits;
+        encoder.setEncodedValueLookup(this);
+        List<EncodedValue> list = new ArrayList<>();
+        encoder.createEncodedValues(list, encoder.toString() + ".", encoderCount);
+        for (EncodedValue ev : list) {
+            addEncodedValue(ev);
+        }
 
         usedBits = encoder.defineRelationBits(encoderCount, nextRelBit);
         if (usedBits > bitsForEdgeFlags)
@@ -212,6 +228,16 @@ public class EncodingManager {
         nextTurnBit = usedBits;
 
         edgeEncoders.add(encoder);
+    }
+
+    private void addEncodedValue(EncodedValue ev) {
+        ev.init(config);
+        if (config.getRequiredBits() > getBytesForFlags() * 8)
+            throw new IllegalArgumentException(String.format(Locale.ROOT, ERR + "(Attempt to add EncodedValue " + ev.getName() + ") ", config.getRequiredBits(), bitsForEdgeFlags, "edge") + WAY_ERR);
+
+        if (encodedValueMap.containsKey(ev.getName()))
+            throw new IllegalStateException("EncodedValue " + ev.getName() + " already exists " + encodedValueMap.get(ev.getName()) + " vs " + ev);
+        encodedValueMap.put(ev.getName(), ev);
     }
 
     /**
@@ -247,10 +273,10 @@ public class EncodingManager {
         return includeWay;
     }
 
-    public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
+    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
         long flags = 0;
         for (AbstractFlagEncoder encoder : edgeEncoders) {
-            flags |= encoder.handleRelationTags(relation, oldRelationFlags);
+            flags |= encoder.handleRelationTags(oldRelationFlags, relation);
         }
 
         return flags;
@@ -259,18 +285,18 @@ public class EncodingManager {
     /**
      * Processes way properties of different kind to determine speed and direction. Properties are
      * directly encoded in 8 bytes.
-     * <p>
      *
      * @param relationFlags The preprocessed relation flags is used to influence the way properties.
-     * @return the encoded flags
      */
-    public long handleWayTags(ReaderWay way, long includeWay, long relationFlags) {
-        long flags = 0;
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
-            flags |= encoder.handleWayTags(way, includeWay, relationFlags & encoder.getRelBitMask());
+    public IntsRef handleWayTags(ReaderWay way, long includeWay, long relationFlags) {
+        IntsRef edgeFlags = createEdgeFlags();
+        for (OSMTagParser parser : sharedEncodedValueMap.values()) {
+            parser.handleWayTags(edgeFlags, way, includeWay, relationFlags);
         }
-
-        return flags;
+        for (AbstractFlagEncoder encoder : edgeEncoders) {
+            encoder.handleWayTags(edgeFlags, way, includeWay, relationFlags & encoder.getRelBitMask());
+        }
+        return edgeFlags;
     }
 
     @Override
@@ -302,24 +328,17 @@ public class EncodingManager {
         return str.toString();
     }
 
-    public long flagsDefault(boolean forward, boolean backward) {
-        long flags = 0;
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
-            flags |= encoder.flagsDefault(forward, backward);
-        }
-        return flags;
+    // TODO hide IntsRef even more in a later version: https://gist.github.com/karussell/f4c2b2b1191be978d7ee9ec8dd2cd48f
+    public IntsRef createEdgeFlags() {
+        return new IntsRef(bitsForEdgeFlags / 32);
     }
 
-    /**
-     * Reverse flags, to do so all encoders are called.
-     */
-    public long reverseFlags(long flags) {
-        // performance critical
-        int len = edgeEncoders.size();
-        for (int i = 0; i < len; i++) {
-            flags = edgeEncoders.get(i).reverseFlags(flags);
+    public IntsRef flagsDefault(boolean forward, boolean backward) {
+        IntsRef intsRef = createEdgeFlags();
+        for (AbstractFlagEncoder encoder : edgeEncoders) {
+            encoder.flagsDefault(intsRef, forward, backward);
         }
-        return flags;
+        return intsRef;
     }
 
     @Override
@@ -410,5 +429,58 @@ public class EncodingManager {
                 return true;
         }
         return false;
+    }
+
+    public List<BooleanEncodedValue> getAccessEncFromNodeFlags(long importNodeFlags) {
+        List<BooleanEncodedValue> list = new ArrayList<>(edgeEncoders.size());
+        for (int i = 0; i < edgeEncoders.size(); i++) {
+            FlagEncoder encoder = edgeEncoders.get(i);
+            if (((1L << i) & importNodeFlags) != 0)
+                list.add(encoder.getAccessEnc());
+        }
+        return list;
+    }
+
+
+    @Override
+    public BooleanEncodedValue getBooleanEncodedValue(String key) {
+        return getEncodedValue(key, BooleanEncodedValue.class);
+    }
+
+    @Override
+    public IntEncodedValue getIntEncodedValue(String key) {
+        return getEncodedValue(key, IntEncodedValue.class);
+    }
+
+    @Override
+    public DecimalEncodedValue getDecimalEncodedValue(String key) {
+        return getEncodedValue(key, DecimalEncodedValue.class);
+    }
+
+    @Override
+    public ObjectEncodedValue getObjectEncodedValue(String key) {
+        return getEncodedValue(key, ObjectEncodedValue.class);
+    }
+
+    @Override
+    public <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType) {
+        EncodedValue ev = encodedValueMap.get(key);
+        if (ev == null)
+            throw new IllegalArgumentException("Cannot find encoded value " + key + " in collection: " + ev);
+        return (T) ev;
+    }
+
+    public final static String ROUNDABOUT = "roundabout";
+
+    /**
+     * Until we have a proper key-string class we create all keys through this function
+     */
+    public static final String getKey(FlagEncoder encoder, String str) {
+        return encoder.toString() + "." + str;
+    }
+
+    // for now keep private as public IntsRef is too ugly and relationFlags is unclear
+    interface OSMTagParser {
+        IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags);
     }
 }

@@ -259,9 +259,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                                 + ", neighbors:" + GHUtility.getNeighbors(iter));
                     }
 
-                    // note: flags overwrite weight => call first
-                    iter.setFlags(sc.flags);
-                    iter.setWeight(sc.weight);
+                    iter.setFlagsAndWeight(sc.flags, sc.weight);
                     iter.setDistance(sc.dist);
                     iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                     setOrigEdgeCount(iter.getEdge(), sc.originalEdges);
@@ -271,13 +269,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             }
 
             if (!updatedInGraph) {
-                CHEdgeIteratorState edgeState = prepareGraph.shortcut(sc.from, sc.to);
-                // note: flags overwrite weight => call first
-                edgeState.setFlags(sc.flags);
-                edgeState.setWeight(sc.weight);
-                edgeState.setDistance(sc.dist);
-                edgeState.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
-                setOrigEdgeCount(edgeState.getEdge(), sc.originalEdges);
+                int scId = prepareGraph.shortcut(sc.from, sc.to, sc.flags, sc.weight, sc.dist, sc.skippedEdge1, sc.skippedEdge2);
+                setOrigEdgeCount(scId, sc.originalEdges);
+
                 tmpNewShortcuts++;
             }
         }
@@ -326,7 +320,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         double dist;
         double weight;
         int originalEdges;
-        long flags = PrepareEncoder.getScFwdDir();
+        int flags = PrepareEncoder.getScFwdDir();
 
         public Shortcut(int from, int to, double weight, double dist) {
             this.from = from;

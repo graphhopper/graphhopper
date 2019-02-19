@@ -54,6 +54,10 @@ public interface CHGraph extends Graph {
      */
     CHEdgeIteratorState shortcut(int a, int b);
 
+    int shortcut(int a, int b, int accessFlags, double weight, double distance, int skippedEdge1, int skippedEdge2);
+
+    int shortcutEdgeBased(int a, int b, int accessFlags, double weight, double distance, int skippedEdge1, int skippedEdge2, int origFirst, int origLast);
+
     @Override
     CHEdgeIteratorState getEdgeIteratorState(int edgeId, int endNode);
 

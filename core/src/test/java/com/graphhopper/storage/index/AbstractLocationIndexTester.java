@@ -17,6 +17,8 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.DistanceCalc;
@@ -333,9 +335,10 @@ public abstract class AbstractLocationIndexTester {
 
         // now make all edges from node 1 accessible for CAR only
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
-        CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
+        FlagEncoder encoder = encodingManager.getEncoder("foot");
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         while (iter.next()) {
-            iter.setFlags(carEncoder.setProperties(50, true, true));
+            iter.set(accessEnc, false).setReverse(accessEnc, false);
         }
         idx.close();
 

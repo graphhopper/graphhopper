@@ -18,6 +18,8 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
@@ -30,7 +32,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 
 import static com.graphhopper.storage.index.QueryResult.Position.*;
@@ -324,10 +325,12 @@ public class QueryGraphTest {
         na.setNode(0, 0, 0);
         na.setNode(1, 0, -0.001);
         g.edge(0, 1, 10, true);
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue avSpeedEnc = carEncoder.getAverageSpeedEnc();
         // in the case of identical nodes the wayGeometry defines the direction!
         EdgeIteratorState edge = g.edge(0, 0).
                 setDistance(100).
-                setFlags(carEncoder.setProperties(20, true, false)).
+                set(accessEnc, true).setReverse(accessEnc, false).set(avSpeedEnc, 20.0).
                 setWayGeometry(Helper.createPointList(0.001, 0, 0, 0.001));
 
         QueryResult qr = new QueryResult(0.0011, 0.0009);
@@ -342,12 +345,12 @@ public class QueryGraphTest {
         assertEquals(2, GHUtility.count(ee.setBaseNode(qr.getClosestNode())));
         EdgeIterator iter = ee.setBaseNode(qr.getClosestNode());
         iter.next();
-        assertTrue(iter.toString(), iter.isForward(carEncoder));
-        assertFalse(iter.toString(), iter.isBackward(carEncoder));
+        assertTrue(iter.toString(), iter.get(accessEnc));
+        assertFalse(iter.toString(), iter.getReverse(accessEnc));
 
         iter.next();
-        assertFalse(iter.toString(), iter.isForward(carEncoder));
-        assertTrue(iter.toString(), iter.isBackward(carEncoder));
+        assertFalse(iter.toString(), iter.get(accessEnc));
+        assertTrue(iter.toString(), iter.getReverse(accessEnc));
     }
 
     @Test
@@ -437,7 +440,7 @@ public class QueryGraphTest {
         int nodeB = 1;
 
         /* init test graph: one directional edge going from A to B, via virtual nodes C and D
-         * 
+         *
          *   (C)-(D)
          *  /       \
          * A         B
@@ -546,9 +549,8 @@ public class QueryGraphTest {
         return qr;
     }
 
-    private boolean isAvoidEdge(QueryGraph queryGraph, int virtualEdgeTypeId, boolean _default) {
-        boolean avoidEdge = queryGraph.virtualEdges.get(virtualEdgeTypeId).getBool(EdgeIteratorState.K_UNFAVORED_EDGE, _default);
-        return avoidEdge;
+    private boolean isAvoidEdge(QueryGraph queryGraph, int virtualEdgeTypeId) {
+        return queryGraph.virtualEdges.get(virtualEdgeTypeId).get(EdgeIteratorState.UNFAVORED_EDGE);
     }
 
     @Test
@@ -566,21 +568,21 @@ public class QueryGraphTest {
         queryGraph.enforceHeading(qr.getClosestNode(), 0., false);
         // test penalized south
         boolean expect = true;
-        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE_REV, !expect));
-        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE, !expect));
+        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE_REV));
+        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE));
 
         queryGraph.clearUnfavoredStatus();
         // test cleared edges south
         expect = false;
-        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE_REV, !expect));
-        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE, !expect));
+        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE_REV));
+        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE));
 
         // enforce coming in north
         queryGraph.enforceHeading(qr.getClosestNode(), 180., true);
         // test penalized south
         expect = true;
-        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE_REV, !expect));
-        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE, !expect));
+        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE_REV));
+        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_BASE));
 
         // query result on second vertical part of way (downward)
         qr = fakeEdgeQueryResult(edge, 1.5, 2, 2);
@@ -591,16 +593,16 @@ public class QueryGraphTest {
         queryGraph.enforceHeading(qr.getClosestNode(), 0., false);
         // test penalized south
         expect = true;
-        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_ADJ, !expect));
-        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_ADJ_REV, !expect));
+        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_ADJ));
+        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_ADJ_REV));
 
         queryGraph.clearUnfavoredStatus();
         // enforce coming in north
         queryGraph.enforceHeading(qr.getClosestNode(), 180., true);
         // test penalized south
         expect = true;
-        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_ADJ, !expect));
-        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_ADJ_REV, !expect));
+        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_ADJ));
+        assertEquals(expect, isAvoidEdge(queryGraph, QueryGraph.VE_ADJ_REV));
     }
 
     @Test
@@ -620,15 +622,15 @@ public class QueryGraphTest {
         VirtualEdgeIteratorState incomingEdge = (VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(1, 2);
         VirtualEdgeIteratorState incomingEdgeReverse = (VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(1, incomingEdge.getBaseNode());
         boolean expect = true;  // expect incoming and reverse incoming edge to be avoided
-        assertEquals(expect, incomingEdge.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, !expect));
-        assertEquals(expect, incomingEdgeReverse.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, !expect));
+        assertEquals(expect, incomingEdge.get(EdgeIteratorState.UNFAVORED_EDGE));
+        assertEquals(expect, incomingEdgeReverse.get(EdgeIteratorState.UNFAVORED_EDGE));
         assertEquals(new LinkedHashSet<>(Arrays.asList(incomingEdge, incomingEdgeReverse)),
                 queryGraph.getUnfavoredVirtualEdges());
 
         queryGraph.clearUnfavoredStatus();
         expect = false; // expect incoming and reverse incoming edge not to be avoided
-        assertEquals(expect, incomingEdge.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, !expect));
-        assertEquals(expect, incomingEdgeReverse.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, !expect));
+        assertEquals(expect, incomingEdge.get(EdgeIteratorState.UNFAVORED_EDGE));
+        assertEquals(expect, incomingEdgeReverse.get(EdgeIteratorState.UNFAVORED_EDGE));
         assertEquals(new LinkedHashSet<>(), queryGraph.getUnfavoredVirtualEdges());
     }
 

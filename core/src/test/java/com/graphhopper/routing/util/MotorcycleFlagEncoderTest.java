@@ -18,6 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -35,6 +37,7 @@ import static org.junit.Assert.*;
 public class MotorcycleFlagEncoderTest {
     private final EncodingManager em = new EncodingManager("motorcycle,foot");
     private final MotorcycleFlagEncoder encoder = (MotorcycleFlagEncoder) em.getEncoder("motorcycle");
+    private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
 
     private Graph initExampleGraph() {
         GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), em, true, new GraphExtension.NoOpExtension()).create(1000);
@@ -46,7 +49,7 @@ public class MotorcycleFlagEncoderTest {
                 setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
         edge.setDistance(100);
 
-        edge.setFlags(encoder.setReverseSpeed(encoder.setProperties(10, true, true), 15));
+        edge.set(accessEnc, true).setReverse(accessEnc, true).set(encoder.getAverageSpeedEnc(), 10.0).setReverse(encoder.getAverageSpeedEnc(), 15.0);
         return gs;
     }
 
@@ -129,55 +132,27 @@ public class MotorcycleFlagEncoderTest {
         way.setTag("highway", "service");
         long flags = encoder.acceptWay(way);
         assertTrue(flags > 0);
-        long result = encoder.handleWayTags(way, flags, 0);
-        assertEquals(20, encoder.getSpeed(result), .1);
-        assertEquals(20, encoder.getReverseSpeed(result), .1);
-    }
-
-    @Test
-    public void testRoundabout() {
-        long flags = encoder.setAccess(0, true, true);
-        long resFlags = encoder.setBool(flags, FlagEncoder.K_ROUNDABOUT, true);
-        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_ROUNDABOUT));
-        assertTrue(encoder.isForward(resFlags));
-        assertTrue(encoder.isBackward(resFlags));
-
-        resFlags = encoder.setBool(flags, FlagEncoder.K_ROUNDABOUT, false);
-        assertFalse(encoder.isBool(resFlags, FlagEncoder.K_ROUNDABOUT));
-        assertTrue(encoder.isForward(resFlags));
-        assertTrue(encoder.isBackward(resFlags));
-
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "motorway");
-        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
-        assertTrue(encoder.isForward(flags));
-        assertTrue(encoder.isBackward(flags));
-        assertFalse(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
-
-        way.setTag("junction", "roundabout");
-        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
-        assertTrue(encoder.isForward(flags));
-        assertFalse(encoder.isBackward(flags));
-        assertTrue(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
-
-        way.clearTags();
-        way.setTag("highway", "motorway");
-        way.setTag("junction", "circular");
-        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
-        assertTrue(encoder.isForward(flags));
-        assertFalse(encoder.isBackward(flags));
-        assertTrue(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+        IntsRef edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way, flags, 0);
+        assertEquals(20, encoder.getSpeed(edgeFlags), .1);
+        assertEquals(20, encoder.getSpeed(true, edgeFlags), .1);
     }
 
     @Test
     public void testSetSpeed0_issue367() {
-        long flags = encoder.setProperties(10, true, true);
-        flags = encoder.setSpeed(flags, 0);
+        IntsRef edgeFlags = em.createEdgeFlags();
+        accessEnc.setBool(false, edgeFlags, true);
+        accessEnc.setBool(true, edgeFlags, true);
+        encoder.getAverageSpeedEnc().setDecimal(false, edgeFlags, 10);
+        encoder.getAverageSpeedEnc().setDecimal(true, edgeFlags, 10);
 
-        assertEquals(0, encoder.getSpeed(flags), .1);
-        assertEquals(10, encoder.getReverseSpeed(flags), .1);
-        assertFalse(encoder.isForward(flags));
-        assertTrue(encoder.isBackward(flags));
+        assertEquals(10, encoder.getAverageSpeedEnc().getDecimal(false, edgeFlags), .1);
+        assertEquals(10, encoder.getAverageSpeedEnc().getDecimal(true, edgeFlags), .1);
+
+        encoder.setSpeed(false, edgeFlags, 0);
+        assertEquals(0, encoder.getSpeed(edgeFlags), .1);
+        assertEquals(10, encoder.getSpeed(true, edgeFlags), .1);
+        assertFalse(accessEnc.getBool(false, edgeFlags));
+        assertTrue(accessEnc.getBool(true, edgeFlags));
     }
 
     @Test
@@ -196,9 +171,10 @@ public class MotorcycleFlagEncoderTest {
         way.setTag("highway", "primary");
         way.setTag("estimated_distance", estimatedDistance);
         long includeWay = encoder.acceptWay(way);
-        long flags = encoder.handleWayTags(way, includeWay, 0l);
+        IntsRef flags = encoder.handleWayTags(em.createEdgeFlags(), way, includeWay, 0);
         edge.setFlags(flags);
         encoder.applyWayTags(way, edge);
-        return encoder.getDouble(edge.getFlags(), MotorcycleFlagEncoder.CURVATURE_KEY);
+        DecimalEncodedValue curvatureEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "curvature"));
+        return curvatureEnc.getDecimal(false, edge.getFlags());
     }
 }

@@ -649,7 +649,7 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testSRTMWithTunnelInterpolation() throws Exception {
+    public void testSRTMWithTunnelInterpolation() {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
                 .setEncodingManager(new EncodingManager(genericImportVehicles, 8));
@@ -660,14 +660,14 @@ public class GraphHopperIT {
         GHResponse rsp = tmpHopper.route(new GHRequest(43.74056471749763, 7.4299266210693755,
                 43.73790260334179, 7.427984089259056).setAlgorithm(ASTAR)
                 .setVehicle(vehicle).setWeighting(weightCalcStr));
-        PathWrapper arsp = rsp.getBest();
+        PathWrapper arsp = rsp.getBest( );
         // Without interpolation: 356.5
-        assertEquals(351.4, arsp.getDistance(), .1);
+        assertEquals(350.9, arsp.getDistance(), .1);
         PointList pointList = arsp.getPoints();
         assertEquals(6, pointList.getSize());
         assertTrue(pointList.is3D());
 
-        assertEquals(17, pointList.getEle(0), .1);
+        assertEquals(18, pointList.getEle(0), .1);
         assertEquals(19.04, pointList.getEle(1), .1);
         assertEquals(21.67, pointList.getEle(2), .1);
         assertEquals(25.03, pointList.getEle(3), .1);

@@ -20,6 +20,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -1401,13 +1402,9 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private Shortcut createShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipEdge1, int skipEdge2, double weight) {
-        // when the shortcuts are compared with the existing ones the all edge iterator in checkShortcuts()
-        // will always use the smaller node id as base
-        boolean fwd = from <= to;
-        boolean bwd = !fwd;
-        int baseNode = from <= to ? from : to;
-        int adjNode = from <= to ? to : from;
-        return new Shortcut(baseNode, adjNode, firstOrigEdge, lastOrigEdge, skipEdge1, skipEdge2, weight, fwd, bwd);
+        boolean fwd = true;
+        boolean bwd = false;
+        return new Shortcut(from, to, firstOrigEdge, lastOrigEdge, skipEdge1, skipEdge2, weight, fwd, bwd);
     }
 
     /**
@@ -1434,10 +1431,11 @@ public class EdgeBasedNodeContractorTest {
         AllCHEdgesIterator iter = chGraph.getAllEdges();
         while (iter.next()) {
             if (iter.isShortcut()) {
+                BooleanEncodedValue accessEnc = encoder.getAccessEnc();
                 shortcuts.add(new Shortcut(
                         iter.getBaseNode(), iter.getAdjNode(),
                         iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(), iter.getSkippedEdge1(), iter.getSkippedEdge2(), iter.getWeight(),
-                        iter.isForward(encoder), iter.isBackward(encoder)
+                        iter.get(accessEnc), iter.getReverse(accessEnc)
                 ));
             }
         }

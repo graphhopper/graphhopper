@@ -19,11 +19,10 @@ package com.graphhopper.routing.util;
 
 /**
  * Encapsulates a bit-encoded value.
- * <p>
  *
  * @author Nop
  */
-public class EncodedValue {
+public class EncodedValueOld {
     protected final long shift;
     protected final long mask;
     protected final double factor;
@@ -44,11 +43,11 @@ public class EncodedValue {
      * @param defaultValue default value
      * @param maxValue     default maximum value
      */
-    public EncodedValue(String name, int shift, int bits, double factor, long defaultValue, int maxValue) {
+    public EncodedValueOld(String name, int shift, int bits, double factor, long defaultValue, int maxValue) {
         this(name, shift, bits, factor, defaultValue, maxValue, true);
     }
 
-    public EncodedValue(String name, int shift, int bits, double factor, long defaultValue, int maxValue, boolean allowZero) {
+    public EncodedValueOld(String name, int shift, int bits, double factor, long defaultValue, int maxValue, boolean allowZero) {
         this.name = name;
         this.shift = shift;
         this.factor = factor;
@@ -111,21 +110,5 @@ public class EncodedValue {
 
     public long setDefaultValue(long flags) {
         return setValue(flags, defaultValue);
-    }
-
-    public long getMaxValue() {
-        return maxValue;
-    }
-
-    /**
-     * Swap the contents controlled by this value encoder with the given value.
-     * <p>
-     *
-     * @return the new flags
-     */
-    public long swap(long flags, EncodedValue otherEncoder) {
-        long otherValue = otherEncoder.getValue(flags);
-        flags = otherEncoder.setValue(flags, getValue(flags));
-        return setValue(flags, otherValue);
     }
 }

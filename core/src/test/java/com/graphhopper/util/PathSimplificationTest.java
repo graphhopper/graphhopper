@@ -135,7 +135,7 @@ public class PathSimplificationTest {
 
         // Path is: [0 0-1, 3 1-4, 6 4-7, 9 7-8, 11 8-9, 10 9-10]
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(0, 10);
-        InstructionList wayList = p.calcInstructions(usTR);
+        InstructionList wayList = p.calcInstructions(carManager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT), usTR);
         Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(DETAILS.AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
 
         PathWrapper pathWrapper = new PathWrapper();

@@ -19,7 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.weighting.PriorityWeighting;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.BitUtil;
 import org.junit.Rule;
 import org.junit.Test;
@@ -89,7 +90,7 @@ public class EncodingManagerTest {
             new EncodingManager(new FootFlagEncoder(), new CarFlagEncoder(), new BikeFlagEncoder(), new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder());
             assertTrue(false);
         } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoders are requesting 44 bits, more than 32 bits of way flags. Decrease the"));
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoders are requesting 36 bits, more than 32 bits of edge flags"));
         }
     }
 
@@ -112,7 +113,7 @@ public class EncodingManagerTest {
             }
 
             @Override
-            public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
+            public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
                 return 0;
             }
 
@@ -122,8 +123,8 @@ public class EncodingManagerTest {
             }
 
             @Override
-            public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
-                return 0;
+            public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, long allowed, long relationFlags) {
+                return edgeFlags;
             }
         };
 
@@ -142,12 +143,12 @@ public class EncodingManagerTest {
         BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder() {
             @Override
             public int defineRelationBits(int index, int shift) {
-                relationCodeEncoder = new EncodedValue("RelationCode2", shift, 2, 1, 0, 3);
+                relationCodeEncoder = new EncodedValueOld("RelationCode2", shift, 2, 1, 0, 3);
                 return shift + 2;
             }
 
             @Override
-            public long handleRelationTags(ReaderRelation relation, long oldRelFlags) {
+            public long handleRelationTags(long oldRelFlags, ReaderRelation relation) {
                 if (relation.hasTag("route", "bicycle"))
                     return relationCodeEncoder.setValue(0, 2);
                 return relationCodeEncoder.setValue(0, 0);
@@ -168,12 +169,12 @@ public class EncodingManagerTest {
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        long relFlags = manager.handleRelationTags(osmRel, 0);
+        long relFlags = manager.handleRelationTags(0, osmRel);
         long allow = defaultBike.acceptBit | lessRelationCodes.acceptBit;
-        long flags = manager.handleWayTags(osmWay, allow, relFlags);
+        IntsRef edgeFlags = manager.handleWayTags(osmWay, allow, relFlags);
 
-        assertTrue(defaultBike.getDouble(flags, PriorityWeighting.KEY)
-                > lessRelationCodes.getDouble(flags, PriorityWeighting.KEY));
+        assertTrue(defaultBike.relationCodeEncoder.getValue(edgeFlags.ints[0])
+                > lessRelationCodes.relationCodeEncoder.getValue(edgeFlags.ints[0]));
     }
 
     @Test
@@ -191,14 +192,14 @@ public class EncodingManagerTest {
         // relation code for network rcn is VERY_NICE for bike and PREFER for mountainbike
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "rcn");
-        long relFlags = manager.handleRelationTags(osmRel, 0);
+        long relFlags = manager.handleRelationTags(0, osmRel);
         long allow = bikeEncoder.acceptBit | mtbEncoder.acceptBit;
-        long flags = manager.handleWayTags(osmWay, allow, relFlags);
+        IntsRef flags = manager.handleWayTags(osmWay, allow, relFlags);
 
         // bike: uninfluenced speed for grade but via network => VERY_NICE                
         // mtb: uninfluenced speed only PREFER
-        assertTrue(bikeEncoder.getDouble(flags, PriorityWeighting.KEY)
-                > mtbEncoder.getDouble(flags, PriorityWeighting.KEY));
+        assertTrue(bikeEncoder.relationCodeEncoder.getValue(flags.ints[0])
+                > mtbEncoder.relationCodeEncoder.getValue(flags.ints[0]));
     }
 
     public void testFullBitMask() {
@@ -225,10 +226,10 @@ public class EncodingManagerTest {
         osmWay.setTag("name", "test");
 
         BikeFlagEncoder singleBikeEnc = (BikeFlagEncoder) manager2.getEncoder("bike2");
-        long flags = manager2.handleWayTags(osmWay, singleBikeEnc.acceptBit, 0);
+        IntsRef flags = manager2.handleWayTags(osmWay, singleBikeEnc.acceptBit, 0);
         double singleSpeed = singleBikeEnc.getSpeed(flags);
         assertEquals(4, singleSpeed, 1e-3);
-        assertEquals(singleSpeed, singleBikeEnc.getReverseSpeed(flags), 1e-3);
+        assertEquals(singleSpeed, singleBikeEnc.getSpeed(true, flags), 1e-3);
 
         EncodingManager manager = new EncodingManager(FlagEncoderFactory.DEFAULT, "bike2,bike,foot", 8);
         FootFlagEncoder foot = (FootFlagEncoder) manager.getEncoder("foot");
@@ -237,10 +238,10 @@ public class EncodingManagerTest {
         long acceptBits = foot.acceptBit | bike.acceptBit;
         flags = manager.handleWayTags(osmWay, acceptBits, 0);
         assertEquals(singleSpeed, bike.getSpeed(flags), 1e-2);
-        assertEquals(singleSpeed, bike.getReverseSpeed(flags), 1e-2);
+        assertEquals(singleSpeed, bike.getSpeed(true, flags), 1e-2);
 
         assertEquals(5, foot.getSpeed(flags), 1e-2);
-        assertEquals(5, foot.getReverseSpeed(flags), 1e-2);
+        assertEquals(5, foot.getSpeed(true, flags), 1e-2);
     }
 
     @Test
@@ -268,5 +269,34 @@ public class EncodingManagerTest {
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
         assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+    }
+
+    @Test
+    public void testSharedEncodedValues() {
+        EncodingManager manager = new EncodingManager("car,foot,bike,motorcycle,mtb", 8);
+
+        for (FlagEncoder tmp : manager.fetchEdgeEncoders()) {
+            AbstractFlagEncoder encoder = (AbstractFlagEncoder) tmp;
+            BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+            BooleanEncodedValue roundaboutEnc = manager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
+
+            ReaderWay way = new ReaderWay(1);
+            way.setTag("highway", "primary");
+            way.setTag("junction", "roundabout");
+            IntsRef edgeFlags = manager.handleWayTags(way, encoder.acceptBit, 0);
+            assertTrue(accessEnc.getBool(false, edgeFlags));
+            if (!encoder.toString().equals("foot"))
+                assertFalse(encoder.toString(), accessEnc.getBool(true, edgeFlags));
+            assertTrue(encoder.toString(), roundaboutEnc.getBool(false, edgeFlags));
+
+            way.clearTags();
+            way.setTag("highway", "tertiary");
+            way.setTag("junction", "circular");
+            edgeFlags = manager.handleWayTags(way, encoder.acceptBit, 0);
+            assertTrue(accessEnc.getBool(false, edgeFlags));
+            if (!encoder.toString().equals("foot"))
+                assertFalse(encoder.toString(), accessEnc.getBool(true, edgeFlags));
+            assertTrue(encoder.toString(), roundaboutEnc.getBool(false, edgeFlags));
+        }
     }
 }
