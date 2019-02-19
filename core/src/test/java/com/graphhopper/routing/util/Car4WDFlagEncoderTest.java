@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
@@ -25,14 +24,15 @@ import org.junit.Test;
 import java.text.DateFormat;
 import java.util.Date;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
  * @author zstadler
  */
 public class Car4WDFlagEncoderTest extends CarFlagEncoderTest {
-    private final EncodingManager em = new EncodingManager("car4wd,bike,foot");
+    private final EncodingManager em = EncodingManager.create("car4wd,bike,foot");
     private final Car4WDFlagEncoder encoder = (Car4WDFlagEncoder) em.getEncoder("car4wd");
 
     @Override

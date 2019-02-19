@@ -17,12 +17,18 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortFastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.GraphExtension;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RAMDirectory;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,9 +37,7 @@ import java.util.List;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED_2DIR;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -50,7 +54,7 @@ public class CHAlgoFactoryDecoratorTest {
         instance = new CHAlgoFactoryDecorator();
         Directory dir = new RAMDirectory();
         FlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager(encoder);
+        EncodingManager encodingManager = EncodingManager.create(encoder);
         weighting1 = new FastestWeighting(encoder);
         weighting2 = new ShortestWeighting(encoder);
         weighting3 = new ShortFastestWeighting(encoder, 0.1);

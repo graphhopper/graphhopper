@@ -29,7 +29,6 @@ import com.graphhopper.util.EdgeIteratorState;
  * Extended graph interface which supports Contraction Hierarchies. Ie. storing and retrieving the
  * levels for a node and creating shortcuts, which are additional 'artificial' edges to speedup
  * traversal in certain cases.
- * <p>
  *
  * @author Peter Karich
  */
@@ -53,6 +52,10 @@ public interface CHGraph extends Graph {
      * except that it can be excluded or included for certain traversals or algorithms.
      */
     CHEdgeIteratorState shortcut(int a, int b);
+
+    int shortcut(int a, int b, int accessFlags, double weight, double distance, int skippedEdge1, int skippedEdge2);
+
+    int shortcutEdgeBased(int a, int b, int accessFlags, double weight, double distance, int skippedEdge1, int skippedEdge2, int origFirst, int origLast);
 
     @Override
     CHEdgeIteratorState getEdgeIteratorState(int edgeId, int endNode);

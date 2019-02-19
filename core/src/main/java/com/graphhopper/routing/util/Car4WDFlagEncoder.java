@@ -50,7 +50,7 @@ public class Car4WDFlagEncoder extends CarFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     @Override

@@ -40,7 +40,7 @@ import static org.junit.Assert.*;
  */
 public class PrepareRoutingSubnetworksTest {
     private final FlagEncoder carFlagEncoder = new CarFlagEncoder();
-    private final EncodingManager em = new EncodingManager(carFlagEncoder);
+    private final EncodingManager em = EncodingManager.create(carFlagEncoder);
 
     GraphHopperStorage createStorage(EncodingManager eman) {
         return new GraphBuilder(eman).create();
@@ -153,7 +153,7 @@ public class PrepareRoutingSubnetworksTest {
     public void testRemoveNode() {
         FlagEncoder carEncoder = new CarFlagEncoder();
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
-        EncodingManager em2 = new EncodingManager(carEncoder, bikeEncoder);
+        EncodingManager em2 = EncodingManager.create(carEncoder, bikeEncoder);
         GraphHopperStorage g = createSubnetworkTestStorage2(em2);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em2.fetchEdgeEncoders());
 
@@ -164,8 +164,8 @@ public class PrepareRoutingSubnetworksTest {
 
         // mark certain edges inaccessible for all encoders
         for (EdgeIteratorState edge : Arrays.asList(GHUtility.getEdge(g, 5, 6), GHUtility.getEdge(g, 4, 5), GHUtility.getEdge(g, 4, 6))) {
-            for (FlagEncoder encoders : em2.fetchEdgeEncoders()) {
-                edge.setFlags(encoders.setAccess(0, false, false));
+            for (FlagEncoder encoder : em2.fetchEdgeEncoders()) {
+                edge.set(encoder.getAccessEnc(), false).setReverse(encoder.getAccessEnc(), false);
             }
         }
 
@@ -178,10 +178,12 @@ public class PrepareRoutingSubnetworksTest {
     public void testRemoveSubnetworkWhenMultipleVehicles() {
         FlagEncoder carEncoder = new CarFlagEncoder();
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
-        EncodingManager em2 = new EncodingManager(carEncoder, bikeEncoder);
+        EncodingManager em2 = EncodingManager.create(carEncoder, bikeEncoder);
         GraphHopperStorage g = createSubnetworkTestStorage2(em2);
-        GHUtility.getEdge(g, 3, 4).setFlags(carEncoder.setProperties(10, false, false)
-                | bikeEncoder.setProperties(5, true, true));
+
+        EdgeIteratorState edge = GHUtility.getEdge(g, 3, 4);
+        GHUtility.setProperties(edge, carEncoder, 10, false, false);
+        GHUtility.setProperties(edge, bikeEncoder, 5, true, true);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em2.fetchEdgeEncoders());
         instance.setMinNetworkSize(5);
         instance.doWork();
@@ -194,7 +196,9 @@ public class PrepareRoutingSubnetworksTest {
         EdgeExplorer bikeExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(bikeEncoder));
         assertEquals(GHUtility.asSet(7, 2, 1, 4), GHUtility.getNeighbors(bikeExplorer.setBaseNode(3)));
 
-        GHUtility.getEdge(g, 3, 4).setFlags(carEncoder.setProperties(10, false, false) | bikeEncoder.setProperties(5, false, false));
+        edge = GHUtility.getEdge(g, 3, 4);
+        GHUtility.setProperties(edge, carEncoder, 10, false, false);
+        GHUtility.setProperties(edge, bikeEncoder, 5, false, false);
         instance = new PrepareRoutingSubnetworks(g, em2.fetchEdgeEncoders());
         instance.setMinNetworkSize(5);
         instance.doWork();
@@ -274,7 +278,7 @@ public class PrepareRoutingSubnetworksTest {
         assertEquals(8, g.getNodes());
 
         assertTrue(isConsistent(g));
-        g.edge(7,8);
+        g.edge(7, 8);
         assertTrue(isConsistent(g));
     }
 
@@ -339,8 +343,8 @@ public class PrepareRoutingSubnetworksTest {
     public static boolean isConsistent(GraphHopperStorage storage) {
         EdgeExplorer edgeExplorer = storage.createEdgeExplorer();
         int nNodes = storage.getNodes();
-        for(int i=0; i<nNodes; i++) {
-            if(!check(storage, edgeExplorer, i)) return false;
+        for (int i = 0; i < nNodes; i++) {
+            if (!check(storage, edgeExplorer, i)) return false;
         }
         return true;
     }
@@ -349,7 +353,7 @@ public class PrepareRoutingSubnetworksTest {
         List<Integer> toNodes = new ArrayList<>();
         List<Integer> edges = new ArrayList<>();
         EdgeIterator edgeIterator = edgeExplorer.setBaseNode(node);
-        while(edgeIterator.next()) {
+        while (edgeIterator.next()) {
             if (edgeIterator.getBaseNode() < 0 || edgeIterator.getAdjNode() < 0) {
                 return false;
             }
@@ -357,13 +361,13 @@ public class PrepareRoutingSubnetworksTest {
             edges.add(edgeIterator.getEdge());
         }
 
-        for(int i=0;i<toNodes.size();i++) {
+        for (int i = 0; i < toNodes.size(); i++) {
             EdgeIteratorState edgeIteratorState = storage.getEdgeIteratorState(edges.get(i), toNodes.get(i));
-            if(edgeIteratorState == null) {
+            if (edgeIteratorState == null) {
                 return false;
             }
             EdgeIteratorState edgeIteratorState2 = storage.getEdgeIteratorState(edges.get(i), node);
-            if(edgeIteratorState2 == null) {
+            if (edgeIteratorState2 == null) {
                 return false;
             }
         }

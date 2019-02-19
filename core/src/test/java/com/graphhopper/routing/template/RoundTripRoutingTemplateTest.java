@@ -24,7 +24,10 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphExtension;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
@@ -45,7 +48,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class RoundTripRoutingTemplateTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
-    private final EncodingManager em = new EncodingManager(carFE);
+    private final EncodingManager em = EncodingManager.create(carFE);
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED_2DIR;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private final GHPoint ghPoint1 = new GHPoint(0, 0);
@@ -54,14 +57,14 @@ public class RoundTripRoutingTemplateTest {
     @Test(expected = IllegalArgumentException.class)
     public void lookup_throwsIfNumberOfGivenPointsNotOne() {
         RoundTripRoutingTemplate routingTemplate = new RoundTripRoutingTemplate(
-                new GHRequest(Collections.singletonList(ghPoint1)), new GHResponse(), null, 1);
+                new GHRequest(Collections.singletonList(ghPoint1)), new GHResponse(), null, em, 1);
         routingTemplate.lookup(Arrays.asList(ghPoint1, ghPoint2), carFE);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void lookup_throwsIfNumberOfPointsInRequestNotOne() {
         RoundTripRoutingTemplate routingTemplate = new RoundTripRoutingTemplate(
-                new GHRequest(Arrays.asList(ghPoint1, ghPoint2)), new GHResponse(), null, 1);
+                new GHRequest(Arrays.asList(ghPoint1, ghPoint2)), new GHResponse(), null, em, 1);
         routingTemplate.lookup(Collections.singletonList(ghPoint1), carFE);
     }
 
@@ -80,7 +83,7 @@ public class RoundTripRoutingTemplateTest {
         ghRequest.getHints().put(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
         RoundTripRoutingTemplate routingTemplate =
-                new RoundTripRoutingTemplate(ghRequest, new GHResponse(), locationIndex, 1);
+                new RoundTripRoutingTemplate(ghRequest, new GHResponse(), locationIndex, em, 1);
         List<QueryResult> stagePoints = routingTemplate.lookup(ghRequest.getPoints(), carFE);
         assertEquals(3, stagePoints.size());
         assertEquals(0, stagePoints.get(0).getClosestNode());
@@ -104,7 +107,7 @@ public class RoundTripRoutingTemplateTest {
         Graph g = createTestGraph(true);
 
         RoundTripRoutingTemplate rTripRouting =
-                new RoundTripRoutingTemplate(new GHRequest(), new GHResponse(), null, 1);
+                new RoundTripRoutingTemplate(new GHRequest(), new GHResponse(), null, em, 1);
 
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
         QueryResult qr4 = locationIndex.findClosest(0.05, 0.25, EdgeFilter.ALL_EDGES);

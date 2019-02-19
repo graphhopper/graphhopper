@@ -25,6 +25,7 @@ import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
 
+import static com.graphhopper.util.GHUtility.createMockedEdgeIteratorState;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -32,11 +33,12 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class ShortFastestWeightingTest {
-    private final FlagEncoder encoder = new EncodingManager("car").getEncoder("car");
+    EncodingManager encodingManager = EncodingManager.create("car");
+    private final FlagEncoder encoder = encodingManager.getEncoder("car");
 
     @Test
     public void testShort() {
-        EdgeIteratorState edge = createEdge(10, encoder.setProperties(50, true, true));
+        EdgeIteratorState edge = createMockedEdgeIteratorState(10, GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, 50, true, true));
         Weighting instance = new ShortFastestWeighting(encoder, 0.03);
         assertEquals(1.02, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
 
@@ -52,24 +54,5 @@ public class ShortFastestWeightingTest {
             assertTrue(false);
         } catch (Exception ex) {
         }
-    }
-
-    EdgeIterator createEdge(final double distance, final long flags) {
-        return new GHUtility.DisabledEdgeIterator() {
-            @Override
-            public double getDistance() {
-                return distance;
-            }
-
-            @Override
-            public long getFlags() {
-                return flags;
-            }
-
-            @Override
-            public boolean getBool(int key, boolean _default) {
-                return _default;
-            }
-        };
     }
 }

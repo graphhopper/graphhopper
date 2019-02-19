@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHIntArrayList;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -358,7 +359,7 @@ public class Path {
     /**
      * @return the list of instructions for this path.
      */
-    public InstructionList calcInstructions(final Translation tr) {
+    public InstructionList calcInstructions(BooleanEncodedValue roundaboutEnc, final Translation tr) {
         final InstructionList ways = new InstructionList(edgeIds.size() / 4, tr);
         if (edgeIds.isEmpty()) {
             if (isFound()) {
@@ -366,7 +367,7 @@ public class Path {
             }
             return ways;
         }
-        forEveryEdge(new InstructionsFromEdges(getFromNode(), graph, weighting, encoder, nodeAccess, tr, ways));
+        forEveryEdge(new InstructionsFromEdges(getFromNode(), graph, weighting, encoder, roundaboutEnc, nodeAccess, tr, ways));
         return ways;
     }
 

@@ -1,7 +1,10 @@
 package com.graphhopper.storage.change;
 
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -12,7 +15,6 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.jackson.Jackson;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,7 +33,7 @@ public class ChangeGraphHelperTest {
 
     @Before
     public void setUp() {
-        encodingManager = new EncodingManager("car");
+        encodingManager = EncodingManager.create("car");
         graph = new GraphBuilder(encodingManager).create();
     }
 
@@ -53,12 +55,13 @@ public class ChangeGraphHelperTest {
         LocationIndex locationIndex = new LocationIndexTree(graph, new RAMDirectory()).prepareIndex();
 
         FlagEncoder encoder = encodingManager.getEncoder("car");
-        double defaultSpeed = encoder.getSpeed(GHUtility.getEdge(graph, 0, 1).getFlags());
+        DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        double defaultSpeed = GHUtility.getEdge(graph, 0, 1).get(avSpeedEnc);
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            long flags = GHUtility.getEdge(graph, 0, 1).getFlags();
-            assertEquals(defaultSpeed, encoder.getSpeed(flags), .1);
-            assertTrue(encoder.isForward(flags));
+            assertEquals(defaultSpeed, iter.get(avSpeedEnc), .1);
+            assertTrue(iter.get(accessEnc));
         }
 
         Reader reader = new InputStreamReader(getClass().getResourceAsStream("overlaydata1.json"), Helper.UTF_CS);
@@ -68,9 +71,9 @@ public class ChangeGraphHelperTest {
         assertEquals(2, updates);
 
         // assert changed speed and access
-        double newSpeed = encoder.getSpeed(GHUtility.getEdge(graph, 0, 1).getFlags());
+        double newSpeed = GHUtility.getEdge(graph, 0, 1).get(avSpeedEnc);
         assertEquals(10, newSpeed, .1);
         assertTrue(newSpeed < defaultSpeed);
-        assertFalse(encoder.isForward(GHUtility.getEdge(graph, 3, 4).getFlags()));
+        assertFalse(GHUtility.getEdge(graph, 3, 4).get(accessEnc));
     }
 }
