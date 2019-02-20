@@ -73,7 +73,11 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public static EncodingManager create(FlagEncoderFactory factory, String flagEncodersStr, int bytesForEdgeFlags) {
-        return create(parseEncoderString(factory, flagEncodersStr), bytesForEdgeFlags);
+        return createBuilder(factory, flagEncodersStr, bytesForEdgeFlags).build();
+    }
+
+    public static EncodingManager.Builder createBuilder(FlagEncoderFactory factory, String flagEncodersStr, int bytesForEdgeFlags) {
+        return createBuilder(parseEncoderString(factory, flagEncodersStr), bytesForEdgeFlags);
     }
 
     /**
@@ -95,11 +99,15 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public static EncodingManager create(List<? extends FlagEncoder> flagEncoders, int bytesForEdgeFlags) {
+        return createBuilder(flagEncoders, bytesForEdgeFlags).build();
+    }
+
+    private static EncodingManager.Builder createBuilder(List<? extends FlagEncoder> flagEncoders, int bytesForEdgeFlags) {
         Builder builder = new Builder(bytesForEdgeFlags);
         for (FlagEncoder flagEncoder : flagEncoders) {
             builder.add(flagEncoder);
         }
-        return builder.build();
+        return builder;
     }
 
     /**
@@ -126,7 +134,7 @@ public class EncodingManager implements EncodedValueLookup {
             bytesForFlags = Integer.parseInt(properties.get("graph.bytes_for_flags"));
         } catch (NumberFormatException ex) {
         }
-        return create(factory, acceptStr, bytesForFlags);
+        return createBuilder(factory, acceptStr, bytesForFlags).build();
     }
 
     /**
@@ -145,8 +153,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public static class Builder {
-        private final EncodingManager em;
-        private boolean buildCalled = false;
+        private EncodingManager em;
 
         public Builder(int bytes) {
             em = new EncodingManager(bytes);
@@ -165,6 +172,33 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         /**
+         * This method specifies the preferred language for way names during import.
+         * <p>
+         * Language code as defined in ISO 639-1 or ISO 639-2.
+         * <ul>
+         * <li>If no preferred language is specified, only the default language with no tag will be
+         * imported.</li>
+         * <li>If a language is specified, it will be imported if its tag is found, otherwise fall back
+         * to default language.</li>
+         * </ul>
+         */
+        public Builder setPreferredLanguage(String language) {
+            check();
+            em.setPreferredLanguage(language);
+            return this;
+        }
+
+        /**
+         * This method specifies if the import should include way names to be able to return
+         * instructions for a route.
+         */
+        public Builder setEnableInstructions(boolean enable) {
+            check();
+            em.setEnableInstructions(enable);
+            return this;
+        }
+
+        /**
          * For backward compatibility provide a way to add multiple FlagEncoders
          */
         public Builder addAll(FlagEncoderFactory factory, String flagEncodersStr) {
@@ -175,11 +209,13 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         public Builder add(FlagEncoder encoder) {
+            check();
             em.addEncoder((AbstractFlagEncoder) encoder);
             return this;
         }
 
         public Builder add(EncodedValue encodedValue) {
+            check();
             em.addEncodedValue(encodedValue);
             return this;
         }
@@ -190,14 +226,19 @@ public class EncodingManager implements EncodedValueLookup {
             return this;
         }
 
+        private void check() {
+            if (em == null)
+                throw new IllegalStateException("Cannot call method after Builder.build() was called");
+        }
+
         public EncodingManager build() {
-            if (buildCalled)
-                throw new IllegalStateException("Cannot call Builder.build() twice");
+            check();
             if (em.encodedValueMap.isEmpty())
                 throw new IllegalStateException("No EncodedValues found");
 
-            buildCalled = true;
-            return em;
+            EncodingManager tmp = em;
+            em = null;
+            return tmp;
         }
     }
 
@@ -242,6 +283,25 @@ public class EncodingManager implements EncodedValueLookup {
 
     public int getBytesForFlags() {
         return bitsForEdgeFlags / 8;
+    }
+
+    private void setEnableInstructions(boolean enableInstructions) {
+        this.enableInstructions = enableInstructions;
+    }
+
+    public boolean isEnableInstructions() {
+        return enableInstructions;
+    }
+
+    private void setPreferredLanguage(String preferredLanguage) {
+        if (preferredLanguage == null)
+            throw new IllegalArgumentException("preferred language cannot be null");
+
+        this.preferredLanguage = preferredLanguage;
+    }
+
+    public String getPreferredLanguage() {
+        return preferredLanguage;
     }
 
     private void addEncoder(AbstractFlagEncoder encoder) {
@@ -496,19 +556,6 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         return flags;
-    }
-
-    public EncodingManager setEnableInstructions(boolean enableInstructions) {
-        this.enableInstructions = enableInstructions;
-        return this;
-    }
-
-    public EncodingManager setPreferredLanguage(String preferredLanguage) {
-        if (preferredLanguage == null)
-            throw new IllegalArgumentException("preferred language cannot be null");
-
-        this.preferredLanguage = preferredLanguage;
-        return this;
     }
 
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
