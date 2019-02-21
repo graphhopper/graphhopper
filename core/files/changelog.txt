@@ -1,6 +1,7 @@
 0.12
     access refactoring #1436 that moves AccessValue into SpatialRule.Access
     refactoring of EncodingManager to use builder pattern. Migration should be simple. Replace new EncodingManager with EncodingManager.create
+	The methods GraphHopper.setEnableInstructions/setPreferredLanguage is now in EncodingManager.Builder
     EncodingManager.supports renames to hasEncoder
     big refactoring #1447: to increase 64bit limit of flags, make reverse direction handling easier, to allow shared EncodedValues,
         remove reverseFlags method, much simpler property access, simplify FlagEncoder (maybe even deprecate this interface at a later stage)
