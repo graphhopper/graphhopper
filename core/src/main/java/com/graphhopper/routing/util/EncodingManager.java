@@ -21,6 +21,8 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.util.parsers.OSMRoundaboutParser;
+import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.IntsRef;
@@ -151,17 +153,7 @@ public class EncodingManager implements EncodedValueLookup {
         public Builder(int bytes) {
             em = new EncodingManager(bytes);
             final BooleanEncodedValue roundaboutEnc = new SimpleBooleanEncodedValue(ROUNDABOUT, false);
-            put(roundaboutEnc, new TagParser() {
-                @Override
-                public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, Access access, long relationFlags) {
-                    if (!access.isWay())
-                        return edgeFlags;
-                    boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
-                    if (isRoundabout)
-                        roundaboutEnc.setBool(false, edgeFlags, true);
-                    return edgeFlags;
-                }
-            });
+            put(roundaboutEnc, new OSMRoundaboutParser(roundaboutEnc));
         }
 
         /**

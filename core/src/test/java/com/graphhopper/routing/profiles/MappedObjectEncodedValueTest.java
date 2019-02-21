@@ -3,6 +3,7 @@ package com.graphhopper.routing.profiles;
 import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -11,7 +12,7 @@ public class MappedObjectEncodedValueTest {
 
     @Test
     public void testInit() {
-        List<RoadClass> list = RoadClass.create("primary", "secondary");
+        List<RoadClass> list = new ArrayList<>(RoadClass.create("primary", "secondary").values());
         RoadClass primary = list.get(0);
         RoadClass secondary = list.get(1);
         MappedObjectEncodedValue prop = new MappedObjectEncodedValue("road_class", list);
