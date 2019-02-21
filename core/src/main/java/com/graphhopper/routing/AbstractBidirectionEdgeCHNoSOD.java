@@ -159,8 +159,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
 
     @Override
     protected int getTraversalId(EdgeIteratorState edge, int origEdgeId, boolean reverse) {
-        EdgeIteratorState iterState = graph.getEdgeIteratorState(origEdgeId, edge.getAdjNode());
-        return GHUtility.createEdgeKey(iterState.getBaseNode(), iterState.getAdjNode(), iterState.getEdge(), reverse);
+        int baseNode = graph.getOtherNode(origEdgeId, edge.getAdjNode());
+        return GHUtility.createEdgeKey(baseNode, edge.getAdjNode(), origEdgeId, reverse);
     }
 
     @Override

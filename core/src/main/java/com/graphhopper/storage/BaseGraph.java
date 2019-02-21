@@ -794,6 +794,12 @@ class BaseGraph implements Graph {
         return extStorage;
     }
 
+    @Override
+    public int getOtherNode(int edge, int node) {
+        long edgePointer = edgeAccess.toPointer(edge);
+        return edgeAccess.getOtherNode(node, edgePointer);
+    }
+
     public void setAdditionalEdgeField(long edgePointer, int value) {
         if (extStorage.isRequireEdgeField() && E_ADDITIONAL >= 0)
             edges.setInt(edgePointer + E_ADDITIONAL, value);

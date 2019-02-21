@@ -142,6 +142,11 @@ abstract class EdgeAccess {
         return edges.getInt(edgePointer + E_LINKB);
     }
 
+    final int getOtherNode(int nodeThis, long edgePointer) {
+        int nodeA = getNodeA(edgePointer);
+        return nodeThis == nodeA ? getNodeB(edgePointer) : nodeA;
+    }
+
     /**
      * Writes plain edge information to the edges index
      */
