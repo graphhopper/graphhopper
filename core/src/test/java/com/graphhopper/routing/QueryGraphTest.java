@@ -24,6 +24,8 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.*;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -32,6 +34,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 
 import static com.graphhopper.storage.index.QueryResult.Position.*;
@@ -676,5 +679,39 @@ public class QueryGraphTest {
         EdgeExplorer edgeExplorer = queryGraph.createEdgeExplorer();
         // using cache means same reference
         assertTrue(edgeExplorer == queryGraph.createEdgeExplorer());
+    }
+
+    @Test
+    public void testWayGeometry() {
+        initGraph(g);
+        QueryGraph queryGraph = new QueryGraph(g);
+        LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        locationIndex.prepareIndex();
+        QueryResult qr = locationIndex.findClosest(1.501, 1.5, DefaultEdgeFilter.allEdges(carEncoder));
+        assertTrue(qr.isValid());
+        queryGraph.lookup(Collections.singletonList(qr));
+
+        //
+        //  /*-x\
+        // 0     1
+        // |
+        // 2
+        // expectation: we snapped to x so the way geometry should be (we use fetch mode=2, adj but not base):
+        // [*,0] for iter x-0 (but it is [x,*,0]
+        // [1] for iter x-1 (this works)
+
+        EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(qr.getClosestNode());
+        while (iter.next()) {
+            System.out.println("iter with adj: " + iter.getAdjNode() + ", way geometry: " + iter.fetchWayGeometry(2));
+        }
+        iter = queryGraph.createEdgeExplorer().setBaseNode(qr.getClosestNode());
+
+        iter.next();
+        assertEquals(0, iter.getAdjNode());
+        assertEquals(2, iter.fetchWayGeometry(2).size());
+
+        iter.next();
+        assertEquals(1, iter.getAdjNode());
+        assertEquals(1, iter.fetchWayGeometry(2).size());
     }
 }
