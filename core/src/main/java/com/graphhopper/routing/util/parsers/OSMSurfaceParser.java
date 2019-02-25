@@ -18,10 +18,15 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.profiles.Surface;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.Helper;
+
+import java.util.List;
 
 import static com.graphhopper.routing.profiles.Surface.*;
 
@@ -29,15 +34,24 @@ public class OSMSurfaceParser implements TagParser {
 
     private final ObjectEncodedValue surfaceEnc;
 
+    public OSMSurfaceParser() {
+        this(Surface.create());
+    }
+
     public OSMSurfaceParser(ObjectEncodedValue surfaceEnc) {
         this.surfaceEnc = surfaceEnc;
+    }
+
+    @Override
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
+        list.add(surfaceEnc);
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, long relationFlags) {
         String surfaceTag = readerWay.getTag("surface");
         Surface surface = Surface.find(surfaceTag);
-        if (surface == OTHER) {
+        if (surface == OTHER && !Helper.isEmpty(surfaceTag)) {
             if (surfaceTag.equals("paving_stones") || surfaceTag.equals("metal") || surfaceTag.startsWith("concrete"))
                 surface = PAVED;
             else if (surfaceTag.equals("sett"))

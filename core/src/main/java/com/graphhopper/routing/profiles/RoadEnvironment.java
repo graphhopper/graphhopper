@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
  * This class defines a IndexBased road environment (ferry, tunnel, ford, ...) but is type safe.
  */
 public class RoadEnvironment extends DefaultIndexBased {
+    public static final String KEY = "road_environment";
     private static final LinkedHashMap<String, RoadEnvironment> map = create("other", "road", "ferry", "tunnel", "bridge", "ford", "shuttle_train");
     public static final RoadEnvironment OTHER = map.get("other"), ROAD = map.get("road"), FERRY = map.get("ferry"),
             TUNNEL = map.get("tunnel"), BRIDGE = map.get("bridge"), FORD = map.get("ford"), SHUTTLE_TRAIN = map.get("shuttle_train");
@@ -38,7 +39,7 @@ public class RoadEnvironment extends DefaultIndexBased {
     }
 
     public static ObjectEncodedValue create() {
-        return new MappedObjectEncodedValue("road_environment", new ArrayList<>(map.values()));
+        return new MappedObjectEncodedValue(KEY, new ArrayList<>(map.values()));
     }
 
     public static LinkedHashMap<String, RoadEnvironment> create(String... list) {

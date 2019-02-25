@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.BitUtil;
 import org.junit.Rule;
@@ -130,7 +131,7 @@ public class EncodingManagerTest {
 
         EncodingManager subject = EncodingManager.create(encoder);
 
-        assertEquals("new_encoder|my_properties|version=10", subject.toDetailsString());
+        assertEquals("new_encoder|my_properties|version=10", subject.flagEncodersAsString());
     }
 
     @Test
@@ -283,7 +284,7 @@ public class EncodingManagerTest {
         for (FlagEncoder tmp : manager.fetchEdgeEncoders()) {
             AbstractFlagEncoder encoder = (AbstractFlagEncoder) tmp;
             BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-            BooleanEncodedValue roundaboutEnc = manager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
+            BooleanEncodedValue roundaboutEnc = manager.getBooleanEncodedValue(Roundabout.KEY);
 
             ReaderWay way = new ReaderWay(1);
             way.setTag("highway", "primary");

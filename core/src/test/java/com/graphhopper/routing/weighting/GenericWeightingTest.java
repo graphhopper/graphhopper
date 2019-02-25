@@ -26,12 +26,12 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -51,7 +51,7 @@ public class GenericWeightingTest {
         properties.put("store_weight", true);
         properties.put("store_width", true);
         encoder = new DataFlagEncoder(properties);
-        em = EncodingManager.create(Arrays.asList(encoder), 8);
+        em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).add(encoder).build();
     }
 
     @Before
@@ -66,7 +66,8 @@ public class GenericWeightingTest {
         graph.edge(0, 1, 1, true);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
-        graph.getEdgeIteratorState(0, 1).setFlags(encoder.handleWayTags(em.createEdgeFlags(), way, EncodingManager.Access.WAY, 0));
+        EncodingManager.AcceptWay map = new EncodingManager.AcceptWay().put(encoder.toString(), EncodingManager.Access.WAY);
+        graph.getEdgeIteratorState(0, 1).setFlags(em.handleWayTags(way, map, 0));
     }
 
     @Test
@@ -89,7 +90,7 @@ public class GenericWeightingTest {
     @Test
     public void testDisabledRoadAttributes() {
         DataFlagEncoder simpleEncoder = new DataFlagEncoder();
-        EncodingManager simpleEncodingManager = EncodingManager.create(simpleEncoder);
+        EncodingManager simpleEncodingManager = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).add(simpleEncoder).build();
         Graph simpleGraph = new GraphBuilder(simpleEncodingManager).create();
 
         ReaderWay way = new ReaderWay(27l);
@@ -101,8 +102,8 @@ public class GenericWeightingTest {
         simpleGraph.edge(0, 1, 1, true);
         AbstractRoutingAlgorithmTester.updateDistancesFor(simpleGraph, 0, 0.00, 0.00);
         AbstractRoutingAlgorithmTester.updateDistancesFor(simpleGraph, 1, 0.01, 0.01);
-        simpleGraph.getEdgeIteratorState(0, 1).setFlags(simpleEncoder.handleWayTags(simpleEncodingManager.createEdgeFlags(), way,
-                EncodingManager.Access.WAY, 0));
+        EncodingManager.AcceptWay map = new EncodingManager.AcceptWay().put(encoder.toString(), EncodingManager.Access.WAY);
+        simpleGraph.getEdgeIteratorState(0, 1).setFlags(simpleEncodingManager.handleWayTags(way, map, 0));
 
         Weighting instance = new GenericWeighting(simpleEncoder, new HintsMap().put(GenericWeighting.HEIGHT_LIMIT, 5.0));
         EdgeIteratorState edge = simpleGraph.getEdgeIteratorState(0, 1);

@@ -22,6 +22,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
@@ -39,7 +40,7 @@ import static org.junit.Assert.*;
 public class CarFlagEncoderTest {
     private final EncodingManager em = EncodingManager.create("car,bike,foot");
     private final CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("car");
-    private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
+    private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
     private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
 

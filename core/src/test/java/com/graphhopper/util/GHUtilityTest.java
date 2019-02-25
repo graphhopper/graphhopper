@@ -196,9 +196,9 @@ public class GHUtilityTest {
 //        TIntLongHashMap map2 = new TIntLongHashMap(100, 0.7f, -1, -1);
 //        assertFalse(map2.containsKey(0));
 //        assertFalse(map2.containsValue(0));
-//        map2.put(0, 3);
-//        map2.put(1, 0);
-//        map2.put(2, 1);
+//        map2.add(0, 3);
+//        map2.add(1, 0);
+//        map2.add(2, 1);
 //        assertTrue(map2.containsKey(0));
 //        assertTrue(map2.containsValue(0));
 //        assertEquals(3, map2.get(0));

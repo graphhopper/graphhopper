@@ -22,6 +22,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -61,7 +62,7 @@ public class InstructionListTest {
     public void setUp() {
         carEncoder = new CarFlagEncoder();
         carManager = EncodingManager.create(carEncoder);
-        roundaboutEnc = carManager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
+        roundaboutEnc = carManager.getBooleanEncodedValue(Roundabout.KEY);
     }
 
     @SuppressWarnings("unchecked")

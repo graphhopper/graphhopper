@@ -29,6 +29,7 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
@@ -49,7 +50,7 @@ public class EncodingManager implements EncodedValueLookup {
     private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via graph.bytes_for_flags: 8";
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
     private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
-    private final Map<EncodedValue, TagParser> sharedEncodedValueMap = new LinkedHashMap<>();
+    private final List<TagParser> sharedEncodedValues = new ArrayList<>();
     private final int bitsForEdgeFlags;
     private final int bitsForTurnFlags = 8 * 4;
     private int nextNodeBit = 0;
@@ -128,7 +129,11 @@ public class EncodingManager implements EncodedValueLookup {
             bytesForFlags = Integer.parseInt(properties.get("graph.bytes_for_flags"));
         } catch (NumberFormatException ex) {
         }
-        return create(factory, acceptStr, bytesForFlags);
+        EncodingManager.Builder emBuilder = new EncodingManager.Builder(bytesForFlags);
+        if ("true".equals(properties.get("graph.add_default_encoded_values")))
+            GHUtility.addDefaultEncodedValues(emBuilder);
+
+        return emBuilder.addAll(factory, acceptStr).build();
     }
 
     /**
@@ -152,8 +157,7 @@ public class EncodingManager implements EncodedValueLookup {
 
         public Builder(int bytes) {
             em = new EncodingManager(bytes);
-            final BooleanEncodedValue roundaboutEnc = new SimpleBooleanEncodedValue(ROUNDABOUT, false);
-            put(roundaboutEnc, new OSMRoundaboutParser(roundaboutEnc));
+            add(new OSMRoundaboutParser());
         }
 
         /**
@@ -176,9 +180,17 @@ public class EncodingManager implements EncodedValueLookup {
             return this;
         }
 
-        public Builder put(EncodedValue encodedValue, TagParser tagParser) {
-            add(encodedValue);
-            em.sharedEncodedValueMap.put(encodedValue, tagParser);
+        /**
+         * This method adds the specified TagParser and automatically adds EncodedValues as requested in
+         * createEncodedValues.
+         */
+        public Builder add(TagParser tagParser) {
+            List<EncodedValue> list = new ArrayList<>();
+            tagParser.createEncodedValues(em, list);
+            for (EncodedValue ev : list) {
+                em.addEncodedValue(ev);
+            }
+            em.sharedEncodedValues.add(tagParser);
             return this;
         }
 
@@ -286,6 +298,10 @@ public class EncodingManager implements EncodedValueLookup {
         encodedValueMap.put(ev.getName(), ev);
     }
 
+    public boolean hasEncodedValue(String key) {
+        return encodedValueMap.get(key) != null;
+    }
+
     /**
      * @return true if the specified encoder is found
      */
@@ -303,7 +319,7 @@ public class EncodingManager implements EncodedValueLookup {
                 return encoder;
         }
         if (throwExc)
-            throw new IllegalArgumentException("Encoder for " + name + " not found. Existing: " + toDetailsString());
+            throw new IllegalArgumentException("Encoder for " + name + " not found. Existing: " + flagEncodersAsString());
         return null;
     }
 
@@ -339,7 +355,7 @@ public class EncodingManager implements EncodedValueLookup {
             return res;
         }
 
-        private AcceptWay put(String key, Access access) {
+        public AcceptWay put(String key, Access access) {
             accessMap.put(key, access);
             if (access != Access.CAN_SKIP)
                 hasAccepted = true;
@@ -404,7 +420,7 @@ public class EncodingManager implements EncodedValueLookup {
         IntsRef edgeFlags = createEdgeFlags();
         // return if way or ferry
         Access access = acceptWay.getAccess();
-        for (TagParser parser : sharedEncodedValueMap.values()) {
+        for (TagParser parser : sharedEncodedValues) {
             parser.handleWayTags(edgeFlags, way, access, relationFlags);
         }
         for (AbstractFlagEncoder encoder : edgeEncoders) {
@@ -426,7 +442,7 @@ public class EncodingManager implements EncodedValueLookup {
         return str.toString();
     }
 
-    public String toDetailsString() {
+    public String flagEncodersAsString() {
         StringBuilder str = new StringBuilder();
         for (AbstractFlagEncoder encoder : edgeEncoders) {
             if (str.length() > 0)
@@ -437,6 +453,20 @@ public class EncodingManager implements EncodedValueLookup {
                     .append(encoder.getPropertiesString())
                     .append("|version=")
                     .append(encoder.getVersion());
+        }
+
+        return str.toString();
+    }
+
+    public String encodedValuesAsString() {
+        // TODO NOW load encoder and EncodedValue separately!
+        // TODO NOW change to include info that is required to load from, e.g. mapped EncodedValue needs a version (hash of the keys, size not sufficient)
+        StringBuilder str = new StringBuilder();
+        for (EncodedValue ev : encodedValueMap.values()) {
+            if (str.length() > 0)
+                str.append(",");
+
+            str.append(ev.toString());
         }
 
         return str.toString();
@@ -583,8 +613,6 @@ public class EncodingManager implements EncodedValueLookup {
             throw new IllegalArgumentException("Cannot find EncodedValue " + key + " in collection: " + ev);
         return (T) ev;
     }
-
-    public final static String ROUNDABOUT = "roundabout";
 
     /**
      * Until we have a proper key-string class we create all keys through this function

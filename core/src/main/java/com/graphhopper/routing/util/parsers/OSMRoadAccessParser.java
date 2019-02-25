@@ -18,28 +18,65 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 
-import static com.graphhopper.routing.profiles.RoadAccess.OTHER;
-import static com.graphhopper.routing.profiles.RoadAccess.UNLIMITED;
+import java.util.Arrays;
+import java.util.List;
 
 
 public class OSMRoadAccessParser implements TagParser {
     private final ObjectEncodedValue roadAccessEnc;
+    private final List<String> restrictions;
+
+    public OSMRoadAccessParser() {
+        this(RoadAccess.create());
+    }
 
     public OSMRoadAccessParser(ObjectEncodedValue roadAccessEnc) {
+        this(roadAccessEnc, Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
+    }
+
+    public OSMRoadAccessParser(ObjectEncodedValue roadAccessEnc, List<String> restrictions) {
         this.roadAccessEnc = roadAccessEnc;
+        this.restrictions = restrictions;
+    }
+
+    @Override
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
+        list.add(roadAccessEnc);
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, long relationFlags) {
-        String accessTag = readerWay.getTag("access");
-        RoadAccess accessValue = RoadAccess.find(accessTag);
-        if (accessValue == OTHER)
-            accessValue = UNLIMITED;
+        RoadAccess accessValue = RoadAccess.UNLIMITED;
+        RoadAccess tmpAccessValue;
+        for (String restriction : restrictions) {
+            tmpAccessValue = RoadAccess.find(readerWay.getTag(restriction, "yes"));
+            if (tmpAccessValue != null && tmpAccessValue.ordinal() > accessValue.ordinal()) {
+                accessValue = tmpAccessValue;
+            }
+        }
+
+        // TODO spatial rule
+//        if (accessValue == RoadAccess.OTHER) {
+//            // TODO Fix transportation mode when adding other forms of transportation
+//            switch (getSpatialRule(way).getAccess(way.getTag("highway", ""), TransportationMode.MOTOR_VEHICLE, YES)) {
+//                case YES:
+//                    accessValue = RoadAccess.UNLIMITED;
+//                    break;
+//                case CONDITIONAL:
+//                    accessValue = RoadAccess.DESTINATION;
+//                    break;
+//                case NO:
+//                    accessValue = RoadAccess.NO;
+//                    break;
+//            }
+//        }
 
         roadAccessEnc.setObject(false, edgeFlags, accessValue);
         return edgeFlags;

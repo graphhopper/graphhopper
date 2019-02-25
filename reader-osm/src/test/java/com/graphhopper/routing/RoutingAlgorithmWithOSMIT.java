@@ -130,7 +130,7 @@ public class RoutingAlgorithmWithOSMIT {
         list.add(new OneRun(52.349969, 8.013813, 52.349713, 8.013293, 56, 7));
         // reverse route avoids the location
 //        list.add(new OneRun(52.349713, 8.013293, 52.349969, 8.013813, 293, 21));
-        runAlgo(testCollector, DIR + "/map-bug432.osm.gz", "target/map-bug432-gh",
+        runAlgo(testCollector, DIR + "/ACCEPT_WAY-bug432.osm.gz", "target/ACCEPT_WAY-bug432-gh",
                 list, "bike2", true, "bike2", "fastest", true);
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -211,7 +211,7 @@ public class RoutingAlgorithmWithOSMIT {
         list.add(new OneRun(57.154888, -2.101822, 57.147299, -2.096286, 1118, 68));
 
         boolean testAlsoCH = false, is3D = false;
-        runAlgo(testCollector, DIR + "/map-sidewalk-no.osm.gz", "target/graph-sidewalkno",
+        runAlgo(testCollector, DIR + "/ACCEPT_WAY-sidewalk-no.osm.gz", "target/graph-sidewalkno",
                 list, "hike", testAlsoCH, "hike", "fastest", is3D);
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());

@@ -15,7 +15,7 @@ public class MappedObjectEncodedValueTest {
         List<RoadClass> list = new ArrayList<>(RoadClass.create("primary", "secondary").values());
         RoadClass primary = list.get(0);
         RoadClass secondary = list.get(1);
-        MappedObjectEncodedValue prop = new MappedObjectEncodedValue("road_class", list);
+        MappedObjectEncodedValue prop = new MappedObjectEncodedValue(RoadClass.KEY, list);
         EncodedValue.InitializerConfig init = new EncodedValue.InitializerConfig();
         assertEquals(2, prop.init(init));
         assertEquals(2, prop.bits);

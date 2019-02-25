@@ -24,13 +24,14 @@ import java.util.LinkedHashMap;
  * This class defines a IndexBased but is type safe.
  */
 public class Surface extends DefaultIndexBased {
+    public static final String KEY = "surface";
     private static final LinkedHashMap<String, Surface> map = create("other", "cobblestone", "asphalt", "paved", "unpaved",
-            "ground", "gravel", "concrete", "paving_stone", "dirt", "parking", "grass");
+            "ground", "gravel", "concrete", "paving_stone", "dirt", "parking", "grass", "sand");
     public static final Surface OTHER = map.get("other"), COBBLESTONE = map.get("cobblestone"),
             ASPHALT = map.get("asphalt"), PAVED = map.get("paved"), UNPAVED = map.get("unpaved"),
             GROUND = map.get("ground"), GRAVEL = map.get("gravel"), CONCRETE = map.get("concrete"),
             PAVING_STONE = map.get("paving_stone"), DIRT = map.get("dirt"),
-            PARKING = map.get("parking"), GRASS = map.get("grass");
+            PARKING = map.get("parking"), GRASS = map.get("grass"), SAND = map.get("sand");
 
     public Surface(String name, int ordinal) {
         super(name, ordinal);
@@ -42,7 +43,7 @@ public class Surface extends DefaultIndexBased {
     }
 
     public static ObjectEncodedValue create() {
-        return new MappedObjectEncodedValue("surface", new ArrayList<>(map.values()));
+        return new MappedObjectEncodedValue(KEY, new ArrayList<>(map.values()));
     }
 
     public static LinkedHashMap<String, Surface> create(String... list) {

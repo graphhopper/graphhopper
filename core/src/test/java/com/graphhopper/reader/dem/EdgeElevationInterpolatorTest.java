@@ -17,43 +17,46 @@
  */
 package com.graphhopper.reader.dem;
 
-import java.util.Arrays;
-
-import org.junit.After;
-import org.junit.Before;
-
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.profiles.ObjectEncodedValue;
+import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import org.junit.After;
+import org.junit.Before;
 
 /**
  * @author Alexey Valikov
  */
-public abstract class AbstractEdgeElevationInterpolatorTest {
+public abstract class EdgeElevationInterpolatorTest {
 
+    protected final static EncodingManager.AcceptWay ACCEPT_WAY = new EncodingManager.AcceptWay().
+            put(RoadEnvironment.KEY, EncodingManager.Access.WAY).put("car", EncodingManager.Access.WAY).put("foot", EncodingManager.Access.WAY);
     protected static final double PRECISION = ElevationInterpolator.EPSILON2;
     protected ReaderWay interpolatableWay;
     protected ReaderWay normalWay;
 
     protected GraphHopperStorage graph;
-    protected DataFlagEncoder dataFlagEncoder;
-    protected AbstractEdgeElevationInterpolator edgeElevationInterpolator;
+    protected ObjectEncodedValue roadEnvEnc;
+    protected EncodingManager encodingManager;
+    protected EdgeElevationInterpolator edgeElevationInterpolator;
 
     @SuppressWarnings("resource")
     @Before
     public void setUp() {
-        dataFlagEncoder = new DataFlagEncoder();
+        roadEnvEnc = RoadEnvironment.create();
         graph = new GraphHopperStorage(new RAMDirectory(),
-                EncodingManager.create(Arrays.asList(dataFlagEncoder, new FootFlagEncoder()),
-                        8),
+                encodingManager = new EncodingManager.Builder(8).add(new CarFlagEncoder()).add(new FootFlagEncoder()).
+                        add(new OSMRoadEnvironmentParser(roadEnvEnc)).build(),
                 true, new GraphExtension.NoOpExtension()).create(100);
 
         edgeElevationInterpolator = createEdgeElevationInterpolator();
@@ -70,8 +73,8 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
 
     protected abstract ReaderWay createInterpolatableWay();
 
-    protected AbstractEdgeElevationInterpolator createEdgeElevationInterpolator() {
-        return new BridgeElevationInterpolator(graph, dataFlagEncoder);
+    protected EdgeElevationInterpolator createEdgeElevationInterpolator() {
+        return new EdgeElevationInterpolator(graph, roadEnvEnc, RoadEnvironment.BRIDGE);
     }
 
     protected void gatherOuterAndInnerNodeIdsOfStructure(EdgeIteratorState edge,

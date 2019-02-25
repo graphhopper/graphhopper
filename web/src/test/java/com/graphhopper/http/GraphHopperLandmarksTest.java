@@ -32,7 +32,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Tests the creation of Landmarks and parsing the map.geo.json file
+ * Tests the creation of Landmarks and parsing the ACCEPT_WAY.geo.json file
  *
  * @author Robin Boldt
  */

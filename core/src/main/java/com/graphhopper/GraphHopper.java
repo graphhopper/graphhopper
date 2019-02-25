@@ -24,6 +24,8 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
+import com.graphhopper.routing.profiles.ObjectEncodedValue;
+import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -881,22 +883,14 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void interpolateBridgesAndOrTunnels() {
-        if (ghStorage.getEncodingManager().hasEncoder("generic")) {
-            final FlagEncoder genericFlagEncoder = ghStorage.getEncodingManager()
-                    .getEncoder("generic");
-            if (!(genericFlagEncoder instanceof DataFlagEncoder)) {
-                throw new IllegalStateException("'generic' flag encoder for elevation interpolation of "
-                        + "bridges and tunnels is enabled but does not have the expected type "
-                        + DataFlagEncoder.class.getName() + ".");
-            }
-            final DataFlagEncoder dataFlagEncoder = (DataFlagEncoder) genericFlagEncoder;
+        if (ghStorage.getEncodingManager().hasEncodedValue(RoadEnvironment.KEY)) {
+            ObjectEncodedValue roadEnvEnc = ghStorage.getEncodingManager().getObjectEncodedValue(RoadEnvironment.KEY);
             StopWatch sw = new StopWatch().start();
-            new TunnelElevationInterpolator(ghStorage, dataFlagEncoder).execute();
+            new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.TUNNEL).execute();
             float tunnel = sw.stop().getSeconds();
             sw = new StopWatch().start();
-            new BridgeElevationInterpolator(ghStorage, dataFlagEncoder).execute();
-            logger.info("Bridge interpolation " + (int) sw.stop().getSeconds() + "s, "
-                    + "tunnel interpolation " + (int) tunnel + "s");
+            new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.BRIDGE).execute();
+            logger.info("Bridge interpolation " + (int) sw.stop().getSeconds() + "s, " + "tunnel interpolation " + (int) tunnel + "s");
         }
     }
 

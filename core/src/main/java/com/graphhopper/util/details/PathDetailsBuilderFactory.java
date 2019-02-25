@@ -36,7 +36,7 @@ public class PathDetailsBuilderFactory {
         List<PathDetailsBuilder> builders = new ArrayList<>();
 
         if (requestedPathDetails.contains(AVERAGE_SPEED))
-            builders.add(new AverageSpeedDetails(encoder));
+            builders.add(new DecimalDetails(AVERAGE_SPEED, encoder.getAverageSpeedEnc()));
 
         if (requestedPathDetails.contains(STREET_NAME))
             builders.add(new StreetNameDetails());

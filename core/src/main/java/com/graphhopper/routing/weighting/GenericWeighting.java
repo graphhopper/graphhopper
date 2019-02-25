@@ -17,6 +17,10 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.profiles.CarMaxSpeed;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.ObjectEncodedValue;
+import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -41,12 +45,14 @@ public class GenericWeighting extends AbstractWeighting {
     protected final double maxSpeed;
     protected final DataFlagEncoder gEncoder;
     protected final DataFlagEncoder.WeightingConfig weightingConfig;
-    protected final int accessType;
     protected final int uncertainAccessiblePenalty = 10;
 
     protected final double height;
     protected final double weight;
     protected final double width;
+
+    private final DecimalEncodedValue carMaxSpeedEnc;
+    private final ObjectEncodedValue roadAccessEnc;
 
     public GenericWeighting(DataFlagEncoder encoder, PMap hintsMap) {
         super(encoder);
@@ -60,10 +66,11 @@ public class GenericWeighting extends AbstractWeighting {
             throw new IllegalArgumentException("Some specified speed value bigger than maximum possible speed: " + maxSpecifiedSpeed + " > " + encoder.getMaxPossibleSpeed());
 
         this.maxSpeed = maxSpecifiedSpeed / SPEED_CONV;
-        accessType = gEncoder.getAccessType("motor_vehicle");
         height = hintsMap.getDouble(HEIGHT_LIMIT, 0d);
         weight = hintsMap.getDouble(WEIGHT_LIMIT, 0d);
         width = hintsMap.getDouble(WIDTH_LIMIT, 0d);
+        roadAccessEnc = encoder.getObjectEncodedValue(RoadAccess.KEY);
+        carMaxSpeedEnc = encoder.getEncodedValue(CarMaxSpeed.KEY, DecimalEncodedValue.class);
     }
 
     @Override
@@ -90,12 +97,7 @@ public class GenericWeighting extends AbstractWeighting {
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
 
-        switch (gEncoder.getAccessValue(edgeState.getFlags())) {
-            case NO:
-                return Double.POSITIVE_INFINITY;
-            case CONDITIONAL:
-                time = time * uncertainAccessiblePenalty;
-        }
+        // TODO include roadAccess vs. SpatialRule.Access
 
         return time;
     }
@@ -116,7 +118,7 @@ public class GenericWeighting extends AbstractWeighting {
         // TODO inner city guessing -> lit, maxspeed <= 50, residential etc => create new encoder.isInnerCity(edge)
         // See #472 use edge.getDouble((encoder), K_MAXSPEED_MOTORVEHICLE_FORWARD, _default) or edge.getMaxSpeed(...) instead?
         // encoder could be made optional via passing to EdgeExplorer
-        double maxspeed = gEncoder.getMaxspeed(edgeState, accessType, reverse);
+        double maxspeed = carMaxSpeedEnc.getDecimal(reverse, edgeState.getFlags());
         if (maxspeed > 0 && speed > maxspeed)
             speed = maxspeed;
 

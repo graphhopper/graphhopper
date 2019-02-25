@@ -15,27 +15,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.dem;
+package com.graphhopper.routing.profiles;
 
-import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.EdgeIteratorState;
+public class RoadClassLink {
+    public static final String KEY = "road_class_link";
 
-/**
- * Elevation interpolator for tunnels. Estimates elevations of inner nodes of
- * the tunnel based on elevations of entry/exit nodes of the tunnel.
- *
- * @author Alexey Valikov
- */
-public class TunnelElevationInterpolator extends AbstractEdgeElevationInterpolator {
-
-    public TunnelElevationInterpolator(GraphHopperStorage storage,
-                                       DataFlagEncoder dataFlagEncoder) {
-        super(storage, dataFlagEncoder);
-    }
-
-    @Override
-    protected boolean isInterpolatableEdge(EdgeIteratorState edge) {
-        return dataFlagEncoder.isTransportModeTunnel(edge);
+    public static BooleanEncodedValue create() {
+        return new SimpleBooleanEncodedValue(KEY);
     }
 }

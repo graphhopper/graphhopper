@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
  * This class defines a IndexBased but is type safe.
  */
 public class RoadClass extends DefaultIndexBased {
+    public static final String KEY = "road_class";
     private static final LinkedHashMap<String, RoadClass> map = create("other", "motorway", "motorroad", "trunk",
             "primary", "secondary", "tertiary", "residential", "unclassified", "service", "road", "track", "forestry",
             "steps", "cycleway", "path", "living_street");
@@ -44,7 +45,7 @@ public class RoadClass extends DefaultIndexBased {
     }
 
     public static ObjectEncodedValue create() {
-        return new MappedObjectEncodedValue("road_class", new ArrayList<>(map.values()));
+        return new MappedObjectEncodedValue(KEY, new ArrayList<>(map.values()));
     }
 
     public static LinkedHashMap<String, RoadClass> create(String... list) {

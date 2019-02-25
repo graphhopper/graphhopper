@@ -18,10 +18,14 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
+
+import java.util.List;
 
 import static com.graphhopper.routing.profiles.RoadClass.OTHER;
 
@@ -29,9 +33,17 @@ public class OSMRoadClassParser implements TagParser {
 
     private final ObjectEncodedValue roadClassEnc;
 
+    public OSMRoadClassParser() {
+        this(RoadClass.create());
+    }
 
     public OSMRoadClassParser(ObjectEncodedValue roadClassEnc) {
         this.roadClassEnc = roadClassEnc;
+    }
+
+    @Override
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
+        link.add(roadClassEnc);
     }
 
     @Override

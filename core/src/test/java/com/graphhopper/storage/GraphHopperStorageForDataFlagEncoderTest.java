@@ -7,6 +7,7 @@ import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.EncodingManager.Access;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.After;
@@ -15,7 +16,6 @@ import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.File;
-import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
@@ -38,7 +38,7 @@ public class GraphHopperStorageForDataFlagEncoderTest {
         properties.put("store_weight", true);
         properties.put("store_width", false);
         encoder = new DataFlagEncoder(properties);
-        encodingManager = EncodingManager.create(Arrays.asList(encoder), 8);
+        encodingManager = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).add(encoder).build();
     }
 
     @Before
@@ -64,7 +64,8 @@ public class GraphHopperStorageForDataFlagEncoderTest {
         graph.edge(0, 1, 1, true);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
-        graph.getEdgeIteratorState(0, 1).setFlags(encoder.handleWayTags(encodingManager.createEdgeFlags(), way_0_1, Access.WAY, 0));
+        EncodingManager.AcceptWay map = new EncodingManager.AcceptWay().put(encoder.toString(), Access.WAY);
+        graph.getEdgeIteratorState(0, 1).setFlags(encodingManager.handleWayTags(way_0_1, map, 0));
 
         // 1-2
         ReaderWay way_1_2 = new ReaderWay(28l);
@@ -73,7 +74,7 @@ public class GraphHopperStorageForDataFlagEncoderTest {
 
         graph.edge(1, 2, 1, true);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 2, 0.02, 0.02);
-        graph.getEdgeIteratorState(1, 2).setFlags(encoder.handleWayTags(encodingManager.createEdgeFlags(), way_1_2, Access.WAY, 0));
+        graph.getEdgeIteratorState(1, 2).setFlags(encodingManager.handleWayTags(way_1_2, map, 0));
 
         // 2-0
         ReaderWay way_2_0 = new ReaderWay(29l);
@@ -81,7 +82,7 @@ public class GraphHopperStorageForDataFlagEncoderTest {
         way_2_0.setTag("maxwidth", "5");
 
         graph.edge(2, 0, 1, true);
-        graph.getEdgeIteratorState(2, 0).setFlags(encoder.handleWayTags(encodingManager.createEdgeFlags(), way_2_0, Access.WAY, 0));
+        graph.getEdgeIteratorState(2, 0).setFlags(encodingManager.handleWayTags(way_2_0, map, 0));
 
         graph.flush();
         graph.close();

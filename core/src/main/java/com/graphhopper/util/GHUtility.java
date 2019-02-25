@@ -22,11 +22,8 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.AllCHEdgesIterator;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
@@ -43,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class GHUtility {
     private static final Logger LOGGER = LoggerFactory.getLogger(GHUtility.class);
+
     /**
      * This method could throw an exception if problems like index out of bounds etc
      */
@@ -426,6 +424,16 @@ public class GHUtility {
             public double getReverse(DecimalEncodedValue property) {
                 return property.getDecimal(true, flags);
             }
+
+            @Override
+            public IndexBased get(ObjectEncodedValue property) {
+                return property.getObject(false, flags);
+            }
+
+            @Override
+            public IndexBased getReverse(ObjectEncodedValue property) {
+                return property.getObject(true, flags);
+            }
         };
     }
 
@@ -528,6 +536,13 @@ public class GHUtility {
         if (bwd)
             edge.setReverse(avSpeedEnc, averageSpeed);
         return edge;
+    }
+
+    public static final EncodingManager.Builder addDefaultEncodedValues(EncodingManager.Builder builder) {
+        // 5+1+3+5+4+4=22 bits
+        return builder.add(new OSMRoadClassParser()).add(new OSMRoadClassLinkParser()).
+                add(new OSMRoadEnvironmentParser()).add(new OSMCarMaxSpeedParser()).add(new OSMRoadAccessParser()).
+                add(new OSMSurfaceParser());
     }
 
     /**

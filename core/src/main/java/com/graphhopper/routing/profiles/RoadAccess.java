@@ -21,11 +21,15 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
 public class RoadAccess extends DefaultIndexBased {
-    private static final LinkedHashMap<String, RoadAccess> map = create("other", "unlimited", "private", "customers",
-            "destination", "delivery", "no", "forestry", "agricultural");
-    public static final RoadAccess OTHER = map.get("other"), UNLIMITED = map.get("unlimited"), PRIVATE = map.get("private"), CUSTOMERS = map.get("customers"),
-            DESTINATION = map.get("destination"), DELIVERY = map.get("delivery"), NO = map.get("no"),
-            FORESTRY = map.get("forestry"), AGRICULTURAL = map.get("agricultural");
+    public static final String KEY = "road_access";
+    // order is important here as we assume "smaller index" means "broader access"
+    private static final LinkedHashMap<String, RoadAccess> map = create("other", "unlimited", "destination",
+            "customers", "delivery", "forestry", "agricultural", "private", "no");
+
+    public static final RoadAccess OTHER = map.get("other"), UNLIMITED = map.get("unlimited"),
+            DESTINATION = map.get("destination"), CUSTOMERS = map.get("customers"), DELIVERY = map.get("delivery"),
+            FORESTRY = map.get("forestry"), AGRICULTURAL = map.get("agricultural"),
+            PRIVATE = map.get("private"), NO = map.get("no");
 
     private RoadAccess(String name, int ordinal) {
         super(name, ordinal);
@@ -37,7 +41,7 @@ public class RoadAccess extends DefaultIndexBased {
     }
 
     public static ObjectEncodedValue create() {
-        return new MappedObjectEncodedValue("road_access", new ArrayList<>(map.values()));
+        return new MappedObjectEncodedValue(KEY, new ArrayList<>(map.values()));
     }
 
     public static LinkedHashMap<String, RoadAccess> create(String... list) {
