@@ -1,6 +1,7 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,6 +41,17 @@ public class MappedDecimalEncodedValueTest {
             maxweight.setDecimal(false, new IntsRef(0), 4);
             assertTrue(false);
         } catch (Exception ex) {
+        }
+    }
+
+    @Test
+    public void testStoreAndLoad() {
+//        MappedDecimalEncodedValue enc = new MappedDecimalEncodedValue(maxweight.toString());
+//        assertEquals(enc, maxweight);
+        PMap map = new PMap("name=road_class");
+        String name = map.get("name", "");
+        if(RoadClass.KEY.equals(name)) {
+            RoadClass.create();
         }
     }
 }

@@ -130,6 +130,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         // workaround to init AbstractWeighting.avSpeedEnc variable that GenericWeighting does not need
         speedEncoder = new FactorizedDecimalEncodedValue("fake", 1, 1, false);
 
+        // TODO NOW
+//        if (!encodedValueLookup.hasEncodedValue(RoadEnvironment.KEY))
+//            throw new IllegalStateException("To use DataFlagEncoder you need to add the default EncodedValues. E.g. use GHUtility.addDefaultEncodedValues");
+
         roadEnvironmentEnc = getObjectEncodedValue(RoadEnvironment.KEY);
     }
 

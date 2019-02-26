@@ -19,6 +19,7 @@ package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -44,5 +45,22 @@ public final class MappedObjectEncodedValue extends SimpleIntEncodedValue implem
     public final IndexBased getObject(boolean reverse, IntsRef ref) {
         int value = super.getInt(reverse, ref);
         return arr[value];
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!super.equals(o)) return false;
+        MappedObjectEncodedValue that = (MappedObjectEncodedValue) o;
+        return Arrays.equals(arr, that.arr);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + Arrays.hashCode(arr);
+    }
+
+    @Override
+    public int getVersion() {
+        return hashCode();
     }
 }

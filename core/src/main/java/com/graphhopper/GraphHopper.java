@@ -24,6 +24,8 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
+import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
+import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
@@ -118,7 +120,8 @@ public class GraphHopper implements GraphHopperAPI {
     private int dataReaderWorkerThreads = 2;
     private boolean calcPoints = true;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
-    private FlagEncoderFactory flagEncoderFactory = FlagEncoderFactory.DEFAULT;
+    private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
+    private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
@@ -513,8 +516,18 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
+    // TODO NOW remove this method
     public FlagEncoderFactory getFlagEncoderFactory() {
         return this.flagEncoderFactory;
+    }
+
+    public EncodedValueFactory getEncodedValueFactory() {
+        return this.encodedValueFactory;
+    }
+
+    public GraphHopper setEncodedValueFactory(EncodedValueFactory factory) {
+        this.encodedValueFactory = factory;
+        return this;
     }
 
     /**
@@ -747,7 +760,7 @@ public class GraphHopper implements GraphHopperAPI {
         setGraphHopperLocation(graphHopperFolder);
 
         if (encodingManager == null)
-            setEncodingManager(EncodingManager.create(flagEncoderFactory, ghLocation));
+            setEncodingManager(EncodingManager.create(encodedValueFactory, flagEncoderFactory, ghLocation));
 
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;

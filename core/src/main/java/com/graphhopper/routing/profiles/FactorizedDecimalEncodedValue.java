@@ -19,6 +19,8 @@ package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Objects;
+
 /**
  * This class holds a decimal value and stores it as an integer value via a conversion factor and a maximum number
  * of bits.
@@ -53,5 +55,22 @@ public final class FactorizedDecimalEncodedValue extends SimpleIntEncodedValue i
     public final double getDecimal(boolean reverse, IntsRef ref) {
         int value = getInt(reverse, ref);
         return value * factor;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!super.equals(o)) return false;
+        FactorizedDecimalEncodedValue that = (FactorizedDecimalEncodedValue) o;
+        return Double.compare(that.factor, factor) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), factor);
+    }
+
+    @Override
+    public int getVersion() {
+        return hashCode();
     }
 }

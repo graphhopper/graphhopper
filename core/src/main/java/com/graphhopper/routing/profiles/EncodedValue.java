@@ -38,6 +38,11 @@ public interface EncodedValue {
      */
     String getName();
 
+    /**
+     * Same version ensures compatibility when reading values
+     */
+    int getVersion();
+
     class InitializerConfig {
         int dataIndex = -1;
         int shift = 32;

@@ -185,7 +185,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
         properties.put("graph.bytes_for_flags", encodingManager.getBytesForFlags());
         properties.put("graph.flag_encoders", encodingManager.flagEncodersAsString());
-        properties.put("graph.default_encoded_values", encodingManager.encodedValuesAsString());
+        properties.put("graph.encoded_values", encodingManager.encodedValuesAsString());
 
         properties.put("graph.byte_order", dir.getByteOrder());
         properties.put("graph.dimension", baseGraph.nodeAccess.getDimension());

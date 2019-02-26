@@ -20,6 +20,7 @@ package com.graphhopper.routing.profiles;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * Implementation of the IntEncodedValue via a limited number of bits. It introduces simple handling of "backward"- and
@@ -145,34 +146,33 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
 
     @Override
     public final String toString() {
-        return getName() + "|bits=" + bits + "|fwd_shift=" + fwdShift + "|store_both_directions=" + storeBothDirections;
+        return getName() + "|version=" + getVersion() + "|bits=" + bits + "|fwd_shift=" + fwdShift + "|store_both_directions=" + storeBothDirections;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         SimpleIntEncodedValue that = (SimpleIntEncodedValue) o;
-
-        if (fwdDataIndex != that.fwdDataIndex) return false;
-        if (bwdDataIndex != that.bwdDataIndex) return false;
-        if (bits != that.bits) return false;
-        if (fwdShift != that.fwdShift) return false;
-        if (bwdShift != that.bwdShift) return false;
-        if (storeBothDirections != that.storeBothDirections) return false;
-        return name.equals(that.name);
+        return fwdDataIndex == that.fwdDataIndex &&
+                bwdDataIndex == that.bwdDataIndex &&
+                bits == that.bits &&
+                maxValue == that.maxValue &&
+                fwdShift == that.fwdShift &&
+                bwdShift == that.bwdShift &&
+                fwdMask == that.fwdMask &&
+                bwdMask == that.bwdMask &&
+                storeBothDirections == that.storeBothDirections &&
+                Objects.equals(name, that.name);
     }
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + fwdDataIndex;
-        result = 31 * result + bwdDataIndex;
-        result = 31 * result + bits;
-        result = 31 * result + fwdShift;
-        result = 31 * result + bwdShift;
-        result = 31 * result + (storeBothDirections ? 1 : 0);
-        return result;
+        return Objects.hash(name, fwdDataIndex, bwdDataIndex, bits, maxValue, fwdShift, bwdShift, fwdMask, bwdMask, storeBothDirections);
+    }
+
+    @Override
+    public int getVersion() {
+        return hashCode();
     }
 }

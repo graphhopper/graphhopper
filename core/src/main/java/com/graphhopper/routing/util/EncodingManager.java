@@ -29,7 +29,7 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
@@ -109,7 +109,7 @@ public class EncodingManager implements EncodedValueLookup {
      * Create the EncodingManager from the provided GraphHopper location. Throws an
      * IllegalStateException if it fails. Used if no EncodingManager specified on load.
      */
-    public static EncodingManager create(FlagEncoderFactory factory, String ghLoc) {
+    public static EncodingManager create(EncodedValueFactory evFactory, FlagEncoderFactory flagEncoderFactory, String ghLoc) {
         Directory dir = new RAMDirectory(ghLoc, true);
         StorableProperties properties = new StorableProperties(dir);
         if (!properties.loadExisting())
@@ -118,22 +118,26 @@ public class EncodingManager implements EncodedValueLookup {
 
         // check encoding for compatibility
         properties.checkVersions(false);
-        String acceptStr = properties.get("graph.flag_encoders");
-
-        if (acceptStr.isEmpty())
-            throw new IllegalStateException("EncodingManager was not configured. And no one was found in the graph: "
-                    + dir.getLocation());
-
         int bytesForFlags = 4;
         try {
             bytesForFlags = Integer.parseInt(properties.get("graph.bytes_for_flags"));
         } catch (NumberFormatException ex) {
         }
-        EncodingManager.Builder emBuilder = new EncodingManager.Builder(bytesForFlags);
-        if ("true".equals(properties.get("graph.add_default_encoded_values")))
-            GHUtility.addDefaultEncodedValues(emBuilder);
 
-        return emBuilder.addAll(factory, acceptStr).build();
+        EncodingManager.Builder builder = new EncodingManager.Builder(bytesForFlags, false);
+        String encodedValuesStr = properties.get("graph.encoded_values");
+        if (!Helper.isEmpty(encodedValuesStr))
+            builder.addAll(evFactory, encodedValuesStr);
+        String flagEncoderValuesStr = properties.get("graph.flag_encoders");
+        if (!Helper.isEmpty(flagEncoderValuesStr))
+            builder.addAll(flagEncoderFactory, flagEncoderValuesStr);
+
+        if (Helper.isEmpty(flagEncoderValuesStr) && Helper.isEmpty(encodedValuesStr))
+            throw new IllegalStateException("EncodingManager was not configured. And no one was found in the graph: "
+                    + dir.getLocation());
+
+
+        return builder.build();
     }
 
     /**
@@ -156,8 +160,13 @@ public class EncodingManager implements EncodedValueLookup {
         private boolean buildCalled = false;
 
         public Builder(int bytes) {
+            this(bytes, true);
+        }
+
+        private Builder(int bytes, boolean addRoundabout) {
             em = new EncodingManager(bytes);
-            add(new OSMRoundaboutParser());
+            if (addRoundabout)
+                add(new OSMRoundaboutParser());
         }
 
         /**
@@ -167,6 +176,11 @@ public class EncodingManager implements EncodedValueLookup {
             for (FlagEncoder fe : parseEncoderString(factory, flagEncodersStr)) {
                 add(fe);
             }
+            return this;
+        }
+
+        public Builder addAll(EncodedValueFactory factory, String encodedValueString) {
+            em.add(this, factory, encodedValueString);
             return this;
         }
 
@@ -236,6 +250,24 @@ public class EncodingManager implements EncodedValueLookup {
             resultEncoders.add(fe);
         }
         return resultEncoders;
+    }
+
+    private void add(Builder builder, EncodedValueFactory factory, String evList) {
+        if (!evList.equals(toLowerCase(evList)))
+            throw new IllegalArgumentException("Use lower case for EncodedValues: " + evList);
+
+        for (String entry : evList.split(",")) {
+            entry = toLowerCase(entry.trim());
+            if (entry.isEmpty())
+                continue;
+
+            EncodedValue fe = factory.create(entry);
+            builder.add(fe);
+            int version = new PMap(entry).getInt("version", Integer.MIN_VALUE);
+            int stored = fe.getVersion();
+            if (stored != version)
+                throw new IllegalArgumentException("Version of EncodedValue does not match. Stored " + stored + " vs. in code " + version);
+        }
     }
 
     static String fixWayName(String str) {
@@ -459,14 +491,17 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public String encodedValuesAsString() {
-        // TODO NOW load encoder and EncodedValue separately!
-        // TODO NOW change to include info that is required to load from, e.g. mapped EncodedValue needs a version (hash of the keys, size not sufficient)
         StringBuilder str = new StringBuilder();
         for (EncodedValue ev : encodedValueMap.values()) {
+            String evString = ev.toString();
+            // TODO NOW ignore EV from FlagEncoders somehow!
+            if (evString.contains("."))
+                continue;
+
             if (str.length() > 0)
                 str.append(",");
 
-            str.append(ev.toString());
+            str.append(evString);
         }
 
         return str.toString();

@@ -44,6 +44,11 @@ public interface EdgeIteratorState {
         }
 
         @Override
+        public int getVersion() {
+            return 1;
+        }
+
+        @Override
         public boolean getBool(boolean reverse, IntsRef ref) {
             return reverse;
         }

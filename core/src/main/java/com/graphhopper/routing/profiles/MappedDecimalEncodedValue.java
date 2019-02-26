@@ -22,6 +22,7 @@ import com.carrotsearch.hppc.IntIntHashMap;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * For certain values it can be more efficient to store the mapping instead of the value and a factor. E.g. for
@@ -76,5 +77,25 @@ public final class MappedDecimalEncodedValue extends SimpleIntEncodedValue imple
     public final double getDecimal(boolean reverse, IntsRef ref) {
         int value = getInt(reverse, ref);
         return toValueMap[value] * precision;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        MappedDecimalEncodedValue that = (MappedDecimalEncodedValue) o;
+        return Double.compare(that.precision, precision) == 0 &&
+                Objects.equals(toStorageMap, that.toStorageMap);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), toStorageMap, precision);
+    }
+
+    @Override
+    public int getVersion() {
+        return hashCode();
     }
 }
