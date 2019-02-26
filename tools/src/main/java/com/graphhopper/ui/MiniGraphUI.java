@@ -25,6 +25,8 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PreparationWeighting;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
@@ -64,6 +66,8 @@ public class MiniGraphUI {
     private final MapLayer pathLayer;
     private final Weighting weighting;
     private final FlagEncoder encoder;
+    private final DecimalEncodedValue avSpeedEnc;
+    private final BooleanEncodedValue accessEnc;
     private final RoutingAlgorithmFactory algoFactory;
     private final AlgorithmOptions algoOpts;
     // for moving
@@ -85,13 +89,15 @@ public class MiniGraphUI {
         final Graph graph = hopper.getGraphHopperStorage();
         this.na = graph.getNodeAccess();
         encoder = hopper.getEncodingManager().getEncoder("car");
+        avSpeedEnc = encoder.getAverageSpeedEnc();
+        accessEnc = encoder.getAccessEnc();
         HintsMap map = new HintsMap("fastest").
                 setVehicle("car");
 
         boolean ch = true;
         if (ch) {
             map.put(Parameters.Landmark.DISABLE, true);
-            weighting = hopper.getCHFactoryDecorator().getWeightings().get(0);
+            weighting = hopper.getCHFactoryDecorator().getNodeBasedWeightings().get(0);
             routingGraph = hopper.getGraphHopperStorage().getGraph(CHGraph.class, weighting);
 
             final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
@@ -101,8 +107,8 @@ public class MiniGraphUI {
                     private final GraphicsWrapper mg;
                     private Graphics2D g2;
 
-                    public TmpAlgo(Graph graph, Weighting type, TraversalMode tMode, GraphicsWrapper mg) {
-                        super(graph, type, tMode);
+                    public TmpAlgo(Graph graph, Weighting type, GraphicsWrapper mg) {
+                        super(graph, type);
                         this.mg = mg;
                     }
 
@@ -124,7 +130,7 @@ public class MiniGraphUI {
                 public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
                     // doable but ugly
                     Weighting w = ((PrepareContractionHierarchies) tmpFactory).getWeighting();
-                    return new TmpAlgo(g, new PreparationWeighting(w), TraversalMode.NODE_BASED, mg).
+                    return new TmpAlgo(g, new PreparationWeighting(w), mg).
                             setEdgeFilter(new LevelEdgeFilter((CHGraph) routingGraph));
                 }
             };
@@ -244,7 +250,7 @@ public class MiniGraphUI {
 
                     // mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, iter.getName());
                     //mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
-                    double speed = encoder.getSpeed(edge.getFlags());
+                    double speed = edge.get(avSpeedEnc);
                     Color color;
                     if (speed >= 120) {
                         // red
@@ -266,8 +272,8 @@ public class MiniGraphUI {
                     }
 
                     g2.setColor(color);
-                    boolean fwd = encoder.isForward(edge.getFlags());
-                    boolean bwd = encoder.isBackward(edge.getFlags());
+                    boolean fwd = edge.get(accessEnc);
+                    boolean bwd = edge.getReverse(accessEnc);
                     float width = speed > 90 ? 1f : 0.8f;
                     if (fwd && !bwd) {
                         mg.plotDirectedEdge(g2, lat, lon, lat2, lon2, width);

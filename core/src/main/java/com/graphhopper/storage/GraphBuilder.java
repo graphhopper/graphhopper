@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * For now this is just a helper class to quickly create a {@link GraphHopperStorage}
@@ -34,6 +35,7 @@ public class GraphBuilder {
     private boolean mmap;
     private boolean store;
     private boolean elevation;
+    private boolean edgeBasedCH;
     private long byteCapacity = 100;
     private Weighting singleCHWeighting;
 
@@ -74,6 +76,11 @@ public class GraphBuilder {
         return this;
     }
 
+    public GraphBuilder setEdgeBasedCH(boolean edgeBasedCH) {
+        this.edgeBasedCH = edgeBasedCH;
+        return this;
+    }
+
     public boolean hasElevation() {
         return elevation;
     }
@@ -95,13 +102,15 @@ public class GraphBuilder {
                 new MMapDirectory(location) :
                 new RAMDirectory(location, store);
 
-        GraphHopperStorage graph;
-        if (encodingManager.needsTurnCostsSupport() || singleCHWeighting == null)
-            graph = new GraphHopperStorage(dir, encodingManager, elevation, new TurnCostExtension());
-        else
-            graph = new GraphHopperStorage(Arrays.asList(singleCHWeighting), dir, encodingManager, elevation, new TurnCostExtension.NoOpExtension());
+        GraphExtension graphExtension = encodingManager.needsTurnCostsSupport() ?
+                new TurnCostExtension() :
+                new TurnCostExtension.NoOpExtension();
 
-        return graph;
+        return singleCHWeighting == null ?
+                new GraphHopperStorage(dir, encodingManager, elevation, graphExtension) :
+                edgeBasedCH ?
+                        new GraphHopperStorage(Collections.<Weighting>emptyList(), Arrays.asList(singleCHWeighting), dir, encodingManager, elevation, graphExtension) :
+                        new GraphHopperStorage(Arrays.asList(singleCHWeighting), Collections.<Weighting>emptyList(), dir, encodingManager, elevation, graphExtension);
     }
 
     /**

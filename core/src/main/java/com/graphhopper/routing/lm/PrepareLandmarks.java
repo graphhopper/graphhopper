@@ -130,7 +130,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         lms.createLandmarks();
         lms.flush();
 
-        LOGGER.info("Calculating landmarks for " + (lms.getSubnetworksWithLandmarks() - 1) + " subnetworks took:" + sw.stop().getSeconds() + " => "
+        LOGGER.info("Calculated landmarks for " + (lms.getSubnetworksWithLandmarks() - 1) + " subnetworks, took:" + sw.stop().getSeconds() + " => "
                 + lms.getLandmarksAsGeoJSON() + ", stored weights:" + lms.getLandmarkCount()
                 + ", nodes:" + graph.getNodes() + ", " + Helper.getMemInfo());
     }

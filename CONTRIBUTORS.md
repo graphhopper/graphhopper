@@ -7,11 +7,12 @@ state this as a comment via a separate, signed commit.
 
 Here is an overview:
 
- * ammagamma, improvements like #700, #703
  * AnahitaS, docs for Android, Android, Tomcat
  * andreaswolf, flag encoder versioning and more
+ * andreylh, polygon for blocked area #1306
  * agouge, discussion and API refactoring
  * b3nn0, Android improvements
+ * baumboi, path detail and landmark improvements
  * boldtrn, one of the core developers with motorcycle knowledge :)
  * cgarreau, increase of routing success rate via subnetwork cleanup
  * ChristianSeitzer, motorcycle improvements
@@ -23,6 +24,7 @@ Here is an overview:
  * dos65, bug fixes in routing algo
  * drnextgis, ru translation and JS fixes
  * duongnt, fixes in storage
+ * easbar, several improvements on core algorithms
  * edy, improvements regarding docker #849
  * elibar, fix for alternative route calculation
  * fbonzon, several UI improvements like #615

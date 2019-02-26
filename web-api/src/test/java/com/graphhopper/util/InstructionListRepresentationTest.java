@@ -2,30 +2,18 @@ package com.graphhopper.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 
+import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mockingDetails;
-import static org.mockito.Mockito.when;
 
 public class InstructionListRepresentationTest {
 
-    @Mock
-    Translation usTR;
-
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
-
     @Test
     public void testRoundaboutJsonIntegrity() {
-        when(usTR.tr("roundabout_exit_onto", 2, "streetname")).thenReturn("At roundabout, take exit 2 onto streetname");
         InstructionList il = new InstructionList(usTR);
 
         PointList pl = new PointList();
@@ -60,7 +48,6 @@ public class InstructionListRepresentationTest {
     // Roundabout with unknown dir of rotation
     @Test
     public void testRoundaboutJsonNaN() {
-        when(usTR.tr("roundabout_exit_onto", 2, "streetname")).thenReturn("At roundabout, take exit 2 onto streetname");
         InstructionList il = new InstructionList(usTR);
 
         PointList pl = new PointList();
@@ -81,5 +68,27 @@ public class InstructionListRepresentationTest {
         assertNotNull(write(json));
     }
 
+    static Translation usTR = new Translation() {
+        @Override
+        public String tr(String key, Object... params) {
+            if (key.equals("roundabout_exit_onto"))
+                return "At roundabout, take exit 2 onto streetname";
+            return key;
+        }
 
+        @Override
+        public Map<String, String> asMap() {
+            return Collections.emptyMap();
+        }
+
+        @Override
+        public Locale getLocale() {
+            return Locale.US;
+        }
+
+        @Override
+        public String getLanguage() {
+            return "en";
+        }
+    };
 }

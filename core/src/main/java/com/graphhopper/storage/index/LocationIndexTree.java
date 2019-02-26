@@ -29,18 +29,10 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-
-import java.util.ArrayList;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * This implementation implements an n-tree to get the closest node or edge from GPS coordinates.
@@ -95,7 +87,7 @@ public class LocationIndexTree implements LocationIndex {
         MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
-        dataAccess = dir.find("location_index");
+        dataAccess = dir.find("location_index", DAType.getPreferredInt(dir.getDefaultType()));
     }
 
     public int getMinResolutionInMeter() {
@@ -343,7 +335,7 @@ public class LocationIndexTree implements LocationIndex {
         return IntArrayList.from(entries);
     }
 
-    // fillIDs according to how they are stored
+    // fill node IDs according to how they are stored
     final void fillIDs(long keyPart, int intIndex, GHIntHashSet set, int depth) {
         long pointer = (long) intIndex << 2;
         if (depth == entries.length) {
@@ -571,13 +563,13 @@ public class LocationIndexTree implements LocationIndex {
 
         return closestMatch;
     }
-    
+
     /**
      * Returns all edges that are within the specified radius around the queried position.
      * Searches at most 9 cells to avoid performance problems. Hence, if the radius is larger than
      * the cell width then not all edges might be returned.
-     * 
-     * TODO: either clarify the method name and description (to only search e.g. 9 tiles) or 
+     * <p>
+     * TODO: either clarify the method name and description (to only search e.g. 9 tiles) or
      * refactor so it can handle a radius larger than 9 tiles. Also remove reference to 'NClosest',
      * which is misleading, and don't always return at least one value. See map-matching #65.
      * TODO: tidy up logic - see comments in graphhopper #994.
@@ -585,7 +577,7 @@ public class LocationIndexTree implements LocationIndex {
      * @param radius in meters
      */
     public List<QueryResult> findNClosest(final double queryLat, final double queryLon,
-            final EdgeFilter edgeFilter, double radius) {
+                                          final EdgeFilter edgeFilter, double radius) {
         // Return ALL results which are very close and e.g. within the GPS signal accuracy.
         // Also important to get all edges if GPS point is close to a junction.
         final double returnAllResultsWithin = distCalc.calcNormalizedDist(radius);
@@ -684,7 +676,7 @@ public class LocationIndexTree implements LocationIndex {
 
         return queryResults;
     }
-    
+
     // make entries static as otherwise we get an additional reference to this class (memory waste)
     interface InMemEntry {
         boolean isLeaf();

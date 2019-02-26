@@ -54,7 +54,7 @@ public class BreadthFirstSearchTest {
             }
         };
 
-        Graph g = new GraphBuilder(new EncodingManager("car")).create();
+        Graph g = new GraphBuilder(EncodingManager.create("car")).create();
         g.edge(0, 1, 85, true);
         g.edge(0, 2, 217, true);
         g.edge(0, 3, 173, true);
@@ -88,7 +88,7 @@ public class BreadthFirstSearchTest {
             }
         };
 
-        Graph g = new GraphBuilder(new EncodingManager("car")).create();
+        Graph g = new GraphBuilder(EncodingManager.create("car")).create();
         g.edge(1, 2, 1, false);
         g.edge(2, 3, 1, false);
         g.edge(3, 4, 1, false);

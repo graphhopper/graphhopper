@@ -39,6 +39,13 @@ graphhopper:
   # graph but less for every request. You can also setup multiple weightings, by providing a comma separated list.
   prepare.ch.weightings: fastest
 
+  # To enable turn-costs in speed mode (contraction hierarchies) edge-based graph traversal and a more elaborate
+  # pre-processing is required. Using this option you can either turn off the edge-based pre-processing (choose 'off'),
+  # use edge-based pre-processing for all encoders/vehicles with turn_costs=true (choose 'edge_or_node') or use node-based
+  # pre-processing for all encoders/vehicles and additional edge-based pre-processing for all encoders/vehicles with
+  # turn_costs=true (choose 'edge_and_node').
+  prepare.ch.edge_based: off
+
 
   # Disable the speed mode. Should be used only with routing.max_visited_nodes or when the hybrid mode is enabled instead
   # prepare.ch.weightings: no
@@ -142,3 +149,18 @@ server:
   - type: http
     port: 8990
     bindHost: localhost
+# See https://www.dropwizard.io/1.3.8/docs/manual/configuration.html#logging
+logging:
+  appenders:
+  - type: file
+    timeZone: UTC
+    currentLogFilename: logs/graphhopper.log
+    logFormat: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    archive: true
+    archivedLogFilenamePattern: ./logs/graphhopper-%d.log.gz
+    archivedFileCount: 30
+    neverBlock: true
+    immediateFlush: false
+  - type: console
+    timeZone: UTC
+    logFormat: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

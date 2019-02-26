@@ -28,6 +28,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -48,7 +49,6 @@ import static org.junit.Assert.*;
 
 /**
  * Tests the OSMReader with the normal helper initialized.
- * <p>
  *
  * @author Peter Karich
  */
@@ -67,6 +67,7 @@ public class OSMReaderTest {
     private final String fileRoadAttributes = "test-road-attributes.xml";
     private final String dir = "./target/tmp/test-db";
     private CarFlagEncoder carEncoder;
+    private BooleanEncodedValue carAccessEnc;
     private BikeFlagEncoder bikeEncoder;
     private FlagEncoder footEncoder;
     private EdgeExplorer carOutExplorer;
@@ -115,8 +116,8 @@ public class OSMReaderTest {
         assertEquals("street 123, B 122", iter.getName());
         assertEquals(n50, iter.getAdjNode());
         AbstractGraphStorageTester.assertPList(Helper.createPointList(51.25, 9.43), iter.fetchWayGeometry(0));
-        assertTrue(iter.isForward(carEncoder));
-        assertTrue(iter.isBackward(carEncoder));
+        assertTrue(iter.get(carAccessEnc));
+        assertTrue(iter.getReverse(carAccessEnc));
 
         assertTrue(iter.next());
         assertEquals("route 666", iter.getName());
@@ -128,8 +129,8 @@ public class OSMReaderTest {
         assertEquals(n10, iter.getAdjNode());
         assertEquals(88643, iter.getDistance(), 1);
 
-        assertTrue(iter.isForward(carEncoder));
-        assertTrue(iter.isBackward(carEncoder));
+        assertTrue(iter.get(carAccessEnc));
+        assertTrue(iter.getReverse(carAccessEnc));
         assertFalse(iter.next());
 
         // get third added location id=30
@@ -229,31 +230,30 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals(n30, iter.getAdjNode());
 
-        FlagEncoder encoder = carEncoder;
         iter = carAllExplorer.setBaseNode(n20);
         assertTrue(iter.next());
         assertEquals(n23, iter.getAdjNode());
-        assertTrue(iter.isForward(encoder));
-        assertFalse(iter.isBackward(encoder));
+        assertTrue(iter.get(carAccessEnc));
+        assertFalse(iter.getReverse(carAccessEnc));
 
         assertTrue(iter.next());
         assertEquals(n22, iter.getAdjNode());
-        assertFalse(iter.isForward(encoder));
-        assertTrue(iter.isBackward(encoder));
+        assertFalse(iter.get(carAccessEnc));
+        assertTrue(iter.getReverse(carAccessEnc));
 
         assertTrue(iter.next());
-        assertFalse(iter.isForward(encoder));
-        assertTrue(iter.isBackward(encoder));
+        assertFalse(iter.get(carAccessEnc));
+        assertTrue(iter.getReverse(carAccessEnc));
 
         assertTrue(iter.next());
         assertEquals(n30, iter.getAdjNode());
-        assertTrue(iter.isForward(encoder));
-        assertFalse(iter.isBackward(encoder));
+        assertTrue(iter.get(carAccessEnc));
+        assertFalse(iter.getReverse(carAccessEnc));
 
         assertTrue(iter.next());
         assertEquals(n10, iter.getAdjNode());
-        assertFalse(iter.isForward(encoder));
-        assertTrue(iter.isBackward(encoder));
+        assertFalse(iter.get(carAccessEnc));
+        assertTrue(iter.getReverse(carAccessEnc));
     }
 
     @Test
@@ -273,13 +273,13 @@ public class OSMReaderTest {
         int n80 = AbstractGraphStorageTester.getIdOf(graph, 54.1);
         EdgeIterator iter = carOutExplorer.setBaseNode(n80);
         iter.next();
-        assertEquals(5, carEncoder.getSpeed(iter.getFlags()), 1e-1);
+        assertEquals(5, iter.get(carEncoder.getAverageSpeedEnc()), 1e-1);
 
         // duration 01:10 is given => more precise speed calculation!
         // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 71km/h
         iter = carOutExplorer.setBaseNode(n40);
         iter.next();
-        assertEquals(70, carEncoder.getSpeed(iter.getFlags()), 1e-1);
+        assertEquals(70, iter.get(carEncoder.getAverageSpeedEnc()), 1e-1);
     }
 
     @Test
@@ -294,7 +294,7 @@ public class OSMReaderTest {
         int n60 = AbstractGraphStorageTester.getIdOf(graph, 56.0);
         EdgeIterator iter = carOutExplorer.setBaseNode(n60);
         iter.next();
-        assertEquals(35, carEncoder.getSpeed(iter.getFlags()), 1e-1);
+        assertEquals(35, iter.get(carEncoder.getAverageSpeedEnc()), 1e-1);
     }
 
     @Test
@@ -393,6 +393,55 @@ public class OSMReaderTest {
     }
 
     @Test
+    public void avoidsLoopEdges_1525() {
+        // loops in OSM should be avoided by adding additional tower node (see #1525, #1531)
+        //     C - D
+        //      \ /
+        //   A - B - E
+        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops.xml").importOrLoad();
+        checkLoop(hopper);
+    }
+
+    void checkLoop(GraphHopper hopper) {
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+
+        // A, B, E and one of C or D should be tower nodes, in any case C and D should not be collapsed entirely
+        // into a loop edge from B to B.
+        assertEquals(4, graph.getNodes());
+        // two edges going to A and E and two edges going to C or D
+        AllEdgesIterator iter = graph.getAllEdges();
+        assertEquals(4, iter.length());
+        while (iter.next()) {
+            assertTrue("found a loop", iter.getAdjNode() != iter.getBaseNode());
+        }
+        int nodeB = AbstractGraphStorageTester.getIdOf(graph, 12);
+        assertTrue("could not find OSM node B", nodeB > -1);
+        assertEquals(4, GHUtility.count(graph.createEdgeExplorer().setBaseNode(nodeB)));
+    }
+
+    @Test
+    public void avoidsLoopEdgesIdenticalLatLon_1533() {
+        checkLoop(new GraphHopperFacade("test-avoid-loops2.xml").importOrLoad());
+    }
+
+    @Test
+    public void avoidsLoopEdgesIdenticalNodeIds_1533() {
+        // We can handle the following case with the proper result:
+        checkLoop(new GraphHopperFacade("test-avoid-loops3.xml").importOrLoad());
+        // We cannot handle the following case, i.e. no loop is created. so we only check that there are no loops
+        GraphHopper hopper = new GraphHopperFacade("test-avoid-loops4.xml").importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        AllEdgesIterator iter = graph.getAllEdges();
+        assertEquals(2, iter.length());
+        while (iter.next()) {
+            assertTrue("found a loop", iter.getAdjNode() != iter.getBaseNode());
+        }
+        int nodeB = AbstractGraphStorageTester.getIdOf(graph, 12);
+        assertTrue("could not find OSM node B", nodeB > -1);
+        assertEquals(2, GHUtility.count(graph.createEdgeExplorer().setBaseNode(nodeB)));
+    }
+
+    @Test
     public void testBarriersOnTowerNodes() {
         GraphHopper hopper = new GraphHopperFacade(fileBarriers).
                 setMinNetworkSize(0, 0).
@@ -417,7 +466,7 @@ public class OSMReaderTest {
 
     @Test
     public void testRelation() {
-        EncodingManager manager = new EncodingManager("bike");
+        EncodingManager manager = EncodingManager.create("bike");
         GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false, new GraphExtension.NoOpExtension());
         OSMReader reader = new OSMReader(ghStorage);
         ReaderRelation osmRel = new ReaderRelation(1);
@@ -446,7 +495,7 @@ public class OSMReaderTest {
 
     @Test
     public void testTurnRestrictions() {
-        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true).
+        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
                 importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
@@ -514,8 +563,8 @@ public class OSMReaderTest {
     @Test
     public void testRoadAttributes() {
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
-        DataFlagEncoder dataFlagEncoder = (new DataFlagEncoder()).setStoreHeight(true).setStoreWeight(true).setStoreWidth(true);
-        hopper.setEncodingManager(new EncodingManager(Arrays.asList(dataFlagEncoder), 8));
+        DataFlagEncoder dataFlagEncoder = new DataFlagEncoder().setStoreHeight(true).setStoreWeight(true).setStoreWidth(true);
+        hopper.setEncodingManager(EncodingManager.create(Arrays.asList(dataFlagEncoder), 8));
         hopper.importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
@@ -526,7 +575,7 @@ public class OSMReaderTest {
         int nb = AbstractGraphStorageTester.getIdOf(graph, 12, 51);
         int nc = AbstractGraphStorageTester.getIdOf(graph, 11.2, 52);
         int nd = AbstractGraphStorageTester.getIdOf(graph, 11.3, 51);
-        int ne = AbstractGraphStorageTester.getIdOf( graph, 10, 51 );
+        int ne = AbstractGraphStorageTester.getIdOf(graph, 10, 51);
 
         EdgeIteratorState edge_ab = GHUtility.getEdge(graph, na, nb);
         EdgeIteratorState edge_ad = GHUtility.getEdge(graph, na, nd);
@@ -557,12 +606,12 @@ public class OSMReaderTest {
     @Test
     public void testEstimatedCenter() {
         final CarFlagEncoder encoder = new CarFlagEncoder() {
-            private EncodedValue objectEncoder;
+            private EncodedValueOld objectEncoder;
 
             @Override
             public int defineNodeBits(int index, int shift) {
                 shift = super.defineNodeBits(index, shift);
-                objectEncoder = new EncodedValue("oEnc", shift, 2, 1, 0, 3, true);
+                objectEncoder = new EncodedValueOld("oEnc", shift, 2, 1, 0, 3, true);
                 return shift + 2;
             }
 
@@ -573,7 +622,7 @@ public class OSMReaderTest {
                 return 0;
             }
         };
-        EncodingManager manager = new EncodingManager(encoder);
+        EncodingManager manager = EncodingManager.create(encoder);
         GraphHopperStorage ghStorage = newGraph(dir, manager, false, false);
         final Map<Integer, Double> latMap = new HashMap<>();
         final Map<Integer, Double> lonMap = new HashMap<>();
@@ -596,7 +645,7 @@ public class OSMReaderTest {
             }
 
             @Override
-            Collection<EdgeIteratorState> addOSMWay(LongIndexedContainer osmNodeIds, long wayFlags, long osmId) {
+            Collection<EdgeIteratorState> addOSMWay(LongIndexedContainer osmNodeIds, IntsRef wayFlags, long osmId) {
                 return Collections.emptyList();
             }
         };
@@ -677,7 +726,7 @@ public class OSMReaderTest {
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
         FootFlagEncoder foot = new FootFlagEncoder();
         BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
-        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4);
+        EncodingManager manager = EncodingManager.create(Arrays.asList(bike, foot, car), 4);
 
         GraphHopperStorage ghStorage = new GraphBuilder(manager).create();
         OSMReader reader = new OSMReader(ghStorage) {
@@ -747,14 +796,14 @@ public class OSMReaderTest {
 
     @Test
     public void testPreferredLanguage() {
-        GraphHopper hopper = new GraphHopperFacade(file1).setPreferredLanguage("de").importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade(file1, false, "de").importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         EdgeIterator iter = carOutExplorer.setBaseNode(n20);
         assertTrue(iter.next());
         assertEquals("straße 123, B 122", iter.getName());
 
-        hopper = new GraphHopperFacade(file1).setPreferredLanguage("el").importOrLoad();
+        hopper = new GraphHopperFacade(file1, false, "el").importOrLoad();
         graph = hopper.getGraphHopperStorage();
         n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         iter = carOutExplorer.setBaseNode(n20);
@@ -791,7 +840,7 @@ public class OSMReaderTest {
     public void testRoutingRequestFails_issue665() {
         GraphHopper hopper = new GraphHopperOSM()
                 .setDataReaderFile(getClass().getResource(file7).getFile())
-                .setEncodingManager(new EncodingManager("car,motorcycle"))
+                .setEncodingManager(EncodingManager.create("car,motorcycle"))
                 .setGraphHopperLocation(dir);
         hopper.getCHFactoryDecorator().setEnabled(false);
         hopper.importOrLoad();
@@ -805,14 +854,13 @@ public class OSMReaderTest {
 
     class GraphHopperFacade extends GraphHopperOSM {
         public GraphHopperFacade(String osmFile) {
-            this(osmFile, false);
+            this(osmFile, false, "");
         }
 
-        public GraphHopperFacade(String osmFile, boolean turnCosts) {
+        public GraphHopperFacade(String osmFile, boolean turnCosts, String prefLang) {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
-            setEncodingManager(new EncodingManager("car,foot"));
             setCHEnabled(false);
 
             if (turnCosts) {
@@ -824,8 +872,9 @@ public class OSMReaderTest {
             }
 
             footEncoder = new FootFlagEncoder();
-
-            setEncodingManager(new EncodingManager(footEncoder, carEncoder, bikeEncoder));
+            setEncodingManager(new EncodingManager.Builder(4).add(footEncoder).add(carEncoder).add(bikeEncoder).
+                    setPreferredLanguage(prefLang).build());
+            carAccessEnc = carEncoder.getAccessEnc();
         }
 
         @Override
@@ -835,7 +884,6 @@ public class OSMReaderTest {
 
         @Override
         protected DataReader importData() throws IOException {
-            getEncodingManager().setPreferredLanguage(getPreferredLanguage());
             GraphHopperStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(),
                     getEncodingManager().needsTurnCostsSupport());
             setGraphHopperStorage(tmpGraph);

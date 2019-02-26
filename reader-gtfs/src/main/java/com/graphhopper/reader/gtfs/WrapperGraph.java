@@ -19,11 +19,12 @@
 package com.graphhopper.reader.gtfs;
 
 import com.graphhopper.routing.VirtualEdgeIteratorState;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
@@ -51,9 +52,14 @@ public class WrapperGraph implements Graph {
     @Override
     public int getNodes() {
         return IntStream.concat(
-                IntStream.of(baseGraph.getNodes()-1),
+                IntStream.of(baseGraph.getNodes() - 1),
                 extraEdges.stream().flatMapToInt(edge -> IntStream.of(edge.getBaseNode(), edge.getAdjNode())))
-                .max().getAsInt()+1;
+                .max().getAsInt() + 1;
+    }
+
+    @Override
+    public int getEdges() {
+        return getAllEdges().length();
     }
 
     @Override
@@ -89,7 +95,7 @@ public class WrapperGraph implements Graph {
                 return IntStream.concat(
                         IntStream.of(baseGraph.getAllEdges().length() - 1),
                         extraEdges.stream().mapToInt(VirtualEdgeIteratorState::getEdge))
-                        .max().getAsInt();
+                        .max().getAsInt()+1;
             }
 
             @Override
@@ -100,6 +106,16 @@ public class WrapperGraph implements Graph {
             @Override
             public int getEdge() {
                 throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int getOrigEdgeFirst() {
+                return getEdge();
+            }
+
+            @Override
+            public int getOrigEdgeLast() {
+                return getEdge();
             }
 
             @Override
@@ -133,12 +149,12 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public long getFlags() {
+            public IntsRef getFlags() {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public EdgeIteratorState setFlags(long flags) {
+            public EdgeIteratorState setFlags(IntsRef flags) {
                 throw new UnsupportedOperationException();
             }
 
@@ -153,17 +169,82 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public boolean isForward(FlagEncoder encoder) {
+            public boolean get(BooleanEncodedValue property) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public boolean isBackward(FlagEncoder encoder) {
+            public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public boolean getBool(int key, boolean _default) {
+            public boolean getReverse(BooleanEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int get(IntEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int getReverse(IntEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState set(IntEncodedValue property, int value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public double get(DecimalEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public double getReverse(DecimalEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState set(DecimalEncodedValue property, double value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState setReverse(DecimalEncodedValue property, double value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public IndexBased get(ObjectEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public IndexBased getReverse(ObjectEncodedValue property) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
                 throw new UnsupportedOperationException();
             }
 
@@ -183,7 +264,7 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public EdgeIteratorState copyPropertiesTo(EdgeIteratorState e) {
+            public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState e) {
                 throw new UnsupportedOperationException();
             }
         };
@@ -207,5 +288,10 @@ public class WrapperGraph implements Graph {
     @Override
     public GraphExtension getExtension() {
         return baseGraph.getExtension();
+    }
+
+    @Override
+    public int getOtherNode(int edge, int node) {
+        return baseGraph.getOtherNode(edge, node);
     }
 }

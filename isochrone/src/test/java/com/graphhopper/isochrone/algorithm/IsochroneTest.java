@@ -8,6 +8,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.After;
 import org.junit.Before;
@@ -24,7 +25,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class IsochroneTest {
 
-    private final EncodingManager encodingManager = new EncodingManager("car");
+    private final EncodingManager encodingManager = EncodingManager.create("car");
     private final FlagEncoder carEncoder = encodingManager.getEncoder("car");
     private GraphHopperStorage graph;
 
@@ -46,26 +47,26 @@ public class IsochroneTest {
     // |/ \--7
     // 6----/
     private void initDirectedAndDiffSpeed(Graph graph) {
-        graph.edge(0, 1).setDistance(70).setFlags(carEncoder.setProperties(10, true, false));
-        graph.edge(0, 4).setDistance(50).setFlags(carEncoder.setProperties(20, true, false));
+        GHUtility.setProperties(graph.edge(0, 1).setDistance(70), carEncoder, 10, true, false);
+        GHUtility.setProperties(graph.edge(0, 4).setDistance(50), carEncoder, 20, true, false);
 
-        graph.edge(1, 4).setDistance(70).setFlags(carEncoder.setProperties(10, true, true));
-        graph.edge(1, 5).setDistance(70).setFlags(carEncoder.setProperties(10, true, true));
-        graph.edge(1, 2).setDistance(200).setFlags(carEncoder.setProperties(10, true, true));
+        GHUtility.setProperties(graph.edge(1, 4).setDistance(70), carEncoder, 10, true, true);
+        GHUtility.setProperties(graph.edge(1, 5).setDistance(70), carEncoder, 10, true, true);
+        GHUtility.setProperties(graph.edge(1, 2).setDistance(200), carEncoder, 10, true, true);
 
-        graph.edge(5, 2).setDistance(50).setFlags(carEncoder.setProperties(10, true, false));
-        graph.edge(2, 3).setDistance(50).setFlags(carEncoder.setProperties(10, true, false));
+        GHUtility.setProperties(graph.edge(5, 2).setDistance(50), carEncoder, 10, true, false);
+        GHUtility.setProperties(graph.edge(2, 3).setDistance(50), carEncoder, 10, true, false);
 
-        graph.edge(5, 3).setDistance(110).setFlags(carEncoder.setProperties(20, true, false));
-        graph.edge(3, 7).setDistance(70).setFlags(carEncoder.setProperties(10, true, false));
+        GHUtility.setProperties(graph.edge(5, 3).setDistance(110), carEncoder, 20, true, false);
+        GHUtility.setProperties(graph.edge(3, 7).setDistance(70), carEncoder, 10, true, false);
 
-        graph.edge(4, 6).setDistance(50).setFlags(carEncoder.setProperties(20, true, false));
-        graph.edge(5, 4).setDistance(70).setFlags(carEncoder.setProperties(10, true, false));
+        GHUtility.setProperties(graph.edge(4, 6).setDistance(50), carEncoder, 20, true, false);
+        GHUtility.setProperties(graph.edge(5, 4).setDistance(70), carEncoder, 10, true, false);
 
-        graph.edge(5, 6).setDistance(70).setFlags(carEncoder.setProperties(10, true, false));
-        graph.edge(7, 5).setDistance(50).setFlags(carEncoder.setProperties(20, true, false));
+        GHUtility.setProperties(graph.edge(5, 6).setDistance(70), carEncoder, 10, true, false);
+        GHUtility.setProperties(graph.edge(7, 5).setDistance(50), carEncoder, 20, true, false);
 
-        graph.edge(6, 7).setDistance(50).setFlags(carEncoder.setProperties(20, true, true));
+        GHUtility.setProperties(graph.edge(6, 7).setDistance(50), carEncoder, 20, true, true);
     }
 
     @Test

@@ -35,7 +35,7 @@ public class LMAlgoFactoryDecoratorTest {
         assertEquals(Arrays.asList("fastest", "shortest"), dec.getWeightingsAsStrings());
 
         FlagEncoder car = new CarFlagEncoder();
-        EncodingManager em = new EncodingManager(car);
+        EncodingManager em = EncodingManager.create(car);
         dec.addWeighting(new FastestWeighting(car)).addWeighting(new ShortestWeighting(car));
         dec.createPreparations(new GraphHopperStorage(new RAMDirectory(), em, false, new GraphExtension.NoOpExtension()), null);
         assertEquals(1, dec.getPreparations().get(0).getLandmarkStorage().getFactor(), .1);

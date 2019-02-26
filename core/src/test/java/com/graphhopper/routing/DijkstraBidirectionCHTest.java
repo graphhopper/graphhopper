@@ -18,7 +18,10 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ch.NodeBasedNodeContractorTest;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.ch.PrepareEncoder;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -26,18 +29,19 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Parameters;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static com.graphhopper.routing.ch.NodeBasedNodeContractorTest.SC_ACCESS;
 import static org.junit.Assert.assertEquals;
 
 /**
  * Tests if a graph optimized by contraction hierarchies returns the same results as a none
  * optimized one. Additionally fine grained path unpacking is tested.
- * <p>
  *
  * @author Peter Karich
  */
@@ -50,16 +54,15 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     @Override
     protected GraphHopperStorage createGHStorage(EncodingManager em,
                                                  List<? extends Weighting> weightings, boolean is3D) {
-        return new GraphHopperStorage(weightings, new RAMDirectory(),
-                em, is3D, new GraphExtension.NoOpExtension()).
+        return new GraphHopperStorage(weightings, new RAMDirectory(), em, is3D, new GraphExtension.NoOpExtension()).
                 create(1000);
     }
 
     @Override
     public RoutingAlgorithmFactory createFactory(GraphHopperStorage ghStorage, AlgorithmOptions opts) {
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
-                ghStorage, getGraph(ghStorage, opts.getWeighting()),
-                opts.getWeighting(), TraversalMode.NODE_BASED);
+        ghStorage.freeze();
+        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(
+                ghStorage, opts.getWeighting(), TraversalMode.NODE_BASED);
         ch.doWork();
         return ch;
     }
@@ -68,7 +71,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     public void testPathRecursiveUnpacking() {
         // use an encoder where it is possible to store 2 weights per edge        
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
-        EncodingManager em = new EncodingManager(encoder);
+        EncodingManager em = EncodingManager.create(encoder);
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         GraphHopperStorage ghStorage = createGHStorage(em, Arrays.asList(weighting), false);
         CHGraphImpl g2 = (CHGraphImpl) ghStorage.getGraph(CHGraph.class, weighting);
@@ -85,15 +88,17 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.edge(4, 6, 1, true);
         g2.edge(6, 7, 1, true);
         EdgeIteratorState iter2_2 = g2.edge(5, 7);
-        iter2_2.setDistance(1.4).setFlags(encoder.setProperties(10, true, false));
+        iter2_2.setDistance(1.4).setFlags(GHUtility.setProperties(em.createEdgeFlags(), encoder, 10, true, false));
 
         ghStorage.freeze();
         // simulate preparation
         CHEdgeIteratorState iter2_1 = g2.shortcut(0, 5);
-        iter2_1.setDistance(2.8).setFlags(encoder.setProperties(10, true, false));
+        iter2_1.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 1);
+        iter2_1.setDistance(2.8);
         iter2_1.setSkippedEdges(iter1_1.getEdge(), iter1_2.getEdge());
         CHEdgeIteratorState tmp = g2.shortcut(0, 7);
-        tmp.setDistance(4.2).setFlags(encoder.setProperties(10, true, false));
+        tmp.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 1);
+        tmp.setDistance(4.2);
         tmp.setSkippedEdges(iter2_1.getEdge(), iter2_2.getEdge());
         g2.setLevel(1, 0);
         g2.setLevel(3, 1);
@@ -105,8 +110,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.setLevel(0, 7);
 
         AlgorithmOptions opts = new AlgorithmOptions(Parameters.Algorithms.DIJKSTRA_BI, weighting);
-        Path p = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
-                ghStorage, g2, weighting, TraversalMode.NODE_BASED).
+        Path p = new PrepareContractionHierarchies(
+                g2, weighting, TraversalMode.NODE_BASED).
                 createAlgo(g2, opts).calcPath(0, 7);
 
         assertEquals(IntArrayList.from(0, 2, 5, 7), p.calcNodes());
@@ -117,7 +122,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     @Test
     public void testBaseGraph() {
         CarFlagEncoder carFE = new CarFlagEncoder();
-        EncodingManager em = new EncodingManager(carFE);
+        EncodingManager em = EncodingManager.create(carFE);
         AlgorithmOptions opts = AlgorithmOptions.start().
                 weighting(new ShortestWeighting(carFE)).build();
         GraphHopperStorage ghStorage = createGHStorage(em,
@@ -235,17 +240,15 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         runTestWithDirectionDependentEdgeSpeed(20, 10, 2, 0, IntArrayList.from(2, 1, 0), new Bike2WeightFlagEncoder());
     }
 
-    private void runTestWithDirectionDependentEdgeSpeed(
-            int speed, int revSpeed, int from, int to, IntArrayList expectedPath, FlagEncoder encoder) {
-        EncodingManager encodingManager = new EncodingManager(encoder);
+    private void runTestWithDirectionDependentEdgeSpeed(double speed, double revSpeed, int from, int to, IntArrayList expectedPath, FlagEncoder encoder) {
+        EncodingManager encodingManager = EncodingManager.create(encoder);
         FastestWeighting weighting = new FastestWeighting(encoder);
         AlgorithmOptions algoOpts = AlgorithmOptions.start().weighting(weighting).build();
         GraphHopperStorage graph = createGHStorage(encodingManager, Arrays.asList(weighting), false);
         EdgeIteratorState edge = graph.edge(0, 1, 2, true);
-        long flags = edge.getFlags();
-        flags = encoder.setSpeed(flags, speed);
-        flags = encoder.setReverseSpeed(flags, revSpeed);
-        edge.setFlags(flags);
+        DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "average_speed"));
+        edge.set(avSpeedEnc, speed).setReverse(avSpeedEnc, revSpeed);
+
         graph.edge(1, 2, 1, true);
 
         CHGraph chGraph = graph.getGraph(CHGraph.class);
@@ -261,8 +264,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     }
 
     private RoutingAlgorithm createCHAlgo(GraphHopperStorage graph, CHGraph chGraph, boolean withSOD, AlgorithmOptions algorithmOptions) {
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
-                graph, chGraph, algorithmOptions.getWeighting(), TraversalMode.NODE_BASED);
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(
+                chGraph, algorithmOptions.getWeighting(), TraversalMode.NODE_BASED);
         if (!withSOD) {
             algorithmOptions.getHints().put("stall_on_demand", false);
         }

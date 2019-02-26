@@ -4,7 +4,7 @@ import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +51,8 @@ public class SpatialRuleLookupBuilder {
             List<Polygon> borders = new ArrayList<>();
             for (int i = 0; i < jsonFeature.getGeometry().getNumGeometries(); i++) {
                 Geometry poly = jsonFeature.getGeometry().getGeometryN(i);
-                if (poly instanceof com.vividsolutions.jts.geom.Polygon)
-                    borders.add(Polygon.create((com.vividsolutions.jts.geom.Polygon) poly));
+                if (poly instanceof org.locationtech.jts.geom.Polygon)
+                    borders.add(Polygon.create((org.locationtech.jts.geom.Polygon) poly));
                 else
                     throw new IllegalArgumentException("Geometry for " + id + " (" + i + ") not supported " + poly.getClass().getSimpleName());
             }

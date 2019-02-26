@@ -17,20 +17,23 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Extended graph interface which supports Contraction Hierarchies. Ie. storing and retrieving the
  * levels for a node and creating shortcuts, which are additional 'artificial' edges to speedup
  * traversal in certain cases.
- * <p>
  *
  * @author Peter Karich
  */
 public interface CHGraph extends Graph {
+
     /**
      * This methods sets the level of the specified node.
      */
@@ -50,6 +53,10 @@ public interface CHGraph extends Graph {
      */
     CHEdgeIteratorState shortcut(int a, int b);
 
+    int shortcut(int a, int b, int accessFlags, double weight, double distance, int skippedEdge1, int skippedEdge2);
+
+    int shortcutEdgeBased(int a, int b, int accessFlags, double weight, double distance, int skippedEdge1, int skippedEdge2, int origFirst, int origLast);
+
     @Override
     CHEdgeIteratorState getEdgeIteratorState(int edgeId, int endNode);
 
@@ -59,6 +66,32 @@ public interface CHGraph extends Graph {
     @Override
     CHEdgeExplorer createEdgeExplorer(EdgeFilter filter);
 
+    EdgeExplorer createOriginalEdgeExplorer();
+
+    EdgeExplorer createOriginalEdgeExplorer(EdgeFilter filter);
+
     @Override
     AllCHEdgesIterator getAllEdges();
+
+    /**
+     * Disconnects the edges (higher to lower node) via the specified edgeState pointing from lower to
+     * higher node.
+     * <p>
+     *
+     * @param edgeState the edge from lower to higher
+     */
+    void disconnect(CHEdgeExplorer edgeExplorer, EdgeIteratorState edgeState);
+
+    /**
+     * @return the number of original edges in this graph (without shortcuts)
+     */
+    int getOriginalEdges();
+
+    NodeOrderingProvider getNodeOrderingProvider();
+
+    /**
+     * @return true if contraction can be started (add shortcuts and set levels), false otherwise
+     */
+    boolean isReadyForContraction();
+
 }

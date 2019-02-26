@@ -18,6 +18,7 @@
 package com.graphhopper.util;
 
 import com.graphhopper.coll.GHIntLongHashMap;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -32,7 +33,8 @@ import static org.junit.Assert.*;
  */
 public class GHUtilityTest {
     private final FlagEncoder carEncoder = new CarFlagEncoder();
-    private final EncodingManager encodingManager = new EncodingManager(carEncoder);
+    private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
+    private final BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
 
     Graph createGraph() {
         return new GraphBuilder(encodingManager).create();
@@ -112,7 +114,7 @@ public class GHUtilityTest {
         CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate(new FastestWeighting(carEncoder));
         GHUtility.copyTo(g, lg);
 
-        assertEquals(g.getAllEdges().length(), lg.getAllEdges().length());
+        assertEquals(g.getAllEdges().length(), lg.getEdges());
     }
 
     @Test
@@ -140,12 +142,12 @@ public class GHUtilityTest {
         EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(8);
         iter.next();
         assertEquals(2.05, iter.getDistance(), 1e-6);
-        assertTrue(iter.isBackward(carEncoder));
-        assertTrue(iter.isForward(carEncoder));
+        assertTrue(iter.getReverse(accessEnc));
+        assertTrue(iter.get(accessEnc));
         iter.next();
         assertEquals(0.5, iter.getDistance(), 1e-6);
-        assertTrue(iter.isBackward(carEncoder));
-        assertTrue(iter.isForward(carEncoder));
+        assertTrue(iter.getReverse(accessEnc));
+        assertTrue(iter.get(accessEnc));
 
         iter = lg.createEdgeExplorer().setBaseNode(7);
         iter.next();
@@ -153,8 +155,8 @@ public class GHUtilityTest {
 
         iter.next();
         assertEquals(2.1, iter.getDistance(), 1e-6);
-        assertFalse(iter.isBackward(carEncoder));
-        assertTrue(iter.isForward(carEncoder));
+        assertFalse(iter.getReverse(accessEnc));
+        assertTrue(iter.get(accessEnc));
         assertFalse(iter.next());
     }
 

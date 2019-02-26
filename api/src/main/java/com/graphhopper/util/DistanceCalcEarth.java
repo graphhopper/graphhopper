@@ -17,10 +17,10 @@
  */
 package com.graphhopper.util;
 
+import static java.lang.Math.*;
+
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-
-import static java.lang.Math.*;
 
 /**
  * @author Peter Karich
@@ -155,7 +155,7 @@ public class DistanceCalcEarth implements DistanceCalc {
         return calcNormalizedDist(c_lat, c_lon / shrinkFactor, r_lat_deg, r_lon_deg);
     }
 
-    private double calcShrinkFactor(double a_lat_deg, double b_lat_deg) {
+    double calcShrinkFactor(double a_lat_deg, double b_lat_deg) {
         return cos(toRadians((a_lat_deg + b_lat_deg) / 2));
     }
 

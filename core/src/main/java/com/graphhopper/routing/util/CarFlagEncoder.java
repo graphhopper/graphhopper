@@ -19,6 +19,9 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.FactorizedDecimalEncodedValue;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
@@ -26,7 +29,6 @@ import java.util.*;
 
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
- * <p>
  *
  * @author Peter Karich
  * @author Nop
@@ -40,6 +42,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
     // This value determines the speed for roads with access=destination
     protected int destinationSpeed;
+    protected boolean speedTwoDirections;
     /**
      * A map which associates string to speed. Get some impression:
      * http://www.itoworld.com/map/124#fullscreen
@@ -56,6 +59,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
         this.properties = properties;
+        this.speedTwoDirections = properties.getBool("speed_two_directions", false);
         this.setBlockFords(properties.getBool("block_fords", true));
         this.setBlockByDefault(properties.getBool("block_barriers", true));
     }
@@ -83,7 +87,9 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         potentialBarriers.add("lift_gate");
         potentialBarriers.add("kissing_gate");
         potentialBarriers.add("swing_gate");
+        potentialBarriers.add("cattle_grid");
 
+        absoluteBarriers.add("fence");
         absoluteBarriers.add("bollard");
         absoluteBarriers.add("stile");
         absoluteBarriers.add("turnstile");
@@ -107,13 +113,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         badSurfaceSpeedMap.add("grass");
         badSurfaceSpeedMap.add("unpaved");
         badSurfaceSpeedMap.add("compacted");
-
-        // limit speed on bad surfaces to 30 km/h
-        badSurfaceSpeed = 30;
-
-        destinationSpeed = 5;
-
-        maxPossibleSpeed = 140;
 
         // autobahn
         defaultSpeedMap.put("motorway", 100);
@@ -141,24 +140,28 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         // forestry stuff
         defaultSpeedMap.put("track", 15);
 
+        // limit speed on bad surfaces to 30 km/h
+        badSurfaceSpeed = 30;
+        destinationSpeed = 5;
+        maxPossibleSpeed = 140;
+        speedDefault = defaultSpeedMap.get("secondary");
+
         init();
     }
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     /**
      * Define the place of the speedBits in the edge flags for car.
      */
     @Override
-    public int defineWayBits(int index, int shift) {
+    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
         // first two bits are reserved for route handling in superclass
-        shift = super.defineWayBits(index, shift);
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"),
-                maxPossibleSpeed);
-        return shift + speedEncoder.getBits();
+        super.createEncodedValues(registerNewEncodedValue, prefix, index);
+        registerNewEncodedValue.add(speedEncoder = new FactorizedDecimalEncodedValue(prefix + "average_speed", speedBits, speedFactor, speedTwoDirections));
     }
 
     protected double getSpeed(ReaderWay way) {
@@ -184,99 +187,99 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public long acceptWay(ReaderWay way) {
+    public EncodingManager.Access getAccess(ReaderWay way) {
         // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 if (restrictedValues.contains(firstValue))
-                    return 0;
+                    return EncodingManager.Access.CAN_SKIP;
                 if (intendedValues.contains(firstValue) ||
                         // implied default is allowed only if foot and bicycle is not specified:
                         firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle"))
-                    return acceptBit | ferryBit;
+                    return EncodingManager.Access.FERRY;
             }
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
         }
 
         if ("track".equals(highwayValue)) {
             String tt = way.getTag("tracktype");
             if (tt != null && !tt.equals("grade1") && !tt.equals("grade2") && !tt.equals("grade3"))
-                return 0;
+                return EncodingManager.Access.CAN_SKIP;
         }
 
         if (!defaultSpeedMap.containsKey(highwayValue))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
 
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
 
         // multiple restrictions needs special handling compared to foot and bike, see also motorcycle
         if (!firstValue.isEmpty()) {
             if (restrictedValues.contains(firstValue) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-                return 0;
+                return EncodingManager.Access.CAN_SKIP;
             if (intendedValues.contains(firstValue))
-                return acceptBit;
+                return EncodingManager.Access.WAY;
         }
 
         // do not drive street cars into fords
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
 
         if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
         else
-            return acceptBit;
+            return EncodingManager.Access.WAY;
     }
 
     @Override
-    public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
+    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
         return oldRelationFlags;
     }
 
     @Override
-    public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
-        if (!isAccept(allowed))
-            return 0;
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access accept, long relationFlags) {
+        if (accept.canSkip())
+            return edgeFlags;
 
-        long flags = 0;
-        if (!isFerry(allowed)) {
+        if (!accept.isFerry()) {
             // get assumed speed from highway type
             double speed = getSpeed(way);
             speed = applyMaxSpeed(way, speed);
 
             speed = applyBadSurfaceSpeed(way, speed);
 
-            flags = setSpeed(flags, speed);
+            setSpeed(false, edgeFlags, speed);
+            setSpeed(true, edgeFlags, speed);
 
-            boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
-            if (isRoundabout)
-                flags = setBool(flags, K_ROUNDABOUT, true);
-
+            boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
             if (isOneway(way) || isRoundabout) {
-                if (isBackwardOneway(way))
-                    flags |= backwardBit;
-
                 if (isForwardOneway(way))
-                    flags |= forwardBit;
-            } else
-                flags |= directionBitMask;
+                    accessEnc.setBool(false, edgeFlags, true);
+                if (isBackwardOneway(way))
+                    accessEnc.setBool(true, edgeFlags, true);
+            } else {
+                accessEnc.setBool(false, edgeFlags, true);
+                accessEnc.setBool(true, edgeFlags, true);
+            }
 
         } else {
             double ferrySpeed = getFerrySpeed(way);
-            flags = setSpeed(flags, ferrySpeed);
-            flags |= directionBitMask;
+            accessEnc.setBool(false, edgeFlags, true);
+            accessEnc.setBool(true, edgeFlags, true);
+            setSpeed(false, edgeFlags, ferrySpeed);
+            setSpeed(true, edgeFlags, ferrySpeed);
         }
 
         for (String restriction : restrictions) {
             if (way.hasTag(restriction, "destination")) {
                 // This is problematic as Speed != Time
-                flags = setSpeed(flags, destinationSpeed);
+                setSpeed(false, edgeFlags, destinationSpeed);
+                setSpeed(true, edgeFlags, destinationSpeed);
             }
         }
-
-        return flags;
+        return edgeFlags;
     }
 
     /**

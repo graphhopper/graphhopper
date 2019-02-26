@@ -173,8 +173,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             if (!source.isValid()) {
                 throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);
             }
-            if (flagEncoder.getEdgeType(source.getClosestEdge().getFlags()) != GtfsStorage.EdgeType.HIGHWAY) {
-                throw new RuntimeException(flagEncoder.getEdgeType(source.getClosestEdge().getFlags()).name());
+            if (flagEncoder.getEdgeType(source.getClosestEdge()) != GtfsStorage.EdgeType.HIGHWAY) {
+                throw new RuntimeException(flagEncoder.getEdgeType(source.getClosestEdge()).name());
             }
             return source;
         }
@@ -184,7 +184,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 final List<Trip.Leg> legs = tripFromLabel.getTrip(translation, graphExplorer, accessEgressWeighting, solution);
                 final PathWrapper pathWrapper = tripFromLabel.createPathWrapper(translation, waypoints, legs);
                 pathWrapper.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
-                pathWrapper.setTime((solution.get(solution.size()-1).label.currentTime - solution.get(0).label.currentTime));
+                pathWrapper.setTime((solution.get(solution.size() - 1).label.currentTime - solution.get(0).label.currentTime));
                 response.add(pathWrapper);
             }
             Comparator<PathWrapper> c = Comparator.comparingInt(p -> (p.isImpossible() ? 1 : 0));
@@ -206,7 +206,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 if (label.adjNode == startNode) {
                     stationLabels.add(label);
                     break;
-                } else if (label.edge != -1 && flagEncoder.getEdgeType(accessEgressGraphExplorer.getEdgeIteratorState(label.edge, label.parent.adjNode).getFlags()) == edgeType) {
+                } else if (label.edge != -1 && flagEncoder.getEdgeType(accessEgressGraphExplorer.getEdgeIteratorState(label.edge, label.parent.adjNode)) == edgeType) {
                     stationLabels.add(label);
                 }
             }
@@ -235,7 +235,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             while (iterator.hasNext()) {
                 Label label = iterator.next();
                 final long weight = router.weight(label);
-                if ( (!profileQuery || discoveredSolutions.size() >= limitSolutions) && weight + smallestStationLabelWeight > highestWeightForDominationTest) {
+                if ((!profileQuery || discoveredSolutions.size() >= limitSolutions) && weight + smallestStationLabelWeight > highestWeightForDominationTest) {
                     break;
                 }
                 Label reverseLabel = reverseSettledSet.get(label.adjNode);
@@ -366,7 +366,11 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                             t.transfer.min_transfer_time = (int) (t.time / 1000L);
                             gtfsFeed.transfers.put(t.id, t.transfer);
                         });
-                gtfsReader.readGraph();
+                try {
+                    gtfsReader.buildPtNetwork();
+                } catch (Exception e) {
+                    throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
+                }
             }
             graphHopperStorage.flush();
             return graphHopperStorage;
@@ -420,14 +424,22 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, flagEncoder, gtfsStorage, realtimeFeed, false, Collections.emptyList(), true, 5.0);
 
                     MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, flagEncoder, false, Double.MAX_VALUE, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
-                    final Stream<Label> labels = router.calcLabels(fromnode, tonode, Instant.ofEpochMilli(0), 0);
-                    List<Label> solutions = labels
-                            .filter(current -> tonode == current.adjNode)
-                            .collect(Collectors.toList());
+                    Iterator<Label> iterator = router.calcLabels(fromnode, tonode, Instant.ofEpochMilli(0), 0).iterator();
+                    Label solution = null;
+                    while (iterator.hasNext()) {
+                        Label label = iterator.next();
+                        if (tonode == label.adjNode) {
+                            solution = label;
+                            break;
+                        }
+                    }
+                    if (solution == null) {
+                        throw new RuntimeException("Can't find a transfer walk route.");
+                    }
                     TransferWithTime transferWithTime = new TransferWithTime();
                     transferWithTime.id = e.getKey();
                     transferWithTime.transfer = e.getValue();
-                    transferWithTime.time = solutions.get(0).currentTime;
+                    transferWithTime.time = solution.currentTime;
                     return transferWithTime;
                 });
     }

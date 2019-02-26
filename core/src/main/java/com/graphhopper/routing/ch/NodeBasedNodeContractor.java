@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.Helper.nf;
 
 class NodeBasedNodeContractor extends AbstractNodeContractor {
@@ -35,6 +36,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<>();
     private final AddShortcutHandler addScHandler = new AddShortcutHandler();
     private final CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
+    private final Params params = new Params();
     private CHEdgeExplorer remainingEdgeExplorer;
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany prepareAlgo;
@@ -45,9 +47,16 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     // each edge can exist in both directions
     private double meanDegree;
 
-    NodeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting) {
-        super(dir, ghStorage, prepareGraph, weighting);
+    NodeBasedNodeContractor(CHGraph prepareGraph, Weighting weighting, PMap pMap) {
+        super(prepareGraph, weighting);
         this.prepareWeighting = new PreparationWeighting(weighting);
+        extractParams(pMap);
+    }
+
+    private void extractParams(PMap pMap) {
+        params.edgeDifferenceWeight = pMap.getFloat(EDGE_DIFFERENCE_WEIGHT, params.edgeDifferenceWeight);
+        params.originalEdgesCountWeight = pMap.getFloat(ORIGINAL_EDGE_COUNT_WEIGHT, params.originalEdgesCountWeight);
+        params.contractedNeighborsWeight = pMap.getFloat(CONTRACTED_NEIGHBORS_WEIGHT, params.contractedNeighborsWeight);
     }
 
     @Override
@@ -72,7 +81,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         // no witness path can be found. this is not really what we want, but changing it requires re-optimizing the
         // graph contraction parameters, because it affects the node contraction order.
         // when this is done there should be no need for this method any longer.
-        meanDegree = prepareGraph.getAllEdges().length() / prepareGraph.getNodes();
+        meanDegree = prepareGraph.getEdges() / prepareGraph.getNodes();
     }
 
     @Override
@@ -120,8 +129,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         int edgeDifference = calcShortcutsResult.shortcutsCount - degree;
 
         // according to the paper do a simple linear combination of the properties to get the priority.
-        // this is the current optimum for unterfranken:
-        return 10 * edgeDifference + originalEdgesCount + contractedNeighbors;
+        return params.edgeDifferenceWeight * edgeDifference +
+                params.originalEdgesCountWeight * originalEdgesCount +
+                params.contractedNeighborsWeight * contractedNeighbors;
     }
 
     @Override
@@ -137,6 +147,11 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     public String getStatisticsString() {
         return String.format(Locale.ROOT, "meanDegree: %.2f, dijkstras: %10s, mem: %10s",
                 meanDegree, nf(dijkstraCount), prepareAlgo.getMemoryUsageAsString());
+    }
+
+    @Override
+    boolean isEdgeBased() {
+        return false;
     }
 
     /**
@@ -244,9 +259,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                                 + ", neighbors:" + GHUtility.getNeighbors(iter));
                     }
 
-                    // note: flags overwrite weight => call first
-                    iter.setFlags(sc.flags);
-                    iter.setWeight(sc.weight);
+                    iter.setFlagsAndWeight(sc.flags, sc.weight);
                     iter.setDistance(sc.dist);
                     iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                     setOrigEdgeCount(iter.getEdge(), sc.originalEdges);
@@ -256,13 +269,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             }
 
             if (!updatedInGraph) {
-                CHEdgeIteratorState edgeState = prepareGraph.shortcut(sc.from, sc.to);
-                // note: flags overwrite weight => call first
-                edgeState.setFlags(sc.flags);
-                edgeState.setWeight(sc.weight);
-                edgeState.setDistance(sc.dist);
-                edgeState.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
-                setOrigEdgeCount(edgeState.getEdge(), sc.originalEdges);
+                int scId = prepareGraph.shortcut(sc.from, sc.to, sc.flags, sc.weight, sc.dist, sc.skippedEdge1, sc.skippedEdge2);
+                setOrigEdgeCount(scId, sc.originalEdges);
+
                 tmpNewShortcuts++;
             }
         }
@@ -311,7 +320,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         double dist;
         double weight;
         int originalEdges;
-        long flags = PrepareEncoder.getScFwdDir();
+        int flags = PrepareEncoder.getScFwdDir();
 
         public Shortcut(int from, int to, double weight, double dist) {
             this.from = from;
@@ -436,6 +445,13 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     private static class CalcShortcutsResult {
         int originalEdgesCount;
         int shortcutsCount;
+    }
+
+    public static class Params {
+        // default values were optimized for Unterfranken
+        private float edgeDifferenceWeight = 10;
+        private float originalEdgesCountWeight = 1;
+        private float contractedNeighborsWeight = 1;
     }
 
 }

@@ -23,14 +23,14 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>directions-api-client-hc</artifactId>
-    <version>0.11-SNAPSHOT</version>
+    <version>0.12-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>GraphHopper Directions API hand-crafted Java Client.</name>
      
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>0.11-SNAPSHOT</version>
+        <version>0.12-SNAPSHOT</version>
     </parent>  
     
     <dependencies>
@@ -74,7 +74,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
                 <configuration>
                     <compilerArgument>-XDignore.symbol.file</compilerArgument>
                     <fork>true</fork>
@@ -83,19 +82,6 @@
                 </configuration>
             </plugin>
             
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.19.1</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>        
     </build>
         

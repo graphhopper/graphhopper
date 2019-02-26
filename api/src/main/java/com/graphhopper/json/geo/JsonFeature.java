@@ -18,7 +18,7 @@
 package com.graphhopper.json.geo;
 
 import com.graphhopper.util.shapes.BBox;
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import java.util.Map;
 
@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class JsonFeature {
     private String id;
-    private String type;
+    private String type = "Feature";
     private BBox bbox;
     private Geometry geometry;
     private Map<String, Object> properties;
@@ -79,10 +79,6 @@ public class JsonFeature {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     public void setBbox(BBox bbox) {
