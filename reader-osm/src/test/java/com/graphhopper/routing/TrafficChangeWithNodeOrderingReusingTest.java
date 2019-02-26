@@ -56,7 +56,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
     public TrafficChangeWithNodeOrderingReusingTest(int maxDeviationPercentage) {
         this.maxDeviationPercentage = maxDeviationPercentage;
         FlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager em = new EncodingManager(encoder);
+        EncodingManager em = EncodingManager.create(encoder);
         baseWeighting = new FastestWeighting(encoder);
         trafficWeighting = new RandomDeviationWeighting(baseWeighting, maxDeviationPercentage);
         Directory dir = new RAMDirectory("traffic-change-test");

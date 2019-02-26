@@ -87,7 +87,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         else
             // allow for basic costs too
             carEncoder = new CarFlagEncoder(5, 5, 3);
-        return new EncodingManager(carEncoder);
+        return EncodingManager.create(carEncoder);
     }
 
     public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {

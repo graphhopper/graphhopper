@@ -26,42 +26,42 @@ import static org.junit.Assert.fail;
  * @author Peter Karich
  * @author ratrun
  */
-public class OSMTagParserTest {
+public class OSMReaderUtilityTest {
     @Test
     public void testParseDuration() {
-        assertEquals(10 * 60, OSMTagParser.parseDuration("00:10"));
-        assertEquals(35 * 60, OSMTagParser.parseDuration("35"));
-        assertEquals(70 * 60, OSMTagParser.parseDuration("01:10"));
-        assertEquals(70 * 60 + 2, OSMTagParser.parseDuration("01:10:02"));
-        assertEquals(0, OSMTagParser.parseDuration(null));
-        assertEquals(60 * 20 * 60, OSMTagParser.parseDuration("20:00"));
-        assertEquals(20 * 60, OSMTagParser.parseDuration("0:20:00"));
-        assertEquals((60 * 2 + 20) * 60 + 2, OSMTagParser.parseDuration("02:20:02"));
+        assertEquals(10 * 60, OSMReaderUtility.parseDuration("00:10"));
+        assertEquals(35 * 60, OSMReaderUtility.parseDuration("35"));
+        assertEquals(70 * 60, OSMReaderUtility.parseDuration("01:10"));
+        assertEquals(70 * 60 + 2, OSMReaderUtility.parseDuration("01:10:02"));
+        assertEquals(0, OSMReaderUtility.parseDuration(null));
+        assertEquals(60 * 20 * 60, OSMReaderUtility.parseDuration("20:00"));
+        assertEquals(20 * 60, OSMReaderUtility.parseDuration("0:20:00"));
+        assertEquals((60 * 2 + 20) * 60 + 2, OSMReaderUtility.parseDuration("02:20:02"));
 
         // two months
-        assertEquals(31 + 31, OSMTagParser.parseDuration("P2M") / (24 * 60 * 60));
+        assertEquals(31 + 31, OSMReaderUtility.parseDuration("P2M") / (24 * 60 * 60));
 
         // two minutes
-        assertEquals(2 * 60, OSMTagParser.parseDuration("PT2M"));
-        assertEquals((5 * 60 + 12) * 60 + 36, OSMTagParser.parseDuration("PT5H12M36S"));
+        assertEquals(2 * 60, OSMReaderUtility.parseDuration("PT2M"));
+        assertEquals((5 * 60 + 12) * 60 + 36, OSMReaderUtility.parseDuration("PT5H12M36S"));
     }
 
     @Test
     public void testWrongDurationFormats() {
         try {
-            OSMTagParser.parseDuration("PT5h12m36s");
+            OSMReaderUtility.parseDuration("PT5h12m36s");
             fail("parseDuration didn't throw when I expected it to");
         } catch (IllegalArgumentException expectedException) {
             assertEquals(expectedException.getMessage(), "Cannot parse duration tag value: PT5h12m36s");
         }
         try {
-            OSMTagParser.parseDuration("oh");
+            OSMReaderUtility.parseDuration("oh");
             fail("parseDuration didn't throw when I expected it to");
         } catch (IllegalArgumentException expectedException) {
             assertEquals(expectedException.getMessage(), "Cannot parse duration tag value: oh");
         }
         try {
-            OSMTagParser.parseDuration("01:10:2");
+            OSMReaderUtility.parseDuration("01:10:2");
             fail("parseDuration didn't throw when I expected it to");
         } catch (IllegalArgumentException expectedException) {
             assertEquals(expectedException.getMessage(), "Cannot parse duration tag value: 01:10:2");

@@ -15,17 +15,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules;
+package com.graphhopper.routing.profiles;
 
-/**
- * Enum defining AccessValues
- *
- * @author Robin Boldt
- */
-public enum AccessValue {
+public interface EncodedValueLookup {
 
-    ACCESSIBLE,
-    EVENTUALLY_ACCESSIBLE,
-    NOT_ACCESSIBLE
+    <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType);
 
+    BooleanEncodedValue getBooleanEncodedValue(String key);
+
+    IntEncodedValue getIntEncodedValue(String key);
+
+    DecimalEncodedValue getDecimalEncodedValue(String key);
+
+    ObjectEncodedValue getObjectEncodedValue(String key);
+
+    boolean hasEncoder(String key);
 }

@@ -23,8 +23,6 @@ import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
-import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -41,7 +39,7 @@ public class WrapperGraphTest {
     public WrapperGraphTest() {
         pt = new PtFlagEncoder();
         foot = new FootFlagEncoder();
-        encodingManager = new EncodingManager(Arrays.asList(pt, foot), 8);
+        encodingManager = EncodingManager.create(Arrays.asList(pt, foot), 8);
     }
 
     @Test

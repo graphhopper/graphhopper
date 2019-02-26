@@ -24,6 +24,7 @@ import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -45,8 +46,8 @@ import com.graphhopper.util.shapes.GHPoint;
  * @author Peter Karich
  */
 final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
-    public AlternativeRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex) {
-        super(ghRequest, ghRsp, locationIndex);
+    public AlternativeRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex, EncodingManager encodingManager) {
+        super(ghRequest, ghRsp, locationIndex, encodingManager);
     }
 
     @Override
@@ -75,12 +76,12 @@ final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
         PointList wpList = getWaypoints();
         altResponse.setWaypoints(wpList);
         ghResponse.add(altResponse);
-        pathMerger.doWork(altResponse, Collections.singletonList(pathList.get(0)), tr);
+        pathMerger.doWork(altResponse, Collections.singletonList(pathList.get(0)), encodingManager, tr);
         for (int index = 1; index < pathList.size(); index++) {
             PathWrapper tmpAltRsp = new PathWrapper();
             tmpAltRsp.setWaypoints(wpList);
             ghResponse.add(tmpAltRsp);
-            pathMerger.doWork(tmpAltRsp, Collections.singletonList(pathList.get(index)), tr);
+            pathMerger.doWork(tmpAltRsp, Collections.singletonList(pathList.get(index)), encodingManager, tr);
         }
         return true;
     }

@@ -23,6 +23,7 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.tour.MultiPointTour;
 import com.graphhopper.routing.util.tour.TourStrategy;
@@ -54,14 +55,16 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
     private final GHRequest ghRequest;
     private final GHResponse ghResponse;
     private final LocationIndex locationIndex;
+    private final EncodingManager encodingManager;
     private PathWrapper altResponse;
     // result from route
     private List<Path> pathList;
 
-    public RoundTripRoutingTemplate(GHRequest request, GHResponse ghRsp, LocationIndex locationIndex, int maxRetries) {
+    public RoundTripRoutingTemplate(GHRequest request, GHResponse ghRsp, LocationIndex locationIndex, EncodingManager encodingManager, int maxRetries) {
         this.ghRequest = request;
         this.ghResponse = ghRsp;
         this.locationIndex = locationIndex;
+        this.encodingManager = encodingManager;
         this.maxRetries = maxRetries;
     }
 
@@ -151,7 +154,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
         altResponse = new PathWrapper();
         altResponse.setWaypoints(getWaypoints());
         ghResponse.add(altResponse);
-        pathMerger.doWork(altResponse, pathList, tr);
+        pathMerger.doWork(altResponse, pathList, encodingManager, tr);
         // with potentially retrying, including generating new route points, for now disabled
         return true;
     }

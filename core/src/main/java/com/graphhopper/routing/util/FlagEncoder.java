@@ -17,21 +17,20 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.InstructionAnnotation;
 import com.graphhopper.util.Translation;
 
 /**
  * This class provides methods to define how a value (like speed or direction) converts to a flag
- * (currently an integer value), which is stored in an edge .
- * <p>
+ * (currently an integer value), which is stored in an edge.
  *
  * @author Peter Karich
  */
-public interface FlagEncoder extends TurnCostEncoder {
-    /**
-     * Reports whether this edge is part of a roundabout.
-     */
-    static final int K_ROUNDABOUT = 2;
+public interface FlagEncoder extends TurnCostEncoder, EncodedValueLookup {
 
     /**
      * @return the version of this FlagEncoder to enforce none-compatibility when new attributes are
@@ -45,94 +44,25 @@ public interface FlagEncoder extends TurnCostEncoder {
     double getMaxSpeed();
 
     /**
-     * @return the speed in km/h for this direction, for backward direction use getReverseSpeed
+     * This method returns the EncodedValue used for the direction-dependent access properties of this encoder.
      */
-    double getSpeed(long flags);
+    BooleanEncodedValue getAccessEnc();
 
     /**
-     * Sets the speed in km/h.
-     * <p>
-     *
-     * @return modified setProperties
+     * This method returns the EncodedValue used for the average speed of this encoder.
      */
-    long setSpeed(long flags, double speed);
-
-    /**
-     * @return the speed of the reverse direction in km/h
-     */
-    double getReverseSpeed(long flags);
-
-    /**
-     * Sets the reverse speed in the flags.
-     */
-    long setReverseSpeed(long flags, double speed);
-
-    /**
-     * Sets the access of the edge.
-     * <p>
-     *
-     * @return modified flags
-     */
-    long setAccess(long flags, boolean forward, boolean backward);
-
-    /**
-     * Sets speed and access properties.
-     * <p>
-     *
-     * @return created flags
-     */
-    long setProperties(double speed, boolean forward, boolean backward);
-
-    /**
-     * Reports whether the edge is available in forward direction (i.e. from base node to adj node)
-     * for a certain vehicle.
-     */
-    boolean isForward(long flags);
-
-    /*
-     * Simple rules for every subclass which introduces a new key. It has to use the prefix K_ and
-     * uses a minimum value which is two magnitudes higher than in the super class. 
-     * Currently this means starting from 100, and subclasses of this class start from 10000 and so on.
-     */
-
-    /**
-     * Reports whether the edge is available in backward direction (i.e. from adj node to base node)
-     * for a certain vehicle.
-     */
-    boolean isBackward(long flags);
-
-    /**
-     * Returns arbitrary boolean value identified by the specified key.
-     */
-    boolean isBool(long flags, int key);
-
-    long setBool(long flags, int key, boolean value);
-
-    /**
-     * Returns arbitrary long value identified by the specified key. E.g. can be used to return the
-     * way or surface type of an edge
-     */
-    long getLong(long flags, int key);
-
-    long setLong(long flags, int key, long value);
-
-    /**
-     * Returns arbitrary double value identified by the specified key. E.g. can be used to return
-     * the maximum width or height allowed for an edge.
-     */
-    double getDouble(long flags, int key);
-
-    long setDouble(long flags, int key, double value);
+    DecimalEncodedValue getAverageSpeedEnc();
 
     /**
      * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.
+     * Use support(String) instead.
      */
     boolean supports(Class<?> feature);
 
     /**
      * @return additional cost or warning information for an instruction like ferry or road charges.
      */
-    InstructionAnnotation getAnnotation(long flags, Translation tr);
+    InstructionAnnotation getAnnotation(IntsRef intsRef, Translation tr);
 
     /**
      * @return true if already registered in an EncodingManager
