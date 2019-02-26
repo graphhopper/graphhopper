@@ -306,14 +306,14 @@ public class GraphHopperOSMTest {
         assertEquals(new GHPoint(51.199999850988384, 9.39999970197677), rsp.getPoints().toGHPoint(2));
 
         GHRequest req = new GHRequest(51.2492152, 9.4317166, 51.2, 9.4);
-        boolean old = instance.isEnableInstructions();
+        boolean old = instance.getEncodingManager().isEnableInstructions();
         req.getHints().put("instructions", true);
         instance.route(req);
-        assertEquals(old, instance.isEnableInstructions());
+        assertEquals(old, instance.getEncodingManager().isEnableInstructions());
 
         req.getHints().put("instructions", false);
         instance.route(req);
-        assertEquals("route method should not change instance field", old, instance.isEnableInstructions());
+        assertEquals("route method should not change instance field", old, instance.getEncodingManager().isEnableInstructions());
     }
 
     @Test

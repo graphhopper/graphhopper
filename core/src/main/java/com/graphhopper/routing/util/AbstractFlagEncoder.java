@@ -622,7 +622,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     @Override
-    public boolean hasEncoder(String key) {
-        return encodedValueLookup.hasEncoder(key);
+    public boolean hasEncodedValue(String key) {
+        return encodedValueLookup.hasEncodedValue(key);
     }
 }

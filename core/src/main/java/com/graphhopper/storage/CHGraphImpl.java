@@ -234,6 +234,13 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return isReadyForContraction;
     }
 
+    @Override
+    public int getOtherNode(int edge, int node) {
+        EdgeAccess edgeAccess = isShortcut(edge) ? chEdgeAccess : baseGraph.edgeAccess;
+        long edgePointer = edgeAccess.toPointer(edge);
+        return edgeAccess.getOtherNode(node, edgePointer);
+    }
+
     void _prepareForContraction() {
         if (isReadyForContraction) {
             return;

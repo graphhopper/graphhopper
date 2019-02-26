@@ -304,6 +304,11 @@ class GraphSupport {
             public GraphExtension getExtension() {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public int getOtherNode(int edge, int node) {
+                throw new UnsupportedOperationException();
+            }
         };
     }
 }

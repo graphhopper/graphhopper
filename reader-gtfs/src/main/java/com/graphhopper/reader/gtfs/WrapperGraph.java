@@ -289,4 +289,9 @@ public class WrapperGraph implements Graph {
     public GraphExtension getExtension() {
         return baseGraph.getExtension();
     }
+
+    @Override
+    public int getOtherNode(int edge, int node) {
+        return baseGraph.getOtherNode(edge, node);
+    }
 }

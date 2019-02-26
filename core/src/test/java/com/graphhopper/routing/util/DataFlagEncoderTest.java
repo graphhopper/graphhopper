@@ -58,7 +58,7 @@ public class DataFlagEncoderTest {
         accessEnc = encoder.getAccessEnc();
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testNoDefaultEncodedValues() {
         EncodingManager em = EncodingManager.create(Arrays.asList(new DataFlagEncoder(properties)));
     }

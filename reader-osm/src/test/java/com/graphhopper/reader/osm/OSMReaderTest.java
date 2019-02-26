@@ -495,7 +495,7 @@ public class OSMReaderTest {
 
     @Test
     public void testTurnRestrictions() {
-        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true).
+        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
                 importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
@@ -796,14 +796,14 @@ public class OSMReaderTest {
 
     @Test
     public void testPreferredLanguage() {
-        GraphHopper hopper = new GraphHopperFacade(file1).setPreferredLanguage("de").importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade(file1, false, "de").importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         EdgeIterator iter = carOutExplorer.setBaseNode(n20);
         assertTrue(iter.next());
         assertEquals("straße 123, B 122", iter.getName());
 
-        hopper = new GraphHopperFacade(file1).setPreferredLanguage("el").importOrLoad();
+        hopper = new GraphHopperFacade(file1, false, "el").importOrLoad();
         graph = hopper.getGraphHopperStorage();
         n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         iter = carOutExplorer.setBaseNode(n20);
@@ -854,10 +854,10 @@ public class OSMReaderTest {
 
     class GraphHopperFacade extends GraphHopperOSM {
         public GraphHopperFacade(String osmFile) {
-            this(osmFile, false);
+            this(osmFile, false, "");
         }
 
-        public GraphHopperFacade(String osmFile, boolean turnCosts) {
+        public GraphHopperFacade(String osmFile, boolean turnCosts, String prefLang) {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
@@ -872,8 +872,8 @@ public class OSMReaderTest {
             }
 
             footEncoder = new FootFlagEncoder();
-
-            setEncodingManager(EncodingManager.create(footEncoder, carEncoder, bikeEncoder));
+            setEncodingManager(new EncodingManager.Builder(4).add(footEncoder).add(carEncoder).add(bikeEncoder).
+                    setPreferredLanguage(prefLang).build());
             carAccessEnc = carEncoder.getAccessEnc();
         }
 
@@ -884,7 +884,6 @@ public class OSMReaderTest {
 
         @Override
         protected DataReader importData() throws IOException {
-            getEncodingManager().setPreferredLanguage(getPreferredLanguage());
             GraphHopperStorage tmpGraph = newGraph(dir, getEncodingManager(), hasElevation(),
                     getEncodingManager().needsTurnCostsSupport());
             setGraphHopperStorage(tmpGraph);

@@ -746,6 +746,14 @@ public class QueryGraph implements Graph {
         return wrappedExtension;
     }
 
+    @Override
+    public int getOtherNode(int edge, int node) {
+        if (isVirtualEdge(edge)) {
+            return getEdgeIteratorState(edge, node).getBaseNode();
+        }
+        return mainGraph.getOtherNode(edge, node);
+    }
+
     private UnsupportedOperationException exc() {
         return new UnsupportedOperationException("QueryGraph cannot be modified.");
     }
