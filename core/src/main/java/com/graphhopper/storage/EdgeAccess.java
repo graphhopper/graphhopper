@@ -79,7 +79,7 @@ abstract class EdgeAccess {
             distance = MAX_DIST;
 //            throw new IllegalArgumentException("Distance too large leading to overflowed integer (#435): " + distance + " ");
         }
-        int integ = Math.round((float) (distance * INT_DIST_FACTOR));
+        int integ = (int) Math.round(distance * INT_DIST_FACTOR);
         assert integ >= 0 : "distance out of range";
         return integ;
     }
