@@ -287,7 +287,6 @@ public class NodeBasedNodeContractorTest {
         checkNoShortcuts();
     }
 
-
     @Test
     public void testNodeContraction_shortcutWeightRounding() {
         // 0 ------------> 4
@@ -320,7 +319,7 @@ public class NodeBasedNodeContractorTest {
         Dijkstra dikstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED);
         Path dijkstraPath = dikstra.calcPath(from, to);
 
-        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(lg, weighting, TraversalMode.NODE_BASED);
+        DijkstraBidirectionCH ch = new DijkstraBidirectionCH(lg, weighting);
         Path chPath = ch.calcPath(from, to);
         assertEquals(dijkstraPath.calcNodes(), chPath.calcNodes());
         assertEquals(dijkstraPath.getDistance(), chPath.getDistance(), 1.e-6);
