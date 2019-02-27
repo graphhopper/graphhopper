@@ -853,7 +853,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             if (weight > MAX_WEIGHT)
                 weightInt = MAX_WEIGHT_31;
             else
-                weightInt = ((int) (weight * WEIGHT_FACTOR)) << 2;
+                weightInt = Math.round((float) (weight * WEIGHT_FACTOR)) << 2;
             return weightInt;
         }
 

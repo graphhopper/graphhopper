@@ -73,7 +73,7 @@ abstract class EdgeAccess {
      * Translates double distance to integer in order to save it in a DataAccess object
      */
     private int distToInt(double distance) {
-        int integ = (int) (distance * INT_DIST_FACTOR);
+        int integ = Math.round((float) (distance * INT_DIST_FACTOR));
         if (integ < 0)
             throw new IllegalArgumentException("Distance cannot be negative: " + distance);
         if (integ >= Integer.MAX_VALUE)
