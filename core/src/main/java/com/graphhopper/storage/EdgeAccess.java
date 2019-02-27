@@ -73,12 +73,14 @@ abstract class EdgeAccess {
      * Translates double distance to integer in order to save it in a DataAccess object
      */
     private int distToInt(double distance) {
-        int integ = Math.round((float) (distance * INT_DIST_FACTOR));
-        if (integ < 0)
+        if (distance < 0)
             throw new IllegalArgumentException("Distance cannot be negative: " + distance);
-        if (integ >= Integer.MAX_VALUE)
-            return Integer.MAX_VALUE;
-        // throw new IllegalArgumentException("Distance too large leading to overflowed integer (#435): " + distance + " ");
+        if (distance > MAX_DIST) {
+            distance = MAX_DIST;
+//            throw new IllegalArgumentException("Distance too large leading to overflowed integer (#435): " + distance + " ");
+        }
+        int integ = Math.round((float) (distance * INT_DIST_FACTOR));
+        assert integ >= 0 : "distance out of range";
         return integ;
     }
 
