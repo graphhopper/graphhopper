@@ -794,7 +794,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
         Path p = createAlgo(graph, opts).
                 calcPath(0, 10);
-        assertEquals(85124371, p.getTime());
+        assertEquals(85124370, p.getTime());
         assertEquals(425622, p.getDistance(), 1);
         assertEquals(85124.4, p.getWeight(), 1);
     }
