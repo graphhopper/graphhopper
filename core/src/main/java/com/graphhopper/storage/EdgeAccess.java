@@ -77,7 +77,6 @@ abstract class EdgeAccess {
             throw new IllegalArgumentException("Distance cannot be negative: " + distance);
         if (distance > MAX_DIST) {
             distance = MAX_DIST;
-//            throw new IllegalArgumentException("Distance too large leading to overflowed integer (#435): " + distance + " ");
         }
         int integ = (int) Math.round(distance * INT_DIST_FACTOR);
         assert integ >= 0 : "distance out of range";
