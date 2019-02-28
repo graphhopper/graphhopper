@@ -872,7 +872,7 @@ public class OSMReaderTest {
         GHResponse response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1).setPathDetails(Arrays.asList(RoadClass.KEY)));
         List<PathDetail> list = response.getBest().getPathDetails().get(RoadClass.KEY);
         assertEquals(3, list.size());
-        assertEquals("motorway", list.get(0).getValue());
+        assertEquals(RoadClass.MOTORWAY.toString(), list.get(0).getValue());
 
         response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1).setPathDetails(Arrays.asList(RoadAccess.KEY)));
         Throwable ex = response.getErrors().get(0);
