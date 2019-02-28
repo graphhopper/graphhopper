@@ -17,10 +17,12 @@
  */
 package com.graphhopper.util.details;
 
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.graphhopper.util.Parameters.DETAILS.*;
@@ -49,6 +51,14 @@ public class PathDetailsBuilderFactory {
 
         if (requestedPathDetails.contains(DISTANCE))
             builders.add(new DistanceDetails());
+
+        if (requestedPathDetails.contains(CarMaxSpeed.KEY) && encoder.hasEncodedValue(CarMaxSpeed.KEY))
+            builders.add(new DecimalDetails(CarMaxSpeed.KEY, encoder.getDecimalEncodedValue(CarMaxSpeed.KEY)));
+
+        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, Surface.KEY, RoadAccess.KEY)) {
+            if (requestedPathDetails.contains(key) && encoder.hasEncodedValue(key))
+                builders.add(new ObjectDetails(key, encoder.getObjectEncodedValue(key)));
+        }
 
         if (requestedPathDetails.size() != builders.size()) {
             throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we could only find " + builders);

@@ -29,11 +29,15 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.parsers.OSMRoadClassParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
 import org.junit.Before;
@@ -41,7 +45,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.*;
 
@@ -86,10 +89,6 @@ public class OSMReaderTest {
     GraphHopperStorage newGraph(String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport) {
         return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D,
                 turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoOpExtension());
-    }
-
-    InputStream getResource(String file) {
-        return getClass().getResourceAsStream(file);
     }
 
     @Test
@@ -850,6 +849,34 @@ public class OSMReaderTest {
 
         GHResponse ghRsp = hopper.route(req);
         assertFalse(ghRsp.getErrors().toString(), ghRsp.hasErrors());
+    }
+
+    @Test
+    public void testRoadClassInfo() {
+        GraphHopper gh = new GraphHopperOSM() {
+
+            @Override
+            protected DataReader importData() {
+                try {
+                    DataReader reader = new OSMReader(getGraphHopperStorage()).setFile(new File(getClass().getResource(file2).toURI()));
+                    reader.readGraph();
+                    return reader;
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }.setEncodingManager(new EncodingManager.Builder(4).add(carEncoder = new CarFlagEncoder()).add(new OSMRoadClassParser()).build()).
+                setGraphHopperLocation(dir).setCHEnabled(false).
+                importOrLoad();
+
+        GHResponse response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1).setPathDetails(Arrays.asList(RoadClass.KEY)));
+        List<PathDetail> list = response.getBest().getPathDetails().get(RoadClass.KEY);
+        assertEquals(3, list.size());
+        assertEquals("motorway", list.get(0).getValue());
+
+        response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1).setPathDetails(Arrays.asList(RoadAccess.KEY)));
+        Throwable ex = response.getErrors().get(0);
+        assertTrue(ex.getMessage(), ex.getMessage().contains("You requested the details [road_access]"));
     }
 
     class GraphHopperFacade extends GraphHopperOSM {
