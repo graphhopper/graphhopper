@@ -191,8 +191,10 @@ public class CompareAlgoVsDijkstraTest {
     }
 
     private void compareWithDijkstra() {
-        prepareLM();
-        prepareCH();
+        if (algoString.equals("alt"))
+            prepareLM();
+        if (algoString.equals("ch"))
+            prepareCH();
         for (int i = 0; i < 100_000; ++i) {
             RoutingAlgorithm algo = algoFactory.createAlgo();
             DijkstraBidirectionRef refAlgo = new DijkstraBidirectionRef(graph, weighting, TraversalMode.NODE_BASED);
