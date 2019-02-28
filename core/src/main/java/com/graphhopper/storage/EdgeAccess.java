@@ -28,7 +28,7 @@ abstract class EdgeAccess {
     private static final int NO_NODE = -1;
     // distance of around +-1000 000 meter are ok
     private static final double INT_DIST_FACTOR = 1000d;
-    static double MAX_DIST = (Integer.MAX_VALUE - 1) / INT_DIST_FACTOR;
+    static double MAX_DIST = Integer.MAX_VALUE / INT_DIST_FACTOR;
     final DataAccess edges;
     int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS;
 
