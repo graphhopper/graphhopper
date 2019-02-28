@@ -2,6 +2,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -29,13 +30,16 @@ import static org.junit.Assert.fail;
 @RunWith(Parameterized.class)
 public class CompareAlgoVsDijkstraTest {
     private final String algoString;
+    // todo: also add edge-based
     private final TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private Directory dir;
     private CarFlagEncoder encoder;
     private Weighting weighting;
     private GraphHopperStorage graph;
+    private CHGraph chGraph;
     private NodeAccess na;
     private PrepareLandmarks plm;
+    private PrepareContractionHierarchies pch;
     private AlgoFactory algoFactory;
     private long seed;
     private Random rnd;
@@ -48,7 +52,9 @@ public class CompareAlgoVsDijkstraTest {
         return new Object[]{
 //                "astar",
 //                "astarbi",
-                "alt"
+                "alt",
+//                "ch"
+                // todo: add more algos (ch with/without stall-on-demand, edge based, ch with/without astar, lm/ch combination etc.
         };
     }
 
@@ -65,7 +71,8 @@ public class CompareAlgoVsDijkstraTest {
         encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
-        graph = new GraphBuilder(em).create();
+        graph = new GraphBuilder(em).setCHGraph(weighting).create();
+        chGraph = graph.getGraph(CHGraph.class);
         na = graph.getNodeAccess();
         System.out.println("seed: " + seed);
     }
@@ -77,7 +84,7 @@ public class CompareAlgoVsDijkstraTest {
     @Repeat(times = 1000)
     public void randomGraph() {
         // increasing number of nodes finds failing test case more quickly, but harder to debug
-        int numNodes = 50;
+        int numNodes = 500;
         GHUtility.buildRandomGraph(graph, seed, numNodes, 2.2, true, true, 0.9);
         // we only want to look at fully connected graphs (otherwise we get problems with lm preprocessing)
         // only exit here for very small graphs though, otherwise there will be hardly any graph that works
@@ -185,6 +192,7 @@ public class CompareAlgoVsDijkstraTest {
 
     private void compareWithDijkstra() {
         prepareLM();
+        prepareCH();
         for (int i = 0; i < 100_000; ++i) {
             RoutingAlgorithm algo = algoFactory.createAlgo();
             DijkstraBidirectionRef refAlgo = new DijkstraBidirectionRef(graph, weighting, TraversalMode.NODE_BASED);
@@ -214,6 +222,12 @@ public class CompareAlgoVsDijkstraTest {
         plm.doWork();
     }
 
+    private void prepareCH() {
+        graph.freeze();
+        pch = new PrepareContractionHierarchies(chGraph, weighting, traversalMode);
+        pch.doWork();
+    }
+
     private AlgoFactory getAlgoFactory(String algoString) {
         switch (algoString) {
             case "astar":
@@ -236,6 +250,13 @@ public class CompareAlgoVsDijkstraTest {
                     public RoutingAlgorithm createAlgo() {
                         AStarBidirection baseAlgo = new AStarBidirection(graph, weighting, traversalMode);
                         return plm.getDecoratedAlgorithm(graph, baseAlgo, AlgorithmOptions.start().build());
+                    }
+                };
+            case "ch":
+                return new AlgoFactory() {
+                    @Override
+                    public RoutingAlgorithm createAlgo() {
+                        return pch.createAlgo(chGraph, AlgorithmOptions.start().build());
                     }
                 };
             default:
