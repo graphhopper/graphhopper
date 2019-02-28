@@ -17,10 +17,7 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.CarMaxSpeed;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.ObjectEncodedValue;
-import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -97,8 +94,12 @@ public class GenericWeighting extends AbstractWeighting {
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
 
+        IndexBased roadAccessEV = edgeState.get(roadAccessEnc);
+        if (roadAccessEV == RoadAccess.NO)
+            return Double.POSITIVE_INFINITY;
+        else if (roadAccessEV != RoadAccess.UNLIMITED)
+            time = time * uncertainAccessiblePenalty;
         // TODO include roadAccess vs. SpatialRule.Access
-
         return time;
     }
 

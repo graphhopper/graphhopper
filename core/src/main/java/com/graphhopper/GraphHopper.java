@@ -526,11 +526,11 @@ public class GraphHopper implements GraphHopperAPI {
         String encodedValueStr = args.get("graph.encoded_values", "");
         // overwrite EncodingManager only if customization requested
         if (!flagEncodersStr.isEmpty() || !encodedValueStr.isEmpty()) {
-            if (!flagEncodersStr.isEmpty())
-                emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
             // We should not pollute EncodingManager with OSM related parsing, so we need to put it into GHUtility (that we could move later to reader-osm)
             if (!encodedValueStr.isEmpty())
                 GHUtility.addOSMTagParsers(emBuilder, encodedValueStr);
+            if (!flagEncodersStr.isEmpty())
+                emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
             emBuilder.setEnableInstructions(args.getBool("datareader.instructions", true));
             emBuilder.setPreferredLanguage(args.get("datareader.preferred_language", ""));
             setEncodingManager(emBuilder.build());

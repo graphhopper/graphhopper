@@ -20,7 +20,6 @@ package com.graphhopper.routing.util.spatialrules;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.util.shapes.BBox;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.FileReader;

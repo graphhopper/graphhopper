@@ -20,6 +20,7 @@ package com.graphhopper;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.util.*;
@@ -297,16 +298,15 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testNorthBayreuthBlockeEdges() {
+    public void testNorthBayreuthBlockedEdges() {
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).addAll(FlagEncoderFactory.DEFAULT, "generic, car").build());
+                setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).add(new CarFlagEncoder()).build());
         tmpHopper.importOrLoad();
 
-        GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202).
-                setVehicle("generic").setWeighting("generic");
+        GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202);
 
         GHResponse rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
@@ -319,7 +319,7 @@ public class GraphHopperIT {
         assertEquals(365, rsp.getBest().getDistance(), 1);
 
         req = new GHRequest(49.975845, 11.522598, 50.026821, 11.497364).
-                setVehicle("generic").setWeighting("generic");
+                setWeighting("fastest");
 
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
@@ -336,7 +336,7 @@ public class GraphHopperIT {
         req.getHints().put(Routing.BLOCK_AREA, "50.017578,11.547527;" + someArea);
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(16674, rsp.getBest().getDistance(), 1);
+        assertEquals(12787, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small circular area
         req.getHints().put(Routing.BLOCK_AREA, "49.981599,11.517448,100");
