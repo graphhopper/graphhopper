@@ -528,6 +528,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (!flagEncodersStr.isEmpty() || !encodedValueStr.isEmpty()) {
             if (!flagEncodersStr.isEmpty())
                 emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
+            // We should not pollute EncodingManager with OSM related parsing, so we need to put it into GHUtility (that we could move later to reader-osm)
             if (!encodedValueStr.isEmpty())
                 GHUtility.addOSMTagParsers(emBuilder, encodedValueStr);
             emBuilder.setEnableInstructions(args.getBool("datareader.instructions", true));
@@ -904,6 +905,8 @@ public class GraphHopper implements GraphHopperAPI {
 
         } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortFastestWeighting(encoder, hintsMap);
+        } else if ("avoid".equalsIgnoreCase(weightingStr)) {
+            weighting = new AvoidWeighting(encoder, hintsMap);
         }
 
         if (weighting == null)

@@ -247,7 +247,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                             discoveredSolutions.add(combinedSolution);
                             originalSolutions.put(combinedSolution, label);
                             if (profileQuery) {
-                                highestWeightForDominationTest = router.weight(discoveredSolutions.get(discoveredSolutions.size()-1));
+                                highestWeightForDominationTest = router.weight(discoveredSolutions.get(discoveredSolutions.size() - 1));
                             } else {
                                 highestWeightForDominationTest = discoveredSolutions.stream().filter(s -> !s.impossible && (ignoreTransfers || s.nTransfers <= 1)).mapToLong(router::weight).min().orElse(Long.MAX_VALUE);
                             }

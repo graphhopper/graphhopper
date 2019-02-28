@@ -55,7 +55,6 @@ public class ShortFastestWeighting extends FastestWeighting {
 
     @Override
     public double getMinWeight(double distance) {
-        // TODO: Should we add the [+ distance * distanceFactor]. It improves the heuristic of the A*.
         return super.getMinWeight(distance) * timeFactor + distance * distanceFactor;
     }
 

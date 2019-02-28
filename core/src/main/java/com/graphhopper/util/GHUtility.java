@@ -542,7 +542,7 @@ public class GHUtility {
 
     public static final EncodingManager.Builder addOSMTagParsers(EncodingManager.Builder builder, String evList) {
         if (!evList.equals(toLowerCase(evList)))
-            throw new IllegalArgumentException("Use lower case for EncodedValues: " + evList);
+            throw new IllegalArgumentException("Use lower case for OSM TagParsers: " + evList);
 
         for (String entry : evList.split(",")) {
             entry = toLowerCase(entry.trim());
@@ -561,6 +561,8 @@ public class GHUtility {
                 builder.add(new OSMSurfaceParser());
             else if (entry.equals(CarMaxSpeed.KEY))
                 builder.add(new OSMCarMaxSpeedParser());
+            else if (entry.equals(Toll.KEY))
+                builder.add(new OSMTollParser());
         }
         return builder;
     }

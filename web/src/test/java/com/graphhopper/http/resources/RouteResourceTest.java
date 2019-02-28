@@ -58,6 +58,7 @@ public class RouteResourceTest {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "car").
                 put("prepare.ch.weightings", "fastest").
+                put("routing.ch.disabling_allowed", "true").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
@@ -142,7 +143,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testGraphHopperWeb() throws Exception {
+    public void testGraphHopperWeb() {
         GraphHopperWeb hopper = new GraphHopperWeb();
         assertTrue(hopper.load("http://localhost:8080/route"));
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128));
@@ -168,6 +169,21 @@ public class RouteResourceTest {
         assertEquals("At roundabout, take exit 2", instructions.get(4).get("text"));
         assertEquals(true, instructions.get(4).get("exited"));
         assertEquals(false, instructions.get(24).get("exited"));
+    }
+
+    @Test
+    public void testAvoidWeighting() {
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
+        assertTrue(hopper.load("http://localhost:8080/route"));
+        GHRequest request = new GHRequest(42.546757, 1.528645, 42.520573, 1.557999).setWeighting("avoid");
+        request.getHints().put("ch.disable", true);
+        GHResponse rsp = hopper.route(request);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(8726, rsp.getBest().getDistance(), 1);
+
+        request.getHints().put("avoid", "tunnel");
+        rsp = hopper.route(request);
+        assertEquals(10520, rsp.getBest().getDistance(), 1);
     }
 
     @Test

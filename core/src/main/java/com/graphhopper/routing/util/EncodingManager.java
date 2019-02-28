@@ -305,7 +305,6 @@ public class EncodingManager implements EncodedValueLookup {
             EncodedValue fe = factory.create(entry);
             builder.add(fe);
             PMap map = new PMap(entry);
-            // ignore check if specified without like e.g. in config.yml
             if (!map.has("version"))
                 throw new IllegalArgumentException("encoded value must have a version specified but it was " + entry);
 
