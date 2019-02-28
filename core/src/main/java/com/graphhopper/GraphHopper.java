@@ -521,9 +521,15 @@ public class GraphHopper implements GraphHopperAPI {
         sortGraph = args.getBool("graph.do_sort", sortGraph);
         removeZipped = args.getBool("graph.remove_zipped", removeZipped);
         int bytesForFlags = args.getInt("graph.bytes_for_flags", 4);
+        EncodingManager.Builder emBuilder = new EncodingManager.Builder(bytesForFlags);
         String flagEncodersStr = args.get("graph.flag_encoders", "");
-        if (!flagEncodersStr.isEmpty()) {
-            EncodingManager.Builder emBuilder = EncodingManager.createBuilder(flagEncoderFactory, flagEncodersStr, bytesForFlags);
+        String encodedValueStr = args.get("graph.encoded_values", "");
+        // overwrite EncodingManager only if customization requested
+        if (!flagEncodersStr.isEmpty() || !encodedValueStr.isEmpty()) {
+            if (!flagEncodersStr.isEmpty())
+                emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
+            if (!encodedValueStr.isEmpty())
+                GHUtility.addOSMTagParsers(emBuilder, encodedValueStr);
             emBuilder.setEnableInstructions(args.getBool("datareader.instructions", true));
             emBuilder.setPreferredLanguage(args.get("datareader.preferred_language", ""));
             setEncodingManager(emBuilder.build());

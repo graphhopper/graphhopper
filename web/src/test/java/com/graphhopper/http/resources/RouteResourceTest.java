@@ -25,6 +25,9 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.api.GraphHopperWeb;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.routing.profiles.RoadClass;
+import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.profiles.Surface;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.details.PathDetail;
@@ -58,11 +61,12 @@ public class RouteResourceTest {
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
+                put("graph.encoded_values", "road_class,surface,road_environment").
                 put("graph.location", DIR));
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
             GraphHopperApplication.class, config);
 
     @AfterClass
@@ -167,7 +171,24 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testPathDetails() throws Exception {
+    public void testPathDetailsRoadClass() {
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
+        assertTrue(hopper.load("http://localhost:8080/route"));
+        GHRequest request = new GHRequest(42.546757, 1.528645, 42.520573, 1.557999);
+        request.setPathDetails(Arrays.asList(RoadClass.KEY, Surface.KEY, RoadEnvironment.KEY, "average_speed"));
+        GHResponse rsp = hopper.route(request);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(4, rsp.getBest().getPathDetails().get(RoadClass.KEY).size());
+        assertEquals(RoadClass.PRIMARY.toString(), rsp.getBest().getPathDetails().get(RoadClass.KEY).get(3).getValue());
+
+        List<PathDetail> roadEnvList = rsp.getBest().getPathDetails().get(RoadEnvironment.KEY);
+        assertEquals(10, roadEnvList.size());
+        assertEquals(RoadEnvironment.ROAD.toString(), roadEnvList.get(0).getValue());
+        assertEquals(RoadEnvironment.TUNNEL.toString(), roadEnvList.get(6).getValue());
+    }
+
+    @Test
+    public void testPathDetails() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load("http://localhost:8080/route"));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);

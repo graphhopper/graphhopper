@@ -60,6 +60,8 @@ public class OSMRoadEnvironmentParser implements TagParser {
         else if (readerWay.hasTag("route", "shuttle_train"))
             // TODO how to feed this information from a relation like https://www.openstreetmap.org/relation/1932780
             roadEnvironment = SHUTTLE_TRAIN;
+        else if (readerWay.hasTag("highway"))
+            roadEnvironment = ROAD;
 
         if (roadEnvironment != OTHER)
             roadEnvEnc.setObject(false, edgeFlags, roadEnvironment);

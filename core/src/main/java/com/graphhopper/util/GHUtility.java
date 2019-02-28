@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.graphhopper.util.Helper.toLowerCase;
+
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
  * methods are useful for unit tests or debugging only.
@@ -536,6 +538,31 @@ public class GHUtility {
         if (bwd)
             edge.setReverse(avSpeedEnc, averageSpeed);
         return edge;
+    }
+
+    public static final EncodingManager.Builder addOSMTagParsers(EncodingManager.Builder builder, String evList) {
+        if (!evList.equals(toLowerCase(evList)))
+            throw new IllegalArgumentException("Use lower case for EncodedValues: " + evList);
+
+        for (String entry : evList.split(",")) {
+            entry = toLowerCase(entry.trim());
+            if (entry.isEmpty())
+                continue;
+
+            if (entry.equals(RoadClass.KEY))
+                builder.add(new OSMRoadClassParser());
+            else if (entry.equals(RoadClassLink.KEY))
+                builder.add(new OSMRoadClassLinkParser());
+            else if (entry.equals(RoadEnvironment.KEY))
+                builder.add(new OSMRoadEnvironmentParser());
+            else if (entry.equals(RoadAccess.KEY))
+                builder.add(new OSMRoadAccessParser());
+            else if (entry.equals(Surface.KEY))
+                builder.add(new OSMSurfaceParser());
+            else if (entry.equals(CarMaxSpeed.KEY))
+                builder.add(new OSMCarMaxSpeedParser());
+        }
+        return builder;
     }
 
     public static final EncodingManager.Builder addDefaultEncodedValues(EncodingManager.Builder builder) {

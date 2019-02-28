@@ -13,7 +13,10 @@ graphhopper:
 
   # Enable turn restrictions for car or motorcycle.
   # graph.flag_encoders: car|turn_costs=true
-
+  
+  # add more data to every edge, currently used for path details only
+  # graph.encoded_values: surface,road_class,road_environment,road_access,car_max_speed
+  # graph.bytes_for_flags: 8
 
   ##### Elevation #####
 
