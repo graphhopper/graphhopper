@@ -683,6 +683,7 @@ public class QueryGraphTest {
 
     @Test
     public void testWayGeometry_edge() {
+        // drawn as horizontal linear graph for simplicity
         // 0 - * - x - * - 1
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0);
@@ -719,9 +720,13 @@ public class QueryGraphTest {
 
     @Test
     public void testWayGeometry_pillar() {
-        //      1
-        //        \
-        // 0 - * - *
+        //   1
+        //    \
+        //     * x
+        //    /
+        //   *
+        //  /
+        // 0
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0);
         na.setNode(1, 0.5, 0.1);
