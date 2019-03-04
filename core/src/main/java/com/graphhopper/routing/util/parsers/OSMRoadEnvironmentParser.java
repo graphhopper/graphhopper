@@ -51,9 +51,9 @@ public class OSMRoadEnvironmentParser implements TagParser {
         RoadEnvironment roadEnvironment = OTHER;
         if (access.isFerry())
             roadEnvironment = FERRY;
-        else if (readerWay.hasTag("bridge"))
+        else if (readerWay.hasTag("bridge") && !readerWay.hasTag("bridge", "no"))
             roadEnvironment = BRIDGE;
-        else if (readerWay.hasTag("tunnel"))
+        else if (readerWay.hasTag("tunnel") && !readerWay.hasTag("tunnel", "no"))
             roadEnvironment = TUNNEL;
         else if (readerWay.hasTag("ford") || readerWay.hasTag("highway", "ford"))
             roadEnvironment = FORD;

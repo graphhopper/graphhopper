@@ -540,33 +540,6 @@ public class GHUtility {
         return edge;
     }
 
-    public static final EncodingManager.Builder addOSMTagParsers(EncodingManager.Builder builder, String evList) {
-        if (!evList.equals(toLowerCase(evList)))
-            throw new IllegalArgumentException("Use lower case for OSM TagParsers: " + evList);
-
-        for (String entry : evList.split(",")) {
-            entry = toLowerCase(entry.trim());
-            if (entry.isEmpty())
-                continue;
-
-            if (entry.equals(RoadClass.KEY))
-                builder.add(new OSMRoadClassParser());
-            else if (entry.equals(RoadClassLink.KEY))
-                builder.add(new OSMRoadClassLinkParser());
-            else if (entry.equals(RoadEnvironment.KEY))
-                builder.add(new OSMRoadEnvironmentParser());
-            else if (entry.equals(RoadAccess.KEY))
-                builder.add(new OSMRoadAccessParser());
-            else if (entry.equals(Surface.KEY))
-                builder.add(new OSMSurfaceParser());
-            else if (entry.equals(CarMaxSpeed.KEY))
-                builder.add(new OSMCarMaxSpeedParser());
-            else if (entry.equals(Toll.KEY))
-                builder.add(new OSMTollParser());
-        }
-        return builder;
-    }
-
     public static final EncodingManager.Builder addDefaultEncodedValues(EncodingManager.Builder builder) {
         // 5+1+3+5+4+4=22 bits
         return builder.add(new OSMRoadClassParser()).add(new OSMRoadClassLinkParser()).

@@ -23,7 +23,9 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.List;
 
@@ -50,11 +52,14 @@ public class OSMCarMaxSpeedParser implements TagParser {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
         double maxSpeed = parseSpeed(way.getTag("maxspeed"));
-        // TODO store from spatial rule, but somehow mark as "implicit"
-//        if (maxSpeed < 0) {
-//            // TODO What if no maxspeed is set, but only forward and backward, and both are higher than the usually allowed?
-//            maxSpeed = getSpatialRule(way).getMaxSpeed(way.getTag("highway", ""), maxSpeed);
-//        }
+
+        if (maxSpeed < 0) {
+            GHPoint estmCentre = way.getTag("estimated_center", null);
+            SpatialRule spatialRule = way.getTag("spatial_rule", null);
+            if (estmCentre != null && spatialRule != null)
+                maxSpeed = spatialRule.getMaxSpeed(way.getTag("highway", ""), maxSpeed);
+        }
+
         double fwdSpeed = parseSpeed(way.getTag("maxspeed:forward"));
         if (fwdSpeed < 0 && maxSpeed > 0)
             fwdSpeed = maxSpeed;

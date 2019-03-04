@@ -43,6 +43,8 @@ public class GraphHopperDataFlagEncoderSpatialRulesTest {
     static {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "generic").
+                // TODO NOW breaks backward compatibility and we need country tag parser as first
+                put("graph.encoded_values", "country,road_environment,road_class,road_access,car_max_speed").
                 put("prepare.ch.weightings", "no").
                 put("spatial_rules.location", "../core/files/spatialrules/countries.geo.json").
                 put("spatial_rules.max_bbox", "11.4,11.7,49.9,50.1").
@@ -51,7 +53,7 @@ public class GraphHopperDataFlagEncoderSpatialRulesTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
             GraphHopperApplication.class, config);
 
 
@@ -61,7 +63,7 @@ public class GraphHopperDataFlagEncoderSpatialRulesTest {
     }
 
     @Test
-    public void testDetourToComplyWithSpatialRule() throws Exception {
+    public void testDetourToComplyWithSpatialRule() {
         final Response response = app.client().target("http://localhost:8080/route?" + "point=49.995933,11.54809&point=50.004871,11.517191&vehicle=generic").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);

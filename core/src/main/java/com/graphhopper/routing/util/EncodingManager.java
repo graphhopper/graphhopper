@@ -218,6 +218,11 @@ public class EncodingManager implements EncodedValueLookup {
             return this;
         }
 
+        public Builder addAll(TagParserFactory factory, String tagParserString) {
+            em.add(this, factory, tagParserString);
+            return this;
+        }
+
         public Builder add(FlagEncoder encoder) {
             check();
             em.addEncoder((AbstractFlagEncoder) encoder);
@@ -312,6 +317,21 @@ public class EncodingManager implements EncodedValueLookup {
             int stored = fe.getVersion();
             if (stored != version)
                 throw new IllegalArgumentException("Version of EncodedValue does not match. Stored " + stored + " vs. in code " + version);
+        }
+    }
+
+    private void add(Builder builder, TagParserFactory factory, String tpList) {
+        if (!tpList.equals(toLowerCase(tpList)))
+            throw new IllegalArgumentException("Use lower case for TagParser: " + tpList);
+
+        for (String entry : tpList.split(",")) {
+            entry = entry.trim();
+            if (entry.isEmpty())
+                continue;
+
+            PMap map = new PMap(entry);
+            TagParser tp = factory.create(entry, map);
+            builder.add(tp);
         }
     }
 

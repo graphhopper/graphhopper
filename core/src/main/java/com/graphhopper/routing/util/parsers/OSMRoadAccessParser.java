@@ -23,10 +23,15 @@ import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.ObjectEncodedValue;
 import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static com.graphhopper.routing.profiles.RoadAccess.OTHER;
+import static com.graphhopper.routing.profiles.RoadAccess.YES;
 
 
 public class OSMRoadAccessParser implements TagParser {
@@ -53,7 +58,7 @@ public class OSMRoadAccessParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, long relationFlags) {
-        RoadAccess accessValue = RoadAccess.UNLIMITED;
+        RoadAccess accessValue = YES;
         RoadAccess tmpAccessValue;
         for (String restriction : restrictions) {
             tmpAccessValue = RoadAccess.find(readerWay.getTag(restriction, "yes"));
@@ -62,21 +67,11 @@ public class OSMRoadAccessParser implements TagParser {
             }
         }
 
-        // TODO spatial rule
-//        if (accessValue == RoadAccess.OTHER) {
-//            // TODO Fix transportation mode when adding other forms of transportation
-//            switch (getSpatialRule(way).getAccess(way.getTag("highway", ""), TransportationMode.MOTOR_VEHICLE, YES)) {
-//                case YES:
-//                    accessValue = RoadAccess.UNLIMITED;
-//                    break;
-//                case CONDITIONAL:
-//                    accessValue = RoadAccess.DESTINATION;
-//                    break;
-//                case NO:
-//                    accessValue = RoadAccess.NO;
-//                    break;
-//            }
-//        }
+        if (accessValue == RoadAccess.YES) {
+            SpatialRule spatialRule = readerWay.getTag("spatial_rule", null);
+            if (spatialRule != null)
+                accessValue = spatialRule.getAccess(readerWay.getTag("highway", ""), TransportationMode.MOTOR_VEHICLE, YES);
+        }
 
         roadAccessEnc.setObject(false, edgeFlags, accessValue);
         return edgeFlags;

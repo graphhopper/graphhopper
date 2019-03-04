@@ -23,10 +23,10 @@ import java.util.LinkedHashMap;
 public class RoadAccess extends DefaultIndexBased {
     public static final String KEY = "road_access";
     // order is important here as we assume "smaller index" means "broader access"
-    private static final LinkedHashMap<String, RoadAccess> map = create("other", "unlimited", "destination",
+    private static final LinkedHashMap<String, RoadAccess> map = create("other", "yes", "destination",
             "customers", "delivery", "forestry", "agricultural", "private", "no");
 
-    public static final RoadAccess OTHER = map.get("other"), UNLIMITED = map.get("unlimited"),
+    public static final RoadAccess OTHER = map.get("other"), YES = map.get("yes"),
             DESTINATION = map.get("destination"), CUSTOMERS = map.get("customers"), DELIVERY = map.get("delivery"),
             FORESTRY = map.get("forestry"), AGRICULTURAL = map.get("agricultural"),
             PRIVATE = map.get("private"), NO = map.get("no");

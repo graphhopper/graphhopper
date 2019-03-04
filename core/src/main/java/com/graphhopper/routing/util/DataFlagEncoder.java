@@ -20,15 +20,12 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.InstructionAnnotation;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Translation;
-import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,9 +76,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private boolean storeHeight = false;
     private boolean storeWeight = false;
     private boolean storeWidth = false;
-    private IntEncodedValue spatialEncoder;
     private ObjectEncodedValue roadEnvironmentEnc;
-    private SpatialRuleLookup spatialRuleLookup = SpatialRuleLookup.EMPTY;
 
     public DataFlagEncoder() {
         this(5, 5, 0);
@@ -121,11 +116,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         /* Value range: [2.5m, 3.5m] */
         if (isStoreWidth())
             registerNewEncodedValue.add(widthEncoder = new FactorizedDecimalEncodedValue(prefix + "width", 6, 0.1, false));
-
-        int tmpMax = spatialRuleLookup.size() - 1;
-        int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
-        if (bits > 0)
-            registerNewEncodedValue.add(spatialEncoder = new SimpleIntEncodedValue("spatial_location", bits, false));
 
         // workaround to init AbstractWeighting.avSpeedEnc variable that GenericWeighting does not need
         speedEncoder = new FactorizedDecimalEncodedValue("fake", 1, 1, false);
@@ -227,27 +217,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
                 accessEnc.setBool(true, edgeFlags, true);
             }
 
-            // fow now we manually skip parsing, later we have a parsing method per EncodedValue and trigger this from the EncodingManager
-            if (spatialEncoder != null) {
-                GHPoint estimatedCenter = way.getTag("estimated_center", null);
-                if (estimatedCenter != null) {
-                    SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);
-                    spatialEncoder.setInt(false, edgeFlags, spatialRuleLookup.getSpatialId(rule));
-                }
-            }
-
             return edgeFlags;
         } catch (Exception ex) {
             throw new RuntimeException("Error while parsing way " + way.toString(), ex);
         }
-    }
-
-    private SpatialRule getSpatialRule(ReaderWay way) {
-        GHPoint estmCentre = way.getTag("estimated_center", null);
-        if (estmCentre != null) {
-            return spatialRuleLookup.lookupRule(estmCentre);
-        }
-        return SpatialRule.EMPTY;
     }
 
     private void extractMeter(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
@@ -267,8 +240,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         } catch (IllegalArgumentException e) {
             LOG.warn("Unable to process value '{}' for way (OSM_ID = {}).", val, way.getId(), e);
         }
-
-        return;
     }
 
     private void extractTons(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
@@ -340,24 +311,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         } else {
             return Double.parseDouble(value) * factor + offset;
         }
-    }
-
-    /**
-     * This method returns the spatialId stored in the specified flags or -1 if not enabled for this encoder.
-     */
-    public int getSpatialId(IntsRef flags) {
-        if (spatialEncoder == null)
-            return -1;
-
-        return spatialEncoder.getInt(false, flags);
-    }
-
-    /**
-     * This method set the spatial ID (e.g. country ID) of the specified flags to the specified id. Fetch the unique
-     * spatial ID via spatialRuleLookup.lookup().getSpatialId
-     */
-    public void setSpatialId(IntsRef flags, int id) {
-        spatialEncoder.setInt(false, flags, id);
     }
 
     public double getHeight(EdgeIteratorState edge) {
@@ -433,12 +386,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     public boolean isStoreWidth() {
         return storeWidth;
-    }
-
-
-    public DataFlagEncoder setSpatialRuleLookup(SpatialRuleLookup spatialRuleLookup) {
-        this.spatialRuleLookup = spatialRuleLookup;
-        return this;
     }
 
     @Override

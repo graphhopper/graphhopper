@@ -120,6 +120,7 @@ public class GraphHopper implements GraphHopperAPI {
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
     private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
+    private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
@@ -476,11 +477,6 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    // TODO NOW remove this method
-    public FlagEncoderFactory getFlagEncoderFactory() {
-        return this.flagEncoderFactory;
-    }
-
     public EncodedValueFactory getEncodedValueFactory() {
         return this.encodedValueFactory;
     }
@@ -489,6 +485,17 @@ public class GraphHopper implements GraphHopperAPI {
         this.encodedValueFactory = factory;
         return this;
     }
+
+
+    public TagParserFactory getTagParserFactory() {
+        return this.tagParserFactory;
+    }
+
+    public GraphHopper setTagParserFactory(TagParserFactory factory) {
+        this.tagParserFactory = factory;
+        return this;
+    }
+
 
     /**
      * Reads the configuration from a CmdArgs object which can be manually filled, or via
@@ -526,9 +533,8 @@ public class GraphHopper implements GraphHopperAPI {
         String encodedValueStr = args.get("graph.encoded_values", "");
         // overwrite EncodingManager only if customization requested
         if (!flagEncodersStr.isEmpty() || !encodedValueStr.isEmpty()) {
-            // We should not pollute EncodingManager with OSM related parsing, so we need to put it into GHUtility (that we could move later to reader-osm)
             if (!encodedValueStr.isEmpty())
-                GHUtility.addOSMTagParsers(emBuilder, encodedValueStr);
+                emBuilder.addAll(tagParserFactory, encodedValueStr);
             if (!flagEncodersStr.isEmpty())
                 emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
             emBuilder.setEnableInstructions(args.getBool("datareader.instructions", true));

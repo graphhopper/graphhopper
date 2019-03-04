@@ -97,9 +97,8 @@ public class GenericWeighting extends AbstractWeighting {
         IndexBased roadAccessEV = edgeState.get(roadAccessEnc);
         if (roadAccessEV == RoadAccess.NO)
             return Double.POSITIVE_INFINITY;
-        else if (roadAccessEV != RoadAccess.UNLIMITED)
+        else if (roadAccessEV != RoadAccess.YES)
             time = time * uncertainAccessiblePenalty;
-        // TODO include roadAccess vs. SpatialRule.Access
         return time;
     }
 

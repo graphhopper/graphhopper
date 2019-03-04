@@ -1,3 +1,6 @@
+0.13
+    DataFlagEncoder: breaking change to previous versions where the Java API dataFlagEncoder.getSpeed returned -1 for cases without speedsign now return 0. The IntDetails of it still return -1
+
 0.12
     access refactoring #1436 that moves AccessValue into SpatialRule.Access
     refactoring of EncodingManager to use builder pattern. Migration should be simple. Replace new EncodingManager with EncodingManager.create

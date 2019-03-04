@@ -189,7 +189,7 @@ public class DataFlagEncoderTest {
         way.setTag("highway", "secondary");
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay().put(encoder.toString(), encoder.getAccess(way));
         IntsRef intsref = encodingManager.handleWayTags(way, map, 0);
-        assertEquals(RoadAccess.UNLIMITED, roadAccessEnc.getObject(false, intsref));
+        assertEquals(RoadAccess.YES, roadAccessEnc.getObject(false, intsref));
 
         way.setTag("vehicle", "destination");
         map = new EncodingManager.AcceptWay().put(encoder.toString(), encoder.getAccess(way));
@@ -399,25 +399,11 @@ public class DataFlagEncoderTest {
             }
         };
 
-        DataFlagEncoder encoder = new DataFlagEncoder(new PMap());
-        encoder.setSpatialRuleLookup(index);
-        EncodingManager em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(4)).add(encoder).build();
-
-        ReaderWay way = new ReaderWay(27l);
-        way.setTag("highway", "track");
-        way.setTag("estimated_center", new GHPoint(0.005, 0.005));
-
-        ReaderWay way2 = new ReaderWay(28l);
-        way2.setTag("highway", "track");
-        way2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
-
-        ReaderWay livingStreet = new ReaderWay(29l);
-        livingStreet.setTag("highway", "living_street");
-        livingStreet.setTag("estimated_center", new GHPoint(0.005, 0.005));
-
-        ReaderWay livingStreet2 = new ReaderWay(30l);
-        livingStreet2.setTag("highway", "living_street");
-        livingStreet2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
+        DataFlagEncoder tmpEncoder = new DataFlagEncoder(new PMap());
+        EncodingManager em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(4).add(new SpatialRuleParser(index))).add(tmpEncoder).build();
+        IntEncodedValue countrySpatialIdEnc = em.getIntEncodedValue(Country.KEY);
+        ObjectEncodedValue tmpRoadAccessEnc = em.getObjectEncodedValue(RoadAccess.KEY);
+        DecimalEncodedValue tmpCarMaxSpeedEnc = em.getDecimalEncodedValue(CarMaxSpeed.KEY);
 
         Graph graph = new GraphBuilder(em).create();
         EdgeIteratorState e1 = graph.edge(0, 1, 1, true);
@@ -430,18 +416,32 @@ public class DataFlagEncoderTest {
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 3, 0.01, 0.01);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 4, -0.01, -0.01);
 
+        ReaderWay way = new ReaderWay(27l);
+        way.setTag("highway", "track");
+        way.setTag("estimated_center", new GHPoint(0.005, 0.005));
         e1.setFlags(em.handleWayTags(way, map, 0));
+        assertEquals(RoadAccess.FORESTRY, e1.get(tmpRoadAccessEnc));
+
+        ReaderWay way2 = new ReaderWay(28l);
+        way2.setTag("highway", "track");
+        way2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
         e2.setFlags(em.handleWayTags(way2, map, 0));
+        assertEquals(RoadAccess.YES, e2.get(tmpRoadAccessEnc));
+
+        assertEquals(index.getSpatialId(new GermanySpatialRule()), e1.get(countrySpatialIdEnc));
+        assertEquals(index.getSpatialId(SpatialRule.EMPTY), e2.get(countrySpatialIdEnc));
+
+        ReaderWay livingStreet = new ReaderWay(29l);
+        livingStreet.setTag("highway", "living_street");
+        livingStreet.setTag("estimated_center", new GHPoint(0.005, 0.005));
         e3.setFlags(em.handleWayTags(livingStreet, map, 0));
+        assertEquals(5, e3.get(tmpCarMaxSpeedEnc), .1);
+
+        ReaderWay livingStreet2 = new ReaderWay(30l);
+        livingStreet2.setTag("highway", "living_street");
+        livingStreet2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
         e4.setFlags(em.handleWayTags(livingStreet2, map, 0));
-
-        assertEquals(index.getSpatialId(new GermanySpatialRule()), encoder.getSpatialId(e1.getFlags()));
-        assertEquals(index.getSpatialId(SpatialRule.EMPTY), encoder.getSpatialId(e2.getFlags()));
-
-        // TODO NOW
-//        assertEquals(SpatialRule.Access.CONDITIONAL, e1.get(roadAccessEnc));
-//        assertEquals(SpatialRule.Access.YES, e2.get(roadAccessEnc));
-//        assertEquals(5, e3.get(carMaxSpeedEnc), .1);
-//        assertEquals(-1, e4.get(carMaxSpeedEnc), .1);
+        // TODO NOW breaks backward compatibility
+        assertEquals(0, e4.get(tmpCarMaxSpeedEnc), .1);
     }
 }
