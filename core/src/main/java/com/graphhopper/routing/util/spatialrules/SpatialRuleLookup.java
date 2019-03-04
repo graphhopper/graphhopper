@@ -50,6 +50,12 @@ public interface SpatialRuleLookup {
     int getSpatialId(SpatialRule rule);
 
     /**
+     * This method returns the SpatialRule for a given Spatial Id. This can be used when retrieving SpatialRules from
+     * a Spatial Id stored in the graph.
+     */
+    SpatialRule getSpatialRule(int spatialId);
+
+    /**
      * @return the number of rules added to this lookup.
      */
     int size();
@@ -73,6 +79,11 @@ public interface SpatialRuleLookup {
         @Override
         public int getSpatialId(SpatialRule rule) {
             return 0;
+        }
+
+        @Override
+        public SpatialRule getSpatialRule(int spatialId) {
+            return SpatialRule.EMPTY;
         }
 
         @Override
