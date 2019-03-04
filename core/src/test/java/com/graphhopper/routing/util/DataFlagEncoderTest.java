@@ -365,6 +365,11 @@ public class DataFlagEncoderTest {
             }
 
             @Override
+            public SpatialRule getSpatialRule(int spatialId) {
+                return SpatialRule.EMPTY;
+            }
+
+            @Override
             public int size() {
                 return 2;
             }
