@@ -201,8 +201,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
         RoutingAlgorithm algo = createAlgo(graph);
         Path p = algo.calcPath(0, 0);
-        assertEquals(p.toString(), IntArrayList.from(new int[]{0}), p.calcNodes());
-        assertEquals(p.toString(), 0, p.getDistance(), 1.e-6);
+        assertPathFromEqualsTo(p, 0);
     }
 
     @Test
@@ -633,8 +632,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test
     public void testCalcIfEmptyWay() {
         Path p = createAlgo(createTestStorage()).calcPath(0, 0);
-        assertEquals(p.calcNodes().toString(), 1, p.calcNodes().size());
-        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
+        assertPathFromEqualsTo(p, 0);
     }
 
     @Test
@@ -642,17 +640,11 @@ public abstract class AbstractRoutingAlgorithmTester {
         GraphHopperStorage ghStorage = createTestStorage();
         // identical tower nodes
         Path p = calcPathViaQuery(ghStorage, 0.001, 0.000, 0.001, 0.000);
-        assertTrue(p.isFound());
-        assertEquals(IntArrayList.from(0), p.calcNodes());
-        // assertEquals(1, p.calcPoints().size());
-        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
+        assertPathFromEqualsTo(p, 0);
 
         // identical query points on edge
         p = calcPath(ghStorage, 0, 1, 0, 1);
-        assertTrue(p.isFound());
-        assertEquals(IntArrayList.from(8), p.calcNodes());
-        // assertEquals(1, p.calcPoints().size());
-        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
+        assertPathFromEqualsTo(p, 8);
 
         // very close
         p = calcPathViaQuery(ghStorage, 0.00092, 0, 0.00091, 0);
@@ -966,5 +958,15 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     protected GraphHopperStorage createMatrixGraph() {
         return createMatrixAlikeGraph(createGHStorage(false));
+    }
+
+    private void assertPathFromEqualsTo(Path p, int node) {
+        assertTrue(p.isFound());
+        assertEquals(p.toString(), IntArrayList.from(node), p.calcNodes());
+        assertEquals(p.toString(), 1, p.calcPoints().size());
+        assertEquals(p.toString(), 0, p.calcEdges().size());
+        assertEquals(p.toString(), 0, p.getWeight(), 1e-4);
+        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
+        assertEquals(p.toString(), 0, p.getTime(), 1e-4);
     }
 }
