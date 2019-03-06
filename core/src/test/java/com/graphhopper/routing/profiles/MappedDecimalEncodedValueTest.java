@@ -43,15 +43,4 @@ public class MappedDecimalEncodedValueTest {
         } catch (Exception ex) {
         }
     }
-
-    @Test
-    public void testStoreAndLoad() {
-//        MappedDecimalEncodedValue enc = new MappedDecimalEncodedValue(maxweight.toString());
-//        assertEquals(enc, maxweight);
-        PMap map = new PMap("name=road_class");
-        String name = map.get("name", "");
-        if(RoadClass.KEY.equals(name)) {
-            RoadClass.create();
-        }
-    }
 }

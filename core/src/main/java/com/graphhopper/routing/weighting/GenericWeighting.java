@@ -67,7 +67,7 @@ public class GenericWeighting extends AbstractWeighting {
         weight = hintsMap.getDouble(WEIGHT_LIMIT, 0d);
         width = hintsMap.getDouble(WIDTH_LIMIT, 0d);
         roadAccessEnc = encoder.getObjectEncodedValue(RoadAccess.KEY);
-        carMaxSpeedEnc = encoder.getEncodedValue(CarMaxSpeed.KEY, DecimalEncodedValue.class);
+        carMaxSpeedEnc = encoder.getDecimalEncodedValue(CarMaxSpeed.KEY);
     }
 
     @Override
@@ -118,7 +118,7 @@ public class GenericWeighting extends AbstractWeighting {
         // TODO inner city guessing -> lit, maxspeed <= 50, residential etc => create new encoder.isInnerCity(edge)
         // See #472 use edge.getDouble((encoder), K_MAXSPEED_MOTORVEHICLE_FORWARD, _default) or edge.getMaxSpeed(...) instead?
         // encoder could be made optional via passing to EdgeExplorer
-        double maxspeed = carMaxSpeedEnc.getDecimal(reverse, edgeState.getFlags());
+        double maxspeed = reverse ? edgeState.get(carMaxSpeedEnc) : edgeState.getReverse(carMaxSpeedEnc);
         if (maxspeed > 0 && speed > maxspeed)
             speed = maxspeed;
 
