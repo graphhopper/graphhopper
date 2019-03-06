@@ -9,7 +9,12 @@ public class CarMaxSpeed {
     /**
      * speed value used for "none" speed limit on German Autobahn
      */
-    public static final double UNLIMITED_SIGN = 140;
+    public static final double UNLIMITED_SIGN_SPEED = 140;
+
+    /**
+     * speed value used for road sections without known speed limit.
+     */
+    public static final double UNSET_SPEED = 0;
 
     public static DecimalEncodedValue create() {
         return new FactorizedDecimalEncodedValue(KEY, 5, 5, true);

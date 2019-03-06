@@ -22,6 +22,7 @@ import com.graphhopper.routing.profiles.CarMaxSpeed;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.storage.IntsRef;
@@ -29,12 +30,12 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.List;
 
-import static com.graphhopper.routing.util.AbstractFlagEncoder.parseSpeed;
+import static com.graphhopper.routing.profiles.CarMaxSpeed.UNSET_SPEED;
 
 public class OSMCarMaxSpeedParser implements TagParser {
 
     private final DecimalEncodedValue carMaxSpeedEnc;
-    private final double maxPossibleSpeed = CarMaxSpeed.UNLIMITED_SIGN;
+    private final double maxPossibleSpeed = CarMaxSpeed.UNLIMITED_SIGN_SPEED;
 
     public OSMCarMaxSpeedParser() {
         this(CarMaxSpeed.create());
@@ -51,7 +52,7 @@ public class OSMCarMaxSpeedParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
-        double maxSpeed = parseSpeed(way.getTag("maxspeed"));
+        double maxSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
 
         if (maxSpeed < 0) {
             GHPoint estmCentre = way.getTag("estimated_center", null);
@@ -60,24 +61,26 @@ public class OSMCarMaxSpeedParser implements TagParser {
                 maxSpeed = spatialRule.getMaxSpeed(way.getTag("highway", ""), maxSpeed);
         }
 
-        double fwdSpeed = parseSpeed(way.getTag("maxspeed:forward"));
+        double fwdSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed:forward"));
         if (fwdSpeed < 0 && maxSpeed > 0)
             fwdSpeed = maxSpeed;
         if (fwdSpeed > maxPossibleSpeed)
             fwdSpeed = maxPossibleSpeed;
 
 
-        double bwdSpeed = parseSpeed(way.getTag("maxspeed:backward"));
+        double bwdSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed:backward"));
         if (bwdSpeed < 0 && maxSpeed > 0)
             bwdSpeed = maxSpeed;
         if (bwdSpeed > maxPossibleSpeed)
             bwdSpeed = maxPossibleSpeed;
 
-        if (fwdSpeed > 0)
-            carMaxSpeedEnc.setDecimal(false, edgeFlags, fwdSpeed);
+        if (fwdSpeed <= 0)
+            fwdSpeed = UNSET_SPEED;
+        carMaxSpeedEnc.setDecimal(false, edgeFlags, fwdSpeed);
 
-        if (bwdSpeed > 0)
-            carMaxSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
+        if (bwdSpeed <= 0)
+            bwdSpeed = UNSET_SPEED;
+        carMaxSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
         return edgeFlags;
     }
 }

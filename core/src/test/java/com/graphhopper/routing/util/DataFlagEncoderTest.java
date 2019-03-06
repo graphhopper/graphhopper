@@ -441,7 +441,6 @@ public class DataFlagEncoderTest {
         livingStreet2.setTag("highway", "living_street");
         livingStreet2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
         e4.setFlags(em.handleWayTags(livingStreet2, map, 0));
-        // TODO NOW breaks backward compatibility
-        assertEquals(0, e4.get(tmpCarMaxSpeedEnc), .1);
+        assertEquals(CarMaxSpeed.UNSET_SPEED, e4.get(tmpCarMaxSpeedEnc), .1);
     }
 }

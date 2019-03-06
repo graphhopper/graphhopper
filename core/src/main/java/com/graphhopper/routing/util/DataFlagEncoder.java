@@ -96,7 +96,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         // TODO include turn information
         super(speedBits, speedFactor, maxTurnCosts);
 
-        maxPossibleSpeed = (int) CarMaxSpeed.UNLIMITED_SIGN;
+        maxPossibleSpeed = (int) CarMaxSpeed.UNLIMITED_SIGN_SPEED;
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
     }
 
@@ -104,6 +104,13 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
         // TODO support different vehicle types, currently just roundabout and fwd&bwd for one vehicle type
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
+
+        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, RoadAccess.KEY, CarMaxSpeed.KEY)) {
+            if (!encodedValueLookup.hasEncodedValue(key))
+                throw new IllegalStateException("To use DataFlagEncoder and the GenericWeighting you need to add " +
+                        "the encoded value " + key + " before this '" + toString() + "' flag encoder. Order is important! " +
+                        "E.g. use the config: graph.encoded_values: " + key);
+        }
 
         /* Value range: [3.0m, 5.4m] */
         if (isStoreHeight())
@@ -119,12 +126,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
         // workaround to init AbstractWeighting.avSpeedEnc variable that GenericWeighting does not need
         speedEncoder = new FactorizedDecimalEncodedValue("fake", 1, 1, false);
-
-        // TODO NOW check for all the other required EV and include the following config
-        // graph.encoded_values: surface,road_class,road_environment,road_access,car_max_speed
-        if (!encodedValueLookup.hasEncodedValue(RoadEnvironment.KEY))
-            throw new IllegalStateException("To use DataFlagEncoder you need to add the default EncodedValues. E.g. use GHUtility.addDefaultEncodedValues");
-
         roadEnvironmentEnc = getObjectEncodedValue(RoadEnvironment.KEY);
     }
 

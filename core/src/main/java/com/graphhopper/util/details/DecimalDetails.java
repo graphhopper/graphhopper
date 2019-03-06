@@ -24,15 +24,20 @@ public class DecimalDetails extends AbstractPathDetailsBuilder {
 
     private final DecimalEncodedValue ev;
     private double decimalValue = 0;
+    private final boolean returnMinus;
 
-    public DecimalDetails(String name, DecimalEncodedValue ev) {
+    /**
+     * @param returnMinus true if getCurrentValue should return -1 for the default value
+     */
+    public DecimalDetails(String name, DecimalEncodedValue ev, boolean returnMinus) {
         super(name);
         this.ev = ev;
+        this.returnMinus = returnMinus;
     }
 
     @Override
     protected Object getCurrentValue() {
-        if (decimalValue == 0)
+        if (returnMinus && decimalValue == 0)
             return -1d;
         return decimalValue;
     }

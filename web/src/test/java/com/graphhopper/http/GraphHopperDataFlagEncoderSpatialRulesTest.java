@@ -43,7 +43,6 @@ public class GraphHopperDataFlagEncoderSpatialRulesTest {
     static {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "generic").
-                // TODO NOW breaks backward compatibility and we need country tag parser as first
                 put("graph.encoded_values", "country,road_environment,road_class,road_access,car_max_speed").
                 put("prepare.ch.weightings", "no").
                 put("spatial_rules.location", "../core/files/spatialrules/countries.geo.json").

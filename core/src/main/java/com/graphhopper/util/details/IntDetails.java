@@ -23,23 +23,15 @@ import com.graphhopper.util.EdgeIteratorState;
 public class IntDetails extends AbstractPathDetailsBuilder {
 
     private final IntEncodedValue ev;
-    private final boolean returnMinus;
-    private int intVal = -1;
+    private int intVal = 0;
 
-    /**
-     * @param returnMinus true if getCurrentValue should return -1 for the default value (e.g. if max_speed not mapped returning 0 would be confusing)
-     */
-    public IntDetails(String name, IntEncodedValue ev, boolean returnMinus) {
+    public IntDetails(String name, IntEncodedValue ev) {
         super(name);
         this.ev = ev;
-        this.returnMinus = returnMinus;
     }
 
     @Override
     protected Object getCurrentValue() {
-        // the problem is e.g. max_speed
-        if (returnMinus && intVal == 0)
-            return -1;
         return intVal;
     }
 
