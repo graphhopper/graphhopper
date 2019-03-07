@@ -67,7 +67,7 @@ public class OSMMaxWidthParser implements TagParser {
                 return;
             }
         } catch (Exception ex) {
-            LOG.warn("Unable to extract meter from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId(), ex);
+            LOG.warn("Unable to extract meter from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId());
         }
 
         valueEncoder.setDecimal(false, edgeFlags, -1);

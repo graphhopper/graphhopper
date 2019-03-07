@@ -57,7 +57,7 @@ public class PathDetailsBuilderFactory {
                 builders.add(new DecimalDetails(key, encoder.getDecimalEncodedValue(key), true));
         }
 
-        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, Surface.KEY, RoadAccess.KEY, Toll.KEY)) {
+        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, Surface.KEY, RoadAccess.KEY, Toll.KEY, Country.KEY)) {
             if (requestedPathDetails.contains(key) && encoder.hasEncodedValue(key))
                 builders.add(new ObjectDetails(key, encoder.getObjectEncodedValue(key)));
         }

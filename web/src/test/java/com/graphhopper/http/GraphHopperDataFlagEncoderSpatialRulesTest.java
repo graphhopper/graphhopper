@@ -41,6 +41,8 @@ public class GraphHopperDataFlagEncoderSpatialRulesTest {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
+        // The EncodedValue "country" requires the setting "spatial_rules.location" as "country" does not load via DefaultTagParserFactory
+        // TODO should we automatically detect this somehow and include a default country file?
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "generic").
                 put("graph.encoded_values", "country,road_environment,road_class,road_access,car_max_speed").
@@ -54,7 +56,6 @@ public class GraphHopperDataFlagEncoderSpatialRulesTest {
     @ClassRule
     public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
             GraphHopperApplication.class, config);
-
 
     @AfterClass
     public static void cleanUp() {

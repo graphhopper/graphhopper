@@ -25,11 +25,13 @@ import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.shapes.GHPoint;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class SpatialRuleParser implements TagParser {
 
-    private final IntEncodedValue spatialIdEnc;
+    private final IntEncodedValue spatialRuleEnc;
     private SpatialRuleLookup spatialRuleLookup;
 
     public SpatialRuleParser(SpatialRuleLookup spatialRuleLookup) {
@@ -38,18 +40,16 @@ public class SpatialRuleParser implements TagParser {
 
     public SpatialRuleParser(String name, SpatialRuleLookup spatialRuleLookup) {
         this.spatialRuleLookup = spatialRuleLookup;
-        int tmpMax = spatialRuleLookup.size() - 1;
-        int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
-        if (bits <= 0)
-            throw new IllegalArgumentException("No bits left to store spatial ID");
-        spatialIdEnc = new SimpleIntEncodedValue(name, bits, false);
+        Map<String, Country> countryMap = Country.create(spatialRuleLookup);
+        // now convert ObjectEncodedValue into Int so that we can use the int values to store the SpatialRules
+        spatialRuleEnc = new MappedObjectEncodedValue(name, new ArrayList<>(countryMap.values()));
     }
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        if (spatialIdEnc == null)
+        if (spatialRuleEnc == null)
             throw new IllegalStateException("SpatialRuleLookup was not initialized before building the EncodingManager");
-        registerNewEncodedValue.add(spatialIdEnc);
+        registerNewEncodedValue.add(spatialRuleEnc);
     }
 
     @Override
@@ -58,7 +58,7 @@ public class SpatialRuleParser implements TagParser {
         if (estimatedCenter != null) {
             SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);
             way.setTag("spatial_rule", rule);
-            spatialIdEnc.setInt(false, edgeFlags, spatialRuleLookup.getSpatialId(rule));
+            spatialRuleEnc.setInt(false, edgeFlags, spatialRuleLookup.getSpatialId(rule));
         }
         return edgeFlags;
     }

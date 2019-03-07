@@ -17,11 +17,24 @@
  */
 package com.graphhopper.routing.profiles;
 
-public class Country {
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+
+import java.util.LinkedHashMap;
+
+public class Country extends DefaultIndexBased {
     public static final String KEY = "country";
 
-    public static IntEncodedValue create() {
-        // currently we do not have all ~120 countries that would require 7 bits
-        return new SimpleIntEncodedValue(KEY, 3);
+    public Country(String name, int ordinal) {
+        super(name, ordinal);
+    }
+
+    public static LinkedHashMap<String, Country> create(SpatialRuleLookup lookup) {
+        LinkedHashMap<String, Country> values = new LinkedHashMap<>();
+        int size = lookup.size();
+        for (int counter = 0; counter < size; counter++) {
+            String ruleId = lookup.getSpatialRule(counter).getId();
+            values.put(ruleId, new Country(ruleId, counter));
+        }
+        return values;
     }
 }
