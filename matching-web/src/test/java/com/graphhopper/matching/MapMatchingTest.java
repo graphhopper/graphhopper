@@ -171,7 +171,7 @@ public class MapMatchingTest {
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
 
         assertEquals(57650, mr.getMatchLength(), 1);
-        assertEquals(2747796, mr.getMatchMillis(), 1);
+        assertEquals(2747801, mr.getMatchMillis(), 1);
 
         // not OK when we only allow a small number of visited nodes:
         AlgorithmOptions opts = AlgorithmOptions.start(algoOptions).maxVisitedNodes(1).build();
