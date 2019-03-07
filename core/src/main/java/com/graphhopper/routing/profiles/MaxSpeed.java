@@ -18,9 +18,10 @@
 package com.graphhopper.routing.profiles;
 
 /**
- * This EncodedValue stores speed values and 0 stands for the default i.e. no maxspeed sign (does not imply no speed limit).
+ * This EncodedValue stores maximum speed values for car and 0 stands for the default
+ * i.e. no max speed sign (does not imply no speed limit).
  */
-public class CarMaxSpeed {
+public class MaxSpeed {
     public static final String KEY = "max_speed";
 
     /**

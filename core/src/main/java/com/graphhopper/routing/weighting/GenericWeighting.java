@@ -70,7 +70,7 @@ public class GenericWeighting extends AbstractWeighting {
         weight = hintsMap.getDouble(WEIGHT_LIMIT, 0d);
         width = hintsMap.getDouble(WIDTH_LIMIT, 0d);
         roadAccessEnc = encoder.getObjectEncodedValue(RoadAccess.KEY);
-        carMaxSpeedEnc = encoder.getDecimalEncodedValue(CarMaxSpeed.KEY);
+        carMaxSpeedEnc = encoder.getDecimalEncodedValue(MaxSpeed.KEY);
 
         if (encoder.hasEncodedValue(MaxWeight.KEY))
             maxWeightEnc = encoder.getDecimalEncodedValue(MaxWeight.KEY);

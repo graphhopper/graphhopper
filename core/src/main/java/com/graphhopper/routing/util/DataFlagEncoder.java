@@ -84,7 +84,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         // TODO include turn information
         super(speedBits, speedFactor, maxTurnCosts);
 
-        maxPossibleSpeed = (int) CarMaxSpeed.UNLIMITED_SIGN_SPEED;
+        maxPossibleSpeed = (int) MaxSpeed.UNLIMITED_SIGN_SPEED;
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
     }
 
@@ -93,7 +93,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         // TODO support different vehicle types, currently just roundabout and fwd&bwd for one vehicle type
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
 
-        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, RoadAccess.KEY, CarMaxSpeed.KEY)) {
+        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, RoadAccess.KEY, MaxSpeed.KEY)) {
             if (!encodedValueLookup.hasEncodedValue(key))
                 throw new IllegalStateException("To use DataFlagEncoder and the GenericWeighting you need to add " +
                         "the encoded value " + key + " before this '" + toString() + "' flag encoder. Order is important! " +

@@ -17,7 +17,7 @@ public class DefaultEncodedValueFactoryTest {
 
     @Test
     public void loadCarMaxSpeed() {
-        EncodedValue enc = CarMaxSpeed.create();
+        EncodedValue enc = MaxSpeed.create();
         FactorizedDecimalEncodedValue loadedEnc = (FactorizedDecimalEncodedValue) factory.create(enc.toString());
         assertEquals(loadedEnc, enc);
     }

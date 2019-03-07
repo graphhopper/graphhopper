@@ -308,7 +308,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
         // on some German autobahns and a very few other places
         if ("none".equals(str))
-            return CarMaxSpeed.UNLIMITED_SIGN_SPEED;
+            return MaxSpeed.UNLIMITED_SIGN_SPEED;
 
         if (str.endsWith(":rural") || str.endsWith(":trunk"))
             return 80;

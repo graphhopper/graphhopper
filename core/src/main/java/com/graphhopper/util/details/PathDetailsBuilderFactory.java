@@ -52,7 +52,7 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(DISTANCE))
             builders.add(new DistanceDetails());
 
-        for (String key : Arrays.asList(CarMaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY)) {
+        for (String key : Arrays.asList(MaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY)) {
             if (requestedPathDetails.contains(key) && encoder.hasEncodedValue(key))
                 builders.add(new DecimalDetails(key, encoder.getDecimalEncodedValue(key), true));
         }

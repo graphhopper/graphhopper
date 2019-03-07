@@ -49,7 +49,7 @@ public class DataFlagEncoderTest {
                 add(new OSMRoadClassParser(roadClassEnc = RoadClass.create())).
                 add(new OSMRoadAccessParser(roadAccessEnc = RoadAccess.create())).
                 add(new OSMSurfaceParser(surfaceEnc = Surface.create())).
-                add(new OSMCarMaxSpeedParser(carMaxSpeedEnc = CarMaxSpeed.create())).
+                add(new OSMCarMaxSpeedParser(carMaxSpeedEnc = MaxSpeed.create())).
                 add(encoder).build();
         map = new EncodingManager.AcceptWay().put(encoder.toString(), EncodingManager.Access.WAY);
         accessEnc = encoder.getAccessEnc();
@@ -400,7 +400,7 @@ public class DataFlagEncoderTest {
         EncodingManager em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(4).add(new SpatialRuleParser(index))).add(tmpEncoder).build();
         IntEncodedValue countrySpatialIdEnc = em.getIntEncodedValue(Country.KEY);
         ObjectEncodedValue tmpRoadAccessEnc = em.getObjectEncodedValue(RoadAccess.KEY);
-        DecimalEncodedValue tmpCarMaxSpeedEnc = em.getDecimalEncodedValue(CarMaxSpeed.KEY);
+        DecimalEncodedValue tmpCarMaxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
 
         Graph graph = new GraphBuilder(em).create();
         EdgeIteratorState e1 = graph.edge(0, 1, 1, true);
@@ -438,6 +438,6 @@ public class DataFlagEncoderTest {
         livingStreet2.setTag("highway", "living_street");
         livingStreet2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
         e4.setFlags(em.handleWayTags(livingStreet2, map, 0));
-        assertEquals(CarMaxSpeed.UNSET_SPEED, e4.get(tmpCarMaxSpeedEnc), .1);
+        assertEquals(MaxSpeed.UNSET_SPEED, e4.get(tmpCarMaxSpeedEnc), .1);
     }
 }

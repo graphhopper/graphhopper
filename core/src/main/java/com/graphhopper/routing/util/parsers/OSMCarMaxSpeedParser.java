@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.CarMaxSpeed;
+import com.graphhopper.routing.profiles.MaxSpeed;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
@@ -30,15 +30,15 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.List;
 
-import static com.graphhopper.routing.profiles.CarMaxSpeed.UNSET_SPEED;
+import static com.graphhopper.routing.profiles.MaxSpeed.UNSET_SPEED;
 
 public class OSMCarMaxSpeedParser implements TagParser {
 
     private final DecimalEncodedValue carMaxSpeedEnc;
-    private final double maxPossibleSpeed = CarMaxSpeed.UNLIMITED_SIGN_SPEED;
+    private final double maxPossibleSpeed = MaxSpeed.UNLIMITED_SIGN_SPEED;
 
     public OSMCarMaxSpeedParser() {
-        this(CarMaxSpeed.create());
+        this(MaxSpeed.create());
     }
 
     public OSMCarMaxSpeedParser(DecimalEncodedValue carMaxSpeedEnc) {
