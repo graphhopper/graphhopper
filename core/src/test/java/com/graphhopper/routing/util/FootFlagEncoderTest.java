@@ -167,6 +167,28 @@ public class FootFlagEncoderTest {
         way.setTag("foot", "no");
         assertFalse(footEncoder.acceptWay(way) > 0);
 
+        // #1562, test if ferry route with foot
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("foot", "yes");
+        assertTrue(footEncoder.acceptWay(way) > 0);
+
+        way.setTag("foot", "designated");
+        assertTrue(footEncoder.acceptWay(way) > 0);
+
+        way.setTag("foot", "official");
+        assertTrue(footEncoder.acceptWay(way) > 0);
+
+        way.setTag("foot", "permissive");
+        assertTrue(footEncoder.acceptWay(way) > 0);
+
+        way.setTag("foot", "no");
+        assertTrue(footEncoder.acceptWay(way) == 0);
+
+        way.setTag("foot", "designated");
+        way.setTag("access", "private");
+        assertTrue(footEncoder.acceptWay(way) == 0);
+
         DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
 
         way.clearTags();

@@ -206,7 +206,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
             if (way.hasTag("route", ferries)) {
                 String footTag = way.getTag("foot");
-                if (footTag == null || "yes".equals(footTag))
+                if (footTag == null || intendedValues.contains(footTag))
                     acceptPotentially = acceptBit | ferryBit;
             }
 
