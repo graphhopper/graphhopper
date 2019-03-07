@@ -57,7 +57,7 @@ public class DepthFirstSearchTest {
             }
         };
 
-        EncodingManager em = new EncodingManager("car");
+        EncodingManager em = EncodingManager.create("car");
         FlagEncoder fe = em.getEncoder("car");
         Graph g = new GraphBuilder(em).create();
         g.edge(1, 2, 1, false);
@@ -87,7 +87,7 @@ public class DepthFirstSearchTest {
             }
         };
 
-        EncodingManager em = new EncodingManager("car");
+        EncodingManager em = EncodingManager.create("car");
         FlagEncoder fe = em.getEncoder("car");
         Graph g = new GraphBuilder(em).create();
         g.edge(1, 2, 1, false);

@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util.spatialrules.countries;
 
-import com.graphhopper.routing.util.spatialrules.AccessValue;
 import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
@@ -50,13 +49,13 @@ public class GermanySpatialRule extends DefaultSpatialRule {
     }
 
     @Override
-    public AccessValue getAccessValue(String highwayTag, TransportationMode transportationMode, AccessValue _default) {
+    public Access getAccess(String highwayTag, TransportationMode transportationMode, Access _default) {
         if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
             if (highwayTag.equals("track"))
-                return AccessValue.EVENTUALLY_ACCESSIBLE;
+                return Access.CONDITIONAL;
         }
 
-        return super.getAccessValue(highwayTag, transportationMode, _default);
+        return super.getAccess(highwayTag, transportationMode, _default);
     }
 
     @Override

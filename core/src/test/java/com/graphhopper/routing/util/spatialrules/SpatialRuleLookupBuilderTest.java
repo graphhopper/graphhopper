@@ -43,17 +43,17 @@ public class SpatialRuleLookupBuilderTest {
         SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory());
 
         // Berlin
-        Assert.assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccessValue("track", TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccessValue("primary", TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
+        assertEquals(SpatialRule.Access.CONDITIONAL, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccess("track", TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
+        assertEquals(SpatialRule.Access.YES, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccess("primary", TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
 
         // Paris -> empty rule
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccessValue("track", TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccessValue("primary", TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
+        assertEquals(SpatialRule.Access.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccess("track", TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
+        assertEquals(SpatialRule.Access.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccess("primary", TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
 
         // Vienna
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccessValue("track", TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccessValue("primary", TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccessValue("living_street", TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
+        assertEquals(SpatialRule.Access.YES, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccess("track", TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
+        assertEquals(SpatialRule.Access.YES, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccess("primary", TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
+        assertEquals(SpatialRule.Access.CONDITIONAL, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccess("living_street", TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
     }
 
     @Test
@@ -83,6 +83,5 @@ public class SpatialRuleLookupBuilderTest {
         SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), .1, new BBox(-180, -179, -90, -89));
         assertEquals(SpatialRuleLookup.EMPTY, spatialRuleLookup);
     }
-
 
 }

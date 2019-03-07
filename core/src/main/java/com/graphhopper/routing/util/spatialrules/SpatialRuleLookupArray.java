@@ -212,7 +212,7 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
         singleRules.add(rule);
     }
 
-    SpatialRule getSpatialRule(int id) {
+    public SpatialRule getSpatialRule(int id) {
         if (id < 0 || id >= ruleContainers.size())
             throw new IllegalArgumentException("SpatialRuleId " + id + " is illegal");
 

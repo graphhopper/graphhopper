@@ -82,7 +82,7 @@ public class Measurement {
         }
 
         seed = args.getLong("measurement.seed", 123);
-        String gitCommit = args.get("measurement.gitinfo", "");
+        put("measurement.gitinfo", args.get("measurement.gitinfo", ""));
         int count = args.getInt("measurement.count", 5000);
 
         GraphHopper hopper = new GraphHopperOSM() {
@@ -109,7 +109,7 @@ public class Measurement {
             protected void loadOrPrepareLM() {
                 StopWatch sw = new StopWatch().start();
                 super.loadOrPrepareLM();
-                put(Parameters.Landmark.PREPARE + "time", sw.stop().getMillis());
+                put(Landmark.PREPARE + "time", sw.stop().getMillis());
             }
 
             @Override
@@ -191,7 +191,6 @@ public class Measurement {
             logger.error("Problem while measuring " + graphLocation, ex);
             put("error", ex.toString());
         } finally {
-            put("measurement.gitinfo", gitCommit);
             put("measurement.count", count);
             put("measurement.seed", seed);
             put("measurement.time", sw.stop().getMillis());
@@ -561,10 +560,11 @@ public class Measurement {
         String[] properties = {
                 "graph.nodes",
                 "graph.edges",
-                "measurement.seed",
+                "graph.import_time",
                 CH.PREPARE + "time",
                 CH.PREPARE + "node.shortcuts",
                 CH.PREPARE + "edge.shortcuts",
+                Landmark.PREPARE + "time",
                 "routing.distance_mean",
                 "routing.mean",
                 "routing.visited_nodes_mean",
@@ -576,6 +576,11 @@ public class Measurement {
                 "routingCH_edge.mean",
                 "routingCH_edge.visited_nodes_mean",
                 "routingCH_edge_no_instr.mean",
+                "routingLM8.distance_mean",
+                "routingLM8.mean",
+                "routingLM8.visited_nodes_mean",
+                "measurement.seed",
+                "measurement.gitinfo",
                 "measurement.timestamp"
         };
         File f = new File(summaryLocation);
@@ -619,12 +624,12 @@ public class Measurement {
         try {
             double doubleValue = Double.parseDouble(result.trim());
             if (doubleValue != (long) doubleValue) {
-                result = String.format("%.2f", doubleValue);
+                result = String.format(Locale.US, "%.2f", doubleValue);
             }
         } catch (NumberFormatException e) {
             // its not a number, never mind
         }
-        return String.format("%" + getSummaryColumnWidth(property) + "s, ", result);
+        return String.format(Locale.US, "%" + getSummaryColumnWidth(property) + "s, ", result);
     }
 
     private int getSummaryColumnWidth(String p) {

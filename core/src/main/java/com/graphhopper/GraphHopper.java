@@ -75,7 +75,6 @@ public class GraphHopper implements GraphHopperAPI {
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
     boolean removeZipped = true;
-    boolean enableInstructions = true;
     // for graph:
     private GraphHopperStorage ghStorage;
     private EncodingManager encodingManager;
@@ -86,7 +85,6 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean elevation = false;
     private LockFactory lockFactory = new NativeFSLockFactory();
     private boolean allowWrites = true;
-    private String preferredLanguage = "";
     private boolean fullyLoaded = false;
     private boolean smoothElevation = false;
     // for routing
@@ -359,44 +357,6 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    public boolean isEnableInstructions() {
-        return enableInstructions;
-    }
-
-    /**
-     * This method specifies if the import should include way names to be able to return
-     * instructions for a route.
-     */
-    public GraphHopper setEnableInstructions(boolean b) {
-        ensureNotLoaded();
-        enableInstructions = b;
-        return this;
-    }
-
-    public String getPreferredLanguage() {
-        return preferredLanguage;
-    }
-
-    /**
-     * This method specifies the preferred language for way names during import.
-     * <p>
-     * Language code as defined in ISO 639-1 or ISO 639-2.
-     * <ul>
-     * <li>If no preferred language is specified, only the default language with no tag will be
-     * imported.</li>
-     * <li>If a language is specified, it will be imported if its tag is found, otherwise fall back
-     * to default language.</li>
-     * </ul>
-     */
-    public GraphHopper setPreferredLanguage(String preferredLanguage) {
-        ensureNotLoaded();
-        if (preferredLanguage == null)
-            throw new IllegalArgumentException("preferred language cannot be null");
-
-        this.preferredLanguage = preferredLanguage;
-        return this;
-    }
-
     /**
      * This methods enables gps point calculation. If disabled only distance will be calculated.
      */
@@ -547,8 +507,12 @@ public class GraphHopper implements GraphHopperAPI {
         removeZipped = args.getBool("graph.remove_zipped", removeZipped);
         int bytesForFlags = args.getInt("graph.bytes_for_flags", 4);
         String flagEncodersStr = args.get("graph.flag_encoders", "");
-        if (!flagEncodersStr.isEmpty())
-            setEncodingManager(new EncodingManager(flagEncoderFactory, flagEncodersStr, bytesForFlags));
+        if (!flagEncodersStr.isEmpty()) {
+            EncodingManager.Builder emBuilder = EncodingManager.createBuilder(flagEncoderFactory, flagEncodersStr, bytesForFlags);
+            emBuilder.setEnableInstructions(args.getBool("datareader.instructions", true));
+            emBuilder.setPreferredLanguage(args.get("datareader.preferred_language", ""));
+            setEncodingManager(emBuilder.build());
+        }
 
         if (args.get("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -609,8 +573,6 @@ public class GraphHopper implements GraphHopperAPI {
         dataReaderWayPointMaxDistance = args.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, dataReaderWayPointMaxDistance);
 
         dataReaderWorkerThreads = args.getInt("datareader.worker_threads", dataReaderWorkerThreads);
-        enableInstructions = args.getBool("datareader.instructions", enableInstructions);
-        preferredLanguage = args.get("datareader.preferred_language", preferredLanguage);
 
         // index
         preciseIndexResolution = args.getInt("index.high_resolution", preciseIndexResolution);
@@ -687,8 +649,6 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
                     + " but also cannot use file for DataReader as it wasn't specified!");
 
-        encodingManager.setEnableInstructions(enableInstructions);
-        encodingManager.setPreferredLanguage(preferredLanguage);
         DataReader reader = createReader(ghStorage);
         logger.info("using " + ghStorage.toString() + ", memory:" + getMemInfo());
         reader.readGraph();
@@ -881,7 +841,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void interpolateBridgesAndOrTunnels() {
-        if (ghStorage.getEncodingManager().supports("generic")) {
+        if (ghStorage.getEncodingManager().hasEncoder("generic")) {
             final FlagEncoder genericFlagEncoder = ghStorage.getEncodingManager()
                     .getEncoder("generic");
             if (!(genericFlagEncoder instanceof DataFlagEncoder)) {
@@ -983,7 +943,7 @@ public class GraphHopper implements GraphHopperAPI {
         Lock readLock = readWriteLock.readLock();
         readLock.lock();
         try {
-            if (!encodingManager.supports(vehicle))
+            if (!encodingManager.hasEncoder(vehicle))
                 throw new IllegalArgumentException("Vehicle not supported: " + vehicle + ". Supported are: " + encodingManager.toString());
 
             HintsMap hints = request.getHints();
@@ -1013,11 +973,11 @@ public class GraphHopper implements GraphHopperAPI {
 
             RoutingTemplate routingTemplate;
             if (ROUND_TRIP.equalsIgnoreCase(algoStr))
-                routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, maxRoundTripRetries);
+                routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, encodingManager, maxRoundTripRetries);
             else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
-                routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex);
+                routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex, encodingManager);
             else
-                routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex);
+                routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex, encodingManager);
 
             List<Path> altPaths = null;
             int maxRetries = routingTemplate.getMaxRetries();
@@ -1074,7 +1034,7 @@ public class GraphHopper implements GraphHopperAPI {
                 // do the actual route calculation !
                 altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
 
-                boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, enableInstructions);
+                boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, getEncodingManager().isEnableInstructions());
                 boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);
                 double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
 

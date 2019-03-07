@@ -20,6 +20,8 @@ package com.graphhopper.storage.change;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -28,13 +30,11 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.EdgeIteratorState;
-
-import java.util.Collection;
-import java.util.Iterator;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -90,6 +90,8 @@ public class ChangeGraphHelper {
     }
 
     private long applyChange(JsonFeature jsonFeature, FlagEncoder encoder) {
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
         long updates = 0;
         EdgeFilter filter = DefaultEdgeFilter.allEdges(encoder);
         GHIntHashSet edges = new GHIntHashSet();
@@ -110,17 +112,17 @@ public class ChangeGraphHelper {
                 updates++;
                 if (enableLogging)
                     logger.info(encoder.toString() + " - access change via feature " + jsonFeature.getId());
-                edge.setFlags(encoder.setAccess(edge.getFlags(), value, value));
+                edge.set(accessEnc, value).setReverse(accessEnc, value);
 
             } else if (props.containsKey("speed")) {
                 // TODO use different speed for the different directions (see e.g. Bike2WeightFlagEncoder)
                 double value = ((Number) props.get("speed")).doubleValue();
-                double oldSpeed = encoder.getSpeed(edge.getFlags());
+                double oldSpeed = edge.get(avSpeedEnc);
                 if (oldSpeed != value) {
                     updates++;
                     if (enableLogging)
                         logger.info(encoder.toString() + " - speed change via feature " + jsonFeature.getId() + ". Old: " + oldSpeed + ", new:" + value);
-                    edge.setFlags(encoder.setSpeed(edge.getFlags(), value));
+                    edge.set(avSpeedEnc, value);
                 }
             }
         }

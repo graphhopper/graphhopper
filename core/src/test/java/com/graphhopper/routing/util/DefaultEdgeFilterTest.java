@@ -34,7 +34,7 @@ import static org.junit.Assert.assertEquals;
 
 public class DefaultEdgeFilterTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
-    private final EncodingManager encodingManager = new EncodingManager(encoder);
+    private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
     private final CHGraph chGraph = graph.getGraph(CHGraph.class);
@@ -70,7 +70,7 @@ public class DefaultEdgeFilterTest {
 
     private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int firstOrigEdge, int lastOrigEdge) {
         CHEdgeIteratorState shortcut = chGraph.shortcut(from, to);
-        shortcut.setFlags(fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir());
+        shortcut.setFlagsAndWeight(fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir(), 0);
         shortcut.setFirstAndLastOrigEdges(firstOrigEdge, lastOrigEdge);
     }
 

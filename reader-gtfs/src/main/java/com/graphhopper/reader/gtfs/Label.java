@@ -141,7 +141,8 @@ public class Label {
     }
 
     private static EdgeLabel getEdgeLabel(EdgeIteratorState edgeIteratorState, PtFlagEncoder flagEncoder) {
-        return new EdgeLabel(edgeIteratorState, flagEncoder.getEdgeType(edgeIteratorState.getFlags()), flagEncoder.getValidityId(edgeIteratorState.getFlags()), flagEncoder.getTransfers(edgeIteratorState.getFlags()), edgeIteratorState.getDistance());
+        return new EdgeLabel(edgeIteratorState, flagEncoder.getEdgeType(edgeIteratorState), edgeIteratorState.get(flagEncoder.getValidityIdEnc()),
+                edgeIteratorState.get(flagEncoder.getTransfersEnc()), edgeIteratorState.getDistance());
     }
 
 }

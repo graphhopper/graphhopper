@@ -42,7 +42,7 @@ public class GraphEdgeIdFinderTest {
     @Test
     public void testParseStringHints() {
         FlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager em = new EncodingManager(encoder);
+        EncodingManager em = EncodingManager.create(encoder);
         GraphHopperStorage graph = new GraphBuilder(em).create();
         // 0-1-2
         // | |
@@ -82,7 +82,7 @@ public class GraphEdgeIdFinderTest {
     @Test
     public void testBlockAreasWithPolygon() {
         FlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager em = new EncodingManager(encoder);
+        EncodingManager em = EncodingManager.create(encoder);
         GraphHopperStorage graph = new GraphBuilder(em).create();
 
         // 00-01-02-03

@@ -21,11 +21,17 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.*;
 import org.junit.Before;
 import org.junit.Rule;
@@ -67,7 +73,7 @@ public class CHTurnCostTest {
         // its important to use @Before when using Repeat Rule!
         maxCost = 10;
         encoder = new CarFlagEncoder(5, 5, maxCost);
-        EncodingManager encodingManager = new EncodingManager(encoder);
+        EncodingManager encodingManager = EncodingManager.create(encoder);
         weighting = new ShortestWeighting(encoder);
         graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
         turnCostExtension = (TurnCostExtension) graph.getExtension();

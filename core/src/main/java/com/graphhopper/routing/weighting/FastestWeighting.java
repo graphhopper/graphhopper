@@ -58,14 +58,14 @@ public class FastestWeighting extends AbstractWeighting {
 
     @Override
     public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-        double speed = reverse ? flagEncoder.getReverseSpeed(edge.getFlags()) : flagEncoder.getSpeed(edge.getFlags());
+        double speed = reverse ? edge.getReverse(avSpeedEnc) : edge.get(avSpeedEnc);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
 
         double time = edge.getDistance() / speed * SPEED_CONV;
 
         // add direction penalties at start/stop/via points
-        boolean unfavoredEdge = edge.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, false);
+        boolean unfavoredEdge = edge.get(EdgeIteratorState.UNFAVORED_EDGE);
         if (unfavoredEdge)
             time += headingPenalty;
 
@@ -76,7 +76,7 @@ public class FastestWeighting extends AbstractWeighting {
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         // TODO move this to AbstractWeighting?
         long time = 0;
-        boolean unfavoredEdge = edgeState.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, false);
+        boolean unfavoredEdge = edgeState.get(EdgeIteratorState.UNFAVORED_EDGE);
         if (unfavoredEdge)
             time += headingPenaltyMillis;
 

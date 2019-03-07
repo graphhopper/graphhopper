@@ -17,10 +17,13 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -40,6 +43,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     private final Translation tr;
     private final InstructionList ways;
+    private final EdgeExplorer outEdgeExplorer;
+    private final EdgeExplorer crossingExplorer;
+    private final BooleanEncodedValue roundaboutEnc;
+    private final BooleanEncodedValue accessEnc;
     /*
      * We need three points to make directions
      *
@@ -72,14 +79,16 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private String prevName;
     private String prevInstructionName;
     private InstructionAnnotation prevAnnotation;
-    private EdgeExplorer outEdgeExplorer;
-    private EdgeExplorer crossingExplorer;
 
     private final int MAX_U_TURN_DISTANCE = 35;
 
-    public InstructionsFromEdges(int tmpNode, Graph graph, Weighting weighting, FlagEncoder encoder, NodeAccess nodeAccess, Translation tr, InstructionList ways) {
+    public InstructionsFromEdges(int tmpNode, Graph graph, Weighting weighting, FlagEncoder encoder,
+                                 BooleanEncodedValue roundaboutEnc, NodeAccess nodeAccess,
+                                 Translation tr, InstructionList ways) {
         this.weighting = weighting;
         this.encoder = encoder;
+        this.accessEnc = encoder.getAccessEnc();
+        this.roundaboutEnc = roundaboutEnc;
         this.nodeAccess = nodeAccess;
         this.tr = tr;
         this.ways = ways;
@@ -98,13 +107,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         // baseNode is the current node and adjNode is the next
         int adjNode = edge.getAdjNode();
         int baseNode = edge.getBaseNode();
-        long flags = edge.getFlags();
+        IntsRef flags = edge.getFlags();
         double adjLat = nodeAccess.getLatitude(adjNode);
         double adjLon = nodeAccess.getLongitude(adjNode);
         double latitude, longitude;
 
         PointList wayGeo = edge.fetchWayGeometry(3);
-        boolean isRoundabout = encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT);
+        boolean isRoundabout = roundaboutEnc.getBool(false, flags);
 
         if (wayGeo.getSize() <= 2) {
             latitude = adjLat;
@@ -144,7 +153,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
                     while (edgeIter.next()) {
                         if ((edgeIter.getAdjNode() != prevNode)
-                                && !encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT)) {
+                                && !roundaboutEnc.getBool(false, edgeIter.getFlags())) {
                             roundaboutInstruction.increaseExitNumber();
                             break;
                         }
@@ -174,7 +183,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             // out of the roundabout
             EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(edge.getAdjNode());
             while (edgeIter.next()) {
-                if (!encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT)) {
+                if (!roundaboutEnc.getBool(false, edgeIter.getFlags())) {
                     ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
                     break;
                 }
@@ -228,7 +237,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                         && (sign < 0) == (prevInstruction.getSign() < 0)
                         && (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT)
                         && (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT)
-                        && edge.isForward(encoder) != edge.isBackward(encoder)
+                        && edge.get(accessEnc) != edge.getReverse(accessEnc)
                         && InstructionsHelper.isNameSimilar(prevInstructionName, name)) {
                     // Chances are good that this is a u-turn, we only need to check if the orientation matches
                     GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
@@ -330,10 +339,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         // Very certain, this is a turn
         if (Math.abs(sign) > 1) {
-                        /*
-                         * Don't show an instruction if the user is following a street, even though the street is
-                         * bending. We should only do this, if following the street is the obvious choice.
-                         */
+            /*
+             * Don't show an instruction if the user is following a street, even though the street is
+             * bending. We should only do this, if following the street is the obvious choice.
+             */
             if (InstructionsHelper.isNameSimilar(name, prevName) && outgoingEdges.outgoingEdgesAreSlowerByFactor(2)) {
                 return returnForcedInstructionOrIgnore(forceInstruction, sign);
             }
@@ -352,8 +361,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             return sign;
         }
 
-        long flag = edge.getFlags();
-        long prevFlag = prevEdge.getFlags();
+        IntsRef flag = edge.getFlags();
+        IntsRef prevFlag = prevEdge.getFlags();
 
         boolean outgoingEdgesAreSlower = outgoingEdges.outgoingEdgesAreSlowerByFactor(1);
 
@@ -372,8 +381,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             //We are at a fork
             if (!InstructionsHelper.isNameSimilar(name, prevName)
                     || InstructionsHelper.isNameSimilar(otherContinue.getName(), prevName)
-                    || prevFlag != flag
-                    || prevFlag == otherContinue.getFlags()
+                    || !prevFlag.equals(flag)
+                    || prevFlag.equals(otherContinue.getFlags())
                     || !outgoingEdgesAreSlower) {
                 GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(otherContinue, nodeAccess);
                 double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);

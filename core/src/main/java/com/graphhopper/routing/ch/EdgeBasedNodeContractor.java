@@ -19,11 +19,13 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -189,21 +191,22 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private void countPreviousEdges(int node) {
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         CHEdgeIterator iter = allEdgeExplorer.setBaseNode(node);
         while (iter.next()) {
             if (isContracted(iter.getAdjNode()))
                 continue;
-            if (iter.isForward(encoder)) {
+            if (iter.get(accessEnc)) {
                 numPrevEdges++;
             }
-            if (iter.isBackward(encoder)) {
+            if (iter.getReverse(accessEnc)) {
                 numPrevEdges++;
             }
             if (!iter.isShortcut()) {
-                if (iter.isForward(encoder)) {
+                if (iter.get(accessEnc)) {
                     numPrevOrigEdges++;
                 }
-                if (iter.isBackward(encoder)) {
+                if (iter.getReverse(accessEnc)) {
                     numPrevOrigEdges++;
                 }
             } else {
@@ -292,21 +295,18 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         }
 
         // our shortcut is new --> add it
+        // this is a bit of a hack, we misuse incEdge of edgeFrom's parent to store the first orig edge
+        int origFirst = edgeFrom.getParent().incEdge;
         LOGGER.trace("Adding shortcut from {} to {}, weight: {}, firstOrigEdge: {}, lastOrigEdge: {}",
                 from, adjNode, edgeTo.weight, edgeFrom.getParent().incEdge, edgeTo.incEdge);
-        CHEdgeIteratorState shortcut = prepareGraph.shortcut(from, adjNode);
-        long direction = PrepareEncoder.getScFwdDir();
-        // we need to set flags first because they overwrite weight etc
-        shortcut.setFlags(direction);
-        shortcut.setSkippedEdges(edgeFrom.edge, edgeTo.edge)
-                // this is a bit of a hack, we misuse incEdge of edgeFrom's parent to store the first orig edge
-                .setFirstAndLastOrigEdges(edgeFrom.getParent().incEdge, edgeTo.incEdge)
-                .setWeight(edgeTo.weight);
+        // todo: so far we are not using the distance in edge based CH
+        double distance = 0.0;
+        int accessFlags = PrepareEncoder.getScFwdDir();
+        int shortcutId = prepareGraph.shortcutEdgeBased(from, adjNode, accessFlags, edgeTo.weight, distance, edgeFrom.edge, edgeTo.edge, origFirst, edgeTo.incEdge);
         final int origEdgeCount = getOrigEdgeCount(edgeFrom.edge) + getOrigEdgeCount(edgeTo.edge);
-        setOrigEdgeCount(shortcut.getEdge(), origEdgeCount);
+        setOrigEdgeCount(shortcutId, origEdgeCount);
         addedShortcutsCount++;
-        CHEntry entry = new CHEntry(
-                shortcut.getEdge(), shortcut.getEdge(), edgeTo.adjNode, edgeTo.weight);
+        CHEntry entry = new CHEntry(shortcutId, shortcutId, edgeTo.adjNode, edgeTo.weight);
         entry.parent = edgeFrom.parent;
         return entry;
     }

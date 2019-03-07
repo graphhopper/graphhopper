@@ -65,7 +65,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             throw new IllegalArgumentException("GraphExtension cannot be null, use NoOpExtension");
 
         if (encodingManager == null)
-            throw new IllegalArgumentException("EncodingManager needs to be non-null since 0.7. Create one using new EncodingManager or EncodingManager.create(flagEncoderFactory, ghLocation)");
+            throw new IllegalArgumentException("EncodingManager needs to be non-null since 0.7. Create one using EncodingManager.create or EncodingManager.create(flagEncoderFactory, ghLocation)");
 
         this.encodingManager = encodingManager;
         this.dir = dir;
@@ -460,6 +460,11 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public GraphExtension getExtension() {
         return baseGraph.getExtension();
+    }
+
+    @Override
+    public int getOtherNode(int edge, int node) {
+        return baseGraph.getOtherNode(edge, node);
     }
 
     private Collection<CHGraphImpl> getAllCHGraphs() {

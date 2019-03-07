@@ -54,7 +54,7 @@ import static org.junit.Assert.assertFalse;
 public class CHQueryWithTurnCostsTest {
     private final int maxCost = 10;
     private final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost);
-    private final EncodingManager encodingManager = new EncodingManager(encoder);
+    private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
     private final TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
@@ -430,7 +430,7 @@ public class CHQueryWithTurnCostsTest {
         // no path between 3 and 1 will be found even though there is one.
         testPathCalculation(3, 1, 5, IntArrayList.from(3, 4, 2, 0, 2, 1));
     }
-    
+
     @Test
     public void testFindPathWithTurnRestriction_single_loop() {
         //     0
@@ -633,8 +633,8 @@ public class CHQueryWithTurnCostsTest {
     private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight) {
         CHEdgeIteratorState shortcut = chGraph.shortcut(from, to);
         // we need to set flags first because they overwrite weight etc
-        shortcut.setFlags(PrepareEncoder.getScFwdDir());
-        shortcut.setFirstAndLastOrigEdges(firstOrigEdge, lastOrigEdge).setSkippedEdges(skipped1, skipped2).setWeight(weight);
+        shortcut.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), weight);
+        shortcut.setFirstAndLastOrigEdges(firstOrigEdge, lastOrigEdge).setSkippedEdges(skipped1, skipped2);
     }
 
     private void setLevelEqualToNodeIdForAllNodes() {
