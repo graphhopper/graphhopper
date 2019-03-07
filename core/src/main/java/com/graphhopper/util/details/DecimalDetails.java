@@ -23,7 +23,7 @@ import com.graphhopper.util.EdgeIteratorState;
 public class DecimalDetails extends AbstractPathDetailsBuilder {
 
     private final DecimalEncodedValue ev;
-    private double decimalValue = 0;
+    private double decimalValue = -1;
     private final boolean returnMinus;
 
     /**

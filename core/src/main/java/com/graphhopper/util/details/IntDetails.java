@@ -23,7 +23,7 @@ import com.graphhopper.util.EdgeIteratorState;
 public class IntDetails extends AbstractPathDetailsBuilder {
 
     private final IntEncodedValue ev;
-    private int intVal = 0;
+    private int intVal = -1;
 
     public IntDetails(String name, IntEncodedValue ev) {
         super(name);
