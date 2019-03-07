@@ -45,7 +45,7 @@ public class GraphHopperDataFlagEncoderSpatialRulesTest {
         // TODO should we automatically detect this somehow and include a default country file?
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "generic").
-                put("graph.encoded_values", "country,road_environment,road_class,road_access,car_max_speed").
+                put("graph.encoded_values", "country,road_environment,road_class,road_access,max_speed").
                 put("prepare.ch.weightings", "no").
                 put("spatial_rules.location", "../core/files/spatialrules/countries.geo.json").
                 put("spatial_rules.max_bbox", "11.4,11.7,49.9,50.1").
