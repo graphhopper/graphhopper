@@ -50,6 +50,9 @@ public class GenericWeighting extends AbstractWeighting {
 
     private final DecimalEncodedValue carMaxSpeedEnc;
     private final ObjectEncodedValue roadAccessEnc;
+    private DecimalEncodedValue maxWeightEnc;
+    private DecimalEncodedValue maxHeightEnc;
+    private DecimalEncodedValue maxWidthEnc;
 
     public GenericWeighting(DataFlagEncoder encoder, PMap hintsMap) {
         super(encoder);
@@ -68,6 +71,13 @@ public class GenericWeighting extends AbstractWeighting {
         width = hintsMap.getDouble(WIDTH_LIMIT, 0d);
         roadAccessEnc = encoder.getObjectEncodedValue(RoadAccess.KEY);
         carMaxSpeedEnc = encoder.getDecimalEncodedValue(CarMaxSpeed.KEY);
+
+        if (encoder.hasEncodedValue(MaxWeight.KEY))
+            maxWeightEnc = encoder.getDecimalEncodedValue(MaxWeight.KEY);
+        if (encoder.hasEncodedValue(MaxWidth.KEY))
+            maxWidthEnc = encoder.getDecimalEncodedValue(MaxWidth.KEY);
+        if (encoder.hasEncodedValue(MaxHeight.KEY))
+            maxHeightEnc = encoder.getDecimalEncodedValue(MaxHeight.KEY);
     }
 
     @Override
@@ -85,9 +95,9 @@ public class GenericWeighting extends AbstractWeighting {
             return Double.POSITIVE_INFINITY;
         }
 
-        if (gEncoder.isStoreHeight() && overLimit(height, gEncoder.getHeight(edgeState))
-                || gEncoder.isStoreWeight() && overLimit(weight, gEncoder.getWeight(edgeState))
-                || gEncoder.isStoreWidth() && overLimit(width, gEncoder.getWidth(edgeState)))
+        if (maxHeightEnc != null && overLimit(height, edgeState.get(maxHeightEnc))
+                || maxWidthEnc != null && overLimit(width, edgeState.get(maxWidthEnc))
+                || maxWeightEnc != null && overLimit(weight, edgeState.get(maxWeightEnc)))
             return Double.POSITIVE_INFINITY;
 
         long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);

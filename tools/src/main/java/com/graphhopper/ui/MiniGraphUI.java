@@ -219,7 +219,7 @@ public class MiniGraphUI {
 //
 //                g2.setColor(Color.RED.brighter().brighter());
 //                path = prepare.createAlgo().calcPath(from, to);
-//                System.out.println("now: " + path.flagEncodersAsString());
+//                System.out.println("now: " + path.toFlagEncodersAsString());
 //                plotPath(path, g2, 1);
                 g2.setColor(Color.black);
 

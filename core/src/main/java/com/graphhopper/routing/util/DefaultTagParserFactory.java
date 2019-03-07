@@ -42,6 +42,12 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMSurfaceParser();
         else if (name.equals(CarMaxSpeed.KEY))
             return new OSMCarMaxSpeedParser();
+        else if (name.equals(MaxHeight.KEY))
+            return new OSMMaxHeightParser();
+        else if (name.equals(MaxWidth.KEY))
+            return new OSMMaxWidthParser();
+        else if (name.equals(MaxWeight.KEY))
+            return new OSMMaxWeightParser();
         else if (name.equals(Toll.KEY))
             return new OSMTollParser();
         throw new IllegalArgumentException("entry in encoder list not supported " + name);

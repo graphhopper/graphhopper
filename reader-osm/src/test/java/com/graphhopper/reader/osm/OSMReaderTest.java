@@ -28,9 +28,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.RoadAccess;
-import com.graphhopper.routing.profiles.RoadClass;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.OSMRoadClassParser;
 import com.graphhopper.storage.*;
@@ -562,9 +560,14 @@ public class OSMReaderTest {
     @Test
     public void testRoadAttributes() {
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
-        DataFlagEncoder dataFlagEncoder = new DataFlagEncoder().setStoreHeight(true).setStoreWeight(true).setStoreWidth(true);
-        hopper.setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).add(dataFlagEncoder).build());
+        DataFlagEncoder dataFlagEncoder = new DataFlagEncoder();
+        hopper.setEncodingManager(GHUtility.addLogisticsEncodedValues(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8))).
+                add(dataFlagEncoder).build());
         hopper.importOrLoad();
+
+        DecimalEncodedValue widthEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWidth.KEY);
+        DecimalEncodedValue heightEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxHeight.KEY);
+        DecimalEncodedValue weightEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWeight.KEY);
 
         Graph graph = hopper.getGraphHopperStorage();
         DataFlagEncoder encoder = (DataFlagEncoder) hopper.getEncodingManager().getEncoder("generic");
@@ -585,21 +588,22 @@ public class OSMReaderTest {
         EdgeIteratorState edge_ce = GHUtility.getEdge(graph, nc, ne);
         EdgeIteratorState edge_de = GHUtility.getEdge(graph, nd, ne);
 
-        assertEquals(4.0, encoder.getHeight(edge_ab), 1e-5);
-        assertEquals(2.5, encoder.getWidth(edge_ab), 1e-5);
-        assertEquals(4.4, encoder.getWeight(edge_ab), 1e-5);
+        assertEquals(4.0, edge_ab.get(heightEnc), 1e-5);
+        assertEquals(2.5, edge_ab.get(widthEnc), 1e-5);
+        // rounded from 4.4 to closest 4.5
+        assertEquals(4.5, edge_ab.get(weightEnc), 1e-5);
 
-        assertEquals(4.0, encoder.getHeight(edge_bc), 1e-5);
-        assertEquals(2.5, encoder.getWidth(edge_bc), 1e-5);
-        assertEquals(4.4, encoder.getWeight(edge_bc), 1e-5);
+        assertEquals(4.0, edge_bc.get(heightEnc), 1e-5);
+        assertEquals(2.5, edge_bc.get(widthEnc), 1e-5);
+        assertEquals(4.5, edge_bc.get(weightEnc), 1e-5);
 
-        assertEquals(4.4, encoder.getHeight(edge_ad), 1e-5);
-        assertEquals(3.5, encoder.getWidth(edge_ad), 1e-5);
-        assertEquals(17.5, encoder.getWeight(edge_ad), 1e-5);
+        assertEquals(4.4, edge_ad.get(heightEnc), 1e-5);
+        assertEquals(3.5, edge_ad.get(widthEnc), 1e-5);
+        assertEquals(18, edge_ad.get(weightEnc), 1e-5);
 
-        assertEquals(4.4, encoder.getHeight(edge_cd), 1e-5);
-        assertEquals(3.5, encoder.getWidth(edge_cd), 1e-5);
-        assertEquals(17.5, encoder.getWeight(edge_cd), 1e-5);
+        assertEquals(4.4, edge_cd.get(heightEnc), 1e-5);
+        assertEquals(3.5, edge_cd.get(widthEnc), 1e-5);
+        assertEquals(18, edge_cd.get(weightEnc), 1e-5);
     }
 
     @Test

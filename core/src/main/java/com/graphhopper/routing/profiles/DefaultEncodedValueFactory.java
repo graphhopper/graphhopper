@@ -42,6 +42,12 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = RoadAccess.create();
         } else if (CarMaxSpeed.KEY.equals(name)) {
             enc = CarMaxSpeed.create();
+        } else if (MaxWeight.KEY.equals(name)) {
+            enc = MaxWeight.create();
+        } else if (MaxHeight.KEY.equals(name)) {
+            enc = MaxHeight.create();
+        } else if (MaxWidth.KEY.equals(name)) {
+            enc = MaxWidth.create();
         } else if (Surface.KEY.equals(name)) {
             enc = Surface.create();
         } else {

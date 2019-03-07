@@ -22,6 +22,8 @@ import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
+import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIterator;
@@ -31,14 +33,12 @@ import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
-import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
 public class GenericWeightingTest {
-    private final PMap properties;
     private final DataFlagEncoder encoder;
     private final EncodingManager em;
     private Graph graph;
@@ -46,12 +46,9 @@ public class GenericWeightingTest {
     private final double edgeWeight = 566111;
 
     public GenericWeightingTest() {
-        properties = new PMap();
-        properties.put("store_height", true);
-        properties.put("store_weight", true);
-        properties.put("store_width", true);
-        encoder = new DataFlagEncoder(properties);
-        em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).add(encoder).build();
+        encoder = new DataFlagEncoder();
+        em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).add(new OSMMaxHeightParser()).
+                add(encoder).build();
     }
 
     @Before

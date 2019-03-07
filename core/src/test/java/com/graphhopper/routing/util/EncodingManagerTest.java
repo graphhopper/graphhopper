@@ -131,7 +131,7 @@ public class EncodingManagerTest {
 
         EncodingManager subject = EncodingManager.create(encoder);
 
-        assertEquals("new_encoder|my_properties|version=10", subject.flagEncodersAsString());
+        assertEquals("new_encoder|my_properties|version=10", subject.toFlagEncodersAsString());
     }
 
     @Test

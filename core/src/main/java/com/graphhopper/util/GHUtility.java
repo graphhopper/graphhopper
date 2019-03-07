@@ -32,8 +32,6 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.graphhopper.util.Helper.toLowerCase;
-
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
  * methods are useful for unit tests or debugging only.
@@ -540,8 +538,11 @@ public class GHUtility {
         return edge;
     }
 
+    public static final EncodingManager.Builder addLogisticsEncodedValues(EncodingManager.Builder builder) {
+        return builder.add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser());
+    }
+
     public static final EncodingManager.Builder addDefaultEncodedValues(EncodingManager.Builder builder) {
-        // 5+1+3+5+4+4=22 bits
         return builder.add(new OSMRoadClassParser()).add(new OSMRoadClassLinkParser()).
                 add(new OSMRoadEnvironmentParser()).add(new OSMCarMaxSpeedParser()).add(new OSMRoadAccessParser()).
                 add(new OSMSurfaceParser());

@@ -17,23 +17,13 @@
  */
 package com.graphhopper.routing.profiles;
 
-/**
- * This EncodedValue stores speed values and 0 stands for the default i.e. no maxspeed sign (does not imply no speed limit).
- */
-public class CarMaxSpeed {
-    public static final String KEY = "car_max_speed";
+import java.util.Arrays;
 
-    /**
-     * speed value used for "none" speed limit on German Autobahn
-     */
-    public static final double UNLIMITED_SIGN_SPEED = 140;
-
-    /**
-     * speed value used for road sections without known speed limit.
-     */
-    public static final double UNSET_SPEED = 0;
+public class MaxHeight {
+    public static final String KEY = "max_height";
 
     public static DecimalEncodedValue create() {
-        return new FactorizedDecimalEncodedValue(KEY, 5, 5, true);
+        return new MappedDecimalEncodedValue(KEY, Arrays.asList(1.9, 2.0, 2.1, 2.2, 2.5, 3.0, 3.2, 3.5, 3.6, 3.7, 3.8, 3.9,
+                4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5.0, 6.0, 10.0), .1, false);
     }
 }

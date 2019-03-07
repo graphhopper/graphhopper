@@ -31,9 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-import static com.graphhopper.util.Helper.isEmpty;
-import static com.graphhopper.util.Helper.toLowerCase;
-
 /**
  * This encoder tries to store all way information into a 32 or 64bit value. Later extendable to
  * multiple ints or bytes. The assumption is that edge.getFlags is cheap and can be later replaced
@@ -70,12 +67,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
     };
 
-    private DecimalEncodedValue heightEncoder;
-    private DecimalEncodedValue weightEncoder;
-    private DecimalEncodedValue widthEncoder;
-    private boolean storeHeight = false;
-    private boolean storeWeight = false;
-    private boolean storeWidth = false;
     private ObjectEncodedValue roadEnvironmentEnc;
 
     public DataFlagEncoder() {
@@ -87,9 +78,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
         this.properties = properties;
-        this.setStoreHeight(properties.getBool("store_height", false));
-        this.setStoreWeight(properties.getBool("store_weight", false));
-        this.setStoreWidth(properties.getBool("store_width", false));
     }
 
     public DataFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
@@ -111,18 +99,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
                         "the encoded value " + key + " before this '" + toString() + "' flag encoder. Order is important! " +
                         "E.g. use the config: graph.encoded_values: " + key);
         }
-
-        /* Value range: [3.0m, 5.4m] */
-        if (isStoreHeight())
-            registerNewEncodedValue.add(heightEncoder = new FactorizedDecimalEncodedValue(prefix + "height", 7, 0.1, false));
-
-        /* Value range: [1.0t, 59.5t] */
-        if (isStoreWeight())
-            registerNewEncodedValue.add(weightEncoder = new FactorizedDecimalEncodedValue(prefix + "weight", 10, 0.1, false));
-
-        /* Value range: [2.5m, 3.5m] */
-        if (isStoreWidth())
-            registerNewEncodedValue.add(widthEncoder = new FactorizedDecimalEncodedValue(prefix + "width", 6, 0.1, false));
 
         // workaround to init AbstractWeighting.avSpeedEnc variable that GenericWeighting does not need
         speedEncoder = new FactorizedDecimalEncodedValue("fake", 1, 1, false);
@@ -181,22 +157,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             if (hwValue == RoadClass.OTHER)
                 return edgeFlags;
 
-            // Road attributes (height, weight, width)
-            if (isStoreHeight()) {
-                List<String> heightTags = Arrays.asList("maxheight", "maxheight:physical");
-                extractMeter(edgeFlags, way, heightEncoder, heightTags);
-            }
-
-            if (isStoreWeight()) {
-                List<String> weightTags = Arrays.asList("maxweight", "maxgcweight");
-                extractTons(edgeFlags, way, weightEncoder, weightTags);
-            }
-
-            if (isStoreWidth()) {
-                List<String> widthTags = Arrays.asList("maxwidth", "maxwidth:physical");
-                extractMeter(edgeFlags, way, widthEncoder, widthTags);
-            }
-
             boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
             // ONEWAY (currently car only)
             boolean isOneway = way.hasTag("oneway", oneways)
@@ -222,111 +182,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         } catch (Exception ex) {
             throw new RuntimeException("Error while parsing way " + way.toString(), ex);
         }
-    }
-
-    private void extractMeter(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
-        String value = way.getFirstPriorityTag(keys);
-        if (isEmpty(value)) return;
-
-        double val;
-        try {
-            val = stringToMeter(value);
-        } catch (Exception ex) {
-            LOG.warn("Unable to extract meter from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId(), ex);
-            return;
-        }
-
-        try {
-            valueEncoder.setDecimal(false, edgeFlags, val);
-        } catch (IllegalArgumentException e) {
-            LOG.warn("Unable to process value '{}' for way (OSM_ID = {}).", val, way.getId(), e);
-        }
-    }
-
-    private void extractTons(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
-        String value = way.getFirstPriorityTag(keys);
-        if (isEmpty(value)) return;
-
-        double val;
-        try {
-            val = stringToTons(value);
-        } catch (Throwable t) {
-            LOG.warn("Unable to extract tons from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId(), t);
-            return;
-        }
-
-        try {
-            valueEncoder.setDecimal(false, edgeFlags, val);
-        } catch (IllegalArgumentException e) {
-            LOG.warn("Unable to process tons value '{}' for way (OSM_ID = {}).", val, way.getId(), e);
-        }
-    }
-
-    public static double stringToTons(String value) {
-        value = toLowerCase(value).replaceAll(" ", "").replaceAll("(tons|ton)", "t");
-        value = value.replace("mgw", "").trim();
-        double factor = 1;
-        if (value.endsWith("t")) {
-            value = value.substring(0, value.length() - 1);
-        } else if (value.endsWith("lbs")) {
-            value = value.substring(0, value.length() - 3);
-            factor = 0.00045359237;
-        }
-
-        return Double.parseDouble(value) * factor;
-    }
-
-    public static double stringToMeter(String value) {
-        value = toLowerCase(value).replaceAll(" ", "").replaceAll("(meters|meter|mtrs|mtr|mt|m\\.)", "m");
-        double factor = 1;
-        double offset = 0;
-        value = value.replaceAll("(\\\"|\'\')", "in").replaceAll("(\'|feet)", "ft");
-        if (value.startsWith("~") || value.contains("approx")) {
-            value = value.replaceAll("(\\~|approx)", "").trim();
-            factor = 0.8;
-        }
-
-        if (value.endsWith("in")) {
-            int startIndex = value.indexOf("ft");
-            String inchValue;
-            if (startIndex < 0) {
-                startIndex = 0;
-            } else {
-                startIndex += 2;
-            }
-
-            inchValue = value.substring(startIndex, value.length() - 2);
-            value = value.substring(0, startIndex);
-            offset = Double.parseDouble(inchValue) * 0.0254;
-        }
-
-        if (value.endsWith("ft")) {
-            value = value.substring(0, value.length() - 2);
-            factor *= 0.3048;
-        } else if (value.endsWith("m")) {
-            value = value.substring(0, value.length() - 1);
-        }
-
-        if (value.isEmpty()) {
-            return offset;
-        } else {
-            return Double.parseDouble(value) * factor + offset;
-        }
-    }
-
-    public double getHeight(EdgeIteratorState edge) {
-        IntsRef edgeFlags = edge.getFlags();
-        return heightEncoder.getDecimal(false, edgeFlags);
-    }
-
-    public double getWeight(EdgeIteratorState edge) {
-        IntsRef edgeFlags = edge.getFlags();
-        return weightEncoder.getDecimal(false, edgeFlags);
-    }
-
-    public double getWidth(EdgeIteratorState edge) {
-        IntsRef edgeFlags = edge.getFlags();
-        return widthEncoder.getDecimal(false, edgeFlags);
     }
 
     @Override
@@ -362,33 +217,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return GenericWeighting.class.isAssignableFrom(feature);
     }
 
-    public DataFlagEncoder setStoreHeight(boolean storeHeight) {
-        this.storeHeight = storeHeight;
-        return this;
-    }
-
-    public boolean isStoreHeight() {
-        return storeHeight;
-    }
-
-    public DataFlagEncoder setStoreWeight(boolean storeWeight) {
-        this.storeWeight = storeWeight;
-        return this;
-    }
-
-    public boolean isStoreWeight() {
-        return storeWeight;
-    }
-
-    public DataFlagEncoder setStoreWidth(boolean storeWidth) {
-        this.storeWidth = storeWidth;
-        return this;
-    }
-
-    public boolean isStoreWidth() {
-        return storeWidth;
-    }
-
     @Override
     public InstructionAnnotation getAnnotation(IntsRef flags, Translation tr) {
         if (roadEnvironmentEnc.getObject(false, flags) == RoadEnvironment.FORD) {
@@ -396,15 +224,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
 
         return super.getAnnotation(flags, tr);
-    }
-
-
-    @Override
-    protected String getPropertiesString() {
-        return super.getPropertiesString() +
-                "|store_height=" + storeHeight +
-                "|store_weight=" + storeWeight +
-                "|store_width=" + storeWidth;
     }
 
     @Override

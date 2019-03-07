@@ -21,8 +21,7 @@ import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntIntHashMap;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * For certain values it can be more efficient to store the mapping instead of the value and a factor. E.g. for
@@ -31,7 +30,7 @@ import java.util.Objects;
  * @see FactorizedDecimalEncodedValue
  */
 public final class MappedDecimalEncodedValue extends SimpleIntEncodedValue implements DecimalEncodedValue {
-    private final int toValueMap[];
+    private final int toValueMapArray[];
     private final IntIntHashMap toStorageMap;
     private final double precision;
 
@@ -44,17 +43,19 @@ public final class MappedDecimalEncodedValue extends SimpleIntEncodedValue imple
 
         this.precision = precision;
         // store int-int mapping
-        toValueMap = new int[values.size()];
+        toValueMapArray = new int[values.size()];
         toStorageMap = new IntIntHashMap(values.size());
 
+        List<Double> sortedValues = new ArrayList<>(values);
+        Collections.sort(sortedValues);
         int index = 0;
         IntHashSet dupCheck = new IntHashSet();
-        for (double val : values) {
+        for (double val : sortedValues) {
             int intVal = toInt(val);
             if (!dupCheck.add(intVal)) {
                 throw new IllegalArgumentException("The value " + val + " was converted to " + intVal + " but this already exists. Remove it to improve efficiency.");
             }
-            toValueMap[index] = intVal;
+            toValueMapArray[index] = intVal;
             toStorageMap.put(intVal, index);
             index++;
         }
@@ -64,11 +65,26 @@ public final class MappedDecimalEncodedValue extends SimpleIntEncodedValue imple
         return (int) Math.round(val / precision);
     }
 
+    int findClosestIndex(int val) {
+        int res = Arrays.binarySearch(toValueMapArray, val);
+        if (res >= 0)
+            throw new IllegalStateException("Cannot happen as toStorageMap.getOrDefault should have caught this case");
+
+        // TODO NOW rounding up from e.g. max_height=10 to 11 might be ugly. Not sure how or what to do about it or if we should make it even configurable.
+        res = -res;
+        double delta1 = res < 2 ? Double.POSITIVE_INFINITY : val - toValueMapArray[res - 2],
+                delta2 = res >= toValueMapArray.length ? Double.POSITIVE_INFINITY : toValueMapArray[res - 1] - val;
+        if (delta1 < delta2)
+            return res - 2;
+        return res - 1;
+    }
+
     @Override
     public final void setDecimal(boolean reverse, IntsRef ref, double value) {
-        int storageInt = toStorageMap.getOrDefault(toInt(value), -1);
+        int intVal = toInt(value);
+        int storageInt = toStorageMap.getOrDefault(intVal, -1);
         if (storageInt < 0)
-            throw new IllegalArgumentException("Cannot find value " + value + " (" + toInt(value) + ") in map to store it");
+            storageInt = findClosestIndex(intVal);
 
         super.setInt(reverse, ref, storageInt);
     }
@@ -76,7 +92,7 @@ public final class MappedDecimalEncodedValue extends SimpleIntEncodedValue imple
     @Override
     public final double getDecimal(boolean reverse, IntsRef ref) {
         int value = getInt(reverse, ref);
-        return toValueMap[value] * precision;
+        return toValueMapArray[value] * precision;
     }
 
     @Override

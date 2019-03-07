@@ -52,8 +52,10 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(DISTANCE))
             builders.add(new DistanceDetails());
 
-        if (requestedPathDetails.contains(CarMaxSpeed.KEY) && encoder.hasEncodedValue(CarMaxSpeed.KEY))
-            builders.add(new DecimalDetails(CarMaxSpeed.KEY, encoder.getDecimalEncodedValue(CarMaxSpeed.KEY), true));
+        for (String key : Arrays.asList(CarMaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY)) {
+            if (requestedPathDetails.contains(key) && encoder.hasEncodedValue(key))
+                builders.add(new DecimalDetails(key, encoder.getDecimalEncodedValue(key), true));
+        }
 
         for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, Surface.KEY, RoadAccess.KEY, Toll.KEY)) {
             if (requestedPathDetails.contains(key) && encoder.hasEncodedValue(key))

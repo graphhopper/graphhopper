@@ -7,6 +7,9 @@ import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.EncodingManager.Access;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
+import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
+import com.graphhopper.routing.util.parsers.OSMMaxWidthParser;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -14,7 +17,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.Closeable;
 import java.io.File;
 
 import static org.junit.Assert.*;
@@ -24,7 +26,6 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperStorageForDataFlagEncoderTest {
     private final String locationParent = "./target/graphstorage";
-    private int defaultSize = 100;
     private String defaultGraphLoc = "./target/graphstorage/default";
     private GraphHopperStorage graph;
 
@@ -34,11 +35,9 @@ public class GraphHopperStorageForDataFlagEncoderTest {
 
     public GraphHopperStorageForDataFlagEncoderTest() {
         properties = new PMap();
-        properties.put("store_height", true);
-        properties.put("store_weight", true);
-        properties.put("store_width", false);
         encoder = new DataFlagEncoder(properties);
-        encodingManager = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).add(encoder).build();
+        encodingManager = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).
+                add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser()).add(encoder).build();
     }
 
     @Before
@@ -48,7 +47,7 @@ public class GraphHopperStorageForDataFlagEncoderTest {
 
     @After
     public void tearDown() {
-        Helper.close((Closeable) graph);
+        Helper.close(graph);
         Helper.removeDir(new File(locationParent));
     }
 
@@ -94,10 +93,5 @@ public class GraphHopperStorageForDataFlagEncoderTest {
 
         FlagEncoder flagEncoder = em.fetchEdgeEncoders().get(0);
         assertTrue(flagEncoder instanceof DataFlagEncoder);
-
-        DataFlagEncoder dataFlagEncoder = (DataFlagEncoder) flagEncoder;
-        assertTrue(dataFlagEncoder.isStoreHeight());
-        assertTrue(dataFlagEncoder.isStoreWeight());
-        assertFalse(dataFlagEncoder.isStoreWidth());
     }
 }
