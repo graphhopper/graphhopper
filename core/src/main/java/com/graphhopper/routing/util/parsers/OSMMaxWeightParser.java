@@ -37,13 +37,15 @@ public class OSMMaxWeightParser implements TagParser {
 
     private static Logger LOG = LoggerFactory.getLogger(OSMMaxWeightParser.class);
     private final DecimalEncodedValue weightEncoder;
+    private final boolean enableLog;
 
     public OSMMaxWeightParser() {
-        this(MaxWeight.create());
+        this(MaxWeight.create(), false);
     }
 
-    public OSMMaxWeightParser(DecimalEncodedValue weightEncoder) {
+    public OSMMaxWeightParser(DecimalEncodedValue weightEncoder, boolean enableLog) {
         this.weightEncoder = weightEncoder;
+        this.enableLog = enableLog;
     }
 
     @Override
@@ -67,7 +69,8 @@ public class OSMMaxWeightParser implements TagParser {
                 return;
             }
         } catch (Exception ex) {
-            LOG.warn("Unable to extract tons from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId());
+            if (enableLog)
+                LOG.warn("Unable to extract tons from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId());
         }
         valueEncoder.setDecimal(false, edgeFlags, -1);
     }
@@ -76,7 +79,9 @@ public class OSMMaxWeightParser implements TagParser {
         value = toLowerCase(value).replaceAll(" ", "").replaceAll("(tons|ton)", "t");
         value = value.replace("mgw", "").trim();
         double factor = 1;
-        if (value.endsWith("t")) {
+        if (value.equals("default") || value.equals("none")) {
+            return -1;
+        } else if (value.endsWith("t")) {
             value = value.substring(0, value.length() - 1);
         } else if (value.endsWith("lbs")) {
             value = value.substring(0, value.length() - 3);

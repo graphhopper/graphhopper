@@ -31,13 +31,15 @@ import java.util.List;
 public class OSMMaxHeightParser implements TagParser {
 
     private final DecimalEncodedValue heightEncoder;
+    private final boolean enableLog;
 
     public OSMMaxHeightParser() {
-        this(MaxHeight.create());
+        this(MaxHeight.create(), false);
     }
 
-    public OSMMaxHeightParser(DecimalEncodedValue heightEncoder) {
+    public OSMMaxHeightParser(DecimalEncodedValue heightEncoder, boolean enableLog) {
         this.heightEncoder = heightEncoder;
+        this.enableLog = enableLog;
     }
 
     @Override
@@ -47,8 +49,8 @@ public class OSMMaxHeightParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
-        List<String> heightTags = Arrays.asList("maxheight", "maxheight:physical"/* not used for way height! "height"*/);
-        OSMMaxWidthParser.extractMeter(edgeFlags, way, heightEncoder, heightTags);
+        List<String> heightTags = Arrays.asList("maxheight", "maxheight:physical"/*, do not use "height" for way height! */);
+        OSMMaxWidthParser.extractMeter(edgeFlags, way, heightEncoder, heightTags, enableLog);
         return edgeFlags;
     }
 }

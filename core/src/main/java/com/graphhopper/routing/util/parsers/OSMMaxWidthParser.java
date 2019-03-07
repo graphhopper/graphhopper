@@ -37,13 +37,15 @@ public class OSMMaxWidthParser implements TagParser {
 
     private static Logger LOG = LoggerFactory.getLogger(OSMMaxWidthParser.class);
     private final DecimalEncodedValue widthEncoder;
+    private final boolean enableLog;
 
     public OSMMaxWidthParser() {
-        this(MaxWidth.create());
+        this(MaxWidth.create(), false);
     }
 
-    public OSMMaxWidthParser(DecimalEncodedValue widthEncoder) {
+    public OSMMaxWidthParser(DecimalEncodedValue widthEncoder, boolean enableLog) {
         this.widthEncoder = widthEncoder;
+        this.enableLog = enableLog;
     }
 
     @Override
@@ -54,11 +56,11 @@ public class OSMMaxWidthParser implements TagParser {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
         List<String> widthTags = Arrays.asList("maxwidth", "maxwidth:physical", "width");
-        extractMeter(edgeFlags, way, widthEncoder, widthTags);
+        extractMeter(edgeFlags, way, widthEncoder, widthTags, enableLog);
         return edgeFlags;
     }
 
-    static void extractMeter(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
+    static void extractMeter(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys, boolean enableLog) {
         String value = way.getFirstPriorityTag(keys);
         try {
             if (!isEmpty(value)) {
@@ -67,7 +69,8 @@ public class OSMMaxWidthParser implements TagParser {
                 return;
             }
         } catch (Exception ex) {
-            LOG.warn("Unable to extract meter from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId());
+            if (enableLog)
+                LOG.warn("Unable to extract meter from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId());
         }
 
         valueEncoder.setDecimal(false, edgeFlags, -1);
@@ -82,6 +85,9 @@ public class OSMMaxWidthParser implements TagParser {
             value = value.replaceAll("(\\~|approx)", "").trim();
             factor = 0.8;
         }
+
+        if (value.equals("default") || value.equals("none") || value.equals("unsigned"))
+            return -1;
 
         if (value.endsWith("in")) {
             int startIndex = value.indexOf("ft");
