@@ -128,8 +128,12 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
             }
         } else if (from == to) {
             // special case of identical start and end
+            if (currFrom.weight != 0 || currTo.weight != 0) {
+                throw new IllegalStateException("If from=to, the starting weight must be zero for from and to");
+            }
             bestPath.sptEntry = currFrom;
             bestPath.edgeTo = currTo;
+            bestPath.setWeight(0);
             finishedFrom = true;
             finishedTo = true;
         }

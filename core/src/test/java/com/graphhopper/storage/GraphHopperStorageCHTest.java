@@ -244,6 +244,24 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     }
 
     @Test
+    public void weightAndDistanceExact() {
+        graph = createGHStorage();
+        CHGraph chGraph = getGraph(graph);
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.freeze();
+
+        // we just make up some weights and distances, they do not really have to be related to our previous edges.
+        // 1.004+1.006 = 2.09999999999. we make sure this does not become 2.09 instead of 2.10 (due to truncation)
+        double x1 = 1.004;
+        double x2 = 1.006;
+        chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), x1 + x2, x1 + x2, 0, 1);
+        CHEdgeIteratorState sc = chGraph.getEdgeIteratorState(2, 2);
+        assertEquals(2.01, sc.getDistance(), 1.e-6);
+        assertEquals(2.01, sc.getWeight(), 1.e-6);
+    }
+
+    @Test
     public void testQueryGraph() {
         graph = createGHStorage();
         CHGraph chGraph = getGraph(graph);

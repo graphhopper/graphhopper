@@ -379,10 +379,10 @@ public class Path {
      */
     public Map<String, List<PathDetail>> calcDetails(List<String> requestedPathDetails, PathDetailsBuilderFactory pathBuilderFactory, int previousIndex) {
         if (!isFound() || requestedPathDetails.isEmpty())
-            return Collections.EMPTY_MAP;
+            return Collections.emptyMap();
         List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders(requestedPathDetails, encoder, weighting);
         if (pathBuilders.isEmpty())
-            return Collections.EMPTY_MAP;
+            return Collections.emptyMap();
 
         forEveryEdge(new PathDetailsFromEdges(pathBuilders, previousIndex));
 
@@ -399,7 +399,7 @@ public class Path {
 
     @Override
     public String toString() {
-        return "distance:" + getDistance() + ", edges:" + edgeIds.size();
+        return "found: " + found + ", weight: " + weight + ", time: " + time + ", distance: " + distance + ", edges: " + edgeIds.size();
     }
 
     public String toDetailsString() {

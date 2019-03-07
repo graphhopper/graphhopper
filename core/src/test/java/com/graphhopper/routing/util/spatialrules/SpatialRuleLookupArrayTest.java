@@ -135,6 +135,21 @@ public class SpatialRuleLookupArrayTest {
         assertEquals("big", spatialRuleLookup.lookupRule(1.5, 1.5).getId());
     }
 
+    @Test
+    public void testSpatialRuleForId() {
+        List<SpatialRule> spatialRules = new ArrayList<>();
+        spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 1.5, 1.5}, new double[]{1, 2, 2, 1}), "1"));
+        spatialRules.add(getSpatialRule(new Polygon(new double[]{1.5, 1.5, 2, 2}, new double[]{1, 2, 2, 1}), "2"));
+        spatialRules.add(getSpatialRule(new Polygon(new double[]{1.5, 1.5, 2, 2}, new double[]{1, 2, 2, 1}), "3"));
+        spatialRules.add(getSpatialRule(new Polygon(new double[]{1.5, 1.5, 2, 2}, new double[]{1, 2, 2, 1}), "4"));
+
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, .1, false, new BBox(1, 2, 1, 2));
+
+        // Note index=0 is the EMPTY rule
+        assertEquals("1", spatialRuleLookup.getSpatialRule(1).getId());
+        assertEquals("4", spatialRuleLookup.getSpatialRule(4).getId());
+    }
+
     private Polygon parsePolygonString(String polygonString) {
         String[] germanPolygonArr = polygonString.split("\\],\\[");
         double[] lats = new double[germanPolygonArr.length];
