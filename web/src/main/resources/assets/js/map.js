@@ -318,7 +318,7 @@ function sliceFeatureCollection(detail, detailKey, geoJsonFeature){
     };
 
     var points = geoJsonFeature.geometry.coordinates;
-    for (i = 0; i < detail.length; i++) {
+    for (var i = 0; i < detail.length; i++) {
         var detailObj = detail[i];
         var from = detailObj[0];
         // It's important to +1
@@ -326,11 +326,13 @@ function sliceFeatureCollection(detail, detailKey, geoJsonFeature){
         var to = detailObj[1] + 1;
         var value = detailObj[2] || "Undefined";
 
+        var tmpPoints = slicePoints(points, from, to, detailKey, value);
+
         feature.features.push({
           "type": "Feature",
           "geometry": {
               "type": "LineString",
-              "coordinates": points.slice(from,to)
+              "coordinates": tmpPoints
           },
           "properties": {
               "attributeType": value
@@ -339,6 +341,18 @@ function sliceFeatureCollection(detail, detailKey, geoJsonFeature){
     }
 
     return feature;
+}
+
+function slicePoints(points, from, to, detailKey, value){
+    if(detailKey==='average_speed'){
+        var tmpPoints = points.slice(from,to);
+        for (var i = 0; i < tmpPoints.length; i++) {
+          tmpPoints[i][2] = value
+        }
+        return tmpPoints;
+    }else{
+        return points.slice(from,to);
+    }
 }
 
 module.exports.clearElevation = function () {
