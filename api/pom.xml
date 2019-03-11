@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-api</artifactId>
     <packaging>jar</packaging>
-    <version>0.12-SNAPSHOT</version>
+    <version>0.13-SNAPSHOT</version>
     <name>GraphHopper API</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
 
