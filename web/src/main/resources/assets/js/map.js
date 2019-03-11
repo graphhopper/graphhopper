@@ -269,6 +269,7 @@ module.exports.addElevation = function (geoJsonFeature, useMiles, details) {
     for (var detailKey in details) {
         GHFeatureCollection.push(sliceFeatureCollection(details[detailKey], detailKey, geoJsonFeature))
     }
+
     if(GHFeatureCollection.length === 0) {
         // No Path Details => Show only elevation
         geoJsonFeature.properties.attributeType = "elevation";
@@ -283,6 +284,7 @@ module.exports.addElevation = function (geoJsonFeature, useMiles, details) {
         };
         GHFeatureCollection.push(elevationCollection);
     }
+
 
     if (elevationControl === null) {
         // TODO no option to switch to miles yet
@@ -326,7 +328,7 @@ function sliceFeatureCollection(detail, detailKey, geoJsonFeature){
         var to = detailObj[1] + 1;
         var value = detailObj[2] || "Undefined";
 
-        var tmpPoints = slicePoints(points, from, to, detailKey, value);
+        var tmpPoints = points.slice(from,to)
 
         feature.features.push({
           "type": "Feature",
@@ -341,18 +343,6 @@ function sliceFeatureCollection(detail, detailKey, geoJsonFeature){
     }
 
     return feature;
-}
-
-function slicePoints(points, from, to, detailKey, value){
-    if(detailKey==='average_speed'){
-        var tmpPoints = points.slice(from,to);
-        for (var i = 0; i < tmpPoints.length; i++) {
-          tmpPoints[i][2] = value
-        }
-        return tmpPoints;
-    }else{
-        return points.slice(from,to);
-    }
 }
 
 module.exports.clearElevation = function () {
