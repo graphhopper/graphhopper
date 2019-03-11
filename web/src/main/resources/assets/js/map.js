@@ -285,23 +285,24 @@ module.exports.addElevation = function (geoJsonFeature, useMiles, details) {
         GHFeatureCollection.push(elevationCollection);
     }
 
-
     if (elevationControl === null) {
         // TODO no option to switch to miles yet
-        // TODO think about adding Color Mappings
-        elevationControl = L.control.heightgraph({
-             width: 800,
-             height: 280,
-             margins: {
-                 top: 10,
-                 right: 30,
-                 bottom: 55,
-                 left: 50
-             },
-             position: "bottomright"
-         });
-
-         elevationControl.addTo(map);
+        options = {
+           width: 800,
+           height: 280,
+           margins: {
+               top: 10,
+               right: 30,
+               bottom: 55,
+               left: 50
+           },
+           position: "bottomright"
+        }
+        // for path details use random colors
+        if(jQuery.isEmptyObject(details))
+           options.mappings = { Elevation: {'elevation': {text: 'Elevation [m]', color: '#27ce49'}}};
+        elevationControl = L.control.heightgraph(options);
+        elevationControl.addTo(map);
     }
 
     elevationControl.addData(GHFeatureCollection);
