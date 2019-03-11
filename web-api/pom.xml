@@ -35,7 +35,7 @@
         <dependency>
             <groupId>com.graphhopper.external</groupId>
             <artifactId>jackson-datatype-jts</artifactId>
-            <version>0.10-2.5-2</version>
+            <version>0.12-2.5-1</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
