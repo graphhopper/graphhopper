@@ -264,6 +264,19 @@ module.exports.initMap = initMap;
 module.exports.adjustMapSize = adjustMapSize;
 
 module.exports.addElevation = function (geoJsonFeature, useMiles, details) {
+    // TODO no option to switch to miles yet
+    var options = {
+       width: 800,
+       height: 280,
+       margins: {
+           top: 10,
+           right: 30,
+           bottom: 55,
+           left: 50
+       },
+       position: "bottomright"
+    }
+
     var GHFeatureCollection = [];
 
     for (var detailKey in details) {
@@ -283,24 +296,11 @@ module.exports.addElevation = function (geoJsonFeature, useMiles, details) {
             }
         };
         GHFeatureCollection.push(elevationCollection);
+        // Use a fixed color for elevation
+        options.mappings = { Elevation: {'elevation': {text: 'Elevation [m]', color: '#27ce49'}}};
     }
 
     if (elevationControl === null) {
-        // TODO no option to switch to miles yet
-        options = {
-           width: 800,
-           height: 280,
-           margins: {
-               top: 10,
-               right: 30,
-               bottom: 55,
-               left: 50
-           },
-           position: "bottomright"
-        }
-        // for path details use random colors
-        if(jQuery.isEmptyObject(details))
-           options.mappings = { Elevation: {'elevation': {text: 'Elevation [m]', color: '#27ce49'}}};
         elevationControl = L.control.heightgraph(options);
         elevationControl.addTo(map);
     }
