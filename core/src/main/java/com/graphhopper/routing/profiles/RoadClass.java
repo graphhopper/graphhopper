@@ -17,42 +17,39 @@
  */
 package com.graphhopper.routing.profiles;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import com.graphhopper.util.Helper;
 
 /**
  * This class defines a IndexBased but is type safe.
  */
-public class RoadClass extends DefaultIndexBased {
-    public static final String KEY = "road_class";
-    private static final LinkedHashMap<String, RoadClass> map = create("other", "motorway", "motorroad", "trunk",
-            "primary", "secondary", "tertiary", "residential", "unclassified", "service", "road", "track", "forestry",
-            "steps", "cycleway", "path", "living_street");
-    public static final RoadClass OTHER = map.get("other"), MOTORWAY = map.get("motorway"), MOTORROAD = map.get("motorroad"),
-            TRUNK = map.get("trunk"), PRIMARY = map.get("primary"), SECONDARY = map.get("secondary"),
-            TERTIARY = map.get("tertiary"), RESIDENTIAL = map.get("residential"), UNCLASSIFIED = map.get("unclassified"),
-            SERVICE = map.get("service"), ROAD = map.get("road"), TRACK = map.get("track"),
-            FORESTRY = map.get("forestry"), STEPS = map.get("steps"), CYCLEWAY = map.get("cycleway"),
-            PATH = map.get("path"), LIVING_STREET = map.get("living_street");
+public enum RoadClass {
+    OTHER("other"), MOTORWAY("motorway"), MOTORROAD("motorroad"),
+    TRUNK("trunk"), PRIMARY("primary"), SECONDARY("secondary"),
+    TERTIARY("tertiary"), RESIDENTIAL("residential"), UNCLASSIFIED("unclassified"),
+    SERVICE("service"), ROAD("road"), TRACK("track"),
+    FORESTRY("forestry"), STEPS("steps"), CYCLEWAY("cycleway"),
+    PATH("path"), LIVING_STREET("living_street");
 
-    private RoadClass(String name, int ordinal) {
-        super(name, ordinal);
+    public static final String KEY = "road_class";
+
+    private final String name;
+
+    RoadClass(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 
     public static RoadClass find(String name) {
-        RoadClass rc = map.get(name);
-        return rc == null ? OTHER : rc;
-    }
-
-    public static ObjectEncodedValue create() {
-        return new MappedObjectEncodedValue(KEY, new ArrayList<>(map.values()));
-    }
-
-    public static LinkedHashMap<String, RoadClass> create(String... list) {
-        LinkedHashMap<String, RoadClass> values = new LinkedHashMap<>();
-        for (int counter = 0; counter < list.length; counter++) {
-            values.put(list[counter], new RoadClass(list[counter], counter));
+        if (name == null)
+            return OTHER;
+        try {
+            return RoadClass.valueOf(Helper.toUpperCase(name));
+        } catch (IllegalArgumentException ex) {
+            return OTHER;
         }
-        return values;
     }
 }

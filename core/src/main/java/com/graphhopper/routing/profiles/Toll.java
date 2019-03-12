@@ -17,35 +17,22 @@
  */
 package com.graphhopper.routing.profiles;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-
 /**
  * This class defines a IndexBased toll
  */
-public class Toll extends DefaultIndexBased {
+public enum Toll {
+    NO("no"), ALL("all"), HGV("hgv");
+
     public static final String KEY = "toll";
-    private static final LinkedHashMap<String, Toll> map = create("no", "all", "hgv");
-    public static final Toll NO = map.get("no"), ALL = map.get("all"), HGV = map.get("hgv");
 
-    public Toll(String name, int ordinal) {
-        super(name, ordinal);
+    private final String name;
+
+    Toll(String name) {
+        this.name = name;
     }
 
-    public static Toll find(String name) {
-        Toll re = map.get(name);
-        return re == null ? NO : re;
-    }
-
-    public static ObjectEncodedValue create() {
-        return new MappedObjectEncodedValue(KEY, new ArrayList<>(map.values()));
-    }
-
-    public static LinkedHashMap<String, Toll> create(String... list) {
-        LinkedHashMap<String, Toll> values = new LinkedHashMap<>();
-        for (int counter = 0; counter < list.length; counter++) {
-            values.put(list[counter], new Toll(list[counter], counter));
-        }
-        return values;
+    @Override
+    public String toString() {
+        return name;
     }
 }

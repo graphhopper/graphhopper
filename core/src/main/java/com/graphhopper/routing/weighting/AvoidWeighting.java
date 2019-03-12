@@ -17,7 +17,10 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.RoadClass;
+import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.profiles.Toll;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -46,9 +49,9 @@ public class AvoidWeighting extends ShortFastestWeighting {
     private boolean avoidTertiary;
     private boolean avoidTrack;
     private boolean avoidResidential;
-    private ObjectEncodedValue tollEnc;
-    private ObjectEncodedValue roadEnvEnc;
-    private ObjectEncodedValue roadClassEnc;
+    private EnumEncodedValue<Toll> tollEnc;
+    private EnumEncodedValue<RoadEnvironment> roadEnvEnc;
+    private EnumEncodedValue<RoadClass> roadClassEnc;
     private double avoidFactor;
 
     public AvoidWeighting(FlagEncoder encoder, PMap map) {
@@ -60,12 +63,12 @@ public class AvoidWeighting extends ShortFastestWeighting {
             avoidBridge = avoidStr.contains("bridge");
             avoidFord = avoidStr.contains("ford");
             avoidTunnel = avoidStr.contains("tunnel");
-            roadEnvEnc = encoder.getObjectEncodedValue(RoadEnvironment.KEY);
+            roadEnvEnc = encoder.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         }
 
         if (encoder.hasEncodedValue(Toll.KEY)) {
             avoidToll = avoidStr.contains("toll");
-            tollEnc = encoder.getObjectEncodedValue(Toll.KEY);
+            tollEnc = encoder.getEnumEncodedValue(Toll.KEY, Toll.class);
         }
 
         if (encoder.hasEncodedValue(RoadClass.KEY)) {
@@ -76,7 +79,7 @@ public class AvoidWeighting extends ShortFastestWeighting {
             avoidTertiary = avoidStr.contains("tertiary");
             avoidTrack = avoidStr.contains("track");
             avoidResidential = avoidStr.contains("residential");
-            roadClassEnc = encoder.getObjectEncodedValue(RoadClass.KEY);
+            roadClassEnc = encoder.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         }
 
         // can be used for preferring too
@@ -89,7 +92,7 @@ public class AvoidWeighting extends ShortFastestWeighting {
             return Double.POSITIVE_INFINITY;
 
         if (roadClassEnc != null) {
-            IndexBased roadClassEV = edge.get(roadClassEnc);
+            RoadClass roadClassEV = edge.get(roadClassEnc);
             if (avoidMotorway && roadClassEV == MOTORWAY || avoidTrunk && roadClassEV == TRUNK
                     || avoidPrimary && roadClassEV == PRIMARY || avoidSecondary && roadClassEV == SECONDARY
                     || avoidTertiary && roadClassEV == TERTIARY || avoidTrack && roadClassEV == TRACK
@@ -98,7 +101,7 @@ public class AvoidWeighting extends ShortFastestWeighting {
         }
 
         if (roadEnvEnc != null) {
-            IndexBased roadEnvEV = edge.get(roadEnvEnc);
+            RoadEnvironment roadEnvEV = edge.get(roadEnvEnc);
             if (avoidFerry && roadEnvEV == FERRY || avoidBridge && roadEnvEV == BRIDGE
                     || avoidFord && roadEnvEV == FORD || avoidTunnel && roadEnvEV == TUNNEL)
                 return weight * avoidFactor;

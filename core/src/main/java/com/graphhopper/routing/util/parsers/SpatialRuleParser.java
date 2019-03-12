@@ -25,9 +25,7 @@ import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.shapes.GHPoint;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class SpatialRuleParser implements TagParser {
 
@@ -35,14 +33,12 @@ public class SpatialRuleParser implements TagParser {
     private SpatialRuleLookup spatialRuleLookup;
 
     public SpatialRuleParser(SpatialRuleLookup spatialRuleLookup) {
-        this(Country.KEY, spatialRuleLookup);
+        this(spatialRuleLookup, new EnumEncodedValue<>(Country.KEY, Country.class));
     }
 
-    public SpatialRuleParser(String name, SpatialRuleLookup spatialRuleLookup) {
+    public SpatialRuleParser(SpatialRuleLookup spatialRuleLookup, IntEncodedValue spatialRuleEnc) {
         this.spatialRuleLookup = spatialRuleLookup;
-        Map<String, Country> countryMap = Country.create(spatialRuleLookup);
-        // now convert ObjectEncodedValue into Int so that we can use the int values to store the SpatialRules
-        spatialRuleEnc = new MappedObjectEncodedValue(name, new ArrayList<>(countryMap.values()));
+        this.spatialRuleEnc = spatialRuleEnc;
     }
 
     @Override

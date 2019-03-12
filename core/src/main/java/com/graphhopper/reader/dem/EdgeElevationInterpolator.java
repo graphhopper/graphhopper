@@ -21,7 +21,7 @@ import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.routing.profiles.ObjectEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -54,12 +54,12 @@ import com.graphhopper.util.*;
 public class EdgeElevationInterpolator {
 
     private final GraphHopperStorage storage;
-    protected final ObjectEncodedValue roadEnvironmentEnc;
+    protected final EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc;
     private final NodeElevationInterpolator nodeElevationInterpolator;
     private final RoadEnvironment interpolateKey;
     private final ElevationInterpolator elevationInterpolator = new ElevationInterpolator();
 
-    public EdgeElevationInterpolator(GraphHopperStorage storage, ObjectEncodedValue roadEnvironmentEnc, RoadEnvironment interpolateKey) {
+    public EdgeElevationInterpolator(GraphHopperStorage storage, EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc, RoadEnvironment interpolateKey) {
         this.storage = storage;
         this.roadEnvironmentEnc = roadEnvironmentEnc;
         this.interpolateKey = interpolateKey;

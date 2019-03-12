@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.ObjectEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.Surface;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
@@ -32,13 +32,13 @@ import static com.graphhopper.routing.profiles.Surface.*;
 
 public class OSMSurfaceParser implements TagParser {
 
-    private final ObjectEncodedValue surfaceEnc;
+    private final EnumEncodedValue<Surface> surfaceEnc;
 
     public OSMSurfaceParser() {
-        this(Surface.create());
+        this(new EnumEncodedValue<>(KEY, Surface.class));
     }
 
-    public OSMSurfaceParser(ObjectEncodedValue surfaceEnc) {
+    public OSMSurfaceParser(EnumEncodedValue<Surface> surfaceEnc) {
         this.surfaceEnc = surfaceEnc;
     }
 
@@ -59,7 +59,7 @@ public class OSMSurfaceParser implements TagParser {
         }
 
         if (surface != OTHER)
-            surfaceEnc.setObject(false, edgeFlags, surface);
+            surfaceEnc.setEnum(false, edgeFlags, surface);
         return edgeFlags;
     }
 }

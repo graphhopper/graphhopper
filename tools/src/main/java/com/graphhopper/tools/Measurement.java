@@ -191,6 +191,7 @@ public class Measurement {
             logger.error("Problem while measuring " + graphLocation, ex);
             put("error", ex.toString());
         } finally {
+            put("gh.gitinfo", Constants.GIT_INFO);
             put("measurement.count", count);
             put("measurement.seed", seed);
             put("measurement.time", sw.stop().getMillis());

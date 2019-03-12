@@ -172,16 +172,7 @@ public abstract class AbstractBikeFlagEncoderTester {
         way.setTag("bicycle", "dismount");
         assertTrue(encoder.getAccess(way).isWay());
 
-        way.clearTags();
-        way.setTag("route", "ferry");
-        assertTrue(encoder.getAccess(way).isFerry());
-        way.setTag("bicycle", "no");
-        assertTrue(encoder.getAccess(way).canSkip());
-
-        way.clearTags();
-        way.setTag("route", "ferry");
-        way.setTag("foot", "yes");
-        assertTrue(encoder.getAccess(way).canSkip());
+        
 
         way.clearTags();
         way.setTag("highway", "cycleway");
@@ -486,5 +477,56 @@ public abstract class AbstractBikeFlagEncoderTester {
         node.setTag("bicycle", "yes");
         // no barrier!
         assertTrue(encoder.handleNodeTags(node) == 0);
+    }
+
+    @Test
+    public void testFerries(){
+        ReaderWay way = new ReaderWay(1);
+
+        way.clearTags();
+        way.setTag("route", "ferry");
+        assertTrue(encoder.getAccess(way).isFerry());
+        way.setTag("bicycle", "no");
+        assertFalse(encoder.getAccess(way).isFerry());
+
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("foot", "yes");
+        assertFalse(encoder.getAccess(way).isFerry());
+
+        // #1122
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("bicycle", "yes");
+        way.setTag("access", "private");
+        assertTrue(encoder.getAccess(way).canSkip());
+
+        // #1562, test if ferry route with bicycle
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("bicycle", "designated");
+        assertTrue(encoder.getAccess(way).isFerry());
+
+        way.setTag("bicycle", "official");
+        assertTrue(encoder.getAccess(way).isFerry());
+
+        way.setTag("bicycle", "permissive");
+        assertTrue(encoder.getAccess(way).isFerry());
+
+        way.setTag("foot", "yes");
+        assertTrue(encoder.getAccess(way).isFerry());
+
+        way.setTag("bicycle", "no");
+        assertTrue(encoder.getAccess(way).canSkip());
+
+        way.setTag("bicycle", "designated");
+        way.setTag("access", "private");
+        assertTrue(encoder.getAccess(way).canSkip());
+
+        // test if when foot is set is invalid
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("foot", "yes");
+        assertTrue(encoder.getAccess(way).canSkip());
     }
 }

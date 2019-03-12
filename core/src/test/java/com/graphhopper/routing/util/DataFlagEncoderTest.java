@@ -32,10 +32,10 @@ public class DataFlagEncoderTest {
     private final PMap properties;
     private final DataFlagEncoder encoder;
     private final BooleanEncodedValue accessEnc;
-    private final ObjectEncodedValue roadAccessEnc;
-    private final ObjectEncodedValue roadEnvironmentEnc;
-    private final ObjectEncodedValue roadClassEnc;
-    private final ObjectEncodedValue surfaceEnc;
+    private final EnumEncodedValue<RoadAccess> roadAccessEnc;
+    private final EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc;
+    private final EnumEncodedValue<RoadClass> roadClassEnc;
+    private final EnumEncodedValue<Surface> surfaceEnc;
     private final DecimalEncodedValue carMaxSpeedEnc;
     private final EncodingManager encodingManager;
 
@@ -45,12 +45,16 @@ public class DataFlagEncoderTest {
         properties = new PMap();
         encoder = new DataFlagEncoder(properties);
         encodingManager = new EncodingManager.Builder(8).
-                add(new OSMRoadEnvironmentParser(roadEnvironmentEnc = RoadEnvironment.create())).
-                add(new OSMRoadClassParser(roadClassEnc = RoadClass.create())).
-                add(new OSMRoadAccessParser(roadAccessEnc = RoadAccess.create())).
-                add(new OSMSurfaceParser(surfaceEnc = Surface.create())).
+                add(new OSMRoadEnvironmentParser()).
+                add(new OSMRoadClassParser()).
+                add(new OSMRoadAccessParser()).
+                add(new OSMSurfaceParser()).
                 add(new OSMCarMaxSpeedParser(carMaxSpeedEnc = MaxSpeed.create())).
                 add(encoder).build();
+        roadEnvironmentEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+        roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+        surfaceEnc = encodingManager.getEnumEncodedValue(Surface.KEY, Surface.class);
         map = new EncodingManager.AcceptWay().put(encoder.toString(), EncodingManager.Access.WAY);
         accessEnc = encoder.getAccessEnc();
     }
@@ -168,10 +172,10 @@ public class DataFlagEncoderTest {
 
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, encodingManager.createEdgeFlags());
         DataFlagEncoder.WeightingConfig config = encoder.createWeightingConfig(map);
-        roadClassEnc.setObject(false, edge.getFlags(), RoadClass.MOTORWAY);
+        roadClassEnc.setEnum(false, edge.getFlags(), RoadClass.MOTORWAY);
         assertEquals(100, config.getSpeed(edge), 1);
 
-        roadClassEnc.setObject(false, edge.getFlags(), RoadClass.TRUNK);
+        roadClassEnc.setEnum(false, edge.getFlags(), RoadClass.TRUNK);
         assertEquals(90, config.getSpeed(edge), 1);
     }
 
@@ -181,17 +185,17 @@ public class DataFlagEncoderTest {
         way.setTag("highway", "secondary");
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay().put(encoder.toString(), encoder.getAccess(way));
         IntsRef intsref = encodingManager.handleWayTags(way, map, 0);
-        assertEquals(RoadAccess.YES, roadAccessEnc.getObject(false, intsref));
+        assertEquals(RoadAccess.YES, roadAccessEnc.getEnum(false, intsref));
 
         way.setTag("vehicle", "destination");
         map = new EncodingManager.AcceptWay().put(encoder.toString(), encoder.getAccess(way));
         intsref = encodingManager.handleWayTags(way, map, 0);
-        assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getObject(false, intsref));
+        assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, intsref));
 
         way.setTag("vehicle", "no");
         map = new EncodingManager.AcceptWay().put(encoder.toString(), encoder.getAccess(way));
         intsref = encodingManager.handleWayTags(way, map, 0);
-        assertEquals(RoadAccess.NO, roadAccessEnc.getObject(false, intsref));
+        assertEquals(RoadAccess.NO, roadAccessEnc.getEnum(false, intsref));
     }
 
     @Test
@@ -399,7 +403,7 @@ public class DataFlagEncoderTest {
         DataFlagEncoder tmpEncoder = new DataFlagEncoder(new PMap());
         EncodingManager em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(4).add(new SpatialRuleParser(index))).add(tmpEncoder).build();
         IntEncodedValue countrySpatialIdEnc = em.getIntEncodedValue(Country.KEY);
-        ObjectEncodedValue tmpRoadAccessEnc = em.getObjectEncodedValue(RoadAccess.KEY);
+        EnumEncodedValue<RoadAccess> tmpRoadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         DecimalEncodedValue tmpCarMaxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
 
         Graph graph = new GraphBuilder(em).create();

@@ -1,7 +1,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.ObjectEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
@@ -15,14 +15,14 @@ import static org.junit.Assert.assertEquals;
 public class OSMRoadClassParserTest {
 
     private EncodingManager em;
-    private ObjectEncodedValue rcEnc;
+    private EnumEncodedValue<RoadClass> rcEnc;
     private OSMRoadClassParser parser;
 
     @Before
     public void setUp() {
-        rcEnc = RoadClass.create();
-        em = new EncodingManager.Builder(4).add(rcEnc).build();
-        parser = new OSMRoadClassParser(rcEnc);
+        parser = new OSMRoadClassParser();
+        em = new EncodingManager.Builder(4).add(parser).build();
+        rcEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
     }
 
     @Test
@@ -31,17 +31,17 @@ public class OSMRoadClassParserTest {
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
         parser.handleWayTags(intsRef, readerWay, WAY, 0);
-        assertEquals(RoadClass.PRIMARY, rcEnc.getObject(false, intsRef));
+        assertEquals(RoadClass.PRIMARY, rcEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "unknownstuff");
         parser.handleWayTags(intsRef, readerWay, WAY, 0);
-        assertEquals(RoadClass.OTHER, rcEnc.getObject(false, intsRef));
+        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "motorway_link");
         parser.handleWayTags(intsRef, readerWay, WAY, 0);
-        assertEquals(RoadClass.MOTORWAY, rcEnc.getObject(false, intsRef));
+        assertEquals(RoadClass.MOTORWAY, rcEnc.getEnum(false, intsRef));
     }
 
     @Test
@@ -50,6 +50,6 @@ public class OSMRoadClassParserTest {
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("route", "ferry");
         parser.handleWayTags(intsRef, readerWay, FERRY, 0);
-        assertEquals(RoadClass.OTHER, rcEnc.getObject(false, intsRef));
+        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, intsRef));
     }
 }

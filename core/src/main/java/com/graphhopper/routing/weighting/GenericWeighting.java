@@ -49,7 +49,7 @@ public class GenericWeighting extends AbstractWeighting {
     protected final double width;
 
     private final DecimalEncodedValue carMaxSpeedEnc;
-    private final ObjectEncodedValue roadAccessEnc;
+    private final EnumEncodedValue<RoadAccess> roadAccessEnc;
     private DecimalEncodedValue maxWeightEnc;
     private DecimalEncodedValue maxHeightEnc;
     private DecimalEncodedValue maxWidthEnc;
@@ -69,7 +69,7 @@ public class GenericWeighting extends AbstractWeighting {
         height = hintsMap.getDouble(HEIGHT_LIMIT, 0d);
         weight = hintsMap.getDouble(WEIGHT_LIMIT, 0d);
         width = hintsMap.getDouble(WIDTH_LIMIT, 0d);
-        roadAccessEnc = encoder.getObjectEncodedValue(RoadAccess.KEY);
+        roadAccessEnc = encoder.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         carMaxSpeedEnc = encoder.getDecimalEncodedValue(MaxSpeed.KEY);
 
         if (encoder.hasEncodedValue(MaxWeight.KEY))
@@ -104,7 +104,7 @@ public class GenericWeighting extends AbstractWeighting {
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
 
-        IndexBased roadAccessEV = edgeState.get(roadAccessEnc);
+        RoadAccess roadAccessEV = edgeState.get(roadAccessEnc);
         if (roadAccessEV == RoadAccess.NO)
             return Double.POSITIVE_INFINITY;
         else if (roadAccessEV != RoadAccess.YES)

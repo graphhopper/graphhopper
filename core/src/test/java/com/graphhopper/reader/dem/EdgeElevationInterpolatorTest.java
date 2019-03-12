@@ -20,7 +20,7 @@ package com.graphhopper.reader.dem;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.ObjectEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -46,19 +46,18 @@ public abstract class EdgeElevationInterpolatorTest {
     protected ReaderWay normalWay;
 
     protected GraphHopperStorage graph;
-    protected ObjectEncodedValue roadEnvEnc;
+    protected EnumEncodedValue<RoadEnvironment> roadEnvEnc;
     protected EncodingManager encodingManager;
     protected EdgeElevationInterpolator edgeElevationInterpolator;
 
     @SuppressWarnings("resource")
     @Before
     public void setUp() {
-        roadEnvEnc = RoadEnvironment.create();
         graph = new GraphHopperStorage(new RAMDirectory(),
                 encodingManager = new EncodingManager.Builder(8).add(new CarFlagEncoder()).add(new FootFlagEncoder()).
-                        add(new OSMRoadEnvironmentParser(roadEnvEnc)).build(),
+                        add(new OSMRoadEnvironmentParser()).build(),
                 true, new GraphExtension.NoOpExtension()).create(100);
-
+        roadEnvEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         edgeElevationInterpolator = createEdgeElevationInterpolator();
 
         interpolatableWay = createInterpolatableWay();

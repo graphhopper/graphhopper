@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.ObjectEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
@@ -30,24 +30,19 @@ import com.graphhopper.storage.IntsRef;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.profiles.RoadAccess.OTHER;
 import static com.graphhopper.routing.profiles.RoadAccess.YES;
 
 
 public class OSMRoadAccessParser implements TagParser {
-    private final ObjectEncodedValue roadAccessEnc;
+    private final EnumEncodedValue<RoadAccess> roadAccessEnc;
     private final List<String> restrictions;
 
     public OSMRoadAccessParser() {
-        this(RoadAccess.create());
+        this(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
     }
 
-    public OSMRoadAccessParser(ObjectEncodedValue roadAccessEnc) {
-        this(roadAccessEnc, Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
-    }
-
-    public OSMRoadAccessParser(ObjectEncodedValue roadAccessEnc, List<String> restrictions) {
-        this.roadAccessEnc = roadAccessEnc;
+    public OSMRoadAccessParser(List<String> restrictions) {
+        this.roadAccessEnc = new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
         this.restrictions = restrictions;
     }
 
@@ -73,7 +68,7 @@ public class OSMRoadAccessParser implements TagParser {
                 accessValue = spatialRule.getAccess(readerWay.getTag("highway", ""), TransportationMode.MOTOR_VEHICLE, YES);
         }
 
-        roadAccessEnc.setObject(false, edgeFlags, accessValue);
+        roadAccessEnc.setEnum(false, edgeFlags, accessValue);
         return edgeFlags;
     }
 }

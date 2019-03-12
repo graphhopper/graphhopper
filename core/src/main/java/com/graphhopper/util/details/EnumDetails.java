@@ -17,16 +17,15 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.routing.profiles.IndexBased;
-import com.graphhopper.routing.profiles.ObjectEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
-public class ObjectDetails extends AbstractPathDetailsBuilder {
+public class EnumDetails<E extends Enum> extends AbstractPathDetailsBuilder {
 
-    private final ObjectEncodedValue ev;
-    private IndexBased objVal = null;
+    private final EnumEncodedValue<E> ev;
+    private Enum objVal = null;
 
-    public ObjectDetails(String name, ObjectEncodedValue ev) {
+    public EnumDetails(String name, EnumEncodedValue<E> ev) {
         super(name);
         this.ev = ev;
     }
@@ -38,7 +37,7 @@ public class ObjectDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        IndexBased val = edge.get(ev);
+        E val = edge.get(ev);
         // we can use the reference equality here
         if (val != objVal) {
             this.objVal = val;

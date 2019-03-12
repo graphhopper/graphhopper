@@ -316,13 +316,6 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("bicycle", "yes");
         way.setTag("access", "no");
         assertTrue(encoder.getAccess(way).isWay());
-
-        // #1122
-        way.clearTags();
-        way.setTag("route", "ferry");
-        way.setTag("bicycle", "yes");
-        way.setTag("access", "private");
-        assertTrue(encoder.getAccess(way).canSkip());
     }
 
     @Test

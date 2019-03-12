@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.ObjectEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
@@ -31,14 +31,10 @@ import static com.graphhopper.routing.profiles.RoadClass.OTHER;
 
 public class OSMRoadClassParser implements TagParser {
 
-    private final ObjectEncodedValue roadClassEnc;
+    private final EnumEncodedValue<RoadClass> roadClassEnc;
 
     public OSMRoadClassParser() {
-        this(RoadClass.create());
-    }
-
-    public OSMRoadClassParser(ObjectEncodedValue roadClassEnc) {
-        this.roadClassEnc = roadClassEnc;
+        this.roadClassEnc = new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
     }
 
     @Override
@@ -57,7 +53,7 @@ public class OSMRoadClassParser implements TagParser {
             roadClass = RoadClass.find(roadClassTag.substring(0, roadClassTag.length() - 5));
 
         if (roadClass != OTHER)
-            roadClassEnc.setObject(false, edgeFlags, roadClass);
+            roadClassEnc.setEnum(false, edgeFlags, roadClass);
         return edgeFlags;
     }
 }

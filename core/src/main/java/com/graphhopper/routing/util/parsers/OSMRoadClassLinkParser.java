@@ -18,10 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.RoadClassLink;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
@@ -32,11 +29,7 @@ public class OSMRoadClassLinkParser implements TagParser {
     private final BooleanEncodedValue linkEnc;
 
     public OSMRoadClassLinkParser() {
-        this(RoadClassLink.create());
-    }
-
-    public OSMRoadClassLinkParser(BooleanEncodedValue linkEnc) {
-        this.linkEnc = linkEnc;
+        this.linkEnc = new SimpleBooleanEncodedValue(RoadClassLink.KEY);
     }
 
     @Override

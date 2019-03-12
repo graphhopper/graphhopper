@@ -67,7 +67,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
     };
 
-    private ObjectEncodedValue roadEnvironmentEnc;
+    private EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc;
 
     public DataFlagEncoder() {
         this(5, 5, 0);
@@ -102,7 +102,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
         // workaround to init AbstractWeighting.avSpeedEnc variable that GenericWeighting does not need
         speedEncoder = new FactorizedDecimalEncodedValue("fake", 1, 1, false);
-        roadEnvironmentEnc = getObjectEncodedValue(RoadEnvironment.KEY);
+        roadEnvironmentEnc = getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
     }
 
     protected void flagsDefault(IntsRef edgeFlags, boolean forward, boolean backward) {
@@ -219,7 +219,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public InstructionAnnotation getAnnotation(IntsRef flags, Translation tr) {
-        if (roadEnvironmentEnc.getObject(false, flags) == RoadEnvironment.FORD) {
+        if (roadEnvironmentEnc.getEnum(false, flags) == RoadEnvironment.FORD) {
             return new InstructionAnnotation(1, tr.tr("way_contains_ford"));
         }
 
@@ -251,20 +251,20 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
 
         // use defaults per road class in the map for average speed estimate
-        return new WeightingConfig(getObjectEncodedValue(RoadClass.KEY), speedArray);
+        return new WeightingConfig(getEnumEncodedValue(RoadClass.KEY, RoadClass.class), speedArray);
     }
 
     public static class WeightingConfig {
         private final double[] speedArray;
-        private final ObjectEncodedValue roadClassEnc;
+        private final EnumEncodedValue<RoadClass> roadClassEnc;
 
-        public WeightingConfig(ObjectEncodedValue roadClassEnc, double[] speedArray) {
+        public WeightingConfig(EnumEncodedValue<RoadClass> roadClassEnc, double[] speedArray) {
             this.roadClassEnc = roadClassEnc;
             this.speedArray = speedArray;
         }
 
         public double getSpeed(EdgeIteratorState edgeState) {
-            RoadClass rc = (RoadClass) edgeState.get(roadClassEnc);
+            RoadClass rc = edgeState.get(roadClassEnc);
             if (rc.ordinal() >= speedArray.length)
                 throw new IllegalStateException("RoadClass not found in speed map " + rc);
 

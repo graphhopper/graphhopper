@@ -33,13 +33,13 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
         if (Roundabout.KEY.equals(name)) {
             enc = Roundabout.create();
         } else if (RoadClassLink.KEY.equals(name)) {
-            enc = RoadClassLink.create();
+            enc = new SimpleBooleanEncodedValue(RoadClassLink.KEY);
         } else if (RoadClass.KEY.equals(name)) {
-            enc = RoadClass.create();
+            enc = new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
         } else if (RoadEnvironment.KEY.equals(name)) {
-            enc = RoadEnvironment.create();
+            enc = new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class);
         } else if (RoadAccess.KEY.equals(name)) {
-            enc = RoadAccess.create();
+            enc = new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
         } else if (MaxSpeed.KEY.equals(name)) {
             enc = MaxSpeed.create();
         } else if (MaxWeight.KEY.equals(name)) {
@@ -49,7 +49,7 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
         } else if (MaxWidth.KEY.equals(name)) {
             enc = MaxWidth.create();
         } else if (Surface.KEY.equals(name)) {
-            enc = Surface.create();
+            enc = new EnumEncodedValue<>(Surface.KEY, Surface.class);
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
         }

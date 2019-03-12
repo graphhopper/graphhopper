@@ -17,24 +17,18 @@
  */
 package com.graphhopper.routing.profiles;
 
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-
-import java.util.LinkedHashMap;
-
-public class Country extends DefaultIndexBased {
+public enum Country {
+    DEU("deu"), AUT("aut");
     public static final String KEY = "country";
 
-    public Country(String name, int ordinal) {
-        super(name, ordinal);
+    private final String name;
+
+    Country(String name) {
+        this.name = name;
     }
 
-    public static LinkedHashMap<String, Country> create(SpatialRuleLookup lookup) {
-        LinkedHashMap<String, Country> values = new LinkedHashMap<>();
-        int size = lookup.size();
-        for (int counter = 0; counter < size; counter++) {
-            String ruleId = lookup.getSpatialRule(counter).getId();
-            values.put(ruleId, new Country(ruleId, counter));
-        }
-        return values;
+    @Override
+    public String toString() {
+        return name;
     }
 }

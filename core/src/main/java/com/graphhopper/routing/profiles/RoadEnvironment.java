@@ -17,36 +17,35 @@
  */
 package com.graphhopper.routing.profiles;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import com.graphhopper.util.Helper;
 
 /**
  * This class defines a IndexBased road environment (ferry, tunnel, ford, ...) but is type safe.
  */
-public class RoadEnvironment extends DefaultIndexBased {
-    public static final String KEY = "road_environment";
-    private static final LinkedHashMap<String, RoadEnvironment> map = create("other", "road", "ferry", "tunnel", "bridge", "ford", "shuttle_train");
-    public static final RoadEnvironment OTHER = map.get("other"), ROAD = map.get("road"), FERRY = map.get("ferry"),
-            TUNNEL = map.get("tunnel"), BRIDGE = map.get("bridge"), FORD = map.get("ford"), SHUTTLE_TRAIN = map.get("shuttle_train");
+public enum RoadEnvironment {
+    OTHER("other"), ROAD("road"), FERRY("ferry"),
+    TUNNEL("tunnel"), BRIDGE("bridge"), FORD("ford"), SHUTTLE_TRAIN("shuttle_train");
 
-    public RoadEnvironment(String name, int ordinal) {
-        super(name, ordinal);
+    public static final String KEY = "road_environment";
+
+    private final String name;
+
+    RoadEnvironment(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 
     public static RoadEnvironment find(String name) {
-        RoadEnvironment re = map.get(name);
-        return re == null ? OTHER : re;
-    }
-
-    public static ObjectEncodedValue create() {
-        return new MappedObjectEncodedValue(KEY, new ArrayList<>(map.values()));
-    }
-
-    public static LinkedHashMap<String, RoadEnvironment> create(String... list) {
-        LinkedHashMap<String, RoadEnvironment> values = new LinkedHashMap<>();
-        for (int counter = 0; counter < list.length; counter++) {
-            values.put(list[counter], new RoadEnvironment(list[counter], counter));
+        if (name == null)
+            return OTHER;
+        try {
+            return RoadEnvironment.valueOf(Helper.toUpperCase(name));
+        } catch (IllegalArgumentException ex) {
+            return OTHER;
         }
-        return values;
     }
 }

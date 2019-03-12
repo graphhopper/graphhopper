@@ -17,38 +17,35 @@
  */
 package com.graphhopper.routing.profiles;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import com.graphhopper.util.Helper;
 
-public class RoadAccess extends DefaultIndexBased {
-    public static final String KEY = "road_access";
+public enum RoadAccess {
     // order is important here as we assume "smaller index" means "broader access"
-    private static final LinkedHashMap<String, RoadAccess> map = create("other", "yes", "destination",
-            "customers", "delivery", "forestry", "agricultural", "private", "no");
+    OTHER("other"), YES("yes"),
+    DESTINATION("destination"), CUSTOMERS("customers"), DELIVERY("delivery"),
+    FORESTRY("forestry"), AGRICULTURAL("agricultural"),
+    PRIVATE("private"), NO("no");
 
-    public static final RoadAccess OTHER = map.get("other"), YES = map.get("yes"),
-            DESTINATION = map.get("destination"), CUSTOMERS = map.get("customers"), DELIVERY = map.get("delivery"),
-            FORESTRY = map.get("forestry"), AGRICULTURAL = map.get("agricultural"),
-            PRIVATE = map.get("private"), NO = map.get("no");
+    public static final String KEY = "road_access";
 
-    private RoadAccess(String name, int ordinal) {
-        super(name, ordinal);
+    private final String name;
+
+    RoadAccess(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 
     public static RoadAccess find(String name) {
-        RoadAccess ra = map.get(name);
-        return ra == null ? OTHER : ra;
-    }
-
-    public static ObjectEncodedValue create() {
-        return new MappedObjectEncodedValue(KEY, new ArrayList<>(map.values()));
-    }
-
-    public static LinkedHashMap<String, RoadAccess> create(String... list) {
-        LinkedHashMap<String, RoadAccess> values = new LinkedHashMap<>();
-        for (int counter = 0; counter < list.length; counter++) {
-            values.put(list[counter], new RoadAccess(list[counter], counter));
+        if (name == null)
+            return OTHER;
+        try {
+            return RoadAccess.valueOf(Helper.toUpperCase(name));
+        } catch (IllegalArgumentException ex) {
+            return OTHER;
         }
-        return values;
     }
 }

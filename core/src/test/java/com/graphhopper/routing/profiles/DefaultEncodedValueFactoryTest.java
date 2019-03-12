@@ -10,8 +10,8 @@ public class DefaultEncodedValueFactoryTest {
 
     @Test
     public void loadRoadClass() {
-        EncodedValue rcEnc = RoadClass.create();
-        ObjectEncodedValue loadedRCEnc = (ObjectEncodedValue) factory.create(rcEnc.toString());
+        EncodedValue rcEnc = new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
+        EncodedValue loadedRCEnc = factory.create(rcEnc.toString());
         assertEquals(loadedRCEnc, rcEnc);
     }
 

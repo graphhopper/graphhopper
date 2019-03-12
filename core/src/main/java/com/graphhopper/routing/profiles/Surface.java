@@ -17,40 +17,38 @@
  */
 package com.graphhopper.routing.profiles;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import com.graphhopper.util.Helper;
 
 /**
  * This class defines a IndexBased but is type safe.
  */
-public class Surface extends DefaultIndexBased {
-    public static final String KEY = "surface";
-    private static final LinkedHashMap<String, Surface> map = create("other", "cobblestone", "asphalt", "paved", "unpaved",
-            "ground", "gravel", "concrete", "paving_stone", "dirt", "parking", "grass", "sand");
-    public static final Surface OTHER = map.get("other"), COBBLESTONE = map.get("cobblestone"),
-            ASPHALT = map.get("asphalt"), PAVED = map.get("paved"), UNPAVED = map.get("unpaved"),
-            GROUND = map.get("ground"), GRAVEL = map.get("gravel"), CONCRETE = map.get("concrete"),
-            PAVING_STONE = map.get("paving_stone"), DIRT = map.get("dirt"),
-            PARKING = map.get("parking"), GRASS = map.get("grass"), SAND = map.get("sand");
+public enum Surface {
+    OTHER("other"), COBBLESTONE("cobblestone"),
+    ASPHALT("asphalt"), PAVED("paved"), UNPAVED("unpaved"),
+    GROUND("ground"), GRAVEL("gravel"), CONCRETE("concrete"),
+    PAVING_STONE("paving_stone"), DIRT("dirt"),
+    PARKING("parking"), GRASS("grass"), SAND("sand");
 
-    public Surface(String name, int ordinal) {
-        super(name, ordinal);
+    public static final String KEY = "surface";
+
+    private final String name;
+
+    Surface(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 
     public static Surface find(String name) {
-        Surface s = map.get(name);
-        return s == null ? OTHER : s;
-    }
-
-    public static ObjectEncodedValue create() {
-        return new MappedObjectEncodedValue(KEY, new ArrayList<>(map.values()));
-    }
-
-    public static LinkedHashMap<String, Surface> create(String... list) {
-        LinkedHashMap<String, Surface> values = new LinkedHashMap<>();
-        for (int counter = 0; counter < list.length; counter++) {
-            values.put(list[counter], new Surface(list[counter], counter));
+        if (name == null)
+            return OTHER;
+        try {
+            return Surface.valueOf(Helper.toUpperCase(name));
+        } catch (IllegalArgumentException ex) {
+            return OTHER;
         }
-        return values;
     }
 }
