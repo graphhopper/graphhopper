@@ -23,21 +23,20 @@ import com.graphhopper.storage.IntsRef;
  * This class implements an ObjectEncodedValue via a list of enums. I.e. it stores just the indices
  * of the used objects as an integer value.
  */
-public final class EnumEncodedValue<T extends Enum> extends SimpleIntEncodedValue {
-    private final T[] arr;
+public final class EnumEncodedValue<E extends Enum> extends SimpleIntEncodedValue {
+    private final E[] arr;
 
-    public EnumEncodedValue(String name, T[] values) {
-        super(name, 32 - Integer.numberOfLeadingZeros(values.length));
-
-        arr = values;
+    public EnumEncodedValue(String name, Class<E> enumType) {
+        super(name, 32 - Integer.numberOfLeadingZeros(enumType.getEnumConstants().length));
+        arr = enumType.getEnumConstants();
     }
 
-    public final void setObject(boolean reverse, IntsRef ref, T value) {
+    public final void setEnum(boolean reverse, IntsRef ref, E value) {
         int intValue = value.ordinal();
         super.setInt(reverse, ref, intValue);
     }
 
-    public final T getObject(boolean reverse, IntsRef ref) {
+    public final E getEnum(boolean reverse, IntsRef ref) {
         int value = super.getInt(reverse, ref);
         return arr[value];
     }

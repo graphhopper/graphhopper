@@ -9,7 +9,7 @@ public class EnumEncodedValueTest {
 
     @Test
     public void testInit() {
-        EnumEncodedValue prop = new EnumEncodedValue("road_class", RoadClass.values());
+        EnumEncodedValue<RoadClass> prop = new EnumEncodedValue<>("road_class", RoadClass.class);
         EncodedValue.InitializerConfig init = new EncodedValue.InitializerConfig();
         assertEquals(5, prop.init(init));
         assertEquals(5, prop.bits);
@@ -18,9 +18,9 @@ public class EnumEncodedValueTest {
         IntsRef ref = new IntsRef(1);
         // default if empty
         ref.ints[0] = 0;
-        assertEquals(RoadClass.OTHER, prop.getObject(false, ref));
+        assertEquals(RoadClass.OTHER, prop.getEnum(false, ref));
 
-        prop.setObject(false, ref, RoadClass.SECONDARY);
-        assertEquals(RoadClass.SECONDARY, prop.getObject(false, ref));
+        prop.setEnum(false, ref, RoadClass.SECONDARY);
+        assertEquals(RoadClass.SECONDARY, prop.getEnum(false, ref));
     }
 }
