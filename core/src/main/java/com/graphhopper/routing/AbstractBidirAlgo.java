@@ -37,6 +37,8 @@ import java.util.PriorityQueue;
  * @author Peter Karich
  */
 public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
+    protected int from;
+    protected int to;
     protected IntObjectMap<SPTEntry> bestWeightMapFrom;
     protected IntObjectMap<SPTEntry> bestWeightMapTo;
     protected IntObjectMap<SPTEntry> bestWeightMapOther;
@@ -105,6 +107,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     }
 
     protected void initFrom(int from, double weight) {
+        this.from = from;
         currFrom = createStartEntry(from, weight, false);
         pqOpenSetFrom.add(currFrom);
         if (!traversalMode.isEdgeBased()) {
@@ -113,6 +116,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     }
 
     protected void initTo(int to, double weight) {
+        this.to = to;
         currTo = createStartEntry(to, weight, true);
         pqOpenSetTo.add(currTo);
         if (!traversalMode.isEdgeBased()) {
@@ -136,7 +140,16 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
             bestPath.setWeight(0);
             finishedFrom = true;
             finishedTo = true;
+            return;
         }
+        postInitFrom();
+        postInitTo();
+    }
+
+    protected void postInitFrom() {
+    }
+
+    protected void postInitTo() {
     }
 
     protected void runAlgo() {
@@ -232,7 +245,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         // update μ
         double weight = entry.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath();
         if (traversalMode.isEdgeBased()) {
-            if (entryOther.edge != entry.edge)
+            if (getIncomingEdge(entryOther) != getIncomingEdge(entry))
                 throw new IllegalStateException("cannot happen for edge based execution of " + getName());
 
             if (entryOther.adjNode != entry.adjNode) {
@@ -259,11 +272,15 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     }
 
     protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        return accept(edge, currEdge.edge);
+        return accept(edge, getIncomingEdge(currEdge));
     }
 
     protected int getOrigEdgeId(EdgeIteratorState edge, boolean reverse) {
         return edge.getEdge();
+    }
+
+    protected int getIncomingEdge(SPTEntry entry) {
+        return entry.edge;
     }
 
     protected int getTraversalId(EdgeIteratorState edge, int origEdgeId, boolean reverse) {
@@ -271,7 +288,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     }
 
     protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
-        return weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
+        return weighting.calcWeight(iter, reverse, getIncomingEdge(currEdge)) + currEdge.getWeightOfVisitedPath();
     }
 
     @Override
@@ -332,6 +349,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     }
 
     void setFromDataStructures(AbstractBidirAlgo other) {
+        from = other.from;
         pqOpenSetFrom = other.pqOpenSetFrom;
         bestWeightMapFrom = other.bestWeightMapFrom;
         finishedFrom = other.finishedFrom;
@@ -341,6 +359,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     }
 
     void setToDataStructures(AbstractBidirAlgo other) {
+        to = other.to;
         pqOpenSetTo = other.pqOpenSetTo;
         bestWeightMapTo = other.bestWeightMapTo;
         finishedTo = other.finishedTo;
