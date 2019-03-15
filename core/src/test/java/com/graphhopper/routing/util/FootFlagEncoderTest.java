@@ -190,6 +190,28 @@ public class FootFlagEncoderTest {
         way.setTag("foot", "no");
         assertTrue(footEncoder.getAccess(way).canSkip());
 
+        // #1562, test if ferry route with foot
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("foot", "yes");
+        assertTrue(footEncoder.getAccess(way).isFerry());
+
+        way.setTag("foot", "designated");
+        assertTrue(footEncoder.getAccess(way).isFerry());
+
+        way.setTag("foot", "official");
+        assertTrue(footEncoder.getAccess(way).isFerry());
+
+        way.setTag("foot", "permissive");
+        assertTrue(footEncoder.getAccess(way).isFerry());
+
+        way.setTag("foot", "no");
+        assertTrue(footEncoder.getAccess(way).canSkip());
+
+        way.setTag("foot", "designated");
+        way.setTag("access", "private");
+        assertTrue(footEncoder.getAccess(way).canSkip());
+
         DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
 
         way.clearTags();

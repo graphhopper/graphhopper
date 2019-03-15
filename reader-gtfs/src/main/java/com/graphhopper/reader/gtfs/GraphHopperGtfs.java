@@ -247,7 +247,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                             discoveredSolutions.add(combinedSolution);
                             originalSolutions.put(combinedSolution, label);
                             if (profileQuery) {
-                                highestWeightForDominationTest = router.weight(discoveredSolutions.get(discoveredSolutions.size()-1));
+                                highestWeightForDominationTest = router.weight(discoveredSolutions.get(discoveredSolutions.size() - 1));
                             } else {
                                 highestWeightForDominationTest = discoveredSolutions.stream().filter(s -> !s.impossible && (ignoreTransfers || s.nTransfers <= 1)).mapToLong(router::weight).min().orElse(Long.MAX_VALUE);
                             }
@@ -285,7 +285,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             visitedNodes += router.getVisitedNodes();
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
             if (discoveredSolutions.isEmpty() && router.getVisitedNodes() >= maxVisitedNodesForRequest) {
-                throw new IllegalArgumentException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest);
+                response.addError(new IllegalArgumentException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest));
             }
             response.getHints().put("visited_nodes.sum", visitedNodes);
             response.getHints().put("visited_nodes.average", visitedNodes);

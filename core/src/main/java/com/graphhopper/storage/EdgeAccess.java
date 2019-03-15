@@ -28,7 +28,7 @@ abstract class EdgeAccess {
     private static final int NO_NODE = -1;
     // distance of around +-1000 000 meter are ok
     private static final double INT_DIST_FACTOR = 1000d;
-    static double MAX_DIST = (Integer.MAX_VALUE - 1) / INT_DIST_FACTOR;
+    static double MAX_DIST = Integer.MAX_VALUE / INT_DIST_FACTOR;
     final DataAccess edges;
     int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS;
 
@@ -73,12 +73,13 @@ abstract class EdgeAccess {
      * Translates double distance to integer in order to save it in a DataAccess object
      */
     private int distToInt(double distance) {
-        int integ = (int) (distance * INT_DIST_FACTOR);
-        if (integ < 0)
+        if (distance < 0)
             throw new IllegalArgumentException("Distance cannot be negative: " + distance);
-        if (integ >= Integer.MAX_VALUE)
-            return Integer.MAX_VALUE;
-        // throw new IllegalArgumentException("Distance too large leading to overflowed integer (#435): " + distance + " ");
+        if (distance > MAX_DIST) {
+            distance = MAX_DIST;
+        }
+        int integ = (int) Math.round(distance * INT_DIST_FACTOR);
+        assert integ >= 0 : "distance out of range";
         return integ;
     }
 

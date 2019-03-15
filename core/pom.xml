@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-core</artifactId>
     <name>GraphHopper Core</name>
-    <version>0.12-SNAPSHOT</version>
+    <version>0.13-SNAPSHOT</version>
     <packaging>jar</packaging>
     <description>
         GraphHopper is a fast and memory efficient Java road routing engine
@@ -15,7 +15,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>0.12-SNAPSHOT</version>
+        <version>0.13-SNAPSHOT</version>
     </parent>
 
     <properties>
