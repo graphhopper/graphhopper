@@ -160,7 +160,6 @@ logging:
     archivedLogFilenamePattern: ./logs/graphhopper-%d.log.gz
     archivedFileCount: 30
     neverBlock: true
-    immediateFlush: false
   - type: console
     timeZone: UTC
     logFormat: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
