@@ -4,14 +4,14 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
-import com.graphhopper.isochrone.algorithm.Isochrone;
-import com.graphhopper.routing.QueryGraph;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import com.wdtinc.mapbox_vector_tile.VectorTile;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.IGeometryFilter;
@@ -35,7 +35,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -84,64 +84,34 @@ public class IsochroneResource {
         if (!encodingManager.hasEncoder(vehicle))
             throw new IllegalArgumentException("vehicle not supported:" + vehicle);
 
-        FlagEncoder encoder = encodingManager.getEncoder(vehicle);
-        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
-        LocationIndex locationIndex = graphHopper.getLocationIndex();
-        QueryResult qr = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
-        if (!qr.isValid())
-            throw new IllegalArgumentException("Point not found:" + point);
-
-        Graph graph = graphHopper.getGraphHopperStorage();
-        QueryGraph queryGraph = new QueryGraph(graph);
-        queryGraph.lookup(Collections.singletonList(qr));
-
-        HintsMap hintsMap = new HintsMap();
-        RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
-
-        Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, graph);
-        Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
-
-        if (distanceInMeter > 0) {
-            isochrone.setDistanceLimit(distanceInMeter);
-        } else {
-            isochrone.setTimeLimit(timeLimitInSeconds);
-        }
-
-        /*
-        List<List<Coordinate>> buckets = isochrone.searchGPS(qr.getClosestNode(), nBuckets);
-        if (isochrone.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
-            throw new IllegalArgumentException("Server side reset: too many junction nodes would have to explored (" + isochrone.getVisitedNodes() + "). Let us know if you need this increased.");
-        }
-
-        int counter = 0;
-        for (List<Coordinate> bucket : buckets) {
-            if (bucket.size() < 2) {
-                throw new IllegalArgumentException("Too few points found for bucket " + counter + ". "
-                        + "Please try a different 'point', a smaller 'buckets' count or a larger 'time_limit'. "
-                        + "And let us know if you think this is a bug!");
-            }
-            counter++;
-        }
-        */
-
         Coordinate nw = num2deg(xInfo, yInfo, zInfo);
         Coordinate se = num2deg(xInfo + 1, yInfo + 1, zInfo);
 
-        if ("mvt".equalsIgnoreCase(resultStr) && zInfo >= 10 && (nw.y < 49 && nw.y > 48.3) && (nw.x > 10.5 && nw.x < 11.5)) {
+        if ("mvt".equalsIgnoreCase(resultStr) && zInfo > 10 && (nw.y < 49 && nw.y > 48.3) && (nw.x > 10.5 && nw.x < 11.5)) {
+            LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
+            final NodeAccess na = graphHopper.getGraphHopperStorage().getNodeAccess();
+            final List<Double[]> edgeList = new ArrayList<>(100);
+            EdgeExplorer edgeExplorer = graphHopper.getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.ALL_EDGES);
+            BBox bbox = new BBox(nw.x, se.x, se.y, nw.y);
+            if (!bbox.isValid())
+                throw new IllegalStateException("Invalid bbox " + bbox);
 
-            qr = locationIndex.findClosest((nw.y + se.y) / 2, (nw.x + se.x) / 2, edgeFilter);
-            if (!qr.isValid())
-                throw new IllegalArgumentException("Point not found:" + point);
-            queryGraph = new QueryGraph(graph);
-            queryGraph.lookup(Collections.singletonList(qr));
-            hintsMap = new HintsMap();
-            RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
-            weighting = graphHopper.createWeighting(hintsMap, encoder, graph);
-            isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
-            isochrone.setTimeLimit(1200);
-            List<Number[]> edgeList = isochrone.searchEdges(qr.getClosestNode());
+            locationIndex.query(bbox, new LocationIndexTree.EdgeVisitor(edgeExplorer) {
+                @Override
+                public void onEdge(int edgeId, int nodeA, int nodeB) {
+                    double lat = na.getLatitude(nodeA);
+                    double lon = na.getLongitude(nodeA);
+                    double toLat = na.getLatitude(nodeB);
+                    double toLon = na.getLongitude(nodeB);
+                    edgeList.add(new Double[]{lon, lat, toLon, toLat});
+                }
+
+                @Override
+                public void onCellBBox(BBox bbox, int width) {
+                }
+            });
+
             IGeometryFilter acceptAllGeomFilter = geometry -> true;
-
             Envelope tileEnvelope = new Envelope(se, nw);
 
             MvtLayerParams layerParams = new MvtLayerParams(256, 4096);
@@ -149,10 +119,9 @@ public class IsochroneResource {
 
             LineString[] edgeListGeometry = new LineString[edgeList.size()];
             for (int edgeCounter = 0; edgeCounter < edgeList.size(); edgeCounter++) {
-                Number[] edge = edgeList.get(edgeCounter);
+                Double[] edge = edgeList.get(edgeCounter);
                 edgeListGeometry[edgeCounter] = geometryFactory.createLineString(
-                        new Coordinate[]{new Coordinate(edge[0].doubleValue(), edge[1].doubleValue()),
-                                new Coordinate(edge[2].doubleValue(), edge[3].doubleValue())});
+                        new Coordinate[]{new Coordinate(edge[0], edge[1]), new Coordinate(edge[2], edge[3])});
             }
 
             logger.info("start encoding: " + resultStr + ", edges:" + 1);

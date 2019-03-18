@@ -148,7 +148,7 @@ public class GraphHopperOSMTest {
     @Test
     public void testQueryLocationIndexWithBBox() {
         GraphHopper gh = new GraphHopperOSM().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("car")).
+                setEncodingManager(EncodingManager.create("car")).
                 setCHEnabled(false).
                 setGraphHopperLocation("./target/monacotmp-gh").
                 setDataReaderFile("../core/files/monaco.osm.gz");
