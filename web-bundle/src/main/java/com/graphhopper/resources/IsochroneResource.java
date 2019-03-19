@@ -6,10 +6,11 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -21,10 +22,7 @@ import com.wdtinc.mapbox_vector_tile.adapt.jts.UserDataKeyValueMapConverter;
 import com.wdtinc.mapbox_vector_tile.build.MvtLayerBuild;
 import com.wdtinc.mapbox_vector_tile.build.MvtLayerParams;
 import com.wdtinc.mapbox_vector_tile.build.MvtLayerProps;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,31 +77,42 @@ public class IsochroneResource {
         if (point == null)
             throw new IllegalArgumentException("point parameter cannot be null");
 
-        StopWatch sw = new StopWatch().start();
+        StopWatch totalSW = new StopWatch().start();
 
         if (!encodingManager.hasEncoder(vehicle))
             throw new IllegalArgumentException("vehicle not supported:" + vehicle);
 
+
         Coordinate nw = num2deg(xInfo, yInfo, zInfo);
         Coordinate se = num2deg(xInfo + 1, yInfo + 1, zInfo);
 
-        if ("mvt".equalsIgnoreCase(resultStr) && zInfo > 10 && (nw.y < 49 && nw.y > 48.3) && (nw.x > 10.5 && nw.x < 11.5)) {
+        if ("mvt".equalsIgnoreCase(resultStr) && zInfo > 9) {
+            StopWatch ghSW = new StopWatch().start();
             LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
             final NodeAccess na = graphHopper.getGraphHopperStorage().getNodeAccess();
-            final List<Double[]> edgeList = new ArrayList<>(100);
+            final List<LineString> lineStringList = new ArrayList<>(1000);
             EdgeExplorer edgeExplorer = graphHopper.getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.ALL_EDGES);
             BBox bbox = new BBox(nw.x, se.x, se.y, nw.y);
             if (!bbox.isValid())
                 throw new IllegalStateException("Invalid bbox " + bbox);
 
+            final GeometryFactory geometryFactory = new GeometryFactory();
+            VectorTile.Tile.Builder mvtBuilder = VectorTile.Tile.newBuilder();
             locationIndex.query(bbox, new LocationIndexTree.EdgeVisitor(edgeExplorer) {
                 @Override
-                public void onEdge(int edgeId, int nodeA, int nodeB) {
-                    double lat = na.getLatitude(nodeA);
-                    double lon = na.getLongitude(nodeA);
-                    double toLat = na.getLatitude(nodeB);
-                    double toLon = na.getLongitude(nodeB);
-                    edgeList.add(new Double[]{lon, lat, toLon, toLat});
+                public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
+
+                    if (zInfo > 12) {
+                        PointList pl = edge.fetchWayGeometry(3);
+                        lineStringList.add(pl.toLineString(false));
+                    } else if (edge.getDistance() > 150 || zInfo == 11 && edge.getDistance() > 50 || zInfo > 11) {
+                        double lat = na.getLatitude(nodeA);
+                        double lon = na.getLongitude(nodeA);
+                        double toLat = na.getLatitude(nodeB);
+                        double toLon = na.getLongitude(nodeB);
+                        lineStringList.add(geometryFactory.createLineString(
+                                new Coordinate[]{new Coordinate(lon, lat), new Coordinate(toLon, toLat)}));
+                    }
                 }
 
                 @Override
@@ -111,38 +120,25 @@ public class IsochroneResource {
                 }
             });
 
+            Geometry multiLineString = geometryFactory.createMultiLineString(lineStringList.toArray(new LineString[0]));
+            ghSW.stop();
+            StopWatch mvtSW = new StopWatch().start();
             IGeometryFilter acceptAllGeomFilter = geometry -> true;
             Envelope tileEnvelope = new Envelope(se, nw);
-
             MvtLayerParams layerParams = new MvtLayerParams(256, 4096);
-            GeometryFactory geometryFactory = new GeometryFactory();
 
-            LineString[] edgeListGeometry = new LineString[edgeList.size()];
-            for (int edgeCounter = 0; edgeCounter < edgeList.size(); edgeCounter++) {
-                Double[] edge = edgeList.get(edgeCounter);
-                edgeListGeometry[edgeCounter] = geometryFactory.createLineString(
-                        new Coordinate[]{new Coordinate(edge[0], edge[1]), new Coordinate(edge[2], edge[3])});
-            }
-
-            logger.info("start encoding: " + resultStr + ", edges:" + 1);
             // doing some AffineTransformation
-            TileGeomResult tileGeom = JtsAdapter.createTileGeom(
-                    geometryFactory.createMultiLineString(edgeListGeometry),
-                    tileEnvelope,
-                    geometryFactory,
-                    layerParams,
-                    acceptAllGeomFilter);
-
+            TileGeomResult tileGeom = JtsAdapter.createTileGeom(multiLineString, tileEnvelope, geometryFactory, layerParams, acceptAllGeomFilter);
             MvtLayerProps layerProps = new MvtLayerProps();
             VectorTile.Tile.Layer.Builder layerBuilder = MvtLayerBuild.newLayerBuilder("roads", layerParams);
             MvtLayerBuild.writeProps(layerBuilder, layerProps);
             List<VectorTile.Tile.Feature> features = JtsAdapter.toFeatures(tileGeom.mvtGeoms, layerProps, new UserDataKeyValueMapConverter());
-            VectorTile.Tile mvt = VectorTile.Tile.newBuilder().addLayers(layerBuilder.addAllFeatures(features).build()).build();
-            byte[] bytes = mvt.toByteArray();
-            String tookStr = "" + sw.stop().getSeconds() * 1000;
-            logger.info("took: " + tookStr);
+            mvtBuilder.addLayers(layerBuilder.addAllFeatures(features));
+            byte[] bytes = mvtBuilder.build().toByteArray();
+
+            logger.info("mvt: " + mvtSW.stop().getSeconds() + ", gh storage: " + ghSW.getSeconds() + ", edges:" + lineStringList.size());
             return Response.fromResponse(Response.ok(bytes, new MediaType("application", "x-protobuf")).build())
-                    .header("X-GH-Took", tookStr)
+                    .header("X-GH-Took", "" + totalSW.stop().getSeconds() * 1000)
                     .build();
 
         }

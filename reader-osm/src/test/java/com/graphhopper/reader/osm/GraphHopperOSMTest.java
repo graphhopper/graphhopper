@@ -165,7 +165,7 @@ public class GraphHopperOSMTest {
             }
 
             @Override
-            public void onEdge(int edgeId, int nodeA, int nodeB) {
+            public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
                 for (int i = 0; i < 2; i++) {
                     int nodeId = i == 0 ? nodeA : nodeB;
                     double lat = na.getLatitude(nodeId);

@@ -476,11 +476,11 @@ public class LocationIndexTree implements LocationIndex {
         public final void onNode(int nodeId) {
             EdgeIterator iter = edgeExplorer.setBaseNode(nodeId);
             while (iter.next()) {
-                onEdge(iter.getEdge(), nodeId, iter.getAdjNode());
+                onEdge(iter, nodeId, iter.getAdjNode());
             }
         }
 
-        public abstract void onEdge(int edgeId, int nodeA, int nodeB);
+        public abstract void onEdge(EdgeIteratorState edge, int nodeA, int nodeB);
     }
 
     /**
