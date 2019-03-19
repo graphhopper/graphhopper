@@ -37,8 +37,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Path("isochrone")
@@ -108,15 +109,15 @@ public class IsochroneResource {
             // otherwise the decoding won't be successful and "undefined":"undefined" instead of "speed": 30 is the result
             final MvtLayerProps layerProps = new MvtLayerProps();
             final VectorTile.Tile.Layer.Builder layerBuilder = MvtLayerBuild.newLayerBuilder("roads", layerParams);
-            // layerBuilder.addKeys("speed").addValues(VectorTile.Tile.Value.newBuilder().setFloatValue(500).build());
             locationIndex.query(bbox, new LocationIndexTree.EdgeVisitor(edgeExplorer) {
                 @Override
                 public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
                     LineString lineString;
-                    if (zInfo > 12) {
+                    int intSpeed = (int) Math.round(edge.get(averageSpeedEnc));
+                    if (zInfo >= 12) {
                         PointList pl = edge.fetchWayGeometry(3);
                         lineString = pl.toLineString(false);
-                    } else if (edge.getDistance() > 150 || zInfo == 11 && edge.getDistance() > 50 || zInfo > 11) {
+                    } else if (intSpeed > 80 || zInfo == 10 && intSpeed >= 50 || zInfo == 11 && intSpeed >= 30 || zInfo > 11) {
                         double lat = na.getLatitude(nodeA);
                         double lon = na.getLongitude(nodeA);
                         double toLat = na.getLatitude(nodeB);
@@ -128,7 +129,10 @@ public class IsochroneResource {
                     }
 
                     edgeCounter.incrementAndGet();
-                    lineString.setUserData(Collections.singletonMap("speed", edge.get(averageSpeedEnc)));
+                    Map<String, Object> map = new HashMap<>(2);
+                    map.put("speed", intSpeed);
+                    map.put("name", edge.getName());
+                    lineString.setUserData(map);
 
                     // doing some AffineTransformation
                     TileGeomResult tileGeom = JtsAdapter.createTileGeom(lineString, tileEnvelope, geometryFactory, layerParams, acceptAllGeomFilter);
