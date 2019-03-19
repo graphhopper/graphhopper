@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.NodeAccess;
@@ -22,7 +23,10 @@ import com.wdtinc.mapbox_vector_tile.adapt.jts.UserDataKeyValueMapConverter;
 import com.wdtinc.mapbox_vector_tile.build.MvtLayerBuild;
 import com.wdtinc.mapbox_vector_tile.build.MvtLayerParams;
 import com.wdtinc.mapbox_vector_tile.build.MvtLayerProps;
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,9 +37,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Path("isochrone")
 public class IsochroneResource {
@@ -45,8 +49,6 @@ public class IsochroneResource {
     private final GraphHopper graphHopper;
     private final EncodingManager encodingManager;
     private final DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder;
-    private final GeometryFactory geometryFactory = new GeometryFactory();
-    private final ConcurrentHashMap<Integer, List<Number[]>> map = new ConcurrentHashMap<>();
 
     @Inject
     public IsochroneResource(GraphHopper graphHopper, EncodingManager encodingManager, DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder) {
@@ -87,10 +89,8 @@ public class IsochroneResource {
         Coordinate se = num2deg(xInfo + 1, yInfo + 1, zInfo);
 
         if ("mvt".equalsIgnoreCase(resultStr) && zInfo > 9) {
-            StopWatch ghSW = new StopWatch().start();
             LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
             final NodeAccess na = graphHopper.getGraphHopperStorage().getNodeAccess();
-            final List<LineString> lineStringList = new ArrayList<>(1000);
             EdgeExplorer edgeExplorer = graphHopper.getGraphHopperStorage().createEdgeExplorer(DefaultEdgeFilter.ALL_EDGES);
             BBox bbox = new BBox(nw.x, se.x, se.y, nw.y);
             if (!bbox.isValid())
@@ -98,21 +98,42 @@ public class IsochroneResource {
 
             final GeometryFactory geometryFactory = new GeometryFactory();
             VectorTile.Tile.Builder mvtBuilder = VectorTile.Tile.newBuilder();
+            final IGeometryFilter acceptAllGeomFilter = geometry -> true;
+            final Envelope tileEnvelope = new Envelope(se, nw);
+            final MvtLayerParams layerParams = new MvtLayerParams(256, 4096);
+            final UserDataKeyValueMapConverter converter = new UserDataKeyValueMapConverter();
+            final DecimalEncodedValue averageSpeedEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encodingManager.getEncoder(vehicle), "average_speed"));
+            final AtomicInteger edgeCounter = new AtomicInteger(0);
+            // in toFeatures addTags of the converter is called and layerProps is filled with keys&values => those need to be stored in the layerBuilder
+            // otherwise the decoding won't be successful and "undefined":"undefined" instead of "speed": 30 is the result
+            final MvtLayerProps layerProps = new MvtLayerProps();
+            final VectorTile.Tile.Layer.Builder layerBuilder = MvtLayerBuild.newLayerBuilder("roads", layerParams);
+            // layerBuilder.addKeys("speed").addValues(VectorTile.Tile.Value.newBuilder().setFloatValue(500).build());
             locationIndex.query(bbox, new LocationIndexTree.EdgeVisitor(edgeExplorer) {
                 @Override
                 public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
-
+                    LineString lineString;
                     if (zInfo > 12) {
                         PointList pl = edge.fetchWayGeometry(3);
-                        lineStringList.add(pl.toLineString(false));
+                        lineString = pl.toLineString(false);
                     } else if (edge.getDistance() > 150 || zInfo == 11 && edge.getDistance() > 50 || zInfo > 11) {
                         double lat = na.getLatitude(nodeA);
                         double lon = na.getLongitude(nodeA);
                         double toLat = na.getLatitude(nodeB);
                         double toLon = na.getLongitude(nodeB);
-                        lineStringList.add(geometryFactory.createLineString(
-                                new Coordinate[]{new Coordinate(lon, lat), new Coordinate(toLon, toLat)}));
+                        lineString = geometryFactory.createLineString(new Coordinate[]{new Coordinate(lon, lat), new Coordinate(toLon, toLat)});
+                    } else {
+                        // skip edge for certain zoom
+                        return;
                     }
+
+                    edgeCounter.incrementAndGet();
+                    lineString.setUserData(Collections.singletonMap("speed", edge.get(averageSpeedEnc)));
+
+                    // doing some AffineTransformation
+                    TileGeomResult tileGeom = JtsAdapter.createTileGeom(lineString, tileEnvelope, geometryFactory, layerParams, acceptAllGeomFilter);
+                    List<VectorTile.Tile.Feature> features = JtsAdapter.toFeatures(tileGeom.mvtGeoms, layerProps, converter);
+                    layerBuilder.addAllFeatures(features);
                 }
 
                 @Override
@@ -120,25 +141,13 @@ public class IsochroneResource {
                 }
             });
 
-            Geometry multiLineString = geometryFactory.createMultiLineString(lineStringList.toArray(new LineString[0]));
-            ghSW.stop();
-            StopWatch mvtSW = new StopWatch().start();
-            IGeometryFilter acceptAllGeomFilter = geometry -> true;
-            Envelope tileEnvelope = new Envelope(se, nw);
-            MvtLayerParams layerParams = new MvtLayerParams(256, 4096);
-
-            // doing some AffineTransformation
-            TileGeomResult tileGeom = JtsAdapter.createTileGeom(multiLineString, tileEnvelope, geometryFactory, layerParams, acceptAllGeomFilter);
-            MvtLayerProps layerProps = new MvtLayerProps();
-            VectorTile.Tile.Layer.Builder layerBuilder = MvtLayerBuild.newLayerBuilder("roads", layerParams);
             MvtLayerBuild.writeProps(layerBuilder, layerProps);
-            List<VectorTile.Tile.Feature> features = JtsAdapter.toFeatures(tileGeom.mvtGeoms, layerProps, new UserDataKeyValueMapConverter());
-            mvtBuilder.addLayers(layerBuilder.addAllFeatures(features));
+            mvtBuilder.addLayers(layerBuilder.build());
             byte[] bytes = mvtBuilder.build().toByteArray();
-
-            logger.info("mvt: " + mvtSW.stop().getSeconds() + ", gh storage: " + ghSW.getSeconds() + ", edges:" + lineStringList.size());
+            totalSW.stop();
+            logger.info("took: " + totalSW.getSeconds() + ", edges:" + edgeCounter.get());
             return Response.fromResponse(Response.ok(bytes, new MediaType("application", "x-protobuf")).build())
-                    .header("X-GH-Took", "" + totalSW.stop().getSeconds() * 1000)
+                    .header("X-GH-Took", "" + totalSW.getSeconds() * 1000)
                     .build();
 
         }
