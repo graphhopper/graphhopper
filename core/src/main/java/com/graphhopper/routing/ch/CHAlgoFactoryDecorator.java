@@ -243,10 +243,14 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (map.getWeighting().isEmpty())
             map.setWeighting(getDefaultWeighting());
 
+        return getPreparation(map);
+    }
+
+    public PrepareContractionHierarchies getPreparation(HintsMap map) {
         boolean edgeBased = map.getBool(Parameters.Routing.EDGE_BASED, false);
         List<String> entriesStrs = new ArrayList<>();
         boolean weightingMatchesButNotEdgeBased = false;
-        for (PrepareContractionHierarchies p : allPreparations) {
+        for (PrepareContractionHierarchies p : getPreparations()) {
             boolean weightingMatches = p.getWeighting().matches(map);
             if (p.isEdgeBased() == edgeBased && weightingMatches)
                 return p;

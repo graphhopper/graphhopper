@@ -11,7 +11,7 @@ We have a prospering community and welcome everyone. Let us know your problems, 
 
 ## Get Started
 
-To get started, read through our documentation and install the GraphHopper Web Service locally:
+To get started, read through our documentation and install the GraphHopper Web Service locally.
 
  * unstable: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md), [web service jar](https://oss.sonatype.org/content/groups/public/com/graphhopper/graphhopper-web/0.12-SNAPSHOT/), [Android APK](https://oss.sonatype.org/content/groups/public/com/graphhopper/graphhopper-android/0.12-SNAPSHOT/)
  * 0.11.0 latest stable: [announcement](https://www.graphhopper.com/blog/2018/09/17/graphhopper-routing-engine-0-11-release-open-sourcing-the-isochrone-module/), [documentation](https://github.com/graphhopper/graphhopper/blob/0.11/docs/index.md), [web service jar](https://graphhopper.com/public/releases/graphhopper-web-0.11.0.jar), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.11.0.apk)
@@ -19,6 +19,10 @@ To get started, read through our documentation and install the GraphHopper Web S
  * 0.9.0: [announcement](https://www.graphhopper.com/blog/2017/05/31/graphhopper-routing-engine-0-9-released/), [documentation](https://github.com/graphhopper/graphhopper/blob/0.9/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.9.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.9.0.apk)
  * 0.8.2: [announcement](https://www.graphhopper.com/blog/2016/10/18/graphhopper-routing-engine-0-8-released/), [documentation](https://github.com/graphhopper/graphhopper/blob/0.8/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.8.2-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.8.2.apk)
  * 0.7.0: [announcement](https://www.graphhopper.com/blog/2016/06/15/graphhopper-routing-engine-0-7-released/), [documentation](https://github.com/graphhopper/graphhopper/blob/0.7/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.7.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.7.0.apk)
+
+### DEB or RPM package
+
+[There is an experimental step by step guide](https://github.com/graphhopper/graphhopper/issues/561#issuecomment-473567727) that creates a debian or rpm package from the cloned and compiled repository. Before we can recommend this we need some more testers and feedback :)
 
 ## Questions
 

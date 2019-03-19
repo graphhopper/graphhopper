@@ -348,8 +348,8 @@ public class LocationIndexTree implements LocationIndex {
     /**
      * This method fills the set with stored node IDs from the given spatial key part (a latitude-longitude prefix).
      */
-    final void fillIDs(long keyPart, int intPointer, GHIntHashSet set, int depth) {
-        long pointer = (long) intPointer << 2;
+    final void fillIDs(long keyPart, int intIndex, GHIntHashSet set, int depth) {
+        long pointer = (long) intIndex << 2;
         if (depth == entries.length) {
             int nextIntPointer = dataAccess.getInt(pointer);
             if (nextIntPointer < 0) {
