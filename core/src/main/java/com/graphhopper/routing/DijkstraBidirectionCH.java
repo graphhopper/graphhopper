@@ -30,11 +30,11 @@ import com.graphhopper.util.EdgeIterator;
  * of a shortest path. When a node that is about to be settled is stallable it is not expanded, but no further search
  * for neighboring stallable nodes is performed.
  *
- * @author ammagamma
+ * @author easbar
  */
 public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
-    public DijkstraBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
-        super(graph, weighting, traversalMode);
+    public DijkstraBidirectionCH(Graph graph, Weighting weighting) {
+        super(graph, weighting);
     }
 
     @Override
@@ -66,7 +66,7 @@ public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
             int traversalId = traversalMode.createTraversalId(iter, reverse);
             SPTEntry adjNode = bestWeightMap.get(traversalId);
             if (adjNode != null &&
-                    adjNode.weight + weighting.calcWeight(iter, !reverse, entry.edge) < entry.weight) {
+                    adjNode.weight + weighting.calcWeight(iter, !reverse, getIncomingEdge(entry)) < entry.weight) {
                 return true;
             }
         }

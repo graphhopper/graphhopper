@@ -23,15 +23,18 @@ import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.CH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
 
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.CH.DISABLE;
@@ -47,11 +50,13 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
     // we need to decouple weighting objects from the weighting list of strings 
     // as we need the strings to create the GraphHopperStorage and the GraphHopperStorage to create the preparations from the Weighting objects currently requiring the encoders
-    private final List<Weighting> weightings = new ArrayList<>();
+    private final List<Weighting> nodeBasedWeightings = new ArrayList<>();
+    private final List<Weighting> edgeBasedWeightings = new ArrayList<>();
     private final Set<String> weightingsAsStrings = new LinkedHashSet<>();
     private boolean disablingAllowed = false;
     // for backward compatibility enable CH by default.
     private boolean enabled = true;
+    private EdgeBasedCHMode edgeBasedCHMode = EdgeBasedCHMode.OFF;
     private int preparationThreads;
     private ExecutorService threadPool;
     private PMap pMap = new PMap();
@@ -87,6 +92,10 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (enableThis)
             setDisablingAllowed(args.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
 
+        String edgeBasedCHStr = args.get(CH.PREPARE + "edge_based", "off").trim();
+        edgeBasedCHStr = edgeBasedCHStr.equals("false") ? "off" : edgeBasedCHStr;
+        edgeBasedCHMode = EdgeBasedCHMode.valueOf(edgeBasedCHStr.toUpperCase(Locale.ROOT));
+
         pMap = args;
     }
 
@@ -116,11 +125,26 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     /**
+     * This method specifies whether or not edge-based CH preparation (needed for turn costs) should be performed.
+     *
+     * @see EdgeBasedCHMode
+     */
+    public final CHAlgoFactoryDecorator setEdgeBasedCHMode(EdgeBasedCHMode edgeBasedCHMode) {
+        this.edgeBasedCHMode = edgeBasedCHMode;
+        return this;
+    }
+
+    /**
      * Decouple weightings from PrepareContractionHierarchies as we need weightings for the
      * graphstorage and the graphstorage for the preparation.
      */
-    public CHAlgoFactoryDecorator addWeighting(Weighting weighting) {
-        weightings.add(weighting);
+    public CHAlgoFactoryDecorator addNodeBasedWeighting(Weighting weighting) {
+        nodeBasedWeightings.add(weighting);
+        return this;
+    }
+
+    public CHAlgoFactoryDecorator addEdgeBasedWeighting(Weighting weighting) {
+        edgeBasedWeightings.add(weighting);
         return this;
     }
 
@@ -130,24 +154,42 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     public CHAlgoFactoryDecorator addPreparation(PrepareContractionHierarchies pch) {
-        preparations.add(pch);
-        int lastIndex = preparations.size() - 1;
-        if (lastIndex >= weightings.size())
+        // we want to make sure that edge- and node-based preparations are added in the same order as their corresponding
+        // weightings, but changing the order between edge- and node-based preparations is accepted
+        int index = 0;
+        for (PrepareContractionHierarchies p : preparations) {
+            if (p.isEdgeBased() == pch.isEdgeBased()) {
+                index++;
+            }
+        }
+        List<Weighting> weightings = pch.isEdgeBased() ? edgeBasedWeightings : nodeBasedWeightings;
+        if (index >= weightings.size())
             throw new IllegalStateException("Cannot access weighting for PrepareContractionHierarchies with " + pch.getWeighting()
                     + ". Call add(Weighting) before");
 
-        if (preparations.get(lastIndex).getWeighting() != weightings.get(lastIndex))
-            throw new IllegalArgumentException("Weighting of PrepareContractionHierarchies " + preparations.get(lastIndex).getWeighting()
-                    + " needs to be identical to previously added " + weightings.get(lastIndex));
+        Weighting expectedWeighting = weightings.get(index);
+        if (pch.getWeighting() != expectedWeighting)
+            throw new IllegalArgumentException("Weighting of PrepareContractionHierarchies " + pch
+                    + " needs to be identical to previously added " + expectedWeighting);
+
+        preparations.add(pch);
         return this;
     }
 
     public final boolean hasWeightings() {
-        return !weightings.isEmpty();
+        return !nodeBasedWeightings.isEmpty() || !edgeBasedWeightings.isEmpty();
     }
 
-    public final List<Weighting> getWeightings() {
-        return weightings;
+    public final List<Weighting> getNodeBasedWeightings() {
+        return nodeBasedWeightings;
+    }
+
+    public final List<Weighting> getEdgeBasedWeightings() {
+        return edgeBasedWeightings;
+    }
+
+    public EdgeBasedCHMode getEdgeBasedCHMode() {
+        return edgeBasedCHMode;
     }
 
     public CHAlgoFactoryDecorator setWeightingsAsStrings(String... weightingNames) {
@@ -194,21 +236,34 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (!isEnabled() || disablingAllowed && disableCH)
             return defaultAlgoFactory;
 
-        if (preparations.isEmpty())
+        List<PrepareContractionHierarchies> allPreparations = getPreparations();
+        if (allPreparations.isEmpty())
             throw new IllegalStateException("No preparations added to this decorator");
 
         if (map.getWeighting().isEmpty())
             map.setWeighting(getDefaultWeighting());
 
-        String entriesStr = "";
-        for (PrepareContractionHierarchies p : preparations) {
-            if (p.getWeighting().matches(map))
-                return p;
+        return getPreparation(map);
+    }
 
-            entriesStr += p.getWeighting() + ", ";
+    public PrepareContractionHierarchies getPreparation(HintsMap map) {
+        boolean edgeBased = map.getBool(Parameters.Routing.EDGE_BASED, false);
+        List<String> entriesStrs = new ArrayList<>();
+        boolean weightingMatchesButNotEdgeBased = false;
+        for (PrepareContractionHierarchies p : getPreparations()) {
+            boolean weightingMatches = p.getWeighting().matches(map);
+            if (p.isEdgeBased() == edgeBased && weightingMatches)
+                return p;
+            else if (weightingMatches)
+                weightingMatchesButNotEdgeBased = true;
+
+            entriesStrs.add(p.getWeighting() + "|" + (p.isEdgeBased() ? "edge" : "node"));
         }
 
-        throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries " + entriesStr);
+        String hint = weightingMatchesButNotEdgeBased
+                ? " The '" + Parameters.Routing.EDGE_BASED + "' url parameter is missing or does not fit the weightings. Its value was: '" + edgeBased + "'"
+                : "";
+        throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries: " + entriesStrs + "." + hint);
     }
 
     public int getPreparationThreads() {
@@ -228,8 +283,9 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         ExecutorCompletionService completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;
         for (final PrepareContractionHierarchies prepare : getPreparations()) {
-            LOGGER.info((++counter) + "/" + getPreparations().size() + " calling CH prepare.doWork for " + prepare.getWeighting() + " ... (" + getMemInfo() + ")");
-            final String name = AbstractWeighting.weightingToFileName(prepare.getWeighting());
+            LOGGER.info((++counter) + "/" + getPreparations().size() + " calling " +
+                    (prepare.isEdgeBased() ? "edge" : "node") + "-based CH prepare.doWork for " + prepare.getWeighting() + " ... (" + getMemInfo() + ")");
+            final String name = AbstractWeighting.weightingToFileName(prepare.getWeighting(), prepare.isEdgeBased());
             completionService.submit(new Runnable() {
                 @Override
                 public void run() {
@@ -254,27 +310,44 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         }
     }
 
-    public void createPreparations(GraphHopperStorage ghStorage, TraversalMode traversalMode) {
-        if (!isEnabled() || !preparations.isEmpty())
+    public void createPreparations(GraphHopperStorage ghStorage) {
+        if (!isEnabled() || !getPreparations().isEmpty())
             return;
-        if (weightings.isEmpty())
+        if (!hasWeightings())
             throw new IllegalStateException("No CH weightings found");
 
-        traversalMode = getNodeBase();
-
-        for (Weighting weighting : getWeightings()) {
-            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
-                    new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class, weighting), traversalMode);
-            tmpPrepareCH.setParams(pMap);
-            addPreparation(tmpPrepareCH);
+        for (Weighting weighting : nodeBasedWeightings) {
+            addPreparation(createCHPreparation(ghStorage, weighting, TraversalMode.NODE_BASED));
+        }
+        for (Weighting weighting : edgeBasedWeightings) {
+            addPreparation(createCHPreparation(ghStorage, weighting, TraversalMode.EDGE_BASED_2DIR));
         }
     }
 
+    private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, Weighting weighting,
+                                                              TraversalMode traversalMode) {
+        PrepareContractionHierarchies tmpPrepareCH = PrepareContractionHierarchies.fromGraphHopperStorage(
+                ghStorage, weighting, traversalMode);
+        tmpPrepareCH.setParams(pMap);
+        return tmpPrepareCH;
+    }
+
     /**
-     * For now only node based will work, later on we can easily find usage of this method to remove
-     * it.
+     * Determines whether or not edge-based CH will be prepared for the different weightings/encoders.
      */
-    public TraversalMode getNodeBase() {
-        return TraversalMode.NODE_BASED;
+    public enum EdgeBasedCHMode {
+        /**
+         * no edge-based CH preparation will be performed
+         */
+        OFF,
+        /**
+         * for encoders with enabled turn costs edge-based CH and otherwise node-based CH preparation will be performed
+         */
+        EDGE_OR_NODE,
+        /**
+         * for encoders with enabled turn costs edge-based CH will be performed and node-based CH preparation will be
+         * performed for all encoders
+         */
+        EDGE_AND_NODE
     }
 }

@@ -19,7 +19,9 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.weighting.PriorityWeighting;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Translation;
 import org.junit.Before;
@@ -39,10 +41,17 @@ import static org.junit.Assert.*;
  */
 public abstract class AbstractBikeFlagEncoderTester {
     protected BikeCommonFlagEncoder encoder;
+    protected EncodingManager encodingManager;
+    protected BooleanEncodedValue roundaboutEnc;
+    protected DecimalEncodedValue priorityEnc;
+    protected DecimalEncodedValue avSpeedEnc;
 
     @Before
     public void setUp() {
-        encoder = createBikeEncoder();
+        encodingManager = EncodingManager.create(encoder = createBikeEncoder());
+        roundaboutEnc = encodingManager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
+        priorityEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
+        avSpeedEnc = encoder.getAverageSpeedEnc();
     }
 
     protected abstract BikeCommonFlagEncoder createBikeEncoder();
@@ -56,9 +65,8 @@ public abstract class AbstractBikeFlagEncoderTester {
     }
 
     protected double getSpeedFromFlags(ReaderWay way) {
-        long allowed = encoder.acceptBit;
-        long flags = encoder.handleWayTags(way, allowed, 0);
-        return encoder.getSpeed(flags);
+        IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, EncodingManager.Access.WAY, 0);
+        return avSpeedEnc.getDecimal(false, flags);
     }
 
     protected String getWayTypeFromFlags(ReaderWay way) {
@@ -66,8 +74,7 @@ public abstract class AbstractBikeFlagEncoderTester {
     }
 
     protected String getWayTypeFromFlags(ReaderWay way, long relationFlags) {
-        long allowed = encoder.acceptBit;
-        long flags = encoder.handleWayTags(way, allowed, relationFlags);
+        IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, EncodingManager.Access.WAY, relationFlags);
         Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
         return encoder.getAnnotation(flags, enMap).getMessage();
     }
@@ -77,122 +84,113 @@ public abstract class AbstractBikeFlagEncoderTester {
         ReaderWay way = new ReaderWay(1);
 
         way.setTag("highway", "motorway");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).canSkip());
 
         way.setTag("highway", "motorway");
         way.setTag("bicycle", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.setTag("highway", "footway");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.setTag("bicycle", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).canSkip());
 
         way.setTag("highway", "footway");
         way.setTag("bicycle", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.setTag("highway", "pedestrian");
         way.setTag("bicycle", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).canSkip());
 
         way.setTag("highway", "pedestrian");
         way.setTag("bicycle", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.setTag("bicycle", "yes");
         way.setTag("highway", "cycleway");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "path");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.setTag("highway", "path");
         way.setTag("bicycle", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
         way.clearTags();
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
         way.clearTags();
 
         way.setTag("highway", "track");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.setTag("mtb", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("foot", "official");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.setTag("bicycle", "official");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("motorroad", "yes");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("ford", "yes");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).canSkip());
         way.setTag("bicycle", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "secondary");
         way.setTag("access", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).canSkip());
         way.setTag("bicycle", "dismount");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "secondary");
         way.setTag("vehicle", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).canSkip());
         way.setTag("bicycle", "dismount");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
-        way.clearTags();
-        way.setTag("route", "ferry");
-        assertTrue(encoder.acceptWay(way) > 0);
-        way.setTag("bicycle", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
-
-        way.clearTags();
-        way.setTag("route", "ferry");
-        way.setTag("foot", "yes");
-        assertFalse(encoder.acceptWay(way) > 0);
+        
 
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("cycleway", "track");
         way.setTag("railway", "abandoned");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
 
         way.clearTags();
         way.setTag("highway", "road");
         way.setTag("bicycle:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "road");
         way.setTag("access", "no");
         way.setTag("bicycle:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
     }
 
     @Test
@@ -200,39 +198,40 @@ public abstract class AbstractBikeFlagEncoderTester {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "rail");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "station");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "station");
         way.setTag("bicycle", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.setTag("bicycle", "no");
-        assertTrue(encoder.acceptWay(way) == 0);
+        assertTrue(encoder.getAccess(way).canSkip());
 
         way = new ReaderWay(1);
         way.setTag("railway", "platform");
-        long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
-        assertNotEquals(0, flags);
+        IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        assertNotEquals(0, flags.ints[0]);
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
-        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
-        assertNotEquals(0, flags);
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        assertNotEquals(0, flags.ints[0]);
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
         way.setTag("bicycle", "no");
-        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
-        assertEquals(0, flags);
+
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        assertEquals(0, flags.ints[0]);
     }
 
     @Test
@@ -375,10 +374,10 @@ public abstract class AbstractBikeFlagEncoderTester {
         way.setTag("highway", "service");
         way.setTag("sac_scale", "hiking");
         // allow
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.setTag("sac_scale", "alpine_hiking");
-        assertTrue(encoder.acceptWay(way) == 0);
+        assertTrue(encoder.getAccess(way).canSkip());
     }
 
     @Test
@@ -392,7 +391,9 @@ public abstract class AbstractBikeFlagEncoderTester {
     public void testPreferenceForSlowSpeed() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
-        assertEquals(30, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(osmWay, 49))), 1e-1);
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        avSpeedEnc.setDecimal(false, edgeFlags, encoder.applyMaxSpeed(osmWay, 49));
+        assertEquals(30, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
         assertPriority(PREFER.getValue(), osmWay);
     }
 
@@ -400,8 +401,9 @@ public abstract class AbstractBikeFlagEncoderTester {
     public void testHandleWayTagsCallsHandlePriority() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "cycleway");
-        long encoded = encoder.handleWayTags(osmWay, encoder.acceptBit, 0);
-        assertEquals((double) VERY_NICE.getValue() / BEST.getValue(), encoder.getDouble(encoded, PriorityWeighting.KEY), 1e-3);
+        IntsRef edgeFlags = encoder.handleWayTags(encodingManager.createEdgeFlags(), osmWay, EncodingManager.Access.WAY, 0);
+        DecimalEncodedValue priorityEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
+        assertEquals((double) VERY_NICE.getValue() / BEST.getValue(), priorityEnc.getDecimal(false, edgeFlags), 1e-3);
     }
 
     @Test
@@ -414,11 +416,14 @@ public abstract class AbstractBikeFlagEncoderTester {
 
     @Test
     public void testPriority() {
-        long flags = encoder.priorityWayEncoder.setValue(0, PriorityCode.BEST.getValue());
-        assertEquals(1, encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
+        IntsRef flags = encodingManager.createEdgeFlags();
+        encoder.priorityWayEncoder.setDecimal(false, flags, PriorityCode.getFactor(PriorityCode.BEST.getValue()));
+        DecimalEncodedValue priorityEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
+        assertEquals(1, priorityEnc.getDecimal(false, flags), 1e-3);
 
-        flags = encoder.priorityWayEncoder.setValue(0, PriorityCode.AVOID_IF_POSSIBLE.getValue());
-        assertEquals(3d / 7d, encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
+        flags = encodingManager.createEdgeFlags();
+        encoder.priorityWayEncoder.setDecimal(false, flags, PriorityCode.getFactor(PriorityCode.AVOID_IF_POSSIBLE.getValue()));
+        assertEquals(3d / 7d, priorityEnc.getDecimal(false, flags), 1e-3);
     }
 
     @Test
@@ -471,5 +476,56 @@ public abstract class AbstractBikeFlagEncoderTester {
         node.setTag("bicycle", "yes");
         // no barrier!
         assertTrue(encoder.handleNodeTags(node) == 0);
+    }
+
+    @Test
+    public void testFerries(){
+        ReaderWay way = new ReaderWay(1);
+
+        way.clearTags();
+        way.setTag("route", "ferry");
+        assertTrue(encoder.getAccess(way).isFerry());
+        way.setTag("bicycle", "no");
+        assertFalse(encoder.getAccess(way).isFerry());
+
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("foot", "yes");
+        assertFalse(encoder.getAccess(way).isFerry());
+
+        // #1122
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("bicycle", "yes");
+        way.setTag("access", "private");
+        assertTrue(encoder.getAccess(way).canSkip());
+
+        // #1562, test if ferry route with bicycle
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("bicycle", "designated");
+        assertTrue(encoder.getAccess(way).isFerry());
+
+        way.setTag("bicycle", "official");
+        assertTrue(encoder.getAccess(way).isFerry());
+
+        way.setTag("bicycle", "permissive");
+        assertTrue(encoder.getAccess(way).isFerry());
+
+        way.setTag("foot", "yes");
+        assertTrue(encoder.getAccess(way).isFerry());
+
+        way.setTag("bicycle", "no");
+        assertTrue(encoder.getAccess(way).canSkip());
+
+        way.setTag("bicycle", "designated");
+        way.setTag("access", "private");
+        assertTrue(encoder.getAccess(way).canSkip());
+
+        // test if when foot is set is invalid
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("foot", "yes");
+        assertTrue(encoder.getAccess(way).canSkip());
     }
 }

@@ -19,6 +19,8 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -42,9 +44,11 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public abstract class AbstractRoutingAlgorithmTester {
-    protected static final EncodingManager encodingManager = new EncodingManager("car,foot");
+    protected static final EncodingManager encodingManager = EncodingManager.create("car,foot");
     private static final DistanceCalc distCalc = new DistanceCalcEarth();
     protected FlagEncoder carEncoder;
+    protected DecimalEncodedValue carAvSpeedEnc;
+    protected BooleanEncodedValue carAccessEnc;
     protected FlagEncoder footEncoder;
     protected AlgorithmOptions defaultOpts;
 
@@ -147,6 +151,8 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Before
     public void setUp() {
         carEncoder = encodingManager.getEncoder("car");
+        carAccessEnc = carEncoder.getAccessEnc();
+        carAvSpeedEnc = carEncoder.getAverageSpeedEnc();
         footEncoder = encodingManager.getEncoder("foot");
         defaultOpts = createAlgoOptions();
     }
@@ -183,7 +189,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         GraphHopperStorage ghStorage = createTestStorage();
         RoutingAlgorithm algo = createAlgo(ghStorage);
         Path p = algo.calcPath(0, 7);
-        assertEquals(p.toString(), IntArrayList.from(new int[]{0, 4, 5, 7}), p.calcNodes());
+        assertEquals(p.toString(), IntArrayList.from(0, 4, 5, 7), p.calcNodes());
         assertEquals(p.toString(), 62.1, p.getDistance(), .1);
     }
 
@@ -195,8 +201,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
         RoutingAlgorithm algo = createAlgo(graph);
         Path p = algo.calcPath(0, 0);
-        assertEquals(p.toString(), IntArrayList.from(new int[]{0}), p.calcNodes());
-        assertEquals(p.toString(), 0, p.getDistance(), 1.e-6);
+        assertPathFromEqualsTo(p, 0);
     }
 
     @Test
@@ -212,7 +217,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(4, 1, 9, true);
         Path p = createAlgo(graph).calcPath(0, 4);
         assertEquals(p.toString(), 20, p.getDistance(), 1e-4);
-        assertEquals(IntArrayList.from(new int[]{0, 2, 1, 4}), p.calcNodes());
+        assertEquals(IntArrayList.from(0, 2, 1, 4), p.calcNodes());
     }
 
     @Test
@@ -225,7 +230,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(4, 1, 9, true);
         Path p = createAlgo(graph).calcPath(3, 5);
         assertEquals(p.toString(), 28, p.getDistance(), 1e-4);
-        assertEquals(IntArrayList.from(new int[]{3, 2, 1, 4, 5}), p.calcNodes());
+        assertEquals(IntArrayList.from(3, 2, 1, 4, 5), p.calcNodes());
     }
 
     // see calc-fastest-graph.svg
@@ -235,7 +240,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         initDirectedAndDiffSpeed(graphShortest, carEncoder);
         Path p1 = createAlgo(graphShortest, defaultOpts).
                 calcPath(0, 3);
-        assertEquals(IntArrayList.from(new int[]{0, 1, 5, 2, 3}), p1.calcNodes());
+        assertEquals(IntArrayList.from(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 402.3, p1.getDistance(), .1);
         assertEquals(p1.toString(), 144823, p1.getTime());
 
@@ -245,7 +250,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         initDirectedAndDiffSpeed(graphFastest, carEncoder);
         Path p2 = createAlgo(graphFastest, opts).
                 calcPath(0, 3);
-        assertEquals(IntArrayList.from(new int[]{0, 4, 6, 7, 5, 3}), p2.calcNodes());
+        assertEquals(IntArrayList.from(0, 4, 6, 7, 5, 3), p2.calcNodes());
         assertEquals(p2.toString(), 1261.7, p2.getDistance(), 0.1);
         assertEquals(p2.toString(), 111442, p2.getTime());
     }
@@ -256,26 +261,26 @@ public abstract class AbstractRoutingAlgorithmTester {
     // |/ \--7
     // 6----/
     protected void initDirectedAndDiffSpeed(Graph graph, FlagEncoder enc) {
-        graph.edge(0, 1).setFlags(enc.setProperties(10, true, false));
-        graph.edge(0, 4).setFlags(enc.setProperties(100, true, false));
+        GHUtility.setProperties(graph.edge(0, 1), enc, 10, true, false);
+        GHUtility.setProperties(graph.edge(0, 4), enc, 100, true, false);
 
-        graph.edge(1, 4).setFlags(enc.setProperties(10, true, true));
-        graph.edge(1, 5).setFlags(enc.setProperties(10, true, true));
-        EdgeIteratorState edge12 = graph.edge(1, 2).setFlags(enc.setProperties(10, true, true));
+        GHUtility.setProperties(graph.edge(1, 4), enc, 10, true, true);
+        GHUtility.setProperties(graph.edge(1, 5), enc, 10, true, true);
+        EdgeIteratorState edge12 = GHUtility.setProperties(graph.edge(1, 2), enc, 10, true, true);
 
-        graph.edge(5, 2).setFlags(enc.setProperties(10, true, false));
-        graph.edge(2, 3).setFlags(enc.setProperties(10, true, false));
+        GHUtility.setProperties(graph.edge(5, 2), enc, 10, true, false);
+        GHUtility.setProperties(graph.edge(2, 3), enc, 10, true, false);
 
-        EdgeIteratorState edge53 = graph.edge(5, 3).setFlags(enc.setProperties(20, true, false));
-        graph.edge(3, 7).setFlags(enc.setProperties(10, true, false));
+        EdgeIteratorState edge53 = GHUtility.setProperties(graph.edge(5, 3), enc, 20, true, false);
+        GHUtility.setProperties(graph.edge(3, 7), enc, 10, true, false);
 
-        graph.edge(4, 6).setFlags(enc.setProperties(100, true, false));
-        graph.edge(5, 4).setFlags(enc.setProperties(10, true, false));
+        GHUtility.setProperties(graph.edge(4, 6), enc, 100, true, false);
+        GHUtility.setProperties(graph.edge(5, 4), enc, 10, true, false);
 
-        graph.edge(5, 6).setFlags(enc.setProperties(10, true, false));
-        graph.edge(7, 5).setFlags(enc.setProperties(100, true, false));
+        GHUtility.setProperties(graph.edge(5, 6), enc, 10, true, false);
+        GHUtility.setProperties(graph.edge(7, 5), enc, 100, true, false);
 
-        graph.edge(6, 7).setFlags(enc.setProperties(100, true, true));
+        GHUtility.setProperties(graph.edge(6, 7), enc, 100, true, true);
 
         updateDistancesFor(graph, 0, 0.002, 0);
         updateDistancesFor(graph, 1, 0.002, 0.001);
@@ -300,30 +305,44 @@ public abstract class AbstractRoutingAlgorithmTester {
                 calcPath(0, 7);
         assertEquals(p1.toString(), 17000, p1.getDistance(), 1e-6);
         assertEquals(p1.toString(), 12240 * 1000, p1.getTime());
-        assertEquals(IntArrayList.from(new int[]{0, 4, 5, 7}), p1.calcNodes());
+        assertEquals(IntArrayList.from(0, 4, 5, 7), p1.calcNodes());
     }
 
     protected void initFootVsCar(Graph graph) {
-        graph.edge(0, 1).setDistance(7000).setFlags(footEncoder.setProperties(5, true, true) | carEncoder.setProperties(10, true, false));
-        graph.edge(0, 4).setDistance(5000).setFlags(footEncoder.setProperties(5, true, true) | carEncoder.setProperties(20, true, false));
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(7000);
+        GHUtility.setProperties(edge, footEncoder, 5, true, true);
+        GHUtility.setProperties(edge, carEncoder, 10, true, false);
+        edge = graph.edge(0, 4).setDistance(5000);
+        GHUtility.setProperties(edge, footEncoder, 5, true, true);
+        GHUtility.setProperties(edge, carEncoder, 20, true, false);
 
-        graph.edge(1, 4).setDistance(7000).setFlags(carEncoder.setProperties(10, true, true));
-        graph.edge(1, 5).setDistance(7000).setFlags(carEncoder.setProperties(10, true, true));
-        graph.edge(1, 2).setDistance(20000).setFlags(footEncoder.setProperties(5, true, true) | carEncoder.setProperties(10, true, true));
+        GHUtility.setProperties(graph.edge(1, 4).setDistance(7000), carEncoder, 10, true, true);
+        GHUtility.setProperties(graph.edge(1, 5).setDistance(7000), carEncoder, 10, true, true);
+        edge = graph.edge(1, 2).setDistance(20000);
+        GHUtility.setProperties(edge, footEncoder, 5, true, true);
+        GHUtility.setProperties(edge, carEncoder, 10, true, true);
 
-        graph.edge(5, 2).setDistance(5000).setFlags(carEncoder.setProperties(10, true, false));
-        graph.edge(2, 3).setDistance(5000).setFlags(footEncoder.setProperties(5, true, true) | carEncoder.setProperties(10, true, false));
+        GHUtility.setProperties(graph.edge(5, 2).setDistance(5000), carEncoder, 10, true, false);
+        edge = graph.edge(2, 3).setDistance(5000);
+        GHUtility.setProperties(edge, footEncoder, 5, true, true);
+        GHUtility.setProperties(edge, carEncoder, 10, true, false);
 
-        graph.edge(5, 3).setDistance(11000).setFlags(carEncoder.setProperties(20, true, false));
-        graph.edge(3, 7).setDistance(7000).setFlags(footEncoder.setProperties(5, true, true) | carEncoder.setProperties(10, true, false));
+        GHUtility.setProperties(graph.edge(5, 3).setDistance(11000), carEncoder, 20, true, false);
+        edge = graph.edge(3, 7).setDistance(7000);
+        GHUtility.setProperties(edge, footEncoder, 5, true, true);
+        GHUtility.setProperties(edge, carEncoder, 10, true, false);
 
-        graph.edge(4, 6).setDistance(5000).setFlags(carEncoder.setProperties(20, true, false));
-        graph.edge(5, 4).setDistance(7000).setFlags(footEncoder.setProperties(5, true, true) | carEncoder.setProperties(10, true, false));
+        GHUtility.setProperties(graph.edge(4, 6).setDistance(5000), carEncoder, 20, true, false);
+        edge = graph.edge(5, 4).setDistance(7000);
+        GHUtility.setProperties(edge, footEncoder, 5, true, true);
+        GHUtility.setProperties(edge, carEncoder, 10, true, false);
 
-        graph.edge(5, 6).setDistance(7000).setFlags(carEncoder.setProperties(10, true, false));
-        graph.edge(7, 5).setDistance(5000).setFlags(footEncoder.setProperties(5, true, true) | carEncoder.setProperties(20, true, false));
+        GHUtility.setProperties(graph.edge(5, 6).setDistance(7000), carEncoder, 10, true, false);
+        edge = graph.edge(7, 5).setDistance(5000);
+        GHUtility.setProperties(edge, footEncoder, 5, true, true);
+        GHUtility.setProperties(edge, carEncoder, 20, true, false);
 
-        graph.edge(6, 7).setDistance(5000).setFlags(carEncoder.setProperties(20, true, true));
+        GHUtility.setProperties(graph.edge(6, 7).setDistance(5000), carEncoder, 20, true, true);
     }
 
     // see test-graph.svg !
@@ -395,14 +414,14 @@ public abstract class AbstractRoutingAlgorithmTester {
     public void testWikipediaShortestPath() {
         GraphHopperStorage ghStorage = createWikipediaTestGraph();
         Path p = createAlgo(ghStorage).calcPath(0, 4);
-        assertEquals(p.toString(), IntArrayList.from(new int[]{0, 2, 5, 4}), p.calcNodes());
+        assertEquals(p.toString(), IntArrayList.from(0, 2, 5, 4), p.calcNodes());
         assertEquals(p.toString(), 20, p.getDistance(), 1e-4);
     }
 
     @Test
     public void testCalcIf1EdgeAway() {
         Path p = createAlgo(createTestStorage()).calcPath(1, 2);
-        assertEquals(IntArrayList.from(new int[]{1, 2}), p.calcNodes());
+        assertEquals(IntArrayList.from(1, 2), p.calcNodes());
         assertEquals(p.toString(), 35.1, p.getDistance(), .1);
     }
 
@@ -429,12 +448,12 @@ public abstract class AbstractRoutingAlgorithmTester {
         // PrepareTowerNodesShortcutsTest.printEdges((CHGraph) graph);
         Path p = createAlgo(graph).calcPath(0, 4);
         // PrepareTowerNodesShortcutsTest.printEdges((CHGraph) graph);
-        assertEquals(p.toString(), IntArrayList.from(new int[]{0, 7, 6, 8, 3, 4}), p.calcNodes());
+        assertEquals(p.toString(), IntArrayList.from(0, 7, 6, 8, 3, 4), p.calcNodes());
         assertEquals(p.toString(), 335.8, p.getDistance(), .1);
 
         p = createAlgo(graph).calcPath(1, 2);
         // the other way around is even larger as 0-1 is already 11008.452
-        assertEquals(p.toString(), IntArrayList.from(new int[]{1, 2}), p.calcNodes());
+        assertEquals(p.toString(), IntArrayList.from(1, 2), p.calcNodes());
         assertEquals(p.toString(), 10007.7, p.getDistance(), .1);
     }
 
@@ -498,7 +517,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         Path p = createAlgo(graph).calcPath(0, 4);
         assertEquals(p.toString(), 40, p.getDistance(), 1e-4);
         assertEquals(p.toString(), 5, p.calcNodes().size());
-        assertEquals(IntArrayList.from(new int[]{0, 7, 6, 5, 4}), p.calcNodes());
+        assertEquals(IntArrayList.from(0, 7, 6, 5, 4), p.calcNodes());
     }
 
     @Test
@@ -509,9 +528,9 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(12, p.calcNodes().size());
 
         IntIndexedContainer list = p.calcNodes();
-        if (!IntArrayList.from(new int[]{36, 46, 56, 66, 76, 86, 85, 84, 94, 93, 92, 91}).equals(list)
-                && !IntArrayList.from(new int[]{36, 46, 56, 66, 76, 86, 85, 84, 83, 82, 92, 91}).equals(list)) {
-            assertTrue("wrong locations: " + list.toString(), false);
+        if (!IntArrayList.from(36, 46, 56, 66, 76, 86, 85, 84, 94, 93, 92, 91).equals(list)
+                && !IntArrayList.from(36, 46, 56, 66, 76, 86, 85, 84, 83, 82, 92, 91).equals(list)) {
+            fail("wrong locations: " + list.toString());
         }
         assertEquals(66f, p.getDistance(), 1e-3);
 
@@ -521,14 +540,14 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     public void testBug1(GraphHopperStorage g) {
         Path p = createAlgo(g).calcPath(34, 36);
-        assertEquals(IntArrayList.from(new int[]{34, 35, 36}), p.calcNodes());
+        assertEquals(IntArrayList.from(34, 35, 36), p.calcNodes());
         assertEquals(3, p.calcNodes().size());
         assertEquals(17, p.getDistance(), 1e-5);
     }
 
     public void testCorrectWeight(GraphHopperStorage g) {
         Path p = createAlgo(g).calcPath(45, 72);
-        assertEquals(IntArrayList.from(new int[]{45, 44, 54, 64, 74, 73, 72}), p.calcNodes());
+        assertEquals(IntArrayList.from(45, 44, 54, 64, 74, 73, 72), p.calcNodes());
         assertEquals(38f, p.getDistance(), 1e-3);
     }
 
@@ -553,7 +572,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(4, 2, 1, false);
 
         Path p = createAlgo(graph).calcPath(0, 2);
-        assertEquals(IntArrayList.from(new int[]{0, 1, 2}), p.calcNodes());
+        assertEquals(IntArrayList.from(0, 1, 2), p.calcNodes());
         assertEquals(p.toString(), 5.99, p.getDistance(), 1e-4);
         assertEquals(p.toString(), 3, p.calcNodes().size());
     }
@@ -568,7 +587,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(3, 1, 4, true);
 
         Path p = createAlgo(graph).calcPath(0, 3);
-        assertEquals(IntArrayList.from(new int[]{0, 1, 2, 3}), p.calcNodes());
+        assertEquals(IntArrayList.from(0, 1, 2, 3), p.calcNodes());
     }
 
     // a-b-0-c-1
@@ -600,12 +619,12 @@ public abstract class AbstractRoutingAlgorithmTester {
         AlgorithmOptions opts = new AlgorithmOptions(DIJKSTRA_BI, weighting);
         RoutingAlgorithmFactory prepare = createFactory(graph, opts);
         Path p = prepare.createAlgo(getGraph(graph, opts.getWeighting()), opts).calcPath(4, 0);
-        assertEquals(IntArrayList.from(new int[]{4, 1, 0}), p.calcNodes());
+        assertEquals(IntArrayList.from(4, 1, 0), p.calcNodes());
         assertEquals(Helper.createPointList(0, 2, 1, 1.5, 1.5, 1, 1, 0.6), p.calcPoints());
         assertEquals(274128, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
 
         p = prepare.createAlgo(getGraph(graph, opts.getWeighting()), opts).calcPath(2, 1);
-        assertEquals(IntArrayList.from(new int[]{2, 0, 1}), p.calcNodes());
+        assertEquals(IntArrayList.from(2, 0, 1), p.calcNodes());
         assertEquals(Helper.createPointList(0, 0, 1, 0.6, 1.5, 1, 1, 1.5), p.calcPoints());
         assertEquals(279482, p.calcPoints().calcDistance(new DistanceCalcEarth()), 1);
     }
@@ -613,8 +632,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test
     public void testCalcIfEmptyWay() {
         Path p = createAlgo(createTestStorage()).calcPath(0, 0);
-        assertEquals(p.calcNodes().toString(), 1, p.calcNodes().size());
-        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
+        assertPathFromEqualsTo(p, 0);
     }
 
     @Test
@@ -622,21 +640,15 @@ public abstract class AbstractRoutingAlgorithmTester {
         GraphHopperStorage ghStorage = createTestStorage();
         // identical tower nodes
         Path p = calcPathViaQuery(ghStorage, 0.001, 0.000, 0.001, 0.000);
-        assertTrue(p.isFound());
-        assertEquals(IntArrayList.from(new int[]{0}), p.calcNodes());
-        // assertEquals(1, p.calcPoints().size());
-        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
+        assertPathFromEqualsTo(p, 0);
 
         // identical query points on edge
         p = calcPath(ghStorage, 0, 1, 0, 1);
-        assertTrue(p.isFound());
-        assertEquals(IntArrayList.from(new int[]{8}), p.calcNodes());
-        // assertEquals(1, p.calcPoints().size());
-        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
+        assertPathFromEqualsTo(p, 8);
 
         // very close
         p = calcPathViaQuery(ghStorage, 0.00092, 0, 0.00091, 0);
-        assertEquals(IntArrayList.from(new int[]{8, 9}), p.calcNodes());
+        assertEquals(IntArrayList.from(8, 9), p.calcNodes());
         assertEquals(p.toString(), 1.11, p.getDistance(), .1);
     }
 
@@ -647,12 +659,12 @@ public abstract class AbstractRoutingAlgorithmTester {
 
         // 0-7 to 4-3
         Path p = calcPathViaQuery(graph, 0.0009, 0, 0.001, 0.001105);
-        assertEquals(p.toString(), IntArrayList.from(new int[]{10, 7, 6, 8, 3, 9}), p.calcNodes());
+        assertEquals(p.toString(), IntArrayList.from(10, 7, 6, 8, 3, 9), p.calcNodes());
         assertEquals(p.toString(), 324.11, p.getDistance(), 0.01);
 
         // 0-1 to 2-3
         p = calcPathViaQuery(graph, 0.001, 0.0001, 0.010, 0.0011);
-        assertEquals(p.toString(), IntArrayList.from(new int[]{0, 7, 6, 8, 3, 9}), p.calcNodes());
+        assertEquals(p.toString(), IntArrayList.from(0, 7, 6, 8, 3, 9), p.calcNodes());
         assertEquals(p.toString(), 1335.35, p.getDistance(), 0.01);
     }
 
@@ -660,7 +672,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     public void testViaEdges_WithCoordinates() {
         GraphHopperStorage ghStorage = createTestStorage();
         Path p = calcPath(ghStorage, 0, 1, 2, 3);
-        assertEquals(IntArrayList.from(new int[]{8, 1, 2, 9}), p.calcNodes());
+        assertEquals(IntArrayList.from(8, 1, 2, 9), p.calcNodes());
         assertEquals(p.toString(), 56.7, p.getDistance(), .1);
     }
 
@@ -684,17 +696,17 @@ public abstract class AbstractRoutingAlgorithmTester {
 
         // 0-1 to 3-4
         Path p = calcPathViaQuery(graph, 0.00010, 0.00001, 0, 0.00009);
-        assertEquals(IntArrayList.from(new int[]{5, 1, 2, 3, 6}), p.calcNodes());
+        assertEquals(IntArrayList.from(5, 1, 2, 3, 6), p.calcNodes());
         assertEquals(p.toString(), 26.81, p.getDistance(), .1);
 
         // overlapping edges: 2-3 and 3-2
         p = calcPathViaQuery(graph, 0.000049, 0.00014, 0.00001, 0.0001);
-        assertEquals(IntArrayList.from(new int[]{5, 6}), p.calcNodes());
+        assertEquals(IntArrayList.from(5, 6), p.calcNodes());
         assertEquals(p.toString(), 6.2, p.getDistance(), .1);
 
         // 'from' and 'to' edge share one node '2': 1-2 to 3-2
         p = calcPathViaQuery(graph, 0.00009, 0.00011, 0.00001, 0.00011);
-        assertEquals(p.toString(), IntArrayList.from(new int[]{6, 2, 5}), p.calcNodes());
+        assertEquals(p.toString(), IntArrayList.from(6, 2, 5), p.calcNodes());
         assertEquals(p.toString(), 12.57, p.getDistance(), .1);
     }
 
@@ -704,7 +716,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         GraphHopperStorage graph = createGHStorage(encodingManager, Arrays.asList(weighting), false);
         initDirectedAndDiffSpeed(graph, carEncoder);
         Path p = calcPathViaQuery(weighting, graph, 0.002, 0.0005, 0.0017, 0.0031);
-        assertEquals(IntArrayList.from(new int[]{8, 1, 5, 3, 9}), p.calcNodes());
+        assertEquals(IntArrayList.from(8, 1, 5, 3, 9), p.calcNodes());
         assertEquals(602.98, p.getDistance(), 1e-1);
     }
 
@@ -762,13 +774,13 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test
     public void testTwoWeightsPerEdge() {
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
-        EncodingManager em = new EncodingManager(encoder);
+        EncodingManager em = EncodingManager.create(encoder);
         AlgorithmOptions opts = AlgorithmOptions.start().
                 weighting(new FastestWeighting(encoder)).build();
         GraphHopperStorage graph = createGHStorage(em, Arrays.asList(opts.getWeighting()), true);
         initEleGraph(graph);
         // force the other path
-        GHUtility.getEdge(graph, 0, 3).setFlags(encoder.setProperties(10, false, true));
+        GHUtility.setProperties(GHUtility.getEdge(graph, 0, 3), encoder, 10, false, true);
 
         // for two weights per edge it happened that Path (and also the Weighting) read the wrong side
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
@@ -782,15 +794,19 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test
     public void test0SpeedButUnblocked_Issue242() {
         GraphHopperStorage graph = createGHStorage(false);
-        long flags = carEncoder.setAccess(carEncoder.setSpeed(0, 0), true, true);
+        EdgeIteratorState edge01 = graph.edge(0, 1).setDistance(10);
+        EdgeIteratorState edge12 = graph.edge(1, 2).setDistance(10);
+        edge01.set(carAvSpeedEnc, 0.0).set(carAccessEnc, true).setReverse(carAccessEnc, true);
+        edge01.setFlags(edge01.getFlags());
 
-        graph.edge(0, 1).setFlags(flags).setDistance(10);
-        graph.edge(1, 2).setFlags(flags).setDistance(10);
+        edge12.set(carAvSpeedEnc, 0.0).set(carAccessEnc, true).setReverse(carAccessEnc, true);
+        edge12.setFlags(edge12.getFlags());
+
 
         RoutingAlgorithm algo = createAlgo(graph);
         try {
             Path p = algo.calcPath(0, 2);
-            assertTrue(false);
+            fail("there should have been an exception");
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Speed cannot be 0"));
         }
@@ -854,7 +870,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         initEleGraph(graph);
         Path p = createAlgo(graph, opts).calcPath(0, 10);
         // GHUtility.printEdgeInfo(graph, carEncoder);
-        assertEquals(IntArrayList.from(new int[]{0, 4, 6, 10}), p.calcNodes());
+        assertEquals(IntArrayList.from(0, 4, 6, 10), p.calcNodes());
 
         AlgorithmOptions fakeOpts = AlgorithmOptions.start().weighting(fakeWeighting).build();
         graph = createGHStorage(encodingManager, Arrays.asList(fakeOpts.getWeighting()), true);
@@ -865,7 +881,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         RoutingAlgorithmFactory factory = createFactory(graph, fakeOpts);
         QueryGraph qGraph = new QueryGraph(getGraph(graph, fakeWeighting)).lookup(from, to);
         p = factory.createAlgo(qGraph, fakeOpts).calcPath(from.getClosestNode(), to.getClosestNode());
-        assertEquals(IntArrayList.from(new int[]{12, 0, 1, 2, 11, 7, 10, 13}), p.calcNodes());
+        assertEquals(IntArrayList.from(12, 0, 1, 2, 11, 7, 10, 13), p.calcNodes());
         assertEquals(37009621, p.getTime());
         assertEquals(616827, p.getDistance(), 1);
         assertEquals(493462, p.getWeight(), 1);
@@ -886,7 +902,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         initFootVsCar(ghStorage);
 
         // normal path would be 0-4-6-7 but block 4-6
-        GHUtility.getEdge(ghStorage, 4, 6).setFlags(carEncoder.setProperties(20, false, false));
+        GHUtility.setProperties(GHUtility.getEdge(ghStorage, 4, 6), carEncoder, 20, false, false);
 
         RoutingAlgorithm algoFoot = createFactory(ghStorage, footOptions).
                 createAlgo(getGraph(ghStorage, footWeighting), footOptions);
@@ -894,7 +910,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         RoutingAlgorithm algoCar = createFactory(ghStorage, carOptions).
                 createAlgo(getGraph(ghStorage, carWeighting), carOptions);
         Path p1 = algoCar.calcPath(0, 7);
-        assertEquals(IntArrayList.from(new int[]{0, 1, 5, 6, 7}), p1.calcNodes());
+        assertEquals(IntArrayList.from(0, 1, 5, 6, 7), p1.calcNodes());
         assertEquals(p1.toString(), 26000, p1.getDistance(), 1e-6);
     }
 
@@ -942,5 +958,15 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     protected GraphHopperStorage createMatrixGraph() {
         return createMatrixAlikeGraph(createGHStorage(false));
+    }
+
+    private void assertPathFromEqualsTo(Path p, int node) {
+        assertTrue(p.isFound());
+        assertEquals(p.toString(), IntArrayList.from(node), p.calcNodes());
+        assertEquals(p.toString(), 1, p.calcPoints().size());
+        assertEquals(p.toString(), 0, p.calcEdges().size());
+        assertEquals(p.toString(), 0, p.getWeight(), 1e-4);
+        assertEquals(p.toString(), 0, p.getDistance(), 1e-4);
+        assertEquals(p.toString(), 0, p.getTime(), 1e-4);
     }
 }

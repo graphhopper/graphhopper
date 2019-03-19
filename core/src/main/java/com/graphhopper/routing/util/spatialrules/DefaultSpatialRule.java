@@ -49,7 +49,7 @@ public class DefaultSpatialRule extends AbstractSpatialRule {
     }
 
     @Override
-    public AccessValue getAccessValue(String highwayTag, TransportationMode transportationMode, AccessValue _default) {
+    public Access getAccess(String highwayTag, TransportationMode transportationMode, Access _default) {
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restriction
         // We tried to find generally forbidden tags
         if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
@@ -59,7 +59,7 @@ public class DefaultSpatialRule extends AbstractSpatialRule {
                 case "cycleway":
                 case "footway":
                 case "pedestrian":
-                    return AccessValue.NOT_ACCESSIBLE;
+                    return Access.NO;
                 default:
                     return _default;
             }

@@ -23,12 +23,8 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 
 public class AStarBidirectionCH extends AStarBidirection {
-    public AStarBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
-        super(graph, weighting, traversalMode);
-        if (traversalMode.isEdgeBased()) {
-            throw new IllegalArgumentException("Edge based traversal is not supported" +
-                    "for CH");
-        }
+    public AStarBidirectionCH(Graph graph, Weighting weighting) {
+        super(graph, weighting, TraversalMode.NODE_BASED);
     }
 
     @Override

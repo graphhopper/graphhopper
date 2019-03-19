@@ -1,7 +1,23 @@
+0.12
+    access refactoring #1436 that moves AccessValue into SpatialRule.Access
+    refactoring of EncodingManager to use builder pattern. Migration should be simple. Replace new EncodingManager with EncodingManager.create
+	The methods GraphHopper.setEnableInstructions/setPreferredLanguage is now in EncodingManager.Builder
+    EncodingManager.supports renames to hasEncoder
+    big refactoring #1447: to increase 64bit limit of flags, make reverse direction handling easier, to allow shared EncodedValues,
+        remove reverseFlags method, much simpler property access, simplify FlagEncoder (maybe even deprecate this interface at a later stage)
+    moved shp-reader into separate repository: https://github.com/graphhopper/graphhopper-reader-shp    
+
 0.11
-    web resources for dropwizard web framework (no servlets anymore)
+    web resources for dropwizard web framework (no servlets anymore) #1108
     prefix -Dgraphhopper. for command line arguments necessary, see docs/web/quickstart.md or docs/core/quickstart-from-source.md#running--debbuging-with-intellij for details
     delegated reading properties to dropwizard, i.e. the new format yml is not read again in GraphHopper.init
+    changed file format for landmarks #1376
+    convert properties into new yml format via: https://gist.github.com/karussell/dbc9b4c455bca98b6a38e4a160e23bf8
+
+0.10
+    introduce path details
+    added handcoded API java client to this repository
+
 0.9
     remove war bundling support #297
     rename of DefaultModule to GraphHopperModule and GHServletModule to GraphHopperServletModule
@@ -139,7 +155,7 @@
         mapsforge: use mapsforge-map dependency; merged #461; avoid duplicates otherwise mapsforge-core would be duplicate (?)
     refactored/renamed classes and methods:
         refactor 'flags' from int to long (still only int is stored)
-        replacing Graph.edge(a,b,dist,flags) by Graph.edge(a,b).setDistance().setFlags()
+        replacing Graph.edge(a,b,dist,edgeFlags) by Graph.edge(a,b).setDistance().setFlags()
         FlagEncoder.flags => use FlagEncoder.setProperties or separate setAccess and setSpeed method
         renamed LocationIDResult to QueryResult and Location2NodesNtree to LocationIndexTree
         renamed Location2IDIndex to LocationIndex

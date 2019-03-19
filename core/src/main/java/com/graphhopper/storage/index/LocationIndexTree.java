@@ -99,7 +99,7 @@ public class LocationIndexTree implements LocationIndex {
         MAGIC_INT = Integer.MAX_VALUE / 22316;
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
-        dataAccess = dir.find("location_index");
+        dataAccess = dir.find("location_index", DAType.getPreferredInt(dir.getDefaultType()));
     }
 
     public int getMinResolutionInMeter() {
@@ -348,8 +348,8 @@ public class LocationIndexTree implements LocationIndex {
     /**
      * This method fills the set with stored node IDs from the given spatial key part (a latitude-longitude prefix).
      */
-    final void fillIDs(long keyPart, int intPointer, GHIntHashSet set, int depth) {
-        long pointer = (long) intPointer << 2;
+    final void fillIDs(long keyPart, int intIndex, GHIntHashSet set, int depth) {
+        long pointer = (long) intIndex << 2;
         if (depth == entries.length) {
             int nextIntPointer = dataAccess.getInt(pointer);
             if (nextIntPointer < 0) {
@@ -476,11 +476,11 @@ public class LocationIndexTree implements LocationIndex {
         public final void onNode(int nodeId) {
             EdgeIterator iter = edgeExplorer.setBaseNode(nodeId);
             while (iter.next()) {
-                onEdge(iter.getEdge(), nodeId, iter.getAdjNode());
+                onEdge(iter, nodeId, iter.getAdjNode());
             }
         }
 
-        public abstract void onEdge(int edgeId, int nodeA, int nodeB);
+        public abstract void onEdge(EdgeIteratorState edge, int nodeA, int nodeB);
     }
 
     /**

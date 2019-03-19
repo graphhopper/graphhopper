@@ -17,30 +17,29 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
+import static com.graphhopper.routing.util.PriorityCode.BEST;
+
 /**
  * Special weighting for (motor)bike
- * <p>
  *
  * @author Peter Karich
  */
 public class PriorityWeighting extends FastestWeighting {
-    /**
-     * For now used only in BikeCommonFlagEncoder, FootEncoder and MotorcycleFlagEncoder
-     */
-    public static final int KEY = 101;
-    private final double minFactor;
 
-    public PriorityWeighting(FlagEncoder encoder) {
-        this(encoder, new PMap(0));
-    }
+    private final double minFactor;
+    private final DecimalEncodedValue priorityEnc;
 
     public PriorityWeighting(FlagEncoder encoder, PMap pMap) {
         super(encoder, pMap);
-        double maxPriority = 1; // BEST / BEST
+        priorityEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
+        double maxPriority = PriorityCode.getFactor(BEST.getValue());
         minFactor = 1 / (0.5 + maxPriority);
     }
 
@@ -54,6 +53,6 @@ public class PriorityWeighting extends FastestWeighting {
         double weight = super.calcWeight(edgeState, reverse, prevOrNextEdgeId);
         if (Double.isInfinite(weight))
             return Double.POSITIVE_INFINITY;
-        return weight / (0.5 + flagEncoder.getDouble(edgeState.getFlags(), KEY));
+        return weight / (0.5 + edgeState.get(priorityEnc));
     }
 }

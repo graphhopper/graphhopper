@@ -93,6 +93,10 @@ public abstract class MiniPerfTest {
         return "sum:" + nf(getSum() / 1000f) + "s, time/call:" + nf(getMean() / 1000f) + "s";
     }
 
+    public int getDummySum() {
+        return dummySum;
+    }
+
     public String nf(Number num) {
         return new DecimalFormat("#.###", DecimalFormatSymbols.getInstance(Locale.ROOT)).format(num);
     }

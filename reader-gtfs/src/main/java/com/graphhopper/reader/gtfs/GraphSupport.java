@@ -18,13 +18,10 @@
 
 package com.graphhopper.reader.gtfs;
 
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
@@ -32,17 +29,18 @@ import com.graphhopper.util.shapes.BBox;
 
 class GraphSupport {
 
-    private GraphSupport() {}
+    private GraphSupport() {
+    }
 
 
     /**
      * Creates a read-only view of a Graph, presenting the sub-graph consisting of all the nodes; and those
      * edges accepted by edgeFilter.
-     *
+     * <p>
      * Devised to pass into LocationIndexTree, and works fine there (because LocationIndexTree doesn't index nodes
      * directly, but only goes through the edges). Probably not useful in other contexts.
      *
-     * @param baseGraph The graph to construct a view for.
+     * @param baseGraph  The graph to construct a view for.
      * @param edgeFilter The filter to filter with.
      * @return The filtered view.
      */
@@ -56,6 +54,11 @@ class GraphSupport {
             @Override
             public int getNodes() {
                 return baseGraph.getNodes();
+            }
+
+            @Override
+            public int getEdges() {
+                return baseGraph.getEdges();
             }
 
             @Override
@@ -108,6 +111,16 @@ class GraphSupport {
                     }
 
                     @Override
+                    public int getOrigEdgeFirst() {
+                        return getEdge();
+                    }
+
+                    @Override
+                    public int getOrigEdgeLast() {
+                        return getEdge();
+                    }
+
+                    @Override
                     public int getBaseNode() {
                         return edge.getBaseNode();
                     }
@@ -140,12 +153,12 @@ class GraphSupport {
                     }
 
                     @Override
-                    public long getFlags() {
+                    public IntsRef getFlags() {
                         return edge.getFlags();
                     }
 
                     @Override
-                    public EdgeIteratorState setFlags(long flags) {
+                    public EdgeIteratorState setFlags(IntsRef flags) {
                         edge.setFlags(flags);
                         return this;
                     }
@@ -159,21 +172,6 @@ class GraphSupport {
                     public EdgeIteratorState setAdditionalField(int value) {
                         edge.setAdditionalField(value);
                         return this;
-                    }
-
-                    @Override
-                    public boolean isForward(FlagEncoder encoder) {
-                        return edge.isForward(encoder);
-                    }
-
-                    @Override
-                    public boolean isBackward(FlagEncoder encoder) {
-                        return edge.isBackward(encoder);
-                    }
-
-                    @Override
-                    public boolean getBool(int key, boolean _default) {
-                        return edge.getBool(key, _default);
                     }
 
                     @Override
@@ -193,7 +191,95 @@ class GraphSupport {
                     }
 
                     @Override
-                    public EdgeIteratorState copyPropertiesTo(EdgeIteratorState e) {
+                    public boolean get(BooleanEncodedValue property) {
+                        return edge.get(property);
+                    }
+
+                    @Override
+                    public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
+                        edge.set(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public boolean getReverse(BooleanEncodedValue property) {
+                        return edge.getReverse(property);
+                    }
+
+                    @Override
+                    public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
+                        edge.setReverse(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public int get(IntEncodedValue property) {
+                        return edge.get(property);
+                    }
+
+                    @Override
+                    public EdgeIteratorState set(IntEncodedValue property, int value) {
+                        edge.set(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public int getReverse(IntEncodedValue property) {
+                        return edge.getReverse(property);
+                    }
+
+                    @Override
+                    public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
+                        edge.setReverse(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public double get(DecimalEncodedValue property) {
+                        return edge.get(property);
+                    }
+
+                    @Override
+                    public EdgeIteratorState set(DecimalEncodedValue property, double value) {
+                        edge.set(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public double getReverse(DecimalEncodedValue property) {
+                        return edge.getReverse(property);
+                    }
+
+                    @Override
+                    public EdgeIteratorState setReverse(DecimalEncodedValue property, double value) {
+                        edge.setReverse(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public IndexBased get(ObjectEncodedValue property) {
+                        return edge.get(property);
+                    }
+
+                    @Override
+                    public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
+                        edge.set(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public IndexBased getReverse(ObjectEncodedValue property) {
+                        return edge.getReverse(property);
+                    }
+
+                    @Override
+                    public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
+                        edge.setReverse(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState e) {
                         throw new UnsupportedOperationException();
                     }
                 };
@@ -216,6 +302,11 @@ class GraphSupport {
 
             @Override
             public GraphExtension getExtension() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int getOtherNode(int edge, int node) {
                 throw new UnsupportedOperationException();
             }
         };

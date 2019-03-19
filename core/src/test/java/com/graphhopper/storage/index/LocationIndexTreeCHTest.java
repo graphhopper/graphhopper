@@ -19,8 +19,8 @@ package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
@@ -82,16 +82,18 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
 
         // create shortcuts
         ghStorage.freeze();
-        FlagEncoder car = encodingManager.getEncoder("car");
-        long flags = car.setProperties(60, true, true);
+        int flags = PrepareEncoder.getScDirMask();
         CHEdgeIteratorState iter5 = lg.shortcut(0, 2);
-        iter5.setDistance(20).setFlags(flags);
+        iter5.setFlagsAndWeight(flags, 0);
+        iter5.setDistance(20);
         iter5.setSkippedEdges(iter1.getEdge(), iter2.getEdge());
         CHEdgeIteratorState iter6 = lg.shortcut(2, 4);
-        iter6.setDistance(28).setFlags(flags);
+        iter6.setFlagsAndWeight(flags, 0);
+        iter6.setDistance(28);
         iter6.setSkippedEdges(iter3.getEdge(), iter4.getEdge());
         CHEdgeIteratorState tmp = lg.shortcut(0, 4);
-        tmp.setDistance(40).setFlags(flags);
+        tmp.setFlagsAndWeight(flags, 0);
+        tmp.setDistance(40);
         tmp.setSkippedEdges(iter5.getEdge(), iter6.getEdge());
 
         LocationIndex index = createIndex(ghStorage, -1);
@@ -154,7 +156,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
         index.findNetworkEntries(0.51, 0.2, set, 0);
         index.findNetworkEntries(0.51, 0.2, set, 1);
         IntSet expectedSet = new GHIntHashSet();
-        expectedSet.add(0);
+        expectedSet.add(1);
         expectedSet.add(2);
         assertEquals(expectedSet, set);
 

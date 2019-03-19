@@ -31,7 +31,7 @@ it is currently the case.
 
 The data layout for the DataAccess objects in GraphHopperStorage called 'nodes' and 'edges' is the following:
 
-![storage layout](http://karussell.files.wordpress.com/2013/08/wiki-graph.png)
+![storage layout](./images/wiki-graph.png)
 
 Some explanations:
  * One 'node row' consists of latitude,longitude (not shown) and the first edgeID

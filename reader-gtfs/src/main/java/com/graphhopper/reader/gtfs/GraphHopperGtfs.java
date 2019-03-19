@@ -173,8 +173,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             if (!source.isValid()) {
                 throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);
             }
-            if (flagEncoder.getEdgeType(source.getClosestEdge().getFlags()) != GtfsStorage.EdgeType.HIGHWAY) {
-                throw new RuntimeException(flagEncoder.getEdgeType(source.getClosestEdge().getFlags()).name());
+            if (flagEncoder.getEdgeType(source.getClosestEdge()) != GtfsStorage.EdgeType.HIGHWAY) {
+                throw new RuntimeException(flagEncoder.getEdgeType(source.getClosestEdge()).name());
             }
             return source;
         }
@@ -184,7 +184,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 final List<Trip.Leg> legs = tripFromLabel.getTrip(translation, graphExplorer, accessEgressWeighting, solution);
                 final PathWrapper pathWrapper = tripFromLabel.createPathWrapper(translation, waypoints, legs);
                 pathWrapper.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
-                pathWrapper.setTime((solution.get(solution.size()-1).label.currentTime - solution.get(0).label.currentTime));
+                pathWrapper.setTime((solution.get(solution.size() - 1).label.currentTime - solution.get(0).label.currentTime));
                 response.add(pathWrapper);
             }
             Comparator<PathWrapper> c = Comparator.comparingInt(p -> (p.isImpossible() ? 1 : 0));
@@ -206,7 +206,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 if (label.adjNode == startNode) {
                     stationLabels.add(label);
                     break;
-                } else if (label.edge != -1 && flagEncoder.getEdgeType(accessEgressGraphExplorer.getEdgeIteratorState(label.edge, label.parent.adjNode).getFlags()) == edgeType) {
+                } else if (label.edge != -1 && flagEncoder.getEdgeType(accessEgressGraphExplorer.getEdgeIteratorState(label.edge, label.parent.adjNode)) == edgeType) {
                     stationLabels.add(label);
                 }
             }
@@ -235,7 +235,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             while (iterator.hasNext()) {
                 Label label = iterator.next();
                 final long weight = router.weight(label);
-                if ( (!profileQuery || discoveredSolutions.size() >= limitSolutions) && weight + smallestStationLabelWeight > highestWeightForDominationTest) {
+                if ((!profileQuery || discoveredSolutions.size() >= limitSolutions) && weight + smallestStationLabelWeight > highestWeightForDominationTest) {
                     break;
                 }
                 Label reverseLabel = reverseSettledSet.get(label.adjNode);
@@ -247,7 +247,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                             discoveredSolutions.add(combinedSolution);
                             originalSolutions.put(combinedSolution, label);
                             if (profileQuery) {
-                                highestWeightForDominationTest = router.weight(discoveredSolutions.get(discoveredSolutions.size()-1));
+                                highestWeightForDominationTest = router.weight(discoveredSolutions.get(discoveredSolutions.size() - 1));
                             } else {
                                 highestWeightForDominationTest = discoveredSolutions.stream().filter(s -> !s.impossible && (ignoreTransfers || s.nTransfers <= 1)).mapToLong(router::weight).min().orElse(Long.MAX_VALUE);
                             }
@@ -285,7 +285,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             visitedNodes += router.getVisitedNodes();
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
             if (discoveredSolutions.isEmpty() && router.getVisitedNodes() >= maxVisitedNodesForRequest) {
-                throw new IllegalArgumentException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest);
+                response.addError(new IllegalArgumentException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest));
             }
             response.getHints().put("visited_nodes.sum", visitedNodes);
             response.getHints().put("visited_nodes.average", visitedNodes);
@@ -366,7 +366,11 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                             t.transfer.min_transfer_time = (int) (t.time / 1000L);
                             gtfsFeed.transfers.put(t.id, t.transfer);
                         });
-                gtfsReader.readGraph();
+                try {
+                    gtfsReader.buildPtNetwork();
+                } catch (Exception e) {
+                    throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
+                }
             }
             graphHopperStorage.flush();
             return graphHopperStorage;

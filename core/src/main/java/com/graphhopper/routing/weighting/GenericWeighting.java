@@ -75,9 +75,9 @@ public class GenericWeighting extends AbstractWeighting {
     public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         // handle oneways and removed edges via subnetwork removal (existing and allowed highway tags but 'island' edges)
         if (reverse) {
-            if (!gEncoder.isBackward(edgeState, accessType))
+            if (!edgeState.getReverse(accessEnc))
                 return Double.POSITIVE_INFINITY;
-        } else if (!gEncoder.isForward(edgeState, accessType)) {
+        } else if (!edgeState.get(accessEnc)) {
             return Double.POSITIVE_INFINITY;
         }
 
@@ -91,9 +91,9 @@ public class GenericWeighting extends AbstractWeighting {
             return Double.POSITIVE_INFINITY;
 
         switch (gEncoder.getAccessValue(edgeState.getFlags())) {
-            case NOT_ACCESSIBLE:
+            case NO:
                 return Double.POSITIVE_INFINITY;
-            case EVENTUALLY_ACCESSIBLE:
+            case CONDITIONAL:
                 time = time * uncertainAccessiblePenalty;
         }
 
@@ -124,7 +124,7 @@ public class GenericWeighting extends AbstractWeighting {
         long timeInMillis = (long) (edgeState.getDistance() / speed * SPEED_CONV);
 
         // add direction penalties at start/stop/via points
-        boolean unfavoredEdge = edgeState.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, false);
+        boolean unfavoredEdge = edgeState.get(EdgeIteratorState.UNFAVORED_EDGE);
         if (unfavoredEdge)
             timeInMillis += headingPenaltyMillis;
 

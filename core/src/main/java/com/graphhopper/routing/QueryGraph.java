@@ -26,10 +26,7 @@ import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -303,7 +300,6 @@ public class QueryGraph implements Graph {
                 int adjNode = closestEdge.getAdjNode();
                 int origTraversalKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), false);
                 int origRevTraversalKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), true);
-                long reverseFlags = closestEdge.detach(true).getFlags();
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
                 int virtNodeId = virtualNodes.getSize() + mainNodes;
@@ -326,10 +322,11 @@ public class QueryGraph implements Graph {
                     }
 
                     queryResults.add(res);
+                    boolean isPillar = res.getSnappedPosition() == QueryResult.Position.PILLAR;
                     createEdges(origTraversalKey, origRevTraversalKey,
-                            prevPoint, prevWayIndex,
+                            prevPoint, prevWayIndex, isPillar,
                             res.getSnappedPoint(), res.getWayIndex(),
-                            fullPL, closestEdge, prevNodeId, virtNodeId, reverseFlags);
+                            fullPL, closestEdge, prevNodeId, virtNodeId);
 
                     virtualNodes.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
 
@@ -350,9 +347,9 @@ public class QueryGraph implements Graph {
                 // two edges between last result and adjacent node are still missing if not all points skipped
                 if (addedEdges)
                     createEdges(origTraversalKey, origRevTraversalKey,
-                            prevPoint, prevWayIndex,
+                            prevPoint, prevWayIndex, false,
                             fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 2,
-                            fullPL, closestEdge, virtNodeId - 1, adjNode, reverseFlags);
+                            fullPL, closestEdge, virtNodeId - 1, adjNode);
 
                 return true;
             }
@@ -394,27 +391,32 @@ public class QueryGraph implements Graph {
     }
 
     private void createEdges(int origTraversalKey, int origRevTraversalKey,
-                             GHPoint3D prevSnapped, int prevWayIndex, GHPoint3D currSnapped, int wayIndex,
+                             GHPoint3D prevSnapped, int prevWayIndex, boolean isPillar, GHPoint3D currSnapped, int wayIndex,
                              PointList fullPL, EdgeIteratorState closestEdge,
-                             int prevNodeId, int nodeId, long reverseFlags) {
+                             int prevNodeId, int nodeId) {
         int max = wayIndex + 1;
-        // basePoints must have at least the size of 2 to make sure fetchWayGeometry(3) returns at least 2
         PointList basePoints = new PointList(max - prevWayIndex + 1, mainNodeAccess.is3D());
         basePoints.add(prevSnapped.lat, prevSnapped.lon, prevSnapped.ele);
         for (int i = prevWayIndex; i < max; i++) {
             basePoints.add(fullPL, i);
         }
-        basePoints.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
+        if (!isPillar) {
+            basePoints.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
+        }
+        // basePoints must have at least the size of 2 to make sure fetchWayGeometry(3) returns at least 2
+        assert basePoints.size() >= 2 : "basePoints must have at least two points";
 
         PointList baseReversePoints = basePoints.clone(true);
         double baseDistance = basePoints.calcDistance(Helper.DIST_PLANE);
         int virtEdgeId = mainEdges + virtualEdges.size();
 
+        boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);
         // edges between base and snapped point
         VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origTraversalKey,
-                virtEdgeId, prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints);
+                virtEdgeId, prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints, reverse);
         VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevTraversalKey,
-                virtEdgeId, nodeId, prevNodeId, baseDistance, reverseFlags, closestEdge.getName(), baseReversePoints);
+                virtEdgeId, nodeId, prevNodeId, baseDistance, IntsRef.deepCopyOf(closestEdge.getFlags()), closestEdge.getName(), baseReversePoints, !reverse);
+
         baseEdge.setReverseEdge(baseReverseEdge);
         baseReverseEdge.setReverseEdge(baseEdge);
         virtualEdges.add(baseEdge);
@@ -486,8 +488,8 @@ public class QueryGraph implements Graph {
      * the other adjacent node of virtualNodeId.
      * <p>
      *
-     * @param virtualNodeId  virtual node at which edges get unfavored
-     * @param virtualEdgeId  this edge and the reverse virtual edge become unfavored
+     * @param virtualNodeId virtual node at which edges get unfavored
+     * @param virtualEdgeId this edge and the reverse virtual edge become unfavored
      */
     public void unfavorVirtualEdgePair(int virtualNodeId, int virtualEdgeId) {
         if (!isVirtualNode(virtualNodeId)) {
@@ -528,6 +530,11 @@ public class QueryGraph implements Graph {
     @Override
     public int getNodes() {
         return virtualNodes.getSize() + mainNodes;
+    }
+
+    @Override
+    public int getEdges() {
+        return virtualEdges.size() + mainEdges;
     }
 
     @Override
@@ -741,6 +748,14 @@ public class QueryGraph implements Graph {
     @Override
     public GraphExtension getExtension() {
         return wrappedExtension;
+    }
+
+    @Override
+    public int getOtherNode(int edge, int node) {
+        if (isVirtualEdge(edge)) {
+            return getEdgeIteratorState(edge, node).getBaseNode();
+        }
+        return mainGraph.getOtherNode(edge, node);
     }
 
     private UnsupportedOperationException exc() {

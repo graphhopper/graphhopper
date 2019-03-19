@@ -26,7 +26,6 @@ import com.graphhopper.util.shapes.BBox;
 /**
  * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via
  * indices called node IDs. To get the lat,lon point you need to set up a LocationIndex instance.
- * <p>
  *
  * @author Peter Karich
  */
@@ -41,6 +40,11 @@ public interface Graph {
      * @return the number of created locations - via setNode() or edge()
      */
     int getNodes();
+
+    /**
+     * @return the number of edges in this graph. equivalent to getAllEdges().length();
+     */
+    int getEdges();
 
     /**
      * Creates a node explorer to access node properties.
@@ -72,12 +76,16 @@ public interface Graph {
      * Returns a wrapper over the specified edgeId.
      *
      * @param adjNode is the node that will be returned via adjNode(). If adjNode is
-     *                Integer.MIN_VALUE then the edge with uncertain values for adjNode and baseNode (two
-     *                possibilities) will be returned.
+     *                Integer.MIN_VALUE then the edge will be returned in the direction of how it is stored
      * @return an edge iterator state or potentially null if adjNode does not match
      * @throws IllegalStateException if edgeId is not valid
      */
     EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode);
+
+    /**
+     * @return the 'opposite' node of a given edge, so if there is an edge 3-2 and node =2 this returns 3
+     */
+    int getOtherNode(int edge, int node);
 
     /**
      * @return all edges in this graph, where baseNode will be the smaller node.
@@ -102,7 +110,6 @@ public interface Graph {
 
     /**
      * Copy this Graph into the specified Graph g.
-     * <p>
      *
      * @return the specified Graph g
      */
@@ -112,4 +119,5 @@ public interface Graph {
      * @return the graph extension like a TurnCostExtension
      */
     GraphExtension getExtension();
+
 }

@@ -17,8 +17,9 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.MotorcycleFlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
@@ -27,10 +28,16 @@ import com.graphhopper.util.PMap;
  */
 public class CurvatureWeighting extends PriorityWeighting {
     private final double minFactor;
+    private final DecimalEncodedValue priorityEnc;
+    private final DecimalEncodedValue curvatureEnc;
+    private final DecimalEncodedValue avSpeedEnc;
 
     public CurvatureWeighting(FlagEncoder flagEncoder, PMap pMap) {
         super(flagEncoder, pMap);
 
+        priorityEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "priority"));
+        curvatureEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "curvature"));
+        avSpeedEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "average_speed"));
         double minBendiness = 1; // see correctErrors
         double maxPriority = 1; // BEST / BEST
         minFactor = minBendiness / Math.log(flagEncoder.getMaxSpeed()) / (0.5 + maxPriority);
@@ -43,8 +50,8 @@ public class CurvatureWeighting extends PriorityWeighting {
 
     @Override
     public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-        double priority = flagEncoder.getDouble(edge.getFlags(), KEY);
-        double bendiness = flagEncoder.getDouble(edge.getFlags(), MotorcycleFlagEncoder.CURVATURE_KEY);
+        double priority = priorityEnc.getDecimal(false, edge.getFlags());
+        double bendiness = curvatureEnc.getDecimal(false, edge.getFlags());
         double speed = getRoadSpeed(edge, reverse);
         double roadDistance = edge.getDistance();
 
@@ -55,7 +62,7 @@ public class CurvatureWeighting extends PriorityWeighting {
     }
 
     protected double getRoadSpeed(EdgeIteratorState edge, boolean reverse) {
-        return reverse ? flagEncoder.getReverseSpeed(edge.getFlags()) : flagEncoder.getSpeed(edge.getFlags());
+        return reverse ? edge.getReverse(avSpeedEnc) : edge.get(avSpeedEnc);
     }
 
     @Override

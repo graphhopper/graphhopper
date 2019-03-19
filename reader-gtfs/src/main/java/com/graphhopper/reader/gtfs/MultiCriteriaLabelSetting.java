@@ -1,6 +1,6 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
  *  GraphHopper GmbH licenses this file to you under the Apache License,
@@ -19,11 +19,13 @@ package com.graphhopper.reader.gtfs;
 
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.util.EdgeIterator;
 
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -36,7 +38,11 @@ import java.util.stream.StreamSupport;
  * @author Peter Karich
  * @author Wesam Herbawi
  */
-class MultiCriteriaLabelSetting {
+public class MultiCriteriaLabelSetting {
+
+    public interface SPTVisitor {
+        void visit(Label label);
+    }
 
     private final Comparator<Label> queueComparator;
     private final List<Label> targetLabels;
@@ -56,7 +62,7 @@ class MultiCriteriaLabelSetting {
     private double betaTransfers;
     private double betaWalkTime = 1.0;
 
-    MultiCriteriaLabelSetting(GraphExplorer explorer, PtFlagEncoder flagEncoder, boolean reverse, double maxWalkDistancePerLeg, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes, List<Label> solutions) {
+    public MultiCriteriaLabelSetting(GraphExplorer explorer, PtFlagEncoder flagEncoder, boolean reverse, double maxWalkDistancePerLeg, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes, List<Label> solutions) {
         this.flagEncoder = flagEncoder;
         this.maxVisitedNodes = maxVisitedNodes;
         this.explorer = explorer;
@@ -69,9 +75,10 @@ class MultiCriteriaLabelSetting {
 
         queueComparator = Comparator
                 .comparingLong(this::weight)
-                .thenComparingLong(l1 -> l1.nTransfers)
+                .thenComparingLong(l -> l.nTransfers)
+                .thenComparingLong(l -> l.walkTime)
                 .thenComparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0)
-                .thenComparingLong(l2 -> l2.impossible ? 1 : 0);
+                .thenComparingLong(l -> l.impossible ? 1 : 0);
         fromHeap = new PriorityQueue<>(queueComparator);
         fromMap = new IntObjectHashMap<>();
     }
@@ -82,6 +89,30 @@ class MultiCriteriaLabelSetting {
         return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false)
                 .limit(maxVisitedNodes)
                 .peek(label -> visitedNodes++);
+    }
+
+    public void calcLabels(int from, int to, Instant startTime, int blockedRouteTypes, SPTVisitor visitor, Predicate<Label> predicate) {
+        this.startTime = startTime.toEpochMilli();
+        this.blockedRouteTypes = blockedRouteTypes;
+        Iterator<Label> iterator = StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false).iterator();
+        Label l;
+        while (iterator.hasNext() && predicate.test(l = iterator.next())) {
+            visitor.visit(l);
+        }
+    }
+
+
+    public void calcLabelsAndNeighbors(int from, int to, Instant startTime, int blockedRouteTypes, SPTVisitor visitor, Predicate<Label> predicate) {
+        this.startTime = startTime.toEpochMilli();
+        this.blockedRouteTypes = blockedRouteTypes;
+        Iterator<Label> iterator = StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false).iterator();
+        Label l;
+        while (iterator.hasNext() && predicate.test(l = iterator.next())) {
+            visitor.visit(l);
+        }
+        for (Label label : fromHeap) {
+            visitor.visit(label);
+        }
     }
 
     // experimental
@@ -103,7 +134,7 @@ class MultiCriteriaLabelSetting {
             super(0, 0);
             this.from = from;
             this.to = to;
-            Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0, 0.0, null, 0, 0,false,null);
+            Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0, 0.0, null, 0, 0, false, null);
             ArrayList<Label> labels = new ArrayList<>(1);
             labels.add(label);
             fromMap.put(from, labels);
@@ -117,11 +148,13 @@ class MultiCriteriaLabelSetting {
             } else {
                 Label label = fromHeap.poll();
                 action.accept(label);
+                final IntEncodedValue validityEnc = flagEncoder.getValidityIdEnc();
                 explorer.exploreEdgesAround(label).forEach(edge -> {
-                    GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
+                    GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge);
                     if (edgeType == GtfsStorage.EdgeType.ENTER_PT && reverse && ptOnly) return;
                     if (edgeType == GtfsStorage.EdgeType.EXIT_PT && !reverse && ptOnly) return;
-                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << flagEncoder.getValidityId(edge.getFlags()))) != 0) return;
+                    if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << edge.get(validityEnc))) != 0)
+                        return;
                     long nextTime;
                     if (reverse) {
                         nextTime = label.currentTime - explorer.calcTravelTimeMillis(edge, label.currentTime);
@@ -210,9 +243,8 @@ class MultiCriteriaLabelSetting {
         return true;
     }
 
-
     void removeDominated(Label me, Collection<Label> sptEntries) {
-        for (Iterator<Label> iterator = sptEntries.iterator(); iterator.hasNext();) {
+        for (Iterator<Label> iterator = sptEntries.iterator(); iterator.hasNext(); ) {
             Label sptEntry = iterator.next();
             if (dominates(me, sptEntry)) {
                 fromHeap.remove(sptEntry);
@@ -237,7 +269,7 @@ class MultiCriteriaLabelSetting {
 
         if (mindTransfers && me.nTransfers > they.nTransfers)
             return false;
-        if (me.nWalkDistanceConstraintViolations  > they.nWalkDistanceConstraintViolations)
+        if (me.nWalkDistanceConstraintViolations > they.nWalkDistanceConstraintViolations)
             return false;
         if (me.impossible && !they.impossible)
             return false;
@@ -253,12 +285,12 @@ class MultiCriteriaLabelSetting {
                     return true;
             }
         }
-        if (mindTransfers && me.nTransfers  < they.nTransfers)
+        if (mindTransfers && me.nTransfers < they.nTransfers)
             return true;
         if (me.nWalkDistanceConstraintViolations < they.nWalkDistanceConstraintViolations)
             return true;
 
-        return queueComparator.compare(me,they) <= 0;
+        return queueComparator.compare(me, they) <= 0;
     }
 
     private Long departureTimeCriterion(Label label) {

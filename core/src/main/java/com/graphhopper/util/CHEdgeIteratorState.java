@@ -36,7 +36,16 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
     /**
      * Sets the edges that this shortcut skips. Those skipped edges can be shortcuts too.
      */
-    void setSkippedEdges(int edge1, int edge2);
+    CHEdgeIteratorState setSkippedEdges(int edge1, int edge2);
+
+    /**
+     * Sets the first and last original edges that are skipped by this shortcut. For example for the following shortcut
+     * edge from x to y, which itself skips the shortcuts x->v and v->y the first original edge would be x->u and the
+     * last original edge would be w->y
+     * <p>
+     * x --> u --> v --> w --> y
+     */
+    CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge);
 
     /**
      * @return true if this edge is a shortcut, false otherwise.
@@ -46,9 +55,9 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
     /**
      * This method is only used on preparation.
      *
-     * @see PrepareEncoder#getScMergeStatus(long, long)
+     * @see PrepareEncoder#getScMergeStatus(int, int)
      */
-    int getMergeStatus(long flags);
+    int getMergeStatus(int flags);
 
     /**
      * Returns the weight of this shortcut.
@@ -59,4 +68,6 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
      * Sets the weight calculated from Weighting.calcWeight, only applicable if isShortcut is true.
      */
     CHEdgeIteratorState setWeight(double weight);
+
+    void setFlagsAndWeight(int flags, double weight);
 }

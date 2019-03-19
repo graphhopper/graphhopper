@@ -20,95 +20,79 @@ package com.graphhopper.reader.gtfs;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.SimpleIntEncodedValue;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
-import com.graphhopper.routing.util.EncodedDoubleValue;
-import com.graphhopper.routing.util.EncodedValue;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.EdgeIteratorState;
+
+import java.util.List;
 
 public class PtFlagEncoder extends AbstractFlagEncoder {
 
-	private EncodedValue time;
-	private EncodedValue transfers;
-	private EncodedValue validityId;
-	private EncodedValue type;
+    private IntEncodedValue timeEnc;
+    private IntEncodedValue transfersEnc;
+    private IntEncodedValue validityIdEnc;
+    private IntEncodedValue typeEnc;
 
-	public PtFlagEncoder() {
-		super(0, 1, 0);
-	}
-
-	@Override
-	public int defineWayBits(int index, int shift) {
-		shift = super.defineWayBits(index, shift);
-
-		// I have to set super.speedEncoder even though
-		// super already knows speedBits and speedFactor because they are constructor parameters.
-		speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, 0, 0);
-		shift += speedEncoder.getBits();
-
-		time = new EncodedValue("time", shift, 17, 1.0, 0, 24*60*60);
-		shift += time.getBits();
-		transfers = new EncodedValue("transfers", shift, 1, 1.0, 0, 1);
-		shift += transfers.getBits();
-		validityId = new EncodedValue("validityId", shift, 20, 1.0, 0, 1048575);
-		shift += validityId.getBits();
-		GtfsStorage.EdgeType[] edgeTypes = GtfsStorage.EdgeType.values();
-		type = new EncodedValue("type", shift, 4, 1.0, GtfsStorage.EdgeType.HIGHWAY.ordinal(), edgeTypes[edgeTypes.length-1].ordinal());
-		shift += type.getBits();
-		return shift;
-	}
-
-	@Override
-	public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
-		return oldRelationFlags;
-	}
-
-	@Override
-	public long acceptWay(ReaderWay way) {
-		return 0;
-	}
-
-	@Override
-	public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
-		return 0;
-	}
-
-	long getTime(long flags) {
-        return time.getValue(flags);
+    public PtFlagEncoder() {
+        super(0, 1, 0);
     }
 
-    long setTime(long flags, long time) {
-        return this.time.setValue(flags, time);
+    @Override
+    public void createEncodedValues(List<EncodedValue> list, String prefix, int index) {
+        // do we really need 2 bits for pt.access?
+        super.createEncodedValues(list, prefix, index);
+
+        list.add(validityIdEnc = new SimpleIntEncodedValue(prefix + "validity_id", 20, false));
+        list.add(transfersEnc = new SimpleIntEncodedValue(prefix + "transfers", 1, false));
+        list.add(typeEnc = new SimpleIntEncodedValue(prefix + "type", 4, false));
+        list.add(timeEnc = new SimpleIntEncodedValue(prefix + "time", 17, false));
     }
 
-    int getTransfers(long flags) {
-		return (int) transfers.getValue(flags);
-	}
+    @Override
+    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
+        return oldRelationFlags;
+    }
 
-	long setTransfers(long flags, int transfers) {
-		return this.transfers.setValue(flags, transfers);
-	}
+    @Override
+    public EncodingManager.Access getAccess(ReaderWay way) {
+        return EncodingManager.Access.CAN_SKIP;
+    }
 
-	int getValidityId(long flags) {
-		return (int) validityId.getValue(flags);
-	}
+    @Override
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+        return edgeFlags;
+    }
 
-	long setValidityId(long flags, int validityId) {
-		return this.validityId.setValue(flags, validityId);
-	}
+    public IntEncodedValue getTimeEnc() {
+        return timeEnc;
+    }
 
-	GtfsStorage.EdgeType getEdgeType(long flags) {
-		return GtfsStorage.EdgeType.values()[(int) type.getValue(flags)];
-	}
+    public IntEncodedValue getTransfersEnc() {
+        return transfersEnc;
+    }
 
-	long setEdgeType(long flags, GtfsStorage.EdgeType edgeType) {
-		return type.setValue(flags, edgeType.ordinal());
-	}
+    public IntEncodedValue getValidityIdEnc() {
+        return validityIdEnc;
+    }
 
-	public String toString() {
-		return "pt";
-	}
+    GtfsStorage.EdgeType getEdgeType(EdgeIteratorState edge) {
+        return GtfsStorage.EdgeType.values()[edge.get(typeEnc)];
+    }
 
-	@Override
-	public int getVersion() {
-		return 0;
-	}
+    void setEdgeType(EdgeIteratorState edge, GtfsStorage.EdgeType edgeType) {
+        edge.set(typeEnc, edgeType.ordinal());
+    }
+
+    public String toString() {
+        return "pt";
+    }
+
+    @Override
+    public int getVersion() {
+        return 1;
+    }
 }

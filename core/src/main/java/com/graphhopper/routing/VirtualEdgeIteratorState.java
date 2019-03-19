@@ -17,7 +17,8 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.profiles.*;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -36,27 +37,29 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     private final int adjNode;
     private final int originalTraversalKey;
     private double distance;
-    private long flags;
+    private IntsRef edgeFlags;
     private String name;
-    // indication if edges are dispreferred as start/stop edge 
+    // true if edge should be avoided as start/stop
     private boolean unfavored;
     private EdgeIteratorState reverseEdge;
+    private final boolean reverse;
 
-    public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance, long flags, String name, PointList pointList) {
+    public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance,
+                                    IntsRef edgeFlags, String name, PointList pointList, boolean reverse) {
         this.originalTraversalKey = originalTraversalKey;
         this.edgeId = edgeId;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
         this.distance = distance;
-        this.flags = flags;
+        this.edgeFlags = edgeFlags;
         this.name = name;
         this.pointList = pointList;
+        this.reverse = reverse;
     }
 
     /**
      * This method returns the original edge via its traversal key. I.e. also the direction is
      * already correctly encoded.
-     * <p>
      *
      * @see GHUtility#createEdgeKey(int, int, int, boolean)
      */
@@ -115,13 +118,106 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public long getFlags() {
-        return flags;
+    public IntsRef getFlags() {
+        return edgeFlags;
     }
 
     @Override
-    public EdgeIteratorState setFlags(long flags) {
-        this.flags = flags;
+    public EdgeIteratorState setFlags(IntsRef flags) {
+        this.edgeFlags = flags;
+        return this;
+    }
+
+    @Override
+    public boolean get(BooleanEncodedValue property) {
+        if (property == EdgeIteratorState.UNFAVORED_EDGE)
+            return unfavored;
+
+        return property.getBool(reverse, edgeFlags);
+    }
+
+    @Override
+    public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
+        property.setBool(reverse, edgeFlags, value);
+        return this;
+    }
+
+    @Override
+    public boolean getReverse(BooleanEncodedValue property) {
+        if (property == EdgeIteratorState.UNFAVORED_EDGE)
+            return unfavored;
+        return property.getBool(!reverse, edgeFlags);
+    }
+
+    @Override
+    public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
+        property.setBool(!reverse, edgeFlags, value);
+        return this;
+    }
+
+    @Override
+    public int get(IntEncodedValue property) {
+        return property.getInt(reverse, edgeFlags);
+    }
+
+    @Override
+    public EdgeIteratorState set(IntEncodedValue property, int value) {
+        property.setInt(reverse, edgeFlags, value);
+        return this;
+    }
+
+    @Override
+    public int getReverse(IntEncodedValue property) {
+        return property.getInt(!reverse, edgeFlags);
+    }
+
+    @Override
+    public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
+        property.setInt(!reverse, edgeFlags, value);
+        return this;
+    }
+
+    @Override
+    public double get(DecimalEncodedValue property) {
+        return property.getDecimal(reverse, edgeFlags);
+    }
+
+    @Override
+    public EdgeIteratorState set(DecimalEncodedValue property, double value) {
+        property.setDecimal(reverse, edgeFlags, value);
+        return this;
+    }
+
+    @Override
+    public double getReverse(DecimalEncodedValue property) {
+        return property.getDecimal(!reverse, edgeFlags);
+    }
+
+    @Override
+    public EdgeIteratorState setReverse(DecimalEncodedValue property, double value) {
+        property.setDecimal(!reverse, edgeFlags, value);
+        return this;
+    }
+
+    @Override
+    public IndexBased get(ObjectEncodedValue property) {
+        return property.getObject(reverse, edgeFlags);
+    }
+
+    @Override
+    public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
+        property.setObject(reverse, edgeFlags, value);
+        return this;
+    }
+
+    @Override
+    public IndexBased getReverse(ObjectEncodedValue property) {
+        return property.getObject(!reverse, edgeFlags);
+    }
+
+    @Override
+    public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
+        property.setObject(!reverse, edgeFlags, value);
         return this;
     }
 
@@ -136,17 +232,8 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         return this;
     }
 
-    @Override
-    public boolean getBool(int key, boolean _default) {
-        if (key == EdgeIteratorState.K_UNFAVORED_EDGE)
-            return unfavored;
-
-        // for non-existent keys return default
-        return _default;
-    }
-
     /**
-     * This method sets edge to unfavored status for routing from or to the start/stop points.
+     * This method sets edge to unfavored status for routing from the start or to the stop location.
      */
     public void setUnfavored(boolean unfavored) {
         this.unfavored = unfavored;
@@ -163,22 +250,12 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public boolean isForward(FlagEncoder encoder) {
-        return encoder.isForward(getFlags());
-    }
-
-    @Override
-    public boolean isBackward(FlagEncoder encoder) {
-        return encoder.isBackward(getFlags());
-    }
-
-    @Override
     public int getAdditionalField() {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public int getMergeStatus(long flags) {
+    public int getMergeStatus(int flags) {
         throw new UnsupportedOperationException("Not supported.");
     }
 
@@ -193,13 +270,30 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public void setSkippedEdges(int edge1, int edge2) {
+    public CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
         throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
+    public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
+        throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
+    public int getOrigEdgeFirst() {
+        return getEdge();
+    }
+
+    @Override
+    public int getOrigEdgeLast() {
+        return getEdge();
     }
 
     @Override
     public EdgeIteratorState detach(boolean reverse) {
         if (reverse) {
+            // update properties of reverse edge
+            // TODO copy wayGeometry too
             reverseEdge.setFlags(getFlags());
             reverseEdge.setName(getName());
             reverseEdge.setDistance(getDistance());
@@ -209,19 +303,25 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         }
     }
 
+
     @Override
     public EdgeIteratorState setAdditionalField(int value) {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public EdgeIteratorState copyPropertiesTo(EdgeIteratorState edge) {
-        throw new UnsupportedOperationException("Not supported.");
+    public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState fromEdge) {
+        throw new RuntimeException("Not supported.");
     }
 
     @Override
     public CHEdgeIteratorState setWeight(double weight) {
         throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
+    public void setFlagsAndWeight(int flags, double weight) {
+        throw new UnsupportedOperationException("Not supported");
     }
 
     @Override
