@@ -216,14 +216,14 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
                 continue;
 
             final int origEdgeId = getOrigEdgeId(iter, reverse);
-            final int traversalId = getTraversalId(iter, origEdgeId, reverse);
+            final int traversalKey = getTraversalKey(iter, origEdgeId, reverse);
             final double weight = calcWeight(iter, currEdge, reverse);
             if (Double.isInfinite(weight))
                 continue;
-            SPTEntry entry = bestWeightMap.get(traversalId);
+            SPTEntry entry = bestWeightMap.get(traversalKey);
             if (entry == null) {
                 entry = createEntry(iter, origEdgeId, weight, currEdge, reverse);
-                bestWeightMap.put(traversalId, entry);
+                bestWeightMap.put(traversalKey, entry);
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
                 prioQueue.remove(entry);
@@ -233,12 +233,12 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
                 continue;
 
             if (updateBestPath)
-                updateBestPath(iter, entry, traversalId, reverse);
+                updateBestPath(iter, entry, traversalKey, reverse);
         }
     }
 
-    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entry, int traversalId, boolean reverse) {
-        SPTEntry entryOther = bestWeightMapOther.get(traversalId);
+    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entry, int traversalKey, boolean reverse) {
+        SPTEntry entryOther = bestWeightMapOther.get(traversalKey);
         if (entryOther == null)
             return;
 
@@ -283,8 +283,8 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         return entry.edge;
     }
 
-    protected int getTraversalId(EdgeIteratorState edge, int origEdgeId, boolean reverse) {
-        return traversalMode.createTraversalId(edge, reverse);
+    protected int getTraversalKey(EdgeIteratorState edge, int origEdgeId, boolean reverse) {
+        return traversalMode.createTraversalKey(edge, reverse);
     }
 
     protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {

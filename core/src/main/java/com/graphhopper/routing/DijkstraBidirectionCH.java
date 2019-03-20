@@ -18,7 +18,6 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
-import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
@@ -63,8 +62,8 @@ public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
         // reached via a suboptimal path. We do this regardless of the CH level of the adjacent nodes.
         EdgeIterator iter = edgeExplorer.setBaseNode(entry.adjNode);
         while (iter.next()) {
-            int traversalId = traversalMode.createTraversalId(iter, reverse);
-            SPTEntry adjNode = bestWeightMap.get(traversalId);
+            int traversalKey = traversalMode.createTraversalKey(iter, reverse);
+            SPTEntry adjNode = bestWeightMap.get(traversalKey);
             if (adjNode != null &&
                     adjNode.weight + weighting.calcWeight(iter, !reverse, getIncomingEdge(entry)) < entry.weight) {
                 return true;
