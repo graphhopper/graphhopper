@@ -19,29 +19,24 @@ package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
 
-import java.util.List;
-
 /**
- * This class implements an ObjectEncodedValue and holds an array of IndexBased objects. It stores just the indices
+ * This class implements an ObjectEncodedValue via a list of enums. I.e. it stores just the indices
  * of the used objects as an integer value.
  */
-public final class MappedObjectEncodedValue extends SimpleIntEncodedValue implements ObjectEncodedValue {
-    private final IndexBased[] arr;
+public final class EnumEncodedValue<E extends Enum> extends SimpleIntEncodedValue {
+    private final E[] arr;
 
-    public MappedObjectEncodedValue(String name, List<? extends IndexBased> values) {
-        super(name, 32 - Integer.numberOfLeadingZeros(values.size()));
-
-        arr = values.toArray(new IndexBased[]{});
+    public EnumEncodedValue(String name, Class<E> enumType) {
+        super(name, 32 - Integer.numberOfLeadingZeros(enumType.getEnumConstants().length));
+        arr = enumType.getEnumConstants();
     }
 
-    @Override
-    public final void setObject(boolean reverse, IntsRef ref, IndexBased value) {
+    public final void setEnum(boolean reverse, IntsRef ref, E value) {
         int intValue = value.ordinal();
         super.setInt(reverse, ref, intValue);
     }
 
-    @Override
-    public final IndexBased getObject(boolean reverse, IntsRef ref) {
+    public final E getEnum(boolean reverse, IntsRef ref) {
         int value = super.getInt(reverse, ref);
         return arr[value];
     }
