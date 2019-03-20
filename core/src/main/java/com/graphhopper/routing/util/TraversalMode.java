@@ -90,7 +90,7 @@ public enum TraversalMode {
      *                  backward searches in bidirectional algorithms.
      * @return the identifier to access the shortest path tree
      */
-    public final int createTraversalId(EdgeIteratorState iterState, boolean reverse) {
+    public final int createTraversalKey(EdgeIteratorState iterState, boolean reverse) {
         if (edgeBased) {
             if (noOfStates == 1)
                 return iterState.getEdge();
@@ -102,9 +102,9 @@ public enum TraversalMode {
     }
 
     /**
-     * If you have an EdgeIteratorState the other createTraversalId is preferred!
+     * If you have an EdgeIteratorState the other createTraversalKey is preferred!
      */
-    public final int createTraversalId(int baseNode, int adjNode, int edgeId, boolean reverse) {
+    public final int createTraversalKey(int baseNode, int adjNode, int edgeId, boolean reverse) {
         if (edgeBased) {
             if (noOfStates == 1)
                 return edgeId;

@@ -103,15 +103,15 @@ public class AStar extends AbstractRoutingAlgorithm {
                 if (Double.isInfinite(alreadyVisitedWeight))
                     continue;
 
-                int traversalId = traversalMode.createTraversalId(iter, false);
-                AStarEntry ase = fromMap.get(traversalId);
+                int traversalKey = traversalMode.createTraversalKey(iter, false);
+                AStarEntry ase = fromMap.get(traversalKey);
                 if (ase == null || ase.weightOfVisitedPath > alreadyVisitedWeight) {
                     int neighborNode = iter.getAdjNode();
                     currWeightToGoal = weightApprox.approximate(neighborNode);
                     estimationFullWeight = alreadyVisitedWeight + currWeightToGoal;
                     if (ase == null) {
                         ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, alreadyVisitedWeight);
-                        fromMap.put(traversalId, ase);
+                        fromMap.put(traversalKey, ase);
                     } else {
 //                        assert (ase.weight > 0.9999999 * estimationFullWeight) : "Inconsistent distance estimate. It is expected weight >= estimationFullWeight but was "
 //                                + ase.weight + " < " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and weightOfVisitedPath:"
@@ -126,7 +126,7 @@ public class AStar extends AbstractRoutingAlgorithm {
                     ase.parent = currEdge;
                     prioQueueOpenSet.add(ase);
 
-                    updateBestPath(iter, ase, traversalId);
+                    updateBestPath(iter, ase, traversalKey);
                 }
             }
 
@@ -157,7 +157,7 @@ public class AStar extends AbstractRoutingAlgorithm {
         return visitedCount;
     }
 
-    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry bestSPTEntry, int traversalId) {
+    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry bestSPTEntry, int traversalKey) {
     }
 
     public static class AStarEntry extends SPTEntry {

@@ -118,11 +118,11 @@ public class MiniGraphUI {
                     }
 
                     @Override
-                    public void updateBestPath(EdgeIteratorState es, SPTEntry entry, int traversalId, boolean reverse) {
+                    public void updateBestPath(EdgeIteratorState es, SPTEntry entry, int traversalKey, boolean reverse) {
                         if (g2 != null)
-                            mg.plotNode(g2, traversalId, Color.YELLOW, 6);
+                            mg.plotNode(g2, traversalKey, Color.YELLOW, 6);
 
-                        super.updateBestPath(es, entry, traversalId, reverse);
+                        super.updateBestPath(es, entry, traversalKey, reverse);
                     }
                 }
 
