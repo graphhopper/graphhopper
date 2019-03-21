@@ -694,7 +694,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public final IntsRef getFlags() {
             if (isShortcut())
                 throw new IllegalStateException("Shortcut should not need to return raw flags!");
-            return getFlags();
+            return super.getFlags();
         }
 
         @Override
