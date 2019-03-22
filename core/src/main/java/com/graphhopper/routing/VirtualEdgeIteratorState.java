@@ -38,7 +38,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     private final int edgeId;
     private final int baseNode;
     private final int adjNode;
-    private final int originalTraversalKey;
+    private final int originalEdgeKey;
     private double distance;
     private IntsRef edgeFlags;
     private String name;
@@ -47,9 +47,9 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     private EdgeIteratorState reverseEdge;
     private final boolean reverse;
 
-    public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance,
+    public VirtualEdgeIteratorState(int originalEdgeKey, int edgeId, int baseNode, int adjNode, double distance,
                                     IntsRef edgeFlags, String name, PointList pointList, boolean reverse) {
-        this.originalTraversalKey = originalTraversalKey;
+        this.originalEdgeKey = originalEdgeKey;
         this.edgeId = edgeId;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
@@ -61,13 +61,13 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     /**
-     * This method returns the original edge via its traversal key. I.e. also the direction is
+     * This method returns the original edge via its key. I.e. also the direction is
      * already correctly encoded.
      *
      * @see GHUtility#createEdgeKey(int, int, int, boolean)
      */
-    public int getOriginalTraversalKey() {
-        return originalTraversalKey;
+    public int getOriginalEdgeKey() {
+        return originalEdgeKey;
     }
 
     @Override
