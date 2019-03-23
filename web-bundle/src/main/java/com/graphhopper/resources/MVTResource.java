@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Path("mvt")
 public class MVTResource {
 
-    private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
+    private static final Logger logger = LoggerFactory.getLogger(MVTResource.class);
 
     private final GraphHopper graphHopper;
     private final EncodingManager encodingManager;
@@ -53,6 +53,19 @@ public class MVTResource {
         this.graphHopper = graphHopper;
         this.encodingManager = encodingManager;
         this.delaunayTriangulationIsolineBuilder = delaunayTriangulationIsolineBuilder;
+    }
+
+    @GET
+    @Path("{z}/{x}/{y}.mvt")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response doGetXyz(
+            @Context HttpServletRequest httpReq,
+            @Context UriInfo uriInfo,
+            @QueryParam("vehicle") @DefaultValue("car") String vehicle,
+            @PathParam("z") int z,
+            @PathParam("x") int x,
+            @PathParam("y") int y) {
+        return doGet(httpReq, uriInfo, vehicle, x, y, z);
     }
 
     @GET
