@@ -140,39 +140,6 @@ public class Isochrone extends AbstractRoutingAlgorithm {
         return buckets;
     }
 
-    public List<Number[]> searchEdges(int from) {
-        searchInternal(from);
-
-        final List<Number[]> list = new ArrayList<>(fromMap.size());
-        final NodeAccess na = graph.getNodeAccess();
-        fromMap.forEach(new IntObjectProcedure<IsoLabel>() {
-
-            @Override
-            public void apply(int nodeId, IsoLabel label) {
-                if (label.parent == null)
-                    return;
-
-                double lat = na.getLatitude(nodeId);
-                double lon = na.getLongitude(nodeId);
-
-                int toNodeIdx = label.parent.adjNode;
-                double toLat = na.getLatitude(toNodeIdx);
-                double toLon = na.getLongitude(toNodeIdx);
-
-                // bytes: 6*4=24
-                list.add(new Number[]{lon, lat, toLon, toLat, Math.round(label.time / 1000f), label.distance});
-
-                // a smaller storage with *preserving* network topology is possible via: line 0: lineOfToNodeId, lat+lon, time, distance
-                // bytes: 0, 3, 3, 3, 3  (zero bytes because if ordered the nodeId is adjacent and implicit via line number, lat+lon can be reduced to 3 bytes via spatial key)
-                // list.add(new Number[]{nodeId, fromSpatialKey, toNodeIdx, Math.round(label.time / 1000), label.distance});
-                //
-                // another more path-based storage mechanism could store all points until parent or already stored points.
-                // This way one could efficiently use the delta encoding for lat+lon and could easily include pillar nodes but this would require vints
-            }
-        });
-        return list;
-    }
-
     public List<Set<Integer>> search(int from, final int bucketCount) {
         searchInternal(from);
 
