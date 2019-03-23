@@ -1,7 +1,6 @@
 package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -43,44 +42,30 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MVTResource {
 
     private static final Logger logger = LoggerFactory.getLogger(MVTResource.class);
-
+    private static final MediaType PBF = new MediaType("application", "x-protobuf");
     private final GraphHopper graphHopper;
     private final EncodingManager encodingManager;
-    private final DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder;
 
     @Inject
-    public MVTResource(GraphHopper graphHopper, EncodingManager encodingManager, DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder) {
+    public MVTResource(GraphHopper graphHopper, EncodingManager encodingManager) {
         this.graphHopper = graphHopper;
         this.encodingManager = encodingManager;
-        this.delaunayTriangulationIsolineBuilder = delaunayTriangulationIsolineBuilder;
     }
 
     @GET
     @Path("{z}/{x}/{y}.mvt")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces("application/x-protobuf")
     public Response doGetXyz(
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
             @QueryParam("vehicle") @DefaultValue("car") String vehicle,
-            @PathParam("z") int z,
-            @PathParam("x") int x,
-            @PathParam("y") int y) {
-        return doGet(httpReq, uriInfo, vehicle, x, y, z);
-    }
-
-    @GET
-    @Produces({MediaType.APPLICATION_JSON})
-    public Response doGet(
-            @Context HttpServletRequest httpReq,
-            @Context UriInfo uriInfo,
-            @QueryParam("vehicle") @DefaultValue("car") String vehicle,
-            @QueryParam("x") int xInfo,
-            @QueryParam("y") int yInfo,
-            @QueryParam("z") int zInfo) {
+            @PathParam("z") int zInfo,
+            @PathParam("x") int xInfo,
+            @PathParam("y") int yInfo) {
 
         if (zInfo <= 9) {
             VectorTile.Tile.Builder mvtBuilder = VectorTile.Tile.newBuilder();
-            return Response.fromResponse(Response.ok(mvtBuilder.build().toByteArray(), new MediaType("application", "x-protobuf")).build())
+            return Response.fromResponse(Response.ok(mvtBuilder.build().toByteArray(), PBF).build())
                     .header("X-GH-Took", "0")
                     .build();
         }
@@ -148,7 +133,7 @@ public class MVTResource {
         byte[] bytes = mvtBuilder.build().toByteArray();
         totalSW.stop();
         logger.info("took: " + totalSW.getSeconds() + ", edges:" + edgeCounter.get());
-        return Response.fromResponse(Response.ok(bytes, new MediaType("application", "x-protobuf")).build())
+        return Response.fromResponse(Response.ok(bytes, PBF).build())
                 .header("X-GH-Took", "" + totalSW.getSeconds() * 1000)
                 .build();
     }
