@@ -95,7 +95,7 @@ if(ghenv.environment === 'development') {
 
     require('leaflet.vectorgrid');
     overlays = {};
-    overlays["Local MVT"] = L.vectorGrid.protobuf("http://localhost:8989/mvt/{z}/{x}/{y}.mvt", {
+    overlays["Local MVT"] = L.vectorGrid.protobuf("http://127.0.0.1:8989/mvt/{z}/{x}/{y}.mvt", {
       rendererFactory: L.canvas.tile,
       maxNativeZoom: 16,
       minNativeZoom: 10,
