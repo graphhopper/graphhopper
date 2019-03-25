@@ -8,10 +8,15 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-navigation</artifactId>
-    <version>0.12-SNAPSHOT</version>
+    <version>0.13-SNAPSHOT</version>
 
     <url>https://www.graphhopper.com</url>
     <description>Super pom of GraphHopper Navigation</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
 
     <scm>
         <connection>scm:git:git@github.com:graphhopper/graphhopper-navigation.git</connection>
@@ -70,7 +75,7 @@
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-web</artifactId>
-            <version>0.12.0-pre6</version>
+            <version>0.12.0</version>
         </dependency>
 
         <dependency>
