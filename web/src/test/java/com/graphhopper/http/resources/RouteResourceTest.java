@@ -32,6 +32,7 @@ import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -56,15 +57,17 @@ public class RouteResourceTest {
                 put("graph.flag_encoders", "car").
                 put("prepare.ch.weightings", "fastest").
                 put("prepare.min_network_size", "0").
-                put("prepare.min_one_way_network_size", "0").
+                // changed from 12 to 0 for issue1574 test should change back and make sure this is not 0 in issue1574 another way
+                // when lowering this number the test passes
+                        put("prepare.min_one_way_network_size", "12").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.location", DIR));
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
-            GraphHopperApplication.class, config);
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(GraphHopperApplication.class, config);
 
+    @BeforeClass
     @AfterClass
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
@@ -359,6 +362,15 @@ public class RouteResourceTest {
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (1)", json.get("message").asText());
+    }
+
+    @Test
+    public void testStallOnDemandBug_issue1574() {
+        final Response response = app.client().target("http://localhost:8080/route?point=42.486984,1.493152&point=42.481863,1.491297&point=42.49697,1.501265&&vehicle=car&weighting=fastest&stall_on_demand=true").request().buildGet().invoke();
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertFalse("there should be no error, but: " + json.get("message"), json.has("message"));
+        System.out.println(json);
+        assertEquals(200, response.getStatus());
     }
 
 }
