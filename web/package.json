@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "jasmine": "3.1.0",
-    "jshint": "2.9.5",
-    "watchify": "3.11.0"
+    "jshint": "^2.10.2",
+    "watchify": "^3.11.1"
   }
 }
