@@ -298,8 +298,8 @@ public class QueryGraph implements Graph {
 
                 GHPoint3D prevPoint = fullPL.toGHPoint(0);
                 int adjNode = closestEdge.getAdjNode();
-                int origTraversalKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), false);
-                int origRevTraversalKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), true);
+                int origEdgeKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), false);
+                int origRevEdgeKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), true);
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
                 int virtNodeId = virtualNodes.getSize() + mainNodes;
@@ -323,7 +323,7 @@ public class QueryGraph implements Graph {
 
                     queryResults.add(res);
                     boolean isPillar = res.getSnappedPosition() == QueryResult.Position.PILLAR;
-                    createEdges(origTraversalKey, origRevTraversalKey,
+                    createEdges(origEdgeKey, origRevEdgeKey,
                             prevPoint, prevWayIndex, isPillar,
                             res.getSnappedPoint(), res.getWayIndex(),
                             fullPL, closestEdge, prevNodeId, virtNodeId);
@@ -346,7 +346,7 @@ public class QueryGraph implements Graph {
 
                 // two edges between last result and adjacent node are still missing if not all points skipped
                 if (addedEdges)
-                    createEdges(origTraversalKey, origRevTraversalKey,
+                    createEdges(origEdgeKey, origRevEdgeKey,
                             prevPoint, prevWayIndex, false,
                             fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 2,
                             fullPL, closestEdge, virtNodeId - 1, adjNode);
@@ -390,7 +390,7 @@ public class QueryGraph implements Graph {
         return this;
     }
 
-    private void createEdges(int origTraversalKey, int origRevTraversalKey,
+    private void createEdges(int origEdgeKey, int origRevEdgeKey,
                              GHPoint3D prevSnapped, int prevWayIndex, boolean isPillar, GHPoint3D currSnapped, int wayIndex,
                              PointList fullPL, EdgeIteratorState closestEdge,
                              int prevNodeId, int nodeId) {
@@ -412,9 +412,9 @@ public class QueryGraph implements Graph {
 
         boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);
         // edges between base and snapped point
-        VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origTraversalKey,
+        VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origEdgeKey,
                 virtEdgeId, prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints, reverse);
-        VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevTraversalKey,
+        VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevEdgeKey,
                 virtEdgeId, nodeId, prevNodeId, baseDistance, IntsRef.deepCopyOf(closestEdge.getFlags()), closestEdge.getName(), baseReversePoints, !reverse);
 
         baseEdge.setReverseEdge(baseReverseEdge);

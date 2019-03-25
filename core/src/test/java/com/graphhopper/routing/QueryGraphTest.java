@@ -638,7 +638,7 @@ public class QueryGraphTest {
     }
 
     @Test
-    public void testInternalAPIOriginalTraversalKey() {
+    public void testInternalAPIOriginalEdgeKey() {
         initGraph(g);
 
         EdgeExplorer explorer = g.createEdgeExplorer();
@@ -657,12 +657,12 @@ public class QueryGraphTest {
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
         assertEquals(GHUtility.createEdgeKey(1, 0, origEdgeId, false),
-                ((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), 0)).getOriginalTraversalKey());
+                ((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), 0)).getOriginalEdgeKey());
 
         assertTrue(iter.next());
         assertEquals(1, iter.getAdjNode());
         assertEquals(GHUtility.createEdgeKey(0, 1, origEdgeId, false),
-                ((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), 1)).getOriginalTraversalKey());
+                ((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), 1)).getOriginalEdgeKey());
     }
 
     @Test

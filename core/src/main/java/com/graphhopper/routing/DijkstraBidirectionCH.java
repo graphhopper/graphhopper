@@ -62,8 +62,8 @@ public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
         // reached via a suboptimal path. We do this regardless of the CH level of the adjacent nodes.
         EdgeIterator iter = edgeExplorer.setBaseNode(entry.adjNode);
         while (iter.next()) {
-            int traversalKey = traversalMode.createTraversalKey(iter, reverse);
-            SPTEntry adjNode = bestWeightMap.get(traversalKey);
+            int traversalId = traversalMode.createTraversalId(iter, reverse);
+            SPTEntry adjNode = bestWeightMap.get(traversalId);
             if (adjNode != null &&
                     adjNode.weight + weighting.calcWeight(iter, !reverse, getIncomingEdge(entry)) < entry.weight) {
                 return true;

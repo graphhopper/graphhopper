@@ -74,7 +74,7 @@ public final class GraphExplorer {
                 throw new RuntimeException();
             }
             extraEdgesBySource.put(extraEdge.getBaseNode(), extraEdge);
-            extraEdgesByDestination.put(extraEdge.getAdjNode(), new VirtualEdgeIteratorState(extraEdge.getOriginalTraversalKey(), extraEdge.getEdge(), extraEdge.getAdjNode(),
+            extraEdgesByDestination.put(extraEdge.getAdjNode(), new VirtualEdgeIteratorState(extraEdge.getOriginalEdgeKey(), extraEdge.getEdge(), extraEdge.getAdjNode(),
                     extraEdge.getBaseNode(), extraEdge.getDistance(), extraEdge.getFlags(), extraEdge.getName(), extraEdge.fetchWayGeometry(3), false));
         }
         this.walkOnly = walkOnly;
