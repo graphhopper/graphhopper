@@ -103,6 +103,49 @@ public class Isochrone extends AbstractRoutingAlgorithm {
         this.finishLimit = limit + Math.max(limit * 0.14, 2_000);
     }
 
+    public static class IsoLabelWithCoordinates {
+        public Coordinate baseCoordinate;
+        public Coordinate adjCoordinate;
+        public long time;
+        public double distance;
+        // debug info
+        public int edgeId, baseNodeId;
+        public final int adjNodeId;
+
+        public IsoLabelWithCoordinates(int adjNodeId) {
+            this.adjNodeId = adjNodeId;
+        }
+    }
+
+    public List<IsoLabelWithCoordinates> search(int from) {
+        searchInternal(from);
+
+        final List<IsoLabelWithCoordinates> shortestPathEntries = new ArrayList<>(fromMap.size());
+        final NodeAccess na = graph.getNodeAccess();
+        fromMap.forEach(new IntObjectProcedure<IsoLabel>() {
+
+            @Override
+            public void apply(int nodeId, IsoLabel label) {
+                double lat = na.getLatitude(nodeId);
+                double lon = na.getLongitude(nodeId);
+                IsoLabelWithCoordinates sptInfo = new IsoLabelWithCoordinates(nodeId);
+                sptInfo.adjCoordinate = new Coordinate(lon, lat);
+                sptInfo.time = label.time;
+                sptInfo.distance = label.distance;
+                sptInfo.edgeId = label.edge;
+                shortestPathEntries.add(sptInfo);
+                if (label.parent != null) {
+                    nodeId = label.parent.adjNode;
+                    double lat2 = na.getLatitude(nodeId);
+                    double lon2 = na.getLongitude(nodeId);
+                    sptInfo.baseNodeId = nodeId;
+                    sptInfo.baseCoordinate = new Coordinate(lon2, lat2);
+                }
+            }
+        });
+        return shortestPathEntries;
+    }
+
     public List<List<Coordinate>> searchGPS(int from, final int bucketCount) {
         searchInternal(from);
 
