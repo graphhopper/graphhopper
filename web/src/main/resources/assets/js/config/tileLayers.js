@@ -87,7 +87,7 @@ var availableTileLayers = {
 
 var overlays;
 if(ghenv.environment === 'development') {
-    var omniscaleGray = L.tileLayer('https://maps.omniscale.net/v2/' +osAPIKey + '/style.grayscale/{z}/{x}/{y}.png?' + (retinaTiles ? '&hq=true' : ''), {
+    var omniscaleGray = L.tileLayer('https://maps.omniscale.net/v2/' +osAPIKey + '/style.grayscale/layers.world,buildings,landusages,labels/{z}/{x}/{y}.png?' + (retinaTiles ? '&hq=true' : ''), {
         layers: 'osm',
         attribution: osmAttr + ', &copy; <a href="https://maps.omniscale.com/">Omniscale</a>'
     });
@@ -97,19 +97,19 @@ if(ghenv.environment === 'development') {
     overlays = {};
     overlays["Local MVT"] = L.vectorGrid.protobuf("http://127.0.0.1:8989/mvt/{z}/{x}/{y}.mvt", {
       rendererFactory: L.canvas.tile,
-      maxNativeZoom: 16,
-      minNativeZoom: 10,
+      maxZoom: 20,
+      minZoom: 11,
       vectorTileLayerStyles: {
         'roads': function(properties, zoom) {
-            var color, opacity = 1, weight = 1, radius = 1, s = properties.speed;
+            var color, opacity = 1, weight = 1, radius = 2, s = properties.speed;
             if(s >= 100) {
                 color = '#dd504b'; // red
                 weight = 3;
-                radius = 4;
+                radius = 6;
             } else if(s >= 80) {
                 color = '#e2a012'; // orange
                 weight = 2;
-                radius = 4;
+                radius = 6;
             } else if(s >= 50) {
                 weight = 2;
                 color = '#f7c913'; // yellow
@@ -130,7 +130,7 @@ if(ghenv.environment === 'development') {
             }
         },
       },
-      interactive: false // use true to make sure that this VectorGrid fires mouse/pointer events
+      interactive: true // use true to make sure that this VectorGrid fires mouse/pointer events
     });
 }
 
