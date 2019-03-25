@@ -17,7 +17,7 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperAPI;
 
 import java.io.InputStreamReader;
 import java.util.List;
@@ -95,7 +95,7 @@ public class Constants {
         try {
             // see com/graphhopper/version file in resources which is modified in the maven packaging process
             // to contain the current version
-            List<String> v = readFile(new InputStreamReader(GraphHopper.class.getResourceAsStream("version"), UTF_CS));
+            List<String> v = readFile(new InputStreamReader(GraphHopperAPI.class.getResourceAsStream("version"), UTF_CS));
             version = v.get(0);
         } catch (Exception ex) {
             System.err.println("GraphHopper Initialization ERROR: cannot read version!? " + ex.getMessage());
@@ -120,7 +120,7 @@ public class Constants {
         }
         String buildDate = "";
         try {
-            List<String> v = readFile(new InputStreamReader(GraphHopper.class.getResourceAsStream("builddate"), UTF_CS));
+            List<String> v = readFile(new InputStreamReader(GraphHopperAPI.class.getResourceAsStream("builddate"), UTF_CS));
             buildDate = v.get(0);
         } catch (Exception ex) {
         }
@@ -128,7 +128,7 @@ public class Constants {
 
         String gitInfo = "";
         try {
-            List<String> gitInfos = readFile(new InputStreamReader(GraphHopper.class.getResourceAsStream("gitinfo"), UTF_CS));
+            List<String> gitInfos = readFile(new InputStreamReader(GraphHopperAPI.class.getResourceAsStream("gitinfo"), UTF_CS));
             if (gitInfos.size() == 5) {
                 gitInfo = gitInfos.get(1) + "|" + gitInfos.get(2) + "|dirty=" + gitInfos.get(3) + "|" + gitInfos.get(4);
             } else {

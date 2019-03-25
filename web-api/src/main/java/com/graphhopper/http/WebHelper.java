@@ -151,6 +151,7 @@ public class WebHelper {
         info.putArray("copyrights")
                 .add("GraphHopper")
                 .add("OpenStreetMap contributors");
+        info.put("version", com.graphhopper.util.Constants.VERSION);
         info.put("took", Math.round(took * 1000));
         ArrayNode jsonPathList = json.putArray("paths");
         for (PathWrapper ar : ghRsp.getAll()) {

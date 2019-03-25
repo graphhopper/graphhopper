@@ -135,27 +135,5 @@
                 </configuration>
             </plugin>
         </plugins>
-
-        <!-- make version available at runtime via version file -->
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-                <includes>
-                    <include>**/version</include>
-                    <include>**/builddate</include>
-                    <include>**/gitinfo</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>false</filtering>
-                <excludes>
-                    <exclude>**/version</exclude>
-                    <exclude>**/builddate</exclude>
-                    <exclude>**/gitinfo</exclude>
-                </excludes>
-            </resource>
-        </resources>
     </build>
 </project>
