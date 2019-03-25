@@ -605,8 +605,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     @Override
-    public ObjectEncodedValue getObjectEncodedValue(String key) {
-        return encodedValueLookup.getObjectEncodedValue(key);
+    public <T extends Enum> EnumEncodedValue getEnumEncodedValue(String key, Class<T> enumType) {
+        return encodedValueLookup.getEnumEncodedValue(key, enumType);
     }
 
     public void setEncodedValueLookup(EncodedValueLookup encodedValueLookup) {
