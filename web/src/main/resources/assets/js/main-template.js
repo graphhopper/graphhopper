@@ -5,7 +5,7 @@ require('flatpickr/dist/l10n');
 var L = require('leaflet');
 require('leaflet-contextmenu');
 require('leaflet-loading');
-require('./lib/L.Control.Heightgraph.js');
+require('leaflet.heightgraph');
 var moment = require('moment');
 require('./lib/leaflet_numbered_markers.js');
 
