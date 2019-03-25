@@ -119,9 +119,11 @@ public class IsochroneResource {
                 feature.setGeometry(geometryFactory.createPolygon(polygonShell));
                 features.add(feature);
             }
+            ObjectNode json = JsonNodeFactory.instance.objectNode();
+            json.putPOJO("polygons", features);
             sw.stop();
             logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
-            return Response.fromResponse(jsonSuccessResponse("polygons", features, sw.getSeconds()))
+            return Response.fromResponse(jsonSuccessResponse(json, sw.getSeconds()))
                     .header("X-GH-Took", "" + sw.getSeconds() * 1000)
                     .build();
         } else if ("pointlist".equalsIgnoreCase(resultStr)) {
@@ -167,13 +169,12 @@ public class IsochroneResource {
                 }
                 items.add(list);
             }
+            ObjectNode json = JsonNodeFactory.instance.objectNode();
+            json.putPOJO("header", header);
+            json.putPOJO("items", items);
             sw.stop();
-            Map map = new HashMap();
-            map.put("header", header);
-            map.put("items", items);
-
             logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
-            return Response.fromResponse(jsonSuccessResponse("result", map, sw.getSeconds()))
+            return Response.fromResponse(jsonSuccessResponse(json, sw.getSeconds()))
                     .header("X-GH-Took", "" + sw.getSeconds() * 1000)
                     .build();
 
@@ -182,9 +183,7 @@ public class IsochroneResource {
         }
     }
 
-    private Response jsonSuccessResponse(String keyName, Object result, float took) {
-        ObjectNode json = JsonNodeFactory.instance.objectNode();
-        json.putPOJO(keyName, result);
+    private Response jsonSuccessResponse(ObjectNode json, float took) {
         // If you replace GraphHopper with your own brand name, this is fine.
         // Still it would be highly appreciated if you mention us in your about page!
         final ObjectNode info = json.putObject("info");
