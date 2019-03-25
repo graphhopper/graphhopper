@@ -266,7 +266,7 @@ module.exports.adjustMapSize = adjustMapSize;
 module.exports.addElevation = function (geoJsonFeature, useMiles, details) {
     // TODO no option to switch to miles yet
     var options = {
-       width: 800,
+       width: 600,
        height: 280,
        margins: {
            top: 10,
@@ -348,6 +348,9 @@ function sliceFeatureCollection(detail, detailKey, geoJsonFeature){
 
 module.exports.clearElevation = function () {
     if (elevationControl){
+        if(elevationControl._markedSegments){
+            map.removeLayer(elevationControl._markedSegments);
+        }
         // TODO this part is not really nice to remove and readd it to the map everytime
         elevationControl.remove();
         elevationControl = null;
