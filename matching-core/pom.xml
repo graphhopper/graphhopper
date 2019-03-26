@@ -10,7 +10,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-map-matching-parent</artifactId>    	
-        <version>0.12-SNAPSHOT</version>
+        <version>${project.parent.version}</version>
     </parent>
     
     <dependencies>
