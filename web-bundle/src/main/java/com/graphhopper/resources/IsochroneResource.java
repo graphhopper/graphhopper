@@ -140,7 +140,7 @@ public class IsochroneResource {
                             list.add(label.distance);
                             break;
                         case "time":
-                            list.add(label.distance);
+                            list.add(label.time);
                             break;
                         case "node_id":
                             list.add(label.adjNodeId);
