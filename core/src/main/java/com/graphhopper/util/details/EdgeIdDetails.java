@@ -48,7 +48,7 @@ public class EdgeIdDetails extends AbstractPathDetailsBuilder {
 
     private int edgeId(EdgeIteratorState edge) {
         if (edge instanceof VirtualEdgeIteratorState) {
-            return GHUtility.getEdgeFromEdgeKey(((VirtualEdgeIteratorState) edge).getOriginalTraversalKey());
+            return GHUtility.getEdgeFromEdgeKey(((VirtualEdgeIteratorState) edge).getOriginalEdgeKey());
         } else {
             return edge.getEdge();
         }

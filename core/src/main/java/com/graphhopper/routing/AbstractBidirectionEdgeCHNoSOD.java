@@ -34,8 +34,6 @@ import com.graphhopper.util.GHUtility;
  * @author easbar
  */
 public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
-    private int from;
-    private int to;
     private final EdgeExplorer innerInExplorer;
     private final EdgeExplorer innerOutExplorer;
     private final TurnWeighting turnWeighting;
@@ -49,38 +47,19 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     }
 
     @Override
-    void init(int from, double fromWeight, int to, double toWeight) {
-        this.from = from;
-        this.to = to;
-        currFrom = createStartEntry(from, fromWeight, false);
-        currTo = createStartEntry(to, toWeight, true);
-        pqOpenSetFrom.add(currFrom);
-        pqOpenSetTo.add(currTo);
-        if (from == to) {
-            // special case of identical start and end
-            setFinished();
-            return;
-        }
+    protected void postInitFrom() {
         EdgeFilter filter = additionalEdgeFilter;
         setEdgeFilter(EdgeFilter.ALL_EDGES);
         fillEdgesFrom();
-        fillEdgesTo();
         setEdgeFilter(filter);
     }
 
-    private void setFinished() {
-        bestPath.sptEntry = currFrom;
-        bestPath.edgeTo = currTo;
-        bestPath.setWeight(0);
-        finishedFrom = true;
-        finishedTo = true;
-    }
-
     @Override
-    public Path calcPath(int from, int to) {
-        this.from = from;
-        this.to = to;
-        return super.calcPath(from, to);
+    protected void postInitTo() {
+        EdgeFilter filter = additionalEdgeFilter;
+        setEdgeFilter(EdgeFilter.ALL_EDGES);
+        fillEdgesTo();
+        setEdgeFilter(filter);
     }
 
     @Override
@@ -158,20 +137,20 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     }
 
     @Override
+    protected int getIncomingEdge(SPTEntry entry) {
+        return ((CHEntry) entry).incEdge;
+    }
+
+    @Override
     protected int getTraversalId(EdgeIteratorState edge, int origEdgeId, boolean reverse) {
         int baseNode = graph.getOtherNode(origEdgeId, edge.getAdjNode());
         return GHUtility.createEdgeKey(baseNode, edge.getAdjNode(), origEdgeId, reverse);
     }
 
     @Override
-    protected double calcWeight(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        return weighting.calcWeight(edge, reverse, ((CHEntry) currEdge).incEdge) + currEdge.getWeightOfVisitedPath();
-    }
-
-    @Override
     protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
         int edgeId = getOrigEdgeId(edge, !reverse);
-        if (!traversalMode.hasUTurnSupport() && edgeId == ((CHEntry) currEdge).incEdge)
+        if (!traversalMode.hasUTurnSupport() && edgeId == getIncomingEdge(currEdge))
             return false;
 
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(edge);

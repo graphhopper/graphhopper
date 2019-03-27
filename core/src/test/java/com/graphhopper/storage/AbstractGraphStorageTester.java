@@ -122,12 +122,9 @@ public abstract class AbstractGraphStorageTester {
         EdgeIteratorState edge1 = graph.edge(0, 1, maxDist, true);
         assertEquals(maxDist, edge1.getDistance(), 1);
 
-        // max out should NOT lead to infinity as this leads fast to NaN!
-        try {
-            graph.edge(0, 2, maxDist + 1, true);
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Distance too large"));
-        }
+        // max out should NOT lead to infinity as this leads fast to NaN! -> we set dist to the maximum if its larger than desired
+        EdgeIteratorState edge2 = graph.edge(0, 2, maxDist + 1, true);
+        assertEquals(maxDist, edge2.getDistance(), 1);
     }
 
     @Test

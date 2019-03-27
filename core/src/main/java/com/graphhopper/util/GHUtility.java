@@ -21,11 +21,10 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
-import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.AllCHEdgesIterator;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.shapes.BBox;
@@ -43,6 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class GHUtility {
     private static final Logger LOGGER = LoggerFactory.getLogger(GHUtility.class);
+
     /**
      * This method could throw an exception if problems like index out of bounds etc
      */
@@ -671,22 +671,22 @@ public class GHUtility {
         }
 
         @Override
-        public IndexBased get(ObjectEncodedValue property) {
+        public <T extends Enum> T get(EnumEncodedValue<T> property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
+        public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public IndexBased getReverse(ObjectEncodedValue property) {
+        public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
+        public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

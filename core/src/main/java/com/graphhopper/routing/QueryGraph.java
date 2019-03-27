@@ -298,8 +298,8 @@ public class QueryGraph implements Graph {
 
                 GHPoint3D prevPoint = fullPL.toGHPoint(0);
                 int adjNode = closestEdge.getAdjNode();
-                int origTraversalKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), false);
-                int origRevTraversalKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), true);
+                int origEdgeKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), false);
+                int origRevEdgeKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), true);
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
                 int virtNodeId = virtualNodes.getSize() + mainNodes;
@@ -322,8 +322,9 @@ public class QueryGraph implements Graph {
                     }
 
                     queryResults.add(res);
-                    createEdges(origTraversalKey, origRevTraversalKey,
-                            prevPoint, prevWayIndex,
+                    boolean isPillar = res.getSnappedPosition() == QueryResult.Position.PILLAR;
+                    createEdges(origEdgeKey, origRevEdgeKey,
+                            prevPoint, prevWayIndex, isPillar,
                             res.getSnappedPoint(), res.getWayIndex(),
                             fullPL, closestEdge, prevNodeId, virtNodeId);
 
@@ -345,8 +346,8 @@ public class QueryGraph implements Graph {
 
                 // two edges between last result and adjacent node are still missing if not all points skipped
                 if (addedEdges)
-                    createEdges(origTraversalKey, origRevTraversalKey,
-                            prevPoint, prevWayIndex,
+                    createEdges(origEdgeKey, origRevEdgeKey,
+                            prevPoint, prevWayIndex, false,
                             fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 2,
                             fullPL, closestEdge, virtNodeId - 1, adjNode);
 
@@ -389,18 +390,21 @@ public class QueryGraph implements Graph {
         return this;
     }
 
-    private void createEdges(int origTraversalKey, int origRevTraversalKey,
-                             GHPoint3D prevSnapped, int prevWayIndex, GHPoint3D currSnapped, int wayIndex,
+    private void createEdges(int origEdgeKey, int origRevEdgeKey,
+                             GHPoint3D prevSnapped, int prevWayIndex, boolean isPillar, GHPoint3D currSnapped, int wayIndex,
                              PointList fullPL, EdgeIteratorState closestEdge,
                              int prevNodeId, int nodeId) {
         int max = wayIndex + 1;
-        // basePoints must have at least the size of 2 to make sure fetchWayGeometry(3) returns at least 2
         PointList basePoints = new PointList(max - prevWayIndex + 1, mainNodeAccess.is3D());
         basePoints.add(prevSnapped.lat, prevSnapped.lon, prevSnapped.ele);
         for (int i = prevWayIndex; i < max; i++) {
             basePoints.add(fullPL, i);
         }
-        basePoints.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
+        if (!isPillar) {
+            basePoints.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
+        }
+        // basePoints must have at least the size of 2 to make sure fetchWayGeometry(3) returns at least 2
+        assert basePoints.size() >= 2 : "basePoints must have at least two points";
 
         PointList baseReversePoints = basePoints.clone(true);
         double baseDistance = basePoints.calcDistance(Helper.DIST_PLANE);
@@ -408,9 +412,9 @@ public class QueryGraph implements Graph {
 
         boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);
         // edges between base and snapped point
-        VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origTraversalKey,
+        VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origEdgeKey,
                 virtEdgeId, prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints, reverse);
-        VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevTraversalKey,
+        VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevEdgeKey,
                 virtEdgeId, nodeId, prevNodeId, baseDistance, IntsRef.deepCopyOf(closestEdge.getFlags()), closestEdge.getName(), baseReversePoints, !reverse);
 
         baseEdge.setReverseEdge(baseReverseEdge);

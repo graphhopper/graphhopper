@@ -23,14 +23,14 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>directions-api-client-hc</artifactId>
-    <version>0.12-SNAPSHOT</version>
+    <version>0.13-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>GraphHopper Directions API hand-crafted Java Client.</name>
      
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>0.12-SNAPSHOT</version>
+        <version>0.13-SNAPSHOT</version>
     </parent>  
     
     <dependencies>

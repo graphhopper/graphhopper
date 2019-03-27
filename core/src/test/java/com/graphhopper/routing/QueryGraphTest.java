@@ -24,6 +24,8 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.*;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -32,6 +34,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 
 import static com.graphhopper.storage.index.QueryResult.Position.*;
@@ -110,7 +113,7 @@ public class QueryGraphTest {
         queryGraph.lookup(Arrays.asList(res));
         assertEquals(new GHPoint(1.5, 1.5), res.getSnappedPoint());
         assertEquals(3, res.getClosestNode());
-        assertEquals(4, getPoints(queryGraph, 0, 3).getSize());
+        assertEquals(3, getPoints(queryGraph, 0, 3).getSize());
         assertEquals(2, getPoints(queryGraph, 3, 1).getSize());
 
         queryGraph = new QueryGraph(g);
@@ -118,7 +121,7 @@ public class QueryGraphTest {
         queryGraph.lookup(Arrays.asList(res));
         assertEquals(new GHPoint(1.5, 1.5), res.getSnappedPoint());
         assertEquals(3, res.getClosestNode());
-        assertEquals(4, getPoints(queryGraph, 0, 3).getSize());
+        assertEquals(3, getPoints(queryGraph, 0, 3).getSize());
         assertEquals(2, getPoints(queryGraph, 3, 1).getSize());
 
         // snap to edge which has pillar nodes        
@@ -187,7 +190,7 @@ public class QueryGraphTest {
         queryGraph.lookup(Arrays.asList(res1));
         assertEquals(new GHPoint(1.5, 1.5), res1.getSnappedPoint());
         assertEquals(3, res1.getClosestNode());
-        assertEquals(4, getPoints(queryGraph, 0, 3).getSize());
+        assertEquals(3, getPoints(queryGraph, 0, 3).getSize());
         PointList pl = getPoints(queryGraph, 3, 1);
         assertEquals(2, pl.getSize());
         assertEquals(new GHPoint(1.5, 1.5), pl.toGHPoint(0));
@@ -213,7 +216,7 @@ public class QueryGraphTest {
         assertEquals(3, res1.getClosestNode());
         assertEquals(new GHPoint(1.5, 1.5), res1.getSnappedPoint());
 
-        assertEquals(4, getPoints(queryGraph, 3, 0).getSize());
+        assertEquals(3, getPoints(queryGraph, 3, 0).getSize());
         assertEquals(2, getPoints(queryGraph, 3, 4).getSize());
         assertEquals(2, getPoints(queryGraph, 4, 1).getSize());
         assertNull(GHUtility.getEdge(queryGraph, 4, 0));
@@ -635,7 +638,7 @@ public class QueryGraphTest {
     }
 
     @Test
-    public void testInternalAPIOriginalTraversalKey() {
+    public void testInternalAPIOriginalEdgeKey() {
         initGraph(g);
 
         EdgeExplorer explorer = g.createEdgeExplorer();
@@ -654,12 +657,12 @@ public class QueryGraphTest {
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
         assertEquals(GHUtility.createEdgeKey(1, 0, origEdgeId, false),
-                ((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), 0)).getOriginalTraversalKey());
+                ((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), 0)).getOriginalEdgeKey());
 
         assertTrue(iter.next());
         assertEquals(1, iter.getAdjNode());
         assertEquals(GHUtility.createEdgeKey(0, 1, origEdgeId, false),
-                ((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), 1)).getOriginalTraversalKey());
+                ((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), 1)).getOriginalEdgeKey());
     }
 
     @Test
@@ -677,4 +680,84 @@ public class QueryGraphTest {
         // using cache means same reference
         assertTrue(edgeExplorer == queryGraph.createEdgeExplorer());
     }
+
+    @Test
+    public void testWayGeometry_edge() {
+        // drawn as horizontal linear graph for simplicity
+        // 0 - * - x - * - 1
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0, 0);
+        na.setNode(1, 0.3, 0.3);
+        g.edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(0.1, 0.1, 0.2, 0.2));
+
+        QueryGraph queryGraph = new QueryGraph(g);
+        LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        locationIndex.prepareIndex();
+        QueryResult qr = locationIndex.findClosest(0.15, 0.15, DefaultEdgeFilter.allEdges(carEncoder));
+        assertTrue(qr.isValid());
+        assertEquals("this test was supposed to test the Position.EDGE case", EDGE, qr.getSnappedPosition());
+        queryGraph.lookup(Collections.singletonList(qr));
+        EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(qr.getClosestNode());
+
+        assertTrue(iter.next());
+        assertEquals(0, iter.getAdjNode());
+        assertEquals(1, iter.fetchWayGeometry(0).size());
+        assertEquals(2, iter.fetchWayGeometry(1).size());
+        assertEquals(2, iter.fetchWayGeometry(2).size());
+        assertEquals(3, iter.fetchWayGeometry(3).size());
+        assertEquals(Helper.createPointList(0.15, 0.15, 0.1, 0.1, 0.0, 0.0), iter.fetchWayGeometry(3));
+
+        assertTrue(iter.next());
+        assertEquals(1, iter.getAdjNode());
+        assertEquals(1, iter.fetchWayGeometry(0).size());
+        assertEquals(2, iter.fetchWayGeometry(1).size());
+        assertEquals(2, iter.fetchWayGeometry(2).size());
+        assertEquals(3, iter.fetchWayGeometry(3).size());
+        assertEquals(Helper.createPointList(0.15, 0.15, 0.2, 0.2, 0.3, 0.3), iter.fetchWayGeometry(3));
+
+        assertFalse(iter.next());
+    }
+
+    @Test
+    public void testWayGeometry_pillar() {
+        //   1
+        //    \
+        //     * x
+        //    /
+        //   *
+        //  /
+        // 0
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0, 0);
+        na.setNode(1, 0.5, 0.1);
+        g.edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(0.1, 0.1, 0.2, 0.2));
+
+        QueryGraph queryGraph = new QueryGraph(g);
+        LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        locationIndex.prepareIndex();
+        QueryResult qr = locationIndex.findClosest(0.2, 0.21, DefaultEdgeFilter.allEdges(carEncoder));
+        assertTrue(qr.isValid());
+        assertEquals("this test was supposed to test the Position.PILLAR case", PILLAR, qr.getSnappedPosition());
+        queryGraph.lookup(Collections.singletonList(qr));
+        EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(qr.getClosestNode());
+
+        assertTrue(iter.next());
+        assertEquals(0, iter.getAdjNode());
+        assertEquals(1, iter.fetchWayGeometry(0).size());
+        assertEquals(2, iter.fetchWayGeometry(1).size());
+        assertEquals(2, iter.fetchWayGeometry(2).size());
+        assertEquals(3, iter.fetchWayGeometry(3).size());
+        assertEquals(Helper.createPointList(0.2, 0.2, 0.1, 0.1, 0.0, 0.0), iter.fetchWayGeometry(3));
+
+        assertTrue(iter.next());
+        assertEquals(1, iter.getAdjNode());
+        assertEquals(0, iter.fetchWayGeometry(0).size());
+        assertEquals(1, iter.fetchWayGeometry(1).size());
+        assertEquals(1, iter.fetchWayGeometry(2).size());
+        assertEquals(2, iter.fetchWayGeometry(3).size());
+        assertEquals(Helper.createPointList(0.2, 0.2, 0.5, 0.1), iter.fetchWayGeometry(3));
+
+        assertFalse(iter.next());
+    }
+
 }

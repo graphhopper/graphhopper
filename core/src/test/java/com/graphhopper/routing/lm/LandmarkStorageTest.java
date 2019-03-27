@@ -228,6 +228,11 @@ public class LandmarkStorageTest {
             }
 
             @Override
+            public SpatialRule getSpatialRule(int spatialId) {
+                throw new IllegalStateException();
+            }
+
+            @Override
             public int size() {
                 return 2;
             }

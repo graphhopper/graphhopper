@@ -6,14 +6,14 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-web-bundle</artifactId>
     <packaging>jar</packaging>
-    <version>0.12-SNAPSHOT</version>
+    <version>0.13-SNAPSHOT</version>
     <name>GraphHopper Dropwizard Bundle</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>0.12-SNAPSHOT</version>
+        <version>0.13-SNAPSHOT</version>
     </parent>
 
     <dependencies>
