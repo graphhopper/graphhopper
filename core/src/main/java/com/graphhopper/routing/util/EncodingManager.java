@@ -627,8 +627,9 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     @Override
-    public ObjectEncodedValue getObjectEncodedValue(String key) {
-        return getEncodedValue(key, ObjectEncodedValue.class);
+    @SuppressWarnings("unchecked")
+    public <T extends Enum> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> type) {
+        return (EnumEncodedValue<T>) getEncodedValue(key, EnumEncodedValue.class);
     }
 
     @Override
