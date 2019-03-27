@@ -183,7 +183,7 @@ docker run -d --name graphhopper -v <path_data_directory>/data:/data -p 8989:898
 
 Here is a list of the more detailed features including a link to the documentation:
 
- * [Simple start for users](./docs/web/quickstart.md) - just Java necessary! [Simple start for developers](./docs/core/quickstart-from-source.md) due to Maven.
+ * [Quick installation and start for users](./docs/web/quickstart.md) - just Java necessary! [Simple start for developers](./docs/core/quickstart-from-source.md) due to Maven.
  * Works out of the box with OpenStreetMap (osm/xml and pbf) and can be adapted to custom data
  * OpenStreetMap integration: Takes care of the road type, speed limit, the surface, barriers, access restrictions, ferries, [conditional access restrictions](https://github.com/graphhopper/graphhopper/pull/621), ...
  * GraphHopper is fast. And with the so called "Contraction Hierarchies" it can be even faster (enabled by default).
@@ -201,6 +201,7 @@ Here is a list of the more detailed features including a link to the documentati
  * Country specific routing via SpatialRules
  * The core uses only a few dependencies (hppc, jts and slf4j)
  * Scales from small indoor-sized to world-wide-sized graphs
- * Find nearest point on street e.g. to get elevation or 'snap to road' or being used as spatial index (see #1485)
+ * Find nearest point on street e.g. to get elevation or 'snap to road' or being used as spatial index (see [#1485](https://github.com/graphhopper/graphhopper/pull/1485))
  * Do [map matching](https://github.com/graphhopper/map-matching) with GraphHopper
  * Calculate [isochrones](./docs/web/api-doc.md#isochrone) with GraphHopper
+ * Show path details [#1142](https://github.com/graphhopper/graphhopper/pull/1142)
