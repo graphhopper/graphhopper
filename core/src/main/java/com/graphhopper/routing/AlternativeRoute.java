@@ -300,8 +300,8 @@ public class AlternativeRoute implements RoutingAlgorithm {
                                                       final double maxShareFactor, final double shareInfluence,
                                                       final double minPlateauFactor, final double plateauInfluence) {
             final double maxWeight = maxWeightFactor * bestPath.getWeight();
-            final GHIntObjectHashMap<IntSet> traversalKeyMap = new GHIntObjectHashMap<>();
-            final AtomicInteger startTID = addToMap(traversalKeyMap, bestPath);
+            final GHIntObjectHashMap<IntSet> traversalIdMap = new GHIntObjectHashMap<>();
+            final AtomicInteger startTID = addToMap(traversalIdMap, bestPath);
 
             // find all 'good' alternatives from forward-SPT matching the backward-SPT and optimize by
             // small total weight (1), small share and big plateau (3a+b) and do these expensive calculations
@@ -321,8 +321,8 @@ public class AlternativeRoute implements RoutingAlgorithm {
 
             bestWeightMapFrom.forEach(new IntObjectPredicate<SPTEntry>() {
                 @Override
-                public boolean apply(final int traversalKey, final SPTEntry fromSPTEntry) {
-                    SPTEntry toSPTEntry = bestWeightMapTo.get(traversalKey);
+                public boolean apply(final int traversalId, final SPTEntry fromSPTEntry) {
+                    SPTEntry toSPTEntry = bestWeightMapTo.get(traversalId);
                     if (toSPTEntry == null)
                         return true;
 
@@ -357,9 +357,9 @@ public class AlternativeRoute implements RoutingAlgorithm {
                         // e.g. when starting point has two edges and one is part of the best path the other edge is path of an alternative
                         assert traversalMode.isEdgeBased();
                     } else {
-                        int nextToTraversalKey = traversalMode.createTraversalKey(tmpFromEntry.adjNode,
+                        int nextToTraversalId = traversalMode.createTraversalId(tmpFromEntry.adjNode,
                                 tmpFromEntry.parent.adjNode, tmpFromEntry.edge, true);
-                        SPTEntry tmpNextToSPTEntry = bestWeightMapTo.get(nextToTraversalKey);
+                        SPTEntry tmpNextToSPTEntry = bestWeightMapTo.get(nextToTraversalId);
                         if (tmpNextToSPTEntry == null)
                             return true;
 
@@ -385,10 +385,10 @@ public class AlternativeRoute implements RoutingAlgorithm {
                     SPTEntry prevToSPTEntry = toSPTEntry;
                     // List<Integer> plateauEdges = new ArrayList<Integer>();
                     while (prevToSPTEntry.parent != null) {
-                        int nextFromTraversalKey = traversalMode.createTraversalKey(prevToSPTEntry.adjNode, prevToSPTEntry.parent.adjNode,
+                        int nextFromTraversalId = traversalMode.createTraversalId(prevToSPTEntry.adjNode, prevToSPTEntry.parent.adjNode,
                                 prevToSPTEntry.edge, false);
 
-                        SPTEntry nextFromSPTEntry = bestWeightMapFrom.get(nextFromTraversalKey);
+                        SPTEntry nextFromSPTEntry = bestWeightMapFrom.get(nextFromTraversalId);
                         // end of a plateau
                         if (nextFromSPTEntry == null)
                             break;
@@ -428,7 +428,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
 
                             // for now do not add alternatives to set, if we do we need to remove then on alternatives.clear too (see below)
                             // AtomicInteger tid = addToMap(traversalIDMap, path);
-                            // int tid = traversalMode.createTraversalKey(path.calcEdges().get(0), false);
+                            // int tid = traversalMode.createTraversalId(path.calcEdges().get(0), false);
                             alternatives.add(new AlternativeInfo(sortBy, path, fromEE, toEE, shareWeight, altNames));
 
                             Collections.sort(alternatives, ALT_COMPARATOR);
@@ -449,7 +449,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
                 SPTEntry getFirstShareEE(SPTEntry startEE, boolean reverse) {
                     while (startEE.parent != null) {
                         // TODO we could make use of traversal ID directly if stored in SPTEntry
-                        int tid = traversalMode.createTraversalKey(startEE.adjNode, startEE.parent.adjNode, startEE.edge, reverse);
+                        int tid = traversalMode.createTraversalId(startEE.adjNode, startEE.parent.adjNode, startEE.edge, reverse);
                         if (isAlreadyExisting(tid))
                             return startEE;
 
@@ -465,7 +465,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
                  */
                 boolean isAlreadyExisting(final int tid) {
                     final AtomicBoolean exists = new AtomicBoolean(false);
-                    traversalKeyMap.forEach(new IntObjectPredicate<IntSet>() {
+                    traversalIdMap.forEach(new IntObjectPredicate<IntSet>() {
                         @Override
                         public boolean apply(int key, IntSet set) {
                             if (set.contains(tid)) {
@@ -524,7 +524,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
             IntSet set = new GHIntHashSet();
             final AtomicInteger startTID = new AtomicInteger(-1);
             for (EdgeIteratorState iterState : path.calcEdges()) {
-                int tid = traversalMode.createTraversalKey(iterState, false);
+                int tid = traversalMode.createTraversalId(iterState, false);
                 set.add(tid);
                 if (startTID.get() < 0) {
                     // for node based traversal we need to explicitely add base node as starting node and to list

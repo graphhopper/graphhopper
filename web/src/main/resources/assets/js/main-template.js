@@ -5,8 +5,8 @@ require('flatpickr/dist/l10n');
 var L = require('leaflet');
 require('leaflet-contextmenu');
 require('leaflet-loading');
+require('leaflet.heightgraph');
 var moment = require('moment');
-require('./lib/leaflet.elevation-0.0.4.min.js');
 require('./lib/leaflet_numbered_markers.js');
 
 global.jQuery = require('jquery');
@@ -549,7 +549,7 @@ function routeLatLng(request, doQuery) {
             return;
         }
 
-        function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation, useMiles) {
+        function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation, useMiles, details) {
             return function () {
 
                 var currentGeoJson = geoJsons[currentLayerIndex];
@@ -568,7 +568,7 @@ function routeLatLng(request, doQuery) {
 
                 if (hasElevation) {
                     mapLayer.clearElevation();
-                    mapLayer.addElevation(currentGeoJson, useMiles);
+                    mapLayer.addElevation(currentGeoJson, useMiles, details);
                 }
 
                 headerTabs.find("li").removeClass("current");
@@ -633,7 +633,7 @@ function routeLatLng(request, doQuery) {
             mapLayer.addDataToRoutingLayer(geojsonFeature);
             var oneTab = $("<div class='route_result_tab'>");
             routeResultsDiv.append(oneTab);
-            tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), request.useMiles));
+            tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), request.useMiles, path.details));
 
             var routeInfo = $("<div class='route_description'>");
             if (path.description && path.description.length > 0) {

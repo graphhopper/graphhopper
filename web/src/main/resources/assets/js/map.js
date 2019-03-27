@@ -204,6 +204,7 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
             }]),
         contextmenuInheritItems: false
     };
+
 }
 
 function focus(coord, zoom, index) {
@@ -262,39 +263,98 @@ module.exports.focus = focus;
 module.exports.initMap = initMap;
 module.exports.adjustMapSize = adjustMapSize;
 
-module.exports.addElevation = function (geoJsonFeature, useMiles) {
+module.exports.addElevation = function (geoJsonFeature, useMiles, details) {
+    // TODO no option to switch to miles yet
+    var options = {
+       width: 600,
+       height: 280,
+       margins: {
+           top: 10,
+           right: 30,
+           bottom: 55,
+           left: 50
+       },
+       position: "bottomright"
+    }
+
+    var GHFeatureCollection = [];
+
+    for (var detailKey in details) {
+        GHFeatureCollection.push(sliceFeatureCollection(details[detailKey], detailKey, geoJsonFeature))
+    }
+
+    if(GHFeatureCollection.length === 0) {
+        // No Path Details => Show only elevation
+        geoJsonFeature.properties.attributeType = "elevation";
+        var elevationCollection = {
+            "type": "FeatureCollection",
+            "features": [geoJsonFeature],
+            "properties": {
+                "Creator": "GraphHopper",
+                "records": 1,
+                "summary": "Elevation"
+            }
+        };
+        GHFeatureCollection.push(elevationCollection);
+        // Use a fixed color for elevation
+        options.mappings = { Elevation: {'elevation': {text: 'Elevation [m]', color: '#27ce49'}}};
+    }
+
     if (elevationControl === null) {
-        elevationControl = L.control.elevation({
-            position: "bottomright",
-            theme: "white-theme", //default: lime-theme
-            width: 450,
-            height: 125,
-            margins: {
-                top: 10,
-                right: 20,
-                bottom: 30,
-                left: 60
-            },
-            useHeightIndicator: true, //if false a marker is drawn at map position
-            interpolation: "linear", //see https://github.com/mbostock/d3/wiki/SVG-Shapes#wiki-area_interpolate
-            hoverNumber: {
-                decimalsX: 2, //decimals on distance (in km or mi)
-                decimalsY: 0, //decimals on height (in m or ft)
-                formatter: undefined //custom formatter function may be injected
-            },
-            xTicks: undefined, //number of ticks in x axis, calculated by default according to width
-            yTicks: undefined, //number of ticks on y axis, calculated by default according to height
-            collapsed: false    //collapsed mode, show chart on click or mouseover
-        });
+        elevationControl = L.control.heightgraph(options);
         elevationControl.addTo(map);
     }
-    elevationControl.options.imperial = useMiles;
-    elevationControl.addData(geoJsonFeature);
+
+    elevationControl.addData(GHFeatureCollection);
 };
 
+function sliceFeatureCollection(detail, detailKey, geoJsonFeature){
+
+    var feature = {
+      "type": "FeatureCollection",
+      "features": [],
+      "properties": {
+          "Creator": "GraphHopper",
+          "summary": detailKey,
+          "records": detail.length
+      }
+    };
+
+    var points = geoJsonFeature.geometry.coordinates;
+    for (var i = 0; i < detail.length; i++) {
+        var detailObj = detail[i];
+        var from = detailObj[0];
+        // It's important to +1
+        // Array.slice is exclusive the to element and the feature needs to include the to coordinate
+        var to = detailObj[1] + 1;
+        var value = detailObj[2] || "Undefined";
+
+        var tmpPoints = points.slice(from,to)
+
+        feature.features.push({
+          "type": "Feature",
+          "geometry": {
+              "type": "LineString",
+              "coordinates": tmpPoints
+          },
+          "properties": {
+              "attributeType": value
+          }
+        });
+    }
+
+    return feature;
+}
+
 module.exports.clearElevation = function () {
-    if (elevationControl)
-        elevationControl.clear();
+    if (elevationControl){
+        if(elevationControl._markedSegments){
+            map.removeLayer(elevationControl._markedSegments);
+        }
+        // TODO this part is not really nice to remove and readd it to the map everytime
+        elevationControl.remove();
+        elevationControl = null;
+    }
 };
 
 module.exports.getMap = function () {

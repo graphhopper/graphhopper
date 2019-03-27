@@ -80,16 +80,16 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
                 if (!accept(iter, currEdge.edge))
                     continue;
 
-                int traversalKey = traversalMode.createTraversalKey(iter, false);
+                int traversalId = traversalMode.createTraversalId(iter, false);
                 double tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
                 if (Double.isInfinite(tmpWeight))
                     continue;
 
-                SPTEntry nEdge = fromMap.get(traversalKey);
+                SPTEntry nEdge = fromMap.get(traversalId);
                 if (nEdge == null) {
                     nEdge = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight);
                     nEdge.parent = currEdge;
-                    fromMap.put(traversalKey, nEdge);
+                    fromMap.put(traversalId, nEdge);
                     fromHeap.add(nEdge);
                 } else if (nEdge.weight > tmpWeight) {
                     fromHeap.remove(nEdge);
@@ -100,7 +100,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
                 } else
                     continue;
 
-                updateBestPath(iter, nEdge, traversalKey);
+                updateBestPath(iter, nEdge, traversalId);
             }
 
             if (fromHeap.isEmpty())
@@ -131,7 +131,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
         return visitedNodes;
     }
 
-    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry bestSPTEntry, int traversalKey) {
+    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry bestSPTEntry, int traversalId) {
     }
 
     @Override
