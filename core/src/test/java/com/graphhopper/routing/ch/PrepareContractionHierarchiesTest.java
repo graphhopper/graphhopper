@@ -511,7 +511,7 @@ public class PrepareContractionHierarchiesTest {
         assertTrue("sptWeight at node 4 should be smaller than shortcut weight 3->4 to make sure node 4 gets stalled", sptWeight4 < scWeight34);
 
         Path path = pch.createAlgo(queryGraph, AlgorithmOptions.start().build()).calcPath(0, 7);
-        assertEquals("wrong or no path found", IntArrayList.from(0, 3, 1, 2, 4, 5, 6, 7), path.calcNodes());
+        assertEquals("wrong or no path found", IntArrayList.from(0, 3, 8, 1, 2, 4, 5, 6, 7), path.calcNodes());
     }
 
     private double getWeight(Graph graph, Weighting w, int from, int to) {
