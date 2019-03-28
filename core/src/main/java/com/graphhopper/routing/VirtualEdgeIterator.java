@@ -213,7 +213,11 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
 
     @Override
     public String toString() {
-        return edges.toString();
+        if (current >= 0 && current < edges.size()) {
+            return "virtual edge: " + edges.get(current) + ", all: " + edges.toString();
+        } else {
+            return "virtual edge: (invalid)" + ", all: " + edges.toString();
+        }
     }
 
     @Override

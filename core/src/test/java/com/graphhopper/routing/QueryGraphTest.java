@@ -162,9 +162,9 @@ public class QueryGraphTest {
                 super.fillVirtualEdges(node2Edge, towerNode, mainExpl);
                 // ignore nodes should include baseNode == 1
                 if (towerNode == 3)
-                    assertEquals("[3->4]", node2Edge.get(towerNode).toString());
+                    assertEquals("virtual edge: (invalid), all: [3->4]", node2Edge.get(towerNode).toString());
                 else if (towerNode == 1)
-                    assertEquals("[1->4, 1 1-0]", node2Edge.get(towerNode).toString());
+                    assertEquals("virtual edge: (invalid), all: [1->4, 1 1-0]", node2Edge.get(towerNode).toString());
                 else
                     throw new IllegalStateException("not allowed " + towerNode);
             }
