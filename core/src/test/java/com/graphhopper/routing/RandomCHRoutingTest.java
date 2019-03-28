@@ -17,7 +17,6 @@ import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -28,7 +27,7 @@ import java.util.Random;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class RandomSODTest {
+public class RandomCHRoutingTest {
     private final TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private Directory dir;
     private CarFlagEncoder encoder;
@@ -51,11 +50,14 @@ public class RandomSODTest {
     }
 
 
-    @Ignore("this test can be used to find bugs, but is disabled by default")
+    /**
+     * Runs random routing queries on a random query/CH graph with random speeds and adding random virtual edges and
+     * nodes.
+     */
     @Test
     public void issue1574_random() {
         // you might have to keep this test running in an infinite loop for several minutes to find potential routing
-        // bugs (e.g. use intellij 'run until failure').
+        // bugs (e.g. use intellij 'run until stop/failure').
         int numNodes = 50;
         long seed = System.nanoTime();
         // for example these used to fail before fixing #1574.
@@ -67,7 +69,8 @@ public class RandomSODTest {
         System.out.println("seed: " + seed);
         Random rnd = new Random(seed);
         // todo: allowing loops also produces another error (may not read speed in wrong direction...), e.g. with this seed: 10785899964423
-        buildRandomGraph(rnd, numNodes, 2.5, false, true, 0.9);
+        boolean allowLoops = false;
+        buildRandomGraph(rnd, numNodes, 2.5, allowLoops, true, 0.9);
         locationIndex = new LocationIndexTree(graph, dir);
         locationIndex.prepareIndex();
 
@@ -102,7 +105,6 @@ public class RandomSODTest {
 
                 double weight = path.getWeight();
                 double refWeight = refPath.getWeight();
-                // todo: using very rough threshold, but sometimes there are large deviations
                 if (Math.abs(refWeight - weight) > 1) {
                     fail("wrong weight: " + from + "->" + to + ", dijkstra: " + refWeight + " vs. ch: " + path.getWeight());
                 }
