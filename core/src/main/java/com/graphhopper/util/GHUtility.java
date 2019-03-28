@@ -198,7 +198,7 @@ public class GHUtility {
                 graph.getNodes(), graph.getAllEdges().length(), minDist, maxDist));
     }
 
-    private static double getDistance(int from, int to, NodeAccess nodeAccess) {
+    public static double getDistance(int from, int to, NodeAccess nodeAccess) {
         double fromLat = nodeAccess.getLat(from);
         double fromLon = nodeAccess.getLon(from);
         double toLat = nodeAccess.getLat(to);
