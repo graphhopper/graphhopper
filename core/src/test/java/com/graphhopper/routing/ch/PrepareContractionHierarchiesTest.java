@@ -463,18 +463,14 @@ public class PrepareContractionHierarchiesTest {
         // the weight of edge 3-1 must be such that node 2 gets stalled in the forward search via the incoming shortcut
         // at node 2 coming from 3. this happens because due to the virtual node x between 3 and 1, the spt entries
         // calculated on the query graph (using the virtual edges) use different floating point rounding / arithmetics.
-        IntsRef flags = edge31.getFlags();
-        carEncoder.getAverageSpeedEnc().setDecimal(false, flags, 22);
-        edge31.setFlags(flags);
+        edge31.set(carEncoder.getAverageSpeedEnc(), 22);
 
         // just stalling node 2 due to the differently calculated weights for the virtual edges would be no problem, yet
         // because the shortcut 3-4 still finds node 4. however node 4 might also get stalled via node 2. 'normally' this
         // would not happen, because node 2 would not even be explored in the forward search, but because of the virtual
         // node the strict upward search is modified and goes like 0-3-1-2 (i.e. it finds node 2).
         // so no we fine tune the weight for 2-4 such that node 4 gets also stalled
-        flags = edge24.getFlags();
-        carEncoder.getAverageSpeedEnc().setDecimal(true, flags, 27.5);
-        edge24.setFlags(flags);
+        edge24.setReverse(carEncoder.getAverageSpeedEnc(), 27.5);
 
         // prepare ch, use node ids as levels
         PrepareContractionHierarchies pch = createPrepareContractionHierarchies(g, lg, fastestWeighting);
