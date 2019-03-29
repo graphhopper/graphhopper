@@ -189,8 +189,6 @@ public class EdgeBasedRoutingAlgorithmTest {
         {
             // this test is more involved for bidir algos: the turn costs have to be taken into account also at the
             // node where fwd and bwd searches meet
-            // todo: fix this, #1585
-            Assume.assumeFalse("does not work for bidir algos yes", algoStr.equals(DIJKSTRA_BI) || algoStr.equals(ASTAR_BI));
             Path p04 = createAlgo(g, opts).calcPath(0, 4);
             assertDistTimeWeight(p04, 4, distance, 6, turnCosts);
             assertEquals(26, p04.getWeight(), 1.e-6);

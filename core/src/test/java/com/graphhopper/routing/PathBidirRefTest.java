@@ -79,7 +79,6 @@ public class PathBidirRefTest {
         assertEquals(IntArrayList.from(1, 2, 3), p.calcNodes());
         assertEquals(30, p.getDistance(), 1e-4);
         assertEquals(5 + 1.8, p.getWeight(), 1e-4);
-        // todo: turn cost time at meeting point should be included, #1585
-//        assertEquals(5000 + 1800, p.getTime(), 1.e-6);
+        assertEquals(5000 + 1800, p.getTime(), 1.e-6);
     }
 }
