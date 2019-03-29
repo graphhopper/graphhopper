@@ -234,6 +234,13 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return isReadyForContraction;
     }
 
+    @Override
+    public int getOtherNode(int edge, int node) {
+        EdgeAccess edgeAccess = isShortcut(edge) ? chEdgeAccess : baseGraph.edgeAccess;
+        long edgePointer = edgeAccess.toPointer(edge);
+        return edgeAccess.getOtherNode(node, edgePointer);
+    }
+
     void _prepareForContraction() {
         if (isReadyForContraction) {
             return;
@@ -416,10 +423,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             header += String.format(Locale.ROOT, formatShortcutExt, "S_ORIG_FIRST", "S_ORIG_LAST");
         }
         System.out.println(header);
-        IntsRef intsRef = new IntsRef(shortcutBytesForFlags / 4);
         for (int i = baseGraph.edgeCount; i < baseGraph.edgeCount + Math.min(shortcutCount, printMax); ++i) {
             long edgePointer = chEdgeAccess.toPointer(i);
-            chEdgeAccess.readFlags(edgePointer, intsRef);
             String edgeString = String.format(Locale.ROOT, formatShortcutsBase,
                     i,
                     chEdgeAccess.getNodeA(edgePointer),
@@ -427,7 +432,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     chEdgeAccess.getLinkA(edgePointer),
                     chEdgeAccess.getLinkB(edgePointer),
                     chEdgeAccess.getDist(edgePointer),
-                    intsRef,
+                    chEdgeAccess.getShortcutFlags(edgePointer),
                     shortcuts.getInt(edgePointer + S_SKIP_EDGE1),
                     shortcuts.getInt(edgePointer + S_SKIP_EDGE2));
             if (edgeBased) {
@@ -689,7 +694,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public final IntsRef getFlags() {
             if (isShortcut())
                 throw new IllegalStateException("Shortcut should not need to return raw flags!");
-            return getFlags();
+            return super.getFlags();
         }
 
         @Override
@@ -744,12 +749,14 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public final CHEdgeIteratorState setWeight(double weight) {
+            checkShortcut(true, "setWeight");
             chEdgeAccess.setShortcutWeight(edgePointer, weight);
             return this;
         }
 
         @Override
         public void setFlagsAndWeight(int flags, double weight) {
+            checkShortcut(true, "setFlagsAndWeight");
             chEdgeAccess.setAccessAndWeight(edgePointer, flags, weight);
             chFlags = flags;
             freshFlags = true;
@@ -757,6 +764,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public final double getWeight() {
+            checkShortcut(true, "getWeight");
             return chEdgeAccess.getShortcutWeight(edgePointer);
         }
 
@@ -846,7 +854,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             if (weight > MAX_WEIGHT)
                 weightInt = MAX_WEIGHT_31;
             else
-                weightInt = ((int) (weight * WEIGHT_FACTOR)) << 2;
+                weightInt = ((int) Math.round(weight * WEIGHT_FACTOR)) << 2;
             return weightInt;
         }
 

@@ -243,16 +243,27 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (map.getWeighting().isEmpty())
             map.setWeighting(getDefaultWeighting());
 
-        boolean edgeBased = map.getBool(Parameters.Routing.EDGE_BASED, false);
-        String entriesStr = "";
-        for (PrepareContractionHierarchies p : allPreparations) {
-            if (p.isEdgeBased() == edgeBased && p.getWeighting().matches(map))
-                return p;
+        return getPreparation(map);
+    }
 
-            entriesStr += p.getWeighting() + "|" + (p.isEdgeBased() ? "edge" : "node") + ", ";
+    public PrepareContractionHierarchies getPreparation(HintsMap map) {
+        boolean edgeBased = map.getBool(Parameters.Routing.EDGE_BASED, false);
+        List<String> entriesStrs = new ArrayList<>();
+        boolean weightingMatchesButNotEdgeBased = false;
+        for (PrepareContractionHierarchies p : getPreparations()) {
+            boolean weightingMatches = p.getWeighting().matches(map);
+            if (p.isEdgeBased() == edgeBased && weightingMatches)
+                return p;
+            else if (weightingMatches)
+                weightingMatchesButNotEdgeBased = true;
+
+            entriesStrs.add(p.getWeighting() + "|" + (p.isEdgeBased() ? "edge" : "node"));
         }
 
-        throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries " + entriesStr);
+        String hint = weightingMatchesButNotEdgeBased
+                ? " The '" + Parameters.Routing.EDGE_BASED + "' url parameter is missing or does not fit the weightings. Its value was: '" + edgeBased + "'"
+                : "";
+        throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries: " + entriesStrs + "." + hint);
     }
 
     public int getPreparationThreads() {

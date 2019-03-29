@@ -1,4 +1,5 @@
 0.12
+    renamed VirtualEdgeIteratorState.getOriginalEdgeKey to more precise getOriginalEdgeKey #1549
     access refactoring #1436 that moves AccessValue into SpatialRule.Access
     refactoring of EncodingManager to use builder pattern. Migration should be simple. Replace new EncodingManager with EncodingManager.create
 	The methods GraphHopper.setEnableInstructions/setPreferredLanguage is now in EncodingManager.Builder

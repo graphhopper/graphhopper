@@ -83,6 +83,11 @@ public interface Graph {
     EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode);
 
     /**
+     * @return the 'opposite' node of a given edge, so if there is an edge 3-2 and node =2 this returns 3
+     */
+    int getOtherNode(int edge, int node);
+
+    /**
      * @return all edges in this graph, where baseNode will be the smaller node.
      */
     AllEdgesIterator getAllEdges();
@@ -114,4 +119,5 @@ public interface Graph {
      * @return the graph extension like a TurnCostExtension
      */
     GraphExtension getExtension();
+
 }

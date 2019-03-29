@@ -19,21 +19,20 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.Dijkstra;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
 
+import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.*;
 
@@ -122,7 +121,11 @@ public class PrepareContractionHierarchiesTest {
     }
 
     GraphHopperStorage createGHStorage() {
-        return new GraphBuilder(encodingManager).setCHGraph(weighting).create();
+        return createGHStorage(weighting);
+    }
+
+    GraphHopperStorage createGHStorage(Weighting w) {
+        return new GraphBuilder(encodingManager).setCHGraph(w).create();
     }
 
     GraphHopperStorage createExampleGraph() {
@@ -417,6 +420,108 @@ public class PrepareContractionHierarchiesTest {
 
     private Set<Integer> buildSet(Integer... values) {
         return new HashSet<>(Arrays.asList(values));
+    }
+
+    @Test
+    public void testStallOnDemandViaVirtuaNode_issue1574() {
+        // this test reproduces the issue that appeared in issue1574 and the problem is very intricate
+        // the problem is a combination of all these things:
+        // * contraction hierarchies
+        // * stall-on-demand (without sod there is no problem, at least in this test)
+        // * shortcuts weight rounding
+        // * via nodes/virtual edges and the associated weight precision (without virtual nodes between source and target
+        //   there is no problem, but this can happen for via routes
+        // * the fact that the LevelEdgeFilter always accepts virtual nodes
+
+        // use fastest weighting in this test to be able to fine-tune some weights via the speed (see below)
+        Weighting fastestWeighting = new FastestWeighting(carEncoder);
+        final GraphHopperStorage g = createGHStorage();
+        CHGraph lg = g.getGraph(CHGraph.class);
+        // the following graph reproduces the issue. note that we will use the node ids as ch levels, so there will
+        // be a shortcuts from 1->3 and 2->3 (not the other way around, because of shortcut disconnections!)
+        // since the shortest path is strictly upward only the forward search runs here, this is also important!
+        // start 0 - 3 - x - 1 - 2
+        //             \         |
+        //               sc ---- 4 - 5 - 6 - 7 finish
+        g.edge(0, 3, 1, true);
+        EdgeIteratorState edge31 = g.edge(3, 1, 1, true);
+        g.edge(1, 2, 1, true);
+        EdgeIteratorState edge24 = g.edge(2, 4, 1, true);
+        g.edge(4, 5, 1, true);
+        g.edge(5, 6, 1, true);
+        g.edge(6, 7, 1, true);
+        updateDistancesFor(g, 0, 0.001, 0.0000);
+        updateDistancesFor(g, 3, 0.001, 0.0001);
+        updateDistancesFor(g, 1, 0.001, 0.0002);
+        updateDistancesFor(g, 2, 0.001, 0.0003);
+        updateDistancesFor(g, 4, 0.000, 0.0003);
+        updateDistancesFor(g, 5, 0.000, 0.0004);
+        updateDistancesFor(g, 6, 0.000, 0.0005);
+        updateDistancesFor(g, 7, 0.000, 0.0006);
+
+        // we use the speed to fine tune some weights:
+        // the weight of edge 3-1 must be such that node 2 gets stalled in the forward search via the incoming shortcut
+        // at node 2 coming from 3. this happens because due to the virtual node x between 3 and 1, the spt entries
+        // calculated on the query graph (using the virtual edges) use different floating point rounding / arithmetics.
+        edge31.set(carEncoder.getAverageSpeedEnc(), 22);
+
+        // just stalling node 2 due to the differently calculated weights for the virtual edges would be no problem, yet
+        // because the shortcut 3-4 still finds node 4. however node 4 might also get stalled via node 2. 'normally' this
+        // would not happen, because node 2 would not even be explored in the forward search, but because of the virtual
+        // node the strict upward search is modified and goes like 0-3-1-2 (i.e. it finds node 2).
+        // so no we fine tune the weight for 2-4 such that node 4 gets also stalled
+        edge24.setReverse(carEncoder.getAverageSpeedEnc(), 27.5);
+
+        // prepare ch, use node ids as levels
+        PrepareContractionHierarchies pch = createPrepareContractionHierarchies(g, lg, fastestWeighting);
+        pch.useFixedNodeOrdering(new NodeOrderingProvider() {
+            @Override
+            public int getNodeIdForLevel(int level) {
+                return level;
+            }
+
+            @Override
+            public int getNumNodes() {
+                return g.getNodes();
+            }
+        }).doWork();
+        assertEquals("there should be exactly two shortcuts (3->2) and (3->4)", 2, lg.getEdges() - lg.getOriginalEdges());
+
+        // insert virtual node and edges
+        QueryResult qr = new QueryResult(0.0001, 0.0015);
+        qr.setClosestEdge(edge31);
+        qr.setSnappedPosition(QueryResult.Position.EDGE);
+        qr.setClosestNode(8);
+        qr.setWayIndex(0);
+        qr.calcSnappedPoint(new DistanceCalc2D());
+        QueryGraph queryGraph = new QueryGraph(lg);
+        queryGraph.lookup(Collections.singletonList(qr));
+
+        // we make sure our weight fine tunings do what they are supposed to
+        double weight03 = getWeight(queryGraph, fastestWeighting, 0, 3);
+        double scWeight23 = weight03 + ((CHEdgeIteratorState) getEdge(lg, 2, 3)).getWeight();
+        double scWeight34 = weight03 + ((CHEdgeIteratorState) getEdge(lg, 3, 4)).getWeight();
+        double sptWeight2 = weight03 + getWeight(queryGraph, fastestWeighting, 3, 8) + getWeight(queryGraph, fastestWeighting, 8, 1) + getWeight(queryGraph, fastestWeighting, 1, 2);
+        double sptWeight4 = sptWeight2 + getWeight(queryGraph, fastestWeighting, 2, 4);
+        assertTrue("incoming shortcut weight 3->2 should be smaller than sptWeight at node 2 to make sure 2 gets stalled", scWeight23 < sptWeight2);
+        assertTrue("sptWeight at node 4 should be smaller than shortcut weight 3->4 to make sure node 4 gets stalled", sptWeight4 < scWeight34);
+
+        Path path = pch.createAlgo(queryGraph, AlgorithmOptions.start().build()).calcPath(0, 7);
+        assertEquals("wrong or no path found", IntArrayList.from(0, 3, 8, 1, 2, 4, 5, 6, 7), path.calcNodes());
+    }
+
+    private double getWeight(Graph graph, Weighting w, int from, int to) {
+        return w.calcWeight(getEdge(graph, from, to), false, -1);
+    }
+
+    private EdgeIteratorState getEdge(Graph graph, int from, int to) {
+        EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(from);
+        while (iter.next()) {
+            if (iter.getAdjNode() == to) {
+                return iter;
+            }
+        }
+        throw new IllegalArgumentException("Could not find edge from: " + from + " to: " + to);
     }
 
     @Test
