@@ -89,15 +89,14 @@ public class TurnWeighting implements Weighting {
         if (prevOrNextEdgeId == EdgeIterator.NO_EDGE)
             return millis;
 
-        // TODO for now assume turn costs are returned in milliseconds?
         // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
-        long turnCostsInMillis;
+        long turnCostsInSeconds;
         if (reverse)
-            turnCostsInMillis = (long) calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId);
+            turnCostsInSeconds = (long) calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId);
         else
-            turnCostsInMillis = (long) calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeState.getEdge());
+            turnCostsInSeconds = (long) calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeState.getEdge());
 
-        return millis + turnCostsInMillis;
+        return millis + 1000 * turnCostsInSeconds;
     }
 
     /**

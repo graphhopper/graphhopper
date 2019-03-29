@@ -29,12 +29,12 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This class merges multiple {@link Path} objects into one continues object that
+ * This class merges multiple {@link Path} objects into one continuous object that
  * can be used in the {@link PathWrapper}. There will be a Path between every waypoint.
  * So for two waypoints there will be only one Path object. For three waypoints there will be
  * two Path objects.
  * <p>
- * The instructions are generated per Path object and are merged into one continues InstructionList.
+ * The instructions are generated per Path object and are merged into one continuous InstructionList.
  * The PointList per Path object are merged and optionally simplified.
  *
  * @author Peter Karich
