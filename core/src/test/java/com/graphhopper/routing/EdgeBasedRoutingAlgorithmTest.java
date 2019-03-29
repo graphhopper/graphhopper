@@ -59,8 +59,8 @@ public class EdgeBasedRoutingAlgorithmTest {
     @Parameters(name = "{0}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
-                // todonow: make this test run also for edge-based CH or otherwise make sure time calculation is tested also for edge-based CH (at the moment it will fail!)
-                // todonow: make this test run also for ALT or otherwise make sure time calculation is tested also for ALT (at the moment it will fail?!)
+                // todo: make this test run also for edge-based CH or otherwise make sure time calculation is tested also for edge-based CH (at the moment it will fail!)
+                // todo: make this test run also for ALT or otherwise make sure time calculation is tested also for ALT (at the moment it will fail?!)
                 {DIJKSTRA},
                 {DIJKSTRA_BI},
                 {ASTAR},

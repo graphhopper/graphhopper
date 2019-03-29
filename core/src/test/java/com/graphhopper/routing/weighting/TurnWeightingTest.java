@@ -49,7 +49,7 @@ public class TurnWeightingTest {
         addTurnCost(0, 1, 2, 5);
         TurnWeighting turnWeighting = new TurnWeighting(new ShortestWeighting(encoder), turnCostExt);
         // todo: for the shortest weighting turn costs cannot be interpreted as seconds ? at least when they are added
-        // to the weight ? how much should they contribute. The same questions arises for the ShortestFastestWeighting...
+        // to the weight ? how much should they contribute ?
 //        assertEquals(105, turnWeighting.calcWeight(edge, false, 0), 1.e-6);
         assertEquals(6000 + 5000, turnWeighting.calcMillis(edge, false, 0), 1.e-6);
     }
