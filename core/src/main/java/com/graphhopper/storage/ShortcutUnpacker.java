@@ -79,9 +79,7 @@ public class ShortcutUnpacker {
     }
 
     private CHEdgeIteratorState getEdge(int edgeId, int adjNode) {
-        CHEdgeIteratorState edge = (CHEdgeIteratorState) graph.getEdgeIteratorState(edgeId, adjNode);
-        assert edge != null : "Edge with id: " + edgeId + " does not exist or does not touch node " + adjNode;
-        return edge;
+        return (CHEdgeIteratorState) graph.getEdgeIteratorState(edgeId, adjNode);
     }
 
     public interface Visitor {
