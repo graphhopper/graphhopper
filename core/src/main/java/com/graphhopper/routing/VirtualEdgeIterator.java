@@ -253,6 +253,17 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
+    public CHEdgeIteratorState setTime(long time) {
+        throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
+    public long getTime() {
+        // will be called only from PreparationWeighting and if isShortcut is true
+        return ((CHEdgeIteratorState) edges.get(current)).getTime();
+    }
+
+    @Override
     public void setFlagsAndWeight(int flags, double weight) {
         throw new UnsupportedOperationException("Not supported");
     }

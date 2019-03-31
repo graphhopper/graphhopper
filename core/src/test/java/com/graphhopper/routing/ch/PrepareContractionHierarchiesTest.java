@@ -183,6 +183,49 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
+    public void testLinearGraph() {
+        // 4-1-3-2-5-0
+        final GraphHopperStorage g = createGHStorage();
+        CHGraph lg = g.getGraph(CHGraph.class);
+        g.edge(4, 1, 100, true);
+        g.edge(1, 3, 100, true);
+        g.edge(3, 2, 100, true);
+        g.edge(2, 5, 100, true);
+        g.edge(5, 0, 100, true);
+        g.freeze();
+        PrepareContractionHierarchies pch = createPrepareContractionHierarchies(g, lg)
+                .useFixedNodeOrdering(new NodeOrderingProvider() {
+                    @Override
+                    public int getNodeIdForLevel(int level) {
+                        return level;
+                    }
+
+                    @Override
+                    public int getNumNodes() {
+                        return g.getNodes();
+                    }
+                });
+        pch.doWork();
+        assertEquals(3, pch.getShortcuts());
+        {
+            RoutingAlgorithm algo = pch.createAlgo(lg, AlgorithmOptions.start().weighting(weighting).build());
+            Path p = algo.calcPath(4, 0);
+            assertEquals(500, p.getDistance(), 1.e-6);
+            assertEquals(500, p.getWeight(), 1.e-6);
+            assertEquals(30000, p.getTime(), 1.e-6);
+        }
+
+        {
+            RoutingAlgorithm algo = pch.createAlgo(lg, AlgorithmOptions.start().weighting(weighting).build());
+            Path p = algo.calcPath(0, 3);
+            assertEquals(300, p.getDistance(), 1.e-6);
+            assertEquals(300, p.getWeight(), 1.e-6);
+            assertEquals(18000, p.getTime(), 1.e-6);
+        }
+
+    }
+
+    @Test
     public void testDirectedGraph() {
         GraphHopperStorage g = createGHStorage();
         CHGraph lg = g.getGraph(CHGraph.class);

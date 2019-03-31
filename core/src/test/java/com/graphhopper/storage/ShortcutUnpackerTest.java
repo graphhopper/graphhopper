@@ -46,11 +46,11 @@ public class ShortcutUnpackerTest {
         graph.edge(4, 5, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
         graph.edge(5, 6, 1, true).set(speedEnc, fwdSpeed).setReverse(speedEnc, bwdSpeed);
         graph.freeze();
-        chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 2, 2, 0, 1);
-        chGraph.shortcut(2, 4, PrepareEncoder.getScFwdDir(), 2, 2, 2, 3);
-        chGraph.shortcut(4, 6, PrepareEncoder.getScFwdDir(), 2, 2, 4, 5);
-        chGraph.shortcut(2, 6, PrepareEncoder.getScFwdDir(), 2, 2, 7, 8);
-        chGraph.shortcut(0, 6, PrepareEncoder.getScFwdDir(), 2, 2, 6, 9);
+        chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 2, 2, 3, 0, 1);
+        chGraph.shortcut(2, 4, PrepareEncoder.getScFwdDir(), 2, 2, 3, 2, 3);
+        chGraph.shortcut(4, 6, PrepareEncoder.getScFwdDir(), 2, 2, 3, 4, 5);
+        chGraph.shortcut(2, 6, PrepareEncoder.getScFwdDir(), 2, 2, 3, 7, 8);
+        chGraph.shortcut(0, 6, PrepareEncoder.getScFwdDir(), 2, 2, 3, 6, 9);
 
         {
             // unpack the shortcut 0-6, traverse original edges in 'forward' order (from node 0 to 6)

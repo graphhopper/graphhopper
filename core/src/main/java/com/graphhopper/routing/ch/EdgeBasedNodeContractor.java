@@ -299,10 +299,11 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         int origFirst = edgeFrom.getParent().incEdge;
         LOGGER.trace("Adding shortcut from {} to {}, weight: {}, firstOrigEdge: {}, lastOrigEdge: {}",
                 from, adjNode, edgeTo.weight, edgeFrom.getParent().incEdge, edgeTo.incEdge);
-        // todo: so far we are not using the distance in edge based CH
+        // todo: so far we are not using the distance or time in edge based CH
         double distance = 0.0;
+        long time = 0;
         int accessFlags = PrepareEncoder.getScFwdDir();
-        int shortcutId = prepareGraph.shortcutEdgeBased(from, adjNode, accessFlags, edgeTo.weight, distance, edgeFrom.edge, edgeTo.edge, origFirst, edgeTo.incEdge);
+        int shortcutId = prepareGraph.shortcutEdgeBased(from, adjNode, accessFlags, edgeTo.weight, distance, time, edgeFrom.edge, edgeTo.edge, origFirst, edgeTo.incEdge);
         final int origEdgeCount = getOrigEdgeCount(edgeFrom.edge) + getOrigEdgeCount(edgeTo.edge);
         setOrigEdgeCount(shortcutId, origEdgeCount);
         addedShortcutsCount++;

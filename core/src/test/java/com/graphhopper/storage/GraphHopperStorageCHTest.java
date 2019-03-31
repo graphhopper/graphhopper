@@ -255,7 +255,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         // 1.004+1.006 = 2.09999999999. we make sure this does not become 2.09 instead of 2.10 (due to truncation)
         double x1 = 1.004;
         double x2 = 1.006;
-        chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), x1 + x2, x1 + x2, 0, 1);
+        chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), x1 + x2, x1 + x2, 0, 0, 1);
         CHEdgeIteratorState sc = chGraph.getEdgeIteratorState(2, 2);
         assertEquals(2.01, sc.getDistance(), 1.e-6);
         assertEquals(2.01, sc.getWeight(), 1.e-6);

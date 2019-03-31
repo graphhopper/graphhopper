@@ -49,6 +49,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private static final int MAX_WEIGHT_31 = (Integer.MAX_VALUE >> 2) << 2;
     private static final double MAX_WEIGHT = (Integer.MAX_VALUE >> 2) / WEIGHT_FACTOR;
     private static final double MIN_WEIGHT = 1 / WEIGHT_FACTOR;
+    private static int MAX_TIME = Integer.MAX_VALUE;
     final DataAccess shortcuts;
     final DataAccess nodesCH;
     final int scDirMask = PrepareEncoder.getScDirMask();
@@ -60,10 +61,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     int shortcutEntryBytes;
     // the nodesCH storage is limited via baseGraph.nodeCount too
     int nodeCHEntryBytes;
-    final int shortcutBytesForFlags = 4;
     private int N_LEVEL;
     // shortcut memory layout is synced with edges indices until E_FLAGS, then:
-    private int S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_FIRST, S_ORIG_LAST;
+    private int S_TIME, S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_FIRST, S_ORIG_LAST;
     private int shortcutCount = 0;
     private boolean isReadyForContraction;
 
@@ -123,7 +123,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
-    public int shortcut(int a, int b, int accessFlags, double weight, double distance, int skippedEdge1, int skippedEdge2) {
+    public int shortcut(int a, int b, int accessFlags, double weight, double distance, long time, int skippedEdge1, int skippedEdge2) {
         if (!baseGraph.isFrozen())
             throw new IllegalStateException("Cannot create shortcut if graph is not yet frozen");
 
@@ -135,14 +135,15 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         long edgePointer = chEdgeAccess.toPointer(scId);
         chEdgeAccess.setAccessAndWeight(edgePointer, accessFlags & scDirMask, weight);
         chEdgeAccess.setDist(edgePointer, distance);
+        chEdgeAccess.setTime(edgePointer, time);
         chEdgeAccess.setSkippedEdges(edgePointer, skippedEdge1, skippedEdge2);
         return scId;
     }
 
     @Override
-    public int shortcutEdgeBased(int a, int b, int accessFlags, double weight, double distance, int skippedEdge1, int skippedEdge2, int origFirst, int origLast) {
+    public int shortcutEdgeBased(int a, int b, int accessFlags, double weight, double distance, long time, int skippedEdge1, int skippedEdge2, int origFirst, int origLast) {
         assert edgeBased : "Edge-based shortcuts should only be added when CHGraph is edge-based";
-        int scId = shortcut(a, b, accessFlags, weight, distance, skippedEdge1, skippedEdge2);
+        int scId = shortcut(a, b, accessFlags, weight, distance, time, skippedEdge1, skippedEdge2);
         chEdgeAccess.setFirstAndLastOrigEdges(chEdgeAccess.toPointer(scId), origFirst, origLast);
         return scId;
     }
@@ -339,7 +340,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         EdgeAccess ea = baseGraph.edgeAccess;
         chEdgeAccess.init(ea.E_NODEA, ea.E_NODEB, ea.E_LINKA, ea.E_LINKB, ea.E_DIST, ea.E_FLAGS);
         // shortcuts
-        S_SKIP_EDGE1 = ea.E_FLAGS + 4;
+        S_TIME = ea.E_FLAGS + 4;
+        S_SKIP_EDGE1 = S_TIME + 4;
         S_SKIP_EDGE2 = S_SKIP_EDGE1 + 4;
         if (edgeBased) {
             S_ORIG_FIRST = S_SKIP_EDGE2 + 4;
@@ -433,6 +435,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     chEdgeAccess.getLinkB(edgePointer),
                     chEdgeAccess.getDist(edgePointer),
                     chEdgeAccess.getShortcutFlags(edgePointer),
+                    shortcuts.getInt(edgePointer + S_TIME),
                     shortcuts.getInt(edgePointer + S_SKIP_EDGE1),
                     shortcuts.getInt(edgePointer + S_SKIP_EDGE2));
             if (edgeBased) {
@@ -585,6 +588,19 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public final double getWeight() {
             checkShortcut(true, "getWeight");
             return chEdgeAccess.getShortcutWeight(edgePointer);
+        }
+
+        @Override
+        public CHEdgeIteratorState setTime(long time) {
+            checkShortcut(true, "setTime");
+            chEdgeAccess.setTime(edgePointer, time);
+            return this;
+        }
+
+        @Override
+        public long getTime() {
+            checkShortcut(true, "getTime");
+            return chEdgeAccess.getTime(edgePointer);
         }
 
         @Override
@@ -748,6 +764,19 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
+        public final CHEdgeIteratorState setTime(long timeMs) {
+            checkShortcut(true, "setTime");
+            chEdgeAccess.setTime(edgePointer, timeMs);
+            return this;
+        }
+
+        @Override
+        public final long getTime() {
+            checkShortcut(true, "getTime");
+            return chEdgeAccess.getTime(edgePointer);
+        }
+
+        @Override
         public final CHEdgeIteratorState setWeight(double weight) {
             checkShortcut(true, "setWeight");
             chEdgeAccess.setShortcutWeight(edgePointer, weight);
@@ -866,6 +895,23 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                 return Double.POSITIVE_INFINITY;
 
             return weight;
+        }
+
+        void setTime(long edgePointer, long time) {
+            shortcuts.setInt(edgePointer + S_TIME, timeToInt(time));
+        }
+
+        long getTime(long edgePointer) {
+            return shortcuts.getInt(edgePointer + S_TIME);
+        }
+
+        private int timeToInt(long timeMs) {
+            if (timeMs < 0)
+                throw new IllegalArgumentException("Time cannot be negative: " + timeMs);
+            if (timeMs > MAX_TIME) {
+                return MAX_TIME;
+            }
+            return (int) timeMs;
         }
 
         void setSkippedEdges(long edgePointer, int edge1, int edge2) {

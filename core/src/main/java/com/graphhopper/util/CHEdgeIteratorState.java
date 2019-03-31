@@ -52,6 +52,10 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
      */
     boolean isShortcut();
 
+    CHEdgeIteratorState setTime(long time);
+
+    long getTime();
+
     /**
      * This method is only used on preparation.
      *

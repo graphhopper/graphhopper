@@ -54,6 +54,12 @@ public class PreparationWeighting implements Weighting {
 
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        if (edgeState instanceof CHEdgeIteratorState) {
+            CHEdgeIteratorState tmp = (CHEdgeIteratorState) edgeState;
+            if (tmp.isShortcut())
+                // todonow: any problems with different directions here ? (see comment in calcWeight)
+                return tmp.getTime();
+        }
         return userWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
     }
 
