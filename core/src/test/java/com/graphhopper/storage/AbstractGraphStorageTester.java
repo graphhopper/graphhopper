@@ -700,6 +700,27 @@ public abstract class AbstractGraphStorageTester {
     }
 
     @Test
+    public void testFwdBwdSpeed() {
+        graph = createGHStorage();
+        EdgeIteratorState edge = graph.edge(0, 1, 100, true);
+        // default speeds
+        assertEquals(60, edge.get(carAvSpeedEnc), 1.e-6);
+        assertEquals(60, edge.getReverse(carAvSpeedEnc), 1.e-6);
+        // set fwd speed
+        edge.set(carAvSpeedEnc, 30);
+        assertEquals(30, edge.get(carAvSpeedEnc), 1.e-6);
+        assertEquals(60, edge.getReverse(carAvSpeedEnc), 1.e-6);
+        // set bwd speed
+        edge.setReverse(carAvSpeedEnc, 30);
+        assertEquals(30, edge.get(carAvSpeedEnc), 1.e-6);
+        assertEquals(30, edge.getReverse(carAvSpeedEnc), 1.e-6);
+        // reset fwd speed
+        edge.set(carAvSpeedEnc, 60);
+        assertEquals(60, edge.get(carAvSpeedEnc), 1.e-6);
+        assertEquals(30, edge.getReverse(carAvSpeedEnc), 1.e-6);
+    }
+
+    @Test
     public void testFlags() {
         graph = createGHStorage();
         GHUtility.setProperties(graph.edge(0, 1), carEncoder, 100, true, true).setDistance(10);
@@ -714,6 +735,7 @@ public abstract class AbstractGraphStorageTester {
         iter = carAllExplorer.setBaseNode(2);
         assertTrue(iter.next());
         assertEquals(10, iter.get(carAvSpeedEnc), 1);
+        assertEquals(60, iter.getReverse(carAvSpeedEnc), 1);
         assertTrue(iter.get(carAccessEnc));
         assertFalse(iter.getReverse(carAccessEnc));
 

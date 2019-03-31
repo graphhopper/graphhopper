@@ -509,13 +509,13 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         public final int getSkippedEdge1() {
             checkShortcut(true, "getSkippedEdge1");
-            return shortcuts.getInt(edgePointer + S_SKIP_EDGE1);
+            return chEdgeAccess.getSkippedEdge1(edgePointer);
         }
 
         @Override
         public final int getSkippedEdge2() {
             checkShortcut(true, "getSkippedEdge2");
-            return shortcuts.getInt(edgePointer + S_SKIP_EDGE2);
+            return chEdgeAccess.getSkippedEdge2(edgePointer);
         }
 
         @Override
@@ -875,6 +875,14 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             }
             shortcuts.setInt(edgePointer + S_SKIP_EDGE1, edge1);
             shortcuts.setInt(edgePointer + S_SKIP_EDGE2, edge2);
+        }
+
+        int getSkippedEdge1(long edgePointer) {
+            return shortcuts.getInt(edgePointer + S_SKIP_EDGE1);
+        }
+
+        int getSkippedEdge2(long edgePointer) {
+            return shortcuts.getInt(edgePointer + S_SKIP_EDGE2);
         }
 
         public void setFirstAndLastOrigEdges(long edgePointer, int origFirst, int origLast) {
