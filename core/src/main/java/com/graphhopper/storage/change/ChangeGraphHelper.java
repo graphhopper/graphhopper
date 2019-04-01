@@ -93,7 +93,7 @@ public class ChangeGraphHelper {
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
         long updates = 0;
-        EdgeFilter filter = DefaultEdgeFilter.allEdges(encoder);
+        EdgeFilter filter = EdgeFilter.ALL_EDGES;
         GHIntHashSet edges = new GHIntHashSet();
         if (jsonFeature.hasGeometry()) {
             graphBrowser.fillEdgeIDs(edges, jsonFeature.getGeometry(), filter);
