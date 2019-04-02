@@ -1,6 +1,5 @@
 package com.graphhopper.routing;
 
-import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -17,7 +16,6 @@ import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -36,9 +34,6 @@ public class RandomCHRoutingTest {
     private LocationIndexTree locationIndex;
     private CHGraph chGraph;
 
-    @Rule
-    public RepeatRule repeatRule = new RepeatRule();
-
     @Before
     public void init() {
         dir = new RAMDirectory();
@@ -55,22 +50,21 @@ public class RandomCHRoutingTest {
      * nodes.
      */
     @Test
-    public void issue1574_random() {
+    public void issues1574_1581_random() {
         // you might have to keep this test running in an infinite loop for several minutes to find potential routing
         // bugs (e.g. use intellij 'run until stop/failure').
         int numNodes = 50;
         long seed = System.nanoTime();
-        // for example these used to fail before fixing #1574.
+        // for example these used to fail before fixing #1574 and/or #1581
 //        seed = 9348906923700L;
 //        seed = 9376976930825L;
 //        seed = 9436934744695L;
 //        seed = 10093639220394L;
+//        seed = 10785899964423L;
 
         System.out.println("seed: " + seed);
         Random rnd = new Random(seed);
-        // todo: allowing loops also produces another error (may not read speed in wrong direction...), e.g. with this seed: 10785899964423
-        boolean allowLoops = false;
-        buildRandomGraph(rnd, numNodes, 2.5, allowLoops, true, 0.9);
+        buildRandomGraph(rnd, numNodes, 2.5, true, true, 0.9);
         locationIndex = new LocationIndexTree(graph, dir);
         locationIndex.prepareIndex();
 
