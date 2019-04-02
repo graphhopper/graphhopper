@@ -95,7 +95,7 @@ public final class GraphExplorer {
             @Override
             public boolean tryAdvance(Consumer<? super EdgeIteratorState> action) {
                 if (edgeIterator.next()) {
-                    GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator);
+                    GtfsStorage.EdgeType edgeType = edgeIterator.get(flagEncoder.getTypeEnc());
 
                     // Optimization (around 20% in Swiss network):
                     // Only use the (single) least-wait-time edge to enter the
@@ -127,7 +127,7 @@ public final class GraphExplorer {
     }
 
     long calcTravelTimeMillis(EdgeIteratorState edge, long earliestStartTime) {
-        GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge);
+        GtfsStorage.EdgeType edgeType = edge.get(flagEncoder.getTypeEnc());
         switch (edgeType) {
             case HIGHWAY:
                 return (long) (accessEgressWeighting.calcMillis(edge, reverse, -1) * (5.0 / walkSpeedKmH));
@@ -176,7 +176,7 @@ public final class GraphExplorer {
     }
 
     private boolean isValidOn(EdgeIteratorState edge, long instant) {
-        GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge);
+        GtfsStorage.EdgeType edgeType = edge.get(flagEncoder.getTypeEnc());
         if (edgeType == GtfsStorage.EdgeType.BOARD || edgeType == GtfsStorage.EdgeType.ALIGHT) {
             final int validityId = edge.get(flagEncoder.getValidityIdEnc());
             final GtfsStorage.Validity validity = realtimeFeed.getValidity(validityId);
@@ -229,7 +229,7 @@ public final class GraphExplorer {
 
         @Override
         public boolean test(EdgeIteratorState edgeIterator) {
-            final GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator);
+            final GtfsStorage.EdgeType edgeType = edgeIterator.get(flagEncoder.getTypeEnc());
             if (edgeType == GtfsStorage.EdgeType.HIGHWAY) {
                 if (reverse) {
                     return edgeIterator.getReverse(accessEgressWeighting.getFlagEncoder().getAccessEnc());

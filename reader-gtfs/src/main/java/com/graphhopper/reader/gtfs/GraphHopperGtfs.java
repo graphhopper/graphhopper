@@ -173,8 +173,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             if (!source.isValid()) {
                 throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);
             }
-            if (flagEncoder.getEdgeType(source.getClosestEdge()) != GtfsStorage.EdgeType.HIGHWAY) {
-                throw new RuntimeException(flagEncoder.getEdgeType(source.getClosestEdge()).name());
+            if (source.getClosestEdge().get(flagEncoder.getTypeEnc()) != GtfsStorage.EdgeType.HIGHWAY) {
+                throw new RuntimeException(source.getClosestEdge().get(flagEncoder.getTypeEnc()).name());
             }
             return source;
         }
@@ -206,7 +206,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 if (label.adjNode == startNode) {
                     stationLabels.add(label);
                     break;
-                } else if (label.edge != -1 && flagEncoder.getEdgeType(accessEgressGraphExplorer.getEdgeIteratorState(label.edge, label.parent.adjNode)) == edgeType) {
+                } else if (label.edge != -1 && accessEgressGraphExplorer.getEdgeIteratorState(label.edge, label.parent.adjNode).get(flagEncoder.getTypeEnc()) == edgeType) {
                     stationLabels.add(label);
                 }
             }
