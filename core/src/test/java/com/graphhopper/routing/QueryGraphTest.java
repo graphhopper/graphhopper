@@ -760,4 +760,38 @@ public class QueryGraphTest {
         assertFalse(iter.next());
     }
 
+    @Test
+    public void testVirtualEdgeDistance() {
+        //   x
+        // -----
+        // |   |
+        // 0   1
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 0, 0);
+        na.setNode(1, 0, 1);
+        // dummy node to make sure graph bounds are valid
+        na.setNode(2, 2, 2);
+        DistanceCalc distCalc = Helper.DIST_PLANE;
+        double dist = 0;
+        dist += distCalc.calcDist(0, 0, 1, 0);
+        dist += distCalc.calcDist(1, 0, 1, 1);
+        dist += distCalc.calcDist(1, 1, 0, 1);
+        g.edge(0, 1, dist, true).setWayGeometry(Helper.createPointList(1, 0, 1, 1));
+        LocationIndexTree index = new LocationIndexTree(g, new RAMDirectory());
+        index.prepareIndex();
+        QueryResult qr = index.findClosest(1.01, 0.7, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = new QueryGraph(g);
+        queryGraph.lookup(Collections.singletonList(qr));
+        // the sum of the virtual edge distances adjacent to the virtual node should be equal to the distance
+        // of the real edge, so the 'distance' from 0 to 1 is the same no matter if we travel on the query graph or the
+        // real graph
+        EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(3);
+        double virtualEdgeDistanceSum = 0;
+        while (iter.next()) {
+            virtualEdgeDistanceSum += iter.getDistance();
+        }
+        double directDist = g.getEdgeIteratorState(0, 1).getDistance();
+        assertEquals(directDist, virtualEdgeDistanceSum, 1.e-3);
+    }
+
 }
