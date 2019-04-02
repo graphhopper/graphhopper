@@ -164,7 +164,10 @@ public class GHUtility {
                 "graph.edge(%d, %d, %f, %s);\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false");
     }
 
-    public static void buildRandomGraph(Graph graph, long seed, int numNodes, double meanDegree, boolean allowLoops, boolean allowZeroDistance, double pBothDir) {
+    public static void buildRandomGraph(Graph graph, long seed, int numNodes, double meanDegree, boolean allowLoops, boolean allowZeroDistance, double pBothDir, double pRandomOffset) {
+        if (numNodes < 2 || meanDegree < 1) {
+            throw new IllegalArgumentException("numNodes must be >= 2, meanDegree >= 1");
+        }
         Random random = new Random(seed);
         for (int i = 0; i < numNodes; ++i) {
             double lat = 49.4 + (random.nextDouble() * 0.01);
@@ -173,25 +176,31 @@ public class GHUtility {
         }
         double minDist = Double.MAX_VALUE;
         double maxDist = Double.MIN_VALUE;
-        int numEdges = (int) (0.5 * meanDegree * numNodes);
-        for (int i = 0; i < numEdges; ++i) {
+        int totalNumEdges = (int) (0.5 * meanDegree * numNodes);
+        int numEdges = 0;
+        while (numEdges < totalNumEdges) {
             int from = random.nextInt(numNodes);
             int to = random.nextInt(numNodes);
             if (!allowLoops && from == to) {
                 continue;
             }
             double distance = GHUtility.getDistance(from, to, graph.getNodeAccess());
+            // allow loops with non-zero distance
+            if (from == to && random.nextDouble() < 0.7) {
+                distance = random.nextDouble() * 1000;
+            }
             if (!allowZeroDistance) {
                 distance = Math.max(0.001, distance);
             }
-            // add some random offset for most cases, but also allow duplicate edges with same weight
-            if (random.nextDouble() < 0.8)
+            // add some random offset, but also allow duplicate edges with same weight
+            if (random.nextDouble() < pRandomOffset)
                 distance += random.nextDouble() * distance * 0.01;
             minDist = Math.min(minDist, distance);
             maxDist = Math.max(maxDist, distance);
             // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
             graph.edge(from, to, distance, bothDirections);
+            numEdges++;
         }
         LOGGER.debug(String.format(Locale.ROOT, "Finished building random graph" +
                         ", nodes: %d, edges: %d , min distance: %.2f, max distance: %.2f\n",

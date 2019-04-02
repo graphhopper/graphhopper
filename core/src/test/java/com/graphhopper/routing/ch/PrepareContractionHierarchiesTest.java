@@ -664,7 +664,7 @@ public class PrepareContractionHierarchiesTest {
         int numNodes = 5_000;
         int numQueries = 100;
         long seed = System.nanoTime();
-        GHUtility.buildRandomGraph(ghStorage, seed, numNodes, 1.3, false, false, 0.9);
+        GHUtility.buildRandomGraph(ghStorage, seed, numNodes, 1.3, false, false, 0.9, 0.8);
         ghStorage.freeze();
 
         // create CH for cars
