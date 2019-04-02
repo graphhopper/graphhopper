@@ -157,6 +157,7 @@ public class PrepareContractionHierarchiesTest {
         GraphHopperStorage g = createGHStorage();
         CHGraph lg = g.getGraph(CHGraph.class);
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        prepare.doWork();
         assertSame(weighting, prepare.getWeighting());
     }
 
@@ -352,6 +353,7 @@ public class PrepareContractionHierarchiesTest {
         CHGraph lg = g.getGraph(CHGraph.class);
         initUnpackingGraph(g, lg, weighting);
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        prepare.doWork();
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.getDistance(), 1e-5);
@@ -366,6 +368,7 @@ public class PrepareContractionHierarchiesTest {
         initUnpackingGraph(g, lg, w);
 
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        prepare.doWork();
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.getDistance(), 1e-1);
@@ -435,7 +438,7 @@ public class PrepareContractionHierarchiesTest {
 
         // use fastest weighting in this test to be able to fine-tune some weights via the speed (see below)
         Weighting fastestWeighting = new FastestWeighting(carEncoder);
-        final GraphHopperStorage g = createGHStorage();
+        final GraphHopperStorage g = createGHStorage(fastestWeighting);
         CHGraph lg = g.getGraph(CHGraph.class);
         // the following graph reproduces the issue. note that we will use the node ids as ch levels, so there will
         // be a shortcuts from 1->3 and 2->3 (not the other way around, because of shortcut disconnections!)
