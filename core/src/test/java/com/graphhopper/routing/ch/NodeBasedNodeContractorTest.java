@@ -383,6 +383,30 @@ public class NodeBasedNodeContractorTest {
         assertEquals(dijkstraPath.getWeight(), chPath.getWeight(), 1.e-6);
     }
 
+    @Test
+    public void testNodeContraction_preventUnnecessaryShortcutWithLoop() {
+        // there should not be shortcuts where one of the skipped edges is a loop at the node to be contracted
+        CarFlagEncoder encoder = new CarFlagEncoder();
+        EncodingManager encodingManager = EncodingManager.create(encoder);
+        Weighting weighting = new FastestWeighting(encoder);
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
+        CHGraph lg = graph.getGraph(CHGraph.class);
+        // 0 - 1 - 2 - 3
+        // o           o
+        graph.edge(0, 1, 1, true);
+        graph.edge(1, 2, 1, true);
+        graph.edge(2, 3, 1, true);
+        graph.edge(0, 0, 1, true);
+        graph.edge(3, 3, 1, true);
+
+        graph.freeze();
+        setMaxLevelOnAllNodes(lg);
+        NodeContractor nodeContractor = createNodeContractor(lg, weighting);
+        nodeContractor.contractNode(0);
+        nodeContractor.contractNode(3);
+        checkNoShortcuts(lg);
+    }
+
     private void contractInOrder(int... nodeIds) {
         contractInOrder(lg, weighting, nodeIds);
     }
@@ -401,11 +425,15 @@ public class NodeBasedNodeContractorTest {
      * Queries the ch graph and checks if the graph's shortcuts match the given expected shortcuts.
      */
     private void checkShortcuts(Shortcut... expectedShortcuts) {
+        checkShortcuts(lg, expectedShortcuts);
+    }
+
+    private void checkShortcuts(CHGraph chGraph, Shortcut... expectedShortcuts) {
         Set<Shortcut> expected = setOf(expectedShortcuts);
         if (expected.size() != expectedShortcuts.length) {
             fail("was given duplicate shortcuts");
         }
-        AllCHEdgesIterator iter = lg.getAllEdges();
+        AllCHEdgesIterator iter = chGraph.getAllEdges();
         Set<Shortcut> given = new HashSet<>();
         while (iter.next()) {
             if (iter.isShortcut()) {
@@ -419,7 +447,11 @@ public class NodeBasedNodeContractorTest {
     }
 
     private void checkNoShortcuts() {
-        checkShortcuts();
+        checkShortcuts(lg);
+    }
+
+    private void checkNoShortcuts(CHGraph chGraph) {
+        checkShortcuts(chGraph);
     }
 
     private Shortcut expectedShortcut(int baseNode, int adjNode, EdgeIteratorState edge1, EdgeIteratorState edge2,

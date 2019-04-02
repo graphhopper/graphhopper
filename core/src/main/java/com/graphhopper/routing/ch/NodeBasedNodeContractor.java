@@ -167,12 +167,15 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         // collect outgoing nodes (goal-nodes) only once
         while (incomingEdges.next()) {
             int fromNode = incomingEdges.getAdjNode();
-            // accept only uncontracted nodes
-            if (isContracted(fromNode))
+            // accept only not-contracted nodes, do not consider loops at the node that is being contracted
+            if (fromNode == sch.getNode() || isContracted(fromNode))
                 continue;
 
+            final double incomingEdgeWeight = prepareWeighting.calcWeight(incomingEdges, true, EdgeIterator.NO_EDGE);
+            if (Double.isInfinite(incomingEdgeWeight)) {
+                continue;
+            }
             final double incomingEdgeDistance = incomingEdges.getDistance();
-            double incomingEdgeWeight = prepareWeighting.calcWeight(incomingEdges, true, EdgeIterator.NO_EDGE);
             int incomingEdge = incomingEdges.getEdge();
             int inOrigEdgeCount = getOrigEdgeCount(incomingEdge);
             // collect outgoing nodes (goal-nodes) only once
@@ -182,8 +185,8 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             degree++;
             while (outgoingEdges.next()) {
                 int toNode = outgoingEdges.getAdjNode();
-                // add only uncontracted nodes
-                if (isContracted(toNode) || fromNode == toNode)
+                // add only not-contracted nodes, do not consider loops at the node that is being contracted
+                if (toNode == sch.getNode() || isContracted(toNode) || fromNode == toNode)
                     continue;
 
                 // Limit weight as ferries or forbidden edges can increase local search too much.
