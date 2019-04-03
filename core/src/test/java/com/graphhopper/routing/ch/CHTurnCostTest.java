@@ -677,7 +677,7 @@ public class CHTurnCostTest {
     }
 
     @Test
-    public void test_Issue1592() {
+    public void test_Issue1593() {
         //      6   5
         //   1<-x-4-x-3
         //  ||    |
