@@ -22,12 +22,9 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
 import com.graphhopper.http.WebHelper;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
+import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -168,7 +165,8 @@ public class RouteResource {
         }
 
         long time = timeString != null ? Long.parseLong(timeString) : System.currentTimeMillis();
-        return Response.ok(ghRsp.getBest().getInstructions().createGPX(trackName, time, enableElevation, withRoute, withTrack, withWayPoints, version), "application/gpx+xml").
+        InstructionList instructions = ghRsp.getBest().getInstructions();
+        return Response.ok(GpxFromInstructions.createGPX(instructions, trackName, time, enableElevation, withRoute, withTrack, withWayPoints, version, instructions.getTr()), "application/gpx+xml").
                 header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
     }
 

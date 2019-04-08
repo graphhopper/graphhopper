@@ -194,7 +194,7 @@ class TripFromLabel {
                 arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
                 Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.stop_name, InstructionAnnotation.EMPTY, arrivalPointList);
                 if (ptLeg.isInSameVehicleAsPrevious) {
-                    instructions.replaceLast(arrivalInstruction);
+                    instructions.set(instructions.size() - 1, arrivalInstruction);
                 } else {
                     instructions.add(arrivalInstruction);
                 }
