@@ -84,7 +84,7 @@ public class RandomCHRoutingTest {
         if (traversalMode.isEdgeBased()) {
             GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
         }
-        runRandomTest(rnd);
+        runRandomTest(rnd, 20);
     }
 
     @Test
@@ -92,7 +92,7 @@ public class RandomCHRoutingTest {
         Assume.assumeFalse(traversalMode.isEdgeBased());
         Random rnd = new Random(9348906923700L);
         buildRandomGraphLegacy(rnd, 50, 2.5, false, true, 0.9);
-        runRandomTest(rnd);
+        runRandomTest(rnd, 20);
     }
 
     @Test
@@ -100,7 +100,15 @@ public class RandomCHRoutingTest {
         Assume.assumeFalse(traversalMode.isEdgeBased());
         Random rnd = new Random(10093639220394L);
         buildRandomGraphLegacy(rnd, 50, 2.5, false, true, 0.9);
-        runRandomTest(rnd);
+        runRandomTest(rnd, 20);
+    }
+
+    @Test
+    public void issue1582() {
+        Assume.assumeFalse(traversalMode.isEdgeBased());
+        Random rnd = new Random(4111485945982L);
+        buildRandomGraphLegacy(rnd, 10, 2.5, false, true, 0.9);
+        runRandomTest(rnd, 100);
     }
 
     @Test
@@ -108,7 +116,7 @@ public class RandomCHRoutingTest {
         Assume.assumeFalse(traversalMode.isEdgeBased());
         Random rnd = new Random(10785899964423L);
         buildRandomGraphLegacy(rnd, 50, 2.5, true, true, 0.9);
-        runRandomTest(rnd);
+        runRandomTest(rnd, 20);
     }
 
     @Test
@@ -118,10 +126,10 @@ public class RandomCHRoutingTest {
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 50, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.0);
         GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
-        runRandomTest(rnd);
+        runRandomTest(rnd, 20);
     }
 
-    private void runRandomTest(Random rnd) {
+    private void runRandomTest(Random rnd, int numVirtualNodes) {
         locationIndex = new LocationIndexTree(graph, dir);
         locationIndex.prepareIndex();
 
@@ -135,7 +143,6 @@ public class RandomCHRoutingTest {
             QueryGraph chQueryGraph = new QueryGraph(chGraph);
             // add virtual nodes and edges, because they can change the routing behavior and/or produce bugs, e.g.
             // when via-points are used
-            int numVirtualNodes = 20;
             addVirtualNodesAndEdges(rnd, queryGraph, chQueryGraph, numVirtualNodes);
 
             int numQueries = 100;
