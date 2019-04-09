@@ -719,9 +719,9 @@ public class CHTurnCostTest {
             queryResults.add(index.findClosest(point.getLat(), point.getLon(), EdgeFilter.ALL_EDGES));
         }
 
+        RoutingAlgorithmFactory pch = automaticPrepareCH();
         QueryGraph queryGraph = new QueryGraph(chGraph);
         queryGraph.lookup(queryResults);
-        RoutingAlgorithmFactory pch = automaticPrepareCH();
         RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
                 .traversalMode(TraversalMode.EDGE_BASED_2DIR)
                 .build());
