@@ -44,27 +44,44 @@ public class RandomCHRoutingTest {
         chGraph = graph.getGraph(CHGraph.class);
     }
 
-
     /**
      * Runs random routing queries on a random query/CH graph with random speeds and adding random virtual edges and
      * nodes.
      */
     @Test
-    public void issues1574_1581_random() {
+    public void random() {
         // you might have to keep this test running in an infinite loop for several minutes to find potential routing
         // bugs (e.g. use intellij 'run until stop/failure').
         int numNodes = 50;
         long seed = System.nanoTime();
-        // for example these used to fail before fixing #1574 and/or #1581
-//        seed = 9348906923700L;
-//        seed = 9376976930825L;
-//        seed = 9436934744695L;
-//        seed = 10093639220394L;
-//        seed = 10785899964423L;
-
         System.out.println("seed: " + seed);
         Random rnd = new Random(seed);
-        buildRandomGraph(rnd, numNodes, 2.5, true, true, 0.9);
+        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.8);
+        runRandomTest(rnd);
+    }
+
+    @Test
+    public void issue1574_1() {
+        Random rnd = new Random(9348906923700L);
+        buildRandomGraphLegacy(rnd, 50, 2.5, false, true, 0.9);
+        runRandomTest(rnd);
+    }
+
+    @Test
+    public void issue1574_2() {
+        Random rnd = new Random(10093639220394L);
+        buildRandomGraphLegacy(rnd, 50, 2.5, false, true, 0.9);
+        runRandomTest(rnd);
+    }
+
+    @Test
+    public void issue1583() {
+        Random rnd = new Random(10785899964423L);
+        buildRandomGraphLegacy(rnd, 50, 2.5, true, true, 0.9);
+        runRandomTest(rnd);
+    }
+
+    private void runRandomTest(Random rnd) {
         locationIndex = new LocationIndexTree(graph, dir);
         locationIndex.prepareIndex();
 
@@ -72,10 +89,12 @@ public class RandomCHRoutingTest {
         PrepareContractionHierarchies pch = new PrepareContractionHierarchies(chGraph, weighting, traversalMode);
         pch.doWork();
 
-        int numQueryGraph = 50;
+        int numQueryGraph = 25;
         for (int j = 0; j < numQueryGraph; j++) {
             QueryGraph queryGraph = new QueryGraph(graph);
             QueryGraph chQueryGraph = new QueryGraph(chGraph);
+            // add virtual nodes and edges, because they can change the routing behavior and/or produce bugs, e.g.
+            // when via-points are used
             addVirtualNodesAndEdges(rnd, queryGraph, chQueryGraph);
 
             int numQueries = 100;
@@ -86,6 +105,7 @@ public class RandomCHRoutingTest {
                 int to = rnd.nextInt(queryGraph.getNodes());
                 DijkstraBidirectionRef refAlgo = new DijkstraBidirectionRef(queryGraph, weighting, TraversalMode.NODE_BASED);
                 Path refPath = refAlgo.calcPath(from, to);
+                double refWeight = refPath.getWeight();
                 if (!refPath.isFound()) {
                     numPathsNotFound++;
                     continue;
@@ -94,11 +114,10 @@ public class RandomCHRoutingTest {
                 RoutingAlgorithm algo = pch.createAlgo(chQueryGraph, AlgorithmOptions.start().hints(new PMap().put("stall_on_demand", true)).build());
                 Path path = algo.calcPath(from, to);
                 if (!path.isFound()) {
-                    fail("path not found for for " + from + "->" + to + ", expected weight: " + path.getWeight());
+                    fail("path not found for for " + from + "->" + to + ", expected weight: " + refWeight);
                 }
 
                 double weight = path.getWeight();
-                double refWeight = refPath.getWeight();
                 if (Math.abs(refWeight - weight) > 1) {
                     fail("wrong weight: " + from + "->" + to + ", dijkstra: " + refWeight + " vs. ch: " + path.getWeight());
                 }
@@ -140,7 +159,11 @@ public class RandomCHRoutingTest {
         return min + rnd.nextDouble() * (max - min);
     }
 
-    private void buildRandomGraph(Random random, int numNodes, double meanDegree, boolean allowLoops, boolean allowZeroDistance, double pBothDir) {
+    /**
+     * More or less does the same as {@link GHUtility#buildRandomGraph}, but since some special seeds
+     * are used in a few tests above this code is kept here. Do not use it for new tests.
+     */
+    private void buildRandomGraphLegacy(Random random, int numNodes, double meanDegree, boolean allowLoops, boolean allowZeroDistance, double pBothDir) {
         for (int i = 0; i < numNodes; ++i) {
             double lat = 49.4 + (random.nextDouble() * 0.0001);
             double lon = 9.7 + (random.nextDouble() * 0.0001);
