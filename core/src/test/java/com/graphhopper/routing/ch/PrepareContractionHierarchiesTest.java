@@ -664,7 +664,8 @@ public class PrepareContractionHierarchiesTest {
         int numNodes = 5_000;
         int numQueries = 100;
         long seed = System.nanoTime();
-        GHUtility.buildRandomGraph(ghStorage, seed, numNodes, 1.3, false, false, 0.9, 0.8);
+        Random rnd = new Random(seed);
+        GHUtility.buildRandomGraph(ghStorage, rnd, numNodes, 1.3, true, true, carFlagEncoder.getAverageSpeedEnc(), 0.7, 0.9, 0.8);
         ghStorage.freeze();
 
         // create CH for cars
@@ -685,7 +686,6 @@ public class PrepareContractionHierarchiesTest {
         motorCyclePch.doWork();
 
         // run a few sample queries to check correctness
-        Random rnd = new Random(seed);
         for (int i = 0; i < numQueries; ++i) {
             Dijkstra dijkstra = new Dijkstra(ghStorage, motorCycleWeighting, traversalMode);
             RoutingAlgorithm chAlgo = motorCyclePch.createAlgo(motorCycleCH, AlgorithmOptions.start().weighting(motorCycleWeighting).build());

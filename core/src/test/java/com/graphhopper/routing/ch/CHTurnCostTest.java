@@ -790,7 +790,7 @@ public class CHTurnCostTest {
         LOGGER.info("Seed used to generate graph: {}", seed);
         final Random rnd = new Random(seed);
         // for larger graphs preparation takes much longer the higher the degree is!
-        GHUtility.buildRandomGraph(graph, seed, 20, 3.0, true, true, 0.9, 0.8);
+        GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, encoder, maxCost, turnCostExtension);
         graph.freeze();
         List<Integer> contractionOrder = getRandomIntegerSequence(chGraph.getNodes(), rnd);
@@ -805,7 +805,7 @@ public class CHTurnCostTest {
     public void testFindPath_heuristic_compareWithDijkstra() {
         long seed = System.nanoTime();
         LOGGER.info("Seed used to generate graph: {}", seed);
-        GHUtility.buildRandomGraph(graph, seed, 20, 3.0, true, true, 0.9, 0.8);
+        GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, encoder, maxCost, turnCostExtension);
         graph.freeze();
         automaticCompareCHWithDijkstra(100);

@@ -164,11 +164,12 @@ public class GHUtility {
                 "graph.edge(%d, %d, %f, %s);\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false");
     }
 
-    public static void buildRandomGraph(Graph graph, long seed, int numNodes, double meanDegree, boolean allowLoops, boolean allowZeroDistance, double pBothDir, double pRandomOffset) {
+    public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree, boolean allowLoops,
+                                        boolean allowZeroDistance, DecimalEncodedValue randomSpeedEnc,
+                                        double pNonZeroLoop, double pBothDir, double pRandomOffset) {
         if (numNodes < 2 || meanDegree < 1) {
             throw new IllegalArgumentException("numNodes must be >= 2, meanDegree >= 1");
         }
-        Random random = new Random(seed);
         for (int i = 0; i < numNodes; ++i) {
             double lat = 49.4 + (random.nextDouble() * 0.01);
             double lon = 9.7 + (random.nextDouble() * 0.01);
@@ -186,7 +187,7 @@ public class GHUtility {
             }
             double distance = GHUtility.getDistance(from, to, graph.getNodeAccess());
             // allow loops with non-zero distance
-            if (from == to && random.nextDouble() < 0.7) {
+            if (from == to && random.nextDouble() < pNonZeroLoop) {
                 distance = random.nextDouble() * 1000;
             }
             if (!allowZeroDistance) {
@@ -199,7 +200,13 @@ public class GHUtility {
             maxDist = Math.max(maxDist, distance);
             // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
-            graph.edge(from, to, distance, bothDirections);
+            EdgeIteratorState edge = graph.edge(from, to, distance, bothDirections);
+            if (randomSpeedEnc != null) {
+                double fwdSpeed = 10 + random.nextDouble() * 120;
+                double bwdSpeed = 10 + random.nextDouble() * 120;
+                edge.set(randomSpeedEnc, fwdSpeed);
+                edge.setReverse(randomSpeedEnc, bwdSpeed);
+            }
             numEdges++;
         }
         LOGGER.debug(String.format(Locale.ROOT, "Finished building random graph" +
