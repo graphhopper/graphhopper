@@ -677,7 +677,7 @@ public class CHTurnCostTest {
     }
 
     @Test
-    public void test_Issue1593() {
+    public void test_issue1593_full() {
         //      6   5
         //   1<-x-4-x-3
         //  ||    |
@@ -731,7 +731,51 @@ public class CHTurnCostTest {
         // travel via the virtual node 7 to node 1. From there we cannot go to 6 because of the one-way so we go back
         // to node 2 (no u-turn because of the duplicate edge) on edge1. And this is were the journey ends: we cannot
         // go to 8 because of the turn restriction from edge1 to edge4 -> there should not be a path!
-        assertFalse("there should not be a path", path.isFound());
+        assertFalse("there should not be a path, but found: " + path.calcNodes(), path.isFound());
+    }
+
+    @Test
+    public void test_issue_1593_simple() {
+        // 1
+        // |
+        // 3-0-x-5-4
+        // |
+        // 2
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(1, 0.2, 0.0);
+        na.setNode(3, 0.1, 0.0);
+        na.setNode(2, 0.0, 0.0);
+        na.setNode(0, 0.1, 0.1);
+        na.setNode(5, 0.1, 0.2);
+        na.setNode(4, 0.1, 0.3);
+        EdgeIteratorState edge0 = graph.edge(3, 1, 10, true);
+        EdgeIteratorState edge1 = graph.edge(2, 3, 10, true);
+        graph.edge(3, 0, 10, true);
+        graph.edge(0, 5, 10, true);
+        graph.edge(5, 4, 10, true);
+        // cannot go, 2-3-1
+        addRestriction(edge1, edge0, 3);
+        graph.freeze();
+        RoutingAlgorithmFactory pch = prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5));
+        assertEquals(5, chGraph.getOriginalEdges());
+        assertEquals("expected two shortcuts: 3->5 and 5->3", 7, chGraph.getEdges());
+        // there should be no path from 2 to 1, because of the turn restriction and because u-turns are not allowed
+        assertFalse(findPathUsingDijkstra(2, 1).isFound());
+        compareCHQueryWithDijkstra(pch, 2, 1);
+
+        // we have to pay attention when there are virtual nodes: turning from the shortcut 3-5 onto the
+        // virtual edge 5-x should be forbidden.
+        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        index.prepareIndex();
+        QueryResult qr = index.findClosest(0.1, 0.15, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = new QueryGraph(chGraph);
+        queryGraph.lookup(Collections.singletonList(qr));
+        assertEquals("expected one virtual node", 1, queryGraph.getNodes() - chGraph.getNodes());
+        RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
+                .traversalMode(TraversalMode.EDGE_BASED_2DIR)
+                .build());
+        Path path = chAlgo.calcPath(2, 1);
+        assertFalse("no path should be found, but found " + path.calcNodes(), path.isFound());
     }
 
     /**
