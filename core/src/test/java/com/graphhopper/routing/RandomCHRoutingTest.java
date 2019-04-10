@@ -7,6 +7,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -15,8 +16,11 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +29,10 @@ import java.util.Random;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+@RunWith(Parameterized.class)
 public class RandomCHRoutingTest {
-    private final TraversalMode traversalMode = TraversalMode.NODE_BASED;
+    private final TraversalMode traversalMode;
+    private final int maxTurnCosts;
     private Directory dir;
     private CarFlagEncoder encoder;
     private Weighting weighting;
@@ -34,13 +40,28 @@ public class RandomCHRoutingTest {
     private LocationIndexTree locationIndex;
     private CHGraph chGraph;
 
+    @Parameterized.Parameters(name = "{0}")
+    public static Object[] params() {
+        return new Object[]{
+                TraversalMode.NODE_BASED,
+                TraversalMode.EDGE_BASED_2DIR
+        };
+    }
+
+    public RandomCHRoutingTest(TraversalMode traversalMode) {
+        this.traversalMode = traversalMode;
+        this.maxTurnCosts = 10;
+    }
+
     @Before
     public void init() {
         dir = new RAMDirectory();
-        encoder = new CarFlagEncoder();
+        encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         EncodingManager em = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
-        graph = new GraphBuilder(em).setCHGraph(weighting).create();
+        GraphBuilder graphBuilder = new GraphBuilder(em);
+        graphBuilder.setEdgeBasedCH(traversalMode.isEdgeBased());
+        graph = graphBuilder.setCHGraph(weighting).create();
         chGraph = graph.getGraph(CHGraph.class);
     }
 
@@ -56,12 +77,19 @@ public class RandomCHRoutingTest {
         long seed = System.nanoTime();
         System.out.println("seed: " + seed);
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.8);
+        // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
+        // the same as taking the direct edge!
+        double pOffset = 0;
+        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, pOffset);
+        if (traversalMode.isEdgeBased()) {
+            GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
+        }
         runRandomTest(rnd);
     }
 
     @Test
     public void issue1574_1() {
+        Assume.assumeFalse(traversalMode.isEdgeBased());
         Random rnd = new Random(9348906923700L);
         buildRandomGraphLegacy(rnd, 50, 2.5, false, true, 0.9);
         runRandomTest(rnd);
@@ -69,6 +97,7 @@ public class RandomCHRoutingTest {
 
     @Test
     public void issue1574_2() {
+        Assume.assumeFalse(traversalMode.isEdgeBased());
         Random rnd = new Random(10093639220394L);
         buildRandomGraphLegacy(rnd, 50, 2.5, false, true, 0.9);
         runRandomTest(rnd);
@@ -76,6 +105,7 @@ public class RandomCHRoutingTest {
 
     @Test
     public void issue1583() {
+        Assume.assumeFalse(traversalMode.isEdgeBased());
         Random rnd = new Random(10785899964423L);
         buildRandomGraphLegacy(rnd, 50, 2.5, true, true, 0.9);
         runRandomTest(rnd);
@@ -95,7 +125,8 @@ public class RandomCHRoutingTest {
             QueryGraph chQueryGraph = new QueryGraph(chGraph);
             // add virtual nodes and edges, because they can change the routing behavior and/or produce bugs, e.g.
             // when via-points are used
-            addVirtualNodesAndEdges(rnd, queryGraph, chQueryGraph);
+            int numVirtualNodes = 20;
+            addVirtualNodesAndEdges(rnd, queryGraph, chQueryGraph, numVirtualNodes);
 
             int numQueries = 100;
             int numPathsNotFound = 0;
@@ -103,7 +134,11 @@ public class RandomCHRoutingTest {
                 assertEquals("queryGraph and chQueryGraph should have equal number of nodes", queryGraph.getNodes(), chQueryGraph.getNodes());
                 int from = rnd.nextInt(queryGraph.getNodes());
                 int to = rnd.nextInt(queryGraph.getNodes());
-                DijkstraBidirectionRef refAlgo = new DijkstraBidirectionRef(queryGraph, weighting, TraversalMode.NODE_BASED);
+                Weighting w = traversalMode.isEdgeBased()
+                        ? new TurnWeighting(weighting, (TurnCostExtension) queryGraph.getExtension())
+                        : weighting;
+                // using plain dijkstra instead of bidirectional, because of #1592
+                RoutingAlgorithm refAlgo = new Dijkstra(queryGraph, w, traversalMode);
                 Path refPath = refAlgo.calcPath(from, to);
                 double refWeight = refPath.getWeight();
                 if (!refPath.isFound()) {
@@ -114,11 +149,13 @@ public class RandomCHRoutingTest {
                 RoutingAlgorithm algo = pch.createAlgo(chQueryGraph, AlgorithmOptions.start().hints(new PMap().put("stall_on_demand", true)).build());
                 Path path = algo.calcPath(from, to);
                 if (!path.isFound()) {
-                    fail("path not found for for " + from + "->" + to + ", expected weight: " + refWeight);
+                    fail("path not found for " + from + "->" + to + ", expected weight: " + refWeight);
                 }
 
                 double weight = path.getWeight();
-                if (Math.abs(refWeight - weight) > 1) {
+                if (Math.abs(refWeight - weight) > 1.e-1) {
+                    System.out.println("expected: " + refPath.calcNodes());
+                    System.out.println("given:    " + path.calcNodes());
                     fail("wrong weight: " + from + "->" + to + ", dijkstra: " + refWeight + " vs. ch: " + path.getWeight());
                 }
             }
@@ -128,9 +165,8 @@ public class RandomCHRoutingTest {
         }
     }
 
-    private void addVirtualNodesAndEdges(Random rnd, QueryGraph queryGraph, QueryGraph chQueryGraph) {
+    private void addVirtualNodesAndEdges(Random rnd, QueryGraph queryGraph, QueryGraph chQueryGraph, int numVirtualNodes) {
         BBox bbox = graph.getBounds();
-        int numVirtualNodes = 20;
         int count = 0;
         List<QueryResult> qrs = new ArrayList<>(numVirtualNodes);
         while (qrs.size() < numVirtualNodes) {

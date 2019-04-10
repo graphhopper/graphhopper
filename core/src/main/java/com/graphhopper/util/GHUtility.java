@@ -136,6 +136,7 @@ public class GHUtility {
     }
 
     public static void printGraphForUnitTest(Graph g, FlagEncoder encoder, BBox bBox) {
+        System.out.println("WARNING: printGraphForUnitTest does not pay attention to custom edge speeds at the moment");
         NodeAccess na = g.getNodeAccess();
         for (int node = 0; node < g.getNodes(); ++node) {
             if (bBox.contains(na.getLat(node), na.getLon(node))) {
@@ -201,9 +202,9 @@ public class GHUtility {
             // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
             EdgeIteratorState edge = graph.edge(from, to, distance, bothDirections);
+            double fwdSpeed = 10 + random.nextDouble() * 120;
+            double bwdSpeed = 10 + random.nextDouble() * 120;
             if (randomSpeedEnc != null) {
-                double fwdSpeed = 10 + random.nextDouble() * 120;
-                double bwdSpeed = 10 + random.nextDouble() * 120;
                 edge.set(randomSpeedEnc, fwdSpeed);
                 edge.setReverse(randomSpeedEnc, bwdSpeed);
             }
@@ -245,8 +246,7 @@ public class GHUtility {
                                 restricted = true;
                             }
                             double cost = restricted ? 0 : random.nextDouble() * maxTurnCost;
-                            turnCostExtension.addTurnInfo(inIter.getEdge(), node, outIter.getEdge(),
-                                    encoder.getTurnFlags(restricted, cost));
+                            turnCostExtension.addTurnInfo(inIter.getEdge(), node, outIter.getEdge(), encoder.getTurnFlags(restricted, cost));
                         }
                     }
                 }
