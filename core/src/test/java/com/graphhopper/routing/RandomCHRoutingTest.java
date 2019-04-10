@@ -111,6 +111,16 @@ public class RandomCHRoutingTest {
         runRandomTest(rnd);
     }
 
+    @Test
+    public void issue1593() {
+        Assume.assumeTrue(traversalMode.isEdgeBased());
+        long seed = 60643479675316L;
+        Random rnd = new Random(seed);
+        GHUtility.buildRandomGraph(graph, rnd, 50, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.0);
+        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
+        runRandomTest(rnd);
+    }
+
     private void runRandomTest(Random rnd) {
         locationIndex = new LocationIndexTree(graph, dir);
         locationIndex.prepareIndex();

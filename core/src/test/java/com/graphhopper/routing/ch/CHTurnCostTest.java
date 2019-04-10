@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static org.junit.Assert.*;
 
@@ -778,6 +779,61 @@ public class CHTurnCostTest {
         assertFalse("no path should be found, but found " + path.calcNodes(), path.isFound());
     }
 
+    @Test
+    public void testRouteViaVirtualNode() {
+        //   3
+        // 0-x-1-2
+        graph.edge(0, 1, 0, false);
+        graph.edge(1, 2, 0, false);
+        updateDistancesFor(graph, 0, 0.00, 0.00);
+        updateDistancesFor(graph, 1, 0.02, 0.02);
+        updateDistancesFor(graph, 2, 0.03, 0.03);
+        graph.freeze();
+        RoutingAlgorithmFactory pch = automaticPrepareCH();
+        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        index.prepareIndex();
+        QueryResult qr = index.findClosest(0.01, 0.01, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = new QueryGraph(chGraph);
+        queryGraph.lookup(Collections.singletonList(qr));
+        assertEquals(3, qr.getClosestNode());
+        assertEquals(0, qr.getClosestEdge().getEdge());
+        RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
+                .traversalMode(TraversalMode.EDGE_BASED_2DIR)
+                .build());
+        Path path = chAlgo.calcPath(0, 2);
+        assertTrue("it should be possible to route via a virtual node, but no path found", path.isFound());
+        assertEquals(IntArrayList.from(0, 3, 1, 2), path.calcNodes());
+        assertEquals(Helper.DIST_PLANE.calcDist(0.00, 0.00, 0.03, 0.03), path.getDistance(), 1.e-1);
+    }
+
+    @Test
+    public void testRouteViaVirtualNode_withAlternative() {
+        //   3
+        // 0-x-1
+        //  \  |
+        //   \-2
+        graph.edge(0, 1, 1, true);
+        graph.edge(1, 2, 1, true);
+        graph.edge(2, 0, 1, true);
+        updateDistancesFor(graph, 0, 0.01, 0.00);
+        updateDistancesFor(graph, 1, 0.01, 0.02);
+        updateDistancesFor(graph, 2, 0.00, 0.02);
+        graph.freeze();
+        RoutingAlgorithmFactory pch = automaticPrepareCH();
+        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        index.prepareIndex();
+        QueryResult qr = index.findClosest(0.01, 0.01, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = new QueryGraph(chGraph);
+        queryGraph.lookup(Collections.singletonList(qr));
+        assertEquals(3, qr.getClosestNode());
+        assertEquals(0, qr.getClosestEdge().getEdge());
+        RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
+                .traversalMode(TraversalMode.EDGE_BASED_2DIR)
+                .build());
+        Path path = chAlgo.calcPath(1, 0);
+        assertEquals(IntArrayList.from(1, 3, 0), path.calcNodes());
+    }
+
     /**
      * This test runs on a random graph with random turn costs and a predefined (but random) contraction order.
      * It often produces exotic conditions that are hard to anticipate beforehand.
@@ -910,8 +966,6 @@ public class CHTurnCostTest {
         Path dijkstraPath = findPathUsingDijkstra(from, to);
         RoutingAlgorithm chAlgo = factory.createAlgo(chGraph, AlgorithmOptions.start().build());
         Path chPath = chAlgo.calcPath(from, to);
-        // todo: for increased precision some tests fail. this is because the weight is truncated, not rounded
-        // when storing shortcut edges. 
         boolean algosDisagree = Math.abs(dijkstraPath.getWeight() - chPath.getWeight()) > 1.e-2;
         if (algosDisagree) {
             System.out.println("Graph that produced error:");
