@@ -134,7 +134,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         float priority = params.edgeQuotientWeight * edgeQuotient +
                 params.originalEdgeQuotientWeight * origEdgeQuotient +
                 params.hierarchyDepthWeight * hierarchyDepth;
-        LOGGER.trace(String.format("node: %d, eq: %d / %d = %f, oeq: %d / %d = %f, depth: %d --> %f\n",
+        LOGGER.trace(String.format(Locale.ROOT, "node: %d, eq: %d / %d = %f, oeq: %d / %d = %f, depth: %d --> %f\n",
                 node,
                 numShortcuts, numPrevEdges, edgeQuotient,
                 numOrigEdges, numPrevOrigEdges, origEdgeQuotient,
