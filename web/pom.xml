@@ -46,6 +46,12 @@
             <version>${dropwizard.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-library</artifactId>
+            <version>1.3</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- for integration tests of service -->
         <dependency>
