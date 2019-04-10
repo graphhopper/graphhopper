@@ -46,7 +46,7 @@ create new virtual nodes or if close enough use the existing junction node.
 
 ```java
 FlagEncoder encoder = new CarFlagEncoder();
-EncodingManager em = new EncodingManager(encoder);
+EncodingManager em = EncodingManager.create(encoder);
 GraphBuilder gb = new GraphBuilder(em).setLocation("graphhopper_folder").setStore(true);
 GraphStorage graph = gb.create();
 // Make a weighted edge between two nodes.
