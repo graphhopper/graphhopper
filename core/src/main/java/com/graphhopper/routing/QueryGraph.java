@@ -781,10 +781,23 @@ public class QueryGraph implements Graph {
                     edgeTo = queryResults.get((edgeTo - mainEdges) / 4).getClosestEdge().getEdge();
                 }
                 return mainTurnExtension.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
-
             } else {
                 return mainTurnExtension.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
             }
+        }
+
+        @Override
+        public boolean isUTurn(int edgeFrom, int edgeTo) {
+            if (!isVirtualEdge(edgeFrom) && !isVirtualEdge(edgeTo)) {
+                return mainTurnExtension.isUTurn(edgeFrom, edgeTo);
+            } else if (isVirtualEdge(edgeFrom) && isVirtualEdge(edgeTo)) {
+                return mainTurnExtension.isUTurn(edgeFrom, edgeTo);
+            } else if (isVirtualEdge(edgeFrom)) {
+                edgeFrom = queryResults.get((edgeFrom - mainEdges) / 4).getClosestEdge().getEdge();
+            } else if (isVirtualEdge(edgeTo)) {
+                edgeTo = queryResults.get((edgeTo - mainEdges) / 4).getClosestEdge().getEdge();
+            }
+            return mainTurnExtension.isUTurn(edgeFrom, edgeTo);
         }
     }
 }

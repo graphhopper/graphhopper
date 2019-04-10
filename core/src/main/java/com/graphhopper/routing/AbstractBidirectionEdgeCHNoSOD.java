@@ -93,6 +93,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
             }
         }
 
+        // todo: it would be sufficient (and maybe more efficient) to use an original edge explorer here ?
         EdgeIterator iter = reverse ?
                 innerInExplorer.setBaseNode(edgeState.getAdjNode()) :
                 innerOutExplorer.setBaseNode(edgeState.getAdjNode());
@@ -102,7 +103,11 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         while (iter.next()) {
             final int edgeId = getOrigEdgeId(iter, !reverse);
             final int prevOrNextOrigEdgeId = getOrigEdgeId(edgeState, reverse);
-            if (!traversalMode.hasUTurnSupport() && edgeId == prevOrNextOrigEdgeId) {
+            boolean isUTurn = edgeId == prevOrNextOrigEdgeId;
+            if (graph.getExtension() instanceof QueryGraph.QueryGraphTurnExt) {
+                isUTurn = ((QueryGraph.QueryGraphTurnExt) graph.getExtension()).isUTurn(edgeId, prevOrNextOrigEdgeId);
+            }
+            if (!traversalMode.hasUTurnSupport() && isUTurn) {
                 continue;
             }
             int key = GHUtility.getEdgeKey(graph, edgeId, iter.getBaseNode(), !reverse);
@@ -149,8 +154,21 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
 
     @Override
     protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        int edgeId = getOrigEdgeId(edge, !reverse);
-        if (!traversalMode.hasUTurnSupport() && edgeId == getIncomingEdge(currEdge))
+        // todo: this is only a quickfix, see #1593
+        /**
+         * Returns the edge id associated with an EdgeIteratorState as it is needed to decide whether or not we are are
+         * dealing with a u-turn. For a real edge this is simply the edge id, for a shortcut it is the first/last original
+         * edge and for a virtual edge it is the original edge that was split when inserting the virtual node.
+         */
+        final int incEdge = getIncomingEdge(currEdge);
+        if (incEdge == EdgeIterator.NO_EDGE)
+            return true;
+        final int prevOrNextEdgeId = getOrigEdgeId(edge, !reverse);
+        boolean isUTurn = prevOrNextEdgeId == incEdge;
+        if (graph.getExtension() instanceof QueryGraph.QueryGraphTurnExt) {
+            isUTurn = ((QueryGraph.QueryGraphTurnExt) graph.getExtension()).isUTurn(incEdge, prevOrNextEdgeId);
+        }
+        if (!traversalMode.hasUTurnSupport() && isUTurn)
             return false;
 
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(edge);
