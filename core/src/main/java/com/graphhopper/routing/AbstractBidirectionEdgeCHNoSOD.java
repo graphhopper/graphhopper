@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -37,6 +38,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     private final EdgeExplorer innerInExplorer;
     private final EdgeExplorer innerOutExplorer;
     private final TurnWeighting turnWeighting;
+    private final TurnCostExtension turnCostExtension;
 
     public AbstractBidirectionEdgeCHNoSOD(Graph graph, TurnWeighting weighting) {
         super(graph, weighting, TraversalMode.EDGE_BASED_2DIR);
@@ -44,6 +46,10 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
         innerInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder));
         innerOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder));
+        if (!(graph.getExtension() instanceof TurnCostExtension)) {
+            throw new IllegalArgumentException("edge-based CH algorithms require a turn cost extension");
+        }
+        turnCostExtension = (TurnCostExtension) graph.getExtension();
     }
 
     @Override
@@ -103,11 +109,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         while (iter.next()) {
             final int edgeId = getOrigEdgeId(iter, !reverse);
             final int prevOrNextOrigEdgeId = getOrigEdgeId(edgeState, reverse);
-            boolean isUTurn = edgeId == prevOrNextOrigEdgeId;
-            if (graph.getExtension() instanceof QueryGraph.QueryGraphTurnExt) {
-                isUTurn = ((QueryGraph.QueryGraphTurnExt) graph.getExtension()).isUTurn(edgeId, prevOrNextOrigEdgeId);
-            }
-            if (!traversalMode.hasUTurnSupport() && isUTurn) {
+            if (!traversalMode.hasUTurnSupport() && turnCostExtension.isUTurn(edgeId, prevOrNextOrigEdgeId)) {
                 continue;
             }
             int key = GHUtility.getEdgeKey(graph, edgeId, iter.getBaseNode(), !reverse);
@@ -154,21 +156,11 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
 
     @Override
     protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        // todo: this is only a quickfix, see #1593
-        /**
-         * Returns the edge id associated with an EdgeIteratorState as it is needed to decide whether or not we are are
-         * dealing with a u-turn. For a real edge this is simply the edge id, for a shortcut it is the first/last original
-         * edge and for a virtual edge it is the original edge that was split when inserting the virtual node.
-         */
         final int incEdge = getIncomingEdge(currEdge);
         if (incEdge == EdgeIterator.NO_EDGE)
             return true;
         final int prevOrNextEdgeId = getOrigEdgeId(edge, !reverse);
-        boolean isUTurn = prevOrNextEdgeId == incEdge;
-        if (graph.getExtension() instanceof QueryGraph.QueryGraphTurnExt) {
-            isUTurn = ((QueryGraph.QueryGraphTurnExt) graph.getExtension()).isUTurn(incEdge, prevOrNextEdgeId);
-        }
-        if (!traversalMode.hasUTurnSupport() && isUTurn)
+        if (!traversalMode.hasUTurnSupport() && turnCostExtension.isUTurn(incEdge, prevOrNextEdgeId))
             return false;
 
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(edge);
