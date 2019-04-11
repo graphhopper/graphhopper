@@ -775,16 +775,32 @@ public class QueryGraph implements Graph {
                 return 0;
             } else if (isVirtualEdge(edgeFrom) || isVirtualEdge(edgeTo)) {
                 if (isVirtualEdge(edgeFrom)) {
-                    edgeFrom = queryResults.get((edgeFrom - mainEdges) / 4).getClosestEdge().getEdge();
+                    edgeFrom = getOriginalEdge(edgeFrom);
                 }
                 if (isVirtualEdge(edgeTo)) {
-                    edgeTo = queryResults.get((edgeTo - mainEdges) / 4).getClosestEdge().getEdge();
+                    edgeTo = getOriginalEdge(edgeTo);
                 }
                 return mainTurnExtension.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
-
             } else {
                 return mainTurnExtension.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
             }
+        }
+
+        @Override
+        public boolean isUTurn(int edgeFrom, int edgeTo) {
+            // detecting a u-turn from a virtual to a non-virtual edge requires looking at the original edge of the
+            // virtual edge. however when we are turning between virtual edges we need to compare the virtual edge ids
+            // see #1593
+            if (isVirtualEdge(edgeFrom) && !isVirtualEdge(edgeTo)) {
+                edgeFrom = getOriginalEdge(edgeFrom);
+            } else if (!isVirtualEdge(edgeFrom) && isVirtualEdge(edgeTo)) {
+                edgeTo = getOriginalEdge(edgeTo);
+            }
+            return mainTurnExtension.isUTurn(edgeFrom, edgeTo);
+        }
+
+        private int getOriginalEdge(int edgeFrom) {
+            return queryResults.get((edgeFrom - mainEdges) / 4).getClosestEdge().getEdge();
         }
     }
 }
