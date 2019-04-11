@@ -160,28 +160,27 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     @Test
-    public void testTurnRestrictions() {
+    public void testLoop_issue1592() {
         GraphHopperStorage g = createStorage(createEncodingManager(true));
         // 0-6
-        //  \|
-        //   4->3
+        //  \ \
+        //   4-3
         //   |
         //   1o
         g.edge(0, 6, 10, true);
-        g.edge(0, 4, 4, true);
-        g.edge(6, 4, 9, true);
-        g.edge(4, 3, 8, false);
-        g.edge(1, 1, 8, true);
-        g.edge(1, 4, 1, true);
+        g.edge(6, 3, 10, true);
+        g.edge(0, 4, 1, true);
+        g.edge(4, 1, 1, true);
+        g.edge(4, 3, 1, true);
+        g.edge(1, 1, 10, true);
         TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
-        addTurnRestriction(g, tcs, 4, 0, 6);
         addTurnRestriction(g, tcs, 0, 4, 3);
 
         Path p = createAlgo(g, AlgorithmOptions.start().
                 weighting(createWeighting(carEncoder, tcs, 40)).
                 traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
                 calcPath(0, 3);
-        assertEquals(22, p.getDistance(), 1.e-3);
+        assertEquals(14, p.getDistance(), 1.e-3);
         assertEquals(IntArrayList.from(0, 4, 1, 1, 4, 3), p.calcNodes());
     }
 
