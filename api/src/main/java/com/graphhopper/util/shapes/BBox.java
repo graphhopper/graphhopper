@@ -143,7 +143,7 @@ public class BBox implements Shape, Cloneable {
         if (s instanceof BBox) {
             return intersects((BBox) s);
         } else if (s instanceof Circle) {
-            return ((Circle) s).intersect(this);
+            return ((Circle) s).intersects(this);
         }
 
         throw new UnsupportedOperationException("unsupported shape");
@@ -161,7 +161,7 @@ public class BBox implements Shape, Cloneable {
     }
 
     public boolean intersects(Circle s) {
-        return s.intersect(this);
+        return s.intersects(this);
     }
 
     /**
