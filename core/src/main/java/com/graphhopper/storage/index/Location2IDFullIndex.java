@@ -23,11 +23,11 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Circle;
 
 /**
  * Very slow O(n) LocationIndex but no RAM/disc required.
- * <p>
  *
  * @author Peter Karich
  */
@@ -100,6 +100,11 @@ public class Location2IDFullIndex implements LocationIndex {
             }
         }
         return res;
+    }
+
+    @Override
+    public void query(BBox queryBBox, Visitor function) {
+        throw new IllegalArgumentException("not implemented");
     }
 
     @Override

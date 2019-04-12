@@ -161,7 +161,7 @@ public class GraphHopperOSMTest {
         final BBox bbox = new BBox(7.422, 7.429, 43.729, 43.734);
         index.query(bbox, new LocationIndexTree.EdgeVisitor(edgeExplorer) {
             @Override
-            public void onCellBBox(BBox bbox, int width) {
+            public void onTile(BBox bbox, int width) {
             }
 
             @Override

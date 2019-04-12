@@ -72,15 +72,15 @@ public class BBoxTest {
 
         // use ISO 19115 standard (minLon, maxLon followed by minLat(south!),maxLat)
         assertTrue(new BBox(12, 15, 12, 15).intersect(new BBox(13, 14, 11, 16)));
-        // assertFalse(new BBox(15, 12, 12, 15).intersect(new BBox(16, 15, 11, 14)));
+        // assertFalse(new BBox(15, 12, 12, 15).intersects(new BBox(16, 15, 11, 14)));
 
         // DOES NOT WORK: use bottom to top coord for lat
-        // assertFalse(new BBox(6, 2, 11, 6).intersect(new BBox(5, 3, 12, 5)));
+        // assertFalse(new BBox(6, 2, 11, 6).intersects(new BBox(5, 3, 12, 5)));
         // so, use bottom-left and top-right corner!
         assertTrue(new BBox(2, 6, 6, 11).intersect(new BBox(3, 5, 5, 12)));
 
         // DOES NOT WORK: use bottom to top coord for lat and right to left for lon
-        // assertFalse(new BBox(6, 11, 11, 6).intersect(new BBox(5, 10, 12, 7)));
+        // assertFalse(new BBox(6, 11, 11, 6).intersects(new BBox(5, 10, 12, 7)));
         // so, use bottom-right and top-left corner
         assertTrue(new BBox(6, 11, 6, 11).intersect(new BBox(7, 10, 5, 12)));
     }
@@ -115,7 +115,7 @@ public class BBoxTest {
             }
 
             @Override
-            public boolean intersect(Shape c) {
+            public boolean intersects(Shape c) {
                 assertTrue(false);
                 return true;
             }
@@ -133,7 +133,7 @@ public class BBoxTest {
             }
 
             @Override
-            public boolean intersect(Shape b) {
+            public boolean intersects(Shape b) {
                 assertTrue(false);
                 return true;
             }

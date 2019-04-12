@@ -139,7 +139,7 @@ public class BBox implements Shape, Cloneable {
     }
 
     @Override
-    public boolean intersect(Shape s) {
+    public boolean intersects(Shape s) {
         if (s instanceof BBox) {
             return intersect((BBox) s);
         } else if (s instanceof Circle) {

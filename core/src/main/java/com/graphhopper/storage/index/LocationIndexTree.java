@@ -18,6 +18,7 @@
 package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.predicates.IntPredicate;
 import com.graphhopper.coll.GHBitSet;
@@ -441,119 +442,28 @@ public class LocationIndexTree implements LocationIndex {
         return deltaLon;
     }
 
-    GHPoint getCenter(double lat, double lon) {
-        GHPoint query = new GHPoint(lat, lon);
-        long key = keyAlgo.encode(query);
-        GHPoint center = new GHPoint();
-        keyAlgo.decode(key, center);
-        return center;
-    }
-
-    /**
-     * This interface allows to visit every node stored in the leafs for a requested area. It makes no guarantee to
-     * visit nodes only once and also it does not guarantee to visit all nodes, it just visits base- or adjacent-nodes
-     * of all edges laying in the requested area.
-     */
-    public interface Visitor {
-        void onCellBBox(BBox bbox, int width);
-
-        void onNode(int nodeId);
-    }
-
-    /**
-     * This abstract class allows to visit every edge from the stored nodes in the leafs of the tree for a requested area.
-     * It guarantees to return all edges but can visit it multiple times. For performance critical methods it might be
-     * better to directly use the Visitor interface.
-     */
-    public static abstract class EdgeVisitor implements Visitor {
-
-        private final EdgeExplorer edgeExplorer;
-
-        public EdgeVisitor(EdgeExplorer edgeExplorer) {
-            this.edgeExplorer = edgeExplorer;
-        }
-
-        public final void onNode(int nodeId) {
-            EdgeIterator iter = edgeExplorer.setBaseNode(nodeId);
-            while (iter.next()) {
-                onEdge(iter, nodeId, iter.getAdjNode());
-            }
-        }
-
-        public abstract void onEdge(EdgeIteratorState edge, int nodeA, int nodeB);
-    }
-
-    /**
-     * This method can be used to visualize the cell boundaries and contained nodes of this LocationIndexTree.
-     */
-    public void visualize(Visitor plotter) {
+    public void query(BBox queryShape, final Visitor function) {
         BBox bbox = graph.getBounds();
-        visualize(START_POINTER, bbox.minLat, bbox.minLon,
-                (bbox.maxLat - bbox.minLat), (bbox.maxLon - bbox.minLon), plotter, 0);
-    }
-
-    final void visualize(int intPointer,
-                         double minLat, double minLon,
-                         double deltaLatPerDepth, double deltaLonPerDepth,
-                         Visitor plotter, int depth) {
-        long pointer = (long) intPointer * 4;
-        if (depth == entries.length) {
-            int intTmpPointer = dataAccess.getInt(pointer);
-            if (intTmpPointer < 0) {
-                // single data entries
-                plotter.onNode(-(intTmpPointer + 1));
-            } else {
-                long maxPointer = (long) intTmpPointer * 4;
-                // loop through every leaf entry => value is maxPointer
-                for (long leafPointer = pointer + 4; leafPointer < maxPointer; leafPointer += 4) {
-                    plotter.onNode(dataAccess.getInt(leafPointer));
-                }
-            }
-            return;
-        }
-
-        int max = (1 << shifts[depth]);
-        int factor = max == 4 ? 2 : 4;
-        deltaLonPerDepth /= factor;
-        deltaLatPerDepth /= factor;
-        for (int cellIndex = 0; cellIndex < max; cellIndex++) {
-            int nextIntPointer = dataAccess.getInt(pointer + cellIndex * 4);
-            if (nextIntPointer <= 0)
-                continue;
-
-            // this bit magic does two things for the 4 and 16 case:
-            // 1. it assumes the cellIndex is a reversed spatial key and so it reverses it
-            // 2. it picks every second bit (e.g. for just latitudes) and interprets the result as an integer
-            int latCount = max == 4 ? (cellIndex & 1) : (cellIndex & 1) * 2 + ((cellIndex & 4) == 0 ? 0 : 1);
-            int lonCount = max == 4 ? (cellIndex >> 1) : (cellIndex & 2) + ((cellIndex & 8) == 0 ? 0 : 1);
-            double tmpMinLon = minLon + deltaLonPerDepth * lonCount,
-                    tmpMinLat = minLat + deltaLatPerDepth * latCount;
-            BBox cellBBox = new BBox(tmpMinLon, tmpMinLon + deltaLonPerDepth, tmpMinLat, tmpMinLat + deltaLatPerDepth);
-            plotter.onCellBBox(cellBBox, Math.max(1, Math.min(4, 4 - depth)));
-            visualize(nextIntPointer, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, plotter, depth + 1);
-        }
-    }
-
-    public void query(Shape queryBBox, Visitor function) {
-        BBox bbox = graph.getBounds();
-        query(START_POINTER, queryBBox,
+        final IntHashSet set = new IntHashSet();
+        query(START_POINTER, queryShape,
                 bbox.minLat, bbox.minLon, bbox.maxLat - bbox.minLat, bbox.maxLon - bbox.minLon,
-                function, 0);
-    }
+                new Visitor() {
+                    @Override
+                    public boolean isTileInfo() {
+                        return function.isTileInfo();
+                    }
 
-    public Collection<Integer> query(BBox queryBBox) {
-        final Collection<Integer> list = new HashSet<>();
-        query(queryBBox, new Visitor() {
-            @Override
-            public void onCellBBox(BBox bbox, int width) {
-            }
+                    @Override
+                    public void onTile(BBox bbox, int width) {
+                        function.onTile(bbox, width);
+                    }
 
-            @Override
-            public void onNode(int node) {
-                list.add(node);
-            }
-        });
-        return list;
+                    @Override
+                    public void onNode(int nodeId) {
+                        if (set.add(nodeId))
+                            function.onNode(nodeId);
+                    }
+                }, 0);
     }
 
     final void query(int intPointer, Shape queryBBox,
@@ -584,14 +494,21 @@ public class LocationIndexTree implements LocationIndex {
             int nextIntPointer = dataAccess.getInt(pointer + cellIndex * 4);
             if (nextIntPointer <= 0)
                 continue;
-            // this bit magic does two things for the 4 and 16 case:
+            // this bit magic does two things for the 4 and 16 tiles case:
             // 1. it assumes the cellIndex is a reversed spatial key and so it reverses it
             // 2. it picks every second bit (e.g. for just latitudes) and interprets the result as an integer
             int latCount = max == 4 ? (cellIndex & 1) : (cellIndex & 1) * 2 + ((cellIndex & 4) == 0 ? 0 : 1);
             int lonCount = max == 4 ? (cellIndex >> 1) : (cellIndex & 2) + ((cellIndex & 8) == 0 ? 0 : 1);
             double tmpMinLon = minLon + deltaLonPerDepth * lonCount,
                     tmpMinLat = minLat + deltaLatPerDepth * latCount;
-            if (queryBBox.intersect(new BBox(tmpMinLon, tmpMinLon + deltaLonPerDepth, tmpMinLat, tmpMinLat + deltaLatPerDepth))) {
+
+            BBox bbox = (queryBBox != null || function.isTileInfo()) ? new BBox(tmpMinLon, tmpMinLon + deltaLonPerDepth, tmpMinLat, tmpMinLat + deltaLatPerDepth) : null;
+            if (function.isTileInfo())
+                function.onTile(bbox, depth);
+            if (queryBBox == null || queryBBox.contains(bbox)) {
+                // fill without a restriction!
+                query(nextIntPointer, function.isTileInfo() ? bbox : null, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, function, depth + 1);
+            } else if (queryBBox.intersects(bbox)) {
                 query(nextIntPointer, queryBBox, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, function, depth + 1);
             }
         }
@@ -606,8 +523,8 @@ public class LocationIndexTree implements LocationIndex {
      * @return true if no further call of this method is required. False otherwise, ie. a next
      * iteration is necessary and no early finish possible.
      */
-    public final boolean findNetworkEntries(double queryLat, double queryLon,
-                                            GHIntHashSet foundEntries, int iteration) {
+    final boolean findNetworkEntries(double queryLat, double queryLon,
+                                     GHIntHashSet foundEntries, int iteration) {
         // find entries in border of searchbox
         for (int yreg = -iteration; yreg <= iteration; yreg++) {
             double subqueryLat = queryLat + yreg * deltaLat;
@@ -662,7 +579,7 @@ public class LocationIndexTree implements LocationIndex {
         return min;
     }
 
-    public final void findNetworkEntriesSingleRegion(GHIntHashSet storedNetworkEntryIds, double queryLat, double queryLon) {
+    final void findNetworkEntriesSingleRegion(GHIntHashSet storedNetworkEntryIds, double queryLat, double queryLon) {
         long keyPart = createReverseKey(queryLat, queryLon);
         fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
     }
@@ -871,9 +788,6 @@ public class LocationIndexTree implements LocationIndex {
 
     // Space efficient sorted integer set. Suited for only a few entries.
     static class SortedIntSet extends IntArrayList {
-        public SortedIntSet() {
-        }
-
         public SortedIntSet(int capacity) {
             super(capacity);
         }
@@ -1011,7 +925,7 @@ public class LocationIndexTree implements LocationIndex {
 
         Collection<InMemEntry> getEntriesOf(int selectDepth) {
             List<InMemEntry> list = new ArrayList<>();
-            fillLayer(list, selectDepth, 0, ((InMemTreeEntry) root).getSubEntriesForDebug());
+            fillLayer(list, selectDepth, 0, root.getSubEntriesForDebug());
             return list;
         }
 

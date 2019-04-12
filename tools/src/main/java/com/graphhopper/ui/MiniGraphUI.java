@@ -285,9 +285,15 @@ public class MiniGraphUI {
                     }
                 }
 
-                index.visualize(new LocationIndexTree.Visitor() {
+                index.query(graph.getBounds(), new LocationIndexTree.Visitor() {
                     @Override
-                    public void onCellBBox(BBox bbox, int width) {
+                    public boolean isTileInfo() {
+                        return true;
+                    }
+
+                    @Override
+                    public void onTile(BBox bbox, int depth) {
+                        int width = Math.max(1, Math.min(4, 4 - depth));
                         g2.setColor(Color.GRAY);
                         mg.plotEdge(g2, bbox.minLat, bbox.minLon, bbox.minLat, bbox.maxLon, width);
                         mg.plotEdge(g2, bbox.minLat, bbox.maxLon, bbox.maxLat, bbox.maxLon, width);
