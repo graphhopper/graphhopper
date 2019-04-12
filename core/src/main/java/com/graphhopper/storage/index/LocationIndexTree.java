@@ -97,7 +97,7 @@ public class LocationIndexTree implements LocationIndex {
         if (g instanceof CHGraph)
             throw new IllegalArgumentException("Use base graph for LocationIndexTree instead of CHGraph");
 
-        MAGIC_INT = Integer.MAX_VALUE / 22316;
+        MAGIC_INT = Integer.MAX_VALUE / 22317;
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
         dataAccess = dir.find("location_index", DAType.getPreferredInt(dir.getDefaultType()));
