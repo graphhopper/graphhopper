@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -37,6 +38,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     private final EdgeExplorer innerInExplorer;
     private final EdgeExplorer innerOutExplorer;
     private final TurnWeighting turnWeighting;
+    private final TurnCostExtension turnCostExtension;
 
     public AbstractBidirectionEdgeCHNoSOD(Graph graph, TurnWeighting weighting) {
         super(graph, weighting, TraversalMode.EDGE_BASED_2DIR);
@@ -44,6 +46,10 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
         innerInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder));
         innerOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder));
+        if (!(graph.getExtension() instanceof TurnCostExtension)) {
+            throw new IllegalArgumentException("edge-based CH algorithms require a turn cost extension");
+        }
+        turnCostExtension = (TurnCostExtension) graph.getExtension();
     }
 
     @Override
@@ -93,6 +99,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
             }
         }
 
+        // todo: it would be sufficient (and maybe more efficient) to use an original edge explorer here ?
         EdgeIterator iter = reverse ?
                 innerInExplorer.setBaseNode(edgeState.getAdjNode()) :
                 innerOutExplorer.setBaseNode(edgeState.getAdjNode());
@@ -102,7 +109,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         while (iter.next()) {
             final int edgeId = getOrigEdgeId(iter, !reverse);
             final int prevOrNextOrigEdgeId = getOrigEdgeId(edgeState, reverse);
-            if (!traversalMode.hasUTurnSupport() && edgeId == prevOrNextOrigEdgeId) {
+            if (!traversalMode.hasUTurnSupport() && turnCostExtension.isUTurn(edgeId, prevOrNextOrigEdgeId)) {
                 continue;
             }
             int key = GHUtility.getEdgeKey(graph, edgeId, iter.getBaseNode(), !reverse);
@@ -149,8 +156,11 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
 
     @Override
     protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        int edgeId = getOrigEdgeId(edge, !reverse);
-        if (!traversalMode.hasUTurnSupport() && edgeId == getIncomingEdge(currEdge))
+        final int incEdge = getIncomingEdge(currEdge);
+        if (incEdge == EdgeIterator.NO_EDGE)
+            return true;
+        final int prevOrNextEdgeId = getOrigEdgeId(edge, !reverse);
+        if (!traversalMode.hasUTurnSupport() && turnCostExtension.isUTurn(incEdge, prevOrNextEdgeId))
             return false;
 
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(edge);
