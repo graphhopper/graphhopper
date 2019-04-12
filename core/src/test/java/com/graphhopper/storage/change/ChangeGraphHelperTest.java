@@ -3,11 +3,15 @@ package com.graphhopper.storage.change;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
+import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
@@ -75,5 +79,57 @@ public class ChangeGraphHelperTest {
         assertEquals(10, newSpeed, .1);
         assertTrue(newSpeed < defaultSpeed);
         assertFalse(GHUtility.getEdge(graph, 3, 4).get(accessEnc));
+    }
+
+    @Test
+    public void testRevertChanges() throws IOException {
+        // 0-1-2
+        // | |
+        // 3-4
+        graph.edge(0, 1, 1, true);
+        graph.edge(1, 2, 1, true);
+        graph.edge(3, 4, 1, true);
+        graph.edge(0, 3, 1, true);
+        graph.edge(1, 4, 1, true);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.01, 0.00);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 2, 0.01, 0.02);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 3, 0.00, 0.00);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 4, 0.00, 0.01);
+        LocationIndex locationIndex = new LocationIndexTree(graph, new RAMDirectory()).prepareIndex();
+
+        FlagEncoder encoder = encodingManager.getEncoder("car");
+        Path p = new Dijkstra(graph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(0, 2);
+        assertTrue(p.isFound());
+
+        double distanceBeforeBlock = p.getDistance();
+        assertEquals(2223, distanceBeforeBlock, 1);
+
+        // Block the edge 0-1
+        Reader reader = new InputStreamReader(getClass().getResourceAsStream("overlaydata2.json"), Helper.UTF_CS);
+        ChangeGraphHelper instance = new ChangeGraphHelper(graph, locationIndex);
+        JsonFeatureCollection collection = Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class);
+        long updates = instance.applyChanges(encodingManager, collection.getFeatures());
+        assertEquals(1, updates);
+
+        p = new Dijkstra(graph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(0, 2);
+        assertTrue(p.isFound());
+
+        double distanceAfterBlock = p.getDistance();
+        assertEquals(4447, distanceAfterBlock, 1);
+
+        // Unblock the edge 0-1
+        reader = new InputStreamReader(getClass().getResourceAsStream("overlaydata3.json"), Helper.UTF_CS);
+        collection = Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class);
+        updates = instance.applyChanges(encodingManager, collection.getFeatures());
+        assertEquals(1, updates);
+
+        p = new Dijkstra(graph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(0, 2);
+        assertTrue(p.isFound());
+
+        assertEquals(distanceBeforeBlock, p.getDistance(), 1);
     }
 }

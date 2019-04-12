@@ -83,7 +83,7 @@ public class PathBidirRef extends Path {
         setFromNode(currEdge.adjNode);
         reverseOrder();
         currEdge = edgeTo;
-        int prevEdge = nextEdgeValid ? sptEntry.edge : EdgeIterator.NO_EDGE;
+        int prevEdge = EdgeIterator.Edge.isValid(sptEntry.edge) ? sptEntry.edge : EdgeIterator.NO_EDGE;
         int tmpEdge = currEdge.edge;
         while (EdgeIterator.Edge.isValid(tmpEdge)) {
             currEdge = currEdge.parent;
