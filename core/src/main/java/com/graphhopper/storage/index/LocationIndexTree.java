@@ -507,7 +507,7 @@ public class LocationIndexTree implements LocationIndex {
                 function.onTile(bbox, depth);
             if (queryBBox == null || queryBBox.contains(bbox)) {
                 // fill without a restriction!
-                query(nextIntPointer, function.isTileInfo() ? bbox : null, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, function, depth + 1);
+                query(nextIntPointer, null, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, function, depth + 1);
             } else if (queryBBox.intersects(bbox)) {
                 query(nextIntPointer, queryBBox, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, function, depth + 1);
             }

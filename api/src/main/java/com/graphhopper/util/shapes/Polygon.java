@@ -201,11 +201,11 @@ public class Polygon implements Shape {
         if (d1 < 0 && d2 < 0) return false;
 
         // If we get here, only two possibilities are left. Either the two
-        // vectors intersects in exactly one point or they are collinear, which
-        // means they intersects in any number of points from zero to infinite.
+        // vectors intersect in exactly one point or they are collinear, which
+        // means they intersect in any number of points from zero to infinite.
         if ((a1 * b2) - (a2 * b1) == 0) return false;
 
-        // If they are not collinear, they must intersects in exactly one point.
+        // If they are not collinear, they must intersect in exactly one point.
         return true;
     }
 
