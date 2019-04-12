@@ -27,49 +27,31 @@ import java.util.List;
 public class EdgeMatch {
 
     private final EdgeIteratorState edgeState;
-    private final List<GPXExtension> gpxExtensions;
+    private final List<State> states;
 
-    public EdgeMatch(EdgeIteratorState edgeState, List<GPXExtension> gpxExtension) {
+    public EdgeMatch(EdgeIteratorState edgeState, List<State> state) {
         this.edgeState = edgeState;
 
         if (edgeState == null) {
             throw new IllegalStateException("Cannot fetch null EdgeState");
         }
 
-        this.gpxExtensions = gpxExtension;
-        if (this.gpxExtensions == null) {
-            throw new IllegalStateException("extension list cannot be null");
+        this.states = state;
+        if (this.states == null) {
+            throw new IllegalStateException("state list cannot be null");
         }
-    }
-
-    public boolean isEmpty() {
-        return gpxExtensions.isEmpty();
     }
 
     public EdgeIteratorState getEdgeState() {
         return edgeState;
     }
 
-    public List<GPXExtension> getGpxExtensions() {
-        return gpxExtensions;
-    }
-
-    public double getMinDistance() {
-        if (isEmpty()) {
-            throw new IllegalStateException("No minimal distance for " + edgeState);
-        }
-
-        double min = Double.MAX_VALUE;
-        for (GPXExtension gpxExt : gpxExtensions) {
-            if (gpxExt.getQueryResult().getQueryDistance() < min) {
-                min = gpxExt.getQueryResult().getQueryDistance();
-            }
-        }
-        return min;
+    public List<State> getStates() {
+        return states;
     }
 
     @Override
     public String toString() {
-        return "edge:" + edgeState + ", extensions:" + gpxExtensions;
+        return "edge:" + edgeState + ", states:" + states;
     }
 }

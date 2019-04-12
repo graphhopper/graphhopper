@@ -3,6 +3,7 @@ package com.graphhopper.matching.cli;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.matching.Observation;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
@@ -12,6 +13,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.util.*;
+import com.graphhopper.util.gpx.GpxFromInstructions;
 import io.dropwizard.cli.Command;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -21,6 +23,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class MatchCommand extends Command {
@@ -94,7 +97,7 @@ public class MatchCommand extends Command {
                 if (gpx.trk.size() > 1) {
                     throw new IllegalArgumentException("GPX documents with multiple tracks not supported yet.");
                 }
-                List<GPXEntry> measurements = gpx.trk.get(0).getEntries();
+                List<Observation> measurements = gpx.trk.get(0).getEntries();
                 importSW.stop();
                 matchSW.start();
                 MatchResult mr = mapMatching.doWork(measurements);
@@ -102,7 +105,6 @@ public class MatchCommand extends Command {
                 System.out.println(gpxFile);
                 System.out.println("\tmatches:\t" + mr.getEdgeMatches().size() + ", gps entries:" + measurements.size());
                 System.out.println("\tgpx length:\t" + (float) mr.getGpxEntriesLength() + " vs " + (float) mr.getMatchLength());
-                System.out.println("\tgpx time:\t" + mr.getGpxEntriesMillis() / 1000f + " vs " + mr.getMatchMillis() / 1000f);
 
                 String outFile = gpxFile.getAbsolutePath() + ".res.gpx";
                 System.out.println("\texport results to:" + outFile);
@@ -110,11 +112,10 @@ public class MatchCommand extends Command {
                 PathWrapper pathWrapper = new PathWrapper();
                 new PathMerger().doWork(pathWrapper, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), tr);
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter(outFile))) {
-                    long time = System.currentTimeMillis();
-                    if (!measurements.isEmpty()) {
-                        time = measurements.get(0).getTime();
-                    }
-                    writer.append(pathWrapper.getInstructions().createGPX(gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, hopper.hasElevation(), withRoute, true, false, Constants.VERSION));
+                    long time = gpx.trk.get(0).getStartTime()
+                            .map(Date::getTime)
+                            .orElse(System.currentTimeMillis());
+                    writer.append(GpxFromInstructions.createGPX(pathWrapper.getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, hopper.hasElevation(), withRoute, true, false, Constants.VERSION, tr));
                 }
             } catch (Exception ex) {
                 importSW.stop();

@@ -126,10 +126,6 @@ public class MapMatching {
         this.maxVisitedNodes = algoOptions.getMaxVisitedNodes();
     }
 
-    public void setDistanceCalc(DistanceCalc distanceCalc) {
-        this.distanceCalc = distanceCalc;
-    }
-
     /**
      * Beta parameter of the exponential distribution for modeling transition
      * probabilities.
@@ -153,9 +149,9 @@ public class MapMatching {
      * @param gpxList the input list with GPX points which should match to edges
      *                of the graph specified in the constructor
      */
-    public MatchResult doWork(List<GPXEntry> gpxList) {
+    public MatchResult doWork(List<Observation> gpxList) {
         // filter the entries:
-        List<GPXEntry> filteredGPXEntries = filterGPXEntries(gpxList);
+        List<Observation> filteredGPXEntries = filterGPXEntries(gpxList);
 
         // now find each of the entries in the graph:
         List<Collection<QueryResult>> queriesPerEntry = lookupGPXEntries(filteredGPXEntries, DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()));
@@ -193,23 +189,23 @@ public class MapMatching {
 
         // Creates candidates from the QueryResults of all GPX entries (a candidate is basically a
         // QueryResult + direction).
-        List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps =
+        List<TimeStep<State, Observation, Path>> timeSteps =
                 createTimeSteps(filteredGPXEntries, queriesPerEntry, queryGraph);
         logger.debug("=============== Time steps ===============");
         i = 1;
-        for (TimeStep<GPXExtension, GPXEntry, Path> ts : timeSteps) {
+        for (TimeStep<State, Observation, Path> ts : timeSteps) {
             logger.debug("Candidates for time step {}", i++);
-            for (GPXExtension candidate : ts.candidates) {
+            for (State candidate : ts.candidates) {
                 logger.debug(candidate.toString());
             }
         }
 
         // Compute the most likely sequence of map matching candidates:
-        List<SequenceState<GPXExtension, GPXEntry, Path>> seq = computeViterbiSequence(timeSteps, gpxList.size(), queryGraph);
+        List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps, gpxList.size(), queryGraph);
 
         logger.debug("=============== Viterbi results =============== ");
         i = 1;
-        for (SequenceState<GPXExtension, GPXEntry, Path> ss : seq) {
+        for (SequenceState<State, Observation, Path> ss : seq) {
             logger.debug("{}: {}, path: {}", i, ss.state,
                     ss.transitionDescriptor != null ? ss.transitionDescriptor.calcEdges() : null);
             i++;
@@ -231,15 +227,15 @@ public class MapMatching {
      * Filters GPX entries to only those which will be used for map matching (i.e. those which
      * are separated by at least 2 * measurementErrorSigman
      */
-    private List<GPXEntry> filterGPXEntries(List<GPXEntry> gpxList) {
-        List<GPXEntry> filtered = new ArrayList<>();
-        GPXEntry prevEntry = null;
+    private List<Observation> filterGPXEntries(List<Observation> gpxList) {
+        List<Observation> filtered = new ArrayList<>();
+        Observation prevEntry = null;
         int last = gpxList.size() - 1;
         for (int i = 0; i <= last; i++) {
-            GPXEntry gpxEntry = gpxList.get(i);
+            Observation gpxEntry = gpxList.get(i);
             if (i == 0 || i == last || distanceCalc.calcDist(
-                    prevEntry.getLat(), prevEntry.getLon(),
-                    gpxEntry.getLat(), gpxEntry.getLon()) > 2 * measurementErrorSigma) {
+                    prevEntry.getPoint().getLat(), prevEntry.getPoint().getLon(),
+                    gpxEntry.getPoint().getLat(), gpxEntry.getPoint().getLon()) > 2 * measurementErrorSigma) {
                 filtered.add(gpxEntry);
                 prevEntry = gpxEntry;
             } else {
@@ -250,15 +246,15 @@ public class MapMatching {
     }
 
     /**
-     * Find the possible locations (edges) of each GPXEntry in the graph.
+     * Find the possible locations (edges) of each Observation in the graph.
      */
-    private List<Collection<QueryResult>> lookupGPXEntries(List<GPXEntry> gpxList,
+    private List<Collection<QueryResult>> lookupGPXEntries(List<Observation> gpxList,
                                                            EdgeFilter edgeFilter) {
 
         final List<Collection<QueryResult>> gpxEntryLocations = new ArrayList<>();
-        for (GPXEntry gpxEntry : gpxList) {
+        for (Observation gpxEntry : gpxList) {
             final List<QueryResult> queryResults = locationIndex.findNClosest(
-                    gpxEntry.lat, gpxEntry.lon, edgeFilter, measurementErrorSigma);
+                    gpxEntry.getPoint().lat, gpxEntry.getPoint().lon, edgeFilter, measurementErrorSigma);
             gpxEntryLocations.add(queryResults);
         }
         return gpxEntryLocations;
@@ -283,8 +279,8 @@ public class MapMatching {
      * transition probabilities. Creates directed candidates for virtual nodes and undirected
      * candidates for real nodes.
      */
-    private List<TimeStep<GPXExtension, GPXEntry, Path>> createTimeSteps(
-            List<GPXEntry> filteredGPXEntries, List<Collection<QueryResult>> queriesPerEntry,
+    private List<TimeStep<State, Observation, Path>> createTimeSteps(
+            List<Observation> filteredGPXEntries, List<Collection<QueryResult>> queriesPerEntry,
             QueryGraph queryGraph) {
         final int n = filteredGPXEntries.size();
         if (queriesPerEntry.size() != n) {
@@ -292,13 +288,13 @@ public class MapMatching {
                     "filteredGPXEntries and queriesPerEntry must have same size.");
         }
 
-        final List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps = new ArrayList<>();
+        final List<TimeStep<State, Observation, Path>> timeSteps = new ArrayList<>();
         for (int i = 0; i < n; i++) {
 
-            GPXEntry gpxEntry = filteredGPXEntries.get(i);
+            Observation gpxEntry = filteredGPXEntries.get(i);
             final Collection<QueryResult> queryResults = queriesPerEntry.get(i);
 
-            List<GPXExtension> candidates = new ArrayList<>();
+            List<State> candidates = new ArrayList<>();
             for (QueryResult qr : queryResults) {
                 int closestNode = qr.getClosestNode();
                 if (queryGraph.isVirtualNode(closestNode)) {
@@ -343,18 +339,18 @@ public class MapMatching {
                         vqr.setSnappedPosition(qr.getSnappedPosition());
                         vqr.setClosestEdge(qr.getClosestEdge());
                         vqr.calcSnappedPoint(distanceCalc);
-                        GPXExtension candidate = new GPXExtension(gpxEntry, vqr, incomingVirtualEdge,
+                        State candidate = new State(gpxEntry, vqr, incomingVirtualEdge,
                                 outgoingVirtualEdge);
                         candidates.add(candidate);
                     }
                 } else {
                     // Create an undirected candidate for the real node.
-                    GPXExtension candidate = new GPXExtension(gpxEntry, qr);
+                    State candidate = new State(gpxEntry, qr);
                     candidates.add(candidate);
                 }
             }
 
-            final TimeStep<GPXExtension, GPXEntry, Path> timeStep = new TimeStep<>(gpxEntry, candidates);
+            final TimeStep<State, Observation, Path> timeStep = new TimeStep<>(gpxEntry, candidates);
             timeSteps.add(timeStep);
         }
         return timeSteps;
@@ -363,18 +359,18 @@ public class MapMatching {
     /**
      * Computes the most likely candidate sequence for the GPX entries.
      */
-    private List<SequenceState<GPXExtension, GPXEntry, Path>> computeViterbiSequence(
-            List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps, int originalGpxEntriesCount,
+    private List<SequenceState<State, Observation, Path>> computeViterbiSequence(
+            List<TimeStep<State, Observation, Path>> timeSteps, int originalGpxEntriesCount,
             QueryGraph queryGraph) {
         final HmmProbabilities probabilities
                 = new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
-        final ViterbiAlgorithm<GPXExtension, GPXEntry, Path> viterbi = new ViterbiAlgorithm<>();
+        final ViterbiAlgorithm<State, Observation, Path> viterbi = new ViterbiAlgorithm<>();
 
         logger.debug("\n=============== Paths ===============");
         int timeStepCounter = 0;
-        TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep = null;
+        TimeStep<State, Observation, Path> prevTimeStep = null;
         int i = 1;
-        for (TimeStep<GPXExtension, GPXEntry, Path> timeStep : timeSteps) {
+        for (TimeStep<State, Observation, Path> timeStep : timeSteps) {
             logger.debug("\nPaths to time step {}", i++);
             computeEmissionProbabilities(timeStep, probabilities);
 
@@ -390,10 +386,10 @@ public class MapMatching {
             if (viterbi.isBroken()) {
                 String likelyReasonStr = "";
                 if (prevTimeStep != null) {
-                    GPXEntry prevGPXE = prevTimeStep.observation;
-                    GPXEntry gpxe = timeStep.observation;
-                    double dist = distanceCalc.calcDist(prevGPXE.lat, prevGPXE.lon,
-                            gpxe.lat, gpxe.lon);
+                    Observation prevGPXE = prevTimeStep.observation;
+                    Observation gpxe = timeStep.observation;
+                    double dist = distanceCalc.calcDist(prevGPXE.getPoint().lat, prevGPXE.getPoint().lon,
+                            gpxe.getPoint().lat, gpxe.getPoint().lon);
                     if (dist > 2000) {
                         likelyReasonStr = "Too long distance to previous measurement? "
                                 + Math.round(dist) + "m, ";
@@ -415,9 +411,9 @@ public class MapMatching {
         return viterbi.computeMostLikelySequence();
     }
 
-    private void computeEmissionProbabilities(TimeStep<GPXExtension, GPXEntry, Path> timeStep,
+    private void computeEmissionProbabilities(TimeStep<State, Observation, Path> timeStep,
                                               HmmProbabilities probabilities) {
-        for (GPXExtension candidate : timeStep.candidates) {
+        for (State candidate : timeStep.candidates) {
             // road distance difference in meters
             final double distance = candidate.getQueryResult().getQueryDistance();
             timeStep.addEmissionLogProbability(candidate,
@@ -425,20 +421,15 @@ public class MapMatching {
         }
     }
 
-    private void computeTransitionProbabilities(TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep,
-                                                TimeStep<GPXExtension, GPXEntry, Path> timeStep,
+    private void computeTransitionProbabilities(TimeStep<State, Observation, Path> prevTimeStep,
+                                                TimeStep<State, Observation, Path> timeStep,
                                                 HmmProbabilities probabilities,
                                                 QueryGraph queryGraph) {
-        final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.lat,
-                prevTimeStep.observation.lon, timeStep.observation.lat, timeStep.observation.lon);
+        final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat,
+                prevTimeStep.observation.getPoint().lon, timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon);
 
-        // time difference in seconds
-        final double timeDiff
-                = (timeStep.observation.getTime() - prevTimeStep.observation.getTime()) / 1000.0;
-        logger.debug("Time difference: {} s", timeDiff);
-
-        for (GPXExtension from : prevTimeStep.candidates) {
-            for (GPXExtension to : timeStep.candidates) {
+        for (State from : prevTimeStep.candidates) {
+            for (State to : timeStep.candidates) {
                 // enforce heading if required:
                 if (from.isOnDirectedEdge()) {
                     // Make sure that the path starting at the "from" candidate goes through
@@ -523,11 +514,11 @@ public class MapMatching {
         return path.getDistance() + totalPenalty;
     }
 
-    private MatchResult computeMatchResult(List<SequenceState<GPXExtension, GPXEntry, Path>> seq,
-                                           Map<String, EdgeIteratorState> virtualEdgesMap, List<GPXEntry> gpxList, QueryGraph queryGraph) {
+    private MatchResult computeMatchResult(List<SequenceState<State, Observation, Path>> seq,
+                                           Map<String, EdgeIteratorState> virtualEdgesMap, List<Observation> gpxList, QueryGraph queryGraph) {
         double distance = 0.0;
         long time = 0;
-        for (SequenceState<GPXExtension, GPXEntry, Path> transitionAndState : seq) {
+        for (SequenceState<State, Observation, Path> transitionAndState : seq) {
             if (transitionAndState.transitionDescriptor != null) {
                 distance += transitionAndState.transitionDescriptor.getDistance();
                 time += transitionAndState.transitionDescriptor.getTime();
@@ -535,7 +526,7 @@ public class MapMatching {
         }
 
         List<EdgeIteratorState> edges = new ArrayList<>();
-        for (SequenceState<GPXExtension, GPXEntry, Path> state : seq) {
+        for (SequenceState<State, Observation, Path> state : seq) {
             if (state.transitionDescriptor != null) {
                 edges.addAll(state.transitionDescriptor.calcEdges());
             }
@@ -547,12 +538,11 @@ public class MapMatching {
         matchResult.setMergedPath(mergedPath);
         matchResult.setMatchMillis(time);
         matchResult.setMatchLength(distance);
-        matchResult.setGPXEntriesMillis(durationMillis(gpxList));
         matchResult.setGPXEntriesLength(gpxLength(gpxList));
         return matchResult;
     }
 
-    private List<EdgeMatch> computeEdgeMatches(List<SequenceState<GPXExtension, GPXEntry, Path>> seq, Map<String, EdgeIteratorState> virtualEdgesMap) {
+    private List<EdgeMatch> computeEdgeMatches(List<SequenceState<State, Observation, Path>> seq, Map<String, EdgeIteratorState> virtualEdgesMap) {
         // This creates a list of directed edges (EdgeIteratorState instances turned the right way),
         // each associated with 0 or more of the observations.
         // These directed edges are edges of the real street graph, where nodes are intersections.
@@ -571,9 +561,9 @@ public class MapMatching {
         // (Consider totally forbidding candidate states to be snapped to a point, and make them all be on directed
         // edges, then that corner case goes away.)
         List<EdgeMatch> edgeMatches = new ArrayList<>();
-        List<GPXExtension> states = new ArrayList<>();
+        List<State> states = new ArrayList<>();
         EdgeIteratorState currentDirectedRealEdge = null;
-        for (SequenceState<GPXExtension, GPXEntry, Path> transitionAndState : seq) {
+        for (SequenceState<State, Observation, Path> transitionAndState : seq) {
             // transition (except before the first state)
             if (transitionAndState.transitionDescriptor != null) {
                 for (EdgeIteratorState edge : transitionAndState.transitionDescriptor.calcEdges()) {
@@ -609,26 +599,18 @@ public class MapMatching {
         return edgeMatches;
     }
 
-    private double gpxLength(List<GPXEntry> gpxList) {
+    private double gpxLength(List<Observation> gpxList) {
         if (gpxList.isEmpty()) {
             return 0;
         } else {
             double gpxLength = 0;
-            GPXEntry prevEntry = gpxList.get(0);
+            Observation prevEntry = gpxList.get(0);
             for (int i = 1; i < gpxList.size(); i++) {
-                GPXEntry entry = gpxList.get(i);
-                gpxLength += distanceCalc.calcDist(prevEntry.lat, prevEntry.lon, entry.lat, entry.lon);
+                Observation entry = gpxList.get(i);
+                gpxLength += distanceCalc.calcDist(prevEntry.getPoint().lat, prevEntry.getPoint().lon, entry.getPoint().lat, entry.getPoint().lon);
                 prevEntry = entry;
             }
             return gpxLength;
-        }
-    }
-
-    private long durationMillis(List<GPXEntry> gpxList) {
-        if (gpxList.isEmpty()) {
-            return 0L;
-        } else {
-            return gpxList.get(gpxList.size() - 1).getTime() - gpxList.get(0).getTime();
         }
     }
 
@@ -707,9 +689,9 @@ public class MapMatching {
         throw new IllegalStateException("Cannot find adjacent edge " + edge);
     }
 
-    private String getSnappedCandidates(Collection<GPXExtension> candidates) {
+    private String getSnappedCandidates(Collection<State> candidates) {
         String str = "";
-        for (GPXExtension gpxe : candidates) {
+        for (State gpxe : candidates) {
             if (!str.isEmpty()) {
                 str += ", ";
             }

@@ -2,14 +2,15 @@ package com.graphhopper.matching.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.matching.EdgeMatch;
-import com.graphhopper.matching.GPXExtension;
+import com.graphhopper.matching.State;
 import com.graphhopper.matching.MatchResult;
+import com.graphhopper.matching.Observation;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 import org.junit.Test;
 
@@ -29,11 +30,9 @@ public class ExtendedJsonResponseTest {
         assertEquals("geometry should have type", "LineString", geometry.get("type").asText());
         assertEquals("geometry should have coordinates", "LINESTRING (-38.999 -3.4445, -38.799 -3.555)", geometry.get("coordinates").asText());
 
-        assertEquals("wpts[0].timestamp should exists", 100000l, link.get("wpts").get(0).get("timestamp").asLong());
         assertEquals("wpts[0].y should exists", "-3.4446", link.get("wpts").get(0).get("y").asText());
         assertEquals("wpts[0].x should exists", "-38.9996", link.get("wpts").get(0).get("x").asText());
 
-        assertEquals("wpts[1].timestamp should exists", 100001l, link.get("wpts").get(1).get("timestamp").asLong());
         assertEquals("wpts[1].y should exists", "-3.4449", link.get("wpts").get(1).get("y").asText());
         assertEquals("wpts[1].x should exists", "-38.9999", link.get("wpts").get(1).get("x").asText());
     }
@@ -44,8 +43,8 @@ public class ExtendedJsonResponseTest {
         return list;
     }
 
-    private List<GPXExtension> getGpxExtension() {
-        List<GPXExtension> list = new ArrayList<>();
+    private List<State> getGpxExtension() {
+        List<State> list = new ArrayList<>();
         QueryResult queryResult1 = new QueryResult(-3.4445, -38.9990) {
             @Override
             public GHPoint3D getSnappedPoint() {
@@ -59,8 +58,8 @@ public class ExtendedJsonResponseTest {
             }
         };
 
-        list.add(new GPXExtension(new GPXEntry(-3.4446, -38.9996, 100000), queryResult1));
-        list.add(new GPXExtension(new GPXEntry(-3.4448, -38.9999, 100001), queryResult2));
+        list.add(new State(new Observation(new GHPoint(-3.4446, -38.9996)), queryResult1));
+        list.add(new State(new Observation(new GHPoint(-3.4448, -38.9999)), queryResult2));
         return list;
     }
 

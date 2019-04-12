@@ -126,14 +126,14 @@ public class MapMatching2Test {
     }
 
     private void validateEdgeMatch(EdgeMatch edgeMatch) {
-        for (GPXExtension gpxExtension : edgeMatch.getGpxExtensions()) {
-            if (gpxExtension.getQueryResult().getSnappedPosition() == QueryResult.Position.TOWER) {
-                if (gpxExtension.getQueryResult().getClosestNode() != edgeMatch.getEdgeState().getAdjNode()
-                        && gpxExtension.getQueryResult().getClosestNode() != edgeMatch.getEdgeState().getAdjNode()) {
+        for (State state : edgeMatch.getStates()) {
+            if (state.getQueryResult().getSnappedPosition() == QueryResult.Position.TOWER) {
+                if (state.getQueryResult().getClosestNode() != edgeMatch.getEdgeState().getAdjNode()
+                        && state.getQueryResult().getClosestNode() != edgeMatch.getEdgeState().getAdjNode()) {
                     fail();
                 }
             } else {
-                if (gpxExtension.getQueryResult().getClosestEdge().getEdge() != edgeMatch.getEdgeState().getEdge()) {
+                if (state.getQueryResult().getClosestEdge().getEdge() != edgeMatch.getEdgeState().getEdge()) {
                     fail();
                 }
             }

@@ -29,6 +29,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
+import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,6 +37,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -97,7 +99,7 @@ public class MapMatchingTest {
     @Test
     public void testDoWork() {
         MapMatching mapMatching = new MapMatching(hopper, algoOptions);
-        List<GPXEntry> inputGPXEntries = createRandomGPXEntries(
+        List<Observation> inputGPXEntries = createRandomGPXEntries(
                 new GHPoint(51.358735, 12.360574),
                 new GHPoint(51.358594, 12.360032));
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
@@ -113,7 +115,6 @@ public class MapMatchingTest {
         assertEquals(Arrays.asList("Platnerstraße", "Platnerstraße", "Platnerstraße"),
                 fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 1.5);
-        assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
 
         PathWrapper matchGHRsp = new PathWrapper();
         new PathMerger().doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), translationMap.get("en"));
@@ -130,7 +131,6 @@ public class MapMatchingTest {
         assertEquals(Arrays.asList("Windmühlenstraße", "Windmühlenstraße", "Bayrischer Platz",
                 "Bayrischer Platz", "Bayrischer Platz"), fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), .1);
-        assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis(), 1);
 
         matchGHRsp = new PathWrapper();
         new PathMerger().doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), translationMap.get("en"));
@@ -149,7 +149,6 @@ public class MapMatchingTest {
         mr = mapMatching.doWork(inputGPXEntries);
 
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 0.5);
-        assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis(), 200);
         assertEquals(138, mr.getEdgeMatches().size());
 
         // TODO full path with 20m distortion
@@ -165,7 +164,7 @@ public class MapMatchingTest {
     public void testDistantPoints() {
         // OK with 1000 visited nodes:
         MapMatching mapMatching = new MapMatching(hopper, algoOptions);
-        List<GPXEntry> inputGPXEntries = createRandomGPXEntries(
+        List<Observation> inputGPXEntries = createRandomGPXEntries(
                 new GHPoint(51.23, 12.18),
                 new GHPoint(51.45, 12.59));
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
@@ -191,7 +190,7 @@ public class MapMatchingTest {
     @Test
     public void testClosePoints() {
         MapMatching mapMatching = new MapMatching(hopper, algoOptions);
-        List<GPXEntry> inputGPXEntries = createRandomGPXEntries(
+        List<Observation> inputGPXEntries = createRandomGPXEntries(
                 new GHPoint(51.342422, 12.3613358),
                 new GHPoint(51.342328, 12.3613358));
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
@@ -216,7 +215,6 @@ public class MapMatchingTest {
         assertEquals(Arrays.asList("Weinligstraße", "Weinligstraße", "Weinligstraße",
                 "Fechnerstraße", "Fechnerstraße"), fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 11); // TODO: this should be around 300m according to Google ... need to check
-        assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis(), 3000);
     }
 
     /**
@@ -238,8 +236,6 @@ public class MapMatchingTest {
                         "Tschaikowskistraße", "Tschaikowskistraße"),
                 fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 5);
-        // TODO why is there such a big difference for millis?
-        assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis(), 6000);
     }
 
     /**
@@ -314,11 +310,12 @@ public class MapMatchingTest {
         return list;
     }
 
-    private List<GPXEntry> createRandomGPXEntries(GHPoint start, GHPoint end) {
+    private List<Observation> createRandomGPXEntries(GHPoint start, GHPoint end) {
         List<Path> paths = hopper.calcPaths(new GHRequest(start, end).setWeighting("fastest"), new GHResponse());
         Translation tr = hopper.getTranslationMap().get("en");
         InstructionList instr = paths.get(0).calcInstructions(hopper.getEncodingManager().getBooleanEncodedValue(EncodingManager.ROUNDABOUT), tr);
-        return instr.createGPXList();
+        return GpxFromInstructions.createGPXList(instr).stream()
+                .map(gpx -> new Observation(gpx.getPoint())).collect(Collectors.toList());
     }
 
 }

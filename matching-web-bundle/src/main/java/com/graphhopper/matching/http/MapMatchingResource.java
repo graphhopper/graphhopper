@@ -24,15 +24,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.matching.*;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.http.WebHelper;
-import com.graphhopper.matching.EdgeMatch;
-import com.graphhopper.matching.GPXExtension;
-import com.graphhopper.matching.MapMatching;
-import com.graphhopper.matching.MatchResult;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.*;
+import com.graphhopper.util.gpx.GpxFromInstructions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,7 +104,7 @@ public class MapMatchingResource {
         MapMatching matching = new MapMatching(graphHopper, opts);
         matching.setMeasurementErrorSigma(gpsAccuracy);
 
-        List<GPXEntry> measurements = gpx.trk.get(0).getEntries();
+        List<Observation> measurements = gpx.trk.get(0).getEntries();
         MatchResult matchResult = matching.doWork(measurements);
 
         // TODO: Request logging and timing should perhaps be done somewhere outside
@@ -137,11 +135,10 @@ public class MapMatchingResource {
             rsp.add(pathWrapper);
 
             if (writeGPX) {
-                long time = System.currentTimeMillis();
-                if (!measurements.isEmpty()) {
-                    time = measurements.get(0).getTime();
-                }
-                return Response.ok(rsp.getBest().getInstructions().createGPX(gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION), "application/gpx+xml").
+                long time = gpx.trk.get(0).getStartTime()
+                        .map(Date::getTime)
+                        .orElse(System.currentTimeMillis());
+                return Response.ok(GpxFromInstructions.createGPX(rsp.getBest().getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION, tr), "application/gpx+xml").
                         header("X-GH-Took", "" + Math.round(took * 1000)).
                         build();
             } else {
@@ -151,7 +148,6 @@ public class MapMatchingResource {
                 matchStatistics.put("distance", matchResult.getMatchLength());
                 matchStatistics.put("time", matchResult.getMatchMillis());
                 matchStatistics.put("original_distance", matchResult.getGpxEntriesLength());
-                matchStatistics.put("original_time", matchResult.getGpxEntriesMillis());
                 map.putPOJO("map_matching", matchStatistics);
 
                 if (enableTraversalKeys) {
@@ -190,11 +186,10 @@ public class MapMatchingResource {
             }
             link.put("id", edgeMatch.getEdgeState().getEdge());
             ArrayNode wpts = link.putArray("wpts");
-            for (GPXExtension extension : edgeMatch.getGpxExtensions()) {
+            for (State extension : edgeMatch.getStates()) {
                 ObjectNode wpt = wpts.addObject();
                 wpt.put("x", extension.getQueryResult().getSnappedPoint().lon);
                 wpt.put("y", extension.getQueryResult().getSnappedPoint().lat);
-                wpt.put("timestamp", extension.getEntry().getTime());
             }
         }
         return root;

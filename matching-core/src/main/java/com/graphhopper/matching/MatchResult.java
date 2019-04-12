@@ -82,21 +82,14 @@ public class MatchResult {
     }
 
     /**
-     * Length of the original GPX track in milliseconds
-     */
-    public long getGpxEntriesMillis() {
-        return gpxEntriesMillis;
-    }
-
-    /**
-     * Length of the map-matched road in meters
+     * Length of the map-matched route in meters
      */
     public double getMatchLength() {
         return matchLength;
     }
 
     /**
-     * Length of the map-matched road in milliseconds
+     * Duration of the map-matched route in milliseconds
      */
     public long getMatchMillis() {
         return matchMillis;

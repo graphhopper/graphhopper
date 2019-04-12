@@ -19,10 +19,13 @@ package com.graphhopper.matching.gpx;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.graphhopper.util.GPXEntry;
+import com.graphhopper.matching.Observation;
+import com.graphhopper.util.shapes.GHPoint3D;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Trk {
@@ -31,14 +34,18 @@ public class Trk {
     public List<Trkseg> trkseg;
     public String name;
 
-    public List<GPXEntry> getEntries() {
-        ArrayList<GPXEntry> gpxEntries = new ArrayList<>();
+    public List<Observation> getEntries() {
+        ArrayList<Observation> gpxEntries = new ArrayList<>();
         for (Trkseg t : trkseg) {
             for (Trkpt trkpt : t.trkpt) {
-                gpxEntries.add(new GPXEntry(trkpt.lat, trkpt.lon, trkpt.ele, trkpt.time != null ? trkpt.time.getTime() : 0));
+                gpxEntries.add(new Observation(new GHPoint3D(trkpt.lat, trkpt.lon, trkpt.ele)));
             }
         }
         return gpxEntries;
+    }
+
+    public Optional<Date> getStartTime() {
+        return trkseg.stream().flatMap(trkseg -> trkseg.trkpt.stream()).findFirst().flatMap(trkpt -> Optional.ofNullable(trkpt.time));
     }
 
 }

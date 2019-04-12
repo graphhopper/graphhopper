@@ -20,17 +20,16 @@ package com.graphhopper.matching;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GPXEntry;
 
 /**
  * During map matching this represents a map matching candidate, i.e. a potential snapped
  * point of a GPX entry. After map matching, this represents the map matched point of
  * an GPX entry.
  * <p>
- * A GPXEntry can either be at an undirected real (tower) node or at a directed virtual node.
- * If this is at a directed virtual node then incoming paths from any previous GPXExtension
+ * A Observation can either be at an undirected real (tower) node or at a directed virtual node.
+ * If this is at a directed virtual node then incoming paths from any previous State
  * should arrive through {@link #getIncomingVirtualEdge()} and outgoing paths to any following
- * GPXExtension should start with {@link #getOutgoingVirtualEdge()}. This is achieved by
+ * State should start with {@link #getOutgoingVirtualEdge()}. This is achieved by
  * penalizing other edges for routing. Note that virtual nodes are always connected to their
  * adjacent nodes via 2 virtual edges (not counting reverse virtual edges).
  *
@@ -38,8 +37,8 @@ import com.graphhopper.util.GPXEntry;
  * @author kodonnell
  * @author Stefan Holder
  */
-public class GPXExtension {
-    private final GPXEntry entry;
+public class State {
+    private final Observation entry;
     private final QueryResult queryResult;
     private final boolean isDirected;
     private final EdgeIteratorState incomingVirtualEdge;
@@ -48,7 +47,7 @@ public class GPXExtension {
     /**
      * Creates an undirected candidate for a real node.
      */
-    public GPXExtension(GPXEntry entry, QueryResult queryResult) {
+    public State(Observation entry, QueryResult queryResult) {
         this.entry = entry;
         this.queryResult = queryResult;
         this.isDirected = false;
@@ -59,9 +58,9 @@ public class GPXExtension {
     /**
      * Creates a directed candidate for a virtual node.
      */
-    public GPXExtension(GPXEntry entry, QueryResult queryResult,
-                        VirtualEdgeIteratorState incomingVirtualEdge,
-                        VirtualEdgeIteratorState outgoingVirtualEdge) {
+    public State(Observation entry, QueryResult queryResult,
+                 VirtualEdgeIteratorState incomingVirtualEdge,
+                 VirtualEdgeIteratorState outgoingVirtualEdge) {
         this.entry = entry;
         this.queryResult = queryResult;
         this.isDirected = true;
@@ -69,7 +68,7 @@ public class GPXExtension {
         this.outgoingVirtualEdge = outgoingVirtualEdge;
     }
 
-    public GPXEntry getEntry() {
+    public Observation getEntry() {
         return entry;
     }
 
@@ -78,7 +77,7 @@ public class GPXExtension {
     }
 
     /**
-     * Returns whether this GPXExtension is directed. This is true if the snapped point
+     * Returns whether this State is directed. This is true if the snapped point
      * is a virtual node, otherwise the snapped node is a real (tower) node and false is returned.
      */
     public boolean isOnDirectedEdge() {
@@ -88,7 +87,7 @@ public class GPXExtension {
     /**
      * Returns the virtual edge that should be used by incoming paths.
      *
-     * @throws IllegalStateException if this GPXExtension is not directed.
+     * @throws IllegalStateException if this State is not directed.
      */
     public EdgeIteratorState getIncomingVirtualEdge() {
         if (!isDirected) {
@@ -101,7 +100,7 @@ public class GPXExtension {
     /**
      * Returns the virtual edge that should be used by outgoing paths.
      *
-     * @throws IllegalStateException if this GPXExtension is not directed.
+     * @throws IllegalStateException if this State is not directed.
      */
     public EdgeIteratorState getOutgoingVirtualEdge() {
         if (!isDirected) {
@@ -113,7 +112,7 @@ public class GPXExtension {
 
     @Override
     public String toString() {
-        return "GPXExtension{" +
+        return "State{" +
                 "closest node=" + queryResult.getClosestNode() +
                 " at " + queryResult.getSnappedPoint().getLat() + "," +
                 queryResult.getSnappedPoint().getLon() +

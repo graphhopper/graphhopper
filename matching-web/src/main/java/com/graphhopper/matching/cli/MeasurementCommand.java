@@ -22,6 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
+import com.graphhopper.matching.Observation;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.util.*;
@@ -182,26 +183,18 @@ public class MeasurementCommand extends Command {
 
                     // if found, use it for map matching:
                     if (!r.hasErrors()) {
-                        long time = 0;
                         double sampleProportion = rand.nextDouble();
                         GHPoint prev = null;
-                        List<GPXEntry> mock = new ArrayList<>();
+                        List<Observation> mock = new ArrayList<>();
                         PointList points = r.getBest().getPoints();
                         // loop through points and add (approximately) sampleProportion of them:
                         for (GHPoint p : points) {
                             if (null != prev && rand.nextDouble() < sampleProportion) {
-                                // estimate a reasonable time taken since the last point, so we
-                                // can give the GPXEntry a time. Use the distance between the
-                                // points and a random speed to estimate a time.
-                                double dx = distCalc.calcDist(prev.lat, prev.lon, p.lat, p.lon);
-                                double speedKPH = rand.nextDouble() * 100;
-                                double dt = (dx / 1000) / speedKPH * 3600000;
-                                time += (long) dt;
                                 // randomise the point lat/lon (i.e. so it's not
                                 // exactly on the route):
                                 GHPoint randomised = distCalc.projectCoordinate(p.lat, p.lon,
                                         20 * rand.nextDouble(), 360 * rand.nextDouble());
-                                mock.add(new GPXEntry(randomised, time));
+                                mock.add(new Observation(randomised));
                             }
                             prev = p;
                         }

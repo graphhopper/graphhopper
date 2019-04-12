@@ -1,9 +1,9 @@
 package com.graphhopper.matching.cli;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.graphhopper.matching.Observation;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.matching.gpx.Trk;
-import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.shapes.BBox;
 import io.dropwizard.cli.Command;
 import io.dropwizard.setup.Bootstrap;
@@ -37,9 +37,9 @@ public class GetBoundsCommand extends Command {
             try {
                 Gpx gpx = xmlMapper.readValue(gpxFile, Gpx.class);
                 for (Trk trk : gpx.trk) {
-                    List<GPXEntry> inputGPXEntries = trk.getEntries();
-                    for (GPXEntry entry : inputGPXEntries) {
-                        bbox.update(entry.getLat(), entry.getLon());
+                    List<Observation> inputGPXEntries = trk.getEntries();
+                    for (Observation entry : inputGPXEntries) {
+                        bbox.update(entry.getPoint().getLat(), entry.getPoint().getLon());
                     }
                 }
             } catch (IOException e) {
