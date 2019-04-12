@@ -122,7 +122,7 @@ public class BBox implements Shape, Cloneable {
      * @return the intersecting BBox or null if not intersecting
      */
     public BBox calculateIntersection(BBox bBox) {
-        if (!this.intersect(bBox))
+        if (!this.intersects(bBox))
             return null;
 
         double minLon = Math.max(this.minLon, bBox.minLon);
@@ -141,7 +141,7 @@ public class BBox implements Shape, Cloneable {
     @Override
     public boolean intersects(Shape s) {
         if (s instanceof BBox) {
-            return intersect((BBox) s);
+            return intersects((BBox) s);
         } else if (s instanceof Circle) {
             return ((Circle) s).intersect(this);
         }
@@ -160,21 +160,21 @@ public class BBox implements Shape, Cloneable {
         throw new UnsupportedOperationException("unsupported shape");
     }
 
-    public boolean intersect(Circle s) {
+    public boolean intersects(Circle s) {
         return s.intersect(this);
     }
 
     /**
      * This method calculates if this BBox intersects with the specified BBox
      */
-    public boolean intersect(double minLon, double maxLon, double minLat, double maxLat) {
+    public boolean intersects(double minLon, double maxLon, double minLat, double maxLat) {
         return this.minLon < maxLon && this.minLat < maxLat && minLon < this.maxLon && minLat < this.maxLat;
     }
 
     /**
      * This method calculates if this BBox intersects with the specified BBox
      */
-    public boolean intersect(BBox o) {
+    public boolean intersects(BBox o) {
         // return (o.minLon < minLon && o.maxLon > minLon || o.minLon < maxLon && o.minLon >= minLon)
         //  && (o.maxLat < maxLat && o.maxLat >= minLat || o.maxLat >= maxLat && o.minLat < maxLat);
         return this.minLon < o.maxLon && this.minLat < o.maxLat && o.minLon < this.maxLon && o.minLat < this.maxLat;

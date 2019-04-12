@@ -75,9 +75,9 @@ public class Circle implements Shape {
     @Override
     public boolean intersects(Shape o) {
         if (o instanceof Circle) {
-            return intersect((Circle) o);
+            return intersects((Circle) o);
         } else if (o instanceof BBox) {
-            return intersect((BBox) o);
+            return intersects((BBox) o);
         }
 
         return o.intersects(this);
@@ -94,7 +94,7 @@ public class Circle implements Shape {
         throw new UnsupportedOperationException("unsupported shape");
     }
 
-    public boolean intersect(BBox b) {
+    public boolean intersects(BBox b) {
         // test top intersects
         if (lat > b.maxLat) {
             if (lon < b.minLon) {
@@ -127,9 +127,9 @@ public class Circle implements Shape {
         return true;
     }
 
-    public boolean intersect(Circle c) {
+    public boolean intersects(Circle c) {
         // necessary to improve speed?
-        if (!getBounds().intersect(c.getBounds())) {
+        if (!getBounds().intersects(c.getBounds())) {
             return false;
         }
 
