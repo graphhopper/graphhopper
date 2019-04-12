@@ -157,7 +157,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
     public void setMaxPaths(int maxPaths) {
         this.maxPaths = maxPaths;
         if (this.maxPaths < 2)
-            throw new IllegalStateException("Use normal algorithm with less overhead instead if no alternatives are required");
+            throw new IllegalArgumentException("Use normal algorithm with less overhead instead if no alternatives are required");
     }
 
     /**
