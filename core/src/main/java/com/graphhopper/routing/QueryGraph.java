@@ -291,7 +291,7 @@ public class QueryGraph implements Graph {
                     }
                 });
 
-                GHPoint3D prevPoint = fullPL.toGHPoint(0);
+                GHPoint3D prevPoint = fullPL.get(0);
                 int adjNode = closestEdge.getAdjNode();
                 int origEdgeKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), false);
                 int origRevEdgeKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), true);
@@ -342,7 +342,7 @@ public class QueryGraph implements Graph {
                 if (addedEdges)
                     createEdges(origEdgeKey, origRevEdgeKey,
                             prevPoint, prevWayIndex, false,
-                            fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 2,
+                            fullPL.get(fullPL.getSize() - 1), fullPL.getSize() - 2,
                             fullPL, closestEdge, virtNodeId - 1, adjNode);
 
                 return true;

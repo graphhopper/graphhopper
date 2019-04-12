@@ -1,19 +1,22 @@
 package com.graphhopper.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.graphhopper.jackson.Jackson;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static io.dropwizard.testing.FixtureHelpers.fixture;
+import static org.junit.Assert.assertEquals;
 
 public class InstructionListRepresentationTest {
 
     @Test
-    public void testRoundaboutJsonIntegrity() {
+    public void testRoundaboutJsonIntegrity() throws IOException {
+        ObjectMapper objectMapper = Jackson.newObjectMapper();
         InstructionList il = new InstructionList(usTR);
 
         PointList pl = new PointList();
@@ -27,27 +30,14 @@ public class InstructionListRepresentationTest {
                 .setExitNumber(2)
                 .setExited();
         il.add(instr);
-
-        Map<String, Object> json = il.createJson().get(0);
-        // assert that all information is present in map for JSON
-        assertEquals("At roundabout, take exit 2 onto streetname", json.get("text").toString());
-        assertEquals(-1, (Double) json.get("turn_angle"), 0.01);
-        assertEquals("2", json.get("exit_number").toString());
-        // assert that a valid JSON object can be written
-        assertNotNull(write(json));
+        assertEquals(objectMapper.readTree(fixture("fixtures/roundabout1.json")).toString(), objectMapper.valueToTree(il).toString());
     }
 
-    private String write(Map<String, Object> json) {
-        try {
-            return new ObjectMapper().writeValueAsString(json);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     // Roundabout with unknown dir of rotation
     @Test
-    public void testRoundaboutJsonNaN() {
+    public void testRoundaboutJsonNaN() throws IOException {
+        ObjectMapper objectMapper = Jackson.newObjectMapper();
         InstructionList il = new InstructionList(usTR);
 
         PointList pl = new PointList();
@@ -60,15 +50,10 @@ public class InstructionListRepresentationTest {
                 .setExitNumber(2)
                 .setExited();
         il.add(instr);
-
-        Map<String, Object> json = il.createJson().get(0);
-        assertEquals("At roundabout, take exit 2 onto streetname", json.get("text").toString());
-        assertNull(json.get("turn_angle"));
-        // assert that a valid JSON object can be written
-        assertNotNull(write(json));
+        assertEquals(objectMapper.readTree(fixture("fixtures/roundabout2.json")).toString(), objectMapper.valueToTree(il).toString());
     }
 
-    static Translation usTR = new Translation() {
+    private static Translation usTR = new Translation() {
         @Override
         public String tr(String key, Object... params) {
             if (key.equals("roundabout_exit_onto"))

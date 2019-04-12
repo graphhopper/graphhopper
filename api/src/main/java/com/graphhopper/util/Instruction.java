@@ -18,7 +18,6 @@
 package com.graphhopper.util;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class Instruction {
@@ -127,24 +126,6 @@ public class Instruction {
         return this;
     }
 
-    /**
-     * Latitude of the location where this instruction should take place.
-     */
-    double getFirstLat() {
-        return points.getLatitude(0);
-    }
-
-    /**
-     * Longitude of the location where this instruction should take place.
-     */
-    double getFirstLon() {
-        return points.getLongitude(0);
-    }
-
-    double getFirstEle() {
-        return points.getElevation(0);
-    }
-
     /* This method returns the points associated to this instruction. Please note that it will not include the last point,
      * i.e. the first point of the next instruction object.
      */
@@ -154,43 +135,6 @@ public class Instruction {
 
     public void setPoints(PointList points) {
         this.points = points;
-    }
-
-    /**
-     * This method returns a list of gpx entries where the time (in time) is relative to the first
-     * which is 0. It does NOT contain the last point which is the first of the next instruction.
-     *
-     * @return the time offset to add for the next instruction
-     */
-    long fillGPXList(List<GPXEntry> list, long time,
-                     Instruction prevInstr, Instruction nextInstr, boolean firstInstr) {
-        checkOne();
-        int len = points.size();
-        long prevTime = time;
-        double lat = points.getLatitude(0);
-        double lon = points.getLongitude(0);
-        double ele = Double.NaN;
-        boolean is3D = points.is3D();
-        if (is3D)
-            ele = points.getElevation(0);
-
-        for (int i = 0; i < len; i++) {
-            list.add(new GPXEntry(lat, lon, ele, prevTime));
-
-            boolean last = i + 1 == len;
-            double nextLat = last ? nextInstr.getFirstLat() : points.getLatitude(i + 1);
-            double nextLon = last ? nextInstr.getFirstLon() : points.getLongitude(i + 1);
-            double nextEle = is3D ? (last ? nextInstr.getFirstEle() : points.getElevation(i + 1)) : Double.NaN;
-            if (is3D)
-                prevTime = Math.round(prevTime + this.time * Helper.DIST_3D.calcDist(nextLat, nextLon, nextEle, lat, lon, ele) / distance);
-            else
-                prevTime = Math.round(prevTime + this.time * Helper.DIST_3D.calcDist(nextLat, nextLon, lat, lon) / distance);
-
-            lat = nextLat;
-            lon = nextLon;
-            ele = nextEle;
-        }
-        return time + this.time;
     }
 
     @Override
@@ -209,7 +153,7 @@ public class Instruction {
      * Return the direction like 'NE' based on the first tracksegment of the instruction. If
      * Instruction does not contain enough coordinate points, an empty string will be returned.
      */
-    String calcDirection(Instruction nextI) {
+    public String calcDirection(Instruction nextI) {
         double azimuth = calcAzimuth(nextI);
         if (Double.isNaN(azimuth))
             return "";
@@ -239,11 +183,6 @@ public class Instruction {
         double lat = points.getLatitude(0);
         double lon = points.getLongitude(0);
         return AC.calcAzimuth(lat, lon, nextLat, nextLon);
-    }
-
-    void checkOne() {
-        if (points.size() < 1)
-            throw new IllegalStateException("Instruction must contain at least one point " + toString());
     }
 
     /**
