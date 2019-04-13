@@ -75,7 +75,7 @@
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-web</artifactId>
-            <version>0.13.0-pre1</version>
+            <version>0.13.0-pre2</version>
         </dependency>
 
         <dependency>
