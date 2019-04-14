@@ -19,6 +19,7 @@ package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
+import org.locationtech.jts.geom.Envelope;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -280,6 +281,10 @@ public class BBox implements Shape, Cloneable {
             list.add(Helper.round2(maxEle));
 
         return list;
+    }
+
+    public static BBox fromEnvelope(Envelope envelope) {
+        return new BBox(envelope.getMinX(), envelope.getMaxX(), envelope.getMinY(), envelope.getMaxY());
     }
 
     /**
