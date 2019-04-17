@@ -35,7 +35,7 @@ Then you need to import an OSM map for the area you want to do map-matching on, 
 sample data:
 
 ```bash
-java -jar matching-web/target/graphhopper-map-matching-web-0.12-SNAPSHOT.jar import map-data/leipzig_germany.osm.pbf
+java -jar matching-web/target/graphhopper-map-matching-web-0.13-SNAPSHOT.jar import map-data/leipzig_germany.osm.pbf
 ```
 
 OpenStreetMap data in pbf or xml format are available from [here](http://download.geofabrik.de/).
@@ -47,14 +47,14 @@ Before re-importing, you need to delete the `graph-cache` directory, which is cr
 
 Now you can match GPX traces against the map:
 ```bash
-java -jar matching-web/target/graphhopper-map-matching-web-0.12-SNAPSHOT.jar match matching-core/src/test/resources/*.gpx
+java -jar matching-web/target/graphhopper-map-matching-web-0.13-SNAPSHOT.jar match matching-core/src/test/resources/*.gpx
 ```
 
 ### Web app
 
 Start via:
 ```bash
-java -jar matching-web/target/graphhopper-map-matching-web-0.12-SNAPSHOT.jar server config.yml
+java -jar matching-web/target/graphhopper-map-matching-web-0.13-SNAPSHOT.jar server config.yml
 ```
 
 Access the simple UI via `localhost:8989`.
@@ -68,7 +68,7 @@ curl -XPOST -H "Content-Type: application/gpx+xml" -d @matching-core/src/test/re
 
 Determine the bounding box of one or more GPX files:
 ```bash
-java -jar matching-web/target/graphhopper-map-matching-web-0.12-SNAPSHOT.jar getbounds matching-core/src/test/resources/*.gpx
+java -jar matching-web/target/graphhopper-map-matching-web-0.13-SNAPSHOT.jar getbounds matching-core/src/test/resources/*.gpx
 ```
 
 #### Java usage
@@ -81,7 +81,7 @@ Use this Maven dependency:
 <dependency>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-map-matching-core</artifactId>
-    <version>0.12-SNAPSHOT</version>
+    <version>0.13-SNAPSHOT</version>
 </dependency>
 ```
 
