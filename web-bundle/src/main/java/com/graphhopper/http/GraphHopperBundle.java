@@ -37,7 +37,6 @@ import com.graphhopper.jackson.GraphHopperModule;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
-import com.graphhopper.reader.gtfs.RealtimeFeed;
 import com.graphhopper.resources.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -215,22 +214,22 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 configuration.has("datareader.file") ? Arrays.asList(configuration.get("datareader.file", "").split(",")) : Collections.emptyList());
         final TranslationMap translationMap = GraphHopperGtfs.createTranslationMap();
         final LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(ghDirectory, graphHopperStorage);
-        final GraphHopperAPI graphHopper = new GraphHopperGtfs(ptFlagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
         environment.jersey().register(new AbstractBinder() {
             @Override
             protected void configure() {
                 bind(configuration).to(CmdArgs.class);
-                bind(graphHopper).to(GraphHopperAPI.class);
                 bind(false).to(Boolean.class).named("hasElevation");
                 bind(locationIndex).to(LocationIndex.class);
                 bind(translationMap).to(TranslationMap.class);
                 bind(encodingManager).to(EncodingManager.class);
+                bind(ptFlagEncoder).to(PtFlagEncoder.class);
                 bind(graphHopperStorage).to(GraphHopperStorage.class);
+                bind(gtfsStorage).to(GtfsStorage.class);
                 bindFactory(RasterHullBuilderFactory.class).to(DelaunayTriangulationIsolineBuilder.class);
             }
         });
         environment.jersey().register(NearestResource.class);
-        environment.jersey().register(RouteResource.class);
+        environment.jersey().register(GraphHopperGtfs.class);
         environment.jersey().register(new PtIsochroneResource(gtfsStorage, encodingManager, graphHopperStorage, locationIndex));
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
