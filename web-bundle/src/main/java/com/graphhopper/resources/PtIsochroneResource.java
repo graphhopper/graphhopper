@@ -33,6 +33,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.index.strtree.STRtree;
@@ -58,7 +59,6 @@ public class PtIsochroneResource {
     private EncodingManager encodingManager;
     private GraphHopperStorage graphHopperStorage;
     private LocationIndex locationIndex;
-//    private final STRtree spatialIndex;
 
     private final Function<Label, Double> z = label -> (double) label.currentTime;
 
@@ -67,15 +67,6 @@ public class PtIsochroneResource {
         this.encodingManager = encodingManager;
         this.graphHopperStorage = graphHopperStorage;
         this.locationIndex = locationIndex;
-//        spatialIndex = new STRtree();
-//        PtFlagEncoder ptFlagEncoder = (PtFlagEncoder) encodingManager.getEncoder("pt");
-//        AllEdgesIterator allEdges = graphHopperStorage.getAllEdges();
-//        while (allEdges.next()) {
-//            if (ptFlagEncoder.getEdgeType(allEdges.getFlags()) == GtfsStorage.EdgeType.HIGHWAY) {
-//                LineString geom = allEdges.fetchWayGeometry(3).toLineString(false);
-//                spatialIndex.insert(geom.getEnvelopeInternal(), allEdges.getEdge());
-//            }
-//        }
     }
 
     public static class Response {
@@ -133,17 +124,16 @@ public class PtIsochroneResource {
             router.calcLabelsAndNeighbors(queryResult.getClosestNode(), -1, initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
             MultiPoint exploredPointsAndNeighbors = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
 
-            // This is what we need to do once we can do bounding-box queries on our spatial index.
-            // Then it should be impossible for unreachable encroaching points to not be found.
-
-//            spatialIndex.query(exploredPointsAndNeighbors.getEnvelopeInternal(), edgeId -> {
-//                EdgeIteratorState e = graphHopperStorage.getEdgeIteratorState((int) edgeId, Integer.MIN_VALUE);
-//                Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(e.getBaseNode()), nodeAccess.getLatitude(e.getBaseNode()));
-//                z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
-//                nodeCoordinate = new Coordinate(nodeAccess.getLongitude(e.getAdjNode()), nodeAccess.getLatitude(e.getAdjNode()));
-//                z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
-//            });
-//            exploredPointsAndNeighbors = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
+            // Get at least all nodes within our bounding box (I think convex hull would be enough.)
+            // I think then we should have all possible encroaching points. (Proof needed.)
+            locationIndex.query(BBox.fromEnvelope(exploredPointsAndNeighbors.getEnvelopeInternal()), new LocationIndex.Visitor() {
+                @Override
+                public void onNode(int nodeId) {
+                    Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(nodeId), nodeAccess.getLatitude(nodeId));
+                    z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
+                }
+            });
+            exploredPointsAndNeighbors = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
 
             CoordinateList siteCoords = DelaunayTriangulationBuilder.extractUniqueCoordinates(exploredPointsAndNeighbors);
             List<ConstraintVertex> constraintVertices = new ArrayList<>();

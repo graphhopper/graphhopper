@@ -87,7 +87,7 @@ public class GraphHopperWebIT {
         path = paths.get(0);
         isBetween(20, 30, path.getPoints().size());
         isBetween(800, 900, path.getDistance());
-        assertTrue("expected: " + path.getDescription().get(0), Arrays.asList("Jacobistraße", "Ludwig-Gercke-Straße", "Eichendorffplatz").contains(path.getDescription().get(0)));
+        assertTrue("expected: " + path.getDescription().get(0), Arrays.asList("Jacobistraße", "Bismarckstraße", "Ludwig-Gercke-Straße", "Eichendorffplatz").contains(path.getDescription().get(0)));
     }
 
     @Test

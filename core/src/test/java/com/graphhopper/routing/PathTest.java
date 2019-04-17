@@ -93,7 +93,7 @@ public class PathTest {
         assertEquals("continue", tmp.getTurnDescription(tr));
 //        assertEquals("[0, 6]", tmp.get("interval").toString());
         assertEquals(6, tmp.getLength());
-        System.out.println(tmp.getPoints());
+//        System.out.println(tmp.getPoints());
 
 
         tmp = instr.get(1);
@@ -102,7 +102,7 @@ public class PathTest {
         assertEquals("arrive at destination", tmp.getTurnDescription(tr));
 //        assertEquals("[6, 6]", tmp.get("interval").toString());
         assertEquals(0, tmp.getLength());
-        System.out.println(tmp.getPoints());
+//        System.out.println(tmp.getPoints());
 
         int acc = 0;
         for (Instruction instruction : instr) {
