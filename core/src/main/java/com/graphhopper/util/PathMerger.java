@@ -22,7 +22,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import com.graphhopper.util.exceptions.ConnectionNotFoundException;
+import com.graphhopper.util.exceptions.PathNotFoundException.ConnectionNotFoundException;
 
 import java.util.ArrayList;
 import java.util.Collections;

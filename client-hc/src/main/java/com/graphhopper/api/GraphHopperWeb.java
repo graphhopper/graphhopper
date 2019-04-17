@@ -29,6 +29,9 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.*;
+import com.graphhopper.util.exceptions.PathNotFoundException.ConnectionNotFoundException;
+import com.graphhopper.util.exceptions.PathNotFoundException.DifferentSubnetworksException;
+import com.graphhopper.util.exceptions.PathNotFoundException.MaximumNodesExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -274,9 +277,15 @@ public class GraphHopperWeb implements GraphHopperAPI {
                 errors.add(new DetailedRuntimeException(exMessage, toMap(error)));
             else if (exClass.equals(IllegalArgumentException.class.getName()))
                 errors.add(new DetailedIllegalArgumentException(exMessage, toMap(error)));
-            else if (exClass.equals(ConnectionNotFoundException.class.getName())) {
+            else if (exClass.equals(PathNotFoundException.class.getName()))
+                errors.add(new PathNotFoundException(exMessage, toMap(error)));
+            else if (exClass.equals(ConnectionNotFoundException.class.getName()))
                 errors.add(new ConnectionNotFoundException(exMessage, toMap(error)));
-            } else if (exClass.equals(PointNotFoundException.class.getName())) {
+            else if (exClass.equals(DifferentSubnetworksException.class.getName()))
+                errors.add(new DifferentSubnetworksException(exMessage, toMap(error)));
+            else if (exClass.equals(MaximumNodesExceededException.class.getName()))
+                errors.add(new MaximumNodesExceededException(exMessage, toMap(error)));
+            else if (exClass.equals(PointNotFoundException.class.getName())) {
                 int pointIndex = error.get("point_index").asInt();
                 errors.add(new PointNotFoundException(exMessage, pointIndex));
             } else if (exClass.equals(PointOutOfBoundsException.class.getName())) {

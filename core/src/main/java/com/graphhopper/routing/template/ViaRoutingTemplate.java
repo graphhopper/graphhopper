@@ -24,15 +24,14 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.PathMerger;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.Translation;
+import com.graphhopper.util.exceptions.PathNotFoundException.MaximumNodesExceededException;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -119,8 +118,9 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
 
             int idx = 0;
             for (Path path : tmpPathList) {
-                if (path.getTime() < 0)
+                if (path.getTime() < 0) {
                     throw new RuntimeException("Time was negative " + path.getTime() + " for index " + idx + ". Please report as bug and include:" + ghRequest);
+                }
 
                 pathList.add(path);
                 debug += ", " + path.getDebugInfo();
@@ -132,8 +132,9 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             // reset all direction enforcements in queryGraph to avoid influencing next path
             queryGraph.clearUnfavoredStatus();
 
-            if (algo.getVisitedNodes() >= algoOpts.getMaxVisitedNodes())
-                throw new IllegalArgumentException("No path found due to maximum nodes exceeded " + algoOpts.getMaxVisitedNodes());
+            if (algo.getVisitedNodes() >= algoOpts.getMaxVisitedNodes()) {
+                throw new MaximumNodesExceededException("No path found due to maximum nodes (\"junctions\") exceeded. This can happen if the requested points are too far apart.", new HashMap<String, Object>());
+            }
 
             visitedNodesSum += algo.getVisitedNodes();
             altResponse.addDebugInfo("visited nodes sum: " + visitedNodesSum);
@@ -149,7 +150,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     @Override
     public boolean isReady(PathMerger pathMerger, Translation tr) {
         if (ghRequest.getPoints().size() - 1 != pathList.size())
-            throw new RuntimeException("There should be exactly one more points than paths. points:" + ghRequest.getPoints().size() + ", paths:" + pathList.size());
+            throw new IllegalStateException("There should be exactly one more points than paths. points:" + ghRequest.getPoints().size() + ", paths:" + pathList.size());
 
         altResponse.setWaypoints(getWaypoints());
         ghResponse.add(altResponse);

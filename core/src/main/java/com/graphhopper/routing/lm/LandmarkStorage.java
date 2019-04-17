@@ -35,7 +35,7 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
-import com.graphhopper.util.exceptions.ConnectionNotFoundException;
+import com.graphhopper.util.exceptions.PathNotFoundException.DifferentSubnetworksException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
@@ -593,7 +593,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         if (subnetworkFrom <= UNCLEAR_SUBNETWORK || subnetworkTo <= UNCLEAR_SUBNETWORK)
             return false;
         if (subnetworkFrom != subnetworkTo) {
-            throw new ConnectionNotFoundException("Connection between locations not found. Different subnetworks " + subnetworkFrom + " vs. " + subnetworkTo, new HashMap<String, Object>());
+            throw new DifferentSubnetworksException("Connection between locations not found. Different subnetworks " + subnetworkFrom + " vs. " + subnetworkTo, new HashMap<String, Object>());
         }
 
         int[] tmpIDs = landmarkIDs.get(subnetworkFrom);

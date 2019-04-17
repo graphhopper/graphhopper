@@ -26,6 +26,8 @@ import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.exceptions.GHException;
+import com.graphhopper.util.exceptions.PathNotFoundException.MaximumNodesExceededException;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
@@ -478,6 +480,7 @@ public class GraphHopperIT {
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
+        assertEquals(MaximumNodesExceededException.class, rsp.getErrors().get(0).getClass());
 
         req = new GHRequest().
                 addPoint(from).
