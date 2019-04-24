@@ -31,7 +31,7 @@ import java.util.*;
 @Path("isochrone")
 public class IsochroneResource {
 
-    private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
+    private static final Logger logger = LoggerFactory.getLogger(IsochroneResource.class);
 
     private final GraphHopper graphHopper;
     private final EncodingManager encodingManager;
