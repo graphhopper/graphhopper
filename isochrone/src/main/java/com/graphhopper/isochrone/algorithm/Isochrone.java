@@ -108,7 +108,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
         public final int nodeId;
         public int edgeId, prevEdgeId, prevNodeId;
         public int timeInSec, prevTimeInSec;
-        public long distance, prevDistance;
+        public int distance, prevDistance;
         public GHPoint coordinate, prevCoordinate;
 
         public IsoLabelWithCoordinates(int nodeId) {
@@ -130,7 +130,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                 IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates(nodeId);
                 isoLabelWC.coordinate = new GHPoint(lat, lon);
                 isoLabelWC.timeInSec = Math.round(label.time / 1000);
-                isoLabelWC.distance = Math.round(label.distance);
+                isoLabelWC.distance = (int) Math.round(label.distance);
                 isoLabelWC.edgeId = label.edge;
                 shortestPathEntries.add(isoLabelWC);
                 if (label.parent != null) {
@@ -141,7 +141,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                     isoLabelWC.prevNodeId = nodeId;
                     isoLabelWC.prevEdgeId = prevLabel.edge;
                     isoLabelWC.prevCoordinate = new GHPoint(prevLat, prevLon);
-                    isoLabelWC.prevDistance = Math.round(prevLabel.distance);
+                    isoLabelWC.prevDistance = (int) Math.round(prevLabel.distance);
                     isoLabelWC.prevTimeInSec = Math.round(prevLabel.time / 1000);
                 }
             }
