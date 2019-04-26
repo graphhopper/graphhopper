@@ -29,6 +29,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.Coordinate;
 
 import java.util.*;
@@ -104,16 +105,14 @@ public class Isochrone extends AbstractRoutingAlgorithm {
     }
 
     public static class IsoLabelWithCoordinates {
-        public Coordinate baseCoordinate;
-        public Coordinate adjCoordinate;
-        public long time;
-        public double distance;
-        // debug info
-        public int edgeId, baseNodeId;
-        public final int adjNodeId;
+        public final int nodeId;
+        public int edgeId, prevEdgeId, prevNodeId;
+        public int timeInSec, prevTimeInSec;
+        public long distance, prevDistance;
+        public GHPoint coordinate, prevCoordinate;
 
-        public IsoLabelWithCoordinates(int adjNodeId) {
-            this.adjNodeId = adjNodeId;
+        public IsoLabelWithCoordinates(int nodeId) {
+            this.nodeId = nodeId;
         }
     }
 
@@ -128,18 +127,22 @@ public class Isochrone extends AbstractRoutingAlgorithm {
             public void apply(int nodeId, IsoLabel label) {
                 double lat = na.getLatitude(nodeId);
                 double lon = na.getLongitude(nodeId);
-                IsoLabelWithCoordinates sptInfo = new IsoLabelWithCoordinates(nodeId);
-                sptInfo.adjCoordinate = new Coordinate(lon, lat);
-                sptInfo.time = label.time;
-                sptInfo.distance = label.distance;
-                sptInfo.edgeId = label.edge;
-                shortestPathEntries.add(sptInfo);
+                IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates(nodeId);
+                isoLabelWC.coordinate = new GHPoint(lat, lon);
+                isoLabelWC.timeInSec = Math.round(label.time / 1000);
+                isoLabelWC.distance = Math.round(label.distance);
+                isoLabelWC.edgeId = label.edge;
+                shortestPathEntries.add(isoLabelWC);
                 if (label.parent != null) {
-                    nodeId = label.parent.adjNode;
-                    double lat2 = na.getLatitude(nodeId);
-                    double lon2 = na.getLongitude(nodeId);
-                    sptInfo.baseNodeId = nodeId;
-                    sptInfo.baseCoordinate = new Coordinate(lon2, lat2);
+                    IsoLabel prevLabel = (IsoLabel) label.parent;
+                    nodeId = prevLabel.adjNode;
+                    double prevLat = na.getLatitude(nodeId);
+                    double prevLon = na.getLongitude(nodeId);
+                    isoLabelWC.prevNodeId = nodeId;
+                    isoLabelWC.prevEdgeId = prevLabel.edge;
+                    isoLabelWC.prevCoordinate = new GHPoint(prevLat, prevLon);
+                    isoLabelWC.prevDistance = Math.round(prevLabel.distance);
+                    isoLabelWC.prevTimeInSec = Math.round(prevLabel.time / 1000);
                 }
             }
         });

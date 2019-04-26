@@ -136,32 +136,41 @@ public class IsochroneResource {
                 List list = new ArrayList(header.size());
                 for (String h : header) {
                     switch (h) {
-                        case "distance":
-                            list.add(label.distance);
-                            break;
-                        case "time":
-                            list.add(label.time);
-                            break;
                         case "node_id":
-                            list.add(label.adjNodeId);
+                            list.add(label.nodeId);
+                            break;
+                        case "prev_node_id":
+                            list.add(label.prevNodeId);
                             break;
                         case "edge_id":
                             list.add(label.edgeId);
                             break;
-                        case "longitude":
-                            list.add(label.adjCoordinate.x);
+                        case "prev_edge_id":
+                            list.add(label.prevEdgeId);
                             break;
-                        case "latitude":
-                            list.add(label.adjCoordinate.y);
+                        case "distance":
+                            list.add(label.distance);
+                            break;
+                        case "prev_distance":
+                            list.add(label.prevCoordinate == null ? 0 : label.prevDistance);
+                            break;
+                        case "time":
+                            list.add(label.timeInSec);
+                            break;
+                        case "prev_time":
+                            list.add(label.prevCoordinate == null ? 0 : label.prevTimeInSec);
+                            break;
+                        case "longitude":
+                            list.add(label.coordinate.lon);
                             break;
                         case "prev_longitude":
-                            list.add(label.baseCoordinate == null ? null : label.baseCoordinate.x);
+                            list.add(label.prevCoordinate == null ? null : label.prevCoordinate.lon);
+                            break;
+                        case "latitude":
+                            list.add(label.coordinate.lat);
                             break;
                         case "prev_latitude":
-                            list.add(label.baseCoordinate == null ? null : label.baseCoordinate.y);
-                            break;
-                        case "prev_node_id":
-                            list.add(label.baseNodeId);
+                            list.add(label.prevCoordinate == null ? null : label.prevCoordinate.lat);
                             break;
                         default:
                             throw new IllegalArgumentException("Unknown property " + h);

@@ -16,10 +16,12 @@ import org.junit.Test;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class IsochroneResourceTest {
     private static final String DIR = "./target/andorra-gh/";
@@ -93,11 +95,34 @@ public class IsochroneResourceTest {
     }
 
     @Test
+    public void requestPointList() {
+        Response rsp = app.client().target("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=300&result=pointlist").request().buildGet().invoke();
+        Map map = rsp.readEntity(Map.class);
+        List<String> header = (List<String>) map.get("header");
+        assertEquals("[longitude, latitude, time, distance]", header.toString());
+        List<List> items = (List<List>) map.get("items");
+        List row = items.get(0);
+        assertEquals(1.5552, ((Number) row.get(0)).doubleValue(), 0.0001);
+        assertEquals(42.5179, ((Number) row.get(1)).doubleValue(), 0.0001);
+        assertEquals(118, ((Number) row.get(2)).intValue(), 1);
+        assertEquals(2263, ((Number) row.get(3)).intValue(), 1);
+
+        rsp = app.client().target("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=300&result=pointlist&pointlist_ext_header=prev_time").request().buildGet().invoke();
+        map = rsp.readEntity(Map.class);
+        header = (List<String>) map.get("header");
+        int prevTimeIndex = header.indexOf("prev_time");
+        assertNotEquals(-1, prevTimeIndex);
+        items = (List) map.get("items");
+        assertEquals(115, ((Number) items.get(0).get(prevTimeIndex)).intValue(), 1);
+    }
+
+    @Test
     public void requestBadRequest() {
         Response response = app.client().target("http://localhost:8080/route?point=-1.816719,51.557148").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
     }
-  
+
+    @Test
     public void requestWithShortest() throws Exception {
         IsochroneResponse rsp = client.isochroneGet("42.509644,1.540554", "no_key_necessary", 130,
                 -1, "car", 1, false, "shortest");
