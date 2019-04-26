@@ -2,10 +2,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -56,7 +53,7 @@ public class RandomCHRoutingTest {
     @Before
     public void init() {
         dir = new RAMDirectory();
-        encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+        encoder = new MotorcycleFlagEncoder(5, 5, maxTurnCosts);
         EncodingManager em = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
         GraphBuilder graphBuilder = new GraphBuilder(em);
@@ -125,6 +122,19 @@ public class RandomCHRoutingTest {
         long seed = 60643479675316L;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 50, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.0);
+        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
+        runRandomTest(rnd, 20);
+    }
+
+    @Test
+    public void anotherIssue() {
+        // todo: this one fails when the encoder is set to motorcycle
+        // it also involves loop edges and it looks as if not using loop edges the random test
+        // does not find a failing test case. could be similar to #1583 ?
+        Assume.assumeTrue(traversalMode.isEdgeBased());
+        long seed = 44602034307124L;
+        Random rnd = new Random(seed);
+        GHUtility.buildRandomGraph(graph, rnd, 12, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.0);
         GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
         runRandomTest(rnd, 20);
     }
