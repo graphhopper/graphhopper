@@ -27,10 +27,7 @@ import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -111,11 +108,85 @@ public class CHQueryWithTurnCostsTest {
         // contraction yields no shortcuts
         setLevelEqualToNodeIdForAllNodes();
 
+        // note that we are using the shortest weighting but turn cost times are included whatsoever, see #1590
         testPathCalculation(0, 1, 40, IntArrayList.from(0, 2, 4, 6, 5, 3, 1));
         testPathCalculation(1, 0, 28, IntArrayList.from(1, 3, 5, 6, 4, 2, 0));
         testPathCalculation(4, 3, 23, IntArrayList.from(4, 6, 5, 3));
         testPathCalculation(0, 0, 0, IntArrayList.from(0));
         testPathCalculation(4, 4, 0, IntArrayList.from(4));
+    }
+
+    @Test
+    public void testFindPathWithTurnCosts_loopShortcutBwdSearch() {
+        // the loop shortcut 4-4 will be encountered during the bwd search
+        //             3
+        //            / \
+        //           1   2
+        //            \ /
+        // 0 - 7 - 8 - 4 - 6 - 5
+        graph.edge(0, 7, 1, false);
+        graph.edge(7, 8, 1, false);
+        graph.edge(8, 4, 1, false);
+        graph.edge(4, 1, 1, false);
+        graph.edge(1, 3, 1, false);
+        graph.edge(3, 2, 1, false);
+        graph.edge(2, 4, 1, false);
+        graph.edge(4, 6, 1, false);
+        graph.edge(6, 5, 1, false);
+        addRestriction(8, 4, 6);
+        addRestriction(8, 4, 2);
+        addRestriction(1, 4, 6);
+
+        graph.freeze();
+
+        // from contracting node 1
+        addShortcut(4, 3, 3, 4, 3, 4, 2);
+        // from contracting node 2
+        addShortcut(3, 4, 5, 6, 5, 6, 2);
+        // from contracting node 3
+        addShortcut(4, 4, 3, 6, 9, 10, 4);
+        // from contracting node 4
+        addShortcut(8, 4, 2, 6, 2, 11, 5);
+        addShortcut(8, 6, 2, 7, 12, 7, 6);
+        setLevelEqualToNodeIdForAllNodes();
+
+        testPathCalculation(0, 5, 9, IntArrayList.from(0, 7, 8, 4, 1, 3, 2, 4, 6, 5));
+    }
+
+    @Test
+    public void testFindPathWithTurnCosts_loopShortcutFwdSearch() {
+        // the loop shortcut 4-4 will be encountered during the fwd search
+        //         3
+        //        / \
+        //       1   2
+        //        \ /
+        // 5 - 6 - 4 - 7 - 8 - 0
+        graph.edge(5, 6, 1, false);
+        graph.edge(6, 4, 1, false);
+        graph.edge(4, 1, 1, false);
+        graph.edge(1, 3, 1, false);
+        graph.edge(3, 2, 1, false);
+        graph.edge(2, 4, 1, false);
+        graph.edge(4, 7, 1, false);
+        graph.edge(7, 8, 1, false);
+        graph.edge(8, 0, 1, false);
+        addRestriction(6, 4, 7);
+        addRestriction(6, 4, 2);
+        addRestriction(1, 4, 7);
+        graph.freeze();
+
+        // from contracting node 1
+        addShortcut(4, 3, 2, 3, 2, 3, 2);
+        // from contracting node 2
+        addShortcut(3, 4, 4, 5, 4, 5, 2);
+        // from contracting node 3
+        addShortcut(4, 4, 2, 5, 9, 10, 4);
+        // from contracting node 4
+        addShortcut(6, 4, 1, 5, 1, 11, 5);
+        addShortcut(6, 7, 1, 6, 12, 6, 6);
+        setLevelEqualToNodeIdForAllNodes();
+
+        testPathCalculation(5, 0, 9, IntArrayList.from(5, 6, 4, 1, 3, 2, 4, 7, 8, 0));
     }
 
     @Test
