@@ -225,7 +225,4 @@ public abstract class GHMatrixAbstractRequester {
         }
     }
 
-    public List<Throwable> readErrors(JsonNode json) {
-        return web.readErrors(json);
-    }
 }

@@ -17,22 +17,12 @@
  */
 package com.graphhopper.util;
 
-import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.*;
 
 /**
  * List of instructions.
  */
 public class InstructionList extends AbstractList<Instruction> {
-
-    static String simpleXMLEscape(String str) {
-        // We could even use the 'more flexible' CDATA section but for now do the following. The 'and' could be important sometimes:
-        return str.replaceAll("&", "&amp;").
-                // but do not care for:
-                        replaceAll("[\\<\\>]", "_");
-    }
 
     private final List<Instruction> instructions;
     private final Translation tr;
@@ -69,211 +59,6 @@ public class InstructionList extends AbstractList<Instruction> {
     @Override
     public Instruction remove(int index) {
         return instructions.remove(index);
-    }
-
-    public void replaceLast(Instruction instr) {
-        if (instructions.isEmpty())
-            throw new IllegalStateException("Cannot replace last instruction as list is empty");
-
-        instructions.set(instructions.size() - 1, instr);
-    }
-
-    public List<Map<String, Object>> createJson() {
-        List<Map<String, Object>> instrList = new ArrayList<>(instructions.size());
-        int pointsIndex = 0;
-        int counter = 0;
-        for (Instruction instruction : instructions) {
-            Map<String, Object> instrJson = new HashMap<>();
-            instrList.add(instrJson);
-
-            InstructionAnnotation ia = instruction.getAnnotation();
-            String text = instruction.getTurnDescription(tr);
-            if (Helper.isEmpty(text))
-                text = ia.getMessage();
-            instrJson.put("text", Helper.firstBig(text));
-            if (!ia.isEmpty()) {
-                instrJson.put("annotation_text", ia.getMessage());
-                instrJson.put("annotation_importance", ia.getImportance());
-            }
-
-            instrJson.put("street_name", instruction.getName());
-            instrJson.put("time", instruction.getTime());
-            instrJson.put("distance", Helper.round(instruction.getDistance(), 3));
-            instrJson.put("sign", instruction.getSign());
-            instrJson.putAll(instruction.getExtraInfoJSON());
-
-            int tmpIndex = pointsIndex + instruction.getLength();
-            instrJson.put("interval", Arrays.asList(pointsIndex, tmpIndex));
-            pointsIndex = tmpIndex;
-
-            counter++;
-        }
-        return instrList;
-    }
-
-    /**
-     * @return This method returns a list of gpx entries where the time (in millis) is relative to
-     * the first which is 0.
-     */
-    public List<GPXEntry> createGPXList() {
-        if (isEmpty())
-            return Collections.emptyList();
-
-        List<GPXEntry> gpxList = new ArrayList<>();
-        long timeOffset = 0;
-        for (int i = 0; i < size() - 1; i++) {
-            Instruction prevInstr = (i > 0) ? get(i - 1) : null;
-            boolean instrIsFirst = prevInstr == null;
-            Instruction nextInstr = get(i + 1);
-            nextInstr.checkOne();
-            // current instruction does not contain last point which is equals to first point of next instruction:
-            timeOffset = get(i).fillGPXList(gpxList, timeOffset, prevInstr, nextInstr, instrIsFirst);
-        }
-        Instruction lastI = get(size() - 1);
-        if (lastI.points.size() != 1)
-            throw new IllegalStateException("Last instruction must have exactly one point but was " + lastI.points.size());
-        double lastLat = lastI.getFirstLat(), lastLon = lastI.getFirstLon(),
-                lastEle = lastI.getPoints().is3D() ? lastI.getFirstEle() : Double.NaN;
-        gpxList.add(new GPXEntry(lastLat, lastLon, lastEle, timeOffset));
-        return gpxList;
-    }
-
-    /**
-     * Creates the standard GPX string out of the points according to the schema found here:
-     * https://graphhopper.com/public/schema/gpx-1.1.xsd
-     * <p>
-     *
-     * @return string to be stored as gpx file
-     */
-    public String createGPX(String version) {
-        return createGPX("GraphHopper", new Date().getTime(), version);
-    }
-
-    public String createGPX(String trackName, long startTimeMillis, String version) {
-        boolean includeElevation = size() > 0 && get(0).getPoints().is3D();
-        return createGPX(trackName, startTimeMillis, includeElevation, true, true, true, version);
-    }
-
-    private void createWayPointBlock(StringBuilder output, Instruction instruction, DecimalFormat decimalFormat) {
-        output.append("\n<wpt ");
-        output.append("lat=\"").append(decimalFormat.format(instruction.getFirstLat()));
-        output.append("\" lon=\"").append(decimalFormat.format(instruction.getFirstLon())).append("\">");
-        String name;
-        if (instruction.getName().isEmpty())
-            name = instruction.getTurnDescription(tr);
-        else
-            name = instruction.getName();
-
-        output.append(" <name>").append(simpleXMLEscape(name)).append("</name>");
-        output.append("</wpt>");
-    }
-
-    public String createGPX(String trackName, long startTimeMillis, boolean includeElevation, boolean withRoute, boolean withTrack, boolean withWayPoints, String version) {
-        DateFormat formatter = Helper.createFormatter();
-
-        DecimalFormat decimalFormat = new DecimalFormat("#", DecimalFormatSymbols.getInstance(Locale.ROOT));
-        decimalFormat.setMinimumFractionDigits(1);
-        decimalFormat.setMaximumFractionDigits(6);
-        decimalFormat.setMinimumIntegerDigits(1);
-
-        String header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
-                + "<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
-                + " creator=\"Graphhopper version " + version + "\" version=\"1.1\""
-                // This xmlns:gh acts only as ID, no valid URL necessary.
-                // Use a separate namespace for custom extensions to make basecamp happy.
-                + " xmlns:gh=\"https://graphhopper.com/public/schema/gpx/1.1\">"
-                + "\n<metadata>"
-                + "<copyright author=\"OpenStreetMap contributors\"/>"
-                + "<link href=\"http://graphhopper.com\">"
-                + "<text>GraphHopper GPX</text>"
-                + "</link>"
-                + "<time>" + formatter.format(startTimeMillis) + "</time>"
-                + "</metadata>";
-        StringBuilder gpxOutput = new StringBuilder(header);
-        if (!isEmpty()) {
-            if (withWayPoints) {
-                createWayPointBlock(gpxOutput, instructions.get(0), decimalFormat);   // Start
-                for (Instruction currInstr : instructions) {
-                    if ((currInstr.getSign() == Instruction.REACHED_VIA) // Via
-                            || (currInstr.getSign() == Instruction.FINISH)) // End
-                    {
-                        createWayPointBlock(gpxOutput, currInstr, decimalFormat);
-                    }
-                }
-            }
-            if (withRoute) {
-                gpxOutput.append("\n<rte>");
-                Instruction nextInstr = null;
-                for (Instruction currInstr : instructions) {
-                    if (null != nextInstr)
-                        createRteptBlock(gpxOutput, nextInstr, currInstr, decimalFormat);
-
-                    nextInstr = currInstr;
-                }
-                createRteptBlock(gpxOutput, nextInstr, null, decimalFormat);
-                gpxOutput.append("\n</rte>");
-            }
-        }
-        if (withTrack) {
-            gpxOutput.append("\n<trk><name>").append(trackName).append("</name>");
-
-            gpxOutput.append("<trkseg>");
-            for (GPXEntry entry : createGPXList()) {
-                gpxOutput.append("\n<trkpt lat=\"").append(decimalFormat.format(entry.getLat()));
-                gpxOutput.append("\" lon=\"").append(decimalFormat.format(entry.getLon())).append("\">");
-                if (includeElevation)
-                    gpxOutput.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
-                gpxOutput.append("<time>").append(formatter.format(startTimeMillis + entry.getTime())).append("</time>");
-                gpxOutput.append("</trkpt>");
-            }
-            gpxOutput.append("\n</trkseg>");
-            gpxOutput.append("\n</trk>");
-        }
-
-        // we could now use 'wpt' for via points
-        gpxOutput.append("\n</gpx>");
-        return gpxOutput.toString();
-    }
-
-    public void createRteptBlock(StringBuilder output, Instruction instruction, Instruction nextI, DecimalFormat decimalFormat) {
-        output.append("\n<rtept lat=\"").append(decimalFormat.format(instruction.getFirstLat())).
-                append("\" lon=\"").append(decimalFormat.format(instruction.getFirstLon())).append("\">");
-
-        if (!instruction.getName().isEmpty())
-            output.append("<desc>").append(simpleXMLEscape(instruction.getTurnDescription(tr))).append("</desc>");
-
-        output.append("<extensions>");
-        output.append("<gh:distance>").append(Helper.round(instruction.getDistance(), 1)).append("</gh:distance>");
-        output.append("<gh:time>").append(instruction.getTime()).append("</gh:time>");
-
-        String direction = instruction.calcDirection(nextI);
-        if (!direction.isEmpty())
-            output.append("<gh:direction>").append(direction).append("</gh:direction>");
-
-        double azimuth = instruction.calcAzimuth(nextI);
-        if (!Double.isNaN(azimuth))
-            output.append("<gh:azimuth>").append(Helper.round2(azimuth)).append("</gh:azimuth>");
-
-        if (instruction instanceof RoundaboutInstruction) {
-            RoundaboutInstruction ri = (RoundaboutInstruction) instruction;
-
-            output.append("<gh:exit_number>").append(ri.getExitNumber()).append("</gh:exit_number>");
-        }
-
-        output.append("<gh:sign>").append(instruction.getSign()).append("</gh:sign>");
-        output.append("</extensions>");
-        output.append("</rtept>");
-    }
-
-    /**
-     * @return list of lat lon
-     */
-    List<List<Double>> createStartPoints() {
-        List<List<Double>> res = new ArrayList<>(instructions.size());
-        for (Instruction instruction : instructions) {
-            res.add(Arrays.asList(instruction.getFirstLat(), instruction.getFirstLon()));
-        }
-        return res;
     }
 
     /**
@@ -337,6 +122,10 @@ public class InstructionList extends AbstractList<Instruction> {
             foundInstruction--;
 
         return get(foundInstruction);
+    }
+
+    public Translation getTr() {
+        return tr;
     }
 
 }

@@ -49,8 +49,8 @@ public abstract class AbstractWeighting implements Weighting {
         if (reverse && !edgeState.getReverse(accessEnc) || !reverse && !edgeState.get(accessEnc))
             throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. " +
                     "(" + edgeState.getBaseNode() + " - " + edgeState.getAdjNode() + ") "
-                            + edgeState.fetchWayGeometry(3) + " " + edgeState.getDistance() + " "
-                            + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc));
+                    + edgeState.fetchWayGeometry(3) + ", dist: " + edgeState.getDistance() + " "
+                    + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc) + ", fwd-speed: " + edgeState.get(avSpeedEnc) + ", bwd-speed: " + edgeState.getReverse(avSpeedEnc));
 
         double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)

@@ -123,7 +123,10 @@ class GtfsReader {
                 } else {
                     streetNode = locationQueryResult.getClosestNode();
                 }
-                gtfsStorage.getStationNodes().put(stop.stop_id, streetNode);
+                Integer prev = gtfsStorage.getStationNodes().put(stop.stop_id, streetNode);
+                if (prev != null) {
+                    throw new RuntimeException("Duplicate stop id: "+stop.stop_id);
+                }
             }
         }
     }
@@ -455,7 +458,7 @@ class GtfsReader {
         }
         EdgeIterator edge = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)).setBaseNode(platformEnterNode);
         while (edge.next()) {
-            if (encoder.getEdgeType(edge) == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK) {
+            if (edge.get(encoder.getTypeEnc()) == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK) {
                 result.put(edge.get(timeEnc), edge.getAdjNode());
             }
         }
@@ -473,7 +476,7 @@ class GtfsReader {
         }
         EdgeIterator i = graph.getBaseGraph().createEdgeExplorer(filter).setBaseNode(stationNode);
         while (i.next()) {
-            if (encoder.getEdgeType(i) == edgeType) {
+            if (i.get(encoder.getTypeEnc()) == edgeType) {
                 if (platformDescriptor.equals(gtfsStorage.getRoutes().get(i.getEdge()))) {
                     return i.getAdjNode();
                 }
@@ -605,12 +608,12 @@ class GtfsReader {
         int stationNode = gtfsStorage.getStationNodes().get(fromStopId);
         EdgeIterator i = graph.createEdgeExplorer().setBaseNode(stationNode);
         while (i.next()) {
-            if (encoder.getEdgeType(i) == GtfsStorage.EdgeType.EXIT_PT) {
+            if (i.get(encoder.getTypeEnc()) == GtfsStorage.EdgeType.EXIT_PT) {
                 GtfsStorageI.PlatformDescriptor routeId = gtfsStorage.getRoutes().get(i.getEdge());
                 if (from_route_id == null || GtfsStorageI.PlatformDescriptor.route(from_route_id).equals(routeId)) {
                     EdgeIterator j = graph.createEdgeExplorer().setBaseNode(i.getAdjNode());
                     while (j.next()) {
-                        if (encoder.getEdgeType(j) == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK) {
+                        if (j.get(encoder.getTypeEnc()) == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK) {
                             int arrivalTime = j.get(timeEnc);
                             SortedMap<Integer, Integer> tailSet = toStopTimelineNode.tailMap(arrivalTime + minimumTransferTime);
                             if (!tailSet.isEmpty()) {
@@ -630,14 +633,14 @@ class GtfsReader {
         int stationNode = gtfsStorage.getStationNodes().get(toStopId);
         EdgeIterator i = graph.getBaseGraph().createEdgeExplorer().setBaseNode(stationNode);
         while (i.next()) {
-            GtfsStorage.EdgeType edgeType = encoder.getEdgeType(i);
+            GtfsStorage.EdgeType edgeType = i.get(encoder.getTypeEnc());
             if (edgeType == GtfsStorage.EdgeType.ENTER_PT) {
                 GtfsStorageI.PlatformDescriptor routeId = gtfsStorage.getRoutes().get(i.getEdge());
                 if (toRouteId == null || routeId instanceof GtfsStorageI.RouteTypePlatform || GtfsStorageI.PlatformDescriptor.route(toRouteId).equals(routeId)) {
                     fromStopTimelineNodes.forEach((time, e) -> {
                         EdgeIterator j = graph.getBaseGraph().createEdgeExplorer().setBaseNode(i.getAdjNode());
                         while (j.next()) {
-                            GtfsStorage.EdgeType edgeType2 = encoder.getEdgeType(j);
+                            GtfsStorage.EdgeType edgeType2 = j.get(encoder.getTypeEnc());
                             if (edgeType2 == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK) {
                                 int departureTime = j.get(timeEnc);
                                 if (departureTime < time + minimumTransferTime) {
@@ -658,12 +661,13 @@ class GtfsReader {
 
     private String getRouteName(GTFSFeed feed, Trip trip) {
         Route route = feed.routes.get(trip.route_id);
-        return (route.route_long_name != null ? route.route_long_name : route.route_short_name) + " " + trip.trip_headsign;
+        String routePart = route != null ? (route.route_long_name != null ? route.route_long_name : route.route_short_name) : "extra";
+        return routePart + " " + trip.trip_headsign;
     }
 
     private void setEdgeTypeAndClearDistance(EdgeIteratorState edge, GtfsStorage.EdgeType edgeType) {
         edge.setDistance(0.0);
-        encoder.setEdgeType(edge, edgeType);
+        edge.set(encoder.getTypeEnc(), edgeType);
     }
 
     private BitSet getValidOn(BitSet validOnDay, int dayShift) {

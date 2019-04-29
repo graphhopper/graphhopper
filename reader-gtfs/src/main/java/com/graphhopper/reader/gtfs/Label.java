@@ -64,20 +64,21 @@ public class Label {
 
     public final long currentTime;
 
-    final int edge;
+    public final int edge;
     public final int adjNode;
 
-    final int nTransfers;
-    final int nWalkDistanceConstraintViolations;
+    public final int nTransfers;
+    public final int nWalkDistanceConstraintViolations;
 
-    final double walkDistanceOnCurrentLeg;
-    final Long departureTime;
-    final long walkTime;
+    public final double walkDistanceOnCurrentLeg;
+    public final Long departureTime;
+    public final long walkTime;
 
     final long residualDelay;
     final boolean impossible;
 
-    final Label parent;
+    public final Label parent;
+    public boolean deleted = false;
 
     Label(long currentTime, int edgeId, int adjNode, int nTransfers, int nWalkDistanceConstraintViolations, double walkDistance, Long departureTime, long walkTime, long residualDelay, boolean impossible, Label parent) {
         this.currentTime = currentTime;
@@ -98,7 +99,7 @@ public class Label {
         return adjNode + " " + Instant.ofEpochMilli(currentTime) + " " + nTransfers + " " + nWalkDistanceConstraintViolations + " " +  (departureTime != null ? Instant.ofEpochMilli(departureTime) : "");
     }
 
-    static Iterable<Transition> reverseEdges(Label leaf, GraphExplorer graph, PtFlagEncoder flagEncoder, boolean reverseEdgeFlags) {
+    static Iterable<Transition> reverseEdges(Label leaf, Graph graph, PtFlagEncoder flagEncoder, boolean reverseEdgeFlags) {
         return new Iterable<Transition>() {
             @Override
             public Iterator<Transition> iterator() {
@@ -141,7 +142,7 @@ public class Label {
     }
 
     private static EdgeLabel getEdgeLabel(EdgeIteratorState edgeIteratorState, PtFlagEncoder flagEncoder) {
-        return new EdgeLabel(edgeIteratorState, flagEncoder.getEdgeType(edgeIteratorState), edgeIteratorState.get(flagEncoder.getValidityIdEnc()),
+        return new EdgeLabel(edgeIteratorState, edgeIteratorState.get(flagEncoder.getTypeEnc()), edgeIteratorState.get(flagEncoder.getValidityIdEnc()),
                 edgeIteratorState.get(flagEncoder.getTransfersEnc()), edgeIteratorState.getDistance());
     }
 

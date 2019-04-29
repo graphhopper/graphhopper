@@ -42,14 +42,14 @@ dependencies {
        exclude group: 'org.apache.xmlgraphics', module: 'xmlgraphics-commons'
     }
 
-    implementation 'org.mapsforge:vtm:0.10.0'
-    implementation 'org.mapsforge:vtm-android:0.10.0'
-    implementation 'org.mapsforge:vtm-android:0.10.0:natives-armeabi-v7a'
-    implementation 'org.mapsforge:vtm-android:0.10.0:natives-arm64-v8a'
-    implementation 'org.mapsforge:vtm-android:0.10.0:natives-x86'
-    implementation 'org.mapsforge:vtm-android:0.10.0:natives-x86_64'
-    implementation 'org.mapsforge:vtm-jts:0.10.0'
-    implementation 'org.mapsforge:vtm-themes:0.10.0'
+    implementation 'org.mapsforge:vtm:0.11.1'
+    implementation 'org.mapsforge:vtm-android:0.11.1'
+    implementation 'org.mapsforge:vtm-android:0.11.1:natives-armeabi-v7a'
+    implementation 'org.mapsforge:vtm-android:0.11.1:natives-arm64-v8a'
+    implementation 'org.mapsforge:vtm-android:0.11.1:natives-x86'
+    implementation 'org.mapsforge:vtm-android:0.11.1:natives-x86_64'
+    implementation 'org.mapsforge:vtm-jts:0.11.1'
+    implementation 'org.mapsforge:vtm-themes:0.11.1'
     implementation 'com.caverock:androidsvg:1.3'
 
     implementation 'org.slf4j:slf4j-api:1.7.25'

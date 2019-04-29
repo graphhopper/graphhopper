@@ -150,7 +150,7 @@ public class MultiCriteriaLabelSetting {
                 action.accept(label);
                 final IntEncodedValue validityEnc = flagEncoder.getValidityIdEnc();
                 explorer.exploreEdgesAround(label).forEach(edge -> {
-                    GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge);
+                    GtfsStorage.EdgeType edgeType = edge.get(flagEncoder.getTypeEnc());
                     if (edgeType == GtfsStorage.EdgeType.ENTER_PT && reverse && ptOnly) return;
                     if (edgeType == GtfsStorage.EdgeType.EXIT_PT && !reverse && ptOnly) return;
                     if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << edge.get(validityEnc))) != 0)
