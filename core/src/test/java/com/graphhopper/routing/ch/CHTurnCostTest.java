@@ -608,6 +608,29 @@ public class CHTurnCostTest {
     }
 
     @Test
+    public void testFindPath_loop() {
+        //             3
+        //            / \
+        //           1   2
+        //            \ /
+        // 0 - 7 - 8 - 4 - 6 - 5
+        graph.edge(0, 7, 1, false);
+        graph.edge(7, 8, 1, false);
+        graph.edge(8, 4, 1, false);
+        graph.edge(4, 1, 1, false);
+        graph.edge(1, 3, 1, false);
+        graph.edge(3, 2, 1, false);
+        graph.edge(2, 4, 1, false);
+        graph.edge(4, 6, 1, false);
+        graph.edge(6, 5, 1, false);
+        addRestriction(8, 4, 6);
+        graph.freeze();
+
+        RoutingAlgorithmFactory factory = prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8));
+        compareCHQueryWithDijkstra(factory, 0, 5);
+    }
+
+    @Test
     public void testFindPath_loopsMustAlwaysBeAccepted() {
         //     ---
         //     \ /
