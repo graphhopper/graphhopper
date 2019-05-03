@@ -18,9 +18,7 @@
 
 package com.graphhopper;
 
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.GtfsStorage;
-import com.graphhopper.reader.gtfs.PtFlagEncoder;
+import com.graphhopper.reader.gtfs.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.GHDirectory;
@@ -28,6 +26,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.shapes.GHPoint;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -74,12 +73,12 @@ public class AnotherAgencyIT {
     public void testRoute1() {
         final double FROM_LAT = 36.9010208, FROM_LON = -116.7659466;
         final double TO_LAT =  36.9059371, TO_LON = -116.7618071;
-        GHRequest ghRequest = new GHRequest(
+        Request ghRequest = new Request(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,9,0,0).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
+        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,9,0,0).atZone(zoneId).toInstant());
+        ghRequest.setIgnoreTransfers(true);
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());

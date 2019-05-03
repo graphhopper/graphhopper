@@ -44,7 +44,7 @@ public class TurnWeighting implements Weighting {
      * @param turnCostExt the turn cost storage to be used
      */
     public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
-        this.turnCostEncoder = (TurnCostEncoder) superWeighting.getFlagEncoder();
+        this.turnCostEncoder = superWeighting.getFlagEncoder();
         this.superWeighting = superWeighting;
         this.turnCostExt = turnCostExt;
 
@@ -57,7 +57,7 @@ public class TurnWeighting implements Weighting {
      * 'tricking' other turn costs or restrictions.
      */
     public TurnWeighting setDefaultUTurnCost(double costInSeconds) {
-        this.defaultUTurnCost = costInSeconds;
+        defaultUTurnCost = costInSeconds;
         return this;
     }
 

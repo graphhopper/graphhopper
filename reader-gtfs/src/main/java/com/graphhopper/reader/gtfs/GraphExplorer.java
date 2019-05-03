@@ -18,13 +18,10 @@
 
 package com.graphhopper.reader.gtfs;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -45,17 +42,12 @@ public final class GraphExplorer {
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
     private final boolean reverse;
-    private final List<EdgeIteratorState> extraEdges = new ArrayList<>();
-    private final ArrayListMultimap<Integer, VirtualEdgeIteratorState> extraEdgesBySource = ArrayListMultimap.create();
-    private final ArrayListMultimap<Integer, VirtualEdgeIteratorState> extraEdgesByDestination = ArrayListMultimap.create();
-    private final Graph graph;
     private final Weighting accessEgressWeighting;
     private final boolean walkOnly;
     private double walkSpeedKmH;
 
 
-    public GraphExplorer(Graph graph, Weighting accessEgressWeighting, PtFlagEncoder flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, List<VirtualEdgeIteratorState> extraEdges, boolean walkOnly, double walkSpeedKmh) {
-        this.graph = graph;
+    public GraphExplorer(Graph graph, Weighting accessEgressWeighting, PtFlagEncoder flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, double walkSpeedKmh) {
         this.accessEgressWeighting = accessEgressWeighting;
         DefaultEdgeFilter accessEgressIn = DefaultEdgeFilter.inEdges(accessEgressWeighting.getFlagEncoder());
         DefaultEdgeFilter accessEgressOut = DefaultEdgeFilter.outEdges(accessEgressWeighting.getFlagEncoder());
@@ -68,27 +60,15 @@ public final class GraphExplorer {
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
         this.reverse = reverse;
-        this.extraEdges.addAll(extraEdges);
-        for (VirtualEdgeIteratorState extraEdge : extraEdges) {
-            if (extraEdge == null) {
-                throw new RuntimeException();
-            }
-            extraEdgesBySource.put(extraEdge.getBaseNode(), extraEdge);
-            extraEdgesByDestination.put(extraEdge.getAdjNode(), new VirtualEdgeIteratorState(extraEdge.getOriginalEdgeKey(), extraEdge.getEdge(), extraEdge.getAdjNode(),
-                    extraEdge.getBaseNode(), extraEdge.getDistance(), extraEdge.getFlags(), extraEdge.getName(), extraEdge.fetchWayGeometry(3), false));
-        }
         this.walkOnly = walkOnly;
         this.walkSpeedKmH = walkSpeedKmh;
     }
 
     Stream<EdgeIteratorState> exploreEdgesAround(Label label) {
-        final List<VirtualEdgeIteratorState> extraEdges = reverse ? extraEdgesByDestination.get(label.adjNode) : extraEdgesBySource.get(label.adjNode);
-        return Stream.concat(
-                label.adjNode < graph.getNodes() ? mainEdgesAround(label) : Stream.empty(),
-                extraEdges.stream()).filter(new EdgeIteratorStatePredicate(label));
+        return allEdgesAround(label).filter(new EdgeIteratorStatePredicate(label));
     }
 
-    private Stream<EdgeIteratorState> mainEdgesAround(Label label) {
+    private Stream<EdgeIteratorState> allEdgesAround(Label label) {
         return StreamSupport.stream(new Spliterators.AbstractSpliterator<EdgeIteratorState>(0, 0) {
             EdgeIterator edgeIterator = edgeExplorer.setBaseNode(label.adjNode);
 
@@ -189,33 +169,6 @@ public final class GraphExplorer {
 
     int calcNTransfers(EdgeIteratorState edge) {
         return edge.get(flagEncoder.getTransfersEnc());
-    }
-
-    EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
-        if (edgeId == -1) {
-            throw new RuntimeException();
-        }
-        for (EdgeIteratorState extraEdge : extraEdges) {
-            if (extraEdge.getEdge() == edgeId) {
-                if (extraEdge.getAdjNode() != adjNode) {
-                    throw new IllegalStateException();
-                }
-                return extraEdge;
-            }
-        }
-        EdgeIteratorState edge = graph.getEdgeIteratorState(edgeId, adjNode);
-        if (edge.getAdjNode() != adjNode) {
-            throw new IllegalStateException();
-        }
-        return edge;
-    }
-
-    NodeAccess getNodeAccess() {
-        return graph.getNodeAccess();
-    }
-
-    public Graph getGraph() {
-        return graph;
     }
 
     private class EdgeIteratorStatePredicate implements Predicate<EdgeIteratorState> {

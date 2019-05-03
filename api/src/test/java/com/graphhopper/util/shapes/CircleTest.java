@@ -29,17 +29,17 @@ import static org.junit.Assert.assertTrue;
 public class CircleTest {
     @Test
     public void testIntersectCircleCircle() {
-        assertTrue(new Circle(0, 0, 80000).intersect(new Circle(1, 1, 80000)));
-        assertFalse(new Circle(0, 0, 75000).intersect(new Circle(1, 1, 80000)));
+        assertTrue(new Circle(0, 0, 80000).intersects(new Circle(1, 1, 80000)));
+        assertFalse(new Circle(0, 0, 75000).intersects(new Circle(1, 1, 80000)));
     }
 
     @Test
     public void testIntersectCircleBBox() {
-        assertTrue(new Circle(10, 10, 120000).intersect(new BBox(9, 11, 8, 9)));
-        assertTrue(new BBox(9, 11, 8, 9).intersect(new Circle(10, 10, 120000)));
+        assertTrue(new Circle(10, 10, 120000).intersects(new BBox(9, 11, 8, 9)));
+        assertTrue(new BBox(9, 11, 8, 9).intersects(new Circle(10, 10, 120000)));
 
-        assertFalse(new Circle(10, 10, 110000).intersect(new BBox(9, 11, 8, 9)));
-        assertFalse(new BBox(9, 11, 8, 9).intersect(new Circle(10, 10, 110000)));
+        assertFalse(new Circle(10, 10, 110000).intersects(new BBox(9, 11, 8, 9)));
+        assertFalse(new BBox(9, 11, 8, 9).intersects(new Circle(10, 10, 110000)));
     }
 
     @Test

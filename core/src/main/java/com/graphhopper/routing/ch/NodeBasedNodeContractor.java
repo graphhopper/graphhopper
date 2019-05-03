@@ -172,6 +172,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                 continue;
 
             final double incomingEdgeWeight = prepareWeighting.calcWeight(incomingEdges, true, EdgeIterator.NO_EDGE);
+            // this check is important to prevent calling calcMillis on inaccessible edges and also allows early exit
             if (Double.isInfinite(incomingEdgeWeight)) {
                 continue;
             }
@@ -360,7 +361,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             else
                 str = from + "->";
 
-            return str + to + ", weight:" + weight + " (" + skippedEdge1 + "," + skippedEdge2 + ")";
+            return str + to + ", weight:" + weight + " (" + skippedEdge1 + "," + skippedEdge2 + "), dist: " + dist;
         }
     }
 

@@ -386,7 +386,7 @@ public class NodeBasedNodeContractorTest {
     @Test
     public void testNodeContraction_preventUnnecessaryShortcutWithLoop() {
         // there should not be shortcuts where one of the skipped edges is a loop at the node to be contracted,
-        // see also #1581
+        // see also #1583
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new FastestWeighting(encoder);

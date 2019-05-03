@@ -123,7 +123,10 @@ class GtfsReader {
                 } else {
                     streetNode = locationQueryResult.getClosestNode();
                 }
-                gtfsStorage.getStationNodes().put(stop.stop_id, streetNode);
+                Integer prev = gtfsStorage.getStationNodes().put(stop.stop_id, streetNode);
+                if (prev != null) {
+                    throw new RuntimeException("Duplicate stop id: "+stop.stop_id);
+                }
             }
         }
     }
@@ -658,7 +661,8 @@ class GtfsReader {
 
     private String getRouteName(GTFSFeed feed, Trip trip) {
         Route route = feed.routes.get(trip.route_id);
-        return (route.route_long_name != null ? route.route_long_name : route.route_short_name) + " " + trip.trip_headsign;
+        String routePart = route != null ? (route.route_long_name != null ? route.route_long_name : route.route_short_name) : "extra";
+        return routePart + " " + trip.trip_headsign;
     }
 
     private void setEdgeTypeAndClearDistance(EdgeIteratorState edge, GtfsStorage.EdgeType edgeType) {
