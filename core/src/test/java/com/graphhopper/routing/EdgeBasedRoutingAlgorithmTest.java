@@ -148,13 +148,13 @@ public class EdgeBasedRoutingAlgorithmTest {
         // test 7-6-5 and reverse
         p = createAlgo(g, AlgorithmOptions.start().
                 weighting(createWeighting(carEncoder, tcs, 40)).
-                traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
+                traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
                 calcPath(5, 7);
         assertEquals(IntArrayList.from(5, 6, 7), p.calcNodes());
 
         p = createAlgo(g, AlgorithmOptions.start().
                 weighting(createWeighting(carEncoder, tcs, 40)).
-                traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
+                traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
                 calcPath(7, 5);
         assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
     }
@@ -300,7 +300,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
         Path p = createAlgo(g, AlgorithmOptions.start().
                 weighting(createWeighting(carEncoder, tcs, 40)).
-                traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
+                traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
                 calcPath(5, 1);
 
         // no restriction and costs
@@ -312,7 +312,7 @@ public class EdgeBasedRoutingAlgorithmTest {
 
         p = createAlgo(g, AlgorithmOptions.start().
                 weighting(createWeighting(carEncoder, tcs, 40)).
-                traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
+                traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
                 calcPath(5, 1);
         assertEquals(IntArrayList.from(5, 6, 3, 1), p.calcNodes());
     }

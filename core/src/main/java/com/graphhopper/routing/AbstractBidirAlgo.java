@@ -248,11 +248,6 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
             if (getIncomingEdge(entryOther) != getIncomingEdge(entry))
                 throw new IllegalStateException("cannot happen for edge based execution of " + getName());
 
-            if (traversalMode.getNoOfStates() != 2
-                    && entryOther.adjNode == entry.adjNode && !traversalMode.hasUTurnSupport()) {
-                // detected illegal u-turn at meeting point, do not update best path
-                return;
-            }
             // prevents the path to contain the edge at the meeting point twice and subtracts the weight (excluding turn weight => no previous edge)
             entry = entry.getParent();
             weight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
