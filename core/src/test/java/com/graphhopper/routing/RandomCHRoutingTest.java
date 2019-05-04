@@ -11,6 +11,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Assume;
@@ -19,9 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -29,6 +28,7 @@ import static org.junit.Assert.fail;
 @RunWith(Parameterized.class)
 public class RandomCHRoutingTest {
     private final TraversalMode traversalMode;
+    private final String encoderString;
     private final int maxTurnCosts;
     private Directory dir;
     private CarFlagEncoder encoder;
@@ -37,23 +37,26 @@ public class RandomCHRoutingTest {
     private LocationIndexTree locationIndex;
     private CHGraph chGraph;
 
-    @Parameterized.Parameters(name = "{0}")
-    public static Object[] params() {
-        return new Object[]{
-                TraversalMode.NODE_BASED,
-                TraversalMode.EDGE_BASED_2DIR
-        };
+    @Parameterized.Parameters(name = "{0}, {1}")
+    public static Collection<Object[]> configs() {
+        return Arrays.asList(new Object[][]{
+                {TraversalMode.NODE_BASED, "car"},
+                {TraversalMode.NODE_BASED, "motorcycle"},
+                {TraversalMode.EDGE_BASED_2DIR, "car"},
+                {TraversalMode.EDGE_BASED_2DIR, "motorcycle"},
+        });
     }
 
-    public RandomCHRoutingTest(TraversalMode traversalMode) {
+    public RandomCHRoutingTest(TraversalMode traversalMode, String encoderString) {
         this.traversalMode = traversalMode;
+        this.encoderString = encoderString;
         this.maxTurnCosts = 10;
     }
 
     @Before
     public void init() {
         dir = new RAMDirectory();
-        encoder = new MotorcycleFlagEncoder(5, 5, maxTurnCosts);
+        encoder = encoderString.equals("car") ? new CarFlagEncoder(5, 5, maxTurnCosts) : new MotorcycleFlagEncoder(5, 5, maxTurnCosts);
         EncodingManager em = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
         GraphBuilder graphBuilder = new GraphBuilder(em);
@@ -81,6 +84,31 @@ public class RandomCHRoutingTest {
         if (traversalMode.isEdgeBased()) {
             GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
         }
+        runRandomTest(rnd, 20);
+    }
+
+    @Test
+    public void anotherIssue() {
+        // todo: this one fails for motorcycle, because of direction dependent speeds on loops that
+        // are apparently not handled correctly
+        Assume.assumeTrue(traversalMode.isEdgeBased());
+        long seed = 5626843808439L;
+        Random rnd = new Random(seed);
+        GHUtility.buildRandomGraph(graph, rnd, 5, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.0);
+        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
+        runRandomTest(rnd, 0);
+    }
+
+    @Test
+    public void anotherIssue2() {
+        // todo: this one fails when the encoder is set to motorcycle
+        // it also involves loop edges and it looks as if not using loop edges the random test
+        // does not find a failing test case. could be similar to #1583 ?
+        Assume.assumeTrue(traversalMode.isEdgeBased());
+        long seed = 44602034307124L;
+        Random rnd = new Random(seed);
+        GHUtility.buildRandomGraph(graph, rnd, 12, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.0);
+        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
         runRandomTest(rnd, 20);
     }
 
@@ -126,19 +154,6 @@ public class RandomCHRoutingTest {
         runRandomTest(rnd, 20);
     }
 
-    @Test
-    public void anotherIssue() {
-        // todo: this one fails when the encoder is set to motorcycle
-        // it also involves loop edges and it looks as if not using loop edges the random test
-        // does not find a failing test case. could be similar to #1583 ?
-        Assume.assumeTrue(traversalMode.isEdgeBased());
-        long seed = 44602034307124L;
-        Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 12, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.0);
-        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
-        runRandomTest(rnd, 20);
-    }
-
     private void runRandomTest(Random rnd, int numVirtualNodes) {
         locationIndex = new LocationIndexTree(graph, dir);
         locationIndex.prepareIndex();
@@ -180,7 +195,7 @@ public class RandomCHRoutingTest {
                 }
 
                 double weight = path.getWeight();
-                if (Math.abs(refWeight - weight) > 1.e-1) {
+                if (Math.abs(refWeight - weight) > 1.e-2) {
                     System.out.println("expected: " + refPath.calcNodes());
                     System.out.println("given:    " + path.calcNodes());
                     fail("wrong weight: " + from + "->" + to + ", dijkstra: " + refWeight + " vs. ch: " + path.getWeight());

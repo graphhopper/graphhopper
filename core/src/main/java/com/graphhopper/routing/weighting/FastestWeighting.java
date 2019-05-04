@@ -59,6 +59,9 @@ public class FastestWeighting extends AbstractWeighting {
     @Override
     public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
         double speed = reverse ? edge.getReverse(avSpeedEnc) : edge.get(avSpeedEnc);
+        // todonow: always reading loops in 'fwd' direction fixes the error but might not be
+        // what we want
+//        double speed = reverse && edge.getBaseNode() != edge.getAdjNode() ? edge.getReverse(avSpeedEnc) : edge.get(avSpeedEnc);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
 

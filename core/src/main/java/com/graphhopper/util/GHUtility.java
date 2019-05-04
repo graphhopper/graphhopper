@@ -204,6 +204,10 @@ public class GHUtility {
             EdgeIteratorState edge = graph.edge(from, to, distance, bothDirections);
             double fwdSpeed = 10 + random.nextDouble() * 120;
             double bwdSpeed = 10 + random.nextDouble() * 120;
+            // todonow: should we make it impossible to set different speeds for loops ? this
+            // might not be enough, they could still have direction-dependent geometries, access etc.
+//            double bwdSpeed = from == to ? fwdSpeed : 10 + random.nextDouble() * 120;
+            System.out.println("graph.edge(" + from + ", " + to + ", " + distance + ", " + bothDirections + ").set(speedEnc, " + fwdSpeed + ").setReverse(speedEnc, " + bwdSpeed + ");");
             if (randomSpeedEnc != null) {
                 edge.set(randomSpeedEnc, fwdSpeed);
                 edge.setReverse(randomSpeedEnc, bwdSpeed);
@@ -247,6 +251,7 @@ public class GHUtility {
                             }
                             double cost = restricted ? 0 : random.nextDouble() * maxTurnCost;
                             turnCostExtension.addTurnInfo(inIter.getEdge(), node, outIter.getEdge(), encoder.getTurnFlags(restricted, cost));
+                            System.out.println("addTurnCost(" + inIter.getEdge() + ", " + node + ", " + outIter.getEdge() + ", " + cost + ");");
                         }
                     }
                 }
