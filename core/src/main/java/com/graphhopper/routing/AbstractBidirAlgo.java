@@ -73,8 +73,8 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     protected abstract SPTEntry createStartEntry(int node, double weight, boolean reverse);
 
     /**
-     * Creates a new entry of the shortest path tree (a {@link SPTEntry} or one of its subclasses) during a
-     * dijkstra expansion.
+     * Creates a new entry of the shortest path tree (a {@link SPTEntry} or one of its subclasses) during a dijkstra
+     * expansion.
      *
      * @param edge    the edge that is currently processed for the expansion
      * @param incEdge the id of the edge that is incoming to the node the edge is pointed at. usually this is the same as
