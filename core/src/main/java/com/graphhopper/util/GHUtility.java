@@ -465,7 +465,7 @@ public class GHUtility {
     public static int createEdgeKey(int nodeA, int nodeB, int edgeId, boolean reverse) {
         edgeId = edgeId << 1;
         if (reverse)
-            return (nodeA > nodeB) ? edgeId : edgeId + 1;
+            return (nodeA >= nodeB) ? edgeId : edgeId + 1;
         return (nodeA > nodeB) ? edgeId + 1 : edgeId;
     }
 

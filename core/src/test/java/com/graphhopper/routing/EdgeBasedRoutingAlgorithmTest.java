@@ -31,7 +31,6 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIteratorState;
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -149,15 +148,40 @@ public class EdgeBasedRoutingAlgorithmTest {
         // test 7-6-5 and reverse
         p = createAlgo(g, AlgorithmOptions.start().
                 weighting(createWeighting(carEncoder, tcs, 40)).
-                traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
+                traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
                 calcPath(5, 7);
         assertEquals(IntArrayList.from(5, 6, 7), p.calcNodes());
 
         p = createAlgo(g, AlgorithmOptions.start().
                 weighting(createWeighting(carEncoder, tcs, 40)).
-                traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
+                traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
                 calcPath(7, 5);
         assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
+    }
+
+    @Test
+    public void testLoop_issue1592() {
+        GraphHopperStorage g = createStorage(createEncodingManager(true));
+        // 0-6
+        //  \ \
+        //   4-3
+        //   |
+        //   1o
+        g.edge(0, 6, 10, true);
+        g.edge(6, 3, 10, true);
+        g.edge(0, 4, 1, true);
+        g.edge(4, 1, 1, true);
+        g.edge(4, 3, 1, true);
+        g.edge(1, 1, 10, true);
+        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
+        addTurnRestriction(g, tcs, 0, 4, 3);
+
+        Path p = createAlgo(g, AlgorithmOptions.start().
+                weighting(createWeighting(carEncoder, tcs, 40)).
+                traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
+                calcPath(0, 3);
+        assertEquals(14, p.getDistance(), 1.e-3);
+        assertEquals(IntArrayList.from(0, 4, 1, 1, 4, 3), p.calcNodes());
     }
 
     @Test
@@ -276,7 +300,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
         Path p = createAlgo(g, AlgorithmOptions.start().
                 weighting(createWeighting(carEncoder, tcs, 40)).
-                traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
+                traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
                 calcPath(5, 1);
 
         // no restriction and costs
@@ -288,7 +312,7 @@ public class EdgeBasedRoutingAlgorithmTest {
 
         p = createAlgo(g, AlgorithmOptions.start().
                 weighting(createWeighting(carEncoder, tcs, 40)).
-                traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
+                traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
                 calcPath(5, 1);
         assertEquals(IntArrayList.from(5, 6, 3, 1), p.calcNodes());
     }

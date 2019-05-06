@@ -73,8 +73,8 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     protected abstract SPTEntry createStartEntry(int node, double weight, boolean reverse);
 
     /**
-     * Creates a new entry of the shortest path tree (a {@link SPTEntry} or one of its subclasses) during a
-     * dijkstra expansion.
+     * Creates a new entry of the shortest path tree (a {@link SPTEntry} or one of its subclasses) during a dijkstra
+     * expansion.
      *
      * @param edge    the edge that is currently processed for the expansion
      * @param incEdge the id of the edge that is incoming to the node the edge is pointed at. usually this is the same as
@@ -248,13 +248,9 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
             if (getIncomingEdge(entryOther) != getIncomingEdge(entry))
                 throw new IllegalStateException("cannot happen for edge based execution of " + getName());
 
-            if (entryOther.adjNode != entry.adjNode) {
-                // prevents the path to contain the edge at the meeting point twice and subtracts the weight (excluding turn weight => no previous edge)
-                entry = entry.getParent();
-                weight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
-            } else if (!traversalMode.hasUTurnSupport())
-                // we detected a u-turn at meeting point, skip if not supported
-                return;
+            // prevents the path to contain the edge at the meeting point twice and subtracts the weight (excluding turn weight => no previous edge)
+            entry = entry.getParent();
+            weight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
         }
 
         if (weight < bestPath.getWeight()) {
