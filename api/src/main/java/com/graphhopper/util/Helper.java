@@ -32,7 +32,6 @@ import java.util.*;
 import java.util.Map.Entry;
 
 /**
- *
  * @author Peter Karich
  */
 public class Helper {
@@ -64,11 +63,11 @@ public class Helper {
         return new Locale(param.substring(0, index), param.substring(index + 1));
     }
 
-    public static String toLowerCase(String string){
+    public static String toLowerCase(String string) {
         return string.toLowerCase(Locale.ROOT);
     }
 
-    public static String toUpperCase(String string){
+    public static String toUpperCase(String string) {
         return string.toUpperCase(Locale.ROOT);
     }
 
@@ -463,10 +462,13 @@ public class Helper {
      * Equivalent to java 8 String#join
      */
     public static String join(String delimiter, List<String> strings) {
-        StringJoiner joiner = new StringJoiner(delimiter);
-        for (CharSequence cs : strings) {
-            joiner.add(cs);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < strings.size(); i++) {
+            if (i > 0) {
+                sb.append(delimiter);
+            }
+            sb.append(strings.get(i));
         }
-        return joiner.toString();
+        return sb.toString();
     }
 }
