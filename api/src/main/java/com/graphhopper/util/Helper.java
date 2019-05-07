@@ -458,4 +458,15 @@ public class Helper {
 
         return sb.toString();
     }
+
+    /**
+     * Equivalent to java 8 String#join
+     */
+    public static String join(String delimiter, List<String> strings) {
+        StringJoiner joiner = new StringJoiner(delimiter);
+        for (CharSequence cs : strings) {
+            joiner.add(cs);
+        }
+        return joiner.toString();
+    }
 }

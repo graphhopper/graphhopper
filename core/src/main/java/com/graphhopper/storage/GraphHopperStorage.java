@@ -86,12 +86,12 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             }
         };
 
-        this.baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, extendedStorage);
+        baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, extendedStorage);
         for (Weighting w : nodeBasedCHWeightings) {
-            nodeBasedCHGraphs.add(new CHGraphImpl(w, dir, this.baseGraph, false));
+            nodeBasedCHGraphs.add(new CHGraphImpl(w, dir, baseGraph, false));
         }
         for (Weighting w : edgeBasedCHWeightings) {
-            edgeBasedCHGraphs.add(new CHGraphImpl(w, dir, this.baseGraph, true));
+            edgeBasedCHGraphs.add(new CHGraphImpl(w, dir, baseGraph, true));
         }
     }
 

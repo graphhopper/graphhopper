@@ -2,10 +2,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -14,6 +11,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Assume;
@@ -147,6 +145,7 @@ public class RandomCHRoutingTest {
 
             int numQueries = 100;
             int numPathsNotFound = 0;
+            List<String> strictViolations = new ArrayList<>();
             for (int i = 0; i < numQueries; i++) {
                 assertEquals("queryGraph and chQueryGraph should have equal number of nodes", queryGraph.getNodes(), chQueryGraph.getNodes());
                 int from = rnd.nextInt(queryGraph.getNodes());
@@ -170,14 +169,24 @@ public class RandomCHRoutingTest {
                 }
 
                 double weight = path.getWeight();
-                if (Math.abs(refWeight - weight) > 1.e-1) {
+                if (Math.abs(refWeight - weight) > 1.e-2) {
                     System.out.println("expected: " + refPath.calcNodes());
                     System.out.println("given:    " + path.calcNodes());
                     fail("wrong weight: " + from + "->" + to + ", dijkstra: " + refWeight + " vs. ch: " + path.getWeight());
                 }
+                if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
+                    strictViolations.add("wrong distance " + from + "->" + to + ", expected: " + refPath.getDistance() + ", given: " + path.getDistance());
+                }
+                if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
+                    strictViolations.add("wrong time " + from + "->" + to + ", expected: " + refPath.getTime() + ", given: " + path.getTime());
+                }
             }
             if (numPathsNotFound > 0.9 * numQueries) {
                 fail("Too many paths not found: " + numPathsNotFound + "/" + numQueries);
+            }
+            if (strictViolations.size() > 0.05 * numQueries) {
+                fail("Too many strict violations: " + strictViolations.size() + "/" + numQueries + "\n" +
+                        Helper.join("\n", strictViolations));
             }
         }
     }
