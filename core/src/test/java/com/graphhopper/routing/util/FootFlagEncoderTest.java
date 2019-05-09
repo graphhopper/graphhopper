@@ -130,6 +130,9 @@ public class FootFlagEncoderTest {
         way.setTag("highway", "footway");
         assertTrue(footEncoder.getAccess(way).isWay());
 
+        way.setTag("highway", "platform");
+        assertTrue(footEncoder.getAccess(way).isWay());
+
         way.setTag("highway", "motorway");
         assertTrue(footEncoder.getAccess(way).canSkip());
 
