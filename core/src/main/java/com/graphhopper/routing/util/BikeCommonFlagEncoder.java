@@ -623,10 +623,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     boolean isPushingSection(ReaderWay way) {
-        return way.hasTag("highway", pushingSectionsHighways)
-                || way.hasTag("railway", "platform")
-                || way.hasTag("highway", "platform")
-                || way.hasTag("bicycle", "dismount");
+        return way.hasTag("highway", pushingSectionsHighways) || way.hasTag("railway", "platform") || way.hasTag("bicycle", "dismount");
     }
 
     protected void handleSpeed(IntsRef edgeFlags, ReaderWay way, double speed) {
