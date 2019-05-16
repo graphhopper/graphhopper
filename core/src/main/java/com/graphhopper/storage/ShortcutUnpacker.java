@@ -110,10 +110,9 @@ public class ShortcutUnpacker {
         assert edgeState.getBaseNode() == adjNode || edgeState.getAdjNode() == adjNode : "adjNode " + adjNode + " must be one of adj/base of edgeState: " + edgeState;
         // since the first/last orig edge is not stateful (just like skipped1/2) we have to find out which one
         // is attached to adjNode, similar as we do for skipped1/2.
-        // todo: it is wasteful to create a CHEdgeIteratorState object just to check which edge we have to use!
-        return graph.getEdgeIteratorState(edgeState.getOrigEdgeLast(), adjNode) == null
-                ? edgeState.getOrigEdgeLast()
-                : edgeState.getOrigEdgeFirst();
+        return graph.isAdjacentToNode(edgeState.getOrigEdgeLast(), adjNode)
+                ? edgeState.getOrigEdgeFirst()
+                : edgeState.getOrigEdgeLast();
     }
 
     private CHEdgeIteratorState getEdge(int edgeId, int adjNode) {

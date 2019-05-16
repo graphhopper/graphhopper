@@ -148,6 +148,10 @@ abstract class EdgeAccess {
         return nodeThis == nodeA ? getNodeB(edgePointer) : nodeA;
     }
 
+    final boolean isAdjacentToNode(int node, long edgePointer) {
+        return getNodeA(edgePointer) == node || getNodeB(edgePointer) == node;
+    }
+
     /**
      * Writes plain edge information to the edges index
      */

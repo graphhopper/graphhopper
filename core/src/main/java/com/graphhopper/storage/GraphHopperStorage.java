@@ -467,6 +467,11 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         return baseGraph.getOtherNode(edge, node);
     }
 
+    @Override
+    public boolean isAdjacentToNode(int edge, int node) {
+        return baseGraph.isAdjacentToNode(edge, node);
+    }
+
     private Collection<CHGraphImpl> getAllCHGraphs() {
         // todo: this method is only used to have a 'view' on the two collections. we could also create this only once
         // as long as the graph collections are only modified in the constructor (otherwise we would have to make sure

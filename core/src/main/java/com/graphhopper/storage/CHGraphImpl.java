@@ -240,6 +240,13 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return edgeAccess.getOtherNode(node, edgePointer);
     }
 
+    @Override
+    public boolean isAdjacentToNode(int edge, int node) {
+        EdgeAccess edgeAccess = isShortcut(edge) ? chEdgeAccess : baseGraph.edgeAccess;
+        long edgePointer = edgeAccess.toPointer(edge);
+        return edgeAccess.isAdjacentToNode(node, edgePointer);
+    }
+
     void _prepareForContraction() {
         if (isReadyForContraction) {
             return;
