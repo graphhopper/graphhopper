@@ -45,9 +45,9 @@ import static com.graphhopper.util.Parameters.Routing.*;
 /**
  * Provides an endpoint that is consumable with the Mapbox Navigation SDK. The Mapbox Navigation SDK consumes json
  * responses that follow the specification of the Mapbox API v5.
- *
+ * <p>
  * See: https://www.mapbox.com/api-documentation/#directions
- *
+ * <p>
  * The baseurl of this endpoint is: [YOUR-IP/HOST]/navigate
  * The version of this endpoint is: v5
  * The user of this endpoint is: gh
@@ -114,6 +114,15 @@ public class NavigateResource {
         if (overview.equals("full"))
             minPathPrecision = 0;
 
+        DistanceUtils.Unit unit = null;
+        if (voiceUnits.equals("metric")) {
+            unit = DistanceUtils.Unit.METRIC;
+        } else if (voiceUnits.equals("imperial")) {
+            unit = DistanceUtils.Unit.IMPERIAL;
+        } else {
+            throw new IllegalArgumentException(voiceUnits + " is no valid voiceUnits (metric or imperial)");
+        }
+
         String vehicleStr = convertProfileToGraphHopperVehicleString(profile);
         List<GHPoint> requestPoints = getPointsFromRequest(httpReq, profile);
 
@@ -139,6 +148,8 @@ public class NavigateResource {
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
                 + took + ", " + weighting + ", " + vehicleStr;
 
+        DistanceConfig config = new DistanceConfig(unit);
+
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
             // Mapbox specifies 422 return type for input errors
@@ -146,7 +157,7 @@ public class NavigateResource {
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         } else {
-            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, navigateResponseConverterTranslationMap, Helper.getLocale(localeStr))).
+            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, navigateResponseConverterTranslationMap, Helper.getLocale(localeStr), config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         }
@@ -176,7 +187,7 @@ public class NavigateResource {
     /**
      * This method is parsing the request URL String. Unfortunately it seems that there is no better options right now.
      * See: https://stackoverflow.com/q/51420380/1548788
-     *
+     * <p>
      * The url looks like: ".../{profile}/1.522438,42.504606;1.527209,42.504776;1.526113,42.505144;1.527218,42.50529?.."
      */
     private List<GHPoint> getPointsFromRequest(HttpServletRequest httpServletRequest, String profile) {
