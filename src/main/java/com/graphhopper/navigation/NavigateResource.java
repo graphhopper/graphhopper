@@ -114,7 +114,7 @@ public class NavigateResource {
         if (overview.equals("full"))
             minPathPrecision = 0;
 
-        DistanceUtils.Unit unit = null;
+        DistanceUtils.Unit unit;
         if (voiceUnits.equals("metric")) {
             unit = DistanceUtils.Unit.METRIC;
         } else if (voiceUnits.equals("imperial")) {
