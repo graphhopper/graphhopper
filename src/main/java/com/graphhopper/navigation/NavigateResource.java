@@ -115,10 +115,8 @@ public class NavigateResource {
         DistanceUtils.Unit unit;
         if (voiceUnits.equals("metric")) {
             unit = DistanceUtils.Unit.METRIC;
-        } else if (voiceUnits.equals("imperial")) {
-            unit = DistanceUtils.Unit.IMPERIAL;
         } else {
-            throw new IllegalArgumentException(voiceUnits + " is no valid voiceUnits (metric or imperial)");
+            unit = DistanceUtils.Unit.IMPERIAL;
         }
 
         String vehicleStr = convertProfileToGraphHopperVehicleString(profile);
