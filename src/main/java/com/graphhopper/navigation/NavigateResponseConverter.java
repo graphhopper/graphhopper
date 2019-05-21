@@ -189,9 +189,9 @@ public class NavigateResponseConverter {
 
         String thenVoiceInstruction = getThenVoiceInstructionpart(instructions, index, locale, translationMap, navigateResponseConverterTranslationMap);
 
-        for (DistanceConfig.VoiceInstructionConfig voiceConfig : distanceConfig.voiceInstructions) {
-            if (voiceConfig instanceof DistanceConfig.InitialVoiceInstructionConfig) {
-                DistanceConfig.InitialVoiceInstructionConfig instructionConfig = (DistanceConfig.InitialVoiceInstructionConfig) voiceConfig;
+        for (VoiceInstructionConfig voiceConfig : distanceConfig.voiceInstructions) {
+            if (voiceConfig instanceof InitialVoiceInstructionConfig) {
+                InitialVoiceInstructionConfig instructionConfig = (InitialVoiceInstructionConfig) voiceConfig;
                 if (distance > instructionConfig.distanceForInitialStayInstruction) {
                     int spokenDistance = instructionConfig.distanceAlongGeometry(distance);
                     int distanceVoiceValue = instructionConfig.distanceVoiceValue(distance);
@@ -200,16 +200,16 @@ public class NavigateResponseConverter {
                 }
             }
 
-            if (voiceConfig instanceof DistanceConfig.FixedVoiceInstructionConfig) {
-                DistanceConfig.FixedVoiceInstructionConfig instructionConfig = (DistanceConfig.FixedVoiceInstructionConfig) voiceConfig;
+            if (voiceConfig instanceof FixedVoiceInstructionConfig) {
+                FixedVoiceInstructionConfig instructionConfig = (FixedVoiceInstructionConfig) voiceConfig;
                 if (distance > instructionConfig.distanceAlongGeometry) {
                     String totalDescription = navigateResponseConverterTranslationMap.getWithFallBack(locale).tr(instructionConfig.key, instructionConfig.distanceVoiceValue) + " " + turnDescription;
                     putSingleVoiceInstruction(instructionConfig.distanceAlongGeometry, totalDescription, voiceInstructions);
                 }
             }
 
-            if (voiceConfig instanceof DistanceConfig.DecisionVoiceInstructionConfig) {
-                DistanceConfig.DecisionVoiceInstructionConfig instructionConfig = (DistanceConfig.DecisionVoiceInstructionConfig) voiceConfig;
+            if (voiceConfig instanceof DecisionVoiceInstructionConfig) {
+                DecisionVoiceInstructionConfig instructionConfig = (DecisionVoiceInstructionConfig) voiceConfig;
                 int instructionIndex = instructionConfig.getFittingInstructionIndex(distance);
                 if (instructionIndex > -1) {
                     String totalDescription = navigateResponseConverterTranslationMap.getWithFallBack(locale).tr(instructionConfig.key, instructionConfig.distanceVoiceValue[instructionIndex]) + " " + turnDescription + thenVoiceInstruction;
