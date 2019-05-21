@@ -26,7 +26,7 @@ class DecisionVoiceInstructionConfig extends VoiceInstructionConfig {
 
     public int getFittingInstructionIndex(double distanceMeter) {
         for (int i = 0; i < distanceAlongGeometry.length; i++) {
-            if (distanceMeter > distanceAlongGeometry[i]) {
+            if (distanceMeter >= distanceAlongGeometry[i]) {
                 return i;
             }
         }
@@ -65,15 +65,15 @@ class InitialVoiceInstructionConfig extends VoiceInstructionConfig {
             return (tmpDistance / 1000) * 1000;
         } else {
             tmpDistance = (int) (tmpDistance * meterToMiles);
-            return (int) (tmpDistance / meterToMiles);
+            return (int) Math.ceil(tmpDistance / meterToMiles);
         }
     }
 
     public int distanceVoiceValue(double distanceInMeter) {
         if (unit == DistanceUtils.Unit.METRIC) {
-            return (int) (distanceInMeter * meterToKilometer);
+            return (int) (distanceAlongGeometry(distanceInMeter) * meterToKilometer);
         } else {
-            return (int) (distanceInMeter * meterToMiles);
+            return (int) (distanceAlongGeometry(distanceInMeter) * meterToMiles);
         }
     }
 }

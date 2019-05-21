@@ -24,7 +24,7 @@ public class DistanceConfig {
                     new InitialVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.metric, 4250, 250, unit),
                     new FixedVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.imperial, 3220, 2),
                     new FixedVoiceInstructionConfig(IN_HIGHER_DISTANCE_SINGULAR.imperial, 1610, 1),
-                    new DecisionVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, new int[]{400, 200}, new int[]{1300, 600})
+                    new DecisionVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial, new int[]{400, 200}, new int[]{1300, 600})
             );
         }
 
