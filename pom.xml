@@ -16,6 +16,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <gh.version>0.13.0-pre3</gh.version>
     </properties>
 
     <scm>
@@ -75,7 +76,7 @@
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-web</artifactId>
-            <version>0.13.0-pre2</version>
+            <version>${gh.version}</version>
         </dependency>
 
         <dependency>
