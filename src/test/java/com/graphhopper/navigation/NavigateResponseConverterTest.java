@@ -31,7 +31,7 @@ public class NavigateResponseConverterTest {
 
     private final TranslationMap trMap = new TranslationMap().doImport();
     private final TranslationMap mtrMap = new NavigateResponseConverterTranslationMap().doImport();
-    private final DistanceConfig distanceConfig = new DistanceConfig(DistanceUtils.Unit.METRIC);
+    private final DistanceConfig distanceConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, mtrMap, Locale.ENGLISH);
 
     @BeforeClass
     public static void beforeClass() {
@@ -172,7 +172,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
                 setVehicle(vehicle));
 
-        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, new DistanceConfig(DistanceUtils.Unit.IMPERIAL));
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, new DistanceConfig(DistanceUtils.Unit.IMPERIAL, mtrMap, Locale.ENGLISH));
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -231,7 +231,10 @@ public class NavigateResponseConverterTest {
 
         rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
                 setVehicle(vehicle).setLocale(Locale.GERMAN));
-        json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.GERMAN, distanceConfig);
+
+        DistanceConfig distanceConfigGerman = new DistanceConfig(DistanceUtils.Unit.METRIC, mtrMap, Locale.GERMAN);
+
+        json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.GERMAN, distanceConfigGerman);
 
         steps = json.get("routes").get(0).get("legs").get(0).get("steps");
         voiceInstruction = steps.get(15).get("voiceInstructions").get(0);

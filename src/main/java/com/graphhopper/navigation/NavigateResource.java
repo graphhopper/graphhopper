@@ -39,6 +39,7 @@ import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import static com.graphhopper.util.Parameters.Routing.*;
 
@@ -143,8 +144,8 @@ public class NavigateResource {
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
                 + took + ", " + weighting + ", " + vehicleStr;
-
-        DistanceConfig config = new DistanceConfig(unit);
+        Locale locale = Helper.getLocale(localeStr);
+        DistanceConfig config = new DistanceConfig(unit, translationMap, locale);
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
@@ -153,7 +154,7 @@ public class NavigateResource {
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         } else {
-            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, navigateResponseConverterTranslationMap, Helper.getLocale(localeStr), config)).
+            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, navigateResponseConverterTranslationMap, locale, config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         }
