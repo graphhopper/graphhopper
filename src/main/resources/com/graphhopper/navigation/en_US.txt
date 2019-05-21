@@ -3,3 +3,7 @@ in_km=In %1$s kilometers
 in_m=In %1$s meters
 for_km=for %1$s kilometer
 then=then
+in_mi_singular=In 1 mile
+in_mi=In %1$s miles
+in_ft=In %1$s feet
+for_mi=for %1$s miles

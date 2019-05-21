@@ -13,10 +13,10 @@ public class DistanceUtils {
     }
 
     enum UnitTranslationKey {
-        IN_HIGHER_DISTANCE_SINGULAR("in_km_singular", ""),
-        IN_HIGHER_DISTANCE_PLURAL("in_km", ""),
-        IN_LOWER_DISTANCE_PLURAL("in_m", ""),
-        FOR_HIGHER_DISTANCE_PLURAL("for_km", "");
+        IN_HIGHER_DISTANCE_SINGULAR("in_km_singular", "in_mi_singular"),
+        IN_HIGHER_DISTANCE_PLURAL("in_km", "in_mi"),
+        IN_LOWER_DISTANCE_PLURAL("in_m", "in_ft"),
+        FOR_HIGHER_DISTANCE_PLURAL("for_km", "for_mi");
 
         public String metric;
         public String imperial;
