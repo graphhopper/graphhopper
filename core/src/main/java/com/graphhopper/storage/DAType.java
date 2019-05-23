@@ -77,7 +77,7 @@ public class DAType {
         else if (dataAccess.contains("MMAP"))
             type = DAType.MMAP;
         else if (dataAccess.contains("UNSAFE"))
-            throw new IllegalArgumentException("UNSAFE option is no longer supported, see #XXX");
+            throw new IllegalArgumentException("UNSAFE option is no longer supported, see #1620");
         else if (dataAccess.contains("RAM_STORE"))
             type = DAType.RAM_STORE;
         else
