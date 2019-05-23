@@ -300,15 +300,6 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Not yet stable enough to offer it for everyone
-     */
-    private GraphHopper setUnsafeMemory() {
-        ensureNotLoaded();
-        dataAccessType = DAType.UNSAFE_STORE;
-        return this;
-    }
-
-    /**
      * This method enabled or disables the speed mode (Contraction Hierarchies)
      *
      * @deprecated use {@link #setCHEnabled(boolean)} instead

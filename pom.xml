@@ -97,8 +97,6 @@
                     <compilerArgument>-Xlint:deprecation</compilerArgument>
                     -->
 
-                    <!-- suppress warning about Unsafe functionality -->
-                    <compilerArgument>-XDignore.symbol.file</compilerArgument>
                     <fork>true</fork>
                     <source>1.7</source>
                     <target>1.7</target>
@@ -187,15 +185,9 @@
                           This will automatically choose the right
                           signatures based on 'maven.compiler.target':
                         -->
-                        <bundledSignature>jdk-unsafe</bundledSignature>
                         <bundledSignature>jdk-deprecated</bundledSignature>
-                        <!-- disallow undocumented classes like sun.misc.Unsafe: -->
-                        <bundledSignature>jdk-non-portable</bundledSignature>
                     </bundledSignatures>
                     <excludes>
-                        <exclude>
-                            com/graphhopper/storage/UnsafeDataAccess.class
-                        </exclude>
                         <!-- Has a couple of issues with the FileWriter -->
                         <exclude>
                             com/graphhopper/tools/Measurement.class
