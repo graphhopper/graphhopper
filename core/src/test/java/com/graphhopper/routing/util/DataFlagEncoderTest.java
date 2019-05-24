@@ -421,7 +421,7 @@ public class DataFlagEncoderTest {
         way.setTag("highway", "track");
         way.setTag("estimated_center", new GHPoint(0.005, 0.005));
         e1.setFlags(em.handleWayTags(way, map, 0));
-        assertEquals(RoadAccess.FORESTRY, e1.get(tmpRoadAccessEnc));
+        assertEquals(RoadAccess.DESTINATION, e1.get(tmpRoadAccessEnc));
 
         ReaderWay way2 = new ReaderWay(28l);
         way2.setTag("highway", "track");

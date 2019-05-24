@@ -46,6 +46,8 @@ public class AustriaSpatialRule extends DefaultSpatialRule {
         if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
             if (highwayTag.equals("living_street"))
                 return RoadAccess.DESTINATION;
+            if (highwayTag.equals("track"))
+                return RoadAccess.FORESTRY;
         }
 
         return super.getAccess(highwayTag, transportationMode, _default);

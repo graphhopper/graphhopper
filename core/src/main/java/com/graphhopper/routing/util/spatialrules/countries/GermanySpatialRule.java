@@ -53,7 +53,7 @@ public class GermanySpatialRule extends DefaultSpatialRule {
     public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
         if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
             if (highwayTag.equals("track"))
-                return RoadAccess.FORESTRY;
+                return RoadAccess.DESTINATION;
         }
 
         return super.getAccess(highwayTag, transportationMode, _default);
