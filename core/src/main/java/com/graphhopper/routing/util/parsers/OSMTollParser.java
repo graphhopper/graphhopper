@@ -44,7 +44,7 @@ public class OSMTollParser implements TagParser {
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, long relationFlags) {
         if (readerWay.hasTag("toll", "yes"))
             tollEnc.setEnum(false, edgeFlags, Toll.ALL);
-        if (readerWay.hasTag("toll:hgv", "yes"))
+        else if (readerWay.hasTag("toll:hgv", "yes"))
             tollEnc.setEnum(false, edgeFlags, Toll.HGV);
         return edgeFlags;
     }
