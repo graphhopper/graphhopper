@@ -23,6 +23,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.BBox;
 
 /**
  * Same as full index but calculates distance to all edges too
@@ -123,6 +124,11 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex {
             }
         }
         return res;
+    }
+
+    @Override
+    public void query(BBox queryBBox, Visitor function) {
+        throw new IllegalArgumentException("not implemented");
     }
 
     @Override

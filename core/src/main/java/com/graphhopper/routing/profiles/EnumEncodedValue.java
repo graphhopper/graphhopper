@@ -23,7 +23,6 @@ import java.util.Arrays;
 
 /**
  * This class allows to store distinct values via an enum. I.e. it stores just the indices
- * of the used objects as an integer value.
  */
 public final class EnumEncodedValue<E extends Enum> extends SimpleIntEncodedValue {
     private final E[] arr;

@@ -17,12 +17,15 @@
  */
 package com.graphhopper.http;
 
+import com.graphhopper.gtfs.dropwizard.RealtimeBundle;
 import com.graphhopper.http.cli.ImportCommand;
 import com.graphhopper.http.resources.RootResource;
 import io.dropwizard.Application;
 import io.dropwizard.bundles.assets.ConfiguredAssetsBundle;
+import io.dropwizard.client.HttpClientBuilder;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.apache.http.client.HttpClient;
 
 import javax.servlet.DispatcherType;
 import java.util.EnumSet;
@@ -36,12 +39,14 @@ public final class GraphHopperApplication extends Application<GraphHopperServerC
     @Override
     public void initialize(Bootstrap<GraphHopperServerConfiguration> bootstrap) {
         bootstrap.addBundle(new GraphHopperBundle());
+        bootstrap.addBundle(new RealtimeBundle());
         bootstrap.addBundle(new ConfiguredAssetsBundle("/assets/", "/maps/", "index.html"));
-        bootstrap.addCommand(new ImportCommand(bootstrap.getObjectMapper()));
+        bootstrap.addCommand(new ImportCommand());
     }
 
     @Override
-    public void run(GraphHopperServerConfiguration configuration, Environment environment) {
+    public void run(GraphHopperServerConfiguration configuration, Environment environment) throws Exception {
+        environment.jersey().register(new GHJerseyViolationExceptionMapper());
         environment.jersey().register(new RootResource());
         environment.servlets().addFilter("cors", CORSFilter.class).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");
         environment.servlets().addFilter("ipfilter", new IPFilter(configuration.getGraphHopperConfiguration().get("jetty.whiteips", ""), configuration.getGraphHopperConfiguration().get("jetty.blackips", ""))).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");

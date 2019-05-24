@@ -32,11 +32,10 @@ import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
 import org.junit.Before;
@@ -44,10 +43,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -147,6 +143,60 @@ public class GraphHopperOSMTest {
 
         assertFalse(gh.getAlgorithmFactory(new HintsMap("fastest")) instanceof PrepareContractionHierarchies);
         gh.close();
+    }
+
+    @Test
+    public void testQueryLocationIndexWithBBox() {
+        GraphHopper gh = new GraphHopperOSM().setStoreOnFlush(true).
+                setEncodingManager(EncodingManager.create("car")).
+                setCHEnabled(false).
+                setGraphHopperLocation("./target/monacotmp-gh").
+                setDataReaderFile("../core/files/monaco.osm.gz");
+        gh.importOrLoad();
+
+        final NodeAccess na = gh.getGraphHopperStorage().getNodeAccess();
+        final Collection<Integer> indexNodeList = new TreeSet<>();
+        LocationIndexTree index = (LocationIndexTree) gh.getLocationIndex();
+        final EdgeExplorer edgeExplorer = gh.getGraphHopperStorage().createEdgeExplorer();
+        final BBox bbox = new BBox(7.422, 7.429, 43.729, 43.734);
+        index.query(bbox, new LocationIndexTree.EdgeVisitor(edgeExplorer) {
+            @Override
+            public void onTile(BBox bbox, int width) {
+            }
+
+            @Override
+            public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
+                for (int i = 0; i < 2; i++) {
+                    int nodeId = i == 0 ? nodeA : nodeB;
+                    double lat = na.getLatitude(nodeId);
+                    double lon = na.getLongitude(nodeId);
+                    if (bbox.contains(lat, lon))
+                        indexNodeList.add(nodeId);
+                }
+            }
+        });
+
+        assertEquals(57, indexNodeList.size());
+        for (int nodeId : indexNodeList) {
+            if (!bbox.contains(na.getLatitude(nodeId), na.getLongitude(nodeId)))
+                fail("bbox " + bbox + " should contain " + nodeId);
+        }
+
+        final Collection<Integer> bfsNodeList = new TreeSet<>();
+        new BreadthFirstSearch() {
+            @Override
+            protected boolean goFurther(int nodeId) {
+                double lat = na.getLatitude(nodeId);
+                double lon = na.getLongitude(nodeId);
+                if (bbox.contains(lat, lon))
+                    bfsNodeList.add(nodeId);
+
+                return true;
+            }
+        }.start(edgeExplorer, index.findClosest(43.731, 7.425, EdgeFilter.ALL_EDGES).getClosestNode());
+
+        assertTrue("index size: " + indexNodeList.size() + ", bfs size: " + bfsNodeList.size(), indexNodeList.size() >= bfsNodeList.size());
+        assertTrue("index size: " + indexNodeList.size() + ", bfs size: " + bfsNodeList.size(), indexNodeList.containsAll(bfsNodeList));
     }
 
     @Test
@@ -301,9 +351,9 @@ public class GraphHopperOSMTest {
                 setAlgorithm(DIJKSTRA_BI)).getBest();
         assertFalse(rsp.hasErrors());
         assertEquals(3, rsp.getPoints().getSize());
-        assertEquals(new GHPoint(51.24921503475044, 9.431716451757769), rsp.getPoints().toGHPoint(0));
-        assertEquals(new GHPoint(52.0, 9.0), rsp.getPoints().toGHPoint(1));
-        assertEquals(new GHPoint(51.199999850988384, 9.39999970197677), rsp.getPoints().toGHPoint(2));
+        assertEquals(new GHPoint(51.24921503475044, 9.431716451757769), rsp.getPoints().get(0));
+        assertEquals(new GHPoint(52.0, 9.0), rsp.getPoints().get(1));
+        assertEquals(new GHPoint(51.199999850988384, 9.39999970197677), rsp.getPoints().get(2));
 
         GHRequest req = new GHRequest(51.2492152, 9.4317166, 51.2, 9.4);
         boolean old = instance.getEncodingManager().isEnableInstructions();

@@ -45,7 +45,6 @@ public class DijkstraTest extends AbstractRoutingAlgorithmTester {
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {TraversalMode.NODE_BASED},
-                {TraversalMode.EDGE_BASED_1DIR},
                 {TraversalMode.EDGE_BASED_2DIR},
                 {TraversalMode.EDGE_BASED_2DIR_UTURN}
         });

@@ -95,7 +95,7 @@ public class GraphBuilder {
     /**
      * Default graph is a {@link GraphHopperStorage} with an in memory directory and disabled storing on flush.
      * Afterwards you'll need to call {@link GraphHopperStorage#create} to have a usable object. Better use
-     * {@link GraphHopperStorage#create} directly.
+     * {@link #create} directly.
      */
     public GraphHopperStorage build() {
         Directory dir = mmap ?
