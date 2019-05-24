@@ -21,10 +21,9 @@ import com.graphhopper.util.Helper;
 
 public enum RoadAccess {
     // order is important here as we assume "smaller index" means "broader access"
-    OTHER("other"), YES("yes"),
-    DESTINATION("destination"), CUSTOMERS("customers"), DELIVERY("delivery"),
+    YES("yes"), DESTINATION("destination"), CUSTOMERS("customers"), DELIVERY("delivery"),
     FORESTRY("forestry"), AGRICULTURAL("agricultural"),
-    PRIVATE("private"), NO("no");
+    PRIVATE("private"), OTHER("other"), NO("no");
 
     public static final String KEY = "road_access";
 
@@ -41,11 +40,11 @@ public enum RoadAccess {
 
     public static RoadAccess find(String name) {
         if (name == null)
-            return OTHER;
+            return YES;
         try {
             return RoadAccess.valueOf(Helper.toUpperCase(name));
         } catch (IllegalArgumentException ex) {
-            return OTHER;
+            return YES;
         }
     }
 }
