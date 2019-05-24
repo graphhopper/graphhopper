@@ -172,21 +172,6 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testAvoidWeighting() {
-        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
-        assertTrue(hopper.load("http://localhost:8080/route"));
-        GHRequest request = new GHRequest(42.546757, 1.528645, 42.520573, 1.557999).setWeighting("avoid");
-        request.getHints().put("ch.disable", true);
-        GHResponse rsp = hopper.route(request);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(8726, rsp.getBest().getDistance(), 1);
-
-        request.getHints().put("avoid", "tunnel");
-        rsp = hopper.route(request);
-        assertEquals(10520, rsp.getBest().getDistance(), 1);
-    }
-
-    @Test
     public void testPathDetailsRoadClass() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load("http://localhost:8080/route"));
