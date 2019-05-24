@@ -569,6 +569,7 @@ public class CHTurnCostTest {
         }
 
         List<Integer> contractionOrder = getRandomIntegerSequence(chGraph.getNodes(), rnd);
+        checkStrict = false;
         compareCHWithDijkstra(numQueries, contractionOrder);
     }
 
