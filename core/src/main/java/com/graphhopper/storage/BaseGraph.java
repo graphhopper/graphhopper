@@ -800,6 +800,12 @@ class BaseGraph implements Graph {
         return edgeAccess.getOtherNode(node, edgePointer);
     }
 
+    @Override
+    public boolean isAdjacentToNode(int edge, int node) {
+        long edgePointer = edgeAccess.toPointer(edge);
+        return edgeAccess.isAdjacentToNode(node, edgePointer);
+    }
+
     public void setAdditionalEdgeField(long edgePointer, int value) {
         if (extStorage.isRequireEdgeField() && E_ADDITIONAL >= 0)
             edges.setInt(edgePointer + E_ADDITIONAL, value);

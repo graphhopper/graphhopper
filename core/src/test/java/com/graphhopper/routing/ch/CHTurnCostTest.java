@@ -61,6 +61,7 @@ public class CHTurnCostTest {
     private TurnCostExtension turnCostExtension;
     private TurnWeighting turnWeighting;
     private CHGraph chGraph;
+    private boolean checkStrict;
 
     @Rule
     public RepeatRule repeatRule = new RepeatRule();
@@ -76,6 +77,7 @@ public class CHTurnCostTest {
         turnCostExtension = (TurnCostExtension) graph.getExtension();
         turnWeighting = new TurnWeighting(weighting, turnCostExtension);
         chGraph = graph.getGraph(CHGraph.class);
+        checkStrict = true;
     }
 
     @Test
@@ -87,17 +89,9 @@ public class CHTurnCostTest {
         graph.edge(0, 3, 1, true);
         graph.edge(3, 4, 3, true);
         graph.freeze();
-
         addTurnCost(2, 1, 0, 2);
         addTurnCost(0, 3, 4, 4);
-
-        final IntArrayList expectedPath = IntArrayList.from(2, 1, 0, 3, 4);
-        final int expectedWeight = 15;
-
-        int from = 2;
-        int to = 4;
-
-        checkPathUsingRandomContractionOrder(expectedPath, expectedWeight, from, to);
+        checkPathUsingRandomContractionOrder(IntArrayList.from(2, 1, 0, 3, 4), 9, 6, 2, 4);
     }
 
     @Test
@@ -173,6 +167,7 @@ public class CHTurnCostTest {
 
         RoutingAlgorithmFactory factory = prepareCH(Arrays.asList(6, 0, 1, 2, 8, 9, 10, 5, 3, 4, 7));
         // run queries for all cases (target/source edge possibly restricted/has costs)
+        checkStrict = false;
         compareCHQueryWithDijkstra(factory, 2, 10);
         compareCHQueryWithDijkstra(factory, 1, 10);
         compareCHQueryWithDijkstra(factory, 2, 9);
@@ -237,10 +232,7 @@ public class CHTurnCostTest {
         addTurnCost(4, 2, 3, 4);
         addTurnCost(3, 2, 4, 2);
 
-        final IntArrayList expectedPath = IntArrayList.from(0, 4, 3, 2, 4, 1);
-        final int expectedWeight = 9;
-
-        checkPathUsingRandomContractionOrder(expectedPath, expectedWeight, 0, 1);
+        checkPathUsingRandomContractionOrder(IntArrayList.from(0, 4, 3, 2, 4, 1), 7, 2, 0, 1);
     }
 
     @Test
@@ -268,7 +260,7 @@ public class CHTurnCostTest {
         final int roadCosts = 12;
         final int turnCosts = 2;
 
-        checkPathUsingRandomContractionOrder(expectedPath, roadCosts + turnCosts, 3, 4);
+        checkPathUsingRandomContractionOrder(expectedPath, roadCosts, turnCosts, 3, 4);
     }
 
     @Test
@@ -297,7 +289,7 @@ public class CHTurnCostTest {
         final int roadCosts = 10;
         final int turnCosts = 2;
 
-        checkPathUsingRandomContractionOrder(expectedPath, roadCosts + turnCosts, 0, 6);
+        checkPathUsingRandomContractionOrder(expectedPath, roadCosts, turnCosts, 0, 6);
     }
 
     @Test
@@ -353,7 +345,7 @@ public class CHTurnCostTest {
         final int roadCosts = 15;
         final int turnCosts = 2;
 
-        checkPathUsingRandomContractionOrder(expectedPath, roadCosts + turnCosts, 0, 14);
+        checkPathUsingRandomContractionOrder(expectedPath, roadCosts, turnCosts, 0, 14);
     }
 
     @Test
@@ -447,7 +439,7 @@ public class CHTurnCostTest {
         final int roadCosts = 49;
         final int turnCosts = 4;
 
-        checkPathUsingRandomContractionOrder(expectedPath, roadCosts + turnCosts, 0, 26);
+        checkPathUsingRandomContractionOrder(expectedPath, roadCosts, turnCosts, 0, 26);
     }
 
     @Test
@@ -469,7 +461,7 @@ public class CHTurnCostTest {
         addRestriction(5, 6, 1);
 
         final IntArrayList expectedPath = IntArrayList.from(5, 6, 4, 0, 3, 2, 4, 6, 1);
-        checkPath(expectedPath, 8, 5, 1, Arrays.asList(0, 1, 2, 3, 4, 5, 6));
+        checkPath(expectedPath, 8, 0, 5, 1, Arrays.asList(0, 1, 2, 3, 4, 5, 6));
     }
 
 
@@ -494,7 +486,7 @@ public class CHTurnCostTest {
         addRestriction(5, 6, 7);
 
         final IntArrayList expectedPath = IntArrayList.from(5, 6, 1, 4, 0, 3, 2, 4, 1, 6, 7);
-        checkPath(expectedPath, 10, 5, 7, Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7));
+        checkPath(expectedPath, 10, 0, 5, 7, Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7));
     }
 
     @Test
@@ -631,6 +623,25 @@ public class CHTurnCostTest {
     }
 
     @Test
+    public void testFindPath_calcTurnCostTime() {
+        // here there will be a shortcut from 1 to 4 and when the path is unpacked it is important that
+        // the turn costs are included at node 1 even though the unpacked original edge 1-0 might be in the
+        // reverted state
+        // 2-1--3
+        //   |  |
+        //   0->4
+        EdgeIteratorState edge0 = graph.edge(1, 2, 1, true);
+        EdgeIteratorState edge1 = graph.edge(0, 4, 1, false);
+        EdgeIteratorState edge2 = graph.edge(4, 3, 1, true);
+        EdgeIteratorState edge3 = graph.edge(1, 3, 1, true);
+        EdgeIteratorState edge4 = graph.edge(1, 0, 1, true);
+        addTurnCost(edge0, edge4, 1, 8);
+        addRestriction(edge0, edge3, 1);
+        graph.freeze();
+        checkPath(IntArrayList.from(2, 1, 0, 4), 3, 8, 2, 4, Arrays.asList(2, 0, 1, 3, 4));
+    }
+
+    @Test
     public void testFindPath_loopsMustAlwaysBeAccepted() {
         //     ---
         //     \ /
@@ -643,7 +654,7 @@ public class CHTurnCostTest {
         addRestriction(edge0, edge2, 1);
         graph.freeze();
         final IntArrayList expectedPath = IntArrayList.from(0, 1, 1, 2, 3);
-        checkPath(expectedPath, 5, 0, 3, Arrays.asList(0, 2, 1, 3));
+        checkPath(expectedPath, 4, 1, 0, 3, Arrays.asList(0, 2, 1, 3));
     }
 
     @Test
@@ -675,7 +686,7 @@ public class CHTurnCostTest {
         graph.freeze();
         IntArrayList expectedPath = IntArrayList.from(0, 1, 2, 3, 4);
         List<Integer> contractionOrder = Arrays.asList(2, 0, 4, 1, 3);
-        checkPath(expectedPath, 4, 0, 4, contractionOrder);
+        checkPath(expectedPath, 4, 0, 0, 4, contractionOrder);
     }
 
     @Test
@@ -697,65 +708,42 @@ public class CHTurnCostTest {
         graph.freeze();
         IntArrayList expectedPath = IntArrayList.from(0, 1, 2, 3, 3, 4);
         List<Integer> contractionOrder = Arrays.asList(2, 0, 4, 1, 3);
-        checkPath(expectedPath, 8, 0, 4, contractionOrder);
+        checkPath(expectedPath, 4, 4, 0, 4, contractionOrder);
     }
 
     @Test
-    public void test_issue1593_full() {
-        //      6   5
-        //   1<-x-4-x-3
-        //  ||    |
-        //  |x7   x8
-        //  ||   /
-        //   2---
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 49.407117, 9.701306);
-        na.setNode(1, 49.406914, 9.703393);
-        na.setNode(2, 49.404004, 9.709110);
-        na.setNode(3, 49.400160, 9.708787);
-        na.setNode(4, 49.400883, 9.706347);
-        EdgeIteratorState edge0 = graph.edge(4, 3, 194.063000, true);
-        EdgeIteratorState edge1 = graph.edge(1, 2, 525.106000, true);
-        EdgeIteratorState edge2 = graph.edge(1, 2, 525.106000, true);
-        EdgeIteratorState edge3 = graph.edge(4, 1, 703.778000, false);
-        EdgeIteratorState edge4 = graph.edge(2, 4, 400.509000, true);
-        // cannot go 4-2-1 and 1-2-4 (at least when using edge1, there is still edge2!)
-        addRestriction(edge4, edge1, 2);
-        addRestriction(edge1, edge4, 2);
-        // cannot go 3-4-1
-        addRestriction(edge0, edge3, 4);
+    public void testFindPath_oneWayLoop() {
+        //     o
+        // 0-1-2-3-4
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.edge(2, 2, 1, false);
+        graph.edge(2, 3, 1, false);
+        graph.edge(3, 4, 1, false);
+        addRestriction(1, 2, 3);
         graph.freeze();
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
-        index.prepareIndex();
-        List<GHPoint> points = Arrays.asList(
-                // 8 (on edge4)
-                new GHPoint(49.401669187194116, 9.706821649608745),
-                // 5 (on edge0)
-                new GHPoint(49.40056349818417, 9.70767186472369),
-                // 7 (on edge2)
-                new GHPoint(49.406580835146556, 9.704665738628218),
-                // 6 (on edge3)
-                new GHPoint(49.40107534698834, 9.702248694088528)
-        );
-
-        List<QueryResult> queryResults = new ArrayList<>(points.size());
-        for (GHPoint point : points) {
-            queryResults.add(index.findClosest(point.getLat(), point.getLon(), EdgeFilter.ALL_EDGES));
-        }
-
         RoutingAlgorithmFactory pch = automaticPrepareCH();
-        QueryGraph queryGraph = new QueryGraph(chGraph);
-        queryGraph.lookup(queryResults);
-        RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
-                .traversalMode(TraversalMode.EDGE_BASED_2DIR)
-                .build());
-        Path path = chAlgo.calcPath(5, 6);
-        // there should not be a path from 5 to 6, because first we cannot go directly 5-4-6, so we need to go left
-        // to 8. then at 2 we cannot go on edge 1 because of another turn restriction, but we can go on edge 2 so we
-        // travel via the virtual node 7 to node 1. From there we cannot go to 6 because of the one-way so we go back
-        // to node 2 (no u-turn because of the duplicate edge) on edge1. And this is were the journey ends: we cannot
-        // go to 8 because of the turn restriction from edge1 to edge4 -> there should not be a path!
-        assertFalse("there should not be a path, but found: " + path.calcNodes(), path.isFound());
+        compareCHQueryWithDijkstra(pch, 0, 3);
+        compareCHQueryWithDijkstra(pch, 1, 4);
+        automaticCompareCHWithDijkstra(100);
+    }
+
+    @Test
+    public void testFindPath_loopEdge() {
+        // 1-0
+        // | |
+        // 4-2o
+        graph.edge(1, 0, 802.964000, false);
+        graph.edge(1, 4, 615.195000, true);
+        graph.edge(2, 2, 181.788000, true);
+        graph.edge(0, 2, 191.996000, true);
+        graph.edge(2, 4, 527.821000, false);
+        addRestriction(0, 2, 4);
+        addTurnCost(0, 2, 2, 3);
+        addTurnCost(2, 2, 4, 4);
+        graph.freeze();
+        RoutingAlgorithmFactory pch = automaticPrepareCH();
+        compareCHQueryWithDijkstra(pch, 0, 4);
     }
 
     @Test
@@ -857,6 +845,64 @@ public class CHTurnCostTest {
         assertEquals(IntArrayList.from(1, 3, 0), path.calcNodes());
     }
 
+    @Test
+    public void test_issue1593_full() {
+        //      6   5
+        //   1<-x-4-x-3
+        //  ||    |
+        //  |x7   x8
+        //  ||   /
+        //   2---
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 49.407117, 9.701306);
+        na.setNode(1, 49.406914, 9.703393);
+        na.setNode(2, 49.404004, 9.709110);
+        na.setNode(3, 49.400160, 9.708787);
+        na.setNode(4, 49.400883, 9.706347);
+        EdgeIteratorState edge0 = graph.edge(4, 3, 194.063000, true);
+        EdgeIteratorState edge1 = graph.edge(1, 2, 525.106000, true);
+        EdgeIteratorState edge2 = graph.edge(1, 2, 525.106000, true);
+        EdgeIteratorState edge3 = graph.edge(4, 1, 703.778000, false);
+        EdgeIteratorState edge4 = graph.edge(2, 4, 400.509000, true);
+        // cannot go 4-2-1 and 1-2-4 (at least when using edge1, there is still edge2!)
+        addRestriction(edge4, edge1, 2);
+        addRestriction(edge1, edge4, 2);
+        // cannot go 3-4-1
+        addRestriction(edge0, edge3, 4);
+        graph.freeze();
+        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        index.prepareIndex();
+        List<GHPoint> points = Arrays.asList(
+                // 8 (on edge4)
+                new GHPoint(49.401669187194116, 9.706821649608745),
+                // 5 (on edge0)
+                new GHPoint(49.40056349818417, 9.70767186472369),
+                // 7 (on edge2)
+                new GHPoint(49.406580835146556, 9.704665738628218),
+                // 6 (on edge3)
+                new GHPoint(49.40107534698834, 9.702248694088528)
+        );
+
+        List<QueryResult> queryResults = new ArrayList<>(points.size());
+        for (GHPoint point : points) {
+            queryResults.add(index.findClosest(point.getLat(), point.getLon(), EdgeFilter.ALL_EDGES));
+        }
+
+        RoutingAlgorithmFactory pch = automaticPrepareCH();
+        QueryGraph queryGraph = new QueryGraph(chGraph);
+        queryGraph.lookup(queryResults);
+        RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
+                .traversalMode(TraversalMode.EDGE_BASED_2DIR)
+                .build());
+        Path path = chAlgo.calcPath(5, 6);
+        // there should not be a path from 5 to 6, because first we cannot go directly 5-4-6, so we need to go left
+        // to 8. then at 2 we cannot go on edge 1 because of another turn restriction, but we can go on edge 2 so we
+        // travel via the virtual node 7 to node 1. From there we cannot go to 6 because of the one-way so we go back
+        // to node 2 (no u-turn because of the duplicate edge) on edge1. And this is were the journey ends: we cannot
+        // go to 8 because of the turn restriction from edge1 to edge4 -> there should not be a path!
+        assertFalse("there should not be a path, but found: " + path.calcNodes(), path.isFound());
+    }
+
     /**
      * This test runs on a random graph with random turn costs and a predefined (but random) contraction order.
      * It often produces exotic conditions that are hard to anticipate beforehand.
@@ -872,6 +918,7 @@ public class CHTurnCostTest {
         GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, encoder, maxCost, turnCostExtension);
         graph.freeze();
+        checkStrict = false;
         List<Integer> contractionOrder = getRandomIntegerSequence(chGraph.getNodes(), rnd);
         compareCHWithDijkstra(100, contractionOrder);
     }
@@ -887,6 +934,7 @@ public class CHTurnCostTest {
         GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, encoder, maxCost, turnCostExtension);
         graph.freeze();
+        checkStrict = false;
         automaticCompareCHWithDijkstra(100);
     }
 
@@ -899,26 +947,36 @@ public class CHTurnCostTest {
         return rnd.nextDouble() * maxDist;
     }
 
-    private void checkPathUsingRandomContractionOrder(IntArrayList expectedPath, int expectedWeight, int from, int to) {
+    private void checkPathUsingRandomContractionOrder(IntArrayList expectedPath, int expectedWeight, int expectedTurnCosts, int from, int to) {
         List<Integer> contractionOrder = getRandomIntegerSequence(chGraph.getNodes());
-        checkPath(expectedPath, expectedWeight, from, to, contractionOrder);
+        checkPath(expectedPath, expectedWeight, expectedTurnCosts, from, to, contractionOrder);
     }
 
-    private void checkPath(IntArrayList expectedPath, int expectedWeight, int from, int to, List<Integer> contractionOrder) {
-        checkPathUsingDijkstra(expectedPath, expectedWeight, from, to);
-        checkPathUsingCH(expectedPath, expectedWeight, from, to, contractionOrder);
+    private void checkPath(IntArrayList expectedPath, int expectedEdgeWeight, int expectedTurnCosts, int from, int to, List<Integer> contractionOrder) {
+        checkPathUsingDijkstra(expectedPath, expectedEdgeWeight, expectedTurnCosts, from, to);
+        checkPathUsingCH(expectedPath, expectedEdgeWeight, expectedTurnCosts, from, to, contractionOrder);
     }
 
-    private void checkPathUsingDijkstra(IntArrayList expectedPath, int expectedWeight, int from, int to) {
+    private void checkPathUsingDijkstra(IntArrayList expectedPath, int expectedEdgeWeight, int expectedTurnCosts, int from, int to) {
         Path dijkstraPath = findPathUsingDijkstra(from, to);
+        int expectedWeight = expectedEdgeWeight + expectedTurnCosts;
+        int expectedDistance = expectedEdgeWeight;
+        int expectedTime = expectedEdgeWeight * 60 + expectedTurnCosts * 1000;
         assertEquals("Normal Dijkstra did not find expected path.", expectedPath, dijkstraPath.calcNodes());
         assertEquals("Normal Dijkstra did not calculate expected weight.", expectedWeight, dijkstraPath.getWeight(), 1.e-6);
+        assertEquals("Normal Dijkstra did not calculate expected distance.", expectedDistance, dijkstraPath.getDistance(), 1.e-6);
+        assertEquals("Normal Dijkstra did not calculate expected time.", expectedTime, dijkstraPath.getTime(), 1.e-6);
     }
 
-    private void checkPathUsingCH(IntArrayList expectedPath, int expectedWeight, int from, int to, List<Integer> contractionOrder) {
+    private void checkPathUsingCH(IntArrayList expectedPath, int expectedEdgeWeight, int expectedTurnCosts, int from, int to, List<Integer> contractionOrder) {
         Path chPath = findPathUsingCH(from, to, contractionOrder);
+        int expectedWeight = expectedEdgeWeight + expectedTurnCosts;
+        int expectedDistance = expectedEdgeWeight;
+        int expectedTime = expectedEdgeWeight * 60 + expectedTurnCosts * 1000;
         assertEquals("Contraction Hierarchies did not find expected path. contraction order=" + contractionOrder, expectedPath, chPath.calcNodes());
         assertEquals("Contraction Hierarchies did not calculate expected weight.", expectedWeight, chPath.getWeight(), 1.e-6);
+        assertEquals("Contraction Hierarchies did not calculate expected distance.", expectedDistance, chPath.getDistance(), 1.e-6);
+        assertEquals("Contraction Hierarchies did not calculate expected time.", expectedTime, chPath.getTime(), 1.e-6);
     }
 
     private Path findPathUsingDijkstra(int from, int to) {
@@ -990,12 +1048,19 @@ public class CHTurnCostTest {
         RoutingAlgorithm chAlgo = factory.createAlgo(chGraph, AlgorithmOptions.start().build());
         Path chPath = chAlgo.calcPath(from, to);
         boolean algosDisagree = Math.abs(dijkstraPath.getWeight() - chPath.getWeight()) > 1.e-2;
+        if (checkStrict) {
+            algosDisagree = algosDisagree
+                    || Math.abs(dijkstraPath.getDistance() - chPath.getDistance()) > 1.e-2
+                    || Math.abs(dijkstraPath.getTime() - chPath.getTime()) > 1;
+        }
         if (algosDisagree) {
             System.out.println("Graph that produced error:");
             GHUtility.printGraphForUnitTest(graph, encoder);
             fail("Dijkstra and CH did not find equal shortest paths for route from " + from + " to " + to + "\n" +
-                    " dijkstra: weight: " + dijkstraPath.getWeight() + ", nodes: " + dijkstraPath.calcNodes() + "\n" +
-                    "       ch: weight: " + chPath.getWeight() + ", nodes: " + chPath.calcNodes());
+                    " dijkstra: weight: " + dijkstraPath.getWeight() + ", distance: " + dijkstraPath.getDistance() +
+                    ", time: " + dijkstraPath.getTime() + ", nodes: " + dijkstraPath.calcNodes() + "\n" +
+                    "       ch: weight: " + chPath.getWeight() + ", distance: " + chPath.getDistance() +
+                    ", time: " + chPath.getTime() + ", nodes: " + chPath.calcNodes());
         }
     }
 

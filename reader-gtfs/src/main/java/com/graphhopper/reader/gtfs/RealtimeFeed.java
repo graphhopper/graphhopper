@@ -254,6 +254,11 @@ public class RealtimeFeed {
             public int getOtherNode(int edge, int node) {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public boolean isAdjacentToNode(int edge, int node) {
+                throw new UnsupportedOperationException();
+            }
         };
 
         Map<GtfsStorage.Validity, Integer> operatingDayPatterns = new HashMap<>(staticGtfs.getOperatingDayPatterns());
