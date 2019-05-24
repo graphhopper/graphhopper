@@ -44,11 +44,6 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
     int bwdMask;
     boolean storeBothDirections;
 
-    SimpleIntEncodedValue() {
-        bits = 0;
-        name = "";
-    }
-
     public SimpleIntEncodedValue(String name, int bits) {
         this(name, bits, false);
     }
@@ -92,7 +87,7 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
         return storeBothDirections ? 2 * bits : bits;
     }
 
-    private boolean isInitialized() {
+    boolean isInitialized() {
         return fwdMask != 0;
     }
 

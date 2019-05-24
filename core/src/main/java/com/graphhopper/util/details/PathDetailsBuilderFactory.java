@@ -40,7 +40,7 @@ public class PathDetailsBuilderFactory {
         List<PathDetailsBuilder> builders = new ArrayList<>();
 
         if (requestedPathDetails.contains(AVERAGE_SPEED))
-            builders.add(new DecimalDetails(AVERAGE_SPEED, encoder.getAverageSpeedEnc(), false));
+            builders.add(new DecimalDetails(AVERAGE_SPEED, encoder.getAverageSpeedEnc(), Double.POSITIVE_INFINITY));
 
         if (requestedPathDetails.contains(STREET_NAME))
             builders.add(new StreetNameDetails());
@@ -56,7 +56,7 @@ public class PathDetailsBuilderFactory {
 
         for (String key : Arrays.asList(MaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY)) {
             if (requestedPathDetails.contains(key) && encoder.hasEncodedValue(key))
-                builders.add(new DecimalDetails(key, encoder.getDecimalEncodedValue(key), true));
+                builders.add(new DecimalDetails(key, encoder.getDecimalEncodedValue(key), Double.POSITIVE_INFINITY));
         }
 
         for (Map.Entry entry : Arrays.asList(new MapEntry<>(RoadClass.KEY, RoadClass.class),

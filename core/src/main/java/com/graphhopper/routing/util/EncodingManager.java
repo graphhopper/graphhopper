@@ -472,7 +472,7 @@ public class EncodingManager implements EncodedValueLookup {
         private Access get(String key) {
             Access res = accessMap.get(key);
             if (res == null)
-                throw new IllegalArgumentException("Couldn't fetch access value for key " + key);
+                throw new IllegalArgumentException("Couldn't fetch Access value for encoder key " + key);
 
             return res;
         }

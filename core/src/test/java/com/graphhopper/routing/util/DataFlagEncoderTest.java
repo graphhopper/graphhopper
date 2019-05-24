@@ -49,7 +49,7 @@ public class DataFlagEncoderTest {
                 add(new OSMRoadClassParser()).
                 add(new OSMRoadAccessParser()).
                 add(new OSMSurfaceParser()).
-                add(new OSMCarMaxSpeedParser(carMaxSpeedEnc = MaxSpeed.create())).
+                add(new OSMMaxSpeedParser(carMaxSpeedEnc = MaxSpeed.create())).
                 add(encoder).build();
         roadEnvironmentEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
@@ -214,7 +214,7 @@ public class DataFlagEncoderTest {
         flags = encodingManager.handleWayTags(osmWay, map, 0);
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
         assertEquals(10, edge.get(carMaxSpeedEnc), .1);
-        assertEquals(0, edge.getReverse(carMaxSpeedEnc), .1);
+        assertEquals(Double.POSITIVE_INFINITY, edge.getReverse(carMaxSpeedEnc), .1);
 
         osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
@@ -231,17 +231,17 @@ public class DataFlagEncoderTest {
     public void testLargeMaxspeed() {
         ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
-        osmWay.setTag("maxspeed", "145");
+        osmWay.setTag("maxspeed", "170");
         IntsRef flags = encodingManager.handleWayTags(osmWay, map, 0);
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals(140, edge.get(carMaxSpeedEnc), .1);
+        assertEquals(MaxSpeed.UNLIMITED_SIGN_SPEED, edge.get(carMaxSpeedEnc), .1);
 
         osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("maxspeed", "1000");
         flags = encodingManager.handleWayTags(osmWay, map, 0);
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals(140, edge.get(carMaxSpeedEnc), .1);
+        assertEquals(MaxSpeed.UNLIMITED_SIGN_SPEED, edge.get(carMaxSpeedEnc), .1);
     }
 
     @Test
@@ -255,10 +255,10 @@ public class DataFlagEncoderTest {
         edge.setFlags(flags);
 
         assertEquals(10, edge.get(carMaxSpeedEnc), .1);
-        assertEquals(0, edge.getReverse(carMaxSpeedEnc), .1);
+        assertEquals(Double.POSITIVE_INFINITY, edge.getReverse(carMaxSpeedEnc), .1);
 
         edge = edge.detach(true);
-        assertEquals(0, edge.get(carMaxSpeedEnc), .1);
+        assertEquals(Double.POSITIVE_INFINITY, edge.get(carMaxSpeedEnc), .1);
         assertEquals(10, edge.getReverse(carMaxSpeedEnc), .1);
     }
 

@@ -72,7 +72,6 @@ public class OSMMaxWeightParser implements TagParser {
             if (enableLog)
                 LOG.warn("Unable to extract tons from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId());
         }
-        valueEncoder.setDecimal(false, edgeFlags, -1);
     }
 
     public static double stringToTons(String value) {

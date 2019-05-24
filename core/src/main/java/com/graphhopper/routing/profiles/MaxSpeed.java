@@ -18,23 +18,22 @@
 package com.graphhopper.routing.profiles;
 
 /**
- * This EncodedValue stores maximum speed values for car and 0 stands for the default
- * i.e. no max speed sign (does not imply no speed limit).
+ * This EncodedValue stores maximum speed values for car. If not initialized it returns UNSET_SPEED.
  */
 public class MaxSpeed {
     public static final String KEY = "max_speed";
 
     /**
-     * speed value used for "none" speed limit on German Autobahn
+     * The speed value used for "none" speed limit on German Autobahn is 155=31*5 as this is the biggest value
+     * not explicitly used in OSM.
      */
-    public static final double UNLIMITED_SIGN_SPEED = 140;
-
+    public static final double UNLIMITED_SIGN_SPEED = 155;
     /**
-     * speed value used for road sections without known speed limit.
+     * The speed value used for road sections without known speed limit.
      */
-    public static final double UNSET_SPEED = 0;
+    public static final double UNSET_SPEED = Double.POSITIVE_INFINITY;
 
     public static DecimalEncodedValue create() {
-        return new FactorizedDecimalEncodedValue(KEY, 5, 5, true);
+        return new FactorizedDecimalEncodedValue(KEY, 5, 5, UNSET_SPEED, true);
     }
 }

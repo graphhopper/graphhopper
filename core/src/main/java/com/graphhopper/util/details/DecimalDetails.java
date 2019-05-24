@@ -23,22 +23,20 @@ import com.graphhopper.util.EdgeIteratorState;
 public class DecimalDetails extends AbstractPathDetailsBuilder {
 
     private final DecimalEncodedValue ev;
+    private final double defaultValue;
     private double decimalValue = -1;
-    private final boolean returnMinus;
 
-    /**
-     * @param returnMinus true if getCurrentValue should return -1 for the default value
-     */
-    public DecimalDetails(String name, DecimalEncodedValue ev, boolean returnMinus) {
+    public DecimalDetails(String name, DecimalEncodedValue ev, double defaultValue) {
         super(name);
         this.ev = ev;
-        this.returnMinus = returnMinus;
+        this.defaultValue = defaultValue;
     }
 
     @Override
     protected Object getCurrentValue() {
-        if (returnMinus && decimalValue == 0)
-            return -1d;
+        // TODO NOW return an empty value and ignore this when exporting to JSON
+//        if (decimalValue == defaultValue)
+//            return PathDetail.EMPTY;
         return decimalValue;
     }
 

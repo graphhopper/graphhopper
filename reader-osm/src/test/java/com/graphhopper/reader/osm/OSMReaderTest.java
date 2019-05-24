@@ -590,20 +590,19 @@ public class OSMReaderTest {
 
         assertEquals(4.0, edge_ab.get(heightEnc), 1e-5);
         assertEquals(2.5, edge_ab.get(widthEnc), 1e-5);
-        // rounded from 4.4 to closest 4.5
-        assertEquals(4.5, edge_ab.get(weightEnc), 1e-5);
+        assertEquals(4.4, edge_ab.get(weightEnc), 1e-5);
 
         assertEquals(4.0, edge_bc.get(heightEnc), 1e-5);
         assertEquals(2.5, edge_bc.get(widthEnc), 1e-5);
-        assertEquals(4.5, edge_bc.get(weightEnc), 1e-5);
+        assertEquals(4.4, edge_bc.get(weightEnc), 1e-5);
 
         assertEquals(4.4, edge_ad.get(heightEnc), 1e-5);
         assertEquals(3.5, edge_ad.get(widthEnc), 1e-5);
-        assertEquals(18, edge_ad.get(weightEnc), 1e-5);
+        assertEquals(17.5, edge_ad.get(weightEnc), 1e-5);
 
         assertEquals(4.4, edge_cd.get(heightEnc), 1e-5);
         assertEquals(3.5, edge_cd.get(widthEnc), 1e-5);
-        assertEquals(18, edge_cd.get(weightEnc), 1e-5);
+        assertEquals(17.5, edge_cd.get(weightEnc), 1e-5);
     }
 
     @Test

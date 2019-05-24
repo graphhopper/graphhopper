@@ -24,9 +24,6 @@ import com.graphhopper.storage.IntsRef;
  */
 public final class SimpleBooleanEncodedValue extends SimpleIntEncodedValue implements BooleanEncodedValue {
 
-    private SimpleBooleanEncodedValue() {
-    }
-
     public SimpleBooleanEncodedValue(String name) {
         this(name, false);
     }

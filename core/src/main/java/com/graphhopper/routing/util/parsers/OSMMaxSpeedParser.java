@@ -32,16 +32,17 @@ import java.util.List;
 
 import static com.graphhopper.routing.profiles.MaxSpeed.UNSET_SPEED;
 
-public class OSMCarMaxSpeedParser implements TagParser {
+public class OSMMaxSpeedParser implements TagParser {
 
     private final DecimalEncodedValue carMaxSpeedEnc;
+
     private final double maxPossibleSpeed = MaxSpeed.UNLIMITED_SIGN_SPEED;
 
-    public OSMCarMaxSpeedParser() {
+    public OSMMaxSpeedParser() {
         this(MaxSpeed.create());
     }
 
-    public OSMCarMaxSpeedParser(DecimalEncodedValue carMaxSpeedEnc) {
+    public OSMMaxSpeedParser(DecimalEncodedValue carMaxSpeedEnc) {
         this.carMaxSpeedEnc = carMaxSpeedEnc;
     }
 

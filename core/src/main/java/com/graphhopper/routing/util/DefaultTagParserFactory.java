@@ -41,7 +41,7 @@ public class DefaultTagParserFactory implements TagParserFactory {
         else if (name.equals(Surface.KEY))
             return new OSMSurfaceParser();
         else if (name.equals(MaxSpeed.KEY))
-            return new OSMCarMaxSpeedParser();
+            return new OSMMaxSpeedParser();
         else if (name.equals(MaxHeight.KEY))
             return new OSMMaxHeightParser();
         else if (name.equals(MaxWidth.KEY))

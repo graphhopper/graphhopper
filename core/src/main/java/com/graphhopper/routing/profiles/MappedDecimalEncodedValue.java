@@ -28,6 +28,7 @@ import java.util.*;
  * "maximum height of a road" there might be only a few distinct values where we need full precision.
  *
  * @see FactorizedDecimalEncodedValue
+ * @deprecated currently default values are not supported, see #1548 for discussion
  */
 public final class MappedDecimalEncodedValue extends SimpleIntEncodedValue implements DecimalEncodedValue {
     private final int toValueMapArray[];
@@ -53,7 +54,7 @@ public final class MappedDecimalEncodedValue extends SimpleIntEncodedValue imple
         for (double val : sortedValues) {
             int intVal = toInt(val);
             if (!dupCheck.add(intVal)) {
-                throw new IllegalArgumentException("The value " + val + " was converted to " + intVal + " but this already exists. Remove it to improve efficiency.");
+                throw new IllegalArgumentException("The value " + val + " was converted to " + intVal + " but this already exists. Remove it or increase precision.");
             }
             toValueMapArray[index] = intVal;
             toStorageMap.put(intVal, index);
@@ -65,13 +66,14 @@ public final class MappedDecimalEncodedValue extends SimpleIntEncodedValue imple
         return (int) Math.round(val / precision);
     }
 
-    int findClosestIndex(int val) {
+    private int findClosestIndex(int val) {
         int res = Arrays.binarySearch(toValueMapArray, val);
         if (res >= 0)
             throw new IllegalStateException("Cannot happen as toStorageMap.getOrDefault should have caught this case");
 
         // TODO NOW rounding up from e.g. max_height=10 to 11 might be ugly. Not sure how or what to do about it or if we should make it even configurable.
         res = -res;
+        // find out to which index the requested val is closer
         double delta1 = res < 2 ? Double.POSITIVE_INFINITY : val - toValueMapArray[res - 2],
                 delta2 = res >= toValueMapArray.length ? Double.POSITIVE_INFINITY : toValueMapArray[res - 1] - val;
         if (delta1 < delta2)

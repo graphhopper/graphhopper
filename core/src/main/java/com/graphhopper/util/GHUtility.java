@@ -547,7 +547,7 @@ public class GHUtility {
 
     public static final EncodingManager.Builder addDefaultEncodedValues(EncodingManager.Builder builder) {
         return builder.add(new OSMRoadClassParser()).add(new OSMRoadClassLinkParser()).
-                add(new OSMRoadEnvironmentParser()).add(new OSMCarMaxSpeedParser()).add(new OSMRoadAccessParser()).
+                add(new OSMRoadEnvironmentParser()).add(new OSMMaxSpeedParser()).add(new OSMRoadAccessParser()).
                 add(new OSMSurfaceParser());
     }
 
