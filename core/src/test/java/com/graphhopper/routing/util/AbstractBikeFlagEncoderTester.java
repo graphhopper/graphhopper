@@ -179,6 +179,20 @@ public abstract class AbstractBikeFlagEncoderTester {
         way.setTag("railway", "abandoned");
         assertTrue(encoder.getAccess(way).isWay());
 
+        way.clearTags();
+        way.setTag("highway", "platform");
+        assertTrue(encoder.getAccess(way).isWay());
+
+        way.clearTags();
+        way.setTag("highway", "platform");
+        way.setTag("bicycle", "dismount");
+        assertTrue(encoder.getAccess(way).isWay());
+
+        way.clearTags();
+        way.setTag("highway", "platform");
+        way.setTag("bicycle", "no");
+        assertTrue(encoder.getAccess(way).canSkip());
+
         DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
 
         way.clearTags();
