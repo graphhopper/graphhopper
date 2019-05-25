@@ -492,6 +492,25 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         relFlags = encoder.handleRelationTags(0, osmRel);
         wayType = getWayTypeFromFlags(osmWay, relFlags);
         assertEquals("get off the bike", wayType);
+
+        // Test for highway=platform.
+        osmRel.clearTags();
+        osmWay.clearTags();
+        osmWay.setTag("highway", "platform");
+
+        // First tests without a cycle route relation, this is a get off the bike
+        relFlags = encoder.handleRelationTags(0, osmRel);
+        wayType = getWayTypeFromFlags(osmWay, relFlags);
+        assertEquals("get off the bike", wayType);
+
+        // now as part of a cycle route relation
+        osmRel.setTag("type", "route");
+        osmRel.setTag("route", "bicycle");
+        osmRel.setTag("network", "lcn");
+        relFlags = encoder.handleRelationTags(0, osmRel);
+        wayType = getWayTypeFromFlags(osmWay, relFlags);
+        assertEquals("", wayType);
+
     }
 
     @Test
