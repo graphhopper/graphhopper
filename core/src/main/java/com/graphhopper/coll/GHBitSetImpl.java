@@ -20,6 +20,10 @@ package com.graphhopper.coll;
 import java.util.BitSet;
 
 /**
+ * This implementation stores the bits inside the values of a long-array. Be aware that the size of this array grows
+ * depending on the values you pass into this set. If you only want to add a few (possibly large) integers you should
+ * use {@link GHTBitSet} instead.
+ *
  * @author Peter Karich
  */
 public class GHBitSetImpl extends BitSet implements GHBitSet {

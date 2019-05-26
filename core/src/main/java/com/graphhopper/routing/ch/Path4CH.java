@@ -21,28 +21,38 @@ import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.ShortcutUnpacker;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 public class Path4CH extends PathBidirRef {
     private final ShortcutUnpacker shortcutUnpacker;
 
     public Path4CH(Graph routingGraph, Graph baseGraph, final Weighting weighting) {
         super(baseGraph, weighting);
-        this.shortcutUnpacker = new ShortcutUnpacker(routingGraph, new ShortcutUnpacker.Visitor() {
-            @Override
-            public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-                distance += edge.getDistance();
-                time += weighting.calcMillis(edge, reverse, EdgeIterator.NO_EDGE);
-                addEdge(edge.getEdge());
-            }
-        });
+        this.shortcutUnpacker = getShortcutUnpacker(routingGraph, weighting);
     }
 
     @Override
-    protected final void processEdge(int edgeId, int endNode, int prevEdgeId) {
+    protected final void processEdge(int edgeId, int adjNode, int prevEdgeId) {
         // Shortcuts do only contain valid weight so first expand before adding
         // to distance and time
-        shortcutUnpacker.visitOriginalEdges(edgeId, endNode, reverseOrder);
+        shortcutUnpacker.visitOriginalEdgesFwd(edgeId, adjNode, true, prevEdgeId);
+    }
+
+    @Override
+    protected void processEdgeBwd(int edgeId, int adjNode, int nextEdgeId) {
+        shortcutUnpacker.visitOriginalEdgesBwd(edgeId, adjNode, true, nextEdgeId);
+    }
+
+    protected ShortcutUnpacker getShortcutUnpacker(Graph routingGraph, final Weighting weighting) {
+        return new ShortcutUnpacker(routingGraph, new ShortcutUnpacker.Visitor() {
+            @Override
+            public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
+                distance += edge.getDistance();
+                time += weighting.calcMillis(edge, reverse, NO_EDGE);
+                addEdge(edge.getEdge());
+            }
+        }, false);
     }
 }

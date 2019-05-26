@@ -88,6 +88,11 @@ public interface Graph {
     int getOtherNode(int edge, int node);
 
     /**
+     * @return true if the edge with id edge is adjacent to node, false otherwise
+     */
+    boolean isAdjacentToNode(int edge, int node);
+
+    /**
      * @return all edges in this graph, where baseNode will be the smaller node.
      */
     AllEdgesIterator getAllEdges();

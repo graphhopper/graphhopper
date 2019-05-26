@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHEntry;
-import com.graphhopper.routing.ch.Path4CH;
+import com.graphhopper.routing.ch.EdgeBasedPathCH;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
@@ -93,7 +93,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
             if (entry.getWeightOfVisitedPath() < bestPath.getWeight()) {
                 bestPath.setSwitchToFrom(reverse);
                 bestPath.setSPTEntry(entry);
-                bestPath.setSPTEntryTo(new SPTEntry(EdgeIterator.NO_EDGE, oppositeNode, 0));
+                bestPath.setSPTEntryTo(new CHEntry(oppositeNode, 0));
                 bestPath.setWeight(entry.getWeightOfVisitedPath());
                 return;
             }
@@ -134,7 +134,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
 
     @Override
     protected Path createAndInitPath() {
-        bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
+        bestPath = new EdgeBasedPathCH(graph, graph.getBaseGraph(), weighting);
         return bestPath;
     }
 
