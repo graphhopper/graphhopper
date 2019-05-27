@@ -27,6 +27,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
+/**
+ * This resource provides the entire shortest path tree as response. In a JSON format ('close' to CSV) discussed at #1577.
+ */
 @Path("spt")
 public class SPTResource {
 
@@ -34,14 +37,11 @@ public class SPTResource {
 
     private final GraphHopper graphHopper;
     private final EncodingManager encodingManager;
-    private final DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder;
-    private final GeometryFactory geometryFactory = new GeometryFactory();
 
     @Inject
-    public SPTResource(GraphHopper graphHopper, EncodingManager encodingManager, DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder) {
+    public SPTResource(GraphHopper graphHopper, EncodingManager encodingManager) {
         this.graphHopper = graphHopper;
         this.encodingManager = encodingManager;
-        this.delaunayTriangulationIsolineBuilder = delaunayTriangulationIsolineBuilder;
     }
 
     @GET
