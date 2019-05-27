@@ -749,6 +749,15 @@ public class QueryGraph implements Graph {
         return mainGraph.getOtherNode(edge, node);
     }
 
+    @Override
+    public boolean isAdjacentToNode(int edge, int node) {
+        if (isVirtualEdge(edge)) {
+            EdgeIteratorState virtualEdge = getEdgeIteratorState(edge, node);
+            return virtualEdge.getBaseNode() == node || virtualEdge.getAdjNode() == node;
+        }
+        return mainGraph.isAdjacentToNode(edge, node);
+    }
+
     private UnsupportedOperationException exc() {
         return new UnsupportedOperationException("QueryGraph cannot be modified.");
     }

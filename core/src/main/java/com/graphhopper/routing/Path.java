@@ -234,8 +234,7 @@ public class Path {
     /**
      * Calculates the distance and time of the specified edgeId. Also it adds the edgeId to the path list.
      *
-     * @param prevEdgeId here the edge that comes before edgeId is necessary. I.e. for the reverse search we need the
-     *                   next edge.
+     * @param prevEdgeId the edge that comes before edgeId: --prevEdgeId-x-edgeId-->adjNode
      */
     protected void processEdge(int edgeId, int adjNode, int prevEdgeId) {
         EdgeIteratorState iter = graph.getEdgeIteratorState(edgeId, adjNode);
