@@ -109,6 +109,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         safeHighwayTags.add("track");
         safeHighwayTags.add("residential");
         safeHighwayTags.add("service");
+        safeHighwayTags.add("platform");
 
         avoidHighwayTags.add("trunk");
         avoidHighwayTags.add("trunk_link");

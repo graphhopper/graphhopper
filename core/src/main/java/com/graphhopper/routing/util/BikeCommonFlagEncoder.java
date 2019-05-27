@@ -167,6 +167,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         setHighwaySpeed("cycleway", CYCLEWAY_SPEED);
         setHighwaySpeed("path", 10);
         setHighwaySpeed("footway", 6);
+        setHighwaySpeed("platform", 6);
         setHighwaySpeed("pedestrian", 6);
         setHighwaySpeed("track", 12);
         setHighwaySpeed("service", 14);

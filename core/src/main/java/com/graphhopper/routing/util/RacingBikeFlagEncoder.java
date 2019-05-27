@@ -113,6 +113,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
 
         addPushingSection("path");
         addPushingSection("footway");
+        addPushingSection("platform");
         addPushingSection("pedestrian");
         addPushingSection("steps");
 

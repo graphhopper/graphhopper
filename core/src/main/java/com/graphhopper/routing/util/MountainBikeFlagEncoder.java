@@ -110,6 +110,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
         setHighwaySpeed("tertiary_link", 18);
 
         addPushingSection("footway");
+        addPushingSection("platform");
         addPushingSection("pedestrian");
         addPushingSection("steps");
 

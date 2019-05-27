@@ -312,6 +312,11 @@ class GraphSupport {
             public int getOtherNode(int edge, int node) {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+            public boolean isAdjacentToNode(int edge, int node) {
+                throw new UnsupportedOperationException();
+            }
         };
     }
 }
