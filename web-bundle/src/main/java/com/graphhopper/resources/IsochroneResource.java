@@ -3,6 +3,7 @@ package com.graphhopper.resources;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
 import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.json.geo.JsonFeature;
@@ -12,7 +13,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.Coordinate;
@@ -27,7 +27,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 @Path("isochrone")
 public class IsochroneResource {
@@ -122,23 +125,11 @@ public class IsochroneResource {
             json.putPOJO("polygons", features);
             sw.stop();
             logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
-            return Response.fromResponse(jsonSuccessResponse(json, sw.getSeconds()))
-                    .header("X-GH-Took", "" + sw.getSeconds() * 1000)
-                    .build();
+            return Response.ok(WebHelper.jsonResponsePutInfo(json, sw.getSeconds())).header("X-GH-Took", "" + sw.getSeconds() * 1000).
+                    build();
 
         } else {
             throw new IllegalArgumentException("type not supported:" + resultStr);
         }
-    }
-
-    private Response jsonSuccessResponse(ObjectNode json, float took) {
-        // If you replace GraphHopper with your own brand name, this is fine.
-        // Still it would be highly appreciated if you mention us in your about page!
-        final ObjectNode info = json.putObject("info");
-        info.putArray("copyrights")
-                .add("GraphHopper")
-                .add("OpenStreetMap contributors");
-        info.put("took", Math.round(took * 1000));
-        return Response.ok(json).build();
     }
 }
