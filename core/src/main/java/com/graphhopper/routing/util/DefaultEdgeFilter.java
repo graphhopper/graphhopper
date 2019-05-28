@@ -102,14 +102,6 @@ public class DefaultEdgeFilter implements EdgeFilter {
         return fwd && iter.get(accessEnc) || bwd && iter.getReverse(accessEnc);
     }
 
-    public boolean acceptsBackward() {
-        return bwd;
-    }
-
-    public boolean acceptsForward() {
-        return fwd;
-    }
-
     @Override
     public String toString() {
         return accessEnc.toString() + ", bwd:" + bwd + ", fwd:" + fwd;
