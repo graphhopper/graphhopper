@@ -63,7 +63,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     public void initFromGraph() {
         super.initFromGraph();
         ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
-        final EdgeFilter allFilter = DefaultEdgeFilter.allEdges(encoder);
+        final EdgeFilter allFilter = DefaultEdgeFilter.allEdges(encoder.getAccessEnc());
         final EdgeFilter remainingNodesFilter = new LevelEdgeFilter(prepareGraph) {
             @Override
             public final boolean accept(EdgeIteratorState edgeState) {

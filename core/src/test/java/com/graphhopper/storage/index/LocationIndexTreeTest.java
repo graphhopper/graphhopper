@@ -484,12 +484,12 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         index.prepareIndex();
         index.setMaxRegionSearch(8);
 
-        EdgeFilter carFilter = DefaultEdgeFilter.allEdges(carEncoder);
+        EdgeFilter carFilter = DefaultEdgeFilter.allEdges(carEncoder.getAccessEnc());
         QueryResult qr = index.findClosest(0.03, 0.03, carFilter);
         assertTrue(qr.isValid());
         assertEquals(33, qr.getClosestNode());
 
-        EdgeFilter bikeFilter = DefaultEdgeFilter.allEdges(bikeEncoder);
+        EdgeFilter bikeFilter = DefaultEdgeFilter.allEdges(bikeEncoder.getAccessEnc());
         qr = index.findClosest(0.03, 0.03, bikeFilter);
         assertTrue(qr.isValid());
         assertEquals(2, qr.getClosestNode());

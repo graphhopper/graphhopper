@@ -189,7 +189,7 @@ public final class GraphHopperGtfs {
         }
 
         private QueryResult findClosest(GHPoint point, int indexForErrorMessage) {
-            final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot"));
+            final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot").getAccessEnc());
             QueryResult source = locationIndex.findClosest(point.lat, point.lon, filter);
             if (!source.isValid()) {
                 throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);
@@ -401,7 +401,7 @@ public final class GraphHopperGtfs {
 
 
     public static LocationIndex createOrLoadIndex(GHDirectory directory, GraphHopperStorage graphHopperStorage) {
-        final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot"));
+        final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot").getAccessEnc());
         Graph walkNetwork = GraphSupport.filteredView(graphHopperStorage, filter);
         LocationIndex locationIndex = new LocationIndexTree(walkNetwork, directory);
         if (!locationIndex.loadExisting()) {

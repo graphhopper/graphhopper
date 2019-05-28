@@ -56,8 +56,8 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         this.traversalMode = traversalMode;
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
-        outEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder));
-        inEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder));
+        outEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc()));
+        inEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc()));
     }
 
     @Override

@@ -108,7 +108,7 @@ class GtfsReader {
 
     void connectStopsToStreetNetwork() {
         FlagEncoder footEncoder = ((GraphHopperStorage) graph).getEncodingManager().getEncoder("foot");
-        final EdgeFilter filter = DefaultEdgeFilter.allEdges(footEncoder);
+        final EdgeFilter filter = DefaultEdgeFilter.allEdges(footEncoder.getAccessEnc());
         for (Stop stop : feed.stops.values()) {
             if (stop.location_type == 0) { // Only stops. Not interested in parent stations for now.
                 QueryResult locationQueryResult = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
@@ -456,7 +456,7 @@ class GtfsReader {
         if (platformEnterNode == -1) {
             return result;
         }
-        EdgeIterator edge = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)).setBaseNode(platformEnterNode);
+        EdgeIterator edge = graph.getBaseGraph().createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc())).setBaseNode(platformEnterNode);
         while (edge.next()) {
             if (edge.get(encoder.getTypeEnc()) == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK) {
                 result.put(edge.get(timeEnc), edge.getAdjNode());
@@ -468,9 +468,9 @@ class GtfsReader {
     private int findPlatformNode(int stationNode, GtfsStorageI.PlatformDescriptor platformDescriptor, GtfsStorage.EdgeType edgeType) {
         DefaultEdgeFilter filter;
         if (edgeType == GtfsStorage.EdgeType.ENTER_PT) {
-            filter = DefaultEdgeFilter.outEdges(encoder);
+            filter = DefaultEdgeFilter.outEdges(encoder.getAccessEnc());
         } else if (edgeType == GtfsStorage.EdgeType.EXIT_PT) {
-            filter = DefaultEdgeFilter.inEdges(encoder);
+            filter = DefaultEdgeFilter.inEdges(encoder.getAccessEnc());
         } else {
             throw new RuntimeException();
         }

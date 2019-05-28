@@ -369,7 +369,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         CHGraph lg = graph.getGraph(CHGraph.class);
         lg.shortcut(1, 4).setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 3);
 
-        EdgeExplorer vehicleOutExplorer = lg.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
+        EdgeExplorer vehicleOutExplorer = lg.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder.getAccessEnc()));
         // iteration should result in same nodes even if reusing the iterator
         assertEquals(GHUtility.asSet(3, 4), GHUtility.getNeighbors(vehicleOutExplorer.setBaseNode(1)));
         assertEquals(GHUtility.asSet(3, 4), GHUtility.getNeighbors(vehicleOutExplorer.setBaseNode(1)));

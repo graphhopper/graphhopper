@@ -453,10 +453,10 @@ public class OSMReader implements DataReader {
         EdgeExplorer edgeInExplorer = inExplorerMap.get(encoder);
 
         if (edgeOutExplorer == null || edgeInExplorer == null) {
-            edgeOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+            edgeOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc()));
             outExplorerMap.put(encoder, edgeOutExplorer);
 
-            edgeInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
+            edgeInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder.getAccessEnc()));
             inExplorerMap.put(encoder, edgeInExplorer);
         }
         return turnRelation.getRestrictionAsEntries(encoder, edgeOutExplorer, edgeInExplorer, this);

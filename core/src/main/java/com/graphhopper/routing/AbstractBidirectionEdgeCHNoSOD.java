@@ -44,8 +44,10 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         super(graph, weighting, TraversalMode.EDGE_BASED_2DIR);
         this.turnWeighting = weighting;
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
-        innerInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder));
-        innerOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder));
+        // important: we have to use different filter ids, otherwise this will not work with QueryGraph's edge explorer
+        // cache, see #1623.
+        innerInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc()).setFilterId(1));
+        innerOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc()).setFilterId(1));
         if (!(graph.getExtension() instanceof TurnCostExtension)) {
             throw new IllegalArgumentException("edge-based CH algorithms require a turn cost extension");
         }
