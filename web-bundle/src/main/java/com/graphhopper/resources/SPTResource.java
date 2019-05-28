@@ -51,7 +51,7 @@ public class SPTResource {
             @QueryParam("vehicle") @DefaultValue("car") String vehicle,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("point") GHPoint point,
-            @QueryParam("pointlist_ext_header") String extendedHeader,
+            @QueryParam("columns") String columnsParam,
             @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter) {
 
@@ -86,15 +86,15 @@ public class SPTResource {
             isochrone.setTimeLimit(timeLimitInSeconds);
         }
 
-        Collection<String> header = new LinkedHashSet<>(Arrays.asList("longitude", "latitude", "time", "distance"));
-        if (!Helper.isEmpty(extendedHeader))
-            header.addAll(Arrays.asList(extendedHeader.split(",")));
+        Collection<String> columns = new LinkedHashSet<>(Arrays.asList("longitude", "latitude", "time", "distance"));
+        if (!Helper.isEmpty(columnsParam))
+            columns.addAll(Arrays.asList(columnsParam.split(",")));
         List<Isochrone.IsoLabelWithCoordinates> resultList = isochrone.search(qr.getClosestNode());
         List<List<Object>> items = new ArrayList<>(resultList.size());
         for (Isochrone.IsoLabelWithCoordinates label : resultList) {
-            List<Object> list = new ArrayList<>(header.size());
-            for (String h : header) {
-                switch (h) {
+            List<Object> list = new ArrayList<>(columns.size());
+            for (String col : columns) {
+                switch (col) {
                     case "node_id":
                         list.add(label.nodeId);
                         break;
@@ -132,13 +132,13 @@ public class SPTResource {
                         list.add(label.prevCoordinate == null ? null : label.prevCoordinate.lat);
                         break;
                     default:
-                        throw new IllegalArgumentException("Unknown property " + h);
+                        throw new IllegalArgumentException("Unknown property " + col);
                 }
             }
             items.add(list);
         }
         ObjectNode json = JsonNodeFactory.instance.objectNode();
-        json.putPOJO("header", header);
+        json.putPOJO("columns", columns);
         json.putPOJO("items", items);
         sw.stop();
         logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
