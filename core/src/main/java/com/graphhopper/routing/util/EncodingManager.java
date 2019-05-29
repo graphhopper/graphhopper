@@ -611,7 +611,7 @@ public class EncodingManager implements EncodedValueLookup {
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 53 * hash + (this.edgeEncoders != null ? this.edgeEncoders.hashCode() : 0);
+        hash = 53 * hash + this.edgeEncoders.hashCode();
         return hash;
     }
 
@@ -624,8 +624,7 @@ public class EncodingManager implements EncodedValueLookup {
             return false;
 
         final EncodingManager other = (EncodingManager) obj;
-        if (this.edgeEncoders != other.edgeEncoders
-                && (this.edgeEncoders == null || !this.edgeEncoders.equals(other.edgeEncoders))) {
+        if (this.edgeEncoders != other.edgeEncoders && !this.edgeEncoders.equals(other.edgeEncoders)) {
             return false;
         }
         return true;
@@ -731,11 +730,11 @@ public class EncodingManager implements EncodedValueLookup {
      * All EncodedValue names that are created from a FlagEncoder should use this method to mark them as
      * "none-shared" accross the other FlagEncoders.
      */
-    public static final String getKey(FlagEncoder encoder, String str) {
+    public static String getKey(FlagEncoder encoder, String str) {
         return getKey(encoder.toString(), str);
     }
 
-    public static final String getKey(String prefix, String str) {
+    public static String getKey(String prefix, String str) {
         return prefix + SPECIAL_SEPARATOR + str;
     }
 }

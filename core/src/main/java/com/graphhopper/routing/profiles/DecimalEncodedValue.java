@@ -10,7 +10,6 @@ import com.graphhopper.storage.IntsRef;
  * 2. the default value is always 0.
  *
  * @see FactorizedDecimalEncodedValue
- * @see MappedDecimalEncodedValue
  */
 public interface DecimalEncodedValue extends EncodedValue {
 
@@ -20,4 +19,6 @@ public interface DecimalEncodedValue extends EncodedValue {
     void setDecimal(boolean reverse, IntsRef ref, double value);
 
     double getDecimal(boolean reverse, IntsRef ref);
+
+    boolean isStoreBothDirections();
 }

@@ -473,7 +473,7 @@ public class PrepareContractionHierarchiesTest {
         // would not happen, because node 2 would not even be explored in the forward search, but because of the virtual
         // node the strict upward search is modified and goes like 0-3-1-2 (i.e. it finds node 2).
         // so no we fine tune the weight for 2-4 such that node 4 gets also stalled
-        edge24.setReverse(carEncoder.getAverageSpeedEnc(), 27.5);
+        edge24.set(carEncoder.getAverageSpeedEnc(), 27.5);
 
         // prepare ch, use node ids as levels
         PrepareContractionHierarchies pch = createPrepareContractionHierarchies(g, lg, fastestWeighting);

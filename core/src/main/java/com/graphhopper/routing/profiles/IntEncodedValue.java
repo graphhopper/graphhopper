@@ -20,4 +20,6 @@ public interface IntEncodedValue extends EncodedValue {
      * This method stores the specified integer value in the specified IntsRef.
      */
     void setInt(boolean reverse, IntsRef ref, int value);
+
+    boolean isStoreBothDirections();
 }

@@ -22,10 +22,12 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import org.junit.Test;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -35,7 +37,8 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class CarFlagEncoderTest {
-    private final EncodingManager em = EncodingManager.create("car,bike,foot");
+    private final EncodingManager em = EncodingManager.create(Arrays.asList(new CarFlagEncoder(new PMap("speed_two_directions=true")),
+            new BikeFlagEncoder(), new FootFlagEncoder()), 8);
     private final CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("car");
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();

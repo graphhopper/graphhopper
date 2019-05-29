@@ -107,7 +107,10 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
     }
 
     final void uncheckedSet(boolean reverse, IntsRef ref, int value) {
-        if (storeBothDirections && reverse) {
+        if (reverse && !storeBothDirections)
+            throw new IllegalArgumentException(getName() + ": value for reverse direction would overwrite forward direction. Enable 'storeBothDirections' or always use reverse==true when storing the value");
+
+        if (reverse) {
             int flags = ref.ints[bwdDataIndex + ref.offset];
             // clear value bits
             flags &= ~bwdMask;
@@ -125,6 +128,7 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
     @Override
     public final int getInt(boolean reverse, IntsRef ref) {
         int flags;
+        // if we do not store both directions ignore reverse == true for convenient reading
         if (reverse && storeBothDirections) {
             flags = ref.ints[bwdDataIndex + ref.offset];
             return (flags & bwdMask) >>> bwdShift;
@@ -132,6 +136,11 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
             flags = ref.ints[fwdDataIndex + ref.offset];
             return (flags & fwdMask) >>> fwdShift;
         }
+    }
+
+    @Override
+    public final boolean isStoreBothDirections() {
+        return storeBothDirections;
     }
 
     @Override

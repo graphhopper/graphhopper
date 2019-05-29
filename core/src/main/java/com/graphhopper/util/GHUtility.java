@@ -207,7 +207,8 @@ public class GHUtility {
             double bwdSpeed = 10 + random.nextDouble() * 120;
             if (randomSpeedEnc != null) {
                 edge.set(randomSpeedEnc, fwdSpeed);
-                edge.setReverse(randomSpeedEnc, bwdSpeed);
+                if (randomSpeedEnc.isStoreBothDirections())
+                    edge.setReverse(randomSpeedEnc, bwdSpeed);
             }
             numEdges++;
         }
@@ -552,7 +553,7 @@ public class GHUtility {
         edge.set(accessEnc, fwd).setReverse(accessEnc, bwd);
         if (fwd)
             edge.set(avSpeedEnc, averageSpeed);
-        if (bwd)
+        if (bwd && avSpeedEnc.isStoreBothDirections())
             edge.setReverse(avSpeedEnc, averageSpeed);
         return edge;
     }
