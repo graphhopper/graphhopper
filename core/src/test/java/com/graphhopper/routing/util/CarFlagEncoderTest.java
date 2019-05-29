@@ -284,7 +284,7 @@ public class CarFlagEncoderTest {
         way.setTag("highway", "motorway");
         way.setTag("maxspeed", "none");
         edgeFlags = em.handleWayTags(way, allowed, 0);
-        assertEquals(140, avSpeedEnc.getDecimal(false, edgeFlags), .1);
+        assertEquals(135, avSpeedEnc.getDecimal(false, edgeFlags), .1);
     }
 
     @Test

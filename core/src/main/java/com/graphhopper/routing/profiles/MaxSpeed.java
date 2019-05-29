@@ -24,10 +24,10 @@ public class MaxSpeed {
     public static final String KEY = "max_speed";
 
     /**
-     * The speed value used for "none" speed limit on German Autobahn is 155=31*5 as this is the biggest value
-     * not explicitly used in OSM.
+     * The speed value used for "none" speed limit on German Autobahn is 150=30*5 as this is the biggest value
+     * not explicitly used in OSM and can be precisely returned for a factor of 5, 3, 2 and 1.
      */
-    public static final double UNLIMITED_SIGN_SPEED = 155;
+    public static final double UNLIMITED_SIGN_SPEED = 150;
     /**
      * The speed value used for road sections without known speed limit.
      */
