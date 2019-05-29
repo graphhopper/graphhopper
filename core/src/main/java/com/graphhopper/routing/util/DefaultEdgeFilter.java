@@ -24,26 +24,28 @@ import com.graphhopper.util.EdgeIteratorState;
  * @author Peter Karich
  */
 public class DefaultEdgeFilter implements EdgeFilter {
+    private static int DEFAULT_FILTER_ID = 0;
     private final boolean bwd;
     private final boolean fwd;
-    protected final BooleanEncodedValue accessEnc;
+    private final BooleanEncodedValue accessEnc;
+    /**
+     * Used to be able to create non-equal filter instances with equal access encoder and fwd/bwd flags.
+     */
+    private int filterId;
 
-    protected DefaultEdgeFilter(BooleanEncodedValue accessEnc, boolean fwd, boolean bwd) {
+    private DefaultEdgeFilter(BooleanEncodedValue accessEnc, boolean fwd, boolean bwd, int filterId) {
         this.accessEnc = accessEnc;
         this.fwd = fwd;
         this.bwd = bwd;
+        this.filterId = filterId;
     }
 
     public static DefaultEdgeFilter outEdges(BooleanEncodedValue accessEnc) {
-        return new DefaultEdgeFilter(accessEnc, true, false);
+        return new DefaultEdgeFilter(accessEnc, true, false, DEFAULT_FILTER_ID);
     }
 
-    public static DefaultEdgeFilter outEdges(FlagEncoder flagEncoder) {
-        return new DefaultEdgeFilter(flagEncoder.getAccessEnc(), true, false);
-    }
-
-    public static DefaultEdgeFilter inEdges(FlagEncoder flagEncoder) {
-        return new DefaultEdgeFilter(flagEncoder.getAccessEnc(), false, true);
+    public static DefaultEdgeFilter inEdges(BooleanEncodedValue accessEnc) {
+        return new DefaultEdgeFilter(accessEnc, false, true, DEFAULT_FILTER_ID);
     }
 
     /**
@@ -51,8 +53,29 @@ public class DefaultEdgeFilter implements EdgeFilter {
      * Edges where neither one of the flags is enabled will still not be accepted. If you need to retrieve all edges
      * regardless of their encoding use {@link EdgeFilter#ALL_EDGES} instead.
      */
+    public static DefaultEdgeFilter allEdges(BooleanEncodedValue accessEnc) {
+        return new DefaultEdgeFilter(accessEnc, true, true, DEFAULT_FILTER_ID);
+    }
+
+    public static DefaultEdgeFilter outEdges(FlagEncoder flagEncoder) {
+        return DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc());
+    }
+
+    public static DefaultEdgeFilter inEdges(FlagEncoder flagEncoder) {
+        return DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
+    }
+
     public static DefaultEdgeFilter allEdges(FlagEncoder flagEncoder) {
-        return new DefaultEdgeFilter(flagEncoder.getAccessEnc(), true, true);
+        return DefaultEdgeFilter.allEdges(flagEncoder.getAccessEnc());
+    }
+
+    public DefaultEdgeFilter setFilterId(int filterId) {
+        this.filterId = filterId;
+        return this;
+    }
+
+    public BooleanEncodedValue getAccessEnc() {
+        return accessEnc;
     }
 
     @Override
@@ -67,16 +90,30 @@ public class DefaultEdgeFilter implements EdgeFilter {
         return fwd && iter.get(accessEnc) || bwd && iter.getReverse(accessEnc);
     }
 
-    public boolean acceptsBackward() {
-        return bwd;
-    }
-
-    public boolean acceptsForward() {
-        return fwd;
-    }
-
     @Override
     public String toString() {
         return accessEnc.toString() + ", bwd:" + bwd + ", fwd:" + fwd;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DefaultEdgeFilter that = (DefaultEdgeFilter) o;
+
+        if (bwd != that.bwd) return false;
+        if (fwd != that.fwd) return false;
+        if (filterId != that.filterId) return false;
+        return accessEnc.equals(that.accessEnc);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (bwd ? 1 : 0);
+        result = 31 * result + (fwd ? 1 : 0);
+        result = 31 * result + accessEnc.hashCode();
+        result = 31 * result + filterId;
+        return result;
     }
 }

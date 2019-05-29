@@ -33,9 +33,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.*;
 
 import static com.graphhopper.storage.index.QueryResult.Position.*;
 import static org.junit.Assert.*;
@@ -678,7 +676,55 @@ public class QueryGraphTest {
 
         EdgeExplorer edgeExplorer = queryGraph.createEdgeExplorer();
         // using cache means same reference
-        assertTrue(edgeExplorer == queryGraph.createEdgeExplorer());
+        assertSame(edgeExplorer, queryGraph.createEdgeExplorer());
+    }
+
+    @Test
+    public void useEECache_nestedLoop() {
+        //
+        // 0->3
+        // |\
+        // 1 2->6
+        //   |\
+        //   4 5
+        g.edge(0, 1, 10, false);
+        g.edge(0, 2, 10, false);
+        g.edge(0, 3, 10, false);
+        g.edge(2, 4, 10, false);
+        g.edge(2, 5, 10, false);
+        g.edge(2, 6, 10, false);
+
+        EdgeExplorer explorer = g.createEdgeExplorer();
+        EdgeIterator iter = explorer.setBaseNode(0);
+        assertTrue(iter.next());
+        QueryResult res = createLocationResult(0, 0, iter, 1, PILLAR);
+
+        QueryGraph queryGraph = new QueryGraph(g).setUseEdgeExplorerCache(true);
+        queryGraph.lookup(Collections.singletonList(res));
+
+        EdgeExplorer outerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
+        EdgeExplorer innerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
+
+        // without using filter id for DefaultEdgeFilter the filters are equal and using the explorers in a nested
+        // loop would fail
+        assertSame(outerEdgeExplorer, innerEdgeExplorer);
+
+        // using a different filter id for the second filter we get different explorers
+        outerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
+        innerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder).setFilterId(1));
+        assertNotSame(outerEdgeExplorer, innerEdgeExplorer);
+
+        // now we can safely use the two explorers in a nested loop
+        Set<String> edges = new HashSet<>();
+        EdgeIterator outerIter = outerEdgeExplorer.setBaseNode(0);
+        while (outerIter.next()) {
+            edges.add("o" + outerIter.getBaseNode() + "-" + outerIter.getAdjNode());
+            EdgeIterator innerIter = innerEdgeExplorer.setBaseNode(outerIter.getAdjNode());
+            while (innerIter.next()) {
+                edges.add("i" + innerIter.getBaseNode() + "-" + innerIter.getAdjNode());
+            }
+        }
+        assertEquals(new HashSet<>(Arrays.asList("o0-1", "o0-2", "o0-3", "i2-4", "i2-5", "i2-6")), edges);
     }
 
     @Test
