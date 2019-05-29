@@ -21,6 +21,6 @@ public class MaxWeight {
     public static final String KEY = "max_weight";
 
     public static DecimalEncodedValue create() {
-        return new FactorizedDecimalEncodedValue(KEY, 8, 0.1, Double.POSITIVE_INFINITY, false);
+        return new UnsignedDecimalEncodedValue(KEY, 8, 0.1, Double.POSITIVE_INFINITY, false);
     }
 }

@@ -23,11 +23,10 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
-import com.graphhopper.routing.profiles.SimpleIntEncodedValue;
+import com.graphhopper.routing.profiles.UnsignedIntEncodedValue;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.List;
 
@@ -47,10 +46,10 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
         // do we really need 2 bits for pt.access?
         super.createEncodedValues(list, prefix, index);
 
-        list.add(validityIdEnc = new SimpleIntEncodedValue(prefix + "validity_id", 20, false));
-        list.add(transfersEnc = new SimpleIntEncodedValue(prefix + "transfers", 1, false));
+        list.add(validityIdEnc = new UnsignedIntEncodedValue(prefix + "validity_id", 20, false));
+        list.add(transfersEnc = new UnsignedIntEncodedValue(prefix + "transfers", 1, false));
         list.add(typeEnc = new EnumEncodedValue<>(prefix + "type", GtfsStorage.EdgeType.class));
-        list.add(timeEnc = new SimpleIntEncodedValue(prefix + "time", 17, false));
+        list.add(timeEnc = new UnsignedIntEncodedValue(prefix + "time", 17, false));
     }
 
     @Override

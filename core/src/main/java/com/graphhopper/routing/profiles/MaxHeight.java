@@ -17,12 +17,10 @@
  */
 package com.graphhopper.routing.profiles;
 
-import java.util.Arrays;
-
 public class MaxHeight {
     public static final String KEY = "max_height";
 
     public static DecimalEncodedValue create() {
-        return new FactorizedDecimalEncodedValue(KEY, 7, 0.1, Double.POSITIVE_INFINITY, false);
+        return new UnsignedDecimalEncodedValue(KEY, 7, 0.1, Double.POSITIVE_INFINITY, false);
     }
 }

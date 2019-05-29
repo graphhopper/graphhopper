@@ -9,7 +9,7 @@ import com.graphhopper.storage.IntsRef;
  * (maximum 32 at the moment for all implementations) and
  * 2. the default value is always 0.
  *
- * @see FactorizedDecimalEncodedValue
+ * @see UnsignedDecimalEncodedValue
  * @see MappedDecimalEncodedValue
  */
 public interface DecimalEncodedValue extends EncodedValue {
