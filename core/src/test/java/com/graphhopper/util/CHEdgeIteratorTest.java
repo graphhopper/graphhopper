@@ -42,7 +42,7 @@ public class CHEdgeIteratorTest {
         CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(carFlagEncoder);
         FastestWeighting weighting = new FastestWeighting(carFlagEncoder);
-        EdgeFilter carOutFilter = DefaultEdgeFilter.outEdges(carFlagEncoder.getAccessEnc());
+        EdgeFilter carOutFilter = DefaultEdgeFilter.outEdges(carFlagEncoder);
         GraphHopperStorage ghStorage = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
         CHGraph g = ghStorage.getGraph(CHGraph.class, weighting);
         BooleanEncodedValue accessEnc = carFlagEncoder.getAccessEnc();

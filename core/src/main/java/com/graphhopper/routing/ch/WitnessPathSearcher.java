@@ -112,8 +112,8 @@ public class WitnessPathSearcher {
         this.turnWeighting = turnWeighting;
         extractParams(pMap);
 
-        DefaultEdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(turnWeighting.getFlagEncoder().getAccessEnc());
-        DefaultEdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(turnWeighting.getFlagEncoder().getAccessEnc());
+        DefaultEdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(turnWeighting.getFlagEncoder());
+        DefaultEdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(turnWeighting.getFlagEncoder());
         outEdgeExplorer = chGraph.createEdgeExplorer(outEdgeFilter);
         origInEdgeExplorer = chGraph.createOriginalEdgeExplorer(inEdgeFilter);
         maxLevel = chGraph.getNodes();

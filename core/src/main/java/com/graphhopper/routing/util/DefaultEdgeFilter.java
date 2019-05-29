@@ -57,26 +57,14 @@ public class DefaultEdgeFilter implements EdgeFilter {
         return new DefaultEdgeFilter(accessEnc, true, true, DEFAULT_FILTER_ID);
     }
 
-    /**
-     * @deprecated Use {@link #outEdges(BooleanEncodedValue)} instead
-     */
-    @Deprecated
     public static DefaultEdgeFilter outEdges(FlagEncoder flagEncoder) {
         return DefaultEdgeFilter.outEdges(flagEncoder.getAccessEnc());
     }
 
-    /**
-     * @deprecated Use {@link #inEdges(BooleanEncodedValue)} instead
-     */
-    @Deprecated
     public static DefaultEdgeFilter inEdges(FlagEncoder flagEncoder) {
         return DefaultEdgeFilter.inEdges(flagEncoder.getAccessEnc());
     }
 
-    /**
-     * @deprecated Use {@link #allEdges(BooleanEncodedValue)} instead
-     */
-    @Deprecated
     public static DefaultEdgeFilter allEdges(FlagEncoder flagEncoder) {
         return DefaultEdgeFilter.allEdges(flagEncoder.getAccessEnc());
     }

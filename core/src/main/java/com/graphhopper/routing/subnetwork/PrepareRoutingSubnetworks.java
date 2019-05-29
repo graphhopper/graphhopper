@@ -79,7 +79,7 @@ public class PrepareRoutingSubnetworks {
         int unvisitedDeadEnds = 0;
         for (FlagEncoder encoder : encoders) {
             // mark edges for one vehicle as inaccessible
-            DefaultEdgeFilter filter = DefaultEdgeFilter.allEdges(encoder.getAccessEnc());
+            DefaultEdgeFilter filter = DefaultEdgeFilter.allEdges(encoder);
             if (minOneWayNetworkSize > 0)
                 unvisitedDeadEnds += removeDeadEndUnvisitedNetworks(filter);
 

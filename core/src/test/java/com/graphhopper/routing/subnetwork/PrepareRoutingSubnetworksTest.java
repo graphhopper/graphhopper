@@ -95,7 +95,7 @@ public class PrepareRoutingSubnetworksTest {
     @Test
     public void testFindSubnetworks() {
         GraphHopperStorage g = createSubnetworkTestStorage();
-        DefaultEdgeFilter filter = DefaultEdgeFilter.allEdges(carFlagEncoder.getAccessEnc());
+        DefaultEdgeFilter filter = DefaultEdgeFilter.allEdges(carFlagEncoder);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(carFlagEncoder));
         List<IntArrayList> components = instance.findSubnetworks(filter);
 
@@ -111,7 +111,7 @@ public class PrepareRoutingSubnetworksTest {
     @Test
     public void testKeepLargestNetworks() {
         GraphHopperStorage g = createSubnetworkTestStorage();
-        DefaultEdgeFilter filter = DefaultEdgeFilter.allEdges(carFlagEncoder.getAccessEnc());
+        DefaultEdgeFilter filter = DefaultEdgeFilter.allEdges(carFlagEncoder);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(carFlagEncoder));
         List<IntArrayList> components = instance.findSubnetworks(filter);
         assertEquals(3, components.size());
@@ -190,9 +190,9 @@ public class PrepareRoutingSubnetworksTest {
         // remove nothing because of two vehicles with different subnetworks
         assertEquals(9, g.getNodes());
 
-        EdgeExplorer carExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(carEncoder.getAccessEnc()));
+        EdgeExplorer carExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(carEncoder));
         assertEquals(GHUtility.asSet(7, 2, 1), GHUtility.getNeighbors(carExplorer.setBaseNode(3)));
-        EdgeExplorer bikeExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(bikeEncoder.getAccessEnc()));
+        EdgeExplorer bikeExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(bikeEncoder));
         assertEquals(GHUtility.asSet(7, 2, 1, 4), GHUtility.getNeighbors(bikeExplorer.setBaseNode(3)));
 
         edge = GHUtility.getEdge(g, 3, 4);
@@ -252,7 +252,7 @@ public class PrepareRoutingSubnetworksTest {
 
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(carFlagEncoder)).
                 setMinOneWayNetworkSize(3);
-        int removed = instance.removeDeadEndUnvisitedNetworks(DefaultEdgeFilter.allEdges(carFlagEncoder.getAccessEnc()));
+        int removed = instance.removeDeadEndUnvisitedNetworks(DefaultEdgeFilter.allEdges(carFlagEncoder));
 
         assertEquals(3, removed);
         instance.markNodesRemovedIfUnreachable();
@@ -268,7 +268,7 @@ public class PrepareRoutingSubnetworksTest {
 
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(carFlagEncoder)).
                 setMinOneWayNetworkSize(3);
-        int removed = instance.removeDeadEndUnvisitedNetworks(DefaultEdgeFilter.allEdges(carFlagEncoder.getAccessEnc()));
+        int removed = instance.removeDeadEndUnvisitedNetworks(DefaultEdgeFilter.allEdges(carFlagEncoder));
 
         assertEquals(3, removed);
         instance.markNodesRemovedIfUnreachable();
@@ -286,7 +286,7 @@ public class PrepareRoutingSubnetworksTest {
         GraphHopperStorage g = createSubnetworkTestStorage();
 
         // Requires a single vehicle type, otherwise we throw.
-        final EdgeFilter filter = DefaultEdgeFilter.outEdges(carFlagEncoder.getAccessEnc());
+        final EdgeFilter filter = DefaultEdgeFilter.outEdges(carFlagEncoder);
         TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(g, filter, false);
 
         List<IntArrayList> components = tarjan.findComponents();
@@ -308,7 +308,7 @@ public class PrepareRoutingSubnetworksTest {
 
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(carFlagEncoder)).
                 setMinOneWayNetworkSize(2);
-        int removedEdges = instance.removeDeadEndUnvisitedNetworks(DefaultEdgeFilter.allEdges(carFlagEncoder.getAccessEnc()));
+        int removedEdges = instance.removeDeadEndUnvisitedNetworks(DefaultEdgeFilter.allEdges(carFlagEncoder));
         assertEquals(2, removedEdges);
     }
 
@@ -335,7 +335,7 @@ public class PrepareRoutingSubnetworksTest {
         instance.doWork();
 
         // only one remaining network
-        List<IntArrayList> components = instance.findSubnetworks(DefaultEdgeFilter.allEdges(carFlagEncoder.getAccessEnc()));
+        List<IntArrayList> components = instance.findSubnetworks(DefaultEdgeFilter.allEdges(carFlagEncoder));
         assertEquals(1, components.size());
     }
 

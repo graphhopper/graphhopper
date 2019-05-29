@@ -42,8 +42,8 @@ abstract class AbstractNodeContractor implements NodeContractor {
 
     @Override
     public void initFromGraph() {
-        inEdgeExplorer = prepareGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder.getAccessEnc()));
-        outEdgeExplorer = prepareGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc()));
+        inEdgeExplorer = prepareGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
+        outEdgeExplorer = prepareGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
         maxLevel = prepareGraph.getNodes();
         maxEdgesCount = prepareGraph.getOriginalEdges();
     }

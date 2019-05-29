@@ -61,7 +61,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         if (points.size() < 2)
             throw new IllegalArgumentException("At least 2 points have to be specified, but was:" + points.size());
 
-        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder.getAccessEnc());
+        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
         queryResults = new ArrayList<>(points.size());
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
             GHPoint point = points.get(placeIndex);

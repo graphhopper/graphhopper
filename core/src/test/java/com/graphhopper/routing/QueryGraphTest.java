@@ -432,8 +432,8 @@ public class QueryGraphTest {
 
     @Test
     public void testIteration_Issue163() {
-        EdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(encodingManager.getEncoder("car").getAccessEnc());
-        EdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(encodingManager.getEncoder("car").getAccessEnc());
+        EdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(encodingManager.getEncoder("car"));
+        EdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(encodingManager.getEncoder("car"));
         EdgeExplorer inExplorer = g.createEdgeExplorer(inEdgeFilter);
         EdgeExplorer outExplorer = g.createEdgeExplorer(outEdgeFilter);
 
@@ -702,16 +702,16 @@ public class QueryGraphTest {
         QueryGraph queryGraph = new QueryGraph(g).setUseEdgeExplorerCache(true);
         queryGraph.lookup(Collections.singletonList(res));
 
-        EdgeExplorer outerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder.getAccessEnc()));
-        EdgeExplorer innerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder.getAccessEnc()));
+        EdgeExplorer outerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
+        EdgeExplorer innerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
 
         // without using filter id for DefaultEdgeFilter the filters are equal and using the explorers in a nested
         // loop would fail
         assertSame(outerEdgeExplorer, innerEdgeExplorer);
 
         // using a different filter id for the second filter we get different explorers
-        outerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder.getAccessEnc()));
-        innerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder.getAccessEnc()).setFilterId(1));
+        outerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
+        innerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder).setFilterId(1));
         assertNotSame(outerEdgeExplorer, innerEdgeExplorer);
 
         // now we can safely use the two explorers in a nested loop
@@ -739,7 +739,7 @@ public class QueryGraphTest {
         QueryGraph queryGraph = new QueryGraph(g);
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory());
         locationIndex.prepareIndex();
-        QueryResult qr = locationIndex.findClosest(0.15, 0.15, DefaultEdgeFilter.allEdges(carEncoder.getAccessEnc()));
+        QueryResult qr = locationIndex.findClosest(0.15, 0.15, DefaultEdgeFilter.allEdges(carEncoder));
         assertTrue(qr.isValid());
         assertEquals("this test was supposed to test the Position.EDGE case", EDGE, qr.getSnappedPosition());
         queryGraph.lookup(Collections.singletonList(qr));
@@ -781,7 +781,7 @@ public class QueryGraphTest {
         QueryGraph queryGraph = new QueryGraph(g);
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory());
         locationIndex.prepareIndex();
-        QueryResult qr = locationIndex.findClosest(0.2, 0.21, DefaultEdgeFilter.allEdges(carEncoder.getAccessEnc()));
+        QueryResult qr = locationIndex.findClosest(0.2, 0.21, DefaultEdgeFilter.allEdges(carEncoder));
         assertTrue(qr.isValid());
         assertEquals("this test was supposed to test the Position.PILLAR case", PILLAR, qr.getSnappedPosition());
         queryGraph.lookup(Collections.singletonList(qr));
