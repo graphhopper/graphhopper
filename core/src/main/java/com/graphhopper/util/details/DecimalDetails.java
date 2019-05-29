@@ -24,14 +24,27 @@ public class DecimalDetails extends AbstractPathDetailsBuilder {
 
     private final DecimalEncodedValue ev;
     private double decimalValue = -1;
+    private final double infinityJsonValue;
 
     public DecimalDetails(String name, DecimalEncodedValue ev) {
+        this(name, ev, -1);
+    }
+
+    /**
+     * DecimalEncodedValue can return infinity as default value, but JSON cannot include this
+     * https://stackoverflow.com/a/9218955/194609
+     */
+    public DecimalDetails(String name, DecimalEncodedValue ev, double infinityJsonValue) {
         super(name);
         this.ev = ev;
+        this.infinityJsonValue = infinityJsonValue;
     }
 
     @Override
     protected Object getCurrentValue() {
+        if (Double.isInfinite(decimalValue))
+            return infinityJsonValue;
+
         return decimalValue;
     }
 

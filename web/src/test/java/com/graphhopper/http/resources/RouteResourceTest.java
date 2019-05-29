@@ -64,7 +64,7 @@ public class RouteResourceTest {
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.encoded_values", "road_class,surface,road_environment").
+                put("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 put("graph.location", DIR));
     }
 
@@ -250,8 +250,8 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testPathDetailsWithoutGraphHopperWeb() throws Exception {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id").request().buildGet().invoke();
+    public void testPathDetailsWithoutGraphHopperWeb() {
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id&details=max_speed").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -271,6 +271,10 @@ public class RouteResourceTest {
         int lastLink = edgeIds.get(edgeIds.size() - 1).get(2).asInt();
         assertEquals(880, firstLink);
         assertEquals(1421, lastLink);
+
+        JsonNode maxSpeed = details.get("max_speed");
+        assertEquals(-1, maxSpeed.get(0).get(2).asDouble(), .01);
+        assertEquals(50, maxSpeed.get(1).get(2).asDouble(), .01);
     }
 
     @Test
