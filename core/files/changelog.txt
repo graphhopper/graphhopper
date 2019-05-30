@@ -1,6 +1,7 @@
 0.13
-    DataFlagEncoder: breaking change to previous versions where the Java API dataFlagEncoder.getSpeed returned -1 for cases without speedsign now return 0. The IntDetails of it still return -1
-    DataFlagEncoder: requires some EncodedValues to be added before
+    removed MappedDecimalEncodedValue: should be replaced with FactoredDecimalEncodedValue
+    DataFlagEncoder: it is now required to add EncodedValues before. graph.encoded_values: max_speed,road_class,road_environment,road_access
+    instead of EncodingManager.ROUNDABOUT use Roundabout.KEY
     removed TraversalMode.EDGE_BASED_1DIR
 
 0.12

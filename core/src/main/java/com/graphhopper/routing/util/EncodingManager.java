@@ -23,6 +23,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.parsers.OSMRoundaboutParser;
 import com.graphhopper.routing.util.parsers.TagParser;
+import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.IntsRef;
@@ -728,7 +729,8 @@ public class EncodingManager implements EncodedValueLookup {
 
     /**
      * All EncodedValue names that are created from a FlagEncoder should use this method to mark them as
-     * "none-shared" accross the other FlagEncoders.
+     * "none-shared" across the other FlagEncoders. E.g. average_speed for the CarFlagEncoder will
+     * be named car-average_speed
      */
     public static String getKey(FlagEncoder encoder, String str) {
         return getKey(encoder.toString(), str);

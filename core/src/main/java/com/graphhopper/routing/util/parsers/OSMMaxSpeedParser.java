@@ -18,10 +18,10 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.MaxSpeed;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.profiles.MaxSpeed;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
@@ -35,8 +35,6 @@ import static com.graphhopper.routing.profiles.MaxSpeed.UNSET_SPEED;
 public class OSMMaxSpeedParser implements TagParser {
 
     private final DecimalEncodedValue carMaxSpeedEnc;
-
-    private final double maxPossibleSpeed = MaxSpeed.UNLIMITED_SIGN_SPEED;
 
     public OSMMaxSpeedParser() {
         this(MaxSpeed.create());
@@ -65,9 +63,9 @@ public class OSMMaxSpeedParser implements TagParser {
         double fwdSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed:forward"));
         if (fwdSpeed < 0 && maxSpeed > 0)
             fwdSpeed = maxSpeed;
+        double maxPossibleSpeed = MaxSpeed.UNLIMITED_SIGN_SPEED;
         if (fwdSpeed > maxPossibleSpeed)
             fwdSpeed = maxPossibleSpeed;
-
 
         double bwdSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed:backward"));
         if (bwdSpeed < 0 && maxSpeed > 0)

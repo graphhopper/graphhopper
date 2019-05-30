@@ -15,10 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -30,7 +29,10 @@ public class DefaultTagParserFactory implements TagParserFactory {
         if (!name.equals(toLowerCase(name)))
             throw new IllegalArgumentException("Use lower case for TagParsers: " + name);
 
-        if (name.equals(RoadClass.KEY))
+        // for Country (SpatialRuleParser) see SpatialRuleLookupHelper
+        if (Roundabout.KEY.equals(name))
+            return new OSMRoundaboutParser();
+        else if (name.equals(RoadClass.KEY))
             return new OSMRoadClassParser();
         else if (name.equals(RoadClassLink.KEY))
             return new OSMRoadClassLinkParser();
@@ -38,16 +40,16 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMRoadEnvironmentParser();
         else if (name.equals(RoadAccess.KEY))
             return new OSMRoadAccessParser();
-        else if (name.equals(Surface.KEY))
-            return new OSMSurfaceParser();
         else if (name.equals(MaxSpeed.KEY))
             return new OSMMaxSpeedParser();
+        else if (name.equals(MaxWeight.KEY))
+            return new OSMMaxWeightParser();
         else if (name.equals(MaxHeight.KEY))
             return new OSMMaxHeightParser();
         else if (name.equals(MaxWidth.KEY))
             return new OSMMaxWidthParser();
-        else if (name.equals(MaxWeight.KEY))
-            return new OSMMaxWeightParser();
+        else if (name.equals(Surface.KEY))
+            return new OSMSurfaceParser();
         else if (name.equals(Toll.KEY))
             return new OSMTollParser();
         throw new IllegalArgumentException("entry in encoder list not supported " + name);

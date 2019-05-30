@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util.spatialrules.countries;
 
+import com.graphhopper.routing.profiles.Country;
 import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
@@ -55,6 +56,6 @@ public class AustriaSpatialRule extends DefaultSpatialRule {
 
     @Override
     public String getId() {
-        return "AUT";
+        return Country.AUT.toString();
     }
 }

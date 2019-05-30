@@ -72,6 +72,7 @@ public interface SpatialRule {
             return _default;
         }
 
+        // should we use Country.DEFAULT here?
         @Override
         public String getId() {
             return "SpatialRule.EMPTY";

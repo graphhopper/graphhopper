@@ -1,6 +1,5 @@
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.util.PMap;
 
 public interface TagParserFactory {

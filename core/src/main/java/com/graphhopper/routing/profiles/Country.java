@@ -18,7 +18,7 @@
 package com.graphhopper.routing.profiles;
 
 public enum Country {
-    DEU("deu"), AUT("aut");
+    DEFAULT("default"), DEU("deu"), AUT("aut");
     public static final String KEY = "country";
 
     private final String name;

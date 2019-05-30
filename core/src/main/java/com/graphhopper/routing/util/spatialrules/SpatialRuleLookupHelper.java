@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.spatialrules;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.profiles.Country;
-import com.graphhopper.routing.util.TagParserFactory;
+import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.util.parsers.SpatialRuleParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.util.PMap;

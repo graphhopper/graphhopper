@@ -558,10 +558,6 @@ public class GHUtility {
         return edge;
     }
 
-    public static final EncodingManager.Builder addLogisticsEncodedValues(EncodingManager.Builder builder) {
-        return builder.add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser());
-    }
-
     public static final EncodingManager.Builder addDefaultEncodedValues(EncodingManager.Builder builder) {
         return builder.add(new OSMRoadClassParser()).add(new OSMRoadClassLinkParser()).
                 add(new OSMRoadEnvironmentParser()).add(new OSMMaxSpeedParser()).add(new OSMRoadAccessParser()).

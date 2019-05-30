@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util.spatialrules.countries;
 
+import com.graphhopper.routing.profiles.Country;
 import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
@@ -37,7 +38,6 @@ public class GermanySpatialRule extends DefaultSpatialRule {
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
         switch (highwayTag) {
             case "motorway":
-                return Integer.MAX_VALUE;
             case "trunk":
                 return Integer.MAX_VALUE;
             case "residential":
@@ -61,6 +61,6 @@ public class GermanySpatialRule extends DefaultSpatialRule {
 
     @Override
     public String getId() {
-        return "DEU";
+        return Country.DEU.toString();
     }
 }

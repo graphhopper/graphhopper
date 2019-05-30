@@ -34,6 +34,8 @@ import com.graphhopper.routing.template.RoundTripRoutingTemplate;
 import com.graphhopper.routing.template.RoutingTemplate;
 import com.graphhopper.routing.template.ViaRoutingTemplate;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
+import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.change.ChangeGraphHelper;
@@ -486,7 +488,6 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-
     public TagParserFactory getTagParserFactory() {
         return this.tagParserFactory;
     }
@@ -495,7 +496,6 @@ public class GraphHopper implements GraphHopperAPI {
         this.tagParserFactory = factory;
         return this;
     }
-
 
     /**
      * Reads the configuration from a CmdArgs object which can be manually filled, or via

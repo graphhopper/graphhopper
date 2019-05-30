@@ -32,7 +32,6 @@ import java.util.List;
 
 import static com.graphhopper.routing.profiles.RoadAccess.YES;
 
-
 public class OSMRoadAccessParser implements TagParser {
     private final EnumEncodedValue<RoadAccess> roadAccessEnc;
     private final List<String> restrictions;

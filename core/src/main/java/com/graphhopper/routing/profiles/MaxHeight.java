@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing.profiles;
 
-import java.util.Arrays;
-
 public class MaxHeight {
     public static final String KEY = "max_height";
 
