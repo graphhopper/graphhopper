@@ -748,6 +748,64 @@ public class CHTurnCostTest {
     }
 
     @Test
+    public void test_issue1593_full() {
+        //      6   5
+        //   1<-x-4-x-3
+        //  ||    |
+        //  |x7   x8
+        //  ||   /
+        //   2---
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 49.407117, 9.701306);
+        na.setNode(1, 49.406914, 9.703393);
+        na.setNode(2, 49.404004, 9.709110);
+        na.setNode(3, 49.400160, 9.708787);
+        na.setNode(4, 49.400883, 9.706347);
+        EdgeIteratorState edge0 = graph.edge(4, 3, 194.063000, true);
+        EdgeIteratorState edge1 = graph.edge(1, 2, 525.106000, true);
+        EdgeIteratorState edge2 = graph.edge(1, 2, 525.106000, true);
+        EdgeIteratorState edge3 = graph.edge(4, 1, 703.778000, false);
+        EdgeIteratorState edge4 = graph.edge(2, 4, 400.509000, true);
+        // cannot go 4-2-1 and 1-2-4 (at least when using edge1, there is still edge2!)
+        addRestriction(edge4, edge1, 2);
+        addRestriction(edge1, edge4, 2);
+        // cannot go 3-4-1
+        addRestriction(edge0, edge3, 4);
+        graph.freeze();
+        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        index.prepareIndex();
+        List<GHPoint> points = Arrays.asList(
+                // 8 (on edge4)
+                new GHPoint(49.401669187194116, 9.706821649608745),
+                // 5 (on edge0)
+                new GHPoint(49.40056349818417, 9.70767186472369),
+                // 7 (on edge2)
+                new GHPoint(49.406580835146556, 9.704665738628218),
+                // 6 (on edge3)
+                new GHPoint(49.40107534698834, 9.702248694088528)
+        );
+
+        List<QueryResult> queryResults = new ArrayList<>(points.size());
+        for (GHPoint point : points) {
+            queryResults.add(index.findClosest(point.getLat(), point.getLon(), EdgeFilter.ALL_EDGES));
+        }
+
+        RoutingAlgorithmFactory pch = automaticPrepareCH();
+        QueryGraph queryGraph = new QueryGraph(chGraph);
+        queryGraph.lookup(queryResults);
+        RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
+                .traversalMode(TraversalMode.EDGE_BASED_2DIR)
+                .build());
+        Path path = chAlgo.calcPath(5, 6);
+        // there should not be a path from 5 to 6, because first we cannot go directly 5-4-6, so we need to go left
+        // to 8. then at 2 we cannot go on edge 1 because of another turn restriction, but we can go on edge 2 so we
+        // travel via the virtual node 7 to node 1. From there we cannot go to 6 because of the one-way so we go back
+        // to node 2 (no u-turn because of the duplicate edge) on edge1. And this is were the journey ends: we cannot
+        // go to 8 because of the turn restriction from edge1 to edge4 -> there should not be a path!
+        assertFalse("there should not be a path, but found: " + path.calcNodes(), path.isFound());
+    }
+
+    @Test
     public void test_issue_1593_simple() {
         // 1
         // |
@@ -881,64 +939,6 @@ public class CHTurnCostTest {
                 .build());
         Path path = chAlgo.calcPath(1, 0);
         assertEquals(IntArrayList.from(1, 3, 0), path.calcNodes());
-    }
-
-    @Test
-    public void test_issue1593_full() {
-        //      6   5
-        //   1<-x-4-x-3
-        //  ||    |
-        //  |x7   x8
-        //  ||   /
-        //   2---
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 49.407117, 9.701306);
-        na.setNode(1, 49.406914, 9.703393);
-        na.setNode(2, 49.404004, 9.709110);
-        na.setNode(3, 49.400160, 9.708787);
-        na.setNode(4, 49.400883, 9.706347);
-        EdgeIteratorState edge0 = graph.edge(4, 3, 194.063000, true);
-        EdgeIteratorState edge1 = graph.edge(1, 2, 525.106000, true);
-        EdgeIteratorState edge2 = graph.edge(1, 2, 525.106000, true);
-        EdgeIteratorState edge3 = graph.edge(4, 1, 703.778000, false);
-        EdgeIteratorState edge4 = graph.edge(2, 4, 400.509000, true);
-        // cannot go 4-2-1 and 1-2-4 (at least when using edge1, there is still edge2!)
-        addRestriction(edge4, edge1, 2);
-        addRestriction(edge1, edge4, 2);
-        // cannot go 3-4-1
-        addRestriction(edge0, edge3, 4);
-        graph.freeze();
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
-        index.prepareIndex();
-        List<GHPoint> points = Arrays.asList(
-                // 8 (on edge4)
-                new GHPoint(49.401669187194116, 9.706821649608745),
-                // 5 (on edge0)
-                new GHPoint(49.40056349818417, 9.70767186472369),
-                // 7 (on edge2)
-                new GHPoint(49.406580835146556, 9.704665738628218),
-                // 6 (on edge3)
-                new GHPoint(49.40107534698834, 9.702248694088528)
-        );
-
-        List<QueryResult> queryResults = new ArrayList<>(points.size());
-        for (GHPoint point : points) {
-            queryResults.add(index.findClosest(point.getLat(), point.getLon(), EdgeFilter.ALL_EDGES));
-        }
-
-        RoutingAlgorithmFactory pch = automaticPrepareCH();
-        QueryGraph queryGraph = new QueryGraph(chGraph);
-        queryGraph.lookup(queryResults);
-        RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
-                .traversalMode(TraversalMode.EDGE_BASED_2DIR)
-                .build());
-        Path path = chAlgo.calcPath(5, 6);
-        // there should not be a path from 5 to 6, because first we cannot go directly 5-4-6, so we need to go left
-        // to 8. then at 2 we cannot go on edge 1 because of another turn restriction, but we can go on edge 2 so we
-        // travel via the virtual node 7 to node 1. From there we cannot go to 6 because of the one-way so we go back
-        // to node 2 (no u-turn because of the duplicate edge) on edge1. And this is were the journey ends: we cannot
-        // go to 8 because of the turn restriction from edge1 to edge4 -> there should not be a path!
-        assertFalse("there should not be a path, but found: " + path.calcNodes(), path.isFound());
     }
 
     /**
