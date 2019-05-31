@@ -13,9 +13,10 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -48,22 +49,26 @@ public class SPTResourceTest {
     @Test
     public void requestSPT() {
         Response rsp = app.client().target("http://localhost:8080/spt?point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
-        Map map = rsp.readEntity(Map.class);
-        List<String> header = (List<String>) map.get("columns");
-        assertEquals("[longitude, latitude, time, distance]", header.toString());
-        List<List> items = (List<List>) map.get("items");
-        List row = items.get(0);
-        assertEquals(1.5552, ((Number) row.get(0)).doubleValue(), 0.0001);
-        assertEquals(42.5179, ((Number) row.get(1)).doubleValue(), 0.0001);
-        assertEquals(118, ((Number) row.get(2)).intValue() / 1000, 1);
-        assertEquals(2263, ((Number) row.get(3)).intValue(), 1);
+        String rspCsvString = rsp.readEntity(String.class);
+        String[] lines = rspCsvString.split("\n");
+        assertTrue(lines.length > 500);
+        List<String> headers = Arrays.asList(lines[0].split(","));
+        assertEquals("[longitude, latitude, time, distance]", headers.toString());
+        String[] row = lines[1].split(",");
+        assertEquals(1.5552, Double.parseDouble(row[0]), 0.0001);
+        assertEquals(42.5179, Double.parseDouble(row[1]), 0.0001);
+        assertEquals(118, Integer.parseInt(row[2]) / 1000, 1);
+        assertEquals(2263, Integer.parseInt(row[3]), 1);
 
-        rsp = app.client().target("http://localhost:8080/spt?point=42.531073,1.573792&time_limit=300&columns=prev_time").request().buildGet().invoke();
-        map = rsp.readEntity(Map.class);
-        header = (List<String>) map.get("columns");
-        int prevTimeIndex = header.indexOf("prev_time");
+        rsp = app.client().target("http://localhost:8080/spt?point=42.531073,1.573792&columns=prev_time").request().buildGet().invoke();
+        rspCsvString = rsp.readEntity(String.class);
+        lines = rspCsvString.split("\n");
+        assertTrue(lines.length > 500);
+        headers = Arrays.asList(lines[0].split(","));
+        int prevTimeIndex = headers.indexOf("prev_time");
         assertNotEquals(-1, prevTimeIndex);
-        items = (List) map.get("items");
-        assertEquals(115, ((Number) items.get(0).get(prevTimeIndex)).intValue() / 1000, 1);
+
+        row = lines[1].split(",");
+        assertEquals(115, Integer.parseInt(row[prevTimeIndex]) / 1000);
     }
 }

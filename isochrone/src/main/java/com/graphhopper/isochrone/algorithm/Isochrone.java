@@ -116,10 +116,13 @@ public class Isochrone extends AbstractRoutingAlgorithm {
         }
     }
 
-    public List<IsoLabelWithCoordinates> search(int from) {
+    public interface Callback {
+        void add(IsoLabelWithCoordinates label);
+    }
+
+    public void search(int from, final Callback callback) {
         searchInternal(from);
 
-        final List<IsoLabelWithCoordinates> shortestPathEntries = new ArrayList<>(fromMap.size());
         final NodeAccess na = graph.getNodeAccess();
         fromMap.forEach(new IntObjectProcedure<IsoLabel>() {
 
@@ -132,7 +135,6 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                 isoLabelWC.timeInSec = Math.round(label.time);
                 isoLabelWC.distance = (int) Math.round(label.distance);
                 isoLabelWC.edgeId = label.edge;
-                shortestPathEntries.add(isoLabelWC);
                 if (label.parent != null) {
                     IsoLabel prevLabel = (IsoLabel) label.parent;
                     nodeId = prevLabel.adjNode;
@@ -144,9 +146,9 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                     isoLabelWC.prevDistance = (int) Math.round(prevLabel.distance);
                     isoLabelWC.prevTimeInSec = Math.round(prevLabel.time);
                 }
+                callback.add(isoLabelWC);
             }
         });
-        return shortestPathEntries;
     }
 
     public List<List<Coordinate>> searchGPS(int from, final int bucketCount) {

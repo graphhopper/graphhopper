@@ -1,9 +1,6 @@
 package com.graphhopper.resources;
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.*;
@@ -21,10 +18,17 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import java.util.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 
 /**
  * This resource provides the entire shortest path tree as response. In a JSON format ('close' to CSV) discussed at #1577.
@@ -44,7 +48,7 @@ public class SPTResource {
     }
 
     @GET
-    @Produces({MediaType.APPLICATION_JSON})
+    @Produces("text/csv")
     public Response doGet(
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
@@ -86,63 +90,86 @@ public class SPTResource {
             isochrone.setTimeLimit(timeLimitInSeconds);
         }
 
-        Collection<String> columns = new LinkedHashSet<>(Arrays.asList("longitude", "latitude", "time", "distance"));
+        final String COL_SEP = ",", LINE_SEP = "\n";
+        Collection<String> columns;
         if (!Helper.isEmpty(columnsParam))
-            columns.addAll(Arrays.asList(columnsParam.split(",")));
-        List<Isochrone.IsoLabelWithCoordinates> resultList = isochrone.search(qr.getClosestNode());
-        List<List<Object>> items = new ArrayList<>(resultList.size());
-        for (Isochrone.IsoLabelWithCoordinates label : resultList) {
-            List<Object> list = new ArrayList<>(columns.size());
-            for (String col : columns) {
-                switch (col) {
-                    case "node_id":
-                        list.add(label.nodeId);
-                        break;
-                    case "prev_node_id":
-                        list.add(label.prevNodeId);
-                        break;
-                    case "edge_id":
-                        list.add(label.edgeId);
-                        break;
-                    case "prev_edge_id":
-                        list.add(label.prevEdgeId);
-                        break;
-                    case "distance":
-                        list.add(label.distance);
-                        break;
-                    case "prev_distance":
-                        list.add(label.prevCoordinate == null ? 0 : label.prevDistance);
-                        break;
-                    case "time":
-                        list.add(label.timeInSec);
-                        break;
-                    case "prev_time":
-                        list.add(label.prevCoordinate == null ? 0 : label.prevTimeInSec);
-                        break;
-                    case "longitude":
-                        list.add(label.coordinate.lon);
-                        break;
-                    case "prev_longitude":
-                        list.add(label.prevCoordinate == null ? null : label.prevCoordinate.lon);
-                        break;
-                    case "latitude":
-                        list.add(label.coordinate.lat);
-                        break;
-                    case "prev_latitude":
-                        list.add(label.prevCoordinate == null ? null : label.prevCoordinate.lat);
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Unknown property " + col);
+            columns = Arrays.asList(columnsParam.split(","));
+        else
+            columns = new LinkedHashSet<>(Arrays.asList("longitude", "latitude", "time", "distance"));
+
+        if (columns.isEmpty())
+            throw new IllegalArgumentException("Either omit the columns parameter or specify the columns via comma separated values");
+
+        StreamingOutput out = output -> {
+            try (Writer writer = new BufferedWriter(new OutputStreamWriter(output))) {
+                StringBuilder sb = new StringBuilder();
+                for (String col : columns) {
+                    if (sb.length() > 0)
+                        sb.append(COL_SEP);
+                    sb.append(col);
                 }
+                sb.append(LINE_SEP);
+                writer.write(sb.toString());
+                isochrone.search(qr.getClosestNode(), label -> {
+                    sb.setLength(0);
+                    for (String col : columns) {
+                        if (sb.length() > 0)
+                            sb.append(COL_SEP);
+                        switch (col) {
+                            case "node_id":
+                                sb.append(label.nodeId);
+                                break;
+                            case "prev_node_id":
+                                sb.append(label.prevNodeId);
+                                break;
+                            case "edge_id":
+                                sb.append(label.edgeId);
+                                break;
+                            case "prev_edge_id":
+                                sb.append(label.prevEdgeId);
+                                break;
+                            case "distance":
+                                sb.append(label.distance);
+                                break;
+                            case "prev_distance":
+                                sb.append(label.prevCoordinate == null ? 0 : label.prevDistance);
+                                break;
+                            case "time":
+                                sb.append(label.timeInSec);
+                                break;
+                            case "prev_time":
+                                sb.append(label.prevCoordinate == null ? 0 : label.prevTimeInSec);
+                                break;
+                            case "longitude":
+                                sb.append(label.coordinate.lon);
+                                break;
+                            case "prev_longitude":
+                                sb.append(label.prevCoordinate == null ? null : label.prevCoordinate.lon);
+                                break;
+                            case "latitude":
+                                sb.append(label.coordinate.lat);
+                                break;
+                            case "prev_latitude":
+                                sb.append(label.prevCoordinate == null ? null : label.prevCoordinate.lat);
+                                break;
+                            default:
+                                throw new IllegalArgumentException("Unknown property " + col);
+                        }
+                    }
+                    sb.append(LINE_SEP);
+                    try {
+                        writer.write(sb.toString());
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                });
+
+                logger.info("took: " + sw.stop().getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-            items.add(list);
-        }
-        ObjectNode json = JsonNodeFactory.instance.objectNode();
-        json.putPOJO("columns", columns);
-        json.putPOJO("items", items);
-        sw.stop();
-        logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
-        return Response.ok(WebHelper.jsonResponsePutInfo(json, sw.getSeconds())).header("X-GH-Took", "" + sw.getSeconds() * 1000).
-                build();
+        };
+        // took header does not make sense as we stream
+        return Response.ok(out).build();
     }
 }
