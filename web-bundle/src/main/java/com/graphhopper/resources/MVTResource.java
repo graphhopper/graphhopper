@@ -124,7 +124,7 @@ public class MVTResource {
             }
 
             @Override
-            public void onCellBBox(BBox bbox, int width) {
+            public void onTile(BBox bbox, int depth) {
             }
         });
 
@@ -132,9 +132,8 @@ public class MVTResource {
         mvtBuilder.addLayers(layerBuilder.build());
         byte[] bytes = mvtBuilder.build().toByteArray();
         totalSW.stop();
-        logger.info("took: " + totalSW.getSeconds() + ", edges:" + edgeCounter.get());
-        return Response.fromResponse(Response.ok(bytes, PBF).build())
-                .header("X-GH-Took", "" + totalSW.getSeconds() * 1000)
+        logger.debug("took: " + totalSW.getSeconds() + ", edges:" + edgeCounter.get());
+        return Response.ok(bytes, PBF).header("X-GH-Took", "" + totalSW.getSeconds() * 1000)
                 .build();
     }
 
