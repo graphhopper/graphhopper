@@ -101,7 +101,7 @@ public class SPTResource {
             throw new IllegalArgumentException("Either omit the columns parameter or specify the columns via comma separated values");
 
         StreamingOutput out = output -> {
-            try (Writer writer = new BufferedWriter(new OutputStreamWriter(output))) {
+            try (Writer writer = new BufferedWriter(new OutputStreamWriter(output, Helper.UTF_CS))) {
                 StringBuilder sb = new StringBuilder();
                 for (String col : columns) {
                     if (sb.length() > 0)
