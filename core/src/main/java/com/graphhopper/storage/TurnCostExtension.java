@@ -197,6 +197,10 @@ public class TurnCostExtension implements GraphExtension {
         return nextCostFlags(edgeFrom, nodeVia, edgeTo);
     }
 
+    public boolean isUTurn(int edgeFrom, int edgeTo) {
+        return edgeFrom == edgeTo;
+    }
+
     private long nextCostFlags(int edgeFrom, int nodeVia, int edgeTo) {
         int turnCostIndex = nodeAccess.getAdditionalNodeField(nodeVia);
         int i = 0;

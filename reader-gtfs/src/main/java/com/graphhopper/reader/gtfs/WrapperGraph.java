@@ -18,8 +18,14 @@
 
 package com.graphhopper.reader.gtfs;
 
+import com.carrotsearch.hppc.IntObjectHashMap;
+import com.carrotsearch.hppc.IntObjectMap;
+import com.google.common.collect.ArrayListMultimap;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
@@ -27,34 +33,50 @@ import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 public class WrapperGraph implements Graph {
 
-    private final Graph baseGraph;
-    private final List<VirtualEdgeIteratorState> extraEdges;
+    private final Graph mainGraph;
+    private final IntObjectMap<EdgeIteratorState> extraEdges = new IntObjectHashMap<>();
+    private final ArrayListMultimap<Integer, VirtualEdgeIteratorState> extraEdgesBySource = ArrayListMultimap.create();
+    private final ArrayListMultimap<Integer, VirtualEdgeIteratorState> extraEdgesByDestination = ArrayListMultimap.create();
 
-    public WrapperGraph(Graph baseGraph, List<VirtualEdgeIteratorState> extraEdges) {
-        this.baseGraph = baseGraph;
-        this.extraEdges = extraEdges;
+
+    public WrapperGraph(Graph mainGraph, List<VirtualEdgeIteratorState> extraEdges) {
+        this.mainGraph = mainGraph;
+        extraEdges.forEach(e -> this.extraEdges.put(e.getEdge(), e));
+        for (VirtualEdgeIteratorState extraEdge : extraEdges) {
+            if (extraEdge == null) {
+                throw new RuntimeException();
+            }
+            extraEdgesBySource.put(extraEdge.getBaseNode(), extraEdge);
+            extraEdgesByDestination.put(extraEdge.getAdjNode(), new VirtualEdgeIteratorState(extraEdge.getOriginalEdgeKey(), extraEdge.getEdge(), extraEdge.getAdjNode(),
+                    extraEdge.getBaseNode(), extraEdge.getDistance(), extraEdge.getFlags(), extraEdge.getName(), extraEdge.fetchWayGeometry(3), true));
+        }
     }
 
     @Override
     public Graph getBaseGraph() {
-        return baseGraph;
+        return this;
     }
 
     @Override
     public int getNodes() {
         return IntStream.concat(
-                IntStream.of(baseGraph.getNodes() - 1),
-                extraEdges.stream().flatMapToInt(edge -> IntStream.of(edge.getBaseNode(), edge.getAdjNode())))
-                .max().getAsInt() + 1;
+                IntStream.of(mainGraph.getNodes() - 1),
+                StreamSupport.stream(extraEdges.values().spliterator(), false)
+                        .flatMapToInt(cursor -> IntStream.of(cursor.value.getBaseNode(), cursor.value.getAdjNode()))
+        ).max().getAsInt() + 1;
     }
 
     @Override
@@ -64,17 +86,17 @@ public class WrapperGraph implements Graph {
 
     @Override
     public NodeAccess getNodeAccess() {
-        return baseGraph.getNodeAccess();
+        return mainGraph.getNodeAccess();
     }
 
     @Override
     public BBox getBounds() {
-        return baseGraph.getBounds();
+        return mainGraph.getBounds();
     }
 
     @Override
     public EdgeIteratorState edge(int a, int b) {
-        return baseGraph.getEdgeIteratorState(a, b);
+        throw new RuntimeException();
     }
 
     @Override
@@ -84,7 +106,12 @@ public class WrapperGraph implements Graph {
 
     @Override
     public EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
-        return baseGraph.getEdgeIteratorState(edgeId, adjNode);
+        EdgeIteratorState edgeIteratorState = extraEdges.get(edgeId);
+        if (edgeIteratorState != null) {
+            return edgeIteratorState;
+        } else {
+            return mainGraph.getEdgeIteratorState(edgeId, adjNode);
+        }
     }
 
     @Override
@@ -93,9 +120,9 @@ public class WrapperGraph implements Graph {
             @Override
             public int length() {
                 return IntStream.concat(
-                        IntStream.of(baseGraph.getAllEdges().length() - 1),
-                        extraEdges.stream().mapToInt(VirtualEdgeIteratorState::getEdge))
-                        .max().getAsInt()+1;
+                        IntStream.of(mainGraph.getAllEdges().length() - 1),
+                        StreamSupport.stream(extraEdges.values().spliterator(), false).mapToInt(cursor -> cursor.value.getEdge()))
+                        .max().getAsInt() + 1;
             }
 
             @Override
@@ -229,22 +256,22 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public IndexBased get(ObjectEncodedValue property) {
+            public <T extends Enum> T get(EnumEncodedValue<T> property) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public IndexBased getReverse(ObjectEncodedValue property) {
+            public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
+            public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
+            public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
                 throw new UnsupportedOperationException();
             }
 
@@ -272,12 +299,235 @@ public class WrapperGraph implements Graph {
 
     @Override
     public EdgeExplorer createEdgeExplorer(EdgeFilter filter) {
-        return baseGraph.createEdgeExplorer(filter);
+        EdgeExplorer baseGraphEdgeExplorer = mainGraph.createEdgeExplorer(filter);
+        return new EdgeExplorer() {
+            @Override
+            public EdgeIterator setBaseNode(int baseNode) {
+                final List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>();
+                extraEdges.addAll(extraEdgesBySource.get(baseNode));
+                extraEdges.addAll(extraEdgesByDestination.get(baseNode));
+                Iterator<VirtualEdgeIteratorState> iterator = extraEdges.iterator();
+                return new EdgeIterator() {
+
+                    EdgeIteratorState current = null;
+                    EdgeIterator baseGraphEdgeIterator = baseGraphIterator();
+                    private EdgeIterator baseGraphIterator() {
+                        if (baseNode < mainGraph.getNodes()) {
+                            return baseGraphEdgeExplorer.setBaseNode(baseNode);
+                        } else {
+                            return null;
+                        }
+                    }
+
+                    @Override
+                    public boolean next() {
+                        if (baseGraphEdgeIterator != null) {
+                            if (baseGraphEdgeIterator.next()) {
+                                current = baseGraphEdgeIterator;
+                                return true;
+                            } else {
+                                baseGraphEdgeIterator = null;
+                            }
+                        }
+                        while(iterator.hasNext()) {
+                            current = iterator.next();
+                            if (filter.accept(current)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+
+                    @Override
+                    public int getEdge() {
+                        return current.getEdge();
+                    }
+
+                    @Override
+                    public int getOrigEdgeFirst() {
+                        return current.getOrigEdgeFirst();
+                    }
+
+                    @Override
+                    public int getOrigEdgeLast() {
+                        return current.getOrigEdgeLast();
+                    }
+
+                    @Override
+                    public int getBaseNode() {
+                        return current.getBaseNode();
+                    }
+
+                    @Override
+                    public int getAdjNode() {
+                        return current.getAdjNode();
+                    }
+
+                    @Override
+                    public PointList fetchWayGeometry(int mode) {
+                        return current.fetchWayGeometry(mode);
+                    }
+
+                    @Override
+                    public EdgeIteratorState setWayGeometry(PointList list) {
+                        current.setWayGeometry(list);
+                        return this;
+                    }
+
+                    @Override
+                    public double getDistance() {
+                        return current.getDistance();
+                    }
+
+                    @Override
+                    public EdgeIteratorState setDistance(double dist) {
+                        current.setDistance(dist);
+                        return this;
+                    }
+
+                    @Override
+                    public IntsRef getFlags() {
+                        return current.getFlags();
+                    }
+
+                    @Override
+                    public EdgeIteratorState setFlags(IntsRef edgeFlags) {
+                        current.setFlags(edgeFlags);
+                        return this;
+                    }
+
+                    @Override
+                    public int getAdditionalField() {
+                        return current.getAdditionalField();
+                    }
+
+                    @Override
+                    public EdgeIteratorState setAdditionalField(int value) {
+                        current.setAdditionalField(value);
+                        return this;
+                    }
+
+                    @Override
+                    public boolean get(BooleanEncodedValue property) {
+                        return current.get(property);
+                    }
+
+                    @Override
+                    public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
+                        current.set(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public boolean getReverse(BooleanEncodedValue property) {
+                        return current.getReverse(property);
+                    }
+
+                    @Override
+                    public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
+                        current.setReverse(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public int get(IntEncodedValue property) {
+                        return current.get(property);
+                    }
+
+                    @Override
+                    public EdgeIteratorState set(IntEncodedValue property, int value) {
+                        current.set(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public int getReverse(IntEncodedValue property) {
+                        return current.getReverse(property);
+                    }
+
+                    @Override
+                    public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
+                        current.setReverse(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public double get(DecimalEncodedValue property) {
+                        return current.get(property);
+                    }
+
+                    @Override
+                    public EdgeIteratorState set(DecimalEncodedValue property, double value) {
+                        current.set(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public double getReverse(DecimalEncodedValue property) {
+                        return current.getReverse(property);
+                    }
+
+                    @Override
+                    public EdgeIteratorState setReverse(DecimalEncodedValue property, double value) {
+                        current.setReverse(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public <T extends Enum> T get(EnumEncodedValue<T> property) {
+                        return current.get(property);
+                    }
+
+                    @Override
+                    public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
+                        current.set(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
+                        return current.getReverse(property);
+                    }
+
+                    @Override
+                    public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
+                        current.setReverse(property, value);
+                        return this;
+                    }
+
+                    @Override
+                    public String getName() {
+                        return current.getName();
+                    }
+
+                    @Override
+                    public EdgeIteratorState setName(String name) {
+                        current.setName(name);
+                        return this;
+                    }
+
+                    @Override
+                    public EdgeIteratorState detach(boolean reverse) {
+                        return current.detach(reverse);
+                    }
+
+                    @Override
+                    public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState e) {
+                        return current.copyPropertiesFrom(e);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return current.toString();
+                    }
+                };
+            }
+        };
     }
 
     @Override
     public EdgeExplorer createEdgeExplorer() {
-        return baseGraph.createEdgeExplorer();
+        return createEdgeExplorer(EdgeFilter.ALL_EDGES);
     }
 
     @Override
@@ -287,11 +537,16 @@ public class WrapperGraph implements Graph {
 
     @Override
     public GraphExtension getExtension() {
-        return baseGraph.getExtension();
+        return mainGraph.getExtension();
     }
 
     @Override
     public int getOtherNode(int edge, int node) {
-        return baseGraph.getOtherNode(edge, node);
+        return mainGraph.getOtherNode(edge, node);
+    }
+
+    @Override
+    public boolean isAdjacentToNode(int edge, int node) {
+        return mainGraph.isAdjacentToNode(edge, node);
     }
 }

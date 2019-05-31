@@ -27,11 +27,13 @@ import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -62,9 +64,9 @@ public class RouteResourceTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
-            GraphHopperApplication.class, config);
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(GraphHopperApplication.class, config);
 
+    @BeforeClass
     @AfterClass
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
@@ -158,12 +160,12 @@ public class RouteResourceTest {
         assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() > 20000);
         assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() < 21000);
 
-        List<Map<String, Object>> instructions = arsp.getInstructions().createJson();
+        InstructionList instructions = arsp.getInstructions();
         assertEquals(26, instructions.size());
-        assertEquals("Continue onto la Callisa", instructions.get(0).get("text"));
-        assertEquals("At roundabout, take exit 2", instructions.get(4).get("text"));
-        assertEquals(true, instructions.get(4).get("exited"));
-        assertEquals(false, instructions.get(24).get("exited"));
+        assertEquals("Continue onto la Callisa", instructions.get(0).getTurnDescription(null));
+        assertEquals("At roundabout, take exit 2", instructions.get(4).getTurnDescription(null));
+        assertEquals(true, instructions.get(4).getExtraInfoJSON().get("exited"));
+        assertEquals(false, instructions.get(24).getExtraInfoJSON().get("exited"));
     }
 
     @Test

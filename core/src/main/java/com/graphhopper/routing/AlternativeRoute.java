@@ -17,12 +17,10 @@
  */
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.coll.GHIntObjectHashMap;
-import com.graphhopper.routing.AStar.AStarEntry;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
@@ -159,7 +157,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
     public void setMaxPaths(int maxPaths) {
         this.maxPaths = maxPaths;
         if (this.maxPaths < 2)
-            throw new IllegalStateException("Use normal algorithm with less overhead instead if no alternatives are required");
+            throw new IllegalArgumentException("Use normal algorithm with less overhead instead if no alternatives are required");
     }
 
     /**
@@ -302,8 +300,8 @@ public class AlternativeRoute implements RoutingAlgorithm {
                                                       final double maxShareFactor, final double shareInfluence,
                                                       final double minPlateauFactor, final double plateauInfluence) {
             final double maxWeight = maxWeightFactor * bestPath.getWeight();
-            final GHIntObjectHashMap<IntSet> traversalIDMap = new GHIntObjectHashMap<>();
-            final AtomicInteger startTID = addToMap(traversalIDMap, bestPath);
+            final GHIntObjectHashMap<IntSet> traversalIdMap = new GHIntObjectHashMap<>();
+            final AtomicInteger startTID = addToMap(traversalIdMap, bestPath);
 
             // find all 'good' alternatives from forward-SPT matching the backward-SPT and optimize by
             // small total weight (1), small share and big plateau (3a+b) and do these expensive calculations
@@ -467,7 +465,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
                  */
                 boolean isAlreadyExisting(final int tid) {
                     final AtomicBoolean exists = new AtomicBoolean(false);
-                    traversalIDMap.forEach(new IntObjectPredicate<IntSet>() {
+                    traversalIdMap.forEach(new IntObjectPredicate<IntSet>() {
                         @Override
                         public boolean apply(int key, IntSet set) {
                             if (set.contains(tid)) {

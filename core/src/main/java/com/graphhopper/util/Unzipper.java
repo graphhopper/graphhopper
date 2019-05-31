@@ -56,13 +56,13 @@ public class Unzipper {
             byte[] buffer = new byte[8 * 1024];
             while (ze != null) {
                 if (ze.isDirectory()) {
-                    new File(toFolder, ze.getName()).mkdir();
+                    getVerifiedFile(toFolder, ze).mkdir();
                 } else {
                     double factor = 1;
                     if (ze.getCompressedSize() > 0 && ze.getSize() > 0)
                         factor = (double) ze.getCompressedSize() / ze.getSize();
 
-                    File newFile = new File(toFolder, ze.getName());
+                    File newFile = getVerifiedFile(toFolder, ze);
                     FileOutputStream fos = new FileOutputStream(newFile);
                     try {
                         int len;
@@ -83,5 +83,13 @@ public class Unzipper {
         } finally {
             zis.close();
         }
+    }
+
+    // see #1628
+    File getVerifiedFile(File destinationDir, ZipEntry ze) throws IOException {
+        File destinationFile = new File(destinationDir, ze.getName());
+        if (!destinationFile.getCanonicalPath().startsWith(destinationDir.getCanonicalPath() + File.separator))
+            throw new SecurityException("Zip Entry is outside of the target dir: " + ze.getName());
+        return destinationFile;
     }
 }

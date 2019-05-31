@@ -800,6 +800,12 @@ class BaseGraph implements Graph {
         return edgeAccess.getOtherNode(node, edgePointer);
     }
 
+    @Override
+    public boolean isAdjacentToNode(int edge, int node) {
+        long edgePointer = edgeAccess.toPointer(edge);
+        return edgeAccess.isAdjacentToNode(node, edgePointer);
+    }
+
     public void setAdditionalEdgeField(long edgePointer, int value) {
         if (extStorage.isRequireEdgeField() && E_ADDITIONAL >= 0)
             edges.setInt(edgePointer + E_ADDITIONAL, value);
@@ -1256,25 +1262,25 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public IndexBased get(ObjectEncodedValue property) {
-            return property.getObject(reverse, getFlags());
+        public <T extends Enum> T get(EnumEncodedValue<T> property) {
+            return property.getEnum(reverse, getFlags());
         }
 
         @Override
-        public EdgeIteratorState set(ObjectEncodedValue property, IndexBased value) {
-            property.setObject(reverse, getFlags(), value);
+        public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
+            property.setEnum(reverse, getFlags(), value);
             edgeAccess.writeFlags(edgePointer, getFlags());
             return this;
         }
 
         @Override
-        public IndexBased getReverse(ObjectEncodedValue property) {
-            return property.getObject(!reverse, getFlags());
+        public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
+            return property.getEnum(!reverse, getFlags());
         }
 
         @Override
-        public EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value) {
-            property.setObject(!reverse, getFlags(), value);
+        public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
+            property.setEnum(!reverse, getFlags(), value);
             edgeAccess.writeFlags(edgePointer, getFlags());
             return this;
         }

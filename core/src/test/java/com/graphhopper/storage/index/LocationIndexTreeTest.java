@@ -112,6 +112,22 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     }
 
     @Test
+    public void testQuery() {
+        Graph graph = createTestGraph2();
+        LocationIndexTree index = createIndex(graph, 500);
+        final ArrayList set = new ArrayList();
+        index.query(new BBox(11.57314, 11.57614, 49.94553, 49.94853), new LocationIndex.Visitor() {
+            @Override
+            public void onNode(int nodeId) {
+                set.add(nodeId);
+            }
+        });
+        assertEquals(17, set.size());
+        assertTrue(set.containsAll(Arrays.asList(2, 3, 4, 5, 6)));
+        assertFalse(set.containsAll(Arrays.asList(17, 18, 25, 30)));
+    }
+
+    @Test
     public void testInMemIndex() {
         Graph graph = createTestGraph(encodingManager);
         LocationIndexTree index = createIndexNoPrepare(graph, 50000);

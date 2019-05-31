@@ -441,6 +441,38 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertEquals(1, iter.getOrigEdgeLast());
     }
 
+    @Test
+    public void testGetEdgeIterator() {
+        graph = newGHStorage(false, true);
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 1, false);
+        graph.freeze();
+        CHGraph lg = getGraph(graph);
+        addShortcut(lg, 0, 2, true, 0, 1, 0, 1, 2);
+
+        CHEdgeIteratorState sc02 = lg.getEdgeIteratorState(2, 2);
+        assertNotNull(sc02);
+        assertEquals(0, sc02.getBaseNode());
+        assertEquals(2, sc02.getAdjNode());
+        assertEquals(2, sc02.getEdge());
+        assertEquals(0, sc02.getSkippedEdge1());
+        assertEquals(1, sc02.getSkippedEdge2());
+        assertEquals(0, sc02.getOrigEdgeFirst());
+        assertEquals(1, sc02.getOrigEdgeLast());
+
+        CHEdgeIteratorState sc20 = lg.getEdgeIteratorState(2, 0);
+        assertNotNull(sc20);
+        assertEquals(2, sc20.getBaseNode());
+        assertEquals(0, sc20.getAdjNode());
+        assertEquals(2, sc20.getEdge());
+        // note these are not stateful! i.e. even though we are looking at the edge 2->0 the first skipped/orig edge
+        // is still edge 0 and the second skipped/last orig edge is edge 1
+        assertEquals(0, sc20.getSkippedEdge1());
+        assertEquals(1, sc20.getSkippedEdge2());
+        assertEquals(0, sc20.getOrigEdgeFirst());
+        assertEquals(1, sc20.getOrigEdgeLast());
+    }
+
     private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int firstOrigEdge, int lastOrigEdge,
                              int skipEdge1, int skipEdge2, int distance) {
         CHEdgeIteratorState shortcut = chGraph.shortcut(from, to);

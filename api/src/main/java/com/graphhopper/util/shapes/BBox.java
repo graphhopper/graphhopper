@@ -19,6 +19,7 @@ package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
+import org.locationtech.jts.geom.Envelope;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,7 +123,7 @@ public class BBox implements Shape, Cloneable {
      * @return the intersecting BBox or null if not intersecting
      */
     public BBox calculateIntersection(BBox bBox) {
-        if (!this.intersect(bBox))
+        if (!this.intersects(bBox))
             return null;
 
         double minLon = Math.max(this.minLon, bBox.minLon);
@@ -139,11 +140,11 @@ public class BBox implements Shape, Cloneable {
     }
 
     @Override
-    public boolean intersect(Shape s) {
+    public boolean intersects(Shape s) {
         if (s instanceof BBox) {
-            return intersect((BBox) s);
+            return intersects((BBox) s);
         } else if (s instanceof Circle) {
-            return ((Circle) s).intersect(this);
+            return ((Circle) s).intersects(this);
         }
 
         throw new UnsupportedOperationException("unsupported shape");
@@ -160,21 +161,21 @@ public class BBox implements Shape, Cloneable {
         throw new UnsupportedOperationException("unsupported shape");
     }
 
-    public boolean intersect(Circle s) {
-        return s.intersect(this);
+    public boolean intersects(Circle s) {
+        return s.intersects(this);
     }
 
     /**
      * This method calculates if this BBox intersects with the specified BBox
      */
-    public boolean intersect(double minLon, double maxLon, double minLat, double maxLat) {
+    public boolean intersects(double minLon, double maxLon, double minLat, double maxLat) {
         return this.minLon < maxLon && this.minLat < maxLat && minLon < this.maxLon && minLat < this.maxLat;
     }
 
     /**
      * This method calculates if this BBox intersects with the specified BBox
      */
-    public boolean intersect(BBox o) {
+    public boolean intersects(BBox o) {
         // return (o.minLon < minLon && o.maxLon > minLon || o.minLon < maxLon && o.minLon >= minLon)
         //  && (o.maxLat < maxLat && o.maxLat >= minLat || o.maxLat >= maxLat && o.minLat < maxLat);
         return this.minLon < o.maxLon && this.minLat < o.maxLat && o.minLon < this.maxLon && o.minLat < this.maxLat;
@@ -280,6 +281,10 @@ public class BBox implements Shape, Cloneable {
             list.add(Helper.round2(maxEle));
 
         return list;
+    }
+
+    public static BBox fromEnvelope(Envelope envelope) {
+        return new BBox(envelope.getMinX(), envelope.getMaxX(), envelope.getMinY(), envelope.getMaxY());
     }
 
     /**
