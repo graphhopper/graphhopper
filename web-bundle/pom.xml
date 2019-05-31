@@ -43,13 +43,13 @@
         <dependency>
             <groupId>javax.xml.ws</groupId>
             <artifactId>jaxws-api</artifactId>
-            <version>2.3.0</version>
+            <version>2.3.1</version>
         </dependency>
         <!-- required for dropwizard -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>24.0-jre</version>
+            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
