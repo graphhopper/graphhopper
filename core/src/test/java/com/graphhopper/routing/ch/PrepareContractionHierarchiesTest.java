@@ -509,11 +509,11 @@ public class PrepareContractionHierarchiesTest {
         queryGraph.lookup(Collections.singletonList(qr));
 
         // we make sure our weight fine tunings do what they are supposed to
-        double weight03 = getWeight(queryGraph, fastestWeighting, 0, 3);
-        double scWeight23 = weight03 + ((CHEdgeIteratorState) getEdge(lg, 2, 3)).getWeight();
-        double scWeight34 = weight03 + ((CHEdgeIteratorState) getEdge(lg, 3, 4)).getWeight();
-        double sptWeight2 = weight03 + getWeight(queryGraph, fastestWeighting, 3, 8) + getWeight(queryGraph, fastestWeighting, 8, 1) + getWeight(queryGraph, fastestWeighting, 1, 2);
-        double sptWeight4 = sptWeight2 + getWeight(queryGraph, fastestWeighting, 2, 4);
+        double weight03 = getWeight(queryGraph, fastestWeighting, 0, 3, false);
+        double scWeight23 = weight03 + ((CHEdgeIteratorState) getEdge(lg, 2, 3, true)).getWeight();
+        double scWeight34 = weight03 + ((CHEdgeIteratorState) getEdge(lg, 3, 4, false)).getWeight();
+        double sptWeight2 = weight03 + getWeight(queryGraph, fastestWeighting, 3, 8, false) + getWeight(queryGraph, fastestWeighting, 8, 1, false) + getWeight(queryGraph, fastestWeighting, 1, 2, false);
+        double sptWeight4 = sptWeight2 + getWeight(queryGraph, fastestWeighting, 2, 4, false);
         assertTrue("incoming shortcut weight 3->2 should be smaller than sptWeight at node 2 to make sure 2 gets stalled", scWeight23 < sptWeight2);
         assertTrue("sptWeight at node 4 should be smaller than shortcut weight 3->4 to make sure node 4 gets stalled", sptWeight4 < scWeight34);
 
@@ -521,12 +521,13 @@ public class PrepareContractionHierarchiesTest {
         assertEquals("wrong or no path found", IntArrayList.from(0, 3, 8, 1, 2, 4, 5, 6, 7), path.calcNodes());
     }
 
-    private double getWeight(Graph graph, Weighting w, int from, int to) {
-        return w.calcWeight(getEdge(graph, from, to), false, -1);
+    private double getWeight(Graph graph, Weighting w, int from, int to, boolean incoming) {
+        return w.calcWeight(getEdge(graph, from, to, false), incoming, -1);
     }
 
-    private EdgeIteratorState getEdge(Graph graph, int from, int to) {
-        EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(from);
+    private EdgeIteratorState getEdge(Graph graph, int from, int to, boolean incoming) {
+        EdgeFilter filter = incoming ? DefaultEdgeFilter.inEdges(carEncoder) : DefaultEdgeFilter.outEdges(carEncoder);
+        EdgeIterator iter = graph.createEdgeExplorer(filter).setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {
                 return iter;
