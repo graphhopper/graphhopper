@@ -27,7 +27,7 @@ import java.util.Random;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-@RunWith(Parameterized.class)
+@ExtendWith(Parameterized.class)
 public class RandomCHRoutingTest {
     private final TraversalMode traversalMode;
     private final int maxTurnCosts;
@@ -38,7 +38,7 @@ public class RandomCHRoutingTest {
     private LocationIndexTree locationIndex;
     private CHGraph chGraph;
 
-    @Parameterized.Parameters(name = "{0}")
+    @MethodSource(name = "{0}")
     public static Object[] params() {
         return new Object[]{
                 TraversalMode.NODE_BASED,

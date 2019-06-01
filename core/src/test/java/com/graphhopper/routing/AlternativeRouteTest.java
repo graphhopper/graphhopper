@@ -30,8 +30,8 @@ import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.runner.RunWith;
-import org.junit.jupiter.api.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -40,7 +40,6 @@ import java.util.List;
 import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
 import static org.junit.Assert.*;
 
-@RunWith(Parameterized.class)
 public class AlternativeRouteTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
     private final EncodingManager em = EncodingManager.create(carFE);
@@ -53,7 +52,7 @@ public class AlternativeRouteTest {
     /**
      * Runs the same test with each of the supported traversal modes
      */
-    @Parameterized.Parameters(name = "{0}")
+
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {TraversalMode.NODE_BASED},
@@ -61,6 +60,8 @@ public class AlternativeRouteTest {
         });
     }
 
+    @ParameterizedTest
+    @MethodSource("configs")
     public GraphHopperStorage createTestGraph(boolean fullGraph, EncodingManager tmpEM) {
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false, new GraphExtension.NoOpExtension());
         graph.create(1000);

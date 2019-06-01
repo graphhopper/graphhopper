@@ -6,7 +6,7 @@ import com.graphhopper.api.model.GHGeocodingResponse;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.net.SocketTimeoutException;
 

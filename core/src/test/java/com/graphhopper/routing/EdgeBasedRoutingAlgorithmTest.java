@@ -48,7 +48,7 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-@RunWith(Parameterized.class)
+@ExtendWith(Parameterized.class)
 public class EdgeBasedRoutingAlgorithmTest {
     private final String algoStr;
     private FlagEncoder carEncoder;
@@ -57,7 +57,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         this.algoStr = algo;
     }
 
-    @Parameters(name = "{0}")
+    @MethodSource(name = "{0}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 // todo: make this test run also for edge-based CH or otherwise make sure time calculation is tested also for edge-based CH (at the moment it will fail!)

@@ -35,7 +35,7 @@ import static org.junit.runners.Parameterized.Parameters;
  * have been applied to the edge weights (like when considering traffic).
  */
 @Ignore("for performance testing only")
-@RunWith(Parameterized.class)
+@ExtendWith(Parameterized.class)
 public class TrafficChangeWithNodeOrderingReusingTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrafficChangeWithNodeOrderingReusingTest.class);
     // make sure to increase xmx/xms for the JVM created by the surefire plugin in parent pom.xml
@@ -48,7 +48,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
     private final CHGraphImpl trafficCHGraph;
     private int maxDeviationPercentage;
 
-    @Parameters(name = "maxDeviationPercentage = {0}")
+    @MethodSource(name = "maxDeviationPercentage = {0}")
     public static Object[] data() {
         return new Object[]{0, 1, 5, 10, 50};
     }

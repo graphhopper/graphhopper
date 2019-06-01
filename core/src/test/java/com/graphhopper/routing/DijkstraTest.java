@@ -30,7 +30,7 @@ import java.util.Collection;
 /**
  * @author Peter Karich
  */
-@RunWith(Parameterized.class)
+@ExtendWith(Parameterized.class)
 public class DijkstraTest extends AbstractRoutingAlgorithmTester {
     private final TraversalMode traversalMode;
 
@@ -41,7 +41,7 @@ public class DijkstraTest extends AbstractRoutingAlgorithmTester {
     /**
      * Runs the same test with each of the supported traversal modes
      */
-    @Parameters(name = "{0}")
+    @MethodSource(name = "{0}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {TraversalMode.NODE_BASED},

@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.runner.RunWith;
 import org.junit.jupiter.api.runners.Parameterized;
 import org.junit.jupiter.api.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.provider;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,7 +40,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Peter Karich
  */
-@RunWith(Parameterized.class)
+@ExtendWith(Parameterized.class)
 public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
     private final TraversalMode traversalMode;
 
@@ -50,7 +51,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
     /**
      * Runs the same test with each of the supported traversal modes
      */
-    @Parameters(name = "{0}")
+    @MethodSource(name = "{0}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {

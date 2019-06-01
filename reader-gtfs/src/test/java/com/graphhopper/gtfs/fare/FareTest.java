@@ -42,7 +42,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
-@RunWith(Theories.class)
+@ExtendWith(Theories.class)
 public class FareTest {
 
     // See https://code.google.com/archive/p/googletransitdatafeed/wikis/FareExamples.wiki

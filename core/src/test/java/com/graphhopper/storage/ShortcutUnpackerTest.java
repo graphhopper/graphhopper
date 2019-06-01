@@ -20,7 +20,7 @@ import org.junit.jupiter.api.runners.Parameterized;
 
 import static org.junit.Assert.assertEquals;
 
-@RunWith(Parameterized.class)
+@ExtendWith(Parameterized.class)
 public class ShortcutUnpackerTest {
     private final static int PREV_EDGE = 12;
     private final static int NEXT_EDGE = 13;
@@ -31,7 +31,7 @@ public class ShortcutUnpackerTest {
     private CHGraph chGraph;
     private TurnCostExtension turnCostExtension;
 
-    @Parameterized.Parameters(name = "{0}")
+    @MethodSource(name = "{0}")
     public static Object[] params() {
         return new Object[]{
                 TraversalMode.NODE_BASED,
