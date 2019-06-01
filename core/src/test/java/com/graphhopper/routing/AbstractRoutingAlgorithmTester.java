@@ -30,7 +30,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -148,7 +148,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         return tmpGraph;
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         carEncoder = encodingManager.getEncoder("car");
         carAccessEnc = carEncoder.getAccessEnc();

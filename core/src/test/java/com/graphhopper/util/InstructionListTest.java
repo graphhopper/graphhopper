@@ -29,7 +29,7 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -47,7 +47,7 @@ public class InstructionListTest {
     private FlagEncoder carEncoder;
     private BooleanEncodedValue roundaboutEnc;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         carEncoder = new CarFlagEncoder();
         carManager = EncodingManager.create(carEncoder);

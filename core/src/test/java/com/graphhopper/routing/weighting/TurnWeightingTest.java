@@ -7,7 +7,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIteratorState;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.util.GHUtility.getEdge;
@@ -21,7 +21,7 @@ public class TurnWeightingTest {
     private Weighting weighting;
     private TurnCostExtension turnCostExt;
 
-    @Before
+    @BeforeEach
     public void setup() {
         encoder = new CarFlagEncoder(5, 5, 10);
         encodingManager = EncodingManager.create(encoder);

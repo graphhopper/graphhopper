@@ -28,8 +28,8 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-import org.junit.jupiter.api.After;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.Arrays;
 
@@ -47,7 +47,7 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
     protected AbstractEdgeElevationInterpolator edgeElevationInterpolator;
 
     @SuppressWarnings("resource")
-    @Before
+    @BeforeEach
     public void setUp() {
         dataFlagEncoder = new DataFlagEncoder();
         graph = new GraphHopperStorage(new RAMDirectory(),
@@ -61,7 +61,7 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
         normalWay.setTag("highway", "primary");
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Helper.close(graph);
     }

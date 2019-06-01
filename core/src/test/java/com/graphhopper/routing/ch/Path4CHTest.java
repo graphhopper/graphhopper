@@ -17,7 +17,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -30,7 +30,7 @@ public class Path4CHTest {
     private Weighting weighting;
     private TurnCostExtension turnCostExtension;
 
-    @Before
+    @BeforeEach
     public void init() {
         encoder = new MotorcycleFlagEncoder(5, 5, maxTurnCosts);
         EncodingManager em = EncodingManager.create(encoder);

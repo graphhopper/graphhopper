@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.osm.conditional;
 
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.text.ParseException;

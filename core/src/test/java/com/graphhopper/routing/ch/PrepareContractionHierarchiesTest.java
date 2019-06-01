@@ -27,7 +27,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -147,7 +147,7 @@ public class PrepareContractionHierarchiesTest {
         return g;
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         dir = new GHDirectory("", DAType.RAM_INT);
     }

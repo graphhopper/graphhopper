@@ -43,7 +43,7 @@ public class GpxTravelTimeConsistencyTest {
     private static final String importVehicles = "foot";
     private static GraphHopper hopper;
 
-    @BeforeAll
+    @BeforeEachAll
     public static void beforeClass() {
         Helper.removeDir(new File(graphFileFoot));
         hopper = new GraphHopperOSM().

@@ -13,7 +13,7 @@ import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.runner.RunWith;
 import org.junit.jupiter.api.runners.Parameterized;
@@ -43,7 +43,7 @@ public class ShortcutUnpackerTest {
         this.edgeBased = traversalMode.isEdgeBased();
     }
 
-    @Before
+    @BeforeEach
     public void init() {
         // use motorcycle to be able to set different fwd/bwd speeds
         encoder = new MotorcycleFlagEncoder(5, 5, 10);

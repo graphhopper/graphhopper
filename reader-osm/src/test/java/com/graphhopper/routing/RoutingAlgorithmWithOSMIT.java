@@ -31,7 +31,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -54,7 +54,7 @@ import static org.junit.Assert.assertEquals;
 public class RoutingAlgorithmWithOSMIT {
     TestAlgoCollector testCollector;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testCollector = new TestAlgoCollector("core integration tests");
     }

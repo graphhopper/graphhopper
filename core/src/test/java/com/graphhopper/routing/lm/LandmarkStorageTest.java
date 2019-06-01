@@ -30,8 +30,8 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.jupiter.api.After;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -46,7 +46,7 @@ public class LandmarkStorageTest {
     private FlagEncoder encoder;
     private EncodingManager encodingManager;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         encoder = new CarFlagEncoder();
         encodingManager = EncodingManager.create(encoder);
@@ -55,7 +55,7 @@ public class LandmarkStorageTest {
         ghStorage.create(1000);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (ghStorage != null)
             ghStorage.close();

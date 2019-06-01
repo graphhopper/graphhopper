@@ -31,7 +31,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -53,7 +53,7 @@ public class PrepareLandmarksTest
     private FlagEncoder encoder;
     private TraversalMode tm;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         encoder = new CarFlagEncoder();
         tm = TraversalMode.NODE_BASED;

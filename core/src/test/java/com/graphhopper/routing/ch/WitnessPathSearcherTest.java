@@ -29,7 +29,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PMap;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -41,7 +41,7 @@ public class WitnessPathSearcherTest {
     private CHGraph chGraph;
     private TurnWeighting chTurnWeighting;
 
-    @Before
+    @BeforeEach
     public void setup() {
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
         EncodingManager encodingManager = EncodingManager.create(encoder);

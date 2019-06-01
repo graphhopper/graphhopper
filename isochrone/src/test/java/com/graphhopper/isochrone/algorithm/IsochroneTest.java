@@ -10,8 +10,8 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
-import org.junit.jupiter.api.After;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -29,14 +29,14 @@ public class IsochroneTest {
     private final FlagEncoder carEncoder = encodingManager.getEncoder("car");
     private GraphHopperStorage graph;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         graph = new GraphHopperStorage(Collections.<Weighting>emptyList(),
                 new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension());
         graph.create(1000);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         graph.close();
     }

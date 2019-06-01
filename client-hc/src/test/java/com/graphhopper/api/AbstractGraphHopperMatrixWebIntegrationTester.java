@@ -1,7 +1,7 @@
 package com.graphhopper.api;
 
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -19,7 +19,7 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
 
     abstract GraphHopperMatrixWeb createMatrixWeb();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         String key = System.getProperty("graphhopper.key", GraphHopperWebIT.KEY);
         ghMatrix = createMatrixWeb();

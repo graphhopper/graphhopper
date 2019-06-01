@@ -24,7 +24,7 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Translation;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
@@ -46,7 +46,7 @@ public abstract class AbstractBikeFlagEncoderTester {
     protected DecimalEncodedValue priorityEnc;
     protected DecimalEncodedValue avSpeedEnc;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         encodingManager = EncodingManager.create(encoder = createBikeEncoder());
         roundaboutEnc = encodingManager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);

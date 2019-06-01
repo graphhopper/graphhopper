@@ -18,8 +18,8 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.util.Downloader;
-import org.junit.jupiter.api.After;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Ignore;
 import org.junit.jupiter.api.Test;
 
@@ -38,12 +38,12 @@ public class CGIARProviderTest {
     private double precision = .1;
     CGIARProvider instance;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         instance = new CGIARProvider();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         instance.release();
     }

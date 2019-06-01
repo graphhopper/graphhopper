@@ -21,7 +21,7 @@ import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ public class BresenhamLineTest {
         }
     };
 
-    @Before
+    @BeforeEach
     public void setUp() {
         points.clear();
     }

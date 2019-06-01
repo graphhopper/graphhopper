@@ -14,7 +14,7 @@ import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -34,7 +34,7 @@ public class GraphHopperWebIT {
     private final GraphHopperWeb gh = new GraphHopperWeb();
     private final GraphHopperMatrixWeb ghMatrix = new GraphHopperMatrixWeb();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         gh.setKey(KEY);
         ghMatrix.setKey(KEY);

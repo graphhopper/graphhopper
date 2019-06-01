@@ -33,7 +33,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
 
@@ -55,7 +55,7 @@ public class GpxFromInstructionsTest {
     private BooleanEncodedValue roundaboutEnc;
     private TranslationMap trMap;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         carEncoder = new CarFlagEncoder();
         carManager = EncodingManager.create(carEncoder);

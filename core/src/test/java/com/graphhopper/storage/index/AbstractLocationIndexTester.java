@@ -25,8 +25,8 @@ import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
-import org.junit.jupiter.api.After;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.Closeable;
@@ -61,12 +61,12 @@ public abstract class AbstractLocationIndexTester {
         return false;
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         Helper.removeDir(new File(location));
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (idx != null)
             idx.close();

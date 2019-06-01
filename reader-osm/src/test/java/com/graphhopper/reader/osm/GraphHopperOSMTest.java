@@ -37,8 +37,8 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.jupiter.api.After;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -62,12 +62,12 @@ public class GraphHopperOSMTest {
     private static final String testOsm3 = "./src/test/resources/com/graphhopper/reader/osm/test-osm3.xml";
     private GraphHopper instance;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         Helper.removeDir(new File(ghLoc));
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (instance != null)
             instance.close();

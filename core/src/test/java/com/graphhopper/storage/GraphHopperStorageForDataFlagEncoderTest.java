@@ -9,8 +9,8 @@ import com.graphhopper.routing.util.EncodingManager.Access;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
-import org.junit.jupiter.api.After;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.Closeable;
@@ -41,12 +41,12 @@ public class GraphHopperStorageForDataFlagEncoderTest {
         encodingManager = EncodingManager.create(Arrays.asList(encoder), 8);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         Helper.removeDir(new File(locationParent));
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Helper.close((Closeable) graph);
         Helper.removeDir(new File(locationParent));

@@ -50,7 +50,7 @@ public class AnotherAgencyIT {
     private static LocationIndex locationIndex;
     private static GtfsStorage gtfsStorage;
 
-    @BeforeAll
+    @BeforeEachAll
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();

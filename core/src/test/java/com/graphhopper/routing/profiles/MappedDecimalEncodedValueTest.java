@@ -1,7 +1,7 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -14,7 +14,7 @@ public class MappedDecimalEncodedValueTest {
 
     private MappedDecimalEncodedValue maxweight;
 
-    @Before
+    @BeforeEach
     public void setup() {
         List<Double> list = Arrays.asList(6d, 1d, 2d, 4.5);
         maxweight = new MappedDecimalEncodedValue("maxweight", list, 0.1, false);

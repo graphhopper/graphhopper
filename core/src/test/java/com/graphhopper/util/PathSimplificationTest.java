@@ -32,7 +32,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.Parameters.DETAILS;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -54,7 +54,7 @@ public class PathSimplificationTest {
     private EncodingManager carManager;
     private FlagEncoder carEncoder;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         carEncoder = new CarFlagEncoder();
         carManager = EncodingManager.create(carEncoder);

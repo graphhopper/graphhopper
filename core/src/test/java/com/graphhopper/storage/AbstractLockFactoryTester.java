@@ -19,8 +19,8 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
-import org.junit.jupiter.api.After;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -36,12 +36,12 @@ public abstract class AbstractLockFactoryTester {
 
     protected abstract LockFactory createLockFactory();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         lockDir.mkdirs();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Helper.removeDir(lockDir);
     }

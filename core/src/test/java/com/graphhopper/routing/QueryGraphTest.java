@@ -29,8 +29,8 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.jupiter.api.After;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -46,14 +46,14 @@ public class QueryGraphTest {
     private FlagEncoder carEncoder;
     private GraphHopperStorage g;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         carEncoder = new CarFlagEncoder();
         encodingManager = EncodingManager.create(carEncoder);
         g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension()).create(100);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         g.close();
     }

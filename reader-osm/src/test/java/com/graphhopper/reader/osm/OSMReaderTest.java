@@ -35,8 +35,8 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.jupiter.api.After;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -73,12 +73,12 @@ public class OSMReaderTest {
     private EdgeExplorer carOutExplorer;
     private EdgeExplorer carAllExplorer;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         new File(dir).mkdirs();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Helper.removeDir(new File(dir));
     }

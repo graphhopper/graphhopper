@@ -55,7 +55,7 @@ public class RealtimeIT {
     private static GraphHopperStorage graphHopperStorage;
     private static LocationIndex locationIndex;
 
-    @BeforeAll
+    @BeforeEachAll
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();

@@ -19,7 +19,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -35,7 +35,7 @@ public class ChangeGraphHelperTest {
     private EncodingManager encodingManager;
     private GraphHopperStorage graph;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         encodingManager = EncodingManager.create("car");
         graph = new GraphBuilder(encodingManager).create();

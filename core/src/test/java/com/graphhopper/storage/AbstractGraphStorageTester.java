@@ -22,8 +22,8 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import org.junit.jupiter.api.After;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.Closeable;
@@ -103,12 +103,12 @@ public abstract class AbstractGraphStorageTester {
         return new GraphHopperStorage(new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension());
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         Helper.removeDir(new File(locationParent));
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         Helper.close(graph);
         Helper.removeDir(new File(locationParent));

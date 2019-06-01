@@ -30,7 +30,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Rule;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -66,9 +66,9 @@ public class CHTurnCostTest {
     @Rule
     public RepeatRule repeatRule = new RepeatRule();
 
-    @Before
+    @BeforeEach
     public void init() {
-        // its important to use @Before when using Repeat Rule!
+        // its important to use @BeforeEach when using Repeat Rule!
         maxCost = 10;
         encoder = new CarFlagEncoder(5, 5, maxCost);
         EncodingManager encodingManager = EncodingManager.create(encoder);

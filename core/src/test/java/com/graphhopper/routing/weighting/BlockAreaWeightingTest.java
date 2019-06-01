@@ -10,7 +10,7 @@ import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.Circle;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -23,7 +23,7 @@ public class BlockAreaWeightingTest {
     private EncodingManager em;
     private Graph graph;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         encoder = new CarFlagEncoder();
         em = EncodingManager.create(Arrays.asList(encoder), 8);

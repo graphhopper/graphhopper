@@ -29,7 +29,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -49,7 +49,7 @@ public class CHAlgoFactoryDecoratorTest {
     private Weighting weighting3;
     private GraphHopperStorage ghStorage;
 
-    @Before
+    @BeforeEach
     public void setup() {
         instance = new CHAlgoFactoryDecorator();
         Directory dir = new RAMDirectory();

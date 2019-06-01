@@ -56,7 +56,7 @@ public class RouteResourceIssue1574Test {
     @ClassRule
     public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(GraphHopperApplication.class, config);
 
-    @BeforeAll
+    @BeforeEachAll
     @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));

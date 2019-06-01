@@ -15,7 +15,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.runner.RunWith;
 import org.junit.jupiter.api.runners.Parameterized;
@@ -51,7 +51,7 @@ public class RandomCHRoutingTest {
         this.maxTurnCosts = 10;
     }
 
-    @Before
+    @BeforeEach
     public void init() {
         dir = new RAMDirectory();
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);

@@ -1,6 +1,6 @@
 package com.graphhopper.api;
 
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -13,7 +13,7 @@ public class GraphHopperMatrixGoogleIT {
     private static String GOOGK = "AIzaSyD82yk4uSmNcruqtue1lFTyuWAtEiLiJbs";
     protected GraphHopperMatrixWeb ghMatrix;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         ghMatrix = createMatrixWeb();
         String key = System.getProperty("google.key", GOOGK);
