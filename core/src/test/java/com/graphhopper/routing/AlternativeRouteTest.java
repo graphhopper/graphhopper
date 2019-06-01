@@ -29,9 +29,9 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.runner.RunWith;
+import org.junit.jupiter.api.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;

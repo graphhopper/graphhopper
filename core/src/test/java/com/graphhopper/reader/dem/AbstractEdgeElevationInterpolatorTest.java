@@ -28,8 +28,8 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.After;
+import org.junit.jupiter.api.Before;
 
 import java.util.Arrays;
 

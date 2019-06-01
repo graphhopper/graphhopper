@@ -22,11 +22,11 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
 import com.conveyal.gtfs.model.FareRule;
 import com.csvreader.CsvReader;
-import org.junit.Assert;
-import org.junit.experimental.theories.DataPoint;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.experimental.theories.DataPoint;
+import org.junit.jupiter.api.experimental.theories.Theories;
+import org.junit.jupiter.api.experimental.theories.Theory;
+import org.junit.jupiter.api.runner.RunWith;
 
 import java.io.IOException;
 import java.io.StringReader;

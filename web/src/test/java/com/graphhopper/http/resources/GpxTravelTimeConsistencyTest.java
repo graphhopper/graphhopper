@@ -27,8 +27,8 @@ import com.graphhopper.util.gpx.GPXEntry;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.List;
@@ -43,7 +43,7 @@ public class GpxTravelTimeConsistencyTest {
     private static final String importVehicles = "foot";
     private static GraphHopper hopper;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         Helper.removeDir(new File(graphFileFoot));
         hopper = new GraphHopperOSM().

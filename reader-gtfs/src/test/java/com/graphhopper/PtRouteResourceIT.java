@@ -32,8 +32,8 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import io.dropwizard.testing.junit.ResourceTestRule;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.ClassRule;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;

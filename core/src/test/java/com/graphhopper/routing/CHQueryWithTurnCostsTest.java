@@ -35,9 +35,9 @@ import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.runner.RunWith;
+import org.junit.jupiter.api.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.List;

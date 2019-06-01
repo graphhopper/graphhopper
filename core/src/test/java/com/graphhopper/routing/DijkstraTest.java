@@ -20,9 +20,9 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.runner.RunWith;
+import org.junit.jupiter.api.runners.Parameterized;
+import org.junit.jupiter.api.runners.Parameterized.Parameters;
 
 import java.util.Arrays;
 import java.util.Collection;

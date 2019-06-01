@@ -21,9 +21,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.AfterClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.ClassRule;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -59,7 +59,7 @@ public class GraphHopperLandmarksTest {
     public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
 
-    @AfterClass
+    @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
     }

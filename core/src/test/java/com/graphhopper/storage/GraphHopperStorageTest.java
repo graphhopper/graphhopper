@@ -19,7 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 

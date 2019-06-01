@@ -18,7 +18,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.BitUtil;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteOrder;
 

@@ -19,7 +19,7 @@ package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
 

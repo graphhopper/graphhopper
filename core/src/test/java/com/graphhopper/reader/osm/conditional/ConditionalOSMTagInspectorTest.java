@@ -19,7 +19,7 @@ package com.graphhopper.reader.osm.conditional;
 
 import com.graphhopper.reader.ConditionalTagInspector;
 import com.graphhopper.reader.ReaderWay;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 

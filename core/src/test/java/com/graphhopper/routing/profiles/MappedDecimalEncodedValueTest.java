@@ -1,8 +1,8 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;

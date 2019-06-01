@@ -28,7 +28,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIterator;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
 

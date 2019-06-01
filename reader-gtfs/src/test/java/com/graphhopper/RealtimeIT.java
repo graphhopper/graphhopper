@@ -30,9 +30,9 @@ import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -55,7 +55,7 @@ public class RealtimeIT {
     private static GraphHopperStorage graphHopperStorage;
     private static LocationIndex locationIndex;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
@@ -73,7 +73,7 @@ public class RealtimeIT {
         graphHopperFactory = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage);
     }
 
-    @AfterClass
+    @AfterAll
     public static void close() {
         graphHopperStorage.close();
         locationIndex.close();

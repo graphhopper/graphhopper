@@ -32,8 +32,8 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.Parameters.DETAILS;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;

@@ -1,8 +1,8 @@
 package com.graphhopper;
 
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import org.junit.jupiter.api.rules.TestRule;
+import org.junit.jupiter.api.runner.Description;
+import org.junit.jupiter.api.runners.model.Statement;
 
 public class RepeatRule implements TestRule {
     @Override

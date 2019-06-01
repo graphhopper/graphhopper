@@ -19,7 +19,7 @@ package com.graphhopper.coll;
 
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIterator;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.PriorityQueue;
 import java.util.Random;

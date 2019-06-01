@@ -27,7 +27,7 @@ import com.graphhopper.storage.change.ChangeGraphHelper;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;

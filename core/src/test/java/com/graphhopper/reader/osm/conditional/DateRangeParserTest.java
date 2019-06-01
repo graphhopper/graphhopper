@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.osm.conditional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.text.ParseException;
 import java.util.Calendar;

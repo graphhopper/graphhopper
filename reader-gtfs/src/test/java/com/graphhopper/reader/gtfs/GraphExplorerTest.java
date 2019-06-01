@@ -30,7 +30,7 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.DistanceCalc2D;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;

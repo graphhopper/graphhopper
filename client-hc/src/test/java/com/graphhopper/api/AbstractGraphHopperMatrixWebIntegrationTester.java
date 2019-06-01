@@ -1,8 +1,8 @@
 package com.graphhopper.api;
 
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 

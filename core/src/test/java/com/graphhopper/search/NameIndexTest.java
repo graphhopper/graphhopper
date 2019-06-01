@@ -19,7 +19,7 @@ package com.graphhopper.search;
 
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 

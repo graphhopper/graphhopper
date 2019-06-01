@@ -29,7 +29,7 @@ import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
-import org.junit.*;
+import org.junit.jupiter.api.*;
 
 import java.io.File;
 import java.util.*;
@@ -52,7 +52,7 @@ public class GraphHopperIT {
     private static GraphHopper hopper;
     private final String tmpGraphFile = "target/graphhopperIT-tmp";
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         // make sure we are using fresh graphhopper files with correct vehicle
         Helper.removeDir(new File(graphFileFoot));
@@ -66,7 +66,7 @@ public class GraphHopperIT {
                 importOrLoad();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         Helper.removeDir(new File(graphFileFoot));
     }

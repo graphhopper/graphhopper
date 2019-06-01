@@ -18,7 +18,7 @@
 package com.graphhopper.tools;
 
 import com.graphhopper.tools.QueryTorture.Query;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.assertEquals;
 
