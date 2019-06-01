@@ -36,7 +36,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Rule;
 import org.junit.jupiter.api.Test;
 

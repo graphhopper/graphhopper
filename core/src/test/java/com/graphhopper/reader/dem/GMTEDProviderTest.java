@@ -20,7 +20,7 @@ package com.graphhopper.reader.dem;
 import com.graphhopper.util.Downloader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -124,7 +124,7 @@ public class GMTEDProviderTest {
     Change to: <argLine>-Xmx500m -Xms500m</argLine>
     This test will download about 2gb of data.
      */
-    @Ignore
+    @Disabled
     public void testGetEle() {
         assertEquals(339, instance.getEle(49.949784, 11.57517), precision);
         assertEquals(438, instance.getEle(49.968668, 11.575127), precision);
@@ -149,7 +149,7 @@ public class GMTEDProviderTest {
 
     }
 
-    @Ignore
+    @Disabled
     public void testGetEleVerticalBorder() {
         // Border between the tiles 50n000e and 70n000e
         assertEquals("50n000e_20101117_gmted_mea075", instance.getFileName(69.999999, 19.493));
@@ -163,7 +163,7 @@ public class GMTEDProviderTest {
         assertEquals(241, instance.getEle(70, 19.236), precision);
     }
 
-    @Ignore
+    @Disabled
     public void testGetEleHorizontalBorder() {
         // Border between the tiles 50n000e and 50n030e
         assertEquals("50n000e_20101117_gmted_mea075", instance.getFileName(53, 29.999999));

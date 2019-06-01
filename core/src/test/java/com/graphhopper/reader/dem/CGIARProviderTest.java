@@ -20,7 +20,7 @@ package com.graphhopper.reader.dem;
 import com.graphhopper.util.Downloader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -112,7 +112,7 @@ public class CGIARProviderTest {
         zipFile.delete();
     }
 
-    @Ignore
+    @Disabled
     public void testGetEle() {
         assertEquals(337, instance.getEle(49.949784, 11.57517), precision);
         assertEquals(466, instance.getEle(49.968668, 11.575127), precision);
@@ -135,7 +135,7 @@ public class CGIARProviderTest {
         assertEquals(0, instance.getEle(60.251, 18.805), precision);
     }
 
-    @Ignore
+    @Disabled
     public void testGetEleVerticalBorder() {
         // Border between the tiles srtm_39_04 and srtm_39_03
         assertEquals("srtm_39_04", instance.getFileName(44.999999, 11.5));
@@ -144,7 +144,7 @@ public class CGIARProviderTest {
         assertEquals(6, instance.getEle(45.000001, 11.5), precision);
     }
 
-    @Ignore
+    @Disabled
     public void testGetEleHorizontalBorder() {
         // Border between the tiles N42E011 and N42E012
         assertEquals("srtm_38_04", instance.getFileName(44.94, 9.999999));

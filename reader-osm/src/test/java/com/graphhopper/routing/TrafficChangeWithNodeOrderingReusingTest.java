@@ -13,7 +13,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.MiniPerfTest;
-import org.junit.jupiter.api.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.runner.RunWith;
 import org.junit.jupiter.api.runners.Parameterized;
@@ -34,7 +34,7 @@ import static org.junit.runners.Parameterized.Parameters;
  * Tests CH contraction and query performance when re-using the node ordering after random changes
  * have been applied to the edge weights (like when considering traffic).
  */
-@Ignore("for performance testing only")
+@Disabled("for performance testing only")
 @ExtendWith(Parameterized.class)
 public class TrafficChangeWithNodeOrderingReusingTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrafficChangeWithNodeOrderingReusingTest.class);
