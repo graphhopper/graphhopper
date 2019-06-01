@@ -27,6 +27,6 @@ public class DelaunayTriangulationIsolineBuilderTest {
 
         List<Coordinate[]> res = instance.calcList(listOfList, listOfList.size());
         Coordinate[] geometry = res.get(0);
-        Assert.assertEquals(9, geometry.length);
+        Assertions.assertEquals(9, geometry.length);
     }
 }

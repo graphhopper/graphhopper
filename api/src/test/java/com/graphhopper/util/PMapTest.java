@@ -28,15 +28,15 @@ public class PMapTest {
     public void singleStringPropertyCanBeRetrieved() {
         PMap subject = new PMap("foo=bar");
 
-        Assert.assertEquals("bar", subject.get("foo"));
+        Assertions.assertEquals("bar", subject.get("foo"));
     }
 
     @Test
     public void propertyFromStringWithMultiplePropertiesCanBeRetrieved() {
         PMap subject = new PMap("foo=valueA|bar=valueB");
 
-        Assert.assertEquals("valueA", subject.get("foo", ""));
-        Assert.assertEquals("valueB", subject.get("bar", ""));
+        Assertions.assertEquals("valueA", subject.get("foo", ""));
+        Assertions.assertEquals("valueB", subject.get("bar", ""));
     }
 
     @Test

@@ -131,7 +131,7 @@ public class FareTest {
                 .min(Comparator.comparingDouble(fare -> fare.fare_attribute.price));
         assumeTrue("There is an obviously cheapest fare.", obviouslyCheapestFare.isPresent());
         Amount amount = Fares.cheapestFare(fares, trip).get();
-        Assert.assertEquals("The fare calculator agrees", BigDecimal.valueOf(obviouslyCheapestFare.get().fare_attribute.price), amount.getAmount());
+        Assertions.assertEquals("The fare calculator agrees", BigDecimal.valueOf(obviouslyCheapestFare.get().fare_attribute.price), amount.getAmount());
     }
 
     @Theory

@@ -28,7 +28,7 @@ import static org.junit.Assert.assertFalse;
 public class GHResponseTest {
     @Test
     public void testToString() throws Exception {
-        Assert.assertEquals("no paths", new GHResponse().toString());
+        Assertions.assertEquals("no paths", new GHResponse().toString());
     }
 
     @Test

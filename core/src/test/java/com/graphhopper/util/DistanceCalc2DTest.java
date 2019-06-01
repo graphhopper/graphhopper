@@ -29,23 +29,23 @@ public class DistanceCalc2DTest {
     public void testCrossingPointToEdge() {
         DistanceCalc2D distanceCalc = new DistanceCalc2D();
         GHPoint point = distanceCalc.calcCrossingPointToEdge(0, 10, 0, 0, 10, 10);
-        Assert.assertEquals(5, point.getLat(), 0);
-        Assert.assertEquals(5, point.getLon(), 0);
+        Assertions.assertEquals(5, point.getLat(), 0);
+        Assertions.assertEquals(5, point.getLon(), 0);
     }
 
     @Test
     public void testCalcNormalizedEdgeDistance() {
         DistanceCalc2D distanceCalc = new DistanceCalc2D();
         double distance = distanceCalc.calcNormalizedEdgeDistance(0, 10, 0, 0, 10, 10);
-        Assert.assertEquals(50, distance, 0);
+        Assertions.assertEquals(50, distance, 0);
     }
 
     @Test
     public void testValidEdgeDistance() {
         DistanceCalc2D distanceCalc = new DistanceCalc2D();
         boolean validEdgeDistance = distanceCalc.validEdgeDistance(5, 15, 0, 0, 10, 10);
-        Assert.assertEquals(false, validEdgeDistance);
+        Assertions.assertEquals(false, validEdgeDistance);
         validEdgeDistance = distanceCalc.validEdgeDistance(15, 5, 0, 0, 10, 10);
-        Assert.assertEquals(false, validEdgeDistance);
+        Assertions.assertEquals(false, validEdgeDistance);
     }
 }

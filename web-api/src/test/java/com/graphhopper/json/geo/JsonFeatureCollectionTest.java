@@ -90,18 +90,18 @@ public class JsonFeatureCollectionTest {
     @Test
     public void testDeserialization() throws IOException {
         JsonFeatureCollection data = objectMapper.readValue(fixture("fixtures/geojson1.json"), JsonFeatureCollection.class);
-        Assert.assertEquals(3, data.getFeatures().size());
+        Assertions.assertEquals(3, data.getFeatures().size());
 
         JsonFeature f1 = data.getFeatures().get(0);
-        Assert.assertEquals("1", f1.getId());
-        Assert.assertEquals("value0", f1.getProperty("prop0"));
-        Assert.assertEquals(0.5, f1.getGeometry().getCoordinate().y, .1);
-        Assert.assertEquals(102.0, f1.getGeometry().getCoordinate().x, .1);
+        Assertions.assertEquals("1", f1.getId());
+        Assertions.assertEquals("value0", f1.getProperty("prop0"));
+        Assertions.assertEquals(0.5, f1.getGeometry().getCoordinate().y, .1);
+        Assertions.assertEquals(102.0, f1.getGeometry().getCoordinate().x, .1);
 
         JsonFeature f2 = data.getFeatures().get(1);
         // read as string despite the 2 (not a string) in json
-        Assert.assertEquals("2", f2.getId());
-        Assert.assertEquals(4, f2.getGeometry().getNumPoints());
+        Assertions.assertEquals("2", f2.getId());
+        Assertions.assertEquals(4, f2.getGeometry().getNumPoints());
         assertEquals(0.0, PointList.fromLineString((LineString) f2.getGeometry()).getLat(0), .1);
         assertEquals(102.0, PointList.fromLineString((LineString) f2.getGeometry()).getLon(0), .1);
         assertEquals(1.0, PointList.fromLineString((LineString) f2.getGeometry()).getLat(1), .1);
