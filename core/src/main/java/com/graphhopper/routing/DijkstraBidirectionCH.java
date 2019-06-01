@@ -65,7 +65,7 @@ public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
         EdgeIterator iter = edgeExplorer.setBaseNode(entry.adjNode);
         while (iter.next()) {
             // no need to inspect the edge we are coming from
-            if (iter.getEdge() == entry.adjNode) {
+            if (iter.getEdge() == entry.edge) {
                 continue;
             }
             int traversalId = traversalMode.createTraversalId(iter, reverse);

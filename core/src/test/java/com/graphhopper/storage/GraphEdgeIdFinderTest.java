@@ -124,13 +124,13 @@ public class GraphEdgeIdFinderTest {
         GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("2,1, 0,2, 2,3", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
 
         GHIntHashSet blockedEdges = new GHIntHashSet();
-        blockedEdges.addAll(new int[]{1, 2, 6, 7});
+        blockedEdges.addAll(1, 2, 6, 7);
         assertEquals(blockedEdges, blockArea.blockedEdges);
 
         blockArea = graphFinder.parseBlockArea("2,1, 1,3, 1,2, 0,1", DefaultEdgeFilter.allEdges(encoder), 1000 * 1000);
 
         blockedEdges = new GHIntHashSet();
-        blockedEdges.addAll(new int[]{4, 9, 6, 7});
+        blockedEdges.addAll(4, 9, 6, 7);
         assertEquals(blockedEdges, blockArea.blockedEdges);
     }
 }

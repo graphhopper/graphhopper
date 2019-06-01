@@ -544,4 +544,9 @@ public class WrapperGraph implements Graph {
     public int getOtherNode(int edge, int node) {
         return mainGraph.getOtherNode(edge, node);
     }
+
+    @Override
+    public boolean isAdjacentToNode(int edge, int node) {
+        return mainGraph.isAdjacentToNode(edge, node);
+    }
 }

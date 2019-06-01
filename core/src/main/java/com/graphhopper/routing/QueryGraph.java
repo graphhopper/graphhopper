@@ -57,8 +57,7 @@ public class QueryGraph implements Graph {
     private final int mainEdges;
     private final QueryGraph baseGraph;
     private final GraphExtension wrappedExtension;
-    // TODO when spreading it on different threads we need multiple independent explorers
-    private final Map<Integer, EdgeExplorer> cacheMap = new HashMap<>(4);
+    private final Map<EdgeFilter, EdgeExplorer> cacheMap = new HashMap<>(4);
 
     // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
     List<VirtualEdgeIteratorState> virtualEdges;
@@ -372,11 +371,11 @@ public class QueryGraph implements Graph {
 
     /**
      * This method is an experimental feature to reduce memory and CPU resources if there are many
-     * locations ("hundreds") for one QueryGraph. It can make problems for custom or threaded
-     * algorithms or when using custom EdgeFilters for EdgeExplorer creation. Another limitation is
-     * that the same edge explorer is used even if a different vehicle/flagEncoder is chosen.
-     * Currently we can cache only the ALL_EDGES filter or instances of the DefaultEdgeFilter where
-     * three edge explorers will be created: forward OR backward OR both.
+     * locations ("hundreds") for one QueryGraph. EdgeExplorer instances are cached based on the {@link EdgeFilter}
+     * passed into {@link #createEdgeExplorer(EdgeFilter)}. For equal (in the java sense) {@link EdgeFilter}s always
+     * the same {@link EdgeExplorer} will be returned when caching is enabled. Care has to be taken for example for
+     * custom or threaded algorithms, when using custom {@link EdgeFilter}s, or when the same edge explorer is used
+     * with different vehicles/encoders.
      */
     public QueryGraph setUseEdgeExplorerCache(boolean useEECache) {
         this.useEdgeExplorerCache = useEECache;
@@ -575,32 +574,15 @@ public class QueryGraph implements Graph {
             throw new IllegalStateException("Call lookup before using this graph");
 
         if (useEdgeExplorerCache) {
-            int counter = -1;
-            if (edgeFilter instanceof DefaultEdgeFilter) {
-                DefaultEdgeFilter dee = (DefaultEdgeFilter) edgeFilter;
-                counter = 0;
-                if (dee.acceptsBackward())
-                    counter = 1;
-                if (dee.acceptsForward())
-                    counter += 2;
-
-                if (counter == 0)
-                    throw new IllegalStateException("You tried to use an edge filter blocking every access");
-
-            } else if (edgeFilter == EdgeFilter.ALL_EDGES) {
-                counter = 4;
+            EdgeExplorer cached = cacheMap.get(edgeFilter);
+            if (cached == null) {
+                cached = createUncachedEdgeExplorer(edgeFilter);
+                cacheMap.put(edgeFilter, cached);
             }
-
-            if (counter >= 0) {
-                EdgeExplorer cached = cacheMap.get(counter);
-                if (cached == null) {
-                    cached = createUncachedEdgeExplorer(edgeFilter);
-                    cacheMap.put(counter, cached);
-                }
-                return cached;
-            }
+            return cached;
+        } else {
+            return createUncachedEdgeExplorer(edgeFilter);
         }
-        return createUncachedEdgeExplorer(edgeFilter);
     }
 
     private EdgeExplorer createUncachedEdgeExplorer(EdgeFilter edgeFilter) {
@@ -747,6 +729,15 @@ public class QueryGraph implements Graph {
             return getEdgeIteratorState(edge, node).getBaseNode();
         }
         return mainGraph.getOtherNode(edge, node);
+    }
+
+    @Override
+    public boolean isAdjacentToNode(int edge, int node) {
+        if (isVirtualEdge(edge)) {
+            EdgeIteratorState virtualEdge = getEdgeIteratorState(edge, node);
+            return virtualEdge.getBaseNode() == node || virtualEdge.getAdjNode() == node;
+        }
+        return mainGraph.isAdjacentToNode(edge, node);
     }
 
     private UnsupportedOperationException exc() {

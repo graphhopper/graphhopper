@@ -21,9 +21,10 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PreparationWeighting;
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.LevelEdgeFilter;
+import com.graphhopper.routing.util.MotorcycleFlagEncoder;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -53,7 +54,7 @@ import static org.junit.Assert.assertFalse;
 @RunWith(Parameterized.class)
 public class CHQueryWithTurnCostsTest {
     private final int maxCost = 10;
-    private final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, maxCost);
+    private final FlagEncoder encoder = new MotorcycleFlagEncoder(5, 5, maxCost);
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
@@ -85,7 +86,7 @@ public class CHQueryWithTurnCostsTest {
         for (int i = 0; i < 3; ++i) {
             testPathCalculation(i, i, 0, IntArrayList.from(i));
         }
-        testPathCalculation(1, 2, 11, IntArrayList.from(1, 0, 2));
+        testPathCalculation(1, 2, 8, IntArrayList.from(1, 0, 2), 3);
         testPathCalculation(2, 1, 8, IntArrayList.from(2, 0, 1));
         testPathCalculation(0, 1, 3, IntArrayList.from(0, 1));
         testPathCalculation(0, 2, 5, IntArrayList.from(0, 2));
@@ -111,11 +112,92 @@ public class CHQueryWithTurnCostsTest {
         // contraction yields no shortcuts
         setLevelEqualToNodeIdForAllNodes();
 
-        testPathCalculation(0, 1, 40, IntArrayList.from(0, 2, 4, 6, 5, 3, 1));
-        testPathCalculation(1, 0, 28, IntArrayList.from(1, 3, 5, 6, 4, 2, 0));
-        testPathCalculation(4, 3, 23, IntArrayList.from(4, 6, 5, 3));
+        // note that we are using the shortest weighting but turn cost times are included whatsoever, see #1590
+        testPathCalculation(0, 1, 26, IntArrayList.from(0, 2, 4, 6, 5, 3, 1), 14);
+        testPathCalculation(1, 0, 26, IntArrayList.from(1, 3, 5, 6, 4, 2, 0), 2);
+        testPathCalculation(4, 3, 17, IntArrayList.from(4, 6, 5, 3), 6);
         testPathCalculation(0, 0, 0, IntArrayList.from(0));
         testPathCalculation(4, 4, 0, IntArrayList.from(4));
+
+        // also check if distance and times (including turn costs) are calculated correctly
+        Path path = createAlgo().calcPath(0, 1);
+        assertEquals("wrong weight", 40, path.getWeight(), 1.e-3);
+        assertEquals("wrong distance", 26, path.getDistance(), 1.e-3);
+        double weightPerMeter = 0.06;
+        assertEquals("wrong time", (26 * weightPerMeter + 14) * 1000, path.getTime(), 1.e-3);
+    }
+
+    @Test
+    public void testFindPathWithTurnCosts_loopShortcutBwdSearch() {
+        // the loop shortcut 4-4 will be encountered during the bwd search
+        //             3
+        //            / \
+        //           1   2
+        //            \ /
+        // 0 - 7 - 8 - 4 - 6 - 5
+        graph.edge(0, 7, 1, false);
+        graph.edge(7, 8, 1, false);
+        graph.edge(8, 4, 1, false);
+        graph.edge(4, 1, 1, false);
+        graph.edge(1, 3, 1, false);
+        graph.edge(3, 2, 1, false);
+        graph.edge(2, 4, 1, false);
+        graph.edge(4, 6, 1, false);
+        graph.edge(6, 5, 1, false);
+        addRestriction(8, 4, 6);
+        addRestriction(8, 4, 2);
+        addRestriction(1, 4, 6);
+
+        graph.freeze();
+
+        // from contracting node 1
+        addShortcut(4, 3, 3, 4, 3, 4, 2);
+        // from contracting node 2
+        addShortcut(3, 4, 5, 6, 5, 6, 2);
+        // from contracting node 3
+        addShortcut(4, 4, 3, 6, 9, 10, 4);
+        // from contracting node 4
+        addShortcut(8, 4, 2, 6, 2, 11, 5);
+        addShortcut(8, 6, 2, 7, 12, 7, 6);
+        setLevelEqualToNodeIdForAllNodes();
+
+        testPathCalculation(0, 5, 9, IntArrayList.from(0, 7, 8, 4, 1, 3, 2, 4, 6, 5));
+    }
+
+    @Test
+    public void testFindPathWithTurnCosts_loopShortcutFwdSearch() {
+        // the loop shortcut 4-4 will be encountered during the fwd search
+        //         3
+        //        / \
+        //       1   2
+        //        \ /
+        // 5 - 6 - 4 - 7 - 8 - 0
+        graph.edge(5, 6, 1, false);
+        graph.edge(6, 4, 1, false);
+        graph.edge(4, 1, 1, false);
+        graph.edge(1, 3, 1, false);
+        graph.edge(3, 2, 1, false);
+        graph.edge(2, 4, 1, false);
+        graph.edge(4, 7, 1, false);
+        graph.edge(7, 8, 1, false);
+        graph.edge(8, 0, 1, false);
+        addRestriction(6, 4, 7);
+        addRestriction(6, 4, 2);
+        addRestriction(1, 4, 7);
+        graph.freeze();
+
+        // from contracting node 1
+        addShortcut(4, 3, 2, 3, 2, 3, 2);
+        // from contracting node 2
+        addShortcut(3, 4, 4, 5, 4, 5, 2);
+        // from contracting node 3
+        addShortcut(4, 4, 2, 5, 9, 10, 4);
+        // from contracting node 4
+        addShortcut(6, 4, 1, 5, 1, 11, 5);
+        addShortcut(6, 7, 1, 6, 12, 6, 6);
+        setLevelEqualToNodeIdForAllNodes();
+
+        testPathCalculation(5, 0, 9, IntArrayList.from(5, 6, 4, 1, 3, 2, 4, 7, 8, 0));
     }
 
     @Test
@@ -138,13 +220,13 @@ public class CHQueryWithTurnCostsTest {
         setLevelEqualToNodeIdForAllNodes();
 
         // when we are searching a path to the highest level node, the backward search will not expand any edges
-        testPathCalculation(1, 4, 19, IntArrayList.from(1, 2, 0, 3, 4));
-        testPathCalculation(2, 4, 10, IntArrayList.from(2, 0, 3, 4));
-        testPathCalculation(0, 4, 6, IntArrayList.from(0, 3, 4));
+        testPathCalculation(1, 4, 11, IntArrayList.from(1, 2, 0, 3, 4), 8);
+        testPathCalculation(2, 4, 7, IntArrayList.from(2, 0, 3, 4), 3);
+        testPathCalculation(0, 4, 5, IntArrayList.from(0, 3, 4), 1);
 
         // when we search a path to or start the search from a low level node both forward and backward searches run
-        testPathCalculation(1, 0, 11, IntArrayList.from(1, 2, 0));
-        testPathCalculation(0, 4, 6, IntArrayList.from(0, 3, 4));
+        testPathCalculation(1, 0, 6, IntArrayList.from(1, 2, 0), 5);
+        testPathCalculation(0, 4, 5, IntArrayList.from(0, 3, 4), 1);
     }
 
     @Test
@@ -165,7 +247,7 @@ public class CHQueryWithTurnCostsTest {
         addShortcut(3, 2, 1, 2, 1, 2, 4);
         setLevelEqualToNodeIdForAllNodes();
 
-        testPathCalculation(1, 4, 15, IntArrayList.from(1, 3, 0, 2, 4));
+        testPathCalculation(1, 4, 9, IntArrayList.from(1, 3, 0, 2, 4), 6);
     }
 
     @Test
@@ -189,11 +271,11 @@ public class CHQueryWithTurnCostsTest {
         setLevelEqualToNodeIdForAllNodes();
 
         // the turn costs have to be accounted for also when the shortcuts are used
-        testPathCalculation(2, 4, 19, IntArrayList.from(2, 3, 1, 0, 4));
-        testPathCalculation(1, 4, 6, IntArrayList.from(1, 0, 4));
-        testPathCalculation(2, 0, 16, IntArrayList.from(2, 3, 1, 0));
-        testPathCalculation(3, 4, 10, IntArrayList.from(3, 1, 0, 4));
-        testPathCalculation(2, 1, 11, IntArrayList.from(2, 3, 1));
+        testPathCalculation(2, 4, 11, IntArrayList.from(2, 3, 1, 0, 4), 8);
+        testPathCalculation(1, 4, 5, IntArrayList.from(1, 0, 4), 1);
+        testPathCalculation(2, 0, 9, IntArrayList.from(2, 3, 1, 0), 7);
+        testPathCalculation(3, 4, 7, IntArrayList.from(3, 1, 0, 4), 3);
+        testPathCalculation(2, 1, 6, IntArrayList.from(2, 3, 1), 5);
     }
 
     @Test
@@ -212,7 +294,7 @@ public class CHQueryWithTurnCostsTest {
 
         // no shortcuts here
         setLevelEqualToNodeIdForAllNodes();
-        testPathCalculation(0, 1, 18, IntArrayList.from(0, 2, 3, 1));
+        testPathCalculation(0, 1, 14, IntArrayList.from(0, 2, 3, 1), 4);
     }
 
     @Test
@@ -351,7 +433,7 @@ public class CHQueryWithTurnCostsTest {
         setLevelEqualToNodeIdForAllNodes();
 
         // without u-turns we need to take the loop
-        testPathCalculation(0, 1, 18, IntArrayList.from(0, 2, 3, 2, 1));
+        testPathCalculation(0, 1, 15, IntArrayList.from(0, 2, 3, 2, 1), 3);
 
         // additional check
         testPathCalculation(3, 1, 4, IntArrayList.from(3, 2, 1));
@@ -380,7 +462,7 @@ public class CHQueryWithTurnCostsTest {
 
         // going via 2, 3 and 4 is possible, but we want the shortest path taking into account turn costs also at
         // the bridge node
-        testPathCalculation(0, 1, 7, IntArrayList.from(0, 3, 1));
+        testPathCalculation(0, 1, 5, IntArrayList.from(0, 3, 1), 2);
     }
 
     @Test
@@ -608,6 +690,13 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private void testPathCalculation(int from, int to, int expectedWeight, IntArrayList expectedNodes) {
+        testPathCalculation(from, to, expectedWeight, expectedNodes, 0);
+    }
+
+    private void testPathCalculation(int from, int to, int expectedEdgeWeight, IntArrayList expectedNodes, int expectedTurnCost) {
+        int expectedWeight = expectedEdgeWeight + expectedTurnCost;
+        int expectedDistance = expectedEdgeWeight;
+        int expectedTime = expectedEdgeWeight * 60 + expectedTurnCost * 1000;
         AbstractBidirectionEdgeCHNoSOD algo = createAlgo();
         Path path = algo.calcPath(from, to);
         if (expectedWeight < 0) {
@@ -617,6 +706,8 @@ public class CHQueryWithTurnCostsTest {
                 assertEquals(String.format(Locale.ROOT, "Unexpected path from %d to %d", from, to), expectedNodes, path.calcNodes());
             }
             assertEquals(String.format(Locale.ROOT, "Unexpected path weight from %d to %d", from, to), expectedWeight, path.getWeight(), 1.e-6);
+            assertEquals(String.format(Locale.ROOT, "Unexpected path distance from %d to %d", from, to), expectedDistance, path.getDistance(), 1.e-6);
+            assertEquals(String.format(Locale.ROOT, "Unexpected path time from %d to %d", from, to), expectedTime, path.getTime());
         }
     }
 

@@ -172,6 +172,7 @@ public class RandomCHRoutingTest {
 
             int numQueries = 100;
             int numPathsNotFound = 0;
+            List<String> strictViolations = new ArrayList<>();
             for (int i = 0; i < numQueries; i++) {
                 assertEquals("queryGraph and chQueryGraph should have equal number of nodes", queryGraph.getNodes(), chQueryGraph.getNodes());
                 int from = rnd.nextInt(queryGraph.getNodes());
@@ -200,9 +201,19 @@ public class RandomCHRoutingTest {
                     System.out.println("given:    " + path.calcNodes());
                     fail("wrong weight: " + from + "->" + to + ", dijkstra: " + refWeight + " vs. ch: " + path.getWeight());
                 }
+                if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
+                    strictViolations.add("wrong distance " + from + "->" + to + ", expected: " + refPath.getDistance() + ", given: " + path.getDistance());
+                }
+                if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
+                    strictViolations.add("wrong time " + from + "->" + to + ", expected: " + refPath.getTime() + ", given: " + path.getTime());
+                }
             }
             if (numPathsNotFound > 0.9 * numQueries) {
                 fail("Too many paths not found: " + numPathsNotFound + "/" + numQueries);
+            }
+            if (strictViolations.size() > 0.05 * numQueries) {
+                fail("Too many strict violations: " + strictViolations.size() + "/" + numQueries + "\n" +
+                        Helper.join("\n", strictViolations));
             }
         }
     }

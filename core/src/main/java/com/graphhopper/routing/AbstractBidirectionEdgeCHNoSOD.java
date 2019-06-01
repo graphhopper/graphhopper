@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHEntry;
-import com.graphhopper.routing.ch.Path4CH;
+import com.graphhopper.routing.ch.EdgeBasedPathCH;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
@@ -44,8 +44,10 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         super(graph, weighting, TraversalMode.EDGE_BASED_2DIR);
         this.turnWeighting = weighting;
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
-        innerInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder));
-        innerOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder));
+        // important: we have to use different filter ids, otherwise this will not work with QueryGraph's edge explorer
+        // cache, see #1623.
+        innerInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder).setFilterId(1));
+        innerOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder).setFilterId(1));
         if (!(graph.getExtension() instanceof TurnCostExtension)) {
             throw new IllegalArgumentException("edge-based CH algorithms require a turn cost extension");
         }
@@ -93,7 +95,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
             if (entry.getWeightOfVisitedPath() < bestPath.getWeight()) {
                 bestPath.setSwitchToFrom(reverse);
                 bestPath.setSPTEntry(entry);
-                bestPath.setSPTEntryTo(new SPTEntry(EdgeIterator.NO_EDGE, oppositeNode, 0));
+                bestPath.setSPTEntryTo(new CHEntry(oppositeNode, 0));
                 bestPath.setWeight(entry.getWeightOfVisitedPath());
                 return;
             }
@@ -134,7 +136,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
 
     @Override
     protected Path createAndInitPath() {
-        bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
+        bestPath = new EdgeBasedPathCH(graph, graph.getBaseGraph(), weighting);
         return bestPath;
     }
 
