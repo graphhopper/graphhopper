@@ -80,6 +80,7 @@ public class RandomCHRoutingTest {
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
         // the same as taking the direct edge!
         double pOffset = 0;
+        // todo: excluding loops here should fix all problems
         GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, pOffset);
         if (traversalMode.isEdgeBased()) {
             GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
@@ -88,7 +89,7 @@ public class RandomCHRoutingTest {
     }
 
     @Test
-    public void anotherIssue() {
+    public void motorcycleIssue() {
         // todo: this one fails for motorcycle, because of direction dependent speeds on loops that
         // are apparently not handled correctly
         Assume.assumeTrue(traversalMode.isEdgeBased());
@@ -100,7 +101,7 @@ public class RandomCHRoutingTest {
     }
 
     @Test
-    public void anotherIssue2() {
+    public void motorcycleIssue2() {
         // todo: this one fails when the encoder is set to motorcycle
         // it also involves loop edges and it looks as if not using loop edges the random test
         // does not find a failing test case. could be similar to #1583 ?
