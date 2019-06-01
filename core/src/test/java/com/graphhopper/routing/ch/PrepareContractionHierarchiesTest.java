@@ -473,6 +473,7 @@ public class PrepareContractionHierarchiesTest {
         // spt entry at 2 is different to the sum of the weights of the spt entry at node 3 and the shortcut edge. this
         // is due to different floating point rounding arithmetic of shortcuts and virtual edges on the query graph.
         edge31.set(carEncoder.getAverageSpeedEnc(), 22);
+        edge31.setReverse(carEncoder.getAverageSpeedEnc(), 22);
 
         // just stalling node 2 alone would not lead to connection not found, because the shortcut 3-4 still finds node
         // 4. however, we can choose the weight of edge 2-4 such that node 4 also gets stalled via node 2.
@@ -480,6 +481,7 @@ public class PrepareContractionHierarchiesTest {
         // note that without the virtual node between 3 and 1 node 2 would not even be explored in the forward search,
         // but because of the virtual node the strict upward search is modified and goes like 0-3-x-1-2.
         edge24.set(carEncoder.getAverageSpeedEnc(), 27.5);
+        edge24.setReverse(carEncoder.getAverageSpeedEnc(), 27.5);
 
         // prepare ch, use node ids as levels
         PrepareContractionHierarchies pch = createPrepareContractionHierarchies(g, lg, fastestWeighting);
