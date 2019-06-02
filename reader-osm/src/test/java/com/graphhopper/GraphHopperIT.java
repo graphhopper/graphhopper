@@ -52,7 +52,7 @@ public class GraphHopperIT {
     private static GraphHopper hopper;
     private final String tmpGraphFile = "target/graphhopperIT-tmp";
 
-    @BeforeEachAll
+    @BeforeAll
     public static void beforeClass() {
         // make sure we are using fresh graphhopper files with correct vehicle
         Helper.removeDir(new File(graphFileFoot));
