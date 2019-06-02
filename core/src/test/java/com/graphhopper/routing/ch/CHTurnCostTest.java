@@ -18,8 +18,6 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.Repeat;
-import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -31,8 +29,8 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Rule;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.RepeatedTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +38,7 @@ import java.util.*;
 
 import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Here we test if Contraction Hierarchies work with turn costs, i.e. we first contract the graph and then run
@@ -63,9 +61,6 @@ public class CHTurnCostTest {
     private CHGraph chGraph;
     private boolean checkStrict;
 
-    @Rule
-    public RepeatRule repeatRule = new RepeatRule();
-
     @BeforeEach
     public void init() {
         // its important to use @BeforeEach when using Repeat Rule!
@@ -81,7 +76,7 @@ public class CHTurnCostTest {
     }
 
     @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_linear() {
         // 2-1-0-3-4
         graph.edge(2, 1, 2, true);
@@ -124,7 +119,7 @@ public class CHTurnCostTest {
     }
 
     @Test
-    @Repeat(times = 100)
+    @RepeatedTest(100)
     public void testFindPath_multipleInOutEdges_turnReplacementDifference() {
         //   0   3 - 4   8
         //    \ /     \ /
@@ -213,7 +208,7 @@ public class CHTurnCostTest {
     }
 
     @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_simpleLoop() {
         //      2
         //     /|
@@ -236,7 +231,7 @@ public class CHTurnCostTest {
     }
 
     @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_singleDirectedLoop() {
         //  3 1-2
         //  | | |
@@ -264,7 +259,7 @@ public class CHTurnCostTest {
     }
 
     @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_singleLoop() {
         //  0   4
         //  |  /|
@@ -293,7 +288,7 @@ public class CHTurnCostTest {
     }
 
     @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_singleLoopWithNoise() {
         //  0~15~16~17              solid lines: paths contributing to shortest path from 0 to 14
         //  |        {              wiggly lines: extra paths to make it more complicated
@@ -349,7 +344,7 @@ public class CHTurnCostTest {
     }
 
     @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_complicatedGraphAndPath() {
         // In this test we try to find a rather complicated shortest path including a double loop and two p-turns
         // with several turn restrictions and turn costs.
@@ -490,7 +485,7 @@ public class CHTurnCostTest {
     }
 
     @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testFindPath_highlyConnectedGraph_compareWithDijkstra() {
         // In this test we use a random contraction order and run many random routing queries. The results are checked
         // by comparing them to the results of a standard dijkstra search.
@@ -802,7 +797,7 @@ public class CHTurnCostTest {
         // travel via the virtual node 7 to node 1. From there we cannot go to 6 because of the one-way so we go back
         // to node 2 (no u-turn because of the duplicate edge) on edge1. And this is were the journey ends: we cannot
         // go to 8 because of the turn restriction from edge1 to edge4 -> there should not be a path!
-        assertFalse("there should not be a path, but found: " + path.calcNodes(), path.isFound());
+        assertFalse(path.isFound(), "there should not be a path, but found: " + path.calcNodes());
     }
 
     @Test
@@ -829,7 +824,7 @@ public class CHTurnCostTest {
         graph.freeze();
         RoutingAlgorithmFactory pch = prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5));
         assertEquals(5, chGraph.getOriginalEdges());
-        assertEquals("expected two shortcuts: 3->5 and 5->3", 7, chGraph.getEdges());
+        assertEquals(7, chGraph.getEdges(), "expected two shortcuts: 3->5 and 5->3");
         // there should be no path from 2 to 1, because of the turn restriction and because u-turns are not allowed
         assertFalse(findPathUsingDijkstra(2, 1).isFound());
         compareCHQueryWithDijkstra(pch, 2, 1);
@@ -841,12 +836,12 @@ public class CHTurnCostTest {
         QueryResult qr = index.findClosest(0.1, 0.15, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = new QueryGraph(chGraph);
         queryGraph.lookup(Collections.singletonList(qr));
-        assertEquals("expected one virtual node", 1, queryGraph.getNodes() - chGraph.getNodes());
+        assertEquals(1, queryGraph.getNodes() - chGraph.getNodes(), "expected one virtual node");
         RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
                 .traversalMode(TraversalMode.EDGE_BASED_2DIR)
                 .build());
         Path path = chAlgo.calcPath(2, 1);
-        assertFalse("no path should be found, but found " + path.calcNodes(), path.isFound());
+        assertFalse(path.isFound(), "no path should be found, but found " + path.calcNodes());
     }
 
     @Test
@@ -881,7 +876,7 @@ public class CHTurnCostTest {
                 .traversalMode(TraversalMode.EDGE_BASED_2DIR)
                 .build());
         Path path = chAlgo.calcPath(2, 3);
-        assertTrue("no path found", path.isFound());
+        assertTrue(path.isFound(), "no path found");
         assertEquals(IntArrayList.from(2, 5, 3), path.calcNodes());
         assertEquals(454.266, path.getDistance(), 1.e-1);
     }
@@ -908,7 +903,7 @@ public class CHTurnCostTest {
                 .traversalMode(TraversalMode.EDGE_BASED_2DIR)
                 .build());
         Path path = chAlgo.calcPath(0, 2);
-        assertTrue("it should be possible to route via a virtual node, but no path found", path.isFound());
+        assertTrue(path.isFound(), "it should be possible to route via a virtual node, but no path found");
         assertEquals(IntArrayList.from(0, 3, 1, 2), path.calcNodes());
         assertEquals(Helper.DIST_PLANE.calcDist(0.00, 0.00, 0.03, 0.03), path.getDistance(), 1.e-1);
     }
@@ -946,8 +941,8 @@ public class CHTurnCostTest {
      * It often produces exotic conditions that are hard to anticipate beforehand.
      * when it fails use {@link GHUtility#printGraphForUnitTest} to extract the graph and reproduce the error.
      */
-    @Repeat(times = 10)
     @Test
+    @RepeatedTest(10)
     public void testFindPath_random_compareWithDijkstra() {
         long seed = System.nanoTime();
         LOGGER.info("Seed used to generate graph: {}", seed);
@@ -964,8 +959,8 @@ public class CHTurnCostTest {
     /**
      * same as {@link #testFindPath_random_compareWithDijkstra()}, but using automatic node priority calculation
      */
-    @Repeat(times = 10)
     @Test
+    @RepeatedTest(10)
     public void testFindPath_heuristic_compareWithDijkstra() {
         long seed = System.nanoTime();
         LOGGER.info("Seed used to generate graph: {}", seed);
@@ -1000,10 +995,10 @@ public class CHTurnCostTest {
         int expectedWeight = expectedEdgeWeight + expectedTurnCosts;
         int expectedDistance = expectedEdgeWeight;
         int expectedTime = expectedEdgeWeight * 60 + expectedTurnCosts * 1000;
-        assertEquals("Normal Dijkstra did not find expected path.", expectedPath, dijkstraPath.calcNodes());
-        assertEquals("Normal Dijkstra did not calculate expected weight.", expectedWeight, dijkstraPath.getWeight(), 1.e-6);
-        assertEquals("Normal Dijkstra did not calculate expected distance.", expectedDistance, dijkstraPath.getDistance(), 1.e-6);
-        assertEquals("Normal Dijkstra did not calculate expected time.", expectedTime, dijkstraPath.getTime(), 1.e-6);
+        assertEquals(expectedPath, dijkstraPath.calcNodes(), "Normal Dijkstra did not find expected path.");
+        assertEquals(expectedWeight, dijkstraPath.getWeight(), 1.e-6, "Normal Dijkstra did not calculate expected weight.");
+        assertEquals(expectedDistance, dijkstraPath.getDistance(), 1.e-6, "Normal Dijkstra did not calculate expected distance.");
+        assertEquals(expectedTime, dijkstraPath.getTime(), 1.e-6, "Normal Dijkstra did not calculate expected time.");
     }
 
     private void checkPathUsingCH(IntArrayList expectedPath, int expectedEdgeWeight, int expectedTurnCosts, int from, int to, List<Integer> contractionOrder) {
@@ -1011,10 +1006,10 @@ public class CHTurnCostTest {
         int expectedWeight = expectedEdgeWeight + expectedTurnCosts;
         int expectedDistance = expectedEdgeWeight;
         int expectedTime = expectedEdgeWeight * 60 + expectedTurnCosts * 1000;
-        assertEquals("Contraction Hierarchies did not find expected path. contraction order=" + contractionOrder, expectedPath, chPath.calcNodes());
-        assertEquals("Contraction Hierarchies did not calculate expected weight.", expectedWeight, chPath.getWeight(), 1.e-6);
-        assertEquals("Contraction Hierarchies did not calculate expected distance.", expectedDistance, chPath.getDistance(), 1.e-6);
-        assertEquals("Contraction Hierarchies did not calculate expected time.", expectedTime, chPath.getTime(), 1.e-6);
+        assertEquals(expectedPath, chPath.calcNodes(), "Contraction Hierarchies did not find expected path. contraction order=" + contractionOrder);
+        assertEquals(expectedWeight, chPath.getWeight(), 1.e-6, "Contraction Hierarchies did not calculate expected weight.");
+        assertEquals(expectedDistance, chPath.getDistance(), 1.e-6, "Contraction Hierarchies did not calculate expected distance.");
+        assertEquals(expectedTime, chPath.getTime(), 1.e-6, "Contraction Hierarchies did not calculate expected time.");
     }
 
     private Path findPathUsingDijkstra(int from, int to) {
