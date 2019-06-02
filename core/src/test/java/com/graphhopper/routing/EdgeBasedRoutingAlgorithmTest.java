@@ -33,12 +33,7 @@ import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.runner.RunWith;
-import org.junit.jupiter.api.runners.Parameterized;
-import org.junit.jupiter.api.runners.Parameterized.Parameters;
-
 import java.util.*;
 
 import static com.graphhopper.util.GHUtility.getEdge;
@@ -48,7 +43,6 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-@ExtendWith(Parameterized.class)
 public class EdgeBasedRoutingAlgorithmTest {
     private final String algoStr;
     private FlagEncoder carEncoder;
@@ -57,7 +51,6 @@ public class EdgeBasedRoutingAlgorithmTest {
         this.algoStr = algo;
     }
 
-    @MethodSource(name = "{0}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 // todo: make this test run also for edge-based CH or otherwise make sure time calculation is tested also for edge-based CH (at the moment it will fail!)

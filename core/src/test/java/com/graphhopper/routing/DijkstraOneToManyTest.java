@@ -26,10 +26,8 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.runner.RunWith;
-import org.junit.jupiter.api.runners.Parameterized;
-import org.junit.jupiter.api.runners.Parameterized.Parameters;
-import org.junit.jupiter.params.provider;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -40,7 +38,6 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Peter Karich
  */
-@ExtendWith(Parameterized.class)
 public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
     private final TraversalMode traversalMode;
 
@@ -51,7 +48,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
     /**
      * Runs the same test with each of the supported traversal modes
      */
-    @MethodSource(name = "{0}")
+
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {
@@ -62,6 +59,8 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
         });
     }
 
+    @ParameterizedTest
+    @MethodSource("configs")
     public static Graph initGraphWeightLimit(Graph g) {
         //      0----1
         //     /     |

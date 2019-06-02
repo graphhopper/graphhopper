@@ -36,8 +36,6 @@ import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.runner.RunWith;
-import org.junit.jupiter.api.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.List;
@@ -51,7 +49,6 @@ import static org.junit.Assert.assertFalse;
  * The graph preparation is done manually here and the tests try to focus on border cases that have to be covered
  * by the query algorithm correctly.
  */
-@ExtendWith(Parameterized.class)
 public class CHQueryWithTurnCostsTest {
     private final int maxCost = 10;
     private final FlagEncoder encoder = new MotorcycleFlagEncoder(5, 5, maxCost);
@@ -62,7 +59,6 @@ public class CHQueryWithTurnCostsTest {
     private final CHGraph chGraph = graph.getGraph(CHGraph.class);
     private String algoString;
 
-    @MethodSource(name = "{0}")
     public static Object[] parameters() {
         return new Object[]{"astar", "dijkstra"};
     }

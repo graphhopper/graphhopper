@@ -17,8 +17,7 @@ import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.runner.RunWith;
-import org.junit.jupiter.api.runners.Parameterized;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,10 +26,8 @@ import java.util.Random;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-@ExtendWith(Parameterized.class)
 public class RandomCHRoutingTest {
-    private final TraversalMode traversalMode;
-    private final int maxTurnCosts;
+    private final int maxTurnCosts = 10;
     private Directory dir;
     private CarFlagEncoder encoder;
     private Weighting weighting;
@@ -38,7 +35,6 @@ public class RandomCHRoutingTest {
     private LocationIndexTree locationIndex;
     private CHGraph chGraph;
 
-    @MethodSource(name = "{0}")
     public static Object[] params() {
         return new Object[]{
                 TraversalMode.NODE_BASED,
@@ -46,13 +42,9 @@ public class RandomCHRoutingTest {
         };
     }
 
-    public RandomCHRoutingTest(TraversalMode traversalMode) {
-        this.traversalMode = traversalMode;
-        this.maxTurnCosts = 10;
-    }
-
     @BeforeEach
-    public void init() {
+    @MethodSource("params")
+    public void init(TraversalMode traversalMode) {
         dir = new RAMDirectory();
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         EncodingManager em = EncodingManager.create(encoder);
@@ -68,7 +60,8 @@ public class RandomCHRoutingTest {
      * nodes.
      */
     @Test
-    public void random() {
+    @MethodSource("params")
+    public void random(TraversalMode traversalMode) {
         // you might have to keep this test running in an infinite loop for several minutes to find potential routing
         // bugs (e.g. use intellij 'run until stop/failure').
         int numNodes = 50;
@@ -82,52 +75,57 @@ public class RandomCHRoutingTest {
         if (traversalMode.isEdgeBased()) {
             GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
         }
-        runRandomTest(rnd, 20);
+        runRandomTest(rnd, 20, traversalMode);
     }
 
     @Test
-    public void issue1574_1() {
-        Assume.assumeFalse(traversalMode.isEdgeBased());
+    @MethodSource("params")
+    public void issue1574_1(TraversalMode traversalMode) {
+        Assumptions.assumeFalse(traversalMode.isEdgeBased());
         Random rnd = new Random(9348906923700L);
         buildRandomGraphLegacy(rnd, 50, 2.5, false, true, 0.9);
-        runRandomTest(rnd, 20);
+        runRandomTest(rnd, 20, traversalMode);
     }
 
     @Test
-    public void issue1574_2() {
-        Assume.assumeFalse(traversalMode.isEdgeBased());
+    @MethodSource("params")
+    public void issue1574_2(TraversalMode traversalMode) {
+        Assumptions.assumeFalse(traversalMode.isEdgeBased());
         Random rnd = new Random(10093639220394L);
         buildRandomGraphLegacy(rnd, 50, 2.5, false, true, 0.9);
-        runRandomTest(rnd, 20);
+        runRandomTest(rnd, 20, traversalMode);
     }
 
     @Test
-    public void issue1582() {
-        Assume.assumeFalse(traversalMode.isEdgeBased());
+    @MethodSource("params")
+    public void issue1582(TraversalMode traversalMode) {
+        Assumptions.assumeFalse(traversalMode.isEdgeBased());
         Random rnd = new Random(4111485945982L);
         buildRandomGraphLegacy(rnd, 10, 2.5, false, true, 0.9);
-        runRandomTest(rnd, 100);
+        runRandomTest(rnd, 100, traversalMode);
     }
 
     @Test
-    public void issue1583() {
-        Assume.assumeFalse(traversalMode.isEdgeBased());
+    @MethodSource("params")
+    public void issue1583(TraversalMode traversalMode) {
+        Assumptions.assumeFalse(traversalMode.isEdgeBased());
         Random rnd = new Random(10785899964423L);
         buildRandomGraphLegacy(rnd, 50, 2.5, true, true, 0.9);
-        runRandomTest(rnd, 20);
+        runRandomTest(rnd, 20, traversalMode);
     }
 
     @Test
-    public void issue1593() {
-        Assume.assumeTrue(traversalMode.isEdgeBased());
+    @MethodSource("params")
+    public void issue1593(TraversalMode traversalMode) {
+        Assumptions.assumeTrue(traversalMode.isEdgeBased());
         long seed = 60643479675316L;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 50, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.0);
         GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
-        runRandomTest(rnd, 20);
+        runRandomTest(rnd, 20, traversalMode);
     }
 
-    private void runRandomTest(Random rnd, int numVirtualNodes) {
+    private void runRandomTest(Random rnd, int numVirtualNodes, TraversalMode traversalMode) {
         locationIndex = new LocationIndexTree(graph, dir);
         locationIndex.prepareIndex();
 
