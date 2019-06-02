@@ -10,7 +10,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class InstructionListRepresentationTest {
 
