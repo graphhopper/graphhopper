@@ -19,8 +19,8 @@ package com.graphhopper.http;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -59,7 +59,7 @@ public class IPFilterTest {
 
         try {
             new IPFilter("1.2.3.4, 4.5.67.1", "8.9.7.3");
-            assertFalse("black and white", true);
+            assertFalse(true, "black and white");
         } catch (Exception ex) {
 
         }

@@ -23,7 +23,7 @@ import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.After;
 import org.junit.ClassRule;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -56,7 +56,7 @@ public class GraphHopperDataFlagEncoderSpatialRulesTest {
 
 
     @After
-    public static void cleanUp() {
+    public void cleanUp() {
         Helper.removeDir(new File(DIR));
     }
 

@@ -43,7 +43,7 @@ public class IsochroneResourceTest {
             GraphHopperApplication.class, config);
 
     @After
-    public static void cleanUp() {
+    public void cleanUp() {
         Helper.removeDir(new File(DIR));
     }
 

@@ -34,7 +34,7 @@ import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.ResourceTestRule;
 import org.junit.After;
 import org.junit.ClassRule;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -109,7 +109,7 @@ public class PtIsochroneResourceTest {
     }
 
     @After
-    public static void close() {
+    public void close() {
         graphHopperStorage.close();
         locationIndex.close();
     }
