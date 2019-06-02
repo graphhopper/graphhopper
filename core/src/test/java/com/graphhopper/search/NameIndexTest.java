@@ -23,8 +23,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -103,7 +103,7 @@ public class NameIndexTest {
         assertEquals("test", index.get(pointer));
         // make sure bytePointer is correctly set after loadExisting
         long newPointer = index.put("testing");
-        assertEquals(newPointer + ">" + pointer, pointer + "test".getBytes().length + 1, newPointer);
+        assertEquals(pointer + "test".getBytes().length + 1, newPointer, newPointer + ">" + pointer);
         index.close();
 
         Helper.removeDir(new File(location));
