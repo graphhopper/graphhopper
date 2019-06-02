@@ -22,19 +22,15 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.BitUtil;
-import org.junit.jupiter.api.Rule;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.rules.ExpectedException;
+import org.junit.jupiter.api.function.Executable;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
  */
 public class EncodingManagerTest {
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
     public void testCompatibility() {
         EncodingManager manager = EncodingManager.create("car,bike,foot");
@@ -58,7 +54,7 @@ public class EncodingManagerTest {
 
         try {
             EncodingManager.create("car,car");
-            assertTrue("do not allow duplicate flag encoders", false);
+            assertTrue(false, "do not allow duplicate flag encoders");
         } catch (Exception ex) {
         }
     }
@@ -72,8 +68,12 @@ public class EncodingManagerTest {
 
     @Test
     public void testEncoderWithWrongVersionIsRejected() {
-        thrown.expect(IllegalArgumentException.class);
-        EncodingManager manager = EncodingManager.create("car|version=0");
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() throws Throwable {
+                EncodingManager manager = EncodingManager.create("car|version=0");
+            }
+        });
     }
 
     @Test
@@ -90,7 +90,7 @@ public class EncodingManagerTest {
             EncodingManager.create(new FootFlagEncoder(), new CarFlagEncoder(), new BikeFlagEncoder(), new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder());
             assertTrue(false);
         } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoders are requesting 36 bits, more than 32 bits of edge flags"));
+            assertTrue(ex.getMessage().startsWith("Encoders are requesting 36 bits, more than 32 bits of edge flags"), ex.getMessage());
         }
     }
 
@@ -293,8 +293,8 @@ public class EncodingManagerTest {
             IntsRef edgeFlags = manager.handleWayTags(way, aw, 0);
             assertTrue(accessEnc.getBool(false, edgeFlags));
             if (!encoder.toString().equals("foot"))
-                assertFalse(encoder.toString(), accessEnc.getBool(true, edgeFlags));
-            assertTrue(encoder.toString(), roundaboutEnc.getBool(false, edgeFlags));
+                assertFalse(accessEnc.getBool(true, edgeFlags), encoder.toString());
+            assertTrue(roundaboutEnc.getBool(false, edgeFlags), encoder.toString());
 
             way.clearTags();
             way.setTag("highway", "tertiary");
@@ -304,8 +304,8 @@ public class EncodingManagerTest {
             edgeFlags = manager.handleWayTags(way, aw, 0);
             assertTrue(accessEnc.getBool(false, edgeFlags));
             if (!encoder.toString().equals("foot"))
-                assertFalse(encoder.toString(), accessEnc.getBool(true, edgeFlags));
-            assertTrue(encoder.toString(), roundaboutEnc.getBool(false, edgeFlags));
+                assertFalse(accessEnc.getBool(true, edgeFlags), encoder.toString());
+            assertTrue(roundaboutEnc.getBool(false, edgeFlags), encoder.toString());
         }
     }
 }
