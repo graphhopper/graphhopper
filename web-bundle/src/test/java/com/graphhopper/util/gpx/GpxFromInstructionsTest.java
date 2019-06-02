@@ -46,7 +46,7 @@ import javax.xml.validation.Validator;
 import java.io.StringReader;
 import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GpxFromInstructionsTest {
 
@@ -113,17 +113,17 @@ public class GpxFromInstructionsTest {
         verifyGPX(gpxStr);
         System.out.println(gpxStr);
 
-        assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T00:00:00Z</time>"));
-        assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));
-        assertTrue(gpxStr, gpxStr.contains("<rtept lat=\"15.1\" lon=\"10.0\">"));
-        assertTrue(gpxStr, gpxStr.contains("<gh:distance>8000.0</gh:distance>"));
-        assertTrue(gpxStr, gpxStr.contains("<desc>turn left onto 2-3</desc>"));
-        assertTrue(gpxStr, gpxStr.contains("<gh:sign>-2</gh:sign>"));
+        assertTrue(gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T00:00:00Z</time>"), gpxStr);
+        assertTrue(gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"), gpxStr);
+        assertTrue(gpxStr.contains("<rtept lat=\"15.1\" lon=\"10.0\">"), gpxStr);
+        assertTrue(gpxStr.contains("<gh:distance>8000.0</gh:distance>"), gpxStr);
+        assertTrue(gpxStr.contains("<desc>turn left onto 2-3</desc>"), gpxStr);
+        assertTrue(gpxStr.contains("<gh:sign>-2</gh:sign>"), gpxStr);
 
-        assertTrue(gpxStr, gpxStr.contains("<gh:direction>N</gh:direction>"));
-        assertTrue(gpxStr, gpxStr.contains("<gh:azimuth>0.0</gh:azimuth>"));
+        assertTrue(gpxStr.contains("<gh:direction>N</gh:direction>"), gpxStr);
+        assertTrue(gpxStr.contains("<gh:azimuth>0.0</gh:azimuth>"), gpxStr);
 
-        assertFalse(gpxStr, gpxStr.contains("NaN"));
+        assertFalse(gpxStr.contains("NaN"), gpxStr);
     }
 
     @Test
@@ -174,7 +174,7 @@ public class GpxFromInstructionsTest {
 
         String gpxStr = GpxFromInstructions.createGPX(instructions, "test", 0, true, true, false, false, Constants.VERSION, trMap.getWithFallBack(Locale.US));
 
-        assertTrue(gpxStr, gpxStr.contains("<gh:exit_number>3</gh:exit_number>"));
+        assertTrue(gpxStr.contains("<gh:exit_number>3</gh:exit_number>"), gpxStr);
         verifyGPX(gpxStr);
     }
 
@@ -191,9 +191,9 @@ public class GpxFromInstructionsTest {
 
         String gpxStr = GpxFromInstructions.createGPX(instructions, "test", 0, true, true, true, true, Constants.VERSION, trMap.getWithFallBack(Locale.US));
 
-        assertFalse(gpxStr, gpxStr.contains("E-"));
-        assertTrue(gpxStr, gpxStr.contains("0.000001"));
-        assertTrue(gpxStr, gpxStr.contains("-0.000125"));
+        assertFalse(gpxStr.contains("E-"), gpxStr);
+        assertTrue(gpxStr.contains("0.000001"), gpxStr);
+        assertTrue(gpxStr.contains("-0.000125"), gpxStr);
         verifyGPX(gpxStr);
     }
 
