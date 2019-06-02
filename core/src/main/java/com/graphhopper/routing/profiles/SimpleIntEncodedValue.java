@@ -50,10 +50,10 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
 
     /**
      * This constructor reserves the specified number of bits in the underlying data structure or twice the amount if
-     * store2DirectedValues is true.
+     * storeTwoDirections is true.
      *
-     * @param storeTwoDirections if true the encoded value can be different for the forward and backward
-     *                           direction of an edge.
+     * @param storeTwoDirections if true this EncodedValue can store different values for the forward and backward
+     *                           direction.
      */
     public SimpleIntEncodedValue(String name, int bits, boolean storeTwoDirections) {
         if (!name.toLowerCase(Locale.ROOT).equals(name))
@@ -138,6 +138,7 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
         }
     }
 
+    @Override
     public final boolean isStoreTwoDirections() {
         return storeTwoDirections;
     }
