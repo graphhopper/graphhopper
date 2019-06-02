@@ -33,7 +33,7 @@ import java.util.Locale;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static com.graphhopper.util.TranslationMapTest.SINGLETON;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich

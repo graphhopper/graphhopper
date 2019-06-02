@@ -25,7 +25,7 @@ import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     @Override

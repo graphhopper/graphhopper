@@ -30,7 +30,7 @@ import com.graphhopper.util.CHEdgeIterator;
 import com.graphhopper.util.CHEdgeIteratorState;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DefaultEdgeFilterTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
@@ -64,8 +64,8 @@ public class DefaultEdgeFilterTest {
             inEdges.add(inIter.getEdge());
         }
         // the loop should be accepted by in- and outExplorers
-        assertEquals("Wrong outgoing edges", IntHashSet.from(0, 3), outEdges);
-        assertEquals("Wrong incoming edges", IntHashSet.from(2, 3), inEdges);
+        assertEquals(IntHashSet.from(0, 3), outEdges, "Wrong outgoing edges");
+        assertEquals(IntHashSet.from(2, 3), inEdges, "Wrong incoming edges");
     }
 
     private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int firstOrigEdge, int lastOrigEdge) {

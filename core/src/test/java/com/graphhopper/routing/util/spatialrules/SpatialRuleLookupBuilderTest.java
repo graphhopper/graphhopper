@@ -20,14 +20,13 @@ package com.graphhopper.routing.util.spatialrules;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.util.shapes.BBox;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileReader;
 import java.io.IOException;
 
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -63,7 +62,7 @@ public class SpatialRuleLookupBuilderTest {
         BBox almostWorldWide = new BBox(-179, 179, -89, 89);
 
         // Might fail if a polygon is defined outside the above coordinates
-        assertTrue("BBox seems to be not contracted", almostWorldWide.contains(spatialRuleLookup.getBounds()));
+        assertTrue(almostWorldWide.contains(spatialRuleLookup.getBounds()), "BBox seems to be not contracted");
     }
 
     @Test
@@ -74,7 +73,7 @@ public class SpatialRuleLookupBuilderTest {
         */
         final FileReader reader = new FileReader(COUNTRIES_FILE);
         SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), .1, new BBox(9, 10, 51, 52));
-        assertFalse("BBox seems to be incorrectly contracted", spatialRuleLookup.getBounds().contains(49.9, 8.9));
+        assertFalse(spatialRuleLookup.getBounds().contains(49.9, 8.9), "BBox seems to be incorrectly contracted");
     }
 
     @Test
