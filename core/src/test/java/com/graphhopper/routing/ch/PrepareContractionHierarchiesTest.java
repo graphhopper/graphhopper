@@ -40,7 +40,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class PrepareContractionHierarchiesTest {
-    private final CarFlagEncoder carEncoder = new CarFlagEncoder();
+    private final CarFlagEncoder carEncoder = new CarFlagEncoder("speed_two_directions=true");
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
     private final Weighting weighting = new ShortestWeighting(carEncoder);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
@@ -412,7 +412,7 @@ public class PrepareContractionHierarchiesTest {
                 });
         prepare.doWork();
         CHEdgeExplorer explorer = lg.createEdgeExplorer();
-        // shortcuts (and edges) leading to or coming from higher level nodes should be disconnected
+        // shortcuts (and edges) leading to or coming from lower level nodes should be disconnected
         // so far we are only disconnecting shortcuts however, see comments in CHGraphImpl.
         assertEquals(buildSet(7, 8, 0, 1, 2, 3), GHUtility.getNeighbors(explorer.setBaseNode(6)));
         assertEquals(buildSet(6, 0), GHUtility.getNeighbors(explorer.setBaseNode(4)));
@@ -427,22 +427,27 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testStallOnDemandViaVirtuaNode_issue1574() {
-        // this test reproduces the issue that appeared in issue1574 and the problem is very intricate
-        // the problem is a combination of all these things:
+        // this test reproduces the issue that appeared in issue1574
+        // the problem is very intricate and a combination of all these things:
         // * contraction hierarchies
         // * stall-on-demand (without sod there is no problem, at least in this test)
         // * shortcuts weight rounding
         // * via nodes/virtual edges and the associated weight precision (without virtual nodes between source and target
         //   there is no problem, but this can happen for via routes
         // * the fact that the LevelEdgeFilter always accepts virtual nodes
+        // here we wil construct a special case where a connection is not found without the fix in #1574.
 
         // use fastest weighting in this test to be able to fine-tune some weights via the speed (see below)
         Weighting fastestWeighting = new FastestWeighting(carEncoder);
         final GraphHopperStorage g = createGHStorage(fastestWeighting);
         CHGraph lg = g.getGraph(CHGraph.class);
         // the following graph reproduces the issue. note that we will use the node ids as ch levels, so there will
-        // be a shortcuts from 1->3 and 2->3 (not the other way around, because of shortcut disconnections!)
-        // since the shortest path is strictly upward only the forward search runs here, this is also important!
+        // be a shortcut 3->2 visible at node 2 and another one 3->4 visible at node 3.
+        // we will fine-tune the edge-speeds such that without the fix node 4 will be stalled and node 5 will not get
+        // discovered. consequently, no path will be found, because only the forward search runs (from 0 to 7 the
+        // shortest path is strictly upward). node 4 is only stalled when node 2 gets stalled before, which in turn will
+        // happen due to the the virtual node between 3 and 1.
+        //
         // start 0 - 3 - x - 1 - 2
         //             \         |
         //               sc ---- 4 - 5 - 6 - 7 finish
@@ -463,17 +468,20 @@ public class PrepareContractionHierarchiesTest {
         updateDistancesFor(g, 7, 0.000, 0.0006);
 
         // we use the speed to fine tune some weights:
-        // the weight of edge 3-1 must be such that node 2 gets stalled in the forward search via the incoming shortcut
-        // at node 2 coming from 3. this happens because due to the virtual node x between 3 and 1, the spt entries
-        // calculated on the query graph (using the virtual edges) use different floating point rounding / arithmetics.
+        // the weight of edge 3-1 is chosen such that node 2 gets stalled in the forward search via the incoming shortcut
+        // at node 2 coming from 3. this happens because due to the virtual node x between 3 and 1, the weight of the
+        // spt entry at 2 is different to the sum of the weights of the spt entry at node 3 and the shortcut edge. this
+        // is due to different floating point rounding arithmetic of shortcuts and virtual edges on the query graph.
         edge31.set(carEncoder.getAverageSpeedEnc(), 22);
+        edge31.setReverse(carEncoder.getAverageSpeedEnc(), 22);
 
-        // just stalling node 2 due to the differently calculated weights for the virtual edges would be no problem, yet
-        // because the shortcut 3-4 still finds node 4. however node 4 might also get stalled via node 2. 'normally' this
-        // would not happen, because node 2 would not even be explored in the forward search, but because of the virtual
-        // node the strict upward search is modified and goes like 0-3-1-2 (i.e. it finds node 2).
-        // so no we fine tune the weight for 2-4 such that node 4 gets also stalled
+        // just stalling node 2 alone would not lead to connection not found, because the shortcut 3-4 still finds node
+        // 4. however, we can choose the weight of edge 2-4 such that node 4 also gets stalled via node 2.
+        // it is important that node 2 gets stalled before otherwise node 4 would have already be discovered.
+        // note that without the virtual node between 3 and 1 node 2 would not even be explored in the forward search,
+        // but because of the virtual node the strict upward search is modified and goes like 0-3-x-1-2.
         edge24.set(carEncoder.getAverageSpeedEnc(), 27.5);
+        edge24.setReverse(carEncoder.getAverageSpeedEnc(), 27.5);
 
         // prepare ch, use node ids as levels
         PrepareContractionHierarchies pch = createPrepareContractionHierarchies(g, lg, fastestWeighting);
@@ -488,7 +496,7 @@ public class PrepareContractionHierarchiesTest {
                 return g.getNodes();
             }
         }).doWork();
-        assertEquals("there should be exactly two shortcuts (3->2) and (3->4)", 2, lg.getEdges() - lg.getOriginalEdges());
+        assertEquals("there should be exactly two (bidirectional) shortcuts (2-3) and (3-4)", 2, lg.getEdges() - lg.getOriginalEdges());
 
         // insert virtual node and edges
         QueryResult qr = new QueryResult(0.0001, 0.0015);
@@ -501,11 +509,11 @@ public class PrepareContractionHierarchiesTest {
         queryGraph.lookup(Collections.singletonList(qr));
 
         // we make sure our weight fine tunings do what they are supposed to
-        double weight03 = getWeight(queryGraph, fastestWeighting, 0, 3);
-        double scWeight23 = weight03 + ((CHEdgeIteratorState) getEdge(lg, 2, 3)).getWeight();
-        double scWeight34 = weight03 + ((CHEdgeIteratorState) getEdge(lg, 3, 4)).getWeight();
-        double sptWeight2 = weight03 + getWeight(queryGraph, fastestWeighting, 3, 8) + getWeight(queryGraph, fastestWeighting, 8, 1) + getWeight(queryGraph, fastestWeighting, 1, 2);
-        double sptWeight4 = sptWeight2 + getWeight(queryGraph, fastestWeighting, 2, 4);
+        double weight03 = getWeight(queryGraph, fastestWeighting, 0, 3, false);
+        double scWeight23 = weight03 + ((CHEdgeIteratorState) getEdge(lg, 2, 3, true)).getWeight();
+        double scWeight34 = weight03 + ((CHEdgeIteratorState) getEdge(lg, 3, 4, false)).getWeight();
+        double sptWeight2 = weight03 + getWeight(queryGraph, fastestWeighting, 3, 8, false) + getWeight(queryGraph, fastestWeighting, 8, 1, false) + getWeight(queryGraph, fastestWeighting, 1, 2, false);
+        double sptWeight4 = sptWeight2 + getWeight(queryGraph, fastestWeighting, 2, 4, false);
         assertTrue("incoming shortcut weight 3->2 should be smaller than sptWeight at node 2 to make sure 2 gets stalled", scWeight23 < sptWeight2);
         assertTrue("sptWeight at node 4 should be smaller than shortcut weight 3->4 to make sure node 4 gets stalled", sptWeight4 < scWeight34);
 
@@ -513,12 +521,13 @@ public class PrepareContractionHierarchiesTest {
         assertEquals("wrong or no path found", IntArrayList.from(0, 3, 8, 1, 2, 4, 5, 6, 7), path.calcNodes());
     }
 
-    private double getWeight(Graph graph, Weighting w, int from, int to) {
-        return w.calcWeight(getEdge(graph, from, to), false, -1);
+    private double getWeight(Graph graph, Weighting w, int from, int to, boolean incoming) {
+        return w.calcWeight(getEdge(graph, from, to, false), incoming, -1);
     }
 
-    private EdgeIteratorState getEdge(Graph graph, int from, int to) {
-        EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(from);
+    private EdgeIteratorState getEdge(Graph graph, int from, int to, boolean incoming) {
+        EdgeFilter filter = incoming ? DefaultEdgeFilter.inEdges(carEncoder) : DefaultEdgeFilter.outEdges(carEncoder);
+        EdgeIterator iter = graph.createEdgeExplorer(filter).setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {
                 return iter;
