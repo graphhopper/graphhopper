@@ -18,8 +18,6 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.Repeat;
-import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -36,16 +34,15 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Rule;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.RepeatedTest;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * In this test we mainly test if {@link EdgeBasedNodeContractorTest} inserts the correct shortcuts when certain
@@ -62,12 +59,8 @@ public class EdgeBasedNodeContractorTest {
     private TurnWeighting turnWeighting;
     private TurnWeighting chTurnWeighting;
 
-    @Rule
-    public RepeatRule repeatRule = new RepeatRule();
-
     @BeforeEach
     public void setup() {
-        // its important to use @BeforeEach when using RepeatRule!
         initialize();
     }
 
@@ -364,7 +357,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testContractNode_duplicateIncomingEdges_sameWeight() {
         // 0 -> 1 -> 2 -> 3 -> 4
         //       \->/
@@ -782,7 +775,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void testContractNode_noUnnecessaryShortcut_witnessPathOfEqualWeight() {
         // this test runs repeatedly because it might pass/fail by chance (because path lengths are equal)
 
@@ -1334,8 +1327,8 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(0);
-        assertTrue("too many edges polled: " + nodeContractor.getNumPolledEdges(),
-                nodeContractor.getNumPolledEdges() <= 8);
+        assertTrue(nodeContractor.getNumPolledEdges() <= 8,
+                "too many edges polled: " + nodeContractor.getNumPolledEdges());
     }
 
     private void contractNode(NodeContractor nodeContractor, int node, int level) {
