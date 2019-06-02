@@ -12,12 +12,15 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.junit.Assert.assertEquals;
 
+@RunWith(Parameterized.class)
 public class ShortcutUnpackerTest {
     private final static int PREV_EDGE = 12;
     private final static int NEXT_EDGE = 13;
@@ -28,6 +31,7 @@ public class ShortcutUnpackerTest {
     private CHGraph chGraph;
     private TurnCostExtension turnCostExtension;
 
+    @Parameterized.Parameters(name = "{0}")
     public static Object[] params() {
         return new Object[]{
                 TraversalMode.NODE_BASED,
@@ -39,7 +43,7 @@ public class ShortcutUnpackerTest {
         this.edgeBased = traversalMode.isEdgeBased();
     }
 
-    @BeforeEach
+    @Before
     public void init() {
         // use motorcycle to be able to set different fwd/bwd speeds
         encoder = new MotorcycleFlagEncoder(5, 5, 10);
@@ -136,7 +140,7 @@ public class ShortcutUnpackerTest {
 
     @Test
     public void loopShortcut() {
-        assumeTrue(edgeBased, "loop shortcuts only exist for edge-based CH");
+        Assume.assumeTrue("loop shortcuts only exist for edge-based CH", edgeBased);
         //     3
         //    / \
         //   2   4
@@ -213,7 +217,7 @@ public class ShortcutUnpackerTest {
 
     @Test
     public void withTurnWeighting() {
-        assumeTrue(edgeBased);
+        Assume.assumeTrue(edgeBased);
         //      2 5 3 2 1 4 6      turn costs ->
         // prev 0-1-2-3-4-5-6 next
         //      1 0 1 4 2 3 2      turn costs <-
@@ -255,32 +259,32 @@ public class ShortcutUnpackerTest {
             // unpack the shortcut 0->6, traverse original edges in 'forward' order (from node 0 to 6)
             TurnWeightingVisitor visitor = new TurnWeightingVisitor();
             new ShortcutUnpacker(chGraph, visitor, edgeBased).visitOriginalEdgesFwd(10, 6, false, PREV_EDGE);
-            assertEquals(6 * 0.06, visitor.weight, 1.e-3, "wrong weight");
-            assertEquals((6 * 60 + 17000), visitor.time, "wrong time");
+            assertEquals("wrong weight", 6 * 0.06, visitor.weight, 1.e-3);
+            assertEquals("wrong time", (6 * 60 + 17000), visitor.time);
         }
 
         {
             // unpack the shortcut 0->6, traverse original edges in 'backward' order (from node 6 to 0)
             TurnWeightingVisitor visitor = new TurnWeightingVisitor();
             new ShortcutUnpacker(chGraph, visitor, edgeBased).visitOriginalEdgesFwd(10, 6, true, PREV_EDGE);
-            assertEquals(6 * 0.06, visitor.weight, 1.e-3, "wrong weight");
-            assertEquals((6 * 60 + 17000), visitor.time, "wrong time");
+            assertEquals("wrong weight", 6 * 0.06, visitor.weight, 1.e-3);
+            assertEquals("wrong time", (6 * 60 + 17000), visitor.time);
         }
 
         {
             // unpack the shortcut 6<-0, traverse original edges in 'forward' order (from node 6 to 0)
             TurnWeightingVisitor visitor = new TurnWeightingVisitor();
             new ShortcutUnpacker(chGraph, visitor, edgeBased).visitOriginalEdgesBwd(10, 0, false, NEXT_EDGE);
-            assertEquals(6 * 0.06, visitor.weight, 1.e-3, "wrong weight");
-            assertEquals((6 * 60 + 21000), visitor.time, "wrong time");
+            assertEquals("wrong weight", 6 * 0.06, visitor.weight, 1.e-3);
+            assertEquals("wrong time", (6 * 60 + 21000), visitor.time);
         }
 
         {
             // unpack the shortcut 6<-0, traverse original edges in 'backward' order (from node 0 to 6)
             TurnWeightingVisitor visitor = new TurnWeightingVisitor();
             new ShortcutUnpacker(chGraph, visitor, edgeBased).visitOriginalEdgesBwd(10, 0, true, NEXT_EDGE);
-            assertEquals(6 * 0.06, visitor.weight, 1.e-3, "wrong weight");
-            assertEquals((6 * 60 + 21000), visitor.time, "wrong time");
+            assertEquals("wrong weight", 6 * 0.06, visitor.weight, 1.e-3);
+            assertEquals("wrong time", (6 * 60 + 21000), visitor.time);
         }
     }
 

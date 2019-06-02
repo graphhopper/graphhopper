@@ -20,6 +20,9 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,6 +30,7 @@ import java.util.Collection;
 /**
  * @author Peter Karich
  */
+@RunWith(Parameterized.class)
 public class DijkstraTest extends AbstractRoutingAlgorithmTester {
     private final TraversalMode traversalMode;
 
@@ -37,6 +41,7 @@ public class DijkstraTest extends AbstractRoutingAlgorithmTester {
     /**
      * Runs the same test with each of the supported traversal modes
      */
+    @Parameters(name = "{0}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {TraversalMode.NODE_BASED},

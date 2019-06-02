@@ -35,20 +35,23 @@ import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
  * Tests the correctness of the contraction hierarchies query in the presence of turn costs.
  * The graph preparation is done manually here and the tests try to focus on border cases that have to be covered
  * by the query algorithm correctly.
  */
+@RunWith(Parameterized.class)
 public class CHQueryWithTurnCostsTest {
     private final int maxCost = 10;
     private final FlagEncoder encoder = new MotorcycleFlagEncoder(5, 5, maxCost);
@@ -59,6 +62,7 @@ public class CHQueryWithTurnCostsTest {
     private final CHGraph chGraph = graph.getGraph(CHGraph.class);
     private String algoString;
 
+    @Parameterized.Parameters(name = "{0}")
     public static Object[] parameters() {
         return new Object[]{"astar", "dijkstra"};
     }
@@ -117,10 +121,10 @@ public class CHQueryWithTurnCostsTest {
 
         // also check if distance and times (including turn costs) are calculated correctly
         Path path = createAlgo().calcPath(0, 1);
-        assertEquals(40, path.getWeight(), 1.e-3, "wrong weight");
-        assertEquals(26, path.getDistance(), 1.e-3, "wrong distance");
+        assertEquals("wrong weight", 40, path.getWeight(), 1.e-3);
+        assertEquals("wrong distance", 26, path.getDistance(), 1.e-3);
         double weightPerMeter = 0.06;
-        assertEquals((26 * weightPerMeter + 14) * 1000, path.getTime(), 1.e-3, "wrong time");
+        assertEquals("wrong time", (26 * weightPerMeter + 14) * 1000, path.getTime(), 1.e-3);
     }
 
     @Test
@@ -696,14 +700,14 @@ public class CHQueryWithTurnCostsTest {
         AbstractBidirectionEdgeCHNoSOD algo = createAlgo();
         Path path = algo.calcPath(from, to);
         if (expectedWeight < 0) {
-            assertFalse(path.isFound(), String.format(Locale.ROOT, "Unexpected path from %d to %d.", from, to));
+            assertFalse(String.format(Locale.ROOT, "Unexpected path from %d to %d.", from, to), path.isFound());
         } else {
             if (expectedNodes != null) {
-                assertEquals(expectedNodes, path.calcNodes(), String.format(Locale.ROOT, "Unexpected path from %d to %d", from, to));
+                assertEquals(String.format(Locale.ROOT, "Unexpected path from %d to %d", from, to), expectedNodes, path.calcNodes());
             }
-            assertEquals(expectedWeight, path.getWeight(), 1.e-6, String.format(Locale.ROOT, "Unexpected path weight from %d to %d", from, to));
-            assertEquals(expectedDistance, path.getDistance(), 1.e-6, String.format(Locale.ROOT, "Unexpected path distance from %d to %d", from, to));
-            assertEquals(expectedTime, path.getTime(), String.format(Locale.ROOT, "Unexpected path time from %d to %d", from, to));
+            assertEquals(String.format(Locale.ROOT, "Unexpected path weight from %d to %d", from, to), expectedWeight, path.getWeight(), 1.e-6);
+            assertEquals(String.format(Locale.ROOT, "Unexpected path distance from %d to %d", from, to), expectedDistance, path.getDistance(), 1.e-6);
+            assertEquals(String.format(Locale.ROOT, "Unexpected path time from %d to %d", from, to), expectedTime, path.getTime());
         }
     }
 

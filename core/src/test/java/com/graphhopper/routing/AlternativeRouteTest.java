@@ -29,17 +29,18 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
 
+@RunWith(Parameterized.class)
 public class AlternativeRouteTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
     private final EncodingManager em = EncodingManager.create(carFE);
@@ -52,7 +53,7 @@ public class AlternativeRouteTest {
     /**
      * Runs the same test with each of the supported traversal modes
      */
-
+    @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {TraversalMode.NODE_BASED},
@@ -60,8 +61,6 @@ public class AlternativeRouteTest {
         });
     }
 
-    @ParameterizedTest
-    @MethodSource("configs")
     public GraphHopperStorage createTestGraph(boolean fullGraph, EncodingManager tmpEM) {
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false, new GraphExtension.NoOpExtension());
         graph.create(1000);
@@ -157,16 +156,16 @@ public class AlternativeRouteTest {
     }
 
     void checkAlternatives(List<AlternativeRoute.AlternativeInfo> alternativeInfos) {
-        assertFalse(alternativeInfos.isEmpty(), "alternativeInfos should contain alternatives");
+        assertFalse("alternativeInfos should contain alternatives", alternativeInfos.isEmpty());
         AlternativeRoute.AlternativeInfo bestInfo = alternativeInfos.get(0);
         for (int i = 1; i < alternativeInfos.size(); i++) {
             AlternativeRoute.AlternativeInfo a = alternativeInfos.get(i);
             if (a.getPath().getWeight() < bestInfo.getPath().getWeight())
-                assertTrue(false, "alternative is not longer -> " + a + " vs " + bestInfo);
+                assertTrue("alternative is not longer -> " + a + " vs " + bestInfo, false);
 
             if (a.getShareWeight() > bestInfo.getPath().getWeight()
                     || a.getShareWeight() > a.getPath().getWeight())
-                assertTrue(false, "share or sortby incorrect -> " + a + " vs " + bestInfo);
+                assertTrue("share or sortby incorrect -> " + a + " vs " + bestInfo, false);
         }
     }
 

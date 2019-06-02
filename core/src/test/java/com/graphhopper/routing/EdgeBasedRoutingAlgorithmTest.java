@@ -33,16 +33,22 @@ import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import org.junit.jupiter.api.Test;
+import org.junit.Assume;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
 import java.util.*;
 
 import static com.graphhopper.util.GHUtility.getEdge;
 import static com.graphhopper.util.Parameters.Algorithms.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
+@RunWith(Parameterized.class)
 public class EdgeBasedRoutingAlgorithmTest {
     private final String algoStr;
     private FlagEncoder carEncoder;
@@ -51,6 +57,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         this.algoStr = algo;
     }
 
+    @Parameters(name = "{0}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 // todo: make this test run also for edge-based CH or otherwise make sure time calculation is tested also for edge-based CH (at the moment it will fail!)
@@ -272,9 +279,9 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private void assertDistTimeWeight(Path path, int numEdges, double distPerEdge, double weightPerEdge, int turnCost) {
-        assertEquals(numEdges * distPerEdge, path.getDistance(), 1.e-6, "wrong distance");
-        assertEquals(numEdges * weightPerEdge + turnCost, path.getWeight(), 1.e-6, "wrong weight");
-        assertEquals(1000 * (numEdges * weightPerEdge + turnCost), path.getTime(), 1.e-6, "wrong time");
+        assertEquals("wrong distance", numEdges * distPerEdge, path.getDistance(), 1.e-6);
+        assertEquals("wrong weight", numEdges * weightPerEdge + turnCost, path.getWeight(), 1.e-6);
+        assertEquals("wrong time", 1000 * (numEdges * weightPerEdge + turnCost), path.getTime(), 1.e-6);
     }
 
 
@@ -307,7 +314,7 @@ public class EdgeBasedRoutingAlgorithmTest {
                         calcPath(i, j);
                 assertTrue(p.isFound()); // We can go from everywhere to everywhere else without using node 3
                 for (IntCursor node : p.calcNodes()) {
-                    assertNotEquals(3, node.value, p.calcNodes().toString());
+                    assertNotEquals(p.calcNodes().toString(), 3, node.value);
                 }
             }
         }
@@ -384,9 +391,9 @@ public class EdgeBasedRoutingAlgorithmTest {
                     @Override
                     public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
                         if (edgeFrom >= 0)
-                            assertNotNull(g.getEdgeIteratorState(edgeFrom, nodeVia), "edge " + edgeFrom + " to " + nodeVia + " does not exist");
+                            assertNotNull("edge " + edgeFrom + " to " + nodeVia + " does not exist", g.getEdgeIteratorState(edgeFrom, nodeVia));
                         if (edgeTo >= 0)
-                            assertNotNull(g.getEdgeIteratorState(edgeTo, nodeVia), "edge " + edgeTo + " to " + nodeVia + " does not exist");
+                            assertNotNull("edge " + edgeTo + " to " + nodeVia + " does not exist", g.getEdgeIteratorState(edgeTo, nodeVia));
                         return super.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
                     }
                 }.setDefaultUTurnCost(40)).

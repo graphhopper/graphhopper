@@ -13,10 +13,10 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.MiniPerfTest;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.runner.RunWith;
-import org.junit.jupiter.api.runners.Parameterized;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +34,8 @@ import static org.junit.runners.Parameterized.Parameters;
  * Tests CH contraction and query performance when re-using the node ordering after random changes
  * have been applied to the edge weights (like when considering traffic).
  */
-@Disabled("for performance testing only")
-@ExtendWith(Parameterized.class)
+@Ignore("for performance testing only")
+@RunWith(Parameterized.class)
 public class TrafficChangeWithNodeOrderingReusingTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrafficChangeWithNodeOrderingReusingTest.class);
     // make sure to increase xmx/xms for the JVM created by the surefire plugin in parent pom.xml
@@ -48,7 +48,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
     private final CHGraphImpl trafficCHGraph;
     private int maxDeviationPercentage;
 
-    @MethodSource(name = "maxDeviationPercentage = {0}")
+    @Parameters(name = "maxDeviationPercentage = {0}")
     public static Object[] data() {
         return new Object[]{0, 1, 5, 10, 50};
     }
