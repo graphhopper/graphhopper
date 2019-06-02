@@ -259,7 +259,7 @@ public class RandomCHRoutingTest {
             double bwdSpeed = 10 + random.nextDouble() * 120;
             DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
             edge.set(speedEnc, fwdSpeed);
-            if (speedEnc.isStoreBothDirections())
+            if (speedEnc.isStoreTwoDirections())
                 edge.setReverse(speedEnc, bwdSpeed);
         }
     }

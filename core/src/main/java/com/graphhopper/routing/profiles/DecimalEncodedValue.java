@@ -20,5 +20,5 @@ public interface DecimalEncodedValue extends EncodedValue {
 
     double getDecimal(boolean reverse, IntsRef ref);
 
-    boolean isStoreBothDirections();
+    boolean isStoreTwoDirections();
 }

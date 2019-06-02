@@ -42,7 +42,7 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
     int bwdShift = -1;
     int fwdMask;
     int bwdMask;
-    boolean storeBothDirections;
+    boolean storeTwoDirections;
 
     public SimpleIntEncodedValue(String name, int bits) {
         this(name, bits, false);
@@ -52,10 +52,10 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
      * This constructor reserves the specified number of bits in the underlying data structure or twice the amount if
      * store2DirectedValues is true.
      *
-     * @param storeBothDirections if true the encoded value can be different for the forward and backward
-     *                            direction of an edge.
+     * @param storeTwoDirections if true the encoded value can be different for the forward and backward
+     *                           direction of an edge.
      */
-    public SimpleIntEncodedValue(String name, int bits, boolean storeBothDirections) {
+    public SimpleIntEncodedValue(String name, int bits, boolean storeTwoDirections) {
         if (!name.toLowerCase(Locale.ROOT).equals(name))
             throw new IllegalArgumentException("EncodedValue name must be lower case but was " + name);
         if (bits <= 0)
@@ -64,7 +64,7 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
             throw new IllegalArgumentException(name + ": at the moment bits cannot be >32");
         this.bits = bits;
         this.name = name;
-        this.storeBothDirections = storeBothDirections;
+        this.storeTwoDirections = storeTwoDirections;
     }
 
     @Override
@@ -76,7 +76,7 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
         this.fwdMask = init.bitMask;
         this.fwdDataIndex = init.dataIndex;
         this.fwdShift = init.shift;
-        if (storeBothDirections) {
+        if (storeTwoDirections) {
             init.next(bits);
             this.bwdMask = init.bitMask;
             this.bwdDataIndex = init.dataIndex;
@@ -84,7 +84,7 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
         }
 
         this.maxValue = (1L << bits) - 1;
-        return storeBothDirections ? 2 * bits : bits;
+        return storeTwoDirections ? 2 * bits : bits;
     }
 
     boolean isInitialized() {
@@ -107,8 +107,8 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
     }
 
     final void uncheckedSet(boolean reverse, IntsRef ref, int value) {
-        if (reverse && !storeBothDirections)
-            throw new IllegalArgumentException(getName() + ": value for reverse direction would overwrite forward direction. Enable 'storeBothDirections' or always use reverse==true when storing the value");
+        if (reverse && !storeTwoDirections)
+            throw new IllegalArgumentException(getName() + ": value for reverse direction would overwrite forward direction. Enable storeTwoDirections for this EncodedValue or don't use setReverse");
 
         if (reverse) {
             int flags = ref.ints[bwdDataIndex + ref.offset];
@@ -129,7 +129,7 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
     public final int getInt(boolean reverse, IntsRef ref) {
         int flags;
         // if we do not store both directions ignore reverse == true for convenient reading
-        if (reverse && storeBothDirections) {
+        if (reverse && storeTwoDirections) {
             flags = ref.ints[bwdDataIndex + ref.offset];
             return (flags & bwdMask) >>> bwdShift;
         } else {
@@ -138,9 +138,8 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
         }
     }
 
-    @Override
-    public final boolean isStoreBothDirections() {
-        return storeBothDirections;
+    public final boolean isStoreTwoDirections() {
+        return storeTwoDirections;
     }
 
     @Override
@@ -150,7 +149,7 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
 
     @Override
     public final String toString() {
-        return getName() + "|version=" + getVersion() + "|bits=" + bits + "|index=" + fwdDataIndex + "|shift=" + fwdShift + "|store_both_directions=" + storeBothDirections;
+        return getName() + "|version=" + getVersion() + "|bits=" + bits + "|index=" + fwdDataIndex + "|shift=" + fwdShift + "|store_both_directions=" + storeTwoDirections;
     }
 
     @Override
@@ -166,13 +165,13 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
                 bwdShift == that.bwdShift &&
                 fwdMask == that.fwdMask &&
                 bwdMask == that.bwdMask &&
-                storeBothDirections == that.storeBothDirections &&
+                storeTwoDirections == that.storeTwoDirections &&
                 Objects.equals(name, that.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, fwdDataIndex, bwdDataIndex, bits, maxValue, fwdShift, bwdShift, fwdMask, bwdMask, storeBothDirections);
+        return Objects.hash(name, fwdDataIndex, bwdDataIndex, bits, maxValue, fwdShift, bwdShift, fwdMask, bwdMask, storeTwoDirections);
     }
 
     @Override

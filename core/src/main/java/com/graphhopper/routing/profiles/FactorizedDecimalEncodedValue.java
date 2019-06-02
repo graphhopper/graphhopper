@@ -29,8 +29,8 @@ public final class FactorizedDecimalEncodedValue extends SimpleIntEncodedValue i
     private final double factor;
     private final double defaultValue;
 
-    public FactorizedDecimalEncodedValue(String name, int bits, double factor, boolean store2DirectedValues) {
-        this(name, bits, factor, 0, store2DirectedValues);
+    public FactorizedDecimalEncodedValue(String name, int bits, double factor, boolean storeTwoDirections) {
+        this(name, bits, factor, 0, storeTwoDirections);
     }
 
     /**
@@ -38,10 +38,10 @@ public final class FactorizedDecimalEncodedValue extends SimpleIntEncodedValue i
      * @param bits                 the bits that should be reserved for the storage
      * @param factor               the precision factor, i.e. store = (int) Math.round(value / factor)
      * @param defaultValue         the value that should be returned if the stored value is 0.
-     * @param store2DirectedValues true if forward and backward direction of the edge should get two independent values.
+     * @param storeTwoDirections true if forward and backward direction of the edge should get two independent values.
      */
-    public FactorizedDecimalEncodedValue(String name, int bits, double factor, double defaultValue, boolean store2DirectedValues) {
-        super(name, bits, store2DirectedValues);
+    public FactorizedDecimalEncodedValue(String name, int bits, double factor, double defaultValue, boolean storeTwoDirections) {
+        super(name, bits, storeTwoDirections);
         this.factor = factor;
         this.defaultValue = defaultValue;
     }

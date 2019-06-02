@@ -253,7 +253,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected void flagsDefault(IntsRef edgeFlags, boolean forward, boolean backward) {
         if (forward)
             speedEncoder.setDecimal(false, edgeFlags, speedDefault);
-        if (backward && speedEncoder.isStoreBothDirections())
+        if (backward && speedEncoder.isStoreTwoDirections())
             speedEncoder.setDecimal(true, edgeFlags, speedDefault);
         accessEnc.setBool(false, edgeFlags, forward);
         accessEnc.setBool(true, edgeFlags, backward);
