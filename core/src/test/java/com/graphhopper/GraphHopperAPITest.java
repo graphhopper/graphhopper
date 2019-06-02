@@ -36,7 +36,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -116,7 +116,7 @@ public class GraphHopperAPITest {
             instance.route(new GHRequest(42, 10.4, 42, 10));
             assertTrue(false);
         } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"));
+            assertTrue(ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"), ex.getMessage());
         }
 
         instance = new GraphHopper().setEncodingManager(encodingManager);
@@ -124,7 +124,7 @@ public class GraphHopperAPITest {
             instance.route(new GHRequest(42, 10.4, 42, 10));
             assertTrue(false);
         } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"));
+            assertTrue(ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"), ex.getMessage());
         }
     }
 
@@ -158,7 +158,7 @@ public class GraphHopperAPITest {
                 loadGraph(graph);
 
         GHResponse rsp = graphHopper.route(new GHRequest(42, 10.4, 42, 10));
-        assertFalse(rsp.toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.toString());
         assertEquals(1800, rsp.getBest().getTime());
 
         final List<JsonFeature> list = new ArrayList<>();
@@ -181,7 +181,7 @@ public class GraphHopperAPITest {
         latch.await();
         assertEquals(0, checkPointCounter.get());
         rsp = graphHopper.route(new GHRequest(42, 10.4, 42, 10));
-        assertFalse(rsp.toString(), rsp.hasErrors());
+        assertFalse(rsp.hasErrors(), rsp.toString());
         assertEquals(8400, rsp.getBest().getTime());
 
         executorService.shutdown();

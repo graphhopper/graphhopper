@@ -22,8 +22,8 @@ import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -54,7 +54,7 @@ public class SpatialKeyAlgoTest {
 
         double expectedDist = ((float) DistanceCalcEarth.C / (1 << bits / 2));
         double d = new DistanceCalcEarth().calcDist(lat, lon, fl.lat, fl.lon);
-        assertTrue("Returned point shouldn't be more far away than " + expectedDist + " -> It was " + d, d < expectedDist);
+        assertTrue(d < expectedDist, "Returned point shouldn't be more far away than " + expectedDist + " -> It was " + d);
     }
 
     @Test
@@ -73,7 +73,7 @@ public class SpatialKeyAlgoTest {
 
         double expectedDist = ((float) DistanceCalcEarth.C / (1 << bits / 2));
         double d = new DistanceCalcEarth().calcDist(lat, lon, fl.lat, fl.lon);
-        assertTrue("Returned point shouldn't be more far away than " + expectedDist + " -> It was " + d, d < expectedDist);
+        assertTrue(d < expectedDist, "Returned point shouldn't be more far away than " + expectedDist + " -> It was " + d);
     }
 
     @Test
@@ -92,7 +92,7 @@ public class SpatialKeyAlgoTest {
 
         double expectedDist = ((float) DistanceCalcEarth.C / (1 << bits / 2));
         double d = new DistanceCalcEarth().calcDist(lat, lon, fl.lat, fl.lon);
-        assertTrue("Returned point shouldn't be more far away than " + expectedDist + " -> It was " + d, d < expectedDist);
+        assertTrue(d < expectedDist, "Returned point shouldn't be more far away than " + expectedDist + " -> It was " + d);
     }
 
     @Test
@@ -151,7 +151,7 @@ public class SpatialKeyAlgoTest {
         assertEquals(key, algo.encode(coord2));
         double dist = new DistanceCalcEarth().calcDist(coord.lat, coord.lon, coord2.lat, coord2.lon);
         // and ensure small distance
-        assertTrue(dist + "", dist < 5);
+        assertTrue(dist < 5, dist + "");
 
         long queriedKey = 246557819640268L;
         long storedKey = 246557819640269L;
@@ -162,7 +162,7 @@ public class SpatialKeyAlgoTest {
         assertEquals(storedKey, algo.encode(coord2));
         dist = new DistanceCalcEarth().calcDist(coord.lat, coord.lon, coord2.lat, coord2.lon);
         // and ensure small distance
-        assertTrue(dist + "", dist < 5);
+        assertTrue(dist < 5, dist + "");
 
         coord = new GHPoint(50.0606072, 9.6277542);
         key = algo.encode(coord);
@@ -170,7 +170,7 @@ public class SpatialKeyAlgoTest {
         assertEquals(key, algo.encode(coord2));
         dist = new DistanceCalcEarth().calcDist(coord.lat, coord.lon, coord2.lat, coord2.lon);
         // and ensure small distance
-        assertTrue(dist + "", dist < 5);
+        assertTrue(dist < 5, dist + "");
 
         coord = new GHPoint(0.01, 0.01);
         key = algo.encode(coord);
@@ -178,7 +178,7 @@ public class SpatialKeyAlgoTest {
         assertEquals(key, algo.encode(coord2));
         dist = new DistanceCalcEarth().calcDist(coord.lat, coord.lon, coord2.lat, coord2.lon);
         // and ensure small distance
-        assertTrue(dist + "", dist < 5);
+        assertTrue(dist < 5, dist + "");
     }
 
     @Test

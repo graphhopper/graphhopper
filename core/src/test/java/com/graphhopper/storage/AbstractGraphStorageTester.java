@@ -34,7 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.graphhopper.util.GHUtility.count;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Abstract test class to be extended for implementations of the Graph interface. Graphs
@@ -60,7 +60,7 @@ public abstract class AbstractGraphStorageTester {
     EdgeExplorer carAllExplorer;
 
     public static void assertPList(PointList expected, PointList list) {
-        assertEquals("size of point lists is not equal", expected.getSize(), list.getSize());
+        assertEquals(expected.getSize(), list.getSize(), "size of point lists is not equal");
         for (int i = 0; i < expected.getSize(); i++) {
             assertEquals(expected.getLatitude(i), list.getLatitude(i), 1e-4);
             assertEquals(expected.getLongitude(i), list.getLongitude(i), 1e-4);
@@ -323,7 +323,7 @@ public abstract class AbstractGraphStorageTester {
             checkExampleGraph(gs);
         } catch (Exception ex) {
             ex.printStackTrace();
-            assertTrue(ex.toString(), false);
+            assertTrue(false, ex.toString());
         }
 
         try {
@@ -333,7 +333,7 @@ public abstract class AbstractGraphStorageTester {
             checkExampleGraph(graph);
         } catch (Exception ex) {
             ex.printStackTrace();
-            assertTrue(ex.toString(), false);
+            assertTrue(false, ex.toString());
         }
         Helper.close((Closeable) graph);
     }

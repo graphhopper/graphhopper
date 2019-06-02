@@ -35,7 +35,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -586,8 +586,8 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
             ids.add(qr.getClosestEdge().getEdge());
         }
         Collections.sort(ids);
-        assertEquals("edge ids do not match",
-                Arrays.asList(edge4_5.getEdge(), edge4_7.getEdge()), ids);
+        assertEquals(Arrays.asList(edge4_5.getEdge(), edge4_7.getEdge()), ids,
+                "edge ids do not match");
     }
 
 }

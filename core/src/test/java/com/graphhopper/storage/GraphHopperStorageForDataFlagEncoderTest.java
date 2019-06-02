@@ -17,7 +17,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.util.Arrays;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by tuan on 20/01/17.

@@ -25,8 +25,8 @@ import com.graphhopper.storage.GraphBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -47,7 +47,7 @@ public class BreadthFirstSearchTest {
             @Override
             public boolean goFurther(int v) {
                 counter++;
-                assertTrue("v " + v + " is already contained in set. iteration:" + counter, !set.contains(v));
+                assertTrue(!set.contains(v), "v " + v + " is already contained in set. iteration:" + counter);
                 set.add(v);
                 list.add(v);
                 return super.goFurther(v);
@@ -81,7 +81,7 @@ public class BreadthFirstSearchTest {
             @Override
             public boolean goFurther(int v) {
                 counter++;
-                assertTrue("v " + v + " is already contained in set. iteration:" + counter, !set.contains(v));
+                assertTrue(!set.contains(v), "v " + v + " is already contained in set. iteration:" + counter);
                 set.add(v);
                 list.add(v);
                 return super.goFurther(v);

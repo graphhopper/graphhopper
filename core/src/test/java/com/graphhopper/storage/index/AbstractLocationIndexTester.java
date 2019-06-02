@@ -33,8 +33,8 @@ import java.io.Closeable;
 import java.io.File;
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -158,7 +158,7 @@ public abstract class AbstractLocationIndexTester {
         for (int i = 0; i < locs; i++) {
             double lat = na.getLatitude(i);
             double lon = na.getLongitude(i);
-            assertEquals("nodeId:" + i + " " + (float) lat + "," + (float) lon, i, findID(idx, lat, lon));
+            assertEquals(i, findID(idx, lat, lon), "nodeId:" + i + " " + (float) lat + "," + (float) lon);
         }
 
         // hit random lat,lon and compare result to full index
@@ -186,10 +186,10 @@ public abstract class AbstractLocationIndexTester {
                 continue;
             }
 
-            assertTrue(i + " orig:" + (float) lat + "," + (float) lon
+            assertTrue(Math.abs(fullDist - newDist) < 50000,
+                    i + " orig:" + (float) lat + "," + (float) lon
                             + " full:" + fullLat + "," + fullLon + " fullDist:" + fullDist
-                            + " found:" + newLat + "," + newLon + " foundDist:" + newDist,
-                    Math.abs(fullDist - newDist) < 50000);
+                            + " found:" + newLat + "," + newLon + " foundDist:" + newDist);
         }
         fullIndex.close();
         Helper.close((Closeable) g);

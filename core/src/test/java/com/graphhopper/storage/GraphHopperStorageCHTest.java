@@ -27,7 +27,8 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.routing.ch.NodeBasedNodeContractorTest.SC_ACCESS;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -415,13 +416,18 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertEquals(edge2.getEdge(), iter.getSkippedEdge2());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testAddShortcut_edgeBased_throwsIfNotConfiguredForEdgeBased() {
         graph = newGHStorage(false, false);
         graph.edge(0, 1, 1, false);
         graph.edge(1, 2, 1, false);
         graph.freeze();
-        addShortcut(getGraph(graph), 0, 2, true, 0, 1, 0, 1, 2);
+        assertThrows(IllegalStateException.class, new Executable() {
+            @Override
+            public void execute() throws Throwable {
+                addShortcut(getGraph(graph), 0, 2, true, 0, 1, 0, 1, 2);
+            }
+        });
     }
 
     @Test
@@ -534,14 +540,24 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         }
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testLoadingWithWrongWeighting_node_throws() {
-        testLoadingWithWrongWeighting_throws(false);
+        assertThrows(IllegalStateException.class, new Executable() {
+            @Override
+            public void execute() throws Throwable {
+                testLoadingWithWrongWeighting_throws(false);
+            }
+        });
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testLoadingWithWrongWeighting_edge_throws() {
-        testLoadingWithWrongWeighting_throws(true);
+        assertThrows(IllegalStateException.class, new Executable() {
+            @Override
+            public void execute() throws Throwable {
+                testLoadingWithWrongWeighting_throws(true);
+            }
+        });
     }
 
     private void testLoadingWithWrongWeighting_throws(boolean edgeBased) {
@@ -555,7 +571,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         newGHStorage.loadExisting();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testLoadingWithExtraWeighting_throws() {
         // we start with one weighting
         GraphHopperStorage ghStorage = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), false);
@@ -563,9 +579,15 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         ghStorage.flush();
 
         // but then add an additional weighting and try to load the graph from disk -> error
-        GraphHopperStorage newGHStorage = createStorageWithWeightings(false,
+        final GraphHopperStorage newGHStorage = createStorageWithWeightings(false,
                 new FastestWeighting(carEncoder), new ShortestWeighting(carEncoder));
-        newGHStorage.loadExisting();
+
+        assertThrows(IllegalStateException.class, new Executable() {
+            @Override
+            public void execute() throws Throwable {
+                newGHStorage.loadExisting();
+            }
+        });
     }
 
     @Test

@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.nio.ByteOrder;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich

@@ -22,7 +22,7 @@ import org.junit.Test;
 import java.text.ParseException;
 import java.util.Calendar;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Robin Boldt

@@ -23,7 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.Random;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -148,20 +148,20 @@ public class GHLongIntBTreeTest {
 //                    System.out.println("\n\n");
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    assertFalse(j + "| Problem with " + i + " " + ex, true);
+                    assertFalse(true, j + "| Problem with " + i + " " + ex);
                 }
 
-                assertEquals(j + "| Size not equal to set! In " + i + " added " + val, addedValues.size(), instance.getSize());
+                assertEquals(addedValues.size(), instance.getSize(), j + "| Size not equal to set! In " + i + " added " + val);
             }
             int i = 0;
             for (int val : addedValues) {
-                assertEquals(j + "| Problem with " + i, val, instance.get(val));
+                assertEquals(val, instance.get(val), j + "| Problem with " + i);
                 i++;
             }
             instance.optimize();
             i = 0;
             for (int val : addedValues) {
-                assertEquals(j + "| Problem with " + i, val, instance.get(val));
+                assertEquals(val, instance.get(val), j + "| Problem with " + i);
                 i++;
             }
         }

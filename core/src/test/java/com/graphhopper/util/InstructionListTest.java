@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich
@@ -287,10 +287,10 @@ public class InstructionListTest {
             List<Double> e = expected.get(i);
             List<Double> wasE = actual.get(i);
             for (int j = 0; j < e.size(); j++) {
-                assertEquals("at index " + i + " value index " + j + " and value " + e + " vs " + wasE + "\n" + "Expected: " + expected + "\n" + "Actual: " + actual
-                        , e.get(j),
+                assertEquals(e.get(j),
                         wasE.get(j),
-                        1e-5d);
+                        1e-5d,
+                        "at index " + i + " value index " + j + " and value " + e + " vs " + wasE + "\n" + "Expected: " + expected + "\n" + "Actual: " + actual);
             }
         }
     }

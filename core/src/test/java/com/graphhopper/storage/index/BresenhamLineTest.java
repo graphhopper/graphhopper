@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich
@@ -133,6 +133,6 @@ public class BresenhamLineTest {
         BresenhamLine.calcPoints(
                 47.57383, 9.61984,
                 47.57382, 9.61890, emitter, 47, 9, 0.00647, 0.00964);
-        assertEquals(points.toString(), 1, points.getSize());
+        assertEquals(1, points.getSize(), points.toString());
     }
 }

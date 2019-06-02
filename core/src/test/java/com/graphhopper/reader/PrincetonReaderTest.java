@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 
 import static com.graphhopper.util.GHUtility.count;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * The data is taken from https://algs4.cs.princeton.edu/44sp/.

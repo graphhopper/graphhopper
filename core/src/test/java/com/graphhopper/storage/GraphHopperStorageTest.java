@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
