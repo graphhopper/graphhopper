@@ -22,7 +22,7 @@ import java.net.SocketTimeoutException;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -50,7 +50,7 @@ public class GraphHopperWebIT {
         req.getHints().put("instructions", true);
         req.getHints().put("calc_points", true);
         GHResponse res = gh.route(req);
-        assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
+        assertFalse(res.hasErrors(), "errors:" + res.getErrors().toString());
         PathWrapper alt = res.getBest();
         isBetween(200, 250, alt.getPoints().size());
         isBetween(10500, 12000, alt.getDistance());
@@ -62,7 +62,7 @@ public class GraphHopperWebIT {
         res = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180).
                 setVehicle("bike"));
         alt = res.getBest();
-        assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
+        assertFalse(res.hasErrors(), "errors:" + res.getErrors().toString());
         isBetween(9000, 9500, alt.getDistance());
     }
 
@@ -77,19 +77,19 @@ public class GraphHopperWebIT {
         req.getHints().put("calc_points", true);
         req.getHints().put("ch.disable", true);
         GHResponse res = gh.route(req);
-        assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
+        assertFalse(res.hasErrors(), "errors:" + res.getErrors().toString());
         List<PathWrapper> paths = res.getAll();
         assertEquals(2, paths.size());
 
         PathWrapper path = paths.get(1);
         isBetween(5, 20, path.getPoints().size());
         isBetween(1000, 1100, path.getDistance());
-        assertTrue("expected: " + path.getDescription().get(0), Arrays.asList("Wiesenstraße", "Hasenspringweg").contains(path.getDescription().get(0)));
+        assertTrue(Arrays.asList("Wiesenstraße", "Hasenspringweg").contains(path.getDescription().get(0)), "expected: " + path.getDescription().get(0));
 
         path = paths.get(0);
         isBetween(20, 30, path.getPoints().size());
         isBetween(800, 900, path.getDistance());
-        assertTrue("expected: " + path.getDescription().get(0), Arrays.asList("Jacobistraße", "Bismarckstraße", "Ludwig-Gercke-Straße", "Eichendorffplatz").contains(path.getDescription().get(0)));
+        assertTrue(Arrays.asList("Jacobistraße", "Bismarckstraße", "Ludwig-Gercke-Straße", "Eichendorffplatz").contains(path.getDescription().get(0)), "expected: " + path.getDescription().get(0));
     }
 
     @Test
@@ -98,7 +98,7 @@ public class GraphHopperWebIT {
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
         GHResponse res = gh.route(req);
-        assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
+        assertFalse(res.hasErrors(), "errors:" + res.getErrors().toString());
 
         req.getHints().put(GraphHopperWeb.TIMEOUT, 1);
         try {
@@ -118,7 +118,7 @@ public class GraphHopperWebIT {
         req.getHints().put("instructions", false);
         req.getHints().put("calc_points", false);
         GHResponse res = gh.route(req);
-        assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
+        assertFalse(res.hasErrors(), "errors:" + res.getErrors().toString());
         PathWrapper alt = res.getBest();
         assertEquals(0, alt.getPoints().size());
         isBetween(10500, 12000, alt.getDistance());
@@ -136,12 +136,12 @@ public class GraphHopperWebIT {
             if (i instanceof RoundaboutInstruction) {
                 counter++;
                 RoundaboutInstruction ri = (RoundaboutInstruction) i;
-                assertEquals("turn_angle was incorrect:" + ri.getTurnAngle(), -1.5, ri.getTurnAngle(), 0.1);
+                assertEquals(-1.5, ri.getTurnAngle(), 0.1, "turn_angle was incorrect:" + ri.getTurnAngle());
                 // This route contains only one roundabout and no (via) point in a roundabout
-                assertEquals("exited was incorrect:" + ri.isExited(), ri.isExited(), true);
+                assertEquals(ri.isExited(), true, "exited was incorrect:" + ri.isExited());
             }
         }
-        assertTrue("no roundabout in route?", counter > 0);
+        assertTrue(counter > 0, "no roundabout in route?");
     }
 
     @Test
@@ -165,7 +165,7 @@ public class GraphHopperWebIT {
                 addPoint(new GHPoint(39.909736, -91.054687));
 
         GHResponse res = gh.route(req);
-        assertTrue("no erros found?", res.hasErrors());
+        assertTrue(res.hasErrors(), "no erros found?");
         assertTrue(res.getErrors().get(0) instanceof PointNotFoundException);
     }
 
@@ -176,7 +176,7 @@ public class GraphHopperWebIT {
                 addPoint(new GHPoint(39.909736, -91.054687));
 
         GHResponse res = gh.route(req);
-        assertTrue("no erros found?", res.hasErrors());
+        assertTrue(res.hasErrors(), "no erros found?");
         assertTrue(res.getErrors().get(0) instanceof PointOutOfBoundsException);
     }
 
@@ -238,8 +238,8 @@ public class GraphHopperWebIT {
     }
 
     void isBetween(double from, double to, double expected) {
-        assertTrue("expected value " + expected + " was smaller than limit " + from, expected >= from);
-        assertTrue("expected value " + expected + " was bigger than limit " + to, expected <= to);
+        assertTrue(expected >= from, "expected value " + expected + " was smaller than limit " + from);
+        assertTrue(expected <= to, "expected value " + expected + " was bigger than limit " + to);
     }
 
     @Test
@@ -308,7 +308,7 @@ public class GraphHopperWebIT {
                 addPoint(new GHPoint(49.6550, 11.4180));
         req.getPathDetails().add("average_speed");
         GHResponse res = gh.route(req);
-        assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
+        assertFalse(res.hasErrors(), "errors:" + res.getErrors().toString());
         PathWrapper alt = res.getBest();
         assertEquals(1, alt.getPathDetails().size());
         List<PathDetail> details = alt.getPathDetails().get("average_speed");
@@ -325,6 +325,6 @@ public class GraphHopperWebIT {
 
         ghRequest.setPointHints(Arrays.asList("Ben-Gurion", ""));
         GHResponse response = gh.route(ghRequest);
-        assertTrue(response.getBest().getDistance() + "m", response.getBest().getDistance() < 500);
+        assertTrue(response.getBest().getDistance() < 500, response.getBest().getDistance() + "m");
     }
 }

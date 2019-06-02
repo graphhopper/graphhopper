@@ -6,12 +6,13 @@ import com.graphhopper.api.model.GHGeocodingResponse;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import java.net.SocketTimeoutException;
 
 import static com.graphhopper.api.GraphHopperWebIT.KEY;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Robin Boldt
@@ -48,7 +49,7 @@ public class GraphHopperGeocodingIT {
     public void testForwardGeocodingNominatim() {
         GHGeocodingResponse response = geocoding.geocode(new GHGeocodingRequest(false, null, "Berlin", "en", 5, "nominatim", 5000));
         int size = response.getHits().size();
-        assertTrue("Unexpected response hit count " + size, size == 4 || size == 5);
+        assertTrue(size == 4 || size == 5, "Unexpected response hit count " + size);
         assertTrue(response.getHits().get(0).getName().contains("Berlin"));
     }
 
@@ -76,14 +77,26 @@ public class GraphHopperGeocodingIT {
         fail();
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testForwardException() {
-        geocoding.geocode(new GHGeocodingRequest(false, new GHPoint(1, 1), null, "en", 5, "default", 1));
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() throws Throwable {
+                geocoding.geocode(new GHGeocodingRequest(
+                        false, new GHPoint(1, 1), null, "en", 5, "default", 1));
+            }
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testBackwadException() {
-        geocoding.geocode(new GHGeocodingRequest(true, null, "Berlin", "en", 5, "default", 1));
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() throws Throwable {
+                geocoding.geocode(new GHGeocodingRequest(
+                        true, null, "Berlin", "en", 5, "default", 1));
+            }
+        });
     }
 
 }
