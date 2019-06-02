@@ -20,7 +20,7 @@ import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class Path4CHTest {
     private final int maxTurnCosts = 10;
@@ -150,9 +150,9 @@ public class Path4CHTest {
     private void checkPath(int from, int to, double edgeWeight, int distance, int turnCostTime) {
         double expectedWeight = (edgeWeight + turnCostTime);
         Path path = createAlgo().calcPath(from, to);
-        assertEquals("wrong weight", expectedWeight, path.getWeight(), 1.e-3);
-        assertEquals("wrong distance", distance, path.getDistance(), 1.e-3);
-        assertEquals("wrong time", expectedWeight * 1000, path.getTime(), 1.e-3);
+        assertEquals(expectedWeight, path.getWeight(), 1.e-3, "wrong weight");
+        assertEquals(distance, path.getDistance(), 1.e-3, "wrong distance");
+        assertEquals(expectedWeight * 1000, path.getTime(), 1.e-3, "wrong time");
     }
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {

@@ -34,7 +34,7 @@ import java.util.*;
 
 import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -496,7 +496,7 @@ public class PrepareContractionHierarchiesTest {
                 return g.getNodes();
             }
         }).doWork();
-        assertEquals("there should be exactly two (bidirectional) shortcuts (2-3) and (3-4)", 2, lg.getEdges() - lg.getOriginalEdges());
+        assertEquals(2, lg.getEdges() - lg.getOriginalEdges(), "there should be exactly two (bidirectional) shortcuts (2-3) and (3-4)");
 
         // insert virtual node and edges
         QueryResult qr = new QueryResult(0.0001, 0.0015);
@@ -514,11 +514,11 @@ public class PrepareContractionHierarchiesTest {
         double scWeight34 = weight03 + ((CHEdgeIteratorState) getEdge(lg, 3, 4, false)).getWeight();
         double sptWeight2 = weight03 + getWeight(queryGraph, fastestWeighting, 3, 8, false) + getWeight(queryGraph, fastestWeighting, 8, 1, false) + getWeight(queryGraph, fastestWeighting, 1, 2, false);
         double sptWeight4 = sptWeight2 + getWeight(queryGraph, fastestWeighting, 2, 4, false);
-        assertTrue("incoming shortcut weight 3->2 should be smaller than sptWeight at node 2 to make sure 2 gets stalled", scWeight23 < sptWeight2);
-        assertTrue("sptWeight at node 4 should be smaller than shortcut weight 3->4 to make sure node 4 gets stalled", sptWeight4 < scWeight34);
+        assertTrue(scWeight23 < sptWeight2, "incoming shortcut weight 3->2 should be smaller than sptWeight at node 2 to make sure 2 gets stalled");
+        assertTrue(sptWeight4 < scWeight34, "sptWeight at node 4 should be smaller than shortcut weight 3->4 to make sure node 4 gets stalled");
 
         Path path = pch.createAlgo(queryGraph, AlgorithmOptions.start().build()).calcPath(0, 7);
-        assertEquals("wrong or no path found", IntArrayList.from(0, 3, 8, 1, 2, 4, 5, 6, 7), path.calcNodes());
+        assertEquals(IntArrayList.from(0, 3, 8, 1, 2, 4, 5, 6, 7), path.calcNodes(), "wrong or no path found");
     }
 
     private double getWeight(Graph graph, Weighting w, int from, int to, boolean incoming) {
@@ -707,18 +707,18 @@ public class PrepareContractionHierarchiesTest {
         }
         long timeMotorCycle = sw.getMillis();
 
-        assertTrue("reusing node ordering should speed up ch contraction", timeMotorCycle < 0.5 * timeCar);
+        assertTrue(timeMotorCycle < 0.5 * timeCar, "reusing node ordering should speed up ch contraction");
     }
 
     void checkPath(GraphHopperStorage g, Weighting w, int expShortcuts, double expDistance, IntIndexedContainer expNodes) {
         CHGraph lg = g.getGraph(CHGraph.class, w);
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg, w);
         prepare.doWork();
-        assertEquals(w.toString(), expShortcuts, prepare.getShortcuts());
+        assertEquals(expShortcuts, prepare.getShortcuts(), w.toString());
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, w, tMode));
         Path p = algo.calcPath(3, 12);
-        assertEquals(w.toString(), expDistance, p.getDistance(), 1e-5);
-        assertEquals(w.toString(), expNodes, p.calcNodes());
+        assertEquals(expDistance, p.getDistance(), 1e-5, w.toString());
+        assertEquals(expNodes, p.calcNodes(), w.toString());
     }
 
     private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHGraph lg) {
