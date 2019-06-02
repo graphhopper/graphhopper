@@ -32,9 +32,9 @@ import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.ClassRule;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.core.Response;
@@ -66,8 +66,8 @@ public class RouteResourceTest {
     @ClassRule
     public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(GraphHopperApplication.class, config);
 
-    @BeforeEachAll
-    @AfterAll
+    @Before
+    @After
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
     }

@@ -23,9 +23,9 @@ import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.ClassRule;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.core.Response;
@@ -56,8 +56,8 @@ public class RouteResourceIssue1574Test {
     @ClassRule
     public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(GraphHopperApplication.class, config);
 
-    @BeforeEachAll
-    @AfterAll
+    @Before
+    @After
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
     }

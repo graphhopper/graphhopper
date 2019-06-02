@@ -24,8 +24,8 @@ import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import io.dropwizard.testing.junit.DropwizardAppRule;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.ClassRule;
+import org.junit.After;
+import org.junit.ClassRule;
 import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.core.Response;
@@ -57,7 +57,7 @@ public class RouteResourceWithEleTest {
             GraphHopperApplication.class, config);
 
 
-    @AfterAll
+    @After
     public static void cleanUp() {
         Helper.removeDir(new File(dir));
     }
