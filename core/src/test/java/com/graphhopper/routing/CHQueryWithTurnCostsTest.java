@@ -41,8 +41,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * Tests the correctness of the contraction hierarchies query in the presence of turn costs.
@@ -117,10 +117,10 @@ public class CHQueryWithTurnCostsTest {
 
         // also check if distance and times (including turn costs) are calculated correctly
         Path path = createAlgo().calcPath(0, 1);
-        assertEquals("wrong weight", 40, path.getWeight(), 1.e-3);
-        assertEquals("wrong distance", 26, path.getDistance(), 1.e-3);
+        assertEquals(40, path.getWeight(), 1.e-3, "wrong weight");
+        assertEquals(26, path.getDistance(), 1.e-3, "wrong distance");
         double weightPerMeter = 0.06;
-        assertEquals("wrong time", (26 * weightPerMeter + 14) * 1000, path.getTime(), 1.e-3);
+        assertEquals((26 * weightPerMeter + 14) * 1000, path.getTime(), 1.e-3, "wrong time");
     }
 
     @Test
@@ -696,14 +696,14 @@ public class CHQueryWithTurnCostsTest {
         AbstractBidirectionEdgeCHNoSOD algo = createAlgo();
         Path path = algo.calcPath(from, to);
         if (expectedWeight < 0) {
-            assertFalse(String.format(Locale.ROOT, "Unexpected path from %d to %d.", from, to), path.isFound());
+            assertFalse(path.isFound(), String.format(Locale.ROOT, "Unexpected path from %d to %d.", from, to));
         } else {
             if (expectedNodes != null) {
-                assertEquals(String.format(Locale.ROOT, "Unexpected path from %d to %d", from, to), expectedNodes, path.calcNodes());
+                assertEquals(expectedNodes, path.calcNodes(), String.format(Locale.ROOT, "Unexpected path from %d to %d", from, to));
             }
-            assertEquals(String.format(Locale.ROOT, "Unexpected path weight from %d to %d", from, to), expectedWeight, path.getWeight(), 1.e-6);
-            assertEquals(String.format(Locale.ROOT, "Unexpected path distance from %d to %d", from, to), expectedDistance, path.getDistance(), 1.e-6);
-            assertEquals(String.format(Locale.ROOT, "Unexpected path time from %d to %d", from, to), expectedTime, path.getTime());
+            assertEquals(expectedWeight, path.getWeight(), 1.e-6, String.format(Locale.ROOT, "Unexpected path weight from %d to %d", from, to));
+            assertEquals(expectedDistance, path.getDistance(), 1.e-6, String.format(Locale.ROOT, "Unexpected path distance from %d to %d", from, to));
+            assertEquals(expectedTime, path.getTime(), String.format(Locale.ROOT, "Unexpected path time from %d to %d", from, to));
         }
     }
 

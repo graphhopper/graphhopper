@@ -34,7 +34,7 @@ import java.util.*;
 
 import static com.graphhopper.storage.AbstractGraphStorageTester.assertPList;
 import static com.graphhopper.util.Parameters.DETAILS.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich

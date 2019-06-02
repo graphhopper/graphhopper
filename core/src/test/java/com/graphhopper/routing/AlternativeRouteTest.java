@@ -38,7 +38,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AlternativeRouteTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
@@ -157,16 +157,16 @@ public class AlternativeRouteTest {
     }
 
     void checkAlternatives(List<AlternativeRoute.AlternativeInfo> alternativeInfos) {
-        assertFalse("alternativeInfos should contain alternatives", alternativeInfos.isEmpty());
+        assertFalse(alternativeInfos.isEmpty(), "alternativeInfos should contain alternatives");
         AlternativeRoute.AlternativeInfo bestInfo = alternativeInfos.get(0);
         for (int i = 1; i < alternativeInfos.size(); i++) {
             AlternativeRoute.AlternativeInfo a = alternativeInfos.get(i);
             if (a.getPath().getWeight() < bestInfo.getPath().getWeight())
-                assertTrue("alternative is not longer -> " + a + " vs " + bestInfo, false);
+                assertTrue(false, "alternative is not longer -> " + a + " vs " + bestInfo);
 
             if (a.getShareWeight() > bestInfo.getPath().getWeight()
                     || a.getShareWeight() > a.getPath().getWeight())
-                assertTrue("share or sortby incorrect -> " + a + " vs " + bestInfo, false);
+                assertTrue(false, "share or sortby incorrect -> " + a + " vs " + bestInfo);
         }
     }
 

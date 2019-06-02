@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class RandomCHRoutingTest {
     private final int maxTurnCosts = 10;
@@ -145,7 +145,7 @@ public class RandomCHRoutingTest {
             int numPathsNotFound = 0;
             List<String> strictViolations = new ArrayList<>();
             for (int i = 0; i < numQueries; i++) {
-                assertEquals("queryGraph and chQueryGraph should have equal number of nodes", queryGraph.getNodes(), chQueryGraph.getNodes());
+                assertEquals(queryGraph.getNodes(), chQueryGraph.getNodes(), "queryGraph and chQueryGraph should have equal number of nodes");
                 int from = rnd.nextInt(queryGraph.getNodes());
                 int to = rnd.nextInt(queryGraph.getNodes());
                 Weighting w = traversalMode.isEdgeBased()

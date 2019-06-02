@@ -43,7 +43,7 @@ import java.util.Random;
 import java.util.zip.GZIPInputStream;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Try algorithms, indices and graph storages with real data
@@ -176,7 +176,7 @@ public class RoutingAlgorithmIT {
             float perRun = sw.stop().getSeconds() / ((float) (N - noJvmWarming));
             System.out.println("# " + getClass().getSimpleName() + " " + entry
                     + ":" + sw.stop().getSeconds() + ", per run:" + perRun);
-            assertTrue("speed too low!? " + perRun + " per run", perRun < 0.08);
+            assertTrue(perRun < 0.08, "speed too low!? " + perRun + " per run");
         }
     }
 }

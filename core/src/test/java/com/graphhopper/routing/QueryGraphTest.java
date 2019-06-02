@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test;
 import java.util.*;
 
 import static com.graphhopper.storage.index.QueryResult.Position.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -346,12 +346,12 @@ public class QueryGraphTest {
         assertEquals(2, GHUtility.count(ee.setBaseNode(qr.getClosestNode())));
         EdgeIterator iter = ee.setBaseNode(qr.getClosestNode());
         iter.next();
-        assertTrue(iter.toString(), iter.get(accessEnc));
-        assertFalse(iter.toString(), iter.getReverse(accessEnc));
+        assertTrue(iter.get(accessEnc), iter.toString());
+        assertFalse(iter.getReverse(accessEnc), iter.toString());
 
         iter.next();
-        assertFalse(iter.toString(), iter.get(accessEnc));
-        assertTrue(iter.toString(), iter.getReverse(accessEnc));
+        assertFalse(iter.get(accessEnc), iter.toString());
+        assertTrue(iter.getReverse(accessEnc), iter.toString());
     }
 
     @Test
@@ -486,7 +486,7 @@ public class QueryGraphTest {
         it.next();
         assertEquals(endNode, it.getBaseNode());
         assertEquals(startNode, it.getAdjNode());
-        assertEquals("The edge id is not the same,", expectedEdgeId, it.getEdge());
+        assertEquals(expectedEdgeId, it.getEdge(), "The edge id is not the same,");
         assertFalse(it.next());
     }
 
@@ -741,7 +741,7 @@ public class QueryGraphTest {
         locationIndex.prepareIndex();
         QueryResult qr = locationIndex.findClosest(0.15, 0.15, DefaultEdgeFilter.allEdges(carEncoder));
         assertTrue(qr.isValid());
-        assertEquals("this test was supposed to test the Position.EDGE case", EDGE, qr.getSnappedPosition());
+        assertEquals(EDGE, qr.getSnappedPosition(), "this test was supposed to test the Position.EDGE case");
         queryGraph.lookup(Collections.singletonList(qr));
         EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(qr.getClosestNode());
 
@@ -783,7 +783,7 @@ public class QueryGraphTest {
         locationIndex.prepareIndex();
         QueryResult qr = locationIndex.findClosest(0.2, 0.21, DefaultEdgeFilter.allEdges(carEncoder));
         assertTrue(qr.isValid());
-        assertEquals("this test was supposed to test the Position.PILLAR case", PILLAR, qr.getSnappedPosition());
+        assertEquals(PILLAR, qr.getSnappedPosition(), "this test was supposed to test the Position.PILLAR case");
         queryGraph.lookup(Collections.singletonList(qr));
         EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(qr.getClosestNode());
 
