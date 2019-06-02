@@ -49,7 +49,7 @@ public class GraphHopperMultimodalIT {
     private static GraphHopperStorage graphHopperStorage;
     private static LocationIndex locationIndex;
 
-    @BeforeEachAll
+    @BeforeAll
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();

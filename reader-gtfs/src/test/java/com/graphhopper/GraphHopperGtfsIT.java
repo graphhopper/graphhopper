@@ -58,7 +58,7 @@ public class GraphHopperGtfsIT {
     private static LocationIndex locationIndex;
     private static GtfsStorage gtfsStorage;
 
-    @BeforeEachAll
+    @BeforeAll
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
@@ -517,9 +517,9 @@ public class GraphHopperGtfsIT {
         PathWrapper solutionWithTransfer = response.getAll().get(0);
         PathWrapper solutionWithoutTransfer = response.getAll().get(1);
 
-        Assume.assumeTrue("First solution has one transfer", solutionWithTransfer.getNumChanges() == 1);
-        Assume.assumeTrue("Second solution has no transfers", solutionWithoutTransfer.getNumChanges() == 0);
-        Assume.assumeTrue("With transfers is faster than without", solutionWithTransfer.getTime() < solutionWithoutTransfer.getTime());
+        Assumptions.assumeTrue(solutionWithTransfer.getNumChanges() == 1, "First solution has one transfer");
+        Assumptions.assumeTrue(solutionWithoutTransfer.getNumChanges() == 0, "Second solution has no transfers");
+        Assumptions.assumeTrue(solutionWithTransfer.getTime() < solutionWithoutTransfer.getTime(), "With transfers is faster than without");
 
         // If one transfer is worth beta_transfers milliseconds of travel time savings
         // to me, I will be indifferent when choosing between the two routes.
