@@ -99,14 +99,15 @@ public class CHAlgoFactoryDecoratorTest {
     public void testAddingPreparationsInWrongOrder_throws() {
         instance.addNodeBasedWeighting(weighting1);
         instance.addNodeBasedWeighting(weighting2);
-        instance.addPreparation(createNodeBasedPreparation(weighting2));
 
         assertThrows(IllegalArgumentException.class, new Executable() {
             @Override
             public void execute() throws Throwable {
-                instance.addPreparation(createNodeBasedPreparation(weighting1));
+                instance.addPreparation(createNodeBasedPreparation(weighting2));
             }
         });
+
+        instance.addPreparation(createNodeBasedPreparation(weighting1));
     }
 
     @Test
