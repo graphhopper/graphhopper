@@ -30,14 +30,15 @@ import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import java.util.Arrays;
 import java.util.List;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED_2DIR;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -71,25 +72,41 @@ public class CHAlgoFactoryDecoratorTest {
         assertTrue(instance.isDisablingAllowed());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testAddingPreparationBeforeWeighting_throws() {
-        PrepareContractionHierarchies preparation = createNodeBasedPreparation(weighting1);
-        instance.addPreparation(preparation);
+        final PrepareContractionHierarchies preparation = createNodeBasedPreparation(weighting1);
+        assertThrows(IllegalStateException.class, new Executable() {
+            @Override
+            public void execute() throws Throwable {
+                instance.addPreparation(preparation);
+            }
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testAddingPreparationWithWrongWeighting_throws() {
         instance.addNodeBasedWeighting(weighting1);
-        PrepareContractionHierarchies preparation = createNodeBasedPreparation(weighting2);
-        instance.addPreparation(preparation);
+        final PrepareContractionHierarchies preparation = createNodeBasedPreparation(weighting2);
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() throws Throwable {
+                instance.addPreparation(preparation);
+            }
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testAddingPreparationsInWrongOrder_throws() {
         instance.addNodeBasedWeighting(weighting1);
         instance.addNodeBasedWeighting(weighting2);
         instance.addPreparation(createNodeBasedPreparation(weighting2));
-        instance.addPreparation(createNodeBasedPreparation(weighting1));
+
+        assertThrows(IllegalArgumentException.class, new Executable() {
+            @Override
+            public void execute() throws Throwable {
+                instance.addPreparation(createNodeBasedPreparation(weighting1));
+            }
+        });
     }
 
     @Test
