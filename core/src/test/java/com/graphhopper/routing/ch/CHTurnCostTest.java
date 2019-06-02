@@ -75,7 +75,6 @@ public class CHTurnCostTest {
         checkStrict = true;
     }
 
-    @Test
     @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_linear() {
         // 2-1-0-3-4
@@ -118,7 +117,6 @@ public class CHTurnCostTest {
         compareCHWithDijkstra(1000, Arrays.asList(0, 1, 2, 3));
     }
 
-    @Test
     @RepeatedTest(100)
     public void testFindPath_multipleInOutEdges_turnReplacementDifference() {
         //   0   3 - 4   8
@@ -207,7 +205,6 @@ public class CHTurnCostTest {
         compareCHWithDijkstra(100, contractionOrder);
     }
 
-    @Test
     @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_simpleLoop() {
         //      2
@@ -230,7 +227,6 @@ public class CHTurnCostTest {
         checkPathUsingRandomContractionOrder(IntArrayList.from(0, 4, 3, 2, 4, 1), 7, 2, 0, 1);
     }
 
-    @Test
     @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_singleDirectedLoop() {
         //  3 1-2
@@ -258,7 +254,6 @@ public class CHTurnCostTest {
         checkPathUsingRandomContractionOrder(expectedPath, roadCosts, turnCosts, 3, 4);
     }
 
-    @Test
     @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_singleLoop() {
         //  0   4
@@ -287,7 +282,6 @@ public class CHTurnCostTest {
         checkPathUsingRandomContractionOrder(expectedPath, roadCosts, turnCosts, 0, 6);
     }
 
-    @Test
     @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_singleLoopWithNoise() {
         //  0~15~16~17              solid lines: paths contributing to shortest path from 0 to 14
@@ -343,7 +337,6 @@ public class CHTurnCostTest {
         checkPathUsingRandomContractionOrder(expectedPath, roadCosts, turnCosts, 0, 14);
     }
 
-    @Test
     @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_complicatedGraphAndPath() {
         // In this test we try to find a rather complicated shortest path including a double loop and two p-turns
@@ -484,7 +477,6 @@ public class CHTurnCostTest {
         checkPath(expectedPath, 10, 0, 5, 7, Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7));
     }
 
-    @Test
     @RepeatedTest(10)
     public void testFindPath_highlyConnectedGraph_compareWithDijkstra() {
         // In this test we use a random contraction order and run many random routing queries. The results are checked
@@ -941,7 +933,6 @@ public class CHTurnCostTest {
      * It often produces exotic conditions that are hard to anticipate beforehand.
      * when it fails use {@link GHUtility#printGraphForUnitTest} to extract the graph and reproduce the error.
      */
-    @Test
     @RepeatedTest(10)
     public void testFindPath_random_compareWithDijkstra() {
         long seed = System.nanoTime();
@@ -959,7 +950,6 @@ public class CHTurnCostTest {
     /**
      * same as {@link #testFindPath_random_compareWithDijkstra()}, but using automatic node priority calculation
      */
-    @Test
     @RepeatedTest(10)
     public void testFindPath_heuristic_compareWithDijkstra() {
         long seed = System.nanoTime();

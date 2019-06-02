@@ -356,7 +356,6 @@ public class EdgeBasedNodeContractorTest {
         checkNumShortcuts(1);
     }
 
-    @Test
     @RepeatedTest(10)
     public void testContractNode_duplicateIncomingEdges_sameWeight() {
         // 0 -> 1 -> 2 -> 3 -> 4
@@ -774,7 +773,6 @@ public class EdgeBasedNodeContractorTest {
         checkShortcuts();
     }
 
-    @Test
     @RepeatedTest(10)
     public void testContractNode_noUnnecessaryShortcut_witnessPathOfEqualWeight() {
         // this test runs repeatedly because it might pass/fail by chance (because path lengths are equal)
