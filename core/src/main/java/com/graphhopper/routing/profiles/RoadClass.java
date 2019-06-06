@@ -23,7 +23,7 @@ import com.graphhopper.util.Helper;
  * This class defines a IndexBased but is type safe.
  */
 public enum RoadClass {
-    OTHER("other"), MOTORWAY("motorway"), MOTORROAD("motorroad"),
+    OTHER("other"), MOTORWAY("motorway"),
     TRUNK("trunk"), PRIMARY("primary"), SECONDARY("secondary"),
     TERTIARY("tertiary"), RESIDENTIAL("residential"), UNCLASSIFIED("unclassified"),
     SERVICE("service"), ROAD("road"), TRACK("track"),
