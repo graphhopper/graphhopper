@@ -654,7 +654,7 @@ public class GraphHopperIT {
                 .setVehicle(vehicle).setWeighting(weightCalcStr));
         PathWrapper arsp = rsp.getBest();
         // Without interpolation: 356.5
-        assertEquals(350.9, arsp.getDistance(), .1);
+        assertEquals(351, arsp.getDistance(), .1);
         PointList pointList = arsp.getPoints();
         assertEquals(6, pointList.getSize());
         assertTrue(pointList.is3D());
