@@ -109,8 +109,9 @@ public interface EdgeIteratorState {
     PointList fetchWayGeometry(int mode);
 
     /**
-     * @param list is a sorted collection of nodes between the baseNode and the current adjacent
-     *             node. Specify the list without the adjacent and base nodes.
+     * @param list is a sorted collection of nodes between the base node and the current adjacent node. Specify the list
+     *             without the adjacent and base node. This method can be called multiple times, but if the distance
+     *             changes, the setDistance method is not called automatically.
      */
     EdgeIteratorState setWayGeometry(PointList list);
 
