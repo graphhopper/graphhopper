@@ -346,7 +346,6 @@ public class EdgeBasedRoutingAlgorithmTest {
         //           3
         //           |
         // 0 -> 1 -> 2 -> 4 -> 5
-
         GraphHopperStorage g = createStorage(createEncodingManager(false));
         g.edge(0, 1, 10, false);
         g.edge(1, 2, 10, false);

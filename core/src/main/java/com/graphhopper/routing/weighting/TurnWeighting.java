@@ -106,6 +106,7 @@ public class TurnWeighting implements Weighting {
      * This method calculates the turn weight separately.
      * Be aware that it always returns 0 turn weight unless a turn weight was explicitly set. This means it does
      * NOT include default u-turn costs and calling methods have to check for u-turns.
+     * todo: this should be cleaned up in #1520.
      */
     public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
         long turnFlags = turnCostExt.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
