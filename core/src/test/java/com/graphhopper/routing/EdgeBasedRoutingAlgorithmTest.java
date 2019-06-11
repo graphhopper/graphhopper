@@ -326,9 +326,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         initGraph(g);
         TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
 
-        // force u-turn via lowering the cost for it
-        EdgeIteratorState e3_6 = getEdge(g, 3, 6);
-        e3_6.setDistance(0.1);
+        // force u-turn at node 3 via lowering the cost for it
+        getEdge(g, 3, 6).setDistance(0.1);
         getEdge(g, 3, 2).setDistance(864);
         getEdge(g, 1, 0).setDistance(864);
 
@@ -339,15 +338,20 @@ public class EdgeBasedRoutingAlgorithmTest {
                 traversalMode(TraversalMode.EDGE_BASED_2DIR_UTURN).build();
         Path p = createAlgo(g, opts).calcPath(7, 5);
 
+        assertEquals(2 + 2 * 0.1, p.getDistance(), 1.e-6);
+        assertEquals(2.2 * 0.06 + 50, p.getWeight(), 1.e-6);
+        assertEquals((2.2 * 0.06 + 50) * 1000, p.getTime(), 1.e-6);
         assertEquals(IntArrayList.from(7, 6, 3, 6, 5), p.calcNodes());
 
-        // no u-turn for 6-3
+        // no u-turn 6-3-6 -> now we *have* to take the expensive roads
         opts = AlgorithmOptions.start().
                 weighting(createWeighting(carEncoder, tcs, 100)).
                 traversalMode(TraversalMode.EDGE_BASED_2DIR_UTURN).build();
         addTurnRestriction(g, tcs, 6, 3, 6);
         p = createAlgo(g, opts).calcPath(7, 5);
 
+        assertEquals(1.1 + 864 + 0.5, p.getDistance(), 1.e-6);
+        assertEquals(865.6 * 0.06, p.getWeight(), 1.e-6);
         assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
     }
 
