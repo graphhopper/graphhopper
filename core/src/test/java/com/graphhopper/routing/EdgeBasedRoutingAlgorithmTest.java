@@ -326,7 +326,13 @@ public class EdgeBasedRoutingAlgorithmTest {
         assertEquals((2.2 * 0.06 + 50) * 1000, p.getTime(), 1.e-6);
         assertEquals(IntArrayList.from(7, 6, 3, 6, 5), p.calcNodes());
 
-        // no more u-turn 6-3-6 -> now we *have* to take the expensive roads
+        // without u-turn mode enabled we need to take an expensive detour
+        p = calcPath(g, 7, 5);
+        assertEquals(1.1 + 864 + 0.5, p.getDistance(), 1.e-6);
+        assertEquals(865.6 * 0.06, p.getWeight(), 1.e-6);
+        assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
+
+        // no more u-turn 6-3-6 -> now we have to take the expensive roads even with u-turn mode
         addTurnRestriction(g, 6, 3, 6);
         p = createAlgo(g, createWeighting(carEncoder, 100), EDGE_BASED_2DIR_UTURN).calcPath(7, 5);
 
