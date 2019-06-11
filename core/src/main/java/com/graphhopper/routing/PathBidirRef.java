@@ -140,6 +140,10 @@ public class PathBidirRef extends Path {
         }
         if (weighting instanceof TurnWeighting) {
             time += ((TurnWeighting) weighting).calcTurnWeight(inEdge, viaNode, outEdge) * 1000;
+            // bugfix: should be cleaned up with u-turn refactoring #1520
+            if (inEdge == outEdge) {
+                time += ((TurnWeighting) weighting).getDefaultTurnCost() * 1000;
+            }
         }
     }
 
