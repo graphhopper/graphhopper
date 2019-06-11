@@ -66,6 +66,8 @@ public class OSMMaxWidthParser implements TagParser {
             return;
         try {
             double val = stringToMeter(value);
+            if (val > valueEncoder.getMaxDecimal())
+                val = valueEncoder.getMaxDecimal();
             valueEncoder.setDecimal(false, edgeFlags, val);
         } catch (Exception ex) {
             if (enableLog)

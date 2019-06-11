@@ -36,17 +36,12 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
     protected int fwdDataIndex;
     protected int bwdDataIndex;
     final int bits;
-    // we need a long here as Java ints are signed
-    long maxValue;
+    int maxValue;
     int fwdShift = -1;
     int bwdShift = -1;
     int fwdMask;
     int bwdMask;
     boolean storeTwoDirections;
-
-    public SimpleIntEncodedValue(String name, int bits) {
-        this(name, bits, false);
-    }
 
     /**
      * This constructor reserves the specified number of bits in the underlying data structure or twice the amount if
@@ -60,7 +55,7 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
             throw new IllegalArgumentException("EncodedValue name must be lower case but was " + name);
         if (bits <= 0)
             throw new IllegalArgumentException(name + ": bits cannot be zero or negative");
-        if (bits > 32)
+        if (bits > 31)
             throw new IllegalArgumentException(name + ": at the moment bits cannot be >32");
         this.bits = bits;
         this.name = name;
@@ -83,7 +78,7 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
             this.bwdShift = init.shift;
         }
 
-        this.maxValue = (1L << bits) - 1;
+        this.maxValue = (1 << bits) - 1;
         return storeTwoDirections ? 2 * bits : bits;
     }
 
@@ -136,6 +131,11 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
             flags = ref.ints[fwdDataIndex + ref.offset];
             return (flags & fwdMask) >>> fwdShift;
         }
+    }
+
+    @Override
+    public int getMaxInt() {
+        return maxValue;
     }
 
     @Override

@@ -20,6 +20,11 @@ package com.graphhopper.routing.profiles;
 public class MaxWeight {
     public static final String KEY = "max_weight";
 
+    /**
+     * Currently enables to store 0.1 to max=0.1*2⁸ tons and infinity. If a value is between the maximum and infinity
+     * it is assumed to use the maximum value. To save bits it might make more sense to store only a few values like
+     * it was done with the MappedDecimalEncodedValue still handling (or rounding) of unknown values is unclear.
+     */
     public static DecimalEncodedValue create() {
         return new FactorizedDecimalEncodedValue(KEY, 8, 0.1, Double.POSITIVE_INFINITY, false);
     }

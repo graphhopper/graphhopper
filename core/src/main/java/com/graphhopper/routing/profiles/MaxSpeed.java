@@ -25,7 +25,8 @@ public class MaxSpeed {
 
     /**
      * The speed value used for "none" speed limit on German Autobahn is 150=30*5 as this is the biggest value
-     * not explicitly used in OSM and can be precisely returned for a factor of 5, 3, 2 and 1.
+     * not explicitly used in OSM and can be precisely returned for a factor of 5, 3, 2 and 1. It is fixed and
+     * not DecimalEncodedValue.getMaxInt to allow special case handling.
      */
     public static final double UNLIMITED_SIGN_SPEED = 150;
     /**

@@ -33,7 +33,7 @@ public class IntEncodedValueTest {
 
     @Test
     public void multiIntsUsage() {
-        IntEncodedValue prop = new SimpleIntEncodedValue("test", 32, true);
+        IntEncodedValue prop = new SimpleIntEncodedValue("test", 31, true);
         prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(2);
         prop.setInt(false, ref, 10);

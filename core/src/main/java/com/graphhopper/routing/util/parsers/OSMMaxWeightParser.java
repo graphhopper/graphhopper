@@ -55,19 +55,21 @@ public class OSMMaxWeightParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+        // do not include OSM tag "height" here as it has completely different meaning (height of peak)
         List<String> weightTags = Arrays.asList("maxweight", "maxgcweight");
-        extractTons(edgeFlags, way, weightEncoder, weightTags);
+        extractTons(edgeFlags, way, weightEncoder, weightTags, enableLog);
         return edgeFlags;
     }
 
-    private void extractTons(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
+    static void extractTons(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys, boolean enableLog) {
         String value = way.getFirstPriorityTag(keys);
+        if (isEmpty(value))
+            return;
         try {
-            if (!isEmpty(value)) {
-                double val = stringToTons(value);
-                valueEncoder.setDecimal(false, edgeFlags, val);
-                return;
-            }
+            double val = stringToTons(value);
+            if (val > valueEncoder.getMaxDecimal())
+                val = valueEncoder.getMaxDecimal();
+            valueEncoder.setDecimal(false, edgeFlags, val);
         } catch (Exception ex) {
             if (enableLog)
                 LOG.warn("Unable to extract tons from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId());

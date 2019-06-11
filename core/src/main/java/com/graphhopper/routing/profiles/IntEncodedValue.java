@@ -21,5 +21,7 @@ public interface IntEncodedValue extends EncodedValue {
      */
     void setInt(boolean reverse, IntsRef ref, int value);
 
+    int getMaxInt();
+
     boolean isStoreTwoDirections();
 }

@@ -19,5 +19,7 @@ public interface DecimalEncodedValue extends EncodedValue {
 
     double getDecimal(boolean reverse, IntsRef ref);
 
+    double getMaxDecimal();
+
     boolean isStoreTwoDirections();
 }

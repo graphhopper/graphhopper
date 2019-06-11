@@ -28,7 +28,11 @@ public final class EnumEncodedValue<E extends Enum> extends SimpleIntEncodedValu
     private final E[] arr;
 
     public EnumEncodedValue(String name, Class<E> enumType) {
-        super(name, 32 - Integer.numberOfLeadingZeros(enumType.getEnumConstants().length));
+        this(name, enumType, false);
+    }
+
+    public EnumEncodedValue(String name, Class<E> enumType, boolean storeTwoDirections) {
+        super(name, 32 - Integer.numberOfLeadingZeros(enumType.getEnumConstants().length), storeTwoDirections);
         arr = enumType.getEnumConstants();
     }
 

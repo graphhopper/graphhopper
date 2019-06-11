@@ -20,6 +20,10 @@ package com.graphhopper.routing.profiles;
 public class MaxWidth {
     public static final String KEY = "max_width";
 
+    /**
+     * Currently enables to store 0.1 to max=0.1*2⁷m and infinity. If a value is between the maximum and infinity
+     * it is assumed to use the maximum value.
+     */
     public static DecimalEncodedValue create() {
         return new FactorizedDecimalEncodedValue(KEY, 7, 0.1, Double.POSITIVE_INFINITY, false);
     }

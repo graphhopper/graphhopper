@@ -34,10 +34,10 @@ public final class FactorizedDecimalEncodedValue extends SimpleIntEncodedValue i
     }
 
     /**
-     * @param name                 the key to identify this EncodedValue
-     * @param bits                 the bits that should be reserved for the storage
-     * @param factor               the precision factor, i.e. store = (int) Math.round(value / factor)
-     * @param defaultValue         the value that should be returned if the stored value is 0.
+     * @param name               the key to identify this EncodedValue
+     * @param bits               the bits that should be reserved for the storage
+     * @param factor             the precision factor, i.e. store = (int) Math.round(value / factor)
+     * @param defaultValue       the value that should be returned if the stored value is 0.
      * @param storeTwoDirections true if forward and backward direction of the edge should get two independent values.
      */
     public FactorizedDecimalEncodedValue(String name, int bits, double factor, double defaultValue, boolean storeTwoDirections) {
@@ -72,6 +72,11 @@ public final class FactorizedDecimalEncodedValue extends SimpleIntEncodedValue i
         if (value == 0)
             return defaultValue;
         return value * factor;
+    }
+
+    @Override
+    public double getMaxDecimal() {
+        return maxValue * factor;
     }
 
     @Override
