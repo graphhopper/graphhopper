@@ -342,6 +342,38 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     @Test
+    public void uTurnCostAtMeetingNode() {
+        //           3
+        //           |
+        // 0 -> 1 -> 2 -> 4 -> 5
+
+        GraphHopperStorage g = createStorage(createEncodingManager(false));
+        g.edge(0, 1, 10, false);
+        g.edge(1, 2, 10, false);
+        g.edge(2, 3, 10, true);
+        g.edge(2, 4, 10, false);
+        g.edge(4, 5, 10, false);
+
+        // cannot go straight at node 2
+        addTurnRestriction(g, 1, 2, 4);
+
+        // without u-turn mode there is no shortest path
+        {
+            Path path = calcPath(g, 0, 5);
+            assertFalse(path.isFound());
+        }
+
+        // with u-turn mode enabled it is possible, the u-turn costs should be included
+        // here we make sure the default u-turn time is also included at the meeting node for bidir algos
+        {
+            Path path = createAlgo(g, createWeighting(carEncoder, 67), EDGE_BASED_2DIR_UTURN).calcPath(0, 5);
+            assertEquals(60, path.getDistance(), 1.e-6);
+            assertEquals(60 * 0.06 + 67, path.getWeight(), 1.e-6);
+            assertEquals((36 + 670) * 100, path.getTime(), 1.e-6);
+        }
+    }
+
+    @Test
     public void testBasicTurnCosts() {
         GraphHopperStorage g = createStorage(createEncodingManager(false));
         initGraph(g);
