@@ -28,7 +28,7 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
         final EncodedValue enc;
         String name = string.split("\\|")[0];
         if (name.isEmpty())
-            throw new IllegalArgumentException("To load EncodedValue name is required. " + string);
+            throw new IllegalArgumentException("To load EncodedValue a name is required. " + string);
 
         // creating the Country EV is done while SpatialRuleIndex is created and not here
         if (Roundabout.KEY.equals(name)) {

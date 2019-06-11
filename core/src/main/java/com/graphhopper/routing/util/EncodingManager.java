@@ -48,7 +48,6 @@ import static com.graphhopper.util.Helper.toLowerCase;
  */
 public class EncodingManager implements EncodedValueLookup {
     private static final String ERR = "Encoders are requesting %s bits, more than %s bits of %s flags. ";
-    private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to more bytes via graph.bytes_for_flags: 8";
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
     private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
     private final List<TagParser> tagParserList = new ArrayList<>();
@@ -73,7 +72,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public static EncodingManager create(String flagEncodersStr, int bytesForEdgeFlags) {
-        return create(FlagEncoderFactory.DEFAULT, flagEncodersStr, bytesForEdgeFlags);
+        return create(new DefaultFlagEncoderFactory(), flagEncodersStr, bytesForEdgeFlags);
     }
 
     public static EncodingManager create(FlagEncoderFactory factory, String flagEncodersStr, int bytesForEdgeFlags) {
@@ -416,7 +415,9 @@ public class EncodingManager implements EncodedValueLookup {
 
         ev.init(config);
         if (config.getRequiredBits() > getBytesForFlags() * 8)
-            throw new IllegalArgumentException(String.format(Locale.ROOT, ERR + "(Attempt to add EncodedValue " + ev.getName() + ") ", config.getRequiredBits(), bitsForEdgeFlags, "edge") + WAY_ERR);
+            throw new IllegalArgumentException(String.format(Locale.ROOT, ERR + "(Attempt to add EncodedValue " + ev.getName() + ") ",
+                    config.getRequiredBits(), bitsForEdgeFlags, "edge") +
+                    "Decrease the number of vehicles or increase the flags to more bytes via graph.bytes_for_flags: " + (config.getRequiredBits() / 8));
 
         encodedValueMap.put(ev.getName(), ev);
     }
