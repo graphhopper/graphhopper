@@ -20,7 +20,8 @@ package com.graphhopper.routing.profiles;
 import com.graphhopper.util.Helper;
 
 /**
- * This class defines a IndexBased but is type safe.
+ * This class defines the road class of an edge. It is heavily influenced from the highway tag in OSM that can be
+ * primary, cycleway etc.
  */
 public enum RoadClass {
     OTHER("other"), MOTORWAY("motorway"),

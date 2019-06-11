@@ -18,7 +18,7 @@
 package com.graphhopper.routing.profiles;
 
 /**
- * This class defines a IndexBased toll
+ * This class defines the toll value like NO (default), ALL (all vehicles) and HGV (toll for heavy goods vehicles)
  */
 public enum Toll {
     NO("no"), ALL("all"), HGV("hgv");

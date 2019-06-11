@@ -20,7 +20,7 @@ package com.graphhopper.routing.profiles;
 import com.graphhopper.util.Helper;
 
 /**
- * This class defines a IndexBased but is type safe.
+ * This class defines the road surface of an edge like unpaved or asphalt. If not tagged it will be "other".
  */
 public enum Surface {
     OTHER("other"), COBBLESTONE("cobblestone"),
