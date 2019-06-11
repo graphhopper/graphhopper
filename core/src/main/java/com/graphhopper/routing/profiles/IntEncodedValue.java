@@ -21,7 +21,13 @@ public interface IntEncodedValue extends EncodedValue {
      */
     void setInt(boolean reverse, IntsRef ref, int value);
 
+    /**
+     * The int value this EncodedValue accepts for setInt without throwing an exception.
+     */
     int getMaxInt();
 
+    /**
+     * @return true if this EncodedValue can store a different value for its reverse direction
+     */
     boolean isStoreTwoDirections();
 }

@@ -20,7 +20,7 @@ package com.graphhopper.routing.profiles;
 import com.graphhopper.util.Helper;
 
 /**
- * This class defines the road class of an edge. It is heavily influenced from the highway tag in OSM that can be
+ * This enum defines the road class of an edge. It is heavily influenced from the highway tag in OSM that can be
  * primary, cycleway etc.
  */
 public enum RoadClass {

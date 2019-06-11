@@ -17,6 +17,12 @@
  */
 package com.graphhopper.routing.profiles;
 
+/**
+ * One of the three logistic attributes that can be stored per edge.
+ *
+ * @see MaxWidth
+ * @see MaxWeight
+ */
 public class MaxHeight {
     public static final String KEY = "max_height";
 

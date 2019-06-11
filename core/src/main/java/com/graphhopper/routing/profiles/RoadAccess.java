@@ -19,6 +19,10 @@ package com.graphhopper.routing.profiles;
 
 import com.graphhopper.util.Helper;
 
+/**
+ * This enum defines the road access of an edge. Most edges are accessible from everyone but certain have restrictions
+ * like accessible only for customers or when delivering.
+ */
 public enum RoadAccess {
     // order is important here as we assume "smaller index" means "broader access"
     YES("yes"), DESTINATION("destination"), CUSTOMERS("customers"), DELIVERY("delivery"),

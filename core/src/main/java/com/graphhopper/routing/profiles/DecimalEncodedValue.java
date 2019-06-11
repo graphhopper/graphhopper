@@ -14,12 +14,20 @@ public interface DecimalEncodedValue extends EncodedValue {
 
     /**
      * This method stores the specified double value (rounding with a previously defined factor) into the IntsRef.
+     *
+     * @see #getMaxDecimal()
      */
     void setDecimal(boolean reverse, IntsRef ref, double value);
 
     double getDecimal(boolean reverse, IntsRef ref);
 
+    /**
+     * The double value this EncodedValue accepts for setDecimal without throwing an exception.
+     */
     double getMaxDecimal();
 
+    /**
+     * @return true if this EncodedValue can store a different value for its reverse direction
+     */
     boolean isStoreTwoDirections();
 }

@@ -20,7 +20,7 @@ package com.graphhopper.routing.profiles;
 import com.graphhopper.util.Helper;
 
 /**
- * This class the road environment of an edge. Currently road, ferry, tunnel, ford, bridge and shuttle_train. All edges
+ * This enum the road environment of an edge. Currently road, ferry, tunnel, ford, bridge and shuttle_train. All edges
  * that do not fit get "other" as value.
  */
 public enum RoadEnvironment {
