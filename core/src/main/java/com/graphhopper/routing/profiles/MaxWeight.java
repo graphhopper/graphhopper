@@ -15,27 +15,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.dem;
-
-import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.EdgeIteratorState;
+package com.graphhopper.routing.profiles;
 
 /**
- * Elevation interpolator for bridges. Estimates elevations of inner nodes of
- * the bridge based on elevations of entry/exit nodes of the bridge.
+ * One of the three logistic attributes that can be stored per edge.
  *
- * @author Alexey Valikov
+ * @see MaxHeight
+ * @see MaxWidth
  */
-public class BridgeElevationInterpolator extends AbstractEdgeElevationInterpolator {
+public class MaxWeight {
+    public static final String KEY = "max_weight";
 
-    public BridgeElevationInterpolator(GraphHopperStorage storage,
-                                       DataFlagEncoder dataFlagEncoder) {
-        super(storage, dataFlagEncoder);
-    }
-
-    @Override
-    protected boolean isInterpolatableEdge(EdgeIteratorState edge) {
-        return dataFlagEncoder.isTransportModeBridge(edge);
+    /**
+     * Currently enables to store 0.1 to max=0.1*2⁸ tons and infinity. If a value is between the maximum and infinity
+     * it is assumed to use the maximum value. To save bits it might make more sense to store only a few values like
+     * it was done with the MappedDecimalEncodedValue still handling (or rounding) of unknown values is unclear.
+     */
+    public static DecimalEncodedValue create() {
+        return new FactorizedDecimalEncodedValue(KEY, 8, 0.1, Double.POSITIVE_INFINITY, false);
     }
 }

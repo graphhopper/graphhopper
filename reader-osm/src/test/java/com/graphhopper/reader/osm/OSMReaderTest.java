@@ -28,12 +28,17 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
+import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
+import com.graphhopper.routing.util.parsers.OSMMaxWidthParser;
+import com.graphhopper.routing.util.parsers.OSMRoadClassParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
 import org.junit.Before;
@@ -41,7 +46,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.*;
 
@@ -86,10 +90,6 @@ public class OSMReaderTest {
     GraphHopperStorage newGraph(String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport) {
         return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D,
                 turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoOpExtension());
-    }
-
-    InputStream getResource(String file) {
-        return getClass().getResourceAsStream(file);
     }
 
     @Test
@@ -563,9 +563,15 @@ public class OSMReaderTest {
     @Test
     public void testRoadAttributes() {
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
-        DataFlagEncoder dataFlagEncoder = new DataFlagEncoder().setStoreHeight(true).setStoreWeight(true).setStoreWidth(true);
-        hopper.setEncodingManager(EncodingManager.create(Arrays.asList(dataFlagEncoder), 8));
+        DataFlagEncoder dataFlagEncoder = new DataFlagEncoder();
+        hopper.setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).
+                add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser()).
+                add(dataFlagEncoder).build());
         hopper.importOrLoad();
+
+        DecimalEncodedValue widthEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWidth.KEY);
+        DecimalEncodedValue heightEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxHeight.KEY);
+        DecimalEncodedValue weightEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWeight.KEY);
 
         Graph graph = hopper.getGraphHopperStorage();
         DataFlagEncoder encoder = (DataFlagEncoder) hopper.getEncodingManager().getEncoder("generic");
@@ -586,21 +592,21 @@ public class OSMReaderTest {
         EdgeIteratorState edge_ce = GHUtility.getEdge(graph, nc, ne);
         EdgeIteratorState edge_de = GHUtility.getEdge(graph, nd, ne);
 
-        assertEquals(4.0, encoder.getHeight(edge_ab), 1e-5);
-        assertEquals(2.5, encoder.getWidth(edge_ab), 1e-5);
-        assertEquals(4.4, encoder.getWeight(edge_ab), 1e-5);
+        assertEquals(4.0, edge_ab.get(heightEnc), 1e-5);
+        assertEquals(2.5, edge_ab.get(widthEnc), 1e-5);
+        assertEquals(4.4, edge_ab.get(weightEnc), 1e-5);
 
-        assertEquals(4.0, encoder.getHeight(edge_bc), 1e-5);
-        assertEquals(2.5, encoder.getWidth(edge_bc), 1e-5);
-        assertEquals(4.4, encoder.getWeight(edge_bc), 1e-5);
+        assertEquals(4.0, edge_bc.get(heightEnc), 1e-5);
+        assertEquals(2.5, edge_bc.get(widthEnc), 1e-5);
+        assertEquals(4.4, edge_bc.get(weightEnc), 1e-5);
 
-        assertEquals(4.4, encoder.getHeight(edge_ad), 1e-5);
-        assertEquals(3.5, encoder.getWidth(edge_ad), 1e-5);
-        assertEquals(17.5, encoder.getWeight(edge_ad), 1e-5);
+        assertEquals(4.4, edge_ad.get(heightEnc), 1e-5);
+        assertEquals(3.5, edge_ad.get(widthEnc), 1e-5);
+        assertEquals(17.5, edge_ad.get(weightEnc), 1e-5);
 
-        assertEquals(4.4, encoder.getHeight(edge_cd), 1e-5);
-        assertEquals(3.5, encoder.getWidth(edge_cd), 1e-5);
-        assertEquals(17.5, encoder.getWeight(edge_cd), 1e-5);
+        assertEquals(4.4, edge_cd.get(heightEnc), 1e-5);
+        assertEquals(3.5, edge_cd.get(widthEnc), 1e-5);
+        assertEquals(17.5, edge_cd.get(weightEnc), 1e-5);
     }
 
     @Test
@@ -850,6 +856,34 @@ public class OSMReaderTest {
 
         GHResponse ghRsp = hopper.route(req);
         assertFalse(ghRsp.getErrors().toString(), ghRsp.hasErrors());
+    }
+
+    @Test
+    public void testRoadClassInfo() {
+        GraphHopper gh = new GraphHopperOSM() {
+
+            @Override
+            protected DataReader importData() {
+                try {
+                    DataReader reader = new OSMReader(getGraphHopperStorage()).setFile(new File(getClass().getResource(file2).toURI()));
+                    reader.readGraph();
+                    return reader;
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }.setEncodingManager(new EncodingManager.Builder(4).add(carEncoder = new CarFlagEncoder()).add(new OSMRoadClassParser()).build()).
+                setGraphHopperLocation(dir).setCHEnabled(false).
+                importOrLoad();
+
+        GHResponse response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1).setPathDetails(Arrays.asList(RoadClass.KEY)));
+        List<PathDetail> list = response.getBest().getPathDetails().get(RoadClass.KEY);
+        assertEquals(3, list.size());
+        assertEquals(RoadClass.MOTORWAY.toString(), list.get(0).getValue());
+
+        response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1).setPathDetails(Arrays.asList(RoadAccess.KEY)));
+        Throwable ex = response.getErrors().get(0);
+        assertTrue(ex.getMessage(), ex.getMessage().contains("You requested the details [road_access]"));
     }
 
     class GraphHopperFacade extends GraphHopperOSM {

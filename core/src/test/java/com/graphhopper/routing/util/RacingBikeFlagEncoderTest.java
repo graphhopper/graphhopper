@@ -93,7 +93,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
 
     @Test
     public void testGetSpeed() {
-        IntsRef intsRef = GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, 10, true, true);
+        IntsRef intsRef = GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, 10, true, false);
         assertEquals(10, encoder.getSpeed(intsRef), 1e-1);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");

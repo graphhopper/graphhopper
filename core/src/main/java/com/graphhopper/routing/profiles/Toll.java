@@ -15,27 +15,24 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.dem;
-
-import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.EdgeIteratorState;
+package com.graphhopper.routing.profiles;
 
 /**
- * Elevation interpolator for tunnels. Estimates elevations of inner nodes of
- * the tunnel based on elevations of entry/exit nodes of the tunnel.
- *
- * @author Alexey Valikov
+ * This enum defines the toll value like NO (default), ALL (all vehicles) and HGV (toll for heavy goods vehicles)
  */
-public class TunnelElevationInterpolator extends AbstractEdgeElevationInterpolator {
+public enum Toll {
+    NO("no"), ALL("all"), HGV("hgv");
 
-    public TunnelElevationInterpolator(GraphHopperStorage storage,
-                                       DataFlagEncoder dataFlagEncoder) {
-        super(storage, dataFlagEncoder);
+    public static final String KEY = "toll";
+
+    private final String name;
+
+    Toll(String name) {
+        this.name = name;
     }
 
     @Override
-    protected boolean isInterpolatableEdge(EdgeIteratorState edge) {
-        return dataFlagEncoder.isTransportModeTunnel(edge);
+    public String toString() {
+        return name;
     }
 }

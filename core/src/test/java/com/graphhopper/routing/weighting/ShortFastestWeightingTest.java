@@ -38,7 +38,7 @@ public class ShortFastestWeightingTest {
 
     @Test
     public void testShort() {
-        EdgeIteratorState edge = createMockedEdgeIteratorState(10, GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, 50, true, true));
+        EdgeIteratorState edge = createMockedEdgeIteratorState(10, GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, 50, true, false));
         Weighting instance = new ShortFastestWeighting(encoder, 0.03);
         assertEquals(1.02, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
 

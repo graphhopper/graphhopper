@@ -26,6 +26,7 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
@@ -206,7 +207,8 @@ public class GHUtility {
             double bwdSpeed = 10 + random.nextDouble() * 120;
             if (randomSpeedEnc != null) {
                 edge.set(randomSpeedEnc, fwdSpeed);
-                edge.setReverse(randomSpeedEnc, bwdSpeed);
+                if (randomSpeedEnc.isStoreTwoDirections())
+                    edge.setReverse(randomSpeedEnc, bwdSpeed);
             }
             numEdges++;
         }
@@ -442,6 +444,16 @@ public class GHUtility {
             public double getReverse(DecimalEncodedValue property) {
                 return property.getDecimal(true, flags);
             }
+
+            @Override
+            public <T extends Enum> T get(EnumEncodedValue<T> property) {
+                return property.getEnum(false, flags);
+            }
+
+            @Override
+            public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
+                return property.getEnum(true, flags);
+            }
         };
     }
 
@@ -541,9 +553,15 @@ public class GHUtility {
         edge.set(accessEnc, fwd).setReverse(accessEnc, bwd);
         if (fwd)
             edge.set(avSpeedEnc, averageSpeed);
-        if (bwd)
+        if (bwd && avSpeedEnc.isStoreTwoDirections())
             edge.setReverse(avSpeedEnc, averageSpeed);
         return edge;
+    }
+
+    public static final EncodingManager.Builder addDefaultEncodedValues(EncodingManager.Builder builder) {
+        return builder.add(new OSMRoadClassParser()).add(new OSMRoadClassLinkParser()).
+                add(new OSMRoadEnvironmentParser()).add(new OSMMaxSpeedParser()).add(new OSMRoadAccessParser()).
+                add(new OSMSurfaceParser());
     }
 
     /**

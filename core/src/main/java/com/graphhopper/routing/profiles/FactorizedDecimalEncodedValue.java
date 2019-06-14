@@ -19,16 +19,31 @@ package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Objects;
+
 /**
  * This class holds a decimal value and stores it as an integer value via a conversion factor and a maximum number
  * of bits.
  */
 public final class FactorizedDecimalEncodedValue extends SimpleIntEncodedValue implements DecimalEncodedValue {
     private final double factor;
+    private final double defaultValue;
 
-    public FactorizedDecimalEncodedValue(String name, int bits, double factor, boolean store2DirectedValues) {
-        super(name, bits, store2DirectedValues);
+    public FactorizedDecimalEncodedValue(String name, int bits, double factor, boolean storeTwoDirections) {
+        this(name, bits, factor, 0, storeTwoDirections);
+    }
+
+    /**
+     * @param name               the key to identify this EncodedValue
+     * @param bits               the bits that should be reserved for the storage
+     * @param factor             the precision factor, i.e. store = (int) Math.round(value / factor)
+     * @param defaultValue       the value that should be returned if the stored value is 0.
+     * @param storeTwoDirections true if forward and backward direction of the edge should get two independent values.
+     */
+    public FactorizedDecimalEncodedValue(String name, int bits, double factor, double defaultValue, boolean storeTwoDirections) {
+        super(name, bits, storeTwoDirections);
         this.factor = factor;
+        this.defaultValue = defaultValue;
     }
 
     private int toInt(double val) {
@@ -37,8 +52,10 @@ public final class FactorizedDecimalEncodedValue extends SimpleIntEncodedValue i
 
     @Override
     public final void setDecimal(boolean reverse, IntsRef ints, double value) {
-        if (maxValue <= 0)
+        if (!isInitialized())
             throw new IllegalStateException("Call init before usage for EncodedValue " + toString());
+        if (value == defaultValue)
+            value = 0;
         if (value > maxValue * factor)
             throw new IllegalArgumentException(getName() + " value " + value + " too large for encoding. maxValue:" + maxValue * factor);
         if (value < 0)
@@ -52,6 +69,30 @@ public final class FactorizedDecimalEncodedValue extends SimpleIntEncodedValue i
     @Override
     public final double getDecimal(boolean reverse, IntsRef ref) {
         int value = getInt(reverse, ref);
+        if (value == 0)
+            return defaultValue;
         return value * factor;
+    }
+
+    @Override
+    public double getMaxDecimal() {
+        return maxValue * factor;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!super.equals(o)) return false;
+        FactorizedDecimalEncodedValue that = (FactorizedDecimalEncodedValue) o;
+        return Double.compare(that.factor, factor) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), factor);
+    }
+
+    @Override
+    public int getVersion() {
+        return hashCode();
     }
 }

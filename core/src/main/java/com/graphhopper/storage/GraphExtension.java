@@ -19,7 +19,7 @@ package com.graphhopper.storage;
 
 /**
  * If you need custom storages, like turn cost tables, or osmid tables for your graph you implement
- * this interface and put it in any graph storage you want.
+ * this interface and add it to any graph storage you want.
  */
 public interface GraphExtension extends Storable<GraphExtension> {
     /**

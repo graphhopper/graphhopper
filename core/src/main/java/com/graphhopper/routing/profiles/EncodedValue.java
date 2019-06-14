@@ -38,6 +38,13 @@ public interface EncodedValue {
      */
     String getName();
 
+    /**
+     * The return value represents the state of this EncodedValue and it can be assumed that two JVMs return the
+     * same version when the EncodedValue has the same state unlike the hashCode method. Same version ensures
+     * compatibility when reading values.
+     */
+    int getVersion();
+
     class InitializerConfig {
         int dataIndex = -1;
         int shift = 32;

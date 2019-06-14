@@ -19,8 +19,8 @@ package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
+import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.util.shapes.BBox;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.FileReader;
@@ -43,17 +43,17 @@ public class SpatialRuleLookupBuilderTest {
         SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(Jackson.newObjectMapper().readValue(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory());
 
         // Berlin
-        assertEquals(SpatialRule.Access.CONDITIONAL, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccess("track", TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
-        assertEquals(SpatialRule.Access.YES, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccess("primary", TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
+        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
 
         // Paris -> empty rule
-        assertEquals(SpatialRule.Access.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccess("track", TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
-        assertEquals(SpatialRule.Access.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccess("primary", TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
 
-        // Vienna
-        assertEquals(SpatialRule.Access.YES, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccess("track", TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
-        assertEquals(SpatialRule.Access.YES, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccess("primary", TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
-        assertEquals(SpatialRule.Access.CONDITIONAL, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccess("living_street", TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
+        // Austria
+        assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRule(48.204484,16.107888).getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccess("living_street", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
     }
 
     @Test
