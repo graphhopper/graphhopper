@@ -611,25 +611,20 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 53 * hash + this.edgeEncoders.hashCode();
-        return hash;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EncodingManager that = (EncodingManager) o;
+        return bitsForEdgeFlags == that.bitsForEdgeFlags &&
+                enableInstructions == that.enableInstructions &&
+                edgeEncoders.equals(that.edgeEncoders) &&
+                encodedValueMap.equals(that.encodedValueMap) &&
+                preferredLanguage.equals(that.preferredLanguage);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == null)
-            return false;
-
-        if (getClass() != obj.getClass())
-            return false;
-
-        final EncodingManager other = (EncodingManager) obj;
-        if (this.edgeEncoders != other.edgeEncoders && !this.edgeEncoders.equals(other.edgeEncoders)) {
-            return false;
-        }
-        return true;
+    public int hashCode() {
+        return Objects.hash(edgeEncoders, encodedValueMap, bitsForEdgeFlags, enableInstructions, preferredLanguage);
     }
 
     /**

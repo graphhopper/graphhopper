@@ -531,7 +531,6 @@ public class GraphHopper implements GraphHopperAPI {
         EncodingManager.Builder emBuilder = new EncodingManager.Builder(bytesForFlags);
         String flagEncodersStr = args.get("graph.flag_encoders", "");
         String encodedValueStr = args.get("graph.encoded_values", "");
-        // overwrite EncodingManager only if customization requested
         if (!flagEncodersStr.isEmpty() || !encodedValueStr.isEmpty()) {
             if (!encodedValueStr.isEmpty())
                 emBuilder.addAll(tagParserFactory, encodedValueStr);
@@ -539,6 +538,7 @@ public class GraphHopper implements GraphHopperAPI {
                 emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
             emBuilder.setEnableInstructions(args.getBool("datareader.instructions", true));
             emBuilder.setPreferredLanguage(args.get("datareader.preferred_language", ""));
+            // overwrite EncodingManager object from configuration file
             setEncodingManager(emBuilder.build());
         }
 

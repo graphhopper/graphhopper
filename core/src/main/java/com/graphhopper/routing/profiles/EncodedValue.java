@@ -39,7 +39,9 @@ public interface EncodedValue {
     String getName();
 
     /**
-     * Same version ensures compatibility when reading values
+     * The return value represents the state of this EncodedValue and it can be assumed that two JVMs return the
+     * same version when the EncodedValue has the same state unlike the hashCode method. Same version ensures
+     * compatibility when reading values.
      */
     int getVersion();
 

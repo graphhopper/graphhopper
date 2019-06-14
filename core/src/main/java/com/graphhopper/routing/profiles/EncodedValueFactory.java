@@ -18,5 +18,9 @@
 package com.graphhopper.routing.profiles;
 
 public interface EncodedValueFactory {
+    /**
+     * This method assumes a string value with the key of an EncodedValue like "road_class" and returns an instance
+     * of it.
+     */
     EncodedValue create(String encodedValueString);
 }
