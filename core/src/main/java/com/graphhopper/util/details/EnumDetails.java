@@ -17,40 +17,32 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
-import static com.graphhopper.util.Parameters.DETAILS.AVERAGE_SPEED;
+public class EnumDetails<E extends Enum> extends AbstractPathDetailsBuilder {
 
-/**
- * Calculate the average speed segments for a Path
- *
- * @author Robin Boldt
- */
-public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
+    private final EnumEncodedValue<E> ev;
+    private Enum objVal = null;
 
-    private final DecimalEncodedValue avSpeedEnc;
-    private double curAvgSpeed = -1;
+    public EnumDetails(String name, EnumEncodedValue<E> ev) {
+        super(name);
+        this.ev = ev;
+    }
 
-    public AverageSpeedDetails(FlagEncoder encoder) {
-        super(AVERAGE_SPEED);
-        this.avSpeedEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "average_speed"));
+    @Override
+    protected Object getCurrentValue() {
+        return objVal.toString();
     }
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        double tmpSpeed = edge.get(avSpeedEnc);
-        if (Math.abs(tmpSpeed - curAvgSpeed) > 0.0001) {
-            curAvgSpeed = tmpSpeed;
+        E val = edge.get(ev);
+        // we can use the reference equality here
+        if (val != objVal) {
+            this.objVal = val;
             return true;
         }
         return false;
-    }
-
-    @Override
-    public Object getCurrentValue() {
-        return curAvgSpeed;
     }
 }

@@ -24,9 +24,6 @@ import com.graphhopper.storage.IntsRef;
  */
 public final class SimpleBooleanEncodedValue extends SimpleIntEncodedValue implements BooleanEncodedValue {
 
-    private SimpleBooleanEncodedValue() {
-    }
-
     public SimpleBooleanEncodedValue(String name) {
         this(name, false);
     }
@@ -37,7 +34,7 @@ public final class SimpleBooleanEncodedValue extends SimpleIntEncodedValue imple
 
     @Override
     public final void setBool(boolean reverse, IntsRef ref, boolean value) {
-        if (storeBothDirections && reverse) {
+        if (storeTwoDirections && reverse) {
             int flags = ref.ints[bwdDataIndex + ref.offset];
             flags &= ~bwdMask;
             // set value
@@ -57,7 +54,7 @@ public final class SimpleBooleanEncodedValue extends SimpleIntEncodedValue imple
     @Override
     public final boolean getBool(boolean reverse, IntsRef ref) {
         int flags;
-        if (storeBothDirections && reverse) {
+        if (storeTwoDirections && reverse) {
             flags = ref.ints[bwdDataIndex + ref.offset];
             return (flags & bwdMask) >>> bwdShift == 1;
         }

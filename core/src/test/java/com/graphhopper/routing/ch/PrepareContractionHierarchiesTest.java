@@ -40,7 +40,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class PrepareContractionHierarchiesTest {
-    private final CarFlagEncoder carEncoder = new CarFlagEncoder();
+    private final CarFlagEncoder carEncoder = new CarFlagEncoder("speed_two_directions=true");
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
     private final Weighting weighting = new ShortestWeighting(carEncoder);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;

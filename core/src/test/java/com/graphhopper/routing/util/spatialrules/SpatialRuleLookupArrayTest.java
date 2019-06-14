@@ -1,8 +1,8 @@
 package com.graphhopper.routing.util.spatialrules;
 
+import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -52,9 +52,9 @@ public class SpatialRuleLookupArrayTest {
 
         SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, false, new BBox(1, 4, 1, 4));
 
-        assertEquals(SpatialRule.Access.CONDITIONAL, spatialRuleLookup.lookupRule(1.2, 1.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
-        assertEquals(SpatialRule.Access.CONDITIONAL, spatialRuleLookup.lookupRule(1.2, 3.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
-        assertEquals(SpatialRule.Access.YES, spatialRuleLookup.lookupRule(2.2, 1.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
+        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(1.2, 1.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(1.2, 3.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(2.2, 1.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
     }
 
     @Test
@@ -66,11 +66,11 @@ public class SpatialRuleLookupArrayTest {
 
         SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, true, new BBox(-1, 4, 1, 4));
 
-        assertEquals(SpatialRule.Access.CONDITIONAL, spatialRuleLookup.lookupRule(1.2, 1.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
-        assertEquals(SpatialRule.Access.CONDITIONAL, spatialRuleLookup.lookupRule(1.2, 3.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
+        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(1.2, 1.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(1.2, 3.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
         // Not in the second Polygon anymore
-        assertEquals(SpatialRule.Access.YES, spatialRuleLookup.lookupRule(3.9, 3.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
-        assertEquals(SpatialRule.Access.YES, spatialRuleLookup.lookupRule(2.2, 1.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, SpatialRule.Access.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(3.9, 3.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(2.2, 1.7).getAccess(null, TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
         // Get the EmptySpatialRule in a BorderTile #1077
         assertEquals(SpatialRule.EMPTY.getId(), spatialRuleLookup.lookupRule(0.9, 0.9).getId());
     }
@@ -174,8 +174,8 @@ public class SpatialRuleLookupArrayTest {
             }
 
             @Override
-            public Access getAccess(String highwayTag, TransportationMode transportationMode, Access _default) {
-                return Access.CONDITIONAL;
+            public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
+                return RoadAccess.DESTINATION;
             }
 
             @Override

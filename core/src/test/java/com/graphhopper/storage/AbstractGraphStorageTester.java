@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.GHUtility.count;
 import static org.junit.Assert.*;
 
@@ -998,10 +999,10 @@ public abstract class AbstractGraphStorageTester {
 
         graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
-        DecimalEncodedValue avSpeed0Enc = manager.getDecimalEncodedValue("car0.average_speed");
-        BooleanEncodedValue access0Enc = manager.getBooleanEncodedValue("car0.access");
-        DecimalEncodedValue avSpeed1Enc = manager.getDecimalEncodedValue("car.average_speed");
-        BooleanEncodedValue access1Enc = manager.getBooleanEncodedValue("car.access");
+        DecimalEncodedValue avSpeed0Enc = manager.getDecimalEncodedValue(getKey("car0", "average_speed"));
+        BooleanEncodedValue access0Enc = manager.getBooleanEncodedValue(getKey("car0", "access"));
+        DecimalEncodedValue avSpeed1Enc = manager.getDecimalEncodedValue(getKey("car", "average_speed"));
+        BooleanEncodedValue access1Enc = manager.getBooleanEncodedValue(getKey("car", "access"));
 
         edge = graph.edge(0, 1);
         GHUtility.setProperties(edge, list.get(0), 99.123, true, true);
@@ -1028,7 +1029,7 @@ public abstract class AbstractGraphStorageTester {
             }
         });
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
-        list.add(new TmpCarFlagEncoder(30, 0.001, 0){
+        list.add(new TmpCarFlagEncoder(30, 0.001, 0) {
             @Override
             public String toString() {
                 return "car2";

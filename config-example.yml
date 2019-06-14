@@ -14,6 +14,10 @@ graphhopper:
   # Enable turn restrictions for car or motorcycle.
   # graph.flag_encoders: car|turn_costs=true
 
+  # add more data to every edge
+  # used for path details and when road_environment is added and elevation is enabled then a tunnel and bridge interpolation is done, see #798
+  # graph.encoded_values: surface,road_class,road_environment,road_access,car_max_speed
+  # graph.bytes_for_flags: 8
 
   ##### Elevation #####
 
@@ -80,7 +84,7 @@ graphhopper:
   # routing.max_visited_nodes: 1000000
 
 
-  # If enabled, allows a user to run flexibility requests even if speed mode is enabled. Every request then has to include a hint routing.ch.disable=true.
+  # If enabled, allows a user to run flexibility requests even if speed mode is enabled. Every request then has to include a hint ch.disable=true.
   # Attention, non-CH route calculations take way more time and resources, compared to CH routing.
   # A possible attacker might exploit this to slow down your service. Only enable it if you need it and with routing.maxVisitedNodes
   # routing.ch.disabling_allowed: true

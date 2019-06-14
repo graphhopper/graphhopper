@@ -275,7 +275,6 @@ public class EdgeBasedRoutingAlgorithmTest {
         assertEquals("wrong time", 1000 * (numEdges * weightPerEdge + turnCost), path.getTime(), 1.e-6);
     }
 
-
     private void blockNode3(Graph g) {
         // Totally block this node (all 9 turn relations)
         addTurnRestriction(g, 2, 3, 1);
@@ -472,5 +471,4 @@ public class EdgeBasedRoutingAlgorithmTest {
     private void addTurnFlags(Graph g, int from, int via, int to, long turnFlags) {
         tcs.addTurnInfo(getEdge(g, from, via).getEdge(), via, getEdge(g, via, to).getEdge(), turnFlags);
     }
-
 }

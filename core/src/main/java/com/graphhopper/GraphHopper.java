@@ -24,12 +24,18 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
+import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
+import com.graphhopper.routing.profiles.EncodedValueFactory;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
 import com.graphhopper.routing.template.RoutingTemplate;
 import com.graphhopper.routing.template.ViaRoutingTemplate;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
+import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.change.ChangeGraphHelper;
@@ -114,7 +120,9 @@ public class GraphHopper implements GraphHopperAPI {
     private int dataReaderWorkerThreads = 2;
     private boolean calcPoints = true;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
-    private FlagEncoderFactory flagEncoderFactory = FlagEncoderFactory.DEFAULT;
+    private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
+    private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
+    private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
@@ -471,8 +479,22 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
-    public FlagEncoderFactory getFlagEncoderFactory() {
-        return this.flagEncoderFactory;
+    public EncodedValueFactory getEncodedValueFactory() {
+        return this.encodedValueFactory;
+    }
+
+    public GraphHopper setEncodedValueFactory(EncodedValueFactory factory) {
+        this.encodedValueFactory = factory;
+        return this;
+    }
+
+    public TagParserFactory getTagParserFactory() {
+        return this.tagParserFactory;
+    }
+
+    public GraphHopper setTagParserFactory(TagParserFactory factory) {
+        this.tagParserFactory = factory;
+        return this;
     }
 
     /**
@@ -506,11 +528,17 @@ public class GraphHopper implements GraphHopperAPI {
         sortGraph = args.getBool("graph.do_sort", sortGraph);
         removeZipped = args.getBool("graph.remove_zipped", removeZipped);
         int bytesForFlags = args.getInt("graph.bytes_for_flags", 4);
+        EncodingManager.Builder emBuilder = new EncodingManager.Builder(bytesForFlags);
         String flagEncodersStr = args.get("graph.flag_encoders", "");
-        if (!flagEncodersStr.isEmpty()) {
-            EncodingManager.Builder emBuilder = EncodingManager.createBuilder(flagEncoderFactory, flagEncodersStr, bytesForFlags);
+        String encodedValueStr = args.get("graph.encoded_values", "");
+        if (!flagEncodersStr.isEmpty() || !encodedValueStr.isEmpty()) {
+            if (!encodedValueStr.isEmpty())
+                emBuilder.addAll(tagParserFactory, encodedValueStr);
+            if (!flagEncodersStr.isEmpty())
+                emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
             emBuilder.setEnableInstructions(args.getBool("datareader.instructions", true));
             emBuilder.setPreferredLanguage(args.get("datareader.preferred_language", ""));
+            // overwrite EncodingManager object from configuration file
             setEncodingManager(emBuilder.build());
         }
 
@@ -705,7 +733,7 @@ public class GraphHopper implements GraphHopperAPI {
         setGraphHopperLocation(graphHopperFolder);
 
         if (encodingManager == null)
-            setEncodingManager(EncodingManager.create(flagEncoderFactory, ghLocation));
+            setEncodingManager(EncodingManager.create(encodedValueFactory, flagEncoderFactory, ghLocation));
 
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
@@ -841,22 +869,14 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void interpolateBridgesAndOrTunnels() {
-        if (ghStorage.getEncodingManager().hasEncoder("generic")) {
-            final FlagEncoder genericFlagEncoder = ghStorage.getEncodingManager()
-                    .getEncoder("generic");
-            if (!(genericFlagEncoder instanceof DataFlagEncoder)) {
-                throw new IllegalStateException("'generic' flag encoder for elevation interpolation of "
-                        + "bridges and tunnels is enabled but does not have the expected type "
-                        + DataFlagEncoder.class.getName() + ".");
-            }
-            final DataFlagEncoder dataFlagEncoder = (DataFlagEncoder) genericFlagEncoder;
+        if (ghStorage.getEncodingManager().hasEncodedValue(RoadEnvironment.KEY)) {
+            EnumEncodedValue<RoadEnvironment> roadEnvEnc = ghStorage.getEncodingManager().getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
             StopWatch sw = new StopWatch().start();
-            new TunnelElevationInterpolator(ghStorage, dataFlagEncoder).execute();
+            new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.TUNNEL).execute();
             float tunnel = sw.stop().getSeconds();
             sw = new StopWatch().start();
-            new BridgeElevationInterpolator(ghStorage, dataFlagEncoder).execute();
-            logger.info("Bridge interpolation " + (int) sw.stop().getSeconds() + "s, "
-                    + "tunnel interpolation " + (int) tunnel + "s");
+            new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.BRIDGE).execute();
+            logger.info("Bridge interpolation " + (int) sw.stop().getSeconds() + "s, " + "tunnel interpolation " + (int) tunnel + "s");
         }
     }
 
