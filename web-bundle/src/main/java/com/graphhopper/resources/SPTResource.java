@@ -28,7 +28,7 @@ import java.io.Writer;
 import java.util.*;
 
 /**
- * This resource provides the entire shortest path tree as response. In a JSON format ('close' to CSV) discussed at #1577.
+ * This resource provides the entire shortest path tree as response. In a simple CSV format discussed at #1577.
  */
 @Path("spt")
 public class SPTResource {
