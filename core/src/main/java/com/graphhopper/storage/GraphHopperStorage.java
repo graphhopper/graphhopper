@@ -184,7 +184,8 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         properties.create(100);
 
         properties.put("graph.bytes_for_flags", encodingManager.getBytesForFlags());
-        properties.put("graph.flag_encoders", encodingManager.toDetailsString());
+        properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
+        properties.put("graph.flag_encoders", encodingManager.toFlagEncodersAsString());
 
         properties.put("graph.byte_order", dir.getByteOrder());
         properties.put("graph.dimension", baseGraph.nodeAccess.getDimension());
@@ -250,9 +251,9 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             // check encoding for compatibility
             String flagEncodersStr = properties.get("graph.flag_encoders");
 
-            if (!flagEncodersStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(flagEncodersStr)) {
+            if (!flagEncodersStr.isEmpty() && !encodingManager.toFlagEncodersAsString().equalsIgnoreCase(flagEncodersStr)) {
                 throw new IllegalStateException("Encoding does not match:"
-                        + "\nGraphhopper config: " + encodingManager.toDetailsString()
+                        + "\nGraphhopper config: " + encodingManager.toFlagEncodersAsString()
                         + "\nGraph: " + flagEncodersStr
                         + "\nChange configuration to match the graph or delete " + dir.getLocation());
             }

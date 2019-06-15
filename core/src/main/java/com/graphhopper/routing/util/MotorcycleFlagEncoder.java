@@ -30,6 +30,8 @@ import com.graphhopper.util.PMap;
 import java.util.HashSet;
 import java.util.List;
 
+import static com.graphhopper.routing.util.EncodingManager.getKey;
+
 /**
  * Defines bit layout for motorbikes
  * <p>
@@ -132,8 +134,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
 
-        registerNewEncodedValue.add(priorityWayEncoder = new FactorizedDecimalEncodedValue(prefix + "priority", 3, PriorityCode.getFactor(1), false));
-        registerNewEncodedValue.add(curvatureEncoder = new FactorizedDecimalEncodedValue(prefix + "curvature", 4, 0.1, false));
+        registerNewEncodedValue.add(priorityWayEncoder = new FactorizedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
+        registerNewEncodedValue.add(curvatureEncoder = new FactorizedDecimalEncodedValue(getKey(prefix, "curvature"), 4, 0.1, false));
     }
 
     @Override

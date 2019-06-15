@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -41,12 +42,17 @@ public class GenericWeighting extends AbstractWeighting {
     protected final double maxSpeed;
     protected final DataFlagEncoder gEncoder;
     protected final DataFlagEncoder.WeightingConfig weightingConfig;
-    protected final int accessType;
     protected final int uncertainAccessiblePenalty = 10;
 
     protected final double height;
     protected final double weight;
     protected final double width;
+
+    private final DecimalEncodedValue carMaxSpeedEnc;
+    private final EnumEncodedValue<RoadAccess> roadAccessEnc;
+    private DecimalEncodedValue maxWeightEnc;
+    private DecimalEncodedValue maxHeightEnc;
+    private DecimalEncodedValue maxWidthEnc;
 
     public GenericWeighting(DataFlagEncoder encoder, PMap hintsMap) {
         super(encoder);
@@ -60,10 +66,18 @@ public class GenericWeighting extends AbstractWeighting {
             throw new IllegalArgumentException("Some specified speed value bigger than maximum possible speed: " + maxSpecifiedSpeed + " > " + encoder.getMaxPossibleSpeed());
 
         this.maxSpeed = maxSpecifiedSpeed / SPEED_CONV;
-        accessType = gEncoder.getAccessType("motor_vehicle");
         height = hintsMap.getDouble(HEIGHT_LIMIT, 0d);
         weight = hintsMap.getDouble(WEIGHT_LIMIT, 0d);
         width = hintsMap.getDouble(WIDTH_LIMIT, 0d);
+        roadAccessEnc = encoder.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+        carMaxSpeedEnc = encoder.getDecimalEncodedValue(MaxSpeed.KEY);
+
+        if (encoder.hasEncodedValue(MaxWeight.KEY))
+            maxWeightEnc = encoder.getDecimalEncodedValue(MaxWeight.KEY);
+        if (encoder.hasEncodedValue(MaxWidth.KEY))
+            maxWidthEnc = encoder.getDecimalEncodedValue(MaxWidth.KEY);
+        if (encoder.hasEncodedValue(MaxHeight.KEY))
+            maxHeightEnc = encoder.getDecimalEncodedValue(MaxHeight.KEY);
     }
 
     @Override
@@ -81,22 +95,20 @@ public class GenericWeighting extends AbstractWeighting {
             return Double.POSITIVE_INFINITY;
         }
 
-        if (gEncoder.isStoreHeight() && overLimit(height, gEncoder.getHeight(edgeState))
-                || gEncoder.isStoreWeight() && overLimit(weight, gEncoder.getWeight(edgeState))
-                || gEncoder.isStoreWidth() && overLimit(width, gEncoder.getWidth(edgeState)))
+        if (maxHeightEnc != null && overLimit(height, edgeState.get(maxHeightEnc))
+                || maxWidthEnc != null && overLimit(width, edgeState.get(maxWidthEnc))
+                || maxWeightEnc != null && overLimit(weight, edgeState.get(maxWeightEnc)))
             return Double.POSITIVE_INFINITY;
 
         long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
 
-        switch (gEncoder.getAccessValue(edgeState.getFlags())) {
-            case NO:
-                return Double.POSITIVE_INFINITY;
-            case CONDITIONAL:
-                time = time * uncertainAccessiblePenalty;
-        }
-
+        RoadAccess roadAccessEV = edgeState.get(roadAccessEnc);
+        if (roadAccessEV == RoadAccess.NO)
+            return Double.POSITIVE_INFINITY;
+        else if (roadAccessEV != RoadAccess.YES)
+            time = time * uncertainAccessiblePenalty;
         return time;
     }
 
@@ -116,7 +128,7 @@ public class GenericWeighting extends AbstractWeighting {
         // TODO inner city guessing -> lit, maxspeed <= 50, residential etc => create new encoder.isInnerCity(edge)
         // See #472 use edge.getDouble((encoder), K_MAXSPEED_MOTORVEHICLE_FORWARD, _default) or edge.getMaxSpeed(...) instead?
         // encoder could be made optional via passing to EdgeExplorer
-        double maxspeed = gEncoder.getMaxspeed(edgeState, accessType, reverse);
+        double maxspeed = reverse ? edgeState.get(carMaxSpeedEnc) : edgeState.getReverse(carMaxSpeedEnc);
         if (maxspeed > 0 && speed > maxspeed)
             speed = maxspeed;
 

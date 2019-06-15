@@ -29,5 +29,5 @@ public interface EncodedValueLookup {
 
     <T extends Enum> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType);
 
-    boolean hasEncoder(String key);
+    boolean hasEncodedValue(String key);
 }

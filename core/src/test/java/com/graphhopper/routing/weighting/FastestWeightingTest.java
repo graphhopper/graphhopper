@@ -41,7 +41,7 @@ public class FastestWeightingTest {
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
         Weighting instance = new FastestWeighting(encoder);
-        IntsRef flags = GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, encoder.getMaxSpeed(), true, true);
+        IntsRef flags = GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, encoder.getMaxSpeed(), true, false);
         assertEquals(instance.getMinWeight(10), instance.calcWeight(createMockedEdgeIteratorState(10, flags), false, EdgeIterator.NO_EDGE), 1e-8);
     }
 
@@ -51,7 +51,7 @@ public class FastestWeightingTest {
                 put(Parameters.Routing.HEADING_PENALTY, "100"));
 
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, 1, 1, 2, 10,
-                GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, 10, true, true), "test", Helper.createPointList(51, 0, 51, 1), false);
+                GHUtility.setProperties(encodingManager.createEdgeFlags(), encoder, 10, true, false), "test", Helper.createPointList(51, 0, 51, 1), false);
         double time = instance.calcWeight(virtEdge, false, 0);
 
         virtEdge.setUnfavored(true);

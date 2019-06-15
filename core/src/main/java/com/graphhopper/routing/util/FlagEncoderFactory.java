@@ -23,17 +23,16 @@ import com.graphhopper.util.PMap;
  * @author Peter Karich
  */
 public interface FlagEncoderFactory {
-    final String CAR = "car";
-    final String CAR4WD = "car4wd";
-    final String BIKE = "bike";
-    final String BIKE2 = "bike2";
-    final String RACINGBIKE = "racingbike";
-    final String MOUNTAINBIKE = "mtb";
-    final String FOOT = "foot";
-    final String HIKE = "hike";
-    final String MOTORCYCLE = "motorcycle";
-    final String GENERIC = "generic";
-    final FlagEncoderFactory DEFAULT = new DefaultFlagEncoderFactory();
+    String CAR = "car";
+    String CAR4WD = "car4wd";
+    String BIKE = "bike";
+    String BIKE2 = "bike2";
+    String RACINGBIKE = "racingbike";
+    String MOUNTAINBIKE = "mtb";
+    String FOOT = "foot";
+    String HIKE = "hike";
+    String MOTORCYCLE = "motorcycle";
+    String GENERIC = "generic";
 
     FlagEncoder createFlagEncoder(String name, PMap configuration);
 }

@@ -1,5 +1,15 @@
 0.13
+    replaced AverageSpeedDetails by DecimalDetails
+    moved TagParser into new package: com.graphhopper.routing.util.parsers
+    removed FlagEncoderFactory.DEFAULT
+    removed forestry and motorroad from RoadClass
+    SpatialRule.AccessValue replaced by RoadAccess
+    removed EncodedValueLookup.hasEncoder, use hasEncodedValue instead
+    removed MappedDecimalEncodedValue: should be replaced with FactoredDecimalEncodedValue
+    DataFlagEncoder: it is now required to add EncodedValues before. graph.encoded_values: max_speed,road_class,road_environment,road_access
+    instead of EncodingManager.ROUNDABOUT use Roundabout.KEY
     removed TraversalMode.EDGE_BASED_1DIR
+
 0.12
     renamed VirtualEdgeIteratorState.getOriginalEdgeKey to more precise getOriginalEdgeKey #1549
     access refactoring #1436 that moves AccessValue into SpatialRule.Access

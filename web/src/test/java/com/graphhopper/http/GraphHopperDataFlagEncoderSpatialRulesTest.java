@@ -41,8 +41,11 @@ public class GraphHopperDataFlagEncoderSpatialRulesTest {
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
+        // The EncodedValue "country" requires the setting "spatial_rules.location" as "country" does not load via DefaultTagParserFactory
+        // TODO should we automatically detect this somehow and include a default country file?
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "generic").
+                put("graph.encoded_values", "country,road_environment,road_class,road_access,max_speed").
                 put("prepare.ch.weightings", "no").
                 put("spatial_rules.location", "../core/files/spatialrules/countries.geo.json").
                 put("spatial_rules.max_bbox", "11.4,11.7,49.9,50.1").
@@ -51,9 +54,8 @@ public class GraphHopperDataFlagEncoderSpatialRulesTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
             GraphHopperApplication.class, config);
-
 
     @AfterClass
     public static void cleanUp() {
@@ -61,7 +63,7 @@ public class GraphHopperDataFlagEncoderSpatialRulesTest {
     }
 
     @Test
-    public void testDetourToComplyWithSpatialRule() throws Exception {
+    public void testDetourToComplyWithSpatialRule() {
         final Response response = app.client().target("http://localhost:8080/route?" + "point=49.995933,11.54809&point=50.004871,11.517191&vehicle=generic").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
