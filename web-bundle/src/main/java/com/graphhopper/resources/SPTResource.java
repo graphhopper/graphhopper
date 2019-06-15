@@ -3,13 +3,13 @@ package com.graphhopper.resources;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.routing.QueryGraph;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,10 +25,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.*;
 
 /**
  * This resource provides the entire shortest path tree as response. In a JSON format ('close' to CSV) discussed at #1577.
@@ -91,14 +88,20 @@ public class SPTResource {
         }
 
         final String COL_SEP = ",", LINE_SEP = "\n";
-        Collection<String> columns;
+        List<String> columns;
         if (!Helper.isEmpty(columnsParam))
             columns = Arrays.asList(columnsParam.split(","));
         else
-            columns = new LinkedHashSet<>(Arrays.asList("longitude", "latitude", "time", "distance"));
+            columns = Arrays.asList("longitude", "latitude", "time", "distance");
 
         if (columns.isEmpty())
             throw new IllegalArgumentException("Either omit the columns parameter or specify the columns via comma separated values");
+
+        Map<String, EncodedValue> pathDetails = new HashMap<>();
+        for (String col : columns) {
+            if (encodingManager.hasEncodedValue(col))
+                pathDetails.put(col, encodingManager.getEncodedValue(col, EncodedValue.class));
+        }
 
         StreamingOutput out = output -> {
             try (Writer writer = new BufferedWriter(new OutputStreamWriter(output, Helper.UTF_CS))) {
@@ -112,48 +115,77 @@ public class SPTResource {
                 writer.write(sb.toString());
                 isochrone.search(qr.getClosestNode(), label -> {
                     sb.setLength(0);
-                    for (String col : columns) {
-                        if (sb.length() > 0)
+                    for (int colIndex = 0; colIndex < columns.size(); colIndex++) {
+                        String col = columns.get(colIndex);
+                        if (colIndex > 0)
                             sb.append(COL_SEP);
+
                         switch (col) {
                             case "node_id":
                                 sb.append(label.nodeId);
-                                break;
+                                continue;
                             case "prev_node_id":
                                 sb.append(label.prevNodeId);
-                                break;
+                                continue;
                             case "edge_id":
                                 sb.append(label.edgeId);
-                                break;
+                                continue;
                             case "prev_edge_id":
                                 sb.append(label.prevEdgeId);
-                                break;
+                                continue;
                             case "distance":
                                 sb.append(label.distance);
-                                break;
+                                continue;
                             case "prev_distance":
                                 sb.append(label.prevCoordinate == null ? 0 : label.prevDistance);
-                                break;
+                                continue;
                             case "time":
                                 sb.append(label.timeInSec);
-                                break;
+                                continue;
                             case "prev_time":
                                 sb.append(label.prevCoordinate == null ? 0 : label.prevTimeInSec);
-                                break;
+                                continue;
                             case "longitude":
                                 sb.append(label.coordinate.lon);
-                                break;
+                                continue;
                             case "prev_longitude":
                                 sb.append(label.prevCoordinate == null ? null : label.prevCoordinate.lon);
-                                break;
+                                continue;
                             case "latitude":
                                 sb.append(label.coordinate.lat);
-                                break;
+                                continue;
                             case "prev_latitude":
                                 sb.append(label.prevCoordinate == null ? null : label.prevCoordinate.lat);
-                                break;
-                            default:
-                                throw new IllegalArgumentException("Unknown property " + col);
+                                continue;
+                        }
+
+                        if (!EdgeIterator.Edge.isValid(label.edgeId))
+                            continue;
+
+                        EdgeIteratorState edge = queryGraph.getEdgeIteratorState(label.edgeId, label.nodeId);
+                        if (edge == null)
+                            continue;
+
+                        if (col.equals(Parameters.DETAILS.STREET_NAME)) {
+                            sb.append(edge.getName().replaceAll(",", ""));
+                            continue;
+                        }
+
+                        EncodedValue ev = pathDetails.get(col);
+                        if (ev instanceof DecimalEncodedValue) {
+                            DecimalEncodedValue dev = (DecimalEncodedValue) ev;
+                            sb.append(reverseFlow ? edge.getReverse(dev) : edge.get(dev));
+                        } else if (ev instanceof EnumEncodedValue) {
+                            EnumEncodedValue eev = (EnumEncodedValue) ev;
+                            sb.append(reverseFlow ? edge.getReverse(eev) : edge.get(eev));
+                        } else if (ev instanceof BooleanEncodedValue) {
+                            BooleanEncodedValue eev = (BooleanEncodedValue) ev;
+                            sb.append(reverseFlow ? edge.getReverse(eev) : edge.get(eev));
+                        } else if (ev instanceof IntEncodedValue) {
+                            IntEncodedValue eev = (IntEncodedValue) ev;
+                            sb.append(reverseFlow ? edge.getReverse(eev) : edge.get(eev));
+                        } else {
+                            throw new IllegalArgumentException("Unknown property " + col);
                         }
                     }
                     sb.append(LINE_SEP);

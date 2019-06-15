@@ -31,6 +31,7 @@ public class SPTResourceTest {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("prepare.ch.weightings", "no").
                 put("graph.flag_encoders", "car").
+                put("graph.encoded_values", "max_speed,road_class").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.location", DIR));
         client = new IsochroneApi();
@@ -70,5 +71,23 @@ public class SPTResourceTest {
 
         row = lines[1].split(",");
         assertEquals(115, Integer.parseInt(row[prevTimeIndex]) / 1000);
+    }
+
+    @Test
+    public void requestDetails() {
+        Response rsp = app.client().target("http://localhost:8080/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();
+        String rspCsvString = rsp.readEntity(String.class);
+        String[] lines = rspCsvString.split("\n");
+        assertTrue(lines.length > 500);
+
+        String[] row = lines[16].split(",");
+        assertEquals("", row[0]);
+        assertEquals("service", row[1]);
+        assertEquals(20, Double.parseDouble(row[2]), .1);
+
+        row = lines[9].split(",");
+        assertEquals("Carretera d'Engolasters CS-200", row[0]);
+        assertEquals("secondary", row[1]);
+        assertTrue(Double.isInfinite(Double.parseDouble(row[2])));
     }
 }
