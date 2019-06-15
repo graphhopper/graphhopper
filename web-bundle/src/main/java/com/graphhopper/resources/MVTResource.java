@@ -1,15 +1,12 @@
 package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.wdtinc.mapbox_vector_tile.VectorTile;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.IGeometryFilter;
@@ -58,10 +55,10 @@ public class MVTResource {
     public Response doGetXyz(
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
-            @QueryParam("vehicle") @DefaultValue("car") String vehicle,
             @PathParam("z") int zInfo,
             @PathParam("x") int xInfo,
-            @PathParam("y") int yInfo) {
+            @PathParam("y") int yInfo,
+            @QueryParam(Parameters.DETAILS.PATH_DETAILS) List<String> pathDetails) {
 
         if (zInfo <= 9) {
             VectorTile.Tile.Builder mvtBuilder = VectorTile.Tile.newBuilder();
@@ -86,21 +83,28 @@ public class MVTResource {
         final Envelope tileEnvelope = new Envelope(se, nw);
         final MvtLayerParams layerParams = new MvtLayerParams(256, 4096);
         final UserDataKeyValueMapConverter converter = new UserDataKeyValueMapConverter();
-        final DecimalEncodedValue averageSpeedEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encodingManager.getEncoder(vehicle), "average_speed"));
+        if (!encodingManager.hasEncodedValue(RoadClass.KEY))
+            throw new IllegalStateException("You need to configure GraphHopper to store road_class, e.g. graph.encoded_values: road_class,max_speed,... ");
+
+        final EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         final AtomicInteger edgeCounter = new AtomicInteger(0);
         // in toFeatures addTags of the converter is called and layerProps is filled with keys&values => those need to be stored in the layerBuilder
         // otherwise the decoding won't be successful and "undefined":"undefined" instead of "speed": 30 is the result
         final MvtLayerProps layerProps = new MvtLayerProps();
         final VectorTile.Tile.Layer.Builder layerBuilder = MvtLayerBuild.newLayerBuilder("roads", layerParams);
+
         locationIndex.query(bbox, new LocationIndexTree.EdgeVisitor(edgeExplorer) {
             @Override
             public void onEdge(EdgeIteratorState edge, int nodeA, int nodeB) {
                 LineString lineString;
-                int intSpeed = (int) Math.round(edge.get(averageSpeedEnc));
-                if (zInfo >= 12) {
+                RoadClass rc = edge.get(roadClassEnc);
+                if (zInfo >= 14) {
                     PointList pl = edge.fetchWayGeometry(3);
                     lineString = pl.toLineString(false);
-                } else if (intSpeed > 80 || zInfo == 10 && intSpeed >= 50 || zInfo == 11 && intSpeed >= 30 || zInfo > 11) {
+                } else if (rc == RoadClass.MOTORWAY
+                        || zInfo > 10 && (rc == RoadClass.PRIMARY || rc == RoadClass.TRUNK)
+                        || zInfo > 11 && (rc == RoadClass.SECONDARY)
+                        || zInfo > 12) {
                     double lat = na.getLatitude(nodeA);
                     double lon = na.getLongitude(nodeA);
                     double toLat = na.getLatitude(nodeB);
@@ -113,8 +117,23 @@ public class MVTResource {
 
                 edgeCounter.incrementAndGet();
                 Map<String, Object> map = new HashMap<>(2);
-                map.put("speed", intSpeed);
                 map.put("name", edge.getName());
+                for (String str : pathDetails) {
+                    // how to indicate an erroneous parameter?
+                    if (str.contains(",") || !encodingManager.hasEncodedValue(str))
+                        continue;
+
+                    EncodedValue ev = encodingManager.getEncodedValue(str, EncodedValue.class);
+                    if (ev instanceof EnumEncodedValue)
+                        map.put(ev.getName(), edge.get((EnumEncodedValue) ev).toString());
+                    else if (ev instanceof DecimalEncodedValue)
+                        map.put(ev.getName(), edge.get((DecimalEncodedValue) ev));
+                    else if (ev instanceof BooleanEncodedValue)
+                        map.put(ev.getName(), edge.get((BooleanEncodedValue) ev));
+                    else if (ev instanceof IntEncodedValue)
+                        map.put(ev.getName(), edge.get((IntEncodedValue) ev));
+                }
+
                 lineString.setUserData(map);
 
                 // doing some AffineTransformation

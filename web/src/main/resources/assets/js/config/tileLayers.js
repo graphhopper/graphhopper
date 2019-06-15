@@ -95,22 +95,23 @@ if(ghenv.environment === 'development') {
 
     require('leaflet.vectorgrid');
     overlays = {};
-    overlays["Local MVT"] = L.vectorGrid.protobuf("http://127.0.0.1:8989/mvt/{z}/{x}/{y}.mvt", {
+    overlays["Local MVT"] = L.vectorGrid.protobuf("http://127.0.0.1:8989/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment", {
       rendererFactory: L.canvas.tile,
       maxZoom: 20,
-      minZoom: 11,
+      minZoom: 10,
       vectorTileLayerStyles: {
         'roads': function(properties, zoom) {
-            var color, opacity = 1, weight = 1, radius = 2, s = properties.speed;
-            if(s >= 100) {
+            var color, opacity = 1, weight = 1, radius = 2, rc = properties.road_class;
+            // if(properties.speed < 30) console.log(properties)
+            if(rc == "motorway") {
                 color = '#dd504b'; // red
                 weight = 3;
                 radius = 6;
-            } else if(s >= 80) {
+            } else if(rc == "primary" || rc == "trunk") {
                 color = '#e2a012'; // orange
                 weight = 2;
                 radius = 6;
-            } else if(s >= 50) {
+            } else if(rc == "secondary") {
                 weight = 2;
                 color = '#f7c913'; // yellow
             } else {

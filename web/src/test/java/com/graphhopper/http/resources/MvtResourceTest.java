@@ -38,7 +38,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import static junit.framework.TestCase.assertTrue;
@@ -55,6 +55,7 @@ public class MvtResourceTest {
     static {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("graph.flag_encoders", "car").
+                put("graph.encoded_values", "road_class,road_environment,max_speed,surface").
                 put("prepare.ch.weightings", "no").
                 put("prepare.min_network_size", "0").
                 put("prepare.min_one_way_network_size", "0").
@@ -73,7 +74,7 @@ public class MvtResourceTest {
 
     @Test
     public void testBasicMvtQuery() throws IOException {
-        final Response response = app.client().target("http://localhost:8080/mvt/15/16528/12099.mvt?vehicle=car").request().buildGet().invoke();
+        final Response response = app.client().target("http://localhost:8080/mvt/15/16528/12099.mvt").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         InputStream is = response.readEntity(InputStream.class);
         JtsMvt result = MvtReader.loadMvt(is, new GeometryFactory(), new TagKeyValueMapConverter());
@@ -83,5 +84,33 @@ public class MvtResourceTest {
         JtsLayer layer = layerValues.values().iterator().next();
         MultiLineString multiLineString = (MultiLineString) layer.getGeometries().iterator().next();
         assertEquals(42, multiLineString.getCoordinates().length);
+        Map map = (Map) multiLineString.getUserData();
+        assertEquals("Camì de les Pardines", map.get("name"));
+    }
+
+    @Test
+    public void testWithDetailsInResponse() throws IOException {
+        final Response response = app.client().target("http://localhost:8080/mvt/15/16522/12102.mvt?details=max_speed&details=road_class&details=road_environment").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        InputStream is = response.readEntity(InputStream.class);
+        JtsMvt result = MvtReader.loadMvt(is, new GeometryFactory(), new TagKeyValueMapConverter());
+        final Map<String, JtsLayer> layerValues = result.getLayersByName();
+        JtsLayer layer = layerValues.values().iterator().next();
+        List layerGeoList = (List) layer.getGeometries();
+        Geometry geometry = (Geometry) layerGeoList.get(0);
+        assertEquals(19, geometry.getCoordinates().length);
+        assertEquals(21, layerGeoList.size());
+
+        Map map = (Map) ((Geometry) layerGeoList.get(0)).getUserData();
+        assertTrue(Double.isInfinite((Double) map.get("max_speed")));
+        assertEquals("residential", map.get("road_class"));
+
+        map = (Map) ((Geometry) layerGeoList.get(1)).getUserData();
+        assertEquals(50, (Double) map.get("max_speed"), .1);
+        assertEquals("secondary", map.get("road_class"));
+        assertEquals("road", map.get("road_environment"));
+
+        map = (Map) ((Geometry) layerGeoList.get(12)).getUserData();
+        assertEquals("bridge", map.get("road_environment"));
     }
 }

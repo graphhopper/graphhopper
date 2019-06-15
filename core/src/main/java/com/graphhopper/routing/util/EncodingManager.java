@@ -666,9 +666,6 @@ public class EncodingManager implements EncodedValueLookup {
         }
     }
 
-    /**
-     * The returned list is never empty.
-     */
     public List<FlagEncoder> fetchEdgeEncoders() {
         return new ArrayList<FlagEncoder>(edgeEncoders);
     }

@@ -71,7 +71,7 @@ public class GraphHopperManaged implements Managed {
         graphHopper.importOrLoad();
         logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
                 + ", data_reader_file:" + graphHopper.getDataReaderFile()
-                + ", flag_encoders:" + graphHopper.getEncodingManager()
+                + ", encoded values:" + graphHopper.getEncodingManager().toEncodedValuesAsString()
                 + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
     }
 
