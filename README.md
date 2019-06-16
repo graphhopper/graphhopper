@@ -205,3 +205,4 @@ Here is a list of the more detailed features including a link to the documentati
  * Do [map matching](https://github.com/graphhopper/map-matching) with GraphHopper
  * Calculate [isochrones](./docs/web/api-doc.md#isochrone) with GraphHopper
  * Show path details [#1142](https://github.com/graphhopper/graphhopper/pull/1142)
+ * GraphHopper can produce vector tiles for debugging purposes [#1572](https://github.com/graphhopper/graphhopper/pull/1572)
