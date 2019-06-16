@@ -533,19 +533,17 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public int getOrigEdgeFirst() {
-            if (!isShortcut()) {
+            if (!isShortcut() || !edgeBased) {
                 return getEdge();
             }
-            checkShortcutAndEdgeBased("getOrigEdgeFirst");
             return shortcuts.getInt(edgePointer + S_ORIG_FIRST);
         }
 
         @Override
         public int getOrigEdgeLast() {
-            if (!isShortcut()) {
+            if (!isShortcut() || !edgeBased) {
                 return getEdge();
             }
-            checkShortcutAndEdgeBased("getOrigEdgeLast");
             return shortcuts.getInt(edgePointer + S_ORIG_LAST);
         }
 

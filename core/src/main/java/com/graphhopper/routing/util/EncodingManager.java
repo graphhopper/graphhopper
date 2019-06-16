@@ -417,7 +417,7 @@ public class EncodingManager implements EncodedValueLookup {
         if (config.getRequiredBits() > getBytesForFlags() * 8)
             throw new IllegalArgumentException(String.format(Locale.ROOT, ERR + "(Attempt to add EncodedValue " + ev.getName() + ") ",
                     config.getRequiredBits(), bitsForEdgeFlags, "edge") +
-                    "Decrease the number of vehicles or increase the flags to more bytes via graph.bytes_for_flags: " + (config.getRequiredBits() / 8));
+                    "Decrease the number of vehicles or increase the flags to more bytes via graph.bytes_for_flags: " + (config.getRequiredBits() / 32 * 4 + 4));
 
         encodedValueMap.put(ev.getName(), ev);
     }

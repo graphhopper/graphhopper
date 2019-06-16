@@ -6,18 +6,19 @@ graphhopper:
   ##### Vehicles #####
 
 
-  # Possible options: car,foot,bike,bike2,mtb,racingbike,motorcycle (comma separated)
-  # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below
+  # More options: foot,bike,bike2,mtb,racingbike,motorcycle (comma separated)
+  # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below.
   graph.flag_encoders: car
-
 
   # Enable turn restrictions for car or motorcycle.
   # graph.flag_encoders: car|turn_costs=true
 
-  # add more data to every edge
-  # used for path details and when road_environment is added and elevation is enabled then a tunnel and bridge interpolation is done, see #798
-  # graph.encoded_values: surface,road_class,road_environment,road_access,car_max_speed
-  # graph.bytes_for_flags: 8
+  # Add additional information to every edge. Used for path details.
+  # If road_environment is added and elevation is enabled then also a tunnel and bridge interpolation is done, see #798.
+  # More options are: surface,max_width,max_height,max_weight,toll
+  graph.encoded_values: road_class,road_class_link,road_environment,max_speed,road_access
+  # If many flag_encoders or encoded_values are used you need to increase bytes_for_flags to 8 or more (multiple of 4)
+  graph.bytes_for_flags: 4
 
   ##### Elevation #####
 

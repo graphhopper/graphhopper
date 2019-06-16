@@ -710,7 +710,6 @@ public class CHQueryWithTurnCostsTest {
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
         TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension);
-        chTurnWeighting.setDefaultUTurnCost(0);
         AbstractBidirectionEdgeCHNoSOD algo = "astar".equals(algoString) ?
                 new AStarBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting) :
                 new DijkstraBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting);
