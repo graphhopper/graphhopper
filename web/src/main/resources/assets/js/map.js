@@ -135,7 +135,10 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
 
     new L.Control.loading().addTo(map);
 
-    L.control.layers(tileLayers.getAvailableTileLayers()/*, overlays*/).addTo(map);
+    if(tileLayers.getOverlays())
+        L.control.layers(tileLayers.getAvailableTileLayers(), tileLayers.getOverlays()).addTo(map);
+    else
+        L.control.layers(tileLayers.getAvailableTileLayers()).addTo(map);
 
     map.on('baselayerchange', function (a) {
         if (a.name) {

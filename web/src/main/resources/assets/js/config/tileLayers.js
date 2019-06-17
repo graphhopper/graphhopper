@@ -16,7 +16,7 @@ var lyrk = L.tileLayer('https://tiles.lyrk.org/' + (retinaTiles ? 'lr' : 'ls') +
     attribution: osmAttr + ', <a href="https://geodienste.lyrk.de/">Lyrk</a>'
 });
 
-var omniscale = L.tileLayer('https://maps.omniscale.net/v2/' +osAPIKey + '/style.default' + (retinaTiles ? '/hq.true' : '') + '/{z}/{x}/{y}.png', {
+var omniscale = L.tileLayer('https://maps.omniscale.net/v2/' +osAPIKey + '/style.default/{z}/{x}/{y}.png' + (retinaTiles ? '?hq=true' : ''), {
     layers: 'osm',
     attribution: osmAttr + ', &copy; <a href="https://maps.omniscale.com/">Omniscale</a>'
 });
@@ -85,11 +85,65 @@ var availableTileLayers = {
     "OpenStreetMap.de": osmde
 };
 
+var overlays;
+if(ghenv.environment === 'development') {
+    var omniscaleGray = L.tileLayer('https://maps.omniscale.net/v2/' +osAPIKey + '/style.grayscale/layers.world,buildings,landusages,labels/{z}/{x}/{y}.png?' + (retinaTiles ? '&hq=true' : ''), {
+        layers: 'osm',
+        attribution: osmAttr + ', &copy; <a href="https://maps.omniscale.com/">Omniscale</a>'
+    });
+    availableTileLayers["Omniscale Dev"] = omniscaleGray;
+
+    require('leaflet.vectorgrid');
+    overlays = {};
+    overlays["Local MVT"] = L.vectorGrid.protobuf("http://127.0.0.1:8989/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment", {
+      rendererFactory: L.canvas.tile,
+      maxZoom: 20,
+      minZoom: 10,
+      vectorTileLayerStyles: {
+        'roads': function(properties, zoom) {
+            var color, opacity = 1, weight = 1, radius = 2, rc = properties.road_class;
+            // if(properties.speed < 30) console.log(properties)
+            if(rc == "motorway") {
+                color = '#dd504b'; // red
+                weight = 3;
+                radius = 6;
+            } else if(rc == "primary" || rc == "trunk") {
+                color = '#e2a012'; // orange
+                weight = 2;
+                radius = 6;
+            } else if(rc == "secondary") {
+                weight = 2;
+                color = '#f7c913'; // yellow
+            } else {
+                if(zoom <= 11) {
+                  // color = "white";
+                  color = "#aaa5a7"
+                  opacity = 0.2;
+                } else {
+                  color = "#aaa5a7"; /* gray */
+                }
+            }
+            return {
+                weight: weight,
+                color: color,
+                opacity: opacity,
+                radius: radius
+            }
+        },
+      },
+      interactive: true // use true to make sure that this VectorGrid fires mouse/pointer events
+    });
+}
+
 module.exports.activeLayerName = "Omniscale";
 module.exports.defaultLayer = omniscale;
 
 module.exports.getAvailableTileLayers = function () {
     return availableTileLayers;
+};
+
+module.exports.getOverlays = function () {
+    return overlays;
 };
 
 module.exports.selectLayer = function (layerName) {
