@@ -273,8 +273,8 @@ public class RouteResourceTest {
         assertEquals(1421, lastLink);
 
         JsonNode maxSpeed = details.get("max_speed");
-        assertEquals(-1, maxSpeed.get(0).get(2).asDouble(), .01);
-        assertEquals(50, maxSpeed.get(1).get(2).asDouble(), .01);
+        assertEquals(-1, maxSpeed.get(0).get(2).asDouble(-1), .01);
+        assertEquals(50, maxSpeed.get(1).get(2).asDouble(-1), .01);
     }
 
     @Test

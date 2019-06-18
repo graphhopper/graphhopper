@@ -48,6 +48,9 @@ public class PathDetail {
         this.value = value;
     }
 
+    /**
+     * @return the value of this PathDetail. Can be null
+     */
     public Object getValue() {
         return value;
     }
