@@ -21,7 +21,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.FactorizedDecimalEncodedValue;
+import com.graphhopper.routing.profiles.UnsignedDecimalEncodedValue;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
@@ -151,8 +151,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
         // larger value required - ferries are faster than pedestrians
-        registerNewEncodedValue.add(speedEncoder = new FactorizedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, false));
-        registerNewEncodedValue.add(priorityWayEncoder = new FactorizedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
+        registerNewEncodedValue.add(speedEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, false));
+        registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
     }
 
     @Override

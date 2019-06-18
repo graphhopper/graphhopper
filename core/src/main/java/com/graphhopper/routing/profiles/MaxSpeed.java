@@ -35,6 +35,6 @@ public class MaxSpeed {
     public static final double UNSET_SPEED = Double.POSITIVE_INFINITY;
 
     public static DecimalEncodedValue create() {
-        return new FactorizedDecimalEncodedValue(KEY, 5, 5, UNSET_SPEED, true);
+        return new UnsignedDecimalEncodedValue(KEY, 5, 5, UNSET_SPEED, true);
     }
 }
