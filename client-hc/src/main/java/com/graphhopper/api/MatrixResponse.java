@@ -124,7 +124,10 @@ public class MatrixResponse {
         } else if (to >= distances[from].length) {
             throw new IllegalStateException("Cannot get 'to' " + to + " from distances with size " + distances[from].length);
         }
-        return distances[from][to];
+        int val = distances[from][to];
+        if (val >= Integer.MAX_VALUE)
+            return Double.POSITIVE_INFINITY;
+        return val;
     }
 
     /**

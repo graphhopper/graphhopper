@@ -69,6 +69,31 @@ public abstract class AbstractGHMatrixWebTester {
     }
 
     @Test
+    public void testWithInfinity() throws IOException {
+        String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-with-connection-not-found.json")));
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+
+        GHMRequest req = createRequest();
+        req.addOutArray("weights");
+        req.addOutArray("distances");
+        req.addOutArray("times");
+        MatrixResponse rsp = matrixWeb.route(req);
+
+        assertFalse(rsp.hasErrors());
+
+        assertTrue(Double.isInfinite(rsp.getDistance(0, 1)));
+        assertEquals(9734., rsp.getDistance(1, 2), .1);
+        assertEquals(0., rsp.getDistance(1, 1), .1);
+
+        assertTrue(Double.isInfinite(rsp.getWeight(0, 1)));
+        assertEquals(807.167, rsp.getWeight(1, 2), .1);
+        assertEquals(0., rsp.getWeight(1, 1), .1);
+
+        assertEquals(Long.MAX_VALUE, rsp.getTime(0, 1));
+        assertEquals(807, rsp.getTime(1, 2) / 1000);
+    }
+
+    @Test
     public void testReadingWeights_TimesAndDistances() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix.json")));
         GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);

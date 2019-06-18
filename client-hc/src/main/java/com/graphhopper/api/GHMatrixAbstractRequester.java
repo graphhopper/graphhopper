@@ -20,7 +20,6 @@ import static com.graphhopper.api.GraphHopperMatrixWeb.*;
  */
 public abstract class GHMatrixAbstractRequester {
 
-    private GraphHopperWeb web = new GraphHopperWeb();
     protected final ObjectMapper objectMapper;
     protected final Set<String> ignoreSet = new HashSet<>(10);
     protected final String serviceUrl;
@@ -155,15 +154,16 @@ public abstract class GHMatrixAbstractRequester {
 
             for (int toIndex = 0; toIndex < toCount; toIndex++) {
                 if (readWeights) {
-                    weights[toIndex] = weightsFromArray.get(toIndex).asDouble();
+                    weights[toIndex] = weightsFromArray.get(toIndex).asDouble(Double.POSITIVE_INFINITY);
                 }
 
                 if (readTimes) {
-                    times[toIndex] = timesFromArray.get(toIndex).asLong() * 1000;
+                    JsonNode tmp = timesFromArray.get(toIndex);
+                    times[toIndex] = tmp.isNull() ? Long.MAX_VALUE : tmp.asLong() * 1000;
                 }
 
                 if (readDistances) {
-                    distances[toIndex] = (int) Math.round(distancesFromArray.get(toIndex).asDouble());
+                    distances[toIndex] = (int) Math.round(distancesFromArray.get(toIndex).asDouble(Integer.MAX_VALUE));
                 }
             }
 
