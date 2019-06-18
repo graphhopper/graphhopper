@@ -17,11 +17,10 @@
  */
 package com.graphhopper.reader.dem;
 
-import static org.junit.Assert.assertEquals;
-
+import com.graphhopper.util.Helper;
 import org.junit.Test;
 
-import com.graphhopper.util.Helper;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Alexey Valikov

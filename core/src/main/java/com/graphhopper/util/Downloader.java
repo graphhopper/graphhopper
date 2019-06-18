@@ -90,7 +90,7 @@ public class Downloader {
     }
 
     public InputStream fetch(String url) throws IOException {
-        return fetch((HttpURLConnection) createConnection(url), false);
+        return fetch(createConnection(url), false);
     }
 
     public HttpURLConnection createConnection(String urlStr) throws IOException {
@@ -142,6 +142,6 @@ public class Downloader {
     }
 
     public String downloadAsString(String url, boolean readErrorStreamNoException) throws IOException {
-        return Helper.isToString(fetch((HttpURLConnection) createConnection(url), readErrorStreamNoException));
+        return Helper.isToString(fetch(createConnection(url), readErrorStreamNoException));
     }
 }

@@ -19,7 +19,7 @@ package com.graphhopper.jackson;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Jackson {
     public static ObjectMapper newObjectMapper() {

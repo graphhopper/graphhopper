@@ -21,7 +21,7 @@ import java.util.Arrays;
 /**
  * This class is copied from: https://github.com/tdebatty/java-string-similarity/blob/master/src/main/java/info/debatty/java/stringsimilarity/JaroWinkler.java
  * and slightly modified. *
- *
+ * <p>
  * The Jaro–Winkler distance metric is designed and best suited for short
  * strings such as person names, and to detect typos; it is (roughly) a
  * variation of Damerau-Levenshtein, where the substitution of 2 close
@@ -30,6 +30,7 @@ import java.util.Arrays;
  * Jaro-Winkler was developed in the area of record linkage (duplicate
  * detection) (Winkler, 1990). It returns a value in the interval [0.0, 1.0].
  * The distance is computed as 1 - Jaro-Winkler similarity.
+ *
  * @author Thibault Debatty
  */
 public class JaroWinkler {
@@ -41,7 +42,6 @@ public class JaroWinkler {
 
     /**
      * Instantiate with default threshold (0.7).
-     *
      */
     public JaroWinkler() {
         this.threshold = DEFAULT_THRESHOLD;

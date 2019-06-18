@@ -162,7 +162,7 @@ public class UnsafeDataAccess extends AbstractDataAccess {
                 long len = getCapacity();
                 writeHeader(raFile, len, segmentSizeInBytes);
                 raFile.seek(HEADER_OFFSET);
-                byte bytes[] = new byte[segmentSizeInBytes];
+                byte[] bytes = new byte[segmentSizeInBytes];
                 int segs = getSegments();
                 for (int s = 0; s < segs; s++) {
                     getBytes(s * segmentSizeInBytes, bytes, segmentSizeInBytes);

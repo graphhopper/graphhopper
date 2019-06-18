@@ -82,7 +82,7 @@ public class IntDoubleBinaryHeap implements BinHeapWrapper<Number, Integer> {
 
     public void insert_(double key, int element) {
         if (isFull()) {
-            ensureCapacity((int) (elements.length * GROW_FACTOR));
+            ensureCapacity(elements.length * GROW_FACTOR);
         }
 
         size++;

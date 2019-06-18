@@ -41,6 +41,6 @@ public class PointNotFoundException extends IllegalArgumentException implements 
 
     @Override
     public Map<String, Object> getDetails() {
-        return Collections.<String, Object>singletonMap("point_index", pointIndex);
+        return Collections.singletonMap("point_index", pointIndex);
     }
 }

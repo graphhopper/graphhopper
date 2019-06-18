@@ -1,7 +1,6 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.PMap;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

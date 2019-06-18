@@ -3,8 +3,8 @@ package com.graphhopper.resources;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
+import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.*;
@@ -26,7 +26,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 @Path("isochrone")
 public class IsochroneResource {

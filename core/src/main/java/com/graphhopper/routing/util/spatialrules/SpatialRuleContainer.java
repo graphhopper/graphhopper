@@ -17,7 +17,9 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * This class contains a collection of SpatialRule and is used for the implementation SpatialRuleLookupArray.
@@ -61,8 +63,7 @@ class SpatialRuleContainer {
     @Override
     public boolean equals(Object o) {
         if (o instanceof SpatialRuleContainer) {
-            if (this.rules.equals(((SpatialRuleContainer) o).getRules()))
-                return true;
+            return this.rules.equals(((SpatialRuleContainer) o).getRules());
         }
         return false;
     }

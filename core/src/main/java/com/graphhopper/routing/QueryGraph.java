@@ -281,6 +281,7 @@ public class QueryGraph implements Graph {
                             return diff;
                         }
                     }
+
                     private double distanceOfSnappedPointToPillarNode(QueryResult o) {
                         GHPoint snappedPoint = o.getSnappedPoint();
                         double fromLat = fullPL.getLatitude(o.getWayIndex());

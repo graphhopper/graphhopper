@@ -18,8 +18,8 @@
 package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.*;
-import com.graphhopper.coll.*;
 import com.graphhopper.coll.LongIntMap;
+import com.graphhopper.coll.*;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;

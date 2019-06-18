@@ -167,12 +167,10 @@ public class StorableProperties implements Storable<StorableProperties> {
         if (!check("name_index", Constants.VERSION_NAME_IDX, silent))
             return false;
 
-        if (!check("shortcuts", Constants.VERSION_SHORTCUT, silent))
-            return false;
+        return check("shortcuts", Constants.VERSION_SHORTCUT, silent);
 
         // The check for the encoder version is done in EncoderManager, as this class does not know about the
         // registered encoders and their version
-        return true;
     }
 
     boolean check(String key, int vers, boolean silent) {

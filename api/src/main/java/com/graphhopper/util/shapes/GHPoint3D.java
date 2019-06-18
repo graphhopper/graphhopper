@@ -50,8 +50,7 @@ public class GHPoint3D extends GHPoint {
         if (obj == null)
             return false;
 
-        @SuppressWarnings("unchecked")
-        final GHPoint3D other = (GHPoint3D) obj;
+        @SuppressWarnings("unchecked") final GHPoint3D other = (GHPoint3D) obj;
         if (Double.isNaN(ele))
             // very special case necessary in QueryGraph, asserted via test
             return NumHelper.equalsEps(lat, other.lat) && NumHelper.equalsEps(lon, other.lon);

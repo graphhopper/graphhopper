@@ -23,8 +23,8 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.util.gpx.GPXEntry;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.gpx.GPXEntry;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.BeforeClass;
@@ -64,8 +64,8 @@ public class GpxTravelTimeConsistencyTest {
         request.setVehicle("foot");
         PathWrapper path = hopper.route(request).getBest();
         List<GPXEntry> gpxList = GpxFromInstructions.createGPXList(path.getInstructions());
-        for(GPXEntry entry : gpxList) {
-            if (entry.getTime() != null ) {
+        for (GPXEntry entry : gpxList) {
+            if (entry.getTime() != null) {
                 GHRequest requestForWaypoint = new GHRequest(routeStart, entry.getPoint());
                 requestForWaypoint.setWeighting("fastest");
                 requestForWaypoint.setVehicle("foot");

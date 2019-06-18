@@ -171,9 +171,7 @@ public class DAType {
             return false;
         if (this.storing != other.storing)
             return false;
-        if (this.integ != other.integ)
-            return false;
-        return true;
+        return this.integ == other.integ;
     }
 
     public enum MemRef {

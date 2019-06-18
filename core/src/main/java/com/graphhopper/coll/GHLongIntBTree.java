@@ -65,7 +65,7 @@ public class GHLongIntBTree implements LongIntMap {
     }
 
     // LATER: see OSMIDMap for a version where we use DataAccess
-    static int binarySearch(long keys[], int start, int len, long key) {
+    static int binarySearch(long[] keys, int start, int len, long key) {
         int high = start + len, low = start - 1, guess;
         while (high - low > 1) {
             // use >>> for average or we could get an integer overflow.
@@ -184,9 +184,9 @@ public class GHLongIntBTree implements LongIntMap {
 
     class BTreeEntry {
         int entrySize;
-        long keys[];
-        int values[];
-        BTreeEntry children[];
+        long[] keys;
+        int[] values;
+        BTreeEntry[] children;
         boolean isLeaf;
 
         public BTreeEntry(int tmpSize, boolean leaf) {

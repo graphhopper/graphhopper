@@ -70,6 +70,7 @@ public class PtIsochroneResource {
         public static class Info {
             public List<String> copyrights = new ArrayList<>();
         }
+
         public List<JsonFeature> polygons = new ArrayList<>();
         public Info info = new Info();
     }

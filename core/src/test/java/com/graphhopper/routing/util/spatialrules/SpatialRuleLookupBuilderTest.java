@@ -51,7 +51,7 @@ public class SpatialRuleLookupBuilderTest {
         assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
 
         // Austria
-        assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRule(48.204484,16.107888).getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
+        assertEquals(RoadAccess.FORESTRY, spatialRuleLookup.lookupRule(48.204484, 16.107888).getAccess("track", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
         assertEquals(RoadAccess.YES, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccess("primary", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
         assertEquals(RoadAccess.DESTINATION, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccess("living_street", TransportationMode.MOTOR_VEHICLE, RoadAccess.YES));
     }

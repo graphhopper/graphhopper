@@ -4,7 +4,6 @@ import com.graphhopper.util.Helper;
 import okhttp3.MediaType;
 
 /**
- *
  * @author Peter Karich
  */
 public class GraphHopperMatrixWeb {

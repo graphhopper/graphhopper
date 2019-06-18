@@ -19,16 +19,13 @@ package com.graphhopper.storage;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.util.shapes.Polygon;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.BreadthFirstSearch;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.Circle;
-import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.Shape;
+import com.graphhopper.util.shapes.Polygon;
+import com.graphhopper.util.shapes.*;
 import org.locationtech.jts.geom.*;
 
 import java.util.ArrayList;
@@ -137,6 +134,7 @@ public class GraphEdgeIdFinder {
 
     /**
      * This method reads the blockAreaString and creates a Collection of Shapes or a set of found edges if area is small enough.
+     *
      * @param useEdgeIdsUntilAreaSize until the specified area (specified in m²) use the findEdgesInShape method
      */
     public BlockArea parseBlockArea(String blockAreaString, EdgeFilter filter, double useEdgeIdsUntilAreaSize) {

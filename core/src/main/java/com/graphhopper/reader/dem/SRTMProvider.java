@@ -44,7 +44,7 @@ public class SRTMProvider extends AbstractSRTMElevationProvider {
     public SRTMProvider(String cacheDir) {
         super(
                 "https://srtm.kurviger.de/SRTM3/",
-                cacheDir.isEmpty()? "/tmp/srtm": cacheDir,
+                cacheDir.isEmpty() ? "/tmp/srtm" : cacheDir,
                 "GraphHopper SRTMReader",
                 1201
         );
@@ -85,7 +85,7 @@ public class SRTMProvider extends AbstractSRTMElevationProvider {
      */
     private SRTMProvider init() {
         try {
-            String strs[] = {"Africa", "Australia", "Eurasia", "Islands", "North_America", "South_America"};
+            String[] strs = {"Africa", "Australia", "Eurasia", "Islands", "North_America", "South_America"};
             for (String str : strs) {
                 InputStream is = getClass().getResourceAsStream(str + "_names.txt");
                 for (String line : Helper.readFile(new InputStreamReader(is, Helper.UTF_CS))) {

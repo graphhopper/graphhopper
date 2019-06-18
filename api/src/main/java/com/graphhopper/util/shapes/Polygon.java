@@ -203,10 +203,8 @@ public class Polygon implements Shape {
         // If we get here, only two possibilities are left. Either the two
         // vectors intersect in exactly one point or they are collinear, which
         // means they intersect in any number of points from zero to infinite.
-        if ((a1 * b2) - (a2 * b1) == 0) return false;
-
-        // If they are not collinear, they must intersect in exactly one point.
-        return true;
+        // return false: if they are not collinear, they must intersect in exactly one point.
+        return (a1 * b2) - (a2 * b1) != 0;
     }
 
     public double getMinLat() {
@@ -235,8 +233,8 @@ public class Polygon implements Shape {
 
         if (arr.length % 2 == 1) throw new IllegalArgumentException("incorrect polygon specified");
 
-        double[] lats = new double[arr.length /2];
-        double[] lons = new double[arr.length /2];
+        double[] lats = new double[arr.length / 2];
+        double[] lons = new double[arr.length / 2];
 
         for (int j = 0; j < arr.length; j++) {
             if (j % 2 == 0) {

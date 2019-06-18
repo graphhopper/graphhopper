@@ -97,7 +97,7 @@ public class IsochroneResourceTest {
         Response response = app.client().target("http://localhost:8080/route?point=-1.816719,51.557148").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
     }
-  
+
     public void requestWithShortest() throws Exception {
         IsochroneResponse rsp = client.isochroneGet("42.509644,1.540554", "no_key_necessary", 130,
                 -1, "car", 1, false, "shortest");
@@ -117,8 +117,8 @@ public class IsochroneResourceTest {
 
     private boolean contains(List polygon, double lat, double lon) {
         int index = 0;
-        double lats[] = new double[polygon.size()];
-        double lons[] = new double[polygon.size()];
+        double[] lats = new double[polygon.size()];
+        double[] lons = new double[polygon.size()];
 
         for (Object o : polygon) {
             List latlon = (List) o;

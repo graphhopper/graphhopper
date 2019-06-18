@@ -17,9 +17,7 @@
  */
 package com.graphhopper.coll;
 
-import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.carrotsearch.hppc.predicates.IntPredicate;
 
 import java.util.Iterator;
 import java.util.Map.Entry;

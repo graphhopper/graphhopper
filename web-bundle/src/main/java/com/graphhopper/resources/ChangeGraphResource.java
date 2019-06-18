@@ -1,6 +1,6 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
  *
  *  GraphHopper GmbH licenses this file to you under the Apache License,
@@ -36,7 +36,6 @@ import javax.ws.rs.core.MediaType;
  *
  * @author Peter Karich
  * @author Michael Zilske
- *
  */
 @Path("change")
 @Produces(MediaType.APPLICATION_JSON)

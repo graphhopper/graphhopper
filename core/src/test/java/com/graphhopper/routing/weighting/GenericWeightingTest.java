@@ -23,13 +23,11 @@ import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
-import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -18,7 +18,10 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.AStarCHEntry;
-import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.BeelineWeightApproximator;
+import com.graphhopper.routing.weighting.ConsistentWeightApproximator;
+import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;

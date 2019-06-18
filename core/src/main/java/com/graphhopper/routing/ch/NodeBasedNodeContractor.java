@@ -20,7 +20,9 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 
 import java.util.Collection;

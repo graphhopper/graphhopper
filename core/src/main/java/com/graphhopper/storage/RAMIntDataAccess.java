@@ -143,7 +143,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
                 segments = new int[segmentCount][];
                 for (int s = 0; s < segmentCount; s++) {
                     int read = raFile.read(bytes) / 4;
-                    int area[] = new int[read];
+                    int[] area = new int[read];
                     for (int j = 0; j < read; j++) {
                         area[j] = bitUtil.toInt(bytes, j * 4);
                     }
@@ -174,7 +174,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
                 raFile.seek(HEADER_OFFSET);
                 // raFile.writeInt() <- too slow, so copy into byte array
                 for (int s = 0; s < segments.length; s++) {
-                    int area[] = segments[s];
+                    int[] area = segments[s];
                     int intLen = area.length;
                     byte[] byteArea = new byte[intLen * 4];
                     for (int i = 0; i < intLen; i++) {

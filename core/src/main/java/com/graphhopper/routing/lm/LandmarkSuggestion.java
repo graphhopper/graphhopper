@@ -36,7 +36,7 @@ public class LandmarkSuggestion {
      * The expected format is lon,lat per line where lines starting with characters will be ignored. You can create
      * such a file manually via geojson.io -> Save as CSV. Optionally add a second line with
      * <pre>#BBOX:minLat,minLon,maxLat,maxLon</pre>
-     *
+     * <p>
      * to specify an explicit bounding box. TODO: support GeoJSON instead.
      */
     public static final LandmarkSuggestion readLandmarks(String file, LocationIndex locationIndex) throws IOException {

@@ -23,7 +23,6 @@ import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
@@ -609,7 +608,7 @@ public class GraphHopperIT {
 
         assertEquals(54, arsp.getPoints().size());
         assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 62.0), arsp.getPoints().get(0));
-        assertEquals(new GHPoint3D(43.727680946587874, 7.4191987684222065, 11.0), arsp.getPoints().get(arsp.getPoints().size()-1));
+        assertEquals(new GHPoint3D(43.727680946587874, 7.4191987684222065, 11.0), arsp.getPoints().get(arsp.getPoints().size() - 1));
 
         assertEquals(62, arsp.getPoints().get(0).getElevation(), 1e-2);
         assertEquals(66, arsp.getPoints().get(1).getElevation(), 1e-2);

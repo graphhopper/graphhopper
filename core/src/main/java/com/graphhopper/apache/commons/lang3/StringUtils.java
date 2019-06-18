@@ -80,7 +80,7 @@ public class StringUtils {
             m = t.length();
         }
 
-        final int p[] = new int[n + 1];
+        final int[] p = new int[n + 1];
         // indexes into strings s and t
         int i; // iterates through s
         int j; // iterates through t

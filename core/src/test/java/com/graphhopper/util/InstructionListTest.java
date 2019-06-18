@@ -191,7 +191,7 @@ public class InstructionListTest {
 
         p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(3, 5);
         wayList = p.calcInstructions(roundaboutEnc, usTR);
-        tmpList = getTurnDescriptions( wayList);
+        tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto 3-4", "keep right onto 4-5", "arrive at destination"),
                 tmpList);
     }
@@ -223,7 +223,7 @@ public class InstructionListTest {
 
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(2, 3);
         InstructionList wayList = p.calcInstructions(roundaboutEnc, usTR);
-        List<String> tmpList = getTurnDescriptions( wayList);
+        List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto street", "turn right onto street", "arrive at destination"), tmpList);
     }
 

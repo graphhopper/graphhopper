@@ -18,7 +18,6 @@
 
 package com.graphhopper.http.cli;
 
-import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.http.GraphHopperManaged;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;

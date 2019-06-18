@@ -18,8 +18,8 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.MaxSpeed;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.MaxSpeed;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
@@ -196,9 +196,7 @@ class InstructionsOutgoingEdges {
 
     private boolean isTheSameStreet(String name1, IntsRef flags1, String name2, IntsRef flags2, boolean checkFlag) {
         if (InstructionsHelper.isNameSimilar(name1, name2)) {
-            if (!checkFlag || flags1.equals(flags2)) {
-                return true;
-            }
+            return !checkFlag || flags1.equals(flags2);
         }
         return false;
     }

@@ -10,7 +10,7 @@ import java.io.IOException;
 
 class BBoxDeserializer extends JsonDeserializer<BBox> {
     @Override
-    public BBox deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
+    public BBox deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         double[] bounds = jsonParser.readValueAs(double[].class);
         return new BBox(bounds);
     }

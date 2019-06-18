@@ -550,9 +550,8 @@ public class LocationIndexTree implements LocationIndex {
                 double rMin = calculateRMin(queryLat, queryLon, iteration);
                 double minDistance = calcMinDistance(queryLat, queryLon, foundEntries);
 
-                if (minDistance < rMin)
-                    // early finish => foundEntries contains a nearest node for sure
-                    return true;
+                // early finish => foundEntries contains a nearest node for sure
+                return minDistance < rMin;
                 // else: continue as an undetected nearer node may sit in a neighbouring tile.
                 // Now calculate how far we have to look outside to find any hidden nearest nodes
                 // and repeat whole process with wider search area until this distance is covered.

@@ -172,7 +172,6 @@ public abstract class AbstractBikeFlagEncoderTester {
         way.setTag("bicycle", "dismount");
         assertTrue(encoder.getAccess(way).isWay());
 
-        
 
         way.clearTags();
         way.setTag("highway", "cycleway");
@@ -504,7 +503,7 @@ public abstract class AbstractBikeFlagEncoderTester {
     }
 
     @Test
-    public void testFerries(){
+    public void testFerries() {
         ReaderWay way = new ReaderWay(1);
 
         way.clearTags();

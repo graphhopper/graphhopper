@@ -53,10 +53,7 @@ public class Location2IDQuadtreeTest extends AbstractLocationIndexTester {
     boolean testGridIgnore(int i) {
         // conceptual limitation where we are stuck in a blind alley limited
         // to the current tile
-        if (i == 6 || i == 36 || i == 90 || i == 96) {
-            return true;
-        }
-        return false;
+        return i == 6 || i == 36 || i == 90 || i == 96;
     }
 
     @Override

@@ -21,13 +21,11 @@ import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import java.util.*;
 
 /**
- *
  * Adapted from org.opentripplanner.common.geometry.DelaunayIsolineBuilder,
  * which is under LGPL.
  *
  * @author laurent
  * @author michaz
- *
  */
 public class ContourBuilder {
 
@@ -135,7 +133,8 @@ public class ContourBuilder {
         }
         // 3. For each hole, determine which shell it fits in.
         for (LinearRing hole : holes) {
-            outer: {
+            outer:
+            {
                 // Probably most of the time, the first shell will be the one
                 for (Polygon shell : shells) {
                     if (shell.contains(hole)) {

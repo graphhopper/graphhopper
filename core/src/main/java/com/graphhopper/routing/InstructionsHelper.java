@@ -69,10 +69,7 @@ class InstructionsHelper {
         if (name1.isEmpty() && name2.isEmpty()) {
             return false;
         }
-        if (name1.equals(name2)) {
-            return true;
-        }
-        return false;
+        return name1.equals(name2);
     }
 
     static GHPoint getPointForOrientationCalculation(EdgeIteratorState edgeIteratorState, NodeAccess nodeAccess) {

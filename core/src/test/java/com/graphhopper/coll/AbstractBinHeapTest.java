@@ -57,7 +57,7 @@ public abstract class AbstractBinHeapTest {
         assertEquals(5, (int) binHeap.pollElement());
         assertEquals(3, (int) binHeap.pollElement());
         assertEquals(2, (int) binHeap.pollElement());
-        assertEquals(1, (int) binHeap.getSize());
+        assertEquals(1, binHeap.getSize());
     }
 
     @Test

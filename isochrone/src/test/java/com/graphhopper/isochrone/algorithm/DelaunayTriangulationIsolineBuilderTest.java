@@ -1,13 +1,13 @@
 package com.graphhopper.isochrone.algorithm;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- *
  * @author Peter Karich
  */
 public class DelaunayTriangulationIsolineBuilderTest {

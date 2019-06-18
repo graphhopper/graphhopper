@@ -37,7 +37,7 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected final ByteOrder byteOrder;
     protected final BitUtil bitUtil;
     private final String location;
-    protected int header[] = new int[(HEADER_OFFSET - 20) / 4];
+    protected int[] header = new int[(HEADER_OFFSET - 20) / 4];
     protected String name;
     protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
     protected int segmentSizePower;

@@ -31,7 +31,6 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
@@ -165,7 +164,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     public LMAlgoFactoryDecorator addWeighting(String weighting) {
-        String str[] = weighting.split("\\|");
+        String[] str = weighting.split("\\|");
         double value = -1;
         if (str.length > 1) {
             PMap map = new PMap(weighting);

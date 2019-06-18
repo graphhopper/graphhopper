@@ -26,6 +26,7 @@ public class Trip {
         }
 
         public abstract Date getDepartureTime();
+
         public abstract Date getArrivalTime();
     }
 
@@ -67,6 +68,7 @@ public class Trip {
                     '}';
         }
     }
+
     public static class WalkLeg extends Leg {
         public final InstructionList instructions;
         private final Date departureTime;
@@ -90,6 +92,7 @@ public class Trip {
         }
 
     }
+
     public static class PtLeg extends Leg {
         public final String feed_id;
         public final boolean isInSameVehicleAsPrevious;
@@ -117,7 +120,7 @@ public class Trip {
 
         @Override
         public Date getArrivalTime() {
-            return stops.get(stops.size()-1).arrivalTime;
+            return stops.get(stops.size() - 1).arrivalTime;
         }
     }
 

@@ -10,7 +10,7 @@ import java.io.IOException;
 
 class GHPointSerializer extends JsonSerializer<GHPoint> {
     @Override
-    public void serialize(GHPoint ghPoint, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
+    public void serialize(GHPoint ghPoint, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
         jsonGenerator.writeStartArray();
         for (Double number : ghPoint.toGeoJson()) {
             jsonGenerator.writeNumber(number);

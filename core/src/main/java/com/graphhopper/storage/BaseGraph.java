@@ -20,7 +20,10 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -841,7 +844,7 @@ class BaseGraph implements Graph {
     private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
         int len = pillarNodes.getSize();
         int dim = nodeAccess.getDimension();
-        long geoRefPosition = (long) geoRef * 4;
+        long geoRefPosition = geoRef * 4;
         int totalLen = len * dim * 4 + 4;
         ensureGeometry(geoRefPosition, totalLen);
         byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);

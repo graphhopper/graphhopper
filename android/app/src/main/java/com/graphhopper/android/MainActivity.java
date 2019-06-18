@@ -16,25 +16,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
-
+import android.widget.*;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.ProgressListener;
-import com.graphhopper.util.StopWatch;
-
 import org.oscim.android.MapView;
 import org.oscim.android.canvas.AndroidGraphics;
 import org.oscim.backend.canvas.Bitmap;
@@ -56,11 +45,7 @@ import org.oscim.tiling.source.mapfile.MapFileTileSource;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class MainActivity extends Activity {
     private static final int NEW_MENU_ID = Menu.FIRST + 1;

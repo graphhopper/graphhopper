@@ -17,7 +17,9 @@
  */
 package com.graphhopper.isochrone.algorithm;
 
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;

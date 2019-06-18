@@ -87,22 +87,13 @@ public class DateRange {
         if (from.get(Calendar.MONTH) < date.get(Calendar.MONTH) && date.get(Calendar.MONTH) < to.get(Calendar.MONTH))
             return true;
         if (from.get(Calendar.MONTH) == date.get(Calendar.MONTH) && to.get(Calendar.MONTH) == date.get(Calendar.MONTH)) {
-            if (from.get(Calendar.DAY_OF_MONTH) <= date.get(Calendar.DAY_OF_MONTH) && date.get(Calendar.DAY_OF_MONTH) <= to.get(Calendar.DAY_OF_MONTH))
-                return true;
-            else
-                return false;
+            return from.get(Calendar.DAY_OF_MONTH) <= date.get(Calendar.DAY_OF_MONTH) && date.get(Calendar.DAY_OF_MONTH) <= to.get(Calendar.DAY_OF_MONTH);
         }
         if (from.get(Calendar.MONTH) == date.get(Calendar.MONTH)) {
-            if (from.get(Calendar.DAY_OF_MONTH) <= date.get(Calendar.DAY_OF_MONTH))
-                return true;
-            else
-                return false;
+            return from.get(Calendar.DAY_OF_MONTH) <= date.get(Calendar.DAY_OF_MONTH);
         }
         if (to.get(Calendar.MONTH) == date.get(Calendar.MONTH)) {
-            if (date.get(Calendar.DAY_OF_MONTH) <= to.get(Calendar.DAY_OF_MONTH))
-                return true;
-            else
-                return false;
+            return date.get(Calendar.DAY_OF_MONTH) <= to.get(Calendar.DAY_OF_MONTH);
         }
         return false;
     }
@@ -112,23 +103,14 @@ public class DateRange {
         if (from.get(Calendar.MONTH) < currMonth || currMonth < to.get(Calendar.MONTH))
             return true;
         if (from.get(Calendar.MONTH) == currMonth && to.get(Calendar.MONTH) == currMonth) {
-            if (from.get(Calendar.DAY_OF_MONTH) < date.get(Calendar.DAY_OF_MONTH)
-                    || date.get(Calendar.DAY_OF_MONTH) < to.get(Calendar.DAY_OF_MONTH))
-                return true;
-            else
-                return false;
+            return from.get(Calendar.DAY_OF_MONTH) < date.get(Calendar.DAY_OF_MONTH)
+                    || date.get(Calendar.DAY_OF_MONTH) < to.get(Calendar.DAY_OF_MONTH);
         }
         if (from.get(Calendar.MONTH) == currMonth) {
-            if (from.get(Calendar.DAY_OF_MONTH) <= date.get(Calendar.DAY_OF_MONTH))
-                return true;
-            else
-                return false;
+            return from.get(Calendar.DAY_OF_MONTH) <= date.get(Calendar.DAY_OF_MONTH);
         }
         if (to.get(Calendar.MONTH) == currMonth) {
-            if (date.get(Calendar.DAY_OF_MONTH) <= to.get(Calendar.DAY_OF_MONTH))
-                return true;
-            else
-                return false;
+            return date.get(Calendar.DAY_OF_MONTH) <= to.get(Calendar.DAY_OF_MONTH);
         }
         return false;
     }

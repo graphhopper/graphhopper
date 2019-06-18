@@ -45,7 +45,7 @@ public class MatrixResponse {
             throw new IllegalArgumentException("Please specify times, distances or weights that should be calculated by the matrix");
     }
 
-    public void setFromRow(int row, long timeRow[], int distanceRow[], double weightRow[]) {
+    public void setFromRow(int row, long[] timeRow, int[] distanceRow, double[] weightRow) {
         if (times.length > 0) {
             check(timeRow.length, toCount, "to times");
             times[row] = timeRow;
@@ -68,7 +68,7 @@ public class MatrixResponse {
                     "Expected " + expectedLength + " was: " + currentLength + ". Matrix: " + fromCount + "x" + toCount);
     }
 
-    public void setTimeRow(int row, long timeRow[]) {
+    public void setTimeRow(int row, long[] timeRow) {
         if (times.length > 0) {
             check(timeRow.length, toCount, "to times");
             times[row] = timeRow;
@@ -77,7 +77,7 @@ public class MatrixResponse {
         }
     }
 
-    public void setDistanceRow(int row, int distanceRow[]) {
+    public void setDistanceRow(int row, int[] distanceRow) {
         if (distances.length > 0) {
             check(distanceRow.length, toCount, "to distances");
             distances[row] = distanceRow;
@@ -86,7 +86,7 @@ public class MatrixResponse {
         }
     }
 
-    public void setWeightRow(int row, double weightRow[]) {
+    public void setWeightRow(int row, double[] weightRow) {
         if (weights.length > 0) {
             check(weightRow.length, toCount, "to weights");
             weights[row] = weightRow;

@@ -17,7 +17,9 @@
  */
 package com.graphhopper.util;
 
-import java.util.*;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * List of instructions.

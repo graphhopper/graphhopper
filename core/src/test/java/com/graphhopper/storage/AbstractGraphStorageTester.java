@@ -306,7 +306,7 @@ public abstract class AbstractGraphStorageTester {
 
         graph.edge(0, 2, 10, true);
         assertEquals(3, graph.getNodes());
-        Helper.close((Closeable) graph);
+        Helper.close(graph);
 
         graph = createGHStorage();
         assertEquals(0, graph.getNodes());
@@ -328,7 +328,7 @@ public abstract class AbstractGraphStorageTester {
         }
 
         try {
-            Helper.close((Closeable) graph);
+            Helper.close(graph);
             graph = createGHStorage();
             gs.copyTo(graph);
             checkExampleGraph(graph);
@@ -336,7 +336,7 @@ public abstract class AbstractGraphStorageTester {
             ex.printStackTrace();
             assertTrue(ex.toString(), false);
         }
-        Helper.close((Closeable) graph);
+        Helper.close(graph);
     }
 
     @Test

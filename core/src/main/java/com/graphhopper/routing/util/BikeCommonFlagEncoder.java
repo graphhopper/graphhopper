@@ -706,7 +706,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
         private final int value;
 
-        private WayType(int value) {
+        WayType(int value) {
             this.value = value;
         }
 

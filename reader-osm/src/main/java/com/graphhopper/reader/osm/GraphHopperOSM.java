@@ -21,7 +21,10 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.lm.PrepareLandmarks;
-import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.shapes.Polygon;
 

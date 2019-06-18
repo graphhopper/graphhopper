@@ -17,10 +17,10 @@
  */
 package com.graphhopper.util;
 
-import static java.lang.Math.sqrt;
-
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+
+import static java.lang.Math.sqrt;
 
 /**
  * Calculates the distance of two points or one point and an edge in euclidean space.
@@ -83,7 +83,7 @@ public class DistanceCalc2D extends DistanceCalcEarth {
 
     @Override
     public GHPoint projectCoordinate(double latInDeg, double lonInDeg, double distanceInMeter,
-            double headingClockwiseFromNorth) {
+                                     double headingClockwiseFromNorth) {
         throw new UnsupportedOperationException("Not supported for the 2D Euclidean space");
     }
 

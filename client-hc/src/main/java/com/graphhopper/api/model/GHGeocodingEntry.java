@@ -198,7 +198,7 @@ public class GHGeocodingEntry {
         return this.extent.toGeoJson().toArray(new Double[4]);
     }
 
-    public BBox getExtendBBox(){
+    public BBox getExtendBBox() {
         return this.extent;
     }
 

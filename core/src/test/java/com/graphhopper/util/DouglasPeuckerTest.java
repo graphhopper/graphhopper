@@ -70,7 +70,7 @@ public class DouglasPeuckerTest {
 
         pointList.clear();
         pointList.parse2DJSON(points1);
-        dp.simplify(pointList, 0, pointList.size() -1);
+        dp.simplify(pointList, 0, pointList.size() - 1);
         assertEquals(20, pointList.getSize());
 
         pointList.clear();

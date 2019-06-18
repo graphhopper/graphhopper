@@ -49,8 +49,7 @@ public abstract class AbstractSpatialRule implements SpatialRule {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof SpatialRule) {
-            if (((SpatialRule) obj).getId().equals(this.getId()))
-                return true;
+            return ((SpatialRule) obj).getId().equals(this.getId());
         }
         return false;
     }

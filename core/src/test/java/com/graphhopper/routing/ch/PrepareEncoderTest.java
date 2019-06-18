@@ -20,8 +20,6 @@ package com.graphhopper.routing.ch;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich

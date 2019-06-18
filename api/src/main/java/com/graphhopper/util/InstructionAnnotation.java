@@ -80,8 +80,6 @@ public class InstructionAnnotation {
         final InstructionAnnotation other = (InstructionAnnotation) obj;
         if (this.importance != other.importance)
             return false;
-        if ((this.message == null) ? (other.message != null) : !this.message.equals(other.message))
-            return false;
-        return true;
+        return (this.message == null) ? (other.message == null) : this.message.equals(other.message);
     }
 }

@@ -18,7 +18,6 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.ch.NodeBasedNodeContractorTest;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -36,7 +35,6 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.ch.NodeBasedNodeContractorTest.SC_ACCESS;
 import static org.junit.Assert.assertEquals;
 
 /**

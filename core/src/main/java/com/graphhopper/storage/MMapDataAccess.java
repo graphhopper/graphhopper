@@ -42,14 +42,14 @@ import java.util.StringTokenizer;
 /**
  * A DataAccess implementation using a memory-mapped file, i.e. a facility of the
  * operating system to access a file like an area of RAM.
- *
+ * <p>
  * Java presents the mapped memory as a ByteBuffer, and ByteBuffer is not
  * thread-safe, which means that access to a ByteBuffer must be externally
  * synchronized.
- *
+ * <p>
  * This class itself is intended to be as thread-safe as other DataAccess
  * implementations are.
- *
+ * <p>
  * The exact behavior of memory-mapping is reported to be wildly platform-dependent.
  *
  * <p>

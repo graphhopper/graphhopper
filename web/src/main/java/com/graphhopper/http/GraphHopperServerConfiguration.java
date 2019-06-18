@@ -20,7 +20,6 @@ package com.graphhopper.http;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.gtfs.dropwizard.RealtimeBundleConfiguration;
-import com.graphhopper.gtfs.dropwizard.FeedConfiguration;
 import com.graphhopper.gtfs.dropwizard.RealtimeConfiguration;
 import com.graphhopper.util.CmdArgs;
 import io.dropwizard.Configuration;
@@ -29,8 +28,6 @@ import io.dropwizard.bundles.assets.AssetsConfiguration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.List;
 
 public class GraphHopperServerConfiguration extends Configuration implements GraphHopperBundleConfiguration, RealtimeBundleConfiguration, AssetsBundleConfiguration {
 

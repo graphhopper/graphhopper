@@ -77,7 +77,7 @@ public class RAMDataAccess extends AbstractDataAccess {
     public RAMDataAccess create(long bytes) {
         if (segments.length > 0)
             throw new IllegalThreadStateException("already created");
-        
+
         setSegmentSize(segmentSizeInBytes);
         ensureCapacity(Math.max(10 * 4, bytes));
         return this;
@@ -173,7 +173,7 @@ public class RAMDataAccess extends AbstractDataAccess {
                 raFile.seek(HEADER_OFFSET);
                 // raFile.writeInt() <- too slow, so copy into byte array
                 for (int s = 0; s < segments.length; s++) {
-                    byte area[] = segments[s];
+                    byte[] area = segments[s];
                     raFile.write(area);
                 }
             } finally {

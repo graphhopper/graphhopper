@@ -87,7 +87,7 @@ public class OSMInputFile implements Sink, OSMInput {
         ips.mark(10);
 
         // check file header
-        byte header[] = new byte[6];
+        byte[] header = new byte[6];
         if (ips.read(header) < 0)
             throw new IllegalArgumentException("Input file is not of valid type " + file.getPath());
 
