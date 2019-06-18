@@ -146,16 +146,4 @@ public class GHMRequest extends GHRequest {
         return this.fromPointHints.size() == this.fromPoints.size() && !fromPoints.isEmpty() &&
                 this.toPointHints.size() == this.toPoints.size() && !toPoints.isEmpty();
     }
-
-    /**
-     * If failFast is true the matrix response will return as soon as there are some (at least one) errors regarding
-     * PointNotFoundException or ConnectionNotFoundException. If false the erroneous values will be null as
-     * unfortunately Infinity is not in the JSON spec.
-     *
-     * @param failFast default is true.
-     */
-    public GHMRequest setFailFast(boolean failFast) {
-        getHints().put("fail_fast", failFast);
-        return this;
-    }
 }
