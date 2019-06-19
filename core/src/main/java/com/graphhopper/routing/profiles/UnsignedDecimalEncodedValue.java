@@ -22,14 +22,14 @@ import com.graphhopper.storage.IntsRef;
 import java.util.Objects;
 
 /**
- * This class holds a decimal value and stores it as an integer value via a conversion factor and a maximum number
+ * This class holds a decimal value and stores it as an unsigned integer value via a conversion factor and a maximum number
  * of bits.
  */
-public final class FactorizedDecimalEncodedValue extends SimpleIntEncodedValue implements DecimalEncodedValue {
+public final class UnsignedDecimalEncodedValue extends UnsignedIntEncodedValue implements DecimalEncodedValue {
     private final double factor;
     private final double defaultValue;
 
-    public FactorizedDecimalEncodedValue(String name, int bits, double factor, boolean storeTwoDirections) {
+    public UnsignedDecimalEncodedValue(String name, int bits, double factor, boolean storeTwoDirections) {
         this(name, bits, factor, 0, storeTwoDirections);
     }
 
@@ -40,7 +40,7 @@ public final class FactorizedDecimalEncodedValue extends SimpleIntEncodedValue i
      * @param defaultValue       the value that should be returned if the stored value is 0.
      * @param storeTwoDirections true if forward and backward direction of the edge should get two independent values.
      */
-    public FactorizedDecimalEncodedValue(String name, int bits, double factor, double defaultValue, boolean storeTwoDirections) {
+    public UnsignedDecimalEncodedValue(String name, int bits, double factor, double defaultValue, boolean storeTwoDirections) {
         super(name, bits, storeTwoDirections);
         this.factor = factor;
         this.defaultValue = defaultValue;
@@ -82,7 +82,7 @@ public final class FactorizedDecimalEncodedValue extends SimpleIntEncodedValue i
     @Override
     public boolean equals(Object o) {
         if (!super.equals(o)) return false;
-        FactorizedDecimalEncodedValue that = (FactorizedDecimalEncodedValue) o;
+        UnsignedDecimalEncodedValue that = (UnsignedDecimalEncodedValue) o;
         return Double.compare(that.factor, factor) == 0;
     }
 

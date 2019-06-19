@@ -32,6 +32,6 @@ public class MaxWeight {
      * it was done with the MappedDecimalEncodedValue still handling (or rounding) of unknown values is unclear.
      */
     public static DecimalEncodedValue create() {
-        return new FactorizedDecimalEncodedValue(KEY, 8, 0.1, Double.POSITIVE_INFINITY, false);
+        return new UnsignedDecimalEncodedValue(KEY, 8, 0.1, Double.POSITIVE_INFINITY, false);
     }
 }

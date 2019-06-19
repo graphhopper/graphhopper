@@ -20,9 +20,9 @@ package com.graphhopper.routing.profiles;
 import com.graphhopper.storage.IntsRef;
 
 /**
- * This class implements a simple Boolean storage via a FactoredIntEncodedValue with 1 bit.
+ * This class implements a simple boolean storage via an UnsignedIntEncodedValue with 1 bit.
  */
-public final class SimpleBooleanEncodedValue extends SimpleIntEncodedValue implements BooleanEncodedValue {
+public final class SimpleBooleanEncodedValue extends UnsignedIntEncodedValue implements BooleanEncodedValue {
 
     public SimpleBooleanEncodedValue(String name) {
         this(name, false);
