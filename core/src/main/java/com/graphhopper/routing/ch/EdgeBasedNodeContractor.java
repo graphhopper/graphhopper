@@ -237,7 +237,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     /**
      * A given potential loop shortcut is only necessary if there is at least one pair of original in- & out-edges for
      * which taking the loop is cheaper than doing the direct turn. However this is almost always the case, because
-     * doing a u-turn at any of the incoming edges is forbidden, i.e. he costs of the direct turn will be infinite.
+     * doing a u-turn at any of the incoming edges is forbidden, i.e. the costs of the direct turn will be infinite.
      */
     private boolean loopShortcutNecessary(int node, int firstOrigEdge, int lastOrigEdge, double loopWeight) {
         EdgeIterator inIter = loopAvoidanceInEdgeExplorer.setBaseNode(node);
