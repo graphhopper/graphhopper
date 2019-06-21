@@ -108,7 +108,7 @@ public class TurnWeighting implements Weighting {
      */
     public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
         if (turnCostExt.isUTurn(edgeFrom, edgeTo)) {
-            return Double.POSITIVE_INFINITY;
+            return defaultUTurnCost;
         }
         long turnFlags = turnCostExt.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
         if (turnCostEncoder.isTurnRestricted(turnFlags))
