@@ -24,8 +24,6 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -245,11 +243,11 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         EdgeIterator inIter = loopAvoidanceInEdgeExplorer.setBaseNode(node);
         while (inIter.next()) {
             EdgeIterator outIter = loopAvoidanceOutEdgeExplorer.setBaseNode(node);
-            double inTurnCost = getTurnCost(inIter.getEdge(), node, firstOrigEdge);
+            double inTurnCost = turnWeighting.calcTurnWeight(inIter.getEdge(), node, firstOrigEdge);
             while (outIter.next()) {
                 double totalLoopCost = inTurnCost + loopWeight +
-                        getTurnCost(lastOrigEdge, node, outIter.getEdge());
-                double directTurnCost = getTurnCost(inIter.getEdge(), node, outIter.getEdge());
+                        turnWeighting.calcTurnWeight(lastOrigEdge, node, outIter.getEdge());
+                double directTurnCost = turnWeighting.calcTurnWeight(inIter.getEdge(), node, outIter.getEdge());
                 if (totalLoopCost < directTurnCost) {
                     return true;
                 }
@@ -318,22 +316,11 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 && (iter.getOrigEdgeLast() == lastOrigEdge);
     }
 
-    private double getTurnCost(int inEdge, int node, int outEdge) {
-        if (illegalUTurn(outEdge, inEdge)) {
-            return Double.POSITIVE_INFINITY;
-        }
-        return turnWeighting.calcTurnWeight(inEdge, node, outEdge);
-    }
-
     private void resetEdgeCounters() {
         numShortcuts = 0;
         numPrevEdges = 0;
         numOrigEdges = 0;
         numPrevOrigEdges = 0;
-    }
-
-    private boolean illegalUTurn(int inEdge, int outEdge) {
-        return outEdge == inEdge;
     }
 
     private Stats stats() {

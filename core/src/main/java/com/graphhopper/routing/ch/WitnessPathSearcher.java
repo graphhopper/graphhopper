@@ -479,9 +479,6 @@ public class WitnessPathSearcher {
     }
 
     private double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-        if (inEdge == outEdge) {
-            return Double.POSITIVE_INFINITY;
-        }
         return turnWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
     }
 
