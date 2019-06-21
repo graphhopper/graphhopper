@@ -133,7 +133,7 @@ public class AlternativeRouteTest {
     }
 
     @Test
-    public void testCalcAlternatives2() throws Exception {
+    public void testCalcAlternatives2() {
         Weighting weighting = new FastestWeighting(carFE);
         Graph g = createTestGraph(true, em);
         AlternativeRoute altDijkstra = new AlternativeRoute(g, weighting, traversalMode);

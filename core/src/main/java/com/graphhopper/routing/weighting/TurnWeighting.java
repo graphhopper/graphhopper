@@ -100,6 +100,9 @@ public class TurnWeighting implements Weighting {
      * This method calculates the turn weight separately.
      */
     public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
+        if (edgeFrom == EdgeIterator.NO_EDGE || edgeTo == EdgeIterator.NO_EDGE) {
+            return 0;
+        }
         if (turnCostExt.isUTurn(edgeFrom, edgeTo)) {
             return defaultUTurnCost;
         }

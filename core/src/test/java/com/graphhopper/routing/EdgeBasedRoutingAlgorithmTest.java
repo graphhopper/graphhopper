@@ -143,11 +143,15 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private Weighting createWeighting() {
-        return createWeighting(carEncoder, 40);
+        return createWeighting(carEncoder, Double.POSITIVE_INFINITY);
     }
 
     private Weighting createWeighting(FlagEncoder encoder, double uTurnCosts) {
-        return new TurnWeighting(new FastestWeighting(encoder), tcs).setDefaultUTurnCost(uTurnCosts);
+        TurnWeighting result = new TurnWeighting(new FastestWeighting(encoder), tcs);
+        if (!Double.isInfinite(uTurnCosts)) {
+            result.setDefaultUTurnCost(uTurnCosts);
+        }
+        return result;
     }
 
     @Test
