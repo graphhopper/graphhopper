@@ -95,7 +95,7 @@ public class AStar extends AbstractRoutingAlgorithm {
 
             EdgeIterator iter = explorer.setBaseNode(currVertex);
             while (iter.next()) {
-                if (!accept(iter, currEdge.edge))
+                if (!accept(iter))
                     continue;
 
                 double alreadyVisitedWeight = weighting.calcWeight(iter, false, currEdge.edge)

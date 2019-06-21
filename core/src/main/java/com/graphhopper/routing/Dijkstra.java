@@ -77,7 +77,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
             int startNode = currEdge.adjNode;
             EdgeIterator iter = explorer.setBaseNode(startNode);
             while (iter.next()) {
-                if (!accept(iter, currEdge.edge))
+                if (!accept(iter))
                     continue;
 
                 int traversalId = traversalMode.createTraversalId(iter, false);
