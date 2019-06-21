@@ -414,6 +414,11 @@ public class GHUtility {
     }
 
     public static EdgeIteratorState createMockedEdgeIteratorState(final double distance, final IntsRef flags) {
+        return createMockedEdgeIteratorState(distance, flags, 0, 1, 2, 3, 4);
+    }
+
+    public static EdgeIteratorState createMockedEdgeIteratorState(final double distance, final IntsRef flags,
+                                                                  final int base, final int adj, final int edge, final int origFirst, final int origLast) {
         return new GHUtility.DisabledEdgeIterator() {
             @Override
             public double getDistance() {
@@ -453,6 +458,36 @@ public class GHUtility {
             @Override
             public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
                 return property.getEnum(true, flags);
+            }
+
+            @Override
+            public int getEdge() {
+                return edge;
+            }
+
+            @Override
+            public int getBaseNode() {
+                return base;
+            }
+
+            @Override
+            public int getAdjNode() {
+                return adj;
+            }
+
+            @Override
+            public PointList fetchWayGeometry(int type) {
+                return Helper.createPointList(0, 2, 6, 4);
+            }
+
+            @Override
+            public int getOrigEdgeFirst() {
+                return origFirst;
+            }
+
+            @Override
+            public int getOrigEdgeLast() {
+                return origLast;
             }
         };
     }
