@@ -159,8 +159,6 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     @Override
     protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
         final int incEdge = getIncomingEdge(currEdge);
-        if (incEdge == EdgeIterator.NO_EDGE)
-            return true;
         final int prevOrNextEdgeId = getOrigEdgeId(edge, !reverse);
         if (!traversalMode.hasUTurnSupport() && turnCostExtension.isUTurn(incEdge, prevOrNextEdgeId))
             return false;
