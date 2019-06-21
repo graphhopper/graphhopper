@@ -40,7 +40,6 @@ import org.junit.runners.Parameterized.Parameters;
 import java.util.*;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED_2DIR;
-import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED_2DIR_UTURN;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.Assert.*;
@@ -315,29 +314,29 @@ public class EdgeBasedRoutingAlgorithmTest {
         GraphHopperStorage g = createStorage(createEncodingManager(true));
         initGraph(g);
 
-        // force u-turn at node 3 via lowering the cost for it
+        // force u-turn at node 3 by using finite u-turn costs
         getEdge(g, 3, 6).setDistance(0.1);
         getEdge(g, 3, 2).setDistance(864);
         getEdge(g, 1, 0).setDistance(864);
 
         addTurnRestriction(g, 7, 6, 5);
         addTurnRestriction(g, 4, 3, 6);
-        Path p = createAlgo(g, createWeighting(carEncoder, 50), EDGE_BASED_2DIR_UTURN).calcPath(7, 5);
+        Path p = createAlgo(g, createWeighting(carEncoder, 50), EDGE_BASED_2DIR).calcPath(7, 5);
 
         assertEquals(2 + 2 * 0.1, p.getDistance(), 1.e-6);
         assertEquals(2.2 * 0.06 + 50, p.getWeight(), 1.e-6);
         assertEquals((2.2 * 0.06 + 50) * 1000, p.getTime(), 1.e-6);
         assertEquals(IntArrayList.from(7, 6, 3, 6, 5), p.calcNodes());
 
-        // without u-turn mode enabled we need to take an expensive detour
+        // with default infinite u-turn costs we need to take an expensive detour
         p = calcPath(g, 7, 5);
         assertEquals(1.1 + 864 + 0.5, p.getDistance(), 1.e-6);
         assertEquals(865.6 * 0.06, p.getWeight(), 1.e-6);
         assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
 
-        // no more u-turn 6-3-6 -> now we have to take the expensive roads even with u-turn mode
+        // no more u-turn 6-3-6 -> now we have to take the expensive roads even with finite u-turn costs
         addTurnRestriction(g, 6, 3, 6);
-        p = createAlgo(g, createWeighting(carEncoder, 100), EDGE_BASED_2DIR_UTURN).calcPath(7, 5);
+        p = createAlgo(g, createWeighting(carEncoder, 100), EDGE_BASED_2DIR).calcPath(7, 5);
 
         assertEquals(1.1 + 864 + 0.5, p.getDistance(), 1.e-6);
         assertEquals(865.6 * 0.06, p.getWeight(), 1.e-6);
@@ -359,16 +358,16 @@ public class EdgeBasedRoutingAlgorithmTest {
         // cannot go straight at node 2
         addTurnRestriction(g, 1, 2, 4);
 
-        // without u-turn mode there is no shortest path
+        // with default/infinite u-turn costs there is no shortest path
         {
             Path path = calcPath(g, 0, 5);
             assertFalse(path.isFound());
         }
 
-        // with u-turn mode enabled it is possible, the u-turn costs should be included
+        // with finite u-turn costs it is possible, the u-turn costs should be included
         // here we make sure the default u-turn time is also included at the meeting node for bidir algos
         {
-            Path path = createAlgo(g, createWeighting(carEncoder, 67), EDGE_BASED_2DIR_UTURN).calcPath(0, 5);
+            Path path = createAlgo(g, createWeighting(carEncoder, 67), EDGE_BASED_2DIR).calcPath(0, 5);
             assertEquals(60, path.getDistance(), 1.e-6);
             assertEquals(60 * 0.06 + 67, path.getWeight(), 1.e-6);
             assertEquals((36 + 670) * 100, path.getTime(), 1.e-6);
@@ -411,7 +410,7 @@ public class EdgeBasedRoutingAlgorithmTest {
                     assertNotNull("edge " + edgeTo + " to " + nodeVia + " does not exist", g.getEdgeIteratorState(edgeTo, nodeVia));
                 return super.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
             }
-        }.setDefaultUTurnCost(40);
+        };
         Path p = createAlgo(g, weighting, EDGE_BASED_2DIR).calcPath(5, 1);
         assertEquals(IntArrayList.from(5, 6, 7, 4, 3, 1), p.calcNodes());
         assertEquals(5 * 0.06 + 1, p.getWeight(), 1.e-6);

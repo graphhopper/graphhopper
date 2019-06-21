@@ -38,7 +38,6 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     private final EdgeExplorer innerInExplorer;
     private final EdgeExplorer innerOutExplorer;
     private final TurnWeighting turnWeighting;
-    private final TurnCostExtension turnCostExtension;
 
     public AbstractBidirectionEdgeCHNoSOD(Graph graph, TurnWeighting weighting) {
         super(graph, weighting, TraversalMode.EDGE_BASED_2DIR);
@@ -48,10 +47,6 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         // cache, see #1623.
         innerInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder).setFilterId(1));
         innerOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder).setFilterId(1));
-        if (!(graph.getExtension() instanceof TurnCostExtension)) {
-            throw new IllegalArgumentException("edge-based CH algorithms require a turn cost extension");
-        }
-        turnCostExtension = (TurnCostExtension) graph.getExtension();
     }
 
     @Override

@@ -37,25 +37,17 @@ public enum TraversalMode {
     /**
      * The simplest traversal mode but without turn restrictions or cost support.
      */
-    NODE_BASED(false, false),
+    NODE_BASED(false),
     /**
      * The bidirectional edged-based traversal mode with turn restriction and cost support. Without
      * u-turn support. 2 times slower than node based.
      */
-    EDGE_BASED_2DIR(true, false),
-    /**
-     * Not recommended as it leads to strange routes that outsmart the turn costs. The most feature
-     * rich edge-based traversal mode with turn restriction and cost support, including u-turns. 4
-     * times slower than node based.
-     */
-    EDGE_BASED_2DIR_UTURN(true, true);
+    EDGE_BASED_2DIR(true);
 
     private final boolean edgeBased;
-    private final boolean uTurnSupport;
 
-    TraversalMode(boolean edgeBased, boolean uTurnSupport) {
+    TraversalMode(boolean edgeBased) {
         this.edgeBased = edgeBased;
-        this.uTurnSupport = uTurnSupport;
     }
 
     public static TraversalMode fromString(String name) {
@@ -102,7 +94,4 @@ public enum TraversalMode {
         return edgeBased;
     }
 
-    public final boolean hasUTurnSupport() {
-        return uTurnSupport;
-    }
 }
