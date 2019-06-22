@@ -56,8 +56,8 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {TraversalMode.NODE_BASED, false},
-                {TraversalMode.EDGE_BASED_2DIR, false},
-                {TraversalMode.EDGE_BASED_2DIR, true}
+                {TraversalMode.EDGE_BASED, false},
+                {TraversalMode.EDGE_BASED, true}
         });
     }
 

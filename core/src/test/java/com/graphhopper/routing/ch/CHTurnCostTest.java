@@ -794,7 +794,7 @@ public class CHTurnCostTest {
         QueryGraph queryGraph = new QueryGraph(chGraph);
         queryGraph.lookup(queryResults);
         RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
-                .traversalMode(TraversalMode.EDGE_BASED_2DIR)
+                .traversalMode(TraversalMode.EDGE_BASED)
                 .build());
         Path path = chAlgo.calcPath(5, 6);
         // there should not be a path from 5 to 6, because first we cannot go directly 5-4-6, so we need to go left
@@ -843,7 +843,7 @@ public class CHTurnCostTest {
         queryGraph.lookup(Collections.singletonList(qr));
         assertEquals("expected one virtual node", 1, queryGraph.getNodes() - chGraph.getNodes());
         RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
-                .traversalMode(TraversalMode.EDGE_BASED_2DIR)
+                .traversalMode(TraversalMode.EDGE_BASED)
                 .build());
         Path path = chAlgo.calcPath(2, 1);
         assertFalse("no path should be found, but found " + path.calcNodes(), path.isFound());
@@ -878,7 +878,7 @@ public class CHTurnCostTest {
         assertEquals(2, qr1.getClosestNode());
         assertEquals(3, qr2.getClosestNode());
         RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
-                .traversalMode(TraversalMode.EDGE_BASED_2DIR)
+                .traversalMode(TraversalMode.EDGE_BASED)
                 .build());
         Path path = chAlgo.calcPath(2, 3);
         assertTrue("no path found", path.isFound());
@@ -905,7 +905,7 @@ public class CHTurnCostTest {
         assertEquals(3, qr.getClosestNode());
         assertEquals(0, qr.getClosestEdge().getEdge());
         RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
-                .traversalMode(TraversalMode.EDGE_BASED_2DIR)
+                .traversalMode(TraversalMode.EDGE_BASED)
                 .build());
         Path path = chAlgo.calcPath(0, 2);
         assertTrue("it should be possible to route via a virtual node, but no path found", path.isFound());
@@ -935,7 +935,7 @@ public class CHTurnCostTest {
         assertEquals(3, qr.getClosestNode());
         assertEquals(0, qr.getClosestEdge().getEdge());
         RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
-                .traversalMode(TraversalMode.EDGE_BASED_2DIR)
+                .traversalMode(TraversalMode.EDGE_BASED)
                 .build());
         Path path = chAlgo.calcPath(1, 0);
         assertEquals(IntArrayList.from(1, 3, 0), path.calcNodes());
@@ -1018,7 +1018,7 @@ public class CHTurnCostTest {
     }
 
     private Path findPathUsingDijkstra(int from, int to) {
-        Dijkstra dijkstra = new Dijkstra(graph, turnWeighting, TraversalMode.EDGE_BASED_2DIR);
+        Dijkstra dijkstra = new Dijkstra(graph, turnWeighting, TraversalMode.EDGE_BASED);
         return dijkstra.calcPath(from, to);
     }
 
@@ -1042,7 +1042,7 @@ public class CHTurnCostTest {
                 return contractionOrder.size();
             }
         };
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph, weighting, TraversalMode.EDGE_BASED_2DIR)
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph, weighting, TraversalMode.EDGE_BASED)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         ch.doWork();
         return ch;
@@ -1055,7 +1055,7 @@ public class CHTurnCostTest {
         pMap.put(NEIGHBOR_UPDATES, 4);
         pMap.put(LOG_MESSAGES, 10);
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies(
-                chGraph, weighting, TraversalMode.EDGE_BASED_2DIR);
+                chGraph, weighting, TraversalMode.EDGE_BASED);
         ch.setParams(pMap);
         ch.doWork();
         return ch;

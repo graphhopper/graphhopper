@@ -54,7 +54,7 @@ public class AStarBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTester {
     public RoutingAlgorithmFactory createFactory(GraphHopperStorage ghStorage, AlgorithmOptions opts) {
         ghStorage.freeze();
         PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(
-                ghStorage, opts.getWeighting(), TraversalMode.EDGE_BASED_2DIR);
+                ghStorage, opts.getWeighting(), TraversalMode.EDGE_BASED);
         ch.doWork();
         return ch;
     }

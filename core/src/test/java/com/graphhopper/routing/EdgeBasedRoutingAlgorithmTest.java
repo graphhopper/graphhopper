@@ -39,7 +39,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.util.*;
 
-import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED_2DIR;
+import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.Assert.*;
@@ -98,7 +98,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     public Path calcPath(Graph g, int from, int to) {
-        return createAlgo(g, createWeighting(), EDGE_BASED_2DIR).calcPath(from, to);
+        return createAlgo(g, createWeighting(), EDGE_BASED).calcPath(from, to);
     }
 
     public RoutingAlgorithm createAlgo(Graph g, Weighting weighting, TraversalMode traversalMode) {
@@ -169,7 +169,7 @@ public class EdgeBasedRoutingAlgorithmTest {
             int from = rnd.nextInt(g.getNodes());
             int to = rnd.nextInt(g.getNodes());
             Weighting w = createWeighting();
-            RoutingAlgorithm refAlgo = new Dijkstra(g, w, EDGE_BASED_2DIR);
+            RoutingAlgorithm refAlgo = new Dijkstra(g, w, EDGE_BASED);
             Path refPath = refAlgo.calcPath(from, to);
             double refWeight = refPath.getWeight();
             if (!refPath.isFound()) {
@@ -321,7 +321,7 @@ public class EdgeBasedRoutingAlgorithmTest {
 
         addTurnRestriction(g, 7, 6, 5);
         addTurnRestriction(g, 4, 3, 6);
-        Path p = createAlgo(g, createWeighting(carEncoder, 50), EDGE_BASED_2DIR).calcPath(7, 5);
+        Path p = createAlgo(g, createWeighting(carEncoder, 50), EDGE_BASED).calcPath(7, 5);
 
         assertEquals(2 + 2 * 0.1, p.getDistance(), 1.e-6);
         assertEquals(2.2 * 0.06 + 50, p.getWeight(), 1.e-6);
@@ -336,7 +336,7 @@ public class EdgeBasedRoutingAlgorithmTest {
 
         // no more u-turn 6-3-6 -> now we have to take the expensive roads even with finite u-turn costs
         addTurnRestriction(g, 6, 3, 6);
-        p = createAlgo(g, createWeighting(carEncoder, 100), EDGE_BASED_2DIR).calcPath(7, 5);
+        p = createAlgo(g, createWeighting(carEncoder, 100), EDGE_BASED).calcPath(7, 5);
 
         assertEquals(1.1 + 864 + 0.5, p.getDistance(), 1.e-6);
         assertEquals(865.6 * 0.06, p.getWeight(), 1.e-6);
@@ -367,7 +367,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         // with finite u-turn costs it is possible, the u-turn costs should be included
         // here we make sure the default u-turn time is also included at the meeting node for bidir algos
         {
-            Path path = createAlgo(g, createWeighting(carEncoder, 67), EDGE_BASED_2DIR).calcPath(0, 5);
+            Path path = createAlgo(g, createWeighting(carEncoder, 67), EDGE_BASED).calcPath(0, 5);
             assertEquals(60, path.getDistance(), 1.e-6);
             assertEquals(60 * 0.06 + 67, path.getWeight(), 1.e-6);
             assertEquals((36 + 670) * 100, path.getTime(), 1.e-6);
@@ -411,7 +411,7 @@ public class EdgeBasedRoutingAlgorithmTest {
                 return super.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
             }
         };
-        Path p = createAlgo(g, weighting, EDGE_BASED_2DIR).calcPath(5, 1);
+        Path p = createAlgo(g, weighting, EDGE_BASED).calcPath(5, 1);
         assertEquals(IntArrayList.from(5, 6, 7, 4, 3, 1), p.calcNodes());
         assertEquals(5 * 0.06 + 1, p.getWeight(), 1.e-6);
         assertEquals(1300, p.getTime(), .1);

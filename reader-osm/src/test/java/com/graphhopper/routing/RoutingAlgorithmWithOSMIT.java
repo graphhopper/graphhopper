@@ -580,7 +580,7 @@ public class RoutingAlgorithmWithOSMIT {
             hopper.importOrLoad();
 
             TraversalMode tMode = importVehicles.contains("turn_costs=true")
-                    ? TraversalMode.EDGE_BASED_2DIR : TraversalMode.NODE_BASED;
+                    ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             HintsMap hints = new HintsMap().setWeighting(weightStr).setVehicle(vehicle);
 
