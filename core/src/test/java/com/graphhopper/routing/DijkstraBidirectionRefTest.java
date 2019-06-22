@@ -64,7 +64,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
                 if (traversalMode.isEdgeBased()) {
                     TurnWeighting turnWeighting = new TurnWeighting(w, new TurnCostExtension());
                     if (allowUTurns) {
-                        turnWeighting.setDefaultUTurnCost(40);
+                        turnWeighting.setUTurnCost(40);
                     }
                 }
                 return new DijkstraBidirectionRef(g, w, traversalMode);

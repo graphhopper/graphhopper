@@ -87,7 +87,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         this.encoder = turnWeighting.getFlagEncoder();
         this.pMap = pMap;
         extractParams(pMap);
-        if (!Double.isInfinite(turnWeighting.getDefaultTurnCost())) {
+        if (!Double.isInfinite(turnWeighting.getUTurnCost())) {
             throw new IllegalArgumentException("edge-based CH currently does not support finite u-turn costs");
         }
     }

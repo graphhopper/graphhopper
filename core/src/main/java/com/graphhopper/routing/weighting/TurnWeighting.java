@@ -38,7 +38,7 @@ public class TurnWeighting implements Weighting {
     private final TurnCostEncoder turnCostEncoder;
     private final TurnCostExtension turnCostExt;
     private final Weighting superWeighting;
-    private double defaultUTurnCost = Double.POSITIVE_INFINITY;
+    private double uTurnCost = Double.POSITIVE_INFINITY;
 
     /**
      * @param turnCostExt the turn cost storage to be used
@@ -56,16 +56,16 @@ public class TurnWeighting implements Weighting {
      * Set the default cost for an u-turn in seconds. Default is 40s. Should be that high to avoid
      * 'tricking' other turn costs or restrictions.
      */
-    public TurnWeighting setDefaultUTurnCost(double costInSeconds) {
-        defaultUTurnCost = costInSeconds;
+    public TurnWeighting setUTurnCost(double costInSeconds) {
+        uTurnCost = costInSeconds;
         return this;
     }
 
     /**
      * @return the default u-turn cost in seconds
      */
-    public double getDefaultTurnCost() {
-        return defaultUTurnCost;
+    public double getUTurnCost() {
+        return uTurnCost;
     }
 
     @Override
@@ -111,7 +111,7 @@ public class TurnWeighting implements Weighting {
             return 0;
         }
         if (turnCostExt.isUTurn(edgeFrom, edgeTo)) {
-            return defaultUTurnCost;
+            return uTurnCost;
         }
         long turnFlags = turnCostExt.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
         if (turnCostEncoder.isTurnRestricted(turnFlags))
