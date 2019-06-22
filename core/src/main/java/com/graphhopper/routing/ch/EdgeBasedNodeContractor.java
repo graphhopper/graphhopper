@@ -87,6 +87,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         this.encoder = turnWeighting.getFlagEncoder();
         this.pMap = pMap;
         extractParams(pMap);
+        if (!Double.isInfinite(turnWeighting.getDefaultTurnCost())) {
+            throw new IllegalArgumentException("edge-based CH currently does not support finite u-turn costs");
+        }
     }
 
     private void extractParams(PMap pMap) {
@@ -243,11 +246,11 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         EdgeIterator inIter = loopAvoidanceInEdgeExplorer.setBaseNode(node);
         while (inIter.next()) {
             EdgeIterator outIter = loopAvoidanceOutEdgeExplorer.setBaseNode(node);
-            double inTurnCost = turnWeighting.calcTurnWeight(inIter.getEdge(), node, firstOrigEdge);
+            double inTurnCost = getTurnCost(inIter.getEdge(), node, firstOrigEdge);
             while (outIter.next()) {
                 double totalLoopCost = inTurnCost + loopWeight +
-                        turnWeighting.calcTurnWeight(lastOrigEdge, node, outIter.getEdge());
-                double directTurnCost = turnWeighting.calcTurnWeight(inIter.getEdge(), node, outIter.getEdge());
+                        getTurnCost(lastOrigEdge, node, outIter.getEdge());
+                double directTurnCost = getTurnCost(inIter.getEdge(), node, outIter.getEdge());
                 if (totalLoopCost < directTurnCost) {
                     return true;
                 }
@@ -314,6 +317,10 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 && (iter.getAdjNode() == adjNode)
                 && (iter.getOrigEdgeFirst() == firstOrigEdge)
                 && (iter.getOrigEdgeLast() == lastOrigEdge);
+    }
+
+    private double getTurnCost(int inEdge, int node, int outEdge) {
+        return turnWeighting.calcTurnWeight(inEdge, node, outEdge);
     }
 
     private void resetEdgeCounters() {

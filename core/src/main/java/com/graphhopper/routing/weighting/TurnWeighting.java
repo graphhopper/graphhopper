@@ -61,6 +61,13 @@ public class TurnWeighting implements Weighting {
         return this;
     }
 
+    /**
+     * @return the default u-turn cost in seconds
+     */
+    public double getDefaultTurnCost() {
+        return defaultUTurnCost;
+    }
+
     @Override
     public double getMinWeight(double distance) {
         return superWeighting.getMinWeight(distance);
