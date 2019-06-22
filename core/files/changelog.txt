@@ -9,7 +9,7 @@
     removed MappedDecimalEncodedValue: should be replaced with FactoredDecimalEncodedValue
     DataFlagEncoder: it is now required to add EncodedValues before. graph.encoded_values: max_speed,road_class,road_environment,road_access
     instead of EncodingManager.ROUNDABOUT use Roundabout.KEY
-    removed TraversalMode.EDGE_BASED_1DIR
+    removed TraversalMode.EDGE_BASED_1DIR and TraversalMode.EDGE_BASED_2DIR_UTURN, renamed TraversalMode.EDGE_BASED_2DIR to TraversalMode.EDGE_BASED
 
 0.12
     renamed VirtualEdgeIteratorState.getOriginalEdgeKey to more precise getOriginalEdgeKey #1549
