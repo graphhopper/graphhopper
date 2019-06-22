@@ -39,7 +39,7 @@ before_script:
   - _JAVA_OPTIONS=
   - "mvn --version"
   - "if [ -z \"$API_KEY\" ]; then API_KEY=78da6e9a-273e-43d1-bdda-8f24e007a1fa; fi" # change in GraphHopperWebIT too
-  - cd web; npm install; BROWSERIFYSWAP_ENV='development' npm run bundleProduction
+  - cd web && npm install && BROWSERIFYSWAP_ENV='development' npm run bundleProduction && cd ..
 
 script:
   - "mvn -Dkey=$API_KEY clean test verify checkstyle:check spotbugs:check forbiddenapis:check -B"
