@@ -95,7 +95,7 @@ if(ghenv.environment === 'development') {
 
     require('leaflet.vectorgrid');
     overlays = {};
-    overlays["Local MVT"] = L.vectorGrid.protobuf("http://127.0.0.1:8989/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment", {
+    overlays["Local MVT"] = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment", {
       rendererFactory: L.canvas.tile,
       maxZoom: 20,
       minZoom: 10,
