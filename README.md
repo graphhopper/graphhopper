@@ -164,20 +164,14 @@ A fast and production ready map visualization for the Desktop can be easily impl
 
 ### Docker
 
-Install GraphHopper via [Docker](https://github.com/graphhopper/graphhopper/pull/849).
-You only need to change the docker-compose.yml entrypoint in core/files/ to run whatever map you like.
-Then just type:
-```bash
-cd core/files/
-docker-compose up -d
-```
+Run a dockerized GraphHopper from sources:
 
-If you don't want to use docker-compose you can do the following:
 ```bash
 docker build -t graphhopper:master .
 docker run -d --name graphhopper -v <path_data_directory>/data:/data -p 8989:8989 graphhopper:master
 ```
 
+See also the builds at [Docker Hub](https://hub.docker.com/r/graphhopper/graphhopper)
 
 # Features
 
