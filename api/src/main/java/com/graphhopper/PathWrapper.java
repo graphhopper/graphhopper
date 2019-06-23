@@ -262,7 +262,10 @@ public class PathWrapper {
         // Make sure that the PathDetail list is merged correctly at via points
         if (!pathDetails.isEmpty() && !otherDetails.isEmpty()) {
             PathDetail lastDetail = pathDetails.get(pathDetails.size() - 1);
-            if (lastDetail.getValue().equals(otherDetails.get(0).getValue())) {
+            boolean extend = lastDetail.getValue() != null
+                    ? lastDetail.getValue().equals(otherDetails.get(0).getValue())
+                    : otherDetails.get(0).getValue() != null;
+            if (extend) {
                 lastDetail.setLast(otherDetails.get(0).getLast());
                 otherDetails.remove(0);
             }

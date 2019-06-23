@@ -66,8 +66,8 @@ public class LocationIndexTree implements LocationIndex {
     private final int MAGIC_INT;
     private final NodeAccess nodeAccess;
     protected DistanceCalc distCalc = Helper.DIST_PLANE;
-    protected SpatialKeyAlgo keyAlgo;
-    int maxRegionSearch = 4;
+    SpatialKeyAlgo keyAlgo;
+    private int maxRegionSearch = 4;
     private DistanceCalc preciseDistCalc = Helper.DIST_EARTH;
     private int[] entries;
     private byte[] shifts;
@@ -138,7 +138,7 @@ public class LocationIndexTree implements LocationIndex {
         equalNormedDelta = distCalc.calcNormalizedDist(0.1);
 
         // now calculate the necessary maxDepth d for our current bounds
-        // if we assume a minimum resolution like 0.5km for a leaf-tile                
+        // if we assume a minimum resolution like 0.5km for a leaf-tile
         // n^(depth/2) = toMeter(dLon) / minResolution
         BBox bounds = graph.getBounds();
         if (graph.getNodes() == 0)
@@ -349,8 +349,8 @@ public class LocationIndexTree implements LocationIndex {
     /**
      * This method fills the set with stored node IDs from the given spatial key part (a latitude-longitude prefix).
      */
-    final void fillIDs(long keyPart, int intIndex, GHIntHashSet set, int depth) {
-        long pointer = (long) intIndex << 2;
+    final void fillIDs(long keyPart, int intPointer, GHIntHashSet set, int depth) {
+        long pointer = (long) intPointer << 2;
         if (depth == entries.length) {
             int nextIntPointer = dataAccess.getInt(pointer);
             if (nextIntPointer < 0) {
@@ -385,7 +385,6 @@ public class LocationIndexTree implements LocationIndex {
     /**
      * calculate the distance to the nearest tile border for a given lat/lon coordinate in the
      * context of a spatial key tile.
-     * <p>
      */
     final double calculateRMin(double lat, double lon) {
         return calculateRMin(lat, lon, 0);
@@ -788,7 +787,7 @@ public class LocationIndexTree implements LocationIndex {
 
     // Space efficient sorted integer set. Suited for only a few entries.
     static class SortedIntSet extends IntArrayList {
-        public SortedIntSet(int capacity) {
+        SortedIntSet(int capacity) {
             super(capacity);
         }
 

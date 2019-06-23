@@ -113,7 +113,7 @@ public class GpxFromInstructionsTest {
 
         String gpxStr = GpxFromInstructions.createGPX(wayList, "test", (long) 0, false, true, true, true, Constants.VERSION, trMap.getWithFallBack(Locale.US));
         verifyGPX(gpxStr);
-        System.out.println(gpxStr);
+//        System.out.println(gpxStr);
 
         assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T00:00:00Z</time>"));
         assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));

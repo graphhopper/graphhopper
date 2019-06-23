@@ -281,6 +281,8 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         if (configuration.getBool("web.change_graph.enabled", false)) {
             environment.jersey().register(ChangeGraphResource.class);
         }
+
+        environment.jersey().register(MVTResource.class);
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(RouteResource.class);
         environment.jersey().register(IsochroneResource.class);

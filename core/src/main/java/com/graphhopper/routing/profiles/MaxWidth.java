@@ -31,6 +31,6 @@ public class MaxWidth {
      * it is assumed to use the maximum value.
      */
     public static DecimalEncodedValue create() {
-        return new FactorizedDecimalEncodedValue(KEY, 7, 0.1, Double.POSITIVE_INFINITY, false);
+        return new UnsignedDecimalEncodedValue(KEY, 7, 0.1, Double.POSITIVE_INFINITY, false);
     }
 }

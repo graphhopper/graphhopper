@@ -1,4 +1,5 @@
 0.13
+    PathDetails return null instead of -1 for Infinity by default
     replaced AverageSpeedDetails by DecimalDetails
     moved TagParser into new package: com.graphhopper.routing.util.parsers
     removed FlagEncoderFactory.DEFAULT

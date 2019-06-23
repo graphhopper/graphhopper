@@ -46,6 +46,7 @@ public enum RoadAccess {
         if (name == null)
             return YES;
         try {
+            // public and permissive will be converted into "yes"
             return RoadAccess.valueOf(Helper.toUpperCase(name));
         } catch (IllegalArgumentException ex) {
             return YES;

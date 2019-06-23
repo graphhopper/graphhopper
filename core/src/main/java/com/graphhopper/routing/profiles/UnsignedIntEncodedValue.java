@@ -23,10 +23,10 @@ import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Implementation of the IntEncodedValue via a limited number of bits. It introduces simple handling of "backward"- and
- * "forward"-edge information.
+ * Implementation of the IntEncodedValue via a limited number of bits and without a sign. It introduces handling
+ * of "backward"- and "forward"-edge information.
  */
-public class SimpleIntEncodedValue implements IntEncodedValue {
+public class UnsignedIntEncodedValue implements IntEncodedValue {
 
     private final String name;
 
@@ -50,13 +50,13 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
      * @param storeTwoDirections if true this EncodedValue can store different values for the forward and backward
      *                           direction.
      */
-    public SimpleIntEncodedValue(String name, int bits, boolean storeTwoDirections) {
+    public UnsignedIntEncodedValue(String name, int bits, boolean storeTwoDirections) {
         if (!name.toLowerCase(Locale.ROOT).equals(name))
             throw new IllegalArgumentException("EncodedValue name must be lower case but was " + name);
         if (bits <= 0)
             throw new IllegalArgumentException(name + ": bits cannot be zero or negative");
         if (bits > 31)
-            throw new IllegalArgumentException(name + ": at the moment bits cannot be >32");
+            throw new IllegalArgumentException(name + ": at the moment the number of reserved bits cannot be more than 31");
         this.bits = bits;
         this.name = name;
         this.storeTwoDirections = storeTwoDirections;
@@ -157,7 +157,7 @@ public class SimpleIntEncodedValue implements IntEncodedValue {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SimpleIntEncodedValue that = (SimpleIntEncodedValue) o;
+        UnsignedIntEncodedValue that = (UnsignedIntEncodedValue) o;
         return fwdDataIndex == that.fwdDataIndex &&
                 bwdDataIndex == that.bwdDataIndex &&
                 bits == that.bits &&
