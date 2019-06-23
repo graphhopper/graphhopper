@@ -4,14 +4,16 @@ ENV JAVA_OPTS "-server -Xconcurrentio -Xmx1g -Xms1g -XX:+UseG1GC -Ddw.server.app
 
 RUN mkdir -p /data && mkdir -p /graphhopper
 
+# install node - only required for JS UI
 RUN apt-get install -y wget \
-    && wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash && \. $HOME/.nvm/nvm.sh \
-    && nvm install node
+       && curl -sL https://deb.nodesource.com/setup_11.x | bash - \
+       && apt-get install -y nodejs
 
 COPY . /graphhopper/
 
 WORKDIR /graphhopper
 
+# create main.js - only required for JS UI
 RUN cd web && npm install && npm run bundleProduction && cd ..
 
 RUN ./graphhopper.sh build
