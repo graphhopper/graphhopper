@@ -70,7 +70,12 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         return this;
     }
 
-    protected boolean accept(EdgeIteratorState iter) {
+    protected boolean accept(EdgeIteratorState iter, int prevOrNextEdgeId) {
+        // for edge-based traversal we leave it for TurnWeighting to decide whether or not a u-turn is acceptable,
+        // but for node-based traversal we exclude such a turn for performance reasons already here
+        if (!traversalMode.isEdgeBased() && iter.getEdge() == prevOrNextEdgeId)
+            return false;
+
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
     }
 

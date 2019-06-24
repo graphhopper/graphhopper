@@ -269,7 +269,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     }
 
     protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        return accept(edge);
+        return accept(edge, getIncomingEdge(currEdge));
     }
 
     protected int getOrigEdgeId(EdgeIteratorState edge, boolean reverse) {

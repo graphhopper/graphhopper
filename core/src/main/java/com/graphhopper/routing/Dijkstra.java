@@ -77,7 +77,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
             int startNode = currEdge.adjNode;
             EdgeIterator iter = explorer.setBaseNode(startNode);
             while (iter.next()) {
-                if (!accept(iter))
+                if (!accept(iter, currEdge.edge))
                     continue;
 
                 double tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
