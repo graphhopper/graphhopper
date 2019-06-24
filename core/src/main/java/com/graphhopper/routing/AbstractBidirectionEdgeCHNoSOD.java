@@ -157,7 +157,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         double turnWeight = reverse
                 ? turnWeighting.calcTurnWeight(prevOrNextEdgeId, edge.getBaseNode(), incEdge)
                 : turnWeighting.calcTurnWeight(incEdge, edge.getBaseNode(), prevOrNextEdgeId);
-        if (turnWeight == Double.POSITIVE_INFINITY) {
+        if (Double.isInfinite(turnWeight)) {
             return false;
         }
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(edge);

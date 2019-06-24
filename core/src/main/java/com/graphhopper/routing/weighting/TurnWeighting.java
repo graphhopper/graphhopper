@@ -90,7 +90,7 @@ public class TurnWeighting implements Weighting {
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         long millis = superWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
-        if (prevOrNextEdgeId == EdgeIterator.NO_EDGE)
+        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId))
             return millis;
 
         // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
@@ -107,7 +107,7 @@ public class TurnWeighting implements Weighting {
      * This method calculates the turn weight separately.
      */
     public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
-        if (edgeFrom == EdgeIterator.NO_EDGE || edgeTo == EdgeIterator.NO_EDGE) {
+        if (!EdgeIterator.Edge.isValid(edgeFrom) || !EdgeIterator.Edge.isValid(edgeTo)) {
             return 0;
         }
         if (turnCostExt.isUTurn(edgeFrom, edgeTo)) {
