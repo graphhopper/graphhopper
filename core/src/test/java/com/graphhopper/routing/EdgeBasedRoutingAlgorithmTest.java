@@ -146,11 +146,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private Weighting createWeighting(FlagEncoder encoder, double uTurnCosts) {
-        TurnWeighting result = new TurnWeighting(new FastestWeighting(encoder), tcs);
-        if (!Double.isInfinite(uTurnCosts)) {
-            result.setUTurnCost(uTurnCosts);
-        }
-        return result;
+        return new TurnWeighting(new FastestWeighting(encoder), tcs, uTurnCosts);
     }
 
     @Test

@@ -38,27 +38,27 @@ public class TurnWeighting implements Weighting {
     private final TurnCostEncoder turnCostEncoder;
     private final TurnCostExtension turnCostExt;
     private final Weighting superWeighting;
-    private double uTurnCost = Double.POSITIVE_INFINITY;
+    private final double uTurnCost;
 
-    /**
-     * @param turnCostExt the turn cost storage to be used
-     */
     public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
-        this.turnCostEncoder = superWeighting.getFlagEncoder();
-        this.superWeighting = superWeighting;
-        this.turnCostExt = turnCostExt;
-
-        if (turnCostExt == null)
-            throw new RuntimeException("No storage set to calculate turn weight");
+        this(superWeighting, turnCostExt, Double.POSITIVE_INFINITY);
     }
 
     /**
-     * Set the default cost for an u-turn in seconds. Default is 40s. Should be that high to avoid
-     * 'tricking' other turn costs or restrictions.
+     * @param superWeighting the weighting that is wrapped by this {@link TurnWeighting} and used to calculate the
+     *                       edge weights for example
+     * @param turnCostExt    the turn cost storage to be used
+     * @param uTurnCost      the cost of a u-turn in seconds, this value will be applied to all u-turn costs no matter
+     *                       whether or not turnCostExt contains explicit values for these turns.
      */
-    public TurnWeighting setUTurnCost(double costInSeconds) {
-        uTurnCost = costInSeconds;
-        return this;
+    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt, double uTurnCost) {
+        this.turnCostEncoder = superWeighting.getFlagEncoder();
+        this.superWeighting = superWeighting;
+        this.turnCostExt = turnCostExt;
+        this.uTurnCost = uTurnCost;
+
+        if (turnCostExt == null)
+            throw new RuntimeException("No storage set to calculate turn weight");
     }
 
     /**

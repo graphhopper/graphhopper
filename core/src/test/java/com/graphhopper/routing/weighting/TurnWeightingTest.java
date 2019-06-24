@@ -45,8 +45,7 @@ public class TurnWeightingTest {
     public void calcWeightAndTime_defaultUTurn() {
         // for u-turns default costs get applied
         EdgeIteratorState edge = graph.edge(0, 1, 100, true);
-        TurnWeighting turnWeighting = new TurnWeighting(weighting, turnCostExt);
-        turnWeighting.setUTurnCost(40);
+        TurnWeighting turnWeighting = new TurnWeighting(weighting, turnCostExt, 40);
         assertEquals(6 + 40, turnWeighting.calcWeight(edge, false, 0), 1.e-6);
         assertEquals((6 + 40) * 1000, turnWeighting.calcMillis(edge, false, 0), 1.e-6);
     }

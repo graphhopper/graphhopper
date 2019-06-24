@@ -63,11 +63,8 @@ public class AStarTest extends AbstractRoutingAlgorithmTester {
             public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
                 Weighting w = opts.getWeighting();
                 if (traversalMode.isEdgeBased()) {
-                    TurnWeighting turnWeighting = new TurnWeighting(w, (TurnCostExtension) g.getExtension());
-                    if (allowUTurns) {
-                        turnWeighting.setUTurnCost(40);
-                    }
-                    w = turnWeighting;
+                    double uTurnCost = allowUTurns ? 40 : Double.POSITIVE_INFINITY;
+                    w = new TurnWeighting(w, (TurnCostExtension) g.getExtension(), uTurnCost);
                 }
                 return new AStar(g, w, traversalMode);
             }
