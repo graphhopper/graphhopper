@@ -191,7 +191,6 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                     continue;
                 }
                 // minor speed up
-                // todonow: really ?
                 if (currEdge.edge == iter.getEdge()) {
                     continue;
                 }
