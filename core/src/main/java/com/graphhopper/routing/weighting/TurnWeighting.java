@@ -38,34 +38,34 @@ public class TurnWeighting implements Weighting {
     private final TurnCostEncoder turnCostEncoder;
     private final TurnCostExtension turnCostExt;
     private final Weighting superWeighting;
-    private double defaultUTurnCost = 40;
+    private final double uTurnCost;
+
+    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
+        this(superWeighting, turnCostExt, Double.POSITIVE_INFINITY);
+    }
 
     /**
-     * @param turnCostExt the turn cost storage to be used
+     * @param superWeighting the weighting that is wrapped by this {@link TurnWeighting} and used to calculate the
+     *                       edge weights for example
+     * @param turnCostExt    the turn cost storage to be used
+     * @param uTurnCost      the cost of a u-turn in seconds, this value will be applied to all u-turn costs no matter
+     *                       whether or not turnCostExt contains explicit values for these turns.
      */
-    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
+    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt, double uTurnCost) {
         this.turnCostEncoder = superWeighting.getFlagEncoder();
         this.superWeighting = superWeighting;
         this.turnCostExt = turnCostExt;
+        this.uTurnCost = uTurnCost;
 
         if (turnCostExt == null)
             throw new RuntimeException("No storage set to calculate turn weight");
     }
 
     /**
-     * Set the default cost for an u-turn in seconds. Default is 40s. Should be that high to avoid
-     * 'tricking' other turn costs or restrictions.
-     */
-    public TurnWeighting setDefaultUTurnCost(double costInSeconds) {
-        defaultUTurnCost = costInSeconds;
-        return this;
-    }
-
-    /**
      * @return the default u-turn cost in seconds
      */
-    public double getDefaultTurnCost() {
-        return defaultUTurnCost;
+    public double getUTurnCost() {
+        return uTurnCost;
     }
 
     @Override
@@ -84,16 +84,13 @@ public class TurnWeighting implements Weighting {
                 ? calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
 
-        if (turnCosts == 0 && origEdgeId == prevOrNextEdgeId)
-            return weight + defaultUTurnCost;
-
         return weight + turnCosts;
     }
 
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         long millis = superWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
-        if (prevOrNextEdgeId == EdgeIterator.NO_EDGE)
+        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId))
             return millis;
 
         // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
@@ -103,19 +100,19 @@ public class TurnWeighting implements Weighting {
                 ? calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId));
 
-        if (turnCostsInSeconds == 0 && origEdgeId == prevOrNextEdgeId)
-            return millis + (long) defaultUTurnCost * 1000;
-
         return millis + 1000 * turnCostsInSeconds;
     }
 
     /**
      * This method calculates the turn weight separately.
-     * Be aware that it always returns 0 turn weight unless a turn weight was explicitly set. This means it does
-     * NOT include default u-turn costs and calling methods have to check for u-turns.
-     * todo: this should be cleaned up in #1520.
      */
     public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
+        if (!EdgeIterator.Edge.isValid(edgeFrom) || !EdgeIterator.Edge.isValid(edgeTo)) {
+            return 0;
+        }
+        if (turnCostExt.isUTurn(edgeFrom, edgeTo)) {
+            return uTurnCost;
+        }
         long turnFlags = turnCostExt.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
         if (turnCostEncoder.isTurnRestricted(turnFlags))
             return Double.POSITIVE_INFINITY;

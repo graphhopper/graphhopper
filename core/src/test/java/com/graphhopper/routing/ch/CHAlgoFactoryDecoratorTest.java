@@ -35,7 +35,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED_2DIR;
+import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 import static org.junit.Assert.*;
 
@@ -134,7 +134,7 @@ public class CHAlgoFactoryDecoratorTest {
     }
 
     private PrepareContractionHierarchies createPreparation(Weighting weighting, boolean edgedBased) {
-        TraversalMode traversalMode = edgedBased ? EDGE_BASED_2DIR : NODE_BASED;
+        TraversalMode traversalMode = edgedBased ? EDGE_BASED : NODE_BASED;
         return PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, weighting, traversalMode);
     }
 

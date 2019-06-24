@@ -320,7 +320,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             addPreparation(createCHPreparation(ghStorage, weighting, TraversalMode.NODE_BASED));
         }
         for (Weighting weighting : edgeBasedWeightings) {
-            addPreparation(createCHPreparation(ghStorage, weighting, TraversalMode.EDGE_BASED_2DIR));
+            addPreparation(createCHPreparation(ghStorage, weighting, TraversalMode.EDGE_BASED));
         }
     }
 
