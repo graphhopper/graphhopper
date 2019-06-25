@@ -114,6 +114,7 @@ public class Parameters {
          */
         public static final String PASS_THROUGH = "pass_through";
         public static final String POINT_HINT = "point_hint";
+        public static final String AVOID_SNAP = "avoid_snap";
         /**
          * default heading penalty in seconds
          */
@@ -189,7 +190,7 @@ public class Parameters {
     /**
      * Properties for the details response
      */
-    public static final class DETAILS {
+    public static final class Details {
 
         public static final String PATH_DETAILS = "details";
 

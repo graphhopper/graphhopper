@@ -58,7 +58,7 @@ public class MVTResource {
             @PathParam("z") int zInfo,
             @PathParam("x") int xInfo,
             @PathParam("y") int yInfo,
-            @QueryParam(Parameters.DETAILS.PATH_DETAILS) List<String> pathDetails) {
+            @QueryParam(Parameters.Details.PATH_DETAILS) List<String> pathDetails) {
 
         if (zInfo <= 9) {
             VectorTile.Tile.Builder mvtBuilder = VectorTile.Tile.newBuilder();

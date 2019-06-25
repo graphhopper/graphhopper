@@ -240,11 +240,15 @@ public class GraphHopperWeb implements GraphHopperAPI {
         }
 
         for (String details : request.getPathDetails()) {
-            url += "&" + Parameters.DETAILS.PATH_DETAILS + "=" + details;
+            url += "&" + Parameters.Details.PATH_DETAILS + "=" + details;
         }
 
         for (String hint : request.getPointHints()) {
             url += "&point_hint=" + WebHelper.encodeURL(hint);
+        }
+
+        for (String avoidSnap : request.getAvoidSnaps()) {
+            url += "&avoid_snap=" + WebHelper.encodeURL(avoidSnap);
         }
 
         if (!key.isEmpty()) {

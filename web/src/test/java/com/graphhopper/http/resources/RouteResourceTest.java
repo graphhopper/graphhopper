@@ -99,7 +99,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testQueryWithDirections() throws Exception {
+    public void testQueryWithDirections() {
         // Note, in general specifying directions does not work with CH, but this is an example where it works
         final Response response = app.client().target("http://localhost:8080/route?" + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240&ch.force_heading=true").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
@@ -113,7 +113,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testQueryWithStraightVia() throws Exception {
+    public void testQueryWithStraightVia() {
         // Note, in general specifying pass_through does not work with CH, but this is an example where it works
         final Response response = app.client().target("http://localhost:8080/route?point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
@@ -127,7 +127,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testJsonRounding() throws Exception {
+    public void testJsonRounding() {
         final Response response = app.client().target("http://localhost:8080/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -136,7 +136,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testFailIfElevationRequestedButNotIncluded() throws Exception {
+    public void testFailIfElevationRequestedButNotIncluded() {
         final Response response = app.client().target("http://localhost:8080/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
@@ -229,7 +229,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testPathDetailsSamePoint() throws Exception {
+    public void testPathDetailsSamePoint() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load("http://localhost:8080/route"));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.554851, 1.536198);
@@ -240,7 +240,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testPathDetailsNoConnection() throws Exception {
+    public void testPathDetailsNoConnection() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load("http://localhost:8080/route"));
         GHRequest request = new GHRequest(42.542078, 1.45586, 42.537841, 1.439981);
@@ -288,6 +288,37 @@ public class RouteResourceTest {
         request.getHints().put("turn_description", false);
         rsp = hopper.route(request);
         assertEquals("Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(3).getName());
+    }
+
+    @Test
+    public void testAvoidSnaps() {
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
+        assertTrue(hopper.load("http://localhost:8080/route"));
+        GHRequest request = new GHRequest(42.511139, 1.53285, 42.508165, 1.532271);
+        GHResponse rsp = hopper.route(request);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(490, rsp.getBest().getDistance(), 2);
+
+        request.setAvoidSnaps(Arrays.asList("tunnel"));
+        rsp = hopper.route(request);
+        assertEquals(1081, rsp.getBest().getDistance(), 2);
+    }
+
+    @Test
+    public void testAvoidSnapsAndPointHints() {
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
+        assertTrue(hopper.load("http://localhost:8080/route"));
+        GHRequest request = new GHRequest(42.511139, 1.53285, 42.508165, 1.532271);
+        request.setAvoidSnaps(Arrays.asList("tunnel"));
+        request.setPointHints(Arrays.asList("Avinguda Fiter i Rossell", ""));
+        GHResponse rsp = hopper.route(request);
+        assertEquals(1590, rsp.getBest().getDistance(), 2);
+
+        // contradicting hints should still allow routing
+        request.setAvoidSnaps(Arrays.asList("tunnel"));
+        request.setPointHints(Arrays.asList("Tunèl del Pont Pla", ""));
+        rsp = hopper.route(request);
+        assertEquals(490, rsp.getBest().getDistance(), 2);
     }
 
     @Test
@@ -339,7 +370,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testGPXWithExcludedRouteSelection() throws Exception {
+    public void testGPXWithExcludedRouteSelection() {
         final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.route=false&gpx.waypoints=false").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         String str = response.readEntity(String.class);
@@ -349,7 +380,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testGPXWithTrackAndWaypointsSelection() throws Exception {
+    public void testGPXWithTrackAndWaypointsSelection() {
         final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.track=true&gpx.route=false&gpx.waypoints=true").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         String str = response.readEntity(String.class);
@@ -370,7 +401,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testWithError() throws Exception {
+    public void testWithError() {
         final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
     }

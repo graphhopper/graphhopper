@@ -34,7 +34,7 @@ import org.junit.Test;
 import java.util.*;
 
 import static com.graphhopper.storage.AbstractGraphStorageTester.assertPList;
-import static com.graphhopper.util.Parameters.DETAILS.*;
+import static com.graphhopper.util.Parameters.Details.*;
 import static org.junit.Assert.*;
 
 /**

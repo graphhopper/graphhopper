@@ -19,7 +19,7 @@ package com.graphhopper.util.details;
 
 import com.graphhopper.util.EdgeIteratorState;
 
-import static com.graphhopper.util.Parameters.DETAILS.STREET_NAME;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 
 /**
  * Calculate the speed name segments of a Path
