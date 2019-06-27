@@ -18,7 +18,9 @@
 package com.graphhopper.util;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -44,6 +46,11 @@ public class BreadthFirstSearchTest {
     @Test
     public void testBFS() {
         BreadthFirstSearch bfs = new BreadthFirstSearch() {
+            @Override
+            protected GHBitSet createBitSet() {
+                return new GHTBitSet();
+            }
+
             @Override
             public boolean goFurther(int v) {
                 counter++;
@@ -78,6 +85,11 @@ public class BreadthFirstSearchTest {
     @Test
     public void testBFS2() {
         BreadthFirstSearch bfs = new BreadthFirstSearch() {
+            @Override
+            protected GHBitSet createBitSet() {
+                return new GHTBitSet();
+            }
+
             @Override
             public boolean goFurther(int v) {
                 counter++;
