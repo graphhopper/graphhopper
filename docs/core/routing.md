@@ -80,8 +80,9 @@ GHResponse res = hopper.route(req);
 
 ## Heading
 
-The flexibile and hybrid mode allows to add a desired heading (north based azimuth between 0 and 360 degree)
-to any point. Adding a heading makes it more likely that a route starts towards the provided direction:
+The flexible and hybrid modes allow adding a desired heading (north based azimuth between 0 and 360 degree)
+to any point. Adding a heading makes it more likely that a route starts towards the provided direction, because
+roads going into other directions are penalized (see the Routing.HEADING_PENALTY parameter)
 ```java
 GHRequest req = new GHRequest().addPoint(new GHPoint (latFrom, lonFrom), favoredHeading).addPoint(new GHPoint (latTo, lonTo));
 ```
