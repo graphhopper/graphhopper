@@ -21,6 +21,7 @@ import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -99,16 +100,19 @@ public class EdgeElevationInterpolator {
                                  final GHBitSet visitedEdgeIds, final EdgeExplorer edgeExplorer) {
         final IntSet outerNodeIds = new GHIntHashSet();
         final GHIntHashSet innerNodeIds = new GHIntHashSet();
-        gatherOuterAndInnerNodeIds(edgeExplorer, interpolatableEdge, visitedEdgeIds, outerNodeIds,
-                innerNodeIds);
-        nodeElevationInterpolator.interpolateElevationsOfInnerNodes(outerNodeIds.toArray(),
-                innerNodeIds.toArray());
+        gatherOuterAndInnerNodeIds(edgeExplorer, interpolatableEdge, visitedEdgeIds, outerNodeIds, innerNodeIds);
+        nodeElevationInterpolator.interpolateElevationsOfInnerNodes(outerNodeIds.toArray(), innerNodeIds.toArray());
     }
 
     public void gatherOuterAndInnerNodeIds(final EdgeExplorer edgeExplorer,
                                            final EdgeIteratorState interpolatableEdge, final GHBitSet visitedEdgesIds,
                                            final IntSet outerNodeIds, final GHIntHashSet innerNodeIds) {
         final BreadthFirstSearch gatherOuterAndInnerNodeIdsSearch = new BreadthFirstSearch() {
+            @Override
+            protected GHBitSet createBitSet() {
+                return new GHTBitSet();
+            }
+
             @Override
             protected boolean checkAdjacent(EdgeIteratorState edge) {
                 visitedEdgesIds.add(edge.getEdge());

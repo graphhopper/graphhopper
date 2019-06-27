@@ -21,6 +21,7 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
+import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
@@ -259,6 +260,11 @@ public class GHUtility {
     public static void printInfo(final Graph g, int startNode, final int counts, final EdgeFilter filter) {
         new BreadthFirstSearch() {
             int counter = 0;
+
+            @Override
+            protected GHBitSet createBitSet() {
+                return new GHTBitSet();
+            }
 
             @Override
             protected boolean goFurther(int nodeId) {
