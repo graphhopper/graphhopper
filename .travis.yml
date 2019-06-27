@@ -7,8 +7,8 @@ notifications:
   email:
     - github@graphhopper.com
 
-# enable container-based stack
-sudo: false
+# enable container-based stack -> no, for now we need to workaround https://github.com/travis-ci/travis-ci/issues/6593
+sudo: true
 
 install: true
 before_install:
