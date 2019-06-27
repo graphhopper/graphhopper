@@ -852,7 +852,7 @@ public class GraphHopper implements GraphHopperAPI {
             ghStorage = newGraph;
         }
 
-        if (hasElevation()) {
+        if (!hasInterpolated() && hasElevation()) {
             interpolateBridgesAndOrTunnels();
         }
 
@@ -868,7 +868,13 @@ public class GraphHopper implements GraphHopperAPI {
         loadOrPrepareLM();
     }
 
-    private void interpolateBridgesAndOrTunnels() {
+    private static final String INTERPOLATION_KEY = "prepare.elevation_interpolation.done";
+
+    private boolean hasInterpolated() {
+        return "true".equals(ghStorage.getProperties().get(INTERPOLATION_KEY));
+    }
+
+    void interpolateBridgesAndOrTunnels() {
         if (ghStorage.getEncodingManager().hasEncodedValue(RoadEnvironment.KEY)) {
             EnumEncodedValue<RoadEnvironment> roadEnvEnc = ghStorage.getEncodingManager().getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
             StopWatch sw = new StopWatch().start();
@@ -876,6 +882,7 @@ public class GraphHopper implements GraphHopperAPI {
             float tunnel = sw.stop().getSeconds();
             sw = new StopWatch().start();
             new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.BRIDGE).execute();
+            ghStorage.getProperties().put(INTERPOLATION_KEY, true);
             logger.info("Bridge interpolation " + (int) sw.stop().getSeconds() + "s, " + "tunnel interpolation " + (int) tunnel + "s");
         }
     }
