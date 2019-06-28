@@ -6,9 +6,12 @@
 
 For a start which requires only the JRE have a look [here](../web/quickstart.md). 
 Windows user can find a quick guide [here](./windows-setup.md).
-People with IDE knowledge can directly jump to [Start Development](#start-development)
+People with IDE knowledge can directly jump to [Start Development](#start-development).
 
-Now, before you proceed install git and jdk8 or jdk11, then do:
+To proceed install `git` and `openjdk8` or `openjdk11`. Get the a jdk from your package manager, 
+[AdoptOpenJDK](https://adoptopenjdk.net/) or [Red Hat](https://github.com/ojdkbuild/ojdkbuild/releases).
+
+Then do:
 
 ```bash
 git clone git://github.com/graphhopper/graphhopper.git
