@@ -8,6 +8,8 @@ RUN apt-get update -y && apt-get install -y python python-pip
 RUN pip install --upgrade awscli s3cmd python-magic
 RUN apt-get remove -y --purge python-pip
 
+RUN apk add --update bash && rm -rf /var/cache/apk/*
+
 ADD . /${APP_NAME}
 
 WORKDIR /${APP_NAME}
