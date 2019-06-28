@@ -9,12 +9,15 @@ import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.Polygon;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 import static junit.framework.TestCase.assertFalse;
@@ -114,7 +117,42 @@ public class IsochroneResourceTest {
         polygon0 = rsp.getPolygons().get(0).getGeometry().getCoordinates().get(0);
         assertTrue(polygon0.size() >= 190);
     }
+    
+    @Test
+    public void requestJsonBadType() throws IOException {
+        Response response = requestIsochrone("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=130&type=xml");
 
+        JsonNode json = parseRequestResponse(response);
+        JsonNode property = json.path("message");
+        String message = property.asText();
+
+        assertEquals("Format not supported:xml", message);
+    }
+    
+    @Test
+    public void requestJson() throws IOException {
+        Response response = requestIsochrone("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=130&type=json");
+        JsonNode json = parseRequestResponse(response);
+        assertTrue(json.has("polygons"));
+        
+        Response response2 = requestIsochrone("http://localhost:8080/isochrone?point=42.531073,1.573792&time_limit=130");
+        JsonNode json2 = parseRequestResponse(response2);
+        assertTrue(json2.has("polygons"));
+    }
+    
+    
+    private Response requestIsochrone(String url) {
+        return app.client().target(url).request().buildGet().invoke();
+    }
+    
+    private JsonNode parseRequestResponse (Response response) throws IOException {
+    	response.bufferEntity();
+        String body = response.readEntity(String.class);
+        
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readTree(body);
+    }
+    
     private boolean contains(List polygon, double lat, double lon) {
         int index = 0;
         double lats[] = new double[polygon.size()];

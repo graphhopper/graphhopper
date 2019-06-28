@@ -56,7 +56,8 @@ public class IsochroneResource {
             @QueryParam("point") GHPoint point,
             @QueryParam("result") @DefaultValue("polygon") String resultStr,
             @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
-            @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter) {
+            @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter,
+            @QueryParam("type") @DefaultValue("json") String respType) {
 
         if (nBuckets > 20 || nBuckets < 1)
             throw new IllegalArgumentException("Number of buckets has to be in the range [1, 20]");
@@ -68,6 +69,10 @@ public class IsochroneResource {
 
         if (!encodingManager.hasEncoder(vehicle))
             throw new IllegalArgumentException("vehicle not supported:" + vehicle);
+        
+        if (respType != null && !respType.equalsIgnoreCase("json") && !respType.equalsIgnoreCase("geojson")) {
+        	throw new IllegalArgumentException("Format not supported:" + respType);
+        }
 
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
@@ -141,7 +146,7 @@ public class IsochroneResource {
         // Still it would be highly appreciated if you mention us in your about page!
         final ObjectNode info = json.putObject("info");
         info.putArray("copyrights")
-                .add("GraphHopper")
+                .add("GrassHopper")
                 .add("OpenStreetMap contributors");
         info.put("took", Math.round(took * 1000));
         return Response.ok(json).build();
