@@ -141,17 +141,21 @@ public class WebHelper {
         sb.append((char) (num));
     }
 
-
-    public static ObjectNode jsonObject(GHResponse ghRsp, boolean enableInstructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, float took) {
-        ObjectNode json = JsonNodeFactory.instance.objectNode();
-        json.putPOJO("hints", ghRsp.getHints().toMap());
-        // If you replace GraphHopper with your own brand name, this is fine.
-        // Still it would be highly appreciated if you mention us in your about page!
+    public static ObjectNode jsonResponsePutInfo(ObjectNode json, float took) {
+        // Do not hesitate to you mention us and link us in your about page too!
+        // https://support.graphhopper.com/support/search/solutions?term=attribution
         final ObjectNode info = json.putObject("info");
         info.putArray("copyrights")
                 .add("GraphHopper")
                 .add("OpenStreetMap contributors");
         info.put("took", Math.round(took * 1000));
+        return json;
+    }
+
+    public static ObjectNode jsonObject(GHResponse ghRsp, boolean enableInstructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, float took) {
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
+        json.putPOJO("hints", ghRsp.getHints().toMap());
+        jsonResponsePutInfo(json, took);
         ArrayNode jsonPathList = json.putArray("paths");
         for (PathWrapper ar : ghRsp.getAll()) {
             ObjectNode jsonPath = jsonPathList.addObject();
