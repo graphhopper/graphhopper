@@ -37,6 +37,8 @@ public class IsochroneResource {
     private final EncodingManager encodingManager;
     private final DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder;
     private final GeometryFactory geometryFactory = new GeometryFactory();
+    
+    private final String[] copyrights = {"GrassHopper", "OpenStreetMap contributors"};
 
     @Inject
     public IsochroneResource(GraphHopper graphHopper, EncodingManager encodingManager, DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder) {
@@ -115,7 +117,37 @@ public class IsochroneResource {
         if ("pointlist".equalsIgnoreCase(resultStr)) {
             sw.stop();
             logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
-            return Response.fromResponse(jsonSuccessResponse(buckets, sw.getSeconds()))
+            
+            Response response = null;
+            
+            if (respType.equalsIgnoreCase("geojson")) {
+            	ArrayList<JsonFeature> features = new ArrayList<>();
+            	int rowIndex = 0;
+            	int maxIsolines = buckets.size() - 1;
+            	for (List<Coordinate> row : buckets) {
+            		// ignore the last bucket as it helps with forming the convex hull,
+            		// as it was noticed in DelaunayTriangulationIsolineBuilder.java
+            		if (rowIndex < maxIsolines) {
+            			for (Coordinate coord : row) {
+                	    	JsonFeature feature = new JsonFeature();
+                	    	HashMap<String, Object> properties = new HashMap<>();
+                	    	properties.put("bucket", rowIndex);
+                	    	// If you replace GraphHopper with your own brand name, this is fine.
+                	        // Still it would be highly appreciated if you mention us in your about page!
+                	    	properties.put("copyrights", copyrights);
+                	    	feature.setProperties(properties);
+                	    	feature.setGeometry(geometryFactory.createPoint(coord));
+                	    	features.add(feature);
+                	    }
+            		}
+            	    rowIndex++;
+            	}
+            	response = geoJsonSuccessResponse(features);
+            } else {
+            	response = jsonSuccessResponse(buckets, sw.getSeconds());
+            }
+            
+            return Response.fromResponse(response)
                     .header("X-GH-Took", "" + sw.getSeconds() * 1000)
                     .build();
         } else if ("polygon".equalsIgnoreCase(resultStr)) {
@@ -125,13 +157,26 @@ public class IsochroneResource {
                 JsonFeature feature = new JsonFeature();
                 HashMap<String, Object> properties = new HashMap<>();
                 properties.put("bucket", features.size());
+                if (respType.equalsIgnoreCase("geojson")) {
+                	// If you replace GraphHopper with your own brand name, this is fine.
+                    // Still it would be highly appreciated if you mention us in your about page!
+        	    	properties.put("copyrights", copyrights);
+                }
                 feature.setProperties(properties);
                 feature.setGeometry(geometryFactory.createPolygon(polygonShell));
                 features.add(feature);
             }
             sw.stop();
+            
+            Response response = null;
+            if (respType.equalsIgnoreCase("geojson")) {
+            	response = geoJsonSuccessResponse(features);
+            } else {
+            	response = jsonSuccessResponse(features, sw.getSeconds());
+            }
+            
             logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
-            return Response.fromResponse(jsonSuccessResponse(features, sw.getSeconds()))
+            return Response.fromResponse(response)
                     .header("X-GH-Took", "" + sw.getSeconds() * 1000)
                     .build();
         } else {
@@ -141,14 +186,23 @@ public class IsochroneResource {
 
     private Response jsonSuccessResponse(Object result, float took) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
+        
         json.putPOJO("polygons", result);
         // If you replace GraphHopper with your own brand name, this is fine.
         // Still it would be highly appreciated if you mention us in your about page!
         final ObjectNode info = json.putObject("info");
-        info.putArray("copyrights")
-                .add("GrassHopper")
-                .add("OpenStreetMap contributors");
+        info.putPOJO("copyrights", copyrights);
         info.put("took", Math.round(took * 1000));
+        
+        return Response.ok(json).build();
+    }
+    
+    private Response geoJsonSuccessResponse(Object result) {
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
+        
+        json.put("type", "FeatureCollection");
+        json.putPOJO("features", result);
+        
         return Response.ok(json).build();
     }
 }
