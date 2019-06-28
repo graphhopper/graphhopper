@@ -67,9 +67,12 @@ There is the isochrone subproject to calculate and visualize the reachable area 
 
 [![Isochrone API image](./docs/isochrone/images/isochrone.png)](./docs/web/api-doc.md#isochrone)
 
-**[Isochrone Experiments](//www.graphhopper.com/blog/2018/07/04/high-precision-reachability/)**
+**[Shortest Path Tree API](//www.graphhopper.com/blog/2018/07/04/high-precision-reachability/)**
 
 [![high precision reachability image](https://www.graphhopper.com/wp-content/uploads/2018/06/berlin-reachability-768x401.png)](https://www.graphhopper.com/blog/2018/07/04/high-precision-reachability/)
+
+To support these high precision reachability approaches there is a special /spt
+endpoint (shortest path tree). [See #1577](https://github.com/graphhopper/graphhopper/pull/1577)
 
 # Technical Overview
 
