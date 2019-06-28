@@ -4,6 +4,10 @@ ARG APP_NAME
 
 ARG ENVIRONMENT
 
+RUN apt-get install -y python python-pip
+RUN pip install --upgrade awscli s3cmd python-magic
+RUN apt-get remove -y --purge python-pip
+
 ADD . /${APP_NAME}
 
 WORKDIR /${APP_NAME}
