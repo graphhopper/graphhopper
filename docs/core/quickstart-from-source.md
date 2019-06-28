@@ -13,10 +13,8 @@ Now, before you proceed install git and jdk8 or jdk11, then do:
 ```bash
 git clone git://github.com/graphhopper/graphhopper.git
 cd graphhopper; git checkout master
-# install npm, can be omitted if no UI is needed
-wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash && \. $HOME/.nvm/nvm.sh && nvm install node
-# create main.js via npm, can be omitted if no UI is needed
-cd web && npm install && npm run bundleProduction && cd ..
+# fetches main.js, can be omitted if no UI is needed
+cd web/src/main/resources/ && ZFILE=/tmp/gh.jar && wget -O $ZFILE "https://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.graphhopper&a=graphhopper-web&v=LATEST" && unzip $ZFILE assets/js/main.js && rm $ZFILE && cd ../../../..
 ./graphhopper.sh -a web -i europe_germany_berlin.pbf
 # now go to http://localhost:8989/ and you should see something similar to GraphHopper Maps: https://graphhopper.com/maps/
 ```
@@ -99,9 +97,17 @@ assets:
     /maps: web/src/main/resources/assets/
 ```
 
-To setup the JavaScript development environment ensure the [node package manager](https://github.com/nvm-sh/nvm) 
-was already installed in the first setup steps. For windows use [nvm-windows](https://github.com/coreybutler/nvm-windows).
-The main.js was also created in these steps via `npm run bundleProduction`.
+To setup the JavaScript development environment install the [node package
+manager](https://github.com/nvm-sh/nvm):
+
+```bash
+# install npm, can be omitted if no UI is needed
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash && \. $HOME/.nvm/nvm.sh && nvm install
+# create main.js via npm, can be omitted if no UI is needed
+cd web && npm install && npm run bundleProduction && cd ..
+```
+
+For windows use [nvm-windows](https://github.com/coreybutler/nvm-windows).
 
 There are more npm commands to e.g. change the main.js on the fly or create an uglified main.js for
 production:
