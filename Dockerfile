@@ -30,6 +30,8 @@ COPY --from=intermediate /${APP_NAME}-deploy/  ${destination}
 
 RUN mkdir -p /logs/${APP_NAME}
 
+RUN apk add --update bash && rm -rf /var/cache/apk/*
+
 ARG CACHEBUST=1
 
 WORKDIR ${destination}
@@ -38,4 +40,4 @@ ENV ENVIRONMENT=${ENVIRONMENT}
 
 RUN chmod +x entrypoint.sh
 
-ENTRYPOINT sh entrypoint.sh ${ENVIRONMENT}
+ENTRYPOINT ./entrypoint.sh ${ENVIRONMENT}
