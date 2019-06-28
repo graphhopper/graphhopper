@@ -18,17 +18,21 @@
 package com.graphhopper;
 
 import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.change.ChangeGraphHelper;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -105,6 +109,57 @@ public class GraphHopperAPITest {
         }
 
         instance.close();
+    }
+
+    @Test
+    public void testDoNotInterpolateTwice1645() {
+        String loc = "./target/issue1645";
+        Helper.removeDir(new File(loc));
+        EncodingManager em = new EncodingManager.Builder(4).add(new OSMRoadEnvironmentParser()).add(new CarFlagEncoder()).build();
+        GraphHopperStorage graph = new GraphBuilder(em).setLocation(loc).set3D(true).setStore(true).create();
+
+        // we need elevation
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 42, 10, 10);
+        na.setNode(1, 42.1, 10.1, 10);
+        na.setNode(2, 42.1, 10.2, 1);
+        na.setNode(3, 42, 10.4, 1);
+
+        graph.edge(0, 1, 10, true);
+        graph.edge(2, 3, 10, true);
+
+        final AtomicInteger counter = new AtomicInteger(0);
+        GraphHopper instance = new GraphHopper().setEncodingManager(em).setElevation(true).setGraphHopperLocation(loc).setCHEnabled(false)
+                .loadGraph(graph);
+        instance.flush();
+        instance.close();
+        assertEquals(0, counter.get());
+
+        instance = new GraphHopper() {
+            @Override
+            void interpolateBridgesAndOrTunnels() {
+                counter.incrementAndGet();
+                super.interpolateBridgesAndOrTunnels();
+            }
+        }.setEncodingManager(em).setElevation(true).setCHEnabled(false);
+        instance.load(loc);
+        instance.flush();
+        instance.close();
+        assertEquals(1, counter.get());
+
+        instance = new GraphHopper() {
+            @Override
+            void interpolateBridgesAndOrTunnels() {
+                counter.incrementAndGet();
+                super.interpolateBridgesAndOrTunnels();
+            }
+        }.setEncodingManager(em).setElevation(true).setCHEnabled(false);
+        instance.load(loc);
+        instance.flush();
+        instance.close();
+        assertEquals(1, counter.get());
+
+        Helper.removeDir(new File(loc));
     }
 
     @Test

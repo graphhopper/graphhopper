@@ -229,10 +229,6 @@ public class WitnessPathSearcher {
                 if (isContracted(iter.getAdjNode())) {
                     continue;
                 }
-                // do not allow u-turns
-                if (iter.getOrigEdgeFirst() == incEdges[currKey]) {
-                    continue;
-                }
                 double edgeWeight = turnWeighting.calcWeight(iter, false, incEdges[currKey]);
                 double weight = edgeWeight + weights[currKey];
                 if (isInfinite(weight)) {
@@ -479,9 +475,6 @@ public class WitnessPathSearcher {
     }
 
     private double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-        if (inEdge == outEdge) {
-            return Double.POSITIVE_INFINITY;
-        }
         return turnWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
     }
 

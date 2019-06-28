@@ -215,11 +215,12 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
             if (!accept(iter, currEdge, reverse))
                 continue;
 
+            final double weight = calcWeight(iter, currEdge, reverse);
+            if (Double.isInfinite(weight)) {
+                continue;
+            }
             final int origEdgeId = getOrigEdgeId(iter, reverse);
             final int traversalId = getTraversalId(iter, origEdgeId, reverse);
-            final double weight = calcWeight(iter, currEdge, reverse);
-            if (Double.isInfinite(weight))
-                continue;
             SPTEntry entry = bestWeightMap.get(traversalId);
             if (entry == null) {
                 entry = createEntry(iter, origEdgeId, weight, currEdge, reverse);

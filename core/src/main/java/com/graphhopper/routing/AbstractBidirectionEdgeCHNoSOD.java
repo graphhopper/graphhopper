@@ -25,7 +25,6 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -38,20 +37,18 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     private final EdgeExplorer innerInExplorer;
     private final EdgeExplorer innerOutExplorer;
     private final TurnWeighting turnWeighting;
-    private final TurnCostExtension turnCostExtension;
 
     public AbstractBidirectionEdgeCHNoSOD(Graph graph, TurnWeighting weighting) {
-        super(graph, weighting, TraversalMode.EDGE_BASED_2DIR);
+        super(graph, weighting, TraversalMode.EDGE_BASED);
         this.turnWeighting = weighting;
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
         // important: we have to use different filter ids, otherwise this will not work with QueryGraph's edge explorer
         // cache, see #1623.
         innerInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder).setFilterId(1));
         innerOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder).setFilterId(1));
-        if (!(graph.getExtension() instanceof TurnCostExtension)) {
-            throw new IllegalArgumentException("edge-based CH algorithms require a turn cost extension");
+        if (!Double.isInfinite(turnWeighting.getUTurnCost())) {
+            throw new IllegalArgumentException("edge-based CH does not support finite u-turn costs at the moment");
         }
-        turnCostExtension = (TurnCostExtension) graph.getExtension();
     }
 
     @Override
@@ -111,9 +108,6 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         while (iter.next()) {
             final int edgeId = getOrigEdgeId(iter, !reverse);
             final int prevOrNextOrigEdgeId = getOrigEdgeId(edgeState, reverse);
-            if (!traversalMode.hasUTurnSupport() && turnCostExtension.isUTurn(edgeId, prevOrNextOrigEdgeId)) {
-                continue;
-            }
             int key = GHUtility.getEdgeKey(graph, edgeId, iter.getBaseNode(), !reverse);
             SPTEntry entryOther = bestWeightMapOther.get(key);
             if (entryOther == null) {
@@ -121,8 +115,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
             }
 
             double turnCostsAtBridgeNode = reverse ?
-                    turnWeighting.calcTurnWeight(iter.getOrigEdgeLast(), iter.getBaseNode(), prevOrNextOrigEdgeId) :
-                    turnWeighting.calcTurnWeight(prevOrNextOrigEdgeId, iter.getBaseNode(), iter.getOrigEdgeFirst());
+                    turnWeighting.calcTurnWeight(edgeId, iter.getBaseNode(), prevOrNextOrigEdgeId) :
+                    turnWeighting.calcTurnWeight(prevOrNextOrigEdgeId, iter.getBaseNode(), edgeId);
 
             double newWeight = entry.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath() + turnCostsAtBridgeNode;
             if (newWeight < bestPath.getWeight()) {
@@ -159,12 +153,13 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     @Override
     protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
         final int incEdge = getIncomingEdge(currEdge);
-        if (incEdge == EdgeIterator.NO_EDGE)
-            return true;
         final int prevOrNextEdgeId = getOrigEdgeId(edge, !reverse);
-        if (!traversalMode.hasUTurnSupport() && turnCostExtension.isUTurn(incEdge, prevOrNextEdgeId))
+        double turnWeight = reverse
+                ? turnWeighting.calcTurnWeight(prevOrNextEdgeId, edge.getBaseNode(), incEdge)
+                : turnWeighting.calcTurnWeight(incEdge, edge.getBaseNode(), prevOrNextEdgeId);
+        if (Double.isInfinite(turnWeight)) {
             return false;
-
+        }
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(edge);
     }
 

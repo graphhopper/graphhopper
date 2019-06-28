@@ -48,6 +48,8 @@ public class OSMRoadClassParser implements TagParser {
             return edgeFlags;
 
         String roadClassTag = readerWay.getTag("highway");
+        if (roadClassTag == null)
+            return edgeFlags;
         RoadClass roadClass = RoadClass.find(roadClassTag);
         if (roadClass == OTHER && roadClassTag.endsWith("_link"))
             roadClass = RoadClass.find(roadClassTag.substring(0, roadClassTag.length() - 5));

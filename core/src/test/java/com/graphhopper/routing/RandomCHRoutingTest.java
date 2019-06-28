@@ -45,7 +45,7 @@ public class RandomCHRoutingTest {
     public static Object[] params() {
         return new Object[]{
                 TraversalMode.NODE_BASED,
-                TraversalMode.EDGE_BASED_2DIR
+                TraversalMode.EDGE_BASED
         };
     }
 
