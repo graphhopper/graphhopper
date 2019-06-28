@@ -101,9 +101,8 @@ To setup the JavaScript development environment install the [node package
 manager](https://github.com/nvm-sh/nvm):
 
 ```bash
-# install npm, can be omitted if no UI is needed
 wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash && \. $HOME/.nvm/nvm.sh && nvm install
-# create main.js via npm, can be omitted if no UI is needed
+# create main.js via npm
 cd web && npm install && npm run bundleProduction && cd ..
 ```
 
