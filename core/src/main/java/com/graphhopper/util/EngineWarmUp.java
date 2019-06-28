@@ -19,6 +19,8 @@ package com.graphhopper.util;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.storage.GraphHopperStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +80,11 @@ public class EngineWarmUp {
         for (int i = 0; i < iterations; i++) {
             BreadthFirstSearch bfs = new BreadthFirstSearch() {
                 int counter = 0;
+
+                @Override
+                protected GHBitSet createBitSet() {
+                    return new GHTBitSet(graphHopper.getMaxVisitedNodes());
+                }
 
                 @Override
                 public boolean goFurther(int nodeId) {

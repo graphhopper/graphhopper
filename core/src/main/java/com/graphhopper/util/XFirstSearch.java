@@ -18,18 +18,18 @@
 package com.graphhopper.util;
 
 import com.graphhopper.coll.GHBitSet;
-import com.graphhopper.coll.GHBitSetImpl;
 
 /**
  * This abstract class defines commonalities for BFS and DFS
- * <p>
  *
  * @author Jan Sölter
  */
 public abstract class XFirstSearch {
-    protected GHBitSet createBitSet() {
-        return new GHBitSetImpl();
-    }
+    /**
+     * Pick the BitSet implementation wisely. Use {@link com.graphhopper.coll.GHBitSetImpl} only if we are sure you visit a large portion of the graph.
+     * And if you choose {@link com.graphhopper.coll.GHTBitSet} the initial capacity can be also important for performance.
+     */
+    protected abstract GHBitSet createBitSet();
 
     public abstract void start(EdgeExplorer explorer, int startNode);
 

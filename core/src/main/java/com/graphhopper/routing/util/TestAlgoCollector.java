@@ -54,7 +54,7 @@ public class TestAlgoCollector {
         FlagEncoder encoder = opts.getWeighting().getFlagEncoder();
         if (encoder.supports(TurnWeighting.class)) {
             if (!opts.getTraversalMode().isEdgeBased()) {
-                errors.add("Cannot use TurnWeighting with a node based traversal");
+                errors.add("Cannot use TurnWeighting with node based traversal");
                 return this;
             }
             algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(new TurnWeighting(opts.getWeighting(), (TurnCostExtension) queryGraph.getExtension())).build());

@@ -24,8 +24,6 @@ import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-
 /**
  * This class creates a DijkstraPath from two Edge's resulting from a BidirectionalDijkstra
  * <p>
@@ -118,19 +116,7 @@ public class PathBidirRef extends Path {
     protected void processEdgeBwd(int edgeId, int adjNode, int nextEdgeId) {
         EdgeIteratorState edge = graph.getEdgeIteratorState(edgeId, adjNode);
         distance += edge.getDistance();
-        // special case for loop edges: since they do not have a meaningful direction we always need to read them
-        // in the 'fwd' direction, but be careful the turn costs have to be applied with reverse = true, see also
-        // same comment in EdgeBasedPath4CH
-        // todonow: consolidate this!
-        if (edge.getBaseNode() == edge.getAdjNode()) {
-            long millis = weighting.calcMillis(edge, false, NO_EDGE);
-            if (weighting instanceof TurnWeighting && EdgeIterator.Edge.isValid(nextEdgeId)) {
-                millis += 1000 * (long) ((TurnWeighting) weighting).calcTurnWeight(edge.getEdge(), edge.getBaseNode(), nextEdgeId);
-            }
-            time += millis;
-        } else {
-            time += weighting.calcMillis(edge, true, nextEdgeId);
-        }
+        time += weighting.calcMillis(edge, true, nextEdgeId);
         addEdge(edgeId);
     }
 
@@ -140,10 +126,6 @@ public class PathBidirRef extends Path {
         }
         if (weighting instanceof TurnWeighting) {
             time += ((TurnWeighting) weighting).calcTurnWeight(inEdge, viaNode, outEdge) * 1000;
-            // bugfix: should be cleaned up with u-turn refactoring #1520
-            if (inEdge == outEdge) {
-                time += ((TurnWeighting) weighting).getDefaultTurnCost() * 1000;
-            }
         }
     }
 

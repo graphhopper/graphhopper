@@ -24,11 +24,9 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -44,6 +42,8 @@ import static org.junit.Assert.*;
 public class AlternativeRouteTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
     private final EncodingManager em = EncodingManager.create(carFE);
+    private final TurnCostExtension turnCostExtension = new TurnCostExtension();
+    private final Weighting weighting = new TurnWeighting(new FastestWeighting(carFE), turnCostExtension);
     private final TraversalMode traversalMode;
 
     public AlternativeRouteTest(TraversalMode tMode) {
@@ -57,12 +57,12 @@ public class AlternativeRouteTest {
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {TraversalMode.NODE_BASED},
-                {TraversalMode.EDGE_BASED_2DIR}
+                {TraversalMode.EDGE_BASED}
         });
     }
 
     public GraphHopperStorage createTestGraph(boolean fullGraph, EncodingManager tmpEM) {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false, turnCostExtension);
         graph.create(1000);
 
         /* 9
@@ -104,8 +104,7 @@ public class AlternativeRouteTest {
     }
 
     @Test
-    public void testCalcAlternatives() throws Exception {
-        Weighting weighting = new FastestWeighting(carFE);
+    public void testCalcAlternatives() {
         GraphHopperStorage g = createTestGraph(true, em);
         AlternativeRoute altDijkstra = new AlternativeRoute(g, weighting, traversalMode);
         altDijkstra.setMaxShareFactor(0.5);
@@ -133,8 +132,7 @@ public class AlternativeRouteTest {
     }
 
     @Test
-    public void testCalcAlternatives2() throws Exception {
-        Weighting weighting = new FastestWeighting(carFE);
+    public void testCalcAlternatives2() {
         Graph g = createTestGraph(true, em);
         AlternativeRoute altDijkstra = new AlternativeRoute(g, weighting, traversalMode);
         altDijkstra.setMaxPaths(3);
@@ -155,17 +153,17 @@ public class AlternativeRouteTest {
         assertEquals(2416.0, pathInfos.get(2).getPath().getWeight(), .1);
     }
 
-    void checkAlternatives(List<AlternativeRoute.AlternativeInfo> alternativeInfos) {
+    private void checkAlternatives(List<AlternativeRoute.AlternativeInfo> alternativeInfos) {
         assertFalse("alternativeInfos should contain alternatives", alternativeInfos.isEmpty());
         AlternativeRoute.AlternativeInfo bestInfo = alternativeInfos.get(0);
         for (int i = 1; i < alternativeInfos.size(); i++) {
             AlternativeRoute.AlternativeInfo a = alternativeInfos.get(i);
             if (a.getPath().getWeight() < bestInfo.getPath().getWeight())
-                assertTrue("alternative is not longer -> " + a + " vs " + bestInfo, false);
+                fail("alternative is not longer -> " + a + " vs " + bestInfo);
 
             if (a.getShareWeight() > bestInfo.getPath().getWeight()
                     || a.getShareWeight() > a.getPath().getWeight())
-                assertTrue("share or sortby incorrect -> " + a + " vs " + bestInfo, false);
+                fail("share or sortby incorrect -> " + a + " vs " + bestInfo);
         }
     }
 

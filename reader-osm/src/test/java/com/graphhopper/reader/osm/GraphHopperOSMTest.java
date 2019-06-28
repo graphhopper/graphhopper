@@ -22,6 +22,8 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
@@ -147,7 +149,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testQueryLocationIndexWithBBox() {
-        GraphHopper gh = new GraphHopperOSM().setStoreOnFlush(true).
+        final GraphHopper gh = new GraphHopperOSM().setStoreOnFlush(true).
                 setEncodingManager(EncodingManager.create("car")).
                 setCHEnabled(false).
                 setGraphHopperLocation("./target/monacotmp-gh").
@@ -184,6 +186,11 @@ public class GraphHopperOSMTest {
 
         final Collection<Integer> bfsNodeList = new TreeSet<>();
         new BreadthFirstSearch() {
+            @Override
+            protected GHBitSet createBitSet() {
+                return new GHBitSetImpl(gh.getGraphHopperStorage().getNodes());
+            }
+
             @Override
             protected boolean goFurther(int nodeId) {
                 double lat = na.getLatitude(nodeId);

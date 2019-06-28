@@ -52,4 +52,12 @@ public class OSMRoadClassParserTest {
         parser.handleWayTags(intsRef, readerWay, FERRY, 0);
         assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, intsRef));
     }
+
+    @Test
+    public void testNoNPE() {
+        ReaderWay readerWay = new ReaderWay(1);
+        IntsRef intsRef = em.createEdgeFlags();
+        parser.handleWayTags(intsRef, readerWay, WAY, 0);
+        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, intsRef));
+    }
 }
