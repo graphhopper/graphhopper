@@ -19,8 +19,8 @@ fi
 
 echo "Building App"
 
-sudo rm -rf osrm_location*
-sudo aws s3 cp s3://cf-distance-service/osrm/latest_pbf/osrm_location.osm.pbf ./ --region ap-south-1
+rm -rf osrm_location*
+aws s3 cp s3://cf-distance-service/osrm/latest_pbf/osrm_location.osm.pbf ./ --region ap-south-1
 ./graphhopper.sh -a clean -i ./osrm_location.osm.pbf
 ./graphhopper.sh -a build -i ./osrm_location.osm.pbf
 ./graphhopper.sh -a import -i ./osrm_location.osm.pbf
