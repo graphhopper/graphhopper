@@ -21,6 +21,17 @@ To get started, read through our documentation and install the GraphHopper Web S
  * 0.8.2: [announcement](https://www.graphhopper.com/blog/2016/10/18/graphhopper-routing-engine-0-8-released/), [documentation](https://github.com/graphhopper/graphhopper/blob/0.8/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.8.2-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.8.2.apk)
  * 0.7.0: [announcement](https://www.graphhopper.com/blog/2016/06/15/graphhopper-routing-engine-0-7-released/), [documentation](https://github.com/graphhopper/graphhopper/blob/0.7/docs/index.md), [web service zip](https://graphhopper.com/public/releases/graphhopper-web-0.7.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.7.0.apk)
 
+### Docker
+
+Run a dockerized GraphHopper from sources:
+
+```bash
+docker build -t graphhopper:master .
+docker run -d --name graphhopper -v <path_data_directory>/data:/data -p 8989:8989 graphhopper:master
+```
+
+See also the builds at [Docker Hub](https://hub.docker.com/r/graphhopper/graphhopper)
+
 ### DEB or RPM package
 
 [There is an experimental step by step guide](https://github.com/graphhopper/graphhopper/issues/561#issuecomment-473567727) that creates a debian or rpm package from the cloned and compiled repository. Before we can recommend this we need some more testers and feedback :)
@@ -164,23 +175,6 @@ GraphHopper also runs on the Desktop in a Java application without internet acce
 E.g. you could use the rough user interface called MiniGraphUI provided in the tools module, see some
 visualizations done with it [here](https://graphhopper.com/blog/2016/01/19/alternative-roads-to-rome/).
 A fast and production ready map visualization for the Desktop can be easily implemented via mapsforge.
-
-### Docker
-
-Install GraphHopper via [Docker](https://github.com/graphhopper/graphhopper/pull/849).
-You only need to change the docker-compose.yml entrypoint in core/files/ to run whatever map you like.
-Then just type:
-```bash
-cd core/files/
-docker-compose up -d
-```
-
-If you don't want to use docker-compose you can do the following:
-```bash
-docker build -t graphhopper:master .
-docker run -d --name graphhopper -v <path_data_directory>/data:/data -p 8989:8989 graphhopper:master
-```
-
 
 # Features
 
