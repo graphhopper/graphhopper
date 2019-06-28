@@ -1,0 +1,21 @@
+service: 
+  expose:
+  - externalPort: 5202
+    internalPort: 8989
+    type: internal
+probePort: 8989
+ingress:
+  exposeName: graphhopper
+  annotations:
+    internal:
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "360"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "360"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "360"
+      nginx.ingress.kubernetes.io/proxy-body-size: "500m"
+resources:
+  limits:
+    cpu: 8000m
+    memory: 5000Mi
+  requests:
+    cpu: 5000m
+    memory: 2000Mi

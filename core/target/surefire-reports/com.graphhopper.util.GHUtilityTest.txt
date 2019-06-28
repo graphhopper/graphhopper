@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.graphhopper.util.GHUtilityTest
--------------------------------------------------------------------------------
-Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.024 sec - in com.graphhopper.util.GHUtilityTest

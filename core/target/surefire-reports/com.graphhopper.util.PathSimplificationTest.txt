@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.graphhopper.util.PathSimplificationTest
--------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.065 sec - in com.graphhopper.util.PathSimplificationTest

@@ -63,4 +63,4 @@ package-lock.json
 
 # Maven
 log/
-target/
+*/target/

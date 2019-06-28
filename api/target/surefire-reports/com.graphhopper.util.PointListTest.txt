@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.graphhopper.util.PointListTest
--------------------------------------------------------------------------------
-Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.029 sec - in com.graphhopper.util.PointListTest

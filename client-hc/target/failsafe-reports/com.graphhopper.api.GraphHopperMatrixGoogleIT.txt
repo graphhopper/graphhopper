@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.graphhopper.api.GraphHopperMatrixGoogleIT
--------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.704 sec - in com.graphhopper.api.GraphHopperMatrixGoogleIT

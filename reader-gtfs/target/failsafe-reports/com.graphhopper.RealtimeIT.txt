@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.graphhopper.RealtimeIT
--------------------------------------------------------------------------------
-Tests run: 17, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.014 sec - in com.graphhopper.RealtimeIT

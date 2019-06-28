@@ -15,6 +15,8 @@ if [ "$bit64" != "" ]; then
 fi
 echo "## using java $vers from $JAVA_HOME"
 
+RUN_ENV=$5
+
 function printBashUsage {
   echo "Usage:"
   echo "-a | --action <action>    must be one the following actions:"
@@ -97,88 +99,6 @@ if [ ! -f "config.yml" ]; then
   cp config-example.yml $CONFIG
 fi
 
-function ensureOsm { 
-  if [ "$OSM_FILE" = "" ]; then
-    # skip
-    return
-  elif [ ! -s "$OSM_FILE" ]; then
-    if [ -z $FORCE_DWN ]; then
-      echo "File not found '$OSM_FILE'. Press ENTER to get it from: $LINK"
-      echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
-      read -e
-    fi
-
-    echo "## now downloading OSM file from $LINK and extracting to $OSM_FILE"
-    
-    if [ ${OSM_FILE: -4} == ".pbf" ]; then
-       wget -S -nv -O "$OSM_FILE" "$LINK"
-    elif [ ${OSM_FILE: -4} == ".ghz" ]; then
-       wget -S -nv -O "$OSM_FILE" "$LINK"
-       cd $DATADIR && unzip "$BASENAME" -d "$NAME-gh"
-    else
-       # make sure aborting download does not result in loading corrupt osm file
-       TMP_OSM=temp.osm
-       wget -S -nv -O - "$LINK" | bzip2 -d > $TMP_OSM
-       mv $TMP_OSM "$OSM_FILE"
-    fi
-  
-    if [[ ! -s "$OSM_FILE" ]]; then
-      echo "ERROR couldn't download or extract OSM file $OSM_FILE ... exiting"
-      exit
-    fi
-  else
-    echo "## using existing osm file $OSM_FILE"
-  fi
-}
-
-function ensureMaven {
-  # maven home existent?
-  if [ "$MAVEN_HOME" = "" ]; then
-    # not existent but probably is maven in the path?
-    MAVEN_HOME=$(mvn -v | grep "Maven home" | cut -d' ' -f3,4,5,6)
-    if [ "$MAVEN_HOME" = "" ]; then
-      # try to detect previous downloaded version
-      MAVEN_HOME="$GH_HOME/maven"
-      if [ ! -f "$MAVEN_HOME/bin/mvn" ]; then
-        echo "No Maven found in the PATH. Now downloading+installing it to $MAVEN_HOME"
-        cd "$GH_HOME"
-        MVN_PACKAGE=apache-maven-3.5.0
-        wget -O maven.zip http://archive.apache.org/dist/maven/maven-3/3.5.0/binaries/$MVN_PACKAGE-bin.zip
-        unzip maven.zip
-        mv $MVN_PACKAGE maven
-        rm maven.zip
-      fi
-    fi
-  fi
-}
-
-
-function packageJar {
-  if [ ! -f "$JAR" ]; then
-    echo "## building graphhopper jar: $JAR"
-    echo "## using maven at $MAVEN_HOME"
-    echo "## executing maven build"
-    mvn --projects web -am -DskipTests=true package
-  else
-    echo "## existing jar found $JAR"
-  fi
-  echo "## Done maven build"
-}
-
-ensureMaven
-
-## now handle actions which do not take an OSM file
-if [ "$ACTION" = "clean" ]; then
- rm -rf ./android/app/target
- rm -rf ./*/target
- rm -rf ./target
- exit
-
-elif [ "$ACTION" = "build" ]; then
- packageJar
- exit  
-fi
- 
 if [ "$FILE" = "" ]; then
   echo -e "no file specified?"
   printBashUsage
@@ -228,18 +148,15 @@ else
 fi
 
 : "${JAVA_OPTS:=-Xmx1000m -Xms1000m}"
-: "${JAR:=web/target/graphhopper-web-$VERSION.jar}"
+: "${JAR:=graphhopper-web-0.11-SNAPSHOT.jar}"
 : "${GRAPH:=$DATADIR/$NAME-gh}"
-
-ensureOsm
-packageJar
 
 echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 
 if [[ "$ACTION" = "web" ]]; then
   export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
   if [[ "$RUN_BACKGROUND" == "true" ]]; then
-    exec "$JAVA" -javaagent:newrelic.jar -Dnewrelic.environment=production $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
+    exec "$JAVA" -javaagent:newrelic.jar -Dnewrelic.environment=${RUN_ENV} $JAVA_OPTS -Dgraphhopper.datareader.file="./osrm_location.osm.pbf" -Dgraphhopper.graph.location="./osrm_location.osm-gh" \
                  $GH_WEB_OPTS -jar "$JAR" server $CONFIG <&- &
     
     if [[ "$GH_PID_FILE" != "" ]]; then
@@ -247,55 +164,8 @@ if [[ "$ACTION" = "web" ]]; then
     fi
     exit $?
   else
-    # TODO how to avoid duplicative command for foreground and background?
-    exec "$JAVA" -javaagent:newrelic.jar -Dnewrelic.environment=production $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
+    exec "$JAVA" -javaagent:newrelic.jar -Dnewrelic.environment=${RUN_ENV} $JAVA_OPTS -Dgraphhopper.datareader.file="./osrm_location.osm.pbf" -Dgraphhopper.graph.location="./osrm_location.osm-gh" \
                  $GH_WEB_OPTS -jar "$JAR" server $CONFIG
     # foreground => we never reach this here
   fi
-
-elif [ "$ACTION" = "import" ]; then
-  "$JAVA" $JAVA_OPTS -Dgraphhopper.datareader.file="$OSM_FILE" -Dgraphhopper.graph.location="$GRAPH" \
-         $GH_IMPORT_OPTS -jar "$JAR" import $CONFIG
-
-elif [ "$ACTION" = "torture" ]; then
-  execMvn --projects tools -am -DskipTests clean package
-  JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
-  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $@
-
-elif [ "$ACTION" = "measurement" ]; then
-  ARGS="$GH_WEB_OPTS graph.location=$GRAPH datareader.file=$OSM_FILE prepare.ch.weightings=fastest prepare.lm.weightings=fastest graph.flag_encoders=car \
-       prepare.min_network_size=10000 prepare.min_oneway_network_size=10000"
-
- function startMeasurement {
-    execMvn --projects tools -am -DskipTests clean package
-    COUNT=5000
-    commit_info=$(git log -n 1 --pretty=oneline)
-    JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
-    echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
-    "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.Measurement $ARGS measurement.count=$COUNT measurement.location="$M_FILE_NAME" \
-            measurement.gitinfo="$commit_info"
- }
- 
- 
- # use all <last_commits> versions starting from HEAD
- last_commits=$3
-  
- if [ "$last_commits" = "" ]; then
-   startMeasurement
-   exit
- fi
-
- current_commit=$(git log -n 1 --pretty=oneline | cut -d' ' -f1)
- commits=$(git rev-list HEAD -n $last_commits)
- for commit in $commits; do
-   git checkout $commit -q
-   M_FILE_NAME=$(git log -n 1 --pretty=oneline | grep -o "\ .*" |  tr " ,;" "_")
-   M_FILE_NAME="measurement$M_FILE_NAME.properties"
-   echo -e "\nusing commit $commit and $M_FILE_NAME"
-   
-   startMeasurement
-   echo -e "\nmeasurement.commit=$commit\n" >> "$M_FILE_NAME"
- done
- # revert checkout
- git checkout $current_commit
 fi

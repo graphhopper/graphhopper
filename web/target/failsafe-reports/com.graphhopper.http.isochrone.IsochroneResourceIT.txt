@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.graphhopper.http.isochrone.IsochroneResourceIT
--------------------------------------------------------------------------------
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.582 sec - in com.graphhopper.http.isochrone.IsochroneResourceIT

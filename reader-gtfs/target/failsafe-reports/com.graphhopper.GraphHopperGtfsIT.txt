@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.graphhopper.GraphHopperGtfsIT
--------------------------------------------------------------------------------
-Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.709 sec - in com.graphhopper.GraphHopperGtfsIT
