@@ -16,25 +16,7 @@ fi
 echo "## using java $vers from $JAVA_HOME"
 
 function printBashUsage {
-  echo "Usage:"
-  echo "-a | --action <action>    must be one the following actions:"
-  echo "     --action import      creates the graph cache only, used for later faster starts"
-  echo "     --action web         starts a local server for user access at localhost:8989 and API access at localhost:8989/route"
-  echo "     --action build       creates the graphhopper web JAR"
-  echo "     --action clean       removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)"
-  echo "     --action measurement does performance analysis of the current source version via random routes (Measurement class)"
-  echo "     --action torture     can be used to test real world routes via feeding graphhopper logs into a GraphHopper system (Torture class)"
-  echo "-c | --config <config>    specify the application configuration"
-  echo "-d | --run-background     run the application in background (detach)"
-  echo "-fd| --force-download     force the download of the OSM data file if needed"
-  echo "-h | --help               display this message"
-  echo "--host <host>             specify to which host the service should be bound"
-  echo "-i | --input <file>       path to the input map file or name of the file to download"
-  echo "--jar <file>              specify the jar file (useful if you want to reuse this script for custom builds)"
-  echo "-o | --graph-cache <dir>  directory for graph cache output"
-  echo "-p | --profiles <string>  comma separated list of vehicle profiles"
-  echo "--port <port>             start web server at specific port"
-  echo "-v | --version            print version"
+    echo "Usage"
 }
 
 VERSION=$(grep "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
