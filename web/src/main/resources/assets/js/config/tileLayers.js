@@ -94,45 +94,62 @@ if(ghenv.environment === 'development') {
     availableTileLayers["Omniscale Dev"] = omniscaleGray;
 
     require('leaflet.vectorgrid');
-    overlays = {};
-    overlays["Local MVT"] = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment", {
+    var vtLayer = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment", {
       rendererFactory: L.canvas.tile,
       maxZoom: 20,
       minZoom: 10,
+      interactive: true,
       vectorTileLayerStyles: {
         'roads': function(properties, zoom) {
-            var color, opacity = 1, weight = 1, radius = 2, rc = properties.road_class;
+            // weight == line width
+            var color, opacity = 1, weight = 1, rc = properties.road_class;
             // if(properties.speed < 30) console.log(properties)
             if(rc == "motorway") {
                 color = '#dd504b'; // red
                 weight = 3;
-                radius = 6;
             } else if(rc == "primary" || rc == "trunk") {
                 color = '#e2a012'; // orange
                 weight = 2;
-                radius = 6;
             } else if(rc == "secondary") {
                 weight = 2;
                 color = '#f7c913'; // yellow
             } else {
-                if(zoom <= 11) {
-                  // color = "white";
-                  color = "#aaa5a7"
-                  opacity = 0.2;
-                } else {
-                  color = "#aaa5a7"; /* gray */
-                }
+                color = "#aaa5a7"; // grey
             }
+            if(zoom > 16)
+               weight += 3;
+            else if(zoom > 15)
+               weight += 2;
+            else if(zoom > 13)
+               weight += 1;
+
             return {
                 weight: weight,
                 color: color,
-                opacity: opacity,
-                radius: radius
+                opacity: opacity
             }
         },
       },
-      interactive: true // use true to make sure that this VectorGrid fires mouse/pointer events
+    })
+    .on('click', function(e) {
+    })
+    .on('mouseover', function(e) {
+        console.log(e.layer.properties);
+        // remove route info
+        $("#info").children("div").remove();
+        // remove last vector tile info
+        $("#info").children("ul").remove();
+
+        var list = "";
+        $.each(e.layer.properties, function (key, value) {
+            list += "<li>" + key + ": " + value + "</li>";
+        });
+        $("#info").append("<ul>"+list+"</ul>");
+        $("#info").show();
+    }).on('mouseout', function (e) {
+//        $("#info").html("");
     });
+    overlays = { "Local MVT": vtLayer };
 }
 
 module.exports.activeLayerName = "Omniscale";
