@@ -38,7 +38,7 @@ public class IsochroneResource {
     private final DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder;
     private final GeometryFactory geometryFactory = new GeometryFactory();
     
-    private final String[] copyrights = {"GrassHopper", "OpenStreetMap contributors"};
+    private final String[] copyrights = {"GraphHopper", "OpenStreetMap contributors"};
 
     @Inject
     public IsochroneResource(GraphHopper graphHopper, EncodingManager encodingManager, DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder) {
