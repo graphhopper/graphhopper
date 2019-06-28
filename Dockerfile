@@ -38,4 +38,4 @@ ENV ENVIRONMENT=${ENVIRONMENT}
 
 RUN chmod +x entrypoint.sh
 
-ENTRYPOINT ./entrypoint.sh ${ENVIRONMENT}
+ENTRYPOINT sh entrypoint.sh ${ENVIRONMENT}

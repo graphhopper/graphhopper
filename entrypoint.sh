@@ -10,4 +10,4 @@ else
     run_env=$1
 fi
 echo ${run_env}
-./graphhopper_run.sh -a web -i ./osrm_location.osm.pbf ${run_env}
+sh graphhopper_run.sh -a web -i ./osrm_location.osm.pbf ${run_env}
