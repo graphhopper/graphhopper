@@ -35,7 +35,7 @@
     "moment": "2.22.1",
     "uglifyify": "5.0.0",
     "flatpickr": "4.4.6",
-    "leaflet.heightgraph": "0.0.1"
+    "leaflet.heightgraph": "0.1.0"
   },
   "devDependencies": {
     "jasmine": "3.1.0",
