@@ -121,30 +121,30 @@ public class IsochroneResource {
             Response response = null;
             
             if (respType.equalsIgnoreCase("geojson")) {
-            	ArrayList<JsonFeature> features = new ArrayList<>();
-            	int rowIndex = 0;
-            	int maxIsolines = buckets.size() - 1;
-            	for (List<Coordinate> row : buckets) {
-            		// ignore the last bucket as it helps with forming the convex hull,
-            		// as it was noticed in DelaunayTriangulationIsolineBuilder.java
-            		if (rowIndex < maxIsolines) {
-            			for (Coordinate coord : row) {
-                	    	JsonFeature feature = new JsonFeature();
-                	    	HashMap<String, Object> properties = new HashMap<>();
-                	    	properties.put("bucket", rowIndex);
-                	    	// If you replace GraphHopper with your own brand name, this is fine.
-                	        // Still it would be highly appreciated if you mention us in your about page!
-                	    	properties.put("copyrights", copyrights);
-                	    	feature.setProperties(properties);
-                	    	feature.setGeometry(geometryFactory.createPoint(coord));
-                	    	features.add(feature);
-                	    }
-            		}
-            	    rowIndex++;
-            	}
-            	response = geoJsonSuccessResponse(features);
+                ArrayList<JsonFeature> features = new ArrayList<>();
+                int rowIndex = 0;
+                int maxIsolines = buckets.size() - 1;
+                for (List<Coordinate> row : buckets) {
+                    // ignore the last bucket as it helps with forming the convex hull,
+                    // as it was noticed in DelaunayTriangulationIsolineBuilder.java
+                    if (rowIndex < maxIsolines) {
+                        for (Coordinate coord : row) {
+                            JsonFeature feature = new JsonFeature();
+                            HashMap<String, Object> properties = new HashMap<>();
+                            properties.put("bucket", rowIndex);
+                            // If you replace GraphHopper with your own brand name, this is fine.
+                            // Still it would be highly appreciated if you mention us in your about page!
+                            properties.put("copyrights", copyrights);
+                            feature.setProperties(properties);
+                            feature.setGeometry(geometryFactory.createPoint(coord));
+                            features.add(feature);
+                        }
+                    }
+                    rowIndex++;
+                }
+                response = geoJsonSuccessResponse(features);
             } else {
-            	response = jsonSuccessResponse(buckets, sw.getSeconds());
+                response = jsonSuccessResponse(buckets, sw.getSeconds());
             }
             
             return Response.fromResponse(response)
@@ -158,9 +158,9 @@ public class IsochroneResource {
                 HashMap<String, Object> properties = new HashMap<>();
                 properties.put("bucket", features.size());
                 if (respType.equalsIgnoreCase("geojson")) {
-                	// If you replace GraphHopper with your own brand name, this is fine.
+                    // If you replace GraphHopper with your own brand name, this is fine.
                     // Still it would be highly appreciated if you mention us in your about page!
-        	    	properties.put("copyrights", copyrights);
+                    properties.put("copyrights", copyrights);
                 }
                 feature.setProperties(properties);
                 feature.setGeometry(geometryFactory.createPolygon(polygonShell));
@@ -170,9 +170,9 @@ public class IsochroneResource {
             
             Response response = null;
             if (respType.equalsIgnoreCase("geojson")) {
-            	response = geoJsonSuccessResponse(features);
+                response = geoJsonSuccessResponse(features);
             } else {
-            	response = jsonSuccessResponse(features, sw.getSeconds());
+                response = jsonSuccessResponse(features, sw.getSeconds());
             }
             
             logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
