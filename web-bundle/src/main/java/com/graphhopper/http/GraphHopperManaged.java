@@ -18,6 +18,7 @@
 
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.json.geo.JsonFeatureCollection;
@@ -57,7 +58,7 @@ public class GraphHopperManaged implements Managed {
         if (!spatialRuleLocation.isEmpty()) {
             final BBox maxBounds = BBox.parseBBoxString(configuration.get("spatial_rules.max_bbox", "-180, 180, -90, 90"));
             try (final InputStreamReader reader = new InputStreamReader(new FileInputStream(spatialRuleLocation), UTF_CS)) {
-                JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
+                JsonFeatureCollection jsonFeatureCollection = objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readValue(reader, JsonFeatureCollection.class);
                 SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, maxBounds, jsonFeatureCollection);
             } catch (IOException e) {
                 throw new RuntimeException(e);
