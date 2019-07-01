@@ -38,8 +38,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.graphhopper.util.Helper.round6;
-import static com.graphhopper.util.Helper.toLowerCase;
+import static com.graphhopper.util.Helper.*;
 
 /**
  * Main wrapper of the GraphHopper Directions API for a simple and efficient

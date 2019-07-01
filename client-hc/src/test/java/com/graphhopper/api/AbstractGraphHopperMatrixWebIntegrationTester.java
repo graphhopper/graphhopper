@@ -6,9 +6,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import static com.graphhopper.api.GraphHopperMatrixWeb.SERVICE_URL;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -34,7 +32,7 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
         // no distances available
         try {
             assertEquals(0, res.getDistance(1, 2), 1);
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
         }
 
