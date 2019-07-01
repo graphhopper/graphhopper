@@ -1,6 +1,7 @@
 package com.graphhopper.api;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -24,6 +25,7 @@ public class GraphHopperMatrixGoogleIT {
         return new GraphHopperMatrixWeb(new GoogleMatrixSyncRequester("https://maps.googleapis.com/maps/api/distancematrix/json"));
     }
 
+    @Ignore
     @Test
     public void testMatrix() {
         GHMRequest req = AbstractGHMatrixWebTester.createRequest();
