@@ -16,10 +16,12 @@ import org.junit.Test;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class IsochroneResourceTest {
     private static final String DIR = "./target/andorra-gh/";
@@ -39,7 +41,7 @@ public class IsochroneResourceTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
             GraphHopperApplication.class, config);
 
     @AfterClass
@@ -97,7 +99,8 @@ public class IsochroneResourceTest {
         Response response = app.client().target("http://localhost:8080/route?point=-1.816719,51.557148").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
     }
-  
+
+    @Test
     public void requestWithShortest() throws Exception {
         IsochroneResponse rsp = client.isochroneGet("42.509644,1.540554", "no_key_necessary", 130,
                 -1, "car", 1, false, "shortest");

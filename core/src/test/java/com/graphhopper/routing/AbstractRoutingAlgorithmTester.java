@@ -167,7 +167,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     }
 
     protected GraphHopperStorage createGHStorage(EncodingManager em, List<? extends Weighting> weightings, boolean is3D) {
-        return new GraphBuilder(em).set3D(is3D).create();
+        return new GraphBuilder(em).set3D(is3D).withTurnCosts(true).create();
     }
 
     protected GraphHopperStorage createGHStorage(boolean is3D) {

@@ -17,10 +17,8 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.Dijkstra;
-import com.graphhopper.routing.DijkstraBidirectionCH;
-import com.graphhopper.routing.DijkstraOneToMany;
-import com.graphhopper.routing.Path;
+import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.SimpleBooleanEncodedValue;
@@ -31,17 +29,19 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
+import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
+import static com.graphhopper.util.Parameters.Routing.HEADING_PENALTY;
 import static org.junit.Assert.*;
 
 public class NodeBasedNodeContractorTest {
@@ -406,6 +406,66 @@ public class NodeBasedNodeContractorTest {
         nodeContractor.contractNode(0);
         nodeContractor.contractNode(3);
         checkNoShortcuts(lg);
+    }
+
+    @Test
+    public void routingWithHeading_fails() {
+        // heading does not work properly with CH!
+        // 3 - 2 - x - 0 - 1 - 4
+        //     |           |
+        //     5 - - - - - 6
+        graph.edge(3, 2, 10, true);
+        graph.edge(2, 0, 10, true);
+        graph.edge(0, 1, 10, true);
+        graph.edge(1, 4, 10, true);
+        graph.edge(2, 5, 10, true);
+        graph.edge(5, 6, 10, true);
+        graph.edge(6, 1, 10, true);
+        updateDistancesFor(graph, 3, 0.02, 0.00);
+        updateDistancesFor(graph, 2, 0.02, 0.01);
+        updateDistancesFor(graph, 0, 0.02, 0.03);
+        updateDistancesFor(graph, 1, 0.02, 0.04);
+        updateDistancesFor(graph, 4, 0.02, 0.05);
+        updateDistancesFor(graph, 5, 0.01, 0.01);
+        updateDistancesFor(graph, 6, 0.01, 0.01);
+
+        graph.freeze();
+        setMaxLevelOnAllNodes(lg);
+
+        // perform CH contraction
+        Weighting weighting = new FastestWeighting(encoder, new PMap().put(HEADING_PENALTY, Double.POSITIVE_INFINITY));
+        contractInOrder(lg, weighting, 0, 1, 2, 3, 4, 5, 6);
+
+        // build query graph
+        LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
+        locationIndex.prepareIndex();
+
+        QueryGraph chQueryGraph = new QueryGraph(lg);
+        chQueryGraph.lookup(Collections.singletonList(locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES)));
+
+        QueryGraph queryGraph = new QueryGraph(graph);
+        queryGraph.lookup(Collections.singletonList(locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES)));
+
+        // without heading
+        {
+            DijkstraBidirectionCH ch = new DijkstraBidirectionCH(chQueryGraph, new PreparationWeighting(weighting));
+            Path chPath = ch.calcPath(7, 3);
+            assertEquals(IntArrayList.from(7, 2, 3), chPath.calcNodes());
+        }
+        // with heading
+        {
+            queryGraph.enforceHeading(7, 90, false);
+            Dijkstra dijkstra = new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED);
+            Path path = dijkstra.calcPath(7, 3);
+            assertEquals(IntArrayList.from(7, 0, 1, 6, 5, 2, 3), path.calcNodes());
+
+            chQueryGraph.enforceHeading(7, 90, false);
+            DijkstraBidirectionCH ch = new DijkstraBidirectionCH(chQueryGraph, new PreparationWeighting(weighting));
+            Path chPath = ch.calcPath(7, 3);
+            // the route takes a u-turn at node 1 and 'skips' the virtual node when going from 0 to 3 (because it takes
+            // the shortcut from 1 to 2), which both should not be
+            assertEquals(IntArrayList.from(7, 0, 1, 0, 2, 3), chPath.calcNodes());
+        }
     }
 
     private void contractInOrder(int... nodeIds) {

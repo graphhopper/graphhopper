@@ -21,6 +21,7 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
+import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
@@ -261,6 +262,11 @@ public class GHUtility {
             int counter = 0;
 
             @Override
+            protected GHBitSet createBitSet() {
+                return new GHTBitSet();
+            }
+
+            @Override
             protected boolean goFurther(int nodeId) {
                 System.out.println(getNodeInfo(g, nodeId, filter));
                 return counter++ <= counts;
@@ -414,6 +420,11 @@ public class GHUtility {
     }
 
     public static EdgeIteratorState createMockedEdgeIteratorState(final double distance, final IntsRef flags) {
+        return createMockedEdgeIteratorState(distance, flags, 0, 1, 2, 3, 4);
+    }
+
+    public static EdgeIteratorState createMockedEdgeIteratorState(final double distance, final IntsRef flags,
+                                                                  final int base, final int adj, final int edge, final int origFirst, final int origLast) {
         return new GHUtility.DisabledEdgeIterator() {
             @Override
             public double getDistance() {
@@ -453,6 +464,36 @@ public class GHUtility {
             @Override
             public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
                 return property.getEnum(true, flags);
+            }
+
+            @Override
+            public int getEdge() {
+                return edge;
+            }
+
+            @Override
+            public int getBaseNode() {
+                return base;
+            }
+
+            @Override
+            public int getAdjNode() {
+                return adj;
+            }
+
+            @Override
+            public PointList fetchWayGeometry(int type) {
+                return Helper.createPointList(0, 2, 6, 4);
+            }
+
+            @Override
+            public int getOrigEdgeFirst() {
+                return origFirst;
+            }
+
+            @Override
+            public int getOrigEdgeLast() {
+                return origLast;
             }
         };
     }

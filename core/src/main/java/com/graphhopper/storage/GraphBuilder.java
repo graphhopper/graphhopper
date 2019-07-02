@@ -35,6 +35,7 @@ public class GraphBuilder {
     private boolean mmap;
     private boolean store;
     private boolean elevation;
+    private boolean turnCosts;
     private boolean edgeBasedCH;
     private long byteCapacity = 100;
     private Weighting singleCHWeighting;
@@ -76,6 +77,11 @@ public class GraphBuilder {
         return this;
     }
 
+    public GraphBuilder withTurnCosts(boolean turnCosts) {
+        this.turnCosts = turnCosts;
+        return this;
+    }
+
     public GraphBuilder setEdgeBasedCH(boolean edgeBasedCH) {
         this.edgeBasedCH = edgeBasedCH;
         return this;
@@ -102,7 +108,7 @@ public class GraphBuilder {
                 new MMapDirectory(location) :
                 new RAMDirectory(location, store);
 
-        GraphExtension graphExtension = encodingManager.needsTurnCostsSupport() ?
+        GraphExtension graphExtension = encodingManager.needsTurnCostsSupport() || turnCosts ?
                 new TurnCostExtension() :
                 new TurnCostExtension.NoOpExtension();
 
