@@ -166,7 +166,7 @@ public class SPTResource {
                         if (edge == null)
                             continue;
 
-                        if (col.equals(Parameters.DETAILS.STREET_NAME)) {
+                        if (col.equals(Parameters.Details.STREET_NAME)) {
                             sb.append(edge.getName().replaceAll(",", ""));
                             continue;
                         }
