@@ -267,6 +267,12 @@ module.exports.initMap = initMap;
 module.exports.adjustMapSize = adjustMapSize;
 
 module.exports.addElevation = function (geoJsonFeature, useMiles, details) {
+
+    // Don't show the elevation graph on small displays
+    if(window.innerWidth < 900 || window.innerHeight < 400){
+        return;
+    }
+
     // TODO no option to switch to miles yet
     var options = {
        width: 600,

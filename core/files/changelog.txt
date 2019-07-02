@@ -1,4 +1,5 @@
 0.13
+    removed docker compose file
     PathDetails return null instead of -1 for Infinity by default
     replaced AverageSpeedDetails by DecimalDetails
     moved TagParser into new package: com.graphhopper.routing.util.parsers
@@ -9,6 +10,7 @@
     removed MappedDecimalEncodedValue: should be replaced with FactoredDecimalEncodedValue
     DataFlagEncoder: it is now required to add EncodedValues before. graph.encoded_values: max_speed,road_class,road_environment,road_access
     instead of EncodingManager.ROUNDABOUT use Roundabout.KEY
+    changed output format of result=pointlist and moved it into separate endpoint /spt
     removed TraversalMode.EDGE_BASED_1DIR and TraversalMode.EDGE_BASED_2DIR_UTURN, renamed TraversalMode.EDGE_BASED_2DIR to TraversalMode.EDGE_BASED
     to prevent u-turns when using edge-based algorithms it is now required to use TurnWeighting, #1640
 

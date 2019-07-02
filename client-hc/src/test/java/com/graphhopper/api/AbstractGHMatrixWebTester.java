@@ -54,7 +54,7 @@ public abstract class AbstractGHMatrixWebTester {
 
         try {
             assertEquals(0., rsp.getDistance(0, 1), .1);
-            assertTrue(false);
+            fail("there should have been an exception");
         } catch (Exception ex) {
         }
     }

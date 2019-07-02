@@ -449,7 +449,7 @@ public class Measurement {
                         put("instructions", withInstructions);
 
                 if (withInstructions)
-                    req.setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED));
+                    req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED));
 
                 // put(algo + ".approximation", "BeelineSimplification").
                 // put(algo + ".epsilon", 2);

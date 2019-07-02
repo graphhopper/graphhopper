@@ -3,8 +3,9 @@ package com.graphhopper.resources;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.isochrone.algorithm.Isochrone;
+import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
+import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.*;
@@ -26,7 +27,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 @Path("isochrone")
 public class IsochroneResource {
@@ -37,8 +41,6 @@ public class IsochroneResource {
     private final EncodingManager encodingManager;
     private final DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder;
     private final GeometryFactory geometryFactory = new GeometryFactory();
-    
-    private final String[] copyrights = {"GraphHopper", "OpenStreetMap contributors"};
 
     @Inject
     public IsochroneResource(GraphHopper graphHopper, EncodingManager encodingManager, DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder) {
@@ -99,58 +101,21 @@ public class IsochroneResource {
             isochrone.setTimeLimit(timeLimitInSeconds);
         }
 
-        List<List<Coordinate>> buckets = isochrone.searchGPS(qr.getClosestNode(), nBuckets);
-        if (isochrone.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
-            throw new IllegalArgumentException("Server side reset: too many junction nodes would have to explored (" + isochrone.getVisitedNodes() + "). Let us know if you need this increased.");
-        }
-
-        int counter = 0;
-        for (List<Coordinate> bucket : buckets) {
-            if (bucket.size() < 2) {
-                throw new IllegalArgumentException("Too few points found for bucket " + counter + ". "
-                        + "Please try a different 'point', a smaller 'buckets' count or a larger 'time_limit'. "
-                        + "And let us know if you think this is a bug!");
+        if ("polygon".equalsIgnoreCase(resultStr)) {
+            List<List<Coordinate>> buckets = isochrone.searchGPS(qr.getClosestNode(), nBuckets);
+            if (isochrone.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
+                throw new IllegalArgumentException("Server side reset: too many junction nodes would have to explored (" + isochrone.getVisitedNodes() + "). Let us know if you need this increased.");
             }
-            counter++;
-        }
 
-        if ("pointlist".equalsIgnoreCase(resultStr)) {
-            sw.stop();
-            logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
-            
-            Response response = null;
-            
-            if (respType.equalsIgnoreCase("geojson")) {
-                ArrayList<JsonFeature> features = new ArrayList<>();
-                int rowIndex = 0;
-                int maxIsolines = buckets.size() - 1;
-                for (List<Coordinate> row : buckets) {
-                    // ignore the last bucket as it helps with forming the convex hull,
-                    // as it was noticed in DelaunayTriangulationIsolineBuilder.java
-                    if (rowIndex < maxIsolines) {
-                        for (Coordinate coord : row) {
-                            JsonFeature feature = new JsonFeature();
-                            HashMap<String, Object> properties = new HashMap<>();
-                            properties.put("bucket", rowIndex);
-                            // If you replace GraphHopper with your own brand name, this is fine.
-                            // Still it would be highly appreciated if you mention us in your about page!
-                            properties.put("copyrights", copyrights);
-                            feature.setProperties(properties);
-                            feature.setGeometry(geometryFactory.createPoint(coord));
-                            features.add(feature);
-                        }
-                    }
-                    rowIndex++;
+            int counter = 0;
+            for (List<Coordinate> bucket : buckets) {
+                if (bucket.size() < 2) {
+                    throw new IllegalArgumentException("Too few points found for bucket " + counter + ". "
+                            + "Please try a different 'point', a smaller 'buckets' count or a larger 'time_limit'. "
+                            + "And let us know if you think this is a bug!");
                 }
-                response = geoJsonSuccessResponse(features);
-            } else {
-                response = jsonSuccessResponse(buckets, sw.getSeconds());
+                counter++;
             }
-            
-            return Response.fromResponse(response)
-                    .header("X-GH-Took", "" + sw.getSeconds() * 1000)
-                    .build();
-        } else if ("polygon".equalsIgnoreCase(resultStr)) {
             ArrayList<JsonFeature> features = new ArrayList<>();
             List<Coordinate[]> polygonShells = delaunayTriangulationIsolineBuilder.calcList(buckets, buckets.size() - 1);
             for (Coordinate[] polygonShell : polygonShells) {
@@ -160,49 +125,32 @@ public class IsochroneResource {
                 if (respType.equalsIgnoreCase("geojson")) {
                     // If you replace GraphHopper with your own brand name, this is fine.
                     // Still it would be highly appreciated if you mention us in your about page!
+                	String[] copyrights = {"GraphHopper", "OpenStreetMap contributors"};
                     properties.put("copyrights", copyrights);
                 }
                 feature.setProperties(properties);
                 feature.setGeometry(geometryFactory.createPolygon(polygonShell));
                 features.add(feature);
             }
-            sw.stop();
+            ObjectNode json = JsonNodeFactory.instance.objectNode();
             
-            Response response = null;
+            ObjectNode finalJson = null;
             if (respType.equalsIgnoreCase("geojson")) {
-                response = geoJsonSuccessResponse(features);
+            	json.put("type", "FeatureCollection");
+                json.putPOJO("features", features);
+                finalJson = json;
             } else {
-                response = jsonSuccessResponse(features, sw.getSeconds());
+            	json.putPOJO("polygons", features);
+            	finalJson = WebHelper.jsonResponsePutInfo(json, sw.getSeconds());
             }
             
+            sw.stop();
             logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
-            return Response.fromResponse(response)
-                    .header("X-GH-Took", "" + sw.getSeconds() * 1000)
-                    .build();
+            return Response.ok(finalJson).header("X-GH-Took", "" + sw.getSeconds() * 1000).
+                    build();
+
         } else {
             throw new IllegalArgumentException("type not supported:" + resultStr);
         }
-    }
-
-    private Response jsonSuccessResponse(Object result, float took) {
-        ObjectNode json = JsonNodeFactory.instance.objectNode();
-        
-        json.putPOJO("polygons", result);
-        // If you replace GraphHopper with your own brand name, this is fine.
-        // Still it would be highly appreciated if you mention us in your about page!
-        final ObjectNode info = json.putObject("info");
-        info.putPOJO("copyrights", copyrights);
-        info.put("took", Math.round(took * 1000));
-        
-        return Response.ok(json).build();
-    }
-    
-    private Response geoJsonSuccessResponse(Object result) {
-        ObjectNode json = JsonNodeFactory.instance.objectNode();
-        
-        json.put("type", "FeatureCollection");
-        json.putPOJO("features", result);
-        
-        return Response.ok(json).build();
     }
 }

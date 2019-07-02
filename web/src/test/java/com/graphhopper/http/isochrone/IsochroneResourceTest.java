@@ -19,10 +19,12 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class IsochroneResourceTest {
     private static final String DIR = "./target/andorra-gh/";
@@ -42,7 +44,7 @@ public class IsochroneResourceTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
             GraphHopperApplication.class, config);
 
     @AfterClass
@@ -100,7 +102,8 @@ public class IsochroneResourceTest {
         Response response = app.client().target("http://localhost:8080/route?point=-1.816719,51.557148").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
     }
-  
+
+    @Test
     public void requestWithShortest() throws Exception {
         IsochroneResponse rsp = client.isochroneGet("42.509644,1.540554", "no_key_necessary", 130,
                 -1, "car", 1, false, "shortest");
@@ -183,48 +186,7 @@ public class IsochroneResourceTest {
         
         assertEquals(lastFeature.path("properties").path("bucket").asInt(), 2);
         assertEquals(lastFeature.path("geometry").path("type").asText(), "Polygon");
-    }
-    
-    @Test
-    public void requestGeoJsonPoints() throws IOException {        
-        Response response = requestIsochrone("/isochrone?point=42.531073,1.573792&time_limit=130&type=geojson&result=pointlist");
-        JsonNode json = parseRequestResponse(response);
-        
-        assertFalse(json.has("polygons"));
-        assertFalse(json.has("info"));
-        
-        assertTrue(json.has("type"));
-        assertEquals(json.path("type").asText(), "FeatureCollection");
-        
-        assertTrue(json.has("features"));
-        
-        JsonNode firstFeature = json.path("features").path(0);
-        assertTrue(firstFeature.isObject());
-        
-        assertTrue(firstFeature.path("properties").has("bucket"));
-        assertTrue(firstFeature.path("properties").has("copyrights"));
-        
-        assertEquals(firstFeature.path("type").asText(), "Feature");
-        assertEquals(firstFeature.path("geometry").path("type").asText(), "Point");
-    }
-    
-    @Test
-    public void requestGeoJsonPointsBuckets() throws IOException {        
-        Response response = requestIsochrone("/isochrone?point=42.531073,1.573792&time_limit=130&type=geojson&result=pointlist&buckets=3");
-        JsonNode json = parseRequestResponse(response);
-        
-        JsonNode features = json.path("features");
-        int length = features.size();
-        JsonNode firstFeature = features.path(0);
-        JsonNode lastFeature = features.path(length - 1);
-        
-        assertEquals(firstFeature.path("properties").path("bucket").asInt(), 0);
-        assertEquals(firstFeature.path("geometry").path("type").asText(), "Point");
-        
-        assertEquals(lastFeature.path("properties").path("bucket").asInt(), 2);
-        assertEquals(lastFeature.path("geometry").path("type").asText(), "Point");
-    }
-    
+    }    
     
     private Response requestIsochrone(String path) {
     	String url = "http://localhost:8080" + path;

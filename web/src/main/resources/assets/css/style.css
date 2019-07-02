@@ -27,6 +27,12 @@ body {
     padding-right: 5px;
 }
 
+#info ul {
+   margin-left:5px;
+   padding-left:5px;
+   list-style-type: none;
+}
+
 .route_results {
     max-height: 40%;
 }

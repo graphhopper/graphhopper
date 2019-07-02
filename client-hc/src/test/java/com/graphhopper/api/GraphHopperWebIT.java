@@ -250,7 +250,7 @@ public class GraphHopperWebIT {
         // no distances available
         try {
             assertEquals(0, res.getDistance(1, 2), 1);
-            assertTrue(false);
+            fail("there should be an exception when trying to get distances");
         } catch (Exception ex) {
         }
 
