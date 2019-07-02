@@ -12,7 +12,7 @@ import static com.graphhopper.routing.profiles.RoadClass.MOTORWAY;
 import static com.graphhopper.routing.profiles.RoadClass.TRUNK;
 import static com.graphhopper.routing.profiles.RoadEnvironment.*;
 
-public class AvoidSnapEdgeFilter implements EdgeFilter {
+public class SnapPreventionEdgeFilter implements EdgeFilter {
 
     private final EnumEncodedValue<RoadEnvironment> reEnc;
     private final EnumEncodedValue<RoadClass> rcEnc;
@@ -20,13 +20,13 @@ public class AvoidSnapEdgeFilter implements EdgeFilter {
     private boolean avoidMotorway = false, avoidTrunk;
     private boolean avoidTunnel, avoidBridge, avoidFerry, avoidFord;
 
-    public AvoidSnapEdgeFilter(EdgeFilter filter, EnumEncodedValue<RoadClass> rcEnc,
-                               EnumEncodedValue<RoadEnvironment> reEnc, List<String> avoidSnaps) {
+    public SnapPreventionEdgeFilter(EdgeFilter filter, EnumEncodedValue<RoadClass> rcEnc,
+                                    EnumEncodedValue<RoadEnvironment> reEnc, List<String> snapPreventions) {
         this.filter = filter;
         this.reEnc = reEnc;
         this.rcEnc = rcEnc;
 
-        for (String key : avoidSnaps) {
+        for (String key : snapPreventions) {
             if ("motorway".equals(key)) {
                 avoidMotorway = true;
                 continue;
@@ -45,7 +45,7 @@ public class AvoidSnapEdgeFilter implements EdgeFilter {
             else if (rc == FORD)
                 avoidFord = true;
             else
-                throw new IllegalArgumentException("Cannot find " + Parameters.Routing.AVOID_SNAP + ": " + key);
+                throw new IllegalArgumentException("Cannot find " + Parameters.Routing.SNAP_PREVENTION + ": " + key);
         }
     }
 

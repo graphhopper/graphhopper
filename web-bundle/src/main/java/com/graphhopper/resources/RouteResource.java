@@ -84,7 +84,7 @@ public class RouteResource {
             @QueryParam("algorithm") @DefaultValue("") String algoStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
             @QueryParam(POINT_HINT) List<String> pointHints,
-            @QueryParam(AVOID_SNAP) List<String> avoidPointSnaps,
+            @QueryParam(SNAP_PREVENTION) List<String> snapPreventions,
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
             @QueryParam("heading") List<Double> favoredHeadings,
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute /* default to false for the route part in next API version, see #437 */,
@@ -127,7 +127,7 @@ public class RouteResource {
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
                 setPointHints(pointHints).
-                setAvoidSnaps(avoidPointSnaps).
+                setSnapPreventions(snapPreventions).
                 setPathDetails(pathDetails).
                 getHints().
                 put(CALC_POINTS, calcPoints).

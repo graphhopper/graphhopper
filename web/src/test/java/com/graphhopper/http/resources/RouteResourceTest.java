@@ -291,7 +291,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testAvoidSnaps() {
+    public void testSnapPreventions() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load("http://localhost:8080/route"));
         GHRequest request = new GHRequest(42.511139, 1.53285, 42.508165, 1.532271);
@@ -299,23 +299,23 @@ public class RouteResourceTest {
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(490, rsp.getBest().getDistance(), 2);
 
-        request.setAvoidSnaps(Arrays.asList("tunnel"));
+        request.setSnapPreventions(Arrays.asList("tunnel"));
         rsp = hopper.route(request);
         assertEquals(1081, rsp.getBest().getDistance(), 2);
     }
 
     @Test
-    public void testAvoidSnapsAndPointHints() {
+    public void testSnapPreventionsAndPointHints() {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load("http://localhost:8080/route"));
         GHRequest request = new GHRequest(42.511139, 1.53285, 42.508165, 1.532271);
-        request.setAvoidSnaps(Arrays.asList("tunnel"));
+        request.setSnapPreventions(Arrays.asList("tunnel"));
         request.setPointHints(Arrays.asList("Avinguda Fiter i Rossell", ""));
         GHResponse rsp = hopper.route(request);
         assertEquals(1590, rsp.getBest().getDistance(), 2);
 
         // contradicting hints should still allow routing
-        request.setAvoidSnaps(Arrays.asList("tunnel"));
+        request.setSnapPreventions(Arrays.asList("tunnel"));
         request.setPointHints(Arrays.asList("Tunèl del Pont Pla", ""));
         rsp = hopper.route(request);
         assertEquals(490, rsp.getBest().getDistance(), 2);

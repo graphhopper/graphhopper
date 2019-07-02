@@ -247,8 +247,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
             url += "&point_hint=" + WebHelper.encodeURL(hint);
         }
 
-        for (String avoidSnap : request.getAvoidSnaps()) {
-            url += "&avoid_snap=" + WebHelper.encodeURL(avoidSnap);
+        for (String snapPrevention : request.getSnapPreventions()) {
+            url += "&snap_prevention=" + WebHelper.encodeURL(snapPrevention);
         }
 
         if (!key.isEmpty()) {

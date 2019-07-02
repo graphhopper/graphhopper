@@ -114,7 +114,7 @@ public class Parameters {
          */
         public static final String PASS_THROUGH = "pass_through";
         public static final String POINT_HINT = "point_hint";
-        public static final String AVOID_SNAP = "avoid_snap";
+        public static final String SNAP_PREVENTION = "snap_prevention";
         /**
          * default heading penalty in seconds
          */

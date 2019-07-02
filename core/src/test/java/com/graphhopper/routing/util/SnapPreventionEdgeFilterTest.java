@@ -13,7 +13,7 @@ import java.util.Arrays;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertFalse;
 
-public class AvoidSnapEdgeFilterTest {
+public class SnapPreventionEdgeFilterTest {
 
     @Test
     public void accept() {
@@ -26,7 +26,7 @@ public class AvoidSnapEdgeFilterTest {
         EncodingManager em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(4)).build();
         EnumEncodedValue<RoadClass> rcEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         EnumEncodedValue<RoadEnvironment> reEnc = em.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
-        AvoidSnapEdgeFilter filter = new AvoidSnapEdgeFilter(trueFilter, rcEnc, reEnc, Arrays.asList("motorway", "ferry"));
+        SnapPreventionEdgeFilter filter = new SnapPreventionEdgeFilter(trueFilter, rcEnc, reEnc, Arrays.asList("motorway", "ferry"));
 
         IntsRef intsRef = em.createEdgeFlags();
         assertTrue(filter.accept(GHUtility.createMockedEdgeIteratorState(1, intsRef)));
