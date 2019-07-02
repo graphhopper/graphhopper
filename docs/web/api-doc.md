@@ -26,7 +26,8 @@ debug            | false   | If true, the output will be formated.
 calc_points      | true    | If the points for the route should be calculated at all printing out only distance and time.
 type             | json    | Specifies the resulting format of the route, for `json` the content type will be application/json. Other possible format options: <br> `gpx`, the content type will be application/gpx+xml, see below for more parameters.
 point_hint       | -       | Optional parameter. Specifies a hint for each `point` parameter to prefer a certain street for the closest location lookup. E.g. if there is an address or house with two or more neighboring streets you can control for which street the closest location is looked up.
-details          | -       | Optional parameter. You can request additional details for the route: `average_speed`, `street_name`, `edge_id`, and `time`. The returned format for one details is `[fromRef, toRef, value]`. The `ref` references the points of the response.
+snap_prevention  | -       | Optional parameter to avoid snapping to a certain road class or road environment. Current supported values: `motorway`, `trunk`, `ferry`, `tunnel`, `bridge` and `ford`. Multiple values are specified like `snap_prevention=ferry&snap_prevention=motorway`
+details          | -       | Optional parameter. You can request additional details for the route: `average_speed`, `street_name`, `edge_id`, `road_class`, `road_environment`, `max_speed` and `time` (and see which other values are configured in `graph.encoded_values`).  Multiple values are specified like `details=average_speed&details=time`. The returned format for one detail segment is `[fromRef, toRef, value]`. The `ref` references the points of the response. Value can also be `null` if the property does not exist for one detail segment.
 
 ### GPX
 

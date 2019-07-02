@@ -38,7 +38,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.util.Helper.round6;
+import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
  * Main wrapper of the GraphHopper Directions API for a simple and efficient
@@ -239,11 +240,15 @@ public class GraphHopperWeb implements GraphHopperAPI {
         }
 
         for (String details : request.getPathDetails()) {
-            url += "&" + Parameters.DETAILS.PATH_DETAILS + "=" + details;
+            url += "&" + Parameters.Details.PATH_DETAILS + "=" + details;
         }
 
         for (String hint : request.getPointHints()) {
-            url += "&point_hint=" + WebHelper.encodeURL(hint);
+            url += "&" + Parameters.Routing.POINT_HINT + "=" + WebHelper.encodeURL(hint);
+        }
+
+        for (String snapPrevention : request.getSnapPreventions()) {
+            url += "&" + Parameters.Routing.SNAP_PREVENTION + "=" + WebHelper.encodeURL(snapPrevention);
         }
 
         if (!key.isEmpty()) {
