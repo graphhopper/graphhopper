@@ -26,16 +26,16 @@ public class SnapPreventionEdgeFilter implements EdgeFilter {
         this.reEnc = reEnc;
         this.rcEnc = rcEnc;
 
-        for (String key : snapPreventions) {
-            if ("motorway".equals(key)) {
+        for (String roadClassOrRoadEnv : snapPreventions) {
+            if ("motorway".equals(roadClassOrRoadEnv)) {
                 avoidMotorway = true;
                 continue;
-            } else if ("trunk".equals(key)) {
+            } else if ("trunk".equals(roadClassOrRoadEnv)) {
                 avoidTrunk = true;
                 continue;
             }
 
-            RoadEnvironment rc = RoadEnvironment.find(key);
+            RoadEnvironment rc = RoadEnvironment.find(roadClassOrRoadEnv);
             if (rc == TUNNEL)
                 avoidTunnel = true;
             else if (rc == BRIDGE)
@@ -45,7 +45,7 @@ public class SnapPreventionEdgeFilter implements EdgeFilter {
             else if (rc == FORD)
                 avoidFord = true;
             else
-                throw new IllegalArgumentException("Cannot find " + Parameters.Routing.SNAP_PREVENTION + ": " + key);
+                throw new IllegalArgumentException("Cannot find " + Parameters.Routing.SNAP_PREVENTION + ": " + roadClassOrRoadEnv);
         }
     }
 
