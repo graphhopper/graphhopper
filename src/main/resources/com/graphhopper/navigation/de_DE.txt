@@ -3,3 +3,7 @@ in_km=In %1$s Kilometern
 in_m=In %1$s Metern
 for_km=für %1$s Kilometer
 then=dann
+in_mi_singular=In 1 Meile
+in_mi=In %1$s Meilen
+in_ft=In %1$s Fuß
+for_mi=für %1$s Meilen

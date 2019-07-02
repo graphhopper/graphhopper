@@ -31,6 +31,7 @@ public class NavigateResponseConverterTest {
 
     private final TranslationMap trMap = new TranslationMap().doImport();
     private final TranslationMap mtrMap = new NavigateResponseConverterTranslationMap().doImport();
+    private final DistanceConfig distanceConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, mtrMap, Locale.ENGLISH);
 
     @BeforeClass
     public static void beforeClass() {
@@ -67,7 +68,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
                 setVehicle(vehicle));
 
-        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, distanceConfig);
 
         JsonNode route = json.get("routes").get(0);
         double routeDistance = route.get("distance").asDouble();
@@ -137,7 +138,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
                 setVehicle(vehicle));
 
-        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, distanceConfig);
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -166,6 +167,40 @@ public class NavigateResponseConverterTest {
     }
 
     @Test
+    public void voiceInstructionsImperialTest() {
+
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
+                setVehicle(vehicle));
+
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, new DistanceConfig(DistanceUtils.Unit.IMPERIAL, mtrMap, Locale.ENGLISH));
+
+        JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+
+        // Step 4 is about 240m long
+        JsonNode step = steps.get(4);
+        JsonNode maneuver = step.get("maneuver");
+
+        JsonNode voiceInstructions = step.get("voiceInstructions");
+        assertEquals(2, voiceInstructions.size());
+        JsonNode voiceInstruction = voiceInstructions.get(0);
+        assertEquals(200, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
+        assertEquals("In 600 feet At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3", voiceInstruction.get("announcement").asText());
+
+        // Step 15 is over 3km long
+        step = steps.get(15);
+        maneuver = step.get("maneuver");
+
+        voiceInstructions = step.get("voiceInstructions");
+        assertEquals(4, voiceInstructions.size());
+        voiceInstruction = voiceInstructions.get(0);
+        assertEquals(3220, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
+        assertEquals("In 2 miles keep right", voiceInstruction.get("announcement").asText());
+
+        voiceInstruction = voiceInstructions.get(3);
+        assertEquals("keep right", voiceInstruction.get("announcement").asText());
+    }
+
+    @Test
     public void alternativeRoutesTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
@@ -173,7 +208,7 @@ public class NavigateResponseConverterTest {
 
         assertEquals(2, rsp.getAll().size());
 
-        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, distanceConfig);
 
         JsonNode routes = json.get("routes");
         assertEquals(2, routes.size());
@@ -188,7 +223,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
                 setVehicle(vehicle));
 
-        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, distanceConfig);
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
         JsonNode voiceInstruction = steps.get(15).get("voiceInstructions").get(0);
@@ -196,7 +231,10 @@ public class NavigateResponseConverterTest {
 
         rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
                 setVehicle(vehicle).setLocale(Locale.GERMAN));
-        json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.GERMAN);
+
+        DistanceConfig distanceConfigGerman = new DistanceConfig(DistanceUtils.Unit.METRIC, mtrMap, Locale.GERMAN);
+
+        json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.GERMAN, distanceConfigGerman);
 
         steps = json.get("routes").get(0).get("legs").get(0).get("steps");
         voiceInstruction = steps.get(15).get("voiceInstructions").get(0);
@@ -210,7 +248,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
                 setVehicle(vehicle));
 
-        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, distanceConfig);
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -236,7 +274,7 @@ public class NavigateResponseConverterTest {
 
         GHResponse rsp = hopper.route(request);
 
-        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, distanceConfig);
 
         //Check that all waypoints are there and in the right order
         JsonNode waypointsJson = json.get("waypoints");
