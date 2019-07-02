@@ -75,7 +75,7 @@ public class IsochroneResource {
             throw new IllegalArgumentException("vehicle not supported:" + vehicle);
         
         if (respType != null && !respType.equalsIgnoreCase("json") && !respType.equalsIgnoreCase("geojson")) {
-        	throw new IllegalArgumentException("Format not supported:" + respType);
+            throw new IllegalArgumentException("Format not supported:" + respType);
         }
 
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
@@ -125,7 +125,7 @@ public class IsochroneResource {
                 if (respType.equalsIgnoreCase("geojson")) {
                     // If you replace GraphHopper with your own brand name, this is fine.
                     // Still it would be highly appreciated if you mention us in your about page!
-                	String[] copyrights = {"GraphHopper", "OpenStreetMap contributors"};
+                    String[] copyrights = {"GraphHopper", "OpenStreetMap contributors"};
                     properties.put("copyrights", copyrights);
                 }
                 feature.setProperties(properties);
