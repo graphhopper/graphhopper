@@ -123,10 +123,7 @@ public class IsochroneResource {
                 HashMap<String, Object> properties = new HashMap<>();
                 properties.put("bucket", features.size());
                 if (respType.equalsIgnoreCase("geojson")) {
-                    // If you replace GraphHopper with your own brand name, this is fine.
-                    // Still it would be highly appreciated if you mention us in your about page!
-                    String[] copyrights = {"GraphHopper", "OpenStreetMap contributors"};
-                    properties.put("copyrights", copyrights);
+                    properties.put("copyrights", WebHelper.COPYRIGHTS);
                 }
                 feature.setProperties(properties);
                 feature.setGeometry(geometryFactory.createPolygon(polygonShell));

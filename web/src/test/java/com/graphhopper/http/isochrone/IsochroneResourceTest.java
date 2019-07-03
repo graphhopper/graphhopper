@@ -194,7 +194,6 @@ public class IsochroneResourceTest {
     }
     
     private JsonNode parseRequestResponse (Response response) throws IOException {
-    	response.bufferEntity();
         String body = response.readEntity(String.class);
         
         ObjectMapper objectMapper = new ObjectMapper();
