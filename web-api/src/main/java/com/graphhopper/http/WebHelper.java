@@ -28,6 +28,8 @@ import com.graphhopper.util.PointList;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.NumberFormat;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -141,13 +143,16 @@ public class WebHelper {
         sb.append((char) (num));
     }
 
+    /**
+     * This includes the required attribution for OpenStreetMap.
+     * Do not hesitate to you mention us and link us in your about page
+     * https://support.graphhopper.com/support/search/solutions?term=attribution
+     */
+    public static final List<String> COPYRIGHTS = Arrays.asList("GraphHopper", "OpenStreetMap contributors");
+
     public static ObjectNode jsonResponsePutInfo(ObjectNode json, float took) {
-        // Do not hesitate to you mention us and link us in your about page too!
-        // https://support.graphhopper.com/support/search/solutions?term=attribution
         final ObjectNode info = json.putObject("info");
-        info.putArray("copyrights")
-                .add("GraphHopper")
-                .add("OpenStreetMap contributors");
+        info.putPOJO("copyrights", COPYRIGHTS);
         info.put("took", Math.round(took * 1000));
         return json;
     }

@@ -18,6 +18,7 @@
 
 package com.graphhopper.resources;
 
+import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.gtfs.*;
@@ -70,6 +71,7 @@ public class PtIsochroneResource {
         public static class Info {
             public List<String> copyrights = new ArrayList<>();
         }
+
         public List<JsonFeature> polygons = new ArrayList<>();
         public Info info = new Info();
     }
@@ -185,8 +187,7 @@ public class PtIsochroneResource {
                 properties.put("z", targetZ);
                 feature.setProperties(properties);
                 response.polygons.add(feature);
-                response.info.copyrights.add("GraphHopper");
-                response.info.copyrights.add("OpenStreetMap contributors");
+                response.info.copyrights.addAll(WebHelper.COPYRIGHTS);
                 return response;
             } else {
                 return wrap(isoline);
@@ -204,8 +205,7 @@ public class PtIsochroneResource {
 
         Response response = new Response();
         response.polygons.add(feature);
-        response.info.copyrights.add("GraphHopper");
-        response.info.copyrights.add("OpenStreetMap contributors");
+        response.info.copyrights.addAll(WebHelper.COPYRIGHTS);
         return response;
     }
 
