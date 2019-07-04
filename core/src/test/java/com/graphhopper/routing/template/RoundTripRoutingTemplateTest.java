@@ -107,30 +107,30 @@ public class RoundTripRoutingTemplateTest {
                 new RoundTripRoutingTemplate(new GHRequest(), new GHResponse(), null, 1);
 
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
-        QueryResult qr4 = locationIndex.findClosest(0.05, 0.25, EdgeFilter.ALL_EDGES);
+        QueryResult qr3 = locationIndex.findClosest(0.05, 0.25, EdgeFilter.ALL_EDGES);
+        assertEquals(3, qr3.getClosestNode());
+        QueryResult qr4 = locationIndex.findClosest(0.00, 0.05, EdgeFilter.ALL_EDGES);
         assertEquals(4, qr4.getClosestNode());
-        QueryResult qr5 = locationIndex.findClosest(0.00, 0.05, EdgeFilter.ALL_EDGES);
+        QueryResult qr5 = locationIndex.findClosest(0.00, 0.10, EdgeFilter.ALL_EDGES);
         assertEquals(5, qr5.getClosestNode());
-        QueryResult qr6 = locationIndex.findClosest(0.00, 0.10, EdgeFilter.ALL_EDGES);
-        assertEquals(6, qr6.getClosestNode());
 
         QueryGraph qGraph = new QueryGraph(g);
-        qGraph.lookup(qr4, qr5);
-        rTripRouting.setQueryResults(Arrays.asList(qr5, qr4, qr5));
+        qGraph.lookup(qr3, qr4);
+        rTripRouting.setQueryResults(Arrays.asList(qr4, qr3, qr4));
         List<Path> paths = rTripRouting.calcPaths(qGraph, new RoutingAlgorithmFactorySimple(),
                 new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         assertEquals(2, paths.size());
-        assertEquals(IntArrayList.from(new int[]{5, 6, 3, 4}), paths.get(0).calcNodes());
-        assertEquals(IntArrayList.from(new int[]{4, 8, 7, 6, 5}), paths.get(1).calcNodes());
+        assertEquals(IntArrayList.from(new int[]{4, 5, 2, 3}), paths.get(0).calcNodes());
+        assertEquals(IntArrayList.from(new int[]{3, 7, 6, 5, 4}), paths.get(1).calcNodes());
 
         qGraph = new QueryGraph(g);
-        qGraph.lookup(qr4, qr6);
-        rTripRouting.setQueryResults(Arrays.asList(qr6, qr4, qr6));
+        qGraph.lookup(qr3, qr5);
+        rTripRouting.setQueryResults(Arrays.asList(qr5, qr3, qr5));
         paths = rTripRouting.calcPaths(qGraph, new RoutingAlgorithmFactorySimple(),
                 new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         assertEquals(2, paths.size());
-        assertEquals(IntArrayList.from(new int[]{6, 3, 4}), paths.get(0).calcNodes());
-        assertEquals(IntArrayList.from(new int[]{4, 8, 7, 6}), paths.get(1).calcNodes());
+        assertEquals(IntArrayList.from(new int[]{5, 2, 3}), paths.get(0).calcNodes());
+        assertEquals(IntArrayList.from(new int[]{3, 7, 6, 5}), paths.get(1).calcNodes());
     }
 
     private Graph createTestGraph(boolean fullGraph) {

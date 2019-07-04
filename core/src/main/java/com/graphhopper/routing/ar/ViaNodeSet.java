@@ -15,28 +15,32 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.ar;
+
+import com.carrotsearch.hppc.IntArrayList;
 
 /**
- * @author Peter Karich
+ * This class stores all data concerning computed viaNodes.
+ *
+ * @author Maximilian Sturm
  */
-public abstract class AbstractAlgoPreparation {
-    private boolean prepared = false;
+public class ViaNodeSet {
+    private int[] area;
+    private IntArrayList viaNodes[][];
 
-    public void doWork() {
-        if (prepared)
-            throw new IllegalStateException("Call doWork only once!");
-        prepared = true;
-        doSpecificWork();
+    public ViaNodeSet(int[] area, IntArrayList[][] viaNodes) {
+        this.area = area;
+        this.viaNodes = viaNodes;
     }
 
-    protected abstract void doSpecificWork();
-
-    public boolean isPrepared() {
-        return prepared;
-    }
-
-    protected void setPrepared() {
-        prepared = true;
+    /**
+     * @param from
+     * @param to
+     * @return the list of viaNodes between from and to
+     */
+    public IntArrayList get(int from, int to) {
+        if (from >= area.length || to >= area.length)
+            return null;
+        return viaNodes[area[from]][area[to]];
     }
 }

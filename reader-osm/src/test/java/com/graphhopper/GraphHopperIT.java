@@ -30,10 +30,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.junit.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.Assert.*;
@@ -62,6 +59,7 @@ public class GraphHopperIT {
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
+                setAREnabled(false).
                 setGraphHopperLocation(graphFileFoot).
                 setEncodingManager(new EncodingManager(importVehicles)).
                 importOrLoad();
@@ -151,7 +149,8 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/monaco.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(new EncodingManager("car")).
+                setAREnabled(false);
         tmpHopper.importOrLoad();
 
         GHRequest request = new GHRequest();
@@ -185,7 +184,7 @@ public class GraphHopperIT {
         assertEquals(2, rsp.getAll().size());
 
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
-        assertEquals(1356, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(1384, rsp.getAll().get(1).getTime() / 1000);
 
         req.getHints().put("alternative_route.max_paths", "3");
         rsp = hopper.route(req);
@@ -193,8 +192,8 @@ public class GraphHopperIT {
         assertEquals(3, rsp.getAll().size());
 
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
-        assertEquals(1356, rsp.getAll().get(1).getTime() / 1000);
-        assertEquals(1364, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(1384, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(1402, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -203,7 +202,8 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("bike, car"));
+                setEncodingManager(new EncodingManager("bike, car")).
+                setAREnabled(false);
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(50.028917, 11.496506, 49.985228, 11.600876).
@@ -218,7 +218,7 @@ public class GraphHopperIT {
         // via unterwaiz
         assertEquals(3318, rsp.getAll().get(1).getTime() / 1000);
         // via eselslohe -> theta; BTW: here smaller time as 2nd alternative due to priority influences time order
-        assertEquals(3094, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(3151, rsp.getAll().get(2).getTime() / 1000);
 
         req = new GHRequest(50.023513, 11.548862, 49.969441, 11.537876).
                 setAlgorithm(ALT_ROUTE).setVehicle("car").setWeighting("fastest");
@@ -229,10 +229,10 @@ public class GraphHopperIT {
         assertEquals(3, rsp.getAll().size());
         // directly via obergräfenthal
         assertEquals(870, rsp.getAll().get(0).getTime() / 1000);
-        // via neudrossenfeld
-        assertEquals(958, rsp.getAll().get(1).getTime() / 1000);
         // via ramsenthal -> lerchenhof
-        assertEquals(913, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(913, rsp.getAll().get(1).getTime() / 1000);
+        // via neudrossenfeld
+        assertEquals(1045, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -241,7 +241,8 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/Laufamholzstrasse.osm.xml").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(new EncodingManager("car")).
+                setAREnabled(false);
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.46553, 11.154669, 49.465244, 11.152577).
@@ -276,7 +277,8 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car,generic", 8));
+                setEncodingManager(new EncodingManager("car,generic", 8)).
+                setAREnabled(false);
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
@@ -300,7 +302,8 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("generic,car", 8));
+                setEncodingManager(new EncodingManager("generic,car", 8)).
+                setAREnabled(false);
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202).
@@ -526,7 +529,9 @@ public class GraphHopperIT {
                 addPoint(from).
                 addPoint(via).
                 addPoint(to).
-                setVehicle(vehicle).setWeighting("fastest");
+                setVehicle(vehicle).
+                setWeighting("fastest").
+                setAlgorithm(ASTAR_BI);
 
         // Fail since points are too far
         hopper.setNonChMaxWaypointDistance(1000);
@@ -549,7 +554,9 @@ public class GraphHopperIT {
                 addPoint(new GHPoint(43.741069, 7.426854)).
                 addPoint(new GHPoint(43.740371, 7.426946)).
                 addPoint(new GHPoint(43.740794, 7.427294)).
-                setVehicle(vehicle).setWeighting("fastest");
+                setVehicle(vehicle).
+                setWeighting("fastest").
+                setAlgorithm(ASTAR_BI);
         rq.getHints().put(Routing.PASS_THROUGH, true);
         GHResponse rsp = hopper.route(rq);
 
@@ -562,7 +569,9 @@ public class GraphHopperIT {
                 addPoint(new GHPoint(43.741069, 7.426854)).
                 addPoint(new GHPoint(43.741069, 7.426854)).
                 addPoint(new GHPoint(43.740371, 7.426946)).
-                setVehicle(vehicle).setWeighting("fastest");
+                setVehicle(vehicle).
+                setWeighting("fastest").
+                setAlgorithm(ASTAR_BI);
         rq.getHints().put(Routing.PASS_THROUGH, true);
         rsp = hopper.route(rq);
         assertEquals(91, rsp.getBest().getDistance(), 5.);
@@ -575,7 +584,8 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager(importVehicles));
+                setEncodingManager(new EncodingManager(importVehicles)).
+                setAREnabled(false);
 
         tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();
@@ -625,7 +635,8 @@ public class GraphHopperIT {
     public void testSRTMWithoutTunnelInterpolation() throws Exception {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
-                .setEncodingManager(new EncodingManager(importVehicles, 8));
+                .setEncodingManager(new EncodingManager(importVehicles, 8))
+                .setAREnabled(false);
 
         tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();
@@ -651,7 +662,8 @@ public class GraphHopperIT {
     public void testSRTMWithTunnelInterpolation() throws Exception {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
-                .setEncodingManager(new EncodingManager(genericImportVehicles, 8));
+                .setEncodingManager(new EncodingManager(genericImportVehicles, 8))
+                .setAREnabled(false);
 
         tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();
@@ -687,6 +699,7 @@ public class GraphHopperIT {
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager(tmpImportVehicles)).
+                setAREnabled(false).
                 importOrLoad();
 
         GHResponse rsp = tmpHopper.route(new GHRequest(48.410987, 15.599492, 48.383419, 15.659294).
@@ -731,6 +744,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager(tmpImportVehicles)).
+                setAREnabled(false).
                 importOrLoad();
 
         assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle().toString());
@@ -771,6 +785,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager(tmpImportVehicles)).
+                setAREnabled(false).
                 importOrLoad();
 
         assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle().toString());
@@ -794,6 +809,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("bike,car")).
+                setAREnabled(false).
                 importOrLoad();
         assertEquals("bike", tmpHopper.getDefaultVehicle().toString());
         checkMultiVehiclesWithCH(tmpHopper);
@@ -806,6 +822,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("car,bike")).
+                setAREnabled(false).
                 importOrLoad();
         assertEquals("car", tmpHopper.getDefaultVehicle().toString());
         checkMultiVehiclesWithCH(tmpHopper);
@@ -815,7 +832,7 @@ public class GraphHopperIT {
     private void checkMultiVehiclesWithCH(GraphHopper tmpHopper) {
         String str = tmpHopper.getEncodingManager().toString();
         GHResponse rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
-                .setVehicle("car"));
+                .setVehicle("car").setAlgorithm(DIJKSTRA_BI));
         PathWrapper arsp = rsp.getBest();
         assertFalse("car routing for " + str + " should not have errors:" + rsp.getErrors(), rsp.hasErrors());
         assertEquals(207, arsp.getTime() / 1000f, 1);
@@ -858,7 +875,8 @@ public class GraphHopperIT {
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager(tmpImportVehicles));
+                setEncodingManager(new EncodingManager(tmpImportVehicles)).
+                setAREnabled(false);
         tmpHopper.getCHFactoryDecorator().setWeightingsAsStrings(weightCalcStr);
         tmpHopper.importOrLoad();
 
@@ -901,7 +919,8 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(new EncodingManager("car")).
+                setAREnabled(false);
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest().
@@ -910,7 +929,8 @@ public class GraphHopperIT {
                         addPoint(new GHPoint(49.984565, 11.499188)).
                         addPoint(new GHPoint(49.9847, 11.499612)).
                         setVehicle("car").setWeighting("fastest").
-                        setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED));
+                        setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED)).
+                        setAlgorithm(ASTAR_BI);
 
         GHResponse rsp = tmpHopper.route(req);
 
@@ -923,7 +943,8 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(new EncodingManager("car")).
+                setAREnabled(false);
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest().
@@ -1005,7 +1026,8 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car|turn_costs=true"));
+                setEncodingManager(new EncodingManager("car|turn_costs=true")).
+                setAREnabled(false);
         tmpHopper.importOrLoad();
 
         // with turn costs (default if none-CH and turn cost enabled)

@@ -57,7 +57,7 @@ import com.graphhopper.util.Parameters;
  * @author jansoe
  */
 public class AStarBidirection extends AbstractBidirAlgo implements RecalculationHook {
-    private ConsistentWeightApproximator weightApprox;
+    protected ConsistentWeightApproximator weightApprox;
 
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);

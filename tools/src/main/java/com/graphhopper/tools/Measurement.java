@@ -34,6 +34,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Algorithms;
+import com.graphhopper.util.Parameters.AR;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.shapes.BBox;
@@ -50,6 +51,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
+import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 
 /**
@@ -107,6 +110,13 @@ public class Measurement {
             }
 
             @Override
+            protected void loadOrPrepareAR() {
+                StopWatch sw = new StopWatch().start();
+                super.loadOrPrepareAR();
+                put(Parameters.AR.PREPARE + "time", sw.stop().getMillis());
+            }
+
+            @Override
             protected DataReader importData() throws IOException {
                 StopWatch sw = new StopWatch().start();
                 DataReader dr = super.importData();
@@ -123,6 +133,7 @@ public class Measurement {
 
         hopper.getCHFactoryDecorator().setDisablingAllowed(true);
         hopper.getLMFactoryDecorator().setDisablingAllowed(true);
+        hopper.getARFactoryDecorator().setDisablingAllowed(true);
         hopper.importOrLoad();
 
         GraphHopperStorage g = hopper.getGraphHopperStorage();
@@ -137,16 +148,19 @@ public class Measurement {
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
-            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1, true);
+            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1, true, false, false);
 
             if (hopper.getLMFactoryDecorator().isEnabled()) {
                 System.gc();
                 isLM = true;
-                int activeLMCount = 12;
+                int activeLMCount = 8;//12;
                 for (; activeLMCount > 3; activeLMCount -= 4) {
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount, true);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount, true, false, false);
                 }
-
+                activeLMCount = 8;
+                printTimeOfRouteQuery(hopper, isCH, isLM, count / 10, "routingLM" + activeLMCount + "_alt", vehicleStr, true, activeLMCount, true, true, false);
+                if (hopper.getARFactoryDecorator().isEnabled())
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 10, "routingLM" + activeLMCount + "_alt_adv", vehicleStr, true, activeLMCount, true, true, true);
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
 
@@ -158,7 +172,7 @@ public class Measurement {
                     System.gc();
                     // try just one constellation, often ~4-6 is best
                     int lmCount = 5;
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr, true, lmCount, true);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr, true, lmCount, true, false, false);
                 }
 
                 isLM = false;
@@ -167,9 +181,12 @@ public class Measurement {
                 CHGraph lg = g.getGraph(CHGraph.class, weighting);
                 fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                 printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1, true);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr, true, -1, false);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1, true);
+                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1, true, false, false);
+                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr, true, -1, false, false, false);
+                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1, true, false, false);
+                printTimeOfRouteQuery(hopper, isCH, isLM, count / 2, "routingCH_alt", vehicleStr, true, -1, true, true, false);
+                if (hopper.getARFactoryDecorator().isEnabled())
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 2, "routingCH_alt_adv", vehicleStr, true, -1, true, true, true);
             }
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
@@ -395,13 +412,15 @@ public class Measurement {
 
     private void printTimeOfRouteQuery(final GraphHopper hopper, final boolean ch, final boolean lm,
                                        int count, String prefix, final String vehicle,
-                                       final boolean withInstructions, final int activeLandmarks, final boolean sod) {
+                                       final boolean withInstructions, final int activeLandmarks, final boolean sod,
+                                       final boolean altRoute, final boolean advAltRoute) {
         final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
         final AtomicLong distSum = new AtomicLong(0);
         final AtomicLong airDistSum = new AtomicLong(0);
         final AtomicInteger failedCount = new AtomicInteger(0);
+        final AtomicInteger altFoundCount = new AtomicInteger(0);
         final DistanceCalc distCalc = new DistanceCalcEarth();
 
         final AtomicLong visitedNodesSum = new AtomicLong(0);
@@ -429,10 +448,20 @@ public class Measurement {
                         put("stall_on_demand", sod).
                         put(Landmark.DISABLE, !lm).
                         put(Landmark.ACTIVE_COUNT, activeLandmarks).
-                        put("instructions", withInstructions);
+                        put("instructions", withInstructions).
+                        put(AR.DISABLE, !advAltRoute);
 
                 if (withInstructions)
                     req.setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED));
+
+                if (altRoute) {
+                    req.setAlgorithm(ALT_ROUTE);
+                } else {
+                    if (ch)
+                        req.setAlgorithm(DIJKSTRA_BI);
+                    else
+                        req.setAlgorithm(ASTAR_BI);
+                }
 
                 // put(algo + ".approximation", "BeelineSimplification").
                 // put(algo + ".epsilon", 2);
@@ -472,6 +501,9 @@ public class Measurement {
                     if (dist < minDistance.get())
                         minDistance.set(dist);
 
+                    if (rsp.hasAlternatives())
+                        altFoundCount.incrementAndGet();
+
 //                    extractTimeSum.addAndGet(p.getExtractTime());                    
 //                    long start = System.nanoTime();
 //                    size = p.calcPoints().getSize();
@@ -485,11 +517,24 @@ public class Measurement {
         count -= failedCount.get();
 
         // if using non-bidirectional algorithm make sure you exclude CH routing
-        String algoStr = ch ? Algorithms.DIJKSTRA_BI : Algorithms.ASTAR_BI;
-        if (ch && !sod) {
-            algoStr += "_no_sod";
+        String algoStr = "";
+        if (altRoute) {
+            algoStr = ALT_ROUTE + "|";
+            if (advAltRoute)
+                algoStr += "|advanced|";
         }
+        if (ch && !sod)
+            algoStr += DIJKSTRA_BI + "|ch|no_sod";
+        else if (ch)
+            algoStr += DIJKSTRA_BI + "|ch";
+        else if (lm)
+            algoStr += ASTAR_BI + "|landmarks";
+        else
+            algoStr += ASTAR_BI + "|beeline";
+
         put(prefix + ".guessed_algorithm", algoStr);
+        if (altRoute)
+            put(prefix + ".alternative_found", (float) altFoundCount.get() / count);
         put(prefix + ".failed_count", failedCount.get());
         put(prefix + ".distance_min", minDistance.get());
         put(prefix + ".distance_mean", (float) distSum.get() / count);

@@ -15,28 +15,35 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.ar;
+
+import com.graphhopper.routing.Path;
 
 /**
- * @author Peter Karich
+ * This class is used to compare alternative routes to the main route and each other
+ *
+ * @author Maximilian Sturm
  */
-public abstract class AbstractAlgoPreparation {
-    private boolean prepared = false;
+public class AlternativeInfo {
+    private final Path path;
+    private final double sortBy;
+    private final int viaNode;
 
-    public void doWork() {
-        if (prepared)
-            throw new IllegalStateException("Call doWork only once!");
-        prepared = true;
-        doSpecificWork();
+    public AlternativeInfo(Path path, double sortBy, int viaNode) {
+        this.path = path;
+        this.sortBy = sortBy;
+        this.viaNode = viaNode;
     }
 
-    protected abstract void doSpecificWork();
-
-    public boolean isPrepared() {
-        return prepared;
+    public Path getPath() {
+        return path;
     }
 
-    protected void setPrepared() {
-        prepared = true;
+    public double getSortBy() {
+        return sortBy;
+    }
+
+    public int getViaNode() {
+        return viaNode;
     }
 }

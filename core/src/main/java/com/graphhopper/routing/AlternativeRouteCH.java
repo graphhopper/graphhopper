@@ -20,6 +20,8 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.ar.*;
+import com.graphhopper.routing.ch.Path4CH;
+import com.graphhopper.routing.ch.PreparationWeighting;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -33,8 +35,8 @@ import com.graphhopper.util.Parameters;
 import java.util.*;
 
 /**
- * This class implements the alternative paths search for the AStar algorithm using the "viaNode" method described in
- * the following papers.
+ * This class implements the alternative paths search for the CH using the "viaNode" method described in the following
+ * papers.
  * <p>
  * <ul>
  * <li>Candidate Sets for Alternative Routes in Road Networks - Luxen and Schieferdecker 2012:
@@ -46,9 +48,9 @@ import java.util.*;
  *
  * @author Maximilian Sturm
  */
-public class AlternativeRoute extends AStarBidirection {
+public class AlternativeRouteCH extends DijkstraBidirectionCH {
     private static final Comparator<AlternativeInfo> ALT_COMPARATOR
-            = new Comparator<AlternativeInfo>() {
+        = new Comparator<AlternativeInfo>() {
         @Override
         public int compare(AlternativeInfo o1,
                            AlternativeInfo o2) {
@@ -63,10 +65,6 @@ public class AlternativeRoute extends AStarBidirection {
     private int maxPaths = 3;
     private int additionalPaths = 3;
 
-    private int maxAdditionalNodes = 25000;
-    private double advAlgorithmFactor = 4;
-    private int visitedNodesFinished = -1;
-
     private int from;
     private int to;
     private ViaNodeSet viaNodeSet;
@@ -75,7 +73,7 @@ public class AlternativeRoute extends AStarBidirection {
     private ArrayList<ContactNode> contactNodes;
     private ArrayList<AlternativeInfo> alternatives;
 
-    public AlternativeRoute(Graph graph, Weighting weighting, TraversalMode traversalMode) {
+    public AlternativeRouteCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         super(graph, weighting, traversalMode);
         contactFound = new boolean[graph.getNodes()];
         contactNodes = new ArrayList<>();
@@ -153,8 +151,7 @@ public class AlternativeRoute extends AStarBidirection {
 
     /**
      * @return whether the advanced algorithm or the base algorithm is being used for this request.
-     * advanced algo: get alternatives by computing shortest paths between origin, destination and a couple of
-     *                precomputed viaNodes
+     * advanced algo: get alternatives by using precomputed viaNodes
      * base algo: get alternatives by computing contact nodes between both search spaces
      */
     public boolean isAdvancedAlgo() {
@@ -203,59 +200,30 @@ public class AlternativeRoute extends AStarBidirection {
     }
 
     /**
-     * @param mainRoute the path returned by the basic AStarBidirection
+     * @param mainRoute the path returned by the basic DijkstraBidirectionCH
      * @return a list of paths containing the main route and all good alternatives
      */
     private List<Path> calcAlternatives(Path mainRoute) {
         alternatives = new ArrayList<>();
         alternatives.add(new AlternativeInfo(mainRoute, 0, -1));
-        if (isAdvancedAlgo()) {
-            for (ViaNode node : viaNodes) {
-                int visitedNodesLeft = visitedNodesFinished + maxAdditionalNodes - getVisitedNodes();
-                if (visitedNodesLeft <= 3)
-                    break;
-                AStarBidirection aStar1 = new AStarBidirection(graph, weighting, traversalMode);
-                aStar1.setApproximation(getApproximation());
-                aStar1.setMaxVisitedNodes(visitedNodesLeft);
-                Path path1;
-                try {
-                    path1 = aStar1.calcPath(from, node.getNode());
-                    visitedCountTo += aStar1.getVisitedNodes();
-                } catch (Exception e) {
-                    visitedCountTo += aStar1.getVisitedNodes();
-                    continue;
-                }
-                visitedNodesLeft = visitedNodesFinished + maxAdditionalNodes - getVisitedNodes();
-                if (visitedNodesLeft <= 3)
-                    break;
-                AStarBidirection aStar2 = new AStarBidirection(graph, weighting, traversalMode);
-                aStar2.setApproximation(getApproximation());
-                aStar2.setMaxVisitedNodes(visitedNodesLeft);
-                Path path2;
-                try {
-                    path2 = aStar2.calcPath(node.getNode(), to);
-                    visitedCountFrom += aStar2.getVisitedNodes();
-                } catch (Exception e) {
-                    visitedCountFrom += aStar2.getVisitedNodes();
-                    continue;
-                }
-                Path altRoute = createPath(path1, path2);
-                double sortBy = calcSortBy(mainRoute, altRoute, true);
-                if (sortBy < Double.MAX_VALUE)
-                    alternatives.add(new AlternativeInfo(altRoute, sortBy, node.getNode()));
-                if (alternatives.size() == maxPaths + additionalPaths)
-                    break;
-            }
-        } else {
-            for (ContactNode node : contactNodes) {
-                Path altRoute = createPath(node.getEntryFrom(), node.getEntryTo());
-                double sortBy = calcSortBy(mainRoute, altRoute, true);
-                if (sortBy < Double.MAX_VALUE)
-                    alternatives.add(new AlternativeInfo(altRoute, sortBy, node.getNode()));
-                if (alternatives.size() == maxPaths + additionalPaths)
-                    break;
-            }
+        if (isAdvancedAlgo())
+            for (ViaNode node : viaNodes)
+                contactNodes.addAll(node.createContactPoints());
+
+        //int aa = 0;
+        //int bb = 0;
+        //int cc = contactPoints.size();
+        for (ContactNode node : contactNodes) {
+            //bb++;
+            Path altRoute = createPath(node.getEntryFrom(), node.getEntryTo());
+            double sortBy = calcSortBy(mainRoute, altRoute, true);
+            if (sortBy < Double.MAX_VALUE)
+                alternatives.add(new AlternativeInfo(altRoute, sortBy, node.getNode()));
+            if (alternatives.size() == maxPaths + additionalPaths)
+                break;
         }
+        //aa = alternatives.size();
+        //System.out.println(aa + "  / " + bb + "  / " + cc);
 
         Collections.sort(alternatives, ALT_COMPARATOR);
         boolean remove = false;
@@ -294,37 +262,6 @@ public class AlternativeRoute extends AStarBidirection {
 
     @Override
     public boolean finished() {
-        if (!super.finished())
-            return false;
-
-        // if we're using the advanced algorithm we won't have to continue searching for contact nodes but we have to
-        // define the maxVisitedNodes for the search spaces for viaNodes. This should be below 250000 nodes to get
-        // query times below 0.5 seconds
-        if (isAdvancedAlgo()) {
-            maxAdditionalNodes *= advAlgorithmFactor;
-            maxAdditionalNodes = Math.min(maxAdditionalNodes, super.maxVisitedNodes - 3);
-            visitedNodesFinished = getVisitedNodes();
-            return true;
-        }
-
-        // after the basic AStarBidirection is finished we safe the amount of visited nodes and define for how long
-        // we continue searching for contact nodes. This should be below 25000 nodes to get query times below 0.5
-        // seconds
-        if (visitedNodesFinished == -1) {
-            maxAdditionalNodes = Math.min(maxAdditionalNodes, super.maxVisitedNodes - 3);
-            visitedNodesFinished = getVisitedNodes();
-        }
-
-        // this is needed to prevent the search space for this algorithm from growing to big compared to the normal
-        // AStarBidirection
-        if (getVisitedNodes() > visitedNodesFinished + maxAdditionalNodes)
-            return true;
-
-        // finding many contact nodes means having to compare and check many alternative routes. For the most part,
-        // the first few contact nodes found will also produce the best alternatives
-        if (contactNodes.size() > (maxPaths + additionalPaths))
-            return true;
-
         if (finishedFrom && finishedTo)
             return true;
 
@@ -340,7 +277,18 @@ public class AlternativeRoute extends AStarBidirection {
             super.updateBestPath(edgeState, entryCurrent, traversalId, reverse);
             return;
         }
-        if (visitedNodesFinished >= 0) {
+        if (isAdvancedAlgo()) {
+            int node = entryCurrent.adjNode;
+            for (ViaNode viaNode : viaNodes) {
+                if (node == viaNode.getNode()) {
+                    if (!reverse)
+                        viaNode.addEntryFrom(entryCurrent);
+                    else
+                        viaNode.addEntryTo(entryCurrent);
+                    break;
+                }
+            }
+        } else {
             if (contactFound[entryCurrent.parent.adjNode]) {
                 contactFound[entryCurrent.adjNode] = true;
             } else {
@@ -370,7 +318,7 @@ public class AlternativeRoute extends AStarBidirection {
 
     @Override
     public String getName() {
-        return Parameters.Algorithms.ALT_ROUTE + (isAdvancedAlgo() ? "|advanced" : "") + "|AStar|" + weightApprox;
+        return Parameters.Algorithms.ALT_ROUTE + (isAdvancedAlgo() ? "|advanced" : "") + "|CH";
     }
 
     /**
@@ -410,7 +358,8 @@ public class AlternativeRoute extends AStarBidirection {
 
         for (int i = 0; i < mainEdges.size(); i++) {
             if (mainEdges.get(i).getEdge() == altEdges.get(i).getEdge()) {
-                sharedWeight += weighting.calcWeight(mainEdges.get(i), false, -1);
+                sharedWeight += ((PreparationWeighting) weighting).getUserWeighting()
+                        .calcWeight(mainEdges.get(i), false, -1);
             } else {
                 start = i + 1;
                 break;
@@ -418,7 +367,8 @@ public class AlternativeRoute extends AStarBidirection {
         }
         for (int i = mainEdges.size() - 1; i >= 0; i--) {
             if (mainEdges.get(i).getEdge() == altEdges.get(i + delta).getEdge()) {
-                sharedWeight += weighting.calcWeight(mainEdges.get(i), false, -1);
+                sharedWeight += ((PreparationWeighting) weighting).getUserWeighting()
+                        .calcWeight(mainEdges.get(i), false, -1);
             } else {
                 end = i + 1;
                 break;
@@ -426,7 +376,7 @@ public class AlternativeRoute extends AStarBidirection {
         }
 
         if (sharedWeight / mainRoute.getWeight() >= 1)
-            return 1;
+            return Double.MAX_VALUE;
 
         if (check)
             if (!checkAlternative(altNodes, start - 10, end + delta + 10))
@@ -481,44 +431,13 @@ public class AlternativeRoute extends AStarBidirection {
     /**
      * @param entryFrom the contactNode's from entry
      * @param entryTo the contactNode's to entry
-     * @return a path between the origin and destination which runs via the node shared by both entries. This method is
-     * used to create an alternative route with the base algorithm.
+     * @return a path between the origin and destination which runs via the node shared by both entries
      */
     private Path createPath(SPTEntry entryFrom, SPTEntry entryTo) {
-        PathBidirRef path = new PathBidirRef(graph, weighting);
+        Path4CH path = new Path4CH(graph, graph.getBaseGraph(), weighting);
         path.setSPTEntry(entryFrom);
         path.setSPTEntryTo(entryTo);
         path.setWeight(entryFrom.weight + entryTo.weight);
         return path.extract();
-    }
-
-    /**
-     * @param path1 a path from the origin to as specific node
-     * @param path2 a path from the specific node to the destination
-     * @return a path between the origin and destination which runs via the specific node. This method is used to create
-     * an alternative route with the advanced algorithm.
-     */
-    private Path createPath(Path path1, Path path2) {
-        List<EdgeIteratorState> edges = path1.calcEdges();
-        if (edges.size() == 0)
-            return new Path(graph, weighting);
-        SPTEntry currentEntry = new SPTEntry(-1, edges.get(0).getBaseNode(), 0);
-        double currentWeight = 0;
-        for (EdgeIteratorState edge : edges) {
-            currentWeight += weighting.calcWeight(edge, false, -1);
-            SPTEntry newEntry = new SPTEntry(edge.getEdge(), edge.getAdjNode(), currentWeight);
-            newEntry.parent = currentEntry;
-            currentEntry = newEntry;
-        }
-        edges = path2.calcEdges();
-        if (edges.size() == 0)
-            return new Path(graph, weighting);
-        for (EdgeIteratorState edge : edges) {
-            currentWeight += weighting.calcWeight(edge, false, -1);
-            SPTEntry newEntry = new SPTEntry(edge.getEdge(), edge.getAdjNode(), currentWeight);
-            newEntry.parent = currentEntry;
-            currentEntry = newEntry;
-        }
-        return new Path(graph, weighting).setWeight(currentWeight).setSPTEntry(currentEntry).extract();
     }
 }

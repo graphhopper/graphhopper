@@ -21,6 +21,7 @@ import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.routing.*;
+import com.graphhopper.routing.ar.ARAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
@@ -108,6 +109,9 @@ public class GraphHopper implements GraphHopperAPI {
     // for CH prepare
     private final CHAlgoFactoryDecorator chFactoryDecorator = new CHAlgoFactoryDecorator();
 
+    // for AR prepare
+    private final ARAlgoFactoryDecorator arFactoryDecorator = new ARAlgoFactoryDecorator();
+
     // for data reader
     private String dataReaderFile;
     private double dataReaderWayPointMaxDistance = 1;
@@ -121,10 +125,13 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
         lmFactoryDecorator.setEnabled(false);
+        arFactoryDecorator.setEnabled(true);
 
-        // order is important to use CH as base algo and set the approximation in the followed lm factory decorator
+        // order is important to use CH as base algo and set the approximation in the followed lm factory decorator.
+        // AR must be the last factory decorator because it need both other decorators during preparation
         algoDecorators.add(chFactoryDecorator);
         algoDecorators.add(lmFactoryDecorator);
+        algoDecorators.add(arFactoryDecorator);
     }
 
     /**
@@ -327,6 +334,20 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper setCHEnabled(boolean enable) {
         ensureNotLoaded();
         chFactoryDecorator.setEnabled(enable);
+        return this;
+    }
+
+    public final boolean isAREnabled() {
+        return arFactoryDecorator.isEnabled();
+    }
+
+    /**
+     * Enables or disables advanced alternative routes (AR). This speed-up mode for long alternative routes is enabled
+     * by default.
+     */
+    public GraphHopper setAREnabled(boolean enable) {
+        ensureNotLoaded();
+        arFactoryDecorator.setEnabled(enable);
         return this;
     }
 
@@ -598,7 +619,7 @@ public class GraphHopper implements GraphHopperAPI {
         minNetworkSize = args.getInt("prepare.min_network_size", minNetworkSize);
         minOneWayNetworkSize = args.getInt("prepare.min_one_way_network_size", minOneWayNetworkSize);
 
-        // prepare CH, LM, ...
+        // prepare CH, LM, AR, ...
         for (RoutingAlgorithmFactoryDecorator decorator : algoDecorators) {
             decorator.init(args);
         }
@@ -762,6 +783,9 @@ public class GraphHopper implements GraphHopperAPI {
             ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), ext);
         }
 
+        if (arFactoryDecorator.isEnabled())
+            initARAlgoFactoryDecorator();
+
         ghStorage.setSegmentSize(defaultSegmentSize);
 
         if (!new File(graphHopperFolder).exists())
@@ -839,6 +863,22 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
+    public final ARAlgoFactoryDecorator getARFactoryDecorator() {
+        return arFactoryDecorator;
+    }
+
+    private void initARAlgoFactoryDecorator() {
+        if (arFactoryDecorator.hasWeightings())
+            return;
+
+        for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
+            for (String arWeightingStr : arFactoryDecorator.getWeightingsAsStrings()) {
+                Weighting weighting = createWeighting(new HintsMap(arWeightingStr), encoder, null);
+                arFactoryDecorator.addWeighting(weighting);
+            }
+        }
+    }
+
     /**
      * Does the preparation and creates the location index
      */
@@ -870,6 +910,10 @@ public class GraphHopper implements GraphHopperAPI {
         if (lmFactoryDecorator.isEnabled())
             lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
         loadOrPrepareLM();
+
+        if (arFactoryDecorator.isEnabled())
+            arFactoryDecorator.createPreparations(ghStorage, chFactoryDecorator, lmFactoryDecorator);
+        loadOrPrepareAR();
     }
 
     private void interpolateBridgesAndOrTunnels() {
@@ -994,9 +1038,14 @@ public class GraphHopper implements GraphHopperAPI {
             if (!lmFactoryDecorator.isDisablingAllowed() && disableLM)
                 throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
 
+            boolean disableAR = hints.getBool(Parameters.AR.DISABLE, false);
+            if (!arFactoryDecorator.isDisablingAllowed() && disableAR)
+                throw new IllegalArgumentException("Disabling AR not allowed on the server-side");
+
             String algoStr = request.getAlgorithm();
             if (algoStr.isEmpty())
-                algoStr = chFactoryDecorator.isEnabled() && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
+                algoStr = ALT_ROUTE;
+            //    algoStr = chFactoryDecorator.isEnabled() && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
 
             List<GHPoint> points = request.getPoints();
             // TODO Maybe we should think about a isRequestValid method that checks all that stuff that we could do to fail fast
@@ -1031,10 +1080,13 @@ public class GraphHopper implements GraphHopperAPI {
                     if (!forceCHHeading && request.hasFavoredHeading(0))
                         throw new IllegalArgumentException("Heading is not (fully) supported for CHGraph. See issue #483");
 
-                    // if LM is enabled we have the LMFactory with the CH algo!
+                    // if LM or AR is enabled we have the LMFactory or ARFactory with the CH algo!
                     RoutingAlgorithmFactory chAlgoFactory = tmpAlgoFactory;
-                    if (tmpAlgoFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
-                        chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) tmpAlgoFactory).getDefaultAlgoFactory();
+                    if (chAlgoFactory instanceof ARAlgoFactoryDecorator.ARRAFactory)
+                        chAlgoFactory = ((ARAlgoFactoryDecorator.ARRAFactory) chAlgoFactory).getBaseAlgoFactory();
+
+                    if (chAlgoFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
+                        chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) chAlgoFactory).getDefaultAlgoFactory();
 
                     if (chAlgoFactory instanceof PrepareContractionHierarchies)
                         weighting = ((PrepareContractionHierarchies) chAlgoFactory).getWeighting();
@@ -1184,6 +1236,10 @@ public class GraphHopper implements GraphHopperAPI {
         return "true".equals(ghStorage.getProperties().get(Landmark.PREPARE + "done"));
     }
 
+    private boolean isARPrepared() {
+        return "true".equals(ghStorage.getProperties().get(Parameters.AR.PREPARE + "done"));
+    }
+
     protected void prepareCH() {
         boolean tmpPrepare = chFactoryDecorator.isEnabled();
         if (tmpPrepare) {
@@ -1205,6 +1261,16 @@ public class GraphHopper implements GraphHopperAPI {
             ghStorage.freeze();
             if (lmFactoryDecorator.loadOrDoWork(ghStorage.getProperties()))
                 ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
+        }
+    }
+
+    protected void loadOrPrepareAR() {
+        boolean tmpPrepare = arFactoryDecorator.isEnabled() && !arFactoryDecorator.getPreparations().isEmpty();
+        if (tmpPrepare) {
+            ensureWriteAccess();
+            ghStorage.freeze();
+            if (arFactoryDecorator.loadOrDoWork(ghStorage.getProperties()))
+                ghStorage.getProperties().put(CH.PREPARE + "done", true);
         }
     }
 

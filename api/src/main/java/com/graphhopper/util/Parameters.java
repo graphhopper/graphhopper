@@ -61,11 +61,13 @@ public class Parameters {
          * All public properties for alternative routing.
          */
         public static final class AltRoute {
-            public static final String MAX_PATHS = ALT_ROUTE + ".max_paths";
-
             public static final String MAX_WEIGHT = ALT_ROUTE + ".max_weight_factor";
 
             public static final String MAX_SHARE = ALT_ROUTE + ".max_share_factor";
+
+            public static final String MAX_PATHS = ALT_ROUTE + ".max_paths";
+
+            public static final String ADDITIONAL_PATHS = ALT_ROUTE + ".additional_paths";
         }
 
         public static final class AStar {
@@ -124,6 +126,33 @@ public class Parameters {
          * a rectangle lat1,lon1,lat2,lon2
          */
         public static final String BLOCK_AREA = "block_area";
+    }
+
+    /**
+     * Properties for routing with advanced alternative routes
+     */
+    public static final class AR {
+        public static final String PREPARE = "prepare.ar.";
+        /**
+         * This property name in HintsMap configures at runtime if advanced alternative routing should be ignored.
+         */
+        public static final String DISABLE = "ar.disable";
+        /**
+         * This property name configures at start if the DISABLE parameter can have an effect.
+         */
+        public static final String INIT_DISABLING_ALLOWED = ROUTING_INIT_PREFIX + "ar.disabling_allowed";
+        /**
+         * Specifies which alternative route parameters are used for the preparation
+         */
+        public static final String MAX_WEIGHT = PREPARE + "max_weight_factor";
+
+        public static final String MAX_SHARE = PREPARE + "max_share_factor";
+
+        public static final String MAX_PATHS = PREPARE + "max_paths";
+
+        public static final String ADDITIONAL_PATHS = PREPARE + "additional_paths";
+
+        public static final String AREAS = PREPARE + "areas";
     }
 
     /**

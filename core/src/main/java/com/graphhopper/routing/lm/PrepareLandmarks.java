@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
+
 /**
  * This class does the preprocessing for the ALT algorithm (A* , landmark, triangle inequality).
  * <p>
@@ -137,19 +139,25 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
 
     public RoutingAlgorithm getDecoratedAlgorithm(Graph qGraph, RoutingAlgorithm algo, AlgorithmOptions opts) {
         int activeLM = Math.max(1, opts.getHints().getInt(Landmark.ACTIVE_COUNT, defaultActiveLandmarks));
+        if (!lms.isInitialized())
+            throw new IllegalStateException("Initialize landmark storage before creating algorithms");
         if (algo instanceof AStar) {
-            if (!lms.isInitialized())
-                throw new IllegalStateException("Initialize landmark storage before creating algorithms");
-
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStar.EPSILON, 1);
             AStar astar = (AStar) algo;
             astar.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));
             return algo;
+        } else if (algo instanceof AlternativeRoute) {
+            double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
+            AlternativeRoute alt = (AlternativeRoute) algo;
+            alt.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
+                    setEpsilon(epsilon));
+            alt.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
+            alt.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
+            alt.setMaxPaths(opts.getHints().getInt(MAX_PATHS, 3));
+            alt.setAdditionalPaths(opts.getHints().getInt(ADDITIONAL_PATHS, 3));
+            return alt;
         } else if (algo instanceof AStarBidirection) {
-            if (!lms.isInitialized())
-                throw new IllegalStateException("Initialize landmark storage before creating algorithms");
-
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
             AStarBidirection astarbi = (AStarBidirection) algo;
             astarbi.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).

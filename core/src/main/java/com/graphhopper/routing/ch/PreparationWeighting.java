@@ -37,6 +37,10 @@ public class PreparationWeighting implements Weighting {
         this.userWeighting = userWeighting;
     }
 
+    public Weighting getUserWeighting() {
+        return userWeighting;
+    }
+
     @Override
     public final double getMinWeight(double distance) {
         return userWeighting.getMinWeight(distance);

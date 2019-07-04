@@ -19,8 +19,6 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.AlternativeRoute;
-import com.graphhopper.routing.PrepareAlternativeRoute;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -35,9 +33,7 @@ import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.Helper.nf;
 import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
-import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_PATHS;
-import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_SHARE;
-import static com.graphhopper.util.Parameters.Algorithms.AltRoute.MAX_WEIGHT;
+import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 
 /**
@@ -77,7 +73,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private PMap pMap = new PMap();
     private int initSize;
     private int checkCounter;
-    private ViaNodeSet viaNodes;
 
     public PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHGraph chGraph, TraversalMode traversalMode) {
         this.ghStorage = ghStorage;
@@ -104,8 +99,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         allSW.start();
         initFromGraph();
         runGraphContraction();
-        if (params.getPrepareAlternativeRoute())
-            computeViaNodes();
 
         logger.info("took:" + (int) allSW.stop().getSeconds() + "s "
                 + ", new shortcuts: " + nf(nodeContractor.getAddedShortcutsCount())
@@ -128,12 +121,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             return;
         contractNodes();
     }
-    
-    private void computeViaNodes() {
-        PrepareAlternativeRoute prepare = new PrepareAlternativeRoute(prepareGraph, prepareWeighting, traversalMode);
-        prepare.doWork();
-        viaNodes = prepare.getViaNodes();
-    }
 
     @Override
     public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
@@ -154,28 +141,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 return new DijkstraBidirectionCHNoSOD(graph, prepareWeighting, traversalMode);
             }
         } else if (ALT_ROUTE.equals(opts.getAlgorithm())) {
-            AlternativeRoute alt = new AlternativeRoute(graph, prepareWeighting, traversalMode);
-            if (params.getPrepareAlternativeRoute())
-                alt.setViaNodes(viaNodes);
+            AlternativeRouteCH alt = new AlternativeRouteCH(graph, prepareWeighting, traversalMode);
+            alt.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
+            alt.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
             alt.setMaxPaths(opts.getHints().getInt(MAX_PATHS, 3));
-            alt.setAdditionalPaths(opts.getHints().getInt(MAX_PATHS, 3));
-            alt.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.25));
-            alt.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.75));
-            alt.setExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1));
+            alt.setAdditionalPaths(opts.getHints().getInt(ADDITIONAL_PATHS, 3));
             return alt;
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies. Try with ch.disable=true");
         }
-    }
-
-    public PrepareAlternativeRoute createPrepareAlternativeRoute(Graph graph, AlgorithmOptions opts) {
-        PrepareAlternativeRoute prepare = new PrepareAlternativeRoute(graph, prepareWeighting, traversalMode);
-        prepare.setMaxPaths(opts.getHints().getInt(MAX_PATHS, 3));
-        prepare.setAdditionalPaths(opts.getHints().getInt(MAX_PATHS, 3));
-        prepare.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
-        prepare.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
-        prepare.setExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1));
-        return prepare;
     }
 
     private void initFromGraph() {
