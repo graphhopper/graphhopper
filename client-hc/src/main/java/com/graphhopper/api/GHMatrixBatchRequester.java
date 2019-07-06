@@ -83,6 +83,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         requestJson.putArray("out_arrays").addAll(outArrayListJson);
         requestJson.put("vehicle", ghRequest.getVehicle());
         requestJson.put("elevation", hasElevation);
+        requestJson.put("fail_fast", ghRequest.getFailFast());
 
         Map<String, String> hintsMap = ghRequest.getHints().toMap();
         for (String hintKey : hintsMap.keySet()) {
@@ -154,7 +155,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
                     JsonNode solution = getResponseJson.get("solution");
                     matrixResponse.addErrors(readUsableEntityError(outArraysList, solution));
                     if (!matrixResponse.hasErrors())
-                        fillResponseFromJson(matrixResponse, solution);
+                        fillResponseFromJson(matrixResponse, solution, ghRequest.getFailFast());
 
                     break;
                 }

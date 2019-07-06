@@ -13,8 +13,9 @@ public class MatrixResponse {
 
     private String debugInfo = "";
     private final List<Throwable> errors = new ArrayList<>(4);
+    private final List<PointPair> disconnectedPoints = new ArrayList<>(0);
     private long[][] times = new long[0][];
-    private int[][] distances = new int[0][];
+    private double[][] distances = new double[0][];
     private double[][] weights = new double[0][];
     private final int fromCount;
     private final int toCount;
@@ -34,7 +35,7 @@ public class MatrixResponse {
         }
 
         if (withDistances) {
-            distances = new int[fromCap][toCap];
+            distances = new double[fromCap][toCap];
         }
 
         if (withWeights) {
@@ -45,7 +46,7 @@ public class MatrixResponse {
             throw new IllegalArgumentException("Please specify times, distances or weights that should be calculated by the matrix");
     }
 
-    public void setFromRow(int row, long timeRow[], int distanceRow[], double weightRow[]) {
+    public void setFromRow(int row, long timeRow[], double distanceRow[], double weightRow[]) {
         if (times.length > 0) {
             check(timeRow.length, toCount, "to times");
             times[row] = timeRow;
@@ -77,7 +78,7 @@ public class MatrixResponse {
         }
     }
 
-    public void setDistanceRow(int row, int distanceRow[]) {
+    public void setDistanceRow(int row, double distanceRow[]) {
         if (distances.length > 0) {
             check(distanceRow.length, toCount, "to distances");
             distances[row] = distanceRow;
@@ -176,6 +177,25 @@ public class MatrixResponse {
         return this;
     }
 
+    /**
+     * @return if there are disconnected points (which do not yield an error in case we do not fail fast)
+     * @see GHMRequest#setFailFast(boolean)
+     */
+    public boolean hasProblems() {
+        return !disconnectedPoints.isEmpty();
+    }
+
+    public MatrixResponse setDisconnectedPoints(List<PointPair> disconnectedPoints) {
+        this.disconnectedPoints.clear();
+        this.disconnectedPoints.addAll(disconnectedPoints);
+        return this;
+    }
+
+    public List<PointPair> getDisconnectedPoints() {
+        return disconnectedPoints;
+    }
+
+
     @Override
     public String toString() {
         String addInfo = "";
@@ -188,6 +208,33 @@ public class MatrixResponse {
             addInfo += ", distances: " + distances.length + "x" + distances[0].length;
         }
 
-        return "[" + addInfo + "] errors:" + errors.toString();
+        String result = "[" + addInfo + "] errors:" + errors.toString();
+        if (!disconnectedPoints.isEmpty()) {
+            result += ", disconnectedPoints: " + disconnectedPoints;
+        }
+        return result;
+    }
+
+    public static class PointPair {
+        private final int sourceIndex;
+        private final int targetIndex;
+
+        public PointPair(int sourceIndex, int targetIndex) {
+            this.sourceIndex = sourceIndex;
+            this.targetIndex = targetIndex;
+        }
+
+        public int getSourceIndex() {
+            return sourceIndex;
+        }
+
+        public int getTargetIndex() {
+            return targetIndex;
+        }
+
+        @Override
+        public String toString() {
+            return "[" + sourceIndex + ", " + targetIndex + "]";
+        }
     }
 }

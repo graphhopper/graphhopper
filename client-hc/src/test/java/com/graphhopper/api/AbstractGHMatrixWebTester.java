@@ -60,6 +60,25 @@ public abstract class AbstractGHMatrixWebTester {
     }
 
     @Test
+    public void testReadingMatrixConnectionsNotFoundNoFailFast() throws IOException {
+        String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-connection-not-found-fail-fast.json")));
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+
+        GHMRequest req = new GHMRequest();
+        req.addPoint(new GHPoint(0, 1));
+        req.addPoint(new GHPoint(2, 3));
+        req.setFailFast(false);
+
+        MatrixResponse rsp = matrixWeb.route(req);
+        assertFalse(rsp.hasErrors());
+        assertTrue(rsp.hasProblems());
+
+        assertEquals(Double.MAX_VALUE, rsp.getWeight(0, 1), 1.e-3);
+        assertEquals(0, rsp.getWeight(0, 0), 1.e-3);
+        assertEquals("[[0, 1], [1, 0]]", rsp.getDisconnectedPoints().toString());
+    }
+
+    @Test
     public void testReadingGoogleThrowsException() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("google-matrix1.json")));
         GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);

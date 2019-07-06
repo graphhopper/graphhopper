@@ -38,6 +38,7 @@ public class GraphHopperGeocodingIT {
         GHGeocodingResponse response = geocoding.geocode(new GHGeocodingRequest("new york", "en", 7));
         BBox extent = response.getHits().get(0).getExtendBBox();
         assertTrue(extent.isValid());
+        // todonow: minLon is -74.25 ?
         assertTrue(extent.minLon < -79);
         assertTrue(extent.maxLon > -72);
         assertTrue(extent.minLat < 40.5);

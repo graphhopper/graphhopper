@@ -101,11 +101,16 @@ public abstract class GHMatrixAbstractRequester {
         }
     }
 
-    public void fillResponseFromJson(MatrixResponse matrixResponse, String responseAsString) throws IOException {
-        fillResponseFromJson(matrixResponse, objectMapper.reader().readTree(responseAsString));
+    public void fillResponseFromJson(MatrixResponse matrixResponse, String responseAsString, boolean failFast) throws IOException {
+        fillResponseFromJson(matrixResponse, objectMapper.reader().readTree(responseAsString), failFast);
     }
 
-    protected void fillResponseFromJson(MatrixResponse matrixResponse, JsonNode solution) {
+    /**
+     * @param failFast If false weights/distances/times that are null are interpreted as disconnected points and are
+     *                 thus set to their respective maximum values. Furthermore, the indices of the disconnected points
+     *                 are added to {@link MatrixResponse#getDisconnectedPoints()}.
+     */
+    protected void fillResponseFromJson(MatrixResponse matrixResponse, JsonNode solution, boolean failFast) {
         final boolean readWeights = solution.has("weights");
         final boolean readDistances = solution.has("distances");
         final boolean readTimes = solution.has("times");
@@ -146,24 +151,36 @@ public abstract class GHMatrixAbstractRequester {
             }
 
             JsonNode distancesFromArray = null;
-            int[] distances = null;
+            double[] distances = null;
             if (readDistances) {
                 distancesFromArray = distancesArray.get(fromIndex);
-                distances = new int[distancesFromArray.size()];
+                distances = new double[distancesFromArray.size()];
                 toCount = checkArraySizes("distances", distancesFromArray.size(), weightsFromArray, timesFromArray);
             }
 
             for (int toIndex = 0; toIndex < toCount; toIndex++) {
                 if (readWeights) {
-                    weights[toIndex] = weightsFromArray.get(toIndex).asDouble();
+                    if (weightsFromArray.get(toIndex).isNull() && !failFast) {
+                        weights[toIndex] = Double.MAX_VALUE;
+                    } else {
+                        weights[toIndex] = weightsFromArray.get(toIndex).asDouble();
+                    }
                 }
 
                 if (readTimes) {
-                    times[toIndex] = timesFromArray.get(toIndex).asLong() * 1000;
+                    if (timesFromArray.get(toIndex).isNull() && !failFast) {
+                        times[toIndex] = Long.MAX_VALUE;
+                    } else {
+                        times[toIndex] = timesFromArray.get(toIndex).asLong() * 1000;
+                    }
                 }
 
                 if (readDistances) {
-                    distances[toIndex] = (int) Math.round(distancesFromArray.get(toIndex).asDouble());
+                    if (distancesFromArray.get(toIndex).isNull() && !failFast) {
+                        distances[toIndex] = Double.MAX_VALUE;
+                    } else {
+                        distances[toIndex] = distancesFromArray.get(toIndex).asDouble();
+                    }
                 }
             }
 
@@ -179,6 +196,31 @@ public abstract class GHMatrixAbstractRequester {
                 matrixResponse.setDistanceRow(fromIndex, distances);
             }
         }
+        if (!failFast && solution.has("hints")) {
+            addProblems(matrixResponse, solution.get("hints"));
+        }
+    }
+
+    private void addProblems(MatrixResponse matrixResponse, JsonNode hints) {
+        for (JsonNode hint : hints) {
+            if (hint.has("point_pairs")) {
+                matrixResponse.setDisconnectedPoints(readDisconnectedPoints(hint.get("point_pairs")));
+            }
+        }
+    }
+
+    private List<MatrixResponse.PointPair> readDisconnectedPoints(JsonNode pointPairsArray) {
+        List<MatrixResponse.PointPair> disconnectedPoints = new ArrayList<>(pointPairsArray.size());
+        for (int i = 0; i < pointPairsArray.size(); i++) {
+            if (pointPairsArray.get(i).size() != 2) {
+                throw new IllegalArgumentException("all point_pairs are expected to contain two elements");
+            }
+            disconnectedPoints.add(new MatrixResponse.PointPair(
+                    pointPairsArray.get(i).get(0).asInt(),
+                    pointPairsArray.get(i).get(1).asInt()
+            ));
+        }
+        return disconnectedPoints;
     }
 
     private static int checkArraySizes(String msg, int len, JsonNode... arrays) {

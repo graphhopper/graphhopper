@@ -1,5 +1,6 @@
 package com.graphhopper.api;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.GHRequest;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -19,6 +20,7 @@ public class GHMRequest extends GHRequest {
     private List<String> toPointHints;
     boolean identicalLists = true;
     private final Set<String> outArrays = new HashSet<>(5);
+    private boolean failFast = true;
 
     public GHMRequest() {
         this(10);
@@ -145,5 +147,17 @@ public class GHMRequest extends GHRequest {
     public boolean hasPointHints() {
         return this.fromPointHints.size() == this.fromPoints.size() && !fromPoints.isEmpty() &&
                 this.toPointHints.size() == this.toPoints.size() && !toPoints.isEmpty();
+    }
+
+    /**
+     * @param failFast if false the matrix calculation will be continued even when some points are not connected
+     */
+    @JsonProperty("fail_fast")
+    public void setFailFast(boolean failFast) {
+        this.failFast = failFast;
+    }
+
+    public boolean getFailFast() {
+        return failFast;
     }
 }
