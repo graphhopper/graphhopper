@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Collections;
 
 import static org.junit.Assert.*;
 
@@ -60,7 +61,7 @@ public abstract class AbstractGHMatrixWebTester {
     }
 
     @Test
-    public void testReadingMatrixConnectionsNotFoundNoFailFast() throws IOException {
+    public void testReadingMatrixConnectionsNotFound_noFailFast() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-connection-not-found-fail-fast.json")));
         GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
 
@@ -76,6 +77,36 @@ public abstract class AbstractGHMatrixWebTester {
         assertEquals(Double.MAX_VALUE, rsp.getWeight(0, 1), 1.e-3);
         assertEquals(0, rsp.getWeight(0, 0), 1.e-3);
         assertEquals("[[0, 1], [1, 0]]", rsp.getDisconnectedPoints().toString());
+    }
+
+    @Test
+    public void testReadingMatrixPointsNotFound_noFailFast() throws IOException {
+        String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-point-not-found-fail-fast.json")));
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+
+        GHMRequest req = new GHMRequest();
+        req.addPoint(new GHPoint(0, 1));
+        req.addPoint(new GHPoint(2, 3));
+        req.addPoint(new GHPoint(4, 5));
+        req.setFailFast(false);
+
+        MatrixResponse rsp = matrixWeb.route(req);
+        assertFalse(rsp.hasErrors());
+        assertTrue(rsp.hasProblems());
+
+        assertEquals(Double.MAX_VALUE, rsp.getWeight(1, 0), 1.e-3);
+        assertEquals(Double.MAX_VALUE, rsp.getWeight(1, 1), 1.e-3);
+        assertEquals(Double.MAX_VALUE, rsp.getWeight(1, 2), 1.e-3);
+        assertEquals(Double.MAX_VALUE, rsp.getWeight(0, 1), 1.e-3);
+        assertEquals(Double.MAX_VALUE, rsp.getWeight(2, 1), 1.e-3);
+
+        assertEquals(0, rsp.getWeight(0, 0), 1.e-3);
+        assertEquals(1, rsp.getWeight(0, 2), 1.e-3);
+        assertEquals(2, rsp.getWeight(2, 0), 1.e-3);
+        assertEquals(3, rsp.getWeight(2, 2), 1.e-3);
+        assertEquals("[[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]]", rsp.getDisconnectedPoints().toString());
+        assertEquals(Collections.singletonList(1), rsp.getInvalidFromPoints());
+        assertEquals(Collections.singletonList(1), rsp.getInvalidToPoints());
     }
 
     @Test

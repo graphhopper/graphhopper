@@ -14,6 +14,9 @@ public class MatrixResponse {
     private String debugInfo = "";
     private final List<Throwable> errors = new ArrayList<>(4);
     private final List<PointPair> disconnectedPoints = new ArrayList<>(0);
+    // todonow: should we add hppc to classpath and use IntArrayList instead ?
+    private final List<Integer> invalidFromPoints = new ArrayList<>(0);
+    private final List<Integer> invalidToPoints = new ArrayList<>(0);
     private long[][] times = new long[0][];
     private double[][] distances = new double[0][];
     private double[][] weights = new double[0][];
@@ -178,11 +181,11 @@ public class MatrixResponse {
     }
 
     /**
-     * @return if there are disconnected points (which do not yield an error in case we do not fail fast)
+     * @return true if there are invalid or disconnected points (which both do not yield an error in case we do not fail fast)
      * @see GHMRequest#setFailFast(boolean)
      */
     public boolean hasProblems() {
-        return !disconnectedPoints.isEmpty();
+        return !disconnectedPoints.isEmpty() || !invalidFromPoints.isEmpty() || !invalidToPoints.isEmpty();
     }
 
     public MatrixResponse setDisconnectedPoints(List<PointPair> disconnectedPoints) {
@@ -195,6 +198,25 @@ public class MatrixResponse {
         return disconnectedPoints;
     }
 
+    public MatrixResponse setInvalidFromPoints(List<Integer> invalidFromPoints) {
+        this.invalidFromPoints.clear();
+        this.invalidFromPoints.addAll(invalidFromPoints);
+        return this;
+    }
+
+    public MatrixResponse setInvalidToPoints(List<Integer> invalidToPoints) {
+        this.invalidToPoints.clear();
+        this.invalidToPoints.addAll(invalidToPoints);
+        return this;
+    }
+
+    public List<Integer> getInvalidFromPoints() {
+        return invalidFromPoints;
+    }
+
+    public List<Integer> getInvalidToPoints() {
+        return invalidToPoints;
+    }
 
     @Override
     public String toString() {
@@ -210,7 +232,13 @@ public class MatrixResponse {
 
         String result = "[" + addInfo + "] errors:" + errors.toString();
         if (!disconnectedPoints.isEmpty()) {
-            result += ", disconnectedPoints: " + disconnectedPoints;
+            result += ", disconnectedPoints: " + disconnectedPoints.size();
+        }
+        if (!invalidFromPoints.isEmpty()) {
+            result += ", invalidFromPoints: " + invalidFromPoints.size();
+        }
+        if (!invalidToPoints.isEmpty()) {
+            result += ", invalidToPoints: " + invalidToPoints.size();
         }
         return result;
     }

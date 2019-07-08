@@ -169,4 +169,63 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
         assertEquals(10, matrix.getDisconnectedPoints().size());
         assertEquals("[[0, 1], [0, 2], [1, 0], [1, 2], [1, 3], [2, 0], [2, 1], [2, 3], [3, 1], [3, 2]]", matrix.getDisconnectedPoints().toString());
     }
+
+    @Test
+    public void testPointsNotFound() {
+        GHMRequest req = new GHMRequest();
+        req.addPoint(new GHPoint(42.506021, 1.643829));
+        req.addPoint(new GHPoint(42.541382, 1.516349));
+        req.addPoint(new GHPoint(42.549034, 1.652069));
+        req.addPoint(new GHPoint(42.566293, 1.597867));
+
+        MatrixResponse matrix = ghMatrix.route(req);
+        assertTrue(matrix.hasErrors());
+        assertEquals(2, matrix.getErrors().size());
+        assertTrue(matrix.getErrors().get(0).getMessage().contains("Cannot find from_points: 0, 2"));
+        assertTrue(matrix.getErrors().get(1).getMessage().contains("Cannot find to_points: 0, 2"));
+        try {
+            matrix.getWeight(0, 1);
+            fail("getWeight should throw an exception if errors were found");
+        } catch (Exception e) {
+            // ok
+        }
+    }
+
+    @Test
+    public void testPointsNotFound_doNotFailFast() {
+        GHMRequest req = new GHMRequest();
+        req.addPoint(new GHPoint(42.506021, 1.643829));
+        req.addPoint(new GHPoint(42.541382, 1.516349));
+        req.addPoint(new GHPoint(42.549034, 1.652069));
+        req.addPoint(new GHPoint(42.566293, 1.597867));
+        req.setFailFast(false);
+        // todonow: is this required (it should not)?
+        req.setVehicle("car");
+
+        MatrixResponse matrix = ghMatrix.route(req);
+        assertFalse(matrix.hasErrors());
+        assertTrue(matrix.hasProblems());
+        assertEquals(0, matrix.getErrors().size());
+        assertEquals(Arrays.asList(0, 2), matrix.getInvalidFromPoints());
+        assertEquals(Arrays.asList(0, 2), matrix.getInvalidToPoints());
+        assertEquals("[[0, 0], [0, 1], [0, 2], [0, 3], [1, 0], [1, 2], [2, 0], [2, 1], [2, 2], [2, 3], [3, 0], [3, 2]]",
+                matrix.getDisconnectedPoints().toString());
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                double weight = matrix.getWeight(i, j);
+                if (i == 1 && j == 1) {
+                    assertEquals(0, weight, 1.e-3);
+                } else if (i == 3 && j == 3) {
+                    assertEquals(0, weight, 1.e-3);
+                } else if (i == 1 && j == 3) {
+                    assertEquals(887.908, weight, 10);
+                } else if (i == 3 && j == 1) {
+                    assertEquals(874.323, weight, 10);
+                } else {
+                    assertEquals(Double.MAX_VALUE, weight, 1.e-3);
+                }
+            }
+        }
+    }
+
 }

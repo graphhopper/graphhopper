@@ -108,7 +108,9 @@ public abstract class GHMatrixAbstractRequester {
     /**
      * @param failFast If false weights/distances/times that are null are interpreted as disconnected points and are
      *                 thus set to their respective maximum values. Furthermore, the indices of the disconnected points
-     *                 are added to {@link MatrixResponse#getDisconnectedPoints()}.
+     *                 are added to {@link MatrixResponse#getDisconnectedPoints()} and the indices of the points that
+     *                 could not be found are added to {@link MatrixResponse#getInvalidFromPoints()} and/or
+     *                 {@link MatrixResponse#getInvalidToPoints()}.
      */
     protected void fillResponseFromJson(MatrixResponse matrixResponse, JsonNode solution, boolean failFast) {
         final boolean readWeights = solution.has("weights");
@@ -206,6 +208,10 @@ public abstract class GHMatrixAbstractRequester {
             if (hint.has("point_pairs")) {
                 matrixResponse.setDisconnectedPoints(readDisconnectedPoints(hint.get("point_pairs")));
             }
+            if (hint.has("invalid_from_points")) {
+                matrixResponse.setInvalidFromPoints(readInvalidPoints(hint.get("invalid_from_points")));
+                matrixResponse.setInvalidToPoints(readInvalidPoints(hint.get("invalid_to_points")));
+            }
         }
     }
 
@@ -221,6 +227,14 @@ public abstract class GHMatrixAbstractRequester {
             ));
         }
         return disconnectedPoints;
+    }
+
+    private List<Integer> readInvalidPoints(JsonNode pointsArray) {
+        List<Integer> result = new ArrayList<>(pointsArray.size());
+        for (int i = 0; i < pointsArray.size(); i++) {
+            result.add(pointsArray.get(i).asInt());
+        }
+        return result;
     }
 
     private static int checkArraySizes(String msg, int len, JsonNode... arrays) {
