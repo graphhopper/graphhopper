@@ -64,6 +64,8 @@ public class GraphHopperWebIT {
         alt = res.getBest();
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
         isBetween(9000, 9500, alt.getDistance());
+
+        assertEquals("[0, 1]", alt.getPointsOrder().toString());
     }
 
     @Test
@@ -240,6 +242,21 @@ public class GraphHopperWebIT {
     void isBetween(double from, double to, double expected) {
         assertTrue("expected value " + expected + " was smaller than limit " + from, expected >= from);
         assertTrue("expected value " + expected + " was bigger than limit " + to, expected <= to);
+    }
+
+    @Test
+    public void testOptimize() {
+        // https://graphhopper.com/maps/?point=49.664184%2C11.345444&point=49.661072%2C11.384068&point=49.670628%2C11.352997&point=49.667128%2C11.404753
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(49.664184, 11.345444)).
+                addPoint(new GHPoint(49.661072, 11.384068)).
+                addPoint(new GHPoint(49.670628, 11.352997)).
+                addPoint(new GHPoint(49.667128, 11.404753));
+        GHResponse res = gh.setOptimize("true").route(req);
+        assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
+        PathWrapper alt = res.getBest();
+        isBetween(850, 1050, alt.getRouteWeight());
+        assertEquals("[0, 2, 1, 3]", alt.getPointsOrder().toString());
     }
 
     @Test
