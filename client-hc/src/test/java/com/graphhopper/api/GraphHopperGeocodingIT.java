@@ -35,13 +35,13 @@ public class GraphHopperGeocodingIT {
 
     @Test
     public void testExtent() {
-        GHGeocodingResponse response = geocoding.geocode(new GHGeocodingRequest("new york", "en", 7));
+        GHGeocodingResponse response = geocoding.geocode(new GHGeocodingRequest("seattle", "en", 7));
         BBox extent = response.getHits().get(0).getExtendBBox();
         assertTrue(extent.isValid());
-        assertTrue(extent.minLon < -79);
-        assertTrue(extent.maxLon > -72);
-        assertTrue(extent.minLat < 40.5);
-        assertTrue(extent.maxLat > 45);
+        assertTrue(extent.minLon > -123.00 && extent.minLon < -122.00);
+        assertTrue(extent.maxLon > -123.00 && extent.maxLon < -122.00);
+        assertTrue(extent.minLat > 47.00 && extent.minLat < 48.00);
+        assertTrue(extent.maxLat > 47.00 && extent.maxLat < 48.00);
     }
 
     @Test
