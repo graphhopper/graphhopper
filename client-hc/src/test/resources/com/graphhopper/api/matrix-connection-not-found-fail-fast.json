@@ -9,28 +9,16 @@
       ]
     },
     "weights": [
-      [
-        0,
-        null
-      ],
-      [
-        null,
-        0
-      ]
+      [0, null],
+      [null, 0]
     ],
     "hints": [
       {
         "message": "There were 2 connections that could not be found, see point_pairs for details",
         "details": "com.graphhopper.util.exceptions.ConnectionNotFoundException",
         "point_pairs": [
-          [
-            0,
-            1
-          ],
-          [
-            1,
-            0
-          ]
+          [0, 1],
+          [1, 0]
         ]
       }
     ]
