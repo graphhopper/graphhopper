@@ -61,12 +61,12 @@ public class PointListTest {
             instance.add(0, 0);
         }
         assertEquals(7, instance.getSize());
-        assertEquals(10, instance.getCapacity());
+        assertEquals(20, instance.getCapacity());
 
         PointList toAdd = new PointList();
         instance.add(toAdd);
         assertEquals(7, instance.getSize());
-        assertEquals(10, instance.getCapacity());
+        assertEquals(20, instance.getCapacity());
 
         toAdd.add(1, 1);
         toAdd.add(2, 2);
@@ -76,7 +76,7 @@ public class PointListTest {
         instance.add(toAdd);
 
         assertEquals(12, instance.getSize());
-        assertEquals(24, instance.getCapacity());
+        assertEquals(30, instance.getCapacity());
 
         for (int i = 0; i < toAdd.size(); i++) {
             assertEquals(toAdd.getLatitude(i), instance.getLatitude(7 + i), 1e-1);
@@ -126,11 +126,11 @@ public class PointListTest {
             list.add(1, i);
         }
         assertEquals(10, list.getSize());
-        assertEquals(20, list.getCapacity());
+        assertEquals(40, list.getCapacity());
 
         PointList copy = list.copy(9, 10);
         assertEquals(1, copy.getSize());
-        assertEquals(1, copy.getCapacity());
+        assertEquals(2, copy.getCapacity());
         assertEquals(9, copy.getLongitude(0), .1);
     }
 
@@ -175,7 +175,7 @@ public class PointListTest {
         pl.add(0, 0, 0);
     }
 
-    @Test()
+    @Test
     public void testToString() {
         PointList pl = new PointList(3, true);
         pl.add(0, 0, 0);
@@ -186,7 +186,7 @@ public class PointListTest {
         assertEquals("(1.0,1.0,1.0), (2.0,2.0,2.0)", pl.shallowCopy(1, 3, false).toString());
     }
 
-    @Test()
+    @Test
     public void testClone() {
         PointList pl = new PointList(3, true);
         pl.add(0, 0, 0);
@@ -201,7 +201,7 @@ public class PointListTest {
         assertNotEquals(shallowPl, clonedPl);
     }
 
-    @Test()
+    @Test
     public void testCopyOfShallowCopy() {
         PointList pl = new PointList(3, true);
         pl.add(0, 0, 0);
@@ -209,14 +209,16 @@ public class PointListTest {
         pl.add(2, 2, 2);
 
         PointList shallowPl = pl.shallowCopy(1, 3, false);
+        assertTrue(shallowPl.is3D());
         PointList copiedPl = shallowPl.copy(0, 2);
+        assertTrue(copiedPl.is3D());
 
         assertEquals(shallowPl, copiedPl);
         copiedPl.setNode(0, 5, 5, 5);
         assertNotEquals(shallowPl, copiedPl);
     }
 
-    @Test()
+    @Test
     public void testCalcDistanceOfShallowCopy() {
         PointList pl = new PointList(3, true);
         pl.add(0, 0, 0);
@@ -228,7 +230,7 @@ public class PointListTest {
         assertEquals(clonedPl.calcDistance(Helper.DIST_EARTH), shallowPl.calcDistance(Helper.DIST_EARTH), .01);
     }
 
-    @Test()
+    @Test
     public void testToGeoJson() {
         PointList pl = new PointList(3, true);
         pl.add(0, 0, 0);

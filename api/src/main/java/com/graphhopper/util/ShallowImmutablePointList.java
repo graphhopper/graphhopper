@@ -24,7 +24,7 @@ package com.graphhopper.util;
  *
  * @author Robin Boldt
  */
-public final class ShallowImmutablePointList extends PointList {
+final class ShallowImmutablePointList extends PointList {
 
     private final static String IMMUTABLE_ERR = "This class is immutable, you are not allowed to change it";
 
@@ -32,7 +32,8 @@ public final class ShallowImmutablePointList extends PointList {
     final int toOffset;
     final PointList wrappedPointList;
 
-    public ShallowImmutablePointList(int fromOffset, int toOffset, PointList wrappedPointList) {
+    ShallowImmutablePointList(int fromOffset, int toOffset, PointList wrappedPointList) {
+        super(0, wrappedPointList.is3D());
         if (fromOffset > toOffset)
             throw new IllegalArgumentException("from must be smaller or equal to end");
         if (fromOffset < 0 || toOffset > wrappedPointList.getSize())
@@ -91,21 +92,6 @@ public final class ShallowImmutablePointList extends PointList {
     public boolean isImmutable() {
         return this.wrappedPointList.isImmutable();
     }
-
-    /*
-    Wrapping Part
-     */
-
-    @Override
-    public boolean is3D() {
-        return wrappedPointList.is3D();
-    }
-
-    @Override
-    public int getDimension() {
-        return wrappedPointList.getDimension();
-    }
-
 
     /*
     Immutable forbidden part
