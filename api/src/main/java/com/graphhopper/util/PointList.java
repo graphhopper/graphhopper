@@ -206,7 +206,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         if (internalLength(newSize) <= latlons.length)
             return;
 
-        int cap = internalLength(newSize + newSize / 2);
+        int cap = internalLength(newSize * 2);
         if (cap < internalLength(15))
             cap = internalLength(15);
 
