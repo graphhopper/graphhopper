@@ -175,7 +175,7 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
         GHMRequest req = new GHMRequest();
         req.addPoint(new GHPoint(42.506021, 1.643829));
         req.addPoint(new GHPoint(42.541382, 1.516349));
-        req.addPoint(new GHPoint(42.549034, 1.652069));
+        req.addPoint(new GHPoint(42.497289, 1.762276));
         req.addPoint(new GHPoint(42.566293, 1.597867));
 
         MatrixResponse matrix = ghMatrix.route(req);
@@ -196,11 +196,9 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
         GHMRequest req = new GHMRequest();
         req.addPoint(new GHPoint(42.506021, 1.643829));
         req.addPoint(new GHPoint(42.541382, 1.516349));
-        req.addPoint(new GHPoint(42.549034, 1.652069));
+        req.addPoint(new GHPoint(42.497289, 1.762276));
         req.addPoint(new GHPoint(42.566293, 1.597867));
         req.setFailFast(false);
-        // todonow: is this required (it should not)?
-        req.setVehicle("car");
 
         MatrixResponse matrix = ghMatrix.route(req);
         assertFalse(matrix.hasErrors());
