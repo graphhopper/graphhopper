@@ -41,6 +41,7 @@ public class GraphHopperMatrixWeb {
             request.getHints().put(KEY, key);
         }
 
+        request.compactPointHints();
         return requester.route(request);
     }
 }

@@ -18,6 +18,7 @@ public class GHMRequest extends GHRequest {
     private List<GHPoint> toPoints;
     private List<String> fromPointHints;
     private List<String> toPointHints;
+    private int called = 0;
     boolean identicalLists = true;
     private final Set<String> outArrays = new HashSet<>(5);
     private boolean failFast = true;
@@ -132,7 +133,6 @@ public class GHMRequest extends GHRequest {
 
     @Override
     public GHRequest setPointHints(List<String> pointHints) {
-        super.setPointHints(pointHints);
         this.fromPointHints = pointHints;
         this.toPointHints = pointHints;
         return this;
@@ -159,5 +159,34 @@ public class GHMRequest extends GHRequest {
 
     public boolean getFailFast() {
         return failFast;
+    }
+
+    /**
+     * This method makes it more likely that hasPointHints returns true as often point hints are added although the
+     * strings are empty. But because they could be used as placeholder we do not know earlier if they are meaningless.
+     */
+    void compactPointHints() {
+        if (called > 0)
+            throw new IllegalStateException("cannot call more than once");
+        called++;
+        boolean clear = true;
+        for (String hint : toPointHints) {
+            if (!hint.isEmpty()) {
+                clear = false;
+                break;
+            }
+        }
+        if (clear)
+            toPointHints.clear();
+
+        clear = true;
+        for (String hint : fromPointHints) {
+            if (!hint.isEmpty()) {
+                clear = false;
+                break;
+            }
+        }
+        if (clear)
+            fromPointHints.clear();
     }
 }
