@@ -31,7 +31,6 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
@@ -88,7 +87,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                 lmSuggestionsLocations.add(loc.trim());
         }
         String lmWeightingsStr = args.get(Landmark.PREPARE + "weightings", "");
-        if (!lmWeightingsStr.isEmpty() && !lmWeightingsStr.equalsIgnoreCase("no")) {
+        if (!lmWeightingsStr.isEmpty() && !lmWeightingsStr.equalsIgnoreCase("no") && !lmWeightingsStr.equalsIgnoreCase("false")) {
             List<String> tmpLMWeightingList = Arrays.asList(lmWeightingsStr.split(","));
             setWeightingsAsStrings(tmpLMWeightingList);
         }

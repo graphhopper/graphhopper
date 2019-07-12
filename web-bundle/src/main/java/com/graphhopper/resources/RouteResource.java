@@ -23,7 +23,9 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.MultiException;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.util.*;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
@@ -40,6 +42,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
 import static com.graphhopper.util.Parameters.Routing.*;
 
 /**
@@ -80,8 +83,9 @@ public class RouteResource {
             @QueryParam("weighting") @DefaultValue("fastest") String weighting,
             @QueryParam("algorithm") @DefaultValue("") String algoStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
-            @QueryParam(Parameters.Routing.POINT_HINT) List<String> pointHints,
-            @QueryParam(Parameters.DETAILS.PATH_DETAILS) List<String> pathDetails,
+            @QueryParam(POINT_HINT) List<String> pointHints,
+            @QueryParam(SNAP_PREVENTION) List<String> snapPreventions,
+            @QueryParam(PATH_DETAILS) List<String> pathDetails,
             @QueryParam("heading") List<Double> favoredHeadings,
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute /* default to false for the route part in next API version, see #437 */,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
@@ -123,6 +127,7 @@ public class RouteResource {
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
                 setPointHints(pointHints).
+                setSnapPreventions(snapPreventions).
                 setPathDetails(pathDetails).
                 getHints().
                 put(CALC_POINTS, calcPoints).

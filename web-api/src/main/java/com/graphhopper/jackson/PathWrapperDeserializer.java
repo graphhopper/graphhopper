@@ -168,6 +168,16 @@ public class PathWrapperDeserializer extends JsonDeserializer<PathWrapper> {
             }
         }
 
+        if (path.has("points_order")) {
+            pathWrapper.setPointsOrder((List<Integer>) objectMapper.convertValue(path.get("points_order"), List.class));
+        } else {
+            List<Integer> list = new ArrayList<>(pathWrapper.getWaypoints().size());
+            for (int i = 0; i < pathWrapper.getWaypoints().size(); i++) {
+                list.add(i);
+            }
+            pathWrapper.setPointsOrder(list);
+        }
+
         double distance = path.get("distance").asDouble();
         long time = path.get("time").asLong();
         pathWrapper.setDistance(distance).setTime(time);

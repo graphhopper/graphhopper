@@ -3,7 +3,6 @@ package com.graphhopper.routing.lm;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.GraphExtension;
@@ -15,9 +14,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 
 public class LMAlgoFactoryDecoratorTest {
@@ -52,6 +49,11 @@ public class LMAlgoFactoryDecoratorTest {
 
         // See #1076
         args.put(Parameters.Landmark.PREPARE + "weightings", "no");
+        dec = new LMAlgoFactoryDecorator();
+        dec.init(args);
+        assertFalse(dec.isEnabled());
+
+        args.put(Parameters.Landmark.PREPARE + "weightings", "false");
         dec = new LMAlgoFactoryDecorator();
         dec.init(args);
         assertFalse(dec.isEnabled());
