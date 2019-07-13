@@ -214,7 +214,7 @@ public class NavigateResource {
             case "cycling":
                 return "bike";
             default:
-                throw new IllegalArgumentException("Not supported profile: " + profile);
+                return profile;
         }
     }
 
