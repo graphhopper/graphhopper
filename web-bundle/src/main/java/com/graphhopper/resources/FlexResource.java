@@ -25,19 +25,19 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.MultiException;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.util.flex.FlexModel;
-import com.graphhopper.util.flex.FlexRequest;
 import com.graphhopper.routing.weighting.FlexWeighting;
 import com.graphhopper.routing.weighting.ScriptInterface;
 import com.graphhopper.routing.weighting.ScriptWeighting;
+import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.flex.FlexModel;
+import com.graphhopper.util.flex.FlexRequest;
 import org.codehaus.janino.ExpressionEvaluator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -52,13 +52,13 @@ public class FlexResource {
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
     private final GraphHopper graphHopper;
-    private final Boolean hasElevation;
     private final ObjectMapper yamlOM;
+    private final CmdArgs cmdArgs;
 
     @Inject
-    public FlexResource(GraphHopper graphHopper, @Named("hasElevation") Boolean hasElevation) {
+    public FlexResource(GraphHopper graphHopper, CmdArgs cmdArgs) {
         this.graphHopper = graphHopper;
-        this.hasElevation = hasElevation;
+        this.cmdArgs = cmdArgs;
         this.yamlOM = Jackson.init(new ObjectMapper(new YAMLFactory()));
     }
 
@@ -82,6 +82,7 @@ public class FlexResource {
     public Response doPost(FlexRequest flex) {
         if (flex == null)
             throw new IllegalArgumentException("FlexRequest cannot be empty");
+
         FlexModel model = flex.getModel();
         GHRequest request = flex.getRequest();
 
@@ -106,10 +107,15 @@ public class FlexResource {
         StopWatch sw = new StopWatch().start();
         GHResponse ghResponse = new GHResponse();
 
-        if (model.getScript().isEmpty())
+        if (model.getScript().isEmpty()) {
             graphHopper.calcPaths(request, ghResponse, new FlexWeighting(model));
-        else
+        } else {
+            // Enabling scripting is currently a security problem. Do not enable it for public facing services!
+            if (!cmdArgs.getBool("routing.scripting", false))
+                throw new IllegalArgumentException("Scripting not allowed");
+
             graphHopper.calcPaths(request, ghResponse, createScriptWeighting(model));
+        }
 
         float took = sw.stop().getSeconds();
         if (ghResponse.hasErrors()) {
