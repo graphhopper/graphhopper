@@ -244,20 +244,12 @@ public class MatrixResponse {
     }
 
     public static class PointPair {
-        private final int sourceIndex;
-        private final int targetIndex;
+        public final int sourceIndex;
+        public final int targetIndex;
 
         public PointPair(int sourceIndex, int targetIndex) {
             this.sourceIndex = sourceIndex;
             this.targetIndex = targetIndex;
-        }
-
-        public int getSourceIndex() {
-            return sourceIndex;
-        }
-
-        public int getTargetIndex() {
-            return targetIndex;
         }
 
         @Override
