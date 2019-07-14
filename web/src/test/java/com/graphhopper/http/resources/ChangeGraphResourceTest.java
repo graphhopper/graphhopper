@@ -32,7 +32,9 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
 
-import static org.junit.Assert.*;
+import static com.graphhopper.http.resources.FlexResourceTest.assertBetween;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
  * @author Peter Karich
@@ -62,14 +64,13 @@ public class ChangeGraphResourceTest {
     }
 
     @Test
-    public void testBlockAccessViaPoint() throws Exception {
+    public void testBlockAccessViaPoint() {
         Response response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertFalse(json.get("info").has("errors"));
         double distance = json.get("paths").get(0).get("distance").asDouble();
-        assertTrue("distance wasn't correct:" + distance, distance > 3000);
-        assertTrue("distance wasn't correct:" + distance, distance < 3500);
+        assertBetween("distance wasn't correct:" + distance, distance, 3000, 3500);
 
         // block road
         String geoJson = "{"
@@ -97,7 +98,6 @@ public class ChangeGraphResourceTest {
         assertFalse(json.get("info").has("errors"));
 
         distance = json.get("paths").get(0).get("distance").asDouble();
-        assertTrue("distance wasn't correct:" + distance, distance > 5300);
-        assertTrue("distance wasn't correct:" + distance, distance < 5800);
+        assertBetween("distance wasn't correct:" + distance, distance, 5300, 5800);
     }
 }
