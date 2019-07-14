@@ -39,6 +39,13 @@
             <version>${project.parent.version}</version>
         </dependency>
 
+        <!-- required for ScriptWeighting -->
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
+            <version>3.0.14</version>
+        </dependency>
+
         <!-- required for JDK9 -->
         <dependency>
             <groupId>javax.xml.ws</groupId>

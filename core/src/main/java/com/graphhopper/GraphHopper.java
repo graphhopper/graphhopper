@@ -23,6 +23,7 @@ import com.graphhopper.reader.dem.*;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.util.flex.FlexModel;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
 import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
@@ -125,6 +126,7 @@ public class GraphHopper implements GraphHopperAPI {
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
+    private Map<String, FlexModel> importVehicleModels = new HashMap<>();
 
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
@@ -536,6 +538,23 @@ public class GraphHopper implements GraphHopperAPI {
                 emBuilder.addAll(tagParserFactory, encodedValueStr);
             if (!flagEncodersStr.isEmpty())
                 emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
+
+//            String encodingManagerStr = args.get("graph.encoding_manager", "");
+//            ObjectMapper om = encodingManagerStr.contains("json") ? new ObjectMapper() : new ObjectMapper(new YAMLFactory());
+//            om.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+//            om.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+//            for (String str : encodingManagerStr.split(",")) {
+//                str = str.trim();
+//                if (str.isEmpty())
+//                    continue;
+//                FlexModel importVehicleModel = om.readValue(new File(str), FlexModel.class);
+//                importVehicleModels.put(importVehicleModel.getName(), importVehicleModel);
+//                if (!flagEncoderSet.containsKey(importVehicleModel.getName())) {
+//                    FlagEncoder baseFlagEncoder = flagEncoderFactory.createFlagEncoder(importVehicleModel.getBase(), new PMap().put("name", importVehicleModel.getName()));
+//                    flagEncoderSet.put(baseFlagEncoder.toString(), baseFlagEncoder);
+//                }
+//            }
+
             emBuilder.setEnableInstructions(args.getBool("datareader.instructions", true));
             emBuilder.setPreferredLanguage(args.get("datareader.preferred_language", ""));
             // overwrite EncodingManager object from configuration file
@@ -903,7 +922,10 @@ public class GraphHopper implements GraphHopperAPI {
         String weightingStr = toLowerCase(hintsMap.getWeighting());
         Weighting weighting = null;
 
-        if (encoder.supports(GenericWeighting.class)) {
+        FlexModel flexModel = importVehicleModels.get(weightingStr);
+        if (flexModel != null) {
+            weighting = new FlexWeighting(flexModel).init(encodingManager);
+        } else if (encoder.supports(GenericWeighting.class)) {
             weighting = new GenericWeighting((DataFlagEncoder) encoder, hintsMap);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(encoder);
@@ -946,7 +968,7 @@ public class GraphHopper implements GraphHopperAPI {
     @Override
     public GHResponse route(GHRequest request) {
         GHResponse response = new GHResponse();
-        calcPaths(request, response);
+        calcPaths(request, response, null);
         return response;
     }
 
@@ -954,6 +976,10 @@ public class GraphHopper implements GraphHopperAPI {
      * This method calculates the alternative path list using the low level Path objects.
      */
     public List<Path> calcPaths(GHRequest request, GHResponse ghRsp) {
+        return calcPaths(request, ghRsp, null);
+    }
+
+    public List<Path> calcPaths(GHRequest request, GHResponse ghRsp, Weighting weighting) {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
 
@@ -1018,7 +1044,6 @@ public class GraphHopper implements GraphHopperAPI {
                     return Collections.emptyList();
 
                 RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
-                Weighting weighting;
                 QueryGraph queryGraph;
 
                 if (chFactoryDecorator.isEnabled() && !disableCH) {
@@ -1042,7 +1067,16 @@ public class GraphHopper implements GraphHopperAPI {
                     checkNonChMaxWaypointDistance(points);
                     queryGraph = new QueryGraph(ghStorage);
                     queryGraph.lookup(qResults);
-                    weighting = createWeighting(hints, encoder, queryGraph);
+
+                    if (weighting != null) {
+                        if (weighting instanceof FlexWeighting)
+                            // TODO vehicleModel.merge(importVehicleModel)
+                            ((FlexWeighting) weighting).init(encodingManager);
+                        else if (weighting instanceof ScriptWeighting)
+                            ((ScriptWeighting) weighting).init(encodingManager);
+                    } else {
+                        weighting = createWeighting(hints, encoder, queryGraph);
+                    }
                 }
                 ghRsp.addDebugInfo("tmode:" + tMode.toString());
 

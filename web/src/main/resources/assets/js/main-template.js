@@ -71,6 +71,86 @@ $(document).ready(function (e) {
 
     gpxExport.addGpxExport(ghRequest);
 
+    $("#flex-input-link").click(function() {
+        $("#regular-input").toggle();
+        $("#flex-input").toggle();
+        // avoid default action, so use a different search button
+        $("#searchButton").toggle();
+        mapLayer.adjustMapSize();
+    });
+
+    var sendData = function() {
+       mapLayer.clearLayers();
+
+       var infoDiv = $("#info");
+       infoDiv.empty();
+       infoDiv.show();
+       var routeResultsDiv = $("<div class='route_results'/>");
+       infoDiv.append(routeResultsDiv);
+       routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
+
+       // flex endpoint is currently fixed to this
+       ghRequest.api_params.elevation = false;
+
+       // "request": { "points":[[13.289337, 52.520399], [13.445892, 52.5687]] }
+       var inputText = $("#flex-input-text").val();
+       if(inputText.length < 5) {
+        routeResultsDiv.html("JSON/YAML too short");
+        return;
+       }
+
+       var points = [];
+       for(var idx = 0; idx < ghRequest.route.size(); idx++) {
+           var point = ghRequest.route.getIndex(idx);
+           if (point.isResolved()) {
+               points.push([point.lng, point.lat]);
+           } else {
+               routeResultsDiv.html("Unresolved points");
+               return;
+           }
+       }
+
+       var requestStr, contentType;
+       if(inputText.indexOf("{") >= 0) {
+           try {
+            contentType = 'application/json; charset=utf-8';
+            var jsonModel = JSON.parse(inputText);
+            var jsonRequest = {"model": jsonModel, "request" : {"points": points}};
+            requestStr = JSON.stringify(jsonRequest);
+           } catch(ex) {
+            routeResultsDiv.html("Cannot parse JSON " + ex);
+            return;
+           }
+       } else {
+           var lines = inputText.split('\n');
+           var modelText = "";
+           for(var i = 0; i < lines.length; i++) {
+               modelText += " "+lines[i] + "\n";
+           }
+           var pointsStr = "";
+           for(var i = 0; i < points.length; i++) {
+               if(i > 0)
+                   pointsStr += ",";
+               pointsStr += "[" + points[i] + "]";
+           }
+
+           contentType = "text/x-yaml";
+           requestStr = "request:\n points: [" + pointsStr + "]\n"
+              + "model:\n" + modelText;
+           console.log(requestStr)
+       }
+
+       var urlForAPI = ghRequest.createURL("/flex");
+       routeResultsDiv.html('<img src="img/indicator.gif"/> Search Flex Route ...');
+       ghRequest.doRequest(urlForAPI, createRouteCallback(ghRequest, routeResultsDiv, false, true, false), requestStr, contentType);
+    };
+
+    $("#flex-input-text").keydown(function (e) {
+        // CTRL+Enter
+        if (e.ctrlKey && e.keyCode == 13) sendData();
+    });
+    $("#flex-search-button").click(sendData);
+
     if (isProduction())
         $('#hosting').show();
 
@@ -534,7 +614,11 @@ function routeLatLng(request, doQuery) {
 
     var urlForAPI = request.createURL();
     routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
-    request.doRequest(urlForAPI, function (json) {
+    request.doRequest(urlForAPI, createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom, false));
+}
+
+function createRouteCallback(request, routeResultsDiv, urlForHistory, doZoom, todoConvert) {
+    return function (json) {
         routeResultsDiv.html("");
         if (json.message) {
             var tmpErrors = json.message;
@@ -725,7 +809,7 @@ function routeLatLng(request, doQuery) {
         $('.defaulting').each(function (index, element) {
             $(element).css("color", "black");
         });
-    });
+    };
 }
 
 function mySubmit() {

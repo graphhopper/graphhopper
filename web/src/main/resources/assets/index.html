@@ -18,32 +18,33 @@
   -->
 
 <html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta name="keywords" content="road routing,shortest path,maps,openstreetmap,android,navigation,routenplaner,gis"/>
-        <link type="image/png" rel="icon" href="/favicon.ico"/>
-        <link rel="search" type="application/opensearchdescription+xml" title="GraphHopper Maps" href="opensearch.xml"/>
-        <title>Driving Directions - GraphHopper Maps</title>
-        <meta name="description" content="A fast route planner for biking, hiking and more! Based on OpenStreetMap including elevation data. Try out for free!"/>
-        <link rel="stylesheet" href="css/leaflet.css?v=1.3.1" />
-        <link rel="stylesheet" href="css/leaflet_numbered_markers.css" />
-        <link rel="stylesheet" href="css/leaflet.contextmenu.css?v=1.4.0" />
-        <link rel="stylesheet" href="css/leaflet.loading.css?v=0.1.24" />
-        <link rel="stylesheet" href="css/ui-lightness/jquery-ui.min.css" />
-        <link rel="stylesheet" href="css/L.Control.Heightgraph.css?v=0.0.1" />
-        <link rel="stylesheet" href="css/flatpickr.min.css?v=4.4.6">
-        <script type="text/javascript" src="js/main.js?v=0.11.2"></script>
-        <link rel="stylesheet" type="text/css" href="css/style.css" />
-    </head>
-    <body>
-        <div id="input">
-            <div id="input_header">
-                <div id="header_img">
-                    <a class="no_link" href="https://graphhopper.com">
-                        <img alt="GraphHopper" src="img/header.png"/>
-                    </a>
-                </div>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="keywords" content="road routing,shortest path,maps,openstreetmap,android,navigation,routenplaner,gis"/>
+    <link type="image/png" rel="icon" href="/favicon.ico"/>
+    <link rel="search" type="application/opensearchdescription+xml" title="GraphHopper Maps" href="opensearch.xml"/>
+    <title>Driving Directions - GraphHopper Maps</title>
+    <meta name="description"
+          content="A fast route planner for biking, hiking and more! Based on OpenStreetMap including elevation data. Try out for free!"/>
+    <link rel="stylesheet" href="css/leaflet.css?v=1.3.1"/>
+    <link rel="stylesheet" href="css/leaflet_numbered_markers.css"/>
+    <link rel="stylesheet" href="css/leaflet.contextmenu.css?v=1.4.0"/>
+    <link rel="stylesheet" href="css/leaflet.loading.css?v=0.1.24"/>
+    <link rel="stylesheet" href="css/ui-lightness/jquery-ui.min.css"/>
+    <link rel="stylesheet" href="css/L.Control.Heightgraph.css?v=0.0.1"/>
+    <link rel="stylesheet" href="css/flatpickr.min.css?v=4.4.6">
+    <script type="text/javascript" src="js/main.js?v=0.11.2"></script>
+    <link rel="stylesheet" type="text/css" href="css/style.css"/>
+</head>
+<body>
+<div id="input">
+    <div id="input_header">
+        <div id="header_img">
+            <a class="no_link" href="https://graphhopper.com">
+                <img alt="GraphHopper" src="img/header.png"/>
+            </a>
+        </div>
 
         <div id="options">
                     <span id="vehicles">
@@ -62,6 +63,12 @@
         </form>
         <div id="export-link" class="left"><a href="/maps"><img src='img/link.png'></a></div>
         <div id="gpxExportButton"><a href=""><img alt="gpx" src='img/gpx.png'></a></div>
+        <div id="flex-input" style="display: none">
+            <textarea id="flex-input-text" name="Text1" cols="35" rows="10"></textarea>
+            <input id="flex-search-button" style="float: right; margin-right: 5px" type="submit" value="Search">
+        </div>
+        <span id="flex-input-link" style="cursor: pointer"><small>flex</small></span>
+
         <div id="hosting">Powered by <a href='https://www.graphhopper.com/products/'>GraphHopper API</a></div>
     </div>
     <div class="clear"></div>
@@ -127,8 +134,10 @@
             g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
           })();
         }
+
 </script>
-<noscript><p><img src="https://matomo.graphhopper.com/matomo.php?idsite=1&amp;rec=1" style="border:0;" alt=""/></p></noscript>
+<noscript><p><img src="https://matomo.graphhopper.com/matomo.php?idsite=1&amp;rec=1" style="border:0;" alt=""/></p>
+</noscript>
 <!-- End Matomo Code -->
 </body>
 </html>

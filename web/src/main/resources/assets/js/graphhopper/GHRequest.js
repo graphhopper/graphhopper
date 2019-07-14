@@ -164,8 +164,9 @@ GHRequest.prototype.createGeocodeURL = function (host, prevIndex) {
     return path;
 };
 
-GHRequest.prototype.createURL = function () {
-    return this.createPath(this.host + "/route?" + this.createPointParams(false) + "&type=" + this.dataType);
+GHRequest.prototype.createURL = function (endpoint) {
+    endpoint = endpoint || "/route";
+    return this.createPath(this.host + endpoint + "?" + this.createPointParams(false) + "&type=" + this.dataType);
 };
 
 GHRequest.prototype.createGPXURL = function (withRoute, withTrack, withWayPoints) {
@@ -229,10 +230,13 @@ GHRequest.prototype.flatParameter = function (key, val) {
     return "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val);
 };
 
-GHRequest.prototype.doRequest = function (url, callback) {
+GHRequest.prototype.doRequest = function (url, callback, data, contentType) {
+    type = data? "POST" : "GET";
     var that = this;
     $.ajax({
         timeout: 30000,
+        data: data,
+        contentType: contentType,
         url: url,
         success: function (json) {
             if (json.paths) {
@@ -274,7 +278,7 @@ GHRequest.prototype.doRequest = function (url, callback) {
 
             callback(json);
         },
-        type: "GET",
+        type: type,
         dataType: this.dataType,
         crossDomain: true
     });

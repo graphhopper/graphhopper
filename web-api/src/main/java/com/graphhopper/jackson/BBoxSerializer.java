@@ -10,7 +10,7 @@ import java.io.IOException;
 
 class BBoxSerializer extends JsonSerializer<BBox> {
     @Override
-    public void serialize(BBox bBox, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
+    public void serialize(BBox bBox, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
         jsonGenerator.writeStartArray();
         for (Double number : bBox.toGeoJson()) {
             jsonGenerator.writeNumber(number);
