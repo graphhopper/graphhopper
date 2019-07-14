@@ -1,6 +1,7 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.graphhopper.GHResponse;
 import com.graphhopper.MultiException;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.util.CmdArgs;
@@ -13,6 +14,7 @@ import com.graphhopper.util.shapes.GHPoint;
 public class GraphHopperModule extends SimpleModule {
 
     public GraphHopperModule() {
+        addDeserializer(GHResponse.class, new GHResponseDeserializer());
         addDeserializer(FlexModel.class, new FlexModelDeserializer());
         addDeserializer(PathWrapper.class, new PathWrapperDeserializer());
         addDeserializer(BBox.class, new BBoxDeserializer());
