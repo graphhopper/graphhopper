@@ -72,12 +72,6 @@ public class EncodingManagerTest {
     }
 
     @Test
-    public void testEncoderWithWrongVersionIsRejected() {
-        thrown.expect(IllegalArgumentException.class);
-        EncodingManager manager = EncodingManager.create("car|version=0");
-    }
-
-    @Test
     public void testWrongEncoders() {
         try {
             FootFlagEncoder foot = new FootFlagEncoder();

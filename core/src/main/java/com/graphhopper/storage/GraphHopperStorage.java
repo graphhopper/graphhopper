@@ -258,6 +258,14 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
                         + "\nChange configuration to match the graph or delete " + dir.getLocation());
             }
 
+            String encodedValueStr = properties.get("graph.encoded_values");
+            if (!encodedValueStr.isEmpty() && !encodingManager.toEncodedValuesAsString().equalsIgnoreCase(encodedValueStr)) {
+                throw new IllegalStateException("Encoded values do not match:"
+                        + "\nGraphhopper config: " + encodingManager.toEncodedValuesAsString()
+                        + "\nGraph: " + encodedValueStr
+                        + "\nChange configuration to match the graph or delete " + dir.getLocation());
+            }
+
             String byteOrder = properties.get("graph.byte_order");
             if (!byteOrder.equalsIgnoreCase("" + dir.getByteOrder()))
                 throw new IllegalStateException("Configured graph.byte_order (" + dir.getByteOrder() + ") is not equal to loaded " + byteOrder + "");
