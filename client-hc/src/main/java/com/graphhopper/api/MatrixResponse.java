@@ -18,7 +18,7 @@ public class MatrixResponse {
     private final List<Integer> invalidFromPoints = new ArrayList<>(0);
     private final List<Integer> invalidToPoints = new ArrayList<>(0);
     private long[][] times = new long[0][];
-    private double[][] distances = new double[0][];
+    private int[][] distances = new int[0][];
     private double[][] weights = new double[0][];
     private final int fromCount;
     private final int toCount;
@@ -38,7 +38,7 @@ public class MatrixResponse {
         }
 
         if (withDistances) {
-            distances = new double[fromCap][toCap];
+            distances = new int[fromCap][toCap];
         }
 
         if (withWeights) {
@@ -49,7 +49,7 @@ public class MatrixResponse {
             throw new IllegalArgumentException("Please specify times, distances or weights that should be calculated by the matrix");
     }
 
-    public void setFromRow(int row, long timeRow[], double distanceRow[], double weightRow[]) {
+    public void setFromRow(int row, long timeRow[], int distanceRow[], double weightRow[]) {
         if (times.length > 0) {
             check(timeRow.length, toCount, "to times");
             times[row] = timeRow;
@@ -81,7 +81,7 @@ public class MatrixResponse {
         }
     }
 
-    public void setDistanceRow(int row, double distanceRow[]) {
+    public void setDistanceRow(int row, int distanceRow[]) {
         if (distances.length > 0) {
             check(distanceRow.length, toCount, "to distances");
             distances[row] = distanceRow;
@@ -128,7 +128,7 @@ public class MatrixResponse {
         } else if (to >= distances[from].length) {
             throw new IllegalStateException("Cannot get 'to' " + to + " from distances with size " + distances[from].length);
         }
-        return distances[from][to];
+        return distances[from][to] == Integer.MAX_VALUE ? Double.MAX_VALUE : distances[from][to];
     }
 
     /**

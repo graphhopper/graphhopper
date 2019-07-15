@@ -153,10 +153,10 @@ public abstract class GHMatrixAbstractRequester {
             }
 
             JsonNode distancesFromArray = null;
-            double[] distances = null;
+            int[] distances = null;
             if (readDistances) {
                 distancesFromArray = distancesArray.get(fromIndex);
-                distances = new double[distancesFromArray.size()];
+                distances = new int[distancesFromArray.size()];
                 toCount = checkArraySizes("distances", distancesFromArray.size(), weightsFromArray, timesFromArray);
             }
 
@@ -179,9 +179,9 @@ public abstract class GHMatrixAbstractRequester {
 
                 if (readDistances) {
                     if (distancesFromArray.get(toIndex).isNull() && !failFast) {
-                        distances[toIndex] = Double.MAX_VALUE;
+                        distances[toIndex] = Integer.MAX_VALUE;
                     } else {
-                        distances[toIndex] = distancesFromArray.get(toIndex).asDouble();
+                        distances[toIndex] = (int) Math.round(distancesFromArray.get(toIndex).asDouble());
                     }
                 }
             }

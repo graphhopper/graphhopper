@@ -13,6 +13,16 @@
       [null, null, null],
       [2, null, 3]
     ],
+    "distances": [
+      [4, null, 5],
+      [null, null, null],
+      [6, null, 7]
+    ],
+    "times": [
+      [8, null, 9],
+      [null, null, null],
+      [10, null, 11]
+    ],
     "hints": [
       {
         "message": "There were 5 connections that could not be found, see point_pairs for details",

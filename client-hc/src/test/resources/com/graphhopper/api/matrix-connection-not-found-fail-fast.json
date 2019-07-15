@@ -12,6 +12,14 @@
       [0, null],
       [null, 0]
     ],
+    "distances": [
+      [1, null],
+      [null, 1]
+    ],
+    "times": [
+      [2, null],
+      [null, 2]
+    ],
     "hints": [
       {
         "message": "There were 2 connections that could not be found, see point_pairs for details",
