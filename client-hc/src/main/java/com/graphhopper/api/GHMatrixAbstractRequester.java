@@ -20,7 +20,6 @@ import static com.graphhopper.api.GraphHopperMatrixWeb.*;
  */
 public abstract class GHMatrixAbstractRequester {
 
-    private GraphHopperWeb web = new GraphHopperWeb();
     protected final ObjectMapper objectMapper;
     protected final Set<String> ignoreSet = new HashSet<>(10);
     protected final String serviceUrl;
