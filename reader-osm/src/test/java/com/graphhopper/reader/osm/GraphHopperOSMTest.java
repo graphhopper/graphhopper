@@ -522,7 +522,7 @@ public class GraphHopperOSMTest {
                         put(Parameters.CH.PREPARE + "weightings", "no")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
-        // older versions do not store this property, ensure that we fail to load it
+        // older versions <= 0.12 did not store this property, ensure that we fail to load it
         instance.getGraphHopperStorage().getProperties().remove("graph.encoded_values");
         instance.getGraphHopperStorage().flush();
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
