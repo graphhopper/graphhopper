@@ -87,7 +87,10 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
         }
 
         String url = buildURL("", ghRequest);
-        url += "&" + pointsStr + "&" + pointHintsStr + "&" + outArrayStr + "&vehicle=" + ghRequest.getVehicle();
+        url += "&" + pointsStr + "&" + pointHintsStr + "&" + outArrayStr;
+        if (!Helper.isEmpty(ghRequest.getVehicle())) {
+            url += "&vehicle=" + ghRequest.getVehicle();
+        }
 
         boolean withTimes = outArraysList.contains("times");
         boolean withDistances = outArraysList.contains("distances");
