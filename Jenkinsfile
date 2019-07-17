@@ -1,36 +1,31 @@
 pipeline {
   agent {
-    label "jenkins-nodejs"
+    label "k8s-slave"
     }
   environment {
     ORG = 'curefit'
     APP_NAME = 'graphhopper'
-    CHARTMUSEUM_CREDS = credentials('jenkins-x-chartmuseum')
+    CHARTMUSEUM_CREDS = credentials('prod-chartmuseum')
     NPM_TOKEN = credentials('npm-token')
     TEMPLATE = 'basic'
-    CHART_REPOSITORY= 'http://jenkins-x-chartmuseum:8080'
+    CHART_REPOSITORY= 'http://chartmuseum.production.cure.fit.internal'     
     }
   stages {
     stage('Publish K8s Chart') {
+      when { anyOf {branch 'stage'; branch 'master' } }
       steps {
-        container('nodejs') {
           script{
-              gitGetCredentials()
               getChart()
               releaseChart()
             }
           }
-        }
       };
     stage('Prepare Docker Image for Stage Environment') {
-      when {
-            branch 'stage';
-        }
+      when { branch 'stage' }
       environment {
-        PREVIEW_VERSION = "0.0.$BUILD_NUMBER-$BRANCH_NAME".replaceAll('_','-')
+        PREVIEW_VERSION = "$BUILD_NUMBER-$BRANCH_NAME".replaceAll('_','-')
         }
       steps {
-        container('nodejs') {
           script{
             def URL = "${DOCKER_REGISTRY}/${ORG}/${APP_NAME}:${PREVIEW_VERSION}"
             buildDockerfile("${APP_NAME}", URL, "stage")
@@ -38,36 +33,22 @@ pipeline {
             updateArtifact("${DOCKER_REGISTRY}/${ORG}/${APP_NAME}", "${PREVIEW_VERSION}", "stage")
             }
           }
-        }
       };
     stage('Prepare Docker Image for Production Environment') {
-      when{
-          branch 'master';
+      when{ branch 'master'; }
+      environment {
+        RELEASE_VERSION = "$BUILD_NUMBER"
         }
       steps {
-        container('nodejs') {
           script{
-            gitGetCredentials()
-            createGitReleaseVersion()
-            def URL = "${DOCKER_REGISTRY}/${ORG}/${APP_NAME}:\$(cat ${WORKSPACE}/VERSION)"
+            def URL = "${DOCKER_REGISTRY}/${ORG}/${APP_NAME}:${RELEASE_VERSION}"
             buildDockerfile("${APP_NAME}", URL, "prod")
             pushDockerImage(URL)
-            updateArtifact("${DOCKER_REGISTRY}/${ORG}/${APP_NAME}", "\$(cat ${WORKSPACE}/VERSION)", "prod")
+            updateArtifact("${DOCKER_REGISTRY}/${ORG}/${APP_NAME}", "${RELEASE_VERSION}", "prod")
             }
           }
-        }
       };
-    stage('Create GIT Release') {
-      when{
-          branch 'master';
-        }
-      steps {
-        container('nodejs') {
-          changelogAndRelease()
-          }
-        }
-      };
-    }
+}
   post {
     success {
       cleanWs()
@@ -82,27 +63,11 @@ void verifyCharts(){
 }
 
 void buildDockerfile(appName, tag, env){
-  sh "docker build -t ${tag} --build-arg TOKEN=${NPM_TOKEN} --build-arg ENVIRONMENT=${env} --build-arg APP_NAME=${appName} --network host ."
+  sh "sudo docker build -t ${tag} --build-arg TOKEN=${NPM_TOKEN} --build-arg ENVIRONMENT=${env} --build-arg APP_NAME=${appName} --network host ."
 }
 
 void pushDockerImage(tag){
-   sh "docker push ${tag}"
-   sh "jx step post build --image ${URL}"
-}
-
-void changelogAndRelease(){
-  sh """
-  jx step tag --version \$(cat VERSION) --verbose
-  """
-}
-
-void gitCheckout(){
-  sh "git checkout $BRANCH_NAME"
-}
-
-void gitGetCredentials(){
-  sh "git config --global credential.helper store"
-  sh "jx step git credentials"
+   sh "sudo docker push ${tag}"
 }
 
 void submodule(){
@@ -113,24 +78,19 @@ void submodule(){
 }
 
 void getChart(){
-  sh "git clone https://github.com/curefit/k8s-templates.git"
+  sh "git clone git@github.com:curefit/k8s-templates.git"
   sh """
   cd ./k8s-templates/${TEMPLATE}
-  chmod +x init.sh
-  ./init.sh ${APP_NAME}
+  chmod +x init-k8s.sh
+  ./init-k8s.sh ${APP_NAME}
   """
   sh "rm -rf ./k8s-templates"
-}
-
-void createGitReleaseVersion(){
-  sh "echo \$(jx-release-version) > ${WORKSPACE}/VERSION"
 }
 
 void releaseChart(){
   sh """
   cd ./charts/${APP_NAME}
   helm init --client-only
-  helm plugin install https://github.com/chartmuseum/helm-push
   helm push . $CHART_REPOSITORY --version 1.0.0-$BRANCH_NAME --force --username ${CHARTMUSEUM_CREDS_USR} --password ${CHARTMUSEUM_CREDS_PSW}
   """
 }
