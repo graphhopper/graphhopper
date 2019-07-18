@@ -3,6 +3,7 @@ package com.graphhopper.api;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This class defines the response for a M-to-N requests.
@@ -250,6 +251,20 @@ public class MatrixResponse {
         public PointPair(int sourceIndex, int targetIndex) {
             this.sourceIndex = sourceIndex;
             this.targetIndex = targetIndex;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            PointPair pointPair = (PointPair) o;
+            return sourceIndex == pointPair.sourceIndex &&
+                    targetIndex == pointPair.targetIndex;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(sourceIndex, targetIndex);
         }
 
         @Override
