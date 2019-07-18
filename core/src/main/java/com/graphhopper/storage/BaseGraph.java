@@ -1012,7 +1012,7 @@ class BaseGraph implements Graph {
         @Override
         public final boolean next() {
             while (true) {
-                if (nextEdgeId == EdgeIterator.NO_EDGE)
+                if (!EdgeIterator.Edge.isValid(nextEdgeId))
                     return false;
 
                 selectEdgeAccess();
@@ -1036,7 +1036,7 @@ class BaseGraph implements Graph {
 
         @Override
         public EdgeIteratorState detach(boolean reverseArg) {
-            if (edgeId == nextEdgeId || edgeId == EdgeIterator.NO_EDGE)
+            if (edgeId == nextEdgeId || !EdgeIterator.Edge.isValid(edgeId))
                 throw new IllegalStateException("call next before detaching or setEdgeId (edgeId:" + edgeId + " vs. next " + nextEdgeId + ")");
 
             EdgeIterable iter = edgeAccess.createSingleEdge(filter);

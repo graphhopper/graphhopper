@@ -156,7 +156,7 @@ abstract class EdgeAccess {
      * Writes plain edge information to the edges index
      */
     final long writeEdge(int edgeId, int nodeA, int nodeB, int nextEdgeA, int nextEdgeB) {
-        if (edgeId < 0 || edgeId == EdgeIterator.NO_EDGE)
+        if (!EdgeIterator.Edge.isValid(edgeId))
             throw new IllegalStateException("Cannot write edge with illegal ID:" + edgeId + "; nodeA:" + nodeA + ", nodeB:" + nodeB);
 
         long edgePointer = toPointer(edgeId);
