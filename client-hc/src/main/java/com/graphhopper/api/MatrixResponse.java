@@ -100,7 +100,8 @@ public class MatrixResponse {
     }
 
     /**
-     * Returns the time for the specific entry (from -&gt; to) in milliseconds.
+     * Returns the time for the specific entry (from -&gt; to) in milliseconds or {@link Long#MAX_VALUE} in case
+     * no connection was found (and {@link GHMRequest#setFailFast(boolean)} was set to true).
      */
     public long getTime(int from, int to) {
         if (hasErrors()) {
@@ -116,7 +117,8 @@ public class MatrixResponse {
     }
 
     /**
-     * Returns the distance for the specific entry (from -&gt; to) in meter.
+     * Returns the distance for the specific entry (from -&gt; to) in meter or {@link Double#MAX_VALUE} in case
+     * no connection was found (and {@link GHMRequest#setFailFast(boolean)} was set to true).
      */
     public double getDistance(int from, int to) {
         if (hasErrors()) {
@@ -132,8 +134,9 @@ public class MatrixResponse {
     }
 
     /**
-     * Returns the weight for the specific entry (from -&gt; to) in arbitrary units
-     * ('costs').
+     * Returns the weight for the specific entry (from -&gt; to) in arbitrary units ('costs'), or
+     * {@link Double#MAX_VALUE} in case no connection was found (and {@link GHMRequest#setFailFast(boolean)} was set
+     * to true).
      */
     public double getWeight(int from, int to) {
         if (hasErrors()) {
