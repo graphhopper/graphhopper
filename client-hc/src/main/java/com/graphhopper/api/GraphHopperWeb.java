@@ -243,8 +243,14 @@ public class GraphHopperWeb implements GraphHopperAPI {
             url += "&" + Parameters.Details.PATH_DETAILS + "=" + details;
         }
 
-        for (String hint : request.getPointHints()) {
-            url += "&" + Parameters.Routing.POINT_HINT + "=" + WebHelper.encodeURL(hint);
+        // append *all* point hints only if at least *one* is not empty
+        for (String checkEmptyHint : request.getPointHints()) {
+            if (!checkEmptyHint.isEmpty()) {
+                for (String hint : request.getPointHints()) {
+                    url += "&" + Parameters.Routing.POINT_HINT + "=" + WebHelper.encodeURL(hint);
+                }
+                break;
+            }
         }
 
         for (String snapPrevention : request.getSnapPreventions()) {

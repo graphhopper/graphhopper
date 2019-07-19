@@ -491,7 +491,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                                 continue;
                             }
                             CHEntry root = entry.getParent();
-                            while (root.parent.edge != EdgeIterator.NO_EDGE) {
+                            while (EdgeIterator.Edge.isValid(root.parent.edge)) {
                                 root = root.getParent();
                             }
                             // todo: removing this 'optimization' improves contraction time significantly, but introduces 
