@@ -189,7 +189,7 @@ public class TurnCostExtension implements GraphExtension {
      * @return turn flags of the specified node and edge properties.
      */
     public long getTurnCostFlags(int edgeFrom, int nodeVia, int edgeTo) {
-        if (edgeFrom == EdgeIterator.NO_EDGE || edgeTo == EdgeIterator.NO_EDGE)
+        if (!EdgeIterator.Edge.isValid(edgeFrom) || !EdgeIterator.Edge.isValid(edgeTo))
             throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
         if (nodeVia < 0)
             throw new IllegalArgumentException("via node cannot be negative");

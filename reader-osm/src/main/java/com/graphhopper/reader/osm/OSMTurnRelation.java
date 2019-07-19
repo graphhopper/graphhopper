@@ -79,7 +79,7 @@ public class OSMTurnRelation {
                 }
             }
 
-            if (edgeIdFrom == EdgeIterator.NO_EDGE)
+            if (!EdgeIterator.Edge.isValid(edgeIdFrom))
                 return Collections.emptyList();
 
             final Collection<TurnCostTableEntry> entries = new ArrayList<>();

@@ -419,7 +419,7 @@ public class GraphHopperOSMTest {
     }
 
     @Test
-    public void testFailsForWrongConfig() throws IOException {
+    public void testFailsForWrongConfig() {
         instance = new GraphHopperOSM().init(
                 new CmdArgs().
                         put("datareader.file", testOsm3).
@@ -474,6 +474,74 @@ public class GraphHopperOSMTest {
             fail();
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match"));
+        }
+
+        // different encoded values should fail to load
+        instance = new GraphHopperOSM().init(
+                new CmdArgs().
+                        put("datareader.file", testOsm3).
+                        put("datareader.dataaccess", "RAM").
+                        put("graph.encoded_values", "road_class").
+                        put("graph.flag_encoders", "foot,car").
+                        put(Parameters.CH.PREPARE + "weightings", "no")).
+                setDataReaderFile(testOsm3);
+        try {
+            instance.load(ghLoc);
+            fail();
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoded values do not match"));
+        }
+
+        // different version for car should fail
+        instance = new GraphHopperOSM().setEncodingManager(EncodingManager.create(new FootFlagEncoder(), new CarFlagEncoder() {
+            @Override
+            public int getVersion() {
+                return 0;
+            }
+        })).init(
+                new CmdArgs().
+                        put("datareader.file", testOsm3).
+                        put("datareader.dataaccess", "RAM").
+                        put(Parameters.CH.PREPARE + "weightings", "no")).
+                setDataReaderFile(testOsm3);
+        try {
+            instance.load(ghLoc);
+            fail();
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match"));
+        }
+    }
+
+    @Test
+    public void testFailsForWrongEVConfig() {
+        instance = new GraphHopperOSM().init(
+                new CmdArgs().
+                        put("datareader.file", testOsm3).
+                        put("datareader.dataaccess", "RAM").
+                        put("graph.flag_encoders", "foot,car").
+                        put(Parameters.CH.PREPARE + "weightings", "no")).
+                setGraphHopperLocation(ghLoc);
+        instance.importOrLoad();
+        // older versions <= 0.12 did not store this property, ensure that we fail to load it
+        instance.getGraphHopperStorage().getProperties().remove("graph.encoded_values");
+        instance.getGraphHopperStorage().flush();
+        assertEquals(5, instance.getGraphHopperStorage().getNodes());
+        instance.close();
+
+        // different encoded values should fail to load
+        instance = new GraphHopperOSM().init(
+                new CmdArgs().
+                        put("datareader.file", testOsm3).
+                        put("datareader.dataaccess", "RAM").
+                        put("graph.encoded_values", "road_environment,road_class").
+                        put("graph.flag_encoders", "foot,car").
+                        put(Parameters.CH.PREPARE + "weightings", "no")).
+                setDataReaderFile(testOsm3);
+        try {
+            instance.load(ghLoc);
+            fail();
+        } catch (Exception ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoded values do not match"));
         }
     }
 

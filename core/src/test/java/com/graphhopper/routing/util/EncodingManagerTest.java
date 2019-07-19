@@ -23,9 +23,7 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.BitUtil;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.*;
 
@@ -33,8 +31,6 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class EncodingManagerTest {
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void testCompatibility() {
@@ -48,19 +44,20 @@ public class EncodingManagerTest {
         assertNotEquals(car.hashCode(), foot.hashCode());
 
         FootFlagEncoder foot2 = new FootFlagEncoder();
-        EncodingManager manager2 = EncodingManager.create(foot2);
+        EncodingManager.create(foot2);
         assertNotEquals(foot, foot2);
         assertNotEquals(foot.hashCode(), foot2.hashCode());
 
         FootFlagEncoder foot3 = new FootFlagEncoder();
-        EncodingManager manager3 = EncodingManager.create(foot3);
+        EncodingManager.create(foot3);
         assertEquals(foot3, foot2);
         assertEquals(foot3.hashCode(), foot2.hashCode());
 
         try {
             EncodingManager.create("car,car");
-            assertTrue("do not allow duplicate flag encoders", false);
+            fail("there should have been an exception, do not allow duplicate flag encoders");
         } catch (Exception ex) {
+            // ok
         }
     }
 
@@ -72,24 +69,18 @@ public class EncodingManagerTest {
     }
 
     @Test
-    public void testEncoderWithWrongVersionIsRejected() {
-        thrown.expect(IllegalArgumentException.class);
-        EncodingManager manager = EncodingManager.create("car|version=0");
-    }
-
-    @Test
     public void testWrongEncoders() {
         try {
             FootFlagEncoder foot = new FootFlagEncoder();
             EncodingManager.create(foot, foot);
-            assertTrue(false);
+            fail("There should have been an exception");
         } catch (Exception ex) {
             assertEquals("You must not register a FlagEncoder (foot) twice!", ex.getMessage());
         }
 
         try {
             EncodingManager.create(new FootFlagEncoder(), new CarFlagEncoder(), new BikeFlagEncoder(), new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder());
-            assertTrue(false);
+            fail("There should have been an exception");
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoders are requesting 36 bits, more than 32 bits of edge flags"));
         }
