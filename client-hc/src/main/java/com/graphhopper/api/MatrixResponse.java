@@ -15,7 +15,6 @@ public class MatrixResponse {
     private String debugInfo = "";
     private final List<Throwable> errors = new ArrayList<>(4);
     private final List<PointPair> disconnectedPoints = new ArrayList<>(0);
-    // todonow: should we add hppc to classpath and use IntArrayList instead ?
     private final List<Integer> invalidFromPoints = new ArrayList<>(0);
     private final List<Integer> invalidToPoints = new ArrayList<>(0);
     private long[][] times = new long[0][];
