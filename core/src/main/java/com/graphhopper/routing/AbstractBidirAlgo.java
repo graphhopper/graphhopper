@@ -103,9 +103,9 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
      * like {@link #calcPath(int, int)}, but this method also allows to strictly restrict the edge the
      * path will begin with and the edge it will end with.
      *
-     * @param fromOutEdge the edge id of the first edge of the path. using {@link EdgeIterator.ANY_EDGE} means
+     * @param fromOutEdge the edge id of the first edge of the path. using {@link EdgeIterator#ANY_EDGE} means
      *                    not enforcing the first edge of the path
-     * @param toInEdge    the edge id of the last edge of the path. using {@link EdgeIterator.ANY_EDGE} means
+     * @param toInEdge    the edge id of the last edge of the path. using {@link EdgeIterator#ANY_EDGE} means
      *                    not enforcing the last edge of the path
      */
     public Path calcPath(int from, int to, int fromOutEdge, int toInEdge) {
