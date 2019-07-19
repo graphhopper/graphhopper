@@ -49,7 +49,7 @@ public class MatrixResponse {
             throw new IllegalArgumentException("Please specify times, distances or weights that should be calculated by the matrix");
     }
 
-    public void setFromRow(int row, long timeRow[], int distanceRow[], double weightRow[]) {
+    public void setFromRow(int row, long[] timeRow, int[] distanceRow, double[] weightRow) {
         if (times.length > 0) {
             check(timeRow.length, toCount, "to times");
             times[row] = timeRow;
@@ -72,7 +72,7 @@ public class MatrixResponse {
                     "Expected " + expectedLength + " was: " + currentLength + ". Matrix: " + fromCount + "x" + toCount);
     }
 
-    public void setTimeRow(int row, long timeRow[]) {
+    public void setTimeRow(int row, long[] timeRow) {
         if (times.length > 0) {
             check(timeRow.length, toCount, "to times");
             times[row] = timeRow;
@@ -81,7 +81,7 @@ public class MatrixResponse {
         }
     }
 
-    public void setDistanceRow(int row, int distanceRow[]) {
+    public void setDistanceRow(int row, int[] distanceRow) {
         if (distances.length > 0) {
             check(distanceRow.length, toCount, "to distances");
             distances[row] = distanceRow;
@@ -90,7 +90,7 @@ public class MatrixResponse {
         }
     }
 
-    public void setWeightRow(int row, double weightRow[]) {
+    public void setWeightRow(int row, double[] weightRow) {
         if (weights.length > 0) {
             check(weightRow.length, toCount, "to weights");
             weights[row] = weightRow;
@@ -99,13 +99,20 @@ public class MatrixResponse {
         }
     }
 
+    public boolean isConnected(int from, int to) {
+        if (hasErrors()) {
+            return false;
+        }
+        return getWeight(from, to) < Double.MAX_VALUE;
+    }
+
     /**
      * Returns the time for the specific entry (from -&gt; to) in milliseconds or {@link Long#MAX_VALUE} in case
      * no connection was found (and {@link GHMRequest#setFailFast(boolean)} was set to true).
      */
     public long getTime(int from, int to) {
         if (hasErrors()) {
-            throw new IllegalStateException("Cannot return time (" + from + "," + to + ") if errors occured " + getErrors());
+            throw new IllegalStateException("Cannot return time (" + from + "," + to + ") if errors occurred " + getErrors());
         }
 
         if (from >= times.length) {

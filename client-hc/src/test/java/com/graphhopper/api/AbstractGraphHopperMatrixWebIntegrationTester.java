@@ -116,6 +116,7 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
         assertTrue(matrix.hasErrors());
         assertEquals(1, matrix.getErrors().size());
         assertTrue(matrix.getErrors().get(0).getMessage().contains("0->1"));
+        assertFalse(matrix.isConnected(0, 1));
         try {
             matrix.getWeight(0, 1);
             fail("getWeight should throw an exception if errors were found");
@@ -147,19 +148,24 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
                 double weight = matrix.getWeight(i, j);
                 double distance = matrix.getDistance(i, j);
                 long time = matrix.getTime(i, j);
+                boolean connected = matrix.isConnected(i, j);
                 if (i == j) {
+                    assertTrue(connected);
                     assertEquals(0, weight, 1.e-3);
                     assertEquals(0, distance, 1.e-3);
                     assertEquals(0, time);
                 } else if (i == 0 && j == 3) {
+                    assertTrue(connected);
                     assertEquals(4931, weight, 100);
                     assertEquals(78643, distance, 100);
                     assertEquals(3752000, time, 100000);
                 } else if (i == 3 && j == 0) {
+                    assertTrue(connected);
                     assertEquals(4745, weight, 100);
                     assertEquals(75480, distance, 100);
                     assertEquals(3613000, time, 100000);
                 } else {
+                    assertFalse(connected);
                     assertEquals("expected maximum weight for matrix element (" + i + ", " + j + "), but was: " + weight, Double.MAX_VALUE, weight, 1.e-3);
                     assertEquals("expected maximum distance for matrix element (" + i + ", " + j + "), but was: " + distance, Double.MAX_VALUE, weight, 1.e-3);
                     assertEquals("expected maximum time for matrix element (" + i + ", " + j + "), but was: " + time, Long.MAX_VALUE, time);
@@ -183,6 +189,7 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
         assertEquals(2, matrix.getErrors().size());
         assertTrue(matrix.getErrors().get(0).getMessage().contains("Cannot find from_points: 0, 2"));
         assertTrue(matrix.getErrors().get(1).getMessage().contains("Cannot find to_points: 0, 2"));
+        assertFalse(matrix.isConnected(0, 1));
         try {
             matrix.getWeight(0, 1);
             fail("getWeight should throw an exception if errors were found");
@@ -216,22 +223,27 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
                 double weight = matrix.getWeight(i, j);
                 double distance = matrix.getDistance(i, j);
                 long time = matrix.getTime(i, j);
+                boolean connected = matrix.isConnected(i, j);
                 if (i == 1 && j == 1 || i == 3 && j == 3) {
                     assertEquals(0, weight, 1.e-3);
                     assertEquals(0, distance, 1.e-3);
                     assertEquals(0, time);
+                    assertTrue(connected);
                 } else if (i == 1 && j == 3) {
                     assertEquals(1087, weight, 10);
                     assertEquals(13926, distance, 100);
                     assertEquals(878000, time, 10000);
+                    assertTrue(connected);
                 } else if (i == 3 && j == 1) {
                     assertEquals(1083, weight, 10);
                     assertEquals(13856, distance, 100);
                     assertEquals(875000, time, 1000);
+                    assertTrue(connected);
                 } else {
                     assertEquals(Double.MAX_VALUE, weight, 1.e-3);
                     assertEquals(Double.MAX_VALUE, distance, 1.e-3);
                     assertEquals(Long.MAX_VALUE, time);
+                    assertFalse(connected);
                 }
             }
         }
@@ -254,6 +266,7 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 2; j++) {
                 double weight = matrix.getWeight(i, j);
+                assertFalse(matrix.isConnected(i, j));
                 assertEquals(Double.MAX_VALUE, weight, 1.e-3);
             }
         }
