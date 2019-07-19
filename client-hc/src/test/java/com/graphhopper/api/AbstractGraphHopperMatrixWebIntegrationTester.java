@@ -198,6 +198,9 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
         req.addPoint(new GHPoint(42.541382, 1.516349));
         req.addPoint(new GHPoint(42.497289, 1.762276));
         req.addPoint(new GHPoint(42.566293, 1.597867));
+        req.addOutArray("weights");
+        req.addOutArray("distances");
+        req.addOutArray("times");
         req.setFailFast(false);
 
         MatrixResponse matrix = ghMatrix.route(req);
@@ -211,16 +214,24 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 double weight = matrix.getWeight(i, j);
-                if (i == 1 && j == 1) {
+                double distance = matrix.getDistance(i, j);
+                long time = matrix.getTime(i, j);
+                if (i == 1 && j == 1 || i == 3 && j == 3) {
                     assertEquals(0, weight, 1.e-3);
-                } else if (i == 3 && j == 3) {
-                    assertEquals(0, weight, 1.e-3);
+                    assertEquals(0, distance, 1.e-3);
+                    assertEquals(0, time);
                 } else if (i == 1 && j == 3) {
-                    assertEquals(887.908, weight, 10);
+                    assertEquals(1087, weight, 10);
+                    assertEquals(13926, distance, 100);
+                    assertEquals(878000, time, 10000);
                 } else if (i == 3 && j == 1) {
-                    assertEquals(874.323, weight, 10);
+                    assertEquals(1083, weight, 10);
+                    assertEquals(13856, distance, 100);
+                    assertEquals(875000, time, 1000);
                 } else {
                     assertEquals(Double.MAX_VALUE, weight, 1.e-3);
+                    assertEquals(Double.MAX_VALUE, distance, 1.e-3);
+                    assertEquals(Long.MAX_VALUE, time);
                 }
             }
         }
