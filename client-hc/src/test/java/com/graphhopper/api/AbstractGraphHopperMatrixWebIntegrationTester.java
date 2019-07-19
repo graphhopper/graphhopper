@@ -237,4 +237,26 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
         }
     }
 
+    @Test
+    public void testPointsNotFound_doNotFailFast_noPointsFound() {
+        GHMRequest req = new GHMRequest();
+        req.addPoint(new GHPoint(42.506021, 1.643829));
+        req.addPoint(new GHPoint(42.497289, 1.762276));
+        req.setFailFast(false);
+
+        MatrixResponse matrix = ghMatrix.route(req);
+        assertFalse(matrix.hasErrors());
+        assertTrue(matrix.hasProblems());
+        assertEquals(0, matrix.getErrors().size());
+        assertEquals(Arrays.asList(0, 1), matrix.getInvalidFromPoints());
+        assertEquals(Arrays.asList(0, 1), matrix.getInvalidToPoints());
+        assertEquals("[[0, 0], [0, 1], [1, 0], [1, 1]]", matrix.getDisconnectedPoints().toString());
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                double weight = matrix.getWeight(i, j);
+                assertEquals(Double.MAX_VALUE, weight, 1.e-3);
+            }
+        }
+    }
+
 }
