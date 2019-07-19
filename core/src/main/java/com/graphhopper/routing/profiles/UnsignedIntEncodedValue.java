@@ -19,6 +19,7 @@ package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -171,12 +172,76 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(name, fwdDataIndex, bwdDataIndex, bits, maxValue, fwdShift, bwdShift, fwdMask, bwdMask, storeTwoDirections);
+    public final int hashCode() {
+        return getVersion();
     }
 
     @Override
     public int getVersion() {
-        return hashCode();
+        int val = staticHashCode(name);
+        val = 31 * val + (storeTwoDirections ? 1231 : 1237);
+        return staticHashCode(val, fwdDataIndex, bwdDataIndex, bits, maxValue, fwdShift, bwdShift, fwdMask, bwdMask);
+    }
+
+    /**
+     * Produces a static hashcode for an integer arrays that is platform independent and still compatible to the default
+     * of openjdk.
+     *
+     * @see Arrays#hashCode(int[])
+     */
+    static int staticHashCode(int... vals) {
+        if (vals == null)
+            return 0;
+        int len = vals.length;
+        int[] locVal = vals;
+        int val = 1;
+        for (int idx = 0; idx < len; ++idx) {
+            val = 31 * val + locVal[idx];
+        }
+
+        return val;
+    }
+
+    /**
+     * Produces a static hashcode for an Enum arrays that is platform independent and still compatible to the default
+     * of openjdk.
+     */
+    static int staticHashCode(Enum... vals) {
+        if (vals == null)
+            return 0;
+        int len = vals.length;
+        Enum[] locVal = vals;
+        int val = 1;
+        for (int idx = 0; idx < len; ++idx) {
+            val = 31 * val + locVal[idx].ordinal();
+        }
+
+        return val;
+    }
+
+    /**
+     * Produces a static hashcode for an integer arrays that is platform independent and still compatible to the default
+     * of openjdk
+     *
+     * @see Double#hashCode
+     */
+    static int staticHashCode(double val) {
+        long var2 = Double.doubleToLongBits(val);
+        return (int) (var2 ^ var2 >>> 32);
+    }
+
+    /**
+     * Produces a static hashcode for a string that is platform independent and still compatible to the default
+     * of openjdk. Do not use for performance critical applications.
+     *
+     * @see String#hashCode()
+     */
+    static int staticHashCode(String str) {
+        int len = str.length();
+        int val = 0;
+        for (int idx = 0; idx < len; ++idx) {
+            val = 31 * val + str.charAt(idx);
+        }
+        return val;
     }
 }
