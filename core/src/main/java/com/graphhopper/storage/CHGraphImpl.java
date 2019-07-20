@@ -283,7 +283,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             // even though this is not optimal from a speed performance point of view.
             if (tmpIter.isShortcut() && tmpIter.getEdge() == edgeState.getEdge()) {
                 // TODO this is ugly, move this somehow into the underlying iteration logic
-                long edgePointer = tmpPrevEdge == EdgeIterator.NO_EDGE ? -1
+                long edgePointer = !EdgeIterator.Edge.isValid(tmpPrevEdge) ? -1
                         : isShortcut(tmpPrevEdge) ? chEdgeAccess.toPointer(tmpPrevEdge) : baseGraph.edgeAccess.toPointer(tmpPrevEdge);
                 chEdgeAccess.internalEdgeDisconnect(edgeState.getEdge(), edgePointer, edgeState.getAdjNode());
                 break;

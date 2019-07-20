@@ -76,7 +76,7 @@ public class TurnWeighting implements Weighting {
     @Override
     public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         double weight = superWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
-        if (prevOrNextEdgeId == EdgeIterator.NO_EDGE)
+        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId))
             return weight;
 
         final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
