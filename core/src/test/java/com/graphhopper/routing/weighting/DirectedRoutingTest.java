@@ -94,6 +94,7 @@ public class DirectedRoutingTest {
     public void init() {
         dir = new RAMDirectory();
         maxTurnCosts = 10;
+        // todonow: make this work with speed_both_directions=true!
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
@@ -112,7 +113,8 @@ public class DirectedRoutingTest {
             pch.doWork();
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, weighting, 10, 4);
+            lm = new PrepareLandmarks(dir, graph, weighting, 16, 8);
+            lm.setMaximumWeight(1000);
             lm.doWork();
         }
     }
