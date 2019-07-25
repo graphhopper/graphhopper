@@ -1036,7 +1036,7 @@ public class GraphHopper implements GraphHopperAPI {
                     else
                         throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
 
-                    queryGraph = new QueryGraph(ghStorage.getGraph(CHGraph.class, weighting));
+                    queryGraph = new QueryGraph(ghStorage.getCHGraph(weighting));
                     queryGraph.lookup(qResults);
                 } else {
                     checkNonChMaxWaypointDistance(points);

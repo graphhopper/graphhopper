@@ -29,7 +29,7 @@ import java.util.List;
 public class DijkstraBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTester {
     @Override
     protected CHGraph getGraph(GraphHopperStorage ghStorage, Weighting weighting) {
-        return ghStorage.getGraph(CHGraph.class, weighting);
+        return ghStorage.getCHGraph(weighting);
     }
 
     @Override
