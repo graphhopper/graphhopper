@@ -124,7 +124,7 @@ public class GHUtilityTest {
         edgeState.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
 
         GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHGraph(new FastestWeighting(carEncoder)).create();
-        CHGraph lg = newStore.getGraph(CHGraph.class);
+        CHGraph lg = newStore.getCHGraph();
         GHUtility.copyTo(g, lg);
         newStore.freeze();
 

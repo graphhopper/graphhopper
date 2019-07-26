@@ -76,7 +76,7 @@ public class CHTurnCostTest {
         graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
         turnCostExtension = (TurnCostExtension) graph.getExtension();
         turnWeighting = new TurnWeighting(weighting, turnCostExtension);
-        chGraph = graph.getGraph(CHGraph.class);
+        chGraph = graph.getCHGraph();
         checkStrict = true;
     }
 

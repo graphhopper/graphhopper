@@ -63,7 +63,7 @@ public class RandomCHRoutingTest {
         GraphBuilder graphBuilder = new GraphBuilder(em);
         graphBuilder.setEdgeBasedCH(traversalMode.isEdgeBased());
         graph = graphBuilder.setCHGraph(weighting).create();
-        chGraph = graph.getGraph(CHGraph.class);
+        chGraph = graph.getCHGraph();
     }
 
     /**

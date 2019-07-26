@@ -56,7 +56,7 @@ public class NodeBasedNodeContractorTest {
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
-    private final CHGraph lg = graph.getGraph(CHGraph.class);
+    private final CHGraph lg = graph.getCHGraph();
     private final TraversalMode traversalMode = TraversalMode.NODE_BASED;
 
     private NodeContractor createNodeContractor() {
@@ -353,7 +353,7 @@ public class NodeBasedNodeContractorTest {
         EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new FastestWeighting(encoder);
         GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
-        CHGraph lg = graph.getGraph(CHGraph.class);
+        CHGraph lg = graph.getCHGraph();
         // 0 ------------> 4
         //  \             /
         //   1 --> 2 --> 3
@@ -391,7 +391,7 @@ public class NodeBasedNodeContractorTest {
         EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new FastestWeighting(encoder);
         GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
-        CHGraph lg = graph.getGraph(CHGraph.class);
+        CHGraph lg = graph.getCHGraph();
         // 0 - 1 - 2 - 3
         // o           o
         graph.edge(0, 1, 1, true);

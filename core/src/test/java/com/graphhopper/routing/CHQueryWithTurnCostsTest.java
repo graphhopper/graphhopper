@@ -56,7 +56,7 @@ public class CHQueryWithTurnCostsTest {
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
     private final TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
-    private final CHGraph chGraph = graph.getGraph(CHGraph.class);
+    private final CHGraph chGraph = graph.getCHGraph();
     private String algoString;
 
     @Parameterized.Parameters(name = "{0}")
