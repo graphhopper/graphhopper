@@ -43,7 +43,7 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     protected CHGraph getGraph(GraphHopperStorage ghStorage) {
-        return ghStorage.getGraph(CHGraph.class);
+        return ghStorage.getCHGraph();
     }
 
     @Override
@@ -134,7 +134,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     @Test
     public void testDisconnectEdge() {
         graph = createGHStorage();
-        CHGraphImpl lg = (CHGraphImpl) getGraph(graph);
+        CHGraph lg = getGraph(graph);
 
         EdgeExplorer chCarOutExplorer = lg.createEdgeExplorer(carOutFilter);
         EdgeExplorer tmpCarInExplorer = lg.createEdgeExplorer(carInFilter);
@@ -186,9 +186,9 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     @Test
     public void testGetWeight() {
         graph = createGHStorage();
-        CHGraphImpl g = (CHGraphImpl) getGraph(graph);
-        assertFalse(g.edge(0, 1).isShortcut());
-        assertFalse(g.edge(1, 2).isShortcut());
+        CHGraph g = getGraph(graph);
+        assertFalse(((CHEdgeIteratorState) g.edge(0, 1)).isShortcut());
+        assertFalse(((CHEdgeIteratorState) g.edge(1, 2)).isShortcut());
 
         graph.freeze();
 
@@ -228,7 +228,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         ghStorage.edge(0, 2);
         ghStorage.freeze();
 
-        CHGraphImpl lg = (CHGraphImpl) ghStorage.getGraph(CHGraph.class, weighting);
+        CHGraph lg = ghStorage.getCHGraph(weighting);
         CHEdgeIteratorState sc1 = lg.shortcut(0, 1);
         sc1.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 100.123);
 
@@ -366,7 +366,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph.edge(3, 4, 10, true);
         graph.freeze();
 
-        CHGraph lg = graph.getGraph(CHGraph.class);
+        CHGraph lg = graph.getCHGraph();
         lg.shortcut(1, 4).setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 3);
 
         EdgeExplorer vehicleOutExplorer = lg.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
@@ -382,7 +382,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         final EdgeIteratorState edge2 = graph.edge(3, 4, 10, true);
         graph.freeze();
 
-        CHGraph lg = graph.getGraph(CHGraph.class);
+        CHGraph lg = graph.getCHGraph();
         lg.shortcut(1, 4);
 
         AllCHEdgesIterator iter = lg.getAllEdges();
@@ -402,7 +402,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         final EdgeIteratorState edge2 = graph.edge(3, 4, 10, true);
         graph.freeze();
 
-        CHGraph lg = graph.getGraph(CHGraph.class);
+        CHGraph lg = graph.getCHGraph();
         CHEdgeIteratorState shortcut = lg.shortcut(1, 4);
         shortcut.setSkippedEdges(edge1.getEdge(), edge2.getEdge());
 
@@ -497,13 +497,13 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         graph.freeze();
 
-        CHGraph carCHGraph = graph.getGraph(CHGraph.class, chWeightings.get(0));
+        CHGraph carCHGraph = graph.getCHGraph(chWeightings.get(0));
         // enable forward directions for car
         CHEdgeIteratorState carSC02 = carCHGraph.shortcut(0, 2);
         carSC02.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 10);
         carSC02.setDistance(20);
 
-        CHGraph bikeCHGraph = graph.getGraph(CHGraph.class, chWeightings.get(1));
+        CHGraph bikeCHGraph = graph.getCHGraph(chWeightings.get(1));
         CHEdgeIteratorState bikeSC02 = bikeCHGraph.shortcut(0, 2);
         // enable both directions for bike
         bikeSC02.setFlagsAndWeight(PrepareEncoder.getScDirMask(), 10);

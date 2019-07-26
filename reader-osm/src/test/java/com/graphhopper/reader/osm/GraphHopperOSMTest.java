@@ -152,7 +152,7 @@ public class GraphHopperOSMTest {
         final GraphHopper gh = new GraphHopperOSM().setStoreOnFlush(true).
                 setEncodingManager(EncodingManager.create("car")).
                 setCHEnabled(false).
-                setGraphHopperLocation("./target/monacotmp-gh").
+                setGraphHopperLocation(ghLoc).
                 setDataReaderFile("../core/files/monaco.osm.gz");
         gh.importOrLoad();
 

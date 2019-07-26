@@ -36,7 +36,7 @@ public class Path4CHTest {
         EncodingManager em = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
         graph = new GraphBuilder(em).setEdgeBasedCH(true).setCHGraph(weighting).create();
-        chGraph = graph.getGraph(CHGraph.class);
+        chGraph = graph.getCHGraph();
         turnCostExtension = (TurnCostExtension) graph.getExtension();
     }
 
@@ -157,7 +157,7 @@ public class Path4CHTest {
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
         TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension);
-        CHGraph lg = graph.getGraph(CHGraph.class, weighting);
+        CHGraph lg = graph.getCHGraph(weighting);
         AbstractBidirectionEdgeCHNoSOD algo = new DijkstraBidirectionEdgeCHNoSOD(lg, chTurnWeighting);
         algo.setEdgeFilter(new LevelEdgeFilter(lg));
         return algo;

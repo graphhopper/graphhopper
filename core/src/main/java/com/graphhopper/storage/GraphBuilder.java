@@ -95,7 +95,7 @@ public class GraphBuilder {
      * Creates a CHGraph
      */
     public CHGraph chGraphCreate(Weighting singleCHWeighting) {
-        return setCHGraph(singleCHWeighting).create().getGraph(CHGraph.class, singleCHWeighting);
+        return setCHGraph(singleCHWeighting).create().getCHGraph(singleCHWeighting);
     }
 
     /**
