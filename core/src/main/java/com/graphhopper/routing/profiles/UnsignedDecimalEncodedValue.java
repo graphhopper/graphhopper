@@ -19,8 +19,6 @@ package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Objects;
-
 /**
  * This class holds a decimal value and stores it as an unsigned integer value via a conversion factor and a maximum number
  * of bits.
@@ -87,12 +85,7 @@ public final class UnsignedDecimalEncodedValue extends UnsignedIntEncodedValue i
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), factor);
-    }
-
-    @Override
     public int getVersion() {
-        return hashCode();
+        return 31 * (31 * super.getVersion() + staticHashCode(factor)) + staticHashCode(defaultValue);
     }
 }
