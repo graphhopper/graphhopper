@@ -193,10 +193,9 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
         if (vals == null)
             return 0;
         int len = vals.length;
-        int[] locVal = vals;
         int val = 1;
         for (int idx = 0; idx < len; ++idx) {
-            val = 31 * val + locVal[idx];
+            val = 31 * val + vals[idx];
         }
 
         return val;
@@ -210,10 +209,9 @@ public class UnsignedIntEncodedValue implements IntEncodedValue {
         if (vals == null)
             return 0;
         int len = vals.length;
-        Enum[] locVal = vals;
         int val = 1;
         for (int idx = 0; idx < len; ++idx) {
-            val = 31 * val + locVal[idx].ordinal();
+            val = 31 * val + vals[idx].ordinal();
         }
 
         return val;
