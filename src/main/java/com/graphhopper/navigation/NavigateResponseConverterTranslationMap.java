@@ -24,8 +24,6 @@ public class NavigateResponseConverterTranslationMap extends TranslationMap {
     @Override
     public TranslationMap doImport() {
 
-        File folder = new File("files/translations/");
-
         try {
             for (String locale : Arrays.asList("de_DE", "en_US")) {
                 TranslationHashMap trMap = new TranslationHashMap(getLocale(locale));
