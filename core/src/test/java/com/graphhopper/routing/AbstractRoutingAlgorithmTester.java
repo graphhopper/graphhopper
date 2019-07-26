@@ -163,7 +163,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     }
 
     protected Graph getGraph(GraphHopperStorage ghStorage, Weighting weighting) {
-        return ghStorage.getGraph(Graph.class, weighting);
+        return ghStorage.getBaseGraph();
     }
 
     protected GraphHopperStorage createGHStorage(EncodingManager em, List<? extends Weighting> weightings, boolean is3D) {

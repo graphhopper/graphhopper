@@ -80,7 +80,7 @@ public class EdgeBasedNodeContractorTest {
         turnCostExtension = (TurnCostExtension) graph.getExtension();
         turnWeighting = new TurnWeighting(weighting, turnCostExtension);
         chTurnWeighting = new TurnWeighting(preparationWeighting, turnCostExtension);
-        chGraph = graph.getGraph(CHGraph.class);
+        chGraph = graph.getCHGraph();
     }
 
     @Test

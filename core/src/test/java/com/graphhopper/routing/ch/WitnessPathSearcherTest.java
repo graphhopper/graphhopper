@@ -50,7 +50,7 @@ public class WitnessPathSearcherTest {
         graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
         TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
         chTurnWeighting = new TurnWeighting(preparationWeighting, turnCostExtension);
-        chGraph = graph.getGraph(CHGraph.class);
+        chGraph = graph.getCHGraph();
     }
 
     @Test

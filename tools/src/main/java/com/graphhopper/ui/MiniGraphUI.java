@@ -98,7 +98,7 @@ public class MiniGraphUI {
         if (ch) {
             map.put(Parameters.Landmark.DISABLE, true);
             weighting = hopper.getCHFactoryDecorator().getNodeBasedWeightings().get(0);
-            routingGraph = hopper.getGraphHopperStorage().getGraph(CHGraph.class, weighting);
+            routingGraph = hopper.getGraphHopperStorage().getCHGraph(weighting);
 
             final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
             algoFactory = new RoutingAlgorithmFactory() {

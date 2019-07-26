@@ -83,7 +83,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, Weighting weighting, TraversalMode traversalMode) {
-        return new PrepareContractionHierarchies(ghStorage.getGraph(CHGraph.class, weighting), weighting, traversalMode);
+        return new PrepareContractionHierarchies(ghStorage.getCHGraph(weighting), weighting, traversalMode);
     }
 
     public PrepareContractionHierarchies setParams(PMap pMap) {
