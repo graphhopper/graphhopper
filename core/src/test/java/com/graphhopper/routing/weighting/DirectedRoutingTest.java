@@ -100,7 +100,7 @@ public class DirectedRoutingTest {
         weighting = new FastestWeighting(encoder);
         turnCostExtension = new TurnCostExtension();
         graph = createGraph();
-        chGraph = graph.getGraph(CHGraph.class);
+        chGraph = graph.getCHGraph();
     }
 
     private void preProcessGraph() {
