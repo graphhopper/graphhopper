@@ -258,6 +258,9 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         boolean weightingMatchesButNotEdgeBased = false;
         boolean weightingEdgeMatchesButNotUTurns = false;
         for (PrepareContractionHierarchies p : getPreparations()) {
+            // todonow: not sure how strict this should be ? e.g. should we sometimes fall back to whatever preparation
+            // we have ? e.g. when specifying the wrong u-turn costs and there is only one CHGraph should we just take
+            // it ? see also: #1637
             boolean weightingMatches = p.getCHProfile().getWeighting().matches(map);
             if (weightingMatches && p.isEdgeBased() == edgeBased && p.getCHProfile().getUTurnCostsInt() == uTurnCosts)
                 return p;
