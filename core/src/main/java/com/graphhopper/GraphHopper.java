@@ -1062,6 +1062,9 @@ public class GraphHopper implements GraphHopperAPI {
                     throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes);
 
                 int uTurnCostInt = request.getHints().getInt(Routing.UTURN_COSTS, INFINITE_UTURN_COSTS);
+                if (uTurnCostInt != INFINITE_UTURN_COSTS && !tMode.isEdgeBased()) {
+                    throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
+                }
                 double uTurnCosts = uTurnCostInt == INFINITE_UTURN_COSTS ? Double.POSITIVE_INFINITY : uTurnCostInt;
                 weighting = createTurnWeighting(queryGraph, weighting, tMode, uTurnCosts);
 
