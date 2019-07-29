@@ -54,7 +54,7 @@ public class CHQueryWithTurnCostsTest {
     private final FlagEncoder encoder = new MotorcycleFlagEncoder(5, 5, maxCost);
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
+    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting)).create();
     private final TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
     private final CHGraph chGraph = graph.getCHGraph();
     private String algoString;

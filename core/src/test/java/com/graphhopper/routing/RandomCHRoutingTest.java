@@ -39,7 +39,6 @@ public class RandomCHRoutingTest {
     private Weighting weighting;
     private GraphHopperStorage graph;
     private LocationIndexTree locationIndex;
-    private CHGraph chGraph;
 
     @Parameterized.Parameters(name = "{0}")
     public static Object[] params() {
@@ -60,10 +59,9 @@ public class RandomCHRoutingTest {
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         EncodingManager em = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
-        GraphBuilder graphBuilder = new GraphBuilder(em);
-        graphBuilder.setEdgeBasedCH(traversalMode.isEdgeBased());
-        graph = graphBuilder.setCHGraph(weighting).create();
-        chGraph = graph.getCHGraph();
+        graph = new GraphBuilder(em)
+                .setCHProfiles(new CHProfile(weighting, traversalMode.isEdgeBased()))
+                .create();
     }
 
     /**
@@ -135,7 +133,9 @@ public class RandomCHRoutingTest {
         locationIndex.prepareIndex();
 
         graph.freeze();
-        PrepareContractionHierarchies pch = new PrepareContractionHierarchies(chGraph, new CHProfile(weighting, traversalMode));
+        CHProfile chProfile = new CHProfile(weighting, traversalMode);
+        CHGraph chGraph = graph.getCHGraph(chProfile);
+        PrepareContractionHierarchies pch = new PrepareContractionHierarchies(chGraph);
         pch.doWork();
 
         int numQueryGraph = 25;

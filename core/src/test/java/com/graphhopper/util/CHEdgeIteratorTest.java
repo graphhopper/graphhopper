@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import org.junit.Test;
@@ -43,7 +44,7 @@ public class CHEdgeIteratorTest {
         EncodingManager encodingManager = EncodingManager.create(carFlagEncoder);
         FastestWeighting weighting = new FastestWeighting(carFlagEncoder);
         EdgeFilter carOutFilter = DefaultEdgeFilter.outEdges(carFlagEncoder);
-        GraphHopperStorage ghStorage = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
+        GraphHopperStorage ghStorage = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).create();
         CHGraph g = ghStorage.getCHGraph();
         BooleanEncodedValue accessEnc = carFlagEncoder.getAccessEnc();
         DecimalEncodedValue avSpeedEnc = carFlagEncoder.getAverageSpeedEnc();

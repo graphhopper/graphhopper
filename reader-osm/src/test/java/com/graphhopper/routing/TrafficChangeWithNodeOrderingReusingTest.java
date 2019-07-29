@@ -41,8 +41,6 @@ public class TrafficChangeWithNodeOrderingReusingTest {
     // make sure to increase xmx/xms for the JVM created by the surefire plugin in parent pom.xml
     private static final String OSM_FILE = "../local/maps/berlin-latest.osm.pbf";
 
-    private final CHProfile baseProfile;
-    private final CHProfile trafficProfile;
     private final GraphHopperStorage ghStorage;
     private final CHGraph baseCHGraph;
     private final CHGraph trafficCHGraph;
@@ -57,8 +55,8 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         this.maxDeviationPercentage = maxDeviationPercentage;
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
-        baseProfile = CHProfile.nodeBased(new FastestWeighting(encoder));
-        trafficProfile = CHProfile.nodeBased(new RandomDeviationWeighting(baseProfile.getWeighting(), maxDeviationPercentage));
+        CHProfile baseProfile = CHProfile.nodeBased(new FastestWeighting(encoder));
+        CHProfile trafficProfile = CHProfile.nodeBased(new RandomDeviationWeighting(baseProfile.getWeighting(), maxDeviationPercentage));
         Directory dir = new RAMDirectory("traffic-change-test");
         ghStorage = new GraphHopperStorage(Arrays.asList(baseProfile, trafficProfile), dir, em, false, new GraphExtension.NoOpExtension());
         baseCHGraph = ghStorage.getCHGraph(baseProfile);
@@ -79,7 +77,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         ghStorage.freeze();
 
         // create CH
-        PrepareContractionHierarchies basePch = new PrepareContractionHierarchies(baseCHGraph, baseProfile);
+        PrepareContractionHierarchies basePch = new PrepareContractionHierarchies(baseCHGraph);
         basePch.doWork();
 
         // check correctness & performance
@@ -87,7 +85,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         runPerformanceTest(ghStorage, baseCHGraph, basePch, seed, numQueries);
 
         // now we re-use the contraction order from the previous contraction and re-run it with the traffic weighting
-        PrepareContractionHierarchies trafficPch = new PrepareContractionHierarchies(trafficCHGraph, trafficProfile)
+        PrepareContractionHierarchies trafficPch = new PrepareContractionHierarchies(trafficCHGraph)
                 .useFixedNodeOrdering(baseCHGraph.getNodeOrderingProvider());
         trafficPch.doWork();
 

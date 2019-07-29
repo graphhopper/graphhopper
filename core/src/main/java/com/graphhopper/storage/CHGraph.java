@@ -45,6 +45,11 @@ public interface CHGraph extends Graph {
      */
     int getLevel(int nodeId);
 
+    /**
+     * Returns the profile of this CH graph. This is used to identify the CH graph.
+     */
+    CHProfile getCHProfile();
+
     boolean isShortcut(int edgeId);
 
     /**

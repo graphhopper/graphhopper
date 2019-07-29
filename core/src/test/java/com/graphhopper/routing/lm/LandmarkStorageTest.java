@@ -87,7 +87,7 @@ public class LandmarkStorageTest {
     public void testSetGetWeight() {
         ghStorage.edge(0, 1, 40, true);
         Directory dir = new RAMDirectory();
-        DataAccess da = dir.find("landmarks_fastest_car_node");
+        DataAccess da = dir.find("landmarks_fastest_car");
         da.create(2000);
 
         LandmarkStorage lms = new LandmarkStorage(ghStorage, dir, new FastestWeighting(encoder), 4).

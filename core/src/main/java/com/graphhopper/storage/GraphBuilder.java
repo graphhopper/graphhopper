@@ -20,7 +20,10 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * For now this is just a helper class to quickly create a {@link GraphHopperStorage}
@@ -35,20 +38,26 @@ public class GraphBuilder {
     private boolean store;
     private boolean elevation;
     private boolean turnCosts;
-    private boolean edgeBasedCH;
     private long byteCapacity = 100;
-    private Weighting singleCHWeighting;
+    private List<CHProfile> chProfiles = Collections.emptyList();
 
     public GraphBuilder(EncodingManager encodingManager) {
         this.encodingManager = encodingManager;
     }
 
     /**
-     * This method enables creating a CHGraph with the specified weighting.
+     * This method enables creating a CHGraph with the specified CHProfile
      */
-    public GraphBuilder setCHGraph(Weighting singleCHWeighting) {
-        this.singleCHWeighting = singleCHWeighting;
+    public GraphBuilder setCHProfiles(List<CHProfile> chProfiles) {
+        if (chProfiles.size() != new HashSet<>(chProfiles).size()) {
+            throw new IllegalArgumentException("Duplicate CH profile: " + chProfiles);
+        }
+        this.chProfiles = chProfiles;
         return this;
+    }
+
+    public GraphBuilder setCHProfiles(CHProfile... chProfiles) {
+        return setCHProfiles(Arrays.asList(chProfiles));
     }
 
     public GraphBuilder setLocation(String location) {
@@ -81,11 +90,6 @@ public class GraphBuilder {
         return this;
     }
 
-    public GraphBuilder setEdgeBasedCH(boolean edgeBasedCH) {
-        this.edgeBasedCH = edgeBasedCH;
-        return this;
-    }
-
     public boolean hasElevation() {
         return elevation;
     }
@@ -93,8 +97,8 @@ public class GraphBuilder {
     /**
      * Creates a CHGraph
      */
-    public CHGraph chGraphCreate(Weighting singleCHWeighting) {
-        return setCHGraph(singleCHWeighting).create().getCHGraph();
+    public CHGraph chGraphCreate(CHProfile chProfile) {
+        return setCHProfiles(chProfile).create().getCHGraph();
     }
 
     /**
@@ -111,11 +115,9 @@ public class GraphBuilder {
                 new TurnCostExtension() :
                 new TurnCostExtension.NoOpExtension();
 
-        return singleCHWeighting == null ?
+        return chProfiles.isEmpty() ?
                 new GraphHopperStorage(dir, encodingManager, elevation, graphExtension) :
-                new GraphHopperStorage(
-                        Collections.singletonList(new CHProfile(singleCHWeighting, edgeBasedCH)),
-                        dir, encodingManager, elevation, graphExtension);
+                new GraphHopperStorage(chProfiles, dir, encodingManager, elevation, graphExtension);
     }
 
     /**

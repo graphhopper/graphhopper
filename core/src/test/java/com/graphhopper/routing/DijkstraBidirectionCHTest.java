@@ -108,8 +108,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.setLevel(0, 7);
 
         AlgorithmOptions opts = new AlgorithmOptions(Parameters.Algorithms.DIJKSTRA_BI, weighting);
-        Path p = new PrepareContractionHierarchies(g2, CHProfile.nodeBased(weighting)).
-                createAlgo(g2, opts).calcPath(0, 7);
+        Path p = new PrepareContractionHierarchies(g2).createAlgo(g2, opts).calcPath(0, 7);
 
         assertEquals(IntArrayList.from(0, 2, 5, 7), p.calcNodes());
         assertEquals(1064, p.getTime());
@@ -201,7 +200,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
             chGraph.setLevel(i, i);
         }
         graph.freeze();
-        RoutingAlgorithm algo = createCHAlgo(graph, chGraph, true, defaultOpts);
+        RoutingAlgorithm algo = createCHAlgo(chGraph, true, defaultOpts);
         Path p = algo.calcPath(1, 0);
         // node 3 will be stalled and nodes 4-7 won't be explored --> we visit 7 nodes
         // note that node 9 will be visited by both forward and backward searches
@@ -210,7 +209,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         assertEquals(p.toString(), IntArrayList.from(1, 8, 9, 0), p.calcNodes());
 
         // without stalling we visit 11 nodes
-        RoutingAlgorithm algoNoSod = createCHAlgo(graph, chGraph, false, defaultOpts);
+        RoutingAlgorithm algoNoSod = createCHAlgo(chGraph, false, defaultOpts);
         Path pNoSod = algoNoSod.calcPath(1, 0);
         assertEquals(11, algoNoSod.getVisitedNodes());
         assertEquals(102, pNoSod.getDistance(), 1.e-3);
@@ -254,15 +253,14 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         }
         graph.freeze();
 
-        RoutingAlgorithm algo = createCHAlgo(graph, chGraph, true, algoOpts);
+        RoutingAlgorithm algo = createCHAlgo(chGraph, true, algoOpts);
         Path p = algo.calcPath(from, to);
         assertEquals(3, p.getDistance(), 1.e-3);
         assertEquals(p.toString(), expectedPath, p.calcNodes());
     }
 
-    private RoutingAlgorithm createCHAlgo(GraphHopperStorage graph, CHGraph chGraph, boolean withSOD, AlgorithmOptions algorithmOptions) {
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(
-                chGraph, CHProfile.nodeBased(algorithmOptions.getWeighting()));
+    private RoutingAlgorithm createCHAlgo(CHGraph chGraph, boolean withSOD, AlgorithmOptions algorithmOptions) {
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph);
         if (!withSOD) {
             algorithmOptions.getHints().put("stall_on_demand", false);
         }

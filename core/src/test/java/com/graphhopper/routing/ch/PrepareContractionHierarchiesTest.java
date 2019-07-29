@@ -125,7 +125,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     GraphHopperStorage createGHStorage(Weighting w) {
-        return new GraphBuilder(encodingManager).setCHGraph(w).create();
+        return new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(w)).create();
     }
 
     GraphHopperStorage createExampleGraph() {
@@ -680,7 +680,7 @@ public class PrepareContractionHierarchiesTest {
         // create CH for cars
         StopWatch sw = new StopWatch().start();
         CHGraph carCH = ghStorage.getCHGraph(carProfile);
-        PrepareContractionHierarchies carPch = new PrepareContractionHierarchies(carCH, carProfile);
+        PrepareContractionHierarchies carPch = new PrepareContractionHierarchies(carCH);
         carPch.doWork();
         long timeCar = sw.stop().getMillis();
 
@@ -689,7 +689,7 @@ public class PrepareContractionHierarchiesTest {
         sw = new StopWatch().start();
         CHGraph motorCycleCH = ghStorage.getCHGraph(motorCycleProfile);
         NodeOrderingProvider nodeOrderingProvider = carCH.getNodeOrderingProvider();
-        PrepareContractionHierarchies motorCyclePch = new PrepareContractionHierarchies(motorCycleCH, motorCycleProfile)
+        PrepareContractionHierarchies motorCyclePch = new PrepareContractionHierarchies(motorCycleCH)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         motorCyclePch.doWork();
 
@@ -730,7 +730,7 @@ public class PrepareContractionHierarchiesTest {
 
     private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHGraph lg, CHProfile p) {
         g.freeze();
-        return new PrepareContractionHierarchies(lg, p);
+        return new PrepareContractionHierarchies(lg);
     }
 
 }

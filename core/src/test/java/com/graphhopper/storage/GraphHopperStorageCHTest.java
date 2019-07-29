@@ -221,7 +221,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
         EncodingManager em = EncodingManager.create(customEncoder);
         FastestWeighting weighting = new FastestWeighting(customEncoder);
-        GraphHopperStorage ghStorage = new GraphBuilder(em).setCHGraph(weighting).create();
+        GraphHopperStorage ghStorage = new GraphBuilder(em).setCHProfiles(CHProfile.nodeBased(weighting)).create();
         ghStorage.edge(0, 2);
         ghStorage.freeze();
 

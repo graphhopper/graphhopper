@@ -76,6 +76,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         this.chEdgeAccess = new CHEdgeAccess(name);
     }
 
+    @Override
     public CHProfile getCHProfile() {
         return chProfile;
     }

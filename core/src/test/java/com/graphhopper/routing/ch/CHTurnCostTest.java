@@ -59,7 +59,6 @@ public class CHTurnCostTest {
     private Weighting weighting;
     private GraphHopperStorage graph;
     private TurnCostExtension turnCostExtension;
-    private TurnWeighting turnWeighting;
     private CHGraph chGraph;
     private boolean checkStrict;
 
@@ -73,10 +72,10 @@ public class CHTurnCostTest {
         encoder = new CarFlagEncoder(5, 5, maxCost);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         weighting = new ShortestWeighting(encoder);
-        graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
-        turnCostExtension = (TurnCostExtension) graph.getExtension();
-        turnWeighting = new TurnWeighting(weighting, turnCostExtension);
+        CHProfile chProfile = CHProfile.edgeBased(weighting);
+        graph = new GraphBuilder(encodingManager).setCHProfiles(chProfile).create();
         chGraph = graph.getCHGraph();
+        turnCostExtension = (TurnCostExtension) graph.getExtension();
         checkStrict = true;
     }
 
@@ -1018,7 +1017,7 @@ public class CHTurnCostTest {
     }
 
     private Path findPathUsingDijkstra(int from, int to) {
-        Dijkstra dijkstra = new Dijkstra(graph, turnWeighting, TraversalMode.EDGE_BASED);
+        Dijkstra dijkstra = new Dijkstra(graph, new TurnWeighting(weighting, turnCostExtension), TraversalMode.EDGE_BASED);
         return dijkstra.calcPath(from, to);
     }
 
@@ -1042,7 +1041,7 @@ public class CHTurnCostTest {
                 return contractionOrder.size();
             }
         };
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph, CHProfile.edgeBased(weighting))
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         ch.doWork();
         return ch;
@@ -1054,7 +1053,7 @@ public class CHTurnCostTest {
         pMap.put(LAST_LAZY_NODES_UPDATES, 100);
         pMap.put(NEIGHBOR_UPDATES, 4);
         pMap.put(LOG_MESSAGES, 10);
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph, CHProfile.edgeBased(weighting));
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph);
         ch.setParams(pMap);
         ch.doWork();
         return ch;
@@ -1138,7 +1137,7 @@ public class CHTurnCostTest {
         turnCostExtension.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(true, 0));
     }
 
-    private void addTurnCost(int from, int via, int to, int cost) {
+    private void addTurnCost(int from, int via, int to, double cost) {
         addTurnCost(getEdge(from, via), getEdge(via, to), via, cost);
     }
 

@@ -73,15 +73,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private PMap pMap = new PMap();
     private int checkCounter;
 
-    public PrepareContractionHierarchies(CHGraph chGraph, CHProfile chProfile) {
+    public PrepareContractionHierarchies(CHGraph chGraph) {
         this.prepareGraph = chGraph;
-        this.chProfile = chProfile;
+        this.chProfile = chGraph.getCHProfile();
         prepareWeighting = new PreparationWeighting(chProfile.getWeighting());
         this.params = Params.forTraversalMode(chProfile.getTraversalMode());
     }
 
     public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHProfile chProfile) {
-        return new PrepareContractionHierarchies(ghStorage.getCHGraph(chProfile), chProfile);
+        return new PrepareContractionHierarchies(ghStorage.getCHGraph(chProfile));
     }
 
     public PrepareContractionHierarchies setParams(PMap pMap) {
