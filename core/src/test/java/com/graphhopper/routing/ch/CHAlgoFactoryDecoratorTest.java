@@ -55,9 +55,9 @@ public class CHAlgoFactoryDecoratorTest {
         profileNode1 = CHProfile.nodeBased(new FastestWeighting(encoder));
         profileNode2 = CHProfile.nodeBased(new ShortestWeighting(encoder));
         profileNode3 = CHProfile.nodeBased(new ShortFastestWeighting(encoder, 0.1));
-        profileEdge1 = CHProfile.edgeBased(new FastestWeighting(encoder));
-        profileEdge2 = CHProfile.edgeBased(new ShortestWeighting(encoder));
-        profileEdge3 = CHProfile.edgeBased(new ShortFastestWeighting(encoder, 0.1));
+        profileEdge1 = CHProfile.edgeBased(new FastestWeighting(encoder), 30);
+        profileEdge2 = CHProfile.edgeBased(new ShortestWeighting(encoder), 30);
+        profileEdge3 = CHProfile.edgeBased(new ShortFastestWeighting(encoder, 0.1), 30);
         ghStorage = new GraphHopperStorage(
                 Arrays.asList(profileNode1, profileNode2, profileNode3, profileEdge1, profileEdge2, profileEdge3),
                 dir, encodingManager, false, new GraphExtension.NoOpExtension());

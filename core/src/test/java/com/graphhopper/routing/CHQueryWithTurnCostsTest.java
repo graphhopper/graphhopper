@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
@@ -54,7 +55,7 @@ public class CHQueryWithTurnCostsTest {
     private final FlagEncoder encoder = new MotorcycleFlagEncoder(5, 5, maxCost);
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting)).create();
+    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_UTURN_COSTS)).create();
     private final TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
     private final CHGraph chGraph = graph.getCHGraph();
     private String algoString;

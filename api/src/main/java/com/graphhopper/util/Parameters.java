@@ -92,6 +92,7 @@ public class Parameters {
      */
     public static final class Routing {
         public static final String EDGE_BASED = "edge_based";
+        public static final String UTURN_COSTS = "u_turn_costs";
         public static final String MAX_VISITED_NODES = "max_visited_nodes";
         public static final String INIT_MAX_VISITED_NODES = ROUTING_INIT_PREFIX + "max_visited_nodes";
         /**

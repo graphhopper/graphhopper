@@ -31,13 +31,14 @@ import com.graphhopper.util.CHEdgeIterator;
 import com.graphhopper.util.CHEdgeIteratorState;
 import org.junit.Test;
 
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
 import static org.junit.Assert.assertEquals;
 
 public class DefaultEdgeFilterTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting)).create();
+    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_UTURN_COSTS)).create();
     private final CHGraph chGraph = graph.getCHGraph();
 
     @Test

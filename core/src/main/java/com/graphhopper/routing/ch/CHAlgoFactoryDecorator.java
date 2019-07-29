@@ -34,6 +34,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.CH.DISABLE;
 
@@ -252,22 +253,31 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     public PrepareContractionHierarchies getPreparation(HintsMap map) {
         boolean edgeBased = map.getBool(Parameters.Routing.EDGE_BASED, false);
+        int uTurnCosts = map.getInt(Parameters.Routing.UTURN_COSTS, INFINITE_UTURN_COSTS);
         List<String> entriesStrs = new ArrayList<>();
         boolean weightingMatchesButNotEdgeBased = false;
+        boolean weightingEdgeMatchesButNotUTurns = false;
         for (PrepareContractionHierarchies p : getPreparations()) {
             boolean weightingMatches = p.getCHProfile().getWeighting().matches(map);
-            if (p.isEdgeBased() == edgeBased && weightingMatches)
+            if (weightingMatches && p.isEdgeBased() == edgeBased && p.getCHProfile().getUTurnCostsInt() == uTurnCosts)
                 return p;
+            else if (weightingMatches && p.isEdgeBased() == edgeBased)
+                weightingEdgeMatchesButNotUTurns = true;
             else if (weightingMatches)
                 weightingMatchesButNotEdgeBased = true;
 
-            entriesStrs.add(p.getCHProfile().getWeighting() + "|" + (p.getCHProfile().isEdgeBased() ? "edge" : "node"));
+            entriesStrs.add(p.getCHProfile().toString());
         }
 
-        String hint = weightingMatchesButNotEdgeBased
-                ? " The '" + Parameters.Routing.EDGE_BASED + "' url parameter is missing or does not fit the weightings. Its value was: '" + edgeBased + "'"
-                : "";
-        throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries: " + entriesStrs + "." + hint);
+        String hint;
+        if (weightingEdgeMatchesButNotUTurns) {
+            hint = "The '" + Parameters.Routing.UTURN_COSTS + "' url parameter is missing or does not fit the weightings. Its value was: '" + uTurnCosts + "'";
+        } else if (weightingMatchesButNotEdgeBased) {
+            hint = "The '" + Parameters.Routing.EDGE_BASED + "' url parameter is missing or does not fit the weightings. Its value was: '" + edgeBased + "'";
+        } else {
+            hint = "";
+        }
+        throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries: " + entriesStrs + ". " + hint);
     }
 
     public int getPreparationThreads() {

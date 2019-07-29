@@ -25,10 +25,12 @@ import com.graphhopper.storage.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
+
 public class DijkstraBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTester {
     @Override
     protected CHGraph getGraph(GraphHopperStorage ghStorage, Weighting weighting) {
-        return ghStorage.getCHGraph(CHProfile.edgeBased(weighting));
+        return ghStorage.getCHGraph(CHProfile.edgeBased(weighting, INFINITE_UTURN_COSTS));
     }
 
     @Override
@@ -36,7 +38,7 @@ public class DijkstraBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTeste
             EncodingManager em, List<? extends Weighting> weightings, boolean is3D) {
         List<CHProfile> chProfiles = new ArrayList<>(weightings.size());
         for (Weighting w : weightings) {
-            chProfiles.add(CHProfile.edgeBased(w));
+            chProfiles.add(CHProfile.edgeBased(w, INFINITE_UTURN_COSTS));
         }
         return new GraphHopperStorage(chProfiles, new RAMDirectory(), em, is3D, new TurnCostExtension()).create(1000);
     }
@@ -45,7 +47,7 @@ public class DijkstraBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTeste
     public RoutingAlgorithmFactory createFactory(GraphHopperStorage ghStorage, AlgorithmOptions opts) {
         ghStorage.freeze();
         PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(
-                ghStorage, CHProfile.edgeBased(opts.getWeighting()));
+                ghStorage, CHProfile.edgeBased(opts.getWeighting(), INFINITE_UTURN_COSTS));
         ch.doWork();
         return ch;
     }

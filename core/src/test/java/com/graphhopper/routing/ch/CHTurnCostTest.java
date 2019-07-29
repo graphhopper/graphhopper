@@ -40,6 +40,7 @@ import java.util.*;
 
 import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
 import static com.graphhopper.routing.ch.CHParameters.*;
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
 import static org.junit.Assert.*;
 
 /**
@@ -59,6 +60,7 @@ public class CHTurnCostTest {
     private Weighting weighting;
     private GraphHopperStorage graph;
     private TurnCostExtension turnCostExtension;
+    private List<CHProfile> chProfiles;
     private CHGraph chGraph;
     private boolean checkStrict;
 
@@ -72,11 +74,32 @@ public class CHTurnCostTest {
         encoder = new CarFlagEncoder(5, 5, maxCost);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         weighting = new ShortestWeighting(encoder);
-        CHProfile chProfile = CHProfile.edgeBased(weighting);
-        graph = new GraphBuilder(encodingManager).setCHProfiles(chProfile).create();
-        chGraph = graph.getCHGraph();
+        chProfiles = createCHProfiles();
+        graph = new GraphBuilder(encodingManager).setCHProfiles(chProfiles).create();
+        // the default CH graph with infinite u-turn costs, can be reset in tests that should run with finite u-turn
+        // costs
+        chGraph = graph.getCHGraph(CHProfile.edgeBased(weighting, INFINITE_UTURN_COSTS));
         turnCostExtension = (TurnCostExtension) graph.getExtension();
         checkStrict = true;
+    }
+
+    /**
+     * Creates a list of distinct CHProfiles with different u-turn costs that can be used by the tests.
+     * There is always a profile with infinite u-turn costs and one with u-turn-costs = 50.
+     */
+    private List<CHProfile> createCHProfiles() {
+        Set<CHProfile> profileSet = new HashSet<>(25);
+        // the first one is always the one with infinite u-turn costs
+        profileSet.add(CHProfile.edgeBased(weighting, INFINITE_UTURN_COSTS));
+        // this one we also always add
+        profileSet.add(CHProfile.edgeBased(weighting, 50));
+        // add more (distinct) profiles
+        long seed = System.nanoTime();
+        Random rnd = new Random(seed);
+        while (profileSet.size() < 5) {
+            profileSet.add(CHProfile.edgeBased(weighting, 10 + rnd.nextInt(90)));
+        }
+        return new ArrayList<>(profileSet);
     }
 
     @Test
@@ -623,6 +646,29 @@ public class CHTurnCostTest {
     }
 
     @Test
+    public void testFindPath_finiteUTurnCost() {
+        // turning to 1 at node 3 when coming from 0 is forbidden, but taking the full loop 3-4-2-3 is very
+        // expensive, so the best solution is to go straight to 4 and take a u-turn there
+        //   1
+        //   |
+        // 0-3-4
+        //   |/
+        //   2
+        graph.edge(0, 3, 100, false);
+        graph.edge(3, 4, 100, true);
+        graph.edge(4, 2, 500, false);
+        graph.edge(2, 3, 200, false);
+        graph.edge(3, 1, 100, false);
+        addRestriction(0, 3, 1);
+        graph.freeze();
+        chGraph = graph.getCHGraph(CHProfile.edgeBased(weighting, 50));
+        RoutingAlgorithmFactory pch = prepareCH(Arrays.asList(4, 0, 2, 3, 1));
+        Path path = pch.createAlgo(chGraph, AlgorithmOptions.start().build()).calcPath(0, 1);
+        assertEquals(IntArrayList.from(0, 3, 4, 3, 1), path.calcNodes());
+        compareCHQueryWithDijkstra(pch, 0, 1);
+    }
+
+    @Test
     public void testFindPath_calcTurnCostTime() {
         // here there will be a shortcut from 1 to 4 and when the path is unpacked it is important that
         // the turn costs are included at node 1 even though the unpacked original edge 1-0 might be in the
@@ -949,7 +995,21 @@ public class CHTurnCostTest {
     @Test
     public void testFindPath_random_compareWithDijkstra() {
         long seed = System.nanoTime();
-        LOGGER.info("Seed used to generate graph: {}", seed);
+        LOGGER.info("Seed for testFindPath_random_compareWithDijkstra: {}", seed);
+        compareWithDijkstraOnRandomGraph(seed);
+    }
+
+    @Repeat(times = 10)
+    @Test
+    public void testFindPath_random_compareWithDijkstra_finiteUTurnCost() {
+        long seed = System.nanoTime();
+        LOGGER.info("Seed for testFindPath_random_compareWithDijkstra_finiteUTurnCost: {}", seed);
+        chGraph = graph.getCHGraph(chProfiles.get(1 + new Random(seed).nextInt(chProfiles.size() - 1)));
+        LOGGER.info("U-turn-costs: " + chGraph.getCHProfile().getUTurnCostsInt());
+        compareWithDijkstraOnRandomGraph(seed);
+    }
+
+    private void compareWithDijkstraOnRandomGraph(long seed) {
         final Random rnd = new Random(seed);
         // for larger graphs preparation takes much longer the higher the degree is!
         GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.8);
@@ -967,7 +1027,21 @@ public class CHTurnCostTest {
     @Test
     public void testFindPath_heuristic_compareWithDijkstra() {
         long seed = System.nanoTime();
-        LOGGER.info("Seed used to generate graph: {}", seed);
+        LOGGER.info("Seed for testFindPath_heuristic_compareWithDijkstra: {}", seed);
+        compareWithDijkstraOnRandomGraph_heuristic(seed);
+    }
+
+    @Repeat(times = 10)
+    @Test
+    public void testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost() {
+        long seed = System.nanoTime();
+        LOGGER.info("Seed for testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost: {}", seed);
+        chGraph = graph.getCHGraph(chProfiles.get(1 + new Random(seed).nextInt(chProfiles.size() - 1)));
+        LOGGER.info("U-turn-costs: " + chGraph.getCHProfile().getUTurnCostsInt());
+        compareWithDijkstraOnRandomGraph_heuristic(seed);
+    }
+
+    private void compareWithDijkstraOnRandomGraph_heuristic(long seed) {
         GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, encoder, maxCost, turnCostExtension);
         graph.freeze();
@@ -1017,7 +1091,7 @@ public class CHTurnCostTest {
     }
 
     private Path findPathUsingDijkstra(int from, int to) {
-        Dijkstra dijkstra = new Dijkstra(graph, new TurnWeighting(weighting, turnCostExtension), TraversalMode.EDGE_BASED);
+        Dijkstra dijkstra = new Dijkstra(graph, new TurnWeighting(weighting, turnCostExtension, chGraph.getCHProfile().getUTurnCosts()), TraversalMode.EDGE_BASED);
         return dijkstra.calcPath(from, to);
     }
 

@@ -65,6 +65,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE;
 import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.OFF;
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 
@@ -806,12 +807,22 @@ public class GraphHopper implements GraphHopperAPI {
             for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
                 for (String chWeightingStr : chFactoryDecorator.getCHProfileStrings()) {
                     // ghStorage is null at this point
+
+                    // extract weighting string and possible configuration
+                    String configStr = "";
+                    if (chWeightingStr.contains("|")) {
+                        configStr = chWeightingStr;
+                        chWeightingStr = chWeightingStr.split("\\|")[0];
+                    }
+                    PMap config = new PMap(configStr);
+                    int uTurnCosts = config.getInt(Routing.UTURN_COSTS, INFINITE_UTURN_COSTS);
+
                     CHAlgoFactoryDecorator.EdgeBasedCHMode edgeBasedCHMode = chFactoryDecorator.getEdgeBasedCHMode();
                     if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supports(TurnWeighting.class))) {
                         chFactoryDecorator.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null)));
                     }
                     if (edgeBasedCHMode != OFF && encoder.supports(TurnWeighting.class)) {
-                        chFactoryDecorator.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null)));
+                        chFactoryDecorator.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null), uTurnCosts));
                     }
                 }
             }
@@ -1050,8 +1061,8 @@ public class GraphHopper implements GraphHopperAPI {
                 if (maxVisitedNodesForRequest > maxVisitedNodes)
                     throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes);
 
-                // todo: make configurable as request parameter etc.
-                double uTurnCosts = Double.POSITIVE_INFINITY;
+                int uTurnCostInt = request.getHints().getInt(Routing.UTURN_COSTS, INFINITE_UTURN_COSTS);
+                double uTurnCosts = uTurnCostInt == INFINITE_UTURN_COSTS ? Double.POSITIVE_INFINITY : uTurnCostInt;
                 weighting = createTurnWeighting(queryGraph, weighting, tMode, uTurnCosts);
 
                 AlgorithmOptions algoOpts = AlgorithmOptions.start().
