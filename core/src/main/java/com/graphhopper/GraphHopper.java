@@ -935,10 +935,10 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * Potentially wraps the specified weighting into a TurnWeighting instance.
      */
-    public Weighting createTurnWeighting(Graph graph, Weighting weighting, TraversalMode tMode, double uTurnCosts) {
+    public Weighting createTurnWeighting(Graph graph, Weighting weighting, TraversalMode tMode) {
         FlagEncoder encoder = weighting.getFlagEncoder();
         if (encoder.supports(TurnWeighting.class) && tMode.isEdgeBased())
-            return new TurnWeighting(weighting, (TurnCostExtension) graph.getExtension(), uTurnCosts);
+            return new TurnWeighting(weighting, (TurnCostExtension) graph.getExtension());
         return weighting;
     }
 
@@ -1050,9 +1050,7 @@ public class GraphHopper implements GraphHopperAPI {
                 if (maxVisitedNodesForRequest > maxVisitedNodes)
                     throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes);
 
-                // todo: make configurable as request parameter etc.
-                double uTurnCosts = Double.POSITIVE_INFINITY;
-                weighting = createTurnWeighting(queryGraph, weighting, tMode, uTurnCosts);
+                weighting = createTurnWeighting(queryGraph, weighting, tMode);
 
                 AlgorithmOptions algoOpts = AlgorithmOptions.start().
                         algorithm(algoStr).traversalMode(tMode).weighting(weighting).

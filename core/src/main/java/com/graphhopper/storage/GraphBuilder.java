@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.Arrays;
 import java.util.Collections;
