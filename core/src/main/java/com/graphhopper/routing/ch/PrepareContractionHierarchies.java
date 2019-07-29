@@ -52,9 +52,8 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
  */
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final CHProfile chProfile;
     private final PreparationWeighting prepareWeighting;
-    private final Weighting weighting;
-    private final TraversalMode traversalMode;
     private final CHGraph prepareGraph;
     private final Random rand = new Random(123);
     private final StopWatch allSW = new StopWatch();
@@ -74,16 +73,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private PMap pMap = new PMap();
     private int checkCounter;
 
-    public PrepareContractionHierarchies(CHGraph chGraph, Weighting weighting, TraversalMode traversalMode) {
+    public PrepareContractionHierarchies(CHGraph chGraph, CHProfile chProfile) {
         this.prepareGraph = chGraph;
-        this.traversalMode = traversalMode;
-        this.weighting = weighting;
-        prepareWeighting = new PreparationWeighting(weighting);
-        this.params = Params.forTraversalMode(traversalMode);
+        this.chProfile = chProfile;
+        prepareWeighting = new PreparationWeighting(chProfile.getWeighting());
+        this.params = Params.forTraversalMode(chProfile.getTraversalMode());
     }
 
-    public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, Weighting weighting, TraversalMode traversalMode) {
-        return new PrepareContractionHierarchies(ghStorage.getCHGraph(weighting), weighting, traversalMode);
+    public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHProfile chProfile) {
+        return new PrepareContractionHierarchies(ghStorage.getCHGraph(chProfile), chProfile);
     }
 
     public PrepareContractionHierarchies setParams(PMap pMap) {
@@ -150,7 +148,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private AbstractBidirAlgo doCreateAlgo(Graph graph, AlgorithmOptions opts) {
-        if (traversalMode.isEdgeBased()) {
+        if (chProfile.isEdgeBased()) {
             return createAlgoEdgeBased(graph, opts);
         } else {
             return createAlgoNodeBased(graph, opts);
@@ -184,7 +182,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     public boolean isEdgeBased() {
-        return traversalMode.isEdgeBased();
+        return chProfile.isEdgeBased();
     }
 
     private void initFromGraph() {
@@ -201,7 +199,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new float[prepareGraph.getNodes()];
-        nodeContractor = createNodeContractor(prepareGraph, traversalMode);
+        nodeContractor = createNodeContractor(prepareGraph, chProfile.getTraversalMode());
         nodeContractor.initFromGraph();
     }
 
@@ -426,7 +424,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     public Weighting getWeighting() {
-        return weighting;
+        return chProfile.getWeighting();
+    }
+
+    public CHProfile getCHProfile() {
+        return chProfile;
     }
 
     private String getTimesAsString() {
@@ -449,7 +451,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     @Override
     public String toString() {
-        return traversalMode.isEdgeBased() ? "prepare|dijkstrabi|edge|ch" : "prepare|dijkstrabi|ch";
+        return chProfile.isEdgeBased() ? "prepare|dijkstrabi|edge|ch" : "prepare|dijkstrabi|ch";
     }
 
     private NodeContractor createNodeContractor(Graph graph, TraversalMode traversalMode) {
@@ -457,7 +459,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased(graph);
             return new EdgeBasedNodeContractor(prepareGraph, chTurnWeighting, pMap);
         } else {
-            return new NodeBasedNodeContractor(prepareGraph, weighting, pMap);
+            return new NodeBasedNodeContractor(prepareGraph, chProfile.getWeighting(), pMap);
         }
     }
 

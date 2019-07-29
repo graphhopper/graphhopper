@@ -853,7 +853,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles));
-        tmpHopper.getCHFactoryDecorator().setWeightingsAsStrings(weightCalcStr);
+        tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr);
         tmpHopper.importOrLoad();
 
         // same query as in testMonacoWithInstructions
@@ -942,7 +942,7 @@ public class GraphHopperIT {
                 setEncodingManager(EncodingManager.create("car"));
 
         tmpHopper.getCHFactoryDecorator().setEnabled(true).
-                setWeightingsAsStrings(Arrays.asList("fastest")).
+                setCHProfilesAsStrings(Arrays.asList("fastest")).
                 setDisablingAllowed(true);
 
         tmpHopper.getLMFactoryDecorator().setEnabled(true).

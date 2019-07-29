@@ -135,7 +135,7 @@ public class RandomCHRoutingTest {
         locationIndex.prepareIndex();
 
         graph.freeze();
-        PrepareContractionHierarchies pch = new PrepareContractionHierarchies(chGraph, weighting, traversalMode);
+        PrepareContractionHierarchies pch = new PrepareContractionHierarchies(chGraph, new CHProfile(weighting, traversalMode));
         pch.doWork();
 
         int numQueryGraph = 25;

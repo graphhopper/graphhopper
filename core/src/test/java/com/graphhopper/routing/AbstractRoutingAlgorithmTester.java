@@ -238,8 +238,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     public void testCalcFastestPath() {
         GraphHopperStorage graphShortest = createGHStorage(false);
         initDirectedAndDiffSpeed(graphShortest, carEncoder);
-        Path p1 = createAlgo(graphShortest, defaultOpts).
-                calcPath(0, 3);
+        Path p1 = createAlgo(graphShortest, defaultOpts).calcPath(0, 3);
         assertEquals(IntArrayList.from(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 402.3, p1.getDistance(), .1);
         assertEquals(p1.toString(), 144823, p1.getTime());

@@ -569,7 +569,7 @@ public class RoutingAlgorithmWithOSMIT {
 
             if (withCH)
                 hopper.getCHFactoryDecorator().
-                        addWeighting(weightStr).
+                        addCHProfileAsString(weightStr).
                         setEnabled(true).
                         setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE).
                         setDisablingAllowed(true);

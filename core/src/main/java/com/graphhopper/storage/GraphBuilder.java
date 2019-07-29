@@ -20,7 +20,6 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -95,7 +94,7 @@ public class GraphBuilder {
      * Creates a CHGraph
      */
     public CHGraph chGraphCreate(Weighting singleCHWeighting) {
-        return setCHGraph(singleCHWeighting).create().getCHGraph(singleCHWeighting);
+        return setCHGraph(singleCHWeighting).create().getCHGraph();
     }
 
     /**
@@ -114,9 +113,9 @@ public class GraphBuilder {
 
         return singleCHWeighting == null ?
                 new GraphHopperStorage(dir, encodingManager, elevation, graphExtension) :
-                edgeBasedCH ?
-                        new GraphHopperStorage(Collections.<Weighting>emptyList(), Arrays.asList(singleCHWeighting), dir, encodingManager, elevation, graphExtension) :
-                        new GraphHopperStorage(Arrays.asList(singleCHWeighting), Collections.<Weighting>emptyList(), dir, encodingManager, elevation, graphExtension);
+                new GraphHopperStorage(
+                        Collections.singletonList(new CHProfile(singleCHWeighting, edgeBasedCH)),
+                        dir, encodingManager, elevation, graphExtension);
     }
 
     /**

@@ -50,7 +50,7 @@ public class ShortcutUnpackerTest {
         EncodingManager encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
         graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(edgeBased).create();
-        chGraph = graph.getCHGraph(weighting);
+        chGraph = graph.getCHGraph();
         if (edgeBased) {
             turnCostExtension = (TurnCostExtension) graph.getExtension();
         }

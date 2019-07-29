@@ -1042,7 +1042,7 @@ public class CHTurnCostTest {
                 return contractionOrder.size();
             }
         };
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph, weighting, TraversalMode.EDGE_BASED)
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph, CHProfile.edgeBased(weighting))
                 .useFixedNodeOrdering(nodeOrderingProvider);
         ch.doWork();
         return ch;
@@ -1054,8 +1054,7 @@ public class CHTurnCostTest {
         pMap.put(LAST_LAZY_NODES_UPDATES, 100);
         pMap.put(NEIGHBOR_UPDATES, 4);
         pMap.put(LOG_MESSAGES, 10);
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(
-                chGraph, weighting, TraversalMode.EDGE_BASED);
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph, CHProfile.edgeBased(weighting));
         ch.setParams(pMap);
         ch.doWork();
         return ch;
