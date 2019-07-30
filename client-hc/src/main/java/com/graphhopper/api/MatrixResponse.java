@@ -191,7 +191,7 @@ public class MatrixResponse {
     }
 
     /**
-     * @return true if there are invalid or disconnected points (which both do not yield an error in case we do not fail fast)
+     * @return true if there are invalid or disconnected points (which both do not yield an error in case we do not fail fast).
      * @see GHMRequest#setFailFast(boolean)
      */
     public boolean hasProblems() {
