@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
@@ -650,5 +651,29 @@ public class CarFlagEncoderTest {
         lowFactorCar.createEncodedValues(list, "car", 0);
         assertEquals(2.5, encoder.getFerrySpeed(way), .1);
         assertEquals(.5, lowFactorCar.getFerrySpeed(way), .1);
+    }
+
+    @Test
+    public void testRelationAccept() {
+        ReaderRelation relation = new ReaderRelation(1);
+        relation.setTag("type", "restriction");
+        relation.setTag("restriction", "no_left_turn");
+        assertTrue(encoder.getRelationAccept(relation).isRelation());
+        relation.setTag("except", "bus");
+        assertTrue(encoder.getRelationAccept(relation).isRelation());
+        relation.setTag("except", "vehicle");
+        assertTrue(encoder.getRelationAccept(relation).canSkip());
+        relation.setTag("except", "motor_vehicle;vehicle");
+        assertTrue(encoder.getRelationAccept(relation).canSkip());
+
+        relation.clearTags();
+        relation.setTag("type", "restriction");
+        relation.setTag("restriction:bus", "no_left_turn");
+        assertTrue(encoder.getRelationAccept(relation).canSkip());
+
+        relation.clearTags();
+        relation.setTag("type", "restriction");
+        relation.setTag("restriction:vehicle", "no_left_turn");
+        assertTrue(encoder.getRelationAccept(relation).isRelation());
     }
 }

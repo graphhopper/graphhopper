@@ -105,6 +105,11 @@ public class EncodingManagerTest {
             }
 
             @Override
+            public EncodingManager.RelationAcceptation getRelationAccept(ReaderRelation relation) {
+                return EncodingManager.RelationAcceptation.RELATION;
+            }
+
+            @Override
             public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
                 return 0;
             }

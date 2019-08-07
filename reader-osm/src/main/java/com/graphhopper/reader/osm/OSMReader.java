@@ -181,8 +181,12 @@ public class OSMReader implements DataReader {
                     if (!relation.isMetaRelation() && relation.hasTag("type", "route"))
                         prepareWaysWithRelationInfo(relation);
 
-                    if (relation.hasTag("type", "restriction"))
-                        prepareRestrictionRelation(relation);
+                    if (relation.hasTag("type", "restriction")) {
+                        boolean valid = filterRestrictionRelation(relation);
+                        if (valid) {
+                            prepareRestrictionRelation(relation);
+                        }
+                    }
 
                     if (++tmpRelationCounter % 100_000 == 0) {
                         LOGGER.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMap().size())
@@ -236,6 +240,15 @@ public class OSMReader implements DataReader {
             return false;
 
         return encodingManager.acceptWay(item, new EncodingManager.AcceptWay());
+    }
+
+    /**
+     * Filter restriction relations.
+     *
+     * @return true the current xml entry is a restriction relation entry
+     */
+    boolean filterRestrictionRelation(ReaderRelation item) {
+        return encodingManager.acceptRelation(item, new EncodingManager.AcceptRelation());
     }
 
     /**
@@ -416,7 +429,7 @@ public class OSMReader implements DataReader {
                 GraphExtension extendedStorage = graph.getExtension();
                 if (extendedStorage instanceof TurnCostExtension) {
                     TurnCostExtension tcs = (TurnCostExtension) extendedStorage;
-                    Collection<TurnCostTableEntry> entries = analyzeTurnRelation(turnRelation);
+                    Collection<TurnCostTableEntry> entries = analyzeTurnRelation(turnRelation, relation);
                     for (TurnCostTableEntry entry : entries) {
                         tcs.addTurnInfo(entry.edgeFrom, entry.nodeVia, entry.edgeTo, entry.flags);
                     }
@@ -425,17 +438,19 @@ public class OSMReader implements DataReader {
         }
     }
 
-    public Collection<TurnCostTableEntry> analyzeTurnRelation(OSMTurnRelation turnRelation) {
+    public Collection<TurnCostTableEntry> analyzeTurnRelation(OSMTurnRelation turnRelation, ReaderRelation relation) {
         Map<Long, TurnCostTableEntry> entries = new LinkedHashMap<>();
 
         for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-            for (TurnCostTableEntry entry : analyzeTurnRelation(encoder, turnRelation)) {
-                TurnCostTableEntry oldEntry = entries.get(entry.getItemId());
-                if (oldEntry != null) {
-                    // merging different encoders
-                    oldEntry.flags |= entry.flags;
-                } else {
-                    entries.put(entry.getItemId(), entry);
+            if (encoder.getRelationAccept(relation).isRelation()) {
+                for (TurnCostTableEntry entry : analyzeTurnRelation(encoder, turnRelation)) {
+                    TurnCostTableEntry oldEntry = entries.get(entry.getItemId());
+                    if (oldEntry != null) {
+                        // merging different encoders
+                        oldEntry.flags |= entry.flags;
+                    } else {
+                        entries.put(entry.getItemId(), entry);
+                    }
                 }
             }
         }
@@ -859,7 +874,13 @@ public class OSMReader implements DataReader {
      * @return the OSM turn relation, <code>null</code>, if unsupported turn relation
      */
     OSMTurnRelation createTurnRelation(ReaderRelation relation) {
-        OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(relation.getTag("restriction"));
+        String tagRestriction = null;
+        if (relation.hasTag("restriction")) {
+            tagRestriction = relation.getTag("restriction");
+        } else if (relation.hasTagStartsWith("restriction:")) {
+            tagRestriction = relation.getTagStartsWith("restriction:", "");
+        }
+        OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(tagRestriction);
         if (type != OSMTurnRelation.Type.UNSUPPORTED) {
             long fromWayID = -1;
             long viaNodeID = -1;

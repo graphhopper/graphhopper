@@ -116,6 +116,11 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
+    public EncodingManager.RelationAcceptation getRelationAccept(ReaderRelation relation) {
+        return EncodingManager.RelationAcceptation.RELATION;
+    }
+
+    @Override
     public EncodingManager.Access getAccess(ReaderWay way) {
         // important to skip unsupported highways, otherwise too many have to be removed after graph creation
         // and node removal is not yet designed for that

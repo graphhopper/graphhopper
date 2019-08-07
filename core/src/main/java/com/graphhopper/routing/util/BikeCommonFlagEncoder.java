@@ -227,6 +227,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
+    public EncodingManager.RelationAcceptation getRelationAccept(ReaderRelation relation) {
+        return EncodingManager.RelationAcceptation.RELATION;
+    }
+
+    @Override
     public EncodingManager.Access getAccess(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {

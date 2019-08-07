@@ -733,6 +733,7 @@ public class OSMReaderTest {
         FootFlagEncoder foot = new FootFlagEncoder();
         BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
         EncodingManager manager = EncodingManager.create(Arrays.asList(bike, foot, car), 4);
+        ReaderRelation relation = new ReaderRelation(1);
 
         GraphHopperStorage ghStorage = new GraphBuilder(manager).create();
         OSMReader reader = new OSMReader(ghStorage) {
@@ -770,7 +771,7 @@ public class OSMReaderTest {
         long assertFlag2 = turnCostEntry_bike.flags;
 
         // combine flags of all encoders
-        Collection<OSMTurnRelation.TurnCostTableEntry> entries = reader.analyzeTurnRelation(null);
+        Collection<OSMTurnRelation.TurnCostTableEntry> entries = reader.analyzeTurnRelation(null, relation);
 
         // we expect two different turnCost entries
         assertEquals(2, entries.size());

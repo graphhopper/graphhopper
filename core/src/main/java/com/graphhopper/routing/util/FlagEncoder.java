@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
@@ -52,6 +53,14 @@ public interface FlagEncoder extends TurnCostEncoder, EncodedValueLookup {
      * This method returns the EncodedValue used for the average speed of this encoder.
      */
     DecimalEncodedValue getAverageSpeedEnc();
+
+    /**
+     * Decide whether a restriction relation is enabled for a given mode of travel. This skips some relations before
+     * handleRelationTags is called.
+     *
+     * @return the encoded value to indicate if this encoder allows travel or not.
+     */
+    EncodingManager.RelationAcceptation getRelationAccept(ReaderRelation relation);
 
     /**
      * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.

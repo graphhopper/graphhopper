@@ -187,6 +187,36 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
+    public EncodingManager.RelationAcceptation getRelationAccept(ReaderRelation relation) {
+        if (!hasRestrictedRelationTag(relation)) {
+            return EncodingManager.RelationAcceptation.CAN_SKIP;
+        }
+        return EncodingManager.RelationAcceptation.RELATION;
+    }
+
+    private boolean hasRestrictedRelationTag(ReaderRelation relation) {
+        boolean hasExcept = relation.hasTag("except");
+        boolean hasRestrictionDedicated = relation.hasTagStartsWith("restriction:");
+        if (hasExcept || hasRestrictionDedicated) {
+            String except = relation.getTag("except");
+            for (String r : restrictions) {
+                if (relation.hasTag("restriction:" + r)) {
+                    return true;
+                }
+                if (except != null && !except.equals("")) {
+                    if (except.contains(r)) {
+                        return false;
+                    }
+                }
+            }
+            if (hasRestrictionDedicated) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
     public EncodingManager.Access getAccess(ReaderWay way) {
         // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");

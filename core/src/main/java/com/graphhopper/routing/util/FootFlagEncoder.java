@@ -196,6 +196,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         return 0;
     }
 
+    @Override
+    public EncodingManager.RelationAcceptation getRelationAccept(ReaderRelation relation) {
+        return EncodingManager.RelationAcceptation.RELATION;
+    }
+
     /**
      * Some ways are okay but not separate for pedestrians.
      */

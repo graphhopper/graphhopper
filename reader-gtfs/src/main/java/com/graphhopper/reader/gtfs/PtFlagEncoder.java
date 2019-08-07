@@ -58,6 +58,11 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
+    public EncodingManager.RelationAcceptation getRelationAccept(ReaderRelation relation) {
+        return EncodingManager.RelationAcceptation.CAN_SKIP;
+    }
+
+    @Override
     public EncodingManager.Access getAccess(ReaderWay way) {
         return EncodingManager.Access.CAN_SKIP;
     }

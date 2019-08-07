@@ -182,6 +182,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     /**
+     * Decide whether a restriction relation is enabled for a given mode of travel. This skips some relations before
+     * handleRelationTags is called.
+     *
+     * @return the encoded value to indicate if this encoder allows travel or not.
+     */
+    public abstract EncodingManager.RelationAcceptation getRelationAccept(ReaderRelation relation);
+
+    /**
      * Analyze the properties of a relation and create the routing flags for the second read step.
      * In the pre-parsing step this method will be called to determine the useful relation tags.
      */

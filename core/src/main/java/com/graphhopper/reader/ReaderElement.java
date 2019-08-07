@@ -95,6 +95,15 @@ public abstract class ReaderElement {
         return val;
     }
 
+    public <T> T getTagStartsWith(String keyPrefix, T defaultValue) {
+        for (String key : properties.keySet()) {
+            if (key.startsWith(keyPrefix)) {
+                return getTag(key, defaultValue);
+            }
+        }
+        return defaultValue;
+    }
+
     public void setTag(String name, Object value) {
         properties.put(name, value);
     }
@@ -141,6 +150,15 @@ public abstract class ReaderElement {
         for (String key : keyList) {
             if (values.contains(getTag(key, "")))
                 return true;
+        }
+        return false;
+    }
+
+    public boolean hasTagStartsWith(String keyPrefix) {
+        for (String key : properties.keySet()) {
+            if (key.startsWith(keyPrefix)) {
+                return true;
+            }
         }
         return false;
     }
