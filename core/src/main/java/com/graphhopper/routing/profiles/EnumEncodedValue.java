@@ -18,6 +18,7 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.Helper;
 
 import java.util.Arrays;
 
@@ -54,12 +55,7 @@ public final class EnumEncodedValue<E extends Enum> extends UnsignedIntEncodedVa
     }
 
     @Override
-    public int hashCode() {
-        return 31 * super.hashCode() + Arrays.hashCode(arr);
-    }
-
-    @Override
     public int getVersion() {
-        return hashCode();
+        return 31 * super.getVersion() + staticHashCode(arr);
     }
 }

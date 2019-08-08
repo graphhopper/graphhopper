@@ -155,7 +155,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testReturnsCorrectWeighting() {
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getGraph(CHGraph.class);
+        CHGraph lg = g.getCHGraph();
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.doWork();
         assertSame(weighting, prepare.getWeighting());
@@ -164,7 +164,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testAddShortcuts() {
         GraphHopperStorage g = createExampleGraph();
-        CHGraph lg = g.getGraph(CHGraph.class);
+        CHGraph lg = g.getCHGraph();
         int old = lg.getEdges();
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.doWork();
@@ -174,7 +174,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testMoreComplexGraph() {
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getGraph(CHGraph.class);
+        CHGraph lg = g.getCHGraph();
         initShortcutsGraph(lg);
         int oldCount = g.getAllEdges().length();
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
@@ -186,7 +186,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testDirectedGraph() {
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getGraph(CHGraph.class);
+        CHGraph lg = g.getCHGraph();
         g.edge(5, 4, 3, false);
         g.edge(4, 5, 10, false);
         g.edge(2, 4, 1, false);
@@ -209,7 +209,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testDirectedGraph2() {
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getGraph(CHGraph.class);
+        CHGraph lg = g.getCHGraph();
         initDirected2(g);
         int oldCount = GHUtility.count(g.getAllEdges());
         assertEquals(19, oldCount);
@@ -283,7 +283,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testRoundaboutUnpacking() {
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getGraph(CHGraph.class);
+        CHGraph lg = g.getCHGraph();
         initRoundaboutGraph(g);
         int oldCount = g.getAllEdges().length();
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
@@ -350,7 +350,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testUnpackingOrder() {
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getGraph(CHGraph.class);
+        CHGraph lg = g.getCHGraph();
         initUnpackingGraph(g, lg, weighting);
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.doWork();
@@ -363,7 +363,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testUnpackingOrder_Fastest() {
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getGraph(CHGraph.class);
+        CHGraph lg = g.getCHGraph();
         Weighting w = new FastestWeighting(carEncoder);
         initUnpackingGraph(g, lg, w);
 
@@ -378,7 +378,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testDisconnects() {
         final GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getGraph(CHGraph.class);
+        CHGraph lg = g.getCHGraph();
         //            4
         //            v
         //            0
@@ -440,7 +440,7 @@ public class PrepareContractionHierarchiesTest {
         // use fastest weighting in this test to be able to fine-tune some weights via the speed (see below)
         Weighting fastestWeighting = new FastestWeighting(carEncoder);
         final GraphHopperStorage g = createGHStorage(fastestWeighting);
-        CHGraph lg = g.getGraph(CHGraph.class);
+        CHGraph lg = g.getCHGraph();
         // the following graph reproduces the issue. note that we will use the node ids as ch levels, so there will
         // be a shortcut 3->2 visible at node 2 and another one 3->4 visible at node 3.
         // we will fine-tune the edge-speeds such that without the fix node 4 will be stalled and node 5 will not get
@@ -539,7 +539,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testCircleBug() {
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getGraph(CHGraph.class);
+        CHGraph lg = g.getCHGraph();
         //  /--1
         // -0--/
         //  |
@@ -560,7 +560,7 @@ public class PrepareContractionHierarchiesTest {
         //   \-<-/
         //
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getGraph(CHGraph.class);
+        CHGraph lg = g.getCHGraph();
         g.edge(1, 2, 1, false);
         g.edge(2, 1, 1, false);
 
@@ -679,7 +679,7 @@ public class PrepareContractionHierarchiesTest {
 
         // create CH for cars
         StopWatch sw = new StopWatch().start();
-        CHGraph carCH = ghStorage.getGraph(CHGraphImpl.class, carWeighting);
+        CHGraph carCH = ghStorage.getCHGraph(carWeighting);
         TraversalMode traversalMode = TraversalMode.NODE_BASED;
         PrepareContractionHierarchies carPch = new PrepareContractionHierarchies(carCH, carWeighting, traversalMode);
         carPch.doWork();
@@ -688,7 +688,7 @@ public class PrepareContractionHierarchiesTest {
         // create CH for motorcycles, re-use car contraction order
         // this speeds up contraction significantly, but can lead to slower queries
         sw = new StopWatch().start();
-        CHGraph motorCycleCH = ghStorage.getGraph(CHGraphImpl.class, motorCycleWeighting);
+        CHGraph motorCycleCH = ghStorage.getCHGraph(motorCycleWeighting);
         NodeOrderingProvider nodeOrderingProvider = carCH.getNodeOrderingProvider();
         PrepareContractionHierarchies motorCyclePch = new PrepareContractionHierarchies(motorCycleCH, motorCycleWeighting, traversalMode)
                 .useFixedNodeOrdering(nodeOrderingProvider);
@@ -711,7 +711,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     void checkPath(GraphHopperStorage g, Weighting w, int expShortcuts, double expDistance, IntIndexedContainer expNodes) {
-        CHGraph lg = g.getGraph(CHGraph.class, w);
+        CHGraph lg = g.getCHGraph(w);
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg, w);
         prepare.doWork();
         assertEquals(w.toString(), expShortcuts, prepare.getShortcuts());

@@ -37,7 +37,7 @@ public class DefaultEdgeFilterTest {
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
-    private final CHGraph chGraph = graph.getGraph(CHGraph.class);
+    private final CHGraph chGraph = graph.getCHGraph();
 
     @Test
     public void testAccept_fwdLoopShortcut_acceptedByInExplorer() {

@@ -95,12 +95,12 @@ public class Measurement {
                 int edges = getGraphHopperStorage().getEdges();
                 if (!getCHFactoryDecorator().getNodeBasedWeightings().isEmpty()) {
                     Weighting weighting = getCHFactoryDecorator().getNodeBasedWeightings().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getEdges();
+                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(weighting).getEdges();
                     put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
                 }
                 if (!getCHFactoryDecorator().getEdgeBasedWeightings().isEmpty()) {
                     Weighting weighting = getCHFactoryDecorator().getEdgeBasedWeightings().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getEdges();
+                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(weighting).getEdges();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
                 }
             }
@@ -175,7 +175,7 @@ public class Measurement {
                 System.gc();
                 if (!hopper.getCHFactoryDecorator().getNodeBasedWeightings().isEmpty()) {
                     Weighting weighting = hopper.getCHFactoryDecorator().getNodeBasedWeightings().get(0);
-                    CHGraph lg = g.getGraph(CHGraph.class, weighting);
+                    CHGraph lg = g.getCHGraph(weighting);
                     fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                     printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1, true, false);

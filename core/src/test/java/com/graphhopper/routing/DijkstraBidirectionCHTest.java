@@ -36,7 +36,6 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.ch.NodeBasedNodeContractorTest.SC_ACCESS;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -48,7 +47,7 @@ import static org.junit.Assert.assertEquals;
 public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     @Override
     protected CHGraph getGraph(GraphHopperStorage ghStorage, Weighting weighting) {
-        return ghStorage.getGraph(CHGraph.class, weighting);
+        return ghStorage.getCHGraph(weighting);
     }
 
     @Override
@@ -74,7 +73,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         EncodingManager em = EncodingManager.create(encoder);
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         GraphHopperStorage ghStorage = createGHStorage(em, Arrays.asList(weighting), false);
-        CHGraphImpl g2 = (CHGraphImpl) ghStorage.getGraph(CHGraph.class, weighting);
+        CHGraph g2 = ghStorage.getCHGraph(weighting);
         g2.edge(0, 1, 1, true);
         EdgeIteratorState iter1_1 = g2.edge(0, 2, 1.4, false);
         EdgeIteratorState iter1_2 = g2.edge(2, 5, 1.4, false);
@@ -196,7 +195,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         }
         graph.edge(9, 0, 1, false);
         graph.edge(3, 9, 200, false);
-        CHGraph chGraph = graph.getGraph(CHGraph.class);
+        CHGraph chGraph = graph.getCHGraph();
 
         // explicitly set the node levels equal to the node ids
         // the graph contraction with this ordering yields no shortcuts
@@ -251,7 +250,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
         graph.edge(1, 2, 1, true);
 
-        CHGraph chGraph = graph.getGraph(CHGraph.class);
+        CHGraph chGraph = graph.getCHGraph();
         for (int i = 0; i < 3; ++i) {
             chGraph.setLevel(i, i);
         }

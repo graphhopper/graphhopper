@@ -44,8 +44,8 @@ public class TrafficChangeWithNodeOrderingReusingTest {
     private final Weighting baseWeighting;
     private final Weighting trafficWeighting;
     private final GraphHopperStorage ghStorage;
-    private final CHGraphImpl baseCHGraph;
-    private final CHGraphImpl trafficCHGraph;
+    private final CHGraph baseCHGraph;
+    private final CHGraph trafficCHGraph;
     private int maxDeviationPercentage;
 
     @Parameters(name = "maxDeviationPercentage = {0}")
@@ -61,8 +61,8 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         trafficWeighting = new RandomDeviationWeighting(baseWeighting, maxDeviationPercentage);
         Directory dir = new RAMDirectory("traffic-change-test");
         ghStorage = new GraphHopperStorage(Arrays.asList(baseWeighting, trafficWeighting), dir, em, false, new GraphExtension.NoOpExtension());
-        baseCHGraph = ghStorage.getGraph(CHGraphImpl.class, baseWeighting);
-        trafficCHGraph = ghStorage.getGraph(CHGraphImpl.class, trafficWeighting);
+        baseCHGraph = ghStorage.getCHGraph(baseWeighting);
+        trafficCHGraph = ghStorage.getCHGraph(trafficWeighting);
     }
 
     @Test

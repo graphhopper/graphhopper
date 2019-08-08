@@ -110,7 +110,7 @@ public class RoutingAlgorithmIT {
             if (pickedWeighting == null)
                 throw new IllegalStateException("Didn't find weighting " + hints.getWeighting() + " in " + hopper.getCHFactoryDecorator().getNodeBasedWeightings());
 
-            prepare.add(new AlgoHelperEntry(ghStorage.getGraph(CHGraph.class, pickedWeighting),
+            prepare.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedWeighting),
                     AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
@@ -118,7 +118,7 @@ public class RoutingAlgorithmIT {
                 }
             });
 
-            prepare.add(new AlgoHelperEntry(ghStorage.getGraph(CHGraph.class, pickedWeighting),
+            prepare.add(new AlgoHelperEntry(ghStorage.getCHGraph(pickedWeighting),
                     AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|prepare|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {

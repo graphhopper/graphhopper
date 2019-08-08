@@ -34,12 +34,11 @@ import java.util.List;
  * This class manages all storage related methods and delegates the calls to the associated graphs.
  * The associated graphs manage their own necessary data structures and are used to provide e.g.
  * different traversal methods. By default this class implements the graph interface and results in
- * identical behavior as the Graph instance from getGraph(Graph.class)
+ * identical behavior as the Graph instance from getBaseGraph()
  * <p>
  *
  * @author Peter Karich
  * @see GraphBuilder to create a (CH)Graph easier
- * @see #getGraph(java.lang.Class)
  */
 public final class GraphHopperStorage implements GraphStorage, Graph {
     private final Directory dir;
@@ -95,17 +94,25 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         }
     }
 
-    /**
-     * This method returns the routing graph for the specified weighting, could be potentially
-     * filled with shortcuts.
-     */
-    public <T extends Graph> T getGraph(Class<T> clazz, Weighting weighting) {
-        if (clazz.equals(Graph.class))
-            return (T) baseGraph;
+    public CHGraph getCHGraph() {
+        Collection<CHGraphImpl> chGraphs = getAllCHGraphs();
+        if (chGraphs.isEmpty()) {
+            throw new IllegalStateException("There is no CHGraph");
+        } else if (chGraphs.size() > 1) {
+            throw new IllegalStateException("There are multiple CHGraphs, use getCHGraph(Weighting) to retrieve a specific one");
+        } else {
+            return chGraphs.iterator().next();
+        }
+    }
 
+    /**
+     * @return the {@link CHGraph} for the specified {@link Weighting}. The graph is identified by the weighting using
+     * reference identity (==)!
+     */
+    public CHGraph getCHGraph(Weighting weighting) {
         Collection<CHGraphImpl> chGraphs = getAllCHGraphs();
         if (chGraphs.isEmpty())
-            throw new IllegalStateException("Cannot find graph implementation for " + clazz);
+            throw new IllegalStateException("There is no CHGraph");
 
         if (weighting == null)
             throw new IllegalStateException("Cannot find CHGraph with null weighting");
@@ -113,24 +120,11 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         List<Weighting> existing = new ArrayList<>();
         for (CHGraphImpl cg : chGraphs) {
             if (cg.getWeighting() == weighting)
-                return (T) cg;
-
+                return cg;
             existing.add(cg.getWeighting());
         }
 
-        throw new IllegalStateException("Cannot find CHGraph for specified weighting: " + weighting + ", existing:" + existing);
-    }
-
-    public <T extends Graph> T getGraph(Class<T> clazz) {
-        if (clazz.equals(Graph.class))
-            return (T) baseGraph;
-
-        Collection<CHGraphImpl> chGraphs = getAllCHGraphs();
-        if (chGraphs.isEmpty())
-            throw new IllegalStateException("Cannot find graph implementation for " + clazz);
-
-        CHGraph cg = chGraphs.iterator().next();
-        return (T) cg;
+        throw new IllegalStateException("Cannot find CHGraph for the specified weighting: " + weighting + ", existing:" + existing);
     }
 
     public boolean isCHPossible() {
@@ -402,9 +396,9 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
                 + "|" + getProperties().versionsToString();
     }
 
-    // now all delegation graph method to avoid ugly programming flow ala
+    // now delegate all Graph methods to BaseGraph to avoid ugly programming flow ala
     // GraphHopperStorage storage = ..;
-    // Graph g = storage.getGraph(Graph.class);
+    // Graph g = storage.getBaseGraph();
     // instead directly the storage can be used to traverse the base graph
     @Override
     public Graph getBaseGraph() {
