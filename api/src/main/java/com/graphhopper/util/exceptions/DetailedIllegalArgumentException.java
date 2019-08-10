@@ -24,8 +24,8 @@ public class DetailedIllegalArgumentException extends IllegalArgumentException i
 
     private final Map<String, Object> details;
 
-    public DetailedIllegalArgumentException(String var1, Map<String, Object> details) {
-        super(var1);
+    public DetailedIllegalArgumentException(String message, Map<String, Object> details) {
+        super(message);
         this.details = details;
     }
 

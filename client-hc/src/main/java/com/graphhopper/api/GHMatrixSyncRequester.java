@@ -91,6 +91,7 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
         if (!Helper.isEmpty(ghRequest.getVehicle())) {
             url += "&vehicle=" + ghRequest.getVehicle();
         }
+        url += "&fail_fast=" + ghRequest.getFailFast();
 
         boolean withTimes = outArraysList.contains("times");
         boolean withDistances = outArraysList.contains("distances");
@@ -109,7 +110,7 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
             }
 
             if (!matrixResponse.hasErrors())
-                fillResponseFromJson(matrixResponse, getResponseJson);
+                fillResponseFromJson(matrixResponse, getResponseJson, ghRequest.getFailFast());
 
         } catch (IOException ex) {
             throw new RuntimeException(ex);

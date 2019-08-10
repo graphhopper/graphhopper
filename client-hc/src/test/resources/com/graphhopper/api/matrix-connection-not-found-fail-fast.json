@@ -1,0 +1,34 @@
+{
+  "status": "finished",
+  "solution": {
+    "info": {
+      "took": 0.049935993,
+      "copyrights": [
+        "GraphHopper",
+        "OpenStreetMap contributors"
+      ]
+    },
+    "weights": [
+      [0, null],
+      [null, 0]
+    ],
+    "distances": [
+      [1, null],
+      [null, 1]
+    ],
+    "times": [
+      [2, null],
+      [null, 2]
+    ],
+    "hints": [
+      {
+        "message": "There were 2 connections that could not be found, see point_pairs for details",
+        "details": "com.graphhopper.util.exceptions.ConnectionNotFoundException",
+        "point_pairs": [
+          [0, 1],
+          [1, 0]
+        ]
+      }
+    ]
+  }
+}
