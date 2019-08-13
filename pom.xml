@@ -170,7 +170,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.12</version>
+                <version>3.12.0</version>
                 <!-- e.g. under core/target/site/pmd.html
                 <configuration>
                     <format>html</format>
