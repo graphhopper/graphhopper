@@ -117,7 +117,7 @@ public class MapMatching {
             // but I have to pass a _different_ instance of FastestWeighting to getGraph so it gives me the graph,
             // (even though this is non-dangerous since it's only about virtual (split) edges (nothing to do with shortcuts),
             // but it's _still_ a different one than the one which I have to pass to the router itself (see below).
-            routingGraph = graphHopper.getGraphHopperStorage().getGraph(CHGraph.class, ((PrepareContractionHierarchies) routingAlgorithmFactory).getWeighting());
+            routingGraph = graphHopper.getGraphHopperStorage().getCHGraph(((PrepareContractionHierarchies) routingAlgorithmFactory).getWeighting());
         } else {
             ch = false;
             routingGraph = graphHopper.getGraphHopperStorage();
