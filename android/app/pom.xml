@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-android</artifactId>
-    <version>0.13-SNAPSHOT</version>
+    <version>0.13-ch_profile-test</version>
     <name>GraphHopper Android</name>
     <packaging>apk</packaging>    
     <organization>
@@ -15,8 +15,8 @@
     <parent>
         <relativePath>../..</relativePath>
         <groupId>com.graphhopper</groupId>
-        <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.13-SNAPSHOT</version>
+        <artifactId>graphhopper-parent</artifactId>
+        <version>0.13-ch_profile-test</version>
     </parent>
     <properties>
         <vtm.version>0.11.1</vtm.version>
