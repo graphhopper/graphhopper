@@ -52,8 +52,6 @@ import java.util.StringTokenizer;
  *
  * The exact behavior of memory-mapping is reported to be wildly platform-dependent.
  *
- * <p>
- *
  * @author Peter Karich
  * @author Michael Zilske
  */
@@ -258,7 +256,6 @@ public final class MMapDataAccess extends AbstractDataAccess {
             } catch (IOException tmpex) {
                 ioex = tmpex;
                 trial++;
-                Helper.cleanHack();
                 try {
                     // mini sleep to let JVM do unmapping
                     Thread.sleep(5);
@@ -328,19 +325,9 @@ public final class MMapDataAccess extends AbstractDataAccess {
     @Override
     public void close() {
         super.close();
-        close(true);
-    }
-
-    /**
-     * @param forceClean if true the clean hack (system.gc) will be executed and forces the system
-     *                   to cleanup the mmap resources. Set false if you need to close many MMapDataAccess objects.
-     */
-    void close(boolean forceClean) {
         clean(0, segments.size());
         segments.clear();
         Helper.close(raFile);
-        if (forceClean)
-            Helper.cleanHack();
     }
 
     @Override
@@ -476,7 +463,6 @@ public final class MMapDataAccess extends AbstractDataAccess {
         }
 
         clean(remainingSegNo, segments.size());
-        Helper.cleanHack();
         segments = new ArrayList<>(segments.subList(0, remainingSegNo));
 
         try {
