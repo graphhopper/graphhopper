@@ -56,7 +56,7 @@ public class ARAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private final List<Weighting> weightings = new ArrayList<>();
     private final List<String> weightingsAsStrings = new ArrayList<>();
     private boolean disablingAllowed = false;
-    private boolean enabled = true;
+    private boolean enabled = false;
     private int preparationThreads;
     private ExecutorService threadPool;
 
@@ -69,7 +69,6 @@ public class ARAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     public ARAlgoFactoryDecorator() {
         setPreparationThreads(1);
-        setWeightingsAsStrings(Arrays.asList(getDefaultWeighting()));
     }
 
     @Override
@@ -146,10 +145,6 @@ public class ARAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         return !weightings.isEmpty();
     }
 
-    private String getDefaultWeighting() {
-        return weightingsAsStrings.isEmpty() ? "fastest" : weightingsAsStrings.iterator().next();
-    }
-
     public final List<Weighting> getWeightings() {
         return weightings;
     }
@@ -215,9 +210,6 @@ public class ARAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
         if (preparations.isEmpty())
             throw new IllegalStateException("No preparations added to this decorator");
-
-        if (map.getWeighting().isEmpty())
-            map.setWeighting(getDefaultWeighting());
 
         for (final PrepareAlternativeRoute p : preparations) {
             if (p.getWeighting().matches(map))

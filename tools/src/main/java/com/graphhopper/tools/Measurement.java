@@ -131,6 +131,9 @@ public class Measurement {
             hopper.clean();
         }
 
+        hopper.getLMFactoryDecorator().setEnabled(true);
+        hopper.getLMFactoryDecorator().addWeighting("fastest");
+
         hopper.getCHFactoryDecorator().setDisablingAllowed(true);
         hopper.getLMFactoryDecorator().setDisablingAllowed(true);
         hopper.getARFactoryDecorator().setDisablingAllowed(true);
@@ -148,18 +151,18 @@ public class Measurement {
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
-            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1, true, false, false);
+            /*printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1, true, false, false);
 
             if (hopper.getLMFactoryDecorator().isEnabled()) {
                 System.gc();
                 isLM = true;
-                int activeLMCount = 8;//12;
+                int activeLMCount = 12;
                 for (; activeLMCount > 3; activeLMCount -= 4) {
                     printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount, true, false, false);
                 }
-                activeLMCount = 8;
-                printTimeOfRouteQuery(hopper, isCH, isLM, count / 10, "routingLM" + activeLMCount + "_alt", vehicleStr, true, activeLMCount, true, true, false);
-                if (hopper.getARFactoryDecorator().isEnabled())
+                */int activeLMCount = 8;
+                printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routingLM" + activeLMCount + "_alt", vehicleStr, true, activeLMCount, true, true, false);
+                /*if (hopper.getARFactoryDecorator().isEnabled())
                     printTimeOfRouteQuery(hopper, isCH, isLM, count / 10, "routingLM" + activeLMCount + "_alt_adv", vehicleStr, true, activeLMCount, true, true, true);
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
@@ -184,10 +187,10 @@ public class Measurement {
                 printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1, true, false, false);
                 printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr, true, -1, false, false, false);
                 printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1, true, false, false);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count / 2, "routingCH_alt", vehicleStr, true, -1, true, true, false);
+                printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingCH_alt", vehicleStr, true, -1, true, true, false);
                 if (hopper.getARFactoryDecorator().isEnabled())
                     printTimeOfRouteQuery(hopper, isCH, isLM, count / 2, "routingCH_alt_adv", vehicleStr, true, -1, true, true, true);
-            }
+            }*/
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
             put("error", ex.toString());
@@ -421,6 +424,8 @@ public class Measurement {
         final AtomicLong airDistSum = new AtomicLong(0);
         final AtomicInteger failedCount = new AtomicInteger(0);
         final AtomicInteger altFoundCount = new AtomicInteger(0);
+        final AtomicInteger altFoundCountAdv = new AtomicInteger(0);
+        final AtomicInteger advAlgorithmCount = new AtomicInteger(0);
         final DistanceCalc distCalc = new DistanceCalcEarth();
 
         final AtomicLong visitedNodesSum = new AtomicLong(0);
@@ -454,14 +459,8 @@ public class Measurement {
                 if (withInstructions)
                     req.setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED));
 
-                if (altRoute) {
+                if (altRoute)
                     req.setAlgorithm(ALT_ROUTE);
-                } else {
-                    if (ch)
-                        req.setAlgorithm(DIJKSTRA_BI);
-                    else
-                        req.setAlgorithm(ASTAR_BI);
-                }
 
                 // put(algo + ".approximation", "BeelineSimplification").
                 // put(algo + ".epsilon", 2);
@@ -504,6 +503,12 @@ public class Measurement {
                     if (rsp.hasAlternatives())
                         altFoundCount.incrementAndGet();
 
+                    if (rsp.getDebugInfo().contains("advanced")) {
+                        advAlgorithmCount.incrementAndGet();
+                        if (rsp.hasAlternatives())
+                            altFoundCountAdv.incrementAndGet();
+                    }
+
 //                    extractTimeSum.addAndGet(p.getExtractTime());                    
 //                    long start = System.nanoTime();
 //                    size = p.calcPoints().getSize();
@@ -521,7 +526,7 @@ public class Measurement {
         if (altRoute) {
             algoStr = ALT_ROUTE + "|";
             if (advAltRoute)
-                algoStr += "|advanced|";
+                algoStr += "advanced|";
         }
         if (ch && !sod)
             algoStr += DIJKSTRA_BI + "|ch|no_sod";
@@ -533,8 +538,14 @@ public class Measurement {
             algoStr += ASTAR_BI + "|beeline";
 
         put(prefix + ".guessed_algorithm", algoStr);
-        if (altRoute)
+        if (altRoute) {
             put(prefix + ".alternative_found", (float) altFoundCount.get() / count);
+            if (advAltRoute) {
+                put(prefix + ".alternative_found_adv", (float) altFoundCountAdv.get() / advAlgorithmCount.get());
+                put(prefix + ".alternative_found_nonadv", (float) (altFoundCount.get() - altFoundCountAdv.get()) / (count - advAlgorithmCount.get()));
+                put(prefix + ".adv_algorithm", (float) advAlgorithmCount.get() / count);
+            }
+        }
         put(prefix + ".failed_count", failedCount.get());
         put(prefix + ".distance_min", minDistance.get());
         put(prefix + ".distance_mean", (float) distSum.get() / count);

@@ -113,7 +113,6 @@ public class GraphPartition extends AbstractAlgoPreparation {
             }
             this.areas = areas;
             this.nodes = nodes;
-            setPrepared();
             return true;
         }
         return false;

@@ -125,7 +125,7 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
         lmFactoryDecorator.setEnabled(false);
-        arFactoryDecorator.setEnabled(true);
+        arFactoryDecorator.setEnabled(false);
 
         // order is important to use CH as base algo and set the approximation in the followed lm factory decorator.
         // AR must be the last factory decorator because it need both other decorators during preparation
@@ -1044,8 +1044,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             String algoStr = request.getAlgorithm();
             if (algoStr.isEmpty())
-                algoStr = ALT_ROUTE;
-            //    algoStr = chFactoryDecorator.isEnabled() && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
+                algoStr = chFactoryDecorator.isEnabled() && !disableCH ? DIJKSTRA_BI : ASTAR_BI;
 
             List<GHPoint> points = request.getPoints();
             // TODO Maybe we should think about a isRequestValid method that checks all that stuff that we could do to fail fast

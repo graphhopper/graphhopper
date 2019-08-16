@@ -140,7 +140,6 @@ public class PrepareAlternativeRoute extends AbstractAlgoPreparation {
                 }
             }
             viaNodeSet = createViaNodeSet();
-            setPrepared();
             return true;
         }
         return false;

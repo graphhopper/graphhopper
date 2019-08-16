@@ -55,7 +55,7 @@ public class AlternativeRoute extends AStarBidirection {
             return Double.compare(o1.getSortBy(), o2.getSortBy());
         }
     };
-    private final double weightInfluence = 2;
+    private final double weightInfluence = 4;
     private final double shareInfluence = 1;
 
     private double maxWeightFactor = 1.4;
@@ -63,8 +63,8 @@ public class AlternativeRoute extends AStarBidirection {
     private int maxPaths = 3;
     private int additionalPaths = 3;
 
-    private int maxAdditionalNodes = 25000;
-    private double advAlgorithmFactor = 4;
+    private int maxAdditionalNodes = 100000;
+    private double advAlgorithmFactor = 1.5;
     private int visitedNodesFinished = -1;
 
     private int from;
@@ -298,18 +298,16 @@ public class AlternativeRoute extends AStarBidirection {
             return false;
 
         // if we're using the advanced algorithm we won't have to continue searching for contact nodes but we have to
-        // define the maxVisitedNodes for the search spaces for viaNodes. This should be below 250000 nodes to get
-        // query times below 0.5 seconds
+        // define the maxVisitedNodes for the search spaces for viaNodes. This should be below 100000 to 150000 nodes
+        // to get consistent query times below 0.5 seconds
         if (isAdvancedAlgo()) {
-            maxAdditionalNodes *= advAlgorithmFactor;
-            maxAdditionalNodes = Math.min(maxAdditionalNodes, super.maxVisitedNodes - 3);
+            maxAdditionalNodes = Math.min((int) (advAlgorithmFactor * maxAdditionalNodes), super.maxVisitedNodes - 3);
             visitedNodesFinished = getVisitedNodes();
             return true;
         }
 
         // after the basic AStarBidirection is finished we safe the amount of visited nodes and define for how long
-        // we continue searching for contact nodes. This should be below 25000 nodes to get query times below 0.5
-        // seconds
+        // we continue searching for contact nodes
         if (visitedNodesFinished == -1) {
             maxAdditionalNodes = Math.min(maxAdditionalNodes, super.maxVisitedNodes - 3);
             visitedNodesFinished = getVisitedNodes();
@@ -318,11 +316,6 @@ public class AlternativeRoute extends AStarBidirection {
         // this is needed to prevent the search space for this algorithm from growing to big compared to the normal
         // AStarBidirection
         if (getVisitedNodes() > visitedNodesFinished + maxAdditionalNodes)
-            return true;
-
-        // finding many contact nodes means having to compare and check many alternative routes. For the most part,
-        // the first few contact nodes found will also produce the best alternatives
-        if (contactNodes.size() > (maxPaths + additionalPaths))
             return true;
 
         if (finishedFrom && finishedTo)
@@ -370,7 +363,7 @@ public class AlternativeRoute extends AStarBidirection {
 
     @Override
     public String getName() {
-        return Parameters.Algorithms.ALT_ROUTE + (isAdvancedAlgo() ? "|advanced" : "") + "|AStar|" + weightApprox;
+        return Parameters.Algorithms.ALT_ROUTE + (isAdvancedAlgo() ? "|advanced" : "") + "|" + super.getName();
     }
 
     /**
@@ -466,7 +459,7 @@ public class AlternativeRoute extends AStarBidirection {
         if (end > altNodes.size())
             end = altNodes.size();
         for (int i = start + 10; i < end - 10; i++){
-            if (altNodes.indexOf(i) != altNodes.lastIndexOf(i))
+            if (i != altNodes.lastIndexOf(altNodes.get(i)))
                 return false;
             approximator.setTo(altNodes.get(i + 10));
             if (approximator.approximate(altNodes.get(i - 10)) <= 100)

@@ -35,8 +35,4 @@ public abstract class AbstractAlgoPreparation {
     public boolean isPrepared() {
         return prepared;
     }
-
-    protected void setPrepared() {
-        prepared = true;
-    }
 }

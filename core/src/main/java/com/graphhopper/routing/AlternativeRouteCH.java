@@ -57,7 +57,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCH {
             return Double.compare(o1.getSortBy(), o2.getSortBy());
         }
     };
-    private final double weightInfluence = 2;
+    private final double weightInfluence = 4;
     private final double shareInfluence = 1;
 
     private double maxWeightFactor = 1.4;
@@ -210,11 +210,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCH {
             for (ViaNode node : viaNodes)
                 contactNodes.addAll(node.createContactPoints());
 
-        //int aa = 0;
-        //int bb = 0;
-        //int cc = contactPoints.size();
         for (ContactNode node : contactNodes) {
-            //bb++;
             Path altRoute = createPath(node.getEntryFrom(), node.getEntryTo());
             double sortBy = calcSortBy(mainRoute, altRoute, true);
             if (sortBy < Double.MAX_VALUE)
@@ -222,8 +218,6 @@ public class AlternativeRouteCH extends DijkstraBidirectionCH {
             if (alternatives.size() == maxPaths + additionalPaths)
                 break;
         }
-        //aa = alternatives.size();
-        //System.out.println(aa + "  / " + bb + "  / " + cc);
 
         Collections.sort(alternatives, ALT_COMPARATOR);
         boolean remove = false;
@@ -416,7 +410,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCH {
         if (end > altNodes.size())
             end = altNodes.size();
         for (int i = start + 10; i < end - 10; i++){
-            if (altNodes.indexOf(i) != altNodes.lastIndexOf(i))
+            if (i != altNodes.lastIndexOf(altNodes.get(i)))
                 return false;
             approximator.setTo(altNodes.get(i + 10));
             if (approximator.approximate(altNodes.get(i - 10)) <= 100)
