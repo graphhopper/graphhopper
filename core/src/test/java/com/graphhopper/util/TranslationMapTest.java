@@ -59,7 +59,13 @@ public class TranslationMapTest {
         trMap = SINGLETON.get("iw");
         assertEquals("רגל", trMap.tr("web.FOOT"));
 
-        // indonesia assertEquals("in", new Locale("id").getLanguage());
+        // Indonesian
+        assertEquals("in", SINGLETON.get("in").getLanguage());
+        assertEquals("in", SINGLETON.get("in_ID").getLanguage());
+
+        // Vietnamese
+        assertEquals("vi", SINGLETON.get("vi").getLanguage());
+        assertEquals("vi", SINGLETON.get("vi_VN").getLanguage());
     }
 
     @Test
