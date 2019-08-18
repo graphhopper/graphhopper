@@ -123,7 +123,7 @@ public class BidirectionalRoutingTest {
     }
 
     @Test
-    public void lm_problem() {
+    public void lm_problem_to_node_of_fallback_approximator() {
         Assume.assumeTrue(algo.equals(Algo.LM));
         // todonow: this test fails, because when the distance is approximated for the start node 0 the LMApproximator
         // uses the fall back approximator for which the to node is never set. This in turn means that the to coordinates
@@ -172,6 +172,44 @@ public class BidirectionalRoutingTest {
                 .calcPath(source, target);
         Path path = createAlgo()
                 .calcPath(0, 3);
+        comparePaths(refPath, path, source, target);
+    }
+
+    @Test
+    public void lm_issue2() {
+        // todonow: why does this one fail ?
+
+        //                    ---
+        //                  /     \
+        // 0 - 1 - 5 - 6 - 9 - 4 - 0
+        //          \     /
+        //            ->-
+        NodeAccess na = graph.getNodeAccess();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        na.setNode(0, 49.406987, 9.709767);
+        na.setNode(1, 49.403612, 9.702953);
+        na.setNode(2, 49.409755, 9.706517);
+        na.setNode(3, 49.409021, 9.708649);
+        na.setNode(4, 49.400674, 9.700906);
+        na.setNode(5, 49.408735, 9.709486);
+        na.setNode(6, 49.406402, 9.700937);
+        na.setNode(7, 49.406965, 9.702660);
+        na.setNode(8, 49.405227, 9.702863);
+        na.setNode(9, 49.409411, 9.709085);
+        graph.edge(0, 1, 623.197000, true).set(speedEnc, 112);
+        graph.edge(5, 1, 741.414000, true).set(speedEnc, 13);
+        graph.edge(9, 4, 1140.835000, true).set(speedEnc, 35);
+        graph.edge(5, 6, 670.689000, true).set(speedEnc, 18);
+        graph.edge(5, 9, 80.731000, false).set(speedEnc, 88);
+        graph.edge(0, 9, 273.948000, true).set(speedEnc, 82);
+        graph.edge(4, 0, 956.552000, true).set(speedEnc, 60);
+        preProcessGraph();
+        int source = 5;
+        int target = 4;
+        Path refPath = new DijkstraBidirectionRef(graph, weighting, TraversalMode.NODE_BASED)
+                .calcPath(source, target);
+        Path path = createAlgo()
+                .calcPath(source, target);
         comparePaths(refPath, path, source, target);
     }
 

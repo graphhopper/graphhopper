@@ -209,11 +209,11 @@ public class GHUtility {
             if (randomSpeedEnc != null) {
                 edge.set(randomSpeedEnc, fwdSpeed);
                 // todonow: revert
-//                System.out.println("edge.set(speedEnc, " + fwdSpeed + ");");
+                System.out.println("edge.set(speedEnc, " + fwdSpeed + ");");
                 if (randomSpeedEnc.isStoreTwoDirections()) {
                     edge.setReverse(randomSpeedEnc, bwdSpeed);
                     // todonow: revert
-//                    System.out.println("edge.setReverse(speedEnc, " + bwdSpeed + ");");
+                    System.out.println("edge.setReverse(speedEnc, " + bwdSpeed + ");");
                 }
             }
             numEdges++;
