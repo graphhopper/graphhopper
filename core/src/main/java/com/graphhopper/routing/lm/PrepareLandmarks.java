@@ -105,7 +105,8 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         return this;
     }
 
-    LandmarkStorage getLandmarkStorage() {
+    // todonow: revert
+    public LandmarkStorage getLandmarkStorage() {
         return lms;
     }
 

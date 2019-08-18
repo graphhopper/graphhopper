@@ -51,8 +51,10 @@ public class ConsistentWeightApproximator {
     }
 
     public double approximate(int node, boolean reverse) {
-        double weightApproximation = 0.5
-                * (uniDirApproximatorForward.approximate(node) - uniDirApproximatorReverse.approximate(node));
+        // todonow: revert
+        double a = uniDirApproximatorForward.approximate(node);
+        double b = uniDirApproximatorReverse.approximate(node);
+        double weightApproximation = 0.5 * (a - b);
 
         if (reverse)
             return -weightApproximation;

@@ -201,6 +201,8 @@ public class LMApproximator implements WeightApproximator {
     @Override
     public void setTo(int to) {
         this.to = getNode(to);
+        // todonow: is this the right fix ? getNode(to) or just to ?
+//        fallBackApproximation.setTo(getNode(to));
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -13,6 +14,7 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,7 +53,7 @@ public class BidirectionalRoutingTest {
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> params() {
-        // todo: run node & edge-based ?
+        // todonow: run node & edge-based ?
         return Arrays.asList(new Object[][]{
                 {Algo.ASTAR, false, false},
                 {Algo.CH_ASTAR, true, false},
@@ -118,6 +120,59 @@ public class BidirectionalRoutingTest {
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
         }
+    }
+
+    @Test
+    public void lm_problem() {
+        Assume.assumeTrue(algo.equals(Algo.LM));
+        // todonow: this test fails, because when the distance is approximated for the start node 0 the LMApproximator
+        // uses the fall back approximator for which the to node is never set. This in turn means that the to coordinates
+        // are zero and a way too large approximation is returned. Eventually the best path is not updated correctly
+        // because the spt entry of the fwd search already has a way too large weight.
+
+        //   ---<---
+        //   |     |
+        //   | 4   |
+        //   |/  \ 0
+        //   1   | |
+        //     \ | |
+        //       3 |
+        // 2 --<----
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 49.405150, 9.709054);
+        na.setNode(1, 49.403705, 9.700517);
+        na.setNode(2, 49.400112, 9.700209);
+        na.setNode(3, 49.403009, 9.708364);
+        na.setNode(4, 49.409021, 9.703622);
+        // 30s
+        graph.edge(4, 3, 1000, true).set(speedEnc, 120);
+        graph.edge(0, 2, 1000, false).set(speedEnc, 120);
+        // 360s
+        graph.edge(1, 3, 1000, true).set(speedEnc, 10);
+        // 80s
+        graph.edge(0, 1, 1000, false).set(speedEnc, 45);
+        graph.edge(1, 4, 1000, true).set(speedEnc, 45);
+        preProcessGraph();
+
+        int source = 0;
+        int target = 3;
+
+        // only for analysis, build the same approximator and print approximations
+//        LMApproximator approx = new LMApproximator(graph, graph.getNodes(), lm.getLandmarkStorage(), 8, lm.getLandmarkStorage().getFactor(), false);
+//        ConsistentWeightApproximator approximator = new ConsistentWeightApproximator(approx);
+//        approximator.setFrom(source);
+//        approximator.setTo(target);
+//        for (int i = 0; i < graph.getNodes(); i++) {
+//            System.out.println("approx " + i + " fwd -> " + approximator.approximate(i, true));
+//            System.out.println("approx " + i + " bwd -> " + approximator.approximate(i, false));
+//        }
+
+        Path refPath = new DijkstraBidirectionRef(graph, weighting, TraversalMode.NODE_BASED)
+                .calcPath(source, target);
+        Path path = createAlgo()
+                .calcPath(0, 3);
+        comparePaths(refPath, path, source, target);
     }
 
     @Test
