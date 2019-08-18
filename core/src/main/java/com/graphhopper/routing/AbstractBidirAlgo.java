@@ -284,14 +284,20 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
                            IntObjectMap<SPTEntry> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
         EdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
+        // todonow: revert
+//        System.out.println("[reverse = " + reverse + "] base node: " + currEdge.adjNode);
         while (iter.next()) {
             if (!accept(iter, currEdge, reverse))
                 continue;
 
+            // todonow: revert
+//            System.out.println("[reverse = " + reverse + "] iter: " + iter);
             final double weight = calcWeight(iter, currEdge, reverse);
             if (Double.isInfinite(weight)) {
                 continue;
             }
+            // todonow: revert
+//            System.out.println("[reverse = " + reverse + "] weight: " + weight);
             final int origEdgeId = getOrigEdgeId(iter, reverse);
             final int traversalId = getTraversalId(iter, origEdgeId, reverse);
             SPTEntry entry = bestWeightMap.get(traversalId);
@@ -328,6 +334,8 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         }
 
         if (weight < bestPath.getWeight()) {
+            // todonow: revert
+//            System.out.println("[reverse = " + reverse + "] found new best path: " + weight);
             bestPath.setSwitchToFrom(reverse);
             bestPath.setSPTEntry(entry);
             bestPath.setSPTEntryTo(entryOther);
