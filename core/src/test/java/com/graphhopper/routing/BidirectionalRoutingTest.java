@@ -1,4 +1,4 @@
-package com.graphhopper.routing.weighting;
+package com.graphhopper.routing;
 
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
@@ -7,6 +7,8 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
