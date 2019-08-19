@@ -174,11 +174,11 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     }
 
     protected void postInitFrom() {
-        // using a local reference is important to prevent stack overflow after calling setEdgeFilter
-        final EdgeFilter tmpFilter = additionalEdgeFilter;
         if (fromOutEdge == ANY_EDGE) {
-            fillEdgesFromUsingFilter(tmpFilter);
+            fillEdgesFromUsingFilter(additionalEdgeFilter);
         } else {
+            // need to use a local reference here, because additionalEdgeFilter is modified when calling fillEdgesFromUsingFilter
+            final EdgeFilter tmpFilter = additionalEdgeFilter;
             fillEdgesFromUsingFilter(new EdgeFilter() {
                 @Override
                 public boolean accept(EdgeIteratorState edgeState) {
@@ -189,10 +189,10 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     }
 
     protected void postInitTo() {
-        final EdgeFilter tmpFilter = additionalEdgeFilter;
         if (toInEdge == ANY_EDGE) {
-            fillEdgesToUsingFilter(tmpFilter);
+            fillEdgesToUsingFilter(additionalEdgeFilter);
         } else {
+            final EdgeFilter tmpFilter = additionalEdgeFilter;
             fillEdgesToUsingFilter(new EdgeFilter() {
                 @Override
                 public boolean accept(EdgeIteratorState edgeState) {
@@ -202,20 +202,27 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         }
     }
 
+    /**
+     * @param edgeFilter edge filter used to fill edges. the {@link #additionalEdgeFilter} reference will be set to
+     *                   edgeFilter by this method, so make sure edgeFilter does not use it directly.
+     */
     protected void fillEdgesFromUsingFilter(EdgeFilter edgeFilter) {
         // we temporarily ignore the additionalEdgeFilter
         EdgeFilter tmpFilter = additionalEdgeFilter;
-        setEdgeFilter(edgeFilter);
+        additionalEdgeFilter = edgeFilter;
         finishedFrom = !fillEdgesFrom();
-        setEdgeFilter(tmpFilter);
+        additionalEdgeFilter = tmpFilter;
     }
 
+    /**
+     * @see #fillEdgesFromUsingFilter(EdgeFilter)
+     */
     protected void fillEdgesToUsingFilter(EdgeFilter edgeFilter) {
         // we temporarily ignore the additionalEdgeFilter
         EdgeFilter tmpFilter = additionalEdgeFilter;
-        setEdgeFilter(edgeFilter);
+        additionalEdgeFilter = edgeFilter;
         finishedTo = !fillEdgesTo();
-        setEdgeFilter(tmpFilter);
+        additionalEdgeFilter = tmpFilter;
     }
 
     protected void runAlgo() {
