@@ -4,10 +4,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.DirectedRoutingTest;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -420,12 +417,43 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     @Test
-    @Ignore("todo: do we require running the algo with an additional edge filter ?")
-    public void worksWithEdgeFilter() {
-        // todo:
-        // e.g. block area is implemented using infinite weighting
-        // when an edge filter is used need to think about what should happen if the filter filters out the
-        // given in out edges etc.
+    public void blockArea() {
+        // 0 - 1 - 2 - 3
+        // |           |
+        // 4 --- 5 --- 6
+        EdgeIteratorState edge1 = graph.edge(0, 1, 10, true);
+        graph.edge(1, 2, 10, true);
+        EdgeIteratorState edge2 = graph.edge(2, 3, 10, true);
+        graph.edge(0, 4, 100, true);
+        graph.edge(4, 5, 100, true);
+        graph.edge(5, 6, 100, true);
+        graph.edge(6, 3, 100, true);
+
+        // usually we would take the direct route
+        assertPath(calcPath(0, 3, ANY_EDGE, ANY_EDGE), 1.8, 30, 1800, nodes(0, 1, 2, 3));
+
+        // with forced edges we might have to go around
+        assertPath(calcPath(0, 3, 3, ANY_EDGE), 24, 400, 24000, nodes(0, 4, 5, 6, 3));
+        assertPath(calcPath(0, 3, ANY_EDGE, 6), 24, 400, 24000, nodes(0, 4, 5, 6, 3));
+
+        // with avoided edges we also have to take a longer route
+        assertPath(calcPath(0, 3, ANY_EDGE, ANY_EDGE, createAvoidEdgeWeighting(edge1)), 24, 400, 24000, nodes(0, 4, 5, 6, 3));
+        assertPath(calcPath(0, 3, ANY_EDGE, ANY_EDGE, createAvoidEdgeWeighting(edge2)), 24, 400, 24000, nodes(0, 4, 5, 6, 3));
+
+        // enforcing forbidden start/target edges still does not allow using them
+        assertNotFound(calcPath(0, 3, edge1.getEdge(), edge2.getEdge(), createAvoidEdgeWeighting(edge1)));
+        assertNotFound(calcPath(0, 3, edge1.getEdge(), edge2.getEdge(), createAvoidEdgeWeighting(edge2)));
+
+        // .. even when the nodes are just next to each other
+        assertNotFound(calcPath(0, 1, edge1.getEdge(), ANY_EDGE, createAvoidEdgeWeighting(edge1)));
+        assertNotFound(calcPath(0, 1, ANY_EDGE, edge2.getEdge(), createAvoidEdgeWeighting(edge2)));
+    }
+
+    private AvoidEdgesWeighting createAvoidEdgeWeighting(EdgeIteratorState edgeOut) {
+        AvoidEdgesWeighting avoidEdgesWeighting = new AvoidEdgesWeighting(weighting);
+        avoidEdgesWeighting.setEdgePenaltyFactor(Double.POSITIVE_INFINITY);
+        avoidEdgesWeighting.addEdges(Collections.singletonList(edgeOut));
+        return avoidEdgesWeighting;
     }
 
     @Test
