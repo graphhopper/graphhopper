@@ -64,13 +64,13 @@ public class DirectedRoutingTest {
                 {Algo.ASTAR, Double.POSITIVE_INFINITY, false, false},
                 {Algo.CH_ASTAR, Double.POSITIVE_INFINITY, true, false},
                 {Algo.CH_DIJKSTRA, Double.POSITIVE_INFINITY, true, false},
-                // todo: yields warnings and fails
+                // todo: yields warnings and fails, see #1665, #1687
 //                {Algo.LM, Double.POSITIVE_INFINITY, false, true}
                 {Algo.ASTAR, 40, false, false},
                 // todo: CH does not handle finite u-turn costs so far, see #1652
 //                {Algo.CH_ASTAR, 40, true, false},
 //                {Algo.CH_DIJKSTRA, 40, true, false},
-                // todo: yields warnings and fails
+                // todo: yields warnings and fails, see #1665, 1687
 //                {Algo.LM, 40, false, true}
                 // todo: add AlternativeRoute ?
         });
