@@ -63,7 +63,7 @@ public class CHProfile {
     /**
      * Use this method when u-turn costs are used to check CHProfile equality
      */
-    public double getUTurnCostsInt() {
+    public int getUTurnCostsInt() {
         return uTurnCosts;
     }
 
