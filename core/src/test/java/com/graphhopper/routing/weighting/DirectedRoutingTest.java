@@ -24,6 +24,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.*;
 
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
@@ -41,7 +42,7 @@ import static org.junit.Assert.fail;
 @RunWith(Parameterized.class)
 public class DirectedRoutingTest {
     private final Algo algo;
-    private final double uTurnCosts;
+    private final int uTurnCosts;
     private final boolean prepareCH;
     private final boolean prepareLM;
     private Directory dir;
@@ -61,11 +62,11 @@ public class DirectedRoutingTest {
     @Parameterized.Parameters(name = "{0}, u-turn-costs: {1}")
     public static Collection<Object[]> params() {
         return Arrays.asList(new Object[][]{
-                {Algo.ASTAR, Double.POSITIVE_INFINITY, false, false},
-                {Algo.CH_ASTAR, Double.POSITIVE_INFINITY, true, false},
-                {Algo.CH_DIJKSTRA, Double.POSITIVE_INFINITY, true, false},
+                {Algo.ASTAR, INFINITE_UTURN_COSTS, false, false},
+                {Algo.CH_ASTAR, INFINITE_UTURN_COSTS, true, false},
+                {Algo.CH_DIJKSTRA, INFINITE_UTURN_COSTS, true, false},
                 // todo: yields warnings and fails, see #1665, #1687
-//                {Algo.LM, Double.POSITIVE_INFINITY, false, true}
+//                {Algo.LM, INFINITE_UTURN_COSTS, false, true}
                 {Algo.ASTAR, 40, false, false},
                 // todo: CH does not handle finite u-turn costs so far, see #1652
 //                {Algo.CH_ASTAR, 40, true, false},
@@ -83,7 +84,7 @@ public class DirectedRoutingTest {
         LM
     }
 
-    public DirectedRoutingTest(Algo algo, double uTurnCosts, boolean prepareCH, boolean prepareLM) {
+    public DirectedRoutingTest(Algo algo, int uTurnCosts, boolean prepareCH, boolean prepareLM) {
         this.algo = algo;
         this.uTurnCosts = uTurnCosts;
         this.prepareCH = prepareCH;
@@ -278,7 +279,7 @@ public class DirectedRoutingTest {
     }
 
     private GraphHopperStorage createGraph() {
-        GraphHopperStorage gh = new GraphHopperStorage(Collections.singletonList(CHProfile.edgeBased(weighting)), dir, encodingManager,
+        GraphHopperStorage gh = new GraphHopperStorage(Collections.singletonList(CHProfile.edgeBased(weighting, uTurnCosts)), dir, encodingManager,
                 false, turnCostExtension);
         gh.create(1000);
         return gh;
