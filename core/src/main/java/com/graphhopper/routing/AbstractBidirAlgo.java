@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -30,15 +31,20 @@ import com.graphhopper.util.GHUtility;
 
 import java.util.PriorityQueue;
 
+import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+
 /**
  * Common subclass for bidirectional algorithms.
  * <p>
  *
  * @author Peter Karich
+ * @author easbar
  */
 public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     protected int from;
     protected int to;
+    protected int fromOutEdge;
+    protected int toInEdge;
     protected IntObjectMap<SPTEntry> bestWeightMapFrom;
     protected IntObjectMap<SPTEntry> bestWeightMapTo;
     protected IntObjectMap<SPTEntry> bestWeightMapOther;
@@ -55,6 +61,8 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
 
     public AbstractBidirAlgo(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
+        fromOutEdge = ANY_EDGE;
+        toInEdge = ANY_EDGE;
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
         initCollections(size);
     }
@@ -88,6 +96,24 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
 
     @Override
     public Path calcPath(int from, int to) {
+        return calcPath(from, to, ANY_EDGE, ANY_EDGE);
+    }
+
+    /**
+     * like {@link #calcPath(int, int)}, but this method also allows to strictly restrict the edge the
+     * path will begin with and the edge it will end with.
+     *
+     * @param fromOutEdge the edge id of the first edge of the path. using {@link EdgeIterator#ANY_EDGE} means
+     *                    not enforcing the first edge of the path
+     * @param toInEdge    the edge id of the last edge of the path. using {@link EdgeIterator#ANY_EDGE} means
+     *                    not enforcing the last edge of the path
+     */
+    public Path calcPath(int from, int to, int fromOutEdge, int toInEdge) {
+        if ((fromOutEdge != ANY_EDGE || toInEdge != ANY_EDGE) && !traversalMode.isEdgeBased()) {
+            throw new IllegalArgumentException("Restricting the start/target edges is only possible for edge-based graph traversal");
+        }
+        this.fromOutEdge = fromOutEdge;
+        this.toInEdge = toInEdge;
         checkAlreadyRun();
         createAndInitPath();
         init(from, 0, to, 0);
@@ -130,8 +156,9 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
                 bestWeightMapOther = bestWeightMapFrom;
                 updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to, true);
             }
-        } else if (from == to) {
-            // special case of identical start and end
+        } else if (from == to && fromOutEdge == ANY_EDGE && toInEdge == ANY_EDGE) {
+            // special handling if start and end are the same and no directions are restricted
+            // the resulting weight should be zero
             if (currFrom.weight != 0 || currTo.weight != 0) {
                 throw new IllegalStateException("If from=to, the starting weight must be zero for from and to");
             }
@@ -147,9 +174,55 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     }
 
     protected void postInitFrom() {
+        if (fromOutEdge == ANY_EDGE) {
+            fillEdgesFromUsingFilter(additionalEdgeFilter);
+        } else {
+            // need to use a local reference here, because additionalEdgeFilter is modified when calling fillEdgesFromUsingFilter
+            final EdgeFilter tmpFilter = additionalEdgeFilter;
+            fillEdgesFromUsingFilter(new EdgeFilter() {
+                @Override
+                public boolean accept(EdgeIteratorState edgeState) {
+                    return (tmpFilter == null || tmpFilter.accept(edgeState)) && edgeState.getOrigEdgeFirst() == fromOutEdge;
+                }
+            });
+        }
     }
 
     protected void postInitTo() {
+        if (toInEdge == ANY_EDGE) {
+            fillEdgesToUsingFilter(additionalEdgeFilter);
+        } else {
+            final EdgeFilter tmpFilter = additionalEdgeFilter;
+            fillEdgesToUsingFilter(new EdgeFilter() {
+                @Override
+                public boolean accept(EdgeIteratorState edgeState) {
+                    return (tmpFilter == null || tmpFilter.accept(edgeState)) && edgeState.getOrigEdgeLast() == toInEdge;
+                }
+            });
+        }
+    }
+
+    /**
+     * @param edgeFilter edge filter used to fill edges. the {@link #additionalEdgeFilter} reference will be set to
+     *                   edgeFilter by this method, so make sure edgeFilter does not use it directly.
+     */
+    protected void fillEdgesFromUsingFilter(EdgeFilter edgeFilter) {
+        // we temporarily ignore the additionalEdgeFilter
+        EdgeFilter tmpFilter = additionalEdgeFilter;
+        additionalEdgeFilter = edgeFilter;
+        finishedFrom = !fillEdgesFrom();
+        additionalEdgeFilter = tmpFilter;
+    }
+
+    /**
+     * @see #fillEdgesFromUsingFilter(EdgeFilter)
+     */
+    protected void fillEdgesToUsingFilter(EdgeFilter edgeFilter) {
+        // we temporarily ignore the additionalEdgeFilter
+        EdgeFilter tmpFilter = additionalEdgeFilter;
+        additionalEdgeFilter = edgeFilter;
+        finishedTo = !fillEdgesTo();
+        additionalEdgeFilter = tmpFilter;
     }
 
     protected void runAlgo() {
@@ -347,6 +420,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
 
     void setFromDataStructures(AbstractBidirAlgo other) {
         from = other.from;
+        fromOutEdge = other.fromOutEdge;
         pqOpenSetFrom = other.pqOpenSetFrom;
         bestWeightMapFrom = other.bestWeightMapFrom;
         finishedFrom = other.finishedFrom;
@@ -357,6 +431,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
 
     void setToDataStructures(AbstractBidirAlgo other) {
         to = other.to;
+        toInEdge = other.toInEdge;
         pqOpenSetTo = other.pqOpenSetTo;
         bestWeightMapTo = other.bestWeightMapTo;
         finishedTo = other.finishedTo;

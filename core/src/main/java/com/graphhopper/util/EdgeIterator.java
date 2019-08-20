@@ -47,6 +47,11 @@ public interface EdgeIterator extends EdgeIteratorState {
     int NO_EDGE = -1;
 
     /**
+     * Integer value used in places where normally an edge would be expected, but no specific edge shall be specified.
+     */
+    int ANY_EDGE = -2;
+
+    /**
      * To be called to go to the next edge state.
      * <p>
      *
