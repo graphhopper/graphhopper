@@ -20,7 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.FactorizedDecimalEncodedValue;
+import com.graphhopper.routing.profiles.UnsignedDecimalEncodedValue;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -161,7 +161,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
-        registerNewEncodedValue.add(speedEncoder = new FactorizedDecimalEncodedValue(prefix + "average_speed", speedBits, speedFactor, speedTwoDirections));
+        registerNewEncodedValue.add(speedEncoder = new UnsignedDecimalEncodedValue(EncodingManager.getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
     }
 
     protected double getSpeed(ReaderWay way) {
@@ -251,7 +251,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             speed = applyBadSurfaceSpeed(way, speed);
 
             setSpeed(false, edgeFlags, speed);
-            setSpeed(true, edgeFlags, speed);
+            if (speedTwoDirections)
+                setSpeed(true, edgeFlags, speed);
 
             boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
             if (isOneway(way) || isRoundabout) {
@@ -269,14 +270,16 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
             setSpeed(false, edgeFlags, ferrySpeed);
-            setSpeed(true, edgeFlags, ferrySpeed);
+            if (speedTwoDirections)
+                setSpeed(true, edgeFlags, ferrySpeed);
         }
 
         for (String restriction : restrictions) {
             if (way.hasTag(restriction, "destination")) {
                 // This is problematic as Speed != Time
                 setSpeed(false, edgeFlags, destinationSpeed);
-                setSpeed(true, edgeFlags, destinationSpeed);
+                if (speedTwoDirections)
+                    setSpeed(true, edgeFlags, destinationSpeed);
             }
         }
         return edgeFlags;

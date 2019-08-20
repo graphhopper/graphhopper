@@ -1,7 +1,7 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
 continue=продовжуйте
-continue_onto=продовжуйте по „%1$s“
+continue_onto=продовжуйте по %1$s
 turn_left=Поверніть ліворуч
 turn_right=Поверніть праворуч
 turn_slight_left=Поверніть трохи лівіше
@@ -10,9 +10,9 @@ turn_sharp_left=Різко поверніть ліворуч
 turn_sharp_right=Різко поверніть праворуч
 keep_left=Тримайтеся ліворуч
 keep_right=Тримайтеся праворуч
-turn_onto=%1$s на „%2$s“
+turn_onto=%1$s на %2$s
 u_turn=Розверніться
-unknown=Невідома інструкція „%1$s“
+unknown=Невідома інструкція %1$s
 web.search_button=Пошук
 web.from_hint=Від
 web.via_hint=через

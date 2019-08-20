@@ -6,14 +6,19 @@ graphhopper:
   ##### Vehicles #####
 
 
-  # Possible options: car,foot,bike,bike2,mtb,racingbike,motorcycle (comma separated)
-  # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below
+  # More options: foot,bike,bike2,mtb,racingbike,motorcycle (comma separated)
+  # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below.
   graph.flag_encoders: car
-
 
   # Enable turn restrictions for car or motorcycle.
   # graph.flag_encoders: car|turn_costs=true
 
+  # Add additional information to every edge. Used for path details.
+  # If road_environment is added and elevation is enabled then also a tunnel and bridge interpolation is done, see #798.
+  # More options are: surface,max_width,max_height,max_weight,toll
+  graph.encoded_values: road_class,road_class_link,road_environment,max_speed,road_access
+  # If many flag_encoders or encoded_values are used you need to increase bytes_for_flags to 8 or more (multiple of 4)
+  graph.bytes_for_flags: 4
 
   ##### Elevation #####
 
@@ -80,7 +85,7 @@ graphhopper:
   # routing.max_visited_nodes: 1000000
 
 
-  # If enabled, allows a user to run flexibility requests even if speed mode is enabled. Every request then has to include a hint routing.ch.disable=true.
+  # If enabled, allows a user to run flexibility requests even if speed mode is enabled. Every request then has to include a hint ch.disable=true.
   # Attention, non-CH route calculations take way more time and resources, compared to CH routing.
   # A possible attacker might exploit this to slow down your service. Only enable it if you need it and with routing.maxVisitedNodes
   # routing.ch.disabling_allowed: true
@@ -160,7 +165,6 @@ logging:
     archivedLogFilenamePattern: ./logs/graphhopper-%d.log.gz
     archivedFileCount: 30
     neverBlock: true
-    immediateFlush: false
   - type: console
     timeZone: UTC
     logFormat: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

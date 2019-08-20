@@ -234,8 +234,7 @@ public class Path {
     /**
      * Calculates the distance and time of the specified edgeId. Also it adds the edgeId to the path list.
      *
-     * @param prevEdgeId here the edge that comes before edgeId is necessary. I.e. for the reverse search we need the
-     *                   next edge.
+     * @param prevEdgeId the edge that comes before edgeId: --prevEdgeId-x-edgeId-->adjNode
      */
     protected void processEdge(int edgeId, int adjNode, int prevEdgeId) {
         EdgeIteratorState iter = graph.getEdgeIteratorState(edgeId, adjNode);
@@ -379,10 +378,10 @@ public class Path {
      */
     public Map<String, List<PathDetail>> calcDetails(List<String> requestedPathDetails, PathDetailsBuilderFactory pathBuilderFactory, int previousIndex) {
         if (!isFound() || requestedPathDetails.isEmpty())
-            return Collections.EMPTY_MAP;
+            return Collections.emptyMap();
         List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders(requestedPathDetails, encoder, weighting);
         if (pathBuilders.isEmpty())
-            return Collections.EMPTY_MAP;
+            return Collections.emptyMap();
 
         forEveryEdge(new PathDetailsFromEdges(pathBuilders, previousIndex));
 
@@ -399,7 +398,7 @@ public class Path {
 
     @Override
     public String toString() {
-        return "distance:" + getDistance() + ", edges:" + edgeIds.size();
+        return "found: " + found + ", weight: " + weight + ", time: " + time + ", distance: " + distance + ", edges: " + edgeIds.size();
     }
 
     public String toDetailsString() {

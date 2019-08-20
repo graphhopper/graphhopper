@@ -80,7 +80,7 @@ public class EdgeBasedNodeContractorTest {
         turnCostExtension = (TurnCostExtension) graph.getExtension();
         turnWeighting = new TurnWeighting(weighting, turnCostExtension);
         chTurnWeighting = new TurnWeighting(preparationWeighting, turnCostExtension);
-        chGraph = graph.getGraph(CHGraph.class);
+        chGraph = graph.getCHGraph();
     }
 
     @Test
@@ -1165,7 +1165,6 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    @Ignore("this test fails because of shortcut weight truncation in CHGraphImpl")
     public void testNodeContraction_minorWeightDeviation() {
         // 0 -> 1 -> 2 -> 3 -> 4
         graph.edge(0, 1, 51.401, false);

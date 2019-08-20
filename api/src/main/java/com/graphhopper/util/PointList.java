@@ -136,7 +136,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
 
         @Override
-        public GHPoint3D toGHPoint(int index) {
+        public GHPoint3D get(int index) {
             throw new UnsupportedOperationException("cannot access EMPTY PointList");
         }
 
@@ -571,7 +571,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
     }
 
-    public GHPoint3D toGHPoint(int index) {
+    public GHPoint3D get(int index) {
         return new GHPoint3D(getLatitude(index), getLongitude(index), getElevation(index));
     }
 
@@ -594,7 +594,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
                 if (counter >= getSize())
                     throw new NoSuchElementException();
 
-                GHPoint3D point = PointList.this.toGHPoint(counter);
+                GHPoint3D point = PointList.this.get(counter);
                 counter++;
                 return point;
             }

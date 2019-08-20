@@ -40,10 +40,16 @@ package com.graphhopper.util;
  */
 public interface EdgeIterator extends EdgeIteratorState {
     /**
-     * integer value to indicate if an edge is valid or not which then would be initialized with
-     * this value
+     * Integer value used in places where normally an edge would be expected, but none is given. For example in the
+     * shortest path tree of route calculations every child element should have an incoming edge, but for the root item
+     * there is no parent so we would use this value instead.
      */
     int NO_EDGE = -1;
+
+    /**
+     * Integer value used in places where normally an edge would be expected, but no specific edge shall be specified.
+     */
+    int ANY_EDGE = -2;
 
     /**
      * To be called to go to the next edge state.
@@ -54,8 +60,13 @@ public interface EdgeIterator extends EdgeIteratorState {
     boolean next();
 
     class Edge {
+        /**
+         * Checks if a given integer edge ID is valid or not. Edge IDs >= 0 are considered valid, while negative
+         * values are considered as invalid. However, some negative values are used as special values, e.g. {@link
+         * #NO_EDGE}.
+         */
         public static boolean isValid(int edgeId) {
-            return edgeId > NO_EDGE;
+            return edgeId >= 0;
         }
     }
 }

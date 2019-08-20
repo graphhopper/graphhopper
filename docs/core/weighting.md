@@ -36,7 +36,7 @@ class MyGraphHopper extends GraphHopper {
     @Override
     public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
         String weightingStr = hintsMap.getWeighting().toLowerCase();
-        if ("my_custom_weighting".equals(weighting)) {
+        if ("my_custom_weighting".equals(weightingStr)) {
             return new MyCustomWeighting(encoder);
         } else {
             return super.createWeighting(hintsMap, encoder, graph);

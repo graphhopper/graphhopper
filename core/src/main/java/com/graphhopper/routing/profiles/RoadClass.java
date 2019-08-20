@@ -1,55 +1,56 @@
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.routing.profiles;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.graphhopper.util.Helper;
 
-public class RoadClass implements IndexBased {
-    private static final List<RoadClass> values = create("_default",
-            "motorway", "motorway_link", "motorroad",
-            "trunk", "trunk_link",
-            "primary", "primary_link",
-            "secondary", "secondary_link",
-            "tertiary", "tertiary_link",
-            "residential", "unclassified",
-            "service", "road", "track", "forestry", "steps", "cycleway", "path", "living_street");
+/**
+ * This enum defines the road class of an edge. It is heavily influenced from the highway tag in OSM that can be
+ * primary, cycleway etc.
+ */
+public enum RoadClass {
+    OTHER("other"), MOTORWAY("motorway"),
+    TRUNK("trunk"), PRIMARY("primary"), SECONDARY("secondary"),
+    TERTIARY("tertiary"), RESIDENTIAL("residential"), UNCLASSIFIED("unclassified"),
+    SERVICE("service"), ROAD("road"), TRACK("track"),
+    BRIDLEWAY("bridleway"), STEPS("steps"), CYCLEWAY("cycleway"),
+    PATH("path"), LIVING_STREET("living_street");
+
+    public static final String KEY = "road_class";
 
     private final String name;
-    private final int ordinal;
 
-    private RoadClass(String name, int ordinal) {
+    RoadClass(String name) {
         this.name = name;
-        this.ordinal = ordinal;
     }
-
 
     @Override
     public String toString() {
         return name;
     }
 
-    @Override
-    public int ordinal() {
-        return ordinal;
-    }
-
-    @Override
-    public int hashCode() {
-        return ordinal;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof RoadClass))
-            return false;
-        return ((RoadClass) obj).ordinal == ordinal;
-    }
-
-    public static List<RoadClass> create(String... values) {
-        List<RoadClass> list = new ArrayList<>(values.length);
-        for (int i = 0; i < values.length; i++) {
-            list.add(new RoadClass(values[i], i));
+    public static RoadClass find(String name) {
+        if (name == null)
+            return OTHER;
+        try {
+            return RoadClass.valueOf(Helper.toUpperCase(name));
+        } catch (IllegalArgumentException ex) {
+            return OTHER;
         }
-        return Collections.unmodifiableList(list);
     }
 }

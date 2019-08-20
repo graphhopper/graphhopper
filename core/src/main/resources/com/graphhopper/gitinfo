@@ -1,0 +1,5 @@
+# properties will be filled by git-commit-id-plugin during maven build
+${git.commit.id}
+${git.branch}
+${git.dirty}
+${git.commit.time}

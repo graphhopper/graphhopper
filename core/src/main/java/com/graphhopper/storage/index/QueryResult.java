@@ -38,10 +38,11 @@ import java.util.List;
  * @author Peter Karich
  */
 public class QueryResult {
+    public static final int INVALID_NODE = -1;
     private final GHPoint queryPoint;
     private double queryDistance = Double.MAX_VALUE;
     private int wayIndex = -1;
-    private int closestNode = -1;
+    private int closestNode = INVALID_NODE;
     private EdgeIteratorState closestEdge;
     private GHPoint3D snappedPoint;
     private Position snappedPosition;
@@ -54,7 +55,7 @@ public class QueryResult {
      * Returns the closest matching node. This is either a tower node of the base graph
      * or a virtual node (see also {@link com.graphhopper.routing.QueryGraph#lookup(List)}).
      *
-     * @return -1 if nothing found, this should be avoided via a call of 'isValid'
+     * @return {@link #INVALID_NODE} if nothing found, this should be avoided via a call of 'isValid'
      */
     public int getClosestNode() {
         return closestNode;
@@ -164,14 +165,14 @@ public class QueryResult {
     @Override
     public String toString() {
         if (closestEdge != null)
-            return closestEdge.getBaseNode() + "-" + closestEdge.getAdjNode() + "  " + snappedPoint;
+            return closestEdge.getBaseNode() + "-" + closestEdge.getAdjNode() + "  " + snappedPoint + ", " + queryPoint;
         return closestNode + ", " + queryPoint + ", " + wayIndex;
     }
 
     /**
      * Whether the query point is projected onto a tower node, pillar node or somewhere within
      * the closest edge.
-     *
+     * <p>
      * Due to precision differences it is hard to define when something is exactly 90° or "on-node"
      * like TOWER or PILLAR or if it is more "on-edge" (EDGE). The default mechanism is to prefer
      * "on-edge" even if it could be 90°. To prefer "on-node" you could use e.g. GHPoint.equals with

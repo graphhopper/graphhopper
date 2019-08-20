@@ -124,7 +124,7 @@ public class GHUtilityTest {
         edgeState.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
 
         GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHGraph(new FastestWeighting(carEncoder)).create();
-        CHGraph lg = newStore.getGraph(CHGraph.class);
+        CHGraph lg = newStore.getCHGraph();
         GHUtility.copyTo(g, lg);
         newStore.freeze();
 
@@ -170,6 +170,9 @@ public class GHUtilityTest {
         assertEquals(8, GHUtility.createEdgeKey(1, 2, 4, false));
         assertEquals(9, GHUtility.createEdgeKey(2, 1, 4, false));
 
+        assertEquals(6, GHUtility.createEdgeKey(1, 1, 3, false));
+        assertEquals(6, GHUtility.createEdgeKey(1, 1, 3, true));
+
         assertTrue(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(1, 2, 4, false), GHUtility.createEdgeKey(1, 2, 4, false)));
         assertTrue(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(2, 1, 4, false), GHUtility.createEdgeKey(1, 2, 4, false)));
         assertFalse(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(1, 2, 4, false), GHUtility.createEdgeKey(1, 2, 5, false)));
@@ -196,9 +199,9 @@ public class GHUtilityTest {
 //        TIntLongHashMap map2 = new TIntLongHashMap(100, 0.7f, -1, -1);
 //        assertFalse(map2.containsKey(0));
 //        assertFalse(map2.containsValue(0));
-//        map2.put(0, 3);
-//        map2.put(1, 0);
-//        map2.put(2, 1);
+//        map2.add(0, 3);
+//        map2.add(1, 0);
+//        map2.add(2, 1);
 //        assertTrue(map2.containsKey(0));
 //        assertTrue(map2.containsValue(0));
 //        assertEquals(3, map2.get(0));

@@ -21,6 +21,7 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -29,7 +30,7 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.Parameters.DETAILS;
+import com.graphhopper.util.Parameters.Details;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import org.junit.Before;
@@ -137,8 +138,8 @@ public class PathSimplificationTest {
 
         // Path is: [0 0-1, 3 1-4, 6 4-7, 9 7-8, 11 8-9, 10 9-10]
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(0, 10);
-        InstructionList wayList = p.calcInstructions(carManager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT), usTR);
-        Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(DETAILS.AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+        InstructionList wayList = p.calcInstructions(carManager.getBooleanEncodedValue(Roundabout.KEY), usTR);
+        Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(Details.AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
 
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.setInstructions(wayList);

@@ -24,7 +24,6 @@ import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.*;
 
 import java.util.Arrays;
@@ -61,7 +60,6 @@ import static java.lang.Double.isInfinite;
  * searches.
  *
  * @author easbar
- *
  */
 public class WitnessPathSearcher {
     private static final int NO_NODE = -1;
@@ -185,7 +183,7 @@ public class WitnessPathSearcher {
         while (inIter.next()) {
             final int incEdge = inIter.getOrigEdgeLast();
             final int edgeKey = getEdgeKey(incEdge, targetNode);
-            if (edges[edgeKey] != NO_EDGE) {
+            if (EdgeIterator.Edge.isValid(edges[edgeKey])) {
                 boolean isZeroWeightLoop = parents[edgeKey] >= 0 && targetNode == adjNodes[parents[edgeKey]] &&
                         weights[edgeKey] - weights[parents[edgeKey]] <= MAX_ZERO_WEIGHT_LOOP;
                 if (!isZeroWeightLoop) {
@@ -231,10 +229,6 @@ public class WitnessPathSearcher {
                 if (isContracted(iter.getAdjNode())) {
                     continue;
                 }
-                // do not allow u-turns
-                if (iter.getOrigEdgeFirst() == incEdges[currKey]) {
-                    continue;
-                }
                 double edgeWeight = turnWeighting.calcWeight(iter, false, incEdges[currKey]);
                 double weight = edgeWeight + weights[currKey];
                 if (isInfinite(weight)) {
@@ -245,7 +239,7 @@ public class WitnessPathSearcher {
 
                 // dijkstra expansion: add or update current entries
                 int key = getEdgeKey(iter.getOrigEdgeLast(), iter.getAdjNode());
-                if (edges[key] == NO_EDGE) {
+                if (!EdgeIterator.Edge.isValid(edges[key])) {
                     setEntry(key, iter, weight, currKey, isPathToCenter);
                     changedEdges.add(key);
                     dijkstraHeap.insert_(weight, key);
@@ -354,7 +348,7 @@ public class WitnessPathSearcher {
                     NO_EDGE,
                     outIter.getOrigEdgeFirst(),
                     sourceNode, turnWeight);
-            if (edges[key] == NO_EDGE) {
+            if (!EdgeIterator.Edge.isValid(edges[key])) {
                 // add new initial entry
                 edges[key] = outIter.getEdge();
                 incEdges[key] = incEdge;
@@ -476,13 +470,11 @@ public class WitnessPathSearcher {
     }
 
     private int getEdgeKey(int edge, int adjNode) {
-        return GHUtility.getEdgeKey(chGraph, edge, adjNode, false);
+        int baseNode = chGraph.getOtherNode(edge, adjNode);
+        return GHUtility.createEdgeKey(baseNode, adjNode, edge, false);
     }
 
     private double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-        if (inEdge == outEdge) {
-            return Double.POSITIVE_INFINITY;
-        }
         return turnWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
     }
 

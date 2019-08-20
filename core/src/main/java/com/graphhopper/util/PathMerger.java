@@ -20,6 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
@@ -29,12 +30,12 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This class merges multiple {@link Path} objects into one continues object that
+ * This class merges multiple {@link Path} objects into one continuous object that
  * can be used in the {@link PathWrapper}. There will be a Path between every waypoint.
  * So for two waypoints there will be only one Path object. For three waypoints there will be
  * two Path objects.
  * <p>
- * The instructions are generated per Path object and are merged into one continues InstructionList.
+ * The instructions are generated per Path object and are merged into one continuous InstructionList.
  * The PointList per Path object are merged and optionally simplified.
  *
  * @author Peter Karich
@@ -87,7 +88,7 @@ public class PathMerger {
         InstructionList fullInstructions = new InstructionList(tr);
         PointList fullPoints = PointList.EMPTY;
         List<String> description = new ArrayList<>();
-        BooleanEncodedValue roundaboutEnc = encodingManager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
+        BooleanEncodedValue roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++) {
             Path path = paths.get(pathIndex);
             if (!path.isFound()) {
@@ -108,7 +109,7 @@ public class PathMerger {
                     if (pathIndex + 1 < paths.size()) {
                         ViaInstruction newInstr = new ViaInstruction(fullInstructions.get(fullInstructions.size() - 1));
                         newInstr.setViaCount(pathIndex + 1);
-                        fullInstructions.replaceLast(newInstr);
+                        fullInstructions.set(fullInstructions.size() - 1, newInstr);
                     }
                 }
 

@@ -38,27 +38,34 @@ public class TurnWeighting implements Weighting {
     private final TurnCostEncoder turnCostEncoder;
     private final TurnCostExtension turnCostExt;
     private final Weighting superWeighting;
-    private double defaultUTurnCost = 40;
+    private final double uTurnCost;
+
+    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
+        this(superWeighting, turnCostExt, Double.POSITIVE_INFINITY);
+    }
 
     /**
-     * @param turnCostExt the turn cost storage to be used
+     * @param superWeighting the weighting that is wrapped by this {@link TurnWeighting} and used to calculate the
+     *                       edge weights for example
+     * @param turnCostExt    the turn cost storage to be used
+     * @param uTurnCost      the cost of a u-turn in seconds, this value will be applied to all u-turn costs no matter
+     *                       whether or not turnCostExt contains explicit values for these turns.
      */
-    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
-        this.turnCostEncoder = (TurnCostEncoder) superWeighting.getFlagEncoder();
+    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt, double uTurnCost) {
+        this.turnCostEncoder = superWeighting.getFlagEncoder();
         this.superWeighting = superWeighting;
         this.turnCostExt = turnCostExt;
+        this.uTurnCost = uTurnCost;
 
         if (turnCostExt == null)
             throw new RuntimeException("No storage set to calculate turn weight");
     }
 
     /**
-     * Set the default cost for an u-turn in seconds. Default is 40s. Should be that high to avoid
-     * 'tricking' other turn costs or restrictions.
+     * @return the default u-turn cost in seconds
      */
-    public TurnWeighting setDefaultUTurnCost(double costInSeconds) {
-        this.defaultUTurnCost = costInSeconds;
-        return this;
+    public double getUTurnCost() {
+        return uTurnCost;
     }
 
     @Override
@@ -69,16 +76,13 @@ public class TurnWeighting implements Weighting {
     @Override
     public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         double weight = superWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
-        if (prevOrNextEdgeId == EdgeIterator.NO_EDGE)
+        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId))
             return weight;
 
         final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
-        double turnCosts = reverse ?
-                calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId) :
-                calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
-
-        if (turnCosts == 0 && origEdgeId == prevOrNextEdgeId)
-            return weight + defaultUTurnCost;
+        double turnCosts = reverse
+                ? calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
+                : calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
 
         return weight + turnCosts;
     }
@@ -86,24 +90,29 @@ public class TurnWeighting implements Weighting {
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         long millis = superWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
-        if (prevOrNextEdgeId == EdgeIterator.NO_EDGE)
+        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId))
             return millis;
 
-        // TODO for now assume turn costs are returned in milliseconds?
         // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
-        long turnCostsInMillis;
-        if (reverse)
-            turnCostsInMillis = (long) calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId);
-        else
-            turnCostsInMillis = (long) calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeState.getEdge());
+        // todo: why no first/last orig edge here as in calcWeight ?
+        final int origEdgeId = edgeState.getEdge();
+        long turnCostsInSeconds = (long) (reverse
+                ? calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
+                : calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId));
 
-        return millis + turnCostsInMillis;
+        return millis + 1000 * turnCostsInSeconds;
     }
 
     /**
      * This method calculates the turn weight separately.
      */
     public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
+        if (!EdgeIterator.Edge.isValid(edgeFrom) || !EdgeIterator.Edge.isValid(edgeTo)) {
+            return 0;
+        }
+        if (turnCostExt.isUTurn(edgeFrom, edgeTo)) {
+            return uTurnCost;
+        }
         long turnFlags = turnCostExt.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
         if (turnCostEncoder.isTurnRestricted(turnFlags))
             return Double.POSITIVE_INFINITY;

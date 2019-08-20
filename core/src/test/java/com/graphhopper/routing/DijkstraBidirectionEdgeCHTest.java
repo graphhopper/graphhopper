@@ -29,7 +29,7 @@ import java.util.List;
 public class DijkstraBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTester {
     @Override
     protected CHGraph getGraph(GraphHopperStorage ghStorage, Weighting weighting) {
-        return ghStorage.getGraph(CHGraph.class, weighting);
+        return ghStorage.getCHGraph(weighting);
     }
 
     @Override
@@ -43,7 +43,7 @@ public class DijkstraBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTeste
     public RoutingAlgorithmFactory createFactory(GraphHopperStorage ghStorage, AlgorithmOptions opts) {
         ghStorage.freeze();
         PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(
-                ghStorage, opts.getWeighting(), TraversalMode.EDGE_BASED_2DIR);
+                ghStorage, opts.getWeighting(), TraversalMode.EDGE_BASED);
         ch.doWork();
         return ch;
     }

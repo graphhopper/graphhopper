@@ -21,6 +21,8 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
+import com.graphhopper.routing.profiles.RoadClass;
+import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -62,12 +64,17 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             throw new IllegalArgumentException("At least 2 points have to be specified, but was:" + points.size());
 
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
+        EdgeFilter strictEdgeFilter = !ghRequest.hasSnapPreventions() ? edgeFilter : new SnapPreventionEdgeFilter(edgeFilter,
+                encoder.getEnumEncodedValue(RoadClass.KEY, RoadClass.class),
+                encoder.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class), ghRequest.getSnapPreventions());
         queryResults = new ArrayList<>(points.size());
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
             GHPoint point = points.get(placeIndex);
             QueryResult qr = null;
             if (ghRequest.hasPointHints())
-                qr = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(edgeFilter, ghRequest.getPointHints().get(placeIndex)));
+                qr = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter, ghRequest.getPointHints().get(placeIndex)));
+            else if (ghRequest.hasSnapPreventions())
+                qr = locationIndex.findClosest(point.lat, point.lon, strictEdgeFilter);
             if (qr == null || !qr.isValid())
                 qr = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
             if (!qr.isValid())

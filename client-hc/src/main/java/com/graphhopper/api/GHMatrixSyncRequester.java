@@ -1,6 +1,7 @@
 package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.jackson.PathWrapperDeserializer;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;
@@ -86,7 +87,11 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
         }
 
         String url = buildURL("", ghRequest);
-        url += "&" + pointsStr + "&" + pointHintsStr + "&" + outArrayStr + "&vehicle=" + ghRequest.getVehicle();
+        url += "&" + pointsStr + "&" + pointHintsStr + "&" + outArrayStr;
+        if (!Helper.isEmpty(ghRequest.getVehicle())) {
+            url += "&vehicle=" + ghRequest.getVehicle();
+        }
+        url += "&fail_fast=" + ghRequest.getFailFast();
 
         boolean withTimes = outArraysList.contains("times");
         boolean withDistances = outArraysList.contains("distances");
@@ -99,13 +104,13 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
             String str = getJson(url);
             JsonNode getResponseJson = objectMapper.reader().readTree(str);
 
-            matrixResponse.addErrors(readErrors(getResponseJson));
+            matrixResponse.addErrors(PathWrapperDeserializer.readErrors(objectMapper, getResponseJson));
             if (!matrixResponse.hasErrors()) {
                 matrixResponse.addErrors(readUsableEntityError(outArraysList, getResponseJson));
             }
 
             if (!matrixResponse.hasErrors())
-                fillResponseFromJson(matrixResponse, getResponseJson);
+                fillResponseFromJson(matrixResponse, getResponseJson, ghRequest.getFailFast());
 
         } catch (IOException ex) {
             throw new RuntimeException(ex);

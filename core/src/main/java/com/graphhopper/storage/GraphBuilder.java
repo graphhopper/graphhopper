@@ -35,6 +35,7 @@ public class GraphBuilder {
     private boolean mmap;
     private boolean store;
     private boolean elevation;
+    private boolean turnCosts;
     private boolean edgeBasedCH;
     private long byteCapacity = 100;
     private Weighting singleCHWeighting;
@@ -76,6 +77,11 @@ public class GraphBuilder {
         return this;
     }
 
+    public GraphBuilder withTurnCosts(boolean turnCosts) {
+        this.turnCosts = turnCosts;
+        return this;
+    }
+
     public GraphBuilder setEdgeBasedCH(boolean edgeBasedCH) {
         this.edgeBasedCH = edgeBasedCH;
         return this;
@@ -89,20 +95,20 @@ public class GraphBuilder {
      * Creates a CHGraph
      */
     public CHGraph chGraphCreate(Weighting singleCHWeighting) {
-        return setCHGraph(singleCHWeighting).create().getGraph(CHGraph.class, singleCHWeighting);
+        return setCHGraph(singleCHWeighting).create().getCHGraph(singleCHWeighting);
     }
 
     /**
      * Default graph is a {@link GraphHopperStorage} with an in memory directory and disabled storing on flush.
      * Afterwards you'll need to call {@link GraphHopperStorage#create} to have a usable object. Better use
-     * {@link GraphHopperStorage#create} directly.
+     * {@link #create} directly.
      */
     public GraphHopperStorage build() {
         Directory dir = mmap ?
                 new MMapDirectory(location) :
                 new RAMDirectory(location, store);
 
-        GraphExtension graphExtension = encodingManager.needsTurnCostsSupport() ?
+        GraphExtension graphExtension = encodingManager.needsTurnCostsSupport() || turnCosts ?
                 new TurnCostExtension() :
                 new TurnCostExtension.NoOpExtension();
 

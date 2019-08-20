@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.jackson.Jackson;
+import com.graphhopper.jackson.PathWrapperDeserializer;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.RoundaboutInstruction;
@@ -62,6 +64,8 @@ public class GraphHopperWebIT {
         alt = res.getBest();
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
         isBetween(9000, 9500, alt.getDistance());
+
+        assertEquals("[0, 1]", alt.getPointsOrder().toString());
     }
 
     @Test
@@ -87,7 +91,7 @@ public class GraphHopperWebIT {
         path = paths.get(0);
         isBetween(20, 30, path.getPoints().size());
         isBetween(800, 900, path.getDistance());
-        assertTrue("expected: " + path.getDescription().get(0), Arrays.asList("Jacobistraße", "Ludwig-Gercke-Straße", "Eichendorffplatz").contains(path.getDescription().get(0)));
+        assertTrue("expected: " + path.getDescription().get(0), Arrays.asList("Jacobistraße", "Bismarckstraße", "Ludwig-Gercke-Straße", "Eichendorffplatz").contains(path.getDescription().get(0)));
     }
 
     @Test
@@ -235,25 +239,24 @@ public class GraphHopperWebIT {
         assertTrue(res.endsWith("</gpx>"));
     }
 
-    @Test
-    public void testCreateGPXFromInstructionList() {
-        GHRequest req = new GHRequest().
-                addPoint(new GHPoint(49.6724, 11.3494)).
-                addPoint(new GHPoint(49.6550, 11.4180));
-        req.getHints().put("elevation", false);
-        req.getHints().put("instructions", true);
-        req.getHints().put("calc_points", true);
-        GHResponse ghResponse = gh.route(req);
-        String gpx = ghResponse.getBest().getInstructions().createGPX("wurst");
-        assertTrue(gpx.contains("<gpx"));
-        assertTrue(gpx.contains("<rtept lat="));
-        assertTrue(gpx.contains("<trk><name>"));
-        assertTrue(gpx.endsWith("</gpx>"));
-    }
-
     void isBetween(double from, double to, double expected) {
         assertTrue("expected value " + expected + " was smaller than limit " + from, expected >= from);
         assertTrue("expected value " + expected + " was bigger than limit " + to, expected <= to);
+    }
+
+    @Test
+    public void testOptimize() {
+        // https://graphhopper.com/maps/?point=49.664184%2C11.345444&point=49.661072%2C11.384068&point=49.670628%2C11.352997&point=49.667128%2C11.404753
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(49.664184, 11.345444)).
+                addPoint(new GHPoint(49.661072, 11.384068)).
+                addPoint(new GHPoint(49.670628, 11.352997)).
+                addPoint(new GHPoint(49.667128, 11.404753));
+        GHResponse res = gh.setOptimize("true").route(req);
+        assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
+        PathWrapper alt = res.getBest();
+        isBetween(850, 1050, alt.getRouteWeight());
+        assertEquals("[0, 2, 1, 3]", alt.getPointsOrder().toString());
     }
 
     @Test
@@ -264,7 +267,7 @@ public class GraphHopperWebIT {
         // no distances available
         try {
             assertEquals(0, res.getDistance(1, 2), 1);
-            assertTrue(false);
+            fail("there should be an exception when trying to get distances");
         } catch (Exception ex) {
         }
 
@@ -307,8 +310,9 @@ public class GraphHopperWebIT {
     public void testUnknownInstructionSign() throws IOException {
         // Actual path for the request: point=48.354413%2C8.676335&point=48.35442%2C8.676345
         // Modified the sign though
-        JsonNode json = new ObjectMapper().readTree("{\"instructions\":[{\"distance\":1.073,\"sign\":741,\"interval\":[0,1],\"text\":\"Continue onto A 81\",\"time\":32,\"street_name\":\"A 81\"},{\"distance\":0,\"sign\":4,\"interval\":[1,1],\"text\":\"Finish!\",\"time\":0,\"street_name\":\"\"}],\"descend\":0,\"ascend\":0,\"distance\":1.073,\"bbox\":[8.676286,48.354446,8.676297,48.354453],\"weight\":0.032179,\"time\":32,\"points_encoded\":true,\"points\":\"gfcfHwq}s@}c~AAA?\",\"snapped_waypoints\":\"gfcfHwq}s@}c~AAA?\"}");
-        PathWrapper wrapper = new GraphHopperWeb().createPathWrapper(json, true, true);
+        ObjectMapper objectMapper = Jackson.newObjectMapper();
+        JsonNode json = objectMapper.readTree("{\"instructions\":[{\"distance\":1.073,\"sign\":741,\"interval\":[0,1],\"text\":\"Continue onto A 81\",\"time\":32,\"street_name\":\"A 81\"},{\"distance\":0,\"sign\":4,\"interval\":[1,1],\"text\":\"Finish!\",\"time\":0,\"street_name\":\"\"}],\"descend\":0,\"ascend\":0,\"distance\":1.073,\"bbox\":[8.676286,48.354446,8.676297,48.354453],\"weight\":0.032179,\"time\":32,\"points_encoded\":true,\"points\":\"gfcfHwq}s@}c~AAA?\",\"snapped_waypoints\":\"gfcfHwq}s@}c~AAA?\"}");
+        PathWrapper wrapper = PathWrapperDeserializer.createPathWrapper(objectMapper, json, true, true);
 
         assertEquals(741, wrapper.getInstructions().get(0).getSign());
         assertEquals("Continue onto A 81", wrapper.getInstructions().get(0).getName());

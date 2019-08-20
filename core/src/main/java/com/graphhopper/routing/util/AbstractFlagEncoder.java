@@ -167,8 +167,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      */
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
         // define the first 2 speedBits in flags for routing
-        registerNewEncodedValue.add(accessEnc = new SimpleBooleanEncodedValue(prefix + "access", true));
-        roundaboutEnc = getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
+        registerNewEncodedValue.add(accessEnc = new SimpleBooleanEncodedValue(EncodingManager.getKey(prefix, "access"), true));
+        roundaboutEnc = getBooleanEncodedValue(Roundabout.KEY);
         encoderBit = 1L << index;
     }
 
@@ -253,7 +253,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected void flagsDefault(IntsRef edgeFlags, boolean forward, boolean backward) {
         if (forward)
             speedEncoder.setDecimal(false, edgeFlags, speedDefault);
-        if (backward)
+        if (backward && speedEncoder.isStoreTwoDirections())
             speedEncoder.setDecimal(true, edgeFlags, speedDefault);
         accessEnc.setBool(false, edgeFlags, forward);
         accessEnc.setBool(true, edgeFlags, backward);
@@ -308,7 +308,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
         // on some German autobahns and a very few other places
         if ("none".equals(str))
-            return 140;
+            return MaxSpeed.UNLIMITED_SIGN_SPEED;
 
         if (str.endsWith(":rural") || str.endsWith(":trunk"))
             return 80;
@@ -605,8 +605,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     @Override
-    public ObjectEncodedValue getObjectEncodedValue(String key) {
-        return encodedValueLookup.getObjectEncodedValue(key);
+    public <T extends Enum> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType) {
+        return encodedValueLookup.getEnumEncodedValue(key, enumType);
     }
 
     public void setEncodedValueLookup(EncodedValueLookup encodedValueLookup) {
@@ -622,7 +622,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     @Override
-    public boolean hasEncoder(String key) {
-        return encodedValueLookup.hasEncoder(key);
+    public boolean hasEncodedValue(String key) {
+        return encodedValueLookup.hasEncodedValue(key);
     }
 }

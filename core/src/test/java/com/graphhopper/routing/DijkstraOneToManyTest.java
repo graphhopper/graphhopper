@@ -55,9 +55,8 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
         return Arrays.asList(new Object[][]{
                 {
                         TraversalMode.NODE_BASED
-                }, //            TODO { TraversalMode.EDGE_BASED_1DIR },
-                //            TODO { TraversalMode.EDGE_BASED_2DIR },
-                //            TODO { TraversalMode.EDGE_BASED_2DIR_UTURN }
+                },
+                //            TODO { TraversalMode.EDGE_BASED },
         });
     }
 
@@ -130,11 +129,11 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
         initGraph(storage);
         RoutingAlgorithm algo = createAlgo(storage);
         Path p = algo.calcPath(0, 8);
-        assertEquals(IntArrayList.from(new int[]{0, 7, 8}), p.calcNodes());
+        assertEquals(IntArrayList.from(0, 7, 8), p.calcNodes());
 
         // expand SPT
         p = algo.calcPath(0, 10);
-        assertEquals(IntArrayList.from(new int[]{0, 1, 2, 3, 4, 10}), p.calcNodes());
+        assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 10), p.calcNodes());
     }
 
     @Test
@@ -160,15 +159,15 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
     public void testUseCache() {
         RoutingAlgorithm algo = createAlgo(createTestStorage());
         Path p = algo.calcPath(0, 4);
-        assertEquals(IntArrayList.from(new int[]{0, 4}), p.calcNodes());
+        assertEquals(IntArrayList.from(0, 4), p.calcNodes());
 
         // expand SPT
         p = algo.calcPath(0, 7);
-        assertEquals(IntArrayList.from(new int[]{0, 4, 5, 7}), p.calcNodes());
+        assertEquals(IntArrayList.from(0, 4, 5, 7), p.calcNodes());
 
         // use SPT
         p = algo.calcPath(0, 2);
-        assertEquals(IntArrayList.from(new int[]{0, 1, 2}), p.calcNodes());
+        assertEquals(IntArrayList.from(0, 1, 2), p.calcNodes());
     }
 
     @Test
@@ -188,7 +187,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
             }
         });
         Path p = algo.calcPath(4, 6);
-        assertEquals(IntArrayList.from(new int[]{4, 3, 6}), p.calcNodes());
+        assertEquals(IntArrayList.from(4, 3, 6), p.calcNodes());
 
         // important call!
         algo.clear();
@@ -199,7 +198,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
             }
         });
         p = algo.calcPath(4, 6);
-        assertEquals(IntArrayList.from(new int[]{4, 5, 6}), p.calcNodes());
+        assertEquals(IntArrayList.from(4, 5, 6), p.calcNodes());
     }
 
     private Graph initGraph(Graph g) {
@@ -241,18 +240,18 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
         RoutingAlgorithm algo = createAlgo(createTestStorage());
 
         Path p = algo.calcPath(0, 0);
-        assertEquals(0, p.distance, 0.00000);
+        assertEquals(0, p.getDistance(), 0.00000);
 
         p = algo.calcPath(0, 4);
-        assertEquals(IntArrayList.from(new int[]{0, 4}), p.calcNodes());
+        assertEquals(IntArrayList.from(0, 4), p.calcNodes());
 
         // expand SPT
         p = algo.calcPath(0, 7);
-        assertEquals(IntArrayList.from(new int[]{0, 4, 5, 7}), p.calcNodes());
+        assertEquals(IntArrayList.from(0, 4, 5, 7), p.calcNodes());
 
         // use SPT
         p = algo.calcPath(0, 2);
-        assertEquals(IntArrayList.from(new int[]{0, 1, 2}), p.calcNodes());
+        assertEquals(IntArrayList.from(0, 1, 2), p.calcNodes());
     }
 
 }

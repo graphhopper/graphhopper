@@ -28,6 +28,7 @@ import com.graphhopper.util.Translation;
 
 import java.util.*;
 
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
@@ -167,6 +168,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         setHighwaySpeed("cycleway", CYCLEWAY_SPEED);
         setHighwaySpeed("path", 10);
         setHighwaySpeed("footway", 6);
+        setHighwaySpeed("platform", 6);
         setHighwaySpeed("pedestrian", 6);
         setHighwaySpeed("track", 12);
         setHighwaySpeed("service", 14);
@@ -212,10 +214,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
-        registerNewEncodedValue.add(speedEncoder = new FactorizedDecimalEncodedValue(prefix + "average_speed", speedBits, speedFactor, speedTwoDirections));
-        registerNewEncodedValue.add(unpavedEncoder = new SimpleBooleanEncodedValue(prefix + "paved", false));
-        registerNewEncodedValue.add(wayTypeEncoder = new SimpleIntEncodedValue(prefix + "waytype", 2, false));
-        registerNewEncodedValue.add(priorityWayEncoder = new FactorizedDecimalEncodedValue(prefix + "priority", 3, PriorityCode.getFactor(1), false));
+        registerNewEncodedValue.add(speedEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
+        registerNewEncodedValue.add(unpavedEncoder = new SimpleBooleanEncodedValue(getKey(prefix, "paved"), false));
+        registerNewEncodedValue.add(wayTypeEncoder = new UnsignedIntEncodedValue(getKey(prefix, "waytype"), 2, false));
+        registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
     }
 
     @Override
@@ -233,7 +235,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             if (way.hasTag("route", ferries)) {
                 // if bike is NOT explicitly tagged allow bike but only if foot is not specified
                 String bikeTag = way.getTag("bicycle");
-                if (bikeTag == null && !way.hasTag("foot") || "yes".equals(bikeTag))
+                if (bikeTag == null && !way.hasTag("foot") || intendedValues.contains(bikeTag))
                     accept = EncodingManager.Access.FERRY;
             }
 

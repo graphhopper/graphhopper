@@ -44,6 +44,11 @@ public interface EdgeIteratorState {
         }
 
         @Override
+        public int getVersion() {
+            return 1;
+        }
+
+        @Override
         public boolean getBool(boolean reverse, IntsRef ref) {
             return reverse;
         }
@@ -89,7 +94,7 @@ public interface EdgeIteratorState {
     int getAdjNode();
 
     /**
-     * For roadnetwork data like OSM a way is nearly always a curve not just a straight line. These
+     * For road network data like OSM a way is nearly always a curve not just a straight line. These
      * nodes are called pillar nodes and are between tower nodes (which are used for routing), they
      * are necessary to have a more exact geometry. See the docs for more information
      * (docs/core/low-level-api.md#what-are-pillar-and-tower-nodes). Updates to the returned list
@@ -104,8 +109,9 @@ public interface EdgeIteratorState {
     PointList fetchWayGeometry(int mode);
 
     /**
-     * @param list is a sorted collection of nodes between the baseNode and the current adjacent
-     *             node. Specify the list without the adjacent and base nodes.
+     * @param list is a sorted collection of nodes between the base node and the current adjacent node. Specify the list
+     *             without the adjacent and base node. This method can be called multiple times, but if the distance
+     *             changes, the setDistance method is not called automatically.
      */
     EdgeIteratorState setWayGeometry(PointList list);
 
@@ -161,13 +167,13 @@ public interface EdgeIteratorState {
 
     EdgeIteratorState setReverse(DecimalEncodedValue property, double value);
 
-    IndexBased get(ObjectEncodedValue property);
+    <T extends Enum> T get(EnumEncodedValue<T> property);
 
-    EdgeIteratorState set(ObjectEncodedValue property, IndexBased value);
+    <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value);
 
-    IndexBased getReverse(ObjectEncodedValue property);
+    <T extends Enum> T getReverse(EnumEncodedValue<T> property);
 
-    EdgeIteratorState setReverse(ObjectEncodedValue property, IndexBased value);
+    <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value);
 
     String getName();
 

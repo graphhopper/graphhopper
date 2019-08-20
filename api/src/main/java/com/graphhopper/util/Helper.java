@@ -20,6 +20,8 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.*;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.charset.Charset;
@@ -30,7 +32,6 @@ import java.util.*;
 import java.util.Map.Entry;
 
 /**
- *
  * @author Peter Karich
  */
 public class Helper {
@@ -62,11 +63,11 @@ public class Helper {
         return new Locale(param.substring(0, index), param.substring(index + 1));
     }
 
-    public static String toLowerCase(String string){
+    public static String toLowerCase(String string) {
         return string.toLowerCase(Locale.ROOT);
     }
 
-    public static String toUpperCase(String string){
+    public static String toUpperCase(String string) {
         return string.toUpperCase(Locale.ROOT);
     }
 
@@ -172,6 +173,29 @@ public class Helper {
 
     public static String getMemInfo() {
         return "totalMB:" + getTotalMB() + ", usedMB:" + getUsedMB();
+    }
+
+    public static int getUsedMBAfterGC() {
+        long before = getTotalGcCount();
+        // trigger gc
+        System.gc();
+        while (getTotalGcCount() == before) {
+            // wait for the gc to have completed
+        }
+        long result = (ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed() +
+                ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage().getUsed()) / (1024 * 1024);
+        return (int) result;
+    }
+
+    private static long getTotalGcCount() {
+        long sum = 0;
+        for (GarbageCollectorMXBean b : ManagementFactory.getGarbageCollectorMXBeans()) {
+            long count = b.getCollectionCount();
+            if (count != -1) {
+                sum += count;
+            }
+        }
+        return sum;
     }
 
     public static int getSizeOfObjectRef(int factor) {
@@ -431,6 +455,20 @@ public class Helper {
                 sb.append(c);
         }
 
+        return sb.toString();
+    }
+
+    /**
+     * Equivalent to java 8 String#join
+     */
+    public static String join(String delimiter, List<String> strings) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < strings.size(); i++) {
+            if (i > 0) {
+                sb.append(delimiter);
+            }
+            sb.append(strings.get(i));
+        }
         return sb.toString();
     }
 }

@@ -46,11 +46,17 @@ public abstract class AbstractWeighting implements Weighting {
 
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        // special case for loop edges: since they do not have a meaningful direction we always need to read them in
+        // forward direction
+        if (edgeState.getBaseNode() == edgeState.getAdjNode()) {
+            reverse = false;
+        }
+
         if (reverse && !edgeState.getReverse(accessEnc) || !reverse && !edgeState.get(accessEnc))
             throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. " +
                     "(" + edgeState.getBaseNode() + " - " + edgeState.getAdjNode() + ") "
-                            + edgeState.fetchWayGeometry(3) + " " + edgeState.getDistance() + " "
-                            + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc));
+                    + edgeState.fetchWayGeometry(3) + ", dist: " + edgeState.getDistance() + " "
+                    + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc) + ", fwd-speed: " + edgeState.get(avSpeedEnc) + ", bwd-speed: " + edgeState.getReverse(avSpeedEnc));
 
         double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)

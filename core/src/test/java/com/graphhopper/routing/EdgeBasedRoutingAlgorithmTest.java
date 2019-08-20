@@ -19,7 +19,10 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -27,15 +30,16 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.TurnCostExtension;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 
+import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.Assert.*;
@@ -47,6 +51,7 @@ import static org.junit.Assert.*;
 public class EdgeBasedRoutingAlgorithmTest {
     private final String algoStr;
     private FlagEncoder carEncoder;
+    private TurnCostExtension tcs;
 
     public EdgeBasedRoutingAlgorithmTest(String algo) {
         this.algoStr = algo;
@@ -55,6 +60,8 @@ public class EdgeBasedRoutingAlgorithmTest {
     @Parameters(name = "{0}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
+                // todo: make this test run also for edge-based CH or otherwise make sure time calculation is tested also for edge-based CH (at the moment it will fail!)
+                // todo: make this test run also for ALT or otherwise make sure time calculation is tested also for ALT (at the moment it will fail?!)
                 {DIJKSTRA},
                 {DIJKSTRA_BI},
                 {ASTAR},
@@ -81,7 +88,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         g.edge(6, 7, 1, true);
     }
 
-    EncodingManager createEncodingManager(boolean restrictedOnly) {
+    private EncodingManager createEncodingManager(boolean restrictedOnly) {
         if (restrictedOnly)
             carEncoder = new CarFlagEncoder(5, 5, 1);
         else
@@ -90,101 +97,206 @@ public class EdgeBasedRoutingAlgorithmTest {
         return EncodingManager.create(carEncoder);
     }
 
+    public Path calcPath(Graph g, int from, int to) {
+        return createAlgo(g, createWeighting(), EDGE_BASED).calcPath(from, to);
+    }
+
+    public RoutingAlgorithm createAlgo(Graph g, Weighting weighting, TraversalMode traversalMode) {
+        return createAlgo(g, AlgorithmOptions.start().weighting(weighting).traversalMode(traversalMode).build());
+    }
+
     public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
         opts = AlgorithmOptions.start(opts).algorithm(algoStr).build();
         return new RoutingAlgorithmFactorySimple().createAlgo(g, opts);
     }
 
-    protected GraphHopperStorage createStorage(EncodingManager em) {
-        return new GraphBuilder(em).create();
+    private GraphHopperStorage createStorage(EncodingManager em) {
+        GraphHopperStorage ghStorage = new GraphBuilder(em).create();
+        tcs = (TurnCostExtension) ghStorage.getExtension();
+        return ghStorage;
     }
 
-    private void initTurnRestrictions(Graph g, TurnCostExtension tcs, TurnCostEncoder tEncoder) {
-        long tflags = tEncoder.getTurnFlags(true, 0);
-
+    private void initTurnRestrictions(Graph g) {
         // only forward from 2-3 to 3-4 => limit 2,3->3,6 and 2,3->3,1
-        tcs.addTurnInfo(getEdge(g, 2, 3).getEdge(), 3, getEdge(g, 3, 6).getEdge(), tflags);
-        tcs.addTurnInfo(getEdge(g, 2, 3).getEdge(), 3, getEdge(g, 3, 1).getEdge(), tflags);
+        addTurnRestriction(g, 2, 3, 6);
+        addTurnRestriction(g, 2, 3, 1);
 
         // only right   from 5-2 to 2-3 => limit 5,2->2,0
-        tcs.addTurnInfo(getEdge(g, 5, 2).getEdge(), 2, getEdge(g, 2, 0).getEdge(), tflags);
+        addTurnRestriction(g, 5, 2, 0);
 
         // only right   from 7-6 to 6-3 => limit 7,6->6,5
-        tcs.addTurnInfo(getEdge(g, 7, 6).getEdge(), 6, getEdge(g, 6, 5).getEdge(), tflags);
+        addTurnRestriction(g, 7, 6, 5);
 
         // no 5-6 to 6-3
-        tcs.addTurnInfo(getEdge(g, 5, 6).getEdge(), 6, getEdge(g, 6, 3).getEdge(), tflags);
+        addTurnRestriction(g, 5, 6, 3);
         // no 4-3 to 3-1
-        tcs.addTurnInfo(getEdge(g, 4, 3).getEdge(), 3, getEdge(g, 3, 1).getEdge(), tflags);
+        addTurnRestriction(g, 4, 3, 1);
         // no 4-3 to 3-2
-        tcs.addTurnInfo(getEdge(g, 4, 3).getEdge(), 3, getEdge(g, 3, 2).getEdge(), tflags);
+        addTurnRestriction(g, 4, 3, 2);
 
         // no u-turn at 6-7
-        tcs.addTurnInfo(getEdge(g, 6, 7).getEdge(), 7, getEdge(g, 7, 6).getEdge(), tflags);
+        addTurnRestriction(g, 6, 7, 6);
 
         // no u-turn at 3-6
-        tcs.addTurnInfo(getEdge(g, 3, 6).getEdge(), 6, getEdge(g, 6, 3).getEdge(), tflags);
+        addTurnRestriction(g, 3, 6, 3);
     }
 
-    Weighting createWeighting(FlagEncoder encoder, TurnCostExtension tcs, double uTurnCosts) {
-        return new TurnWeighting(new FastestWeighting(encoder), tcs).setDefaultUTurnCost(uTurnCosts);
+    private Weighting createWeighting() {
+        return createWeighting(carEncoder, Double.POSITIVE_INFINITY);
+    }
+
+    private Weighting createWeighting(FlagEncoder encoder, double uTurnCosts) {
+        return new TurnWeighting(new FastestWeighting(encoder), tcs, uTurnCosts);
+    }
+
+    @Test
+    public void testRandomGraph() {
+        long seed = System.nanoTime();
+        final int numQueries = 100;
+        Random rnd = new Random(seed);
+        GraphHopperStorage g = createStorage(createEncodingManager(false));
+        GHUtility.buildRandomGraph(g, rnd, 50, 2.2, true, true, carEncoder.getAverageSpeedEnc(), 0.8, 0.8, 0.8);
+        GHUtility.addRandomTurnCosts(g, seed, carEncoder, 3, tcs);
+        g.freeze();
+        int numPathsNotFound = 0;
+        // todo: reduce redundancy with RandomCHRoutingTest
+        List<String> strictViolations = new ArrayList<>();
+        for (int i = 0; i < numQueries; i++) {
+            int from = rnd.nextInt(g.getNodes());
+            int to = rnd.nextInt(g.getNodes());
+            Weighting w = createWeighting();
+            RoutingAlgorithm refAlgo = new Dijkstra(g, w, EDGE_BASED);
+            Path refPath = refAlgo.calcPath(from, to);
+            double refWeight = refPath.getWeight();
+            if (!refPath.isFound()) {
+                numPathsNotFound++;
+                continue;
+            }
+
+            Path path = calcPath(g, from, to);
+            if (!path.isFound()) {
+                fail("path not found for " + from + "->" + to + ", expected weight: " + refWeight);
+            }
+
+            double weight = path.getWeight();
+            if (Math.abs(refWeight - weight) > 1.e-2) {
+                System.out.println("expected: " + refPath.calcNodes());
+                System.out.println("given:    " + path.calcNodes());
+                fail("wrong weight: " + from + "->" + to + ", dijkstra: " + refWeight + " vs. " + algoStr + ": " + path.getWeight());
+            }
+            if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
+                strictViolations.add("wrong distance " + from + "->" + to + ", expected: " + refPath.getDistance() + ", given: " + path.getDistance());
+            }
+            if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
+                strictViolations.add("wrong time " + from + "->" + to + ", expected: " + refPath.getTime() + ", given: " + path.getTime());
+            }
+        }
+        if (numPathsNotFound > 0.9 * numQueries) {
+            fail("Too many paths not found: " + numPathsNotFound + "/" + numQueries);
+        }
+        if (strictViolations.size() > 0.05 * numQueries) {
+            fail("Too many strict violations: " + strictViolations.size() + "/" + numQueries + "\n" +
+                    Helper.join("\n", strictViolations));
+        }
     }
 
     @Test
     public void testBasicTurnRestriction() {
         GraphHopperStorage g = createStorage(createEncodingManager(true));
         initGraph(g);
-        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
-        initTurnRestrictions(g, tcs, carEncoder);
-        Path p = createAlgo(g, AlgorithmOptions.start().
-                weighting(createWeighting(carEncoder, tcs, 40)).
-                traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
-                calcPath(5, 1);
-        assertEquals(IntArrayList.from(new int[]{5, 2, 3, 4, 7, 6, 3, 1}), p.calcNodes());
+        initTurnRestrictions(g);
+        Path p = calcPath(g, 5, 1);
+        assertEquals(IntArrayList.from(5, 2, 3, 4, 7, 6, 3, 1), p.calcNodes());
 
         // test 7-6-5 and reverse
-        p = createAlgo(g, AlgorithmOptions.start().
-                weighting(createWeighting(carEncoder, tcs, 40)).
-                traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
-                calcPath(5, 7);
-        assertEquals(IntArrayList.from(new int[]{5, 6, 7}), p.calcNodes());
+        p = calcPath(g, 5, 7);
+        assertEquals(IntArrayList.from(5, 6, 7), p.calcNodes());
 
-        p = createAlgo(g, AlgorithmOptions.start().
-                weighting(createWeighting(carEncoder, tcs, 40)).
-                traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
-                calcPath(7, 5);
-        assertEquals(IntArrayList.from(new int[]{7, 6, 3, 2, 5}), p.calcNodes());
+        p = calcPath(g, 7, 5);
+        assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
     }
 
+    @Test
+    public void testLoop_issue1592() {
+        GraphHopperStorage g = createStorage(createEncodingManager(true));
+        // 0-6
+        //  \ \
+        //   4-3
+        //   |
+        //   1o
+        g.edge(0, 6, 10, true);
+        g.edge(6, 3, 10, true);
+        g.edge(0, 4, 1, true);
+        g.edge(4, 1, 1, true);
+        g.edge(4, 3, 1, true);
+        g.edge(1, 1, 10, true);
+        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
+        addTurnRestriction(g, 0, 4, 3);
 
-    private void blockNode3(Graph g, TurnCostExtension tcs, TurnCostEncoder tEncoder) {
+        Path p = calcPath(g, 0, 3);
+        assertEquals(14, p.getDistance(), 1.e-3);
+        assertEquals(IntArrayList.from(0, 4, 1, 1, 4, 3), p.calcNodes());
+    }
+
+    @Test
+    public void testTurnCosts_timeCalculation() {
+        // 0 - 1 - 2 - 3 - 4
+        GraphHopperStorage g = createStorage(createEncodingManager(false));
+        final int distance = 100;
+        final int turnCosts = 2;
+        g.edge(0, 1, distance, true);
+        g.edge(1, 2, distance, true);
+        g.edge(2, 3, distance, true);
+        g.edge(3, 4, distance, true);
+        addTurnCost(g, turnCosts, 1, 2, 3);
+
+        {
+            // simple case where turn cost is encountered during forward search
+            Path p14 = calcPath(g, 1, 4);
+            assertDistTimeWeight(p14, 3, distance, 6, turnCosts);
+            assertEquals(20, p14.getWeight(), 1.e-6);
+            assertEquals(20000, p14.getTime());
+        }
+
+        {
+            // this test is more involved for bidir algos: the turn costs have to be taken into account also at the
+            // node where fwd and bwd searches meet
+            Path p04 = calcPath(g, 0, 4);
+            assertDistTimeWeight(p04, 4, distance, 6, turnCosts);
+            assertEquals(26, p04.getWeight(), 1.e-6);
+            assertEquals(26000, p04.getTime());
+        }
+    }
+
+    private void assertDistTimeWeight(Path path, int numEdges, double distPerEdge, double weightPerEdge, int turnCost) {
+        assertEquals("wrong distance", numEdges * distPerEdge, path.getDistance(), 1.e-6);
+        assertEquals("wrong weight", numEdges * weightPerEdge + turnCost, path.getWeight(), 1.e-6);
+        assertEquals("wrong time", 1000 * (numEdges * weightPerEdge + turnCost), path.getTime(), 1.e-6);
+    }
+
+    private void blockNode3(Graph g) {
         // Totally block this node (all 9 turn relations)
-        final long BLOCK = tEncoder.getTurnFlags(true, 0);
-        tcs.addTurnInfo(getEdge(g, 2, 3).getEdge(), 3, getEdge(g, 3, 1).getEdge(), BLOCK);
-        tcs.addTurnInfo(getEdge(g, 2, 3).getEdge(), 3, getEdge(g, 3, 4).getEdge(), BLOCK);
-        tcs.addTurnInfo(getEdge(g, 4, 3).getEdge(), 3, getEdge(g, 3, 1).getEdge(), BLOCK);
-        tcs.addTurnInfo(getEdge(g, 4, 3).getEdge(), 3, getEdge(g, 3, 2).getEdge(), BLOCK);
-        tcs.addTurnInfo(getEdge(g, 6, 3).getEdge(), 3, getEdge(g, 3, 1).getEdge(), BLOCK);
-        tcs.addTurnInfo(getEdge(g, 6, 3).getEdge(), 3, getEdge(g, 3, 4).getEdge(), BLOCK);
-        tcs.addTurnInfo(getEdge(g, 1, 3).getEdge(), 3, getEdge(g, 3, 6).getEdge(), BLOCK);
-        tcs.addTurnInfo(getEdge(g, 1, 3).getEdge(), 3, getEdge(g, 3, 2).getEdge(), BLOCK);
-        tcs.addTurnInfo(getEdge(g, 1, 3).getEdge(), 3, getEdge(g, 3, 4).getEdge(), BLOCK);
+        addTurnRestriction(g, 2, 3, 1);
+        addTurnRestriction(g, 2, 3, 4);
+        addTurnRestriction(g, 4, 3, 1);
+        addTurnRestriction(g, 4, 3, 2);
+        addTurnRestriction(g, 6, 3, 1);
+        addTurnRestriction(g, 6, 3, 4);
+        addTurnRestriction(g, 1, 3, 6);
+        addTurnRestriction(g, 1, 3, 2);
+        addTurnRestriction(g, 1, 3, 4);
     }
 
     @Test
     public void testBlockANode() {
         GraphHopperStorage g = createStorage(createEncodingManager(true));
         initGraph(g);
-        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
-        blockNode3(g, tcs, carEncoder);
-        for (int i=0; i<=7; i++) {
-            if (i==3) continue;
-            for (int j=0; j<=7; j++) {
-                if (j==3) continue;
-                Path p = createAlgo(g, AlgorithmOptions.start().
-                        weighting(createWeighting(carEncoder, tcs, 40)).
-                        traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
-                        calcPath(i, j);
+        blockNode3(g);
+        for (int i = 0; i <= 7; i++) {
+            if (i == 3) continue;
+            for (int j = 0; j <= 7; j++) {
+                if (j == 3) continue;
+                Path p = calcPath(g, i, j);
                 assertTrue(p.isFound()); // We can go from everywhere to everywhere else without using node 3
                 for (IntCursor node : p.calcNodes()) {
                     assertNotEquals(p.calcNodes().toString(), 3, node.value);
@@ -197,89 +309,165 @@ public class EdgeBasedRoutingAlgorithmTest {
     public void testUTurns() {
         GraphHopperStorage g = createStorage(createEncodingManager(true));
         initGraph(g);
-        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
 
-        long tflags = carEncoder.getTurnFlags(true, 0);
-
-        // force u-turn via lowering the cost for it
-        EdgeIteratorState e3_6 = getEdge(g, 3, 6);
-        e3_6.setDistance(0.1);
+        // force u-turn at node 3 by using finite u-turn costs
+        getEdge(g, 3, 6).setDistance(0.1);
         getEdge(g, 3, 2).setDistance(864);
         getEdge(g, 1, 0).setDistance(864);
 
-        tcs.addTurnInfo(getEdge(g, 7, 6).getEdge(), 6, getEdge(g, 6, 5).getEdge(), tflags);
-        tcs.addTurnInfo(getEdge(g, 4, 3).getEdge(), 3, e3_6.getEdge(), tflags);
-        AlgorithmOptions opts = AlgorithmOptions.start().
-                weighting(createWeighting(carEncoder, tcs, 50)).
-                traversalMode(TraversalMode.EDGE_BASED_2DIR_UTURN).build();
-        Path p = createAlgo(g, opts).calcPath(7, 5);
+        addTurnRestriction(g, 7, 6, 5);
+        addTurnRestriction(g, 4, 3, 6);
+        Path p = createAlgo(g, createWeighting(carEncoder, 50), EDGE_BASED).calcPath(7, 5);
 
-        assertEquals(IntArrayList.from(new int[]{7, 6, 3, 6, 5}), p.calcNodes());
+        assertEquals(2 + 2 * 0.1, p.getDistance(), 1.e-6);
+        assertEquals(2.2 * 0.06 + 50, p.getWeight(), 1.e-6);
+        assertEquals((2.2 * 0.06 + 50) * 1000, p.getTime(), 1.e-6);
+        assertEquals(IntArrayList.from(7, 6, 3, 6, 5), p.calcNodes());
 
-        // no u-turn for 6-3
-        opts = AlgorithmOptions.start().
-                weighting(createWeighting(carEncoder, tcs, 100)).
-                traversalMode(TraversalMode.EDGE_BASED_2DIR_UTURN).build();
-        tcs.addTurnInfo(getEdge(g, 6, 3).getEdge(), 3, getEdge(g, 3, 6).getEdge(), tflags);
-        p = createAlgo(g, opts).calcPath(7, 5);
+        // with default infinite u-turn costs we need to take an expensive detour
+        p = calcPath(g, 7, 5);
+        assertEquals(1.1 + 864 + 0.5, p.getDistance(), 1.e-6);
+        assertEquals(865.6 * 0.06, p.getWeight(), 1.e-6);
+        assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
 
-        assertEquals(IntArrayList.from(new int[]{7, 6, 3, 2, 5}), p.calcNodes());
+        // no more u-turn 6-3-6 -> now we have to take the expensive roads even with finite u-turn costs
+        addTurnRestriction(g, 6, 3, 6);
+        p = createAlgo(g, createWeighting(carEncoder, 100), EDGE_BASED).calcPath(7, 5);
+
+        assertEquals(1.1 + 864 + 0.5, p.getDistance(), 1.e-6);
+        assertEquals(865.6 * 0.06, p.getWeight(), 1.e-6);
+        assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
+    }
+
+    @Test
+    public void uTurnCostAtMeetingNode() {
+        //           3
+        //           |
+        // 0 -> 1 -> 2 -> 4 -> 5
+        GraphHopperStorage g = createStorage(createEncodingManager(false));
+        g.edge(0, 1, 10, false);
+        g.edge(1, 2, 10, false);
+        g.edge(2, 3, 10, true);
+        g.edge(2, 4, 10, false);
+        g.edge(4, 5, 10, false);
+
+        // cannot go straight at node 2
+        addTurnRestriction(g, 1, 2, 4);
+
+        // with default/infinite u-turn costs there is no shortest path
+        {
+            Path path = calcPath(g, 0, 5);
+            assertFalse(path.isFound());
+        }
+
+        // with finite u-turn costs it is possible, the u-turn costs should be included
+        // here we make sure the default u-turn time is also included at the meeting node for bidir algos
+        {
+            Path path = createAlgo(g, createWeighting(carEncoder, 67), EDGE_BASED).calcPath(0, 5);
+            assertEquals(60, path.getDistance(), 1.e-6);
+            assertEquals(60 * 0.06 + 67, path.getWeight(), 1.e-6);
+            assertEquals((36 + 670) * 100, path.getTime(), 1.e-6);
+        }
     }
 
     @Test
     public void testBasicTurnCosts() {
         GraphHopperStorage g = createStorage(createEncodingManager(false));
         initGraph(g);
-        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
-        Path p = createAlgo(g, AlgorithmOptions.start().
-                weighting(createWeighting(carEncoder, tcs, 40)).
-                traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
-                calcPath(5, 1);
+        Path p = calcPath(g, 5, 1);
 
         // no restriction and costs
-        EdgeIteratorState e3_6 = getEdge(g, 5, 6);
-        e3_6.setDistance(2);
-        assertEquals(IntArrayList.from(new int[]{5, 2, 3, 1}), p.calcNodes());
+        assertEquals(IntArrayList.from(5, 2, 3, 1), p.calcNodes());
 
         // now introduce some turn costs
-        long tflags = carEncoder.getTurnFlags(false, 2);
-        tcs.addTurnInfo(getEdge(g, 5, 2).getEdge(), 2, getEdge(g, 2, 3).getEdge(), tflags);
+        getEdge(g, 5, 6).setDistance(2);
+        addTurnCost(g, 2, 5, 2, 3);
 
-        p = createAlgo(g, AlgorithmOptions.start().
-                weighting(createWeighting(carEncoder, tcs, 40)).
-                traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
-                calcPath(5, 1);
-        assertEquals(IntArrayList.from(new int[]{5, 6, 3, 1}), p.calcNodes());
+        p = calcPath(g, 5, 1);
+        assertEquals(IntArrayList.from(5, 6, 3, 1), p.calcNodes());
     }
 
     @Test
     public void testTurnCostsBug_991() {
         final GraphHopperStorage g = createStorage(createEncodingManager(false));
         initGraph(g);
-        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
 
-        long tflags = carEncoder.getTurnFlags(false, 2);
-        tcs.addTurnInfo(getEdge(g, 5, 2).getEdge(), 2, getEdge(g, 2, 3).getEdge(), tflags);
-        tcs.addTurnInfo(getEdge(g, 2, 0).getEdge(), 0, getEdge(g, 0, 1).getEdge(), tflags);
-        tcs.addTurnInfo(getEdge(g, 5, 6).getEdge(), 6, getEdge(g, 6, 3).getEdge(), tflags);
+        addTurnCost(g, 2, 5, 2, 3);
+        addTurnCost(g, 2, 2, 0, 1);
+        addTurnCost(g, 2, 5, 6, 3);
+        addTurnCost(g, 1, 6, 7, 4);
 
-        tflags = carEncoder.getTurnFlags(false, 1);
-        tcs.addTurnInfo(getEdge(g, 6, 7).getEdge(), 7, getEdge(g, 7, 4).getEdge(), tflags);
+        TurnWeighting weighting = new TurnWeighting(new FastestWeighting(carEncoder), tcs) {
+            @Override
+            public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
+                if (edgeFrom >= 0)
+                    assertNotNull("edge " + edgeFrom + " to " + nodeVia + " does not exist", g.getEdgeIteratorState(edgeFrom, nodeVia));
+                if (edgeTo >= 0)
+                    assertNotNull("edge " + edgeTo + " to " + nodeVia + " does not exist", g.getEdgeIteratorState(edgeTo, nodeVia));
+                return super.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
+            }
+        };
+        Path p = createAlgo(g, weighting, EDGE_BASED).calcPath(5, 1);
+        assertEquals(IntArrayList.from(5, 6, 7, 4, 3, 1), p.calcNodes());
+        assertEquals(5 * 0.06 + 1, p.getWeight(), 1.e-6);
+        assertEquals(1300, p.getTime(), .1);
+    }
 
-        Path p = createAlgo(g, AlgorithmOptions.start().
-                weighting(new TurnWeighting(new FastestWeighting(carEncoder), tcs) {
-                    @Override
-                    public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
-                        if (edgeFrom >= 0)
-                            assertNotNull("edge " + edgeFrom + " to " + nodeVia + " does not exist", g.getEdgeIteratorState(edgeFrom, nodeVia));
-                        if (edgeTo >= 0)
-                            assertNotNull("edge " + edgeTo + " to " + nodeVia + " does not exist", g.getEdgeIteratorState(edgeTo, nodeVia));
-                        return super.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
-                    }
-                }.setDefaultUTurnCost(40)).
-                traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
-                calcPath(5, 1);
-        assertEquals(IntArrayList.from(new int[]{5, 6, 7, 4, 3, 1}), p.calcNodes());
-        assertEquals(301, p.getTime(), .1);
+    @Test
+    public void testLoopEdge() {
+        //   o
+        // 3-2-4
+        //  \|
+        //   0
+        final GraphHopperStorage g = createStorage(createEncodingManager(false));
+        g.edge(3, 2, 188, false);
+        g.edge(3, 0, 182, true);
+        g.edge(4, 2, 690, true);
+        g.edge(2, 2, 121, false);
+        g.edge(2, 0, 132, true);
+        addTurnRestriction(g, 2, 2, 0);
+        addTurnRestriction(g, 3, 2, 4);
+
+        Path p = calcPath(g, 3, 4);
+        assertEquals(IntArrayList.from(3, 2, 2, 4), p.calcNodes());
+        assertEquals(999, p.getDistance(), 1.e-3);
+    }
+
+    @Test
+    public void testDoubleLoopPTurn() {
+        // we cannot go 1-4-5, but taking the loop at 4 is cheaper than taking the one at 3
+        //  0-1
+        //    |
+        // o3-4o
+        //    |
+        //    5
+        final GraphHopperStorage g = createStorage(createEncodingManager(false));
+        g.edge(0, 1, 1, true);
+        g.edge(3, 4, 2, true);
+        g.edge(4, 4, 4, true);
+        g.edge(3, 3, 1, true);
+        g.edge(1, 4, 5, true);
+        g.edge(5, 4, 1, true);
+        addTurnRestriction(g, 1, 4, 5);
+
+        Path p = calcPath(g, 0, 5);
+        assertEquals(IntArrayList.from(0, 1, 4, 4, 5), p.calcNodes());
+        assertEquals(11, p.getDistance(), 1.e-3);
+        assertEquals(11 * 0.06, p.getWeight(), 1.e-3);
+        assertEquals(11 * 0.06 * 1000, p.getTime(), 1.e-3);
+    }
+
+    private void addTurnRestriction(Graph g, int from, int via, int to) {
+        long turnFlags = carEncoder.getTurnFlags(true, 0);
+        addTurnFlags(g, from, via, to, turnFlags);
+    }
+
+    private void addTurnCost(Graph g, double costs, int from, int via, int to) {
+        long turnFlags = carEncoder.getTurnFlags(false, costs);
+        addTurnFlags(g, from, via, to, turnFlags);
+    }
+
+    private void addTurnFlags(Graph g, int from, int via, int to, long turnFlags) {
+        tcs.addTurnInfo(getEdge(g, from, via).getEdge(), via, getEdge(g, via, to).getEdge(), turnFlags);
     }
 }

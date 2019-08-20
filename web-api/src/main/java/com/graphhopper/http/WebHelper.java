@@ -28,6 +28,8 @@ import com.graphhopper.util.PointList;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.NumberFormat;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -141,17 +143,24 @@ public class WebHelper {
         sb.append((char) (num));
     }
 
+    /**
+     * This includes the required attribution for OpenStreetMap.
+     * Do not hesitate to you mention us and link us in your about page
+     * https://support.graphhopper.com/support/search/solutions?term=attribution
+     */
+    public static final List<String> COPYRIGHTS = Arrays.asList("GraphHopper", "OpenStreetMap contributors");
+
+    public static ObjectNode jsonResponsePutInfo(ObjectNode json, float took) {
+        final ObjectNode info = json.putObject("info");
+        info.putPOJO("copyrights", COPYRIGHTS);
+        info.put("took", Math.round(took * 1000));
+        return json;
+    }
 
     public static ObjectNode jsonObject(GHResponse ghRsp, boolean enableInstructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, float took) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         json.putPOJO("hints", ghRsp.getHints().toMap());
-        // If you replace GraphHopper with your own brand name, this is fine.
-        // Still it would be highly appreciated if you mention us in your about page!
-        final ObjectNode info = json.putObject("info");
-        info.putArray("copyrights")
-                .add("GraphHopper")
-                .add("OpenStreetMap contributors");
-        info.put("took", Math.round(took * 1000));
+        jsonResponsePutInfo(json, took);
         ArrayNode jsonPathList = json.putArray("paths");
         for (PathWrapper ar : ghRsp.getAll()) {
             ObjectNode jsonPath = jsonPathList.addObject();

@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.GenericWeighting;
@@ -33,7 +34,7 @@ import org.junit.Test;
 import java.util.*;
 
 import static com.graphhopper.storage.AbstractGraphStorageTester.assertPList;
-import static com.graphhopper.util.Parameters.DETAILS.*;
+import static com.graphhopper.util.Parameters.Details.*;
 import static org.junit.Assert.*;
 
 /**
@@ -43,12 +44,12 @@ public class PathTest {
     private final FlagEncoder encoder = new CarFlagEncoder();
     private final DataFlagEncoder dataFlagEncoder = new DataFlagEncoder();
     private final EncodingManager carManager = EncodingManager.create(encoder);
-    private final BooleanEncodedValue carManagerRoundabout = carManager.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
+    private final BooleanEncodedValue carManagerRoundabout = carManager.getBooleanEncodedValue(Roundabout.KEY);
     private final BooleanEncodedValue carAccessEnc = encoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnv = encoder.getAverageSpeedEnc();
-    private final EncodingManager dataFlagManager = EncodingManager.create(dataFlagEncoder);
+    private final EncodingManager dataFlagManager = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(4)).add(dataFlagEncoder).build();
     private final EncodingManager mixedEncoders = EncodingManager.create(new CarFlagEncoder(), new FootFlagEncoder());
-    private final BooleanEncodedValue mixedManagerRoundabout = mixedEncoders.getBooleanEncodedValue(EncodingManager.ROUNDABOUT);
+    private final BooleanEncodedValue mixedManagerRoundabout = mixedEncoders.getBooleanEncodedValue(Roundabout.KEY);
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
     private final RoundaboutGraph roundaboutGraph = new RoundaboutGraph();
@@ -87,20 +88,28 @@ public class PathTest {
         // 0-1-2
         assertPList(Helper.createPointList(0, 0.1, 8, 1, 9, 1, 1, 0.1, 10, 1, 11, 1, 2, 0.1), path.calcPoints());
         InstructionList instr = path.calcInstructions(carManagerRoundabout, tr);
-        List<Map<String, Object>> res = instr.createJson();
-        Map<String, Object> tmp = res.get(0);
-        assertEquals(3000.0, tmp.get("distance"));
-        assertEquals(504000L, tmp.get("time"));
-        assertEquals("Continue", tmp.get("text"));
-        assertEquals("[0, 6]", tmp.get("interval").toString());
+        Instruction tmp = instr.get(0);
+        assertEquals(3000.0, tmp.getDistance(), 0.0);
+        assertEquals(504000L, tmp.getTime());
+        assertEquals("continue", tmp.getTurnDescription(tr));
+//        assertEquals("[0, 6]", tmp.get("interval").toString());
+        assertEquals(6, tmp.getLength());
+//        System.out.println(tmp.getPoints());
 
-        tmp = res.get(1);
-        assertEquals(0.0, tmp.get("distance"));
-        assertEquals(0L, tmp.get("time"));
-        assertEquals("Arrive at destination", tmp.get("text"));
-        assertEquals("[6, 6]", tmp.get("interval").toString());
-        int lastIndex = (Integer) ((List) res.get(res.size() - 1).get("interval")).get(0);
-        assertEquals(path.calcPoints().size() - 1, lastIndex);
+
+        tmp = instr.get(1);
+        assertEquals(0.0, tmp.getDistance(), 0.0);
+        assertEquals(0L, tmp.getTime());
+        assertEquals("arrive at destination", tmp.getTurnDescription(tr));
+//        assertEquals("[6, 6]", tmp.get("interval").toString());
+        assertEquals(0, tmp.getLength());
+//        System.out.println(tmp.getPoints());
+
+        int acc = 0;
+        for (Instruction instruction : instr) {
+            acc += instruction.getLength();
+        }
+        assertEquals(path.calcPoints().size() - 1, acc);
 
         // force minor change for instructions
         edge2.setName("2");
@@ -114,21 +123,23 @@ public class PathTest {
         path.setSPTEntry(e1);
         path.extract();
         instr = path.calcInstructions(carManagerRoundabout, tr);
-        res = instr.createJson();
 
-        tmp = res.get(0);
-        assertEquals(1000.0, tmp.get("distance"));
-        assertEquals(360000L, tmp.get("time"));
-        assertEquals("Continue", tmp.get("text"));
-        assertEquals("[0, 3]", tmp.get("interval").toString());
+        tmp = instr.get(0);
+        assertEquals(1000.0, tmp.getDistance(), 0);
+        assertEquals(360000L, tmp.getTime());
+        assertEquals("continue", tmp.getTurnDescription(tr));
+        assertEquals(3, tmp.getLength());
 
-        tmp = res.get(1);
-        assertEquals(2000.0, tmp.get("distance"));
-        assertEquals(144000L, tmp.get("time"));
-        assertEquals("Turn sharp right onto 2", tmp.get("text"));
-        assertEquals("[3, 6]", tmp.get("interval").toString());
-        lastIndex = (Integer) ((List) res.get(res.size() - 1).get("interval")).get(0);
-        assertEquals(path.calcPoints().size() - 1, lastIndex);
+        tmp = instr.get(1);
+        assertEquals(2000.0, tmp.getDistance(), 0);
+        assertEquals(144000L, tmp.getTime());
+        assertEquals("turn sharp right onto 2", tmp.getTurnDescription(tr));
+        assertEquals(3, tmp.getLength());
+        acc = 0;
+        for (Instruction instruction : instr) {
+            acc += instruction.getLength();
+        }
+        assertEquals(path.calcPoints().size() - 1, acc);
 
         // now reverse order
         path = new Path(g, new FastestWeighting(encoder));
@@ -141,20 +152,22 @@ public class PathTest {
         assertPList(Helper.createPointList(2, 0.1, 11, 1, 10, 1, 1, 0.1, 9, 1, 8, 1, 0, 0.1), path.calcPoints());
 
         instr = path.calcInstructions(carManagerRoundabout, tr);
-        res = instr.createJson();
-        tmp = res.get(0);
-        assertEquals(2000.0, tmp.get("distance"));
-        assertEquals(144000L, tmp.get("time"));
-        assertEquals("Continue onto 2", tmp.get("text"));
-        assertEquals("[0, 3]", tmp.get("interval").toString());
+        tmp = instr.get(0);
+        assertEquals(2000.0, tmp.getDistance(), 0);
+        assertEquals(144000L, tmp.getTime());
+        assertEquals("continue onto 2", tmp.getTurnDescription(tr));
+        assertEquals(3, tmp.getLength());
 
-        tmp = res.get(1);
-        assertEquals(1000.0, tmp.get("distance"));
-        assertEquals(360000L, tmp.get("time"));
-        assertEquals("Turn sharp left", tmp.get("text"));
-        assertEquals("[3, 6]", tmp.get("interval").toString());
-        lastIndex = (Integer) ((List) res.get(res.size() - 1).get("interval")).get(0);
-        assertEquals(path.calcPoints().size() - 1, lastIndex);
+        tmp = instr.get(1);
+        assertEquals(1000.0, tmp.getDistance(), 0);
+        assertEquals(360000L, tmp.getTime());
+        assertEquals("turn sharp left", tmp.getTurnDescription(tr));
+        assertEquals(3, tmp.getLength());
+        acc = 0;
+        for (Instruction instruction : instr) {
+            acc += instruction.getLength();
+        }
+        assertEquals(path.calcPoints().size() - 1, acc);
     }
 
     @Test
@@ -228,10 +241,10 @@ public class PathTest {
             assertEquals("[1, 2, 3, 4, 5, 8]", p.calcNodes().toString());
             InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
             // Test instructions
-            List<String> tmpList = pick("text", wayList.createJson());
-            assertEquals(Arrays.asList("Continue onto MainStreet 1 2",
+            List<String> tmpList = getTurnDescriptions(wayList);
+            assertEquals(Arrays.asList("continue onto MainStreet 1 2",
                     "At roundabout, take exit 3 onto 5-8",
-                    "Arrive at destination"),
+                    "arrive at destination"),
                     tmpList);
             // Test Radian
             double delta = roundaboutGraph.getAngle(1, 2, 5, 8);
@@ -242,10 +255,10 @@ public class PathTest {
             p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).
                     calcPath(1, 7);
             wayList = p.calcInstructions(mixedManagerRoundabout, tr);
-            tmpList = pick("text", wayList.createJson());
-            assertEquals(Arrays.asList("Continue onto MainStreet 1 2",
+            tmpList = getTurnDescriptions(wayList);
+            assertEquals(Arrays.asList("continue onto MainStreet 1 2",
                     "At roundabout, take exit 2 onto MainStreet 4 7",
-                    "Arrive at destination"),
+                    "arrive at destination"),
                     tmpList);
             // Test Radian
             delta = roundaboutGraph.getAngle(1, 2, 4, 7);
@@ -263,9 +276,9 @@ public class PathTest {
                 .calcPath(2, 8);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
-        List<String> tmpList = pick("text", wayList.createJson());
+        List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("At roundabout, take exit 3 onto 5-8",
-                "Arrive at destination"),
+                "arrive at destination"),
                 tmpList);
     }
 
@@ -279,10 +292,10 @@ public class PathTest {
                 .calcPath(6, 8);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
-        List<String> tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto 3-6",
+        List<String> tmpList = getTurnDescriptions(wayList);
+        assertEquals(Arrays.asList("continue onto 3-6",
                 "At roundabout, take exit 3 onto 5-8",
-                "Arrive at destination"),
+                "arrive at destination"),
                 tmpList);
         roundaboutGraph.inverse3to9();
     }
@@ -403,10 +416,10 @@ public class PathTest {
                 .calcPath(1, 8);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
-        List<String> tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto MainStreet 1 2",
+        List<String> tmpList = getTurnDescriptions(wayList);
+        assertEquals(Arrays.asList("continue onto MainStreet 1 2",
                 "At roundabout, take exit 2 onto 5-8",
-                "Arrive at destination"),
+                "arrive at destination"),
                 tmpList);
         // Test Radian
         double delta = roundaboutGraph.getAngle(1, 2, 5, 8);
@@ -481,9 +494,9 @@ public class PathTest {
                 .calcPath(6, 11);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(carManagerRoundabout, tr);
-        List<String> tmpList = pick("text", wayList.createJson());
+        List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("At roundabout, take exit 1 onto MainStreet 1 11",
-                "Arrive at destination"),
+                "arrive at destination"),
                 tmpList);
     }
 
@@ -497,10 +510,10 @@ public class PathTest {
                 .calcPath(1, 8);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(mixedManagerRoundabout, tr);
-        List<String> tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto MainStreet 1 2",
+        List<String> tmpList = getTurnDescriptions(wayList);
+        assertEquals(Arrays.asList("continue onto MainStreet 1 2",
                 "At roundabout, take exit 1 onto 5-8",
-                "Arrive at destination"),
+                "arrive at destination"),
                 tmpList);
         // Test Radian
         double delta = roundaboutGraph.getAngle(1, 2, 5, 8);
@@ -868,11 +881,10 @@ public class PathTest {
         assertEquals(2, wayList.size());
     }
 
-    List<String> pick(String key, List<Map<String, Object>> instructionJson) {
+    List<String> getTurnDescriptions(InstructionList instructionJson) {
         List<String> list = new ArrayList<>();
-
-        for (Map<String, Object> json : instructionJson) {
-            list.add(json.get(key).toString());
+        for (Instruction instruction : instructionJson) {
+            list.add(instruction.getTurnDescription(tr));
         }
         return list;
     }

@@ -20,81 +20,39 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.CHEdgeIteratorState;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.storage.ShortcutUnpacker;
+import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.Locale;
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
-/**
- * Recursively unpack shortcuts.
- * <p>
- *
- * @author Peter Karich
- * @see PrepareContractionHierarchies
- */
 public class Path4CH extends PathBidirRef {
-    private final Graph routingGraph;
+    private final ShortcutUnpacker shortcutUnpacker;
 
-    public Path4CH(Graph routingGraph, Graph baseGraph, Weighting weighting) {
+    public Path4CH(Graph routingGraph, Graph baseGraph, final Weighting weighting) {
         super(baseGraph, weighting);
-        this.routingGraph = routingGraph;
+        this.shortcutUnpacker = getShortcutUnpacker(routingGraph, weighting);
     }
 
     @Override
-    protected final void processEdge(int edgeId, int endNode, int prevEdgeId) {
+    protected final void processEdge(int edgeId, int adjNode, int prevEdgeId) {
         // Shortcuts do only contain valid weight so first expand before adding
         // to distance and time
-        expandEdge(getEdge(edgeId, endNode), false);
+        shortcutUnpacker.visitOriginalEdgesFwd(edgeId, adjNode, true, prevEdgeId);
     }
 
-    private void expandEdge(CHEdgeIteratorState edge, boolean reverse) {
-        if (!edge.isShortcut()) {
-            distance += edge.getDistance();
-            time += weighting.calcMillis(edge, reverse, EdgeIterator.NO_EDGE);
-            addEdge(edge.getEdge());
-            return;
-        }
-        expandSkippedEdges(edge.getSkippedEdge1(), edge.getSkippedEdge2(), edge.getBaseNode(), edge.getAdjNode(), reverse);
+    @Override
+    protected void processEdgeBwd(int edgeId, int adjNode, int nextEdgeId) {
+        shortcutUnpacker.visitOriginalEdgesBwd(edgeId, adjNode, true, nextEdgeId);
     }
 
-    private void expandSkippedEdges(int skippedEdge1, int skippedEdge2, int from, int to, boolean reverse) {
-        // for edge-based CH we need to take special care for loop shortcuts
-        if (from != to) {
-            // get properties like speed of the edge in the correct direction
-            if (reverseOrder == reverse) {
-                int tmp = from;
-                from = to;
-                to = tmp;
+    protected ShortcutUnpacker getShortcutUnpacker(Graph routingGraph, final Weighting weighting) {
+        return new ShortcutUnpacker(routingGraph, new ShortcutUnpacker.Visitor() {
+            @Override
+            public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
+                distance += edge.getDistance();
+                time += weighting.calcMillis(edge, reverse, NO_EDGE);
+                addEdge(edge.getEdge());
             }
-            CHEdgeIteratorState sk2to = getEdge(skippedEdge2, to);
-            if (sk2to != null) {
-                expandEdge(sk2to, !reverseOrder);
-                expandEdge(getEdge(skippedEdge1, from), reverseOrder);
-            } else {
-                expandEdge(getEdge(skippedEdge1, to), !reverseOrder);
-                expandEdge(getEdge(skippedEdge2, from), reverseOrder);
-            }
-        } else {
-            CHEdgeIteratorState sk1 = getEdge(skippedEdge1, from);
-            CHEdgeIteratorState sk2 = getEdge(skippedEdge2, from);
-            if (sk1.getAdjNode() == sk1.getBaseNode() || sk2.getAdjNode() == sk2.getBaseNode()) {
-                // this is a loop where both skipped edges are loops. but this should never happen.
-                throw new IllegalStateException(String.format(Locale.ROOT,
-                        "error: detected edge where both skipped edges are loops. from: %d, to: %d, " +
-                                "skip-edge1: %d, skip-edge2: %d, reverse: %b", from, to, skippedEdge1, skippedEdge2, reverse));
-            }
-
-            if (!reverseOrder) {
-                expandEdge(sk1, !reverse);
-                expandEdge(sk2, reverse);
-            } else {
-                expandEdge(sk2, reverse);
-                expandEdge(sk1, !reverse);
-            }
-        }
-    }
-
-    private CHEdgeIteratorState getEdge(int edgeId, int adjNode) {
-        return (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(edgeId, adjNode);
+        }, false);
     }
 }

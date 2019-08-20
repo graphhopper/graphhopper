@@ -62,7 +62,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
     @Test
     public void testCHGraph() {
         GraphHopperStorage ghStorage = createGHStorage(new RAMDirectory(), encodingManager, false);
-        CHGraph lg = ghStorage.getGraph(CHGraph.class);
+        CHGraph lg = ghStorage.getCHGraph();
         // 0
         // 1
         // 2
@@ -98,7 +98,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
     @Test
     public void testSortHighLevelFirst() {
         GraphHopperStorage g = createGHStorage(new RAMDirectory(), encodingManager, false);
-        final CHGraph lg = g.getGraph(CHGraph.class);
+        final CHGraph lg = g.getCHGraph();
         lg.getNodeAccess().ensureNode(4);
         lg.setLevel(1, 10);
         lg.setLevel(2, 30);
@@ -132,7 +132,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
         EdgeIteratorState iter1 = g.edge(1, 0, 100, true);
         g.edge(2, 3, 100, true);
 
-        CHGraphImpl lg = (CHGraphImpl) g.getGraph(CHGraph.class);
+        CHGraph lg = g.getCHGraph();
         g.freeze();
         lg.setLevel(0, 11);
         lg.setLevel(1, 10);

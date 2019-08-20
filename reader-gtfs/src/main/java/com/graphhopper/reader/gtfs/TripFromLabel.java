@@ -27,8 +27,9 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.Trip;
 import com.graphhopper.gtfs.fare.Fares;
 import com.graphhopper.routing.InstructionsFromEdges;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -58,11 +59,6 @@ class TripFromLabel {
     TripFromLabel(GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed) {
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
-    }
-
-    PathWrapper parseSolutionIntoPath(boolean arriveBy, PtFlagEncoder encoder, Translation tr, GraphExplorer queryGraph, Weighting weighting, Label solution, PointList waypoints) {
-        final List<Trip.Leg> legs = getTrip(arriveBy, encoder, tr, queryGraph, weighting, solution);
-        return createPathWrapper(tr, waypoints, legs);
     }
 
     PathWrapper createPathWrapper(Translation tr, PointList waypoints, List<Trip.Leg> legs) {
@@ -120,18 +116,13 @@ class TripFromLabel {
         return path;
     }
 
-    List<Trip.Leg> getTrip(boolean arriveBy, PtFlagEncoder encoder, Translation tr, GraphExplorer queryGraph, Weighting weighting, Label solution) {
-        List<Label.Transition> transitions = getTransitions(arriveBy, encoder, queryGraph, solution);
-        return getTrip(tr, queryGraph, weighting, transitions);
-    }
-
-    List<Trip.Leg> getTrip(Translation tr, GraphExplorer queryGraph, Weighting weighting, List<Label.Transition> transitions) {
+    List<Trip.Leg> getTrip(Translation tr, Graph queryGraph, Weighting weighting, List<Label.Transition> transitions) {
         final List<List<Label.Transition>> partitions = getPartitions(transitions);
         final List<Trip.Leg> legs = getLegs(tr, queryGraph, weighting, partitions);
         return legs;
     }
 
-    List<Label.Transition> getTransitions(boolean arriveBy, PtFlagEncoder encoder, GraphExplorer queryGraph, Label solution) {
+    List<Label.Transition> getTransitions(boolean arriveBy, PtFlagEncoder encoder, Graph queryGraph, Label solution) {
         List<Label.Transition> transitions = new ArrayList<>();
         if (arriveBy) {
             reverseEdges(solution, queryGraph, encoder, false)
@@ -162,7 +153,7 @@ class TripFromLabel {
         return partitions;
     }
 
-    private List<Trip.Leg> getLegs(Translation tr, GraphExplorer queryGraph, Weighting weighting, List<List<Label.Transition>> partitions) {
+    private List<Trip.Leg> getLegs(Translation tr, Graph queryGraph, Weighting weighting, List<List<Label.Transition>> partitions) {
         return partitions.stream().flatMap(partition -> parsePathIntoLegs(partition, queryGraph, weighting, tr).stream()).collect(Collectors.toList());
     }
 
@@ -194,7 +185,7 @@ class TripFromLabel {
                 arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
                 Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.stop_name, InstructionAnnotation.EMPTY, arrivalPointList);
                 if (ptLeg.isInSameVehicleAsPrevious) {
-                    instructions.replaceLast(arrivalInstruction);
+                    instructions.set(instructions.size() - 1, arrivalInstruction);
                 } else {
                     instructions.add(arrivalInstruction);
                 }
@@ -330,7 +321,7 @@ class TripFromLabel {
     // One could argue that one should never write a parser
     // by hand, because it is always ugly, but use a parser library.
     // The code would then read like a specification of what paths through the graph mean.
-    private List<Trip.Leg> parsePathIntoLegs(List<Label.Transition> path, GraphExplorer graph, Weighting weighting, Translation tr) {
+    private List<Trip.Leg> parsePathIntoLegs(List<Label.Transition> path, Graph graph, Weighting weighting, Translation tr) {
         if (path.size() <= 1) {
             return Collections.emptyList();
         }
@@ -379,8 +370,8 @@ class TripFromLabel {
             return result;
         } else {
             InstructionList instructions = new InstructionList(tr);
-            InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(path.get(1).edge.edgeIteratorState.getBaseNode(), graph.getGraph(),
-                    weighting, weighting.getFlagEncoder(), weighting.getFlagEncoder().getBooleanEncodedValue(EncodingManager.ROUNDABOUT), graph.getNodeAccess(), tr, instructions);
+            InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(path.get(1).edge.edgeIteratorState.getBaseNode(), graph,
+                    weighting, weighting.getFlagEncoder(), weighting.getFlagEncoder().getBooleanEncodedValue(Roundabout.KEY), graph.getNodeAccess(), tr, instructions);
             int prevEdgeId = -1;
             for (int i = 1; i < path.size(); i++) {
                 if (path.get(i).edge.edgeType != GtfsStorage.EdgeType.HIGHWAY) {

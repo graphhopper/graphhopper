@@ -78,6 +78,7 @@ public class Constants {
      */
     public static final String VERSION;
     public static final String BUILD_DATE;
+    public static final String GIT_INFO;
     public static final boolean SNAPSHOT;
 
     static {
@@ -124,6 +125,18 @@ public class Constants {
         } catch (Exception ex) {
         }
         BUILD_DATE = buildDate;
+
+        String gitInfo = "";
+        try {
+            List<String> gitInfos = readFile(new InputStreamReader(GraphHopper.class.getResourceAsStream("gitinfo"), UTF_CS));
+            if (gitInfos.size() == 5) {
+                gitInfo = gitInfos.get(1) + "|" + gitInfos.get(2) + "|dirty=" + gitInfos.get(3) + "|" + gitInfos.get(4);
+            } else {
+                System.err.println("GraphHopper Initialization WARNING: unexpected git info: " + gitInfos.toString());
+            }
+        } catch (Exception ex) {
+        }
+        GIT_INFO = gitInfo;
     }
 
     public static String getVersions() {

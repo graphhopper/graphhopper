@@ -6,14 +6,14 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-web</artifactId>
     <packaging>jar</packaging>
-    <version>0.12-SNAPSHOT</version>
+    <version>0.13-SNAPSHOT</version>
     <name>GraphHopper Web</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>0.12-SNAPSHOT</version>
+        <version>0.13-SNAPSHOT</version>
     </parent>
     <properties>
         <jetty.version>9.4.2.v20170220</jetty.version>
@@ -38,7 +38,7 @@
         <dependency>
             <groupId>io.dropwizard-bundles</groupId>
             <artifactId>dropwizard-configurable-assets-bundle</artifactId>
-            <version>${dropwizard.version}</version>
+            <version>1.3.5</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
@@ -76,7 +76,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.2.1</version>
                 <configuration>
                     <createDependencyReducedPom>true</createDependencyReducedPom>
                     <filters>

@@ -9,17 +9,22 @@ import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.Polygon;
 import io.dropwizard.testing.junit.DropwizardAppRule;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class IsochroneResourceTest {
     private static final String DIR = "./target/andorra-gh/";
@@ -39,7 +44,7 @@ public class IsochroneResourceTest {
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(
             GraphHopperApplication.class, config);
 
     @AfterClass
@@ -97,7 +102,8 @@ public class IsochroneResourceTest {
         Response response = app.client().target("http://localhost:8080/route?point=-1.816719,51.557148").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
     }
-  
+
+    @Test
     public void requestWithShortest() throws Exception {
         IsochroneResponse rsp = client.isochroneGet("42.509644,1.540554", "no_key_necessary", 130,
                 -1, "car", 1, false, "shortest");
@@ -114,7 +120,86 @@ public class IsochroneResourceTest {
         polygon0 = rsp.getPolygons().get(0).getGeometry().getCoordinates().get(0);
         assertTrue(polygon0.size() >= 190);
     }
+    
+    @Test
+    public void requestJsonBadType() throws IOException {
+        Response response = requestIsochrone("/isochrone?point=42.531073,1.573792&time_limit=130&type=xml");
 
+        JsonNode json = parseRequestResponse(response);
+        String message = json.path("message").asText();
+
+        assertEquals(message, "Format not supported:xml");
+    }
+    
+    
+    @Test
+    public void requestJsonWithType() throws IOException {
+        Response response = requestIsochrone("/isochrone?point=42.531073,1.573792&time_limit=130&type=json");
+        JsonNode json = parseRequestResponse(response);
+        assertTrue(json.has("polygons"));
+        assertTrue(json.has("info"));
+    }
+    
+    @Test
+    public void requestJsonNoType() throws IOException {
+        Response response = requestIsochrone("/isochrone?point=42.531073,1.573792&time_limit=130");
+        JsonNode json = parseRequestResponse(response);
+        assertTrue(json.has("polygons"));
+        assertTrue(json.has("info"));
+    }
+    
+    @Test
+    public void requestGeoJsonPolygons() throws IOException {        
+        Response response = requestIsochrone("/isochrone?point=42.531073,1.573792&time_limit=130&type=geojson");
+        JsonNode json = parseRequestResponse(response);
+        
+        assertFalse(json.has("polygons"));
+        assertFalse(json.has("info"));
+        
+        assertTrue(json.has("type"));
+        assertEquals(json.path("type").asText(), "FeatureCollection");
+        
+        assertTrue(json.has("features"));
+        
+        JsonNode firstFeature = json.path("features").path(0);
+        assertTrue(firstFeature.isObject());
+        
+        assertTrue(firstFeature.path("properties").has("bucket"));
+        assertTrue(firstFeature.path("properties").has("copyrights"));
+        
+        assertEquals(firstFeature.path("type").asText(), "Feature");
+        assertEquals(firstFeature.path("geometry").path("type").asText(), "Polygon");
+    }
+    
+    @Test
+    public void requestGeoJsonPolygonsBuckets() throws IOException {        
+        Response response = requestIsochrone("/isochrone?point=42.531073,1.573792&time_limit=130&type=geojson&buckets=3");
+        JsonNode json = parseRequestResponse(response);
+        
+        JsonNode features = json.path("features");
+        int length = features.size();
+        JsonNode firstFeature = features.path(0);
+        JsonNode lastFeature = features.path(length - 1);
+        
+        assertEquals(firstFeature.path("properties").path("bucket").asInt(), 0);
+        assertEquals(firstFeature.path("geometry").path("type").asText(), "Polygon");
+        
+        assertEquals(lastFeature.path("properties").path("bucket").asInt(), 2);
+        assertEquals(lastFeature.path("geometry").path("type").asText(), "Polygon");
+    }    
+    
+    private Response requestIsochrone(String path) {
+    	String url = "http://localhost:8080" + path;
+        return app.client().target(url).request().buildGet().invoke();
+    }
+    
+    private JsonNode parseRequestResponse (Response response) throws IOException {
+        String body = response.readEntity(String.class);
+        
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readTree(body);
+    }
+    
     private boolean contains(List polygon, double lat, double lon) {
         int index = 0;
         double lats[] = new double[polygon.size()];

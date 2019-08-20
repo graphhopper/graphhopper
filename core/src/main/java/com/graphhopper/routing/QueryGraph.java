@@ -24,7 +24,6 @@ import com.carrotsearch.hppc.procedures.IntProcedure;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
@@ -57,8 +56,7 @@ public class QueryGraph implements Graph {
     private final int mainEdges;
     private final QueryGraph baseGraph;
     private final GraphExtension wrappedExtension;
-    // TODO when spreading it on different threads we need multiple independent explorers
-    private final Map<Integer, EdgeExplorer> cacheMap = new HashMap<>(4);
+    private final Map<EdgeFilter, EdgeExplorer> cacheMap = new HashMap<>(4);
 
     // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
     List<VirtualEdgeIteratorState> virtualEdges;
@@ -273,33 +271,28 @@ public class QueryGraph implements Graph {
                 EdgeIteratorState closestEdge = results.get(0).getClosestEdge();
                 final PointList fullPL = closestEdge.fetchWayGeometry(3);
                 int baseNode = closestEdge.getBaseNode();
-                // sort results on the same edge by the wayIndex and if equal by distance to pillar node
                 Collections.sort(results, new Comparator<QueryResult>() {
                     @Override
                     public int compare(QueryResult o1, QueryResult o2) {
-                        int diff = o1.getWayIndex() - o2.getWayIndex();
+                        int diff = Integer.compare(o1.getWayIndex(), o2.getWayIndex());
                         if (diff == 0) {
-                            // sort by distance from snappedPoint to fullPL.get(wayIndex) if wayIndex is identical
-                            GHPoint p1 = o1.getSnappedPoint();
-                            GHPoint p2 = o2.getSnappedPoint();
-                            if (p1.equals(p2))
-                                return 0;
-
-                            double fromLat = fullPL.getLatitude(o1.getWayIndex());
-                            double fromLon = fullPL.getLongitude(o1.getWayIndex());
-                            if (Helper.DIST_PLANE.calcNormalizedDist(fromLat, fromLon, p1.lat, p1.lon)
-                                    > Helper.DIST_PLANE.calcNormalizedDist(fromLat, fromLon, p2.lat, p2.lon))
-                                return 1;
-                            return -1;
+                            return Double.compare(distanceOfSnappedPointToPillarNode(o1), distanceOfSnappedPointToPillarNode(o2));
+                        } else {
+                            return diff;
                         }
-                        return diff;
+                    }
+                    private double distanceOfSnappedPointToPillarNode(QueryResult o) {
+                        GHPoint snappedPoint = o.getSnappedPoint();
+                        double fromLat = fullPL.getLatitude(o.getWayIndex());
+                        double fromLon = fullPL.getLongitude(o.getWayIndex());
+                        return Helper.DIST_PLANE.calcNormalizedDist(fromLat, fromLon, snappedPoint.lat, snappedPoint.lon);
                     }
                 });
 
-                GHPoint3D prevPoint = fullPL.toGHPoint(0);
+                GHPoint3D prevPoint = fullPL.get(0);
                 int adjNode = closestEdge.getAdjNode();
-                int origTraversalKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), false);
-                int origRevTraversalKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), true);
+                int origEdgeKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), false);
+                int origRevEdgeKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), true);
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
                 int virtNodeId = virtualNodes.getSize() + mainNodes;
@@ -308,8 +301,7 @@ public class QueryGraph implements Graph {
                 // Create base and adjacent PointLists for all none-equal virtual nodes.
                 // We do so via inserting them at the correct position of fullPL and cutting the
                 // fullPL into the right pieces.
-                for (int counter = 0; counter < results.size(); counter++) {
-                    QueryResult res = results.get(counter);
+                for (QueryResult res : results) {
                     if (res.getClosestEdge().getBaseNode() != baseNode)
                         throw new IllegalStateException("Base nodes have to be identical but were not: " + closestEdge + " vs " + res.getClosestEdge());
 
@@ -322,8 +314,9 @@ public class QueryGraph implements Graph {
                     }
 
                     queryResults.add(res);
-                    createEdges(origTraversalKey, origRevTraversalKey,
-                            prevPoint, prevWayIndex,
+                    boolean isPillar = res.getSnappedPosition() == QueryResult.Position.PILLAR;
+                    createEdges(origEdgeKey, origRevEdgeKey,
+                            prevPoint, prevWayIndex, isPillar,
                             res.getSnappedPoint(), res.getWayIndex(),
                             fullPL, closestEdge, prevNodeId, virtNodeId);
 
@@ -345,9 +338,9 @@ public class QueryGraph implements Graph {
 
                 // two edges between last result and adjacent node are still missing if not all points skipped
                 if (addedEdges)
-                    createEdges(origTraversalKey, origRevTraversalKey,
-                            prevPoint, prevWayIndex,
-                            fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 2,
+                    createEdges(origEdgeKey, origRevEdgeKey,
+                            prevPoint, prevWayIndex, false,
+                            fullPL.get(fullPL.getSize() - 1), fullPL.getSize() - 2,
                             fullPL, closestEdge, virtNodeId - 1, adjNode);
 
                 return true;
@@ -377,11 +370,11 @@ public class QueryGraph implements Graph {
 
     /**
      * This method is an experimental feature to reduce memory and CPU resources if there are many
-     * locations ("hundreds") for one QueryGraph. It can make problems for custom or threaded
-     * algorithms or when using custom EdgeFilters for EdgeExplorer creation. Another limitation is
-     * that the same edge explorer is used even if a different vehicle/flagEncoder is chosen.
-     * Currently we can cache only the ALL_EDGES filter or instances of the DefaultEdgeFilter where
-     * three edge explorers will be created: forward OR backward OR both.
+     * locations ("hundreds") for one QueryGraph. EdgeExplorer instances are cached based on the {@link EdgeFilter}
+     * passed into {@link #createEdgeExplorer(EdgeFilter)}. For equal (in the java sense) {@link EdgeFilter}s always
+     * the same {@link EdgeExplorer} will be returned when caching is enabled. Care has to be taken for example for
+     * custom or threaded algorithms, when using custom {@link EdgeFilter}s, or when the same edge explorer is used
+     * with different vehicles/encoders.
      */
     public QueryGraph setUseEdgeExplorerCache(boolean useEECache) {
         this.useEdgeExplorerCache = useEECache;
@@ -389,18 +382,21 @@ public class QueryGraph implements Graph {
         return this;
     }
 
-    private void createEdges(int origTraversalKey, int origRevTraversalKey,
-                             GHPoint3D prevSnapped, int prevWayIndex, GHPoint3D currSnapped, int wayIndex,
+    private void createEdges(int origEdgeKey, int origRevEdgeKey,
+                             GHPoint3D prevSnapped, int prevWayIndex, boolean isPillar, GHPoint3D currSnapped, int wayIndex,
                              PointList fullPL, EdgeIteratorState closestEdge,
                              int prevNodeId, int nodeId) {
         int max = wayIndex + 1;
-        // basePoints must have at least the size of 2 to make sure fetchWayGeometry(3) returns at least 2
         PointList basePoints = new PointList(max - prevWayIndex + 1, mainNodeAccess.is3D());
         basePoints.add(prevSnapped.lat, prevSnapped.lon, prevSnapped.ele);
         for (int i = prevWayIndex; i < max; i++) {
             basePoints.add(fullPL, i);
         }
-        basePoints.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
+        if (!isPillar) {
+            basePoints.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
+        }
+        // basePoints must have at least the size of 2 to make sure fetchWayGeometry(3) returns at least 2
+        assert basePoints.size() >= 2 : "basePoints must have at least two points";
 
         PointList baseReversePoints = basePoints.clone(true);
         double baseDistance = basePoints.calcDistance(Helper.DIST_PLANE);
@@ -408,9 +404,9 @@ public class QueryGraph implements Graph {
 
         boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);
         // edges between base and snapped point
-        VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origTraversalKey,
+        VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origEdgeKey,
                 virtEdgeId, prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints, reverse);
-        VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevTraversalKey,
+        VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevEdgeKey,
                 virtEdgeId, nodeId, prevNodeId, baseDistance, IntsRef.deepCopyOf(closestEdge.getFlags()), closestEdge.getName(), baseReversePoints, !reverse);
 
         baseEdge.setReverseEdge(baseReverseEdge);
@@ -577,32 +573,15 @@ public class QueryGraph implements Graph {
             throw new IllegalStateException("Call lookup before using this graph");
 
         if (useEdgeExplorerCache) {
-            int counter = -1;
-            if (edgeFilter instanceof DefaultEdgeFilter) {
-                DefaultEdgeFilter dee = (DefaultEdgeFilter) edgeFilter;
-                counter = 0;
-                if (dee.acceptsBackward())
-                    counter = 1;
-                if (dee.acceptsForward())
-                    counter += 2;
-
-                if (counter == 0)
-                    throw new IllegalStateException("You tried to use an edge filter blocking every access");
-
-            } else if (edgeFilter == EdgeFilter.ALL_EDGES) {
-                counter = 4;
+            EdgeExplorer cached = cacheMap.get(edgeFilter);
+            if (cached == null) {
+                cached = createUncachedEdgeExplorer(edgeFilter);
+                cacheMap.put(edgeFilter, cached);
             }
-
-            if (counter >= 0) {
-                EdgeExplorer cached = cacheMap.get(counter);
-                if (cached == null) {
-                    cached = createUncachedEdgeExplorer(edgeFilter);
-                    cacheMap.put(counter, cached);
-                }
-                return cached;
-            }
+            return cached;
+        } else {
+            return createUncachedEdgeExplorer(edgeFilter);
         }
-        return createUncachedEdgeExplorer(edgeFilter);
     }
 
     private EdgeExplorer createUncachedEdgeExplorer(EdgeFilter edgeFilter) {
@@ -710,9 +689,6 @@ public class QueryGraph implements Graph {
     }
 
     @Override
-    /**
-     * @see QueryGraph
-     */
     public EdgeExplorer createEdgeExplorer() {
         return createEdgeExplorer(EdgeFilter.ALL_EDGES);
     }
@@ -746,6 +722,23 @@ public class QueryGraph implements Graph {
         return wrappedExtension;
     }
 
+    @Override
+    public int getOtherNode(int edge, int node) {
+        if (isVirtualEdge(edge)) {
+            return getEdgeIteratorState(edge, node).getBaseNode();
+        }
+        return mainGraph.getOtherNode(edge, node);
+    }
+
+    @Override
+    public boolean isAdjacentToNode(int edge, int node) {
+        if (isVirtualEdge(edge)) {
+            EdgeIteratorState virtualEdge = getEdgeIteratorState(edge, node);
+            return virtualEdge.getBaseNode() == node || virtualEdge.getAdjNode() == node;
+        }
+        return mainGraph.isAdjacentToNode(edge, node);
+    }
+
     private UnsupportedOperationException exc() {
         return new UnsupportedOperationException("QueryGraph cannot be modified.");
     }
@@ -763,16 +756,32 @@ public class QueryGraph implements Graph {
                 return 0;
             } else if (isVirtualEdge(edgeFrom) || isVirtualEdge(edgeTo)) {
                 if (isVirtualEdge(edgeFrom)) {
-                    edgeFrom = queryResults.get((edgeFrom - mainEdges) / 4).getClosestEdge().getEdge();
+                    edgeFrom = getOriginalEdge(edgeFrom);
                 }
                 if (isVirtualEdge(edgeTo)) {
-                    edgeTo = queryResults.get((edgeTo - mainEdges) / 4).getClosestEdge().getEdge();
+                    edgeTo = getOriginalEdge(edgeTo);
                 }
                 return mainTurnExtension.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
-
             } else {
                 return mainTurnExtension.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
             }
+        }
+
+        @Override
+        public boolean isUTurn(int edgeFrom, int edgeTo) {
+            // detecting a u-turn from a virtual to a non-virtual edge requires looking at the original edge of the
+            // virtual edge. however when we are turning between virtual edges we need to compare the virtual edge ids
+            // see #1593
+            if (isVirtualEdge(edgeFrom) && !isVirtualEdge(edgeTo)) {
+                edgeFrom = getOriginalEdge(edgeFrom);
+            } else if (!isVirtualEdge(edgeFrom) && isVirtualEdge(edgeTo)) {
+                edgeTo = getOriginalEdge(edgeTo);
+            }
+            return mainTurnExtension.isUTurn(edgeFrom, edgeTo);
+        }
+
+        private int getOriginalEdge(int edgeFrom) {
+            return queryResults.get((edgeFrom - mainEdges) / 4).getClosestEdge().getEdge();
         }
     }
 }

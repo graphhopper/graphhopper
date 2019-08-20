@@ -21,6 +21,7 @@ package com.graphhopper.reader.gtfs;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.shapes.BBox;
 
 class EmptyLocationIndex implements LocationIndex {
     @Override
@@ -39,13 +40,16 @@ class EmptyLocationIndex implements LocationIndex {
     }
 
     @Override
+    public void query(BBox queryBBox, Visitor function) {
+    }
+
+    @Override
     public LocationIndex setApproximation(boolean approxDist) {
         return this;
     }
 
     @Override
     public void setSegmentSize(int bytes) {
-
     }
 
     @Override
@@ -60,12 +64,10 @@ class EmptyLocationIndex implements LocationIndex {
 
     @Override
     public void flush() {
-
     }
 
     @Override
     public void close() {
-
     }
 
     @Override

@@ -21,7 +21,7 @@ import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
-import static com.graphhopper.util.Parameters.DETAILS.EDGE_ID;
+import static com.graphhopper.util.Parameters.Details.EDGE_ID;
 
 /**
  * Calculate the Edge Id segments of a Path
@@ -48,7 +48,7 @@ public class EdgeIdDetails extends AbstractPathDetailsBuilder {
 
     private int edgeId(EdgeIteratorState edge) {
         if (edge instanceof VirtualEdgeIteratorState) {
-            return GHUtility.getEdgeFromEdgeKey(((VirtualEdgeIteratorState) edge).getOriginalTraversalKey());
+            return GHUtility.getEdgeFromEdgeKey(((VirtualEdgeIteratorState) edge).getOriginalEdgeKey());
         } else {
             return edge.getEdge();
         }
