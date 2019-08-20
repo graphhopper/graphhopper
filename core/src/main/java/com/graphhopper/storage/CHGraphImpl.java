@@ -124,7 +124,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     @Override
     public int shortcutEdgeBased(int a, int b, int accessFlags, double weight, double distance, int skippedEdge1, int skippedEdge2, int origFirst, int origLast) {
-        assert edgeBased : "Edge-based shortcuts should only be added when CHGraph is edge-based";
+        if (!edgeBased) {
+            throw new IllegalStateException("Edge-based shortcuts should only be added when CHGraph is edge-based");
+        }
         int scId = shortcut(a, b, accessFlags, weight, distance, skippedEdge1, skippedEdge2);
         chEdgeAccess.setFirstAndLastOrigEdges(chEdgeAccess.toPointer(scId), origFirst, origLast);
         return scId;
@@ -866,6 +868,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         public void setFirstAndLastOrigEdges(long edgePointer, int origFirst, int origLast) {
+            if (!edgeBased) {
+                throw new IllegalStateException("Edge-based shortcuts should only be added when CHGraph is edge-based");
+            }
             shortcuts.setInt(edgePointer + S_ORIG_FIRST, origFirst);
             shortcuts.setInt(edgePointer + S_ORIG_LAST, origLast);
         }
