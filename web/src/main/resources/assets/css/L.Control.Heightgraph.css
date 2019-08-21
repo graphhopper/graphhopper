@@ -32,6 +32,7 @@
     position: absolute;
     right: 0;
     display: none;
+    cursor: pointer;
 }
 
 .border-top {
