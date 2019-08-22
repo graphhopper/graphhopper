@@ -68,9 +68,8 @@ public class DirectedRoutingTest {
                 // todo: yields warnings and fails, see #1665, #1687
 //                {Algo.LM, INFINITE_UTURN_COSTS, false, true}
                 {Algo.ASTAR, 40, false, false},
-                // todo: CH does not handle finite u-turn costs so far, see #1652
-//                {Algo.CH_ASTAR, 40, true, false},
-//                {Algo.CH_DIJKSTRA, 40, true, false},
+                {Algo.CH_ASTAR, 40, true, false},
+                {Algo.CH_DIJKSTRA, 40, true, false},
                 // todo: yields warnings and fails, see #1665, 1687
 //                {Algo.LM, 40, false, true}
                 // todo: add AlternativeRoute ?
@@ -226,7 +225,7 @@ public class DirectedRoutingTest {
         }
         // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
         // however, when there are too many deviations we fail
-        if (strictViolations.size() > Math.max(1, 0.20 * numQueries)) {
+        if (strictViolations.size() > Math.max(1, 0.30 * numQueries)) {
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
         }
     }
