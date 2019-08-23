@@ -986,6 +986,58 @@ public class CHTurnCostTest {
         assertEquals(IntArrayList.from(1, 3, 0), path.calcNodes());
     }
 
+    @Test
+    public void testFiniteUTurnCost_virtualViaNode() {
+        // if there is an extra virtual node it can be possible to do a u-turn that otherwise would not be possible
+        // and so there can be a difference between CH and non-CH...
+        // todonow: not sure how to resolve this yet!
+        // 4->3->2->1-x-0
+        //          |
+        //          5->6
+        graph.edge(4, 3, 0, false);
+        graph.edge(3, 2, 0, false);
+        graph.edge(2, 1, 0, false);
+        graph.edge(1, 0, 0, true);
+        graph.edge(1, 5, 0, false);
+        graph.edge(5, 6, 0, false);
+        updateDistancesFor(graph, 4, 0.1, 0.0);
+        updateDistancesFor(graph, 3, 0.1, 0.1);
+        updateDistancesFor(graph, 2, 0.1, 0.2);
+        updateDistancesFor(graph, 1, 0.1, 0.3);
+        updateDistancesFor(graph, 0, 0.1, 0.4);
+        updateDistancesFor(graph, 5, 0.0, 0.3);
+        updateDistancesFor(graph, 6, 0.0, 0.4);
+        // not allowed to turn right at node 1 -> we have to take a u-turn at node 0 (or at the virtual node...)
+        addRestriction(2, 1, 5);
+        graph.freeze();
+        chGraph = graph.getCHGraph(CHProfile.edgeBased(weighting, 50));
+        RoutingAlgorithmFactory pch = prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
+        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        index.prepareIndex();
+        GHPoint virtualPoint = new GHPoint(0.1, 0.35);
+        QueryResult qr = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
+        QueryGraph chQueryGraph = new QueryGraph(chGraph);
+        chQueryGraph.lookup(Collections.singletonList(qr));
+        assertEquals(3, qr.getClosestEdge().getEdge());
+        RoutingAlgorithm chAlgo = pch.createAlgo(chQueryGraph, AlgorithmOptions.start()
+                .traversalMode(TraversalMode.EDGE_BASED)
+                .build());
+        Path path = chAlgo.calcPath(4, 6);
+        assertTrue(path.isFound());
+        assertEquals(IntArrayList.from(4, 3, 2, 1, 0, 1, 5, 6), path.calcNodes());
+
+        QueryResult qr2 = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = new QueryGraph(graph);
+        queryGraph.lookup(Collections.singletonList(qr2));
+        assertEquals(3, qr2.getClosestEdge().getEdge());
+        Dijkstra dijkstra = new Dijkstra(queryGraph, new TurnWeighting(weighting, turnCostExtension, chGraph.getCHProfile().getUTurnCosts()), TraversalMode.EDGE_BASED);
+        Path dijkstraPath = dijkstra.calcPath(4, 6);
+        // todonow: dijkstra does a u-turn at the virtual node...
+        assertEquals(IntArrayList.from(4, 3, 2, 1, 7, 1, 5, 6), dijkstraPath.calcNodes());
+        // todonow: this fails!
+        assertEquals(dijkstraPath.getWeight(), path.getWeight(), 1.e-3);
+    }
+
     /**
      * This test runs on a random graph with random turn costs and a predefined (but random) contraction order.
      * It often produces exotic conditions that are hard to anticipate beforehand.
