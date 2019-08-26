@@ -46,7 +46,7 @@ import static org.junit.Assert.fail;
  * This test simulates incoming lat/lon coordinates that get snapped to graph edges (using {@link QueryGraph}) and the
  * calculated directions are tested.
  *
- * @see DirectionResolverTest which test direction resolving on a normal graph only considering real nodes and edges
+ * @see DirectionResolverTest which tests direction resolving on a normal graph only considering real nodes and edges
  */
 public class DirectionResolverOnQueryGraphTest {
     private QueryGraph queryGraph;

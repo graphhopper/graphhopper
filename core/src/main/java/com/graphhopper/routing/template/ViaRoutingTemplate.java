@@ -196,8 +196,8 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         return 1;
     }
 
-    private static int getOutEdge(DirectionResolverResult directionResolverResult, String curbApproach) {
-        switch (curbApproach) {
+    private static int getOutEdge(DirectionResolverResult directionResolverResult, String curbSide) {
+        switch (curbSide) {
             case CURB_SIDE_RIGHT:
                 return directionResolverResult.getOutEdgeRight();
             case CURB_SIDE_LEFT:
@@ -205,12 +205,12 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             case CURB_SIDE_EITHER:
                 return ANY_EDGE;
             default:
-                throw new IllegalArgumentException("Unknown value for " + CURB_SIDE + " : " + curbApproach + ". allowed: " + CURB_SIDE_LEFT + ", " + CURB_SIDE_RIGHT + ", " + CURB_SIDE_EITHER);
+                throw new IllegalArgumentException("Unknown value for " + CURB_SIDE + " : " + curbSide + ". allowed: " + CURB_SIDE_LEFT + ", " + CURB_SIDE_RIGHT + ", " + CURB_SIDE_EITHER);
         }
     }
 
-    private static int getInEdge(DirectionResolverResult directionResolverResult, String curbApproach) {
-        switch (curbApproach) {
+    private static int getInEdge(DirectionResolverResult directionResolverResult, String curbSide) {
+        switch (curbSide) {
             case CURB_SIDE_RIGHT:
                 return directionResolverResult.getInEdgeRight();
             case CURB_SIDE_LEFT:
@@ -218,7 +218,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             case CURB_SIDE_EITHER:
                 return ANY_EDGE;
             default:
-                throw new IllegalArgumentException("Unknown value for " + CURB_SIDE + " : " + curbApproach + ". allowed: " + CURB_SIDE_LEFT + ", " + CURB_SIDE_RIGHT + ", " + CURB_SIDE_EITHER);
+                throw new IllegalArgumentException("Unknown value for " + CURB_SIDE + " : " + curbSide + ". allowed: " + CURB_SIDE_LEFT + ", " + CURB_SIDE_RIGHT + ", " + CURB_SIDE_EITHER);
         }
     }
 }
