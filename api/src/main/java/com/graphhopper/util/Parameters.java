@@ -114,6 +114,10 @@ public class Parameters {
          */
         public static final String PASS_THROUGH = "pass_through";
         public static final String POINT_HINT = "point_hint";
+        public static final String CURB_SIDE = "curb_side";
+        public static final String CURB_SIDE_LEFT = "left";
+        public static final String CURB_SIDE_RIGHT = "right";
+        public static final String CURB_SIDE_EITHER = "either";
         public static final String SNAP_PREVENTION = "snap_prevention";
         /**
          * default heading penalty in seconds

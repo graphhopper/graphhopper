@@ -35,7 +35,11 @@ import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+import static com.graphhopper.util.Parameters.Routing.*;
 
 /**
  * Implementation of calculating a route with multiple via points.
@@ -87,11 +91,21 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     }
 
     @Override
-    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
+    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts, FlagEncoder encoder) {
         long visitedNodesSum = 0L;
         boolean viaTurnPenalty = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
         int pointCounts = ghRequest.getPoints().size();
         pathList = new ArrayList<>(pointCounts - 1);
+
+        List<DirectionResolverResult> directions = Collections.emptyList();
+        if (!ghRequest.getCurbSides().isEmpty()) {
+            DirectionResolver directionResolver = new DirectionResolver(queryGraph, encoder);
+            directions = new ArrayList<>(queryResults.size());
+            for (QueryResult qr : queryResults) {
+                directions.add(directionResolver.resolveDirections(qr.getClosestNode(), qr.getQueryPoint()));
+            }
+        }
+
         QueryResult fromQResult = queryResults.get(0);
         StopWatch sw;
         for (int placeIndex = 1; placeIndex < pointCounts; placeIndex++) {
@@ -119,7 +133,20 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             sw = new StopWatch().start();
 
             // calculate paths
-            List<Path> tmpPathList = algo.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode());
+            List<Path> tmpPathList;
+            if (!directions.isEmpty()) {
+                assert ghRequest.getCurbSides().size() == directions.size();
+                if (!(algo instanceof AbstractBidirAlgo)) {
+                    throw new IllegalArgumentException("To make use of the " + Routing.CURB_SIDE + " parameter you need a bidirectional algorithm");
+                } else {
+                    int sourceOutEdge = getOutEdge(directions.get(placeIndex - 1), ghRequest.getCurbSides().get(placeIndex - 1));
+                    int targetInEdge = getInEdge(directions.get(placeIndex), ghRequest.getCurbSides().get(placeIndex));
+                    tmpPathList = Collections.singletonList(((AbstractBidirAlgo) algo)
+                            .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
+                }
+            } else {
+                tmpPathList = algo.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode());
+            }
             debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s";
             if (tmpPathList.isEmpty())
                 throw new IllegalStateException("At least one path has to be returned for " + fromQResult + " -> " + toQResult);
@@ -167,5 +194,31 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     @Override
     public int getMaxRetries() {
         return 1;
+    }
+
+    private static int getOutEdge(DirectionResolverResult directionResolverResult, String curbApproach) {
+        switch (curbApproach) {
+            case CURB_SIDE_RIGHT:
+                return directionResolverResult.getOutEdgeRight();
+            case CURB_SIDE_LEFT:
+                return directionResolverResult.getOutEdgeLeft();
+            case CURB_SIDE_EITHER:
+                return ANY_EDGE;
+            default:
+                throw new IllegalArgumentException("Unknown value for " + CURB_SIDE + " : " + curbApproach + ". allowed: " + CURB_SIDE_LEFT + ", " + CURB_SIDE_RIGHT + ", " + CURB_SIDE_EITHER);
+        }
+    }
+
+    private static int getInEdge(DirectionResolverResult directionResolverResult, String curbApproach) {
+        switch (curbApproach) {
+            case CURB_SIDE_RIGHT:
+                return directionResolverResult.getInEdgeRight();
+            case CURB_SIDE_LEFT:
+                return directionResolverResult.getInEdgeLeft();
+            case CURB_SIDE_EITHER:
+                return ANY_EDGE;
+            default:
+                throw new IllegalArgumentException("Unknown value for " + CURB_SIDE + " : " + curbApproach + ". allowed: " + CURB_SIDE_LEFT + ", " + CURB_SIDE_RIGHT + ", " + CURB_SIDE_EITHER);
+        }
     }
 }

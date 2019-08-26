@@ -67,6 +67,7 @@ import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.
 import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.OFF;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
+import static com.graphhopper.util.Parameters.Routing.CURB_SIDE;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -979,7 +980,15 @@ public class GraphHopper implements GraphHopperAPI {
             if (hints.has(Routing.EDGE_BASED))
                 tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
 
+            if (!tMode.isEdgeBased() && !request.getCurbSides().isEmpty()) {
+                throw new IllegalArgumentException("To make use of the " + CURB_SIDE + " parameter you need to set " + Routing.EDGE_BASED + " to true");
+            }
+
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
+
+            if (tMode.isEdgeBased() && !encoder.supports(TurnWeighting.class)) {
+                throw new IllegalArgumentException("Edge-based routing is not supported for vehicle: " + vehicle);
+            }
 
             boolean disableCH = hints.getBool(CH.DISABLE, false);
             if (!chFactoryDecorator.isDisablingAllowed() && disableCH)
@@ -1059,7 +1068,7 @@ public class GraphHopper implements GraphHopperAPI {
                         build();
 
                 // do the actual route calculation !
-                altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
+                altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts, encoder);
 
                 boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, getEncodingManager().isEnableInstructions());
                 boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);
