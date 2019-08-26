@@ -56,7 +56,6 @@ public class DirectionResolver {
     private final FlagEncoder encoder;
 
     public DirectionResolver(Graph graph, FlagEncoder encoder) {
-        // todonow: what if we want to use an edge filter ? maybe pass edge explorer and node access instead of graph ?
         edgeExplorer = graph.createEdgeExplorer();
         nodeAccess = graph.getNodeAccess();
         this.encoder = encoder;
