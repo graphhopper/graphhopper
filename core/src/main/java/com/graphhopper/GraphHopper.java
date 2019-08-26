@@ -986,10 +986,6 @@ public class GraphHopper implements GraphHopperAPI {
 
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
 
-            if (tMode.isEdgeBased() && !encoder.supports(TurnWeighting.class)) {
-                throw new IllegalArgumentException("Edge-based routing is not supported for vehicle: " + vehicle);
-            }
-
             boolean disableCH = hints.getBool(CH.DISABLE, false);
             if (!chFactoryDecorator.isDisablingAllowed() && disableCH)
                 throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
