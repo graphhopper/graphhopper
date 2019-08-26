@@ -610,7 +610,7 @@ public class GraphHopperIT {
 
         assertEquals(54, arsp.getPoints().size());
         assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 62.0), arsp.getPoints().get(0));
-        assertEquals(new GHPoint3D(43.727680946587874, 7.4191987684222065, 11.0), arsp.getPoints().get(arsp.getPoints().size()-1));
+        assertEquals(new GHPoint3D(43.727680946587874, 7.4191987684222065, 11.0), arsp.getPoints().get(arsp.getPoints().size() - 1));
 
         assertEquals(62, arsp.getPoints().get(0).getElevation(), 1e-2);
         assertEquals(66, arsp.getPoints().get(1).getElevation(), 1e-2);
@@ -1075,6 +1075,18 @@ public class GraphHopperIT {
         assertEquals(1044, rsp2.getBest().getDistance(), 1);
         // just a quick check that we did not run the same algorithm twice
         assertNotEquals(rsp1.getHints().get("visited_nodes.sum", "_"), rsp2.getHints().get("visited_nodes.sum", "_"));
+    }
+
+    @Test
+    public void testEdgeBasedRequiresTurnCostSupport() {
+        GHPoint p = new GHPoint(43.727687, 7.418737);
+        GHPoint q = new GHPoint(43.74958, 7.436566);
+        GHRequest req = new GHRequest(p, q);
+        req.getHints().put(Routing.EDGE_BASED, true);
+        req.setVehicle("foot");
+        GHResponse rsp = hopper.route(req);
+        assertTrue("using edge-based for encoder without turncost support should be an error, but got:\n" + rsp.getErrors(),
+                rsp.getErrors().toString().contains("You need a turn cost extension to make use of edge_based=true, e.g. use car|turn_costs=true"));
     }
 
     @Test
