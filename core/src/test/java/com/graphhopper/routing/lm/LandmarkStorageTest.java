@@ -26,7 +26,6 @@ import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -36,7 +35,8 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
@@ -62,64 +62,39 @@ public class LandmarkStorageTest {
     }
 
     @Test
-    public void testInfinitWeight() {
-        Directory dir = new RAMDirectory();
-        EdgeIteratorState edge = ghStorage.edge(0, 1);
-        int res = new LandmarkStorage(ghStorage, dir, new FastestWeighting(encoder) {
-            @Override
-            public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-                return Integer.MAX_VALUE * 2L;
-            }
-        }, 8).setMaximumWeight(LandmarkStorage.PRECISION).calcWeight(edge, false);
-        assertEquals(Integer.MAX_VALUE, res);
-
-        dir = new RAMDirectory();
-        res = new LandmarkStorage(ghStorage, dir, new FastestWeighting(encoder) {
-            @Override
-            public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-                return Double.POSITIVE_INFINITY;
-            }
-        }, 8).setMaximumWeight(LandmarkStorage.PRECISION).calcWeight(edge, false);
-        assertEquals(Integer.MAX_VALUE, res);
-    }
-
-    @Test
     public void testSetGetWeight() {
         ghStorage.edge(0, 1, 40, true);
         Directory dir = new RAMDirectory();
         DataAccess da = dir.find("landmarks_fastest_car_node");
         da.create(2000);
 
+        double maxWeight = 1 << 16;
         LandmarkStorage lms = new LandmarkStorage(ghStorage, dir, new FastestWeighting(encoder), 4).
-                setMaximumWeight(LandmarkStorage.PRECISION);
-        /* FROM_WEIGHT_BITS = 18
-        2^18 = 262144, use -1 for infinity and -2 for maximum
-        As the backward weight reaches a too high value it will use the maximum instead of 0 or infinity*/
-        lms.setWeight(0, 0, 16, Math.pow(2, 18), true);
-        assertEquals((int) Math.pow(2, 18) - 2, lms.getFromWeight(0, 0));
+                setMaximumWeight(maxWeight);
+        // FROM_WEIGHT_BITS = 18 => 2^18 = 262144, use 262144-1 for infinity and 262144-2 for maximum
+        // When the backward weight reaches a too high value it will use the maximum instead of 0 or infinity
+        lms.setWeight(0, 0, 16, Double.MAX_VALUE, true);
+        assertEquals(LandmarkStorage.FROM_WEIGHT_MAX, lms.getFromWeightInt(0, 0), 1);
         lms.setWeight(0, 0, 16, 999999, true);
-        assertEquals((int) Math.pow(2, 18) - 2, lms.getFromWeight(0, 0));
+        assertEquals(LandmarkStorage.FROM_WEIGHT_MAX, lms.getFromWeightInt(0, 0), 1);
 
-        /* FROM_WEIGHT_BITS = 18 --> remaining bits: 32-18 = 14
-        The delta value is signed and will therefore go from -2^(14-1) to 2^(14-1).
-        Now 2^13-1 is used for infinity, 2^13-2 as maximum and -2^13 as minimum.
-        If the difference between forward and backward weight is too large it will use
-        the maximum (if positive) or the minimum (if negative) instead of 0 or infinity
-        The delta will then be added to the backward weight*/
+        // FROM_WEIGHT_BITS = 18 --> remaining bits: 32-18 = 14
+        // The delta value is signed and will therefore go from -2^(14-1) to 2^(14-1).
+        // Now 2^13-1 is used for infinity, 2^13-2 as maximum and -2^13 as minimum.
+        // If the difference between forward and backward weight is too large it will use
+        // the maximum (if positive) or the minimum (if negative) instead of 0 or infinity
+        // The delta will then be added to the backward weight
         lms.setWeight(0, 0, 16, 999999, false);
-        assertEquals((int) (Math.pow(2, 18) - 2 + Math.pow(2, 13) - 2), lms.getToWeight(0, 0));
-        //                 {backward weight}   {delta weight}
+        assertEquals(1.0 / 5 * maxWeight + LandmarkStorage.FROM_WEIGHT_MAX * lms.getFromFactor(), lms.getToWeight(0, 0), 5);
         lms.setWeight(0, 0, 16, 1, false);
-        assertEquals((int) (Math.pow(2, 18) - 2 + -Math.pow(2, 13)), lms.getToWeight(0, 0));
-        //                 {backward weight}   {delta weight}
+        assertEquals(-1.0 / 5 * maxWeight + LandmarkStorage.FROM_WEIGHT_MAX * lms.getFromFactor(), lms.getToWeight(0, 0), 5);
 
         da.setInt(0, Integer.MAX_VALUE);
-        assertTrue(lms.isInfinity(0));
         // for infinity return much bigger value
-        // assertEquals(Integer.MAX_VALUE, lms.getFromWeight(0, 0));
+        assertTrue(Double.isInfinite(lms.getFromWeight(0, 0)));
 
         lms.setWeight(0, 0, 16, 999999, true);
-        assertFalse(lms.isInfinity(0));
+        assertEquals(LandmarkStorage.FROM_WEIGHT_MAX * lms.getFromFactor(), lms.getFromWeight(0, 0), .1);
     }
 
     @Test
@@ -135,8 +110,8 @@ public class LandmarkStorageTest {
         storage.setMinimumNodes(2);
         storage.createLandmarks();
         assertEquals(3, storage.getSubnetworksWithLandmarks());
-        assertEquals("[2, 0]", Arrays.toString(storage.getLandmarks(1)));
-        assertEquals("[6, 4]", Arrays.toString(storage.getLandmarks(2)));
+        assertEquals("[5, 4]", Arrays.toString(storage.getLandmarks(1)));
+        assertEquals("[2, 0]", Arrays.toString(storage.getLandmarks(2)));
     }
 
     @Test
@@ -171,8 +146,9 @@ public class LandmarkStorageTest {
         storage.setMinimumNodes(2);
         storage.createLandmarks();
 
-        assertEquals(2, storage.getSubnetworksWithLandmarks());
-        assertEquals("[4, 0]", Arrays.toString(storage.getLandmarks(1)));
+        assertEquals(3, storage.getSubnetworksWithLandmarks());
+        assertEquals("[1, 0]", Arrays.toString(storage.getLandmarks(1)));
+        assertEquals("[5, 4]", Arrays.toString(storage.getLandmarks(2)));
     }
 
     @Test
@@ -251,7 +227,7 @@ public class LandmarkStorageTest {
 
     @Test
     public void testDelta() {
-        int distance = 1000000;
+        int distance = 100000;
 
         ghStorage.edge(1, 2, distance, false);
         ghStorage.edge(2, 3, distance, false);
@@ -277,23 +253,30 @@ public class LandmarkStorageTest {
         assertEquals(15, storage.getLandmarks(1)[0]);
         assertEquals(9, storage.getLandmarks(1)[1]);
 
-        assertEquals(35680, storage.getFromWeight(0, 1));
-        assertEquals(40777, storage.getToWeight(0, 1));
-        assertEquals(71361, storage.getFromWeight(0, 9));
-        assertEquals(66264, storage.getToWeight(0, 9));
-        assertEquals(15291, storage.getFromWeight(0, 12));
-        assertEquals(15291, storage.getToWeight(0, 12));
-        assertEquals(40777, storage.getFromWeight(1, 1));
-        assertEquals(35680, storage.getToWeight(1, 1));
-        assertEquals(50972, storage.getFromWeight(1, 12));
-        assertEquals(56069, storage.getToWeight(1, 12));
-        assertEquals(66264, storage.getFromWeight(1, 15));
-        assertEquals(71361, storage.getToWeight(1, 15));
+        // test storing and fetching
+        storage.setWeight(0, 10, storage.LM_ROW_LENGTH, 70000, true);
+        assertEquals(70000, storage.getFromWeight(0, 10), 2);
+        storage.setWeight(0, 10, storage.LM_ROW_LENGTH, 60000, false);
+        assertEquals(60000, storage.getToWeight(0, 10), 20);
+
+        // test what was set in createLandmarks
+        assertEquals(42000, storage.getFromWeight(0, 1), 2);
+        assertEquals(48000, storage.getToWeight(0, 1), 10);
+        assertEquals(84000, storage.getFromWeight(0, 9), 2);
+        assertEquals(78000, storage.getToWeight(0, 9), 10);
+        assertEquals(18000, storage.getFromWeight(0, 12), 2);
+        assertEquals(18000, storage.getToWeight(0, 12), 10);
+        assertEquals(48000, storage.getFromWeight(1, 1), 2);
+        assertEquals(42000, storage.getToWeight(1, 1), 10);
+        assertEquals(60000, storage.getFromWeight(1, 12), 2);
+        assertEquals(66000, storage.getToWeight(1, 12), 10);
+        assertEquals(78000, storage.getFromWeight(1, 15), 2);
+        assertEquals(84000, storage.getToWeight(1, 15), 10);
     }
 
     @Test
     public void testDeltaWarning() {
-        int distance = 1000000;
+        int distance = 100000;
 
         ghStorage.edge(1, 2, distance, false);
         ghStorage.edge(2, 3, distance, false);
@@ -316,7 +299,7 @@ public class LandmarkStorageTest {
         assertEquals(12, storage.getLandmarks(1)[0]);
         assertEquals(9, storage.getLandmarks(1)[1]);
 
-        assertEquals((int) Math.pow(2, 13) - 2, storage.getToWeight(0, 9) - storage.getFromWeight(0, 9));
-        assertEquals((int) -Math.pow(2, 13), storage.getToWeight(1, 12) - storage.getFromWeight(1, 12));
+        assertEquals(24000, storage.getToWeight(0, 9) - storage.getFromWeight(0, 9), 1);
+        assertEquals(-24000, storage.getToWeight(1, 12) - storage.getFromWeight(1, 12), 1);
     }
 }

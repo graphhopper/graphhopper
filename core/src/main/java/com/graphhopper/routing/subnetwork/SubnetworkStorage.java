@@ -43,7 +43,6 @@ public class SubnetworkStorage implements Storable<SubnetworkStorage> {
     public int getSubnetwork(int nodeId) {
         byte[] bytes = new byte[1];
         da.getBytes(nodeId, bytes, bytes.length);
-
         return (int) bytes[0];
     }
 

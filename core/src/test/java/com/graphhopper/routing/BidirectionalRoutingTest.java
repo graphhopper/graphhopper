@@ -2,7 +2,6 @@ package com.graphhopper.routing;
 
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
-import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -55,11 +54,10 @@ public class BidirectionalRoutingTest {
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> params() {
-        // todonow: run node & edge-based ?
         return Arrays.asList(new Object[][]{
-                {Algo.ASTAR, false, false},
-                {Algo.CH_ASTAR, true, false},
-                {Algo.CH_DIJKSTRA, true, false},
+//                {Algo.ASTAR, false, false},
+//                {Algo.CH_ASTAR, true, false},
+//                {Algo.CH_DIJKSTRA, true, false},
                 {Algo.LM, false, true}
         });
     }
@@ -80,7 +78,6 @@ public class BidirectionalRoutingTest {
     @Before
     public void init() {
         dir = new RAMDirectory();
-        // todonow: make this work with speed_both_directions=true!
         encoder = new CarFlagEncoder(5, 5, 0);
         encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
@@ -98,8 +95,8 @@ public class BidirectionalRoutingTest {
             pch.doWork();
         }
         if (prepareLM) {
-            lm = new PrepareLandmarks(dir, graph, weighting, 16, 8);
-            lm.setMaximumWeight(1000);
+            lm = new PrepareLandmarks(dir, graph, weighting, Math.min(16, graph.getNodes()), Math.min(8, graph.getNodes()));
+            lm.setMaximumWeight(10000);
             lm.doWork();
         }
     }
@@ -125,12 +122,12 @@ public class BidirectionalRoutingTest {
     }
 
     @Test
-    public void lm_problem_to_node_of_fallback_approximator() {
+    public void lm_small_subnetworks_should_never_get_landmarks() {
         Assume.assumeTrue(algo.equals(Algo.LM));
-        // todonow: this test fails, because when the distance is approximated for the start node 0 the LMApproximator
-        // uses the fall back approximator for which the to node is never set. This in turn means that the to coordinates
-        // are zero and a way too large approximation is returned. Eventually the best path is not updated correctly
-        // because the spt entry of the fwd search already has a way too large weight.
+
+        // A special subnetwork. Now the routing between 0 and 3 should result in the fallback approximation as the
+        // landmarks are expected in the bigger subnetwork only. If a landmark would be created e.g. on node 0 then
+        // all "from estimates" in the bigger subnetwork would be infinity leading to mostly maxed out weights for this LM.
 
         //   ---<---
         //   |     |
@@ -157,79 +154,60 @@ public class BidirectionalRoutingTest {
         graph.edge(1, 4, 1000, true).set(speedEnc, 45);
         preProcessGraph();
 
-        int source = 0;
-        int target = 3;
-
-        // only for analysis, build the same approximator and print approximations
-//        LMApproximator approx = new LMApproximator(graph, graph.getNodes(), lm.getLandmarkStorage(), 8, lm.getLandmarkStorage().getFactor(), false);
-//        ConsistentWeightApproximator approximator = new ConsistentWeightApproximator(approx);
-//        approximator.setFrom(source);
-//        approximator.setTo(target);
-//        for (int i = 0; i < graph.getNodes(); i++) {
-//            System.out.println("approx " + i + " fwd -> " + approximator.approximate(i, true));
-//            System.out.println("approx " + i + " bwd -> " + approximator.approximate(i, false));
-//        }
-
+        int source = 0, target = 3;
         Path refPath = new DijkstraBidirectionRef(graph, weighting, TraversalMode.NODE_BASED)
                 .calcPath(source, target);
         Path path = createAlgo()
-                .calcPath(0, 3);
+                .calcPath(source, target);
         comparePaths(refPath, path, source, target);
     }
 
     @Test
-    public void lm_issue2() {
-        // todonow: why does this one fail ?
-
-        //                    ---
-        //                  /     \
-        // 0 - 1 - 5 - 6 - 9 - 4 - 0
-        //          \     /
-        //            ->-
-        NodeAccess na = graph.getNodeAccess();
+    public void test_pick_correct_delta_factor() {
+        //  8-6
+        //  |  \  1
+        //  4   9 |\
+        //  |   ^ | |
+        //  |   |/  |
+        //  0<--5  /
+        //   \----/
+        NodeAccess nodeAccess = graph.getNodeAccess();
+        nodeAccess.setNode(0, 49.40120, 9.70377);
+        nodeAccess.setNode(1, 49.40570, 9.70932);
+        nodeAccess.setNode(4, 49.40423, 9.70189);
+        nodeAccess.setNode(5, 49.40040, 9.70676);
+        nodeAccess.setNode(6, 49.40638, 9.70688);
+        nodeAccess.setNode(8, 49.40717, 9.70089);
+        nodeAccess.setNode(9, 49.40339, 9.70914);
         DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        na.setNode(0, 49.406987, 9.709767);
-        na.setNode(1, 49.403612, 9.702953);
-        na.setNode(2, 49.409755, 9.706517);
-        na.setNode(3, 49.409021, 9.708649);
-        na.setNode(4, 49.400674, 9.700906);
-        na.setNode(5, 49.408735, 9.709486);
-        na.setNode(6, 49.406402, 9.700937);
-        na.setNode(7, 49.406965, 9.702660);
-        na.setNode(8, 49.405227, 9.702863);
-        na.setNode(9, 49.409411, 9.709085);
-        graph.edge(0, 1, 623.197000, true).set(speedEnc, 112);
-        graph.edge(5, 1, 741.414000, true).set(speedEnc, 13);
-        graph.edge(9, 4, 1140.835000, true).set(speedEnc, 35);
-        graph.edge(5, 6, 670.689000, true).set(speedEnc, 18);
-        graph.edge(5, 9, 80.731000, false).set(speedEnc, 88);
-        graph.edge(0, 9, 273.948000, true).set(speedEnc, 82);
-        graph.edge(4, 0, 956.552000, true).set(speedEnc, 60);
+        graph.edge(4, 8, 336, true).set(speedEnc, 128);
+        graph.edge(5, 9, 376, false).set(speedEnc, 11);
+        graph.edge(5, 1, 622, true).set(speedEnc, 98);
+        graph.edge(9, 6, 371, true).set(speedEnc, 55);
+        graph.edge(0, 1, 642, true).set(speedEnc, 12);
+        graph.edge(4, 0, 367, true).set(speedEnc, 122);
+        graph.edge(8, 6, 445, true).set(speedEnc, 100);
+        graph.edge(5, 0, 234, false).set(speedEnc, 29);
         preProcessGraph();
-        int source = 5;
-        int target = 4;
-        Path refPath = new DijkstraBidirectionRef(graph, weighting, TraversalMode.NODE_BASED)
-                .calcPath(source, target);
-        Path path = createAlgo()
-                .calcPath(source, target);
+        int source = 5, target = 9;
+        Path refPath = new DijkstraBidirectionRef(graph, weighting, TraversalMode.NODE_BASED).calcPath(source, target);
+        Path path = createAlgo().calcPath(source, target);
         comparePaths(refPath, path, source, target);
     }
 
     @Test
-    @Repeat(times = 10)
+    @Repeat(times = 5)
     public void randomGraph() {
         final long seed = System.nanoTime();
         System.out.println("random Graph seed: " + seed);
         final int numQueries = 50;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
-//        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
             int source = getRandom(rnd);
             int target = getRandom(rnd);
-//            System.out.println("source: " + source + ", target: " + target);
             Path refPath = new DijkstraBidirectionRef(graph, weighting, TraversalMode.NODE_BASED)
                     .calcPath(source, target);
             Path path = createAlgo()
@@ -248,7 +226,7 @@ public class BidirectionalRoutingTest {
      * Similar to {@link #randomGraph()}, but using the {@link QueryGraph} as it is done in real usage.
      */
     @Test
-    @Repeat(times = 10)
+    @Repeat(times = 5)
     public void randomGraph_withQueryGraph() {
         final long seed = System.nanoTime();
         System.out.println("randomGraph_withQueryGraph seed: " + seed);
@@ -259,7 +237,6 @@ public class BidirectionalRoutingTest {
         double pOffset = 0;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, pOffset);
-//        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         LocationIndexTree index = new LocationIndexTree(graph, dir);
         index.prepareIndex();
@@ -349,5 +326,4 @@ public class BidirectionalRoutingTest {
     private int getRandom(Random rnd) {
         return rnd.nextInt(graph.getNodes());
     }
-
 }

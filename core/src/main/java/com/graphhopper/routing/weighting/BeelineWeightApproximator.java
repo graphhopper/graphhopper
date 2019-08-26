@@ -31,7 +31,7 @@ public class BeelineWeightApproximator implements WeightApproximator {
     private final NodeAccess nodeAccess;
     private final Weighting weighting;
     private DistanceCalc distanceCalc = Helper.DIST_EARTH;
-    private double toLat, toLon;
+    private double toLat = Double.NaN, toLon = Double.NaN;
     private double epsilon = 1;
 
     public BeelineWeightApproximator(NodeAccess nodeAccess, Weighting weighting) {
@@ -57,6 +57,9 @@ public class BeelineWeightApproximator implements WeightApproximator {
 
     @Override
     public double approximate(int fromNode) {
+        if (Double.isNaN(toLat))
+            throw new IllegalArgumentException("Destination coordinates were not initialized. setTo needs to be called");
+
         double fromLat = nodeAccess.getLatitude(fromNode);
         double fromLon = nodeAccess.getLongitude(fromNode);
         double dist2goal = distanceCalc.calcDist(toLat, toLon, fromLat, fromLon);

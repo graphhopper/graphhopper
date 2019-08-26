@@ -51,15 +51,13 @@ public class ConsistentWeightApproximator {
     }
 
     public double approximate(int node, boolean reverse) {
-        // todonow: revert
-        double a = uniDirApproximatorForward.approximate(node);
-        double b = uniDirApproximatorReverse.approximate(node);
-        double weightApproximation = 0.5 * (a - b);
-
-        if (reverse)
-            return -weightApproximation;
-
-        return weightApproximation;
+        double weightApproximation = 0.5 * (uniDirApproximatorForward.approximate(node) - uniDirApproximatorReverse.approximate(node));
+//        if (reverse && weightApproximation > 0.1 || !reverse && weightApproximation < -0.1)
+//            throw new IllegalStateException("weight approximation cannot be negative. Details LM: reverse:" + reverse
+//                    + ", weightApproximation:" + weightApproximation + ", node:" + node
+//                    + ", fwd approx:" + uniDirApproximatorForward.approximate(node)
+//                    + ", bwd approx:" + uniDirApproximatorReverse.approximate(node));
+        return reverse ? -weightApproximation : weightApproximation;
     }
 
     @Override

@@ -170,9 +170,9 @@ public class GHUtility {
     public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree, boolean allowLoops,
                                         boolean allowZeroDistance, DecimalEncodedValue randomSpeedEnc,
                                         double pNonZeroLoop, double pBothDir, double pRandomOffset) {
-        if (numNodes < 2 || meanDegree < 1) {
+        if (numNodes < 2 || meanDegree < 1)
             throw new IllegalArgumentException("numNodes must be >= 2, meanDegree >= 1");
-        }
+
         for (int i = 0; i < numNodes; ++i) {
             double lat = 49.4 + (random.nextDouble() * 0.01);
             double lon = 9.7 + (random.nextDouble() * 0.01);
@@ -208,12 +208,8 @@ public class GHUtility {
             double bwdSpeed = 10 + random.nextDouble() * 120;
             if (randomSpeedEnc != null) {
                 edge.set(randomSpeedEnc, fwdSpeed);
-                // todonow: revert
-                System.out.println("edge.set(speedEnc, " + fwdSpeed + ");");
                 if (randomSpeedEnc.isStoreTwoDirections()) {
                     edge.setReverse(randomSpeedEnc, bwdSpeed);
-                    // todonow: revert
-                    System.out.println("edge.setReverse(speedEnc, " + bwdSpeed + ");");
                 }
             }
             numEdges++;

@@ -55,18 +55,35 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class LandmarkStorage implements Storable<LandmarkStorage> {
     private static final Logger LOGGER = LoggerFactory.getLogger(LandmarkStorage.class);
-    // This value is used to identify nodes where no subnetwork is associated
+    // This value is used to identify nodes where no subnetwork is associated (yet)
     private static final int UNSET_SUBNETWORK = -1;
     // This value should only be used if subnetwork is too small to be explicitly stored
     private static final int UNCLEAR_SUBNETWORK = 0;
+    // This value sets the amount of bits used to store the forward weight.
+    // The rest of overall 32 bits stores the delta (difference between forward and backward weight)
+    private static final int FROM_WEIGHT_BITS = 18;
+    // The delta is signed: 32-x-1
+    private static final int DELTA_BITS = 31 - FROM_WEIGHT_BITS;
+    private static final double DOUBLE_MLTPL = 1e8;
+    // The forward weight is unsigned: 2^x - 1
+    private static final int FROM_WEIGHT_INFINITY = (1 << FROM_WEIGHT_BITS) - 1;
+    // This value will be used if the forward weight is too large. The difference to from_weight_infinity is important
+    // to avoid overestimating the distance
+    static final int FROM_WEIGHT_MAX = FROM_WEIGHT_INFINITY - 1;
+    private static final int DELTA_INFINITY = (1 << DELTA_BITS) - 1;
+    // This value will be used if the delta is too large and forward > backward
+    private static final int DELTA_MAX = DELTA_INFINITY - 1;
+    // This value will be used if the delta is too large and forward < backward
+    private static final int DELTA_MIN = -DELTA_INFINITY - 1;
+
     // one node has an associated landmark information ('one landmark row'): the forward and backward weight
-    private long LM_ROW_LENGTH;
+    long LM_ROW_LENGTH;
     private int landmarks;
     private final DataAccess landmarkWeightDA;
     /* every subnetwork has its own landmark mapping but the count of landmarks is always the same */
     private final List<int[]> landmarkIDs;
-    private double factor = -1;
-    private final static double DOUBLE_MLTPL = 1e6;
+    private double fromFactor = -1;
+    private double deltaFactor = -1;
     private final GraphHopperStorage graph;
     private final FlagEncoder encoder;
     private final Weighting weighting;
@@ -106,18 +123,18 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // Edge based is not really necessary because when adding turn costs while routing we can still
         // use the node based traversal as this is a smaller weight approximation and will still produce correct results
         this.traversalMode = TraversalMode.NODE_BASED;
-        final String name = AbstractWeighting.weightingToFileName(weighting, false);
-        this.landmarkWeightDA = dir.find("landmarks_" + name);
+        String name = "landmarks_" + AbstractWeighting.weightingToFileName(weighting, false);
+        this.landmarkWeightDA = dir.find(name);
 
         this.landmarks = landmarks;
-        // one short per landmark and two directions => 2*2 byte
+        // use 4 bytes per landmark to store forward value and the delta (to backward)
         this.LM_ROW_LENGTH = landmarks * 4;
         this.landmarkIDs = new ArrayList<>();
-        this.subnetworkStorage = new SubnetworkStorage(dir, "landmarks_" + name);
+        this.subnetworkStorage = new SubnetworkStorage(dir, name);
     }
 
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     /**
@@ -131,9 +148,13 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      */
     public LandmarkStorage setMaximumWeight(double maxWeight) {
         if (maxWeight > 0) {
-            this.factor = maxWeight / PRECISION;
-            if (Double.isInfinite(factor) || Double.isNaN(factor))
-                throw new IllegalStateException("Illegal factor " + factor + " calculated from maximum weight " + maxWeight);
+            fromFactor = maxWeight / FROM_WEIGHT_MAX;
+            if (Double.isInfinite(fromFactor) || Double.isNaN(fromFactor))
+                throw new IllegalStateException("Illegal from factor " + fromFactor + " calculated from maximum weight " + maxWeight);
+            // guess maximum difference (approx. 20%)
+            deltaFactor = maxWeight / 5 / DELTA_MAX;
+            if (Double.isInfinite(deltaFactor) || Double.isNaN(deltaFactor))
+                throw new IllegalStateException("Illegal delta factor " + deltaFactor + " calculated from maximum weight " + maxWeight);
         }
         return this;
     }
@@ -172,10 +193,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         return minimumNodes;
     }
 
-    SubnetworkStorage getSubnetworkStorage() {
-        return subnetworkStorage;
-    }
-
     /**
      * This weighting is used for the selection heuristic and is per default not the weighting specified in the contructor.
      * The special weighting leads to a much better distribution of the landmarks and results in better response times.
@@ -199,6 +216,11 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         return initialized;
     }
 
+    // for tests only
+    double getFromFactor() {
+        return fromFactor;
+    }
+
     /**
      * This method calculates the landmarks and initial weightings to & from them.
      */
@@ -212,12 +234,12 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         this.landmarkWeightDA.ensureCapacity(maxBytes);
 
         for (long pointer = 0; pointer < maxBytes; pointer += 4) {
-            landmarkWeightDA.setInt(pointer, (DELTA_INF << FROM_WEIGHT_BITS) | FROM_WEIGHT_INF);
+            landmarkWeightDA.setInt(pointer, (DELTA_INFINITY << FROM_WEIGHT_BITS) | FROM_WEIGHT_INFINITY);
         }
 
         String additionalInfo = "";
         // guess the factor
-        if (factor <= 0) {
+        if (fromFactor <= 0) {
             // A 'factor' is necessary to store the weight in just a short value but without loosing too much precision.
             // This factor is rather delicate to pick, we estimate it through the graph boundaries its maximum distance.
             // For small areas we use max_bounds_dist*X and otherwise we use a big fixed value for this distance.
@@ -235,7 +257,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         }
 
         if (logDetails)
-            LOGGER.info("init landmarks for subnetworks with node count greater than " + minimumNodes + " with factor:" + factor + additionalInfo);
+            LOGGER.info("init landmarks for subnetworks with node count greater than " + minimumNodes
+                    + " with factor:" + fromFactor + ", delta factor " + deltaFactor + additionalInfo);
 
         int[] empty = new int[landmarks];
         Arrays.fill(empty, UNSET_SUBNETWORK);
@@ -265,20 +288,29 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         if (logDetails)
             LOGGER.info("Calculated " + graphComponents.size() + " subnetworks via tarjan in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
 
-        EdgeExplorer tmpExplorer = graph.createEdgeExplorer(new RequireBothDirectionsEdgeFilter(encoder));
+        EdgeExplorer requireBothDirectionExplorer = graph.createEdgeExplorer(new RequireBothDirectionsEdgeFilter(encoder));
+
+        // sort graphComponents by size to mark small subnetworks as "unclear" subnetworks
+        Collections.sort(graphComponents, SORT_BY_SIZE);
 
         int nodes = 0;
         for (IntArrayList subnetworkIds : graphComponents) {
             nodes += subnetworkIds.size();
-            if (subnetworkIds.size() < minimumNodes)
+            if (subnetworkIds.size() < minimumNodes) {
+                // mark the skipped nodes as MAX that cannot be overwritten from explorers bleeding into these subnetworks
+                for (int i = 0; i < subnetworkIds.size(); i++) {
+                    int node = subnetworkIds.get(i);
+                    subnetworks[node] = UNCLEAR_SUBNETWORK;
+                }
                 continue;
+            }
 
             int index = subnetworkIds.size() - 1;
             // ensure start node is reachable from both sides and no subnetwork is associated
             for (; index >= 0; index--) {
                 int nextStartNode = subnetworkIds.get(index);
                 if (subnetworks[nextStartNode] == UNSET_SUBNETWORK
-                        && GHUtility.count(tmpExplorer.setBaseNode(nextStartNode)) > 0) {
+                        && GHUtility.count(requireBothDirectionExplorer.setBaseNode(nextStartNode)) > 0) {
 
                     GHPoint p = createPoint(graph, nextStartNode);
                     if (logDetails)
@@ -310,10 +342,11 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         landmarkWeightDA.setHeader(0 * 4, getVersion());
         landmarkWeightDA.setHeader(1 * 4, landmarks);
         landmarkWeightDA.setHeader(2 * 4, subnetworkCount);
-        if (factor * DOUBLE_MLTPL > Integer.MAX_VALUE)
-            throw new UnsupportedOperationException("landmark weight factor cannot be bigger than Integer.MAX_VALUE " + factor * DOUBLE_MLTPL);
-        landmarkWeightDA.setHeader(3 * 4, (int) Math.round(factor * DOUBLE_MLTPL));
-        landmarkWeightDA.setHeader(4 * 4, graph.getNodes());
+        if (fromFactor * DOUBLE_MLTPL > Integer.MAX_VALUE)
+            throw new UnsupportedOperationException("landmark weight from factor " + fromFactor * DOUBLE_MLTPL + " cannot be bigger than Integer.MAX_VALUE");
+        landmarkWeightDA.setHeader(3 * 4, (int) Math.round(fromFactor * DOUBLE_MLTPL));
+        landmarkWeightDA.setHeader(4 * 4, (int) Math.round(deltaFactor * DOUBLE_MLTPL));
+        landmarkWeightDA.setHeader(5 * 4, graph.getNodes());
 
         // serialize fast byte[] into DataAccess
         subnetworkStorage.create(graph.getNodes());
@@ -324,6 +357,21 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         if (logDetails)
             LOGGER.info("Finished landmark creation. Subnetwork node count sum " + nodes + " vs. nodes " + graph.getNodes());
         initialized = true;
+
+//        int counter = 0;
+//        for (int n = 0; n < graph.getNodes(); n++) {
+//            // int sn = subnetworkStorage.getSubnetwork(n);
+//            for (int lmIdx = 0; lmIdx < landmarks; lmIdx++) {
+//                double fromW = getFromWeight(lmIdx, n);
+//                double toW = getToWeight(lmIdx, n);
+//                if (Double.isInfinite(toW) || Double.isInfinite(fromW) || getFromWeightInt(lmIdx, n) == FROM_WEIGHT_MAX) {
+////                    System.out.println(n + ", coord:" + graph.getNodeAccess().getLat(n) + "," + graph.getNodeAccess().getLon(n)
+////                            + ", from:" + fromW + ", to:" + toW + ", lm idx:" + lmIdx + ", sn:" + subnetworkStorage.getSubnetwork(n));
+//                    counter++;
+//                }
+//            }
+//        }
+//        System.out.println("TODO remove me: " + graph.getNodes() + ", counter:" + counter);
     }
 
     /**
@@ -367,7 +415,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             Weighting initWeighting = lmSelectionWeighting;
             LandmarkExplorer explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, true);
             explorer.setStartNode(startNode);
-            explorer.setFilter(blockedEdges, true, true);
+            explorer.setFilter(blockedEdges, subnetworks, true, true);
             explorer.runAlgo();
 
             if (explorer.getFromCount() < minimumNodes) {
@@ -376,6 +424,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 return false;
             }
 
+            if (tmpLandmarkNodeIds.length < 2)
+                throw new IllegalStateException("More than 1 landmark required");
+
             // 1b) we have one landmark, now determine the other landmarks
             tmpLandmarkNodeIds[0] = explorer.getLastNode();
             for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length - 1; lmIdx++) {
@@ -383,7 +434,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                     throw new RuntimeException("Thread was interrupted");
                 }
                 explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode, true);
-                explorer.setFilter(blockedEdges, true, true);
+                explorer.setFilter(blockedEdges, subnetworks, true, true);
                 // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
                 for (int j = 0; j < lmIdx + 1; j++) {
                     explorer.setStartNode(tmpLandmarkNodeIds[j]);
@@ -407,7 +458,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             int lmNodeId = tmpLandmarkNodeIds[lmIdx];
             LandmarkExplorer explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, true);
             explorer.setStartNode(lmNodeId);
-            explorer.setFilter(blockedEdges, true, false);
+            explorer.setFilter(blockedEdges, subnetworks, true, false);
             explorer.runAlgo();
             explorer.initLandmarkWeights(lmIdx, lmNodeId, LM_ROW_LENGTH);
 
@@ -419,7 +470,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
             explorer = new LandmarkExplorer(graph, this, weighting, traversalMode, false);
             explorer.setStartNode(lmNodeId);
-            explorer.setFilter(blockedEdges, false, true);
+            explorer.setFilter(blockedEdges, subnetworks, false, true);
             explorer.runAlgo();
             explorer.initLandmarkWeights(lmIdx, lmNodeId, LM_ROW_LENGTH);
 
@@ -433,7 +484,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                         + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%");
         }
 
-        // TODO set weight to SHORT_MAX if entry has either no 'from' or no 'to' entry
         landmarkIDs.add(tmpLandmarkNodeIds);
         return true;
     }
@@ -468,123 +518,87 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     }
 
     /**
-     * The factor is used to convert double values into more compact int values.
-     */
-    // todonow: revert
-    public double getFactor() {
-        return factor;
-    }
-
-    /**
      * @return the weight from the landmark to the specified node. Where the landmark integer is not
      * a node ID but the internal index of the landmark array.
      */
-    int getFromWeight(int landmarkIndex, int node) {
+    int getFromWeightInt(int landmarkIndex, int node) {
         //only the right bits of this integer store the backward value
-        int res = landmarkWeightDA.getInt((long) node * LM_ROW_LENGTH + landmarkIndex * 4) & FROM_WEIGHT_INF;
+        return landmarkWeightDA.getInt(node * LM_ROW_LENGTH + landmarkIndex * 4) & FROM_WEIGHT_INFINITY;
+    }
 
-        if (res == FROM_WEIGHT_INF)
-            return Integer.MAX_VALUE;
-        // throw new IllegalStateException("Do not call getFromWeight for wrong landmark[" + landmarkIndex + "]=" + landmarkIDs[landmarkIndex] + " and node " + node);
+    double getFromWeight(int landmarkIndex, int node) {
+        int res = getFromWeightInt(landmarkIndex, node);
+        if (res == FROM_WEIGHT_INFINITY)
+            return Double.POSITIVE_INFINITY;
 
-        assert res >= 0 : "Negative backward weight " + res + ", landmark index:" + landmarkIndex + ", node:" + node;
-        return res;
+        double tmp = res * fromFactor;
+        assert tmp >= 0 : "Negative from weight " + tmp + ", landmark index:" + landmarkIndex + ", node:" + node;
+        return tmp;
     }
 
     /**
      * @return the weight from the specified node to the landmark (specified *as index*)
      */
-    int getToWeight(int landmarkIndex, int node) {
+    double getToWeight(int landmarkIndex, int node) {
         int res = landmarkWeightDA.getInt((long) node * LM_ROW_LENGTH + landmarkIndex * 4);
 
-        //the left bits of "res" store the difference between forward and backward value
+        // the remaining bits of "res" store the delta
         int delta = res >> FROM_WEIGHT_BITS;
+        if (delta == DELTA_INFINITY)
+            return Double.POSITIVE_INFINITY;
 
-        if (delta == DELTA_INF)
-            return Integer.MAX_VALUE;
-        // throw new IllegalStateException("Do not call getToWeight for wrong landmark[" + landmarkIndex + "]=" + landmarkIDs[landmarkIndex] + " and node " + node);
+        int from = res & FROM_WEIGHT_INFINITY;
+        if (from == FROM_WEIGHT_INFINITY)
+            // try best to still use delta
+            from = FROM_WEIGHT_MAX;
 
-        //the right bits of "res" store the backward value
-        int from = res & FROM_WEIGHT_INF;
-
-        if (from == FROM_WEIGHT_INF) {
-            from = DELTA_INF + 1;
-        }
-
-        //to get the forward value you have to add the backward to the delta value
-        res = from + delta;
-
-        assert res >= 0 : "Negative forward weight " + res + ", landmark index:" + landmarkIndex + ", node:" + node;
-        return res;
+        double tmp = from * fromFactor + delta * deltaFactor;
+        assert tmp >= 0 : "Negative delta weight " + tmp + ", landmark index:" + landmarkIndex + ", node:" + node;
+        return tmp;
     }
-
-    // 'to' and 'from' fit into 32 bit => 16 bit for each of them => 65536
-    static final long PRECISION = 1 << 16;
-    /* This value sets the amount of bits used to store the backward weight.
-    The rest of overall 32 bits stores the difference between forward and backward weight*/
-    private static final int FROM_WEIGHT_BITS = 18;
-    // The backward weight is unsigned --> 2^x - 1
-    private static final int FROM_WEIGHT_INF = (int) Math.pow(2, FROM_WEIGHT_BITS) - 1;
-    // This value will be used if the backward weight is too large
-    private static final int FROM_WEIGHT_MAX = FROM_WEIGHT_INF - 1;
-    /* The difference between forward and backward weight is signed
-    --> 2^(31-x) - 1 instead of 2^(32-x) - 1*/
-    private static final int DELTA_INF = (int) Math.pow(2, 31 - FROM_WEIGHT_BITS) - 1;
-    // This value will be used if the difference between these weights is too large and forward > backward
-    private static final int DELTA_MAX = DELTA_INF - 1;
-    // This value will be used if the difference between these weights is too large and forward < backward
-    private static final int DELTA_MIN = -DELTA_INF - 1;
 
     /**
      * @return false if the value capacity was reached and instead of the real value the MAX was stored.
      */
     final boolean setWeight(int lmIdx, int nodeId, long rowSize, double value, boolean from) {
-        double tmpVal = value / factor;
-        if (tmpVal > Integer.MAX_VALUE)
-            throw new UnsupportedOperationException("Cannot store infinity explicitly, landmark: " + lmIdx + ", node: " + nodeId + ", value: " + value);
+        if (Double.isInfinite(value))
+            throw new UnsupportedOperationException("Cannot store 'infinity' explicitly, landmark: " + lmIdx + ", node: " + nodeId + ", value: " + value);
 
         if (from) {
-            if (tmpVal >= FROM_WEIGHT_MAX) {
-                landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, (DELTA_INF << FROM_WEIGHT_BITS) | FROM_WEIGHT_MAX);
+            double fromVal = value / fromFactor;
+            // this part assumes delta is uninitialized, i.e. from==true is executed first
+            if (fromVal >= FROM_WEIGHT_MAX) {
+                int fromValInt = fromVal == FROM_WEIGHT_INFINITY ? FROM_WEIGHT_INFINITY : FROM_WEIGHT_MAX;
+                landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, (DELTA_INFINITY << FROM_WEIGHT_BITS) | fromValInt);
                 return false;
             } else {
-                landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, (DELTA_INF << FROM_WEIGHT_BITS) | (int) tmpVal);
+                landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, (DELTA_INFINITY << FROM_WEIGHT_BITS) | (int) Math.round(fromVal));
                 return true;
             }
         } else {
-            int fromWeight = getFromWeight(lmIdx, nodeId);
+            int fromWeightInt = getFromWeightInt(lmIdx, nodeId);
             int delta;
-            if (fromWeight == Integer.MAX_VALUE) {
-                fromWeight = FROM_WEIGHT_INF;
-                delta = (int) tmpVal - DELTA_INF + 1;
-            } else {
-                delta = (int) tmpVal - fromWeight;
-            }
+            if (fromWeightInt == FROM_WEIGHT_INFINITY)
+                fromWeightInt = FROM_WEIGHT_MAX;
 
+            delta = (int) Math.round((value - fromWeightInt * fromFactor) / deltaFactor);
             if (delta >= DELTA_MAX) {
-                landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, (DELTA_MAX << FROM_WEIGHT_BITS) | fromWeight);
+                delta = delta == DELTA_INFINITY ? DELTA_INFINITY : DELTA_MAX;
+                landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, (delta << FROM_WEIGHT_BITS) | fromWeightInt);
                 return false;
             } else if (delta <= DELTA_MIN) {
-                landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, (DELTA_MIN << FROM_WEIGHT_BITS) | fromWeight);
+                landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, (DELTA_MIN << FROM_WEIGHT_BITS) | fromWeightInt);
                 return false;
             } else {
-                landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, (delta << FROM_WEIGHT_BITS) | fromWeight);
+                landmarkWeightDA.setInt(nodeId * rowSize + lmIdx * 4, (delta << FROM_WEIGHT_BITS) | fromWeightInt);
                 return true;
             }
         }
     }
 
-    boolean isInfinity(long pointer) {
-        return (landmarkWeightDA.getInt(pointer) & FROM_WEIGHT_INF) == FROM_WEIGHT_INF;
-    }
-
-    int calcWeight(EdgeIteratorState edge, boolean reverse) {
-        return (int) (weighting.calcWeight(edge, reverse, EdgeIterator.NO_EDGE) / factor);
-    }
-
     // From all available landmarks pick just a few active ones
     boolean initActiveLandmarks(int fromNode, int toNode, int[] activeLandmarkIndices,
-                                int[] activeFroms, int[] activeTos, boolean reverse) {
+                                double[] activeFroms, double[] activeTos, boolean reverse) {
         if (fromNode < 0 || toNode < 0)
             throw new IllegalStateException("from " + fromNode + " and to "
                     + toNode + " nodes have to be 0 or positive to init landmarks");
@@ -593,22 +607,34 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         int subnetworkTo = subnetworkStorage.getSubnetwork(toNode);
         if (subnetworkFrom <= UNCLEAR_SUBNETWORK || subnetworkTo <= UNCLEAR_SUBNETWORK)
             return false;
-        if (subnetworkFrom != subnetworkTo) {
+        if (subnetworkFrom != subnetworkTo)
             throw new ConnectionNotFoundException("Connection between locations not found. Different subnetworks " + subnetworkFrom + " vs. " + subnetworkTo, new HashMap<String, Object>());
-        }
 
         int[] tmpIDs = landmarkIDs.get(subnetworkFrom);
 
-        // kind of code duplication to approximate
-        List<Map.Entry<Integer, Integer>> list = new ArrayList<>(tmpIDs.length);
+        // kind of code duplication to LMApproximator.getMaxWeight
+        List<Map.Entry<Double, Integer>> list = new ArrayList<>(tmpIDs.length);
         for (int lmIndex = 0; lmIndex < tmpIDs.length; lmIndex++) {
-            int fromWeight = getFromWeight(lmIndex, toNode) - getFromWeight(lmIndex, fromNode);
-            int toWeight = getToWeight(lmIndex, fromNode) - getToWeight(lmIndex, toNode);
+            double fromWeight = getFromWeight(lmIndex, toNode) - getFromWeight(lmIndex, fromNode);
+            double toWeight = getToWeight(lmIndex, fromNode) - getToWeight(lmIndex, toNode);
 
-            list.add(new MapEntry<>(reverse
-                    ? Math.max(-fromWeight, -toWeight)
-                    : Math.max(fromWeight, toWeight), lmIndex));
+            double tmpMax;
+            if (Double.isInfinite(fromWeight)) {
+                if (Double.isInfinite(toWeight))
+                    // this can happen if both nodes are in one subnetwork and LM is in another (but one of the subnetworks is too small to be considered independent)
+                    continue;
+                tmpMax = reverse ? -toWeight : toWeight;
+            } else if (Double.isInfinite(toWeight)) {
+                tmpMax = reverse ? -fromWeight : fromWeight;
+            } else {
+                tmpMax = reverse ? Math.max(-fromWeight, -toWeight) : Math.max(fromWeight, toWeight);
+            }
+
+            list.add(new MapEntry<>(tmpMax, lmIndex));
         }
+
+        if (list.isEmpty())
+            return false;
 
         Collections.sort(list, SORT_BY_WEIGHT);
 
@@ -709,13 +735,14 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             int version = landmarkWeightDA.getHeader(0 * 4);
             if (version != getVersion())
                 throw new IllegalArgumentException("Cannot load landmark data due to incompatible version. Storage used version: " + version + ", expected: " + getVersion());
-            int nodes = landmarkWeightDA.getHeader(4 * 4);
+            int nodes = landmarkWeightDA.getHeader(5 * 4);
             if (nodes != graph.getNodes())
                 throw new IllegalArgumentException("Cannot load landmark data as written for different graph storage with " + nodes + " nodes, not " + graph.getNodes());
 
             landmarks = landmarkWeightDA.getHeader(1 * 4);
             int subnetworks = landmarkWeightDA.getHeader(2 * 4);
-            factor = landmarkWeightDA.getHeader(3 * 4) / DOUBLE_MLTPL;
+            fromFactor = landmarkWeightDA.getHeader(3 * 4) / DOUBLE_MLTPL;
+            deltaFactor = landmarkWeightDA.getHeader(4 * 4) / DOUBLE_MLTPL;
             LM_ROW_LENGTH = landmarks * 4;
             long maxBytes = LM_ROW_LENGTH * nodes;
             long bytePos = maxBytes;
@@ -773,7 +800,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         private boolean from;
         private final LandmarkStorage lms;
 
-        public LandmarkExplorer(Graph g, LandmarkStorage lms, Weighting weighting, TraversalMode tMode, boolean from) {
+        LandmarkExplorer(Graph g, LandmarkStorage lms, Weighting weighting, TraversalMode tMode, boolean from) {
             super(g, weighting, tMode);
             this.lms = lms;
             this.from = from;
@@ -786,8 +813,13 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             setUpdateBestPath(false);
         }
 
-        public void setFilter(IntHashSet set, boolean fwd, boolean bwd) {
-            EdgeFilter ef = new BlockedEdgesFilter(flagEncoder.getAccessEnc(), fwd, bwd, set);
+        void setFilter(final IntHashSet blockedEdges, final byte[] subnetworks, final boolean fwd, final boolean bwd) {
+            EdgeFilter ef = new BlockedEdgesFilter(flagEncoder.getAccessEnc(), fwd, bwd, blockedEdges) {
+                @Override
+                public boolean accept(EdgeIteratorState edgeState) {
+                    return subnetworks[edgeState.getAdjNode()] != UNCLEAR_SUBNETWORK & super.accept(edgeState);
+                }
+            };
             outEdgeExplorer = graph.createEdgeExplorer(ef);
             inEdgeExplorer = graph.createEdgeExplorer(ef);
         }
@@ -803,11 +835,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             return bestWeightMapFrom.size();
         }
 
-        int getToCount() {
-            return bestWeightMapTo.size();
-        }
-
-        public int getLastNode() {
+        int getLastNode() {
             return lastNode;
         }
 
@@ -854,25 +882,26 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             return failed.get();
         }
 
-        public void initLandmarkWeights(final int lmIdx, int lmNodeId, final long rowSize) {
+        void initLandmarkWeights(final int lmIdx, int lmNodeId, final long rowSize) {
             IntObjectMap<SPTEntry> map = from ? bestWeightMapFrom : bestWeightMapTo;
             final AtomicInteger maxedout = new AtomicInteger(0);
-            final Map.Entry<Double, Double> finalMaxWeight = new MapEntry<>(0d, 0d);
+            final DoubleRef finalMaxWeight = new DoubleRef(0d);
 
             map.forEach(new IntObjectProcedure<SPTEntry>() {
                 @Override
                 public void apply(int nodeId, SPTEntry b) {
                     if (!lms.setWeight(lmIdx, nodeId, rowSize, b.weight, from)) {
                         maxedout.incrementAndGet();
-                        finalMaxWeight.setValue(Math.max(b.weight, finalMaxWeight.getValue()));
+                        finalMaxWeight.val = Math.max(b.weight, finalMaxWeight.val);
                     }
                 }
             });
 
             if ((double) maxedout.get() / map.size() > 0.1) {
                 LOGGER.warn("landmark " + lmIdx + " (" + nodeAccess.getLatitude(lmNodeId) + "," + nodeAccess.getLongitude(lmNodeId) + "): " +
-                        "too many " + (from ? "backward" : "delta") + " weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Factor is too small " + lms.factor
-                        + ". To fix this increase maximum in config.yml: prepare.lm.weighting: " + weighting.getName() + "|maximum=" + finalMaxWeight.getValue() * 1.2);
+                        "too many " + (from ? "backward" : "delta") + " weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Factor is too small "
+                        + (from ? lms.fromFactor : lms.deltaFactor)
+                        + ". To fix this increase maximum in config.yml: prepare.lm.weighting: " + weighting.getName() + "|maximum=" + finalMaxWeight.val * 1.2);
             }
         }
     }
@@ -880,10 +909,21 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     /**
      * Sort landmark by weight and let maximum weight come first, to pick best active landmarks.
      */
-    final static Comparator<Map.Entry<Integer, Integer>> SORT_BY_WEIGHT = new Comparator<Map.Entry<Integer, Integer>>() {
+    final static Comparator<Map.Entry<Double, Integer>> SORT_BY_WEIGHT = new Comparator<Map.Entry<Double, Integer>>() {
         @Override
-        public int compare(Map.Entry<Integer, Integer> o1, Map.Entry<Integer, Integer> o2) {
-            return Integer.compare(o2.getKey(), o1.getKey());
+        public int compare(Map.Entry<Double, Integer> o1, Map.Entry<Double, Integer> o2) {
+            return Double.compare(o2.getKey(), o1.getKey());
+        }
+    };
+
+    /**
+     * Sort graph components by size. Smallest first.
+     */
+    final static Comparator<IntArrayList> SORT_BY_SIZE = new Comparator<IntArrayList>() {
+
+        @Override
+        public int compare(IntArrayList list1, IntArrayList list2) {
+            return Integer.compare(list1.size(), list2.size());
         }
     };
 
@@ -919,22 +959,27 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         }
 
         @Override
-        public final boolean accept(EdgeIteratorState iter) {
+        public boolean accept(EdgeIteratorState iter) {
             boolean blocked = blockedEdges.contains(iter.getEdge());
             return fwd && iter.get(accessEnc) && !blocked || bwd && iter.getReverse(accessEnc) && !blocked;
-        }
-
-        public boolean acceptsBackward() {
-            return bwd;
-        }
-
-        public boolean acceptsForward() {
-            return fwd;
         }
 
         @Override
         public String toString() {
             return accessEnc + ", bwd:" + bwd + ", fwd:" + fwd;
+        }
+    }
+
+    private static class DoubleRef {
+        double val;
+
+        public DoubleRef(double val) {
+            this.val = val;
+        }
+
+        @Override
+        public String toString() {
+            return "" + val;
         }
     }
 }
