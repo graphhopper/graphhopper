@@ -991,6 +991,10 @@ public class GraphHopper implements GraphHopperAPI {
 
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
 
+            if (tMode.isEdgeBased() && !encoder.supports(TurnWeighting.class)) {
+                throw new IllegalArgumentException("You need a turn cost extension to make use of edge_based=true, e.g. use car|turn_costs=true");
+            }
+
             boolean disableCH = hints.getBool(CH.DISABLE, false);
             if (!chFactoryDecorator.isDisablingAllowed() && disableCH)
                 throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
