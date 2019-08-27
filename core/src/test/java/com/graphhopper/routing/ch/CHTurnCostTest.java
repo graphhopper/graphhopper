@@ -1030,7 +1030,7 @@ public class CHTurnCostTest {
         QueryGraph queryGraph = new QueryGraph(graph);
         queryGraph.lookup(Collections.singletonList(qr2));
         assertEquals(3, qr2.getClosestEdge().getEdge());
-        Dijkstra dijkstra = new Dijkstra(queryGraph, new TurnWeighting(weighting, turnCostExtension, chGraph.getCHProfile().getUTurnCosts()), TraversalMode.EDGE_BASED);
+        Dijkstra dijkstra = new Dijkstra(queryGraph, new TurnWeighting(weighting, (TurnCostExtension) queryGraph.getExtension(), chGraph.getCHProfile().getUTurnCosts()), TraversalMode.EDGE_BASED);
         Path dijkstraPath = dijkstra.calcPath(4, 6);
         // todonow: dijkstra does a u-turn at the virtual node...
         assertEquals(IntArrayList.from(4, 3, 2, 1, 7, 1, 5, 6), dijkstraPath.calcNodes());
