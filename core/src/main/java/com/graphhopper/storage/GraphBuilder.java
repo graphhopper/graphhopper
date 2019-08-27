@@ -45,11 +45,11 @@ public class GraphBuilder {
     }
 
     /**
-     * This method enables creating a CHGraph with the specified CHProfile
+     * This method enables creating CHGraphs with the specified CHProfiles
      */
     public GraphBuilder setCHProfiles(List<CHProfile> chProfiles) {
         if (chProfiles.size() != new HashSet<>(chProfiles).size()) {
-            throw new IllegalArgumentException("Duplicate CH profile: " + chProfiles);
+            throw new IllegalArgumentException("Given CH profiles contain duplicates, given: " + chProfiles);
         }
         this.chProfiles = chProfiles;
         return this;

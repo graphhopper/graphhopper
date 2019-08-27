@@ -14,7 +14,7 @@
     removed TraversalMode.EDGE_BASED_1DIR and TraversalMode.EDGE_BASED_2DIR_UTURN, renamed TraversalMode.EDGE_BASED_2DIR to TraversalMode.EDGE_BASED
     to prevent u-turns when using edge-based algorithms it is now required to use TurnWeighting, #1640
     GraphHopperStorage.getGraph(Class) was replaced by GraphHopperStorage.getBase/CHGraph(), #1669
-    CHGraph.shortcut(int, int) was removed (use .shortcut(int, int, ...) and/or .shortcutEdgeBased(int, int, ...) instead
+    CHGraph.shortcut(int, int) was removed (use .shortcut(int, int, ...) and/or .shortcutEdgeBased(int, int, ...) instead, #1693
     CH graphs are now identified using CHProfile instead of Weighting, #1670
     It is now possible to specify finite u-turn costs for CH preparation, #1671
 

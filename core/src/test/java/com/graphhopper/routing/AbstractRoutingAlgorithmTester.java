@@ -37,6 +37,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
+import static com.graphhopper.util.Helper.DIST_EARTH;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.*;
 
@@ -45,7 +47,6 @@ import static org.junit.Assert.*;
  */
 public abstract class AbstractRoutingAlgorithmTester {
     protected static final EncodingManager encodingManager = EncodingManager.create("car,foot");
-    private static final DistanceCalc distCalc = new DistanceCalcEarth();
     protected FlagEncoder carEncoder;
     protected DecimalEncodedValue carAvSpeedEnc;
     protected BooleanEncodedValue carAccessEnc;
@@ -84,16 +85,6 @@ public abstract class AbstractRoutingAlgorithmTester {
         updateDistancesFor(graph, 6, 0, 0.001);
         updateDistancesFor(graph, 5, 0, 0.004);
         return graph;
-    }
-
-    public static void updateDistancesFor(Graph g, int node, double lat, double lon) {
-        NodeAccess na = g.getNodeAccess();
-        na.setNode(node, lat, lon);
-        EdgeIterator iter = g.createEdgeExplorer().setBaseNode(node);
-        while (iter.next()) {
-            iter.setDistance(iter.fetchWayGeometry(3).calcDistance(distCalc));
-            // System.out.println(node + "->" + adj + ": " + iter.getDistance());
-        }
     }
 
     protected static GraphHopperStorage createMatrixAlikeGraph(GraphHopperStorage tmpGraph) {
@@ -766,7 +757,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         res.setClosestEdge(edge);
         res.setWayIndex(0);
         res.setSnappedPosition(QueryResult.Position.EDGE);
-        res.calcSnappedPoint(distCalc);
+        res.calcSnappedPoint(DIST_EARTH);
         return res;
     }
 
