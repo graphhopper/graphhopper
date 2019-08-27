@@ -20,15 +20,19 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.search.NameIndex;
+import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Locale;
 
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
@@ -51,7 +55,7 @@ class BaseGraph implements Graph {
     final BBox bounds;
     final NodeAccess nodeAccess;
     final GraphExtension extStorage;
-    final NameIndex nameIndex;
+    final StringIndex nameIndex;
     final BitUtil bitUtil;
     final EncodingManager encodingManager;
     final EdgeAccess edgeAccess;
@@ -95,7 +99,7 @@ class BaseGraph implements Graph {
         this.bytesForFlags = encodingManager.getBytesForFlags();
         this.bitUtil = BitUtil.get(dir.getByteOrder());
         this.wayGeometry = dir.find("geometry");
-        this.nameIndex = new NameIndex(dir);
+        this.nameIndex = new StringIndex(dir);
         this.nodes = dir.find("nodes", DAType.getPreferredInt(dir.getDefaultType()));
         this.edges = dir.find("edges", DAType.getPreferredInt(dir.getDefaultType()));
         this.listener = listener;
@@ -922,7 +926,7 @@ class BaseGraph implements Graph {
     }
 
     private void setName(long edgePointer, String name) {
-        int nameIndexRef = (int) nameIndex.put(name);
+        int nameIndexRef = (int) nameIndex.put(Collections.singletonMap("", name));
         if (nameIndexRef < 0)
             throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
 

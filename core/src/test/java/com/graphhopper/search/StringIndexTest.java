@@ -7,7 +7,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class StringIndexTest {
 
@@ -47,14 +49,19 @@ public class StringIndexTest {
         assertEquals("same name", index.get(aPointer));
         assertEquals("same name", index.get(aPointer, "a"));
         assertEquals("same name", index.get(aPointer, "b"));
-        // TODO fallback vs. fail fast ?
-        assertEquals("same name", index.get(aPointer, "c"));
+        // fallback vs. fail fast ?
+        try {
+            index.get(aPointer, "c");
+            fail("get should fail fast");
+        } catch (Exception ex) {
+            assertTrue(true);
+        }
     }
 
     @Test
     public void putSame2() {
         StringIndex index = create();
-        long aPointer = index.put(createMap("a", "same name",
+        long aPointer = index.put(createMap("a", "a name",
                 "b", "same name"));
 
         assertEquals("a name", index.get(aPointer));
@@ -69,5 +76,25 @@ public class StringIndexTest {
         assertEquals("a name", index.get(aPointer));
         assertEquals("a name", index.get(aPointer, "a"));
         assertEquals("b name", index.get(aPointer, "b"));
+    }
+
+    @Test
+    public void putMany() {
+        StringIndex index = create();
+        long aPointer = 0, tmpPointer = 0;
+
+        for (int i = 0; i < 10000; i++) {
+            aPointer = index.put(createMap("a", "a name " + i, "b", "b name " + i, "c", "c name " + i));
+
+            if(i == 567)
+                tmpPointer = aPointer;
+        }
+
+        assertEquals("b name 9999", index.get(aPointer, "b"));
+        assertEquals("c name 9999", index.get(aPointer, "c"));
+
+        assertEquals("a name 567", index.get(tmpPointer, "a"));
+        assertEquals("b name 567", index.get(tmpPointer, "b"));
+        assertEquals("c name 567", index.get(tmpPointer, "c"));
     }
 }
