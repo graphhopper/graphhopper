@@ -2,7 +2,6 @@ package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.EncodingManager.Access;
@@ -19,6 +18,7 @@ import org.junit.Test;
 
 import java.io.File;
 
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.*;
 
 /**
@@ -61,8 +61,8 @@ public class GraphHopperStorageForDataFlagEncoderTest {
         way_0_1.setTag("maxheight", "4.4");
 
         graph.edge(0, 1, 1, true);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
+        updateDistancesFor(graph, 0, 0.00, 0.00);
+        updateDistancesFor(graph, 1, 0.01, 0.01);
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay().put(encoder.toString(), Access.WAY);
         graph.getEdgeIteratorState(0, 1).setFlags(encodingManager.handleWayTags(way_0_1, map, 0));
 
@@ -72,7 +72,7 @@ public class GraphHopperStorageForDataFlagEncoderTest {
         way_1_2.setTag("maxweight", "45");
 
         graph.edge(1, 2, 1, true);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 2, 0.02, 0.02);
+        updateDistancesFor(graph, 2, 0.02, 0.02);
         graph.getEdgeIteratorState(1, 2).setFlags(encodingManager.handleWayTags(way_1_2, map, 0));
 
         // 2-0
