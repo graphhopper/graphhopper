@@ -15,6 +15,7 @@
     to prevent u-turns when using edge-based algorithms it is now required to use TurnWeighting, #1640
     GraphHopperStorage.getGraph(Class) was replaced by GraphHopperStorage.getBase/CHGraph(), #1669
     CHGraph.shortcut(int, int) was removed (use .shortcut(int, int, ...) and/or .shortcutEdgeBased(int, int, ...) instead
+    CH graphs are now identified using CHProfile instead of Weighting, #1670
 
 0.12
     renamed VirtualEdgeIteratorState.getOriginalEdgeKey to more precise getOriginalEdgeKey #1549

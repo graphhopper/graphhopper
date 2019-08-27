@@ -747,8 +747,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         if (chFactoryDecorator.isEnabled()) {
             initCHAlgoFactoryDecorator();
-            ghStorage = new GraphHopperStorage(chFactoryDecorator.getNodeBasedWeightings(), chFactoryDecorator.getEdgeBasedWeightings(),
-                    dir, encodingManager, hasElevation(), ext);
+            ghStorage = new GraphHopperStorage(chFactoryDecorator.getCHProfiles(), dir, encodingManager, hasElevation(), ext);
         } else {
             ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), ext);
         }
@@ -803,16 +802,16 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void initCHAlgoFactoryDecorator() {
-        if (!chFactoryDecorator.hasWeightings()) {
+        if (!chFactoryDecorator.hasCHProfiles()) {
             for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-                for (String chWeightingStr : chFactoryDecorator.getWeightingsAsStrings()) {
+                for (String chWeightingStr : chFactoryDecorator.getCHProfileStrings()) {
                     // ghStorage is null at this point
                     CHAlgoFactoryDecorator.EdgeBasedCHMode edgeBasedCHMode = chFactoryDecorator.getEdgeBasedCHMode();
                     if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supports(TurnWeighting.class))) {
-                        chFactoryDecorator.addNodeBasedWeighting(createWeighting(new HintsMap(chWeightingStr), encoder, null));
+                        chFactoryDecorator.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null)));
                     }
                     if (edgeBasedCHMode != OFF && encoder.supports(TurnWeighting.class)) {
-                        chFactoryDecorator.addEdgeBasedWeighting(createWeighting(new HintsMap(chWeightingStr), encoder, null));
+                        chFactoryDecorator.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null)));
                     }
                 }
             }
@@ -1035,13 +1034,14 @@ public class GraphHopper implements GraphHopperAPI {
                     if (tmpAlgoFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
                         chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) tmpAlgoFactory).getDefaultAlgoFactory();
 
-                    if (chAlgoFactory instanceof PrepareContractionHierarchies)
-                        weighting = ((PrepareContractionHierarchies) chAlgoFactory).getWeighting();
-                    else
+                    if (chAlgoFactory instanceof PrepareContractionHierarchies) {
+                        CHProfile chProfile = ((PrepareContractionHierarchies) chAlgoFactory).getCHProfile();
+                        queryGraph = new QueryGraph(ghStorage.getCHGraph(chProfile));
+                        queryGraph.lookup(qResults);
+                        weighting = chProfile.getWeighting();
+                    } else {
                         throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
-
-                    queryGraph = new QueryGraph(ghStorage.getCHGraph(weighting));
-                    queryGraph.lookup(qResults);
+                    }
                 } else {
                     checkNonChMaxWaypointDistance(points);
                     queryGraph = new QueryGraph(ghStorage);

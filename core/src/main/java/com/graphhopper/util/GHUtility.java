@@ -406,7 +406,7 @@ public class GHUtility {
         Directory outdir = guessDirectory(store);
         boolean is3D = store.getNodeAccess().is3D();
 
-        return new GraphHopperStorage(store.getNodeBasedCHWeightings(), store.getEdgeBasedCHWeightings(), outdir, store.getEncodingManager(),
+        return new GraphHopperStorage(store.getCHProfiles(), outdir, store.getEncodingManager(),
                 is3D, store.getExtension()).
                 create(store.getNodes());
     }

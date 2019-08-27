@@ -26,12 +26,8 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -55,7 +51,7 @@ public class NodeBasedNodeContractorTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
+    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).create();
     private final CHGraph lg = graph.getCHGraph();
     private final TraversalMode traversalMode = TraversalMode.NODE_BASED;
 
@@ -341,7 +337,7 @@ public class NodeBasedNodeContractorTest {
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new FastestWeighting(encoder);
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).create();
         CHGraph lg = graph.getCHGraph();
         // 0 ------------> 4
         //  \             /
@@ -379,7 +375,7 @@ public class NodeBasedNodeContractorTest {
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new FastestWeighting(encoder);
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).create();
         CHGraph lg = graph.getCHGraph();
         // 0 - 1 - 2 - 3
         // o           o

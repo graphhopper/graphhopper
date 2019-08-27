@@ -29,10 +29,7 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.SPTEntry;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -97,8 +94,9 @@ public class MiniGraphUI {
         boolean ch = true;
         if (ch) {
             map.put(Parameters.Landmark.DISABLE, true);
-            weighting = hopper.getCHFactoryDecorator().getNodeBasedWeightings().get(0);
-            routingGraph = hopper.getGraphHopperStorage().getCHGraph(weighting);
+            CHProfile chProfile = hopper.getCHFactoryDecorator().getNodeBasedCHProfiles().get(0);
+            weighting = chProfile.getWeighting();
+            routingGraph = hopper.getGraphHopperStorage().getCHGraph(chProfile);
 
             final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
             algoFactory = new RoutingAlgorithmFactory() {

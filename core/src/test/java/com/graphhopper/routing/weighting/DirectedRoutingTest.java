@@ -109,7 +109,7 @@ public class DirectedRoutingTest {
             return;
         }
         if (prepareCH) {
-            pch = new PrepareContractionHierarchies(chGraph, weighting, TraversalMode.EDGE_BASED);
+            pch = new PrepareContractionHierarchies(chGraph);
             pch.doWork();
         }
         if (prepareLM) {
@@ -278,7 +278,7 @@ public class DirectedRoutingTest {
     }
 
     private GraphHopperStorage createGraph() {
-        GraphHopperStorage gh = new GraphHopperStorage(new ArrayList<Weighting>(), Collections.singletonList(weighting), dir, encodingManager,
+        GraphHopperStorage gh = new GraphHopperStorage(Collections.singletonList(CHProfile.edgeBased(weighting)), dir, encodingManager,
                 false, turnCostExtension);
         gh.create(1000);
         return gh;

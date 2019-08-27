@@ -111,7 +111,7 @@ public class GHUtilityTest {
         Graph g = initUnsorted(createGraph());
         g.edge(0, 0, 11, true);
 
-        CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate(new FastestWeighting(carEncoder));
+        CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate(CHProfile.nodeBased(new FastestWeighting(carEncoder)));
         GHUtility.copyTo(g, lg);
 
         assertEquals(g.getAllEdges().length(), lg.getEdges());
@@ -123,7 +123,7 @@ public class GHUtilityTest {
         EdgeIteratorState edgeState = g.edge(6, 5, 11, true);
         edgeState.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
 
-        GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHGraph(new FastestWeighting(carEncoder)).create();
+        GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(new FastestWeighting(carEncoder))).create();
         CHGraph lg = newStore.getCHGraph();
         GHUtility.copyTo(g, lg);
         newStore.freeze();

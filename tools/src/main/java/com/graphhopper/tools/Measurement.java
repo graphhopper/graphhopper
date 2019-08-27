@@ -26,11 +26,7 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Algorithms;
@@ -93,14 +89,14 @@ public class Measurement {
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 int edges = getGraphHopperStorage().getEdges();
-                if (!getCHFactoryDecorator().getNodeBasedWeightings().isEmpty()) {
-                    Weighting weighting = getCHFactoryDecorator().getNodeBasedWeightings().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(weighting).getEdges();
+                if (!getCHFactoryDecorator().getNodeBasedCHProfiles().isEmpty()) {
+                    CHProfile chProfile = getCHFactoryDecorator().getNodeBasedCHProfiles().get(0);
+                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chProfile).getEdges();
                     put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
                 }
-                if (!getCHFactoryDecorator().getEdgeBasedWeightings().isEmpty()) {
-                    Weighting weighting = getCHFactoryDecorator().getEdgeBasedWeightings().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(weighting).getEdges();
+                if (!getCHFactoryDecorator().getEdgeBasedCHProfiles().isEmpty()) {
+                    CHProfile chProfile = getCHFactoryDecorator().getEdgeBasedCHProfiles().get(0);
+                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chProfile).getEdges();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
                 }
             }
@@ -173,16 +169,16 @@ public class Measurement {
 
                 isLM = false;
                 System.gc();
-                if (!hopper.getCHFactoryDecorator().getNodeBasedWeightings().isEmpty()) {
-                    Weighting weighting = hopper.getCHFactoryDecorator().getNodeBasedWeightings().get(0);
-                    CHGraph lg = g.getCHGraph(weighting);
+                if (!hopper.getCHFactoryDecorator().getNodeBasedCHProfiles().isEmpty()) {
+                    CHProfile chProfile = hopper.getCHFactoryDecorator().getNodeBasedCHProfiles().get(0);
+                    CHGraph lg = g.getCHGraph(chProfile);
                     fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                     printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1, true, false);
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr, true, -1, false, false);
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1, true, false);
                 }
-                if (!hopper.getCHFactoryDecorator().getEdgeBasedWeightings().isEmpty()) {
+                if (!hopper.getCHFactoryDecorator().getEdgeBasedCHProfiles().isEmpty()) {
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge", vehicleStr, true, -1, false, true);
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge_no_instr", vehicleStr, false, -1, false, true);
                 }

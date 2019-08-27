@@ -49,8 +49,8 @@ public class ShortcutUnpackerTest {
         encoder = new MotorcycleFlagEncoder(5, 5, 10);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
-        graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(edgeBased).create();
-        chGraph = graph.getCHGraph(weighting);
+        graph = new GraphBuilder(encodingManager).setCHProfiles(new CHProfile(weighting, edgeBased)).create();
+        chGraph = graph.getCHGraph();
         if (edgeBased) {
             turnCostExtension = (TurnCostExtension) graph.getExtension();
         }
