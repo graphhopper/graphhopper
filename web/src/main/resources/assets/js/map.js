@@ -13,6 +13,8 @@ var fullscreenControl = null;
 // Items added in every contextmenu.
 var defaultContextmenuItems;
 
+var expandElevationDiagram = true;
+
 // called if window changes or before map is created
 function adjustMapSize() {
     var mapDiv = $("#map");
@@ -208,6 +210,11 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         contextmenuInheritItems: false
     };
 
+    // Don't show the elevation graph on small displays
+    if(window.innerWidth < 900 || window.innerHeight < 400){
+        expandElevationDiagram = false;
+    }
+
 }
 
 function focus(coord, zoom, index) {
@@ -266,21 +273,7 @@ module.exports.focus = focus;
 module.exports.initMap = initMap;
 module.exports.adjustMapSize = adjustMapSize;
 
-module.exports.addElevation = function (geoJsonFeature, request, details) {
-
-    var expandElevationDiagram;
-
-    // Don't show the elevation graph on small displays
-    if(window.innerWidth < 900 || window.innerHeight < 400){
-        expandElevationDiagram = false;
-    }else{
-        if(typeof request.expandElevationDiagram === 'undefined' || request.expandElevationDiagram){
-            expandElevationDiagram = true;
-        }else{
-            expandElevationDiagram = false;
-        }
-    }
-
+module.exports.addElevation = function (geoJsonFeature, details) {
 
     // TODO no option to switch to miles yet
     var options = {
@@ -295,7 +288,7 @@ module.exports.addElevation = function (geoJsonFeature, request, details) {
         position: "bottomright",
         expand: expandElevationDiagram,
         expandCallback: function (expand) {
-            request.expandElevationDiagram = expand;
+            expandElevationDiagram = expand;
         }
     };
 

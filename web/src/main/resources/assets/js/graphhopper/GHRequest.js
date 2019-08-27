@@ -36,7 +36,6 @@ var GHRequest = function (host, api_key) {
 
     this.do_zoom = true;
     this.useMiles = false;
-    this.expandElevationDiagram = true;
     this.dataType = "json";
     this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "elevation": false,
         "key": api_key, "pt": {}};
@@ -62,7 +61,7 @@ var GHRequest = function (host, api_key) {
 
 GHRequest.prototype.init = function (params) {
     for (var key in params) {
-        if (key === "point" || key === "mathRandom" || key === "do_zoom" || key === "layer" || key === "use_miles" || key === "expand_elevation_diagram")
+        if (key === "point" || key === "mathRandom" || key === "do_zoom" || key === "layer" || key === "use_miles")
             continue;
 
         var val = params[key];
@@ -79,9 +78,6 @@ GHRequest.prototype.init = function (params) {
 
     if ('use_miles' in params)
         this.useMiles = params.use_miles;
-
-    if ('expand_elevation_diagram' in params)
-        this.expandElevationDiagram = params.expand_elevation_diagram;
 
     // overwrite elevation e.g. important if not supported from feature set
     this.api_params.elevation = false;
@@ -178,7 +174,7 @@ GHRequest.prototype.createGPXURL = function (withRoute, withTrack, withWayPoints
 
 GHRequest.prototype.createHistoryURL = function () {
     var skip = {"key": true};
-    return this.createPath("?" + this.createPointParams(true), skip) + "&use_miles=" + !!this.useMiles + "&expand_elevation_diagram=" + !!this.expandElevationDiagram;
+    return this.createPath("?" + this.createPointParams(true), skip) + "&use_miles=" + !!this.useMiles;
 };
 
 GHRequest.prototype.createPointParams = function (useRawInput) {

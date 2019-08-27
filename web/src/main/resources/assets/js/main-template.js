@@ -568,7 +568,7 @@ function routeLatLng(request, doQuery) {
 
                 if (hasElevation) {
                     mapLayer.clearElevation();
-                    mapLayer.addElevation(currentGeoJson, request, details);
+                    mapLayer.addElevation(currentGeoJson, details);
                 }
 
                 headerTabs.find("li").removeClass("current");
