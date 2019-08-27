@@ -36,6 +36,7 @@ import org.junit.Test;
 import java.util.*;
 
 import static com.graphhopper.storage.index.QueryResult.Position.*;
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.*;
 
 /**
@@ -296,10 +297,10 @@ public class QueryGraphTest {
         g.edge(1, 3, 10, true);
         g.edge(3, 4, 10, true);
         EdgeIteratorState edge = g.edge(1, 3, 20, true).setWayGeometry(Helper.createPointList(-0.001, 0.001, -0.001, 0.002));
-        AbstractRoutingAlgorithmTester.updateDistancesFor(g, 0, 0, 0);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(g, 1, 0, 0.001);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(g, 3, 0, 0.002);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(g, 4, 0, 0.003);
+        updateDistancesFor(g, 0, 0, 0);
+        updateDistancesFor(g, 1, 0, 0.001);
+        updateDistancesFor(g, 3, 0, 0.002);
+        updateDistancesFor(g, 4, 0, 0.003);
 
         QueryResult qr = new QueryResult(-0.0005, 0.001);
         qr.setClosestEdge(edge);

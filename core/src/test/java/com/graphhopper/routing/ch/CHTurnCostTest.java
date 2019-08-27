@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static org.junit.Assert.*;
 

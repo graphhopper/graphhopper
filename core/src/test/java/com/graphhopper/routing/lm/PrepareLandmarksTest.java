@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -87,7 +88,7 @@ public class PrepareLandmarksTest
                 if (hIndex + 1 < height)
                     graph.edge(node, node + width).set(accessEnc, true).setReverse(accessEnc, true).set(avSpeedEnc, speed);
 
-                AbstractRoutingAlgorithmTester.updateDistancesFor(graph, node, -hIndex / 50.0, wIndex / 50.0);
+                updateDistancesFor(graph, node, -hIndex / 50.0, wIndex / 50.0);
             }
         }
         Directory dir = new RAMDirectory();
