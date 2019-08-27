@@ -114,6 +114,9 @@ public class TurnWeighting implements Weighting {
             // also this does not allow TurnCostEncoder to set the u-turn costs to zero explicitly, like FootFlagEncoder!
             // this problem is a bit hidden, because if you do not apply any turn restrictions (like FootFlagEncoder)
             // you never do a u-turn anyway.
+            if (!turnCostExt.isUTurnAllowed(nodeVia)) {
+                return Double.POSITIVE_INFINITY;
+            }
             return uTurnCosts;
         }
         long turnFlags = turnCostExt.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);

@@ -989,8 +989,7 @@ public class CHTurnCostTest {
     @Test
     public void testFiniteUTurnCost_virtualViaNode() {
         // if there is an extra virtual node it can be possible to do a u-turn that otherwise would not be possible
-        // and so there can be a difference between CH and non-CH...
-        // todonow: not sure how to resolve this yet!
+        // and so there can be a difference between CH and non-CH... therefore u-turns at virtual nodes are forbidden
         // 4->3->2->1-x-0
         //          |
         //          5->6
@@ -1032,10 +1031,10 @@ public class CHTurnCostTest {
         assertEquals(3, qr2.getClosestEdge().getEdge());
         Dijkstra dijkstra = new Dijkstra(queryGraph, new TurnWeighting(weighting, (TurnCostExtension) queryGraph.getExtension(), chGraph.getCHProfile().getUTurnCosts()), TraversalMode.EDGE_BASED);
         Path dijkstraPath = dijkstra.calcPath(4, 6);
-        // todonow: dijkstra does a u-turn at the virtual node...
-        assertEquals(IntArrayList.from(4, 3, 2, 1, 7, 1, 5, 6), dijkstraPath.calcNodes());
-        // todonow: this fails!
+        assertEquals(IntArrayList.from(4, 3, 2, 1, 7, 0, 7, 1, 5, 6), dijkstraPath.calcNodes());
         assertEquals(dijkstraPath.getWeight(), path.getWeight(), 1.e-3);
+        assertEquals(dijkstraPath.getDistance(), path.getDistance(), 1.e-3);
+        assertEquals(dijkstraPath.getTime(), path.getTime(), 1.e-3);
     }
 
     /**
