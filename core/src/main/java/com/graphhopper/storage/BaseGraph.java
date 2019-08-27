@@ -55,7 +55,7 @@ class BaseGraph implements Graph {
     final BBox bounds;
     final NodeAccess nodeAccess;
     final GraphExtension extStorage;
-    final StringIndex nameIndex;
+    final StringIndex stringIndex;
     final BitUtil bitUtil;
     final EncodingManager encodingManager;
     final EdgeAccess edgeAccess;
@@ -99,7 +99,7 @@ class BaseGraph implements Graph {
         this.bytesForFlags = encodingManager.getBytesForFlags();
         this.bitUtil = BitUtil.get(dir.getByteOrder());
         this.wayGeometry = dir.find("geometry");
-        this.nameIndex = new StringIndex(dir);
+        this.stringIndex = new StringIndex(dir);
         this.nodes = dir.find("nodes", DAType.getPreferredInt(dir.getDefaultType()));
         this.edges = dir.find("edges", DAType.getPreferredInt(dir.getDefaultType()));
         this.listener = listener;
@@ -337,7 +337,7 @@ class BaseGraph implements Graph {
         nodes.setSegmentSize(bytes);
         edges.setSegmentSize(bytes);
         wayGeometry.setSegmentSize(bytes);
-        nameIndex.setSegmentSize(bytes);
+        stringIndex.setSegmentSize(bytes);
         extStorage.setSegmentSize(bytes);
     }
 
@@ -364,7 +364,7 @@ class BaseGraph implements Graph {
 
         initSize = Math.min(initSize, 2000);
         wayGeometry.create(initSize);
-        nameIndex.create(initSize);
+        stringIndex.create(initSize);
         extStorage.create(initSize);
         initStorage();
         // 0 stands for no separate geoRef
@@ -376,7 +376,7 @@ class BaseGraph implements Graph {
     String toDetailsString() {
         return "edges:" + nf(edgeCount) + "(" + edges.getCapacity() / Helper.MB + "MB), "
                 + "nodes:" + nf(getNodes()) + "(" + nodes.getCapacity() / Helper.MB + "MB), "
-                + "name:(" + nameIndex.getCapacity() / Helper.MB + "MB), "
+                + "name:(" + stringIndex.getCapacity() / Helper.MB + "MB), "
                 + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB), "
                 + "bounds:" + bounds;
     }
@@ -419,7 +419,7 @@ class BaseGraph implements Graph {
         setWayGeometryHeader();
 
         wayGeometry.flush();
-        nameIndex.flush();
+        stringIndex.flush();
         edges.flush();
         nodes.flush();
         extStorage.flush();
@@ -427,14 +427,14 @@ class BaseGraph implements Graph {
 
     void close() {
         wayGeometry.close();
-        nameIndex.close();
+        stringIndex.close();
         edges.close();
         nodes.close();
         extStorage.close();
     }
 
     long getCapacity() {
-        return edges.getCapacity() + nodes.getCapacity() + nameIndex.getCapacity()
+        return edges.getCapacity() + nodes.getCapacity() + stringIndex.getCapacity()
                 + wayGeometry.getCapacity() + extStorage.getCapacity();
     }
 
@@ -456,7 +456,7 @@ class BaseGraph implements Graph {
         if (!wayGeometry.loadExisting())
             throw new IllegalStateException("Cannot load geometry. corrupt file or directory? " + dir);
 
-        if (!nameIndex.loadExisting())
+        if (!stringIndex.loadExisting())
             throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
 
         if (!extStorage.loadExisting())
@@ -603,7 +603,7 @@ class BaseGraph implements Graph {
         clonedG.loadEdgesHeader();
 
         // name
-        nameIndex.copyTo(clonedG.nameIndex);
+        stringIndex.copyTo(clonedG.stringIndex);
 
         // geometry
         setWayGeometryHeader();
@@ -926,7 +926,7 @@ class BaseGraph implements Graph {
     }
 
     private void setName(long edgePointer, String name) {
-        int nameIndexRef = (int) nameIndex.put(Collections.singletonMap("", name));
+        int nameIndexRef = (int) stringIndex.put(Collections.singletonMap("", name));
         if (nameIndexRef < 0)
             throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
 
@@ -1323,7 +1323,7 @@ class BaseGraph implements Graph {
         @Override
         public String getName() {
             int nameIndexRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_NAME);
-            return baseGraph.nameIndex.get(nameIndexRef);
+            return baseGraph.stringIndex.get(nameIndexRef);
         }
 
         @Override

@@ -72,7 +72,7 @@ public class Constants {
     public static final int VERSION_SHORTCUT = 2;
     public static final int VERSION_GEOMETRY = 4;
     public static final int VERSION_LOCATION_IDX = 3;
-    public static final int VERSION_NAME_IDX = 3;
+    public static final int VERSION_NAME_IDX = 4;
     /**
      * The version without the snapshot string
      */
