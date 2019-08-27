@@ -19,11 +19,15 @@ package com.graphhopper.jackson;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Jackson {
+
     public static ObjectMapper newObjectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
+        return initObjectMapper(new ObjectMapper());
+    }
+
+    public static ObjectMapper initObjectMapper(ObjectMapper objectMapper) {
         objectMapper.registerModule(new GraphHopperModule());
         objectMapper.registerModule(new JtsModule());
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
