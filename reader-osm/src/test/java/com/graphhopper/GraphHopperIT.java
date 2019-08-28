@@ -1051,15 +1051,46 @@ public class GraphHopperIT {
         assertNotEquals(rsp1.getHints().get("visited_nodes.sum", "_"), rsp2.getHints().get("visited_nodes.sum", "_"));
     }
 
+    @Test
+    public void testNodeBasedCHOnlyButTurnCostForNonCH() {
+        // before edge-based CH was added a common case was to use edge-based without CH and CH for node-based
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/moscow.osm.gz").
+                setStoreOnFlush(true).
+                setCHEnabled(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create("car|turn_costs=true"));
+        tmpHopper.getCHFactoryDecorator()
+                .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.OFF)
+                .setDisablingAllowed(true);
+        tmpHopper.importOrLoad();
+
+        // without CH -> use edge-based unless disabled explicitly
+        assertMoscowEdgeBased(tmpHopper, "none", false);
+        assertMoscowEdgeBased(tmpHopper, "true", false);
+        assertMoscowNodeBased(tmpHopper, "false", false);
+
+        // with CH -> use node-based unless edge_based is enabled explicitly (which should give an error)
+        assertMoscowNodeBased(tmpHopper, "none", true);
+        assertMoscowNodeBased(tmpHopper, "false", true);
+        GHResponse rsp = runMoscow(tmpHopper, "true", true);
+        assertEquals(1, rsp.getErrors().size());
+        assertTrue(rsp.getErrors().toString().contains("Cannot find CH RoutingAlgorithmFactory"));
+    }
+
     private GHResponse assertMoscowNodeBased(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
-        return assertMoscow(tmpHopper, edgeBasedParam, false, ch);
+        GHResponse rsp = runMoscow(tmpHopper, edgeBasedParam, ch);
+        assertEquals(400, rsp.getBest().getDistance(), 1);
+        return rsp;
     }
 
     private GHResponse assertMoscowEdgeBased(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
-        return assertMoscow(tmpHopper, edgeBasedParam, true, ch);
+        GHResponse rsp = runMoscow(tmpHopper, edgeBasedParam, ch);
+        assertEquals(1044, rsp.getBest().getDistance(), 1);
+        return rsp;
     }
 
-    private GHResponse assertMoscow(GraphHopper tmpHopper, String edgeBasedParam, boolean withTurnCosts, boolean ch) {
+    private GHResponse runMoscow(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
         if (edgeBasedParam.equals("true") || edgeBasedParam.equals("false")) {
             req.getHints().put(Routing.EDGE_BASED, edgeBasedParam);
@@ -1067,9 +1098,7 @@ public class GraphHopperIT {
             req.getHints().remove(Routing.EDGE_BASED);
         }
         req.getHints().put(CH.DISABLE, !ch);
-        GHResponse rsp = tmpHopper.route(req);
-        assertEquals(withTurnCosts ? 1044 : 400, rsp.getBest().getDistance(), 1);
-        return rsp;
+        return tmpHopper.route(req);
     }
 
     @Test
