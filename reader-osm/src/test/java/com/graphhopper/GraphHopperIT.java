@@ -1022,8 +1022,8 @@ public class GraphHopperIT {
         tmpHopper.getCHFactoryDecorator().setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_AND_NODE);
         tmpHopper.importOrLoad();
 
-        // no edge_based parameter -> use node-based (because its faster)
-        assertMoscowNodeBased(tmpHopper, "none", true);
+        // no edge_based parameter -> use edge-based (because its there)
+        assertMoscowEdgeBased(tmpHopper, "none", true);
         // edge_based=false -> use node-based
         assertMoscowNodeBased(tmpHopper, "false", true);
         // edge_based=true -> use edge-based
@@ -1075,7 +1075,8 @@ public class GraphHopperIT {
         assertMoscowNodeBased(tmpHopper, "false", true);
         GHResponse rsp = runMoscow(tmpHopper, "true", true);
         assertEquals(1, rsp.getErrors().size());
-        assertTrue(rsp.getErrors().toString().contains("Cannot find CH RoutingAlgorithmFactory"));
+        assertTrue(rsp.getErrors().toString().contains("Found a node-based CH preparation"));
+        assertTrue(rsp.getErrors().toString().contains("but requested edge-based CH"));
     }
 
     @Test
