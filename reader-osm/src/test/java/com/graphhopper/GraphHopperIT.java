@@ -1084,4 +1084,21 @@ public class GraphHopperIT {
                 rsp.getErrors().toString().contains("You need a turn cost extension to make use of edge_based=true, e.g. use car|turn_costs=true"));
     }
 
+    @Test
+    public void testEncoderWithTurnCostSupport_stillAllows_nodeBasedRouting() {
+        // see #1698
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/moscow.osm.gz").
+                setGraphHopperLocation(tmpGraphFile).
+                setCHEnabled(false).
+                setEncodingManager(EncodingManager.create("foot,car|turn_costs=true"));
+        tmpHopper.importOrLoad();
+        GHPoint p = new GHPoint(55.813357, 37.5958585);
+        GHPoint q = new GHPoint(55.811042, 37.594689);
+        GHRequest req = new GHRequest(p, q);
+        req.setVehicle("foot");
+        GHResponse rsp = tmpHopper.route(req);
+        assertEquals("there should not be an error, but was: " + rsp.getErrors(), 0, rsp.getErrors().size());
+    }
+
 }
