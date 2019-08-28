@@ -959,10 +959,9 @@ public class GraphHopper implements GraphHopperAPI {
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
             HintsMap hints = request.getHints();
 
+            // we use edge-based routing if the encoder supports turn-costs *unless* the edge_based parameter is set
+            // explicitly
             TraversalMode tMode = encoder.supports(TurnWeighting.class) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
-
-            String tModeStr = hints.get("traversal_mode", tMode.toString());
-            tMode = TraversalMode.fromString(tModeStr);
             if (hints.has(Routing.EDGE_BASED))
                 tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
 
