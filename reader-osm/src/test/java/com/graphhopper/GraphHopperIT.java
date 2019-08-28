@@ -101,7 +101,7 @@ public class GraphHopperIT {
         InstructionList il = arsp.getInstructions();
         assertEquals(21, il.size());
 
-        // TODO roundabout fine tuning -> enter + leave roundabout (+ two rounabouts -> is it necessary if we do not leave the street?)
+        // TODO roundabout fine tuning -> enter + leave roundabout (+ two roundabouts -> is it necessary if we do not leave the street?)
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
         assertEquals("continue onto Avenue des Guelfes", il.get(0).getTurnDescription(tr));
         assertEquals("continue onto Avenue des Papalins", il.get(1).getTurnDescription(tr));
@@ -439,13 +439,13 @@ public class GraphHopperIT {
         request.addPoint(new GHPoint(43.74958, 7.436566));
         request.addPoint(new GHPoint(43.727687, 7.418737));
         request.setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr);
-        request.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED));
+        request.setPathDetails(Collections.singletonList(Parameters.Details.AVERAGE_SPEED));
 
         GHResponse rsp = hopper.route(request);
 
         PathWrapper arsp = rsp.getBest();
         Map<String, List<PathDetail>> details = arsp.getPathDetails();
-        assertTrue(details.size() == 1);
+        assertEquals(1, details.size());
         List<PathDetail> detailList = details.get(Parameters.Details.AVERAGE_SPEED);
         assertEquals(1, detailList.size());
         assertEquals(5.0, detailList.get(0).getValue());
@@ -565,7 +565,7 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testSRTMWithInstructions() throws Exception {
+    public void testSRTMWithInstructions() {
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
@@ -608,7 +608,7 @@ public class GraphHopperIT {
 
         assertEquals(54, arsp.getPoints().size());
         assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 62.0), arsp.getPoints().get(0));
-        assertEquals(new GHPoint3D(43.727680946587874, 7.4191987684222065, 11.0), arsp.getPoints().get(arsp.getPoints().size()-1));
+        assertEquals(new GHPoint3D(43.727680946587874, 7.4191987684222065, 11.0), arsp.getPoints().get(arsp.getPoints().size() - 1));
 
         assertEquals(62, arsp.getPoints().get(0).getElevation(), 1e-2);
         assertEquals(66, arsp.getPoints().get(1).getElevation(), 1e-2);
@@ -836,7 +836,7 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testIfCHIsUsed() throws Exception {
+    public void testIfCHIsUsed() {
         // route directly after import
         executeCHFootRoute();
 
@@ -853,7 +853,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles));
-        tmpHopper.getCHFactoryDecorator().setWeightingsAsStrings(weightCalcStr);
+        tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr);
         tmpHopper.importOrLoad();
 
         // same query as in testMonacoWithInstructions
@@ -904,7 +904,7 @@ public class GraphHopperIT {
                         addPoint(new GHPoint(49.984565, 11.499188)).
                         addPoint(new GHPoint(49.9847, 11.499612)).
                         setVehicle("car").setWeighting("fastest").
-                        setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED));
+                        setPathDetails(Collections.singletonList(Parameters.Details.AVERAGE_SPEED));
 
         GHResponse rsp = tmpHopper.route(req);
 
@@ -924,7 +924,7 @@ public class GraphHopperIT {
                 addPoint(new GHPoint(49.984352, 11.498802)).
                 addPoint(new GHPoint(49.984352, 11.498802)).
                 setVehicle("car").setWeighting("fastest").
-                setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED));
+                setPathDetails(Collections.singletonList(Parameters.Details.AVERAGE_SPEED));
 
         GHResponse rsp = tmpHopper.route(req);
 
@@ -942,11 +942,11 @@ public class GraphHopperIT {
                 setEncodingManager(EncodingManager.create("car"));
 
         tmpHopper.getCHFactoryDecorator().setEnabled(true).
-                setWeightingsAsStrings(Arrays.asList("fastest")).
+                setCHProfilesAsStrings(Collections.singletonList("fastest")).
                 setDisablingAllowed(true);
 
         tmpHopper.getLMFactoryDecorator().setEnabled(true).
-                setWeightingsAsStrings(Arrays.asList("fastest|maximum=2000")).
+                setWeightingsAsStrings(Collections.singletonList("fastest|maximum=2000")).
                 setDisablingAllowed(true);
 
         tmpHopper.importOrLoad();
@@ -1073,6 +1073,18 @@ public class GraphHopperIT {
         assertEquals(1044, rsp2.getBest().getDistance(), 1);
         // just a quick check that we did not run the same algorithm twice
         assertNotEquals(rsp1.getHints().get("visited_nodes.sum", "_"), rsp2.getHints().get("visited_nodes.sum", "_"));
+    }
+
+    @Test
+    public void testEdgeBasedRequiresTurnCostSupport() {
+        GHPoint p = new GHPoint(43.727687, 7.418737);
+        GHPoint q = new GHPoint(43.74958, 7.436566);
+        GHRequest req = new GHRequest(p, q);
+        req.getHints().put(Routing.EDGE_BASED, true);
+        req.setVehicle("foot");
+        GHResponse rsp = hopper.route(req);
+        assertTrue("using edge-based for encoder without turncost support should be an error, but got:\n" + rsp.getErrors(),
+                rsp.getErrors().toString().contains("You need a turn cost extension to make use of edge_based=true, e.g. use car|turn_costs=true"));
     }
 
 }

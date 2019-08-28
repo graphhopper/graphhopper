@@ -1,7 +1,6 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
@@ -22,6 +21,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.*;
 
 /**
@@ -411,11 +411,11 @@ public class DataFlagEncoderTest {
         EdgeIteratorState e2 = graph.edge(0, 2, 1, true);
         EdgeIteratorState e3 = graph.edge(0, 3, 1, true);
         EdgeIteratorState e4 = graph.edge(0, 4, 1, true);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 2, -0.01, -0.01);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 3, 0.01, 0.01);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 4, -0.01, -0.01);
+        updateDistancesFor(graph, 0, 0.00, 0.00);
+        updateDistancesFor(graph, 1, 0.01, 0.01);
+        updateDistancesFor(graph, 2, -0.01, -0.01);
+        updateDistancesFor(graph, 3, 0.01, 0.01);
+        updateDistancesFor(graph, 4, -0.01, -0.01);
 
         ReaderWay way = new ReaderWay(27l);
         way.setTag("highway", "track");

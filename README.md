@@ -172,9 +172,9 @@ visualize the routes.
 ### Desktop
 
 GraphHopper also runs on the Desktop in a Java application without internet access.
-E.g. you could use the rough user interface called MiniGraphUI provided in the tools module, see some
+For debugging purposes GraphHopper can produce vector tiles, i.e. a visualization of the road network in the browser (see #1572). Also a more low level Swing-based UI is provided via MiniGraphUI in the tools module, see some
 visualizations done with it [here](https://graphhopper.com/blog/2016/01/19/alternative-roads-to-rome/).
-A fast and production ready map visualization for the Desktop can be easily implemented via mapsforge.
+A fast and production ready map visualization for the Desktop can be implemented via [mapsforge](https://github.com/mapsforge/mapsforge) or [mapsforge vtm](https://github.com/mapsforge/vtm).
 
 # Features
 
@@ -187,19 +187,19 @@ Here is a list of the more detailed features including a link to the documentati
  * Memory efficient data structures, algorithms and [the low and high level API](./docs/core/low-level-api.md) is tuned towards ease of use and efficiency
  * Provides a simple [web API](./docs/web/api-doc.md) including JavaScript and Java clients
  * Multiple weightings (fastest/shortest/...) and pre-built routing profiles: car, bike, racingbike, mountain bike, foot, motorcycle, ...
- * Support for public transit routing and [GTFS support](./reader-gtfs/README.md).
+ * Supports public transit routing and [GTFS](./reader-gtfs/README.md).
  * Offers turn instructions in more than 35 languages, contribute or improve [here](./docs/core/translations.md)
  * Displays and takes into account [elevation data](./docs/core/elevation.md) (per default disabled)
  * Can apply [real time changes to edge weights](https://graphhopper.com/blog/2015/04/08/visualize-and-handle-traffic-information-with-graphhopper-in-real-time-for-cologne-germany-koln/) (flexible and hybrid mode only)
- * Customize vehicle profiles per request (flexible and hybrid mode only)
+ * Customization of vehicle profiles per request are possible (flexible and hybrid mode only)
  * Possibility to specify a [heading parameter](./docs/core/routing.md) of the vehicle for start, end and via points for navigation applications via `pass_through` or `heading` parameters (flexible and hybrid mode only)
  * [Alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424) (flexible and hybrid mode only)
  * [Turn costs and restrictions](./docs/core/turn-restrictions.md)
  * Country specific routing via SpatialRules
  * The core uses only a few dependencies (hppc, jts and slf4j)
  * Scales from small indoor-sized to world-wide-sized graphs
- * Find nearest point on street e.g. to get elevation or 'snap to road' or being used as spatial index (see [#1485](https://github.com/graphhopper/graphhopper/pull/1485))
- * Do [map matching](https://github.com/graphhopper/map-matching) with GraphHopper
- * Calculate [isochrones](./docs/web/api-doc.md#isochrone) with GraphHopper
- * Show path details [#1142](https://github.com/graphhopper/graphhopper/pull/1142)
- * GraphHopper can produce vector tiles for debugging purposes [#1572](https://github.com/graphhopper/graphhopper/pull/1572)
+ * Finds nearest point on street e.g. to get elevation or 'snap to road' or being used as spatial index (see [#1485](https://github.com/graphhopper/graphhopper/pull/1485))
+ * Does [map matching](https://github.com/graphhopper/map-matching) with GraphHopper
+ * Calculates [isochrones](./docs/web/api-doc.md#isochrone) with GraphHopper
+ * Shows details along a route ("path details") [#1142](https://github.com/graphhopper/graphhopper/pull/1142)
+ * Shows the whole road network in the browser for debugging purposes ("vector tile support") [#1572](https://github.com/graphhopper/graphhopper/pull/1572)

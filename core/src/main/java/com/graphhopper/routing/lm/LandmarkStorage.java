@@ -57,7 +57,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private static final Logger LOGGER = LoggerFactory.getLogger(LandmarkStorage.class);
     // This value is used to identify nodes where no subnetwork is associated
     private static final int UNSET_SUBNETWORK = -1;
-    // This value should only be used if subnetwork is too small to be explicitely stored
+    // This value should only be used if subnetwork is too small to be explicitly stored
     private static final int UNCLEAR_SUBNETWORK = 0;
     // one node has an associated landmark information ('one landmark row'): the forward and backward weight
     private long LM_ROW_LENGTH;
@@ -106,7 +106,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // Edge based is not really necessary because when adding turn costs while routing we can still
         // use the node based traversal as this is a smaller weight approximation and will still produce correct results
         this.traversalMode = TraversalMode.NODE_BASED;
-        final String name = AbstractWeighting.weightingToFileName(weighting, false);
+        final String name = AbstractWeighting.weightingToFileName(weighting);
         this.landmarkWeightDA = dir.find("landmarks_" + name);
 
         this.landmarks = landmarks;

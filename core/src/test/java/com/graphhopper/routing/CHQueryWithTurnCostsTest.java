@@ -54,7 +54,7 @@ public class CHQueryWithTurnCostsTest {
     private final FlagEncoder encoder = new MotorcycleFlagEncoder(5, 5, maxCost);
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
+    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting)).create();
     private final TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
     private final CHGraph chGraph = graph.getCHGraph();
     private String algoString;
@@ -718,10 +718,9 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight) {
-        CHEdgeIteratorState shortcut = chGraph.shortcut(from, to);
-        // we need to set flags first because they overwrite weight etc
-        shortcut.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), weight);
-        shortcut.setFirstAndLastOrigEdges(firstOrigEdge, lastOrigEdge).setSkippedEdges(skipped1, skipped2);
+        // todo: not using distance atm
+        double distance = 0;
+        chGraph.shortcutEdgeBased(from, to, PrepareEncoder.getScFwdDir(), weight, distance, skipped1, skipped2, firstOrigEdge, lastOrigEdge);
     }
 
     private void setLevelEqualToNodeIdForAllNodes() {
