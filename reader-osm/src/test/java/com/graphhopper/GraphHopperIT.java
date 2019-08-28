@@ -1002,20 +1002,12 @@ public class GraphHopperIT {
                 setEncodingManager(EncodingManager.create("car|turn_costs=true"));
         tmpHopper.importOrLoad();
 
-        // with turn costs (default if non-CH and turn cost enabled)
-        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        GHResponse rsp = tmpHopper.route(req);
-        assertEquals(1044, rsp.getBest().getDistance(), 1);
-
-        // without turn costs
-        req.getHints().put(Routing.EDGE_BASED, "false");
-        rsp = tmpHopper.route(req);
-        assertEquals(400, rsp.getBest().getDistance(), 1);
-
-        // with turn costs
-        req.getHints().put(Routing.EDGE_BASED, "true");
-        rsp = tmpHopper.route(req);
-        assertEquals(1044, rsp.getBest().getDistance(), 1);
+        // no edge_based parameter -> use edge-based (since encoder supports it and no CH)
+        assertMoscowEdgeBased(tmpHopper, "none", false);
+        // edge_based=false -> use node-based
+        assertMoscowNodeBased(tmpHopper, "false", false);
+        // edge_based=true -> use edge-based
+        assertMoscowEdgeBased(tmpHopper, "true", false);
     }
 
     @Test
@@ -1030,18 +1022,12 @@ public class GraphHopperIT {
         tmpHopper.getCHFactoryDecorator().setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_AND_NODE);
         tmpHopper.importOrLoad();
 
-        // without turn costs
-        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        req.getHints().put(Routing.EDGE_BASED, "false");
-        GHResponse rsp = tmpHopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(400, rsp.getBest().getDistance(), 1);
-
-        // with turn costs                
-        req.getHints().put(Routing.EDGE_BASED, "true");
-        rsp = tmpHopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(1044, rsp.getBest().getDistance(), 1);
+        // no edge_based parameter -> use node-based (because its faster)
+        assertMoscowNodeBased(tmpHopper, "none", true);
+        // edge_based=false -> use node-based
+        assertMoscowNodeBased(tmpHopper, "false", true);
+        // edge_based=true -> use edge-based
+        assertMoscowEdgeBased(tmpHopper, "true", true);
     }
 
     @Test
@@ -1057,22 +1043,33 @@ public class GraphHopperIT {
                 .setDisablingAllowed(true);
         tmpHopper.importOrLoad();
 
-        // with CH
-        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        req.getHints().put(Routing.EDGE_BASED, "true");
-        req.getHints().put(CH.DISABLE, "false");
-        GHResponse rsp1 = tmpHopper.route(req);
-        assertFalse(rsp1.getErrors().toString(), rsp1.hasErrors());
-        assertEquals(1044, rsp1.getBest().getDistance(), 1);
-
-        // without CH      
-        req.getHints().put(Routing.EDGE_BASED, "true");
-        req.getHints().put(CH.DISABLE, "true");
-        GHResponse rsp2 = tmpHopper.route(req);
-        assertFalse(rsp2.getErrors().toString(), rsp2.hasErrors());
-        assertEquals(1044, rsp2.getBest().getDistance(), 1);
+        // with CH -> edge-based
+        GHResponse rsp1 = assertMoscowEdgeBased(tmpHopper, "true", false);
+        // without CH -> also edge-based
+        GHResponse rsp2 = assertMoscowEdgeBased(tmpHopper, "true", true);
         // just a quick check that we did not run the same algorithm twice
         assertNotEquals(rsp1.getHints().get("visited_nodes.sum", "_"), rsp2.getHints().get("visited_nodes.sum", "_"));
+    }
+
+    private GHResponse assertMoscowNodeBased(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
+        return assertMoscow(tmpHopper, edgeBasedParam, false, ch);
+    }
+
+    private GHResponse assertMoscowEdgeBased(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
+        return assertMoscow(tmpHopper, edgeBasedParam, true, ch);
+    }
+
+    private GHResponse assertMoscow(GraphHopper tmpHopper, String edgeBasedParam, boolean withTurnCosts, boolean ch) {
+        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
+        if (edgeBasedParam.equals("true") || edgeBasedParam.equals("false")) {
+            req.getHints().put(Routing.EDGE_BASED, edgeBasedParam);
+        } else {
+            req.getHints().remove(Routing.EDGE_BASED);
+        }
+        req.getHints().put(CH.DISABLE, !ch);
+        GHResponse rsp = tmpHopper.route(req);
+        assertEquals(withTurnCosts ? 1044 : 400, rsp.getBest().getDistance(), 1);
+        return rsp;
     }
 
     @Test
