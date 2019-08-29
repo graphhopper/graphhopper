@@ -1098,7 +1098,7 @@ public class GraphHopperIT {
         assertMoscowEdgeBased(tmpHopper, "true", true);
         GHResponse rsp = runMoscow(tmpHopper, "false", true);
         assertTrue(rsp.hasErrors());
-        assertTrue(rsp.getErrors().toString().contains("Found an edge-based CH preparation"));
+        assertTrue(rsp.getErrors().toString().contains("Found 1 edge-based CH preparation"));
         assertTrue(rsp.getErrors().toString().contains("but requested node-based CH"));
     }
 
