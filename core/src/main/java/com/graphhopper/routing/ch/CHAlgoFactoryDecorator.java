@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.carrotsearch.hppc.IntObjectHashMap;
+import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.HintsMap;
@@ -221,7 +223,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      * Enables the use of contraction hierarchies to reduce query times. Enabled by default.
      *
      * @param profileString String representation of a CH profile like: "fastest", "shortest|edge_based=true",
-     *                       "fastest|u_turn_costs=30 or your own weight-calculation type.
+     *                      "fastest|u_turn_costs=30 or your own weight-calculation type.
      */
     public CHAlgoFactoryDecorator addCHProfileAsString(String profileString) {
         chProfileStrings.add(profileString);
@@ -252,35 +254,64 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     public PrepareContractionHierarchies getPreparation(HintsMap map) {
-        boolean edgeBased = map.getBool(Parameters.Routing.EDGE_BASED, false);
-        int uTurnCosts = map.getInt(Parameters.Routing.UTURN_COSTS, INFINITE_UTURN_COSTS);
         List<String> entriesStrs = new ArrayList<>();
-        boolean weightingMatchesButNotEdgeBased = false;
-        boolean weightingEdgeMatchesButNotUTurns = false;
+        IntObjectMap<PrepareContractionHierarchies> edgeBasedPCHs = new IntObjectHashMap<>(3);
+        PrepareContractionHierarchies nodeBasedPCH = null;
         for (PrepareContractionHierarchies p : getPreparations()) {
-            // todonow: not sure how strict this should be ? e.g. should we sometimes fall back to whatever preparation
-            // we have ? e.g. when specifying the wrong u-turn costs and there is only one CHGraph should we just take
-            // it ? see also: #1637
             boolean weightingMatches = p.getCHProfile().getWeighting().matches(map);
-            if (weightingMatches && p.isEdgeBased() == edgeBased && p.getCHProfile().getUTurnCostsInt() == uTurnCosts)
-                return p;
-            else if (weightingMatches && p.isEdgeBased() == edgeBased)
-                weightingEdgeMatchesButNotUTurns = true;
-            else if (weightingMatches)
-                weightingMatchesButNotEdgeBased = true;
-
+            if (weightingMatches) {
+                if (p.isEdgeBased()) {
+                    edgeBasedPCHs.put(p.getCHProfile().getUTurnCostsInt(), p);
+                } else {
+                    nodeBasedPCH = p;
+                }
+            }
             entriesStrs.add(p.getCHProfile().toString());
         }
 
-        String hint;
-        if (weightingEdgeMatchesButNotUTurns) {
-            hint = "The '" + Parameters.Routing.UTURN_COSTS + "' url parameter is missing or does not fit the weightings. Its value was: '" + uTurnCosts + "'";
-        } else if (weightingMatchesButNotEdgeBased) {
-            hint = "The '" + Parameters.Routing.EDGE_BASED + "' url parameter is missing or does not fit the weightings. Its value was: '" + edgeBased + "'";
-        } else {
-            hint = "";
+        if (edgeBasedPCHs.isEmpty() && nodeBasedPCH == null) {
+            throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries: " + entriesStrs + ".");
         }
-        throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries: " + entriesStrs + ". " + hint);
+        if (map.has(Parameters.Routing.EDGE_BASED) && map.has(Parameters.Routing.UTURN_COSTS)) {
+            boolean edgeBased = map.getBool(Parameters.Routing.EDGE_BASED, false);
+            int uTurnCosts = map.getInt(Parameters.Routing.UTURN_COSTS, INFINITE_UTURN_COSTS);
+            if (edgeBased) {
+                PrepareContractionHierarchies edgeBasedPCH = edgeBasedPCHs.get(uTurnCosts);
+                if (edgeBasedPCH != null) {
+                    return edgeBasedPCH;
+                } else if (!edgeBasedPCHs.isEmpty()) {
+                    throw new IllegalArgumentException("Found edge-based CH preparations for weighting map " + map + " but none for requested u-turn costs: " +
+                            uTurnCosts + ", available: " + edgeBasedPCHs.keys() + ". You need to configure edge-based CH preparation for this value of u-turn costs or" +
+                            " choose another value using the '" + Parameters.Routing.UTURN_COSTS + "' request parameter.");
+                } else {
+                    throw new IllegalArgumentException("Found " + edgeBasedPCHs.size() + " node-based CH preparations for weighting map " + map + ", but requested edge-based CH. " +
+                            "You either need to configure edge-based CH preparation or set the '" + Parameters.Routing.EDGE_BASED + "' " +
+                            "request parameter to 'false' (was 'true'). all entries: " + entriesStrs);
+                }
+            } else {
+                if (nodeBasedPCH != null) {
+                    return nodeBasedPCH;
+                } else {
+                    throw new IllegalArgumentException("Found an edge-based CH preparation for weighting map " + map + ", but requested node-based CH. " +
+                            "You either need to configure edge-based CH preparation or set the '" + Parameters.Routing.EDGE_BASED + "' " +
+                            "request parameter to 'true' (was 'false'). all entries: " + entriesStrs);
+                }
+            }
+        } else if (map.has(Parameters.Routing.EDGE_BASED)){
+          // todonow: finish this
+        } else if (map.has(Parameters.Routing.UTURN_COSTS)){
+            // no edge_based parameter was set, we determine the CH preparation based on what is there
+            if (!edgeBasedPCHs.isEmpty()) {
+                if (edgeBasedPCHs.size() == 1) {
+                    return edgeBasedPCHs.values().iterator().next().value;
+                } else {
+                    throw new IllegalArgumentException("Found edge-based CH preparations for multiple values of u-turn costs: " + edgeBasedPCHs.keys() +
+                            ". You need to specify which one to use using the `" + Parameters.Routing.UTURN_COSTS + "' parameter");
+                }
+            } else {
+                return nodeBasedPCH;
+            }
+        }
     }
 
     public int getPreparationThreads() {

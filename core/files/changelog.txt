@@ -16,6 +16,7 @@
     GraphHopperStorage.getGraph(Class) was replaced by GraphHopperStorage.getBase/CHGraph(), #1669
     CHGraph.shortcut(int, int) was removed (use .shortcut(int, int, ...) and/or .shortcutEdgeBased(int, int, ...) instead, #1693
     CH graphs are now identified using CHProfile instead of Weighting, #1670
+    removed the 'traversal_mode` request parameter for /route, instead of 'traversal_mode=edge_based_2dir' use edge_based=true
     It is now possible to specify finite u-turn costs for CH preparation, #1671
 
 0.12
