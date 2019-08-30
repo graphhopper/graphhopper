@@ -29,6 +29,7 @@ import com.graphhopper.matching.*;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import org.slf4j.Logger;
@@ -98,7 +99,7 @@ public class MapMatchingResource {
         StopWatch sw = new StopWatch().start();
 
         AlgorithmOptions opts = AlgorithmOptions.start()
-                .traversalMode(graphHopper.getTraversalMode())
+                .traversalMode(graphHopper.getEncodingManager().needsTurnCostsSupport() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED)
                 .maxVisitedNodes(maxVisitedNodes)
                 .hints(new HintsMap().put("vehicle", vehicleStr))
                 .build();

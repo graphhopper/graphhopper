@@ -3,10 +3,10 @@ package com.graphhopper.matching.cli;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.matching.Observation;
-import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
+import com.graphhopper.matching.Observation;
+import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -25,6 +25,9 @@ import java.io.FileWriter;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+
+import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
+import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 
 public class MatchCommand extends Command {
 
@@ -69,7 +72,8 @@ public class MatchCommand extends Command {
 
         FlagEncoder firstEncoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
         AlgorithmOptions opts = AlgorithmOptions.start().
-                algorithm(Parameters.Algorithms.DIJKSTRA_BI).traversalMode(hopper.getTraversalMode()).
+                algorithm(Parameters.Algorithms.DIJKSTRA_BI).
+                traversalMode(hopper.getEncodingManager().needsTurnCostsSupport() ? EDGE_BASED : NODE_BASED).
                 weighting(new FastestWeighting(firstEncoder)).
                 maxVisitedNodes(args.getInt("max_visited_nodes")).
                 // Penalizing inner-link U-turns only works with fastest weighting, since
