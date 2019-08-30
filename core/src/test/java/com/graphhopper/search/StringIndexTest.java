@@ -2,7 +2,6 @@ package com.graphhopper.search;
 
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -168,6 +167,31 @@ public class StringIndexTest {
         // make sure bytePointer is correctly set after loadExisting
         long newPointer = index.add(createMap("", "testing"));
         assertEquals(newPointer + ">" + pointer, pointer + "test".getBytes().length + 1 + 2, newPointer);
+        index.close();
+
+        Helper.removeDir(new File(location));
+    }
+
+    // TODO NOW
+    @Test
+    public void testLoadKeys() {
+        String location = "./target/stringindex-store";
+        Helper.removeDir(new File(location));
+
+        StringIndex index = new StringIndex(new RAMDirectory(location, true).create()).create(1000);
+        long pointerA = index.add(createMap("", "test value"));
+        long pointerB = index.add(createMap("a", "value", "b", "another value"));
+        index.flush();
+        index.close();
+
+        index = new StringIndex(new RAMDirectory(location, true));
+        assertTrue(index.loadExisting());
+        assertEquals("test value", index.get(pointerA));
+        assertEquals("test value", index.get(pointerA, ""));
+
+        assertEquals("value", index.get(pointerB, ""));
+        assertEquals("value", index.get(pointerB, "a"));
+        assertEquals("another value", index.get(pointerA, "b"));
         index.close();
 
         Helper.removeDir(new File(location));
