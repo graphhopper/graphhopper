@@ -46,6 +46,10 @@ public class OSMTollParser implements TagParser {
             tollEnc.setEnum(false, edgeFlags, Toll.ALL);
         else if (readerWay.hasTag("toll:hgv", "yes"))
             tollEnc.setEnum(false, edgeFlags, Toll.HGV);
+        else if (readerWay.hasTag("toll:N2", "yes"))
+            tollEnc.setEnum(false, edgeFlags, Toll.HGV);
+        else if (readerWay.hasTag("toll:N3", "yes"))
+            tollEnc.setEnum(false, edgeFlags, Toll.HGV);
         return edgeFlags;
     }
 }
