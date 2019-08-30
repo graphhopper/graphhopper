@@ -17,39 +17,44 @@
  */
 package com.graphhopper.routing.util.parsers;
 
+import static com.graphhopper.routing.profiles.TrackType.OTHER;
+
+import java.util.List;
+
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.Toll;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.profiles.TrackType;
+import com.graphhopper.routing.util.EncodingManager.Access;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.List;
+public class OSMTrackTypeParser implements TagParser {
 
-public class OSMTollParser implements TagParser {
+    private final EnumEncodedValue<TrackType> trackTypeEnc;
 
-    private final EnumEncodedValue<Toll> tollEnc;
-
-    public OSMTollParser() {
-        this.tollEnc = new EnumEncodedValue<>(Toll.KEY, Toll.class);
+    public OSMTrackTypeParser() {
+        this.trackTypeEnc = new EnumEncodedValue<>(TrackType.KEY, TrackType.class);
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(tollEnc);
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
+        link.add(trackTypeEnc);
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, long relationFlags) {
-        if (readerWay.hasTag("toll", "yes"))
-            tollEnc.setEnum(false, edgeFlags, Toll.ALL);
-        else if (readerWay.hasTag("toll:hgv", "yes"))
-            tollEnc.setEnum(false, edgeFlags, Toll.HGV);
-        else if (readerWay.hasTag("toll:N2", "yes"))
-            tollEnc.setEnum(false, edgeFlags, Toll.HGV);
-        else if (readerWay.hasTag("toll:N3", "yes"))
-            tollEnc.setEnum(false, edgeFlags, Toll.HGV);
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, Access access,
+                    long relationFlags) {
+        if (!access.isWay())
+            return edgeFlags;
+
+        String trackTypeTag = readerWay.getTag("tracktype");
+        if (trackTypeTag == null)
+            return edgeFlags;
+        TrackType trackType = TrackType.find(trackTypeTag);
+        if (trackType != OTHER)
+            trackTypeEnc.setEnum(false, edgeFlags, trackType);
         return edgeFlags;
     }
+
 }
