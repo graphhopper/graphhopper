@@ -926,7 +926,7 @@ class BaseGraph implements Graph {
     }
 
     private void setName(long edgePointer, String name) {
-        int nameIndexRef = (int) stringIndex.put(Collections.singletonMap("", name));
+        int nameIndexRef = (int) stringIndex.add(Collections.singletonMap("", name));
         if (nameIndexRef < 0)
             throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
 

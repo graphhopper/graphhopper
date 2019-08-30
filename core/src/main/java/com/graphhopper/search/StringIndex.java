@@ -83,7 +83,7 @@ public class StringIndex implements Storable<StringIndex> {
     /**
      * This method writes the specified map into the storage.
      */
-    public long put(Map<String, String> entryMap) {
+    public long add(Map<String, String> entryMap) {
         if (entryMap.isEmpty())
             return EMPTY_POINTER;
 
@@ -93,18 +93,22 @@ public class StringIndex implements Storable<StringIndex> {
         strings.ensureCapacity(bytePointer);
         int entryIndex = 0;
         for (Map.Entry<String, String> entry : entryMap.entrySet()) {
-            String key = entry.getKey();
+            String key = entry.getKey(), value = entry.getValue();
             int keyIndex = keys.indexOf(key);
             if (keyIndex < 0) {
                 keyIndex = keys.size();
                 keys.add(key);
             }
 
-            byte[] nameBytes = getBytesForString(key, entry.getValue());
-            strings.ensureCapacity(bytePointer + nameBytes.length);
-            strings.setShort(oldPointer + 1 + 2 * entryIndex, (short) ((nameBytes.length << 8) | keyIndex));
-            strings.setBytes(bytePointer, nameBytes, nameBytes.length);
-            bytePointer += nameBytes.length;
+            if (value == null || value.isEmpty()) {
+                strings.setShort(oldPointer + 1 + 2 * entryIndex, (short) (0 | keyIndex));
+            } else {
+                byte[] nameBytes = getBytesForString(key, value);
+                strings.ensureCapacity(bytePointer + nameBytes.length);
+                strings.setShort(oldPointer + 1 + 2 * entryIndex, (short) ((nameBytes.length << 8) | keyIndex));
+                strings.setBytes(bytePointer, nameBytes, nameBytes.length);
+                bytePointer += nameBytes.length;
+            }
             entryIndex++;
         }
         return oldPointer;
@@ -121,7 +125,7 @@ public class StringIndex implements Storable<StringIndex> {
         if (pointer == EMPTY_POINTER)
             return "";
 
-        int keyCount = strings.getShort(pointer);
+        int keyCount = strings.getShort(pointer) & 0xFF;
         int keyIndex = keys.indexOf(key);
         if (!key.isEmpty() && keyIndex < 0)
             throw new IllegalArgumentException("Cannot find key " + key);
@@ -131,17 +135,18 @@ public class StringIndex implements Storable<StringIndex> {
         pointer += 1 + 2 * keyCount;
         long tmpPointer = pointer;
         for (int i = 0; i < keyCount; i++) {
-            if (bytes[i * 2 + 1] == keyIndex) {
-                byte[] stringBytes = new byte[bytes[i * 2 + 2]];
+            int currentKeyIndex = bytes[i * 2 + 1] & 0xFF;
+            if (currentKeyIndex == keyIndex) {
+                byte[] stringBytes = new byte[bytes[i * 2 + 2] & 0xFF];
                 strings.getBytes(tmpPointer, stringBytes, stringBytes.length);
                 return new String(stringBytes, Helper.UTF_CS);
             }
 
-            tmpPointer += bytes[i * 2 + 2];
+            tmpPointer += bytes[i * 2 + 2] & 0xFF;
         }
         if (!key.isEmpty())
             throw new IllegalStateException("Something went wrong with key " + key);
-        byte[] stringBytes = new byte[bytes[2]];
+        byte[] stringBytes = new byte[bytes[2] & 0xFF];
         strings.getBytes(pointer, stringBytes, stringBytes.length);
         return new String(stringBytes, Helper.UTF_CS);
     }
