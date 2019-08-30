@@ -42,12 +42,13 @@ import static com.graphhopper.util.Helper.toLowerCase;
  * We aim for allowing slight typos/differences of the substrings, without having too much false positives.
  *
  * @author Robin Boldt
+ * @author Peter Karich
  */
 public class NameSimilarityEdgeFilter implements EdgeFilter {
 
-
     private static final Map<String, String> DEFAULT_REWRITE_MAP = new HashMap<String, String>() {{
-        // two char words will be ignored but ignore certain longer phrases (or rename them)
+        // Words with 2 characters like "Dr" (Drive) will be ignored, so it is not required to list them here.
+        // Words with 3 and more characters should be listed here to remove or rename them.
         for (String remove : Arrays.asList(
                 "ally", "alley",
                 "arc", "arcade",
@@ -66,6 +67,11 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
                 "via")) {
             put(remove, "");
         }
+        // expand instead of remove as significant part of the road name
+        put("n", "north");
+        put("s", "south");
+        put("w", "west");
+        put("e", "east");
     }};
     private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{L}]+");
     private static final JaroWinkler jaroWinkler = new JaroWinkler();

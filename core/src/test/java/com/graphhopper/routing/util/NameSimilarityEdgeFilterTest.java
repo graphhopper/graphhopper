@@ -19,7 +19,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
@@ -131,13 +130,12 @@ public class NameSimilarityEdgeFilterTest {
         assertFalse(createNameSimilarityEdgeFilter("Potsdamer Str.").accept(edge));
     }
 
-    @Ignore
-    public void testThatShouldSucceed() {
-        // Google Maps vs OSM @ 32.121435,-110.857969
-        assertTrue(createNameSimilarityEdgeFilter("S Wilmot Rd").accept(createTestEdgeIterator("South Wilmot Road")));
+    @Test
+    public void testServiceMix() {
+        assertTrue(createNameSimilarityEdgeFilter("North Derby Lane").accept(createTestEdgeIterator("N Derby Ln")));
+        assertTrue(createNameSimilarityEdgeFilter("N Derby Ln").accept(createTestEdgeIterator("North Derby Lane")));
 
-        // @ 37.307774,13.581259
-        assertTrue(createNameSimilarityEdgeFilter("Via Manzoni").accept(createTestEdgeIterator("Via Alessandro Manzoni")));
+        assertTrue(createNameSimilarityEdgeFilter("George Street").accept(createTestEdgeIterator("George St")));
     }
 
     /**
