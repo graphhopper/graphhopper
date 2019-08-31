@@ -23,7 +23,7 @@ import static java.lang.Math.toRadians;
 /**
  * Calculates the angle of a turn, defined by three points. The fast atan2 method is from Jim Shima,
  * 1999, http://www.dspguru.com/dsp/tricks/fixed-point-atan2-with-self-normalization
- * <p>
+ * and stands under public domain.
  *
  * @author Johannes Pelzer
  * @author Peter Karich
