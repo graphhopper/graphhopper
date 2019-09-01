@@ -15,7 +15,7 @@
     <parent>
         <relativePath>../..</relativePath>
         <groupId>com.graphhopper</groupId>
-        <artifactId>graphhopper-parent</artifactId>    	
+        <artifactId>graphhopper-parent</artifactId>
         <version>0.13-SNAPSHOT</version>
     </parent>
     <properties>

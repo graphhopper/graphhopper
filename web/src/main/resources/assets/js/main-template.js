@@ -549,7 +549,7 @@ function routeLatLng(request, doQuery) {
             return;
         }
 
-        function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation, useMiles, details) {
+        function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation, details) {
             return function () {
 
                 var currentGeoJson = geoJsons[currentLayerIndex];
@@ -568,7 +568,7 @@ function routeLatLng(request, doQuery) {
 
                 if (hasElevation) {
                     mapLayer.clearElevation();
-                    mapLayer.addElevation(currentGeoJson, useMiles, details);
+                    mapLayer.addElevation(currentGeoJson, details);
                 }
 
                 headerTabs.find("li").removeClass("current");
@@ -633,7 +633,7 @@ function routeLatLng(request, doQuery) {
             mapLayer.addDataToRoutingLayer(geojsonFeature);
             var oneTab = $("<div class='route_result_tab'>");
             routeResultsDiv.append(oneTab);
-            tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), request.useMiles, path.details));
+            tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), path.details));
 
             var routeInfo = $("<div class='route_description'>");
             if (path.description && path.description.length > 0) {

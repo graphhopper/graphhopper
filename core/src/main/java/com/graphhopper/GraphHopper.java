@@ -97,7 +97,6 @@ public class GraphHopper implements GraphHopperAPI {
     // for routing
     private int maxRoundTripRetries = 3;
     private boolean simplifyResponse = true;
-    private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
 
     private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
@@ -167,9 +166,6 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper setEncodingManager(EncodingManager em) {
         ensureNotLoaded();
         this.encodingManager = em;
-        if (em.needsTurnCostsSupport())
-            traversalMode = TraversalMode.EDGE_BASED;
-
         return this;
     }
 
@@ -206,18 +202,6 @@ public class GraphHopper implements GraphHopperAPI {
      */
     public GraphHopper setWayPointMaxDistance(double wayPointMaxDistance) {
         this.dataReaderWayPointMaxDistance = wayPointMaxDistance;
-        return this;
-    }
-
-    public TraversalMode getTraversalMode() {
-        return traversalMode;
-    }
-
-    /**
-     * Sets the default traversal mode used for the algorithms and preparation.
-     */
-    public GraphHopper setTraversalMode(TraversalMode traversalMode) {
-        this.traversalMode = traversalMode;
         return this;
     }
 
@@ -748,8 +732,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         if (chFactoryDecorator.isEnabled()) {
             initCHAlgoFactoryDecorator();
-            ghStorage = new GraphHopperStorage(chFactoryDecorator.getNodeBasedWeightings(), chFactoryDecorator.getEdgeBasedWeightings(),
-                    dir, encodingManager, hasElevation(), ext);
+            ghStorage = new GraphHopperStorage(chFactoryDecorator.getCHProfiles(), dir, encodingManager, hasElevation(), ext);
         } else {
             ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), ext);
         }
@@ -804,16 +787,16 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void initCHAlgoFactoryDecorator() {
-        if (!chFactoryDecorator.hasWeightings()) {
+        if (!chFactoryDecorator.hasCHProfiles()) {
             for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-                for (String chWeightingStr : chFactoryDecorator.getWeightingsAsStrings()) {
+                for (String chWeightingStr : chFactoryDecorator.getCHProfileStrings()) {
                     // ghStorage is null at this point
                     CHAlgoFactoryDecorator.EdgeBasedCHMode edgeBasedCHMode = chFactoryDecorator.getEdgeBasedCHMode();
                     if (!(edgeBasedCHMode == EDGE_OR_NODE && encoder.supports(TurnWeighting.class))) {
-                        chFactoryDecorator.addNodeBasedWeighting(createWeighting(new HintsMap(chWeightingStr), encoder, null));
+                        chFactoryDecorator.addCHProfile(CHProfile.nodeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null)));
                     }
                     if (edgeBasedCHMode != OFF && encoder.supports(TurnWeighting.class)) {
-                        chFactoryDecorator.addEdgeBasedWeighting(createWeighting(new HintsMap(chWeightingStr), encoder, null));
+                        chFactoryDecorator.addCHProfile(CHProfile.edgeBased(createWeighting(new HintsMap(chWeightingStr), encoder, null)));
                     }
                 }
             }
@@ -974,20 +957,21 @@ public class GraphHopper implements GraphHopperAPI {
             if (!encodingManager.hasEncoder(vehicle))
                 throw new IllegalArgumentException("Vehicle not supported: " + vehicle + ". Supported are: " + encodingManager.toString());
 
+            FlagEncoder encoder = encodingManager.getEncoder(vehicle);
             HintsMap hints = request.getHints();
-            String tModeStr = hints.get("traversal_mode", traversalMode.toString());
-            TraversalMode tMode = TraversalMode.fromString(tModeStr);
+
+            // we use edge-based routing if the encoder supports turn-costs *unless* the edge_based parameter is set
+            // explicitly.
+            TraversalMode tMode = encoder.supports(TurnWeighting.class) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
             if (hints.has(Routing.EDGE_BASED))
                 tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
 
-            if (!tMode.isEdgeBased() && !request.getCurbSides().isEmpty()) {
-                throw new IllegalArgumentException("To make use of the " + CURB_SIDE + " parameter you need to set " + Routing.EDGE_BASED + " to true");
-            }
-
-            FlagEncoder encoder = encodingManager.getEncoder(vehicle);
-
             if (tMode.isEdgeBased() && !encoder.supports(TurnWeighting.class)) {
                 throw new IllegalArgumentException("You need a turn cost extension to make use of edge_based=true, e.g. use car|turn_costs=true");
+            }
+
+            if (!tMode.isEdgeBased() && !request.getCurbSides().isEmpty()) {
+                throw new IllegalArgumentException("To make use of the " + CURB_SIDE + " parameter you need to set " + Routing.EDGE_BASED + " to true");
             }
 
             boolean disableCH = hints.getBool(CH.DISABLE, false);
@@ -1040,13 +1024,14 @@ public class GraphHopper implements GraphHopperAPI {
                     if (tmpAlgoFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
                         chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) tmpAlgoFactory).getDefaultAlgoFactory();
 
-                    if (chAlgoFactory instanceof PrepareContractionHierarchies)
-                        weighting = ((PrepareContractionHierarchies) chAlgoFactory).getWeighting();
-                    else
+                    if (chAlgoFactory instanceof PrepareContractionHierarchies) {
+                        CHProfile chProfile = ((PrepareContractionHierarchies) chAlgoFactory).getCHProfile();
+                        queryGraph = new QueryGraph(ghStorage.getCHGraph(chProfile));
+                        queryGraph.lookup(qResults);
+                        weighting = chProfile.getWeighting();
+                    } else {
                         throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
-
-                    queryGraph = new QueryGraph(ghStorage.getCHGraph(weighting));
-                    queryGraph.lookup(qResults);
+                    }
                 } else {
                     checkNonChMaxWaypointDistance(points);
                     queryGraph = new QueryGraph(ghStorage);

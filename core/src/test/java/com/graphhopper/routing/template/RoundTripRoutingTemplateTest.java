@@ -39,7 +39,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.assertEquals;
 
