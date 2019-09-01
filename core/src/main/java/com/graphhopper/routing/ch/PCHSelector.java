@@ -59,7 +59,7 @@ public class PCHSelector {
         findPCHsMatchingWeighting();
 
         if (!foundPCHsMatchingWeighting()) {
-            throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting weightingMap " + weightingMap + " in entries: " + entriesStrs + ".");
+            throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + weightingMap + " in entries: " + entriesStrs + ".");
         }
 
         if (edgeBased != null && uTurnCosts != null) {
@@ -161,19 +161,19 @@ public class PCHSelector {
     }
 
     private PrepareContractionHierarchies throwRequestedNodeBasedButOnlyFoundEdgeBased() throws NoSuchCHPreparationException {
-        throw new NoSuchCHPreparationException("Found " + edgeBasedPCHsByUTurnCosts.size() + " edge-based CH preparation(s) for weighting weightingMap " + weightingMap
+        throw new NoSuchCHPreparationException("Found " + edgeBasedPCHsByUTurnCosts.size() + " edge-based CH preparation(s) for weighting map " + weightingMap
                 + ", but requested node-based CH. You either need to configure edge-based CH preparation or set the '" + Parameters.Routing.EDGE_BASED + "' " +
                 "request parameter to 'true' (was 'false'). all entries: " + entriesStrs);
     }
 
     private PrepareContractionHierarchies throwRequestedEdgeBasedButOnlyFoundNodeBased() throws NoSuchCHPreparationException {
-        throw new NoSuchCHPreparationException("Found a node-based CH preparation for weighting weightingMap " + weightingMap + ", but requested edge-based CH. " +
+        throw new NoSuchCHPreparationException("Found a node-based CH preparation for weighting map " + weightingMap + ", but requested edge-based CH. " +
                 "You either need to configure edge-based CH preparation or set the '" + Parameters.Routing.EDGE_BASED + "' " +
                 "request parameter to 'false' (was 'true'). all entries: " + entriesStrs);
     }
 
     private PrepareContractionHierarchies throwFoundEdgeBasedButNotForRequestedUTurnCosts(int uTurnCosts) throws NoSuchCHPreparationException {
-        throw new NoSuchCHPreparationException("Found edge-based CH preparations for weighting weightingMap " + weightingMap + " but none for requested u-turn costs: " +
+        throw new NoSuchCHPreparationException("Found edge-based CH preparations for weighting map " + weightingMap + " but none for requested u-turn costs: " +
                 uTurnCosts + ", available: " + edgeBasedPCHsByUTurnCosts.keys() + ". You need to configure edge-based CH preparation for this value of u-turn costs or" +
                 " choose another value using the '" + Parameters.Routing.UTURN_COSTS + "' request parameter.");
     }
