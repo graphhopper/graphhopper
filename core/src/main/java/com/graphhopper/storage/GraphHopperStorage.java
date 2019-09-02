@@ -303,7 +303,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     private List<String> parseList(String listStr) {
         String trimmed = listStr.trim();
         if (trimmed.length() < 2)
-            throw new IllegalStateException("graph.ch.profiles is missing");
+            return Collections.emptyList();
         String[] items = trimmed.substring(1, trimmed.length() - 1).split(",");
         List<String> result = new ArrayList<>();
         for (String item : items) {
