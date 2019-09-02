@@ -61,6 +61,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
                 "ln.", "lane",
                 "pde.", "pde", "parade",
                 "pl.", "place", "plaza",
+                "rte", "route",
                 "str.", "str", "straße", "strasse", "st.", "street", "strada",
                 "sq.", "square",
                 "tr.", "track",
@@ -73,7 +74,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         put("w", "west");
         put("e", "east");
     }};
-    private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{L}]+");
+    private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{LD}]+");
     private static final JaroWinkler jaroWinkler = new JaroWinkler();
     private static final double JARO_WINKLER_ACCEPT_FACTOR = .9;
     private final EdgeFilter edgeFilter;
@@ -93,6 +94,10 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         this.pointHint = prepareName(removeRelation(pointHint == null ? "" : pointHint));
     }
 
+    String getNormalizedPointHint() {
+        return pointHint;
+    }
+
     /**
      * Removes any characters in the String that we don't care about in the matching procedure
      * TODO Currently limited to certain 'western' languages
@@ -106,8 +111,14 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
             String tmp = rewriteMap.get(rewrite);
             if (tmp != null)
                 rewrite = tmp;
-            // Ignore matching short frases like de, la, ...
-            if (!rewrite.isEmpty() && rewrite.length() > 2) {
+            boolean isNumber = false;
+            try {
+                if (Integer.parseInt(rewrite) > 0)
+                    isNumber = true;
+            } catch (NumberFormatException ex) {
+            }
+            // Ignore matching short frases like de, la, ... except it is a number
+            if (rewrite.length() > 2 || isNumber) {
                 list.add(rewrite);
             }
         }
