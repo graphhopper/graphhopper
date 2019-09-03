@@ -3,6 +3,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.parsers.*;
+import com.graphhopper.routing.util.parsers.helpers.OSMWeightExtractor;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
@@ -335,23 +336,23 @@ public class DataFlagEncoderTest {
 
     @Test
     public void stringToTons() {
-        assertEquals(1.5, OSMMaxWeightParser.stringToTons("1.5"), DELTA);
-        assertEquals(1.5, OSMMaxWeightParser.stringToTons("1.5 t"), DELTA);
-        assertEquals(1.5, OSMMaxWeightParser.stringToTons("1.5   t"), DELTA);
-        assertEquals(1.5, OSMMaxWeightParser.stringToTons("1.5 tons"), DELTA);
-        assertEquals(1.5, OSMMaxWeightParser.stringToTons("1.5 ton"), DELTA);
-        assertEquals(1.5, OSMMaxWeightParser.stringToTons("3306.9 lbs"), DELTA);
-        assertEquals(3, OSMMaxWeightParser.stringToTons("3 T"), DELTA);
-        assertEquals(3, OSMMaxWeightParser.stringToTons("3ton"), DELTA);
+        assertEquals(1.5, OSMWeightExtractor.stringToTons("1.5"), DELTA);
+        assertEquals(1.5, OSMWeightExtractor.stringToTons("1.5 t"), DELTA);
+        assertEquals(1.5, OSMWeightExtractor.stringToTons("1.5   t"), DELTA);
+        assertEquals(1.5, OSMWeightExtractor.stringToTons("1.5 tons"), DELTA);
+        assertEquals(1.5, OSMWeightExtractor.stringToTons("1.5 ton"), DELTA);
+        assertEquals(1.5, OSMWeightExtractor.stringToTons("3306.9 lbs"), DELTA);
+        assertEquals(3, OSMWeightExtractor.stringToTons("3 T"), DELTA);
+        assertEquals(3, OSMWeightExtractor.stringToTons("3ton"), DELTA);
 
         // maximum gross weight
-        assertEquals(6, OSMMaxWeightParser.stringToTons("6t mgw"), DELTA);
+        assertEquals(6, OSMWeightExtractor.stringToTons("6t mgw"), DELTA);
     }
 
     @Test(expected = NumberFormatException.class)
     public void stringToTonsException() {
         // Unexpected values
-        OSMMaxWeightParser.stringToTons("weight limit 1.5t");
+        OSMWeightExtractor.stringToTons("weight limit 1.5t");
     }
 
     @Test
