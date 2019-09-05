@@ -5,6 +5,7 @@ import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
@@ -77,8 +78,35 @@ public class SPTResource {
 
         HintsMap hintsMap = new HintsMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
+        Weighting weighting;
+        if (!hintsMap.get("avoid", "").isEmpty()) {
+            String avoid = hintsMap.get("avoid", "");
+            final boolean avoidMotorway = avoid.contains("motorway");
+            final boolean avoidBridge = avoid.contains("bridge");
+            final boolean avoidTunnel = avoid.contains("tunnel");
 
-        Weighting weighting = graphHopper.createWeighting(hintsMap, encoder, graph);
+            EnumEncodedValue<RoadEnvironment> reEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+            EnumEncodedValue<RoadClass> rcEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+            weighting = new FastestWeighting(encoder, hintsMap) {
+                @Override
+                public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
+                    double weight = super.calcWeight(edge, reverse, prevOrNextEdgeId);
+                    RoadEnvironment re = edge.get(reEnc);
+                    if (avoidBridge && re == RoadEnvironment.BRIDGE)
+                        weight *= 100;
+                    if (avoidTunnel && re == RoadEnvironment.TUNNEL)
+                        weight *= 100;
+                    if (avoidMotorway) {
+                        RoadClass rc = edge.get(rcEnc);
+                        if (rc == RoadClass.MOTORWAY)
+                            weight *= 100;
+                    }
+                    return weight;
+                }
+            };
+        } else {
+            weighting = graphHopper.createWeighting(hintsMap, encoder, graph);
+        }
         Isochrone isochrone = new Isochrone(queryGraph, weighting, reverseFlow);
 
         if (distanceInMeter > 0) {

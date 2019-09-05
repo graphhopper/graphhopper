@@ -165,6 +165,35 @@ $(document).ready(function (e) {
 
                 mapLayer.initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, urlParams.layer, urlParams.use_miles);
 
+                var lineLayer = L.geoJson().addTo(mapLayer.getMap());
+                lineLayer.options.style = function (feature) {
+                     var p = feature.properties || {};
+                     return {color:p.color||"gray", weight:p.weight||2, opacity:0.5};
+                }
+
+                var counter = 0;
+                var timeLimit = 20 * 30;
+                var Papa = require("papaparse");
+                Papa.parse("http://localhost:8989/spt?point=51.037319,13.60837&avoid=motorway&time_limit="+timeLimit+"&columns=prev_longitude,prev_latitude,longitude,latitude,time", {
+                    download: true,
+                    worker: true, // the UI should stay reactive while downloading
+                    step: function(results) {
+                        var d = results.data;
+                        // the root node has null for the previous values and time==0
+                        if(counter > 0 && d[4] > 0) {
+                            var r = d[4] / 1000.0 / timeLimit;
+                            // TODO can we avoid parsing the Color here?
+                            var colorStr = "rgb("+255 * (1 - r)+","+ 128 * r+","+ 255 * r+")";
+                            lineLayer.addData({type:"Feature",properties:{color:colorStr},geometry:{type:"LineString",coordinates:[[d[0],d[1]],[d[2],d[3]]]}});
+                        }
+
+                        counter++;
+                    },
+                    complete: function() {
+                        console.log("All done for /spt! " + counter);
+                    }
+                });
+
                 // execute query
                 initFromParams(urlParams, true);
 
