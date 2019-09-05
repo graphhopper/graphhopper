@@ -5,11 +5,10 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.UnsignedIntEncodedValue;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
@@ -96,14 +95,20 @@ public class RestaurantImportCommand extends ConfiguredCommand<GraphHopperServer
             logger.info("restaurant data already imported");
         }
 
-        // start in the middle of Germany
-        QueryResult result = index.findClosest(52.515385, 13.394394, EdgeFilter.ALL_EDGES);
-        if (!result.isValid())
+        // berlin: 52.335339,13.161621
+        // stuttgart
+        QueryResult from = index.findClosest(48.748945, 9.09668, EdgeFilter.ALL_EDGES);
+        if (!from.isValid())
+            throw new IllegalArgumentException("start point is invalid");
+        // mönchengladbach: 51.185369,6.405029
+        // hamburg
+        QueryResult to = index.findClosest(53.527248, 9.931641, EdgeFilter.ALL_EDGES);
+        if (!to.isValid())
             throw new IllegalArgumentException("start point is invalid");
 
-        Histogram histo = new Histogram(0, 600, 20);
+        Histogram histo = new Histogram(0, 420, 10);
 
-        StopWatch sw = new StopWatch().start();
+
         final Graph graph = graphHopper.getGraphHopperStorage();
         final EdgeExplorer explorer = graph.createEdgeExplorer(DefaultEdgeFilter.allEdges(car));
         final GHBitSetImpl uniqueEdges = new GHBitSetImpl(graph.getAllEdges().length());
@@ -111,10 +116,20 @@ public class RestaurantImportCommand extends ConfiguredCommand<GraphHopperServer
         final AtomicInteger integer = new AtomicInteger(0);
         Isochrone iso = new Isochrone(graph, new FastestWeighting(car), false);
         iso.setTimeLimit(Integer.MAX_VALUE);
-        sortedNodesFromHeap.add(result.getClosestNode());
+
+        Path p = new DijkstraBidirectionRef(graph, new FastestWeighting(car), TraversalMode.NODE_BASED).calcPath(from.getClosestNode(), to.getClosestNode());
+        if (!p.isFound())
+            throw new IllegalArgumentException("Cannot find path");
+
+        for (int node : p.calcNodes().toArray()) {
+            iso.initNode(node);
+            sortedNodesFromHeap.add(node);
+        }
+
+        StopWatch sw = new StopWatch().start();
         logger.info("nodes: " + graph.getNodes() + ", edges:" + graph.getEdges());
         // TODO this tweaked search method could be useful in master too, as it seems small effort to provide sorted results
-        iso.search(result.getClosestNode(), label -> {
+        iso.search(from.getClosestNode(), label -> {
 
             sortedNodesFromHeap.add(label.nodeId);
             // We need to traverse all edges. The problem is that the restaurant can be on any edge

@@ -45,9 +45,9 @@ public class Isochrone extends AbstractRoutingAlgorithm {
     enum ExploreType {TIME, DISTANCE}
 
     // TODO use same class as used in GTFS module?
-    class IsoLabel extends SPTEntry {
+    public static class IsoLabel extends SPTEntry {
 
-        IsoLabel(int edgeId, int adjNode, double weight, long time, double distance) {
+        public IsoLabel(int edgeId, int adjNode, double weight, long time, double distance) {
             super(edgeId, adjNode, weight);
             this.time = time;
             this.distance = distance;
@@ -118,6 +118,12 @@ public class Isochrone extends AbstractRoutingAlgorithm {
 
     public interface Callback {
         void add(IsoLabelWithCoordinates label);
+    }
+
+    public void initNode(int node) {
+        IsoLabel label = new IsoLabel(EdgeIterator.NO_EDGE, node, 0, 0, 0);
+        fromMap.put(node, label);
+        fromHeap.add(label);
     }
 
     public void search(int from, final Callback callback) {

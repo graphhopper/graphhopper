@@ -17,8 +17,13 @@
  */
 package com.graphhopper.routing.util.parsers;
 
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
+
+import java.util.List;
 
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -54,6 +59,19 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMTollParser();
         else if (name.equals(TrackType.KEY))
             return new OSMTrackTypeParser();
-        throw new IllegalArgumentException("entry in encoder list not supported " + name);
+        else
+            // to start Webserver also with countEnc
+            return new TagParser() {
+                @Override
+                public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
+                    registerNewEncodedValue.add(new UnsignedIntEncodedValue("count", 8, false));
+                }
+
+                @Override
+                public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+                    return edgeFlags;
+                }
+            };
+//        throw new IllegalArgumentException("entry in encoder list not supported " + name);
     }
 }
