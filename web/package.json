@@ -24,19 +24,18 @@
     }
   },
   "dependencies": {
+    "leaflet.vectorgrid": "1.3.0",
     "browserify": "16.2.0",
     "browserify-swap": "0.2.2",
-    "d3": "^5.11.0",
-    "flatpickr": "4.4.6",
+    "d3": "5.11.0",
     "jquery": "3.4.1",
     "leaflet": "1.5.1",
     "leaflet-contextmenu": "1.4.0",
     "leaflet-loading": "0.1.24",
-    "leaflet.heightgraph": "0.2.0",
-    "leaflet.vectorgrid": "1.3.0",
     "moment": "2.22.1",
-    "papaparse": "^5.0.2",
-    "uglifyify": "5.0.2"
+    "uglifyify": "5.0.2",
+    "flatpickr": "4.4.6",
+    "leaflet.heightgraph": "0.2.0"
   },
   "devDependencies": {
     "jasmine": "3.1.0",
