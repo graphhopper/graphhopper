@@ -118,7 +118,6 @@ public class MVTResource {
                 edgeCounter.incrementAndGet();
                 Map<String, Object> map = new HashMap<>(2);
                 map.put("name", edge.getName());
-                map.put("curly_factor", getBeeline(edge, na) / edge.getDistance());
                 for (String str : pathDetails) {
                     // how to indicate an erroneous parameter?
                     if (str.contains(",") || !encodingManager.hasEncodedValue(str))
@@ -141,12 +140,6 @@ public class MVTResource {
                 TileGeomResult tileGeom = JtsAdapter.createTileGeom(lineString, tileEnvelope, geometryFactory, layerParams, acceptAllGeomFilter);
                 List<VectorTile.Tile.Feature> features = JtsAdapter.toFeatures(tileGeom.mvtGeoms, layerProps, converter);
                 layerBuilder.addAllFeatures(features);
-            }
-
-            private double getBeeline(EdgeIteratorState edge, NodeAccess na) {
-                int a = edge.getBaseNode();
-                int b = edge.getAdjNode();
-                return Helper.DIST_EARTH.calcDist(na.getLat(a), na.getLon(a), na.getLat(b), na.getLon(b));
             }
 
             @Override

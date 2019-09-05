@@ -109,25 +109,18 @@ if(ghenv.environment === 'development') {
             // weight == line width
             var color, opacity = 1, weight = 1, rc = properties.road_class;
             // if(properties.speed < 30) console.log(properties)
-            if(properties.curly_factor < 0.6) {
+            if(rc == "motorway") {
                 color = '#dd504b'; // red
                 weight = 3;
-            } else if(properties.curly_factor < 0.8) {
-                color = '#e2a012'; // red
+            } else if(rc == "primary" || rc == "trunk") {
+                color = '#e2a012'; // orange
                 weight = 2;
+            } else if(rc == "secondary") {
+                weight = 2;
+                color = '#f7c913'; // yellow
+            } else {
+                color = "#aaa5a7"; // grey
             }
-//            if(rc == "motorway") {
-//                color = '#dd504b'; // red
-//                weight = 3;
-//            } else if(rc == "primary" || rc == "trunk") {
-//                color = '#e2a012'; // orange
-//                weight = 2;
-//            } else if(rc == "secondary") {
-//                weight = 2;
-//                color = '#f7c913'; // yellow
-//            } else {
-//                color = "#aaa5a7"; // grey
-//            }
             if(zoom > 16)
                weight += 3;
             else if(zoom > 15)
