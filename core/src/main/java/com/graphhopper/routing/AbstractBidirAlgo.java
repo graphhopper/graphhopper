@@ -247,7 +247,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         return currFrom.weight + currTo.weight >= bestPath.getWeight();
     }
 
-    boolean fillEdgesFrom() {
+    public boolean fillEdgesFrom() {
         if (pqOpenSetFrom.isEmpty()) {
             return false;
         }

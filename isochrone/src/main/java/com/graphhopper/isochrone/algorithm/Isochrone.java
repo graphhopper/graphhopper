@@ -107,7 +107,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
     public static class IsoLabelWithCoordinates {
         public final int nodeId;
         public int edgeId, prevEdgeId, prevNodeId;
-        public int timeInSec, prevTimeInSec;
+        public int timeMillis, prevTimeMillis;
         public int distance, prevDistance;
         public GHPoint coordinate, prevCoordinate;
 
@@ -121,34 +121,80 @@ public class Isochrone extends AbstractRoutingAlgorithm {
     }
 
     public void search(int from, final Callback callback) {
-        searchInternal(from);
-
+        checkAlreadyRun();
         final NodeAccess na = graph.getNodeAccess();
-        fromMap.forEach(new IntObjectProcedure<IsoLabel>() {
-
-            @Override
-            public void apply(int nodeId, IsoLabel label) {
-                double lat = na.getLatitude(nodeId);
-                double lon = na.getLongitude(nodeId);
-                IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates(nodeId);
-                isoLabelWC.coordinate = new GHPoint(lat, lon);
-                isoLabelWC.timeInSec = Math.round(label.time);
-                isoLabelWC.distance = (int) Math.round(label.distance);
-                isoLabelWC.edgeId = label.edge;
-                if (label.parent != null) {
-                    IsoLabel prevLabel = (IsoLabel) label.parent;
-                    nodeId = prevLabel.adjNode;
-                    double prevLat = na.getLatitude(nodeId);
-                    double prevLon = na.getLongitude(nodeId);
-                    isoLabelWC.prevNodeId = nodeId;
-                    isoLabelWC.prevEdgeId = prevLabel.edge;
-                    isoLabelWC.prevCoordinate = new GHPoint(prevLat, prevLon);
-                    isoLabelWC.prevDistance = (int) Math.round(prevLabel.distance);
-                    isoLabelWC.prevTimeInSec = Math.round(prevLabel.time);
-                }
-                callback.add(isoLabelWC);
+        currEdge = new IsoLabel(-1, from, 0, 0, 0);
+        fromMap.put(from, currEdge);
+        EdgeExplorer explorer = reverseFlow ? inEdgeExplorer : outEdgeExplorer;
+        while (true) {
+            visitedNodes++;
+            if (finished()) {
+                break;
             }
-        });
+
+            int neighborNode = currEdge.adjNode;
+            EdgeIterator iter = explorer.setBaseNode(neighborNode);
+            while (iter.next()) {
+                if (!accept(iter, currEdge.edge)) {
+                    continue;
+                }
+
+                double tmpWeight = weighting.calcWeight(iter, reverseFlow, currEdge.edge) + currEdge.weight;
+                if (Double.isInfinite(tmpWeight))
+                    continue;
+
+                double tmpDistance = iter.getDistance() + currEdge.distance;
+                long tmpTime = weighting.calcMillis(iter, reverseFlow, currEdge.edge) + currEdge.time;
+                int tmpNode = iter.getAdjNode();
+                IsoLabel nEdge = fromMap.get(tmpNode);
+                if (nEdge == null) {
+                    nEdge = new IsoLabel(iter.getEdge(), tmpNode, tmpWeight, tmpTime, tmpDistance);
+                    nEdge.parent = currEdge;
+                    fromMap.put(tmpNode, nEdge);
+                    fromHeap.add(nEdge);
+                } else if (nEdge.weight > tmpWeight) {
+                    fromHeap.remove(nEdge);
+                    nEdge.edge = iter.getEdge();
+                    nEdge.weight = tmpWeight;
+                    nEdge.distance = tmpDistance;
+                    nEdge.time = tmpTime;
+                    nEdge.parent = currEdge;
+                    fromHeap.add(nEdge);
+                }
+            }
+
+            if (fromHeap.isEmpty()) {
+                break;
+            }
+
+            currEdge = fromHeap.poll();
+
+            int nodeId = currEdge.adjNode;
+            IsoLabel label = fromMap.get(nodeId);
+            double lat = na.getLatitude(nodeId);
+            double lon = na.getLongitude(nodeId);
+            IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates(nodeId);
+            isoLabelWC.coordinate = new GHPoint(lat, lon);
+            isoLabelWC.timeMillis = Math.round(label.time);
+            isoLabelWC.distance = (int) Math.round(label.distance);
+            isoLabelWC.edgeId = label.edge;
+            if (label.parent != null) {
+                IsoLabel prevLabel = (IsoLabel) label.parent;
+                nodeId = prevLabel.adjNode;
+                double prevLat = na.getLatitude(nodeId);
+                double prevLon = na.getLongitude(nodeId);
+                isoLabelWC.prevNodeId = nodeId;
+                isoLabelWC.prevEdgeId = prevLabel.edge;
+                isoLabelWC.prevCoordinate = new GHPoint(prevLat, prevLon);
+                isoLabelWC.prevDistance = (int) Math.round(prevLabel.distance);
+                isoLabelWC.prevTimeMillis = Math.round(prevLabel.time);
+            }
+            callback.add(isoLabelWC);
+
+            if (currEdge == null) {
+                throw new AssertionError("Empty edge cannot happen");
+            }
+        }
     }
 
     public List<List<Coordinate>> searchGPS(int from, final int bucketCount) {

@@ -19,6 +19,7 @@ package com.graphhopper.http;
 
 import com.graphhopper.gtfs.dropwizard.RealtimeBundle;
 import com.graphhopper.http.cli.ImportCommand;
+import com.graphhopper.http.cli.RestaurantImportCommand;
 import com.graphhopper.http.resources.RootResource;
 import io.dropwizard.Application;
 import io.dropwizard.bundles.assets.ConfiguredAssetsBundle;
@@ -40,6 +41,7 @@ public final class GraphHopperApplication extends Application<GraphHopperServerC
         bootstrap.addBundle(new RealtimeBundle());
         bootstrap.addBundle(new ConfiguredAssetsBundle("/assets/", "/maps/", "index.html"));
         bootstrap.addCommand(new ImportCommand());
+        bootstrap.addCommand(new RestaurantImportCommand());
     }
 
     @Override
