@@ -271,30 +271,26 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         }
         if (map.has(Parameters.Routing.EDGE_BASED)) {
             boolean edgeBased = map.getBool(Parameters.Routing.EDGE_BASED, false);
-            if (edgeBased) {
-                if (edgeBasedPCH != null) {
-                    return edgeBasedPCH;
-                } else {
-                    throw new IllegalArgumentException("Found a node-based CH preparation for weighting map " + map + ", but requested edge-based CH. " +
-                            "You either need to configure edge-based CH preparation or set the '" + Parameters.Routing.EDGE_BASED + "' " +
-                            "request parameter to 'false' (was 'true'). all entries: " + entriesStrs);
-                }
-            } else {
-                if (nodeBasedPCH != null) {
-                    return nodeBasedPCH;
-                } else {
-                    throw new IllegalArgumentException("Found an edge-based CH preparation for weighting map " + map + ", but requested node-based CH. " +
-                            "You either need to configure edge-based CH preparation or set the '" + Parameters.Routing.EDGE_BASED + "' " +
-                            "request parameter to 'true' (was 'false'). all entries: " + entriesStrs);
-                }
-            }
-        } else {
-            // no edge_based parameter was set, we determine the CH preparation based on what is there
-            if (edgeBasedPCH != null) {
+            if (edgeBased && edgeBasedPCH != null) {
                 return edgeBasedPCH;
-            } else {
+            }
+            if (!edgeBased && nodeBasedPCH != null) {
                 return nodeBasedPCH;
             }
+
+            if (edgeBased) {
+                throw new IllegalArgumentException("Found a node-based CH preparation for weighting map " + map + ", but requested edge-based CH. " +
+                        "You either need to configure edge-based CH preparation or set the '" + Parameters.Routing.EDGE_BASED + "' " +
+                        "request parameter to 'false' (was 'true'). all entries: " + entriesStrs);
+            } else {
+                throw new IllegalArgumentException("Found an edge-based CH preparation for weighting map " + map + ", but requested node-based CH. " +
+                        "You either need to configure node-based CH preparation or set the '" + Parameters.Routing.EDGE_BASED + "' " +
+                        "request parameter to 'true' (was 'false'). all entries: " + entriesStrs);
+            }
+        } else {
+            // no edge_based parameter was set, we determine the CH preparation based on what is there (and prefer edge-based
+            // if we can choose)
+            return edgeBasedPCH != null ? edgeBasedPCH : nodeBasedPCH;
         }
     }
 
