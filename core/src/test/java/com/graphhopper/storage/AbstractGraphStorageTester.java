@@ -119,7 +119,7 @@ public abstract class AbstractGraphStorageTester {
     public void testSetTooBigDistance_435() {
         graph = createGHStorage();
 
-        double maxDist = EdgeAccess.MAX_DIST;
+        double maxDist = BaseGraph.MAX_DIST;
         EdgeIteratorState edge1 = graph.edge(0, 1, maxDist, true);
         assertEquals(maxDist, edge1.getDistance(), 1);
 

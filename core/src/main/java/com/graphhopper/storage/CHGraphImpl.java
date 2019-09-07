@@ -326,7 +326,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     void initStorage() {
         EdgeAccess ea = baseGraph.edgeAccess;
-        chEdgeAccess.init(ea.E_NODEA, ea.E_NODEB, ea.E_LINKA, ea.E_LINKB, ea.E_DIST, ea.E_FLAGS);
+        chEdgeAccess.init(ea.E_NODEA, ea.E_NODEB, ea.E_LINKA, ea.E_LINKB, ea.E_FLAGS);
         // shortcuts
         S_SKIP_EDGE1 = ea.E_FLAGS + 4;
         S_SKIP_EDGE2 = S_SKIP_EDGE1 + 4;
