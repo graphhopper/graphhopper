@@ -113,7 +113,8 @@ public class PCHSelector {
     }
 
     private PrepareContractionHierarchies selectUsingUTurnCosts(int uTurnCosts) throws NoSuchCHPreparationException {
-        // no edge_based parameter was set, we determine the CH preparation based on what is there
+        // no edge_based parameter was set, we determine the CH preparation based on what is there (and prefer edge-based
+        // if we can choose)
         PrepareContractionHierarchies edgeBasedPCH = edgeBasedPCHsByUTurnCosts.get(uTurnCosts);
         if (edgeBasedPCH != null) {
             return edgeBasedPCH;
@@ -162,7 +163,7 @@ public class PCHSelector {
 
     private PrepareContractionHierarchies throwRequestedNodeBasedButOnlyFoundEdgeBased() throws NoSuchCHPreparationException {
         throw new NoSuchCHPreparationException("Found " + edgeBasedPCHsByUTurnCosts.size() + " edge-based CH preparation(s) for weighting map " + weightingMap
-                + ", but requested node-based CH. You either need to configure edge-based CH preparation or set the '" + Parameters.Routing.EDGE_BASED + "' " +
+                + ", but requested node-based CH. You either need to configure node-based CH preparation or set the '" + Parameters.Routing.EDGE_BASED + "' " +
                 "request parameter to 'true' (was 'false'). all entries: " + entriesStrs);
     }
 
