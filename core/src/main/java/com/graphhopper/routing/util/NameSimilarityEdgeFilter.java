@@ -42,12 +42,13 @@ import static com.graphhopper.util.Helper.toLowerCase;
  * We aim for allowing slight typos/differences of the substrings, without having too much false positives.
  *
  * @author Robin Boldt
+ * @author Peter Karich
  */
 public class NameSimilarityEdgeFilter implements EdgeFilter {
 
-
     private static final Map<String, String> DEFAULT_REWRITE_MAP = new HashMap<String, String>() {{
-        // two char words will be ignored but ignore certain longer phrases (or rename them)
+        // Words with 2 characters like "Dr" (Drive) will be ignored, so it is not required to list them here.
+        // Words with 3 and more characters should be listed here to remove or rename them.
         for (String remove : Arrays.asList(
                 "ally", "alley",
                 "arc", "arcade",
@@ -60,14 +61,20 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
                 "ln.", "lane",
                 "pde.", "pde", "parade",
                 "pl.", "place", "plaza",
+                "rte", "route",
                 "str.", "str", "straße", "strasse", "st.", "street", "strada",
                 "sq.", "square",
                 "tr.", "track",
                 "via")) {
             put(remove, "");
         }
+        // expand instead of remove as significant part of the road name
+        put("n", "north");
+        put("s", "south");
+        put("w", "west");
+        put("e", "east");
     }};
-    private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{L}]+");
+    private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{LD}]+");
     private static final JaroWinkler jaroWinkler = new JaroWinkler();
     private static final double JARO_WINKLER_ACCEPT_FACTOR = .9;
     private final EdgeFilter edgeFilter;
@@ -87,6 +94,10 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         this.pointHint = prepareName(removeRelation(pointHint == null ? "" : pointHint));
     }
 
+    String getNormalizedPointHint() {
+        return pointHint;
+    }
+
     /**
      * Removes any characters in the String that we don't care about in the matching procedure
      * TODO Currently limited to certain 'western' languages
@@ -100,8 +111,14 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
             String tmp = rewriteMap.get(rewrite);
             if (tmp != null)
                 rewrite = tmp;
-            // Ignore matching short frases like de, la, ...
-            if (!rewrite.isEmpty() && rewrite.length() > 2) {
+            boolean isNumber = false;
+            try {
+                if (Integer.parseInt(rewrite) > 0)
+                    isNumber = true;
+            } catch (NumberFormatException ex) {
+            }
+            // Ignore matching short frases like de, la, ... except it is a number
+            if (rewrite.length() > 2 || isNumber) {
                 list.add(rewrite);
             }
         }
