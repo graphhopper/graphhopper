@@ -165,9 +165,12 @@ public class DirectedRoutingTest {
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
             Path path = createAlgo()
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
-            strictViolations.addAll(comparePaths(refPath, path, source, target));
+            // do not check nodes, because there can be ambiguity when there are zero weight loops
+            strictViolations.addAll(comparePaths(refPath, path, source, target, false));
         }
-        if (strictViolations.size() > Math.max(1, 0.20 * numQueries)) {
+        // sometimes there are multiple best paths with different distance/time, if this happens too often something
+        // is wrong and we fail
+        if (strictViolations.size() > Math.max(1, 0.05 * numQueries)) {
             for (String strictViolation : strictViolations) {
                 System.out.println("strict violation: " + strictViolation);
             }
@@ -221,10 +224,11 @@ public class DirectedRoutingTest {
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
             Path path = createAlgo(chQueryGraph)
                     .calcPath(source, target, chSourceOutEdge, chTargetInEdge);
-            strictViolations.addAll(comparePaths(refPath, path, source, target));
+            // do not check nodes, because there can be ambiguity when there are zero weight loops
+            strictViolations.addAll(comparePaths(refPath, path, source, target, false));
         }
-        // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
-        // however, when there are too many deviations we fail
+        // sometimes there are multiple best paths with different distance/time, if this happens too often something
+        // is wrong and we fail
         if (strictViolations.size() > Math.max(1, 0.05 * numQueries)) {
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
         }
@@ -256,7 +260,7 @@ public class DirectedRoutingTest {
         return result;
     }
 
-    private List<String> comparePaths(Path refPath, Path path, int source, int target) {
+    private List<String> comparePaths(Path refPath, Path path, int source, int target, boolean checkNodes) {
         List<String> strictViolations = new ArrayList<>();
         double refWeight = refPath.getWeight();
         double weight = path.getWeight();
@@ -271,7 +275,7 @@ public class DirectedRoutingTest {
         if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
             strictViolations.add("wrong time " + source + "->" + target + ", expected: " + refPath.getTime() + ", given: " + path.getTime());
         }
-        if (!refPath.calcNodes().equals(path.calcNodes())) {
+        if (checkNodes && !refPath.calcNodes().equals(path.calcNodes())) {
             strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refPath.calcNodes() + "\ngiven:    " + path.calcNodes());
         }
         return strictViolations;
