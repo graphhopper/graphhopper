@@ -225,7 +225,7 @@ public class DirectedRoutingTest {
         }
         // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
         // however, when there are too many deviations we fail
-        if (strictViolations.size() > Math.max(1, 0.30 * numQueries)) {
+        if (strictViolations.size() > Math.max(1, 0.05 * numQueries)) {
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
         }
     }

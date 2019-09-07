@@ -62,7 +62,7 @@ public class TurnWeighting implements Weighting {
         this.uTurnCosts = uTurnCosts < 0 ? Double.POSITIVE_INFINITY : uTurnCosts;
     }
 
-    public double getUTurnCost() {
+    public double getUTurnCosts() {
         return uTurnCosts;
     }
 
@@ -110,7 +110,7 @@ public class TurnWeighting implements Weighting {
         }
         if (turnCostExt.isUTurn(edgeFrom, edgeTo)) {
             // note that the u-turn costs overwrite any turn costs set in TurnCostExtension
-            // todonow:
+            // todo:
             // also this does not allow TurnCostEncoder to set the u-turn costs to zero explicitly, like FootFlagEncoder!
             // this problem is a bit hidden, because if you do not apply any turn restrictions (like FootFlagEncoder)
             // you never do a u-turn anyway.

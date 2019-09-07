@@ -792,7 +792,7 @@ public class GraphHopper implements GraphHopperAPI {
                 for (String chWeightingStr : chFactoryDecorator.getCHProfileStrings()) {
                     // ghStorage is null at this point
 
-                    // extract weighting string and possible configuration
+                    // extract weighting string and u-turn-costs
                     String configStr = "";
                     if (chWeightingStr.contains("|")) {
                         configStr = chWeightingStr;
