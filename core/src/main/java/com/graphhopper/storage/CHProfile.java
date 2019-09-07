@@ -7,7 +7,7 @@ import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.Objects;
 
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 
 /**
  * Specifies all properties of a CH routing profile. Generally these properties cannot be changed after the CH
@@ -21,7 +21,7 @@ public class CHProfile {
     private final int uTurnCosts;
 
     public static CHProfile nodeBased(Weighting weighting) {
-        return new CHProfile(weighting, TraversalMode.NODE_BASED, INFINITE_UTURN_COSTS);
+        return new CHProfile(weighting, TraversalMode.NODE_BASED, INFINITE_U_TURN_COSTS);
     }
 
     public static CHProfile edgeBased(Weighting weighting, int uTurnCosts) {
@@ -33,19 +33,19 @@ public class CHProfile {
     }
 
     /**
-     * @param uTurnCosts the costs of a u-turn in seconds, for {@link TurnWeighting#INFINITE_UTURN_COSTS} the u-turn costs
+     * @param uTurnCosts the costs of a u-turn in seconds, for {@link TurnWeighting#INFINITE_U_TURN_COSTS} the u-turn costs
      *                   will be infinite
      */
     public CHProfile(Weighting weighting, boolean edgeBased, int uTurnCosts) {
-        if (!edgeBased && uTurnCosts != INFINITE_UTURN_COSTS) {
+        if (!edgeBased && uTurnCosts != INFINITE_U_TURN_COSTS) {
             throw new IllegalArgumentException("Finite u-turn costs are only allowed for edge-based CH");
         }
         this.weighting = weighting;
         this.edgeBased = edgeBased;
-        if (uTurnCosts < 0 && uTurnCosts != INFINITE_UTURN_COSTS) {
-            throw new IllegalArgumentException("u-turn costs must be positive, or equal to " + INFINITE_UTURN_COSTS + " (=infinite costs)");
+        if (uTurnCosts < 0 && uTurnCosts != INFINITE_U_TURN_COSTS) {
+            throw new IllegalArgumentException("u-turn costs must be positive, or equal to " + INFINITE_U_TURN_COSTS + " (=infinite costs)");
         }
-        this.uTurnCosts = uTurnCosts < 0 ? INFINITE_UTURN_COSTS : uTurnCosts;
+        this.uTurnCosts = uTurnCosts < 0 ? INFINITE_U_TURN_COSTS : uTurnCosts;
     }
 
     public Weighting getWeighting() {

@@ -24,7 +24,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.*;
 
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
@@ -62,9 +62,9 @@ public class DirectedRoutingTest {
     @Parameterized.Parameters(name = "{0}, u-turn-costs: {1}")
     public static Collection<Object[]> params() {
         return Arrays.asList(new Object[][]{
-                {Algo.ASTAR, INFINITE_UTURN_COSTS, false, false},
-                {Algo.CH_ASTAR, INFINITE_UTURN_COSTS, true, false},
-                {Algo.CH_DIJKSTRA, INFINITE_UTURN_COSTS, true, false},
+                {Algo.ASTAR, INFINITE_U_TURN_COSTS, false, false},
+                {Algo.CH_ASTAR, INFINITE_U_TURN_COSTS, true, false},
+                {Algo.CH_DIJKSTRA, INFINITE_U_TURN_COSTS, true, false},
                 // todo: yields warnings and fails, see #1665, #1687
 //                {Algo.LM, INFINITE_UTURN_COSTS, false, true}
                 {Algo.ASTAR, 40, false, false},

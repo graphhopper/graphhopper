@@ -32,7 +32,7 @@ import com.graphhopper.util.EdgeIteratorState;
  * @author Peter Karich
  */
 public class TurnWeighting implements Weighting {
-    public static final int INFINITE_UTURN_COSTS = -1;
+    public static final int INFINITE_U_TURN_COSTS = -1;
     /**
      * Encoder, which decodes the turn flags
      */
@@ -42,7 +42,7 @@ public class TurnWeighting implements Weighting {
     private final double uTurnCosts;
 
     public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
-        this(superWeighting, turnCostExt, INFINITE_UTURN_COSTS);
+        this(superWeighting, turnCostExt, INFINITE_U_TURN_COSTS);
     }
 
     /**

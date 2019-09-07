@@ -36,7 +36,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.routing.ch.NodeBasedNodeContractorTest.SC_ACCESS;
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.Assert.*;
 
@@ -58,7 +58,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     }
 
     private GraphHopperStorage newGHStorage(Directory dir, boolean is3D, boolean forEdgeBasedTraversal) {
-        CHProfile chProfile = new CHProfile(new FastestWeighting(carEncoder), forEdgeBasedTraversal, INFINITE_UTURN_COSTS);
+        CHProfile chProfile = new CHProfile(new FastestWeighting(carEncoder), forEdgeBasedTraversal, INFINITE_U_TURN_COSTS);
         return new GraphHopperStorage(Collections.singletonList(chProfile), dir, encodingManager, is3D, new GraphExtension.NoOpExtension());
     }
 
@@ -616,7 +616,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
             profiles.add(CHProfile.nodeBased(nodeBasedCHWeighting));
         }
         for (Weighting edgeBasedCHWeighting : edgeBasedCHWeightings) {
-            profiles.add(CHProfile.edgeBased(edgeBasedCHWeighting, INFINITE_UTURN_COSTS));
+            profiles.add(CHProfile.edgeBased(edgeBasedCHWeighting, INFINITE_U_TURN_COSTS));
         }
         return new GraphHopperStorage(profiles,
                 new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), encodingManager, false, new GraphExtension.NoOpExtension());

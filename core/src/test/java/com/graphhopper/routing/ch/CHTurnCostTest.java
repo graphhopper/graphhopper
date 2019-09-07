@@ -40,7 +40,7 @@ import java.util.*;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.*;
 
 /**
@@ -78,7 +78,7 @@ public class CHTurnCostTest {
         graph = new GraphBuilder(encodingManager).setCHProfiles(chProfiles).create();
         // the default CH graph with infinite u-turn costs, can be reset in tests that should run with finite u-turn
         // costs
-        chGraph = graph.getCHGraph(CHProfile.edgeBased(weighting, INFINITE_UTURN_COSTS));
+        chGraph = graph.getCHGraph(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS));
         turnCostExtension = (TurnCostExtension) graph.getExtension();
         checkStrict = true;
     }
@@ -90,7 +90,7 @@ public class CHTurnCostTest {
     private List<CHProfile> createCHProfiles() {
         Set<CHProfile> profileSet = new HashSet<>(25);
         // the first one is always the one with infinite u-turn costs
-        profileSet.add(CHProfile.edgeBased(weighting, INFINITE_UTURN_COSTS));
+        profileSet.add(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS));
         // this one we also always add
         profileSet.add(CHProfile.edgeBased(weighting, 50));
         // add more (distinct) profiles

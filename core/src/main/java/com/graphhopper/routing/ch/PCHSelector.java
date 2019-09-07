@@ -158,7 +158,7 @@ public class PCHSelector {
 
     private PrepareContractionHierarchies throwFoundEdgeBasedButUnclearWhichOneToTake() throws NoSuchCHPreparationException {
         throw new NoSuchCHPreparationException("Found matching edge-based CH preparations for multiple values of u-turn costs: " + edgeBasedPCHsByUTurnCosts.keys() +
-                ". You need to specify which one to use using the `" + Parameters.Routing.UTURN_COSTS + "' parameter");
+                ". You need to specify which one to use using the `" + Parameters.Routing.U_TURN_COSTS + "' parameter");
     }
 
     private PrepareContractionHierarchies throwRequestedNodeBasedButOnlyFoundEdgeBased() throws NoSuchCHPreparationException {
@@ -176,6 +176,6 @@ public class PCHSelector {
     private PrepareContractionHierarchies throwFoundEdgeBasedButNotForRequestedUTurnCosts(int uTurnCosts) throws NoSuchCHPreparationException {
         throw new NoSuchCHPreparationException("Found edge-based CH preparations for weighting map " + weightingMap + " but none for requested u-turn costs: " +
                 uTurnCosts + ", available: " + edgeBasedPCHsByUTurnCosts.keys() + ". You need to configure edge-based CH preparation for this value of u-turn costs or" +
-                " choose another value using the '" + Parameters.Routing.UTURN_COSTS + "' request parameter.");
+                " choose another value using the '" + Parameters.Routing.U_TURN_COSTS + "' request parameter.");
     }
 }

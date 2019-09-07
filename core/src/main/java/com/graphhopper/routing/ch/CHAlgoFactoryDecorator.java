@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.IntObjectHashMap;
-import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.HintsMap;
@@ -36,7 +34,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.CH.DISABLE;
 
@@ -255,7 +253,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     public PrepareContractionHierarchies getPreparation(HintsMap map) {
         Boolean edgeBased = map.has(Routing.EDGE_BASED) ? map.getBool(Routing.EDGE_BASED, false) : null;
-        Integer uTurnCosts = map.has(Routing.UTURN_COSTS) ? map.getInt(Routing.UTURN_COSTS, INFINITE_UTURN_COSTS) : null;
+        Integer uTurnCosts = map.has(Routing.U_TURN_COSTS) ? map.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS) : null;
         try {
             return PCHSelector.select(getPreparations(), map, edgeBased, uTurnCosts);
         } catch (NoSuchCHPreparationException e) {

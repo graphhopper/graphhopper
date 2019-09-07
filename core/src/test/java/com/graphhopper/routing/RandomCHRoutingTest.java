@@ -25,7 +25,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.*;
 
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -43,9 +43,9 @@ public class RandomCHRoutingTest {
     @Parameterized.Parameters(name = "{0}, u-turn-costs={1}")
     public static Collection<Object[]> params() {
         return Arrays.asList(new Object[][]{
-                {TraversalMode.NODE_BASED, INFINITE_UTURN_COSTS},
+                {TraversalMode.NODE_BASED, INFINITE_U_TURN_COSTS},
                 {TraversalMode.EDGE_BASED, 40},
-                {TraversalMode.EDGE_BASED, INFINITE_UTURN_COSTS}
+                {TraversalMode.EDGE_BASED, INFINITE_U_TURN_COSTS}
         });
     }
 
@@ -156,7 +156,7 @@ public class RandomCHRoutingTest {
                 int from = rnd.nextInt(queryGraph.getNodes());
                 int to = rnd.nextInt(queryGraph.getNodes());
                 Weighting w = traversalMode.isEdgeBased()
-                        ? new TurnWeighting(weighting, (TurnCostExtension) queryGraph.getExtension(), uTurnCosts == INFINITE_UTURN_COSTS ? Double.POSITIVE_INFINITY : uTurnCosts)
+                        ? new TurnWeighting(weighting, (TurnCostExtension) queryGraph.getExtension(), uTurnCosts == INFINITE_U_TURN_COSTS ? Double.POSITIVE_INFINITY : uTurnCosts)
                         : weighting;
                 // using plain dijkstra instead of bidirectional, because of #1592
                 RoutingAlgorithm refAlgo = new Dijkstra(queryGraph, w, traversalMode);

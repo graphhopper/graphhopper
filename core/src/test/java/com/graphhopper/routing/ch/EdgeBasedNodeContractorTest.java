@@ -40,7 +40,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.*;
 
 /**
@@ -71,7 +71,7 @@ public class EdgeBasedNodeContractorTest {
         encoder = new CarFlagEncoder(5, 5, maxCost);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         weighting = new ShortestWeighting(encoder);
-        uTurnCosts = INFINITE_UTURN_COSTS;
+        uTurnCosts = INFINITE_U_TURN_COSTS;
         graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, uTurnCosts)).create();
         turnCostExtension = (TurnCostExtension) graph.getExtension();
         chGraph = graph.getCHGraph();

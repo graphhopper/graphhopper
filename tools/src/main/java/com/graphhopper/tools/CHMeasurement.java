@@ -35,7 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_UTURN_COSTS;
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static java.lang.System.nanoTime;
@@ -76,7 +76,7 @@ public class CHMeasurement {
         final int landmarks = cmdArgs.getInt("landmarks", 0);
         final boolean cleanup = cmdArgs.getBool("cleanup", true);
         final boolean withTurnCosts = cmdArgs.getBool("turncosts", true);
-        final int uTurnCosts = cmdArgs.getInt(Parameters.Routing.UTURN_COSTS, INFINITE_UTURN_COSTS);
+        final int uTurnCosts = cmdArgs.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
         final double errorThreshold = cmdArgs.getDouble("threshold", 0.1);
         final long seed = cmdArgs.getLong("seed", 456);
         final int compIterations = cmdArgs.getInt("comp_iterations", 100);
@@ -231,7 +231,7 @@ public class CHMeasurement {
                 req.getHints().put(Parameters.Routing.EDGE_BASED, withTurnCosts);
                 req.getHints().put(Parameters.CH.DISABLE, false);
                 req.getHints().put(Parameters.Landmark.DISABLE, true);
-                req.getHints().put(Parameters.Routing.UTURN_COSTS, uTurnCosts);
+                req.getHints().put(Parameters.Routing.U_TURN_COSTS, uTurnCosts);
                 req.setAlgorithm(algo);
                 long start = nanoTime();
                 GHResponse chRoute = graphHopper.route(req);
