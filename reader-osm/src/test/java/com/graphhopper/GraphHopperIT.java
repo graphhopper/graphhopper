@@ -1022,8 +1022,8 @@ public class GraphHopperIT {
         tmpHopper.getCHFactoryDecorator().setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_AND_NODE);
         tmpHopper.importOrLoad();
 
-        // no edge_based parameter -> use node-based (because its faster)
-        assertMoscowNodeBased(tmpHopper, "none", true);
+        // no edge_based parameter -> use edge-based (because its there)
+        assertMoscowEdgeBased(tmpHopper, "none", true);
         // edge_based=false -> use node-based
         assertMoscowNodeBased(tmpHopper, "false", true);
         // edge_based=true -> use edge-based
@@ -1075,7 +1075,31 @@ public class GraphHopperIT {
         assertMoscowNodeBased(tmpHopper, "false", true);
         GHResponse rsp = runMoscow(tmpHopper, "true", true);
         assertEquals(1, rsp.getErrors().size());
-        assertTrue(rsp.getErrors().toString().contains("Cannot find CH RoutingAlgorithmFactory"));
+        assertTrue(rsp.getErrors().toString().contains("Found a node-based CH preparation"));
+        assertTrue(rsp.getErrors().toString().contains("but requested edge-based CH"));
+    }
+
+    @Test
+    public void testEdgeBasedByDefaultIfOnlyEdgeBased() {
+        // when there is only one edge-based CH profile, there is no need to specify edge_based=true explicitly,
+        // see #1637
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/moscow.osm.gz").
+                setStoreOnFlush(true).
+                setCHEnabled(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create("car|turn_costs=true"));
+        tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        tmpHopper.getCHFactoryDecorator().setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE);
+        tmpHopper.importOrLoad();
+
+        // even when we omit the edge_based parameter we get edge-based CH, unless we disable it explicitly
+        assertMoscowEdgeBased(tmpHopper, "none", true);
+        assertMoscowEdgeBased(tmpHopper, "true", true);
+        GHResponse rsp = runMoscow(tmpHopper, "false", true);
+        assertTrue(rsp.hasErrors());
+        assertTrue(rsp.getErrors().toString().contains("Found an edge-based CH preparation"));
+        assertTrue(rsp.getErrors().toString().contains("but requested node-based CH"));
     }
 
     private GHResponse assertMoscowNodeBased(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {

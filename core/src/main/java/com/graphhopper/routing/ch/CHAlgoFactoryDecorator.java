@@ -220,7 +220,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      * Enables the use of contraction hierarchies to reduce query times. Enabled by default.
      *
      * @param profileString String representation of a CH profile like: "fastest", "shortest|edge_based=true",
-     *                       "fastest|u_turn_costs=30 or your own weight-calculation type.
+     *                      "fastest|u_turn_costs=30 or your own weight-calculation type.
      */
     public CHAlgoFactoryDecorator addCHProfileAsString(String profileString) {
         chProfileStrings.add(profileString);
@@ -251,23 +251,47 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     public PrepareContractionHierarchies getPreparation(HintsMap map) {
-        boolean edgeBased = map.getBool(Parameters.Routing.EDGE_BASED, false);
         List<String> entriesStrs = new ArrayList<>();
-        boolean weightingMatchesButNotEdgeBased = false;
+        PrepareContractionHierarchies edgeBasedPCH = null;
+        PrepareContractionHierarchies nodeBasedPCH = null;
         for (PrepareContractionHierarchies p : getPreparations()) {
             boolean weightingMatches = p.getCHProfile().getWeighting().matches(map);
-            if (p.isEdgeBased() == edgeBased && weightingMatches)
-                return p;
-            else if (weightingMatches)
-                weightingMatchesButNotEdgeBased = true;
-
+            if (weightingMatches) {
+                if (p.isEdgeBased()) {
+                    edgeBasedPCH = p;
+                } else {
+                    nodeBasedPCH = p;
+                }
+            }
             entriesStrs.add(p.getCHProfile().getWeighting() + "|" + (p.getCHProfile().isEdgeBased() ? "edge" : "node"));
         }
 
-        String hint = weightingMatchesButNotEdgeBased
-                ? " The '" + Parameters.Routing.EDGE_BASED + "' url parameter is missing or does not fit the weightings. Its value was: '" + edgeBased + "'"
-                : "";
-        throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries: " + entriesStrs + "." + hint);
+        if (edgeBasedPCH == null && nodeBasedPCH == null) {
+            throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries: " + entriesStrs + ".");
+        }
+        if (map.has(Parameters.Routing.EDGE_BASED)) {
+            boolean edgeBased = map.getBool(Parameters.Routing.EDGE_BASED, false);
+            if (edgeBased && edgeBasedPCH != null) {
+                return edgeBasedPCH;
+            }
+            if (!edgeBased && nodeBasedPCH != null) {
+                return nodeBasedPCH;
+            }
+
+            if (edgeBased) {
+                throw new IllegalArgumentException("Found a node-based CH preparation for weighting map " + map + ", but requested edge-based CH. " +
+                        "You either need to configure edge-based CH preparation or set the '" + Parameters.Routing.EDGE_BASED + "' " +
+                        "request parameter to 'false' (was 'true'). all entries: " + entriesStrs);
+            } else {
+                throw new IllegalArgumentException("Found an edge-based CH preparation for weighting map " + map + ", but requested node-based CH. " +
+                        "You either need to configure node-based CH preparation or set the '" + Parameters.Routing.EDGE_BASED + "' " +
+                        "request parameter to 'true' (was 'false'). all entries: " + entriesStrs);
+            }
+        } else {
+            // no edge_based parameter was set, we determine the CH preparation based on what is there (and prefer edge-based
+            // if we can choose)
+            return edgeBasedPCH != null ? edgeBasedPCH : nodeBasedPCH;
+        }
     }
 
     public int getPreparationThreads() {
