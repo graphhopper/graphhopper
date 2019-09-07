@@ -20,8 +20,8 @@ package com.graphhopper.routing.ch;
 
 import java.io.IOException;
 
-public class NoSuchCHPreparationException extends IOException {
-    public NoSuchCHPreparationException(String message) {
+public class CHProfileSelectionException extends IOException {
+    public CHProfileSelectionException(String message) {
         super(message);
     }
 }
