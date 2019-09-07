@@ -718,9 +718,7 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private void addShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipped1, int skipped2, double weight) {
-        // todo: not using distance atm
-        double distance = 0;
-        chGraph.shortcutEdgeBased(from, to, PrepareEncoder.getScFwdDir(), weight, distance, skipped1, skipped2, firstOrigEdge, lastOrigEdge);
+        chGraph.shortcutEdgeBased(from, to, PrepareEncoder.getScFwdDir(), weight, skipped1, skipped2, firstOrigEdge, lastOrigEdge);
     }
 
     private void setLevelEqualToNodeIdForAllNodes() {

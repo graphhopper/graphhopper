@@ -1148,12 +1148,12 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public final double getDistance() {
+        public double getDistance() {
             return edgeAccess.getDist(edgePointer);
         }
 
         @Override
-        public final EdgeIteratorState setDistance(double dist) {
+        public EdgeIteratorState setDistance(double dist) {
             edgeAccess.setDist(edgePointer, dist);
             return this;
         }

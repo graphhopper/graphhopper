@@ -296,11 +296,10 @@ public class ShortcutUnpackerTest {
     private void shortcut(int baseNode, int adjNode, int skip1, int skip2, int origFirst, int origLast) {
         // shortcut weight/distance is not important for us here
         double weight = 1;
-        double distance = 1;
         if (edgeBased) {
-            chGraph.shortcutEdgeBased(baseNode, adjNode, PrepareEncoder.getScFwdDir(), weight, distance, skip1, skip2, origFirst, origLast);
+            chGraph.shortcutEdgeBased(baseNode, adjNode, PrepareEncoder.getScFwdDir(), weight, skip1, skip2, origFirst, origLast);
         } else {
-            chGraph.shortcut(baseNode, adjNode, PrepareEncoder.getScFwdDir(), weight, distance, skip1, skip2);
+            chGraph.shortcut(baseNode, adjNode, PrepareEncoder.getScFwdDir(), weight, skip1, skip2);
         }
     }
 
