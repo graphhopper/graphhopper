@@ -18,6 +18,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
@@ -49,7 +50,7 @@ public class ShortcutUnpackerTest {
         encoder = new MotorcycleFlagEncoder(5, 5, 10);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
-        graph = new GraphBuilder(encodingManager).setCHProfiles(new CHProfile(weighting, edgeBased)).create();
+        graph = new GraphBuilder(encodingManager).setCHProfiles(new CHProfile(weighting, edgeBased, INFINITE_U_TURN_COSTS)).create();
         chGraph = graph.getCHGraph();
         if (edgeBased) {
             turnCostExtension = (TurnCostExtension) graph.getExtension();

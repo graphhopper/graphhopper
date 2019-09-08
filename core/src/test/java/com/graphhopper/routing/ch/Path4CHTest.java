@@ -17,7 +17,7 @@ import com.graphhopper.util.GHUtility;
 import org.junit.Before;
 import org.junit.Test;
 
-
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 
 public class Path4CHTest {
@@ -33,7 +33,7 @@ public class Path4CHTest {
         encoder = new MotorcycleFlagEncoder(5, 5, maxTurnCosts);
         EncodingManager em = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
-        graph = new GraphBuilder(em).setCHProfiles(CHProfile.edgeBased(weighting)).create();
+        graph = new GraphBuilder(em).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
         chGraph = graph.getCHGraph();
         turnCostExtension = (TurnCostExtension) graph.getExtension();
     }
