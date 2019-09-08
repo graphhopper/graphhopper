@@ -18,10 +18,14 @@
 
 package com.graphhopper.routing.ch;
 
-import java.io.IOException;
+import com.graphhopper.util.exceptions.DetailedIllegalArgumentException;
 
-public class CHProfileSelectionException extends IOException {
-    public CHProfileSelectionException(String message) {
-        super(message);
+import java.util.HashMap;
+
+public class CHProfileSelectionException extends DetailedIllegalArgumentException {
+    CHProfileSelectionException(final String message) {
+        super(message, new HashMap<String, Object>() {{
+            put("error", message);
+        }});
     }
 }
