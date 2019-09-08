@@ -43,7 +43,8 @@ graphhopper:
   # contraction hierarchies (CH) is done to speed routing up. This requires more RAM/disc space for holding the
   # graph but less for every request. You can also setup multiple weightings, by providing a comma separated list.
   # To enable finite u-turn costs use something like fastest|u_turn_costs=30, where 30 are the u-turn costs in seconds
-  # (given as integer). The u-turn costs will only be applied for edge_based, see below.
+  # (given as integer). Note that since the u-turn costs are given in seconds the weighting you use should also
+  # calculate the weight in seconds. The u-turn costs will only be applied for edge_based, see below.
   prepare.ch.weightings: fastest
 
   # To enable turn-costs in speed mode (contraction hierarchies) edge-based graph traversal and a more elaborate
