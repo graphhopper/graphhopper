@@ -20,7 +20,10 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -819,96 +822,58 @@ class BaseGraph implements Graph {
                 throw new IllegalArgumentException("Cannot use pointlist which is " + pillarNodes.getDimension()
                         + "D for graph which is " + nodeAccess.getDimension() + "D");
 
-            long existingGeoRef = Helper.toUnsignedLong(edges.getInt(edgePointer + E_GEO));
-
-            int len = pillarNodes.getSize();
-            int dim = nodeAccess.getDimension();
-            if (existingGeoRef > 0) {
-                final int count = wayGeometry.getInt(existingGeoRef * 4L);
-                if (len <= count) {
-                    setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
-                    return;
-                }
-            }
-
-            long nextGeoRef = nextGeoRef(len * dim);
-            setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, nextGeoRef);
+            setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse);
         } else {
             edges.setInt(edgePointer + E_GEO, 0);
         }
     }
 
-    private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
-        int len = pillarNodes.getSize();
-        int dim = nodeAccess.getDimension();
-        long geoRefPosition = (long) geoRef * 4;
-        int totalLen = len * dim * 4 + 4;
-        ensureGeometry(geoRefPosition, totalLen);
-        byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
-        wayGeometry.setBytes(geoRefPosition, wayGeometryBytes, wayGeometryBytes.length);
-        edges.setInt(edgePointer + E_GEO, Helper.toSignedInt(geoRef));
-    }
-
-    private byte[] createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
-        int len = pillarNodes.getSize();
-        int dim = nodeAccess.getDimension();
-        int totalLen = len * dim * 4 + 4;
-        byte[] bytes = new byte[totalLen];
-        bitUtil.fromInt(bytes, len, 0);
+    private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse) {
         if (reverse)
             pillarNodes.reverse();
-
-        int tmpOffset = 4;
-        boolean is3D = nodeAccess.is3D();
-        for (int i = 0; i < len; i++) {
-            double lat = pillarNodes.getLatitude(i);
-            bitUtil.fromInt(bytes, Helper.degreeToInt(lat), tmpOffset);
-            tmpOffset += 4;
-            bitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLongitude(i)), tmpOffset);
-            tmpOffset += 4;
-
-            if (is3D) {
-                bitUtil.fromInt(bytes, Helper.eleToInt(pillarNodes.getElevation(i)), tmpOffset);
-                tmpOffset += 4;
+        byte[] wayGeometryBytes = encodePolyline(pillarNodes, nodeAccess.is3D(), 1e7).getBytes(Helper.UTF_CS);
+        long existingGeoPointer = Helper.toUnsignedLong(edges.getInt(edgePointer + E_GEO)) * 4L;
+        if (existingGeoPointer > 0) {
+            final int storedByteCount = wayGeometry.getInt(existingGeoPointer);
+            if (wayGeometryBytes.length <= storedByteCount) {
+                wayGeometry.setInt(existingGeoPointer, wayGeometryBytes.length);
+                wayGeometry.setBytes(existingGeoPointer + 4, wayGeometryBytes, wayGeometryBytes.length);
+                return;
             }
         }
-        return bytes;
+
+        int byteLengthWithPadding = (wayGeometryBytes.length / 4 + 1) * 4;
+        if (wayGeometryBytes.length % 4 != 0)
+            byteLengthWithPadding += 4;
+        long nextGeoRef = nextGeoRef(byteLengthWithPadding / 4);
+        long nextGeoPointer = nextGeoRef * 4;
+        wayGeometry.ensureCapacity(nextGeoPointer + byteLengthWithPadding);
+        wayGeometry.setInt(nextGeoPointer, wayGeometryBytes.length);
+        wayGeometry.setBytes(nextGeoPointer + 4, wayGeometryBytes, wayGeometryBytes.length);
+        edges.setInt(edgePointer + E_GEO, Helper.toSignedInt(nextGeoRef));
     }
 
     private PointList fetchWayGeometry_(long edgePointer, boolean reverse, int mode, int baseNode, int adjNode) {
-        long geoRef = Helper.toUnsignedLong(edges.getInt(edgePointer + E_GEO));
-        int count = 0;
+        long geoPointer = Helper.toUnsignedLong(edges.getInt(edgePointer + E_GEO)) * 4L;
+        int byteLength = 0;
         byte[] bytes = null;
-        if (geoRef > 0) {
-            geoRef *= 4L;
-            count = wayGeometry.getInt(geoRef);
-
-            geoRef += 4L;
-            bytes = new byte[count * nodeAccess.getDimension() * 4];
-            wayGeometry.getBytes(geoRef, bytes, bytes.length);
+        if (geoPointer > 0) {
+            byteLength = wayGeometry.getInt(geoPointer);
+            bytes = new byte[byteLength];
+            wayGeometry.getBytes(geoPointer + 4, bytes, bytes.length);
         } else if (mode == 0)
             return PointList.EMPTY;
 
-        PointList pillarNodes = new PointList(count + mode, nodeAccess.is3D());
+        // guess size of PointList from byteLength
+        PointList pillarNodes = new PointList(Math.max(20, byteLength / 6) + mode, nodeAccess.is3D());
         if (reverse) {
             if ((mode & 2) != 0)
                 pillarNodes.add(nodeAccess, adjNode);
         } else if ((mode & 1) != 0)
             pillarNodes.add(nodeAccess, baseNode);
 
-        int index = 0;
-        for (int i = 0; i < count; i++) {
-            double lat = Helper.intToDegree(bitUtil.toInt(bytes, index));
-            index += 4;
-            double lon = Helper.intToDegree(bitUtil.toInt(bytes, index));
-            index += 4;
-            if (nodeAccess.is3D()) {
-                pillarNodes.add(lat, lon, Helper.intToEle(bitUtil.toInt(bytes, index)));
-                index += 4;
-            } else {
-                pillarNodes.add(lat, lon);
-            }
-        }
+        if (byteLength > 0)
+            decodePolyline(pillarNodes, new String(bytes, Helper.UTF_CS), nodeAccess.is3D(), 1e7);
 
         if (reverse) {
             if ((mode & 1) != 0)
@@ -919,6 +884,85 @@ class BaseGraph implements Graph {
             pillarNodes.add(nodeAccess, adjNode);
 
         return pillarNodes;
+    }
+
+    private static void decodePolyline(PointList poly, String encoded, boolean is3D, double precision) {
+        int index = 0;
+        int len = encoded.length();
+        int lat = 0, lng = 0, ele = 0;
+        while (index < len) {
+            // latitude
+            int b, shift = 0, result = 0;
+            do {
+                b = encoded.charAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            int deltaLatitude = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lat += deltaLatitude;
+
+            // longitude
+            shift = 0;
+            result = 0;
+            do {
+                b = encoded.charAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            int deltaLongitude = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lng += deltaLongitude;
+
+            if (is3D) {
+                // elevation
+                shift = 0;
+                result = 0;
+                do {
+                    b = encoded.charAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                int deltaElevation = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+                ele += deltaElevation;
+                poly.add((double) lat / precision, (double) lng / precision, (double) ele / 100);
+            } else
+                poly.add((double) lat / precision, (double) lng / precision);
+        }
+    }
+
+    private static String encodePolyline(PointList poly, boolean includeElevation, double precision) {
+        StringBuilder sb = new StringBuilder();
+        int size = poly.getSize();
+        int prevLat = 0;
+        int prevLon = 0;
+        int prevEle = 0;
+        for (int i = 0; i < size; i++) {
+            int num = (int) Math.floor(poly.getLatitude(i) * precision);
+            encodeNumber(sb, num - prevLat);
+            prevLat = num;
+            num = (int) Math.floor(poly.getLongitude(i) * precision);
+            encodeNumber(sb, num - prevLon);
+            prevLon = num;
+            if (includeElevation) {
+                num = (int) Math.floor(poly.getElevation(i) * 100);
+                encodeNumber(sb, num - prevEle);
+                prevEle = num;
+            }
+        }
+        return sb.toString();
+    }
+
+    private static void encodeNumber(StringBuilder sb, int num) {
+        num = num << 1;
+        if (num < 0) {
+            num = ~num;
+        }
+        while (num >= 0x20) {
+            int nextValue = (0x20 | (num & 0x1f)) + 63;
+            sb.append((char) (nextValue));
+            num >>= 5;
+        }
+        num += 63;
+        sb.append((char) (num));
     }
 
     private void setName(long edgePointer, String name) {
@@ -936,13 +980,9 @@ class BaseGraph implements Graph {
         return removedNodes;
     }
 
-    private void ensureGeometry(long bytePos, int byteLength) {
-        wayGeometry.ensureCapacity(bytePos + byteLength);
-    }
-
     private long nextGeoRef(int arrayLength) {
         long tmp = maxGeoRef;
-        maxGeoRef += arrayLength + 1L;
+        maxGeoRef += arrayLength;
         if (maxGeoRef >= 0xFFFFffffL)
             throw new IllegalStateException("Geometry too large, does not fit in 32 bits " + maxGeoRef);
 
