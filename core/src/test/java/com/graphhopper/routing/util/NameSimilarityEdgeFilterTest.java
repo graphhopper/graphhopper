@@ -22,6 +22,7 @@ import com.graphhopper.util.GHUtility;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -55,7 +56,7 @@ public class NameSimilarityEdgeFilterTest {
         edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
         assertTrue(edgeFilter.accept(edge));
 
-        edgeFilter = createNameSimilarityEdgeFilter("Johannesstraße, 99636, Rastenberg, Deutschland");
+        edgeFilter = createNameSimilarityEdgeFilter("Johannesstraße, Rastenberg, Deutschland");
         edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
         assertFalse(edgeFilter.accept(edge));
 
@@ -131,9 +132,26 @@ public class NameSimilarityEdgeFilterTest {
     }
 
     @Test
+    public void normalization() {
+        assertEquals("northderby", createNameSimilarityEdgeFilter("North Derby Lane").getNormalizedPointHint());
+
+        // do not remove the number as it is a significant part of the name, especially in the US
+        assertEquals("i28north", createNameSimilarityEdgeFilter("I-28 N").getNormalizedPointHint());
+        assertEquals("south23rd", createNameSimilarityEdgeFilter("S 23rd St").getNormalizedPointHint());
+        assertEquals("66", createNameSimilarityEdgeFilter("Route 66").getNormalizedPointHint());
+        assertEquals("fayettecounty1", createNameSimilarityEdgeFilter("Fayette County Rd 1").getNormalizedPointHint());
+
+        // too short, except when numbers
+        assertEquals("112", createNameSimilarityEdgeFilter("A B C 1 12").getNormalizedPointHint());
+    }
+
+    @Test
     public void testServiceMix() {
         assertTrue(createNameSimilarityEdgeFilter("North Derby Lane").accept(createTestEdgeIterator("N Derby Ln")));
         assertTrue(createNameSimilarityEdgeFilter("N Derby Ln").accept(createTestEdgeIterator("North Derby Lane")));
+
+        assertFalse(createNameSimilarityEdgeFilter("North Derby Lane").accept(createTestEdgeIterator("I-29 N")));
+        assertFalse(createNameSimilarityEdgeFilter("I-29 N").accept(createTestEdgeIterator("North Derby Lane")));
 
         assertTrue(createNameSimilarityEdgeFilter("George Street").accept(createTestEdgeIterator("George St")));
     }
@@ -172,13 +190,13 @@ public class NameSimilarityEdgeFilterTest {
 //        assertTrue(edgeFilter.accept(edge));
     }
 
-    private NameSimilarityEdgeFilter createNameSimilarityEdgeFilter(String s) {
+    private NameSimilarityEdgeFilter createNameSimilarityEdgeFilter(String pointHint) {
         return new NameSimilarityEdgeFilter(new EdgeFilter() {
             @Override
             public boolean accept(EdgeIteratorState edgeState) {
                 return true;
             }
-        }, s);
+        }, pointHint);
     }
 
     private EdgeIteratorState createTestEdgeIterator(final String name) {
