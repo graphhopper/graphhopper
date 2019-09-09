@@ -187,7 +187,7 @@ public class PathWrapperDeserializer extends JsonDeserializer<PathWrapper> {
     private static PointList deserializePointList(ObjectMapper objectMapper, JsonNode jsonNode, boolean hasElevation) {
         PointList snappedPoints;
         if (jsonNode.isTextual()) {
-            snappedPoints = WebHelper.decodePolyline(jsonNode.asText(), 5, hasElevation);
+            snappedPoints = WebHelper.decodePolyline(jsonNode.asText(), Math.max(10, jsonNode.asText().length() / 4), hasElevation);
         } else {
             LineString lineString = objectMapper.convertValue(jsonNode, LineString.class);
             snappedPoints = PointList.fromLineString(lineString);

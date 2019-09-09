@@ -865,7 +865,7 @@ class BaseGraph implements Graph {
             return PointList.EMPTY;
 
         // guess size of PointList from byteLength
-        PointList pillarNodes = new PointList(Math.max(20, byteLength / 6) + mode, nodeAccess.is3D());
+        PointList pillarNodes = new PointList(Math.max(10, byteLength / 6) + mode, nodeAccess.is3D());
         if (reverse) {
             if ((mode & 2) != 0)
                 pillarNodes.add(nodeAccess, adjNode);
@@ -930,7 +930,7 @@ class BaseGraph implements Graph {
     }
 
     private static String encodePolyline(PointList poly, boolean includeElevation, double precision) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(Math.max(20, poly.size() * 3));
         int size = poly.getSize();
         int prevLat = 0;
         int prevLon = 0;

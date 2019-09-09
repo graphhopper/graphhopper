@@ -108,7 +108,7 @@ public class WebHelper {
     }
 
     public static String encodePolyline(PointList poly, boolean includeElevation, double precision) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(Math.max(20, poly.size() * 3));
         int size = poly.getSize();
         int prevLat = 0;
         int prevLon = 0;
