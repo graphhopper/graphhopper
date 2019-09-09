@@ -981,6 +981,7 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("You need a turn cost extension to make use of edge_based=true, e.g. use car|turn_costs=true");
             }
 
+            // todonow: really ? what if we do not specify edge_based at all ?
             if (!tMode.isEdgeBased() && !request.getCurbSides().isEmpty()) {
                 throw new IllegalArgumentException("To make use of the " + CURB_SIDE + " parameter you need to set " + Routing.EDGE_BASED + " to true");
             }

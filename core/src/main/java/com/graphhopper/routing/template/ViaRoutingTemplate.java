@@ -38,9 +38,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
-import static com.graphhopper.util.Parameters.Routing.*;
-
 /**
  * Implementation of calculating a route with multiple via points.
  *
@@ -139,8 +136,8 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                 if (!(algo instanceof AbstractBidirAlgo)) {
                     throw new IllegalArgumentException("To make use of the " + Routing.CURB_SIDE + " parameter you need a bidirectional algorithm");
                 } else {
-                    int sourceOutEdge = getOutEdge(directions.get(placeIndex - 1), ghRequest.getCurbSides().get(placeIndex - 1));
-                    int targetInEdge = getInEdge(directions.get(placeIndex), ghRequest.getCurbSides().get(placeIndex));
+                    int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), ghRequest.getCurbSides().get(placeIndex - 1));
+                    int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), ghRequest.getCurbSides().get(placeIndex));
                     tmpPathList = Collections.singletonList(((AbstractBidirAlgo) algo)
                             .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
                 }
@@ -196,29 +193,4 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         return 1;
     }
 
-    private static int getOutEdge(DirectionResolverResult directionResolverResult, String curbSide) {
-        switch (curbSide) {
-            case CURB_SIDE_RIGHT:
-                return directionResolverResult.getOutEdgeRight();
-            case CURB_SIDE_LEFT:
-                return directionResolverResult.getOutEdgeLeft();
-            case CURB_SIDE_EITHER:
-                return ANY_EDGE;
-            default:
-                throw new IllegalArgumentException("Unknown value for " + CURB_SIDE + " : " + curbSide + ". allowed: " + CURB_SIDE_LEFT + ", " + CURB_SIDE_RIGHT + ", " + CURB_SIDE_EITHER);
-        }
-    }
-
-    private static int getInEdge(DirectionResolverResult directionResolverResult, String curbSide) {
-        switch (curbSide) {
-            case CURB_SIDE_RIGHT:
-                return directionResolverResult.getInEdgeRight();
-            case CURB_SIDE_LEFT:
-                return directionResolverResult.getInEdgeLeft();
-            case CURB_SIDE_EITHER:
-                return ANY_EDGE;
-            default:
-                throw new IllegalArgumentException("Unknown value for " + CURB_SIDE + " : " + curbSide + ". allowed: " + CURB_SIDE_LEFT + ", " + CURB_SIDE_RIGHT + ", " + CURB_SIDE_EITHER);
-        }
-    }
 }
