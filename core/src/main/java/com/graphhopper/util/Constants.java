@@ -34,7 +34,6 @@ public class Constants {
      */
     public static final String JAVA_VERSION = System.getProperty("java.version");
 
-
     /**
      * The value of <tt>System.getProperty("os.name")</tt>. *
      */
@@ -69,7 +68,7 @@ public class Constants {
 
     public static final int VERSION_NODE = 5;
     public static final int VERSION_EDGE = 14;
-    public static final int VERSION_SHORTCUT = 3;
+    public static final int VERSION_SHORTCUT = 4;
     public static final int VERSION_GEOMETRY = 4;
     public static final int VERSION_LOCATION_IDX = 3;
     public static final int VERSION_NAME_IDX = 3;

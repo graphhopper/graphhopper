@@ -25,8 +25,8 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.CH;
+import com.graphhopper.util.Parameters.Routing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +34,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.CH.DISABLE;
 
@@ -251,46 +252,22 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     public PrepareContractionHierarchies getPreparation(HintsMap map) {
-        List<String> entriesStrs = new ArrayList<>();
-        PrepareContractionHierarchies edgeBasedPCH = null;
-        PrepareContractionHierarchies nodeBasedPCH = null;
+        Boolean edgeBased = map.has(Routing.EDGE_BASED) ? map.getBool(Routing.EDGE_BASED, false) : null;
+        Integer uTurnCosts = map.has(Routing.U_TURN_COSTS) ? map.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS) : null;
+        CHProfile selectedProfile = selectProfile(map, edgeBased, uTurnCosts);
         for (PrepareContractionHierarchies p : getPreparations()) {
-            boolean weightingMatches = p.getCHProfile().getWeighting().matches(map);
-            if (weightingMatches) {
-                if (p.isEdgeBased()) {
-                    edgeBasedPCH = p;
-                } else {
-                    nodeBasedPCH = p;
-                }
+            if (p.getCHProfile().equals(selectedProfile)) {
+                return p;
             }
-            entriesStrs.add(p.getCHProfile().getWeighting() + "|" + (p.getCHProfile().isEdgeBased() ? "edge" : "node"));
         }
+        throw new IllegalStateException("Could not find CH preparation for selected profile: " + selectedProfile);
+    }
 
-        if (edgeBasedPCH == null && nodeBasedPCH == null) {
-            throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries: " + entriesStrs + ".");
-        }
-        if (map.has(Parameters.Routing.EDGE_BASED)) {
-            boolean edgeBased = map.getBool(Parameters.Routing.EDGE_BASED, false);
-            if (edgeBased && edgeBasedPCH != null) {
-                return edgeBasedPCH;
-            }
-            if (!edgeBased && nodeBasedPCH != null) {
-                return nodeBasedPCH;
-            }
-
-            if (edgeBased) {
-                throw new IllegalArgumentException("Found a node-based CH preparation for weighting map " + map + ", but requested edge-based CH. " +
-                        "You either need to configure edge-based CH preparation or set the '" + Parameters.Routing.EDGE_BASED + "' " +
-                        "request parameter to 'false' (was 'true'). all entries: " + entriesStrs);
-            } else {
-                throw new IllegalArgumentException("Found an edge-based CH preparation for weighting map " + map + ", but requested node-based CH. " +
-                        "You either need to configure node-based CH preparation or set the '" + Parameters.Routing.EDGE_BASED + "' " +
-                        "request parameter to 'true' (was 'false'). all entries: " + entriesStrs);
-            }
-        } else {
-            // no edge_based parameter was set, we determine the CH preparation based on what is there (and prefer edge-based
-            // if we can choose)
-            return edgeBasedPCH != null ? edgeBasedPCH : nodeBasedPCH;
+    private CHProfile selectProfile(HintsMap map, Boolean edgeBased, Integer uTurnCosts) {
+        try {
+            return CHProfileSelector.select(chProfiles, map, edgeBased, uTurnCosts);
+        } catch (CHProfileSelectionException e) {
+            throw new IllegalArgumentException(e.getMessage());
         }
     }
 

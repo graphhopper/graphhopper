@@ -471,7 +471,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             throw new IllegalArgumentException("For edge-based CH you need a turn cost extension");
         }
         TurnCostExtension turnCostExtension = (TurnCostExtension) extension;
-        return new TurnWeighting(prepareWeighting, turnCostExtension);
+        return new TurnWeighting(prepareWeighting, turnCostExtension, chProfile.getUTurnCosts());
     }
 
     private static class Params {
