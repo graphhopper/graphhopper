@@ -23,6 +23,7 @@ import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -83,6 +84,11 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
     private final EdgeFilter edgeFilter;
     private final String pointHint;
     private final Map<String, String> rewriteMap;
+    private final Map<String, String> cacheMap = new LinkedHashMap(100) {
+        public boolean removeEldestEntry(Map.Entry eldest) {
+            return size() >= 100;
+        }
+    };
 
     public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint) {
         this(edgeFilter, pointHint, DEFAULT_REWRITE_MAP);
@@ -128,7 +134,9 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
                 }
             }
         }
-        return sb.toString();
+        String toCacheStr = sb.toString();
+        cacheMap.put(name, toCacheStr);
+        return toCacheStr;
     }
 
     private String removeRelation(String edgeName) {
