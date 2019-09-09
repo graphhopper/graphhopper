@@ -21,7 +21,9 @@ import com.graphhopper.apache.commons.lang3.StringUtils;
 import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -103,33 +105,42 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
      * TODO Currently limited to certain 'western' languages
      */
     private String prepareName(String name) {
-        // \s = A whitespace character: [ \t\n\x0B\f\r]
-        String[] arr = name.split("\\s");
-        List<String> list = new ArrayList<>(arr.length);
-        for (int i = 0; i < arr.length; i++) {
-            String rewrite = NON_WORD_CHAR.matcher(toLowerCase(arr[i])).replaceAll("");
-            String tmp = rewriteMap.get(rewrite);
-            if (tmp != null)
-                rewrite = tmp;
-            boolean isNumber = false;
-            try {
-                if (Integer.parseInt(rewrite) > 0)
-                    isNumber = true;
-            } catch (NumberFormatException ex) {
+        final char separator = ' ';
+        int lastMatch = 0, nextMatch;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i <= name.length(); i++) {
+            // string.split("\\s") can be slow. prepareName is called often so we make it fast although a bit unreadable also avoid trim().
+            // another bottleneck is NON_WORD_CHAR.replaceAll but it is harder to replace. Or we could create a cache
+            if (i < name.length() && name.charAt(i) != separator)
+                continue;
+            if (lastMatch == i) {
+                lastMatch++;
+                continue;
             }
-            // Ignore matching short frases like de, la, ... except it is a number
-            if (rewrite.length() > 2 || isNumber) {
-                list.add(rewrite);
+            String token = name.substring(lastMatch, i);
+            lastMatch = i + 1;
+            // end string.split
+            String normalizedToken = toLowerCase(NON_WORD_CHAR.matcher(token).replaceAll(""));
+            String rewrite = rewriteMap.get(normalizedToken);
+            if (rewrite != null)
+                normalizedToken = rewrite;
+            if (normalizedToken.isEmpty())
+                continue;
+            // Ignore matching short phrases like de, la, ... except it is a number
+            if (normalizedToken.length() > 2) {
+                sb.append(normalizedToken);
+            } else {
+                if (Character.isDigit(normalizedToken.charAt(0)) && (normalizedToken.length() == 1 || Character.isDigit(normalizedToken.charAt(1)))) {
+                    sb.append(normalizedToken);
+                }
             }
         }
-        return listToString(list);
+        return sb.toString();
     }
 
     private String removeRelation(String edgeName) {
-        if (edgeName != null && edgeName.contains(", ")) {
-            edgeName = edgeName.substring(0, edgeName.lastIndexOf(','));
-        }
-        return edgeName;
+        int index = edgeName.lastIndexOf(", ");
+        return index >= 0 ? edgeName.substring(0, index) : edgeName;
     }
 
     @Override
@@ -149,7 +160,6 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
 
         name = removeRelation(name);
         String edgeName = prepareName(name);
-
         return isJaroWinklerSimilar(pointHint, edgeName);
     }
 
@@ -157,14 +167,6 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         double jwSimilarity = jaroWinkler.similarity(str1, str2);
         // System.out.println(str1 + " vs. edge:" + str2 + ", " + jwSimilarity);
         return jwSimilarity > JARO_WINKLER_ACCEPT_FACTOR;
-    }
-
-    private final String listToString(List<String> list) {
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; i < list.size(); i++) {
-            b.append(list.get(i));
-        }
-        return b.toString();
     }
 
     private boolean isLevenshteinSimilar(String hint, String name) {
