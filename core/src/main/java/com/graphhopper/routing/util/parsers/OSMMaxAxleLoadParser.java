@@ -17,42 +17,43 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.MaxWeight;
+import com.graphhopper.routing.profiles.MaxAxleLoad;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.helpers.OSMWeightExtractor;
 import com.graphhopper.storage.IntsRef;
 
-public class OSMMaxWeightParser implements TagParser {
+public class OSMMaxAxleLoadParser implements TagParser {
+    
+    private final DecimalEncodedValue maxAxleLoadEncoder;
+    private final boolean enableLog;
 
-    private DecimalEncodedValue weightEncoder;
-    private boolean enableLog;
-
-    public OSMMaxWeightParser() {
-        this(MaxWeight.create(), false);
+    public OSMMaxAxleLoadParser() {
+        this(MaxAxleLoad.create(), false);
     }
 
-    public OSMMaxWeightParser(DecimalEncodedValue weightEncoder, boolean enableLog) {
-        this.weightEncoder = weightEncoder;
+    public OSMMaxAxleLoadParser(DecimalEncodedValue maxAxleLoadEncoder, boolean enableLog) {
+        this.maxAxleLoadEncoder = maxAxleLoadEncoder;
         this.enableLog = enableLog;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(weightEncoder);
+    public void createEncodedValues(EncodedValueLookup lookup,
+                    List<EncodedValue> registerNewEncodedValue) {
+        registerNewEncodedValue.add(maxAxleLoadEncoder);
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
-        // do not include OSM tag "height" here as it has completely different meaning (height of peak)
-        List<String> weightTags = Arrays.asList("maxweight", "maxgcweight");
-        OSMWeightExtractor.extractTons(edgeFlags, way, weightEncoder, weightTags, enableLog);
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access,
+                    long relationFlags) {
+        OSMWeightExtractor.extractTons(edgeFlags, way, maxAxleLoadEncoder,
+                        Collections.singletonList("maxaxleload"), enableLog);
         return edgeFlags;
     }
 }

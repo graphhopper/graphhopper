@@ -49,6 +49,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = MaxHeight.create();
         } else if (MaxWidth.KEY.equals(name)) {
             enc = MaxWidth.create();
+        } else if (MaxAxleLoad.KEY.equals(name)) {
+            enc = MaxAxleLoad.create();
         } else if (Surface.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(Surface.KEY, Surface.class);
         } else if (Toll.KEY.equals(name)) {
