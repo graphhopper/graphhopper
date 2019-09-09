@@ -23,7 +23,6 @@ import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,19 +30,20 @@ import java.util.regex.Pattern;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
- * This class defines the basis for NameSimilarity matching using an EdgeFilter.
+ * This class defines the basis for NameSimilarity matching using an EdgeFilter. It is not thread-safe.
  * The typical use-case is to match not the nearest edge in
  * {@link com.graphhopper.storage.index.LocationIndex#findClosest(double, double, EdgeFilter)}
- * but the match the edge which name is closest to the pointHint
+ * but the edge with the name that is similar to the specified pointHint and still close.
  * <p>
  * Names that are similar to each other are (n1 name1, n2 name2):
  * <ul>
  * <li>n1 == n2</li>
  * <li>n1 is significant substring of n2, e.g: n1="Main Road", n2="Main Road, New York"</li>
- * <li>n1 and n2 contain a reasonable longest common substring, e.g.: n1="Cape Point / Cape of Good Hope", n2="Cape Point Rd, Cape Peninsula, Cape Town, 8001, Afrique du Sud"</li>
+ * <li>n1 and n2 contain a reasonable longest common substring, e.g.: n1="Cape Point / Cape of Good Hope",
+ *     n2="Cape Point Rd, Cape Peninsula, Cape Town, 8001, Afrique du Sud"</li>
  * </ul>
  * <p>
- * We aim for allowing slight typos/differences of the substrings, without having too much false positives.
+ * The aim is to allow minor typos/differences of the substrings, without having too much false positives.
  *
  * @author Robin Boldt
  * @author Peter Karich
@@ -84,11 +84,6 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
     private final EdgeFilter edgeFilter;
     private final String pointHint;
     private final Map<String, String> rewriteMap;
-    private final Map<String, String> cacheMap = new LinkedHashMap(100) {
-        public boolean removeEldestEntry(Map.Entry eldest) {
-            return size() >= 100;
-        }
-    };
 
     public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint) {
         this(edgeFilter, pointHint, DEFAULT_REWRITE_MAP);
@@ -112,10 +107,6 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
      * TODO Currently limited to certain 'western' languages
      */
     private String prepareName(String name) {
-        String tmp = cacheMap.get(name);
-        if (tmp != null)
-            return tmp;
-
         StringBuilder sb = new StringBuilder(name.length());
         Matcher wordCharMatcher = WORD_CHAR.matcher(name);
         while (wordCharMatcher.find()) {
@@ -134,9 +125,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
                 }
             }
         }
-        String toCacheStr = sb.toString();
-        cacheMap.put(name, toCacheStr);
-        return toCacheStr;
+        return sb.toString();
     }
 
     private String removeRelation(String edgeName) {
