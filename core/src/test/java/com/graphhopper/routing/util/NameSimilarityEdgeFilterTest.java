@@ -136,8 +136,8 @@ public class NameSimilarityEdgeFilterTest {
         assertEquals("northderby", createNameSimilarityEdgeFilter("North Derby Lane").getNormalizedPointHint());
 
         // do not remove the number as it is a significant part of the name, especially in the US
-        assertEquals("i28north", createNameSimilarityEdgeFilter("I-28 N").getNormalizedPointHint());
-        assertEquals("i28north", createNameSimilarityEdgeFilter(" I-28    N  ").getNormalizedPointHint());
+        assertEquals("28north", createNameSimilarityEdgeFilter("I-28 N").getNormalizedPointHint());
+        assertEquals("28north", createNameSimilarityEdgeFilter(" I-28    N  ").getNormalizedPointHint());
         assertEquals("south23rd", createNameSimilarityEdgeFilter("S 23rd St").getNormalizedPointHint());
         assertEquals("66", createNameSimilarityEdgeFilter("Route 66").getNormalizedPointHint());
         assertEquals("fayettecounty1", createNameSimilarityEdgeFilter("Fayette County Rd 1").getNormalizedPointHint());

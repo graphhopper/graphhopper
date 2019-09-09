@@ -24,6 +24,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -76,7 +77,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         put("w", "west");
         put("e", "east");
     }};
-    private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{LD}]+");
+    private static final Pattern WORD_CHAR = Pattern.compile("\\p{LD}+");
     private static final JaroWinkler jaroWinkler = new JaroWinkler();
     private static final double JARO_WINKLER_ACCEPT_FACTOR = .9;
     private final EdgeFilter edgeFilter;
@@ -88,7 +89,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
     }
 
     /**
-     * @param rewriteMap maps abreviations to its longer form
+     * @param rewriteMap maps abbreviations to its longer form
      */
     public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint, Map<String, String> rewriteMap) {
         this.edgeFilter = edgeFilter;
@@ -105,22 +106,14 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
      * TODO Currently limited to certain 'western' languages
      */
     private String prepareName(String name) {
-        final char separator = ' ';
-        int lastMatch = 0, nextMatch;
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i <= name.length(); i++) {
-            // string.split("\\s") can be slow. prepareName is called often so we make it fast although a bit unreadable also avoid trim().
-            // another bottleneck is NON_WORD_CHAR.replaceAll but it is harder to replace. Or we could create a cache
-            if (i < name.length() && name.charAt(i) != separator)
-                continue;
-            if (lastMatch == i) {
-                lastMatch++;
-                continue;
-            }
-            String token = name.substring(lastMatch, i);
-            lastMatch = i + 1;
-            // end string.split
-            String normalizedToken = toLowerCase(NON_WORD_CHAR.matcher(token).replaceAll(""));
+        String tmp = cacheMap.get(name);
+        if (tmp != null)
+            return tmp;
+
+        StringBuilder sb = new StringBuilder(name.length());
+        Matcher wordCharMatcher = WORD_CHAR.matcher(name);
+        while (wordCharMatcher.find()) {
+            String normalizedToken = toLowerCase(wordCharMatcher.group());
             String rewrite = rewriteMap.get(normalizedToken);
             if (rewrite != null)
                 normalizedToken = rewrite;
