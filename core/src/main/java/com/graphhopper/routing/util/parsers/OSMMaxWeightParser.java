@@ -26,7 +26,7 @@ import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.MaxWeight;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.parsers.helpers.OSMWeightExtractor;
+import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
 public class OSMMaxWeightParser implements TagParser {
@@ -52,7 +52,7 @@ public class OSMMaxWeightParser implements TagParser {
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
         // do not include OSM tag "height" here as it has completely different meaning (height of peak)
         List<String> weightTags = Arrays.asList("maxweight", "maxgcweight");
-        OSMWeightExtractor.extractTons(edgeFlags, way, weightEncoder, weightTags, enableLog);
+        OSMValueExtractor.extractTons(edgeFlags, way, weightEncoder, weightTags, enableLog);
         return edgeFlags;
     }
 }

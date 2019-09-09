@@ -28,7 +28,6 @@ import com.graphhopper.routing.util.parsers.OSMRoadClassParser;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.util.parsers.OSMSurfaceParser;
 import com.graphhopper.routing.util.parsers.SpatialRuleParser;
-import com.graphhopper.routing.util.parsers.helpers.OSMDimensionExtractor;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
@@ -57,8 +56,6 @@ public class DataFlagEncoderTest {
     private final EnumEncodedValue<Surface> surfaceEnc;
     private final DecimalEncodedValue carMaxSpeedEnc;
     private final EncodingManager encodingManager;
-
-    private final double DELTA = 0.1;
 
     public DataFlagEncoderTest() {
         properties = new PMap();
@@ -318,38 +315,6 @@ public class DataFlagEncoderTest {
         // important to filter out illegal highways to reduce the number of edges before adding them to the graph
         osmWay.setTag("highway", "building");
         assertTrue(encoder.getAccess(osmWay).canSkip());
-    }
-
-    @Test
-    public void stringToMeter() {
-        assertEquals(1.5, OSMDimensionExtractor.stringToMeter("1.5"), DELTA);
-        assertEquals(1.5, OSMDimensionExtractor.stringToMeter("1.5m"), DELTA);
-        assertEquals(1.5, OSMDimensionExtractor.stringToMeter("1.5 m"), DELTA);
-        assertEquals(1.5, OSMDimensionExtractor.stringToMeter("1.5   m"), DELTA);
-        assertEquals(1.5, OSMDimensionExtractor.stringToMeter("1.5 meter"), DELTA);
-        assertEquals(1.5, OSMDimensionExtractor.stringToMeter("4 ft 11 in"), DELTA);
-        assertEquals(1.5, OSMDimensionExtractor.stringToMeter("4'11''"), DELTA);
-
-
-        assertEquals(3, OSMDimensionExtractor.stringToMeter("3 m."), DELTA);
-        assertEquals(3, OSMDimensionExtractor.stringToMeter("3meters"), DELTA);
-        assertEquals(0.8 * 3, OSMDimensionExtractor.stringToMeter("~3"), DELTA);
-        assertEquals(3 * 0.8, OSMDimensionExtractor.stringToMeter("3 m approx"), DELTA);
-
-        // 2.743 + 0.178
-        assertEquals(2.921, OSMDimensionExtractor.stringToMeter("9 ft 7in"), DELTA);
-        assertEquals(2.921, OSMDimensionExtractor.stringToMeter("9'7\""), DELTA);
-        assertEquals(2.921, OSMDimensionExtractor.stringToMeter("9'7''"), DELTA);
-        assertEquals(2.921, OSMDimensionExtractor.stringToMeter("9' 7\""), DELTA);
-
-        assertEquals(2.743, OSMDimensionExtractor.stringToMeter("9'"), DELTA);
-        assertEquals(2.743, OSMDimensionExtractor.stringToMeter("9 feet"), DELTA);
-    }
-
-    @Test(expected = NumberFormatException.class)
-    public void stringToMeterException() {
-        // Unexpected values
-        OSMDimensionExtractor.stringToMeter("height limit 1.5m");
     }
 
     @Test

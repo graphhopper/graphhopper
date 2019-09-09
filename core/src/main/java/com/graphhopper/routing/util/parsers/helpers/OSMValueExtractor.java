@@ -1,20 +1,3 @@
-/*
- *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for
- *  additional information regarding copyright ownership.
- *
- *  GraphHopper GmbH licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except in
- *  compliance with the License. You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package com.graphhopper.routing.util.parsers.helpers;
 
 import static com.graphhopper.util.Helper.isEmpty;
@@ -29,12 +12,43 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.storage.IntsRef;
 
-public class OSMDimensionExtractor {
+public class OSMValueExtractor {
     
-    private static final Logger LOG = LoggerFactory.getLogger(OSMDimensionExtractor.class);
-    
-    private OSMDimensionExtractor() {
+    private static final Logger LOG = LoggerFactory.getLogger(OSMValueExtractor.class);
+
+    private OSMValueExtractor() {
         // utility class
+    }
+
+    public static void extractTons(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys, boolean enableLog) {
+        String value = way.getFirstPriorityTag(keys);
+        if (isEmpty(value))
+            return;
+        try {
+            double val = stringToTons(value);
+            if (val > valueEncoder.getMaxDecimal())
+                val = valueEncoder.getMaxDecimal();
+            valueEncoder.setDecimal(false, edgeFlags, val);
+        } catch (Exception ex) {
+            if (enableLog)
+                LOG.warn("Unable to extract tons from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId());
+        }
+    }
+
+    public static double stringToTons(String value) {
+        value = toLowerCase(value).replaceAll(" ", "").replaceAll("(tons|ton)", "t");
+        value = value.replace("mgw", "").trim();
+        double factor = 1;
+        if (value.equals("default") || value.equals("none")) {
+            return -1;
+        } else if (value.endsWith("t")) {
+            value = value.substring(0, value.length() - 1);
+        } else if (value.endsWith("lbs")) {
+            value = value.substring(0, value.length() - 3);
+            factor = 0.00045359237;
+        }
+    
+        return Double.parseDouble(value) * factor;
     }
 
     public static void extractMeter(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys, boolean enableLog) {
@@ -92,5 +106,4 @@ public class OSMDimensionExtractor {
             return Double.parseDouble(value) * factor + offset;
         }
     }
-
 }

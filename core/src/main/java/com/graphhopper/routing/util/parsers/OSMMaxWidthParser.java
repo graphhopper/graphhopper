@@ -26,7 +26,7 @@ import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.MaxWidth;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.parsers.helpers.OSMDimensionExtractor;
+import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
 public class OSMMaxWidthParser implements TagParser {
@@ -51,7 +51,7 @@ public class OSMMaxWidthParser implements TagParser {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
         List<String> widthTags = Arrays.asList("maxwidth", "maxwidth:physical", "width");
-        OSMDimensionExtractor.extractMeter(edgeFlags, way, widthEncoder, widthTags, enableLog);
+        OSMValueExtractor.extractMeter(edgeFlags, way, widthEncoder, widthTags, enableLog);
         return edgeFlags;
     }
 }

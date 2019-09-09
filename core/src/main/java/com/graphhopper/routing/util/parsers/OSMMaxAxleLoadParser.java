@@ -26,7 +26,7 @@ import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.routing.profiles.MaxAxleLoad;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.parsers.helpers.OSMWeightExtractor;
+import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
 public class OSMMaxAxleLoadParser implements TagParser {
@@ -52,7 +52,7 @@ public class OSMMaxAxleLoadParser implements TagParser {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access,
                     long relationFlags) {
-        OSMWeightExtractor.extractTons(edgeFlags, way, maxAxleLoadEncoder,
+        OSMValueExtractor.extractTons(edgeFlags, way, maxAxleLoadEncoder,
                         Collections.singletonList("maxaxleload"), enableLog);
         return edgeFlags;
     }
