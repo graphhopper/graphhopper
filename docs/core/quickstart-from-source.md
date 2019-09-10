@@ -63,7 +63,7 @@ Program arguments: server config.yml
 
 ### Contribute
 
-See this [guide](../CONTRIBUTING.md) on how to contribute.
+See this [guide](../../CONTRIBUTING.md) on how to contribute.
 
 ### Java, Embedded Usage
 
