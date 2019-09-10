@@ -228,39 +228,38 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // but has always been like that and changing it would possibly require retuning the contraction parameters
         updatePrioritiesOfRemainingNodes();
         nodeContractor.prepareContraction();
-        int initSize = sortedNodes.getSize();
+        final int initSize = sortedNodes.getSize();
         int level = 0;
         checkCounter = 0;
-        long logSize = Math.round(Math.max(10, initSize / 100d * params.getLogMessagesPercentage()));
-        if (params.getLogMessagesPercentage() == 0)
-            logSize = Integer.MAX_VALUE;
+        final long logSize = params.getLogMessagesPercentage() == 0
+                ? Long.MAX_VALUE
+                : Math.round(Math.max(10, initSize * params.getLogMessagesPercentage() / 100d));
 
-        // preparation takes longer but queries are slightly faster with preparation
-        // => enable it but call not so often
-        boolean periodicUpdate = true;
+        // specifies after how many contracted nodes the queue of remaining nodes is rebuilt. this takes time but the
+        // more often we do this the more up-to-date the node priorities will be
+        // todo: instead of using a fixed interval size maybe try adjusting it depending on the number of remaining
+        // nodes ?
+        final long periodicUpdatesCount = params.getPeriodicUpdatesPercentage() == 0
+                ? Long.MAX_VALUE
+                : Math.round(Math.max(10, initSize * params.getPeriodicUpdatesPercentage() / 100d));
         int updateCounter = 0;
-        long periodicUpdatesCount = Math.round(Math.max(10, sortedNodes.getSize() / 100d * params.getPeriodicUpdatesPercentage()));
-        if (params.getPeriodicUpdatesPercentage() == 0)
-            periodicUpdate = false;
 
-        // disable lazy updates for last x percentage of nodes as preparation is then a lot slower
-        // and query time does not really benefit
-        long lastNodesLazyUpdates = Math.round(sortedNodes.getSize() / 100d * params.getLastNodesLazyUpdatePercentage());
+        // enable lazy updates for last x percentage of nodes. lazy updates make preparation slower but potentially
+        // keep node priorities more up to date, possibly resulting in a better preparation.
+        final long lastNodesLazyUpdates = Math.round(initSize * params.getLastNodesLazyUpdatePercentage() / 100d);
 
         // according to paper "Polynomial-time Construction of Contraction Hierarchies for Multi-criteria Objectives" by Funke and Storandt
         // we don't need to wait for all nodes to be contracted
-        long nodesToAvoidContract = Math.round((100 - params.getNodesContractedPercentage()) / 100d * sortedNodes.getSize());
+        final long nodesToAvoidContract = Math.round(initSize * (100 - params.getNodesContractedPercentage()) / 100d);
 
-        // Recompute priority of uncontracted neighbors.
-        // Without neighbor updates preparation is faster but we need them
-        // to slightly improve query time. Also if not applied too often it decreases the shortcut number.
-        boolean neighborUpdate = true;
-        if (params.getNeighborUpdatePercentage() == 0)
-            neighborUpdate = false;
+        // Recompute priority of (the given percentage of) uncontracted neighbors. Doing neighbor updates takes additional
+        // time during preparation but keeps node priorities more up to date. this potentially improves query time and
+        // reduces number of shortcuts.
+        final boolean neighborUpdate = (params.getNeighborUpdatePercentage() != 0);
 
         while (!sortedNodes.isEmpty()) {
             // periodically update priorities of ALL nodes
-            if (periodicUpdate && checkCounter > 0 && checkCounter % periodicUpdatesCount == 0) {
+            if (checkCounter > 0 && checkCounter % periodicUpdatesCount == 0) {
                 updatePrioritiesOfRemainingNodes();
                 updateCounter++;
                 if (sortedNodes.isEmpty())
@@ -295,7 +294,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 break;
 
             // there might be multiple edges going to the same neighbor nodes -> only calculate priority once per node
-            IntSet updatedNeighors = new IntHashSet(10);
+            IntSet updatedNeighbors = new IntHashSet(10);
             CHEdgeIterator iter = vehicleAllExplorer.setBaseNode(polledNode);
             while (iter.next()) {
 
@@ -307,13 +306,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 if (prepareGraph.getLevel(nn) != maxLevel)
                     continue;
 
-                if (neighborUpdate && !updatedNeighors.contains(nn) && rand.nextInt(100) < params.getNeighborUpdatePercentage()) {
+                if (neighborUpdate && !updatedNeighbors.contains(nn) && rand.nextInt(100) < params.getNeighborUpdatePercentage()) {
                     neighborUpdateSW.start();
                     float oldPrio = oldPriorities[nn];
                     float priority = oldPriorities[nn] = calculatePriority(nn);
                     if (priority != oldPrio) {
                         sortedNodes.update(nn, oldPrio, priority);
-                        updatedNeighors.add(nn);
+                        updatedNeighbors.add(nn);
                     }
                     neighborUpdateSW.stop();
                 }
@@ -476,26 +475,36 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     private static class Params {
         /**
-         * Specifies how often periodic updates will happen. The higher the value the longer the preparation takes
-         * but the less shortcuts are produced.
+         * Specifies after how many contracted nodes a full refresh of the queue of remaining/not contracted nodes
+         * is performed. For example for a graph with 1000 nodes a value of 20 means that a full refresh is performed
+         * after every 200 nodes (20% of the number of nodes of the graph). The more of these updates are performed
+         * the longer the preparation will take, but the more up-to-date the node priorities will be. Higher values
+         * here mean fewer updates!
          */
         private int periodicUpdatesPercentage;
         /**
-         * Specifies when lazy updates will happen, measured relative to all existing nodes. 100 means always.
+         * Specifies the fraction of nodes for which lazy updates will be performed. For example a value of 20 means
+         * that lazy updates will be performed for the last 20% of all nodes. A value of 100 means lazy updates will
+         * be performed for all nodes. Higher values here lead to a longer preparation time, but the node priorities
+         * will be more up-to-date (potentially leading to a better preparation (less shortcuts/faster queries)).
          */
         private int lastNodesLazyUpdatePercentage;
         /**
-         * Specifies how often neighbor updates will happen. 100 means always.
+         * Specifies the probability that the priority of a given neighbor of a contracted node will be updated after
+         * the node was contracted. For example a value of 20 means that on average 20% of the neighbor nodes will be
+         * updated / each neighbor will be updated with a chance of 20%. Higher values here lead to longer preparation
+         * times, but the node priorities will be more up-to-date.
          */
         private int neighborUpdatePercentage;
         /**
-         * Defines how many nodes (percentage) should be contracted. Less nodes means slower query but
-         * faster contraction.
+         * Defines how many nodes (percentage) should be contracted. A value of 20 means only the first 20% of all nodes
+         * will be contracted. Higher values here mean longer preparation times, but faster queries (because the
+         * graph will be fully contracted).
          */
         private int nodesContractedPercentage;
         /**
-         * Specifies how often a log message should be printed. Specify something around 20 (20% of the
-         * start nodes).
+         * Specifies how often a log message should be printed.
+         * @see #periodicUpdatesPercentage
          */
         private int logMessagesPercentage;
 
