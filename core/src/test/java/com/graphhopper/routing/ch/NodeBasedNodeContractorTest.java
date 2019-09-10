@@ -28,6 +28,7 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -179,9 +180,9 @@ public class NodeBasedNodeContractorTest {
         graph.edge(6, 7, 1, true);
         graph.freeze();
 
-        int sc1to4 = lg.shortcut(1, 4, PrepareEncoder.getScDirMask(), 2, 2, iter1to3.getEdge(), iter3to4.getEdge());
-        int sc4to6 = lg.shortcut(4, 6, PrepareEncoder.getScFwdDir(), 2, 2, iter4to5.getEdge(), iter5to6.getEdge());
-        int sc6to4 = lg.shortcut(6, 4, PrepareEncoder.getScFwdDir(), 3, 3, iter6to8.getEdge(), iter8to4.getEdge());
+        int sc1to4 = lg.shortcut(1, 4, PrepareEncoder.getScDirMask(), 2, iter1to3.getEdge(), iter3to4.getEdge());
+        int sc4to6 = lg.shortcut(4, 6, PrepareEncoder.getScFwdDir(), 2, iter4to5.getEdge(), iter5to6.getEdge());
+        int sc6to4 = lg.shortcut(6, 4, PrepareEncoder.getScFwdDir(), 3, iter6to8.getEdge(), iter8to4.getEdge());
 
         setMaxLevelOnAllNodes();
 
@@ -483,7 +484,7 @@ public class NodeBasedNodeContractorTest {
         while (iter.next()) {
             if (iter.isShortcut()) {
                 given.add(new Shortcut(
-                        iter.getBaseNode(), iter.getAdjNode(), iter.getWeight(), iter.getDistance(),
+                        iter.getBaseNode(), iter.getAdjNode(), iter.getWeight(),
                         iter.get(SC_ACCESS), iter.getReverse(SC_ACCESS),
                         iter.getSkippedEdge1(), iter.getSkippedEdge2()));
             }
@@ -502,10 +503,17 @@ public class NodeBasedNodeContractorTest {
     private Shortcut expectedShortcut(int baseNode, int adjNode, EdgeIteratorState edge1, EdgeIteratorState edge2,
                                       boolean fwd, boolean bwd) {
         //todo: weight calculation might have to be adjusted for different encoders/weightings/reverse speed
-        double weight = weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE) +
-                weighting.calcWeight(edge2, false, EdgeIterator.NO_EDGE);
-        double distance = edge1.getDistance() + edge2.getDistance();
-        return new Shortcut(baseNode, adjNode, weight, distance, fwd, bwd, edge1.getEdge(), edge2.getEdge());
+        double weight1 = getWeight(edge1);
+        double weight2 = getWeight(edge2);
+        return new Shortcut(baseNode, adjNode, weight1 + weight2, fwd, bwd, edge1.getEdge(), edge2.getEdge());
+    }
+
+    private double getWeight(EdgeIteratorState edge) {
+        if (edge instanceof CHEdgeIteratorState) {
+            return ((CHEdgeIteratorState) edge).getWeight();
+        } else {
+            return weighting.calcWeight(edge, false, EdgeIterator.NO_EDGE);
+        }
     }
 
     private Set<Shortcut> setOf(Shortcut... shortcuts) {
@@ -531,17 +539,15 @@ public class NodeBasedNodeContractorTest {
         int baseNode;
         int adjNode;
         double weight;
-        double distance;
         boolean fwd;
         boolean bwd;
         int skipEdge1;
         int skipEdge2;
 
-        Shortcut(int baseNode, int adjNode, double weight, double distance, boolean fwd, boolean bwd, int skipEdge1, int skipEdge2) {
+        Shortcut(int baseNode, int adjNode, double weight, boolean fwd, boolean bwd, int skipEdge1, int skipEdge2) {
             this.baseNode = baseNode;
             this.adjNode = adjNode;
             this.weight = weight;
-            this.distance = distance;
             this.fwd = fwd;
             this.bwd = bwd;
             this.skipEdge1 = skipEdge1;
@@ -556,7 +562,6 @@ public class NodeBasedNodeContractorTest {
             return baseNode == shortcut.baseNode &&
                     adjNode == shortcut.adjNode &&
                     Double.compare(shortcut.weight, weight) == 0 &&
-                    Double.compare(shortcut.distance, distance) == 0 &&
                     fwd == shortcut.fwd &&
                     bwd == shortcut.bwd &&
                     skipEdge1 == shortcut.skipEdge1 &&
@@ -565,7 +570,7 @@ public class NodeBasedNodeContractorTest {
 
         @Override
         public int hashCode() {
-            return Objects.hash(baseNode, adjNode, weight, distance, fwd, bwd, skipEdge1, skipEdge2);
+            return Objects.hash(baseNode, adjNode, weight, fwd, bwd, skipEdge1, skipEdge2);
         }
 
         @Override
@@ -574,7 +579,6 @@ public class NodeBasedNodeContractorTest {
                     "baseNode=" + baseNode +
                     ", adjNode=" + adjNode +
                     ", weight=" + weight +
-                    ", distance=" + distance +
                     ", fwd=" + fwd +
                     ", bwd=" + bwd +
                     ", skipEdge1=" + skipEdge1 +

@@ -26,22 +26,18 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 abstract class EdgeAccess {
     private static final int NO_NODE = -1;
-    // distance of around +-1000 000 meter are ok
-    private static final double INT_DIST_FACTOR = 1000d;
-    static double MAX_DIST = Integer.MAX_VALUE / INT_DIST_FACTOR;
     final DataAccess edges;
-    int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS;
+    int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS;
 
     EdgeAccess(DataAccess edges) {
         this.edges = edges;
     }
 
-    final void init(int E_NODEA, int E_NODEB, int E_LINKA, int E_LINKB, int E_DIST, int E_FLAGS) {
+    final void init(int E_NODEA, int E_NODEB, int E_LINKA, int E_LINKB, int E_FLAGS) {
         this.E_NODEA = E_NODEA;
         this.E_NODEB = E_NODEB;
         this.E_LINKA = E_LINKA;
         this.E_LINKB = E_LINKB;
-        this.E_DIST = E_DIST;
         this.E_FLAGS = E_FLAGS;
     }
 
@@ -61,35 +57,8 @@ abstract class EdgeAccess {
         edges.setInt(edgePointer + E_NODEB, NO_NODE);
     }
 
-    static final boolean isInvalidNodeB(int node) {
+    static boolean isInvalidNodeB(int node) {
         return node == EdgeAccess.NO_NODE;
-    }
-
-    final void setDist(long edgePointer, double distance) {
-        edges.setInt(edgePointer + E_DIST, distToInt(distance));
-    }
-
-    /**
-     * Translates double distance to integer in order to save it in a DataAccess object
-     */
-    private int distToInt(double distance) {
-        if (distance < 0)
-            throw new IllegalArgumentException("Distance cannot be negative: " + distance);
-        if (distance > MAX_DIST) {
-            distance = MAX_DIST;
-        }
-        int integ = (int) Math.round(distance * INT_DIST_FACTOR);
-        assert integ >= 0 : "distance out of range";
-        return integ;
-    }
-
-    /**
-     * returns distance (already translated from integer to double)
-     */
-    final double getDist(long pointer) {
-        int val = edges.getInt(pointer + E_DIST);
-        // do never return infinity even if INT MAX, see #435
-        return val / INT_DIST_FACTOR;
     }
 
     final void readFlags(long edgePointer, IntsRef edgeFlags) {

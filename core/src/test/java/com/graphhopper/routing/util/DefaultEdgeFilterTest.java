@@ -71,7 +71,7 @@ public class DefaultEdgeFilterTest {
 
     private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int skip1, int skip2) {
         int accessFlags = fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir();
-        chGraph.shortcut(from, to, accessFlags, 5, 5, skip1, skip2);
+        chGraph.shortcut(from, to, accessFlags, 5, skip1, skip2);
     }
 
 }

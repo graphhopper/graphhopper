@@ -107,8 +107,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         g.edge(10, 11, 1, true);
 
         graph.freeze();
-        g.shortcut(3, 4, PrepareEncoder.getScDirMask(), 0, 40, NO_EDGE, NO_EDGE);
-        g.shortcut(0, 4, PrepareEncoder.getScDirMask(), 0, 40, NO_EDGE, NO_EDGE);
+        g.shortcut(3, 4, PrepareEncoder.getScDirMask(), 0, NO_EDGE, NO_EDGE);
+        g.shortcut(0, 4, PrepareEncoder.getScDirMask(), 0, NO_EDGE, NO_EDGE);
         g.setLevel(0, 1);
         g.setLevel(4, 1);
 
@@ -117,7 +117,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         iter = g.createEdgeExplorer().setBaseNode(2);
         assertEquals(2, GHUtility.count(iter));
 
-        int sc = g.shortcut(5, 6, PrepareEncoder.getScDirMask(), 0, 40, 1, 2);
+        int sc = g.shortcut(5, 6, PrepareEncoder.getScDirMask(), 0, 1, 2);
         CHEdgeIteratorState tmpIter = g.getEdgeIteratorState(sc, 6);
         assertEquals(1, tmpIter.getSkippedEdge1());
         assertEquals(2, tmpIter.getSkippedEdge2());
@@ -136,9 +136,9 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         // only remove edges
         lg.edge(4, 1, 30, true);
         graph.freeze();
-        lg.shortcut(1, 2, PrepareEncoder.getScDirMask(), 0, 10, 10, 11);
-        lg.shortcut(1, 0, PrepareEncoder.getScFwdDir(), 0, 20, 12, 13);
-        lg.shortcut(3, 1, PrepareEncoder.getScFwdDir(), 0, 30, 14, 15);
+        lg.shortcut(1, 2, PrepareEncoder.getScDirMask(), 0, 10, 11);
+        lg.shortcut(1, 0, PrepareEncoder.getScFwdDir(), 0, 12, 13);
+        lg.shortcut(3, 1, PrepareEncoder.getScFwdDir(), 0, 14, 15);
         // create everytime a new independent iterator for disconnect method
         EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(1);
         iter.next();
@@ -177,7 +177,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         // only remove edges
         int flags = PrepareEncoder.getScDirMask();
-        int sc = g.shortcut(0, 1, flags, 5, 5, NO_EDGE, NO_EDGE);
+        int sc = g.shortcut(0, 1, flags, 5, NO_EDGE, NO_EDGE);
         CHEdgeIteratorState sc1 = g.getEdgeIteratorState(sc, 1);
         assertTrue(sc1.isShortcut());
         sc1.setWeight(2.001);
@@ -213,33 +213,32 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         ghStorage.freeze();
 
         CHGraph lg = ghStorage.getCHGraph();
-        int sc1 = lg.shortcut(0, 1, PrepareEncoder.getScFwdDir(), 100.123, 0, NO_EDGE, NO_EDGE);
+        int sc1 = lg.shortcut(0, 1, PrepareEncoder.getScFwdDir(), 100.123, NO_EDGE, NO_EDGE);
 
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 1).getWeight(), 1e-3);
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 0).getWeight(), 1e-3);
         assertEquals(100.123, ((CHEdgeIteratorState) GHUtility.getEdge(lg, 0, 1)).getWeight(), 1e-3);
         assertEquals(100.123, ((CHEdgeIteratorState) GHUtility.getEdge(lg, 1, 0)).getWeight(), 1e-3);
 
-        int sc2 = lg.shortcut(1, 0, PrepareEncoder.getScDirMask(), 1.011011, 0, NO_EDGE, NO_EDGE);
+        int sc2 = lg.shortcut(1, 0, PrepareEncoder.getScDirMask(), 1.011011, NO_EDGE, NO_EDGE);
         assertEquals(1.011011, lg.getEdgeIteratorState(sc2, 0).getWeight(), 1e-3);
         assertEquals(1.011011, lg.getEdgeIteratorState(sc2, 1).getWeight(), 1e-3);
     }
 
     @Test
-    public void weightAndDistanceExact() {
+    public void weightExact() {
         graph = createGHStorage();
         CHGraph chGraph = getGraph(graph);
         graph.edge(0, 1, 1, false);
         graph.edge(1, 2, 1, false);
         graph.freeze();
 
-        // we just make up some weights and distances, they do not really have to be related to our previous edges.
+        // we just make up some weights, they do not really have to be related to our previous edges.
         // 1.004+1.006 = 2.09999999999. we make sure this does not become 2.09 instead of 2.10 (due to truncation)
         double x1 = 1.004;
         double x2 = 1.006;
-        chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), x1 + x2, x1 + x2, 0, 1);
+        chGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), x1 + x2, 0, 1);
         CHEdgeIteratorState sc = chGraph.getEdgeIteratorState(2, 2);
-        assertEquals(2.01, sc.getDistance(), 1.e-6);
         assertEquals(2.01, sc.getWeight(), 1.e-6);
     }
 
@@ -255,7 +254,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         EdgeIteratorState edge1 = chGraph.edge(0, 1);
         chGraph.edge(1, 2);
         graph.freeze();
-        chGraph.shortcut(0, 1, PrepareEncoder.getScDirMask(), 10, 10, NO_EDGE, NO_EDGE);
+        chGraph.shortcut(0, 1, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
 
         QueryGraph qGraph = new QueryGraph(chGraph);
         QueryResult fromRes = createQR(1.004, 1.01, 0, edge1);
@@ -303,7 +302,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertEquals(1, GHUtility.count(graph.createEdgeExplorer().setBaseNode(1)));
         assertEquals(1, GHUtility.count(chGraph.createEdgeExplorer().setBaseNode(1)));
 
-        chGraph.shortcut(2, 3, PrepareEncoder.getScDirMask(), 10, 10, NO_EDGE, NO_EDGE);
+        chGraph.shortcut(2, 3, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
 
         // should be identical to access without shortcut
         assertEquals(1, GHUtility.count(graph.createEdgeExplorer().setBaseNode(1)));
@@ -349,7 +348,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph.freeze();
 
         CHGraph lg = graph.getCHGraph();
-        lg.shortcut(1, 4, PrepareEncoder.getScFwdDir(), 3, 3, NO_EDGE, NO_EDGE);
+        lg.shortcut(1, 4, PrepareEncoder.getScFwdDir(), 3, NO_EDGE, NO_EDGE);
 
         EdgeExplorer vehicleOutExplorer = lg.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
         // iteration should result in same nodes even if reusing the iterator
@@ -365,7 +364,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph.freeze();
 
         CHGraph lg = graph.getCHGraph();
-        lg.shortcut(1, 4, PrepareEncoder.getScDirMask(), 10, 10, NO_EDGE, NO_EDGE);
+        lg.shortcut(1, 4, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
 
         AllCHEdgesIterator iter = lg.getAllEdges();
         iter.next();
@@ -385,7 +384,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph.freeze();
 
         CHGraph lg = graph.getCHGraph();
-        lg.shortcut(1, 4, PrepareEncoder.getScDirMask(), 10, 10, edge1.getEdge(), edge2.getEdge());
+        lg.shortcut(1, 4, PrepareEncoder.getScDirMask(), 10, edge1.getEdge(), edge2.getEdge());
 
         AllCHEdgesIterator iter = lg.getAllEdges();
         iter.next();
@@ -456,7 +455,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
     private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int firstOrigEdge, int lastOrigEdge,
                              int skipEdge1, int skipEdge2, int distance) {
-        chGraph.shortcutEdgeBased(from, to, fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir(), 0, distance, skipEdge1, skipEdge2, firstOrigEdge, lastOrigEdge);
+        chGraph.shortcutEdgeBased(from, to, fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir(), 0, skipEdge1, skipEdge2, firstOrigEdge, lastOrigEdge);
     }
 
     @Test
@@ -478,11 +477,11 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         CHGraph carCHGraph = graph.getCHGraph(chProfiles.get(0));
         // enable forward directions for car
-        int carSC02 = carCHGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 10, 20, NO_EDGE, NO_EDGE);
+        int carSC02 = carCHGraph.shortcut(0, 2, PrepareEncoder.getScFwdDir(), 10, NO_EDGE, NO_EDGE);
 
         CHGraph bikeCHGraph = graph.getCHGraph(chProfiles.get(1));
         // enable both directions for bike
-        int bikeSC02 = bikeCHGraph.shortcut(0, 2, PrepareEncoder.getScDirMask(), 10, 20, NO_EDGE, NO_EDGE);
+        int bikeSC02 = bikeCHGraph.shortcut(0, 2, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
 
         // assert car CH graph
         assertTrue(carCHGraph.getEdgeIteratorState(carSC02, 2).get(tmpCarAccessEnc));

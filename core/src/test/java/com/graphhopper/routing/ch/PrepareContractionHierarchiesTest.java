@@ -315,23 +315,23 @@ public class PrepareContractionHierarchiesTest {
         ghStorage.freeze();
         int x = EdgeIterator.NO_EDGE;
         double weight = w.calcWeight(edgeState01, false, x) + w.calcWeight(edgeState12, false, x);
-        int sc0_2 = g.shortcut(0, 2, oneDirFlags, w.calcWeight(edgeState01, false, x) + w.calcWeight(edgeState12, false, x), 2 * dist, tmpEdgeId, edgeState12.getEdge());
+        int sc0_2 = g.shortcut(0, 2, oneDirFlags, w.calcWeight(edgeState01, false, x) + w.calcWeight(edgeState12, false, x), tmpEdgeId, edgeState12.getEdge());
 
         tmpEdgeId = sc0_2;
         weight += w.calcWeight(edgeState23, false, x);
-        int sc0_3 = g.shortcut(0, 3, oneDirFlags, weight, 3 * dist, tmpEdgeId, edgeState23.getEdge());
+        int sc0_3 = g.shortcut(0, 3, oneDirFlags, weight, tmpEdgeId, edgeState23.getEdge());
 
         tmpEdgeId = sc0_3;
         weight += w.calcWeight(edgeState34, false, x);
-        int sc0_4 = g.shortcut(0, 4, oneDirFlags, weight, 4, tmpEdgeId, edgeState34.getEdge());
+        int sc0_4 = g.shortcut(0, 4, oneDirFlags, weight, tmpEdgeId, edgeState34.getEdge());
 
         tmpEdgeId = sc0_4;
         weight += w.calcWeight(edgeState45, false, x);
-        int sc0_5 = g.shortcut(0, 5, oneDirFlags, weight, 5, tmpEdgeId, edgeState45.getEdge());
+        int sc0_5 = g.shortcut(0, 5, oneDirFlags, weight, tmpEdgeId, edgeState45.getEdge());
 
         tmpEdgeId = sc0_5;
         weight += w.calcWeight(edgeState56, false, x);
-        int sc0_6 = g.shortcut(0, 6, oneDirFlags, weight, 6, tmpEdgeId, edgeState56.getEdge());
+        int sc0_6 = g.shortcut(0, 6, oneDirFlags, weight, tmpEdgeId, edgeState56.getEdge());
 
         g.setLevel(0, 10);
         g.setLevel(6, 9);
