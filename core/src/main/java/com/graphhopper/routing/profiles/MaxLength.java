@@ -21,18 +21,17 @@ package com.graphhopper.routing.profiles;
  * One of the four logistic attributes that can be stored per edge.
  *
  * @see MaxHeight
- * @see MaxLength
+ * @see MaxWeight
  * @see MaxWidth
  */
-public class MaxWeight {
-    public static final String KEY = "max_weight";
+public class MaxLength {
+    public static final String KEY = "max_length";
 
     /**
-     * Currently enables to store 0.1 to max=0.1*2⁸ tons and infinity. If a value is between the maximum and infinity
-     * it is assumed to use the maximum value. To save bits it might make more sense to store only a few values like
-     * it was done with the MappedDecimalEncodedValue still handling (or rounding) of unknown values is unclear.
+     * Currently enables to store 0.1 to max=0.1*2⁷m and infinity. If a value is
+     * between the maximum and infinity it is assumed to use the maximum value.
      */
     public static DecimalEncodedValue create() {
-        return new UnsignedDecimalEncodedValue(KEY, 8, 0.1, Double.POSITIVE_INFINITY, false);
+        return new UnsignedDecimalEncodedValue(KEY, 7, 0.1, Double.POSITIVE_INFINITY, false);
     }
 }
