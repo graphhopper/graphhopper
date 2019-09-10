@@ -844,10 +844,11 @@ public class OSMReaderTest {
 
     @Test
     public void testRoutingRequestFails_issue665() {
-        GraphHopper hopper = new GraphHopperOSM()
-                .setDataReaderFile(getClass().getResource(file7).getFile())
-                .setEncodingManager(EncodingManager.create("car,motorcycle"))
-                .setGraphHopperLocation(dir);
+        GraphHopper hopper = new GraphHopperOSM().
+                forTesting().
+                setDataReaderFile(getClass().getResource(file7).getFile()).
+                setEncodingManager(EncodingManager.create("car,motorcycle")).
+                setGraphHopperLocation(dir);
         hopper.getCHFactoryDecorator().setEnabled(false);
         hopper.importOrLoad();
         GHRequest req = new GHRequest(48.977277, 8.256896, 48.978876, 8.254884).
@@ -872,7 +873,8 @@ public class OSMReaderTest {
                     throw new RuntimeException(e);
                 }
             }
-        }.setEncodingManager(new EncodingManager.Builder(4).add(carEncoder = new CarFlagEncoder()).add(new OSMRoadClassParser()).build()).
+        }.forTesting().
+                setEncodingManager(new EncodingManager.Builder(4).add(carEncoder = new CarFlagEncoder()).add(new OSMRoadClassParser()).build()).
                 setGraphHopperLocation(dir).setCHEnabled(false).
                 importOrLoad();
 
@@ -892,6 +894,7 @@ public class OSMReaderTest {
         }
 
         public GraphHopperFacade(String osmFile, boolean turnCosts, String prefLang) {
+            forTesting();
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);

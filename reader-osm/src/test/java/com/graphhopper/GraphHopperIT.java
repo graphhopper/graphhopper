@@ -61,7 +61,6 @@ public class GraphHopperIT {
 
         hopper = new GraphHopperOSM().
                 setOSMFile(osmFile).
-                setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(graphFileFoot).
                 setEncodingManager(EncodingManager.create(importVehicles)).
@@ -236,6 +235,7 @@ public class GraphHopperIT {
     public void testPointHint() {
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(DIR + "/Laufamholzstrasse.osm.xml").
+                forTesting().
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create("car"));
@@ -568,7 +568,6 @@ public class GraphHopperIT {
     public void testSRTMWithInstructions() {
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(osmFile).
-                setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(importVehicles));
@@ -617,7 +616,7 @@ public class GraphHopperIT {
 
     @Test
     public void testSRTMWithoutTunnelInterpolation() {
-        GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
+        GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
                 .setEncodingManager(EncodingManager.create(importVehicles, 8));
 
@@ -643,7 +642,7 @@ public class GraphHopperIT {
 
     @Test
     public void testSRTMWithTunnelInterpolation() {
-        GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
+        GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
                 .setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).addAll(new DefaultFlagEncoderFactory(), genericImportVehicles).build());
 
@@ -677,7 +676,6 @@ public class GraphHopperIT {
 
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(tmpOsmFile).
-                setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles)).
@@ -722,7 +720,7 @@ public class GraphHopperIT {
 
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(tmpOsmFile).
-                setStoreOnFlush(true).
+                forTesting().
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles)).
                 importOrLoad();
@@ -762,6 +760,7 @@ public class GraphHopperIT {
 
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(tmpOsmFile).
+                forTesting().
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles)).

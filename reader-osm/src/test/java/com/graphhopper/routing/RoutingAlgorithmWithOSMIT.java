@@ -552,6 +552,7 @@ public class RoutingAlgorithmWithOSMIT {
         try {
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopperOSM().
+                    setMinNetworkSize(200, 0).
                     setStoreOnFlush(true).
                     setCHEnabled(withCH).
                     setDataReaderFile(osmFile).
@@ -619,6 +620,7 @@ public class RoutingAlgorithmWithOSMIT {
         Helper.removeDir(new File(graphFile));
         final EncodingManager encodingManager = EncodingManager.create("car");
         final GraphHopper hopper = new GraphHopperOSM().
+                forTesting().
                 setStoreOnFlush(true).
                 setEncodingManager(encodingManager).setCHEnabled(false).
                 setWayPointMaxDistance(0).

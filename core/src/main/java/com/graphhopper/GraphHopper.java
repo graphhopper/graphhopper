@@ -106,7 +106,7 @@ public class GraphHopper implements GraphHopperAPI {
     private int maxRegionSearch = 4;
     // for prepare
     private int minNetworkSize = 200;
-    private int minOneWayNetworkSize = 0;
+    private int minOneWayNetworkSize = 200;
 
     // for LM prepare
     private final LMAlgoFactoryDecorator lmFactoryDecorator = new LMAlgoFactoryDecorator();
@@ -239,6 +239,14 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper forMobile() {
         setSimplifyResponse(false);
         return setMemoryMapped();
+    }
+
+    /**
+     * For testing, i.e. preserve raw network topology and use in-memory.
+     */
+    public GraphHopper forTesting() {
+        return setStoreOnFlush(false).
+                setMinNetworkSize(0, 0);
     }
 
     /**
