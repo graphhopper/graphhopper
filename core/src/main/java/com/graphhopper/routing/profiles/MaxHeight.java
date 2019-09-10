@@ -18,8 +18,9 @@
 package com.graphhopper.routing.profiles;
 
 /**
- * One of the three logistic attributes that can be stored per edge.
+ * One of the four logistic attributes that can be stored per edge.
  *
+ * @see MaxLength
  * @see MaxWidth
  * @see MaxWeight
  */
