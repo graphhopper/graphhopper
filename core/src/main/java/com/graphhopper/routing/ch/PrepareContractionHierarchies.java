@@ -56,6 +56,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private final PreparationWeighting prepareWeighting;
     private final CHGraph prepareGraph;
     private final Random rand = new Random(123);
+    private final IntSet updatedNeighbors;
     private final StopWatch allSW = new StopWatch();
     private final StopWatch periodicUpdateSW = new StopWatch();
     private final StopWatch lazyUpdateSW = new StopWatch();
@@ -78,6 +79,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         this.chProfile = chGraph.getCHProfile();
         prepareWeighting = new PreparationWeighting(chProfile.getWeighting());
         this.params = Params.forTraversalMode(chProfile.getTraversalMode());
+        updatedNeighbors = new IntHashSet(50);
     }
 
     public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHProfile chProfile) {
@@ -258,6 +260,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         final boolean neighborUpdate = (params.getNeighborUpdatePercentage() != 0);
 
         while (!sortedNodes.isEmpty()) {
+            stopIfInterrupted();
             // periodically update priorities of ALL nodes
             if (checkCounter > 0 && checkCounter % periodicUpdatesCount == 0) {
                 updatePrioritiesOfRemainingNodes();
@@ -294,14 +297,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 break;
 
             // there might be multiple edges going to the same neighbor nodes -> only calculate priority once per node
-            IntSet updatedNeighbors = new IntHashSet(10);
+            updatedNeighbors.clear();
             CHEdgeIterator iter = vehicleAllExplorer.setBaseNode(polledNode);
             while (iter.next()) {
-
-                if (Thread.currentThread().isInterrupted()) {
-                    throw new RuntimeException("Thread was interrupted");
-                }
-
                 int nn = iter.getAdjNode();
                 if (prepareGraph.getLevel(nn) != maxLevel)
                     continue;
@@ -346,6 +344,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         for (int i = 0; i < nodesToContract; ++i) {
+            stopIfInterrupted();
             int node = nodeOrderingProvider.getNodeIdForLevel(i);
             contractNode(node, i);
 
@@ -361,6 +360,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 logFixedNodeOrderingStats(i, logSize, stopWatch);
                 stopWatch.start();
             }
+        }
+    }
+
+    private void stopIfInterrupted() {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new RuntimeException("Thread was interrupted");
         }
     }
 
