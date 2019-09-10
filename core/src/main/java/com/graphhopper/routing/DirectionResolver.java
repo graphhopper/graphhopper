@@ -196,7 +196,7 @@ public class DirectionResolver {
             double nextPointLat = geometry.getLat(1);
             double nextPointLon = geometry.getLon(1);
 
-            // todonow: special treatment in case the coordinates of the first pillar node equal those of the base tower
+            // todo: special treatment in case the coordinates of the first pillar node equal those of the base tower
             // node, see #1694
             if (geometry.size() > 2 && PointList.equalsEps(nextPointLat, geometry.getLat(0)) &&
                     PointList.equalsEps(nextPointLon, geometry.getLon(0))) {

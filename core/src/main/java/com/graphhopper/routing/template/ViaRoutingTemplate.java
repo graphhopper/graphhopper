@@ -134,7 +134,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             if (!directions.isEmpty()) {
                 assert ghRequest.getCurbSides().size() == directions.size();
                 if (!(algo instanceof AbstractBidirAlgo)) {
-                    throw new IllegalArgumentException("To make use of the " + Routing.CURB_SIDE + " parameter you need a bidirectional algorithm");
+                    throw new IllegalArgumentException("To make use of the " + Routing.CURB_SIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
                 } else {
                     int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), ghRequest.getCurbSides().get(placeIndex - 1));
                     int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), ghRequest.getCurbSides().get(placeIndex));

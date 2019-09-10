@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.util.Helper.round6;
 import static com.graphhopper.util.Helper.toLowerCase;
-import static com.graphhopper.util.Parameters.Routing.CURB_SIDE_EITHER;
+import static com.graphhopper.util.Parameters.CurbSides.CURB_SIDE_EITHER;
 
 /**
  * Main wrapper of the GraphHopper Directions API for a simple and efficient

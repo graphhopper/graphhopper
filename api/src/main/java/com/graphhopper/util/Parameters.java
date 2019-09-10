@@ -116,9 +116,6 @@ public class Parameters {
         public static final String PASS_THROUGH = "pass_through";
         public static final String POINT_HINT = "point_hint";
         public static final String CURB_SIDE = "curb_side";
-        public static final String CURB_SIDE_LEFT = "left";
-        public static final String CURB_SIDE_RIGHT = "right";
-        public static final String CURB_SIDE_EITHER = "either";
         public static final String SNAP_PREVENTION = "snap_prevention";
         /**
          * default heading penalty in seconds
@@ -130,6 +127,15 @@ public class Parameters {
          * a rectangle lat1,lon1,lat2,lon2
          */
         public static final String BLOCK_AREA = "block_area";
+    }
+
+    /**
+     * Possible values of {@link Parameters.Routing#CURB_SIDE}
+     */
+    public static final class CurbSides {
+        public static final String CURB_SIDE_LEFT = "left";
+        public static final String CURB_SIDE_RIGHT = "right";
+        public static final String CURB_SIDE_EITHER = "either";
     }
 
     /**

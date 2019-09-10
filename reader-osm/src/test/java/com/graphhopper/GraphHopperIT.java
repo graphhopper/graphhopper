@@ -37,7 +37,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Routing.*;
+import static com.graphhopper.util.Parameters.CurbSides.*;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.*;
 
