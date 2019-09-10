@@ -58,10 +58,10 @@ public class Path4CHTest {
         // we 'contract' the graph such that only a few shortcuts are created and that the fwd/bwd searches for the
         // 0-8 query meet at node 4 (make sure we include all three cases where turn cost times might come to play:
         // fwd/bwd search and meeting point)
-        addShortcut(0, 2, 0, 1, 0, 1, 0.12, 2, 0);
-        addShortcut(2, 4, 2, 3, 2, 3, 0.12, 2, 0);
-        addShortcut(4, 6, 4, 5, 4, 5, 0.12, 2, 0);
-        addShortcut(6, 8, 6, 7, 6, 7, 0.12, 2, 0);
+        addShortcut(0, 2, 0, 1, 0, 1, 0.12, 0);
+        addShortcut(2, 4, 2, 3, 2, 3, 0.12, 0);
+        addShortcut(4, 6, 4, 5, 4, 5, 0.12, 0);
+        addShortcut(6, 8, 6, 7, 6, 7, 0.12, 0);
         setCHOrder(1, 3, 5, 7, 0, 8, 2, 6, 4);
 
         // going from 0 to 8 will create shortest path tree entries that follow the shortcuts.
@@ -105,18 +105,18 @@ public class Path4CHTest {
         addTurnCost(edge1, edge0, 1, 0);
 
         // shortcuts ->
-        addShortcut(0, 2, 0, 1, 0, 1, 0.12, 2, 5);
-        addShortcut(2, 4, 2, 3, 2, 3, 0.12, 2, 2);
-        addShortcut(4, 6, 4, 5, 4, 5, 0.12, 2, 4);
-        addShortcut(2, 6, 2, 5, 7, 8, 0.24, 4, 7);
-        addShortcut(0, 6, 0, 5, 6, 9, 0.36, 6, 12);
+        addShortcut(0, 2, 0, 1, 0, 1, 0.12, 5);
+        addShortcut(2, 4, 2, 3, 2, 3, 0.12, 2);
+        addShortcut(4, 6, 4, 5, 4, 5, 0.12, 4);
+        addShortcut(2, 6, 2, 5, 7, 8, 0.24, 7);
+        addShortcut(0, 6, 0, 5, 6, 9, 0.36, 12);
 
         // shortcuts <-
-        addShortcut(6, 4, 5, 4, 5, 4, 0.24, 2, 3);
-        addShortcut(4, 2, 3, 2, 3, 2, 0.24, 2, 4);
-        addShortcut(2, 0, 1, 0, 1, 0, 0.24, 2, 0);
-        addShortcut(6, 2, 5, 2, 11, 12, 0.48, 4, 9);
-        addShortcut(6, 0, 5, 0, 14, 13, 0.60, 6, 10);
+        addShortcut(6, 4, 5, 4, 5, 4, 0.24, 3);
+        addShortcut(4, 2, 3, 2, 3, 2, 0.24, 4);
+        addShortcut(2, 0, 1, 0, 1, 0, 0.24, 0);
+        addShortcut(6, 2, 5, 2, 11, 12, 0.48, 9);
+        addShortcut(6, 0, 5, 0, 14, 13, 0.60, 10);
 
         // strictly it would be cleaner to manually build the SPT and extract the path, but for convenience we
         // use the routing algo to build it
@@ -140,9 +140,9 @@ public class Path4CHTest {
         return GHUtility.getEdge(graph, from, to);
     }
 
-    private void addShortcut(int from, int to, int origFirst, int origLast, int skip1, int skip2, double edgeWeight, double distance, int turnCost) {
+    private void addShortcut(int from, int to, int origFirst, int origLast, int skip1, int skip2, double edgeWeight, int turnCost) {
         double weight = edgeWeight + turnCost * 1000;
-        chGraph.shortcutEdgeBased(from, to, PrepareEncoder.getScFwdDir(), weight, distance, skip1, skip2, origFirst, origLast);
+        chGraph.shortcutEdgeBased(from, to, PrepareEncoder.getScFwdDir(), weight, skip1, skip2, origFirst, origLast);
     }
 
     private void checkPath(int from, int to, double edgeWeight, int distance, int turnCostTime) {

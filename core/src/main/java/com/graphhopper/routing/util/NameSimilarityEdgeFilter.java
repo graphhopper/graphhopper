@@ -21,25 +21,29 @@ import com.graphhopper.apache.commons.lang3.StringUtils;
 import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
- * This class defines the basis for NameSimilarity matching using an EdgeFilter.
+ * This class defines the basis for NameSimilarity matching using an EdgeFilter. It is not thread-safe.
  * The typical use-case is to match not the nearest edge in
  * {@link com.graphhopper.storage.index.LocationIndex#findClosest(double, double, EdgeFilter)}
- * but the match the edge which name is closest to the pointHint
+ * but the edge with the name that is similar to the specified pointHint and still close.
  * <p>
  * Names that are similar to each other are (n1 name1, n2 name2):
  * <ul>
  * <li>n1 == n2</li>
  * <li>n1 is significant substring of n2, e.g: n1="Main Road", n2="Main Road, New York"</li>
- * <li>n1 and n2 contain a reasonable longest common substring, e.g.: n1="Cape Point / Cape of Good Hope", n2="Cape Point Rd, Cape Peninsula, Cape Town, 8001, Afrique du Sud"</li>
+ * <li>n1 and n2 contain a reasonable longest common substring, e.g.: n1="Cape Point / Cape of Good Hope",
+ *     n2="Cape Point Rd, Cape Peninsula, Cape Town, 8001, Afrique du Sud"</li>
  * </ul>
  * <p>
- * We aim for allowing slight typos/differences of the substrings, without having too much false positives.
+ * The aim is to allow minor typos/differences of the substrings, without having too much false positives.
  *
  * @author Robin Boldt
  * @author Peter Karich
@@ -74,7 +78,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         put("w", "west");
         put("e", "east");
     }};
-    private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{LD}]+");
+    private static final Pattern WORD_CHAR = Pattern.compile("\\p{LD}+");
     private static final JaroWinkler jaroWinkler = new JaroWinkler();
     private static final double JARO_WINKLER_ACCEPT_FACTOR = .9;
     private final EdgeFilter edgeFilter;
@@ -86,7 +90,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
     }
 
     /**
-     * @param rewriteMap maps abreviations to its longer form
+     * @param rewriteMap maps abbreviations to its longer form
      */
     public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint, Map<String, String> rewriteMap) {
         this.edgeFilter = edgeFilter;
@@ -103,33 +107,30 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
      * TODO Currently limited to certain 'western' languages
      */
     private String prepareName(String name) {
-        // \s = A whitespace character: [ \t\n\x0B\f\r]
-        String[] arr = name.split("\\s");
-        List<String> list = new ArrayList<>(arr.length);
-        for (int i = 0; i < arr.length; i++) {
-            String rewrite = NON_WORD_CHAR.matcher(toLowerCase(arr[i])).replaceAll("");
-            String tmp = rewriteMap.get(rewrite);
-            if (tmp != null)
-                rewrite = tmp;
-            boolean isNumber = false;
-            try {
-                if (Integer.parseInt(rewrite) > 0)
-                    isNumber = true;
-            } catch (NumberFormatException ex) {
-            }
-            // Ignore matching short frases like de, la, ... except it is a number
-            if (rewrite.length() > 2 || isNumber) {
-                list.add(rewrite);
+        StringBuilder sb = new StringBuilder(name.length());
+        Matcher wordCharMatcher = WORD_CHAR.matcher(name);
+        while (wordCharMatcher.find()) {
+            String normalizedToken = toLowerCase(wordCharMatcher.group());
+            String rewrite = rewriteMap.get(normalizedToken);
+            if (rewrite != null)
+                normalizedToken = rewrite;
+            if (normalizedToken.isEmpty())
+                continue;
+            // Ignore matching short phrases like de, la, ... except it is a number
+            if (normalizedToken.length() > 2) {
+                sb.append(normalizedToken);
+            } else {
+                if (Character.isDigit(normalizedToken.charAt(0)) && (normalizedToken.length() == 1 || Character.isDigit(normalizedToken.charAt(1)))) {
+                    sb.append(normalizedToken);
+                }
             }
         }
-        return listToString(list);
+        return sb.toString();
     }
 
     private String removeRelation(String edgeName) {
-        if (edgeName != null && edgeName.contains(", ")) {
-            edgeName = edgeName.substring(0, edgeName.lastIndexOf(','));
-        }
-        return edgeName;
+        int index = edgeName.lastIndexOf(", ");
+        return index >= 0 ? edgeName.substring(0, index) : edgeName;
     }
 
     @Override
@@ -149,7 +150,6 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
 
         name = removeRelation(name);
         String edgeName = prepareName(name);
-
         return isJaroWinklerSimilar(pointHint, edgeName);
     }
 
@@ -157,14 +157,6 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         double jwSimilarity = jaroWinkler.similarity(str1, str2);
         // System.out.println(str1 + " vs. edge:" + str2 + ", " + jwSimilarity);
         return jwSimilarity > JARO_WINKLER_ACCEPT_FACTOR;
-    }
-
-    private final String listToString(List<String> list) {
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; i < list.size(); i++) {
-            b.append(list.get(i));
-        }
-        return b.toString();
     }
 
     private boolean isLevenshteinSimilar(String hint, String name) {

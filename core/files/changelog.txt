@@ -20,6 +20,7 @@
     removed GraphHopper.set/getTraversalMode() methods, #1705
     edge-based CH is now chosen by default if it was prepared, #1706
     it is now possible to specify finite u-turn costs for CH preparation, #1671
+    removed distances from CH shortcuts, reduces memory consumption per shortcut by 4 bytes (about 8-10%), #1719
 
 0.12
     renamed VirtualEdgeIteratorState.getOriginalEdgeKey to more precise getOriginalEdgeKey #1549

@@ -42,7 +42,7 @@ All questions can go to our [forum](https://discuss.graphhopper.com/) where we a
 
 ## Contribute
 
-Read through [how to contribute](.github/CONTRIBUTING.md) for information on topics
+Read through [how to contribute](CONTRIBUTING.md) for information on topics
 like finding and fixing bugs and improving our documentation or translations!
 
 ## For the Web

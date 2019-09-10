@@ -17,41 +17,43 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.MaxWidth;
+import com.graphhopper.routing.profiles.MaxAxleLoad;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
-public class OSMMaxWidthParser implements TagParser {
-
-    private final DecimalEncodedValue widthEncoder;
+public class OSMMaxAxleLoadParser implements TagParser {
+    
+    private final DecimalEncodedValue maxAxleLoadEncoder;
     private final boolean enableLog;
 
-    public OSMMaxWidthParser() {
-        this(MaxWidth.create(), false);
+    public OSMMaxAxleLoadParser() {
+        this(MaxAxleLoad.create(), false);
     }
 
-    public OSMMaxWidthParser(DecimalEncodedValue widthEncoder, boolean enableLog) {
-        this.widthEncoder = widthEncoder;
+    public OSMMaxAxleLoadParser(DecimalEncodedValue maxAxleLoadEncoder, boolean enableLog) {
+        this.maxAxleLoadEncoder = maxAxleLoadEncoder;
         this.enableLog = enableLog;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(widthEncoder);
+    public void createEncodedValues(EncodedValueLookup lookup,
+                    List<EncodedValue> registerNewEncodedValue) {
+        registerNewEncodedValue.add(maxAxleLoadEncoder);
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
-        List<String> widthTags = Arrays.asList("maxwidth", "maxwidth:physical", "width");
-        OSMValueExtractor.extractMeter(edgeFlags, way, widthEncoder, widthTags, enableLog);
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access,
+                    long relationFlags) {
+        OSMValueExtractor.extractTons(edgeFlags, way, maxAxleLoadEncoder,
+                        Collections.singletonList("maxaxleload"), enableLog);
         return edgeFlags;
     }
 }
