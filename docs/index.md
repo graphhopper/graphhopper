@@ -45,7 +45,7 @@ Find all changes in previous and current versions in the [changelogs](../core/fi
 
 #### Contribute
 
-Read [here](../.github/CONTRIBUTING.md) on how to contribute as a developer and translator.
+Read [here](CONTRIBUTING.md) on how to contribute as a developer and translator.
 
 #### Technical
 
