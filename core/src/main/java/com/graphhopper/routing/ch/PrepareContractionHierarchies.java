@@ -34,8 +34,8 @@ import java.util.Random;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.Helper.nf;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.util.Parameters.Algorithms.*;
+import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
 
 /**
  * This class prepares the graph for a bidirectional algorithm supporting contraction hierarchies
@@ -178,6 +178,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             } else {
                 return new DijkstraBidirectionCHNoSOD(graph, prepareWeighting);
             }
+        } else if (ALT_ROUTE.equalsIgnoreCase(opts.getAlgorithm())) {
+            AlternativeRouteCH altRouteAlgo = new AlternativeRouteCH(graph, prepareWeighting);
+            altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
+            altRouteAlgo.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
+            return altRouteAlgo;
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for node-based Contraction Hierarchies. Try with ch.disable=true");
         }
