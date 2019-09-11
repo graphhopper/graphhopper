@@ -138,6 +138,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                 } else {
                     int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), ghRequest.getCurbSides().get(placeIndex - 1));
                     int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), ghRequest.getCurbSides().get(placeIndex));
+                    // todonow: enable this feature for alternative routes as well ?
                     tmpPathList = Collections.singletonList(((AbstractBidirAlgo) algo)
                             .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
                 }
