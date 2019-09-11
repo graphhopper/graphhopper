@@ -19,6 +19,7 @@ package com.graphhopper;
 
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.reader.osm.GraphHopperOSMForTest;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
@@ -233,9 +234,8 @@ public class GraphHopperIT {
 
     @Test
     public void testPointHint() {
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSMForTest().
                 setOSMFile(DIR + "/Laufamholzstrasse.osm.xml").
-                forTesting().
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create("car"));
@@ -718,9 +718,8 @@ public class GraphHopperIT {
         String tmpImportVehicles = "car,bike";
         String tmpWeightCalcStr = "fastest";
 
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSMForTest().
                 setOSMFile(tmpOsmFile).
-                forTesting().
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles)).
                 importOrLoad();
@@ -758,9 +757,8 @@ public class GraphHopperIT {
         String tmpImportVehicles = "car,bike";
         String tmpWeightCalcStr = "fastest";
 
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSMForTest().
                 setOSMFile(tmpOsmFile).
-                forTesting().
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles)).

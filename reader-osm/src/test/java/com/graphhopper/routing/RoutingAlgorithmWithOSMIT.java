@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.reader.osm.GraphHopperOSMForTest;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
@@ -614,13 +615,12 @@ public class RoutingAlgorithmWithOSMIT {
     }
 
     @Test
-    public void testMonacoParallel() throws IOException {
+    public void testMonacoParallel() {
         System.out.println("testMonacoParallel takes a bit time...");
         String graphFile = "target/monaco-gh";
         Helper.removeDir(new File(graphFile));
         final EncodingManager encodingManager = EncodingManager.create("car");
-        final GraphHopper hopper = new GraphHopperOSM().
-                forTesting().
+        final GraphHopper hopper = new GraphHopperOSMForTest().
                 setStoreOnFlush(true).
                 setEncodingManager(encodingManager).setCHEnabled(false).
                 setWayPointMaxDistance(0).

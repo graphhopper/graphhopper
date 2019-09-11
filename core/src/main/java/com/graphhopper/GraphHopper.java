@@ -242,14 +242,6 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * For testing, i.e. preserve raw network topology and use in-memory.
-     */
-    public GraphHopper forTesting() {
-        return setStoreOnFlush(false).
-                setMinNetworkSize(0, 0);
-    }
-
-    /**
      * Precise location resolution index means also more space (disc/RAM) could be consumed and
      * probably slower query times, which would be e.g. not suitable for Android. The resolution
      * specifies the tile width (in meter).

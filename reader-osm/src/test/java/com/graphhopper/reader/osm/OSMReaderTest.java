@@ -844,8 +844,7 @@ public class OSMReaderTest {
 
     @Test
     public void testRoutingRequestFails_issue665() {
-        GraphHopper hopper = new GraphHopperOSM().
-                forTesting().
+        GraphHopper hopper = new GraphHopperOSMForTest().
                 setDataReaderFile(getClass().getResource(file7).getFile()).
                 setEncodingManager(EncodingManager.create("car,motorcycle")).
                 setGraphHopperLocation(dir);
@@ -861,7 +860,7 @@ public class OSMReaderTest {
 
     @Test
     public void testRoadClassInfo() {
-        GraphHopper gh = new GraphHopperOSM() {
+        GraphHopper gh = new GraphHopperOSMForTest() {
 
             @Override
             protected DataReader importData() {
@@ -873,8 +872,7 @@ public class OSMReaderTest {
                     throw new RuntimeException(e);
                 }
             }
-        }.forTesting().
-                setEncodingManager(new EncodingManager.Builder(4).add(carEncoder = new CarFlagEncoder()).add(new OSMRoadClassParser()).build()).
+        }.setEncodingManager(new EncodingManager.Builder(4).add(carEncoder = new CarFlagEncoder()).add(new OSMRoadClassParser()).build()).
                 setGraphHopperLocation(dir).setCHEnabled(false).
                 importOrLoad();
 
@@ -888,14 +886,12 @@ public class OSMReaderTest {
         assertTrue(ex.getMessage(), ex.getMessage().contains("You requested the details [road_access]"));
     }
 
-    class GraphHopperFacade extends GraphHopperOSM {
+    class GraphHopperFacade extends GraphHopperOSMForTest {
         public GraphHopperFacade(String osmFile) {
             this(osmFile, false, "");
         }
 
         public GraphHopperFacade(String osmFile, boolean turnCosts, String prefLang) {
-            forTesting();
-            setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
             setCHEnabled(false);
