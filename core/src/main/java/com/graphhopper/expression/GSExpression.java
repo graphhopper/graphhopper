@@ -42,7 +42,7 @@ public class GSExpression {
 
         String valueAsStr = (String) getParameters().get(0);
         if (!lookup.hasEncodedValue(valueAsStr))
-            throw new IllegalArgumentException("Cannot find parameter name " + valueAsStr + " in line " + getLineNumber());
+            throw new IllegalArgumentException("Cannot find parameter " + valueAsStr + " in storage, line " + getLineNumber());
 
         if (getName().equals("==")) {
             String parameterStr = (String) getParameters().get(1);
