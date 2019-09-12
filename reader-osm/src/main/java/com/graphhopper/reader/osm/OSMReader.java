@@ -872,6 +872,7 @@ public class OSMReader implements DataReader {
             vehicleTypeRestricted = relation.getKeyStartsWith("restriction:");
             if (!Helper.isEmpty(vehicleTypeRestricted)) {
                 tagRestriction = relation.getTag(vehicleTypeRestricted);
+                vehicleTypeRestricted = vehicleTypeRestricted.replace("restriction:", "");
             }
         }
         if (relation.hasTag("except")) {
