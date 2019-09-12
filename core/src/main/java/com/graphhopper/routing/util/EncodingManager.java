@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
@@ -516,68 +517,13 @@ public class EncodingManager implements EncodedValueLookup {
      * @return if at least one encoder consumes the specified relation. Additionally the specified acceptRelation is changed
      * to provide more details.
      */
-    public boolean acceptRelation(ReaderRelation relation, AcceptRelation acceptRelation) {
-        if (!acceptRelation.isEmpty())
-            throw new IllegalArgumentException("AcceptRelation must be empty");
-
+    public boolean acceptRelation(OSMTurnRelation relation) {
         for (AbstractFlagEncoder encoder : edgeEncoders) {
-            acceptRelation.put(encoder.toString(), encoder.getRelationAccept(relation));
+            if (encoder.acceptsRelation(relation)) {
+                return true;
+            }
         }
-        return acceptRelation.hasAccepted();
-    }
-
-    public static class AcceptRelation {
-        private Map<String, RelationAcceptation> acceptRelationMap;
-        boolean hasAccepted = false;
-
-        public AcceptRelation() {
-            this.acceptRelationMap = new HashMap<>(5);
-        }
-
-        private RelationAcceptation get(String key) {
-            RelationAcceptation res = acceptRelationMap.get(key);
-            if (res == null)
-                throw new IllegalArgumentException("Couldn't fetch Access value for encoder key " + key);
-
-            return res;
-        }
-
-        public AcceptRelation put(String key, RelationAcceptation relationAcceptation) {
-            acceptRelationMap.put(key, relationAcceptation);
-            if (relationAcceptation != RelationAcceptation.CAN_SKIP)
-                hasAccepted = true;
-            return this;
-        }
-
-        public boolean isEmpty() {
-            return acceptRelationMap.isEmpty();
-        }
-
-        public boolean hasAccepted() {
-            return hasAccepted;
-        }
-
-        private boolean has(String key) {
-            return acceptRelationMap.containsKey(key);
-        }
-
-        public RelationAcceptation getAccess() {
-            if (acceptRelationMap.isEmpty())
-                throw new IllegalStateException("Cannot determine Access if map is empty");
-            return acceptRelationMap.values().iterator().next();
-        }
-    }
-
-    public enum RelationAcceptation {
-        RELATION, CAN_SKIP;
-
-        public boolean isRelation() {
-            return this.ordinal() == RELATION.ordinal();
-        }
-
-        public boolean canSkip() {
-            return this.ordinal() == CAN_SKIP.ordinal();
-        }
+        return false;
     }
 
     public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {

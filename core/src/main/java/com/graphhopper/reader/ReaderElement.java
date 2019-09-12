@@ -17,6 +17,8 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.util.Helper;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,12 +98,29 @@ public abstract class ReaderElement {
     }
 
     public <T> T getTagStartsWith(String keyPrefix, T defaultValue) {
-        for (String key : properties.keySet()) {
-            if (key.startsWith(keyPrefix)) {
-                return getTag(key, defaultValue);
-            }
+        String matchedKey = getKeyStartsWith(keyPrefix);
+        if (!Helper.isEmpty(matchedKey)) {
+            return getTag(matchedKey, defaultValue);
         }
         return defaultValue;
+    }
+
+    public String getKeyStartsWith(String keyPrefix) {
+        int nbMatchedKeys = 0;
+        String matchedKey = null;
+        for (String key : properties.keySet()) {
+            if (key.startsWith(keyPrefix)) {
+                nbMatchedKeys++;
+                matchedKey = key;
+                if (nbMatchedKeys > 1) {
+                    throw new IllegalArgumentException("Several matched keys found for keyPrefix " + keyPrefix);
+                }
+            }
+        }
+        if (nbMatchedKeys == 1) {
+            return matchedKey;
+        }
+        return null;
     }
 
     public void setTag(String name, Object value) {

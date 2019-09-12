@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
@@ -58,9 +58,9 @@ public interface FlagEncoder extends TurnCostEncoder, EncodedValueLookup {
      * Decide whether a restriction relation is enabled for a given mode of travel. This skips some relations before
      * handleRelationTags is called.
      *
-     * @return the encoded value to indicate if this encoder allows travel or not.
+     * @return true if this encoder allows travel.
      */
-    EncodingManager.RelationAcceptation getRelationAccept(ReaderRelation relation);
+    boolean acceptsRelation(OSMTurnRelation relation);
 
     /**
      * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.

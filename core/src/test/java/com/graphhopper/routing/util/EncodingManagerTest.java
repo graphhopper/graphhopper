@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
@@ -105,8 +106,8 @@ public class EncodingManagerTest {
             }
 
             @Override
-            public EncodingManager.RelationAcceptation getRelationAccept(ReaderRelation relation) {
-                return EncodingManager.RelationAcceptation.RELATION;
+            public boolean acceptsRelation(OSMTurnRelation relation) {
+                return true;
             }
 
             @Override

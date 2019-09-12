@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
@@ -227,8 +228,33 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public EncodingManager.RelationAcceptation getRelationAccept(ReaderRelation relation) {
-        return EncodingManager.RelationAcceptation.RELATION;
+    public boolean acceptsRelation(OSMTurnRelation relation) {
+        if (relation.isVehicleTypeConcernedByTurnRestriction(restrictions)) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean hasRestrictedRelationTag(ReaderRelation relation) {
+        boolean hasExcept = relation.hasTag("except");
+        boolean hasRestrictionDedicated = relation.hasTagStartsWith("restriction:");
+        if (hasExcept || hasRestrictionDedicated) {
+            String except = relation.getTag("except");
+            for (String r : restrictions) {
+                if (relation.hasTag("restriction:" + r)) {
+                    return true;
+                }
+                if (!Helper.isEmpty(except)) {
+                    if (except.contains(r)) {
+                        return false;
+                    }
+                }
+            }
+            if (hasRestrictionDedicated) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

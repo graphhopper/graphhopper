@@ -17,10 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ConditionalTagInspector;
-import com.graphhopper.reader.ReaderNode;
-import com.graphhopper.reader.ReaderRelation;
-import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.*;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.profiles.*;
@@ -181,13 +178,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return shift;
     }
 
-    /**
-     * Decide whether a restriction relation is enabled for a given mode of travel. This skips some relations before
-     * handleRelationTags is called.
-     *
-     * @return the encoded value to indicate if this encoder allows travel or not.
-     */
-    public abstract EncodingManager.RelationAcceptation getRelationAccept(ReaderRelation relation);
+    public abstract boolean acceptsRelation(OSMTurnRelation relation);
 
     /**
      * Analyze the properties of a relation and create the routing flags for the second read step.
