@@ -69,7 +69,8 @@ public class OSMTurnRelation {
     }
 
     /**
-     * From a vehiclesTypes list, when the
+     * For a conditional turn restriction, test each vehicle type to verify if it is concerned.
+     * For a normal turn restriction (non conditional), the restriction is necessary considered.
      * @param vehicleTypes
      * @return
      */

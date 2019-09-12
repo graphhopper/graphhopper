@@ -232,28 +232,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         return true;
     }
 
-    private boolean hasRestrictedRelationTag(ReaderRelation relation) {
-        boolean hasExcept = relation.hasTag("except");
-        boolean hasRestrictionDedicated = relation.hasTagStartsWith("restriction:");
-        if (hasExcept || hasRestrictionDedicated) {
-            String except = relation.getTag("except");
-            for (String r : restrictions) {
-                if (relation.hasTag("restriction:" + r)) {
-                    return true;
-                }
-                if (!Helper.isEmpty(except)) {
-                    if (except.contains(r)) {
-                        return false;
-                    }
-                }
-            }
-            if (hasRestrictionDedicated) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     @Override
     public EncodingManager.Access getAccess(ReaderWay way) {
         String highwayValue = way.getTag("highway");
