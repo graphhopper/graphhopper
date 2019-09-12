@@ -56,12 +56,12 @@ public interface CHGraph extends Graph {
      * This method creates a shortcut between a to b which is nearly identical to creating an edge
      * except that it can be excluded or included for certain traversals or algorithms.
      */
-    int shortcut(int a, int b, int accessFlags, double weight, double distance, int skippedEdge1, int skippedEdge2);
+    int shortcut(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2);
 
     /**
      * like shortcut(), but for edge-based CH
      */
-    int shortcutEdgeBased(int a, int b, int accessFlags, double weight, double distance, int skippedEdge1, int skippedEdge2, int origFirst, int origLast);
+    int shortcutEdgeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2, int origFirst, int origLast);
 
     @Override
     CHEdgeIteratorState getEdgeIteratorState(int edgeId, int endNode);

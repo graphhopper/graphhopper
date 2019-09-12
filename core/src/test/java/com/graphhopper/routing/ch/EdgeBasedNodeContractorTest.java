@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.*;
 
 /**
@@ -54,6 +55,7 @@ public class EdgeBasedNodeContractorTest {
     private CarFlagEncoder encoder;
     private GraphHopperStorage graph;
     private TurnCostExtension turnCostExtension;
+    private int uTurnCosts;
     private Weighting weighting;
 
     @Rule
@@ -69,7 +71,8 @@ public class EdgeBasedNodeContractorTest {
         encoder = new CarFlagEncoder(5, 5, maxCost);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         weighting = new ShortestWeighting(encoder);
-        graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting)).create();
+        uTurnCosts = INFINITE_U_TURN_COSTS;
+        graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, uTurnCosts)).create();
         turnCostExtension = (TurnCostExtension) graph.getExtension();
         chGraph = graph.getCHGraph();
     }
@@ -1116,6 +1119,31 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
+    public void testFindPath_finiteUTurnCost() {
+        // turning to 1 at node 3 when coming from 0 is forbidden, but taking the full loop 3-4-2-3 is very
+        // expensive, so the best solution is to go straight to 4 and take a u-turn there
+        //   1
+        //   |
+        // 0-3-4
+        //   |/
+        //   2
+        graph.edge(0, 3, 100, false);
+        graph.edge(3, 4, 100, true);
+        graph.edge(4, 2, 500, false);
+        graph.edge(2, 3, 200, false);
+        graph.edge(3, 1, 100, false);
+        graph.freeze();
+        setMaxLevelOnAllNodes();
+        addRestriction(0, 3, 1);
+        uTurnCosts = 60;
+        contractNodes(4);
+        checkShortcuts(
+                createShortcut(3, 2, 1, 2, 1, 2, 600),
+                createShortcut(3, 3, 1, 1, 1, 1, 260)
+        );
+    }
+
+    @Test
     public void testNodeContraction_turnRestrictionAndLoop() {
         //  /\    /<-3
         // 0  1--2
@@ -1355,7 +1383,7 @@ public class EdgeBasedNodeContractorTest {
 
     private EdgeBasedNodeContractor createNodeContractor() {
         PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
-        TurnWeighting turnWeighting = new TurnWeighting(preparationWeighting, turnCostExtension);
+        TurnWeighting turnWeighting = new TurnWeighting(preparationWeighting, turnCostExtension, uTurnCosts);
         EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(chGraph, turnWeighting, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;

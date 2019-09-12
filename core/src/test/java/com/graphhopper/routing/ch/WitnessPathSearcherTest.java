@@ -29,6 +29,7 @@ import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -44,7 +45,7 @@ public class WitnessPathSearcherTest {
         EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new ShortestWeighting(encoder);
         PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
-        graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting)).create();
+        graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
         TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
         chTurnWeighting = new TurnWeighting(preparationWeighting, turnCostExtension);
         chGraph = graph.getCHGraph();

@@ -25,8 +25,8 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.CH;
+import com.graphhopper.util.Parameters.Routing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +34,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.CH.DISABLE;
 
@@ -220,7 +221,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      * Enables the use of contraction hierarchies to reduce query times. Enabled by default.
      *
      * @param profileString String representation of a CH profile like: "fastest", "shortest|edge_based=true",
-     *                       "fastest|u_turn_costs=30 or your own weight-calculation type.
+     *                      "fastest|u_turn_costs=30 or your own weight-calculation type.
      */
     public CHAlgoFactoryDecorator addCHProfileAsString(String profileString) {
         chProfileStrings.add(profileString);
@@ -251,23 +252,23 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     public PrepareContractionHierarchies getPreparation(HintsMap map) {
-        boolean edgeBased = map.getBool(Parameters.Routing.EDGE_BASED, false);
-        List<String> entriesStrs = new ArrayList<>();
-        boolean weightingMatchesButNotEdgeBased = false;
+        Boolean edgeBased = map.has(Routing.EDGE_BASED) ? map.getBool(Routing.EDGE_BASED, false) : null;
+        Integer uTurnCosts = map.has(Routing.U_TURN_COSTS) ? map.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS) : null;
+        CHProfile selectedProfile = selectProfile(map, edgeBased, uTurnCosts);
         for (PrepareContractionHierarchies p : getPreparations()) {
-            boolean weightingMatches = p.getCHProfile().getWeighting().matches(map);
-            if (p.isEdgeBased() == edgeBased && weightingMatches)
+            if (p.getCHProfile().equals(selectedProfile)) {
                 return p;
-            else if (weightingMatches)
-                weightingMatchesButNotEdgeBased = true;
-
-            entriesStrs.add(p.getCHProfile().getWeighting() + "|" + (p.getCHProfile().isEdgeBased() ? "edge" : "node"));
+            }
         }
+        throw new IllegalStateException("Could not find CH preparation for selected profile: " + selectedProfile);
+    }
 
-        String hint = weightingMatchesButNotEdgeBased
-                ? " The '" + Parameters.Routing.EDGE_BASED + "' url parameter is missing or does not fit the weightings. Its value was: '" + edgeBased + "'"
-                : "";
-        throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries: " + entriesStrs + "." + hint);
+    private CHProfile selectProfile(HintsMap map, Boolean edgeBased, Integer uTurnCosts) {
+        try {
+            return CHProfileSelector.select(chProfiles, map, edgeBased, uTurnCosts);
+        } catch (CHProfileSelectionException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
     }
 
     public int getPreparationThreads() {

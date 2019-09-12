@@ -54,7 +54,8 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(DISTANCE))
             builders.add(new DistanceDetails());
 
-        for (String key : Arrays.asList(MaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY)) {
+        for (String key : Arrays.asList(MaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY,
+                        MaxAxleLoad.KEY, MaxLength.KEY)) {
             if (requestedPathDetails.contains(key) && encoder.hasEncodedValue(key))
                 builders.add(new DecimalDetails(key, encoder.getDecimalEncodedValue(key)));
         }
@@ -62,7 +63,7 @@ public class PathDetailsBuilderFactory {
         for (Map.Entry entry : Arrays.asList(new MapEntry<>(RoadClass.KEY, RoadClass.class),
                 new MapEntry<>(RoadEnvironment.KEY, RoadEnvironment.class), new MapEntry<>(Surface.KEY, Surface.class),
                 new MapEntry<>(RoadAccess.KEY, RoadAccess.class), new MapEntry<>(Toll.KEY, Toll.class),
-                new MapEntry<>(Country.KEY, Country.class))) {
+                new MapEntry<>(TrackType.KEY, TrackType.class), new MapEntry<>(Country.KEY, Country.class))) {
             String key = (String) entry.getKey();
             if (requestedPathDetails.contains(key) && encoder.hasEncodedValue(key))
                 builders.add(new EnumDetails(key, encoder.getEnumEncodedValue(key, (Class<Enum>) entry.getValue())));

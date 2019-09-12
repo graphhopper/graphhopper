@@ -122,6 +122,7 @@ public class RouteResource {
         }
 
         initHints(request.getHints(), uriInfo.getQueryParameters());
+        translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
         request.setVehicle(vehicleStr).
                 setWeighting(weighting).
                 setAlgorithm(algoStr).
@@ -160,6 +161,16 @@ public class RouteResource {
                     Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                             header("X-GH-Took", "" + Math.round(took * 1000)).
                             build();
+        }
+    }
+
+    private void translateTurnCostsParamToEdgeBased(GHRequest request, MultivaluedMap<String, String> queryParams) {
+        if (queryParams.containsKey(TURN_COSTS)) {
+            List<String> turnCosts = queryParams.get(TURN_COSTS);
+            if (turnCosts.size() != 1) {
+                throw new IllegalArgumentException("You may only specify the turn_costs parameter once");
+            }
+            request.getHints().put(EDGE_BASED, turnCosts.get(0));
         }
     }
 

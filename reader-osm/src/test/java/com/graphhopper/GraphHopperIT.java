@@ -1022,8 +1022,8 @@ public class GraphHopperIT {
         tmpHopper.getCHFactoryDecorator().setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_AND_NODE);
         tmpHopper.importOrLoad();
 
-        // no edge_based parameter -> use node-based (because its faster)
-        assertMoscowNodeBased(tmpHopper, "none", true);
+        // no edge_based parameter -> use edge-based (because its there)
+        assertMoscowEdgeBased(tmpHopper, "none", true);
         // edge_based=false -> use node-based
         assertMoscowNodeBased(tmpHopper, "false", true);
         // edge_based=true -> use edge-based
@@ -1051,15 +1051,70 @@ public class GraphHopperIT {
         assertNotEquals(rsp1.getHints().get("visited_nodes.sum", "_"), rsp2.getHints().get("visited_nodes.sum", "_"));
     }
 
+    @Test
+    public void testNodeBasedCHOnlyButTurnCostForNonCH() {
+        // before edge-based CH was added a common case was to use edge-based without CH and CH for node-based
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/moscow.osm.gz").
+                setStoreOnFlush(true).
+                setCHEnabled(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create("car|turn_costs=true"));
+        tmpHopper.getCHFactoryDecorator()
+                .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.OFF)
+                .setDisablingAllowed(true);
+        tmpHopper.importOrLoad();
+
+        // without CH -> use edge-based unless disabled explicitly
+        assertMoscowEdgeBased(tmpHopper, "none", false);
+        assertMoscowEdgeBased(tmpHopper, "true", false);
+        assertMoscowNodeBased(tmpHopper, "false", false);
+
+        // with CH -> use node-based unless edge_based is enabled explicitly (which should give an error)
+        assertMoscowNodeBased(tmpHopper, "none", true);
+        assertMoscowNodeBased(tmpHopper, "false", true);
+        GHResponse rsp = runMoscow(tmpHopper, "true", true);
+        assertEquals(1, rsp.getErrors().size());
+        assertTrue(rsp.getErrors().toString().contains("Found a node-based CH profile"));
+        assertTrue(rsp.getErrors().toString().contains("but requested edge-based CH"));
+    }
+
+    @Test
+    public void testEdgeBasedByDefaultIfOnlyEdgeBased() {
+        // when there is only one edge-based CH profile, there is no need to specify edge_based=true explicitly,
+        // see #1637
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/moscow.osm.gz").
+                setStoreOnFlush(true).
+                setCHEnabled(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create("car|turn_costs=true"));
+        tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        tmpHopper.getCHFactoryDecorator().setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE);
+        tmpHopper.importOrLoad();
+
+        // even when we omit the edge_based parameter we get edge-based CH, unless we disable it explicitly
+        assertMoscowEdgeBased(tmpHopper, "none", true);
+        assertMoscowEdgeBased(tmpHopper, "true", true);
+        GHResponse rsp = runMoscow(tmpHopper, "false", true);
+        assertTrue(rsp.hasErrors());
+        assertTrue(rsp.getErrors().toString().contains("Found 1 edge-based CH profile"));
+        assertTrue(rsp.getErrors().toString().contains("but requested node-based CH"));
+    }
+
     private GHResponse assertMoscowNodeBased(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
-        return assertMoscow(tmpHopper, edgeBasedParam, false, ch);
+        GHResponse rsp = runMoscow(tmpHopper, edgeBasedParam, ch);
+        assertEquals(400, rsp.getBest().getDistance(), 1);
+        return rsp;
     }
 
     private GHResponse assertMoscowEdgeBased(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
-        return assertMoscow(tmpHopper, edgeBasedParam, true, ch);
+        GHResponse rsp = runMoscow(tmpHopper, edgeBasedParam, ch);
+        assertEquals(1044, rsp.getBest().getDistance(), 1);
+        return rsp;
     }
 
-    private GHResponse assertMoscow(GraphHopper tmpHopper, String edgeBasedParam, boolean withTurnCosts, boolean ch) {
+    private GHResponse runMoscow(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
         if (edgeBasedParam.equals("true") || edgeBasedParam.equals("false")) {
             req.getHints().put(Routing.EDGE_BASED, edgeBasedParam);
@@ -1067,9 +1122,7 @@ public class GraphHopperIT {
             req.getHints().remove(Routing.EDGE_BASED);
         }
         req.getHints().put(CH.DISABLE, !ch);
-        GHResponse rsp = tmpHopper.route(req);
-        assertEquals(withTurnCosts ? 1044 : 400, rsp.getBest().getDistance(), 1);
-        return rsp;
+        return tmpHopper.route(req);
     }
 
     @Test
@@ -1082,6 +1135,23 @@ public class GraphHopperIT {
         GHResponse rsp = hopper.route(req);
         assertTrue("using edge-based for encoder without turncost support should be an error, but got:\n" + rsp.getErrors(),
                 rsp.getErrors().toString().contains("You need a turn cost extension to make use of edge_based=true, e.g. use car|turn_costs=true"));
+    }
+
+    @Test
+    public void testEncoderWithTurnCostSupport_stillAllows_nodeBasedRouting() {
+        // see #1698
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/moscow.osm.gz").
+                setGraphHopperLocation(tmpGraphFile).
+                setCHEnabled(false).
+                setEncodingManager(EncodingManager.create("foot,car|turn_costs=true"));
+        tmpHopper.importOrLoad();
+        GHPoint p = new GHPoint(55.813357, 37.5958585);
+        GHPoint q = new GHPoint(55.811042, 37.594689);
+        GHRequest req = new GHRequest(p, q);
+        req.setVehicle("foot");
+        GHResponse rsp = tmpHopper.route(req);
+        assertEquals("there should not be an error, but was: " + rsp.getErrors(), 0, rsp.getErrors().size());
     }
 
 }

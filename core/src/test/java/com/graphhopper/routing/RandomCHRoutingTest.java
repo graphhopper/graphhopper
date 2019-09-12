@@ -23,10 +23,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -34,23 +33,26 @@ import static org.junit.Assert.fail;
 public class RandomCHRoutingTest {
     private final TraversalMode traversalMode;
     private final int maxTurnCosts;
+    private final int uTurnCosts;
     private Directory dir;
     private CarFlagEncoder encoder;
     private Weighting weighting;
     private GraphHopperStorage graph;
     private LocationIndexTree locationIndex;
 
-    @Parameterized.Parameters(name = "{0}")
-    public static Object[] params() {
-        return new Object[]{
-                TraversalMode.NODE_BASED,
-                TraversalMode.EDGE_BASED
-        };
+    @Parameterized.Parameters(name = "{0}, u-turn-costs={1}")
+    public static Collection<Object[]> params() {
+        return Arrays.asList(new Object[][]{
+                {TraversalMode.NODE_BASED, INFINITE_U_TURN_COSTS},
+                {TraversalMode.EDGE_BASED, 40},
+                {TraversalMode.EDGE_BASED, INFINITE_U_TURN_COSTS}
+        });
     }
 
-    public RandomCHRoutingTest(TraversalMode traversalMode) {
+    public RandomCHRoutingTest(TraversalMode traversalMode, int uTurnCosts) {
         this.traversalMode = traversalMode;
         this.maxTurnCosts = 10;
+        this.uTurnCosts = uTurnCosts;
     }
 
     @Before
@@ -60,7 +62,7 @@ public class RandomCHRoutingTest {
         EncodingManager em = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
         graph = new GraphBuilder(em)
-                .setCHProfiles(new CHProfile(weighting, traversalMode.isEdgeBased()))
+                .setCHProfiles(new CHProfile(weighting, traversalMode.isEdgeBased(), uTurnCosts))
                 .create();
     }
 
@@ -133,7 +135,7 @@ public class RandomCHRoutingTest {
         locationIndex.prepareIndex();
 
         graph.freeze();
-        CHProfile chProfile = new CHProfile(weighting, traversalMode);
+        CHProfile chProfile = new CHProfile(weighting, traversalMode, uTurnCosts);
         CHGraph chGraph = graph.getCHGraph(chProfile);
         PrepareContractionHierarchies pch = new PrepareContractionHierarchies(chGraph);
         pch.doWork();
@@ -154,7 +156,7 @@ public class RandomCHRoutingTest {
                 int from = rnd.nextInt(queryGraph.getNodes());
                 int to = rnd.nextInt(queryGraph.getNodes());
                 Weighting w = traversalMode.isEdgeBased()
-                        ? new TurnWeighting(weighting, (TurnCostExtension) queryGraph.getExtension())
+                        ? new TurnWeighting(weighting, (TurnCostExtension) queryGraph.getExtension(), uTurnCosts == INFINITE_U_TURN_COSTS ? Double.POSITIVE_INFINITY : uTurnCosts)
                         : weighting;
                 // using plain dijkstra instead of bidirectional, because of #1592
                 RoutingAlgorithm refAlgo = new Dijkstra(queryGraph, w, traversalMode);
