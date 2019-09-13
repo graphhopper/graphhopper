@@ -23,4 +23,6 @@ public interface EncodedValueFactory {
      * of it.
      */
     EncodedValue create(String encodedValueString);
+
+    Enum find(String typeKey, String key);
 }

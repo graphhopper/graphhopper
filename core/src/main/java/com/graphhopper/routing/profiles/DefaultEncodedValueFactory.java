@@ -64,4 +64,22 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
         }
         return enc;
     }
+
+    @Override
+    public Enum find(String typeKey, String key) {
+        if (typeKey.equals(RoadClass.KEY)) {
+            return RoadClass.find(key);
+        } else if (typeKey.equals(RoadEnvironment.KEY)) {
+            return RoadEnvironment.find(key);
+        } else if (typeKey.equals(RoadAccess.KEY)) {
+            return RoadAccess.find(key);
+        } else if (typeKey.equals(Surface.KEY)) {
+            return Surface.find(key);
+        } else if (typeKey.equals(Toll.KEY)) {
+            return Toll.find(key);
+        } else if (typeKey.equals(TrackType.KEY)) {
+            return TrackType.find(key);
+        }
+        throw new IllegalArgumentException("Cannot find type key: " + typeKey);
+    }
 }

@@ -1,6 +1,9 @@
 package com.graphhopper.expression;
 
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueFactory;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,7 +38,11 @@ public class GSExpression {
         return parameters;
     }
 
-    public GSCompiledExpression compile(EncodedValueLookup lookup) {
+    /**
+     * This method makes running this expression possible and faster:
+     * 1. it resolves the specified EncodedValues and 2. it converts string expressions into a simple object structure (TODO NOW AST)
+     */
+    public GSCompiledExpression compile(EncodedValueLookup lookup, EncodedValueFactory factory) {
         if (getParameters().isEmpty()) {
             return new GSCompiledUnconditionalExpression(name, value);
         }
@@ -44,21 +51,10 @@ public class GSExpression {
         if (!lookup.hasEncodedValue(valueAsStr))
             throw new IllegalArgumentException("Cannot find parameter " + valueAsStr + " in storage, line " + getLineNumber());
 
+        // TODO NOW currently it is required that the first parameter is an EncodedValue -> avoid this via detecting the type (string, number, EncodedValue)
         if (getName().equals("==")) {
             String parameterStr = (String) getParameters().get(1);
-            Enum param;
-            // TODO NOW this is ugly. Use somehow DefaultEncodedValueFactory?
-            if (valueAsStr.equals("road_class")) {
-                param = RoadClass.find(parameterStr);
-            } else if (valueAsStr.equals("road_environment")) {
-                param = RoadEnvironment.find(parameterStr);
-            } else if (valueAsStr.equals("road_access")) {
-                param = RoadAccess.find(parameterStr);
-            } else if (valueAsStr.equals("surface")) {
-                param = Surface.find(parameterStr);
-            } else {
-                throw new GSParseException("Cannot compile script. Value not found " + parameterStr, "", lineNumber);
-            }
+            Enum param = factory.find(valueAsStr, parameterStr);
             return new GSCompiledEQExpression(name, lookup.getEncodedValue(valueAsStr, EnumEncodedValue.class),
                     param, ((Number) value).doubleValue());
         } else if (getName().equals(">"))
@@ -100,32 +96,29 @@ public class GSExpression {
             throw new GSParseException("expression with illegal number of tokens: " + tokens.length,
                     fullLine, lineNumber);
 
-        for (int i = 0; i < tokens.length; i++) {
-            String str = tokens[i];
+        for (int tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+            String str = tokens[tokenIndex];
             if (str.equals("?")) {
-                if (i + 1 >= tokens.length)
+                if (tokenIndex + 1 >= tokens.length)
                     throw new GSParseException("expression found with no value after '?'", expressionLine, lineNumber);
-                if (i == 3) {
-
+                if (tokenIndex == 3) {
                     String name = tokens[1];
                     List<Object> parameters;
                     if (name.equals("==")) {
                         parameters = new ArrayList<>();
                         parameters.add(tokens[0]);
                         parameters.add(parseString(tokens[2], "Second parameter of condition " + name
-                                        + " expected to be a string but was " + tokens[2],
-                                expressionLine, lineNumber));
+                                + " expected to be a string but was " + tokens[2], expressionLine, lineNumber));
                     } else if (name.equals("<") || name.equals(">")) {
                         parameters = new ArrayList<>();
                         parameters.add(tokens[0]);
                         parameters.add(parseNumber(tokens[2], "Second parameter of condition " + name
-                                        + " expected to be a number but was " + tokens[2],
-                                expressionLine, lineNumber));
+                                + " expected to be a number but was " + tokens[2], expressionLine, lineNumber));
                     } else {
                         throw new GSParseException("no expression found with name " + name, expressionLine, lineNumber);
                     }
-                    Number value = parseNumber(tokens[i + 1], "Value was expected to be a number but was " + tokens[i + 1],
-                            expressionLine, lineNumber);
+                    Number value = parseNumber(tokens[tokenIndex + 1], "Value was expected to be a number but was "
+                            + tokens[tokenIndex + 1], expressionLine, lineNumber);
                     return new GSExpression(name, parameters, value, lineNumber);
                 }
 
@@ -136,7 +129,7 @@ public class GSExpression {
         throw new GSParseException("expression without '?' found", expressionLine, lineNumber);
     }
 
-    public static Number parseNumber(String token, String message, String expressionLine, int lineNumber) {
+    static Number parseNumber(String token, String message, String expressionLine, int lineNumber) {
         try {
             return Integer.parseInt(token);
         } catch (NumberFormatException ex) {
@@ -148,7 +141,7 @@ public class GSExpression {
         }
     }
 
-    public static String parseString(String token, String message, String expressionLine, int lineNumber) {
+    static String parseString(String token, String message, String expressionLine, int lineNumber) {
         if (token.startsWith("'") && token.endsWith("'"))
             return token.substring(1, token.length() - 1);
 

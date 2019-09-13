@@ -704,7 +704,8 @@ public class EncodingManager implements EncodedValueLookup {
         return (T) ev;
     }
 
-    private static String SPECIAL_SEPARATOR = "-";
+    // . or @ or $? The minus is ugly in formulas e.g. car-average_speed-3 is impossible to parse
+    private static String SPECIAL_SEPARATOR = ".";
 
     /**
      * All EncodedValue names that are created from a FlagEncoder should use this method to mark them as

@@ -9,12 +9,12 @@ import java.util.List;
 /**
  * GraphHopper script parser for scripts that are basically a collection of assignments:
  * <pre>
- * assigment_variable: value
+ * assignment_variable: value
  * </pre>
  * <p>
  * or conditional assignments:
  * <pre>
- * assigment_variable:
+ * assignment_variable:
  *   condition ? value
  *   condition ? value
  *   value
@@ -28,11 +28,11 @@ import java.util.List;
  */
 public class GSParser {
 
-    public List<GSAssignment> parse(Reader reader) throws IOException {
+    public static List<GSAssignment> parse(Reader reader) throws IOException {
         BufferedReader bReader = new BufferedReader(reader);
         String lineAsString;
         int lineCounter = 0;
-        GSAssignment currentAssigment = null;
+        GSAssignment currentAssignment = null;
         List<GSAssignment> assignments = new ArrayList<>();
         while ((lineAsString = bReader.readLine()) != null) {
             lineCounter++;
@@ -47,27 +47,27 @@ public class GSParser {
                 continue;
 
             if (type == GSExpression.class) {
-                if (currentAssigment == null)
+                if (currentAssignment == null)
                     throw new GSParseException("Before expression no assignment start is found", lineAsString, lineCounter);
                 GSExpression expression = GSExpression.parse(lineAsString, statementAsString, lineCounter);
-                currentAssigment.add(expression);
+                currentAssignment.add(expression);
             } else {
                 int colonIndex = statementAsString.indexOf(":");
                 if (colonIndex <= 0)
-                    throw new GSParseException("Cannot find colon at assigment", statementAsString, lineCounter);
-                currentAssigment = new GSAssignment(statementAsString.substring(0, colonIndex), lineCounter);
-                assignments.add(currentAssigment);
+                    throw new GSParseException("Cannot find colon at assignment", statementAsString, lineCounter);
+                currentAssignment = new GSAssignment(statementAsString.substring(0, colonIndex), lineCounter);
+                assignments.add(currentAssignment);
 
                 // expression on same line after ':'
                 statementAsString = statementAsString.substring(colonIndex + 1).trim();
                 if (!statementAsString.isEmpty()) {
                     GSExpression expression = GSExpression.parse(lineAsString, statementAsString, lineCounter);
-                    currentAssigment.add(expression);
+                    currentAssignment.add(expression);
                 }
             }
         }
         if (assignments.isEmpty())
-            throw new GSParseException("Global exception: no assigments found", "", 0);
+            throw new GSParseException("Global exception: no assignments found", "", 0);
         return assignments;
     }
 }
