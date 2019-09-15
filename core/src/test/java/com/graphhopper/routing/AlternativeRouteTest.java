@@ -243,15 +243,15 @@ public class AlternativeRouteTest {
     }
 
     /**
-     * check that the shortest path from node 0 to 7 contains node 4 and the best alternative node 8
+     * check that the shortest path from node 0 to 2 contains node 8 and the best alternative node 4
      */
     @Test
-    public void testNoPrepare_0_7() {
+    public void testNoPrepare_0_2() {
         AlternativeRoute altRoute = (AlternativeRoute) createAlgo(createTestGraph(true, manager), false);
-        List<Path> paths = altRoute.calcPaths(0, 7);
+        List<Path> paths = altRoute.calcPaths(0, 2);
         assertEquals(2, paths.size());
-        assertTrue(paths.get(0).calcNodes().contains(4));
-        assertTrue(paths.get(1).calcNodes().contains(8));
+        assertTrue(paths.get(0).calcNodes().contains(8));
+        assertTrue(paths.get(1).calcNodes().contains(4));
 
         assertFalse(altRoute.isAdvancedAlgo());
     }

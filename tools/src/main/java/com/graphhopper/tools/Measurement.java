@@ -131,9 +131,6 @@ public class Measurement {
             hopper.clean();
         }
 
-        hopper.getLMFactoryDecorator().setEnabled(true);
-        hopper.getLMFactoryDecorator().addWeighting("fastest");
-
         hopper.getCHFactoryDecorator().setDisablingAllowed(true);
         hopper.getLMFactoryDecorator().setDisablingAllowed(true);
         hopper.getARFactoryDecorator().setDisablingAllowed(true);
@@ -151,7 +148,7 @@ public class Measurement {
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
-            /*printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1, true, false, false);
+            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1, true, false, false);
 
             if (hopper.getLMFactoryDecorator().isEnabled()) {
                 System.gc();
@@ -160,9 +157,9 @@ public class Measurement {
                 for (; activeLMCount > 3; activeLMCount -= 4) {
                     printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount, true, false, false);
                 }
-                */int activeLMCount = 8;
+                activeLMCount = 8;
                 printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routingLM" + activeLMCount + "_alt", vehicleStr, true, activeLMCount, true, true, false);
-                /*if (hopper.getARFactoryDecorator().isEnabled())
+                if (hopper.getARFactoryDecorator().isEnabled())
                     printTimeOfRouteQuery(hopper, isCH, isLM, count / 10, "routingLM" + activeLMCount + "_alt_adv", vehicleStr, true, activeLMCount, true, true, true);
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
@@ -190,7 +187,7 @@ public class Measurement {
                 printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingCH_alt", vehicleStr, true, -1, true, true, false);
                 if (hopper.getARFactoryDecorator().isEnabled())
                     printTimeOfRouteQuery(hopper, isCH, isLM, count / 2, "routingCH_alt_adv", vehicleStr, true, -1, true, true, true);
-            }*/
+            }
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
             put("error", ex.toString());

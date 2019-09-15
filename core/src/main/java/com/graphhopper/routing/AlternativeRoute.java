@@ -26,9 +26,7 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.*;
 
 import java.util.*;
 
@@ -64,7 +62,7 @@ public class AlternativeRoute extends AStarBidirection {
     private int additionalPaths = 3;
 
     private int maxAdditionalNodes = 100000;
-    private double advAlgorithmFactor = 1.5;
+    private double advAlgorithmFactor = 2;
     private int visitedNodesFinished = -1;
 
     private int from;
@@ -77,7 +75,10 @@ public class AlternativeRoute extends AStarBidirection {
 
     public AlternativeRoute(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         super(graph, weighting, traversalMode);
-        contactFound = new boolean[graph.getNodes()];
+        if (graph instanceof QueryGraph)
+            contactFound = new boolean[((QueryGraph) graph).getAllEdgesSize()];
+        else
+            contactFound = new boolean[graph.getAllEdges().length()];
         contactNodes = new ArrayList<>();
     }
 
@@ -258,21 +259,18 @@ public class AlternativeRoute extends AStarBidirection {
         }
 
         Collections.sort(alternatives, ALT_COMPARATOR);
-        boolean remove = false;
         for (int i = 1; i < alternatives.size(); i++) {
-            if (remove) {
+            if (i == maxPaths) {
                 alternatives.remove(i--);
                 continue;
             }
             Path path = alternatives.get(i).getPath();
-            for (int j = i + 1; j < alternatives.size(); j++) {
-                if (calcSortBy(path, alternatives.get(j).getPath(), false) == Double.MAX_VALUE) {
+            for (int j = 1; j < i; j++) {
+                if (calcSortBy(alternatives.get(j).getPath(), path, false) == Double.MAX_VALUE) {
                     alternatives.remove(i--);
                     break;
                 }
             }
-            if (i == maxPaths - 1)
-                remove = true;
         }
 
         ArrayList<Path> paths = new ArrayList<>(alternatives.size());
@@ -327,37 +325,43 @@ public class AlternativeRoute extends AStarBidirection {
         return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
     }
 
+    private void setContactFound(SPTEntry entry) {
+        int edge = entry.edge;
+        while (edge >= 0) {
+            if (contactFound[edge])
+                return;
+            contactFound[edge] = true;
+            entry = entry.parent;
+            edge = entry.edge;
+        }
+    }
+
     @Override
     protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entryCurrent, int traversalId, boolean reverse) {
-        if (entryCurrent.parent == null) {
-            super.updateBestPath(edgeState, entryCurrent, traversalId, reverse);
+        if (entryCurrent.parent != null)
+            if (entryCurrent.parent.edge >= 0)
+                contactFound[entryCurrent.edge] = contactFound[entryCurrent.parent.edge];
+
+        SPTEntry entryOther = bestWeightMapOther.get(traversalId);
+        if (entryOther == null)
             return;
-        }
-        if (visitedNodesFinished >= 0) {
-            if (contactFound[entryCurrent.parent.adjNode]) {
-                contactFound[entryCurrent.adjNode] = true;
-            } else {
-                if (!reverse) {
-                    Iterator<SPTEntry> iterator = pqOpenSetTo.iterator();
-                    while (iterator.hasNext()) {
-                        SPTEntry entryOther = iterator.next();
-                        if (entryCurrent.adjNode == entryOther.adjNode) {
-                            contactFound[entryCurrent.adjNode] = true;
-                            contactNodes.add(new ContactNode(entryCurrent, entryOther));
-                        }
-                    }
-                } else {
-                    Iterator<SPTEntry> iterator = pqOpenSetFrom.iterator();
-                    while (iterator.hasNext()) {
-                        SPTEntry entryOther = iterator.next();
-                        if (entryCurrent.adjNode == entryOther.adjNode) {
-                            contactFound[entryCurrent.adjNode] = true;
-                            contactNodes.add(new ContactNode(entryOther, entryCurrent));
-                        }
-                    }
-                }
+
+        SPTEntry entry = entryCurrent;
+        if (traversalMode.isEdgeBased())
+            entry = entry.parent;
+        int edge = entry.edge;
+        int edgeOther = entryOther.edge;
+        if (edge >= 0 && edgeOther >= 0 && (edge != edgeOther)) {
+            if (!contactFound[edge] || !contactFound[edgeOther]) {
+                setContactFound(entry);
+                setContactFound(entryOther);
+                if (!reverse)
+                    contactNodes.add(new ContactNode(entry, entryOther));
+                else
+                    contactNodes.add(new ContactNode(entryOther, entry));
             }
         }
+
         super.updateBestPath(edgeState, entryCurrent, traversalId, reverse);
     }
 
@@ -373,11 +377,17 @@ public class AlternativeRoute extends AStarBidirection {
      * Double.MAX_VALUE will be returned.
      */
     private double calcSortBy(Path mainRoute, Path altRoute, boolean check) {
-        if (mainRoute.calcNodes().size() == 0 || altRoute.calcNodes().size() == 0) return Double.MAX_VALUE;
+        if (mainRoute.calcNodes().size() == 0 || altRoute.calcNodes().size() == 0)
+            return Double.MAX_VALUE;
+
         double share = calcShare(mainRoute, altRoute, check);
-        if (share > maxShareFactor) return Double.MAX_VALUE;
+        if (share > maxShareFactor)
+            return Double.MAX_VALUE;
+
         double weight = calcWeight(mainRoute, altRoute, share);
-        if (weight > maxWeightFactor) return Double.MAX_VALUE;
+        if (weight > maxWeightFactor)
+            return Double.MAX_VALUE;
+
         return weightInfluence * (weight - 1) / (maxWeightFactor - 1) + shareInfluence * share / maxShareFactor;
     }
 
@@ -419,7 +429,7 @@ public class AlternativeRoute extends AStarBidirection {
         }
 
         if (sharedWeight / mainRoute.getWeight() >= 1)
-            return 1;
+            return Double.MAX_VALUE;
 
         if (check)
             if (!checkAlternative(altNodes, start - 10, end + delta + 10))

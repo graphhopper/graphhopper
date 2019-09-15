@@ -714,6 +714,10 @@ public class QueryGraph implements Graph {
         return createEdgeExplorer(EdgeFilter.ALL_EDGES);
     }
 
+    public int getAllEdgesSize() {
+        return mainEdges + virtualEdges.size();
+    }
+
     @Override
     public AllEdgesIterator getAllEdges() {
         throw new UnsupportedOperationException("Not supported yet.");

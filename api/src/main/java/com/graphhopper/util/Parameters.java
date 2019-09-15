@@ -225,6 +225,7 @@ public class Parameters {
         public static final String AVERAGE_SPEED = "average_speed";
         public static final String STREET_NAME = "street_name";
         public static final String EDGE_ID = "edge_id";
+        public static final String NODE_ID = "node_id";
         public static final String TIME = "time";
         public static final String DISTANCE = "distance";
     }

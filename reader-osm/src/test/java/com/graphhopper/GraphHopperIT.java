@@ -182,7 +182,7 @@ public class GraphHopperIT {
         assertEquals(2, rsp.getAll().size());
 
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
-        assertEquals(1384, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(1356, rsp.getAll().get(1).getTime() / 1000);
 
         req.getHints().put("alternative_route.max_paths", "3");
         rsp = hopper.route(req);
@@ -190,7 +190,7 @@ public class GraphHopperIT {
         assertEquals(3, rsp.getAll().size());
 
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
-        assertEquals(1539, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(1356, rsp.getAll().get(1).getTime() / 1000);
         assertEquals(1402, rsp.getAll().get(2).getTime() / 1000);
     }
 
@@ -212,10 +212,10 @@ public class GraphHopperIT {
         assertEquals(3, rsp.getAll().size());
         // via ramsenthal
         assertEquals(2864, rsp.getAll().get(0).getTime() / 1000);
-        // via obergräfenthal -> theta
-        assertEquals(3080, rsp.getAll().get(1).getTime() / 1000);
-        // via dreschenau -> theta
-        assertEquals(3518, rsp.getAll().get(2).getTime() / 1000);
+        // via unterwaiz
+        assertEquals(3318, rsp.getAll().get(1).getTime() / 1000);
+        // via eselslohe -> theta; BTW: here smaller time as 2nd alternative due to priority influences time order
+        assertEquals(3094, rsp.getAll().get(2).getTime() / 1000);
 
         req = new GHRequest(50.023513, 11.548862, 49.969441, 11.537876).
                 setAlgorithm(ALT_ROUTE).setVehicle("car").setWeighting("fastest");
@@ -226,10 +226,10 @@ public class GraphHopperIT {
         assertEquals(3, rsp.getAll().size());
         // directly via obergräfenthal
         assertEquals(870, rsp.getAll().get(0).getTime() / 1000);
-        // via ramsenthal -> lerchenhof
-        assertEquals(913, rsp.getAll().get(1).getTime() / 1000);
         // via neudrossenfeld
-        assertEquals(1027, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(958, rsp.getAll().get(1).getTime() / 1000);
+        // via ramsenthal -> lerchenhof
+        assertEquals(913, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
