@@ -108,9 +108,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         boolean oppositeEdgeRestricted = reverse ? (fromOutEdge != ANY_EDGE) : (toInEdge != ANY_EDGE);
         if (edgeState.getAdjNode() == oppositeNode && (!oppositeEdgeRestricted || getOrigEdgeId(edgeState, reverse) == oppositeEdge)) {
             if (entry.getWeightOfVisitedPath() < bestPath.getWeight()) {
-                bestPath.setSwitchToFrom(reverse);
-                bestPath.setSPTEntry(entry);
-                bestPath.setSPTEntryTo(new CHEntry(oppositeNode, 0));
+                bestPath.setSPTEntry(reverse ? new CHEntry(oppositeNode, 0) : entry);
+                bestPath.setSPTEntryTo(reverse ? entry : new CHEntry(oppositeNode, 0));
                 bestPath.setWeight(entry.getWeightOfVisitedPath());
                 return;
             }
@@ -138,9 +137,8 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
 
             double newWeight = entry.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath() + turnCostsAtBridgeNode;
             if (newWeight < bestPath.getWeight()) {
-                bestPath.setSwitchToFrom(reverse);
-                bestPath.setSPTEntry(entry);
-                bestPath.setSPTEntryTo(entryOther);
+                bestPath.setSPTEntry(reverse ? entryOther : entry);
+                bestPath.setSPTEntryTo(reverse ? entry : entryOther);
                 bestPath.setWeight(newWeight);
             }
         }

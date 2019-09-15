@@ -32,7 +32,6 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class PathBidirRef extends Path {
     protected SPTEntry edgeTo;
-    private boolean switchFromAndToSPTEntry = false;
 
     public PathBidirRef(Graph g, Weighting weighting) {
         super(g, weighting);
@@ -41,12 +40,6 @@ public class PathBidirRef extends Path {
     PathBidirRef(PathBidirRef p) {
         super(p);
         edgeTo = p.edgeTo;
-        switchFromAndToSPTEntry = p.switchFromAndToSPTEntry;
-    }
-
-    public PathBidirRef setSwitchToFrom(boolean b) {
-        switchFromAndToSPTEntry = b;
-        return this;
     }
 
     public PathBidirRef setSPTEntryTo(SPTEntry edgeTo) {
@@ -66,11 +59,6 @@ public class PathBidirRef extends Path {
             throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge have to be the same. " + toString() + ", fromEntry:" + sptEntry + ", toEntry:" + edgeTo);
 
         extractSW.start();
-        if (switchFromAndToSPTEntry) {
-            SPTEntry ee = sptEntry;
-            sptEntry = edgeTo;
-            edgeTo = ee;
-        }
         extractFwdPath();
         processTurnAtMeetingPoint();
         extractBwdPath();

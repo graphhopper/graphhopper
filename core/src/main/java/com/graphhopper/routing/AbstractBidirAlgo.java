@@ -328,9 +328,8 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         }
 
         if (weight < bestPath.getWeight()) {
-            bestPath.setSwitchToFrom(reverse);
-            bestPath.setSPTEntry(entry);
-            bestPath.setSPTEntryTo(entryOther);
+            bestPath.setSPTEntry(reverse ? entryOther : entry);
+            bestPath.setSPTEntryTo(reverse ? entry : entryOther);
             bestPath.setWeight(weight);
         }
     }
