@@ -65,7 +65,6 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
                 }
             });
         }
-        finishedFrom = bestPath.isFound();
     }
 
     @Override
@@ -80,7 +79,6 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
                 }
             });
         }
-        finishedTo = bestPath.isFound();
     }
 
     @Override
