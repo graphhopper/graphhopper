@@ -26,6 +26,12 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.StopWatch;
 
+/**
+ * Builds a {@link Path} from the two fwd- and bwd-shortest path tree entries of a bidirectional search
+ *
+ * @author Peter Karich
+ * @author easbar
+ */
 public class BidirPathExtractor {
     private final Graph graph;
     private final Weighting weighting;
@@ -61,6 +67,7 @@ public class BidirPathExtractor {
     protected void extractFwdPath(SPTEntry sptEntry) {
         SPTEntry fwdRoot = followParentsUntilRoot(sptEntry, false);
         onFwdTreeRoot(fwdRoot.adjNode);
+        // since we followed the fwd path in backward direction we need to reverse the edge ids
         path.reverseOrder();
     }
 
@@ -102,10 +109,11 @@ public class BidirPathExtractor {
         path.setEndNode(node);
     }
 
-    protected void onEdge(int edge, int adjNode, boolean reverse, int prevEdge) {
+    // todonow: docs, clarify prev/next
+    protected void onEdge(int edge, int adjNode, boolean reverse, int prevOrNextEdge) {
         EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, adjNode);
         path.addDistance(edgeState.getDistance());
-        path.addTime(weighting.calcMillis(edgeState, reverse, prevEdge));
+        path.addTime(weighting.calcMillis(edgeState, reverse, prevOrNextEdge));
         path.addEdge(edge);
     }
 

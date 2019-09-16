@@ -35,11 +35,11 @@ public class NodeBasedCHBidirPathExtractor extends BidirPathExtractor {
     }
 
     @Override
-    public void onEdge(int edge, int adjNode, boolean reverse, int prevEdge) {
+    public void onEdge(int edge, int adjNode, boolean reverse, int prevOrNextEdge) {
         if (reverse) {
-            shortcutUnpacker.visitOriginalEdgesBwd(edge, adjNode, true, prevEdge);
+            shortcutUnpacker.visitOriginalEdgesBwd(edge, adjNode, true, prevOrNextEdge);
         } else {
-            shortcutUnpacker.visitOriginalEdgesFwd(edge, adjNode, true, prevEdge);
+            shortcutUnpacker.visitOriginalEdgesFwd(edge, adjNode, true, prevOrNextEdge);
         }
     }
 
