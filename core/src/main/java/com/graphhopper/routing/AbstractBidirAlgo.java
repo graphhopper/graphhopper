@@ -368,7 +368,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         if (finished())
             return pathExtractor.extract(bestFwdEntry, bestBwdEntry, bestWeight);
 
-        return new Path(graph, weighting);
+        return createEmptyPath();
     }
 
     protected boolean fromEntryCanBeSkipped() {

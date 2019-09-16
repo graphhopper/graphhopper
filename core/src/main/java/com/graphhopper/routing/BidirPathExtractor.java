@@ -49,12 +49,13 @@ public class BidirPathExtractor {
 
     public Path extract(SPTEntry fwdEntry, SPTEntry bwdEntry, double weight) {
         if (fwdEntry == null || bwdEntry == null) {
+            // todonow: supposed to be 'not found'
             return path;
         }
         if (fwdEntry.adjNode != bwdEntry.adjNode)
             throw new IllegalStateException("forward and backward entries must have same adjacent nodes, fwdEntry:" + fwdEntry + ", bwdEntry:" + bwdEntry);
 
-        StopWatch sw = new StopWatch("extract").start();
+        StopWatch sw = new StopWatch().start();
         extractFwdPath(fwdEntry);
         processMeetingPoint(fwdEntry, bwdEntry);
         extractBwdPath(bwdEntry);
@@ -94,7 +95,7 @@ public class BidirPathExtractor {
     }
 
     protected void setExtractionTime(long nanos) {
-        path.setDebugString("path extraction: " + nanos / 1000 + "micros");
+        path.setDebugString("path extraction: " + nanos / 1000 + " micros");
     }
 
     protected int getIncEdge(SPTEntry entry) {

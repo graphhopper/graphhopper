@@ -146,8 +146,7 @@ public class AStar extends AbstractRoutingAlgorithm {
         if (currEdge == null || !finished())
             return createEmptyPath();
 
-        return new Path(graph, weighting).
-                setWeight(currEdge.weight).setSPTEntry(currEdge).extract();
+        return PathExtractor.extractPath(graph, weighting, currEdge);
     }
 
     @Override

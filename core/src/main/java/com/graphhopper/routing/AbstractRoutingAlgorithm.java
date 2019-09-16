@@ -110,6 +110,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     }
 
     protected Path createEmptyPath() {
+        // todonow: this is supposed to be 'not found' ?! also make sure from/to nodes are set!
         return new Path(graph, weighting);
     }
 
