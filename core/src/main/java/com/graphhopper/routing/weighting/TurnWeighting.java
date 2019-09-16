@@ -32,40 +32,38 @@ import com.graphhopper.util.EdgeIteratorState;
  * @author Peter Karich
  */
 public class TurnWeighting implements Weighting {
+    public static final int INFINITE_U_TURN_COSTS = -1;
     /**
      * Encoder, which decodes the turn flags
      */
     private final TurnCostEncoder turnCostEncoder;
     private final TurnCostExtension turnCostExt;
     private final Weighting superWeighting;
-    private final double uTurnCost;
+    private final double uTurnCosts;
 
     public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
-        this(superWeighting, turnCostExt, Double.POSITIVE_INFINITY);
+        this(superWeighting, turnCostExt, INFINITE_U_TURN_COSTS);
     }
 
     /**
      * @param superWeighting the weighting that is wrapped by this {@link TurnWeighting} and used to calculate the
      *                       edge weights for example
      * @param turnCostExt    the turn cost storage to be used
-     * @param uTurnCost      the cost of a u-turn in seconds, this value will be applied to all u-turn costs no matter
+     * @param uTurnCosts     the cost of a u-turn in seconds, this value will be applied to all u-turn costs no matter
      *                       whether or not turnCostExt contains explicit values for these turns.
      */
-    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt, double uTurnCost) {
+    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt, double uTurnCosts) {
+        if (turnCostExt == null) {
+            throw new RuntimeException("No storage set to calculate turn weight");
+        }
         this.turnCostEncoder = superWeighting.getFlagEncoder();
         this.superWeighting = superWeighting;
         this.turnCostExt = turnCostExt;
-        this.uTurnCost = uTurnCost;
-
-        if (turnCostExt == null)
-            throw new RuntimeException("No storage set to calculate turn weight");
+        this.uTurnCosts = uTurnCosts < 0 ? Double.POSITIVE_INFINITY : uTurnCosts;
     }
 
-    /**
-     * @return the default u-turn cost in seconds
-     */
-    public double getUTurnCost() {
-        return uTurnCost;
+    public double getUTurnCosts() {
+        return uTurnCosts;
     }
 
     @Override
@@ -111,7 +109,15 @@ public class TurnWeighting implements Weighting {
             return 0;
         }
         if (turnCostExt.isUTurn(edgeFrom, edgeTo)) {
-            return uTurnCost;
+            // note that the u-turn costs overwrite any turn costs set in TurnCostExtension
+            // todo:
+            // also this does not allow TurnCostEncoder to set the u-turn costs to zero explicitly, like FootFlagEncoder!
+            // this problem is a bit hidden, because if you do not apply any turn restrictions (like FootFlagEncoder)
+            // you never do a u-turn anyway.
+            if (!turnCostExt.isUTurnAllowed(nodeVia)) {
+                return Double.POSITIVE_INFINITY;
+            }
+            return uTurnCosts;
         }
         long turnFlags = turnCostExt.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
         if (turnCostEncoder.isTurnRestricted(turnFlags))

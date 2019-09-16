@@ -19,17 +19,15 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.Parameters;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
+
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 
 public class AStarBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTester {
     @Override
@@ -41,20 +39,24 @@ public class AStarBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTester {
 
     @Override
     protected CHGraph getGraph(GraphHopperStorage ghStorage, Weighting weighting) {
-        return ghStorage.getGraph(CHGraph.class, weighting);
+        return ghStorage.getCHGraph(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS));
     }
 
     @Override
     protected GraphHopperStorage createGHStorage(
             EncodingManager em, List<? extends Weighting> weightings, boolean is3D) {
-        return new GraphHopperStorage(Collections.<Weighting>emptyList(), weightings, new RAMDirectory(), em, is3D, new TurnCostExtension()).create(1000);
+        List<CHProfile> chProfiles = new ArrayList<>(weightings.size());
+        for (Weighting w : weightings) {
+            chProfiles.add(CHProfile.edgeBased(w, INFINITE_U_TURN_COSTS));
+        }
+        return new GraphHopperStorage(chProfiles, new RAMDirectory(), em, is3D, new TurnCostExtension()).create(1000);
     }
 
     @Override
     public RoutingAlgorithmFactory createFactory(GraphHopperStorage ghStorage, AlgorithmOptions opts) {
         ghStorage.freeze();
         PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(
-                ghStorage, opts.getWeighting(), TraversalMode.EDGE_BASED);
+                ghStorage, CHProfile.edgeBased(opts.getWeighting(), INFINITE_U_TURN_COSTS));
         ch.doWork();
         return ch;
     }

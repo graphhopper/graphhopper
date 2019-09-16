@@ -36,6 +36,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.graphhopper.util.Helper.DIST_EARTH;
+
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
  * methods are useful for unit tests or debugging only.
@@ -406,7 +408,7 @@ public class GHUtility {
         Directory outdir = guessDirectory(store);
         boolean is3D = store.getNodeAccess().is3D();
 
-        return new GraphHopperStorage(store.getNodeBasedCHWeightings(), store.getEdgeBasedCHWeightings(), outdir, store.getEncodingManager(),
+        return new GraphHopperStorage(store.getCHProfiles(), outdir, store.getEncodingManager(),
                 is3D, store.getExtension()).
                 create(store.getNodes());
     }
@@ -599,10 +601,20 @@ public class GHUtility {
         return edge;
     }
 
-    public static final EncodingManager.Builder addDefaultEncodedValues(EncodingManager.Builder builder) {
+    public static EncodingManager.Builder addDefaultEncodedValues(EncodingManager.Builder builder) {
         return builder.add(new OSMRoadClassParser()).add(new OSMRoadClassLinkParser()).
                 add(new OSMRoadEnvironmentParser()).add(new OSMMaxSpeedParser()).add(new OSMRoadAccessParser()).
                 add(new OSMSurfaceParser());
+    }
+
+    public static void updateDistancesFor(Graph g, int node, double lat, double lon) {
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(node, lat, lon);
+        EdgeIterator iter = g.createEdgeExplorer().setBaseNode(node);
+        while (iter.next()) {
+            iter.setDistance(iter.fetchWayGeometry(3).calcDistance(DIST_EARTH));
+            // System.out.println(node + "->" + adj + ": " + iter.getDistance());
+        }
     }
 
     /**

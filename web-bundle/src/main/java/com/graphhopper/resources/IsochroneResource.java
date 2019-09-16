@@ -60,7 +60,8 @@ public class IsochroneResource {
             @QueryParam("point") GHPoint point,
             @QueryParam("result") @DefaultValue("polygon") String resultStr,
             @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
-            @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter) {
+            @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter,
+            @QueryParam("type") @DefaultValue("json") String respType) {
 
         if (nBuckets > 20 || nBuckets < 1)
             throw new IllegalArgumentException("Number of buckets has to be in the range [1, 20]");
@@ -72,6 +73,10 @@ public class IsochroneResource {
 
         if (!encodingManager.hasEncoder(vehicle))
             throw new IllegalArgumentException("vehicle not supported:" + vehicle);
+        
+        if (respType != null && !respType.equalsIgnoreCase("json") && !respType.equalsIgnoreCase("geojson")) {
+            throw new IllegalArgumentException("Format not supported:" + respType);
+        }
 
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
         EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
@@ -117,15 +122,28 @@ public class IsochroneResource {
                 JsonFeature feature = new JsonFeature();
                 HashMap<String, Object> properties = new HashMap<>();
                 properties.put("bucket", features.size());
+                if (respType.equalsIgnoreCase("geojson")) {
+                    properties.put("copyrights", WebHelper.COPYRIGHTS);
+                }
                 feature.setProperties(properties);
                 feature.setGeometry(geometryFactory.createPolygon(polygonShell));
                 features.add(feature);
             }
             ObjectNode json = JsonNodeFactory.instance.objectNode();
-            json.putPOJO("polygons", features);
+            
+            ObjectNode finalJson = null;
+            if (respType.equalsIgnoreCase("geojson")) {
+            	json.put("type", "FeatureCollection");
+                json.putPOJO("features", features);
+                finalJson = json;
+            } else {
+            	json.putPOJO("polygons", features);
+            	finalJson = WebHelper.jsonResponsePutInfo(json, sw.getSeconds());
+            }
+            
             sw.stop();
             logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
-            return Response.ok(WebHelper.jsonResponsePutInfo(json, sw.getSeconds())).header("X-GH-Took", "" + sw.getSeconds() * 1000).
+            return Response.ok(finalJson).header("X-GH-Took", "" + sw.getSeconds() * 1000).
                     build();
 
         } else {

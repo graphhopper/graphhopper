@@ -30,6 +30,8 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
+import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+
 /**
  * @author easbar
  */
@@ -46,25 +48,39 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         // cache, see #1623.
         innerInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder).setFilterId(1));
         innerOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder).setFilterId(1));
-        if (!Double.isInfinite(turnWeighting.getUTurnCost())) {
-            throw new IllegalArgumentException("edge-based CH does not support finite u-turn costs at the moment");
-        }
     }
 
     @Override
     protected void postInitFrom() {
-        EdgeFilter filter = additionalEdgeFilter;
-        setEdgeFilter(EdgeFilter.ALL_EDGES);
-        fillEdgesFrom();
-        setEdgeFilter(filter);
+        // With CH the additionalEdgeFilter is the one that filters out edges leading or coming from higher rank nodes,
+        // i.e. LevelEdgeFilter, For the first step though we need all edges, so we need to ignore this filter.
+        // Using an arbitrary filter is not supported for CH anyway.
+        if (fromOutEdge == ANY_EDGE) {
+            fillEdgesFromUsingFilter(EdgeFilter.ALL_EDGES);
+        } else {
+            fillEdgesFromUsingFilter(new EdgeFilter() {
+                @Override
+                public boolean accept(EdgeIteratorState edgeState) {
+                    return edgeState.getOrigEdgeFirst() == fromOutEdge;
+                }
+            });
+        }
+        finishedFrom = bestPath.isFound();
     }
 
     @Override
     protected void postInitTo() {
-        EdgeFilter filter = additionalEdgeFilter;
-        setEdgeFilter(EdgeFilter.ALL_EDGES);
-        fillEdgesTo();
-        setEdgeFilter(filter);
+        if (toInEdge == ANY_EDGE) {
+            fillEdgesToUsingFilter(EdgeFilter.ALL_EDGES);
+        } else {
+            fillEdgesToUsingFilter(new EdgeFilter() {
+                @Override
+                public boolean accept(EdgeIteratorState edgeState) {
+                    return edgeState.getOrigEdgeLast() == toInEdge;
+                }
+            });
+        }
+        finishedTo = bestPath.isFound();
     }
 
     @Override
@@ -88,7 +104,9 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         // node of the shortest path matches the source or target. in this case one of the searches does not contribute
         // anything to the shortest path.
         int oppositeNode = reverse ? from : to;
-        if (edgeState.getAdjNode() == oppositeNode) {
+        int oppositeEdge = reverse ? fromOutEdge : toInEdge;
+        boolean oppositeEdgeRestricted = reverse ? (fromOutEdge != ANY_EDGE) : (toInEdge != ANY_EDGE);
+        if (edgeState.getAdjNode() == oppositeNode && (!oppositeEdgeRestricted || getOrigEdgeId(edgeState, reverse) == oppositeEdge)) {
             if (entry.getWeightOfVisitedPath() < bestPath.getWeight()) {
                 bestPath.setSwitchToFrom(reverse);
                 bestPath.setSPTEntry(entry);

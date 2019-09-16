@@ -1,0 +1,42 @@
+{
+  "status": "finished",
+  "solution": {
+    "info": {
+      "took": 0.049935993,
+      "copyrights": [
+        "GraphHopper",
+        "OpenStreetMap contributors"
+      ]
+    },
+    "weights": [
+      [0, null, 1],
+      [null, null, null],
+      [2, null, 3]
+    ],
+    "distances": [
+      [4, null, 5],
+      [null, null, null],
+      [6, null, 7]
+    ],
+    "times": [
+      [8, null, 9],
+      [null, null, null],
+      [10, null, 11]
+    ],
+    "hints": [
+      {
+        "message": "There were 5 connections that could not be found, see point_pairs for details",
+        "details": "com.graphhopper.util.exceptions.ConnectionNotFoundException",
+        "point_pairs": [
+          [0, 1],[1, 0], [1, 1], [1, 2], [2, 1]
+        ]
+      },
+      {
+        "message": "There were 1 from_points and 1 to_points that could not be found, see invalid_from/to_points for details",
+        "details": "com.graphhopper.util.exceptions.PointsNotFoundException",
+        "invalid_from_points": [1],
+        "invalid_to_points": [1]
+      }
+    ]
+  }
+}

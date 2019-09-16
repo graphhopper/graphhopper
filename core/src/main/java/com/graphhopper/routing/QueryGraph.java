@@ -780,6 +780,13 @@ public class QueryGraph implements Graph {
             return mainTurnExtension.isUTurn(edgeFrom, edgeTo);
         }
 
+        @Override
+        public boolean isUTurnAllowed(int node) {
+            // do not allow u-turns at virtual nodes, otherwise the route depends on whether or not there are virtual
+            // via nodes, see #1672
+            return !isVirtualNode(node);
+        }
+
         private int getOriginalEdge(int edgeFrom) {
             return queryResults.get((edgeFrom - mainEdges) / 4).getClosestEdge().getEdge();
         }

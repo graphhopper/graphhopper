@@ -26,11 +26,7 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Algorithms;
@@ -93,14 +89,14 @@ public class Measurement {
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 int edges = getGraphHopperStorage().getEdges();
-                if (!getCHFactoryDecorator().getNodeBasedWeightings().isEmpty()) {
-                    Weighting weighting = getCHFactoryDecorator().getNodeBasedWeightings().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getEdges();
+                if (!getCHFactoryDecorator().getNodeBasedCHProfiles().isEmpty()) {
+                    CHProfile chProfile = getCHFactoryDecorator().getNodeBasedCHProfiles().get(0);
+                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chProfile).getEdges();
                     put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
                 }
-                if (!getCHFactoryDecorator().getEdgeBasedWeightings().isEmpty()) {
-                    Weighting weighting = getCHFactoryDecorator().getEdgeBasedWeightings().get(0);
-                    int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getEdges();
+                if (!getCHFactoryDecorator().getEdgeBasedCHProfiles().isEmpty()) {
+                    CHProfile chProfile = getCHFactoryDecorator().getEdgeBasedCHProfiles().get(0);
+                    int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chProfile).getEdges();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
                 }
             }
@@ -147,14 +143,16 @@ public class Measurement {
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
-            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1, true, false);
+            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr,
+                    true, false, -1, true, false);
 
             if (hopper.getLMFactoryDecorator().isEnabled()) {
                 System.gc();
                 isLM = true;
                 int activeLMCount = 12;
                 for (; activeLMCount > 3; activeLMCount -= 4) {
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount, true, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr,
+                            true, false, activeLMCount, true, false);
                 }
 
                 // compareRouting(hopper, vehicleStr, count / 5);
@@ -168,23 +166,31 @@ public class Measurement {
                     System.gc();
                     // try just one constellation, often ~4-6 is best
                     int lmCount = 5;
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr, true, lmCount, true, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr,
+                            true, false, lmCount, true, false);
                 }
 
                 isLM = false;
                 System.gc();
-                if (!hopper.getCHFactoryDecorator().getNodeBasedWeightings().isEmpty()) {
-                    Weighting weighting = hopper.getCHFactoryDecorator().getNodeBasedWeightings().get(0);
-                    CHGraph lg = g.getGraph(CHGraph.class, weighting);
+                if (!hopper.getCHFactoryDecorator().getNodeBasedCHProfiles().isEmpty()) {
+                    CHProfile chProfile = hopper.getCHFactoryDecorator().getNodeBasedCHProfiles().get(0);
+                    CHGraph lg = g.getCHGraph(chProfile);
                     fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                     printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1, true, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr, true, -1, false, false);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1, true, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr,
+                            true, false, -1, true, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_with_hints", vehicleStr,
+                            true, true, -1, true, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr,
+                            true, false, -1, false, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr,
+                            false, false, -1, true, false);
                 }
-                if (!hopper.getCHFactoryDecorator().getEdgeBasedWeightings().isEmpty()) {
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge", vehicleStr, true, -1, false, true);
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge_no_instr", vehicleStr, false, -1, false, true);
+                if (!hopper.getCHFactoryDecorator().getEdgeBasedCHProfiles().isEmpty()) {
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge", vehicleStr,
+                            true, false, -1, false, true);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge_no_instr", vehicleStr,
+                            false, false, -1, false, true);
                 }
             }
         } catch (Exception ex) {
@@ -411,7 +417,8 @@ public class Measurement {
 
     private void printTimeOfRouteQuery(final GraphHopper hopper, final boolean ch, final boolean lm,
                                        int count, String prefix, final String vehicle,
-                                       final boolean withInstructions, final int activeLandmarks, final boolean sod, final boolean edgeBased) {
+                                       final boolean withInstructions, final boolean withPointHints,
+                                       final int activeLandmarks, final boolean sod, final boolean edgeBased) {
         final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
@@ -420,6 +427,7 @@ public class Measurement {
         final AtomicInteger failedCount = new AtomicInteger(0);
         final DistanceCalc distCalc = new DistanceCalcEarth();
 
+        final EdgeExplorer edgeExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(hopper.getEncodingManager().getEncoder(vehicle)));
         final AtomicLong visitedNodesSum = new AtomicLong(0);
 //        final AtomicLong extractTimeSum = new AtomicLong(0);
 //        final AtomicLong calcPointsTimeSum = new AtomicLong(0);
@@ -450,6 +458,17 @@ public class Measurement {
 
                 if (withInstructions)
                     req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED));
+
+
+                if (withPointHints) {
+                    EdgeIterator iter = edgeExplorer.setBaseNode(from);
+                    if (!iter.next())
+                        throw new IllegalArgumentException("wrong 'from' when adding point hint");
+                    EdgeIterator iter2 = edgeExplorer.setBaseNode(to);
+                    if (!iter2.next())
+                        throw new IllegalArgumentException("wrong 'to' when adding point hint");
+                    req.setPointHints(Arrays.asList(iter.getName(), iter2.getName()));
+                }
 
                 // put(algo + ".approximation", "BeelineSimplification").
                 // put(algo + ".epsilon", 2);

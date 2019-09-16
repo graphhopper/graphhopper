@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -93,6 +94,7 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
                 toRef.set(currTo);
             }
         };
+        astar.createAndInitPath();
         astar.init(0, 1, 1, 0.5);
 
         assertEquals(1, ((AStar.AStarEntry) fromRef.get()).weightOfVisitedPath, .1);

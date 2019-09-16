@@ -26,12 +26,8 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -40,7 +36,7 @@ import org.junit.Test;
 
 import java.util.*;
 
-import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Parameters.Routing.HEADING_PENALTY;
 import static org.junit.Assert.*;
 
@@ -55,8 +51,8 @@ public class NodeBasedNodeContractorTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
-    private final CHGraph lg = graph.getGraph(CHGraph.class);
+    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).create();
+    private final CHGraph lg = graph.getCHGraph();
     private final TraversalMode traversalMode = TraversalMode.NODE_BASED;
 
     private NodeContractor createNodeContractor() {
@@ -184,20 +180,9 @@ public class NodeBasedNodeContractorTest {
         graph.edge(6, 7, 1, true);
         graph.freeze();
 
-        CHEdgeIteratorState sc1to4 = lg.shortcut(1, 4);
-        sc1to4.setFlagsAndWeight(PrepareEncoder.getScDirMask(), 2);
-        sc1to4.setDistance(2);
-        sc1to4.setSkippedEdges(iter1to3.getEdge(), iter3to4.getEdge());
-
-        CHEdgeIteratorState sc4to6 = lg.shortcut(4, 6);
-        sc4to6.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 2);
-        sc4to6.setDistance(2);
-        sc4to6.setSkippedEdges(iter4to5.getEdge(), iter5to6.getEdge());
-
-        CHEdgeIteratorState sc6to4 = lg.shortcut(6, 4);
-        sc6to4.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), 3);
-        sc6to4.setDistance(3);
-        sc6to4.setSkippedEdges(iter6to8.getEdge(), iter8to4.getEdge());
+        int sc1to4 = lg.shortcut(1, 4, PrepareEncoder.getScDirMask(), 2, iter1to3.getEdge(), iter3to4.getEdge());
+        int sc4to6 = lg.shortcut(4, 6, PrepareEncoder.getScFwdDir(), 2, iter4to5.getEdge(), iter5to6.getEdge());
+        int sc6to4 = lg.shortcut(6, 4, PrepareEncoder.getScFwdDir(), 3, iter6to8.getEdge(), iter8to4.getEdge());
 
         setMaxLevelOnAllNodes();
 
@@ -221,8 +206,8 @@ public class NodeBasedNodeContractorTest {
         nodeContractor.contractNode(4);
         checkShortcuts(manualSc1, manualSc2, manualSc3,
                 // there should be two different shortcuts for both directions!
-                expectedShortcut(1, 6, sc1to4, sc4to6, true, false),
-                expectedShortcut(6, 1, sc6to4, sc1to4, true, false)
+                expectedShortcut(1, 6, lg.getEdgeIteratorState(sc1to4, 4), lg.getEdgeIteratorState(sc4to6, 6), true, false),
+                expectedShortcut(6, 1, lg.getEdgeIteratorState(sc6to4, 4), lg.getEdgeIteratorState(sc1to4, 1), true, false)
         );
     }
 
@@ -352,8 +337,8 @@ public class NodeBasedNodeContractorTest {
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new FastestWeighting(encoder);
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
-        CHGraph lg = graph.getGraph(CHGraph.class);
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).create();
+        CHGraph lg = graph.getCHGraph();
         // 0 ------------> 4
         //  \             /
         //   1 --> 2 --> 3
@@ -390,8 +375,8 @@ public class NodeBasedNodeContractorTest {
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new FastestWeighting(encoder);
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
-        CHGraph lg = graph.getGraph(CHGraph.class);
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).create();
+        CHGraph lg = graph.getCHGraph();
         // 0 - 1 - 2 - 3
         // o           o
         graph.edge(0, 1, 1, true);
@@ -499,7 +484,7 @@ public class NodeBasedNodeContractorTest {
         while (iter.next()) {
             if (iter.isShortcut()) {
                 given.add(new Shortcut(
-                        iter.getBaseNode(), iter.getAdjNode(), iter.getWeight(), iter.getDistance(),
+                        iter.getBaseNode(), iter.getAdjNode(), iter.getWeight(),
                         iter.get(SC_ACCESS), iter.getReverse(SC_ACCESS),
                         iter.getSkippedEdge1(), iter.getSkippedEdge2()));
             }
@@ -518,10 +503,17 @@ public class NodeBasedNodeContractorTest {
     private Shortcut expectedShortcut(int baseNode, int adjNode, EdgeIteratorState edge1, EdgeIteratorState edge2,
                                       boolean fwd, boolean bwd) {
         //todo: weight calculation might have to be adjusted for different encoders/weightings/reverse speed
-        double weight = weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE) +
-                weighting.calcWeight(edge2, false, EdgeIterator.NO_EDGE);
-        double distance = edge1.getDistance() + edge2.getDistance();
-        return new Shortcut(baseNode, adjNode, weight, distance, fwd, bwd, edge1.getEdge(), edge2.getEdge());
+        double weight1 = getWeight(edge1);
+        double weight2 = getWeight(edge2);
+        return new Shortcut(baseNode, adjNode, weight1 + weight2, fwd, bwd, edge1.getEdge(), edge2.getEdge());
+    }
+
+    private double getWeight(EdgeIteratorState edge) {
+        if (edge instanceof CHEdgeIteratorState) {
+            return ((CHEdgeIteratorState) edge).getWeight();
+        } else {
+            return weighting.calcWeight(edge, false, EdgeIterator.NO_EDGE);
+        }
     }
 
     private Set<Shortcut> setOf(Shortcut... shortcuts) {
@@ -547,17 +539,15 @@ public class NodeBasedNodeContractorTest {
         int baseNode;
         int adjNode;
         double weight;
-        double distance;
         boolean fwd;
         boolean bwd;
         int skipEdge1;
         int skipEdge2;
 
-        Shortcut(int baseNode, int adjNode, double weight, double distance, boolean fwd, boolean bwd, int skipEdge1, int skipEdge2) {
+        Shortcut(int baseNode, int adjNode, double weight, boolean fwd, boolean bwd, int skipEdge1, int skipEdge2) {
             this.baseNode = baseNode;
             this.adjNode = adjNode;
             this.weight = weight;
-            this.distance = distance;
             this.fwd = fwd;
             this.bwd = bwd;
             this.skipEdge1 = skipEdge1;
@@ -572,7 +562,6 @@ public class NodeBasedNodeContractorTest {
             return baseNode == shortcut.baseNode &&
                     adjNode == shortcut.adjNode &&
                     Double.compare(shortcut.weight, weight) == 0 &&
-                    Double.compare(shortcut.distance, distance) == 0 &&
                     fwd == shortcut.fwd &&
                     bwd == shortcut.bwd &&
                     skipEdge1 == shortcut.skipEdge1 &&
@@ -581,7 +570,7 @@ public class NodeBasedNodeContractorTest {
 
         @Override
         public int hashCode() {
-            return Objects.hash(baseNode, adjNode, weight, distance, fwd, bwd, skipEdge1, skipEdge2);
+            return Objects.hash(baseNode, adjNode, weight, fwd, bwd, skipEdge1, skipEdge2);
         }
 
         @Override
@@ -590,7 +579,6 @@ public class NodeBasedNodeContractorTest {
                     "baseNode=" + baseNode +
                     ", adjNode=" + adjNode +
                     ", weight=" + weight +
-                    ", distance=" + distance +
                     ", fwd=" + fwd +
                     ", bwd=" + bwd +
                     ", skipEdge1=" + skipEdge1 +

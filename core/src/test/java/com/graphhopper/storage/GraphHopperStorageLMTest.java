@@ -2,7 +2,6 @@ package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.EncodingManager.Access;
@@ -12,6 +11,7 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Arrays;
 
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -31,8 +31,8 @@ public class GraphHopperStorageLMTest {
         way_0_1.setTag("maxheight", "4.4");
 
         graph.edge(0, 1, 1, true);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
+        updateDistancesFor(graph, 0, 0.00, 0.00);
+        updateDistancesFor(graph, 1, 0.01, 0.01);
         graph.getEdgeIteratorState(0, 1).setFlags(carFlagEncoder.handleWayTags(encodingManager.createEdgeFlags(), way_0_1, Access.WAY, 0));
 
         // 1-2
@@ -41,7 +41,7 @@ public class GraphHopperStorageLMTest {
         way_1_2.setTag("maxweight", "45");
 
         graph.edge(1, 2, 1, true);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 2, 0.02, 0.02);
+        updateDistancesFor(graph, 2, 0.02, 0.02);
         graph.getEdgeIteratorState(1, 2).setFlags(carFlagEncoder.handleWayTags(encodingManager.createEdgeFlags(), way_1_2, Access.WAY, 0));
 
         graph.flush();

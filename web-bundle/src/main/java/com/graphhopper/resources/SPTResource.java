@@ -140,10 +140,10 @@ public class SPTResource {
                                 sb.append(label.prevCoordinate == null ? 0 : label.prevDistance);
                                 continue;
                             case "time":
-                                sb.append(label.timeInSec);
+                                sb.append(label.timeMillis);
                                 continue;
                             case "prev_time":
-                                sb.append(label.prevCoordinate == null ? 0 : label.prevTimeInSec);
+                                sb.append(label.prevCoordinate == null ? 0 : label.prevTimeMillis);
                                 continue;
                             case "longitude":
                                 sb.append(label.coordinate.lon);

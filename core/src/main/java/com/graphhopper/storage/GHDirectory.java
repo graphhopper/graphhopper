@@ -27,7 +27,6 @@ import static com.graphhopper.util.Helper.*;
 
 /**
  * Implements some common methods for the subclasses.
- * <p>
  *
  * @author Peter Karich
  */
@@ -109,34 +108,20 @@ public class GHDirectory implements Directory {
 
     @Override
     public void clear() {
-        // If there is at least one MMap DA then do not apply the cleanHack 
-        // for every single mmap DA as this is very slow if lots of DataAccess objects were collected 
-        // => forceClean == false
-
-        MMapDataAccess mmapDA = null;
         for (DataAccess da : map.values()) {
-            if (da instanceof MMapDataAccess)
-                mmapDA = (MMapDataAccess) da;
-
-            removeDA(da, da.getName(), false);
+            removeDA(da, da.getName());
         }
-        if (mmapDA != null)
-            cleanHack();
         map.clear();
     }
 
     @Override
     public void remove(DataAccess da) {
         removeFromMap(da.getName());
-        removeDA(da, da.getName(), true);
+        removeDA(da, da.getName());
     }
 
-    void removeDA(DataAccess da, String name, boolean forceClean) {
-        if (da instanceof MMapDataAccess)
-            ((MMapDataAccess) da).close(forceClean);
-        else
-            da.close();
-
+    void removeDA(DataAccess da, String name) {
+        da.close();
         if (da.getType().isStoring())
             removeDir(new File(location + name));
     }

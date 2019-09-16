@@ -46,6 +46,11 @@ import static com.graphhopper.util.Helper.nf;
  * loadExisting, (4) usage, (5) flush, (6) close
  */
 class BaseGraph implements Graph {
+    // currently distances are stored as 4 byte integers. using a conversion factor of 1000 the minimum distance
+    // that is not considered zero is 0.0005m (=0.5mm) and the maximum distance per edge is about 2.147.483m=2147km
+    private static final double INT_DIST_FACTOR = 1000d;
+    static double MAX_DIST = Integer.MAX_VALUE / INT_DIST_FACTOR;
+
     final DataAccess edges;
     final DataAccess nodes;
     final BBox bounds;
@@ -68,7 +73,7 @@ class BaseGraph implements Graph {
     // node memory layout:
     protected int N_EDGE_REF, N_LAT, N_LON, N_ELE, N_ADDITIONAL;
     // edge memory layout not found in EdgeAccess:
-    int E_GEO, E_NAME, E_ADDITIONAL;
+    int E_DIST, E_GEO, E_NAME, E_ADDITIONAL;
     /**
      * Specifies how many entries (integers) are used per edge.
      */
@@ -224,9 +229,9 @@ class BaseGraph implements Graph {
                 nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(4),
-                nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(encodingManager.getBytesForFlags()));
 
+        E_DIST = nextEdgeEntryIndex(4);
         E_GEO = nextEdgeEntryIndex(4);
         E_NAME = nextEdgeEntryIndex(4);
         if (extStorage.isRequireEdgeField())
@@ -391,7 +396,7 @@ class BaseGraph implements Graph {
         }
         System.out.println("edges:");
         String formatEdges = "%12s | %12s | %12s | %12s | %12s | %12s | %12s \n";
-        System.out.format(Locale.ROOT, formatEdges, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS");
+        System.out.format(Locale.ROOT, formatEdges, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_FLAGS", "E_DIST");
         IntsRef intsRef = new IntsRef(bytesForFlags / 4);
         for (int i = 0; i < Math.min(edgeCount, printMax); ++i) {
             long edgePointer = edgeAccess.toPointer(i);
@@ -401,8 +406,8 @@ class BaseGraph implements Graph {
                     edgeAccess.getNodeB(edgePointer),
                     edgeAccess.getLinkA(edgePointer),
                     edgeAccess.getLinkB(edgePointer),
-                    edgeAccess.getDist(edgePointer),
-                    intsRef);
+                    intsRef,
+                    getDist(edgePointer));
         }
         if (edgeCount > printMax) {
             System.out.printf(Locale.ROOT, " ... %d more edges", edgeCount - printMax);
@@ -806,6 +811,34 @@ class BaseGraph implements Graph {
         return edgeAccess.isAdjacentToNode(node, edgePointer);
     }
 
+
+    private void setDist(long edgePointer, double distance) {
+        edges.setInt(edgePointer + E_DIST, distToInt(distance));
+    }
+
+    /**
+     * Translates double distance to integer in order to save it in a DataAccess object
+     */
+    private int distToInt(double distance) {
+        if (distance < 0)
+            throw new IllegalArgumentException("Distance cannot be negative: " + distance);
+        if (distance > MAX_DIST) {
+            distance = MAX_DIST;
+        }
+        int integ = (int) Math.round(distance * INT_DIST_FACTOR);
+        assert integ >= 0 : "distance out of range";
+        return integ;
+    }
+
+    /**
+     * returns distance (already translated from integer to double)
+     */
+    private double getDist(long pointer) {
+        int val = edges.getInt(pointer + E_DIST);
+        // do never return infinity even if INT MAX, see #435
+        return val / INT_DIST_FACTOR;
+    }
+
     public void setAdditionalEdgeField(long edgePointer, int value) {
         if (extStorage.isRequireEdgeField() && E_ADDITIONAL >= 0)
             edges.setInt(edgePointer + E_ADDITIONAL, value);
@@ -841,7 +874,7 @@ class BaseGraph implements Graph {
     private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
         int len = pillarNodes.getSize();
         int dim = nodeAccess.getDimension();
-        long geoRefPosition = (long) geoRef * 4;
+        long geoRefPosition = geoRef * 4;
         int totalLen = len * dim * 4 + 4;
         ensureGeometry(geoRefPosition, totalLen);
         byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
@@ -1148,13 +1181,13 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public final double getDistance() {
-            return edgeAccess.getDist(edgePointer);
+        public double getDistance() {
+            return baseGraph.getDist(edgePointer);
         }
 
         @Override
-        public final EdgeIteratorState setDistance(double dist) {
-            edgeAccess.setDist(edgePointer, dist);
+        public EdgeIteratorState setDistance(double dist) {
+            baseGraph.setDist(edgePointer, dist);
             return this;
         }
 

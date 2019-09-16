@@ -101,7 +101,7 @@ public class GraphHopperIT {
         InstructionList il = arsp.getInstructions();
         assertEquals(21, il.size());
 
-        // TODO roundabout fine tuning -> enter + leave roundabout (+ two rounabouts -> is it necessary if we do not leave the street?)
+        // TODO roundabout fine tuning -> enter + leave roundabout (+ two roundabouts -> is it necessary if we do not leave the street?)
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
         assertEquals("continue onto Avenue des Guelfes", il.get(0).getTurnDescription(tr));
         assertEquals("continue onto Avenue des Papalins", il.get(1).getTurnDescription(tr));
@@ -439,13 +439,13 @@ public class GraphHopperIT {
         request.addPoint(new GHPoint(43.74958, 7.436566));
         request.addPoint(new GHPoint(43.727687, 7.418737));
         request.setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr);
-        request.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED));
+        request.setPathDetails(Collections.singletonList(Parameters.Details.AVERAGE_SPEED));
 
         GHResponse rsp = hopper.route(request);
 
         PathWrapper arsp = rsp.getBest();
         Map<String, List<PathDetail>> details = arsp.getPathDetails();
-        assertTrue(details.size() == 1);
+        assertEquals(1, details.size());
         List<PathDetail> detailList = details.get(Parameters.Details.AVERAGE_SPEED);
         assertEquals(1, detailList.size());
         assertEquals(5.0, detailList.get(0).getValue());
@@ -565,7 +565,7 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testSRTMWithInstructions() throws Exception {
+    public void testSRTMWithInstructions() {
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
@@ -608,7 +608,7 @@ public class GraphHopperIT {
 
         assertEquals(54, arsp.getPoints().size());
         assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 62.0), arsp.getPoints().get(0));
-        assertEquals(new GHPoint3D(43.727680946587874, 7.4191987684222065, 11.0), arsp.getPoints().get(arsp.getPoints().size()-1));
+        assertEquals(new GHPoint3D(43.727680946587874, 7.4191987684222065, 11.0), arsp.getPoints().get(arsp.getPoints().size() - 1));
 
         assertEquals(62, arsp.getPoints().get(0).getElevation(), 1e-2);
         assertEquals(66, arsp.getPoints().get(1).getElevation(), 1e-2);
@@ -836,7 +836,7 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testIfCHIsUsed() throws Exception {
+    public void testIfCHIsUsed() {
         // route directly after import
         executeCHFootRoute();
 
@@ -853,7 +853,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles));
-        tmpHopper.getCHFactoryDecorator().setWeightingsAsStrings(weightCalcStr);
+        tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr);
         tmpHopper.importOrLoad();
 
         // same query as in testMonacoWithInstructions
@@ -904,7 +904,7 @@ public class GraphHopperIT {
                         addPoint(new GHPoint(49.984565, 11.499188)).
                         addPoint(new GHPoint(49.9847, 11.499612)).
                         setVehicle("car").setWeighting("fastest").
-                        setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED));
+                        setPathDetails(Collections.singletonList(Parameters.Details.AVERAGE_SPEED));
 
         GHResponse rsp = tmpHopper.route(req);
 
@@ -924,7 +924,7 @@ public class GraphHopperIT {
                 addPoint(new GHPoint(49.984352, 11.498802)).
                 addPoint(new GHPoint(49.984352, 11.498802)).
                 setVehicle("car").setWeighting("fastest").
-                setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED));
+                setPathDetails(Collections.singletonList(Parameters.Details.AVERAGE_SPEED));
 
         GHResponse rsp = tmpHopper.route(req);
 
@@ -942,11 +942,11 @@ public class GraphHopperIT {
                 setEncodingManager(EncodingManager.create("car"));
 
         tmpHopper.getCHFactoryDecorator().setEnabled(true).
-                setWeightingsAsStrings(Arrays.asList("fastest")).
+                setCHProfilesAsStrings(Collections.singletonList("fastest")).
                 setDisablingAllowed(true);
 
         tmpHopper.getLMFactoryDecorator().setEnabled(true).
-                setWeightingsAsStrings(Arrays.asList("fastest|maximum=2000")).
+                setWeightingsAsStrings(Collections.singletonList("fastest|maximum=2000")).
                 setDisablingAllowed(true);
 
         tmpHopper.importOrLoad();
@@ -1002,20 +1002,12 @@ public class GraphHopperIT {
                 setEncodingManager(EncodingManager.create("car|turn_costs=true"));
         tmpHopper.importOrLoad();
 
-        // with turn costs (default if non-CH and turn cost enabled)
-        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        GHResponse rsp = tmpHopper.route(req);
-        assertEquals(1044, rsp.getBest().getDistance(), 1);
-
-        // without turn costs
-        req.getHints().put(Routing.EDGE_BASED, "false");
-        rsp = tmpHopper.route(req);
-        assertEquals(400, rsp.getBest().getDistance(), 1);
-
-        // with turn costs
-        req.getHints().put(Routing.EDGE_BASED, "true");
-        rsp = tmpHopper.route(req);
-        assertEquals(1044, rsp.getBest().getDistance(), 1);
+        // no edge_based parameter -> use edge-based (since encoder supports it and no CH)
+        assertMoscowEdgeBased(tmpHopper, "none", false);
+        // edge_based=false -> use node-based
+        assertMoscowNodeBased(tmpHopper, "false", false);
+        // edge_based=true -> use edge-based
+        assertMoscowEdgeBased(tmpHopper, "true", false);
     }
 
     @Test
@@ -1030,18 +1022,12 @@ public class GraphHopperIT {
         tmpHopper.getCHFactoryDecorator().setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_AND_NODE);
         tmpHopper.importOrLoad();
 
-        // without turn costs
-        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        req.getHints().put(Routing.EDGE_BASED, "false");
-        GHResponse rsp = tmpHopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(400, rsp.getBest().getDistance(), 1);
-
-        // with turn costs                
-        req.getHints().put(Routing.EDGE_BASED, "true");
-        rsp = tmpHopper.route(req);
-        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(1044, rsp.getBest().getDistance(), 1);
+        // no edge_based parameter -> use edge-based (because its there)
+        assertMoscowEdgeBased(tmpHopper, "none", true);
+        // edge_based=false -> use node-based
+        assertMoscowNodeBased(tmpHopper, "false", true);
+        // edge_based=true -> use edge-based
+        assertMoscowEdgeBased(tmpHopper, "true", true);
     }
 
     @Test
@@ -1057,22 +1043,115 @@ public class GraphHopperIT {
                 .setDisablingAllowed(true);
         tmpHopper.importOrLoad();
 
-        // with CH
-        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        req.getHints().put(Routing.EDGE_BASED, "true");
-        req.getHints().put(CH.DISABLE, "false");
-        GHResponse rsp1 = tmpHopper.route(req);
-        assertFalse(rsp1.getErrors().toString(), rsp1.hasErrors());
-        assertEquals(1044, rsp1.getBest().getDistance(), 1);
-
-        // without CH      
-        req.getHints().put(Routing.EDGE_BASED, "true");
-        req.getHints().put(CH.DISABLE, "true");
-        GHResponse rsp2 = tmpHopper.route(req);
-        assertFalse(rsp2.getErrors().toString(), rsp2.hasErrors());
-        assertEquals(1044, rsp2.getBest().getDistance(), 1);
+        // with CH -> edge-based
+        GHResponse rsp1 = assertMoscowEdgeBased(tmpHopper, "true", false);
+        // without CH -> also edge-based
+        GHResponse rsp2 = assertMoscowEdgeBased(tmpHopper, "true", true);
         // just a quick check that we did not run the same algorithm twice
         assertNotEquals(rsp1.getHints().get("visited_nodes.sum", "_"), rsp2.getHints().get("visited_nodes.sum", "_"));
+    }
+
+    @Test
+    public void testNodeBasedCHOnlyButTurnCostForNonCH() {
+        // before edge-based CH was added a common case was to use edge-based without CH and CH for node-based
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/moscow.osm.gz").
+                setStoreOnFlush(true).
+                setCHEnabled(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create("car|turn_costs=true"));
+        tmpHopper.getCHFactoryDecorator()
+                .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.OFF)
+                .setDisablingAllowed(true);
+        tmpHopper.importOrLoad();
+
+        // without CH -> use edge-based unless disabled explicitly
+        assertMoscowEdgeBased(tmpHopper, "none", false);
+        assertMoscowEdgeBased(tmpHopper, "true", false);
+        assertMoscowNodeBased(tmpHopper, "false", false);
+
+        // with CH -> use node-based unless edge_based is enabled explicitly (which should give an error)
+        assertMoscowNodeBased(tmpHopper, "none", true);
+        assertMoscowNodeBased(tmpHopper, "false", true);
+        GHResponse rsp = runMoscow(tmpHopper, "true", true);
+        assertEquals(1, rsp.getErrors().size());
+        assertTrue(rsp.getErrors().toString().contains("Found a node-based CH profile"));
+        assertTrue(rsp.getErrors().toString().contains("but requested edge-based CH"));
+    }
+
+    @Test
+    public void testEdgeBasedByDefaultIfOnlyEdgeBased() {
+        // when there is only one edge-based CH profile, there is no need to specify edge_based=true explicitly,
+        // see #1637
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/moscow.osm.gz").
+                setStoreOnFlush(true).
+                setCHEnabled(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create("car|turn_costs=true"));
+        tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        tmpHopper.getCHFactoryDecorator().setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE);
+        tmpHopper.importOrLoad();
+
+        // even when we omit the edge_based parameter we get edge-based CH, unless we disable it explicitly
+        assertMoscowEdgeBased(tmpHopper, "none", true);
+        assertMoscowEdgeBased(tmpHopper, "true", true);
+        GHResponse rsp = runMoscow(tmpHopper, "false", true);
+        assertTrue(rsp.hasErrors());
+        assertTrue(rsp.getErrors().toString().contains("Found 1 edge-based CH profile"));
+        assertTrue(rsp.getErrors().toString().contains("but requested node-based CH"));
+    }
+
+    private GHResponse assertMoscowNodeBased(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
+        GHResponse rsp = runMoscow(tmpHopper, edgeBasedParam, ch);
+        assertEquals(400, rsp.getBest().getDistance(), 1);
+        return rsp;
+    }
+
+    private GHResponse assertMoscowEdgeBased(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
+        GHResponse rsp = runMoscow(tmpHopper, edgeBasedParam, ch);
+        assertEquals(1044, rsp.getBest().getDistance(), 1);
+        return rsp;
+    }
+
+    private GHResponse runMoscow(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
+        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
+        if (edgeBasedParam.equals("true") || edgeBasedParam.equals("false")) {
+            req.getHints().put(Routing.EDGE_BASED, edgeBasedParam);
+        } else {
+            req.getHints().remove(Routing.EDGE_BASED);
+        }
+        req.getHints().put(CH.DISABLE, !ch);
+        return tmpHopper.route(req);
+    }
+
+    @Test
+    public void testEdgeBasedRequiresTurnCostSupport() {
+        GHPoint p = new GHPoint(43.727687, 7.418737);
+        GHPoint q = new GHPoint(43.74958, 7.436566);
+        GHRequest req = new GHRequest(p, q);
+        req.getHints().put(Routing.EDGE_BASED, true);
+        req.setVehicle("foot");
+        GHResponse rsp = hopper.route(req);
+        assertTrue("using edge-based for encoder without turncost support should be an error, but got:\n" + rsp.getErrors(),
+                rsp.getErrors().toString().contains("You need a turn cost extension to make use of edge_based=true, e.g. use car|turn_costs=true"));
+    }
+
+    @Test
+    public void testEncoderWithTurnCostSupport_stillAllows_nodeBasedRouting() {
+        // see #1698
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/moscow.osm.gz").
+                setGraphHopperLocation(tmpGraphFile).
+                setCHEnabled(false).
+                setEncodingManager(EncodingManager.create("foot,car|turn_costs=true"));
+        tmpHopper.importOrLoad();
+        GHPoint p = new GHPoint(55.813357, 37.5958585);
+        GHPoint q = new GHPoint(55.811042, 37.594689);
+        GHRequest req = new GHRequest(p, q);
+        req.setVehicle("foot");
+        GHResponse rsp = tmpHopper.route(req);
+        assertEquals("there should not be an error, but was: " + rsp.getErrors(), 0, rsp.getErrors().size());
     }
 
 }

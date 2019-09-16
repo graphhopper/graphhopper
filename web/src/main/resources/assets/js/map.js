@@ -13,6 +13,8 @@ var fullscreenControl = null;
 // Items added in every contextmenu.
 var defaultContextmenuItems;
 
+var expandElevationDiagram = true;
+
 // called if window changes or before map is created
 function adjustMapSize() {
     var mapDiv = $("#map");
@@ -208,6 +210,11 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         contextmenuInheritItems: false
     };
 
+    // Don't show the elevation graph on small displays
+    if(window.innerWidth < 900 || window.innerHeight < 400){
+        expandElevationDiagram = false;
+    }
+
 }
 
 function focus(coord, zoom, index) {
@@ -266,25 +273,26 @@ module.exports.focus = focus;
 module.exports.initMap = initMap;
 module.exports.adjustMapSize = adjustMapSize;
 
-module.exports.addElevation = function (geoJsonFeature, useMiles, details) {
-
-    // Don't show the elevation graph on small displays
-    if(window.innerWidth < 900 || window.innerHeight < 400){
-        return;
-    }
+module.exports.addElevation = function (geoJsonFeature, details) {
 
     // TODO no option to switch to miles yet
     var options = {
-       width: 600,
-       height: 280,
-       margins: {
-           top: 10,
-           right: 30,
-           bottom: 55,
-           left: 50
-       },
-       position: "bottomright"
-    }
+        width: 600,
+        height: 280,
+        margins: {
+            top: 10,
+            right: 30,
+            bottom: 55,
+            left: 50
+        },
+        xTicks: 6,
+        yTicks: 6,
+        position: "bottomright",
+        expand: expandElevationDiagram,
+        expandCallback: function (expand) {
+            expandElevationDiagram = expand;
+        }
+    };
 
     var GHFeatureCollection = [];
 
@@ -336,9 +344,15 @@ function sliceFeatureCollection(detail, detailKey, geoJsonFeature){
         // It's important to +1
         // Array.slice is exclusive the to element and the feature needs to include the to coordinate
         var to = detailObj[1] + 1;
-        var value = detailObj[2] || "Undefined";
+        var value;
+        try {
+            value = detailObj[2].toString()
+        } catch (error) {
+            console.error(error);
+            value = "Undefined";
+        }
 
-        var tmpPoints = points.slice(from,to)
+        var tmpPoints = points.slice(from,to);
 
         feature.features.push({
           "type": "Feature",

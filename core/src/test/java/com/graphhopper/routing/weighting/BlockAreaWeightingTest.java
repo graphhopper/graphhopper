@@ -1,6 +1,5 @@
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -15,6 +14,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.assertEquals;
 
 public class BlockAreaWeightingTest {
@@ -30,8 +30,8 @@ public class BlockAreaWeightingTest {
         graph = new GraphBuilder(em).create();
         // 0-1
         graph.edge(0, 1, 1, true);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
+        updateDistancesFor(graph, 0, 0.00, 0.00);
+        updateDistancesFor(graph, 1, 0.01, 0.01);
     }
 
     @Test
