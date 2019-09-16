@@ -23,7 +23,6 @@ import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -431,7 +430,7 @@ public class OSMReader implements DataReader {
         Map<Long, TurnCostTableEntry> entries = new LinkedHashMap<>();
 
         for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-            if (encoder.acceptsRelation(turnRelation)) {
+            if ((turnRelation == null) || ((turnRelation != null) && encoder.acceptsRelation(turnRelation))) {
                 for (TurnCostTableEntry entry : analyzeTurnRelation(encoder, turnRelation)) {
                     TurnCostTableEntry oldEntry = entries.get(entry.getItemId());
                     if (oldEntry != null) {
@@ -863,22 +862,22 @@ public class OSMReader implements DataReader {
      * @return the OSM turn relation, <code>null</code>, if unsupported turn relation
      */
     OSMTurnRelation createTurnRelation(ReaderRelation relation) {
-        String tagRestriction = null;
-        String vehicleTypeRestricted = null;
-        List<String> vehicleTypesExcept = null;
+        String tagRestriction = "";
+        String vehicleTypeRestricted = "";
+        List<String> vehicleTypesExcept = new ArrayList<>();
         if (relation.hasTag("restriction")) {
             tagRestriction = relation.getTag("restriction");
         } else if (relation.hasTagStartsWith("restriction:")) {
             vehicleTypeRestricted = relation.getKeyStartsWith("restriction:");
-            if (!Helper.isEmpty(vehicleTypeRestricted)) {
-                tagRestriction = relation.getTag(vehicleTypeRestricted);
-                vehicleTypeRestricted = vehicleTypeRestricted.replace("restriction:", "");
-            }
+            tagRestriction = relation.getTag(vehicleTypeRestricted);
+            vehicleTypeRestricted = vehicleTypeRestricted.replace("restriction:", "").trim();
         }
         if (relation.hasTag("except")) {
             String tagExcept = relation.getTag("except");
             if (!Helper.isEmpty(tagExcept)) {
-                vehicleTypesExcept = new ArrayList<>(Arrays.asList(tagExcept.split(";")));
+                List<String> vehicleTypes = new ArrayList<>(Arrays.asList(tagExcept.split(";")));
+                for (String vehicleType : vehicleTypes)
+                    vehicleTypesExcept.add(vehicleType.trim());
             }
         }
         OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(tagRestriction);
@@ -899,7 +898,10 @@ public class OSMReader implements DataReader {
                 }
             }
             if (fromWayID >= 0 && toWayID >= 0 && viaNodeID >= 0) {
-                return new OSMTurnRelation(fromWayID, viaNodeID, toWayID, type, vehicleTypeRestricted, vehicleTypesExcept);
+                OSMTurnRelation osmTurnRelation = new OSMTurnRelation(fromWayID, viaNodeID, toWayID, type);
+                osmTurnRelation.setVehicleTypeRestricted(vehicleTypeRestricted);
+                osmTurnRelation.addVehicleTypesExcept(vehicleTypesExcept);
+                return osmTurnRelation;
             }
         }
         return null;
@@ -961,6 +963,29 @@ public class OSMReader implements DataReader {
             return entries;
         } catch (Exception e) {
             throw new IllegalStateException("Could not built turn table entry for relation of node with osmId:" + osmTurnRelation.getViaOsmNodeId(), e);
+        }
+    }
+
+    /**
+     * Helper class to processing purposes only
+     */
+    public static class TurnCostTableEntry {
+        public int edgeFrom;
+        public int nodeVia;
+        public int edgeTo;
+        public long flags;
+
+        /**
+         * @return an unique id (edgeFrom, edgeTo) to avoid duplicate entries if multiple encoders
+         * are involved.
+         */
+        public long getItemId() {
+            return ((long) edgeFrom) << 32 | ((long) edgeTo);
+        }
+
+        @Override
+        public String toString() {
+            return "*-(" + edgeFrom + ")->" + nodeVia + "-(" + edgeTo + ")->*";
         }
     }
 

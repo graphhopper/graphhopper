@@ -723,9 +723,9 @@ public class OSMReaderTest {
      */
     @Test
     public void testTurnFlagCombination() {
-        final OSMTurnRelation.TurnCostTableEntry turnCostEntry_car = new OSMTurnRelation.TurnCostTableEntry();
-        final OSMTurnRelation.TurnCostTableEntry turnCostEntry_foot = new OSMTurnRelation.TurnCostTableEntry();
-        final OSMTurnRelation.TurnCostTableEntry turnCostEntry_bike = new OSMTurnRelation.TurnCostTableEntry();
+        final OSMReader.TurnCostTableEntry turnCostEntry_car = new OSMReader.TurnCostTableEntry();
+        final OSMReader.TurnCostTableEntry turnCostEntry_foot = new OSMReader.TurnCostTableEntry();
+        final OSMReader.TurnCostTableEntry turnCostEntry_bike = new OSMReader.TurnCostTableEntry();
 
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
         FootFlagEncoder foot = new FootFlagEncoder();
@@ -735,7 +735,7 @@ public class OSMReaderTest {
         GraphHopperStorage ghStorage = new GraphBuilder(manager).create();
         OSMReader reader = new OSMReader(ghStorage) {
             @Override
-            public Collection<OSMTurnRelation.TurnCostTableEntry> analyzeTurnRelation(FlagEncoder encoder,
+            public Collection<OSMReader.TurnCostTableEntry> analyzeTurnRelation(FlagEncoder encoder,
                                                                                       OSMTurnRelation turnRelation) {
                 // simulate by returning one turn cost entry directly
                 if (encoder.toString().equalsIgnoreCase("car")) {
@@ -768,12 +768,12 @@ public class OSMReaderTest {
         long assertFlag2 = turnCostEntry_bike.flags;
 
         // combine flags of all encoders
-        Collection<OSMTurnRelation.TurnCostTableEntry> entries = reader.analyzeTurnRelation(null);
+        Collection<OSMReader.TurnCostTableEntry> entries = reader.analyzeTurnRelation(null);
 
         // we expect two different turnCost entries
         assertEquals(2, entries.size());
 
-        for (OSMTurnRelation.TurnCostTableEntry entry : entries) {
+        for (OSMReader.TurnCostTableEntry entry : entries) {
             if (entry.edgeFrom == 1) {
                 // the first entry provides turn flags for car and foot only
                 assertEquals(assertFlag1, entry.flags);

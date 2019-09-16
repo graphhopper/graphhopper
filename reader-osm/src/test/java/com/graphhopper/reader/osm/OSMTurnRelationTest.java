@@ -70,13 +70,13 @@ public class OSMTurnRelationTest {
         EdgeExplorer edgeExplorer = ghStorage.createEdgeExplorer();
 
         // TYPE == ONLY
-        OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, Type.ONLY, null, null);
-        Collection<OSMTurnRelation.TurnCostTableEntry> result
+        OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, Type.ONLY);
+        Collection<OSMReader.TurnCostTableEntry> result
                 = OSMReader.getRestrictionAsEntries(instance, encoder, edgeExplorer, edgeExplorer, osmReader);
 
         assertEquals(2, result.size());
-        Iterator<OSMTurnRelation.TurnCostTableEntry> iter = result.iterator();
-        OSMTurnRelation.TurnCostTableEntry entry = iter.next();
+        Iterator<OSMReader.TurnCostTableEntry> iter = result.iterator();
+        OSMReader.TurnCostTableEntry entry = iter.next();
         assertEquals(4, entry.edgeFrom);
         assertEquals(6, entry.edgeTo);
         assertEquals(3, entry.nodeVia);
@@ -87,7 +87,7 @@ public class OSMTurnRelationTest {
         assertEquals(3, entry.nodeVia);
 
         // TYPE == NOT
-        instance = new OSMTurnRelation(4, 3, 3, Type.NOT, null, null);
+        instance = new OSMTurnRelation(4, 3, 3, Type.NOT);
         result = OSMReader.getRestrictionAsEntries(instance, encoder, edgeExplorer, edgeExplorer, osmReader);
 
         assertEquals(1, result.size());

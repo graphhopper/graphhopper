@@ -107,9 +107,6 @@ public class EncodingManagerTest {
 
             @Override
             public boolean acceptsRelation(OSMTurnRelation relation) {
-                if (relation == null) {
-                    return true;
-                }
                 if (relation.isVehicleTypeConcernedByTurnRestriction(restrictions)) {
                     return true;
                 }

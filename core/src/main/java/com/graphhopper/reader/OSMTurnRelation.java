@@ -17,8 +17,6 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.util.Helper;
-
 import java.util.*;
 
 /**
@@ -32,16 +30,18 @@ public class OSMTurnRelation {
     private final long viaOsmNodeId;
     private final long toOsmWayId;
     private final Type restriction;
-    private final String vehicleTypeRestricted;
-    private final List<String> vehicleTypesExcept;
+    // vehicleTypeRestricted contains the dedicated vehicle type
+    // example: restriction:bus = no_left_turn => vehicleTypeRestricted = "bus";
+    private String vehicleTypeRestricted;
+    private List<String> vehicleTypesExcept;
 
-    public OSMTurnRelation(long fromWayID, long viaNodeID, long toWayID, Type restrictionType, String vehicleTypeRestricted,  List<String> vehicleTypesExcept) {
+    public OSMTurnRelation(long fromWayID, long viaNodeID, long toWayID, Type restrictionType) {
         this.fromOsmWayId = fromWayID;
         this.viaOsmNodeId = viaNodeID;
         this.toOsmWayId = toWayID;
         this.restriction = restrictionType;
-        this.vehicleTypeRestricted = vehicleTypeRestricted;
-        this.vehicleTypesExcept = vehicleTypesExcept;
+        this.vehicleTypeRestricted = "";
+        this.vehicleTypesExcept = new ArrayList<>();
     }
 
     public long getOsmIdFrom() {
@@ -64,8 +64,16 @@ public class OSMTurnRelation {
         return vehicleTypeRestricted;
     }
 
+    public void setVehicleTypeRestricted(String vehicleTypeRestricted) {
+        this.vehicleTypeRestricted = vehicleTypeRestricted;
+    }
+
     public List<String> getVehicleTypesExcept() {
         return vehicleTypesExcept;
+    }
+
+    public void addVehicleTypesExcept(List<String> vehicleTypesExcept) {
+        this.vehicleTypesExcept = vehicleTypesExcept;
     }
 
     /**
@@ -75,22 +83,26 @@ public class OSMTurnRelation {
      * @return
      */
     public boolean isVehicleTypeConcernedByTurnRestriction(List<String> vehicleTypes) {
-        if (Helper.isEmpty(vehicleTypeRestricted) && ((vehicleTypesExcept == null) || ((vehicleTypesExcept != null) && (vehicleTypesExcept.isEmpty())))) {
+        if (vehicleTypeRestricted.isEmpty() && vehicleTypesExcept.isEmpty()) {
+            //normal turn restriction, not dedicated to a vehicle type
             return true;
         }
         for (String vehicleType : vehicleTypes) {
-            if (!Helper.isEmpty(vehicleTypeRestricted)) {
+            if (!vehicleTypeRestricted.isEmpty()) {
                 if (vehicleTypeRestricted.equals(vehicleType)) {
+                    //turn restriction dedicated to vehicleType, for example: restriction:bus = no_left_turn
                     return true;
                 }
             }
-            if (vehicleTypesExcept != null) {
+            if (!vehicleTypesExcept.isEmpty()) {
                 if (vehicleTypesExcept.contains(vehicleType)) {
+                    //turn restriction except for vehicleType
                     return false;
                 }
             }
         }
-        if (!Helper.isEmpty(vehicleTypeRestricted)) {
+        if (!vehicleTypeRestricted.isEmpty()) {
+            //turn restriction dedicated to a vehicle type not found in vehicleTypes
             return false;
         }
         return true;
@@ -122,29 +134,6 @@ public class OSMTurnRelation {
                 result = tags.get(tag);
             }
             return (result != null) ? result : UNSUPPORTED;
-        }
-    }
-
-    /**
-     * Helper class to processing purposes only
-     */
-    public static class TurnCostTableEntry {
-        public int edgeFrom;
-        public int nodeVia;
-        public int edgeTo;
-        public long flags;
-
-        /**
-         * @return an unique id (edgeFrom, edgeTo) to avoid duplicate entries if multiple encoders
-         * are involved.
-         */
-        public long getItemId() {
-            return ((long) edgeFrom) << 32 | ((long) edgeTo);
-        }
-
-        @Override
-        public String toString() {
-            return "*-(" + edgeFrom + ")->" + nodeVia + "-(" + edgeTo + ")->*";
         }
     }
 

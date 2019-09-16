@@ -656,32 +656,30 @@ public class CarFlagEncoderTest {
     @Test
     public void testAcceptsRelation() {
         List<String> vehicleTypesExcept = new ArrayList<>();
-        String vehicleTypeRestricted = null;
-        OSMTurnRelation osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.Type.NOT, vehicleTypeRestricted, vehicleTypesExcept);
+        OSMTurnRelation osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.Type.NOT);
         assertTrue(encoder.acceptsRelation(osmTurnRelation));
 
         vehicleTypesExcept.add("bus");
-        osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.Type.NOT, vehicleTypeRestricted, vehicleTypesExcept);
+        osmTurnRelation.addVehicleTypesExcept(vehicleTypesExcept);
         assertTrue(encoder.acceptsRelation(osmTurnRelation));
 
         vehicleTypesExcept.clear();
         vehicleTypesExcept.add("vehicle");
-        osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.Type.NOT, vehicleTypeRestricted, vehicleTypesExcept);
+        osmTurnRelation.addVehicleTypesExcept(vehicleTypesExcept);
         assertFalse(encoder.acceptsRelation(osmTurnRelation));
 
         vehicleTypesExcept.clear();
         vehicleTypesExcept.add("motor_vehicle");
         vehicleTypesExcept.add("vehicle");
-        osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.Type.NOT, vehicleTypeRestricted, vehicleTypesExcept);
+        osmTurnRelation.addVehicleTypesExcept(vehicleTypesExcept);
         assertFalse(encoder.acceptsRelation(osmTurnRelation));
 
         vehicleTypesExcept.clear();
-        vehicleTypeRestricted = "bus";
-        osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.Type.NOT, vehicleTypeRestricted, vehicleTypesExcept);
+        osmTurnRelation.setVehicleTypeRestricted("bus");
+        osmTurnRelation.addVehicleTypesExcept(vehicleTypesExcept);
         assertFalse(encoder.acceptsRelation(osmTurnRelation));
 
-        vehicleTypeRestricted = "vehicle";
-        osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.Type.NOT, vehicleTypeRestricted, vehicleTypesExcept);
+        osmTurnRelation.setVehicleTypeRestricted("vehicle");
         assertTrue(encoder.acceptsRelation(osmTurnRelation));
     }
 }
