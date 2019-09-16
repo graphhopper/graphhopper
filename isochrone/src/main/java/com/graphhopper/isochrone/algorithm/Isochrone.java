@@ -22,6 +22,7 @@ import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.PathExtractor;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -291,7 +292,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
         if (currEdge == null || !finished()) {
             return createEmptyPath();
         }
-        return new Path(graph, weighting).setSPTEntry(currEdge).extract();
+        return PathExtractor.extractPath(graph, weighting, currEdge);
     }
 
     @Override

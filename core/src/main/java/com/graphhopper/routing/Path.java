@@ -47,18 +47,11 @@ import java.util.*;
  * @author jan soe
  */
 public class Path {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
-    final StopWatch extractSW = new StopWatch("extract");
     protected Graph graph;
     protected double distance;
     // we go upwards (via SPTEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
     protected long time;
-    /**
-     * Shortest path tree entry
-     */
-    protected SPTEntry sptEntry;
     protected int endNode = -1;
     private List<String> description;
     protected Weighting weighting;
@@ -68,7 +61,7 @@ public class Path {
     private GHIntArrayList edgeIds;
     private double weight;
     private NodeAccess nodeAccess;
-    private String debugString = "";
+    private String debugInfo = "";
 
     public Path(Graph graph, Weighting weighting) {
         this.weight = Double.MAX_VALUE;
@@ -80,13 +73,12 @@ public class Path {
     }
 
     /**
-     * Populates an unextracted path instances from the specified path p.
+     * Populates an unextracted path instance from the specified path p.
      */
     Path(Path p) {
         this(p.graph, p.weighting);
         weight = p.weight;
         edgeIds = new GHIntArrayList(p.edgeIds);
-        sptEntry = p.sptEntry;
     }
 
     /**
@@ -101,11 +93,6 @@ public class Path {
 
     public Path setDescription(List<String> description) {
         this.description = description;
-        return this;
-    }
-
-    public Path setSPTEntry(SPTEntry sptEntry) {
-        this.sptEntry = sptEntry;
         return this;
     }
 
@@ -199,67 +186,18 @@ public class Path {
     }
 
     /**
-     * Extracts the Path from the shortest-path-tree determined by sptEntry.
-     */
-    public Path extract() {
-        if (isFound())
-            throw new IllegalStateException("Extract can only be called once");
-
-        extractSW.start();
-        SPTEntry currEdge = sptEntry;
-        setEndNode(currEdge.adjNode);
-        boolean nextEdgeValid = EdgeIterator.Edge.isValid(currEdge.edge);
-        int nextEdge;
-        while (nextEdgeValid) {
-            // the reverse search needs the next edge
-            nextEdgeValid = EdgeIterator.Edge.isValid(currEdge.parent.edge);
-            nextEdge = nextEdgeValid ? currEdge.parent.edge : EdgeIterator.NO_EDGE;
-            processEdge(currEdge.edge, currEdge.adjNode, nextEdge);
-            currEdge = currEdge.parent;
-        }
-
-        setFromNode(currEdge.adjNode);
-        reverseOrder();
-        extractSW.stop();
-        return setFound(true);
-    }
-
-    /**
      * Yields the final edge of the path
      */
     public EdgeIteratorState getFinalEdge() {
         return graph.getEdgeIteratorState(edgeIds.get(edgeIds.size() - 1), endNode);
     }
 
-    /**
-     * @return the time it took to extract the path in nano (!) seconds
-     */
-    public long getExtractTime() {
-        return extractSW.getNanos();
+    public void setDebugInfo(String debugInfo) {
+        this.debugInfo = debugInfo;
     }
 
     public String getDebugInfo() {
-        return extractSW.toString();
-    }
-
-    public void setDebugString(String debugString) {
-        this.debugString = debugString;
-    }
-
-    public String getDebugString() {
-        return debugString;
-    }
-
-    /**
-     * Calculates the distance and time of the specified edgeId. Also it adds the edgeId to the path list.
-     *
-     * @param prevEdgeId the edge that comes before edgeId: --prevEdgeId-x-edgeId-->adjNode
-     */
-    protected void processEdge(int edgeId, int adjNode, int prevEdgeId) {
-        EdgeIteratorState iter = graph.getEdgeIteratorState(edgeId, adjNode);
-        distance += iter.getDistance();
-        time += weighting.calcMillis(iter, false, prevEdgeId);
-        addEdge(edgeId);
+        return debugInfo;
     }
 
     /**
