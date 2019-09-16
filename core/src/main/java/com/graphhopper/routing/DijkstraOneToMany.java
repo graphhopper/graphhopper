@@ -96,7 +96,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             path.addEdge(edge);
             node = parents[node];
         }
-        path.reverseOrder();
+        path.reverseEdges();
         path.setFromNode(fromNode);
         path.setEndNode(endNode);
         path.setFound(true);

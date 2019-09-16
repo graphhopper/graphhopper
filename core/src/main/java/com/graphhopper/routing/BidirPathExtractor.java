@@ -69,7 +69,7 @@ public class BidirPathExtractor {
         SPTEntry fwdRoot = followParentsUntilRoot(sptEntry, false);
         onFwdTreeRoot(fwdRoot.adjNode);
         // since we followed the fwd path in backward direction we need to reverse the edge ids
-        path.reverseOrder();
+        path.reverseEdges();
     }
 
     protected void extractBwdPath(SPTEntry sptEntry) {

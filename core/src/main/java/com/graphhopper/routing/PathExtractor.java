@@ -55,7 +55,7 @@ public class PathExtractor {
 
     private void extractPath(SPTEntry sptEntry) {
         SPTEntry currEdge = followParentsUntilRoot(sptEntry);
-        path.reverseOrder();
+        path.reverseEdges();
         path.setFromNode(currEdge.adjNode);
         path.setEndNode(sptEntry.adjNode);
     }

@@ -37,19 +37,17 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 /**
- * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
- * edge determination faster and less complex as there could be several edges (u,v) especially for
- * graphs with shortcuts.
- * <p>
+ * This class represents the result of a shortest path calculation. It also provides methods to extract further
+ * information about the found path, like instructions etc.
  *
  * @author Peter Karich
  * @author Ottavio Campana
  * @author jan soe
+ * @author easbar
  */
 public class Path {
     protected Graph graph;
     protected double distance;
-    // we go upwards (via SPTEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
     protected long time;
     protected int endNode = -1;
@@ -70,15 +68,6 @@ public class Path {
         this.weighting = weighting;
         this.encoder = weighting.getFlagEncoder();
         this.edgeIds = new GHIntArrayList();
-    }
-
-    /**
-     * Populates an unextracted path instance from the specified path p.
-     */
-    Path(Path p) {
-        this(p.graph, p.weighting);
-        weight = p.weight;
-        edgeIds = new GHIntArrayList(p.edgeIds);
     }
 
     /**
@@ -110,7 +99,7 @@ public class Path {
      */
     private int getFromNode() {
         if (fromNode < 0)
-            throw new IllegalStateException("Call extract() before retrieving fromNode");
+            throw new IllegalStateException("fromNode < 0 should not happen");
 
         return fromNode;
     }
@@ -136,7 +125,7 @@ public class Path {
         return this;
     }
 
-    void reverseOrder() {
+    void reverseEdges() {
         if (!reverseOrder)
             throw new IllegalStateException("Switching order multiple times is not supported");
 
