@@ -228,11 +228,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public boolean acceptsRelation(OSMTurnRelation relation) {
-        return true;
-    }
-
-    @Override
     public EncodingManager.Access getAccess(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
