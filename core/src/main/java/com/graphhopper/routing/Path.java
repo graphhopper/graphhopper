@@ -68,6 +68,7 @@ public class Path {
     private GHIntArrayList edgeIds;
     private double weight;
     private NodeAccess nodeAccess;
+    private String debugString = "";
 
     public Path(Graph graph, Weighting weighting) {
         this.weight = Double.MAX_VALUE;
@@ -108,7 +109,7 @@ public class Path {
         return this;
     }
 
-    protected void addEdge(int edge) {
+    public void addEdge(int edge) {
         edgeIds.add(edge);
     }
 
@@ -161,6 +162,11 @@ public class Path {
         return this;
     }
 
+    public Path addDistance(double distance) {
+        this.distance += distance;
+        return this;
+    }
+
     /**
      * @return distance in meter
      */
@@ -173,6 +179,11 @@ public class Path {
      */
     public long getTime() {
         return time;
+    }
+
+    public Path addTime(long time) {
+        this.time += time;
+        return this;
     }
 
     /**
@@ -229,6 +240,14 @@ public class Path {
 
     public String getDebugInfo() {
         return extractSW.toString();
+    }
+
+    public void setDebugString(String debugString) {
+        this.debugString = debugString;
+    }
+
+    public String getDebugString() {
+        return debugString;
     }
 
     /**
