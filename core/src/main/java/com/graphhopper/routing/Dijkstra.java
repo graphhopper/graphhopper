@@ -74,8 +74,8 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
             if (isMaxVisitedNodesExceeded() || finished())
                 break;
 
-            int startNode = currEdge.adjNode;
-            EdgeIterator iter = explorer.setBaseNode(startNode);
+            int currNode = currEdge.adjNode;
+            EdgeIterator iter = explorer.setBaseNode(currNode);
             while (iter.next()) {
                 if (!accept(iter, currEdge.edge))
                     continue;
