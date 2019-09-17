@@ -19,6 +19,9 @@
 package com.graphhopper.http;
 
 import com.graphhopper.MultiException;
+import com.graphhopper.util.Helper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -26,8 +29,13 @@ import javax.ws.rs.ext.Provider;
 
 @Provider
 public class MultiExceptionMapper implements ExceptionMapper<MultiException> {
+    private static final Logger logger = LoggerFactory.getLogger(MultiExceptionMapper.class);
+
     @Override
-    public Response toResponse(MultiException exception) {
-        return Response.status(Response.Status.BAD_REQUEST).entity(exception).build();
+    public Response toResponse(MultiException e) {
+        logger.info("bad request: " + (Helper.isEmpty(e.getMessage()) ? "unknown reason" : e.getErrors()));
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity(e)
+                .build();
     }
 }
