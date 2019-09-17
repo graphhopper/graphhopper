@@ -535,7 +535,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
         @Override
         public int hashCode() {
-            return Objects.hash(startNode, startEdge, endNode, targetEdge);
+            return 31 * startNode + endNode;
         }
     }
 
