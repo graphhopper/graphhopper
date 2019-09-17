@@ -235,7 +235,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         checkCounter = 0;
         final long logSize = params.getLogMessagesPercentage() == 0
                 ? Long.MAX_VALUE
-                : Math.round(Math.max(10, initSize * params.getLogMessagesPercentage() / 100d));
+                : Math.round(Math.max(10, initSize * (params.getLogMessagesPercentage() / 100d)));
 
         // specifies after how many contracted nodes the queue of remaining nodes is rebuilt. this takes time but the
         // more often we do this the more up-to-date the node priorities will be
@@ -243,16 +243,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // nodes ?
         final long periodicUpdatesCount = params.getPeriodicUpdatesPercentage() == 0
                 ? Long.MAX_VALUE
-                : Math.round(Math.max(10, initSize * params.getPeriodicUpdatesPercentage() / 100d));
+                : Math.round(Math.max(10, initSize * (params.getPeriodicUpdatesPercentage() / 100d)));
         int updateCounter = 0;
 
         // enable lazy updates for last x percentage of nodes. lazy updates make preparation slower but potentially
         // keep node priorities more up to date, possibly resulting in a better preparation.
-        final long lastNodesLazyUpdates = Math.round(initSize * params.getLastNodesLazyUpdatePercentage() / 100d);
+        final long lastNodesLazyUpdates = Math.round(initSize * (params.getLastNodesLazyUpdatePercentage() / 100d));
 
         // according to paper "Polynomial-time Construction of Contraction Hierarchies for Multi-criteria Objectives" by Funke and Storandt
         // we don't need to wait for all nodes to be contracted
-        final long nodesToAvoidContract = Math.round(initSize * (100 - params.getNodesContractedPercentage()) / 100d);
+        final long nodesToAvoidContract = Math.round(initSize * ((100 - params.getNodesContractedPercentage()) / 100d));
 
         // Recompute priority of (the given percentage of) uncontracted neighbors. Doing neighbor updates takes additional
         // time during preparation but keeps node priorities more up to date. this potentially improves query time and
