@@ -65,11 +65,18 @@ where the default is [Omniscale](http://omniscale.com/). All of these are availa
 
 ## For Mobile Apps
 
-There are subprojects to make GraphHopper working offline
-on [Android](./android/README.md)
-and [iOS](http://github.com/graphhopper/graphhopper-ios)
+### Offline
+
+There are subprojects to make GraphHopper working offline on [Android](./android/README.md) and [iOS](http://github.com/graphhopper/graphhopper-ios)
 
 [![simple routing](https://www.graphhopper.com/wp-content/uploads/2016/10/android-demo-screenshot-2.png)](./android/README.md)
+
+### Online
+
+There is an extension that creates a [navigation endpoint](https://github.com/graphhopper/graphhopper-navigation) to feed a 
+[lightweight navigation Android client](https://github.com/graphhopper/graphhopper-navigation-example).
+
+[![android navigation demo app](https://raw.githubusercontent.com/graphhopper/graphhopper-navigation-example/master/files/graphhopper-navigation-example.png)](https://github.com/graphhopper/graphhopper-navigation-example)
 
 ## For Analysis
 
