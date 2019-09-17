@@ -126,6 +126,7 @@ public class RouteResource {
 
         initHints(request.getHints(), uriInfo.getQueryParameters());
         translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
+        enableEdgeBasedIfThereAreCurbSides(curbSides, request);
         request.setVehicle(vehicleStr).
                 setWeighting(weighting).
                 setAlgorithm(algoStr).
@@ -165,6 +166,16 @@ public class RouteResource {
                     Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
                             header("X-GH-Took", "" + Math.round(took * 1000)).
                             build();
+        }
+    }
+
+    private void enableEdgeBasedIfThereAreCurbSides(List<String> curbSides, GHRequest request) {
+        if (!curbSides.isEmpty()) {
+            if (!request.getHints().getBool(EDGE_BASED, true)) {
+                throw new IllegalArgumentException("Disabling '" + EDGE_BASED + "' when using '" + CURB_SIDE + "' is not allowed");
+            } else {
+                request.getHints().put(EDGE_BASED, true);
+            }
         }
     }
 
