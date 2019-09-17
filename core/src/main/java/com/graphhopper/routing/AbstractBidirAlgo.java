@@ -53,7 +53,6 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     protected SPTEntry bestFwdEntry;
     protected SPTEntry bestBwdEntry;
     protected double bestWeight;
-    private BidirPathExtractor pathExtractor;
     PriorityQueue<SPTEntry> pqOpenSetFrom;
     PriorityQueue<SPTEntry> pqOpenSetTo;
     private boolean updateBestPath = true;
@@ -69,7 +68,6 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         bestWeight = Double.MAX_VALUE;
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
         initCollections(size);
-        pathExtractor = createPathExtractor(graph, weighting);
     }
 
     protected void initCollections(int size) {
@@ -366,7 +364,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     @Override
     protected Path extractPath() {
         if (finished())
-            return pathExtractor.extract(bestFwdEntry, bestBwdEntry, bestWeight);
+            return createPathExtractor(graph, weighting).extract(bestFwdEntry, bestBwdEntry, bestWeight);
 
         return createEmptyPath();
     }

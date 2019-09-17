@@ -42,7 +42,7 @@ public class PathExtractor {
 
     public Path extract(SPTEntry sptEntry) {
         if (sptEntry == null) {
-            // todonow: supposed to be 'not found'
+            // path not found
             return path;
         }
         StopWatch sw = new StopWatch().start();

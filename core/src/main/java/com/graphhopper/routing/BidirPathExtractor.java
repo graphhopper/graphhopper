@@ -49,7 +49,7 @@ public class BidirPathExtractor {
 
     public Path extract(SPTEntry fwdEntry, SPTEntry bwdEntry, double weight) {
         if (fwdEntry == null || bwdEntry == null) {
-            // todonow: supposed to be 'not found'
+            // path not found
             return path;
         }
         if (fwdEntry.adjNode != bwdEntry.adjNode)
@@ -110,7 +110,6 @@ public class BidirPathExtractor {
         path.setEndNode(node);
     }
 
-    // todonow: docs, clarify prev/next
     protected void onEdge(int edge, int adjNode, boolean reverse, int prevOrNextEdge) {
         EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, adjNode);
         path.addDistance(edgeState.getDistance());

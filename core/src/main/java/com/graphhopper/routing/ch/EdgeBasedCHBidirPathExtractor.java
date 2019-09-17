@@ -26,6 +26,9 @@ import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.ShortcutUnpacker;
 import com.graphhopper.util.EdgeIteratorState;
 
+/**
+ * @author easbar
+ */
 public class EdgeBasedCHBidirPathExtractor extends BidirPathExtractor {
     private final ShortcutUnpacker shortcutUnpacker;
 
