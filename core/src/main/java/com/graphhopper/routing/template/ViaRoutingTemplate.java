@@ -26,17 +26,16 @@ import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.PathMerger;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.Translation;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 /**
  * Implementation of calculating a route with multiple via points.
@@ -137,8 +136,14 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                     throw new IllegalArgumentException("To make use of the " + Routing.CURB_SIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
                 } else {
                     int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), ghRequest.getCurbSides().get(placeIndex - 1));
+                    if (sourceOutEdge == NO_EDGE) {
+                        return throwImpossibleCurbSideConstraint(placeIndex - 1);
+                    }
                     int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), ghRequest.getCurbSides().get(placeIndex));
-                    // todo: enable this feature for alternative routes as well ?
+                    if (targetInEdge == NO_EDGE) {
+                        throwImpossibleCurbSideConstraint(placeIndex);
+                    }
+                    // todo: enable curb side feature for alternative routes as well ?
                     tmpPathList = Collections.singletonList(((AbstractBidirAlgo) algo)
                             .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
                 }
@@ -176,6 +181,10 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         ghResponse.getHints().put("visited_nodes.average", (float) visitedNodesSum / (pointCounts - 1));
 
         return pathList;
+    }
+
+    private List<Path> throwImpossibleCurbSideConstraint(int pointIndex) {
+        throw new IllegalArgumentException("Impossible curb side constraint: 'curb_side=" + ghRequest.getCurbSides().get(pointIndex) + "' at point " + (pointIndex));
     }
 
     @Override
