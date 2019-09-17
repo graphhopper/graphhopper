@@ -21,6 +21,7 @@
     edge-based CH is now chosen by default if it was prepared, #1706
     it is now possible to specify finite u-turn costs for CH preparation, #1671
     removed distances from CH shortcuts, reduces memory consumption per shortcut by 4 bytes (about 8-10%), #1719
+    removed PathNative,PathBidirRef,Path4CH,EdgeBasedPathCH and moved path extraction code out of Path class, added PathExtractor,BidirPathExtractor(+subclasses for CH) instead, #1730
 
 0.12
     renamed VirtualEdgeIteratorState.getOriginalEdgeKey to more precise getOriginalEdgeKey #1549
