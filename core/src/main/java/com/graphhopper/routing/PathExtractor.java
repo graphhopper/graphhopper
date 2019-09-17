@@ -34,13 +34,13 @@ public class PathExtractor {
         return new PathExtractor(graph, weighting).extract(sptEntry);
     }
 
-    public PathExtractor(Graph graph, Weighting weighting) {
+    protected PathExtractor(Graph graph, Weighting weighting) {
         this.graph = graph;
         this.weighting = weighting;
         path = new Path(graph, weighting);
     }
 
-    public Path extract(SPTEntry sptEntry) {
+    protected Path extract(SPTEntry sptEntry) {
         if (sptEntry == null) {
             // path not found
             return path;

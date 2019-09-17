@@ -41,13 +41,13 @@ public class BidirPathExtractor {
         return new BidirPathExtractor(graph, weighting).extract(fwdEntry, bwdEntry, weight);
     }
 
-    public BidirPathExtractor(Graph graph, Weighting weighting) {
+    protected BidirPathExtractor(Graph graph, Weighting weighting) {
         this.graph = graph;
         this.weighting = weighting;
         this.path = new Path(graph, weighting);
     }
 
-    public Path extract(SPTEntry fwdEntry, SPTEntry bwdEntry, double weight) {
+    protected Path extract(SPTEntry fwdEntry, SPTEntry bwdEntry, double weight) {
         if (fwdEntry == null || bwdEntry == null) {
             // path not found
             return path;
