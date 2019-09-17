@@ -26,8 +26,11 @@ import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.PathMerger;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.Translation;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -35,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 /**
@@ -102,6 +106,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             }
         }
 
+        final boolean ignoreImpossibleCurbSides = ghRequest.getHints().getBool(Routing.IGNORE_IMPOSSIBLE_CURB_SIDES, false);
         QueryResult fromQResult = queryResults.get(0);
         StopWatch sw;
         for (int placeIndex = 1; placeIndex < pointCounts; placeIndex++) {
@@ -136,13 +141,9 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                     throw new IllegalArgumentException("To make use of the " + Routing.CURB_SIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
                 } else {
                     int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), ghRequest.getCurbSides().get(placeIndex - 1));
-                    if (sourceOutEdge == NO_EDGE) {
-                        return throwImpossibleCurbSideConstraint(placeIndex - 1);
-                    }
                     int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), ghRequest.getCurbSides().get(placeIndex));
-                    if (targetInEdge == NO_EDGE) {
-                        throwImpossibleCurbSideConstraint(placeIndex);
-                    }
+                    sourceOutEdge = ignoreThrowOrAcceptImpossibleCurbSides(sourceOutEdge, placeIndex - 1, ignoreImpossibleCurbSides);
+                    targetInEdge = ignoreThrowOrAcceptImpossibleCurbSides(targetInEdge, placeIndex, ignoreImpossibleCurbSides);
                     // todo: enable curb side feature for alternative routes as well ?
                     tmpPathList = Collections.singletonList(((AbstractBidirAlgo) algo)
                             .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
@@ -183,8 +184,19 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         return pathList;
     }
 
-    private List<Path> throwImpossibleCurbSideConstraint(int pointIndex) {
-        throw new IllegalArgumentException("Impossible curb side constraint: 'curb_side=" + ghRequest.getCurbSides().get(pointIndex) + "' at point " + (pointIndex));
+    private int ignoreThrowOrAcceptImpossibleCurbSides(int edge, int placeIndex, boolean ignoreImpossibleCurbSides) {
+        if (edge != NO_EDGE) {
+            return edge;
+        }
+        if (ignoreImpossibleCurbSides) {
+            return ANY_EDGE;
+        } else {
+            return throwImpossibleCurbSideConstraint(placeIndex);
+        }
+    }
+
+    private int throwImpossibleCurbSideConstraint(int placeIndex) {
+        throw new IllegalArgumentException("Impossible curb side constraint: 'curb_side=" + ghRequest.getCurbSides().get(placeIndex) + "' at point " + placeIndex);
     }
 
     @Override
