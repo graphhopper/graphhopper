@@ -24,11 +24,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.http.WebHelper;
 import com.graphhopper.matching.*;
 import com.graphhopper.matching.gpx.Gpx;
-import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import org.slf4j.Logger;
@@ -42,6 +43,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
 
+import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
 import static com.graphhopper.util.Parameters.Routing.*;
 
 /**
@@ -77,7 +79,7 @@ public class MapMatchingResource {
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
             @QueryParam("vehicle") @DefaultValue("car") String vehicleStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
-            @QueryParam(Parameters.DETAILS.PATH_DETAILS) List<String> pathDetails,
+            @QueryParam(PATH_DETAILS) List<String> pathDetails,
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
@@ -97,7 +99,7 @@ public class MapMatchingResource {
         StopWatch sw = new StopWatch().start();
 
         AlgorithmOptions opts = AlgorithmOptions.start()
-                .traversalMode(graphHopper.getTraversalMode())
+                .traversalMode(graphHopper.getEncodingManager().needsTurnCostsSupport() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED)
                 .maxVisitedNodes(maxVisitedNodes)
                 .hints(new HintsMap().put("vehicle", vehicleStr))
                 .build();

@@ -26,6 +26,7 @@ import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
@@ -42,7 +43,6 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  * @author kodonnell
  */
@@ -81,8 +81,8 @@ public class MapMatchingTest {
                 .build();
 
         return Arrays.asList(new Object[][]{
-            {"non-CH", hopper, flexibleOpts},
-            {"CH", hopper, chOpts}
+                {"non-CH", hopper, flexibleOpts},
+                {"CH", hopper, chOpts}
         });
     }
 
@@ -170,7 +170,7 @@ public class MapMatchingTest {
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
 
         assertEquals(57650, mr.getMatchLength(), 1);
-        assertEquals(2747801, mr.getMatchMillis(), 1);
+        assertEquals(2681705, mr.getMatchMillis(), 1);
 
         // not OK when we only allow a small number of visited nodes:
         AlgorithmOptions opts = AlgorithmOptions.start(algoOptions).maxVisitedNodes(1).build();
@@ -313,7 +313,7 @@ public class MapMatchingTest {
     private List<Observation> createRandomGPXEntries(GHPoint start, GHPoint end) {
         List<Path> paths = hopper.calcPaths(new GHRequest(start, end).setWeighting("fastest"), new GHResponse());
         Translation tr = hopper.getTranslationMap().get("en");
-        InstructionList instr = paths.get(0).calcInstructions(hopper.getEncodingManager().getBooleanEncodedValue(EncodingManager.ROUNDABOUT), tr);
+        InstructionList instr = paths.get(0).calcInstructions(hopper.getEncodingManager().getBooleanEncodedValue(Roundabout.KEY), tr);
         return GpxFromInstructions.createGPXList(instr).stream()
                 .map(gpx -> new Observation(gpx.getPoint())).collect(Collectors.toList());
     }

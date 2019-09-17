@@ -113,11 +113,10 @@ public class MapMatching {
         RoutingAlgorithmFactory routingAlgorithmFactory = graphHopper.getAlgorithmFactory(hints);
         if (routingAlgorithmFactory instanceof PrepareContractionHierarchies) {
             ch = true;
-            // I want to use my own instance of FastestWeighting because it uses its own U-Turn-penalty,
-            // but I have to pass a _different_ instance of FastestWeighting to getGraph so it gives me the graph,
-            // (even though this is non-dangerous since it's only about virtual (split) edges (nothing to do with shortcuts),
-            // but it's _still_ a different one than the one which I have to pass to the router itself (see below).
-            routingGraph = graphHopper.getGraphHopperStorage().getGraph(CHGraph.class, ((PrepareContractionHierarchies) routingAlgorithmFactory).getWeighting());
+            // I want to use my own instance of FastestWeighting because it uses its own heading penalty,
+            // but here it is ok to use the CH preparation that was prepared for a different FastestWeighting (without
+            // the heading penalty), because we are only using it for map-matching (but not CH routing)
+            routingGraph = graphHopper.getGraphHopperStorage().getCHGraph(((PrepareContractionHierarchies) routingAlgorithmFactory).getCHProfile());
         } else {
             ch = false;
             routingGraph = graphHopper.getGraphHopperStorage();
