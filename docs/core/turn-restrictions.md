@@ -41,4 +41,4 @@ Another example, using the *except* tag, means only *bicycle* are allowed to tur
 > restriction=no_left_turn  
 > except=bicycle
 
-Redefining `acceptsRelation` function in *encoders* enable to change the default turn restriction use.
+You can overwrite `FlagEncoder#acceptsTurnRelation` to change the default handling of turn restrictions in your customized vehicle profile.

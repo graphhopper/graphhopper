@@ -97,14 +97,6 @@ public abstract class ReaderElement {
         return val;
     }
 
-    public <T> T getTagStartsWith(String keyPrefix, T defaultValue) {
-        String matchedKey = getKeyStartsWith(keyPrefix);
-        if (!Helper.isEmpty(matchedKey)) {
-            return getTag(matchedKey, defaultValue);
-        }
-        return defaultValue;
-    }
-
     public String getKeyStartsWith(String keyPrefix) {
         int nbMatchedKeys = 0;
         String matchedKey = null;

@@ -55,12 +55,10 @@ public interface FlagEncoder extends TurnCostEncoder, EncodedValueLookup {
     DecimalEncodedValue getAverageSpeedEnc();
 
     /**
-     * Decide whether a restriction relation is enabled for a given mode of travel. This skips some relations before
-     * handleRelationTags is called.
-     *
-     * @return true if this encoder allows travel.
+     * @return whether or not this encoder should apply the given turn restriction
+     * @see OSMTurnRelation
      */
-    boolean acceptsRelation(OSMTurnRelation relation);
+    boolean acceptsTurnRelation(OSMTurnRelation relation);
 
     /**
      * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.

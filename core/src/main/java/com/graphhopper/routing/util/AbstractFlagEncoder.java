@@ -178,7 +178,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return shift;
     }
 
-    public boolean acceptsRelation(OSMTurnRelation relation) { return true; }
+    public boolean acceptsTurnRelation(OSMTurnRelation relation) { return true; }
 
     /**
      * Analyze the properties of a relation and create the routing flags for the second read step.

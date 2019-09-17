@@ -511,21 +511,6 @@ public class EncodingManager implements EncodedValueLookup {
         }
     }
 
-    /**
-     * Determine whether a relation is routable for one of the added encoders.
-     *
-     * @return if at least one encoder consumes the specified relation. Additionally the specified acceptRelation is changed
-     * to provide more details.
-     */
-    public boolean acceptRelation(OSMTurnRelation relation) {
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
-            if (encoder.acceptsRelation(relation)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
         long flags = 0;
         for (AbstractFlagEncoder encoder : edgeEncoders) {

@@ -430,7 +430,7 @@ public class OSMReader implements DataReader {
         Map<Long, TurnCostTableEntry> entries = new LinkedHashMap<>();
 
         for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
-            if ((turnRelation == null) || ((turnRelation != null) && encoder.acceptsRelation(turnRelation))) {
+            if (encoder.acceptsTurnRelation(turnRelation)) {
                 for (TurnCostTableEntry entry : analyzeTurnRelation(encoder, turnRelation)) {
                     TurnCostTableEntry oldEntry = entries.get(entry.getItemId());
                     if (oldEntry != null) {

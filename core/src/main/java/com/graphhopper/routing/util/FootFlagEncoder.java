@@ -198,7 +198,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public boolean acceptsRelation(OSMTurnRelation relation) {
+    public boolean acceptsTurnRelation(OSMTurnRelation relation) {
         return false;
     }
 

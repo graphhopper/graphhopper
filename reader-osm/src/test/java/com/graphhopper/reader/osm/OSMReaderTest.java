@@ -727,6 +727,8 @@ public class OSMReaderTest {
         final OSMReader.TurnCostTableEntry turnCostEntry_foot = new OSMReader.TurnCostTableEntry();
         final OSMReader.TurnCostTableEntry turnCostEntry_bike = new OSMReader.TurnCostTableEntry();
 
+        final OSMTurnRelation osmTurnRelation = new OSMTurnRelation(1, 1,1, OSMTurnRelation.Type.NOT);
+
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
         FootFlagEncoder foot = new FootFlagEncoder();
         BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
@@ -768,7 +770,7 @@ public class OSMReaderTest {
         long assertFlag2 = turnCostEntry_bike.flags;
 
         // combine flags of all encoders
-        Collection<OSMReader.TurnCostTableEntry> entries = reader.analyzeTurnRelation(null);
+        Collection<OSMReader.TurnCostTableEntry> entries = reader.analyzeTurnRelation(osmTurnRelation);
 
         // we expect two different turnCost entries
         assertEquals(2, entries.size());
