@@ -27,9 +27,9 @@
      inkscape:window-height="1056"
      id="namedview19"
      showgrid="false"
-     inkscape:zoom="13.906433"
-     inkscape:cx="-8.7603739"
-     inkscape:cy="17.891838"
+     inkscape:zoom="39.333332"
+     inkscape:cx="7.5032014"
+     inkscape:cy="10.586187"
      inkscape:window-x="0"
      inkscape:window-y="20"
      inkscape:window-maximized="1"
@@ -75,8 +75,10 @@
        id="g21618">
       <path
          style="color:#000000;display:inline;overflow:visible;visibility:visible;opacity:0.3;fill:none;stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
-         d="m 254.75,1053.3622 c -0.9695,0 -1.75,0.7805 -1.75,1.75 0,0.9695 0.85147,1.3859 1.75,1.75 2.1115,0.5909 2.52991,-3.4095 0,-3.5 z m 0.25,11 c -0.0176,0.047 -0.0325,0.089 -0.0312,0.125 -1.60588,-2.8214 1.12489,-4.349 0.0312,-0.125 z"
-         id="path17460" />
+         d="m 254.75,1053.3622 c -0.9695,0 -1.75,0.7805 -1.75,1.75 0,0.9695 0.85147,1.3859 1.75,1.75 2.1115,0.5909 2.52991,-3.4095 0,-3.5 z"
+         id="path17460"
+         inkscape:connector-curvature="0"
+         sodipodi:nodetypes="cscc" />
       <g
          id="g16644"
          transform="translate(0,-1)">

@@ -328,6 +328,12 @@ public class WheelchairFlagEncoderTest {
         way.setTag("highway", "residential");
         way.setTag("sidewalk", "yes");
         assertEquals(PriorityCode.PREFER.getValue(), wheelchairEncoder.handlePriority(way, 0));
+
+        way.clearTags();
+        way.setTag("highway", "footway");
+        assertEquals(PriorityCode.PREFER.getValue(), wheelchairEncoder.handlePriority(way, 0));
+        way.setTag("wheelchair", "designated");
+        assertEquals(PriorityCode.VERY_NICE.getValue(), wheelchairEncoder.handlePriority(way, 0));
     }
 
     @Test

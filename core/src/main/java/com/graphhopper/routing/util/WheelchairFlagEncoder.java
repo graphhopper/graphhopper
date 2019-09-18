@@ -40,7 +40,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     final Set<String> avoidHighwayTags = new HashSet<>();
     final Set<String> avoidSurfaces = new HashSet<>();
     final Set<String> avoidSmoothness = new HashSet<>();
-    // convert network tag of hiking routes into a way route code
 
     /**
      * Should be only instantiated via EncodingManager
@@ -107,8 +106,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         allowedHighwayTags.add("cycleway");
         allowedHighwayTags.add("unclassified");
         allowedHighwayTags.add("road");
-        // disallowed in some countries
-        //allowedHighwayTags.add("bridleway");
 
         maxPossibleSpeed = FERRY_SPEED;
         speedDefault = MEAN_SPEED;
@@ -169,15 +166,9 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         }
 
         if (!access.isFerry()) {
-            String sacScale = way.getTag("sac_scale");
-            if (sacScale != null) {
-                accessEnc.setBool(false, edgeFlags, false);
-                accessEnc.setBool(true, edgeFlags, false);
-            } else {
-                speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED);
-                accessEnc.setBool(false, edgeFlags, true);
-                accessEnc.setBool(true, edgeFlags, true);
-            }
+            speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED);
+            accessEnc.setBool(false, edgeFlags, true);
+            accessEnc.setBool(true, edgeFlags, true);
         } else {
             double ferrySpeed = getFerrySpeed(way);
             setSpeed(false, edgeFlags, ferrySpeed);
@@ -188,17 +179,23 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         return edgeFlags;
     }
 
+    /**
+     * First get priority from {@link FootFlagEncoder#handlePriority(ReaderWay, int)} then evaluate wheelchair specific
+     * tags.
+     * @param way
+     * @param priorityFromRelation
+     * @return a priority for the given way
+     */
+    @Override
     protected int handlePriority(ReaderWay way, int priorityFromRelation) {
         TreeMap<Double, Integer> weightToPrioMap = new TreeMap<>();
-        if (priorityFromRelation == 0) {
-            weightToPrioMap.put(0d, UNCHANGED.getValue());
-        } else {
-            weightToPrioMap.put(110d, priorityFromRelation);
+
+        weightToPrioMap.put(100d, super.handlePriority(way, priorityFromRelation));
+
+        if (way.hasTag("wheelchair", "designated")) {
+            weightToPrioMap.put(102d, VERY_NICE.getValue());
         }
 
-        super.collect(way, weightToPrioMap);
-
-        // pick priority with biggest order value
         return weightToPrioMap.lastEntry().getValue();
     }
 
