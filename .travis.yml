@@ -13,9 +13,10 @@ env:
 matrix:
   include:
     - jdk: openjdk8
-    - jdk: openjdk12
-    - env: JDK='OpenJDK 13' SKIP_EXT_TESTS=true
+    - env: JDK='OpenJDK 13'
       install: . ./install-jdk.sh -F 13 -C
+    - env: JDK='OpenJDK 14' SKIP_EXT_TESTS=true
+      install: . ./install-jdk.sh -F 14 -C
     
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
@@ -46,7 +47,7 @@ script:
 after_success:
   # often spotbugs etc take long to be compatible with a future JDK version so skip them
   - if [ "$SKIP_EXT_TESTS" != "true" ]; then
-        mvn checkstyle:check spotbugs:check forbiddenapis:check;
+        mvn checkstyle:check forbiddenapis:check;
     fi
   # if tagged deploy then release to maven central or deploy snapshot artifacts to sonatype 
   - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_TAG" != "" ]; then
