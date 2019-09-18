@@ -74,8 +74,8 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
             if (isMaxVisitedNodesExceeded() || finished())
                 break;
 
-            int startNode = currEdge.adjNode;
-            EdgeIterator iter = explorer.setBaseNode(startNode);
+            int currNode = currEdge.adjNode;
+            EdgeIterator iter = explorer.setBaseNode(currNode);
             while (iter.next()) {
                 if (!accept(iter, currEdge.edge))
                     continue;
@@ -123,8 +123,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
         if (currEdge == null || !finished())
             return createEmptyPath();
 
-        return new Path(graph, weighting).
-                setWeight(currEdge.weight).setSPTEntry(currEdge).extract();
+        return PathExtractor.extractPath(graph, weighting, currEdge);
     }
 
     @Override

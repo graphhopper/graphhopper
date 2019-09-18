@@ -42,7 +42,7 @@ before_script:
   - cd web && npm install && BROWSERIFYSWAP_ENV='development' npm run bundleProduction && cd ..
 
 script:
-  - "mvn -Dkey=$API_KEY clean test verify -B"
+  - "mvn -Dkey=$API_KEY clean install -B"
 
 after_success:
   # often spotbugs etc take long to be compatible with a future JDK version so skip them

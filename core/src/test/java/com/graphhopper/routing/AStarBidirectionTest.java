@@ -94,7 +94,6 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
                 toRef.set(currTo);
             }
         };
-        astar.createAndInitPath();
         astar.init(0, 1, 1, 0.5);
 
         assertEquals(1, ((AStar.AStarEntry) fromRef.get()).weightOfVisitedPath, .1);

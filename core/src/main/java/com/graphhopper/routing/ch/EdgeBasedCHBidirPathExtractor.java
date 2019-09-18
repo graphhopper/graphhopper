@@ -15,44 +15,54 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.PathBidirRef;
+import com.graphhopper.routing.BidirPathExtractor;
+import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.ShortcutUnpacker;
 import com.graphhopper.util.EdgeIteratorState;
 
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-
-public class Path4CH extends PathBidirRef {
+/**
+ * @author easbar
+ */
+public class EdgeBasedCHBidirPathExtractor extends BidirPathExtractor {
     private final ShortcutUnpacker shortcutUnpacker;
 
-    public Path4CH(Graph routingGraph, Graph baseGraph, final Weighting weighting) {
+    public EdgeBasedCHBidirPathExtractor(Graph routingGraph, Graph baseGraph, Weighting weighting) {
         super(baseGraph, weighting);
-        this.shortcutUnpacker = getShortcutUnpacker(routingGraph, weighting);
+        shortcutUnpacker = createShortcutUnpacker(routingGraph, weighting);
+        if (!(weighting instanceof TurnWeighting)) {
+            throw new IllegalArgumentException("Need a TurnWeighting for edge-based CH");
+        }
     }
 
     @Override
-    protected final void processEdge(int edgeId, int adjNode, int prevEdgeId) {
-        // Shortcuts do only contain valid weight so first expand before adding
-        // to distance and time
-        shortcutUnpacker.visitOriginalEdgesFwd(edgeId, adjNode, true, prevEdgeId);
+    public void onEdge(int edge, int adjNode, boolean reverse, int prevOrNextEdge) {
+        if (reverse) {
+            shortcutUnpacker.visitOriginalEdgesBwd(edge, adjNode, true, prevOrNextEdge);
+        } else {
+            shortcutUnpacker.visitOriginalEdgesFwd(edge, adjNode, true, prevOrNextEdge);
+        }
     }
 
-    @Override
-    protected void processEdgeBwd(int edgeId, int adjNode, int nextEdgeId) {
-        shortcutUnpacker.visitOriginalEdgesBwd(edgeId, adjNode, true, nextEdgeId);
-    }
-
-    protected ShortcutUnpacker getShortcutUnpacker(Graph routingGraph, final Weighting weighting) {
+    private ShortcutUnpacker createShortcutUnpacker(Graph routingGraph, final Weighting weighting) {
         return new ShortcutUnpacker(routingGraph, new ShortcutUnpacker.Visitor() {
             @Override
             public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-                distance += edge.getDistance();
-                time += weighting.calcMillis(edge, reverse, NO_EDGE);
-                addEdge(edge.getEdge());
+                path.addDistance(edge.getDistance());
+                path.addTime(weighting.calcMillis(edge, reverse, prevOrNextEdgeId));
+                path.addEdge(edge.getEdge());
             }
-        }, false);
+        }, true);
     }
+
+    @Override
+    public int getIncEdge(SPTEntry sptEntry) {
+        return ((CHEntry) sptEntry).incEdge;
+    }
+
 }
