@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
@@ -102,6 +103,14 @@ public class EncodingManagerTest {
             @Override
             protected String getPropertiesString() {
                 return "my_properties";
+            }
+
+            @Override
+            public boolean acceptsTurnRelation(OSMTurnRelation relation) {
+                if (relation.isVehicleTypeConcernedByTurnRestriction(restrictions)) {
+                    return true;
+                }
+                return false;
             }
 
             @Override
