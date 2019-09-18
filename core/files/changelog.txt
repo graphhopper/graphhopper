@@ -1,3 +1,6 @@
+0.14
+    added new `curb_side` feature, #1697
+
 0.13
     removed docker compose file
     PathDetails return null instead of -1 for Infinity by default
