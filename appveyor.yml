@@ -24,7 +24,7 @@ install:
 build_script:
   - mvn clean install -DskipTests=true -B
 test_script:
-  - mvn test verify -B && mvn checkstyle:check spotbugs:check forbiddenapis:check -B
+  - mvn test verify -B && mvn checkstyle:check forbiddenapis:check -B
 cache:
   - C:\maven\
   - C:\Users\appveyor\.m2
