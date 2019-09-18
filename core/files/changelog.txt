@@ -1,3 +1,6 @@
+0.14
+    conditional turn restrictions now supported, #1683
+
 0.13
     removed docker compose file
     PathDetails return null instead of -1 for Infinity by default
