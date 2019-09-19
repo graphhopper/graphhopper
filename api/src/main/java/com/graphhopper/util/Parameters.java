@@ -117,7 +117,7 @@ public class Parameters {
         public static final String PASS_THROUGH = "pass_through";
         public static final String POINT_HINT = "point_hint";
         public static final String CURB_SIDE = "curb_side";
-        public static final String IGNORE_IMPOSSIBLE_CURB_SIDES = "ignore_impossible_curb_sides";
+        public static final String FORCE_CURB_SIDES = "force_curb_sides";
         public static final String SNAP_PREVENTION = "snap_prevention";
         /**
          * default heading penalty in seconds

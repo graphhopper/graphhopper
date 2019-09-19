@@ -106,7 +106,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             }
         }
 
-        final boolean ignoreImpossibleCurbSides = ghRequest.getHints().getBool(Routing.IGNORE_IMPOSSIBLE_CURB_SIDES, false);
+        final boolean forceCurbSides = ghRequest.getHints().getBool(Routing.FORCE_CURB_SIDES, true);
         QueryResult fromQResult = queryResults.get(0);
         StopWatch sw;
         for (int placeIndex = 1; placeIndex < pointCounts; placeIndex++) {
@@ -142,8 +142,8 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                 } else {
                     int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), ghRequest.getCurbSides().get(placeIndex - 1));
                     int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), ghRequest.getCurbSides().get(placeIndex));
-                    sourceOutEdge = ignoreThrowOrAcceptImpossibleCurbSides(sourceOutEdge, placeIndex - 1, ignoreImpossibleCurbSides);
-                    targetInEdge = ignoreThrowOrAcceptImpossibleCurbSides(targetInEdge, placeIndex, ignoreImpossibleCurbSides);
+                    sourceOutEdge = ignoreThrowOrAcceptImpossibleCurbSides(sourceOutEdge, placeIndex - 1, forceCurbSides);
+                    targetInEdge = ignoreThrowOrAcceptImpossibleCurbSides(targetInEdge, placeIndex, forceCurbSides);
                     // todo: enable curb side feature for alternative routes as well ?
                     tmpPathList = Collections.singletonList(((AbstractBidirAlgo) algo)
                             .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
@@ -184,14 +184,14 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         return pathList;
     }
 
-    private int ignoreThrowOrAcceptImpossibleCurbSides(int edge, int placeIndex, boolean ignoreImpossibleCurbSides) {
+    private int ignoreThrowOrAcceptImpossibleCurbSides(int edge, int placeIndex, boolean forceCurbSides) {
         if (edge != NO_EDGE) {
             return edge;
         }
-        if (ignoreImpossibleCurbSides) {
-            return ANY_EDGE;
-        } else {
+        if (forceCurbSides) {
             return throwImpossibleCurbSideConstraint(placeIndex);
+        } else {
+            return ANY_EDGE;
         }
     }
 
