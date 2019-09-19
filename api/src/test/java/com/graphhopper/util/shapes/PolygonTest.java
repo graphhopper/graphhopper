@@ -13,20 +13,14 @@ public class PolygonTest {
     @Test
     public void testContains(){
 
-        /*
-         * |----|
-         * |    |
-         * |----|
-         */
-        Polygon square = new Polygon(new double[]{0,0,20,20}, new double[]{0,20,20,0});
-        assertTrue(square.contains(10,10));
-        assertTrue(square.contains(16,10));
-        assertFalse(square.contains(10,-20));
-        assertTrue(square.contains(10,0));
-        assertFalse(square.contains(10,20));
-        assertTrue(square.contains(10,16));
-        assertFalse(square.contains(20,20));
-
+     Polygon square = new Polygon(new double[]{0,0,10,10}, new double[]{0,10,10,0});
+    assertTrue(square.contains(5,5));
+    assertTrue(square.contains(8,5));
+    assertFalse(square.contains(5,-10));
+    assertTrue(square.contains(5,0));
+    assertFalse(square.contains(5,10));
+    assertTrue(square.contains(5,8));
+    assertFalse(square.contains(10,10));
         /*
          * \-----|
          *   --| |
