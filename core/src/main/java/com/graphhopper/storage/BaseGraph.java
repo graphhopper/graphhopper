@@ -482,8 +482,8 @@ class BaseGraph implements Graph {
         if (to.reverse)
             reverse = !reverse;
         // in case reverse is true we have to swap the nodes to store flags correctly in its "storage direction"
-        int nodeA = reverse ? from.getAdjNode() : from.getBaseNode();
-        int nodeB = reverse ? from.getBaseNode() : from.getAdjNode();
+        int nodeA = reverse ? to.getAdjNode() : to.getBaseNode();
+        int nodeB = reverse ? to.getBaseNode() : to.getAdjNode();
         long edgePointer = edgeAccess.toPointer(to.getEdge());
         int linkA = reverse ? edgeAccess.getLinkB(edgePointer) : edgeAccess.getLinkA(edgePointer);
         int linkB = reverse ? edgeAccess.getLinkA(edgePointer) : edgeAccess.getLinkB(edgePointer);
