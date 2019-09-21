@@ -38,12 +38,12 @@ import java.util.PriorityQueue;
  * @author Peter Karich
  */
 public class AStar extends AbstractRoutingAlgorithm {
-    private WeightApproximator weightApprox;
-    private int visitedCount;
     private GHIntObjectHashMap<AStarEntry> fromMap;
-    private PriorityQueue<AStarEntry> prioQueueOpenSet;
+    private PriorityQueue<AStarEntry> fromHeap;
     private AStarEntry currEdge;
-    private int to1 = -1;
+    private int visitedNodes;
+    private int to = -1;
+    private WeightApproximator weightApprox;
 
     public AStar(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
@@ -64,97 +64,94 @@ public class AStar extends AbstractRoutingAlgorithm {
 
     protected void initCollections(int size) {
         fromMap = new GHIntObjectHashMap<>();
-        prioQueueOpenSet = new PriorityQueue<>(size);
+        fromHeap = new PriorityQueue<>(size);
     }
 
     @Override
     public Path calcPath(int from, int to) {
         checkAlreadyRun();
-        to1 = to;
-
+        this.to = to;
         weightApprox.setTo(to);
         double weightToGoal = weightApprox.approximate(from);
         currEdge = new AStarEntry(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
         if (!traversalMode.isEdgeBased()) {
             fromMap.put(from, currEdge);
         }
-        return runAlgo();
+        runAlgo();
+        return extractPath();
     }
 
-    private Path runAlgo() {
+    private void runAlgo() {
         double currWeightToGoal, estimationFullWeight;
         EdgeExplorer explorer = outEdgeExplorer;
         while (true) {
-            int currVertex = currEdge.adjNode;
-            visitedCount++;
-            if (isMaxVisitedNodesExceeded())
-                return createEmptyPath();
-
-            if (finished())
+            visitedNodes++;
+            if (isMaxVisitedNodesExceeded() || finished())
                 break;
 
-            EdgeIterator iter = explorer.setBaseNode(currVertex);
+            int currNode = currEdge.adjNode;
+            EdgeIterator iter = explorer.setBaseNode(currNode);
             while (iter.next()) {
                 if (!accept(iter, currEdge.edge))
                     continue;
 
-                double alreadyVisitedWeight = weighting.calcWeight(iter, false, currEdge.edge)
-                        + currEdge.weightOfVisitedPath;
-                if (Double.isInfinite(alreadyVisitedWeight))
+                double tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weightOfVisitedPath;
+                if (Double.isInfinite(tmpWeight)) {
                     continue;
-
+                }
                 int traversalId = traversalMode.createTraversalId(iter, false);
+
                 AStarEntry ase = fromMap.get(traversalId);
-                if (ase == null || ase.weightOfVisitedPath > alreadyVisitedWeight) {
+                if (ase == null || ase.weightOfVisitedPath > tmpWeight) {
                     int neighborNode = iter.getAdjNode();
                     currWeightToGoal = weightApprox.approximate(neighborNode);
-                    estimationFullWeight = alreadyVisitedWeight + currWeightToGoal;
+                    estimationFullWeight = tmpWeight + currWeightToGoal;
                     if (ase == null) {
-                        ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, alreadyVisitedWeight);
+                        ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, tmpWeight);
                         fromMap.put(traversalId, ase);
                     } else {
 //                        assert (ase.weight > 0.9999999 * estimationFullWeight) : "Inconsistent distance estimate. It is expected weight >= estimationFullWeight but was "
 //                                + ase.weight + " < " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and weightOfVisitedPath:"
 //                                + ase.weightOfVisitedPath + " vs. alreadyVisitedWeight:" + alreadyVisitedWeight + " (" + ase.weightOfVisitedPath / alreadyVisitedWeight + ")";
 
-                        prioQueueOpenSet.remove(ase);
+                        fromHeap.remove(ase);
                         ase.edge = iter.getEdge();
                         ase.weight = estimationFullWeight;
-                        ase.weightOfVisitedPath = alreadyVisitedWeight;
+                        ase.weightOfVisitedPath = tmpWeight;
                     }
 
                     ase.parent = currEdge;
-                    prioQueueOpenSet.add(ase);
+                    fromHeap.add(ase);
 
                     updateBestPath(iter, ase, traversalId);
                 }
             }
 
-            if (prioQueueOpenSet.isEmpty())
-                return createEmptyPath();
+            if (fromHeap.isEmpty())
+                break;
 
-            currEdge = prioQueueOpenSet.poll();
+            currEdge = fromHeap.poll();
             if (currEdge == null)
                 throw new AssertionError("Empty edge cannot happen");
         }
-
-        return extractPath();
-    }
-
-    @Override
-    protected Path extractPath() {
-        return new Path(graph, weighting).
-                setWeight(currEdge.weight).setSPTEntry(currEdge).extract();
     }
 
     @Override
     protected boolean finished() {
-        return currEdge.adjNode == to1;
+        return currEdge.adjNode == to;
+    }
+
+    @Override
+    protected Path extractPath() {
+        if (currEdge == null || !finished())
+            return createEmptyPath();
+
+        return PathExtractor.extractPath(graph, weighting, currEdge);
     }
 
     @Override
     public int getVisitedNodes() {
-        return visitedCount;
+        return visitedNodes;
     }
 
     protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry bestSPTEntry, int traversalId) {

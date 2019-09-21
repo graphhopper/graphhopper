@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
@@ -79,12 +80,10 @@ public class PathTest {
         EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
         edge2.setWayGeometry(Helper.createPointList(11, 1, 10, 1));
 
-        Path path = new Path(g, new FastestWeighting(encoder));
         SPTEntry e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 0, 1);
-        path.setSPTEntry(e1);
-        path.extract();
+        Path path = extractPath(g, new FastestWeighting(encoder), e1);
         // 0-1-2
         assertPList(Helper.createPointList(0, 0.1, 8, 1, 9, 1, 1, 0.1, 10, 1, 11, 1, 2, 0.1), path.calcPoints());
         InstructionList instr = path.calcInstructions(carManagerRoundabout, tr);
@@ -116,12 +115,10 @@ public class PathTest {
         na.setNode(3, 1.0, 1.0);
         g.edge(1, 3).setDistance(1000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 10.0);
 
-        path = new Path(g, new FastestWeighting(encoder));
         e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 0, 1);
-        path.setSPTEntry(e1);
-        path.extract();
+        path = extractPath(g, new FastestWeighting(encoder), e1);
         instr = path.calcInstructions(carManagerRoundabout, tr);
 
         tmp = instr.get(0);
@@ -142,12 +139,10 @@ public class PathTest {
         assertEquals(path.calcPoints().size() - 1, acc);
 
         // now reverse order
-        path = new Path(g, new FastestWeighting(encoder));
         e1 = new SPTEntry(edge1.getEdge(), 0, 1);
         e1.parent = new SPTEntry(edge2.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 2, 1);
-        path.setSPTEntry(e1);
-        path.extract();
+        path = extractPath(g, new FastestWeighting(encoder), e1);
         // 2-1-0
         assertPList(Helper.createPointList(2, 0.1, 11, 1, 10, 1, 1, 0.1, 9, 1, 8, 1, 0, 0.1), path.calcPoints());
 
@@ -199,14 +194,12 @@ public class PathTest {
         g.edge(2, 5).setDistance(10000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
         g.edge(3, 5).setDistance(100000).set(carAccessEnc, true).setReverse(carAccessEnc, true).set(carAvSpeedEnv, 50.0);
 
-        Path path = new Path(g, new FastestWeighting(encoder));
         SPTEntry e1 = new SPTEntry(edge4.getEdge(), 4, 1);
         e1.parent = new SPTEntry(edge3.getEdge(), 3, 1);
         e1.parent.parent = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent.parent.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent.parent.parent = new SPTEntry(-1, 0, 1);
-        path.setSPTEntry(e1);
-        path.extract();
+        Path path = extractPath(g, new FastestWeighting(encoder), e1);
 
         InstructionList il = path.calcInstructions(carManagerRoundabout, tr);
         Instruction nextInstr0 = il.find(-0.001, 0.0, 1000);
@@ -1024,6 +1017,10 @@ public class PathTest {
             delta = clockwise ? (Math.PI + delta) : -1 * (Math.PI - delta);
             return delta;
         }
+    }
+
+    private static Path extractPath(Graph graph, Weighting weighting, SPTEntry sptEntry) {
+        return PathExtractor.extractPath(graph, weighting, sptEntry);
     }
 
 }
