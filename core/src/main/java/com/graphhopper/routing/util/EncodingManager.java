@@ -703,7 +703,7 @@ public class EncodingManager implements EncodedValueLookup {
         return (T) ev;
     }
 
-    private static String SPECIAL_SEPARATOR = "-";
+    private static String SPECIAL_SEPARATOR = ".";
 
     /**
      * All EncodedValue names that are created from a FlagEncoder should use this method to mark them as

@@ -307,7 +307,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             if (val != null)
                 code = val;
             else
-                code = PriorityCode.PREFER.getValue();  // Assume priority of network "lcn" as bicycle route default
+                code = BEST.getValue();  // Assume priority of network "lcn" as bicycle route default
         } else if (relation.hasTag("route", "ferry")) {
             code = AVOID_IF_POSSIBLE.getValue();
         }

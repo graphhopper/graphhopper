@@ -99,27 +99,28 @@ if(ghenv.environment === 'development') {
     availableTileLayers["Omniscale Dev"] = omniscaleGray;
 
     require('leaflet.vectorgrid');
-    var vtLayer = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment", {
+    var vtLayer = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment&details=bike.priority&details=bike.access", {
       rendererFactory: L.canvas.tile,
       maxZoom: 20,
-      minZoom: 10,
+      minZoom: 8,
       interactive: true,
       vectorTileLayerStyles: {
         'roads': function(properties, zoom) {
             // weight == line width
-            var color, opacity = 1, weight = 1, rc = properties.road_class;
+            var color, opacity = 1, weight = 1, rc = properties["bike.priority"], access = properties["bike.access"];
             // if(properties.speed < 30) console.log(properties)
-            if(rc == "motorway") {
+            if(!access) {
                 color = '#dd504b'; // red
                 weight = 3;
-            } else if(rc == "primary" || rc == "trunk") {
-                color = '#e2a012'; // orange
+            } else if(rc > 0.8) {
+                color = 'green';
                 weight = 2;
-            } else if(rc == "secondary") {
+            } else if(rc > 0.35) {
                 weight = 2;
                 color = '#f7c913'; // yellow
             } else {
-                color = "#aaa5a7"; // grey
+                color = "orange";
+                weight = 3;
             }
             if(zoom > 16)
                weight += 3;
