@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
@@ -53,12 +52,6 @@ public interface FlagEncoder extends TurnCostEncoder, EncodedValueLookup {
      * This method returns the EncodedValue used for the average speed of this encoder.
      */
     DecimalEncodedValue getAverageSpeedEnc();
-
-    /**
-     * @return whether or not this encoder should apply the given turn restriction
-     * @see OSMTurnRelation
-     */
-    boolean acceptsTurnRelation(OSMTurnRelation relation);
 
     /**
      * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.

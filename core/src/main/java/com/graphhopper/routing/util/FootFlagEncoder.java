@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -195,11 +194,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     @Override
     public long getTurnFlags(boolean restricted, double costs) {
         return 0;
-    }
-
-    @Override
-    public boolean acceptsTurnRelation(OSMTurnRelation relation) {
-        return false;
     }
 
     /**
