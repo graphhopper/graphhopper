@@ -15,7 +15,7 @@ Then do:
 
 ```bash
 git clone git://github.com/graphhopper/graphhopper.git
-cd graphhopper; git checkout master
+cd graphhopper; git checkout 0.13
 # fetches main.js, can be omitted if no UI is needed
 cd web/src/main/resources/ && ZFILE=/tmp/gh.jar && wget -O $ZFILE "https://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.graphhopper&a=graphhopper-web&v=LATEST" && unzip $ZFILE assets/js/main.js && rm $ZFILE && cd ../../../..
 ./graphhopper.sh -a web -i europe_germany_berlin.pbf
