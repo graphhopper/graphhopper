@@ -478,16 +478,7 @@ class BaseGraph implements Graph {
      * @return the updated iterator the properties where copied to.
      */
     EdgeIteratorState copyProperties(EdgeIteratorState from, CommonEdgeIterator to) {
-        boolean reverse = from.get(REVERSE_STATE);
-        if (to.reverse)
-            reverse = !reverse;
-        // in case reverse is true we have to swap the nodes to store flags correctly in its "storage direction"
-        int nodeA = reverse ? from.getAdjNode() : from.getBaseNode();
-        int nodeB = reverse ? from.getBaseNode() : from.getAdjNode();
         long edgePointer = edgeAccess.toPointer(to.getEdge());
-        int linkA = reverse ? edgeAccess.getLinkB(edgePointer) : edgeAccess.getLinkA(edgePointer);
-        int linkB = reverse ? edgeAccess.getLinkA(edgePointer) : edgeAccess.getLinkB(edgePointer);
-        edgeAccess.writeEdge(to.getEdge(), nodeA, nodeB, linkA, linkB);
         edgeAccess.writeFlags(edgePointer, from.getFlags());
 
         // copy the rest with higher level API
