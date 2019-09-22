@@ -17,8 +17,7 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.OSMTurnRelation.Type;
+import com.graphhopper.reader.osm.OSMTurnRelation.Type;
 import com.graphhopper.routing.EdgeBasedRoutingAlgorithmTest;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -71,12 +70,12 @@ public class OSMTurnRelationTest {
 
         // TYPE == ONLY
         OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, Type.ONLY);
-        Collection<OSMReader.TurnCostTableEntry> result
-                = OSMReader.getRestrictionAsEntries(instance, encoder, edgeExplorer, edgeExplorer, osmReader);
+        Collection<OSMTurnRelation.TurnCostTableEntry> result
+                = instance.getRestrictionAsEntries(encoder, edgeExplorer, edgeExplorer, osmReader);
 
         assertEquals(2, result.size());
-        Iterator<OSMReader.TurnCostTableEntry> iter = result.iterator();
-        OSMReader.TurnCostTableEntry entry = iter.next();
+        Iterator<OSMTurnRelation.TurnCostTableEntry> iter = result.iterator();
+        OSMTurnRelation.TurnCostTableEntry entry = iter.next();
         assertEquals(4, entry.edgeFrom);
         assertEquals(6, entry.edgeTo);
         assertEquals(3, entry.nodeVia);
@@ -88,7 +87,7 @@ public class OSMTurnRelationTest {
 
         // TYPE == NOT
         instance = new OSMTurnRelation(4, 3, 3, Type.NOT);
-        result = OSMReader.getRestrictionAsEntries(instance, encoder, edgeExplorer, edgeExplorer, osmReader);
+        result = instance.getRestrictionAsEntries(encoder, edgeExplorer, edgeExplorer, osmReader);
 
         assertEquals(1, result.size());
         iter = result.iterator();
