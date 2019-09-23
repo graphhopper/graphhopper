@@ -201,10 +201,12 @@ public class OSMReader implements DataReader {
     }
 
     private void prepareRestrictionRelation(ReaderRelation relation) {
-        OSMTurnRelation turnRelation = createTurnRelation(relation);
-        if (turnRelation != null) {
-            getOsmWayIdSet().add(turnRelation.getOsmIdFrom());
-            getOsmWayIdSet().add(turnRelation.getOsmIdTo());
+        List<OSMTurnRelation> turnRelations = createTurnRelation(relation);
+        for (OSMTurnRelation turnRelation : turnRelations) {
+            if (turnRelation != null) {
+                getOsmWayIdSet().add(turnRelation.getOsmIdFrom());
+                getOsmWayIdSet().add(turnRelation.getOsmIdTo());
+            }
         }
     }
 
@@ -412,14 +414,16 @@ public class OSMReader implements DataReader {
 
     public void processRelation(ReaderRelation relation) {
         if (relation.hasTag("type", "restriction")) {
-            OSMTurnRelation turnRelation = createTurnRelation(relation);
-            if (turnRelation != null) {
-                GraphExtension extendedStorage = graph.getExtension();
-                if (extendedStorage instanceof TurnCostExtension) {
-                    TurnCostExtension tcs = (TurnCostExtension) extendedStorage;
-                    Collection<TurnCostTableEntry> entries = analyzeTurnRelation(turnRelation);
-                    for (TurnCostTableEntry entry : entries) {
-                        tcs.addTurnInfo(entry.edgeFrom, entry.nodeVia, entry.edgeTo, entry.flags);
+            List<OSMTurnRelation> turnRelations = createTurnRelation(relation);
+            for (OSMTurnRelation turnRelation : turnRelations) {
+                if (turnRelation != null) {
+                    GraphExtension extendedStorage = graph.getExtension();
+                    if (extendedStorage instanceof TurnCostExtension) {
+                        TurnCostExtension tcs = (TurnCostExtension) extendedStorage;
+                        Collection<TurnCostTableEntry> entries = analyzeTurnRelation(turnRelation);
+                        for (TurnCostTableEntry entry : entries) {
+                            tcs.addTurnInfo(entry.edgeFrom, entry.nodeVia, entry.edgeTo, entry.flags);
+                        }
                     }
                 }
             }
@@ -861,17 +865,10 @@ public class OSMReader implements DataReader {
      *
      * @return the OSM turn relation, <code>null</code>, if unsupported turn relation
      */
-    OSMTurnRelation createTurnRelation(ReaderRelation relation) {
-        String tagRestriction = "";
-        String vehicleTypeRestricted = "";
+    List<OSMTurnRelation> createTurnRelation(ReaderRelation relation) {
+        List<OSMTurnRelation> osmTurnRelations = new ArrayList<>();
+        String vehicleTypeRestricted= "";
         List<String> vehicleTypesExcept = new ArrayList<>();
-        if (relation.hasTag("restriction")) {
-            tagRestriction = relation.getTag("restriction");
-        } else if (relation.hasTagStartsWith("restriction:")) {
-            vehicleTypeRestricted = relation.getKeyStartsWith("restriction:");
-            tagRestriction = relation.getTag(vehicleTypeRestricted);
-            vehicleTypeRestricted = vehicleTypeRestricted.replace("restriction:", "").trim();
-        }
         if (relation.hasTag("except")) {
             String tagExcept = relation.getTag("except");
             if (!Helper.isEmpty(tagExcept)) {
@@ -880,7 +877,29 @@ public class OSMReader implements DataReader {
                     vehicleTypesExcept.add(vehicleType.trim());
             }
         }
-        OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(tagRestriction);
+        if (relation.hasTag("restriction")) {
+            OSMTurnRelation osmTurnRelation = createTurnRelation(relation.getTag("restriction"), relation, vehicleTypeRestricted, vehicleTypesExcept);
+            if (osmTurnRelation != null) {
+                osmTurnRelations.add(osmTurnRelation);
+            }
+            return osmTurnRelations;
+        }
+        if (relation.hasTagStartsWith("restriction:")) {
+            List<String> vehicleTypesRestricted = relation.getKeysStartsWith("restriction:");
+            for (String vehicleType : vehicleTypesRestricted) {
+                String restrictionType = relation.getTag(vehicleType);
+                vehicleTypeRestricted = vehicleType.replace("restriction:", "").trim();
+                OSMTurnRelation osmTurnRelation = createTurnRelation(restrictionType, relation, vehicleTypeRestricted, vehicleTypesExcept);
+                if (osmTurnRelation != null) {
+                    osmTurnRelations.add(osmTurnRelation);
+                }
+            }
+        }
+        return osmTurnRelations;
+    }
+
+    OSMTurnRelation createTurnRelation(String restrictionType, ReaderRelation relation, String vehicleTypeRestricted, List<String> vehicleTypesExcept) {
+        OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(restrictionType);
         if (type != OSMTurnRelation.Type.UNSUPPORTED) {
             long fromWayID = -1;
             long viaNodeID = -1;
