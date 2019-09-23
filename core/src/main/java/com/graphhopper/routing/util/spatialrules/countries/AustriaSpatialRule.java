@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing.util.spatialrules.countries;
 
-import com.graphhopper.routing.profiles.Country;
-import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 

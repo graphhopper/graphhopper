@@ -18,7 +18,7 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.coll.MapEntry;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 

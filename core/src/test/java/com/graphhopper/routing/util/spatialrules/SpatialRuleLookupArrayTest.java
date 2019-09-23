@@ -1,6 +1,6 @@
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 import org.junit.Test;

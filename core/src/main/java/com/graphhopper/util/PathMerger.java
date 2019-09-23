@@ -19,8 +19,8 @@ package com.graphhopper.util;
 
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.Roundabout;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.Roundabout;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;

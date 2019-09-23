@@ -21,7 +21,7 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.profiles.Roundabout;
+import com.graphhopper.routing.ev.Roundabout;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;

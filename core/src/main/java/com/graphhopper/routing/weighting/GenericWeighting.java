@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;

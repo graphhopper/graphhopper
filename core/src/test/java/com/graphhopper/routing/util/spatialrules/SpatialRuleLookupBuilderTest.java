@@ -19,7 +19,7 @@ package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
 

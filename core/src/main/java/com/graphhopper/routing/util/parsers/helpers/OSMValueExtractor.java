@@ -1,7 +1,7 @@
 package com.graphhopper.routing.util.parsers.helpers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.IntsRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

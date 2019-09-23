@@ -17,15 +17,15 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import static com.graphhopper.routing.profiles.TrackType.OTHER;
+import static com.graphhopper.routing.ev.TrackType.OTHER;
 
 import java.util.List;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.TrackType;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.TrackType;
 import com.graphhopper.routing.util.EncodingManager.Access;
 import com.graphhopper.storage.IntsRef;
 

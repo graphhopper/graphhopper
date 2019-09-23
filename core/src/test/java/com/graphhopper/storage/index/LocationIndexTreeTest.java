@@ -19,7 +19,7 @@ package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;

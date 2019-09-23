@@ -18,12 +18,12 @@
 package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.*;
-import com.graphhopper.coll.*;
 import com.graphhopper.coll.LongIntMap;
+import com.graphhopper.coll.*;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -865,7 +865,7 @@ public class OSMReader implements DataReader {
      */
     List<OSMTurnRelation> createTurnRelations(ReaderRelation relation) {
         List<OSMTurnRelation> osmTurnRelations = new ArrayList<>();
-        String vehicleTypeRestricted= "";
+        String vehicleTypeRestricted = "";
         List<String> vehicleTypesExcept = new ArrayList<>();
         if (relation.hasTag("except")) {
             String tagExcept = relation.getTag("except");
@@ -933,7 +933,7 @@ public class OSMReader implements DataReader {
      * @return a collection of node cost entries which can be added to the graph later
      */
     public static Collection<TurnCostTableEntry> getRestrictionAsEntries(OSMTurnRelation osmTurnRelation, TurnCostEncoder encoder,
-                                                                  EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, OSMReader osmReader) {
+                                                                         EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, OSMReader osmReader) {
         int nodeVia = osmReader.getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
 
         try {

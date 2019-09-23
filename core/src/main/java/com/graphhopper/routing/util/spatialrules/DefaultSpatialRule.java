@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.ev.RoadAccess;
 
 /**
  * Default implementation for the SpatialRule that contains the current default values

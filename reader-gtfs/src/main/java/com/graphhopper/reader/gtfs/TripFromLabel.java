@@ -27,7 +27,7 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.Trip;
 import com.graphhopper.gtfs.fare.Fares;
 import com.graphhopper.routing.InstructionsFromEdges;
-import com.graphhopper.routing.profiles.Roundabout;
+import com.graphhopper.routing.ev.Roundabout;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
