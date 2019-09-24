@@ -68,7 +68,7 @@ import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.
 import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Routing.CURB_SIDE;
+import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -982,7 +982,7 @@ public class GraphHopper implements GraphHopperAPI {
             }
 
             if (!tMode.isEdgeBased() && !request.getCurbSides().isEmpty()) {
-                throw new IllegalArgumentException("To make use of the " + CURB_SIDE + " parameter you need to set " + Routing.EDGE_BASED + " to true");
+                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to set " + Routing.EDGE_BASED + " to true");
             }
 
             boolean disableCH = hints.getBool(CH.DISABLE, false);

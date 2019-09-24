@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.util.Helper.round6;
 import static com.graphhopper.util.Helper.toLowerCase;
-import static com.graphhopper.util.Parameters.CurbSides.CURB_SIDE_EITHER;
+import static com.graphhopper.util.Parameters.CurbSides.CURBSIDE_ANY;
 
 /**
  * Main wrapper of the GraphHopper Directions API for a simple and efficient
@@ -254,11 +254,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
             }
         }
 
-        // append *all* curb sides only if at least *one* is not CURB_SIDE_EITHER
+        // append *all* curbsides only if at least *one* is not CURBSIDE_ANY
         for (String checkEitherSide : request.getCurbSides()) {
-            if (!checkEitherSide.equals(CURB_SIDE_EITHER)) {
+            if (!checkEitherSide.equals(CURBSIDE_ANY)) {
                 for (String curbSide : request.getCurbSides()) {
-                    url += "&" + Parameters.Routing.CURB_SIDE + "=" + WebHelper.encodeURL(curbSide);
+                    url += "&" + Parameters.Routing.CURBSIDE + "=" + WebHelper.encodeURL(curbSide);
                 }
                 break;
             }

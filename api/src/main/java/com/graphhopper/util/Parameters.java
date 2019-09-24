@@ -116,8 +116,8 @@ public class Parameters {
          */
         public static final String PASS_THROUGH = "pass_through";
         public static final String POINT_HINT = "point_hint";
-        public static final String CURB_SIDE = "curb_side";
-        public static final String FORCE_CURB_SIDES = "force_curb_sides";
+        public static final String CURBSIDE = "curbside";
+        public static final String FORCE_CURBSIDES = "force_curbsides";
         public static final String SNAP_PREVENTION = "snap_prevention";
         /**
          * default heading penalty in seconds
@@ -132,12 +132,12 @@ public class Parameters {
     }
 
     /**
-     * Possible values of {@link Parameters.Routing#CURB_SIDE}
+     * Possible values of {@link Parameters.Routing#CURBSIDE}
      */
     public static final class CurbSides {
-        public static final String CURB_SIDE_LEFT = "left";
-        public static final String CURB_SIDE_RIGHT = "right";
-        public static final String CURB_SIDE_EITHER = "either";
+        public static final String CURBSIDE_LEFT = "left";
+        public static final String CURBSIDE_RIGHT = "right";
+        public static final String CURBSIDE_ANY = "any";
     }
 
     /**

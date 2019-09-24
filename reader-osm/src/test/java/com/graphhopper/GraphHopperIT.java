@@ -1167,7 +1167,7 @@ public class GraphHopperIT {
                 .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE);
         h.importOrLoad();
 
-        // depending on the curb side parameters we take very different routes
+        // depending on the curbside parameters we take very different routes
         GHPoint p = new GHPoint(50.015072, 11.499145);
         GHPoint q = new GHPoint(50.014141, 11.497552);
         final String itz = "Itzgrund";
@@ -1176,12 +1176,12 @@ public class GraphHopperIT {
         final String kulmbach = "Kulmbacher Straße, KU 18";
         final String adamSeiler = "Adam-Seiler-Straße";
         final String friedhof = "Friedhofsweg";
-        assertPath(h, p, q, asList(CURB_SIDE_RIGHT, CURB_SIDE_RIGHT), 344, asList(itz, rotmain, rotmain));
-        assertPath(h, p, q, asList(CURB_SIDE_RIGHT, CURB_SIDE_LEFT), 1564, asList(itz, rotmain, rotmain, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, rotmain));
-        assertPath(h, p, q, asList(CURB_SIDE_LEFT, CURB_SIDE_RIGHT), 1199, asList(itz, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, itz, rotmain, rotmain));
-        assertPath(h, p, q, asList(CURB_SIDE_LEFT, CURB_SIDE_LEFT), 266, asList(itz, bayreuth, rotmain));
+        assertPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 344, asList(itz, rotmain, rotmain));
+        assertPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 1564, asList(itz, rotmain, rotmain, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, rotmain));
+        assertPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 1199, asList(itz, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, itz, rotmain, rotmain));
+        assertPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 266, asList(itz, bayreuth, rotmain));
         // without restricting anything we get the shortest path
-        assertPath(h, p, q, asList(CURB_SIDE_EITHER, CURB_SIDE_EITHER), 266, asList(itz, bayreuth, rotmain));
+        assertPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 266, asList(itz, bayreuth, rotmain));
         assertPath(h, p, q, Collections.<String>emptyList(), 266, asList(itz, bayreuth, rotmain));
     }
 

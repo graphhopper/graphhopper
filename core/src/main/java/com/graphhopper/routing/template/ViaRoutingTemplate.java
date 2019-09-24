@@ -106,7 +106,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             }
         }
 
-        final boolean forceCurbSides = ghRequest.getHints().getBool(Routing.FORCE_CURB_SIDES, true);
+        final boolean forceCurbSides = ghRequest.getHints().getBool(Routing.FORCE_CURBSIDES, true);
         QueryResult fromQResult = queryResults.get(0);
         StopWatch sw;
         for (int placeIndex = 1; placeIndex < pointCounts; placeIndex++) {
@@ -138,13 +138,13 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             if (!directions.isEmpty()) {
                 assert ghRequest.getCurbSides().size() == directions.size();
                 if (!(algo instanceof AbstractBidirAlgo)) {
-                    throw new IllegalArgumentException("To make use of the " + Routing.CURB_SIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
+                    throw new IllegalArgumentException("To make use of the " + Routing.CURBSIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
                 } else {
                     int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), ghRequest.getCurbSides().get(placeIndex - 1));
                     int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), ghRequest.getCurbSides().get(placeIndex));
                     sourceOutEdge = ignoreThrowOrAcceptImpossibleCurbSides(sourceOutEdge, placeIndex - 1, forceCurbSides);
                     targetInEdge = ignoreThrowOrAcceptImpossibleCurbSides(targetInEdge, placeIndex, forceCurbSides);
-                    // todo: enable curb side feature for alternative routes as well ?
+                    // todo: enable curbside feature for alternative routes as well ?
                     tmpPathList = Collections.singletonList(((AbstractBidirAlgo) algo)
                             .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
                 }
@@ -196,7 +196,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     }
 
     private int throwImpossibleCurbSideConstraint(int placeIndex) {
-        throw new IllegalArgumentException("Impossible curb side constraint: 'curb_side=" + ghRequest.getCurbSides().get(placeIndex) + "' at point " + placeIndex);
+        throw new IllegalArgumentException("Impossible curbside constraint: 'curbside=" + ghRequest.getCurbSides().get(placeIndex) + "' at point " + placeIndex);
     }
 
     @Override

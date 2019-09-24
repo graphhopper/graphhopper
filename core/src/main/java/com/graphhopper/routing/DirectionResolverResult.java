@@ -22,7 +22,7 @@ import java.util.Objects;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Parameters.CurbSides.*;
-import static com.graphhopper.util.Parameters.Routing.CURB_SIDE;
+import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
 
 public class DirectionResolverResult {
     private static DirectionResolverResult UNRESTRICTED = new DirectionResolverResult(ANY_EDGE, ANY_EDGE, ANY_EDGE, ANY_EDGE);
@@ -62,27 +62,27 @@ public class DirectionResolverResult {
 
     public static int getOutEdge(DirectionResolverResult directionResolverResult, String curbSide) {
         switch (curbSide) {
-            case CURB_SIDE_RIGHT:
+            case CURBSIDE_RIGHT:
                 return directionResolverResult.getOutEdgeRight();
-            case CURB_SIDE_LEFT:
+            case CURBSIDE_LEFT:
                 return directionResolverResult.getOutEdgeLeft();
-            case CURB_SIDE_EITHER:
+            case CURBSIDE_ANY:
                 return ANY_EDGE;
             default:
-                throw new IllegalArgumentException("Unknown value for " + CURB_SIDE + " : " + curbSide + ". allowed: " + CURB_SIDE_LEFT + ", " + CURB_SIDE_RIGHT + ", " + CURB_SIDE_EITHER);
+                throw new IllegalArgumentException("Unknown value for " + CURBSIDE + " : " + curbSide + ". allowed: " + CURBSIDE_LEFT + ", " + CURBSIDE_RIGHT + ", " + CURBSIDE_ANY);
         }
     }
 
     public static int getInEdge(DirectionResolverResult directionResolverResult, String curbSide) {
         switch (curbSide) {
-            case CURB_SIDE_RIGHT:
+            case CURBSIDE_RIGHT:
                 return directionResolverResult.getInEdgeRight();
-            case CURB_SIDE_LEFT:
+            case CURBSIDE_LEFT:
                 return directionResolverResult.getInEdgeLeft();
-            case CURB_SIDE_EITHER:
+            case CURBSIDE_ANY:
                 return ANY_EDGE;
             default:
-                throw new IllegalArgumentException("Unknown value for " + CURB_SIDE + " : " + curbSide + ". allowed: " + CURB_SIDE_LEFT + ", " + CURB_SIDE_RIGHT + ", " + CURB_SIDE_EITHER);
+                throw new IllegalArgumentException("Unknown value for " + CURBSIDE + " : " + curbSide + ". allowed: " + CURBSIDE_LEFT + ", " + CURBSIDE_RIGHT + ", " + CURBSIDE_ANY);
         }
     }
 
