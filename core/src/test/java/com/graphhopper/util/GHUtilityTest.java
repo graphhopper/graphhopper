@@ -19,6 +19,7 @@ package com.graphhopper.util;
 
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -67,6 +68,19 @@ public class GHUtilityTest {
         return g;
     }
 
+    double getLengthOfAllEdges(Graph graph) {
+        double distance = 0;
+        DistanceCalc calc = new DistanceCalc2D();
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            // This is meant to verify that all of the same edges (including tower nodes)
+            // are included in the copied graph. Can not use iter.getDistance() since it
+            // does not verify new geometry. See #1732
+            distance += iter.fetchWayGeometry(3).calcDistance(calc);
+        }
+        return distance;
+    }
+
     @Test
     public void testSort() {
         Graph g = initUnsorted(createGraph());
@@ -80,6 +94,7 @@ public class GHUtilityTest {
         assertEquals(3.0, na.getLatitude(4), 1e-4); // 3
         assertEquals(5.0, na.getLatitude(5), 1e-4); // 7
         assertEquals(4.2, na.getLatitude(6), 1e-4); // 5
+        assertEquals(getLengthOfAllEdges(g), getLengthOfAllEdges(newG), 1e-4);
     }
 
     @Test
