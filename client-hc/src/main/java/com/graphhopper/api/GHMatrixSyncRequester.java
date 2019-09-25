@@ -45,31 +45,17 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
 
     @Override
     public MatrixResponse route(GHMRequest ghRequest) {
-        StringBuilder pointHintsStr = new StringBuilder();
-
         String pointsStr;
+        String pointHintsStr;
         if (ghRequest.identicalLists) {
             pointsStr = createPointQuery(ghRequest.getFromPoints(), "point");
-
-            for (String hint : ghRequest.getFromPointHints()) {
-                if (pointHintsStr.length() > 0)
-                    pointHintsStr.append("&");
-                pointHintsStr.append("point_hint=").append(encode(hint));
-            }
+            pointHintsStr = createUrlString("point_hint", ghRequest.getFromPointHints());
         } else {
             pointsStr = createPointQuery(ghRequest.getFromPoints(), "from_point");
             pointsStr += "&" + createPointQuery(ghRequest.getToPoints(), "to_point");
 
-            for (String hint : ghRequest.getFromPointHints()) {
-                if (pointHintsStr.length() > 0)
-                    pointHintsStr.append("&");
-                pointHintsStr.append("from_point_hint=").append(encode(hint));
-            }
-            for (String hint : ghRequest.getToPointHints()) {
-                if (pointHintsStr.length() > 0)
-                    pointHintsStr.append("&");
-                pointHintsStr.append("to_point_hint=").append(encode(hint));
-            }
+            pointHintsStr = createUrlString("from_point_hint", ghRequest.getFromPointHints());
+            pointHintsStr += "&" + createUrlString("to_point_hint", ghRequest.getToPointHints());
         }
 
         String outArrayStr = "";
@@ -117,6 +103,16 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
         }
 
         return matrixResponse;
+    }
+
+    private String createUrlString(String paramName, List<String> params) {
+        StringBuilder result = new StringBuilder();
+        for (String param : params) {
+            if (result.length() > 0)
+                result.append("&");
+            result.append(paramName).append('=').append(encode(param));
+        }
+        return result.toString();
     }
 
     private String createPointQuery(List<GHPoint> list, String pointName) {

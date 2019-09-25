@@ -39,6 +39,7 @@ public class GHRequest {
     // Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference
     private final List<Double> favoredHeadings;
     private List<String> pointHints = new ArrayList<>();
+    private List<String> curbSides = new ArrayList<>();
     private List<String> snapPreventions = new ArrayList<>();
     private List<String> pathDetails = new ArrayList<>();
     private String algo = "";
@@ -253,6 +254,19 @@ public class GHRequest {
 
     public boolean hasPointHints() {
         return pointHints.size() == points.size() && !points.isEmpty();
+    }
+
+    public GHRequest setCurbSides(List<String> curbSides) {
+        this.curbSides = curbSides;
+        return this;
+    }
+
+    public List<String> getCurbSides() {
+        return curbSides;
+    }
+
+    public boolean hasCurbSides() {
+        return curbSides.size() == points.size() && !points.isEmpty();
     }
 
     public GHRequest setSnapPreventions(List<String> snapPreventions) {
