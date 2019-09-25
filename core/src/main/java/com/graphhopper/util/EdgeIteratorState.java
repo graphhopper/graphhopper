@@ -22,6 +22,14 @@ import com.graphhopper.storage.IntsRef;
 
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
+ * Example:
+ * <span>
+ * EdgeExplorer expl = graph.createEdgeExplorer();
+ * EdgeIterator iter = expl.setBaseNode(baseNode);
+ * while(iter.next()) {
+ * iter.getBaseBase() // equals to the specified baseNode
+ * }
+ * </span>
  *
  * @author Peter Karich
  * @see EdgeIterator
@@ -77,10 +85,8 @@ public interface EdgeIteratorState {
     int getOrigEdgeLast();
 
     /**
-     * Returns the node used to instantiate the EdgeIterator. Example: "EdgeIterator iter =
-     * graph.getEdges(baseNode)". Often only used for convenience reasons. Do not confuse this with
-     * a <i>source node</i> of a directed edge.
-     * <p>
+     * Returns the node used to instantiate the EdgeIterator. Often only used for convenience reasons.
+     * Do not confuse this with a <i>source node</i> of a directed edge.
      *
      * @return the requested node itself
      * @see EdgeIterator
@@ -94,12 +100,11 @@ public interface EdgeIteratorState {
     int getAdjNode();
 
     /**
-     * For road network data like OSM a way is nearly always a curve not just a straight line. These
-     * nodes are called pillar nodes and are between tower nodes (which are used for routing), they
-     * are necessary to have a more exact geometry. See the docs for more information
+     * For road network data like OSM a way is often not just a straight line. The nodes between the junction nodes
+     * are called pillar nodes. The junction nodes are called tower nodes and used for routing. The pillar nodes are
+     * necessary to have an exact geometry. See the docs for more information
      * (docs/core/low-level-api.md#what-are-pillar-and-tower-nodes). Updates to the returned list
      * are not reflected in the graph, for that you've to use setWayGeometry.
-     * <p>
      *
      * @param mode can be <ul> <li>0 = only pillar nodes, no tower nodes</li> <li>1 = inclusive the
      *             base tower node only</li> <li>2 = inclusive the adjacent tower node only</li> <li>3 =
@@ -109,9 +114,9 @@ public interface EdgeIteratorState {
     PointList fetchWayGeometry(int mode);
 
     /**
-     * @param list is a sorted collection of nodes between the base node and the current adjacent node. Specify the list
-     *             without the adjacent and base node. This method can be called multiple times, but if the distance
-     *             changes, the setDistance method is not called automatically.
+     * @param list is a sorted collection of coordinates between the base node and the current adjacent node. Specify
+     *             the list without the adjacent and base node. This method can be called multiple times, but if the
+     *             distance changes, the setDistance method is not called automatically.
      */
     EdgeIteratorState setWayGeometry(PointList list);
 
