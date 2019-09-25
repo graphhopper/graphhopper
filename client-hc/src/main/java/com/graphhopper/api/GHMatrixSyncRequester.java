@@ -47,15 +47,20 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
     public MatrixResponse route(GHMRequest ghRequest) {
         String pointsStr;
         String pointHintsStr;
+        String curbSidesStr;
         if (ghRequest.identicalLists) {
-            pointsStr = createPointQuery(ghRequest.getFromPoints(), "point");
+            pointsStr = createPointQuery("point", ghRequest.getFromPoints());
             pointHintsStr = createUrlString("point_hint", ghRequest.getFromPointHints());
+            curbSidesStr = createUrlString("curbside", ghRequest.getFromCurbSides());
         } else {
-            pointsStr = createPointQuery(ghRequest.getFromPoints(), "from_point");
-            pointsStr += "&" + createPointQuery(ghRequest.getToPoints(), "to_point");
+            pointsStr = createPointQuery("from_point", ghRequest.getFromPoints());
+            pointsStr += "&" + createPointQuery("to_point", ghRequest.getToPoints());
 
             pointHintsStr = createUrlString("from_point_hint", ghRequest.getFromPointHints());
             pointHintsStr += "&" + createUrlString("to_point_hint", ghRequest.getToPointHints());
+
+            curbSidesStr = createUrlString("from_curbside", ghRequest.getFromCurbSides());
+            curbSidesStr += "&" + createUrlString("to_curbside", ghRequest.getToCurbSides());
         }
 
         String outArrayStr = "";
@@ -73,7 +78,8 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
         }
 
         String url = buildURL("", ghRequest);
-        url += "&" + pointsStr + "&" + pointHintsStr + "&" + outArrayStr;
+        // todonow: there should be some kind of test
+        url += "&" + pointsStr + "&" + pointHintsStr + "&" + curbSidesStr + "&" + outArrayStr;
         if (!Helper.isEmpty(ghRequest.getVehicle())) {
             url += "&vehicle=" + ghRequest.getVehicle();
         }
@@ -115,7 +121,7 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
         return result.toString();
     }
 
-    private String createPointQuery(List<GHPoint> list, String pointName) {
+    private String createPointQuery(String pointName, List<GHPoint> list) {
         StringBuilder pointsStr = new StringBuilder();
         for (GHPoint p : list) {
             if (pointsStr.length() > 0)
