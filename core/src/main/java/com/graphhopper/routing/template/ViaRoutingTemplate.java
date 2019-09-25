@@ -106,7 +106,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             }
         }
 
-        final boolean forceCurbSides = ghRequest.getHints().getBool(Routing.FORCE_CURBSIDES, true);
+        final boolean forceCurbSides = ghRequest.getHints().getBool(Routing.FORCE_CURBSIDE, true);
         QueryResult fromQResult = queryResults.get(0);
         StopWatch sw;
         for (int placeIndex = 1; placeIndex < pointsCount; placeIndex++) {

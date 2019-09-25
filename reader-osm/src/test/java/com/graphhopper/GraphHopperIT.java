@@ -1246,7 +1246,7 @@ public class GraphHopperIT {
     private GHResponse calcCurbSidePath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbSides, boolean force) {
         GHRequest req = new GHRequest(source, target);
         req.getHints().put(Routing.EDGE_BASED, true);
-        req.getHints().put(Routing.FORCE_CURBSIDES, force);
+        req.getHints().put(Routing.FORCE_CURBSIDE, force);
         req.setCurbSides(curbSides);
         return tmpHopper.route(req);
     }
