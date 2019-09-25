@@ -43,6 +43,7 @@ import org.junit.Test;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -244,7 +245,7 @@ public class RouteResourceTest {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load("http://localhost:8080/route"));
         GHRequest request = new GHRequest(42.542078, 1.45586, 42.537841, 1.439981);
-        request.setPathDetails(Arrays.asList("average_speed"));
+        request.setPathDetails(Collections.singletonList("average_speed"));
         GHResponse rsp = hopper.route(request);
         assertTrue(rsp.getErrors().toString(), rsp.hasErrors());
     }
@@ -299,7 +300,7 @@ public class RouteResourceTest {
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(490, rsp.getBest().getDistance(), 2);
 
-        request.setSnapPreventions(Arrays.asList("tunnel"));
+        request.setSnapPreventions(Collections.singletonList("tunnel"));
         rsp = hopper.route(request);
         assertEquals(1081, rsp.getBest().getDistance(), 2);
     }
@@ -309,13 +310,13 @@ public class RouteResourceTest {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load("http://localhost:8080/route"));
         GHRequest request = new GHRequest(42.511139, 1.53285, 42.508165, 1.532271);
-        request.setSnapPreventions(Arrays.asList("tunnel"));
+        request.setSnapPreventions(Collections.singletonList("tunnel"));
         request.setPointHints(Arrays.asList("Avinguda Fiter i Rossell", ""));
         GHResponse rsp = hopper.route(request);
         assertEquals(1590, rsp.getBest().getDistance(), 2);
 
         // contradicting hints should still allow routing
-        request.setSnapPreventions(Arrays.asList("tunnel"));
+        request.setSnapPreventions(Collections.singletonList("tunnel"));
         request.setPointHints(Arrays.asList("Tunèl del Pont Pla", ""));
         rsp = hopper.route(request);
         assertEquals(490, rsp.getBest().getDistance(), 2);

@@ -108,7 +108,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
     }
 
     @Override
-    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
+    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts, FlagEncoder encoder) {
         pathList = new ArrayList<>(queryResults.size() - 1);
 
         AvoidEdgesWeighting avoidPathWeighting = new AvoidEdgesWeighting(algoOpts.getWeighting());

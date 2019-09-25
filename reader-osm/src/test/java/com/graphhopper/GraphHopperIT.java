@@ -37,6 +37,8 @@ import java.io.File;
 import java.util.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
+import static com.graphhopper.util.Parameters.CurbSides.*;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.*;
 
 /**
@@ -244,14 +246,14 @@ public class GraphHopperIT {
         GHRequest req = new GHRequest(49.46553, 11.154669, 49.465244, 11.152577).
                 setVehicle("car").setWeighting("fastest");
 
-        req.setPointHints(new ArrayList<>(Arrays.asList("Laufamholzstraße, 90482, Nürnberg, Deutschland", "")));
+        req.setPointHints(new ArrayList<>(asList("Laufamholzstraße, 90482, Nürnberg, Deutschland", "")));
         GHResponse rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         GHPoint snappedPoint = rsp.getBest().getWaypoints().get(0);
         assertEquals(49.465686, snappedPoint.getLat(), .000001);
         assertEquals(11.154605, snappedPoint.getLon(), .000001);
 
-        req.setPointHints(new ArrayList<>(Arrays.asList("", "")));
+        req.setPointHints(new ArrayList<>(asList("", "")));
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         snappedPoint = rsp.getBest().getWaypoints().get(0);
@@ -259,7 +261,7 @@ public class GraphHopperIT {
         assertEquals(11.154498, snappedPoint.getLon(), .000001);
 
         // Match to closest edge, since hint was not found
-        req.setPointHints(new ArrayList<>(Arrays.asList("xy", "")));
+        req.setPointHints(new ArrayList<>(asList("xy", "")));
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         snappedPoint = rsp.getBest().getWaypoints().get(0);
@@ -1152,6 +1154,101 @@ public class GraphHopperIT {
         req.setVehicle("foot");
         GHResponse rsp = tmpHopper.route(req);
         assertEquals("there should not be an error, but was: " + rsp.getErrors(), 0, rsp.getErrors().size());
+    }
+
+    @Test
+    public void testCurbSides() {
+        GraphHopper h = new GraphHopperOSM().
+                setOSMFile(DIR + "/north-bayreuth.osm.gz").
+                setCHEnabled(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create("car|turn_costs=true"));
+        h.getCHFactoryDecorator()
+                .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE);
+        h.importOrLoad();
+
+        // depending on the curbside parameters we take very different routes
+        GHPoint p = new GHPoint(50.015072, 11.499145);
+        GHPoint q = new GHPoint(50.014141, 11.497552);
+        final String itz = "Itzgrund";
+        final String rotmain = "An den Rotmainauen";
+        final String bayreuth = "Bayreuther Straße, KU 18";
+        final String kulmbach = "Kulmbacher Straße, KU 18";
+        final String adamSeiler = "Adam-Seiler-Straße";
+        final String friedhof = "Friedhofsweg";
+        assertCurbSidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 344, asList(itz, rotmain, rotmain));
+        assertCurbSidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 1564, asList(itz, rotmain, rotmain, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, rotmain));
+        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 1199, asList(itz, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, itz, rotmain, rotmain));
+        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 266, asList(itz, bayreuth, rotmain));
+        // without restricting anything we get the shortest path
+        assertCurbSidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 266, asList(itz, bayreuth, rotmain));
+        assertCurbSidesPath(h, p, q, Collections.<String>emptyList(), 266, asList(itz, bayreuth, rotmain));
+    }
+
+    @Test
+    public void testForceCurbSides() {
+        GraphHopper h = new GraphHopperOSM().
+                setOSMFile(DIR + "/monaco.osm.gz").
+                setCHEnabled(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create("car|turn_costs=true"));
+        h.getCHFactoryDecorator()
+                .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE);
+        h.importOrLoad();
+
+        // depending on the curbside parameters we take very different routes
+        //    p
+        //    ---->----
+        //            q
+        GHPoint p = new GHPoint(43.738399, 7.420782);
+        GHPoint q = new GHPoint(43.737949, 7.423523);
+        final String boulevard = "Boulevard de Suisse";
+        final String avenue = "Avenue de la Costa";
+        assertCurbSidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), "Impossible curbside constraint: 'curbside=right' at point 0", true);
+        assertCurbSidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=right' at point 0", true);
+        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue));
+        assertCurbSidesPathError(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=left' at point 1", true);
+        // without restricting anything we get the shortest path
+        assertCurbSidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 463, asList(boulevard, avenue, avenue));
+        assertCurbSidesPath(h, p, q, Collections.<String>emptyList(), 463, asList(boulevard, avenue, avenue));
+        // if we set force_curbside to false impossible curbside constraints will be ignored
+        assertCurbSidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue), false);
+        assertCurbSidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 463, asList(boulevard, avenue, avenue), false);
+        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue), false);
+        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 463, asList(boulevard, avenue, avenue), false);
+    }
+
+    private void assertCurbSidesPath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbSides, int expectedDistance, List<String> expectedStreets) {
+        assertCurbSidesPath(tmpHopper, source, target, curbSides, expectedDistance, expectedStreets, true);
+    }
+
+    private void assertCurbSidesPath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbSides, int expectedDistance, List<String> expectedStreets, boolean force) {
+        GHResponse rsp = calcCurbSidePath(tmpHopper, source, target, curbSides, force);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        PathWrapper path = rsp.getBest();
+        List<String> streets = new ArrayList<>(path.getInstructions().size());
+        for (Instruction instruction : path.getInstructions()) {
+            if (!Helper.isEmpty(instruction.getName())) {
+                streets.add(instruction.getName());
+            }
+        }
+        assertEquals(expectedStreets, streets);
+        assertEquals(expectedDistance, path.getDistance(), 1);
+    }
+
+    private void assertCurbSidesPathError(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbSides, String errorMessage, boolean force) {
+        GHResponse rsp = calcCurbSidePath(tmpHopper, source, target, curbSides, force);
+        assertTrue(rsp.hasErrors());
+        assertTrue("unexpected error. expected message containing: " + errorMessage + ", but got: " +
+                rsp.getErrors(), rsp.getErrors().toString().contains(errorMessage));
+    }
+
+    private GHResponse calcCurbSidePath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbSides, boolean force) {
+        GHRequest req = new GHRequest(source, target);
+        req.getHints().put(Routing.EDGE_BASED, true);
+        req.getHints().put(Routing.FORCE_CURBSIDE, force);
+        req.setCurbSides(curbSides);
+        return tmpHopper.route(req);
     }
 
 }

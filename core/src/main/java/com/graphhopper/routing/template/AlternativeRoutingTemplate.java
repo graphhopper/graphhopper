@@ -59,12 +59,12 @@ final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
     }
 
     @Override
-    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
+    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts, FlagEncoder encoder) {
         boolean withViaTurnPenalty = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
         if (withViaTurnPenalty)
             throw new IllegalArgumentException("Alternative paths and " + PASS_THROUGH + " at the same time is currently not supported");
 
-        return super.calcPaths(queryGraph, algoFactory, algoOpts);
+        return super.calcPaths(queryGraph, algoFactory, algoOpts, encoder);
     }
 
     @Override
