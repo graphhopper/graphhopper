@@ -93,9 +93,9 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     @Override
     public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts, FlagEncoder encoder) {
         long visitedNodesSum = 0L;
-        boolean viaTurnPenalty = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
-        int pointCounts = ghRequest.getPoints().size();
-        pathList = new ArrayList<>(pointCounts - 1);
+        final boolean viaTurnPenalty = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
+        final int pointsCount = ghRequest.getPoints().size();
+        pathList = new ArrayList<>(pointsCount - 1);
 
         List<DirectionResolverResult> directions = Collections.emptyList();
         if (!ghRequest.getCurbSides().isEmpty()) {
@@ -109,7 +109,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         final boolean forceCurbSides = ghRequest.getHints().getBool(Routing.FORCE_CURBSIDES, true);
         QueryResult fromQResult = queryResults.get(0);
         StopWatch sw;
-        for (int placeIndex = 1; placeIndex < pointCounts; placeIndex++) {
+        for (int placeIndex = 1; placeIndex < pointsCount; placeIndex++) {
             if (placeIndex == 1) {
                 // enforce start direction
                 queryGraph.enforceHeading(fromQResult.getClosestNode(), ghRequest.getFavoredHeading(0), false);
@@ -179,7 +179,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         }
 
         ghResponse.getHints().put("visited_nodes.sum", visitedNodesSum);
-        ghResponse.getHints().put("visited_nodes.average", (float) visitedNodesSum / (pointCounts - 1));
+        ghResponse.getHints().put("visited_nodes.average", (float) visitedNodesSum / (pointsCount - 1));
 
         return pathList;
     }
