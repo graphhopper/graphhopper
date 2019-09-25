@@ -705,7 +705,9 @@ public class MapMatching {
             super(graph, weighting);
             int prevEdge = EdgeIterator.NO_EDGE;
             for (EdgeIteratorState edge : edges) {
-                processEdge(edge.getEdge(), edge.getAdjNode(), prevEdge);
+                addDistance(edge.getDistance());
+                addTime(weighting.calcMillis(edge, false, prevEdge));
+                addEdge(edge.getEdge());
                 prevEdge = edge.getEdge();
             }
             if (edges.isEmpty()) {
