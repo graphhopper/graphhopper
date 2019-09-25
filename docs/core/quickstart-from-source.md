@@ -6,7 +6,6 @@
 
 For a start which requires only the JRE have a look [here](../web/quickstart.md). 
 Windows user can find a quick guide [here](./windows-setup.md).
-People with IDE knowledge can directly jump to [Start Development](#start-development).
 
 To proceed install `git` and `openjdk8` or `openjdk11`. Get the a jdk from your package manager, 
 [AdoptOpenJDK](https://adoptopenjdk.net/) or [Red Hat](https://github.com/ojdkbuild/ojdkbuild/releases).
@@ -48,7 +47,9 @@ before running `graphhopper.sh`.
 
 ## Start Development
 
-Open the project in your IDE, first class IDEs are NetBeans and IntelliJ where no further setup is required.
+First you need to run the commands given in section [Try out](#try-out), if you have not done so yet.
+
+Then open the project in your IDE, first class IDEs are NetBeans and IntelliJ where no further setup is required.
 
 ### Running & Debbuging with IntelliJ
 
