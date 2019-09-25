@@ -157,7 +157,7 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
                 } else if (i == 0 && j == 3) {
                     assertTrue(connected);
                     assertEquals(4931, weight, 100);
-                    assertEquals(78643, distance, 100);
+                    assertEquals(78812, distance, 100);
                     assertEquals(3752000, time, 100000);
                 } else if (i == 3 && j == 0) {
                     assertTrue(connected);
