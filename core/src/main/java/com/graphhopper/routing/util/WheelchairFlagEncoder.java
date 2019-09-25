@@ -32,14 +32,10 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  * @author don-philipe
  */
 public class WheelchairFlagEncoder extends FootFlagEncoder {
-    static final int SLOW_SPEED = 2;
-    static final int MEAN_SPEED = 5;
-    static final int FERRY_SPEED = 15;
-    final Set<String> safeHighwayTags = new HashSet<>();
-    final Set<String> allowedHighwayTags = new HashSet<>();
-    final Set<String> avoidHighwayTags = new HashSet<>();
-    final Set<String> avoidSurfaces = new HashSet<>();
-    final Set<String> avoidSmoothness = new HashSet<>();
+    final Set<String> excludeSurfaces = new HashSet<>();
+    final Set<String> excludeSmoothness = new HashSet<>();
+    final float maxInclinePercent = 6;
+    final float maxKerbHeightCm = 3;
 
     /**
      * Should be only instantiated via EncodingManager
@@ -89,18 +85,16 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         avoidHighwayTags.add("steps");
         avoidHighwayTags.add("track");
 
-        avoidSurfaces.add("cobblestone");
-        avoidSurfaces.add("gravel");
-        avoidSurfaces.add("sand");
+        excludeSurfaces.add("cobblestone");
+        excludeSurfaces.add("gravel");
+        excludeSurfaces.add("sand");
 
-        avoidSmoothness.add("bad");
-        avoidSmoothness.add("very_bad");
-        avoidSmoothness.add("horrible");
-        avoidSmoothness.add("very_horrible");
-        avoidSmoothness.add("impassable");
+        excludeSmoothness.add("bad");
+        excludeSmoothness.add("very_bad");
+        excludeSmoothness.add("horrible");
+        excludeSmoothness.add("very_horrible");
+        excludeSmoothness.add("impassable");
 
-        // for now no explicit avoiding #257
-        //avoidHighwayTags.add("cycleway"); 
         allowedHighwayTags.addAll(safeHighwayTags);
         allowedHighwayTags.addAll(avoidHighwayTags);
         allowedHighwayTags.add("cycleway");
@@ -134,25 +128,61 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
             return EncodingManager.Access.CAN_SKIP;
         }
 
-        if (way.hasTag("surface", avoidSurfaces)) {
+        if (way.hasTag("surface", excludeSurfaces)) {
             if (!way.hasTag("sidewalk", sidewalkValues)) {
                 return EncodingManager.Access.CAN_SKIP;
             } else {
                 String sidewalk = way.getTag("sidewalk");
-                if (way.hasTag("sidewalk:" + sidewalk + ":surface", avoidSurfaces)) {
+                if (way.hasTag("sidewalk:" + sidewalk + ":surface", excludeSurfaces)) {
                     return EncodingManager.Access.CAN_SKIP;
                 }
             }
         }
 
-        if (way.hasTag("smoothness", avoidSmoothness)) {
+        if (way.hasTag("smoothness", excludeSmoothness)) {
             if (!way.hasTag("sidewalk", sidewalkValues)) {
                 return EncodingManager.Access.CAN_SKIP;
             } else {
                 String sidewalk = way.getTag("sidewalk");
-                if (way.hasTag("sidewalk:" + sidewalk + ":smoothness", avoidSmoothness)) {
+                if (way.hasTag("sidewalk:" + sidewalk + ":smoothness", excludeSmoothness)) {
                     return EncodingManager.Access.CAN_SKIP;
                 }
+            }
+        }
+
+        if (way.hasTag("incline")) {
+            String tagValue = way.getTag("incline");
+            if (tagValue.endsWith("%") || tagValue.endsWith("°")) {
+                try {
+                    double incline = Double.parseDouble(tagValue.substring(0, tagValue.length() - 1));
+                    if (tagValue.endsWith("°")) {
+                        incline = Math.tan(incline * Math.PI / 180) * 100;
+                    }
+
+                    if (-maxInclinePercent > incline || incline > maxInclinePercent) {
+                        return EncodingManager.Access.CAN_SKIP;
+                    }
+                } catch (NumberFormatException ex) { }
+            }
+        }
+
+        if (way.hasTag("kerb", "raised")) {
+            return EncodingManager.Access.CAN_SKIP;
+        }
+
+        if (way.hasTag("kerb")) {
+            String tagValue = way.getTag("kerb");
+            if (tagValue.endsWith("cm") || tagValue.endsWith("mm")) {
+                try {
+                    float kerbHeight = Float.parseFloat(tagValue.substring(0, tagValue.length() - 2));
+                    if (tagValue.endsWith("mm")) {
+                        kerbHeight /= 100;
+                    }
+
+                    if (kerbHeight > maxKerbHeightCm) {
+                        return EncodingManager.Access.CAN_SKIP;
+                    }
+                } catch (NumberFormatException ex) { }
             }
         }
 
@@ -167,14 +197,13 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
 
         if (!access.isFerry()) {
             speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED);
-            accessEnc.setBool(false, edgeFlags, true);
-            accessEnc.setBool(true, edgeFlags, true);
         } else {
             double ferrySpeed = getFerrySpeed(way);
             setSpeed(false, edgeFlags, ferrySpeed);
-            accessEnc.setBool(false, edgeFlags, true);
-            accessEnc.setBool(true, edgeFlags, true);
         }
+
+        accessEnc.setBool(false, edgeFlags, true);
+        accessEnc.setBool(true, edgeFlags, true);
 
         return edgeFlags;
     }
@@ -194,6 +223,8 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
 
         if (way.hasTag("wheelchair", "designated")) {
             weightToPrioMap.put(102d, VERY_NICE.getValue());
+        } else if (way.hasTag("wheelchair", "limited")) {
+            weightToPrioMap.put(102d, REACH_DEST.getValue());
         }
 
         return weightToPrioMap.lastEntry().getValue();

@@ -241,6 +241,49 @@ public class WheelchairFlagEncoderTest {
         way.clearTags();
         way.setTag("sac_scale", "hiking");
         assertTrue(wheelchairEncoder.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "footway");
+        assertTrue(wheelchairEncoder.getAccess(way).isWay());
+        way.setTag("incline", "up");
+        assertTrue(wheelchairEncoder.getAccess(way).isWay());
+        way.setTag("incline", "3%");
+        assertTrue(wheelchairEncoder.getAccess(way).isWay());
+        way.setTag("incline", "9.1%");
+        assertTrue(wheelchairEncoder.getAccess(way).canSkip());
+        way.setTag("incline", "1°");
+        assertTrue(wheelchairEncoder.getAccess(way).isWay());
+        way.setTag("incline", "5°");
+        assertTrue(wheelchairEncoder.getAccess(way).canSkip());
+        way.setTag("incline", "-4%");
+        assertTrue(wheelchairEncoder.getAccess(way).isWay());
+        way.setTag("incline", "-9%");
+        assertTrue(wheelchairEncoder.getAccess(way).canSkip());
+        way.setTag("incline", "-3°");
+        assertTrue(wheelchairEncoder.getAccess(way).isWay());
+        way.setTag("incline", "-6.5°");
+        assertTrue(wheelchairEncoder.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "footway");
+        way.setTag("wheelchair", "no");
+        assertTrue(wheelchairEncoder.getAccess(way).canSkip());
+        way.setTag("wheelchair", "limited");
+        assertTrue(wheelchairEncoder.getAccess(way).isWay());
+
+        way.clearTags();
+        way.setTag("highway", "footway");
+        assertTrue(wheelchairEncoder.getAccess(way).isWay());
+        way.setTag("kerb", "lowered");
+        assertTrue(wheelchairEncoder.getAccess(way).isWay());
+        way.setTag("kerb", "raised");
+        assertTrue(wheelchairEncoder.getAccess(way).canSkip());
+        way.setTag("kerb", "2cm");
+        assertTrue(wheelchairEncoder.getAccess(way).isWay());
+        way.setTag("kerb", "4cm");
+        assertTrue(wheelchairEncoder.getAccess(way).canSkip());
+        way.setTag("kerb", "20mm");
+        assertTrue(wheelchairEncoder.getAccess(way).isWay());
     }
 
     @Test
@@ -334,6 +377,12 @@ public class WheelchairFlagEncoderTest {
         assertEquals(PriorityCode.PREFER.getValue(), wheelchairEncoder.handlePriority(way, 0));
         way.setTag("wheelchair", "designated");
         assertEquals(PriorityCode.VERY_NICE.getValue(), wheelchairEncoder.handlePriority(way, 0));
+
+        way.clearTags();
+        way.setTag("highway", "footway");
+        assertEquals(PriorityCode.PREFER.getValue(), wheelchairEncoder.handlePriority(way, 0));
+        way.setTag("wheelchair", "limited");
+        assertEquals(PriorityCode.REACH_DEST.getValue(), wheelchairEncoder.handlePriority(way, 0));
     }
 
     @Test
