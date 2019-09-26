@@ -21,9 +21,7 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -39,8 +37,8 @@ import static org.junit.Assert.*;
  * @author don-philipe
  */
 public class WheelchairFlagEncoderTest {
-    private final EncodingManager encodingManager = EncodingManager.create("car,bike,wheelchair");
-    private final FootFlagEncoder wheelchairEncoder = (FootFlagEncoder) encodingManager.getEncoder("wheelchair");
+    private final EncodingManager encodingManager = EncodingManager.create("car,bike,wheelchair", 8);
+    private final WheelchairFlagEncoder wheelchairEncoder = (WheelchairFlagEncoder) encodingManager.getEncoder("wheelchair");
     private final DecimalEncodedValue wheelchairAvSpeedEnc = wheelchairEncoder.getAverageSpeedEnc();
     private final BooleanEncodedValue wheelchairAccessEnc = wheelchairEncoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnc = encodingManager.getEncoder("car").getAverageSpeedEnc();
@@ -547,5 +545,45 @@ public class WheelchairFlagEncoderTest {
 
         way.setTag("sidewalk:both:smoothness", "horrible");
         assertTrue(wheelchairEncoder.getAccess(way).canSkip());
+    }
+
+    private Graph initExampleGraph() {
+        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension()).create(1000);
+        NodeAccess na = gs.getNodeAccess();
+        // incline of 5% over all
+        na.setNode(0, 51.1, 12.001, 50);
+        na.setNode(1, 51.1, 12.002, 55);
+        EdgeIteratorState edge0 = gs.edge(0, 1).setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
+        edge0.setDistance(100);
+        GHUtility.setProperties(edge0, wheelchairEncoder, 5, 5);
+
+        // incline of 10% over all
+        na.setNode(2, 51.2, 12.101, 50);
+        na.setNode(3, 51.2, 12.102, 60);
+        EdgeIteratorState edge1 = gs.edge(2, 3).setWayGeometry(Helper.createPointList3D(51.2, 12.1011, 49, 51.2, 12.1015, 55));
+        edge1.setDistance(100);
+        GHUtility.setProperties(edge1, wheelchairEncoder, 5, 5);
+        return gs;
+    }
+
+    @Test
+    public void testApplyWayTags() {
+        Graph graph = initExampleGraph();
+
+        EdgeIteratorState edge0 = GHUtility.getEdge(graph, 0, 1);
+        ReaderWay way0 = new ReaderWay(1);
+        wheelchairEncoder.applyWayTags(way0, edge0);
+
+        IntsRef flags0 = edge0.getFlags();
+        assertEquals(2, wheelchairEncoder.getSpeed(false, flags0), 1e-1);
+        assertEquals(5, wheelchairEncoder.getSpeed(true, flags0), 1e-1);
+
+        EdgeIteratorState edge1 = GHUtility.getEdge(graph, 2, 3);
+        ReaderWay way1 = new ReaderWay(2);
+        wheelchairEncoder.applyWayTags(way1, edge1);
+
+        IntsRef flags1 = edge1.getFlags();
+        assertEquals(0, wheelchairEncoder.getSpeed(false, flags1), 1e-1);
+        assertEquals(0, wheelchairEncoder.getSpeed(true, flags1), 1e-1);
     }
 }

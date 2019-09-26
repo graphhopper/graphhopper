@@ -18,11 +18,16 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.UnsignedDecimalEncodedValue;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.PointList;
 
 import java.util.*;
 
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
@@ -34,8 +39,9 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 public class WheelchairFlagEncoder extends FootFlagEncoder {
     final Set<String> excludeSurfaces = new HashSet<>();
     final Set<String> excludeSmoothness = new HashSet<>();
-    final float maxInclinePercent = 6;
-    final float maxKerbHeightCm = 3;
+    final int maxInclinePercent = 6;
+    final int smallInclinePercent = 3;
+    final int maxKerbHeightCm = 3;
 
     /**
      * Should be only instantiated via EncodingManager
@@ -109,6 +115,25 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     @Override
     public int getVersion() {
         return 1;
+    }
+
+    /**
+     * Remove speedEncoder from super class FootFlagEncoder and add a speedEncoder which supports two directions for
+     * speed calculation at slopes.
+     * @param registerNewEncodedValue
+     * @param prefix
+     * @param index
+     */
+    @Override
+    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
+        super.createEncodedValues(registerNewEncodedValue, prefix, index);
+        for (int i = 0; i < registerNewEncodedValue.size(); i++) {
+            if (registerNewEncodedValue.get(i).getName().endsWith("average_speed")) {
+                registerNewEncodedValue.remove(i);
+                registerNewEncodedValue.add(speedEncoder = new UnsignedDecimalEncodedValue(
+                        getKey(prefix, "average_speed"), speedBits, speedFactor, true));
+            }
+        }
     }
 
     /**
@@ -206,6 +231,55 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         accessEnc.setBool(true, edgeFlags, true);
 
         return edgeFlags;
+    }
+
+    /**
+     * Calculate slopes from elevation data and set speed according to that. In-/declines between smallInclinePercent
+     * and maxInclinePercent will reduce speed to SLOW_SPEED. In-/declines above maxInclinePercent will result in zero
+     * speed.
+     * @param way
+     * @param edge
+     */
+    @Override
+    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
+        PointList pl = edge.fetchWayGeometry(3);
+
+        double prevEle = pl.getElevation(0);
+        double fullDist2D = edge.getDistance();
+
+        if (Double.isInfinite(fullDist2D)) {
+            throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
+        }
+
+        if (fullDist2D < 1) {
+            return;
+        }
+
+        double eleDelta = pl.getElevation(pl.size() - 1) - prevEle;
+        if (eleDelta > smallInclinePercent && eleDelta < maxInclinePercent) {
+            setFwdBwdSpeed(edge, SLOW_SPEED, MEAN_SPEED);
+        } else if (eleDelta > maxInclinePercent) {
+            setFwdBwdSpeed(edge, 0, 0);
+        } else if (eleDelta < -smallInclinePercent && eleDelta > -maxInclinePercent) {
+            setFwdBwdSpeed(edge, MEAN_SPEED, SLOW_SPEED);
+        } else if (eleDelta < -maxInclinePercent) {
+            setFwdBwdSpeed(edge, 0, 0);
+        }
+    }
+
+    /**
+     * Can set the given speed values to the given edge depending on the forward and backward accessibility of the edge.
+     * @param edge the edge to set speed for
+     * @param fwdSpeed speed value in forward direction
+     * @param bwdSpeed speed value in backward direction
+     */
+    private void setFwdBwdSpeed(EdgeIteratorState edge, int fwdSpeed, int bwdSpeed) {
+        if (accessEnc.getBool(false, edge.getFlags())) {
+            setSpeed(false, edge.getFlags(), fwdSpeed);
+        }
+        if (accessEnc.getBool(true, edge.getFlags())) {
+            setSpeed(true, edge.getFlags(), bwdSpeed);
+        }
     }
 
     /**
