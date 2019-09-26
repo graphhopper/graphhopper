@@ -189,10 +189,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public boolean acceptsTurnRelation(OSMTurnRelation relation) {
-        if (relation.isVehicleTypeConcernedByTurnRestriction(restrictions)) {
-            return true;
-        }
-        return false;
+        return relation.isVehicleTypeConcernedByTurnRestriction(restrictions);
     }
 
     @Override

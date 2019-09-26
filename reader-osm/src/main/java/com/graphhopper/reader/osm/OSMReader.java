@@ -917,7 +917,7 @@ public class OSMReader implements DataReader {
             if (fromWayID >= 0 && toWayID >= 0 && viaNodeID >= 0) {
                 OSMTurnRelation osmTurnRelation = new OSMTurnRelation(fromWayID, viaNodeID, toWayID, type);
                 osmTurnRelation.setVehicleTypeRestricted(vehicleTypeRestricted);
-                osmTurnRelation.addVehicleTypesExcept(vehicleTypesExcept);
+                osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
                 return osmTurnRelation;
             }
         }

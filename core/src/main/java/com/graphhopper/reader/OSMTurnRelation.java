@@ -72,7 +72,7 @@ public class OSMTurnRelation {
         return vehicleTypesExcept;
     }
 
-    public void addVehicleTypesExcept(List<String> vehicleTypesExcept) {
+    public void setVehicleTypesExcept(List<String> vehicleTypesExcept) {
         this.vehicleTypesExcept = vehicleTypesExcept;
     }
 
@@ -83,29 +83,11 @@ public class OSMTurnRelation {
      * @return
      */
     public boolean isVehicleTypeConcernedByTurnRestriction(List<String> vehicleTypes) {
-        if (vehicleTypeRestricted.isEmpty() && vehicleTypesExcept.isEmpty()) {
-            //normal turn restriction, not dedicated to a vehicle type
-            return true;
-        }
-        for (String vehicleType : vehicleTypes) {
-            if (!vehicleTypeRestricted.isEmpty()) {
-                if (vehicleTypeRestricted.equals(vehicleType)) {
-                    //turn restriction dedicated to vehicleType, for example: restriction:bus = no_left_turn
-                    return true;
-                }
-            }
-            if (!vehicleTypesExcept.isEmpty()) {
-                if (vehicleTypesExcept.contains(vehicleType)) {
-                    //turn restriction except for vehicleType
-                    return false;
-                }
-            }
-        }
-        if (!vehicleTypeRestricted.isEmpty()) {
-            //turn restriction dedicated to a vehicle type not found in vehicleTypes
+        // if the restriction explicitly does not apply for one of the vehicles we do not accept it
+        if (!Collections.disjoint(vehicleTypes, vehicleTypesExcept)) {
             return false;
         }
-        return true;
+        return vehicleTypeRestricted.isEmpty() || vehicleTypes.contains(vehicleTypeRestricted);
     }
 
     @Override
