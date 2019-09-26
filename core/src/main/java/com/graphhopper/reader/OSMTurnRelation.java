@@ -79,8 +79,6 @@ public class OSMTurnRelation {
     /**
      * For a conditional turn restriction, test each vehicle type to verify if it is concerned.
      * For a normal turn restriction (non conditional), the restriction is necessary considered.
-     * @param vehicleTypes
-     * @return
      */
     public boolean isVehicleTypeConcernedByTurnRestriction(List<String> vehicleTypes) {
         // if the restriction explicitly does not apply for one of the vehicles we do not accept it
