@@ -140,11 +140,14 @@ public class Measurement {
             maxNode = g.getNodes();
             boolean isCH = false;
             boolean isLM = false;
+            final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
-            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr,
-                    true, false, -1, true, false);
+            if (runSlow) {
+                printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr,
+                        true, false, -1, true, false);
+            }
 
             if (hopper.getLMFactoryDecorator().isEnabled()) {
                 System.gc();
@@ -429,6 +432,7 @@ public class Measurement {
 
         final EdgeExplorer edgeExplorer = g.createEdgeExplorer(DefaultEdgeFilter.allEdges(hopper.getEncodingManager().getEncoder(vehicle)));
         final AtomicLong visitedNodesSum = new AtomicLong(0);
+        final AtomicLong maxVisitedNodes = new AtomicLong(0);
 //        final AtomicLong extractTimeSum = new AtomicLong(0);
 //        final AtomicLong calcPointsTimeSum = new AtomicLong(0);
 //        final AtomicLong calcDistTimeSum = new AtomicLong(0);
@@ -496,7 +500,12 @@ public class Measurement {
 
                 PathWrapper arsp = rsp.getBest();
                 if (!warmup) {
-                    visitedNodesSum.addAndGet(rsp.getHints().getLong("visited_nodes.sum", 0));
+                    long visitedNodes = rsp.getHints().getLong("visited_nodes.sum", 0);
+                    visitedNodesSum.addAndGet(visitedNodes);
+                    if (visitedNodes > maxVisitedNodes.get()) {
+                        maxVisitedNodes.set(visitedNodes);
+                    }
+
                     long dist = (long) arsp.getDistance();
                     distSum.addAndGet(dist);
 
@@ -532,6 +541,7 @@ public class Measurement {
         put(prefix + ".air_distance_mean", (float) airDistSum.get() / count);
         put(prefix + ".distance_max", maxDistance.get());
         put(prefix + ".visited_nodes_mean", (float) visitedNodesSum.get() / count);
+        put(prefix + ".visited_nodes_max", (float) maxVisitedNodes.get());
 
 //        put(prefix + ".extractTime", (float) extractTimeSum.get() / count / 1000000f);
 //        put(prefix + ".calcPointsTime", (float) calcPointsTimeSum.get() / count / 1000000f);

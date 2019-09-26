@@ -1,13 +1,12 @@
 package com.graphhopper.routing.util.parsers;
 
-import static org.junit.Assert.assertEquals;
-
+import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import org.junit.Test;
 
-import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
+import static org.junit.Assert.assertEquals;
 
 public class OSMValueExtractorTest {
-    
+
     private final double DELTA = 0.1;
 
     @Test
@@ -20,6 +19,7 @@ public class OSMValueExtractorTest {
         assertEquals(1.5, OSMValueExtractor.stringToTons("3306.9 lbs"), DELTA);
         assertEquals(3, OSMValueExtractor.stringToTons("3 T"), DELTA);
         assertEquals(3, OSMValueExtractor.stringToTons("3ton"), DELTA);
+        assertEquals(10, OSMValueExtractor.stringToTons("10000 kg"), 0.1);
 
         // maximum gross weight
         assertEquals(6, OSMValueExtractor.stringToTons("6t mgw"), DELTA);
@@ -55,6 +55,8 @@ public class OSMValueExtractorTest {
 
         assertEquals(2.743, OSMValueExtractor.stringToMeter("9'"), DELTA);
         assertEquals(2.743, OSMValueExtractor.stringToMeter("9 feet"), DELTA);
+
+        assertEquals(1.5, OSMValueExtractor.stringToMeter("150 cm"), 0.01);
     }
 
     @Test(expected = NumberFormatException.class)
