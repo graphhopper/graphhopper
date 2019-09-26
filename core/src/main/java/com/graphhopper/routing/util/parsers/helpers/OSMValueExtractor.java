@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import static com.graphhopper.util.Helper.isEmpty;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class OSMValueExtractor {
@@ -21,8 +20,6 @@ public class OSMValueExtractor {
 
     public static void extractTons(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys, boolean enableLog) {
         String value = way.getFirstPriorityTag(keys);
-        if (isEmpty(value))
-            return;
         try {
             double val = stringToTons(value);
             if (val > valueEncoder.getMaxDecimal())
@@ -35,8 +32,8 @@ public class OSMValueExtractor {
     }
 
     public static double stringToTons(String value) {
-        value = toLowerCase(value).replaceAll("(tons|ton)", "t");
-        value = value.replace("mgw", "").trim();
+        value = toLowerCase(value).replaceAll("(tons|ton)", "t").
+                replace("mgw", "").trim();
         if (isInvalid(value))
             throw new NumberFormatException("Cannot parse value for 'tons': " + value);
 
@@ -56,8 +53,6 @@ public class OSMValueExtractor {
 
     public static void extractMeter(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys, boolean enableLog) {
         String value = way.getFirstPriorityTag(keys);
-        if (isEmpty(value))
-            return;
         try {
             double val = stringToMeter(value);
             if (val > valueEncoder.getMaxDecimal())
@@ -70,13 +65,12 @@ public class OSMValueExtractor {
     }
 
     public static double stringToMeter(String value) {
-        value = toLowerCase(value).replaceAll(" ", "").replaceAll("(meters|meter|mtrs|mtr|mt|m\\.)", "m");
+        value = toLowerCase(value).replaceAll(" ", "").replaceAll("(meters|meter|mtrs|mtr|mt|m\\.)", "m").
+                replaceAll("(\"|\'\')", "in").replaceAll("(\'|feet)", "ft");
         if (isInvalid(value))
             throw new NumberFormatException("Cannot parse value for 'meter': " + value);
-
         double factor = 1;
         double offset = 0;
-        value = value.replaceAll("(\"|\'\')", "in").replaceAll("(\'|feet)", "ft");
         if (value.startsWith("~") || value.contains("approx")) {
             value = value.replaceAll("(~|approx)", "").trim();
             factor = 0.8;
