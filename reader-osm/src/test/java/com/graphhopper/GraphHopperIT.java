@@ -1182,6 +1182,7 @@ public class GraphHopperIT {
         assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 266, asList(itz, bayreuth, rotmain));
         // without restricting anything we get the shortest path
         assertCurbSidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 266, asList(itz, bayreuth, rotmain));
+        assertCurbSidesPath(h, p, q, asList(CURBSIDE_ANY, ""), 266, asList(itz, bayreuth, rotmain));
         assertCurbSidesPath(h, p, q, Collections.<String>emptyList(), 266, asList(itz, bayreuth, rotmain));
     }
 

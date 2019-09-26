@@ -61,6 +61,9 @@ public class DirectionResolverResult {
     }
 
     public static int getOutEdge(DirectionResolverResult directionResolverResult, String curbSide) {
+        if (curbSide.trim().isEmpty()) {
+            curbSide = CURBSIDE_ANY;
+        }
         switch (curbSide) {
             case CURBSIDE_RIGHT:
                 return directionResolverResult.getOutEdgeRight();
@@ -69,11 +72,14 @@ public class DirectionResolverResult {
             case CURBSIDE_ANY:
                 return ANY_EDGE;
             default:
-                throw new IllegalArgumentException("Unknown value for " + CURBSIDE + " : " + curbSide + ". allowed: " + CURBSIDE_LEFT + ", " + CURBSIDE_RIGHT + ", " + CURBSIDE_ANY);
+                throw new IllegalArgumentException("Unknown value for " + CURBSIDE + " : '" + curbSide + "'. allowed: " + CURBSIDE_LEFT + ", " + CURBSIDE_RIGHT + ", " + CURBSIDE_ANY);
         }
     }
 
     public static int getInEdge(DirectionResolverResult directionResolverResult, String curbSide) {
+        if (curbSide.trim().isEmpty()) {
+            curbSide = CURBSIDE_ANY;
+        }
         switch (curbSide) {
             case CURBSIDE_RIGHT:
                 return directionResolverResult.getInEdgeRight();
@@ -82,7 +88,7 @@ public class DirectionResolverResult {
             case CURBSIDE_ANY:
                 return ANY_EDGE;
             default:
-                throw new IllegalArgumentException("Unknown value for " + CURBSIDE + " : " + curbSide + ". allowed: " + CURBSIDE_LEFT + ", " + CURBSIDE_RIGHT + ", " + CURBSIDE_ANY);
+                throw new IllegalArgumentException("Unknown value for '" + CURBSIDE + " : " + curbSide + "'. allowed: " + CURBSIDE_LEFT + ", " + CURBSIDE_RIGHT + ", " + CURBSIDE_ANY);
         }
     }
 
