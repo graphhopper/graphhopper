@@ -29,3 +29,16 @@ the value of `u_turn_costs` freely.
 
 While OSM data only contains turn *restrictions*, the GraphHopper routing engine can also deal with turn *costs*, i.e.
 you can specify custom turn costs for each turn at each junction.
+
+Conditional turn restriction are supported. For example, the following no left turn restriction concerns only bus :
+
+> type=restriction  
+> restriction:bus=no_left_turn
+
+Another example, using the *except* tag, means only *bicycle* are allowed to turn left:
+
+> type=restriction  
+> restriction=no_left_turn  
+> except=bicycle
+
+You can overwrite `FlagEncoder#acceptsTurnRelation` to change the default handling of turn restrictions in your customized vehicle profile.
