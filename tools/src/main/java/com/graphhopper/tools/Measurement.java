@@ -140,11 +140,11 @@ public class Measurement {
             maxNode = g.getNodes();
             boolean isCH = false;
             boolean isLM = false;
-            final boolean withoutSpeedup = args.getBool("measurement.without_speedup", true);
+            final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
-            if (!withoutSpeedup) {
+            if (runSlow) {
                 printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr,
                         true, false, -1, true, false);
             }
