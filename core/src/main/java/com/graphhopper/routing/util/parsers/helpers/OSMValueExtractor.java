@@ -35,7 +35,7 @@ public class OSMValueExtractor {
     }
 
     public static double stringToTons(String value) {
-        value = value.toLowerCase().replaceAll("(tons|ton)", "t");
+        value = toLowerCase(value).replaceAll("(tons|ton)", "t");
         value = value.replace("mgw", "").trim();
         if (isInvalid(value))
             throw new NumberFormatException("Cannot parse value for 'tons': " + value);
@@ -114,7 +114,7 @@ public class OSMValueExtractor {
     }
 
     static boolean isInvalid(String value) {
-        value = value.toLowerCase();
+        value = toLowerCase(value);
         return value.isEmpty() || value.startsWith("default") || value.equals("none") || value.equals("unknown")
                 || value.contains("unrestricted") || value.startsWith("〜")
                 || value.contains("narrow") || value.equals("unsigned") || value.equals("fixme") || value.equals("small")
