@@ -19,6 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
+import com.carrotsearch.hppc.predicates.IntPredicate;
 import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
@@ -73,6 +74,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private float[] oldPriorities;
     private PMap pMap = new PMap();
     private int checkCounter;
+    private IntPredicate allowContraction = new IntPredicate() {
+        @Override
+        public boolean apply(int node) {
+            return true;
+        }
+    };
 
     public PrepareContractionHierarchies(CHGraph chGraph) {
         this.prepareGraph = chGraph;
@@ -108,6 +115,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                             " must be equal to number of nodes in graph (" + prepareGraph.getNodes() + ").");
         }
         this.nodeOrderingProvider = nodeOrderingProvider;
+        return this;
+    }
+
+    public PrepareContractionHierarchies useNodeFilter(IntPredicate allowContraction) {
+        this.allowContraction = allowContraction;
         return this;
     }
 
@@ -252,7 +264,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         // according to paper "Polynomial-time Construction of Contraction Hierarchies for Multi-criteria Objectives" by Funke and Storandt
         // we don't need to wait for all nodes to be contracted
-        final long nodesToAvoidContract = Math.round(initSize * ((100 - params.getNodesContractedPercentage()) / 100d));
+        final long nodesToAvoidContract = 0;
 
         // Recompute priority of (the given percentage of) uncontracted neighbors. Doing neighbor updates takes additional
         // time during preparation but keeps node priorities more up to date. this potentially improves query time and
@@ -261,6 +273,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         while (!sortedNodes.isEmpty()) {
             stopIfInterrupted();
+
             // periodically update priorities of ALL nodes
             if (checkCounter > 0 && checkCounter % periodicUpdatesCount == 0) {
                 updatePrioritiesOfRemainingNodes();
@@ -275,6 +288,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             checkCounter++;
             int polledNode = sortedNodes.pollKey();
+
+            if (!allowContraction.apply(polledNode)) {
+                continue;
+            }
 
             if (!sortedNodes.isEmpty() && sortedNodes.getSize() < lastNodesLazyUpdates) {
                 lazyUpdateSW.start();
@@ -450,7 +467,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private float calculatePriority(int node) {
-        return nodeContractor.calculatePriority(node);
+        if (allowContraction.apply(node)) {
+            return nodeContractor.calculatePriority(node);
+        } else {
+            return Integer.MAX_VALUE;
+        }
     }
 
     @Override

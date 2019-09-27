@@ -18,7 +18,9 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.carrotsearch.hppc.predicates.IntPredicate;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -294,6 +296,108 @@ public class PrepareContractionHierarchiesTest {
         Path p = algo.calcPath(4, 7);
         assertEquals(IntArrayList.from(4, 5, 6, 7), p.calcNodes());
     }
+
+    @Test
+    public void testCustomizableCore() {
+        GraphHopperStorage g = createGHStorage();
+        CHGraph lg = g.getCHGraph();
+        //              roundabout:
+        //16-0-9-10--11   12<-13
+        //    \       \  /      \
+        //    17       \|        7-8-..
+        // -15-1--2--3--4       /     /
+        //     /         \-5->6/     /
+        //  -14            \________/
+
+        g.edge(16, 0, 1, true);
+        EdgeIteratorState edge0_9 = g.edge(0, 9, 1, true);
+        g.edge(0, 17, 1, true);
+        g.edge(9, 10, 1, true);
+        g.edge(10, 11, 1, true);
+        g.edge(11, 28, 1, true);
+        g.edge(28, 29, 1, true);
+        EdgeIteratorState edge29_30 = g.edge(29, 30, 1, true);
+        g.edge(30, 31, 1, true);
+        g.edge(31, 4, 1, true);
+
+        g.edge(17, 1, 1, true);
+        g.edge(15, 1, 1, true);
+        g.edge(14, 1, 1, true);
+        g.edge(14, 18, 1, true);
+        g.edge(18, 19, 1, true);
+        g.edge(19, 20, 1, true);
+        g.edge(20, 15, 1, true);
+        g.edge(19, 21, 1, true);
+        g.edge(21, 16, 1, true);
+        g.edge(1, 2, 1, true);
+        EdgeIteratorState edge2_3 = g.edge(2, 3, 1, true);
+        g.edge(3, 4, 1, true);
+
+        g.edge(4, 5, 1, false);
+        g.edge(5, 6, 1, false);
+        g.edge(6, 7, 1, false);
+        g.edge(7, 13, 1, false);
+        g.edge(13, 12, 1, false);
+        g.edge(12, 4, 1, false);
+
+        g.edge(7, 8, 1, true);
+        g.edge(8, 22, 1, true);
+        g.edge(22, 23, 1, true);
+        g.edge(23, 24, 1, true);
+        g.edge(24, 25, 1, true);
+        g.edge(25, 27, 1, true);
+        g.edge(27, 5, 1, true);
+        g.edge(25, 26, 1, false);
+        g.edge(26, 25, 1, false);
+
+        // Make three edges customizable by
+        // a) marking their incident nodes to belong to an uncontractable core
+        //      (so their edges are never parts of shortcuts)
+        // b) giving the edges a high weight, so that they don't lie on witness paths,
+        //    preventing necessary shortcuts from being created
+        //      (this should mean we can customize those edges from 0 to 1000 without losing correctness)
+
+        final IntHashSet blockedNodes = new IntHashSet();
+        blockedNodes.add(2);
+        blockedNodes.add(3);
+        blockedNodes.add(0);
+        blockedNodes.add(9);
+        blockedNodes.add(29);
+        blockedNodes.add(30);
+
+        edge2_3.setDistance(1000.0);
+        edge0_9.setDistance(1000.0);
+        edge29_30.setDistance(1000.0);
+
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        prepare.useNodeFilter(new IntPredicate() {
+            @Override
+            public boolean apply(int node) {
+                return !blockedNodes.contains(node);
+            }
+        });
+
+        prepare.doWork();
+
+        RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
+        Path p = algo.calcPath(4, 7);
+        assertEquals(IntArrayList.from(4, 5, 6, 7), p.calcNodes());
+
+        RoutingAlgorithm wurst = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
+        Path path = wurst.calcPath(1, 4);
+        System.out.println(path.calcNodes());
+
+        // edge.setDistance(1.0);
+        edge0_9.setDistance(1.0);
+        edge29_30.setDistance(1.0);
+
+
+        RoutingAlgorithm pups = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
+        Path pupsPath = pups.calcPath(1, 4);
+        System.out.println(pupsPath.calcNodes());
+
+    }
+
 
     void initUnpackingGraph(GraphHopperStorage ghStorage, CHGraph g, Weighting w) {
         final IntsRef edgeFlags = encodingManager.createEdgeFlags();
