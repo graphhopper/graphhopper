@@ -65,6 +65,19 @@ public class PolygonTest {
         assertFalse(squareHole.contains(1.5,1.5));
         assertFalse(squareHole.contains(0.5,1.5));
 
+        /*
+         * |----|
+         * | /\ |
+         * |/  \|
+         */
+        square = new Polygon(new double[]{1, 1, 2, 1.1, 2}, new double[]{1, 2, 2, 1.5, 1});
+
+        assertTrue(square.contains(1.5, 1.5));
+        assertFalse(square.contains(0.5, 0.5));
+        assertFalse(square.contains(0.5, 1.5));
+        assertFalse(square.contains(2.5, 1.5));
+        assertFalse(square.contains(1.5, 0.5));
+        assertFalse(square.contains(1.5, 2.5));
     }
 
 }
