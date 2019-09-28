@@ -24,10 +24,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
-import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
-import com.graphhopper.routing.profiles.EncodedValueFactory;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -644,6 +641,16 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new RuntimeException("Cannot read file " + getDataReaderFile(), ex);
             }
             cleanUp();
+            BooleanEncodedValue conditional = encodingManager.getBooleanEncodedValue("conditional");
+            AllEdgesIterator allEdges = ghStorage.getAllEdges();
+            int nConditional = 0;
+            while (allEdges.next()) {
+                if (allEdges.get(conditional)) {
+                    nConditional++;
+                }
+            }
+            System.out.println(conditional);
+            System.out.println(nConditional + " of " + ghStorage.getEdges() + " are tagged with a conditional.");
             postProcessing();
             flush();
         } finally {

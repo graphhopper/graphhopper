@@ -58,6 +58,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMTollParser();
         else if (name.equals(TrackType.KEY))
             return new OSMTrackTypeParser();
-        throw new IllegalArgumentException("entry in encoder list not supported " + name);
+        else if (name.equals("conditional"))
+            return new OSMConditionalRestrictionParser();
+        throw new IllegalArgumentException("entry in tag parser list not supported " + name);
     }
 }
