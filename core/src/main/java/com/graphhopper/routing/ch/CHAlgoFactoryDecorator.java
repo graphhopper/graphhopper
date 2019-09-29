@@ -17,9 +17,15 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.carrotsearch.hppc.IntDoubleHashMap;
+import com.carrotsearch.hppc.IntHashSet;
+import com.carrotsearch.hppc.predicates.IntPredicate;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
@@ -326,9 +332,27 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHProfile chProfile) {
-        PrepareContractionHierarchies tmpPrepareCH = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chProfile);
-        tmpPrepareCH.setParams(pMap);
-        return tmpPrepareCH;
+        CHGraph chGraph = ghStorage.getCHGraph(chProfile);
+        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(chGraph);
+        BooleanEncodedValue conditional = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
+        AllEdgesIterator edgeCursor = ghStorage.getAllEdges();
+        final IntHashSet blockedNodes = new IntHashSet();
+        final IntHashSet blockedEdges = new IntHashSet();
+        while (edgeCursor.next()) {
+            if (edgeCursor.get(conditional)) {
+                blockedEdges.add(edgeCursor.getEdge());
+                blockedNodes.add(edgeCursor.getBaseNode());
+                blockedNodes.add(edgeCursor.getAdjNode());
+            }
+        }
+        prepare.useNodeFilter(new IntPredicate() {
+            @Override
+            public boolean apply(int node) {
+                return !blockedNodes.contains(node);
+            }
+        });
+        prepare.setParams(pMap);
+        return prepare;
     }
 
     /**
