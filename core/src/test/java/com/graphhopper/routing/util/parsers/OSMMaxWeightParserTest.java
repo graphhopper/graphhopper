@@ -20,7 +20,7 @@ public class OSMMaxWeightParserTest {
     @Before
     public void setUp() {
         parser = new OSMMaxWeightParser();
-        em = new EncodingManager.Builder(4).add(parser).build();
+        em = new EncodingManager.Builder().add(parser).build();
         mwEnc = em.getDecimalEncodedValue(MaxWeight.KEY);
     }
 

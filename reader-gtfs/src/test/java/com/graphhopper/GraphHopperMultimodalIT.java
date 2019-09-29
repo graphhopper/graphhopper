@@ -53,7 +53,7 @@ public class GraphHopperMultimodalIT {
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
-        EncodingManager encodingManager = EncodingManager.create(Arrays.asList(ptFlagEncoder, new FootFlagEncoder()), 8);
+        EncodingManager encodingManager = EncodingManager.create(Arrays.asList(ptFlagEncoder, new FootFlagEncoder()));
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
         GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Collections.singleton("files/sample-feed.zip"), Collections.singleton("files/beatty.osm"));

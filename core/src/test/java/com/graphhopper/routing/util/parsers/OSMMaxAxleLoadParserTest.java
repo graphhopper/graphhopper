@@ -21,7 +21,7 @@ public class OSMMaxAxleLoadParserTest {
     @Before
     public void setUp() {
         parser = new OSMMaxAxleLoadParser();
-        em = new EncodingManager.Builder(4).add(parser).build();
+        em = new EncodingManager.Builder().add(parser).build();
         malEnc = em.getDecimalEncodedValue(MaxAxleLoad.KEY);
     }
 

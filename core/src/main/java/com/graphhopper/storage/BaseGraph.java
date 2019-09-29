@@ -1158,7 +1158,7 @@ class BaseGraph implements Graph {
             this.edgePointer = edgePointer;
             this.edgeAccess = edgeAccess;
             this.baseGraph = baseGraph;
-            this.baseIntsRef = new IntsRef(baseGraph.bytesForFlags / 4);
+            this.baseIntsRef = new IntsRef((int) Math.ceil(((double) baseGraph.bytesForFlags) / 4.0));
         }
 
         @Override

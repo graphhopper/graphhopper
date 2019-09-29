@@ -513,8 +513,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         sortGraph = args.getBool("graph.do_sort", sortGraph);
         removeZipped = args.getBool("graph.remove_zipped", removeZipped);
-        int bytesForFlags = args.getInt("graph.bytes_for_flags", 4);
-        EncodingManager.Builder emBuilder = new EncodingManager.Builder(bytesForFlags);
+        EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         String flagEncodersStr = args.get("graph.flag_encoders", "");
         String encodedValueStr = args.get("graph.encoded_values", "");
         if (!flagEncodersStr.isEmpty() || !encodedValueStr.isEmpty()) {

@@ -563,7 +563,7 @@ public class OSMReaderTest {
     public void testRoadAttributes() {
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
         DataFlagEncoder dataFlagEncoder = new DataFlagEncoder();
-        hopper.setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).
+        hopper.setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).
                 add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser()).
                 add(dataFlagEncoder).build());
         hopper.importOrLoad();
@@ -733,7 +733,7 @@ public class OSMReaderTest {
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
         FootFlagEncoder foot = new FootFlagEncoder();
         BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
-        EncodingManager manager = EncodingManager.create(Arrays.asList(bike, foot, car), 4);
+        EncodingManager manager = EncodingManager.create(Arrays.asList(bike, foot, car));
 
         GraphHopperStorage ghStorage = new GraphBuilder(manager).create();
         OSMReader reader = new OSMReader(ghStorage) {
@@ -976,7 +976,7 @@ public class OSMReaderTest {
                     throw new RuntimeException(e);
                 }
             }
-        }.setEncodingManager(new EncodingManager.Builder(4).add(carEncoder = new CarFlagEncoder()).add(new OSMRoadClassParser()).build()).
+        }.setEncodingManager(new EncodingManager.Builder().add(carEncoder = new CarFlagEncoder()).add(new OSMRoadClassParser()).build()).
                 setGraphHopperLocation(dir).setCHEnabled(false).
                 importOrLoad();
 
@@ -1010,7 +1010,7 @@ public class OSMReaderTest {
             }
 
             footEncoder = new FootFlagEncoder();
-            setEncodingManager(new EncodingManager.Builder(4).add(footEncoder).add(carEncoder).add(bikeEncoder).
+            setEncodingManager(new EncodingManager.Builder().add(footEncoder).add(carEncoder).add(bikeEncoder).
                     setPreferredLanguage(prefLang).build());
             carAccessEnc = carEncoder.getAccessEnc();
         }

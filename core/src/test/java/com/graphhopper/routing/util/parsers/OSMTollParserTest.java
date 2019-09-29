@@ -19,7 +19,7 @@ public class OSMTollParserTest {
     @Before
     public void setUp() {
         parser = new OSMTollParser();
-        em = new EncodingManager.Builder(4).add(parser).build();
+        em = new EncodingManager.Builder().add(parser).build();
         tollEnc = em.getEnumEncodedValue(Toll.KEY, Toll.class);
     }
 

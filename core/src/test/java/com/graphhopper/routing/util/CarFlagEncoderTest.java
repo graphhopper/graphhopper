@@ -38,7 +38,7 @@ import static org.junit.Assert.*;
  */
 public class CarFlagEncoderTest {
     private final EncodingManager em = EncodingManager.create(Arrays.asList(new CarFlagEncoder(new PMap("speed_two_directions=true")),
-            new BikeFlagEncoder(), new FootFlagEncoder()), 8);
+            new BikeFlagEncoder(), new FootFlagEncoder()));
     private final CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("car");
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();

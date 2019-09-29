@@ -275,7 +275,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).addAll(new DefaultFlagEncoderFactory(), "car,generic").build());
+                setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).addAll(new DefaultFlagEncoderFactory(), "car,generic").build());
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
@@ -299,7 +299,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).add(new CarFlagEncoder()).build());
+                setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).add(new CarFlagEncoder()).build());
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202);
@@ -621,7 +621,7 @@ public class GraphHopperIT {
     public void testSRTMWithoutTunnelInterpolation() {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
-                .setEncodingManager(EncodingManager.create(importVehicles, 8));
+                .setEncodingManager(EncodingManager.create(importVehicles));
 
         tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();
@@ -647,7 +647,7 @@ public class GraphHopperIT {
     public void testSRTMWithTunnelInterpolation() {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
-                .setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).addAll(new DefaultFlagEncoderFactory(), genericImportVehicles).build());
+                .setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).addAll(new DefaultFlagEncoderFactory(), genericImportVehicles).build());
 
         tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();

@@ -556,7 +556,7 @@ public class RoutingAlgorithmWithOSMIT {
                     setCHEnabled(withCH).
                     setDataReaderFile(osmFile).
                     setGraphHopperLocation(graphFile).
-                    setEncodingManager(new EncodingManager.Builder(8).addAll(new DefaultFlagEncoderFactory(), importVehicles).build());
+                    setEncodingManager(new EncodingManager.Builder().addAll(new DefaultFlagEncoderFactory(), importVehicles).build());
 
             if (osmFile.contains("krautsand"))
                 hopper.setMinNetworkSize(0, 0);

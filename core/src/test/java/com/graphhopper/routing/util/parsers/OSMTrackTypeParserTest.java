@@ -21,7 +21,7 @@ public class OSMTrackTypeParserTest {
     @Before
     public void setUp() {
         parser = new OSMTrackTypeParser();
-        em = new EncodingManager.Builder(4).add(parser).build();
+        em = new EncodingManager.Builder().add(parser).build();
         ttEnc = em.getEnumEncodedValue(TrackType.KEY, TrackType.class);
     }
 

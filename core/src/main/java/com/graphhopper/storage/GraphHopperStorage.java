@@ -262,7 +262,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
             String bytesForFlags = properties.get("graph.bytes_for_flags");
             if (!bytesForFlags.equalsIgnoreCase("" + encodingManager.getBytesForFlags()))
-                throw new IllegalStateException("Configured graph.bytes_for_flags (" + encodingManager.getBytesForFlags() + ") is not equal to loaded " + bytesForFlags);
+                throw new IllegalStateException("Number of bytes for edge flags resulting from configured encoders (" + encodingManager.getBytesForFlags() + ") is not equal to loaded " + bytesForFlags);
 
             String dim = properties.get("graph.dimension");
             baseGraph.loadExisting(dim);

@@ -25,8 +25,6 @@ import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.shapes.GHPoint;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -54,7 +52,7 @@ public class AnotherAgencyIT {
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
-        EncodingManager encodingManager = EncodingManager.create(Arrays.asList(ptFlagEncoder, new FootFlagEncoder()), 8);
+        EncodingManager encodingManager = EncodingManager.create(Arrays.asList(ptFlagEncoder, new FootFlagEncoder()));
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
         gtfsStorage = GraphHopperGtfs.createGtfsStorage();
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Arrays.asList("files/sample-feed.zip", "files/another-sample-feed.zip"), Collections.emptyList());
