@@ -174,7 +174,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         long initSize = Math.max(byteCount, 100);
         properties.create(100);
 
-        properties.put("graph.bytes_for_flags", encodingManager.getBytesForFlags());
+        properties.put("graph.bytes_for_flags", encodingManager.getIntsForFlags() * 4);
         properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
         properties.put("graph.flag_encoders", encodingManager.toFlagEncodersAsString());
 
@@ -261,8 +261,8 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
                 throw new IllegalStateException("Configured graph.byte_order (" + dir.getByteOrder() + ") is not equal to loaded " + byteOrder + "");
 
             String bytesForFlags = properties.get("graph.bytes_for_flags");
-            if (!bytesForFlags.equalsIgnoreCase("" + encodingManager.getBytesForFlags()))
-                throw new IllegalStateException("Number of bytes for edge flags resulting from configured encoders (" + encodingManager.getBytesForFlags() + ") is not equal to loaded " + bytesForFlags);
+            if (!bytesForFlags.equalsIgnoreCase("" + encodingManager.getIntsForFlags() * 4))
+                throw new IllegalStateException("Number of bytes for edge flags resulting from configured encoders (" + encodingManager.getIntsForFlags() * 4 + ") is not equal to loaded " + bytesForFlags);
 
             String dim = properties.get("graph.dimension");
             baseGraph.loadExisting(dim);

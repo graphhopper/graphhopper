@@ -306,11 +306,8 @@ public class EncodingManager implements EncodedValueLookup {
         return str.replaceAll(";[ ]*", ", ");
     }
 
-    public int getBytesForFlags() {
-        // This is the number of bytes we actually need
-        double bytes = Math.ceil((double) config.getRequiredBits() / 8.0);
-        // Now we want bytes that are a multiple of 4, otherwise all hell breaks loose
-        return (int) Math.ceil(bytes / 4.0) * 4;
+    public int getIntsForFlags() {
+        return (int) Math.ceil((double) config.getRequiredBits() / 32.0);
     }
 
     private void setEnableInstructions(boolean enableInstructions) {
@@ -546,7 +543,7 @@ public class EncodingManager implements EncodedValueLookup {
 
     // TODO hide IntsRef even more in a later version: https://gist.github.com/karussell/f4c2b2b1191be978d7ee9ec8dd2cd48f
     public IntsRef createEdgeFlags() {
-        return new IntsRef((int) Math.ceil(((double) getBytesForFlags()) / 4.0));
+        return new IntsRef(getIntsForFlags());
     }
 
     public IntsRef flagsDefault(boolean forward, boolean backward) {
