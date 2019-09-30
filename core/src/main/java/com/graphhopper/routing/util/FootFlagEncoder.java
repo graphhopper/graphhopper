@@ -52,6 +52,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     final Map<String, Integer> hikingNetworkToCode = new HashMap<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
+    protected boolean speedTwoDirections;
     private DecimalEncodedValue priorityWayEncoder;
     private EncodedValueOld relationCodeEncoder;
 
@@ -67,6 +68,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
                 properties.getDouble("speedFactor", 1));
         this.properties = properties;
         this.setBlockFords(properties.getBool("block_fords", true));
+        this.speedTwoDirections = properties.getBool("speed_two_directions", false);
     }
 
     public FootFlagEncoder(String propertiesStr) {
@@ -151,8 +153,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
         // larger value required - ferries are faster than pedestrians
-        registerNewEncodedValue.add(speedEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, false));
-        registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
+        registerNewEncodedValue.add(speedEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
+        registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), speedTwoDirections));
     }
 
     @Override

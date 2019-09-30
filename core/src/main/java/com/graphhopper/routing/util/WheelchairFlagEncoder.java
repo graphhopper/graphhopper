@@ -109,6 +109,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
 
         maxPossibleSpeed = FERRY_SPEED;
         speedDefault = MEAN_SPEED;
+        speedTwoDirections = true;
         init();
     }
 
@@ -131,7 +132,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
             if (registerNewEncodedValue.get(i).getName().endsWith("average_speed")) {
                 registerNewEncodedValue.remove(i);
                 registerNewEncodedValue.add(speedEncoder = new UnsignedDecimalEncodedValue(
-                        getKey(prefix, "average_speed"), speedBits, speedFactor, true));
+                        getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
             }
         }
     }
@@ -256,29 +257,29 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         }
 
         double eleDelta = pl.getElevation(pl.size() - 1) - prevEle;
-        if (eleDelta > smallInclinePercent && eleDelta < maxInclinePercent) {
+        double elePercent = eleDelta / fullDist2D * 100;
+        if (elePercent> smallInclinePercent && elePercent < maxInclinePercent) {
             setFwdBwdSpeed(edge, SLOW_SPEED, MEAN_SPEED);
-        } else if (eleDelta > maxInclinePercent) {
-            setFwdBwdSpeed(edge, 0, 0);
-        } else if (eleDelta < -smallInclinePercent && eleDelta > -maxInclinePercent) {
+        } else if (elePercent < -smallInclinePercent && elePercent > -maxInclinePercent) {
             setFwdBwdSpeed(edge, MEAN_SPEED, SLOW_SPEED);
-        } else if (eleDelta < -maxInclinePercent) {
-            setFwdBwdSpeed(edge, 0, 0);
+        } else if (elePercent > maxInclinePercent || elePercent < -maxInclinePercent) {
+            edge.set(accessEnc, false);
+            edge.setReverse(accessEnc, false);
         }
     }
 
     /**
-     * Can set the given speed values to the given edge depending on the forward and backward accessibility of the edge.
+     * Sets the given speed values to the given edge depending on the forward and backward accessibility of the edge.
      * @param edge the edge to set speed for
      * @param fwdSpeed speed value in forward direction
      * @param bwdSpeed speed value in backward direction
      */
     private void setFwdBwdSpeed(EdgeIteratorState edge, int fwdSpeed, int bwdSpeed) {
-        if (accessEnc.getBool(false, edge.getFlags())) {
-            setSpeed(false, edge.getFlags(), fwdSpeed);
+        if (edge.get(accessEnc)) {
+            edge.set(speedEncoder, fwdSpeed);
         }
-        if (accessEnc.getBool(true, edge.getFlags())) {
-            setSpeed(true, edge.getFlags(), bwdSpeed);
+        if (edge.getReverse(accessEnc)) {
+            edge.setReverse(speedEncoder, bwdSpeed);
         }
     }
 

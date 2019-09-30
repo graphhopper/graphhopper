@@ -574,16 +574,16 @@ public class WheelchairFlagEncoderTest {
         ReaderWay way0 = new ReaderWay(1);
         wheelchairEncoder.applyWayTags(way0, edge0);
 
-        IntsRef flags0 = edge0.getFlags();
-        assertEquals(2, wheelchairEncoder.getSpeed(false, flags0), 1e-1);
-        assertEquals(5, wheelchairEncoder.getSpeed(true, flags0), 1e-1);
+        assertTrue(edge0.get(wheelchairEncoder.accessEnc));
+        assertTrue(edge0.getReverse(wheelchairEncoder.accessEnc));
+        assertEquals(2, edge0.get(wheelchairEncoder.getAverageSpeedEnc()), 0);
+        assertEquals(5, edge0.getReverse(wheelchairEncoder.getAverageSpeedEnc()), 0);
 
         EdgeIteratorState edge1 = GHUtility.getEdge(graph, 2, 3);
         ReaderWay way1 = new ReaderWay(2);
         wheelchairEncoder.applyWayTags(way1, edge1);
 
-        IntsRef flags1 = edge1.getFlags();
-        assertEquals(0, wheelchairEncoder.getSpeed(false, flags1), 1e-1);
-        assertEquals(0, wheelchairEncoder.getSpeed(true, flags1), 1e-1);
+        assertFalse(edge1.get(wheelchairEncoder.accessEnc));
+        assertFalse(edge1.getReverse(wheelchairEncoder.accessEnc));
     }
 }
