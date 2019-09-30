@@ -703,7 +703,8 @@ public class EncodingManager implements EncodedValueLookup {
         return (T) ev;
     }
 
-    private static String SPECIAL_SEPARATOR = "-";
+    // Or use @ or $ instead? Would be helpful to make valid variable names
+    private static String SPECIAL_SEPARATOR = ".";
 
     /**
      * All EncodedValue names that are created from a FlagEncoder should use this method to mark them as

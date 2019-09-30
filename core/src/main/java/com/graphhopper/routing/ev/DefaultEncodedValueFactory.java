@@ -64,4 +64,21 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
         }
         return enc;
     }
+
+    public Class<? extends Enum> findValues(String name) {
+        if (RoadClass.KEY.equals(name))
+            return RoadClass.class;
+        if (RoadEnvironment.KEY.equals(name))
+            return RoadEnvironment.class;
+        if (RoadAccess.KEY.equals(name))
+            return RoadAccess.class;
+        if (Surface.KEY.equals(name))
+            return Surface.class;
+        if (Toll.KEY.equals(name))
+            return Toll.class;
+        if (TrackType.KEY.equals(name))
+            return TrackType.class;
+
+        throw new IllegalArgumentException("Cannot find enum class " + name);
+    }
 }

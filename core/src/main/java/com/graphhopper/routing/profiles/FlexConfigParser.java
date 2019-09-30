@@ -15,14 +15,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ev;
+package com.graphhopper.routing.profiles;
 
-public interface EncodedValueFactory {
-    /**
-     * This method assumes a string value with the key of an EncodedValue like "road_class" and returns an instance
-     * of it.
-     */
-    EncodedValue create(String encodedValueString);
+import java.io.InputStream;
 
-    Class<? extends Enum> findValues(String name);
+public interface FlexConfigParser {
+    FlexConfig parse(InputStream is);
+
+    FlexConfig parse(String string);
 }

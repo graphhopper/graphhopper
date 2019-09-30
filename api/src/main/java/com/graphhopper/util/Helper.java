@@ -462,4 +462,19 @@ public class Helper {
         }
         return sb.toString();
     }
+
+    /**
+     * This method finds the enum in the enumClass via enum.toString
+     */
+    public static <T extends Enum<T>> T getValueOf(Class<T> enumClass, String enumToString) {
+        if (enumToString == null)
+            return enumClass.getEnumConstants()[0];
+
+        for (T e : enumClass.getEnumConstants()) {
+            if (e.toString().equals(enumToString)) {
+                return e;
+            }
+        }
+        return enumClass.getEnumConstants()[0];
+    }
 }
