@@ -37,7 +37,7 @@ import static org.junit.Assert.*;
  * @author don-philipe
  */
 public class WheelchairFlagEncoderTest {
-    private final EncodingManager encodingManager = EncodingManager.create("car,bike,wheelchair", 8);
+    private final EncodingManager encodingManager = EncodingManager.create("car,bike,wheelchair");
     private final WheelchairFlagEncoder wheelchairEncoder = (WheelchairFlagEncoder) encodingManager.getEncoder("wheelchair");
     private final DecimalEncodedValue wheelchairAvSpeedEnc = wheelchairEncoder.getAverageSpeedEnc();
     private final BooleanEncodedValue wheelchairAccessEnc = wheelchairEncoder.getAccessEnc();
