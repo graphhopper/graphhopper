@@ -546,15 +546,6 @@ public class GHUtility {
         return edgeKey / 2;
     }
 
-    /**
-     * Returns the edge key for a given edge id and adjacent node. This is needed in a few places where
-     * the base node is not known.
-     */
-    public static int getEdgeKey(Graph graph, int edgeId, int node, boolean reverse) {
-        EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(edgeId, node);
-        return GHUtility.createEdgeKey(edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode(), edgeId, reverse);
-    }
-
     public static IntsRef setProperties(IntsRef edgeFlags, FlagEncoder encoder, double averageSpeed, boolean fwd, boolean bwd) {
         if (averageSpeed < 0.0001 && (fwd || bwd))
             throw new IllegalStateException("Zero speed is only allowed if edge will get inaccessible. Otherwise Weighting can produce inconsistent results");

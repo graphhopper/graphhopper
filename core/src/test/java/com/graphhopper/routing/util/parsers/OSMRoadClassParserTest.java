@@ -21,7 +21,7 @@ public class OSMRoadClassParserTest {
     @Before
     public void setUp() {
         parser = new OSMRoadClassParser();
-        em = new EncodingManager.Builder(4).add(parser).build();
+        em = new EncodingManager.Builder().add(parser).build();
         rcEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
     }
 

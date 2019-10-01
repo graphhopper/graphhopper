@@ -35,7 +35,11 @@ import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 /**
  * Implementation of calculating a route with multiple via points.
@@ -87,14 +91,25 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     }
 
     @Override
-    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
+    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts, FlagEncoder encoder) {
         long visitedNodesSum = 0L;
-        boolean viaTurnPenalty = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
-        int pointCounts = ghRequest.getPoints().size();
-        pathList = new ArrayList<>(pointCounts - 1);
+        final boolean viaTurnPenalty = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
+        final int pointsCount = ghRequest.getPoints().size();
+        pathList = new ArrayList<>(pointsCount - 1);
+
+        List<DirectionResolverResult> directions = Collections.emptyList();
+        if (!ghRequest.getCurbSides().isEmpty()) {
+            DirectionResolver directionResolver = new DirectionResolver(queryGraph, encoder);
+            directions = new ArrayList<>(queryResults.size());
+            for (QueryResult qr : queryResults) {
+                directions.add(directionResolver.resolveDirections(qr.getClosestNode(), qr.getQueryPoint()));
+            }
+        }
+
+        final boolean forceCurbSides = ghRequest.getHints().getBool(Routing.FORCE_CURBSIDE, true);
         QueryResult fromQResult = queryResults.get(0);
         StopWatch sw;
-        for (int placeIndex = 1; placeIndex < pointCounts; placeIndex++) {
+        for (int placeIndex = 1; placeIndex < pointsCount; placeIndex++) {
             if (placeIndex == 1) {
                 // enforce start direction
                 queryGraph.enforceHeading(fromQResult.getClosestNode(), ghRequest.getFavoredHeading(0), false);
@@ -119,7 +134,23 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             sw = new StopWatch().start();
 
             // calculate paths
-            List<Path> tmpPathList = algo.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode());
+            List<Path> tmpPathList;
+            if (!directions.isEmpty()) {
+                assert ghRequest.getCurbSides().size() == directions.size();
+                if (!(algo instanceof AbstractBidirAlgo)) {
+                    throw new IllegalArgumentException("To make use of the " + Routing.CURBSIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
+                } else {
+                    int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), ghRequest.getCurbSides().get(placeIndex - 1));
+                    int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), ghRequest.getCurbSides().get(placeIndex));
+                    sourceOutEdge = ignoreThrowOrAcceptImpossibleCurbSides(sourceOutEdge, placeIndex - 1, forceCurbSides);
+                    targetInEdge = ignoreThrowOrAcceptImpossibleCurbSides(targetInEdge, placeIndex, forceCurbSides);
+                    // todo: enable curbside feature for alternative routes as well ?
+                    tmpPathList = Collections.singletonList(((AbstractBidirAlgo) algo)
+                            .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
+                }
+            } else {
+                tmpPathList = algo.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode());
+            }
             debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s";
             if (tmpPathList.isEmpty())
                 throw new IllegalStateException("At least one path has to be returned for " + fromQResult + " -> " + toQResult);
@@ -148,9 +179,24 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         }
 
         ghResponse.getHints().put("visited_nodes.sum", visitedNodesSum);
-        ghResponse.getHints().put("visited_nodes.average", (float) visitedNodesSum / (pointCounts - 1));
+        ghResponse.getHints().put("visited_nodes.average", (float) visitedNodesSum / (pointsCount - 1));
 
         return pathList;
+    }
+
+    private int ignoreThrowOrAcceptImpossibleCurbSides(int edge, int placeIndex, boolean forceCurbSides) {
+        if (edge != NO_EDGE) {
+            return edge;
+        }
+        if (forceCurbSides) {
+            return throwImpossibleCurbSideConstraint(placeIndex);
+        } else {
+            return ANY_EDGE;
+        }
+    }
+
+    private int throwImpossibleCurbSideConstraint(int placeIndex) {
+        throw new IllegalArgumentException("Impossible curbside constraint: 'curbside=" + ghRequest.getCurbSides().get(placeIndex) + "' at point " + placeIndex);
     }
 
     @Override
@@ -168,4 +214,5 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     public int getMaxRetries() {
         return 1;
     }
+
 }

@@ -446,22 +446,6 @@ public class GraphHopperOSMTest {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match"));
         }
 
-        // different bytesForFlags should fail to load
-        instance = new GraphHopperOSM().init(
-                new CmdArgs().
-                        put("datareader.file", testOsm3).
-                        put("datareader.dataaccess", "RAM").
-                        put("graph.flag_encoders", "foot,car").
-                        put("graph.bytes_for_flags", 8).
-                        put(Parameters.CH.PREPARE + "weightings", "no")).
-                setDataReaderFile(testOsm3);
-        try {
-            instance.load(ghLoc);
-            fail();
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.bytes_for_flags (8) is not equal to loaded 4"));
-        }
-
         // different order is no longer okay, see #350
         try {
             GraphHopper tmpGH = new GraphHopperOSM().init(new CmdArgs().
@@ -918,7 +902,7 @@ public class GraphHopperOSMTest {
         // try all parallelization modes        
         for (int threadCount = 1; threadCount < 6; threadCount++) {
             EncodingManager em = EncodingManager.create(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),
-                    new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()), 8);
+                    new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()));
 
             GraphHopper tmpGH = new GraphHopperOSM().
                     setStoreOnFlush(false).
@@ -959,7 +943,7 @@ public class GraphHopperOSMTest {
         // try all parallelization modes
         for (int threadCount = 1; threadCount < 6; threadCount++) {
             EncodingManager em = EncodingManager.create(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),
-                    new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()), 8);
+                    new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()));
 
             GraphHopper tmpGH = new GraphHopperOSM().
                     setStoreOnFlush(false).
@@ -1032,7 +1016,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testGetMultipleWeightingsForCH() {
-        EncodingManager em = EncodingManager.create(Collections.singletonList(new CarFlagEncoder()), 8);
+        EncodingManager em = EncodingManager.create(Collections.singletonList(new CarFlagEncoder()));
 
         GraphHopper tmpGH = new GraphHopperOSM().
                 setStoreOnFlush(false).

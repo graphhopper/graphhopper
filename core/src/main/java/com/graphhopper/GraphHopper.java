@@ -68,6 +68,7 @@ import static com.graphhopper.routing.ch.CHAlgoFactoryDecorator.EdgeBasedCHMode.
 import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
+import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -512,8 +513,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         sortGraph = args.getBool("graph.do_sort", sortGraph);
         removeZipped = args.getBool("graph.remove_zipped", removeZipped);
-        int bytesForFlags = args.getInt("graph.bytes_for_flags", 4);
-        EncodingManager.Builder emBuilder = new EncodingManager.Builder(bytesForFlags);
+        EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         String flagEncodersStr = args.get("graph.flag_encoders", "");
         String encodedValueStr = args.get("graph.encoded_values", "");
         if (!flagEncodersStr.isEmpty() || !encodedValueStr.isEmpty()) {
@@ -980,6 +980,10 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("You need a turn cost extension to make use of edge_based=true, e.g. use car|turn_costs=true");
             }
 
+            if (!tMode.isEdgeBased() && !request.getCurbSides().isEmpty()) {
+                throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to set " + Routing.EDGE_BASED + " to true");
+            }
+
             boolean disableCH = hints.getBool(CH.DISABLE, false);
             if (!chFactoryDecorator.isDisablingAllowed() && disableCH)
                 throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
@@ -1064,7 +1068,7 @@ public class GraphHopper implements GraphHopperAPI {
                         build();
 
                 // do the actual route calculation !
-                altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
+                altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts, encoder);
 
                 boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, getEncodingManager().isEnableInstructions());
                 boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);

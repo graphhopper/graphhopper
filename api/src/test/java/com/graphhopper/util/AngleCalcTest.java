@@ -19,7 +19,8 @@ package com.graphhopper.util;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
 
 /**
  * @author Johannes Pelzer
@@ -100,7 +101,7 @@ public class AngleCalcTest {
     }
 
     @Test
-    public void testConvertAzimuth2xaxisAngle() {
+    public void testConvertAzimuth2xAxisAngle() {
         assertEquals(Math.PI / 2, AC.convertAzimuth2xaxisAngle(0), 1E-6);
         assertEquals(Math.PI / 2, Math.abs(AC.convertAzimuth2xaxisAngle(360)), 1E-6);
         assertEquals(0, AC.convertAzimuth2xaxisAngle(90), 1E-6);
@@ -111,7 +112,7 @@ public class AngleCalcTest {
     }
 
     @Test
-    public void checkAzimuthConsitency() {
+    public void checkAzimuthConsistency() {
         double azimuthDegree = AC.calcAzimuth(0, 0, 1, 1);
         double radianXY = AC.calcOrientation(0, 0, 1, 1);
         double radian2 = AC.convertAzimuth2xaxisAngle(azimuthDegree);
@@ -121,5 +122,32 @@ public class AngleCalcTest {
         radianXY = AC.calcOrientation(0, 4, 1, 3);
         radian2 = AC.convertAzimuth2xaxisAngle(azimuthDegree);
         assertEquals(radianXY, radian2, 1E-3);
+    }
+
+    @Test
+    public void testIsClockwise() {
+        Coordinate a = new Coordinate(0.1, 1);
+        Coordinate b = new Coordinate(0.2, 0.8);
+        Coordinate c = new Coordinate(0.6, 0.3);
+        assertTrue(isClockwise(a, b, c));
+        assertTrue(isClockwise(b, c, a));
+        assertTrue(isClockwise(c, a, b));
+        assertFalse(isClockwise(c, b, a));
+        assertFalse(isClockwise(a, c, b));
+        assertFalse(isClockwise(b, a, c));
+    }
+
+    private boolean isClockwise(Coordinate a, Coordinate b, Coordinate c) {
+        return AC.isClockwise(a.x, a.y, b.x, b.y, c.x, c.y);
+    }
+
+    private static class Coordinate {
+        final double x;
+        final double y;
+
+        Coordinate(double x, double y) {
+            this.x = x;
+            this.y = y;
+        }
     }
 }

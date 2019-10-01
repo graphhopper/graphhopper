@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
@@ -184,6 +185,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         }
 
         return speed;
+    }
+
+    @Override
+    public boolean acceptsTurnRelation(OSMTurnRelation relation) {
+        return relation.isVehicleTypeConcernedByTurnRestriction(restrictions);
     }
 
     @Override

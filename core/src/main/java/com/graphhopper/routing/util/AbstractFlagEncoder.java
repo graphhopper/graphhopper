@@ -17,10 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ConditionalTagInspector;
-import com.graphhopper.reader.ReaderNode;
-import com.graphhopper.reader.ReaderRelation;
-import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.*;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.profiles.*;
@@ -180,6 +177,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     public int defineRelationBits(int index, int shift) {
         return shift;
     }
+
+    public boolean acceptsTurnRelation(OSMTurnRelation relation) { return true; }
 
     /**
      * Analyze the properties of a relation and create the routing flags for the second read step.

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.ch.Path4CH;
+import com.graphhopper.routing.ch.NodeBasedCHBidirPathExtractor;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -39,13 +39,12 @@ public class AStarBidirectionCH extends AStarBidirection {
             return true;
 
         // changed finish condition for CH
-        return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
+        return currFrom.weight >= bestWeight && currTo.weight >= bestWeight;
     }
 
     @Override
-    protected Path createAndInitPath() {
-        bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
-        return bestPath;
+    protected BidirPathExtractor createPathExtractor(Graph graph, Weighting weighting) {
+        return new NodeBasedCHBidirPathExtractor(graph, graph.getBaseGraph(), weighting);
     }
 
     @Override

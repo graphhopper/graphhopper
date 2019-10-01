@@ -64,7 +64,7 @@ public class PtIsochroneResourceTest {
         final CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
         final FootFlagEncoder footFlagEncoder = new FootFlagEncoder();
 
-        EncodingManager encodingManager = new EncodingManager.Builder(12).add(carFlagEncoder).add(footFlagEncoder).add(ptFlagEncoder).build();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(carFlagEncoder).add(footFlagEncoder).add(ptFlagEncoder).build();
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
         GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Collections.singleton("../reader-gtfs/files/sample-feed.zip"), Collections.emptyList());

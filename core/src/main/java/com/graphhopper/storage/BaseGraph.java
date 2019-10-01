@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 
-import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static com.graphhopper.util.Helper.nf;
 
 /**
@@ -60,7 +59,7 @@ class BaseGraph implements Graph {
     final BitUtil bitUtil;
     final EncodingManager encodingManager;
     final EdgeAccess edgeAccess;
-    private final int bytesForFlags;
+    private final int intsForFlags;
     // length | nodeA | nextNode | ... | nodeB
     // as we use integer index in 'egdes' area => 'geometry' area is limited to 4GB (we use pos&neg values!)
     private final DataAccess wayGeometry;
@@ -97,7 +96,7 @@ class BaseGraph implements Graph {
                      InternalGraphEventListener listener, GraphExtension extendedStorage) {
         this.dir = dir;
         this.encodingManager = encodingManager;
-        this.bytesForFlags = encodingManager.getBytesForFlags();
+        this.intsForFlags = encodingManager.getIntsForFlags();
         this.bitUtil = BitUtil.get(dir.getByteOrder());
         this.wayGeometry = dir.find("geometry");
         this.nameIndex = new NameIndex(dir);
@@ -229,7 +228,7 @@ class BaseGraph implements Graph {
                 nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(4),
-                nextEdgeEntryIndex(encodingManager.getBytesForFlags()));
+                nextEdgeEntryIndex(encodingManager.getIntsForFlags() * 4));
 
         E_DIST = nextEdgeEntryIndex(4);
         E_GEO = nextEdgeEntryIndex(4);
@@ -397,7 +396,7 @@ class BaseGraph implements Graph {
         System.out.println("edges:");
         String formatEdges = "%12s | %12s | %12s | %12s | %12s | %12s | %12s \n";
         System.out.format(Locale.ROOT, formatEdges, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_FLAGS", "E_DIST");
-        IntsRef intsRef = new IntsRef(bytesForFlags / 4);
+        IntsRef intsRef = new IntsRef(intsForFlags);
         for (int i = 0; i < Math.min(edgeCount, printMax); ++i) {
             long edgePointer = edgeAccess.toPointer(i);
             edgeAccess.readFlags(edgePointer, intsRef);
@@ -478,16 +477,7 @@ class BaseGraph implements Graph {
      * @return the updated iterator the properties where copied to.
      */
     EdgeIteratorState copyProperties(EdgeIteratorState from, CommonEdgeIterator to) {
-        boolean reverse = from.get(REVERSE_STATE);
-        if (to.reverse)
-            reverse = !reverse;
-        // in case reverse is true we have to swap the nodes to store flags correctly in its "storage direction"
-        int nodeA = reverse ? from.getAdjNode() : from.getBaseNode();
-        int nodeB = reverse ? from.getBaseNode() : from.getAdjNode();
         long edgePointer = edgeAccess.toPointer(to.getEdge());
-        int linkA = reverse ? edgeAccess.getLinkB(edgePointer) : edgeAccess.getLinkA(edgePointer);
-        int linkB = reverse ? edgeAccess.getLinkA(edgePointer) : edgeAccess.getLinkB(edgePointer);
-        edgeAccess.writeEdge(to.getEdge(), nodeA, nodeB, linkA, linkB);
         edgeAccess.writeFlags(edgePointer, from.getFlags());
 
         // copy the rest with higher level API
@@ -1167,7 +1157,7 @@ class BaseGraph implements Graph {
             this.edgePointer = edgePointer;
             this.edgeAccess = edgeAccess;
             this.baseGraph = baseGraph;
-            this.baseIntsRef = new IntsRef(baseGraph.bytesForFlags / 4);
+            this.baseIntsRef = new IntsRef(baseGraph.intsForFlags);
         }
 
         @Override

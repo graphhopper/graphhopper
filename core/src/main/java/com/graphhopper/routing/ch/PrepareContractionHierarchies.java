@@ -56,6 +56,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private final PreparationWeighting prepareWeighting;
     private final CHGraph prepareGraph;
     private final Random rand = new Random(123);
+    private final IntSet updatedNeighbors;
     private final StopWatch allSW = new StopWatch();
     private final StopWatch periodicUpdateSW = new StopWatch();
     private final StopWatch lazyUpdateSW = new StopWatch();
@@ -78,6 +79,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         this.chProfile = chGraph.getCHProfile();
         prepareWeighting = new PreparationWeighting(chProfile.getWeighting());
         this.params = Params.forTraversalMode(chProfile.getTraversalMode());
+        updatedNeighbors = new IntHashSet(50);
     }
 
     public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHProfile chProfile) {
@@ -233,7 +235,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         checkCounter = 0;
         final long logSize = params.getLogMessagesPercentage() == 0
                 ? Long.MAX_VALUE
-                : Math.round(Math.max(10, initSize * params.getLogMessagesPercentage() / 100d));
+                : Math.round(Math.max(10, initSize * (params.getLogMessagesPercentage() / 100d)));
 
         // specifies after how many contracted nodes the queue of remaining nodes is rebuilt. this takes time but the
         // more often we do this the more up-to-date the node priorities will be
@@ -241,16 +243,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // nodes ?
         final long periodicUpdatesCount = params.getPeriodicUpdatesPercentage() == 0
                 ? Long.MAX_VALUE
-                : Math.round(Math.max(10, initSize * params.getPeriodicUpdatesPercentage() / 100d));
+                : Math.round(Math.max(10, initSize * (params.getPeriodicUpdatesPercentage() / 100d)));
         int updateCounter = 0;
 
         // enable lazy updates for last x percentage of nodes. lazy updates make preparation slower but potentially
         // keep node priorities more up to date, possibly resulting in a better preparation.
-        final long lastNodesLazyUpdates = Math.round(initSize * params.getLastNodesLazyUpdatePercentage() / 100d);
+        final long lastNodesLazyUpdates = Math.round(initSize * (params.getLastNodesLazyUpdatePercentage() / 100d));
 
         // according to paper "Polynomial-time Construction of Contraction Hierarchies for Multi-criteria Objectives" by Funke and Storandt
         // we don't need to wait for all nodes to be contracted
-        final long nodesToAvoidContract = Math.round(initSize * (100 - params.getNodesContractedPercentage()) / 100d);
+        final long nodesToAvoidContract = Math.round(initSize * ((100 - params.getNodesContractedPercentage()) / 100d));
 
         // Recompute priority of (the given percentage of) uncontracted neighbors. Doing neighbor updates takes additional
         // time during preparation but keeps node priorities more up to date. this potentially improves query time and
@@ -258,6 +260,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         final boolean neighborUpdate = (params.getNeighborUpdatePercentage() != 0);
 
         while (!sortedNodes.isEmpty()) {
+            stopIfInterrupted();
             // periodically update priorities of ALL nodes
             if (checkCounter > 0 && checkCounter % periodicUpdatesCount == 0) {
                 updatePrioritiesOfRemainingNodes();
@@ -294,14 +297,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 break;
 
             // there might be multiple edges going to the same neighbor nodes -> only calculate priority once per node
-            IntSet updatedNeighbors = new IntHashSet(10);
+            updatedNeighbors.clear();
             CHEdgeIterator iter = vehicleAllExplorer.setBaseNode(polledNode);
             while (iter.next()) {
-
-                if (Thread.currentThread().isInterrupted()) {
-                    throw new RuntimeException("Thread was interrupted");
-                }
-
                 int nn = iter.getAdjNode();
                 if (prepareGraph.getLevel(nn) != maxLevel)
                     continue;
@@ -346,6 +344,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         for (int i = 0; i < nodesToContract; ++i) {
+            stopIfInterrupted();
             int node = nodeOrderingProvider.getNodeIdForLevel(i);
             contractNode(node, i);
 
@@ -361,6 +360,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 logFixedNodeOrderingStats(i, logSize, stopWatch);
                 stopWatch.start();
             }
+        }
+    }
+
+    private void stopIfInterrupted() {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new RuntimeException("Thread was interrupted");
         }
     }
 

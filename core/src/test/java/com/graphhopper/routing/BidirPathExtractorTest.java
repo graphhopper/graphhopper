@@ -34,8 +34,9 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
+ * @author easbar
  */
-public class PathBidirRefTest {
+public class BidirPathExtractorTest {
     private FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 10);
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
 
@@ -47,11 +48,10 @@ public class PathBidirRefTest {
     public void testExtract() {
         Graph g = createGraph();
         g.edge(1, 2, 10, true);
-        PathBidirRef p = new PathBidirRef(g, new FastestWeighting(carEncoder));
-        p.sptEntry = new SPTEntry(0, 2, 0);
-        p.sptEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 10);
-        p.edgeTo = new SPTEntry(EdgeIterator.NO_EDGE, 2, 0);
-        p.extract();
+        SPTEntry fwdEntry = new SPTEntry(0, 2, 0);
+        fwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 10);
+        SPTEntry bwdEntry = new SPTEntry(EdgeIterator.NO_EDGE, 2, 0);
+        Path p = BidirPathExtractor.extractPath(g, new FastestWeighting(carEncoder), fwdEntry, bwdEntry, 0);
         assertEquals(IntArrayList.from(1, 2), p.calcNodes());
         assertEquals(10, p.getDistance(), 1e-4);
     }
@@ -67,15 +67,15 @@ public class PathBidirRefTest {
         TurnCostExtension turnCostExtension = (TurnCostExtension) g.getExtension();
         turnCostExtension.addTurnInfo(0, 2, 1, carEncoder.getTurnFlags(false, 5));
 
-        PathBidirRef p = new PathBidirRef(g, new TurnWeighting(new FastestWeighting(carEncoder), turnCostExtension));
-        p.sptEntry = new SPTEntry(0, 2, 0.6);
-        p.sptEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);
+        SPTEntry fwdEntry = new SPTEntry(0, 2, 0.6);
+        fwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);
 
-        p.edgeTo = new SPTEntry(1, 2, 1.2);
-        p.edgeTo.parent = new SPTEntry(EdgeIterator.NO_EDGE, 3, 0);
+        SPTEntry bwdEntry = new SPTEntry(1, 2, 1.2);
+        bwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 3, 0);
+
+        Path p = BidirPathExtractor.extractPath(g, new TurnWeighting(new FastestWeighting(carEncoder), turnCostExtension), fwdEntry, bwdEntry, 0);
         p.setWeight(5 + 1.8);
 
-        p.extract();
         assertEquals(IntArrayList.from(1, 2, 3), p.calcNodes());
         assertEquals(30, p.getDistance(), 1e-4);
         assertEquals(5 + 1.8, p.getWeight(), 1e-4);

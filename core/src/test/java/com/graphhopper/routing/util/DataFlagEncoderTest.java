@@ -60,7 +60,7 @@ public class DataFlagEncoderTest {
     public DataFlagEncoderTest() {
         properties = new PMap();
         encoder = new DataFlagEncoder(properties);
-        encodingManager = new EncodingManager.Builder(8).
+        encodingManager = new EncodingManager.Builder().
                 add(new OSMRoadEnvironmentParser()).
                 add(new OSMRoadClassParser()).
                 add(new OSMRoadAccessParser()).
@@ -83,8 +83,8 @@ public class DataFlagEncoderTest {
     @Test
     public void testSufficientEncoderBitLength() {
         try {
-            EncodingManager em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).add(new DataFlagEncoder(properties)).build();
-            EncodingManager em1 = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(12)).add(new DataFlagEncoder(properties)).build();
+            EncodingManager em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).add(new DataFlagEncoder(properties)).build();
+            EncodingManager em1 = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).add(new DataFlagEncoder(properties)).build();
         } catch (Throwable t) {
             fail(t.toString());
         }
@@ -364,7 +364,7 @@ public class DataFlagEncoderTest {
         };
 
         DataFlagEncoder tmpEncoder = new DataFlagEncoder(new PMap());
-        EncodingManager em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(4).add(new SpatialRuleParser(index))).add(tmpEncoder).build();
+        EncodingManager em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder().add(new SpatialRuleParser(index))).add(tmpEncoder).build();
         IntEncodedValue countrySpatialIdEnc = em.getIntEncodedValue(Country.KEY);
         EnumEncodedValue<RoadAccess> tmpRoadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         DecimalEncodedValue tmpCarMaxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);

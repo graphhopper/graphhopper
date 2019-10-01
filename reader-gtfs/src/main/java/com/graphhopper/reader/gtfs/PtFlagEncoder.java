@@ -18,6 +18,7 @@
 
 package com.graphhopper.reader.gtfs;
 
+import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
@@ -55,6 +56,11 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
     @Override
     public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
         return oldRelationFlags;
+    }
+
+    @Override
+    public boolean acceptsTurnRelation(OSMTurnRelation relation) {
+        return false;
     }
 
     @Override

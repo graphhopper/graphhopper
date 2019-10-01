@@ -36,7 +36,7 @@ public class GraphHopperStorageForDataFlagEncoderTest {
     public GraphHopperStorageForDataFlagEncoderTest() {
         properties = new PMap();
         encoder = new DataFlagEncoder(properties);
-        encodingManager = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).
+        encodingManager = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).
                 add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser()).add(encoder).build();
     }
 

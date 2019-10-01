@@ -18,7 +18,6 @@
 
 package com.graphhopper.http.cli;
 
-import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.http.GraphHopperManaged;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
@@ -48,7 +47,7 @@ public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfigurat
             final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
             final GHDirectory ghDirectory = GraphHopperGtfs.createGHDirectory(configuration.getGraphHopperConfiguration().get("graph.location", "target/tmp"));
             final GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
-            final EncodingManager encodingManager = EncodingManager.create(Arrays.asList(ptFlagEncoder, new FootFlagEncoder(), new CarFlagEncoder()), 12);
+            final EncodingManager encodingManager = EncodingManager.create(Arrays.asList(ptFlagEncoder, new FootFlagEncoder(), new CarFlagEncoder()));
             final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, ptFlagEncoder, gtfsStorage,
                     configuration.getGraphHopperConfiguration().has("gtfs.file") ? Arrays.asList(configuration.getGraphHopperConfiguration().get("gtfs.file", "").split(",")) : Collections.emptyList(),
                     configuration.getGraphHopperConfiguration().has("datareader.file") ? Arrays.asList(configuration.getGraphHopperConfiguration().get("datareader.file", "").split(",")) : Collections.emptyList());

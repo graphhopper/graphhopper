@@ -26,7 +26,7 @@ public class BlockAreaWeightingTest {
     @Before
     public void setUp() {
         encoder = new CarFlagEncoder();
-        em = EncodingManager.create(Arrays.asList(encoder), 8);
+        em = EncodingManager.create(Arrays.asList(encoder));
         graph = new GraphBuilder(em).create();
         // 0-1
         graph.edge(0, 1, 1, true);
