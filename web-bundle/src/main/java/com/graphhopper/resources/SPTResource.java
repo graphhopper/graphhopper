@@ -72,8 +72,7 @@ public class SPTResource {
             throw new IllegalArgumentException("Point not found:" + point);
 
         Graph graph = graphHopper.getGraphHopperStorage();
-        QueryGraph queryGraph = new QueryGraph(graph);
-        queryGraph.lookup(Collections.singletonList(qr));
+        QueryGraph queryGraph = QueryGraph.lookup(graph, Collections.singletonList(qr));
 
         HintsMap hintsMap = new HintsMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());

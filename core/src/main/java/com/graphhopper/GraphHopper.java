@@ -1036,16 +1036,14 @@ public class GraphHopper implements GraphHopperAPI {
 
                     if (chAlgoFactory instanceof PrepareContractionHierarchies) {
                         CHProfile chProfile = ((PrepareContractionHierarchies) chAlgoFactory).getCHProfile();
-                        queryGraph = new QueryGraph(ghStorage.getCHGraph(chProfile));
-                        queryGraph.lookup(qResults);
+                        queryGraph = QueryGraph.lookup(ghStorage.getCHGraph(chProfile), qResults);
                         weighting = chProfile.getWeighting();
                     } else {
                         throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
                     }
                 } else {
                     checkNonChMaxWaypointDistance(points);
-                    queryGraph = new QueryGraph(ghStorage);
-                    queryGraph.lookup(qResults);
+                    queryGraph = QueryGraph.lookup(ghStorage, qResults);
                     weighting = createWeighting(hints, encoder, queryGraph);
                 }
                 ghRsp.addDebugInfo("tmode:" + tMode.toString());

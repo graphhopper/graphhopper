@@ -90,8 +90,7 @@ public class RoundTripRoutingTemplateTest {
         assertEquals(6, stagePoints.get(1).getClosestNode());
         assertEquals(0, stagePoints.get(2).getClosestNode());
 
-        QueryGraph queryGraph = new QueryGraph(g);
-        queryGraph.lookup(stagePoints);
+        QueryGraph queryGraph = QueryGraph.lookup(g, stagePoints);
         Weighting weighting = new FastestWeighting(carFE);
         List<Path> paths = routingTemplate.calcPaths(
                 queryGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode), carFE);

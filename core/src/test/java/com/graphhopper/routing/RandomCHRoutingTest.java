@@ -142,11 +142,11 @@ public class RandomCHRoutingTest {
 
         int numQueryGraph = 25;
         for (int j = 0; j < numQueryGraph; j++) {
-            QueryGraph queryGraph = new QueryGraph(graph);
-            QueryGraph chQueryGraph = new QueryGraph(chGraph);
             // add virtual nodes and edges, because they can change the routing behavior and/or produce bugs, e.g.
             // when via-points are used
-            addVirtualNodesAndEdges(rnd, queryGraph, chQueryGraph, numVirtualNodes);
+            List<QueryResult> qrs = createQueryResults(rnd, numVirtualNodes);
+            QueryGraph queryGraph = QueryGraph.lookup(graph, qrs);
+            QueryGraph chQueryGraph = QueryGraph.lookup(chGraph, qrs);
 
             int numQueries = 100;
             int numPathsNotFound = 0;
@@ -196,7 +196,7 @@ public class RandomCHRoutingTest {
         }
     }
 
-    private void addVirtualNodesAndEdges(Random rnd, QueryGraph queryGraph, QueryGraph chQueryGraph, int numVirtualNodes) {
+    private List<QueryResult> createQueryResults(Random rnd, int numVirtualNodes) {
         BBox bbox = graph.getBounds();
         int count = 0;
         List<QueryResult> qrs = new ArrayList<>(numVirtualNodes);
@@ -210,8 +210,7 @@ public class RandomCHRoutingTest {
             }
             count++;
         }
-        queryGraph.lookup(qrs);
-        chQueryGraph.lookup(qrs);
+        return qrs;
     }
 
     private QueryResult findQueryResult(Random rnd, BBox bbox) {

@@ -425,11 +425,11 @@ public class NodeBasedNodeContractorTest {
         LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
         locationIndex.prepareIndex();
 
-        QueryGraph chQueryGraph = new QueryGraph(lg);
-        chQueryGraph.lookup(Collections.singletonList(locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES)));
+        QueryGraph chQueryGraph = QueryGraph.lookup(lg,
+                Collections.singletonList(locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES)));
 
-        QueryGraph queryGraph = new QueryGraph(graph);
-        queryGraph.lookup(Collections.singletonList(locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES)));
+        QueryGraph queryGraph = QueryGraph.lookup(graph,
+                Collections.singletonList(locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES)));
 
         // without heading
         {

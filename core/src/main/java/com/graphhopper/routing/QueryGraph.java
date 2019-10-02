@@ -145,6 +145,12 @@ public class QueryGraph implements Graph {
 
     private boolean useEdgeExplorerCache = false;
 
+    public static QueryGraph lookup(Graph graph, List<QueryResult> queryResults) {
+        QueryGraph result = new QueryGraph(graph);
+        result.lookup(queryResults);
+        return result;
+    }
+
     public QueryGraph(Graph graph) {
         mainGraph = graph;
         mainNodeAccess = graph.getNodeAccess();

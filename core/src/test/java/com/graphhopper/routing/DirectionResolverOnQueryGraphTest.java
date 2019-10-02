@@ -277,8 +277,7 @@ public class DirectionResolverOnQueryGraphTest {
         for (ExpectedResult r : expectedResults) {
             qrs.add(getQueryResult(r.lat, r.lon));
         }
-        queryGraph = new QueryGraph(g);
-        queryGraph.lookup(qrs);
+        queryGraph = QueryGraph.lookup(g, qrs);
         DirectionResolver resolver = new DirectionResolver(queryGraph, encoder);
         for (int i = 0; i < expectedResults.length; i++) {
             assertEquals("unexpected resolved direction",
@@ -301,8 +300,7 @@ public class DirectionResolverOnQueryGraphTest {
 
     private void assertUnrestricted(double lat, double lon) {
         QueryResult qr = getQueryResult(lat, lon);
-        queryGraph = new QueryGraph(g);
-        queryGraph.lookup(Collections.singletonList(qr));
+        queryGraph = QueryGraph.lookup(g, Collections.singletonList(qr));
         DirectionResolver resolver = new DirectionResolver(queryGraph, encoder);
         assertEquals(unrestricted(), resolver.resolveDirections(qr.getClosestNode(), qr.getQueryPoint()));
     }

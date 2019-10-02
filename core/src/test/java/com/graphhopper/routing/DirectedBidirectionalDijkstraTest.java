@@ -4,10 +4,6 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.DirectedRoutingTest;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -16,7 +12,6 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -28,7 +23,6 @@ import java.util.Random;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 /**
  * This test makes sure that {@link DijkstraBidirectionRef#calcPath(int from, int to, int fromOutEdge, int toInEdge)}, i.e.
@@ -44,8 +38,6 @@ public class DirectedBidirectionalDijkstraTest {
     private FlagEncoder encoder;
     private EncodingManager encodingManager;
     private Weighting weighting;
-    private LocationIndex locationIndex;
-    private QueryGraph queryGraph;
 
     @Rule
     public RepeatRule repeatRule = new RepeatRule();
@@ -483,9 +475,12 @@ public class DirectedBidirectionalDijkstraTest {
         na.setNode(3, 0, 2);
         na.setNode(4, 0, 1);
         na.setNode(5, 0, 0);
-        initQueryGraph();
 
-        QueryResult qr = findClosest();
+        LocationIndex locationIndex = new LocationIndexTree(graph, dir);
+        locationIndex.prepareIndex();
+        QueryResult qr = locationIndex.findClosest(1.1, 0.5, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = QueryGraph.lookup(graph, Collections.singletonList(qr));
+
         assertEquals("wanted to get EDGE", QueryResult.Position.EDGE, qr.getSnappedPosition());
         assertEquals(6, qr.getClosestNode());
 
@@ -500,18 +495,6 @@ public class DirectedBidirectionalDijkstraTest {
         Path path = algo.calcPath(6, 0, outEdge, ANY_EDGE);
         assertEquals(nodes(6, 1, 2, 3, 4, 5, 0), path.calcNodes());
         assertEquals(5 + virtualEdge.getDistance(), path.getDistance(), 1.e-3);
-    }
-
-    private void initQueryGraph() {
-        queryGraph = new QueryGraph(graph);
-        locationIndex = new LocationIndexTree(graph, dir);
-        locationIndex.prepareIndex();
-    }
-
-    private QueryResult findClosest() {
-        QueryResult qr = locationIndex.findClosest(1.1, 0.5, EdgeFilter.ALL_EDGES);
-        queryGraph.lookup(Collections.singletonList(qr));
-        return qr;
     }
 
     private Path calcPath(int source, int target, int sourceOutEdge, int targetInEdge) {

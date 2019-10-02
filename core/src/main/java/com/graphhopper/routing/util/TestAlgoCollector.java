@@ -48,8 +48,7 @@ public class TestAlgoCollector {
     public TestAlgoCollector assertDistance(EncodingManager encodingManager, AlgoHelperEntry algoEntry, List<QueryResult> queryList,
                                             OneRun oneRun) {
         List<Path> altPaths = new ArrayList<>();
-        QueryGraph queryGraph = new QueryGraph(algoEntry.getForQueryGraph());
-        queryGraph.lookup(queryList);
+        QueryGraph queryGraph = QueryGraph.lookup(algoEntry.getForQueryGraph(), queryList);
         AlgorithmOptions opts = algoEntry.getAlgorithmOptions();
         FlagEncoder encoder = opts.getWeighting().getFlagEncoder();
         if (encoder.supports(TurnWeighting.class)) {

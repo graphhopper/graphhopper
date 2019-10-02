@@ -465,8 +465,7 @@ public final class GraphHopperGtfs {
                     tostation.setClosestNode(tonode);
                     points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
 
-                    QueryGraph queryGraph = new QueryGraph(graphHopperStorage);
-                    queryGraph.lookup(Collections.emptyList());
+                    QueryGraph queryGraph = QueryGraph.lookup(graphHopperStorage, Collections.emptyList());
                     final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, flagEncoder, gtfsStorage, realtimeFeed, false, true, 5.0);
 
                     MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, flagEncoder, false, Double.MAX_VALUE, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
