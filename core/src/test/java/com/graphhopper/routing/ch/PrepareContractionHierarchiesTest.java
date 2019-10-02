@@ -316,7 +316,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(10, 11, 1, true);
         g.edge(11, 28, 1, true);
         g.edge(28, 29, 1, true);
-        EdgeIteratorState edge29_30 = g.edge(29, 30, 1, true);
+        g.edge(29, 30, 1, true);
         g.edge(30, 31, 1, true);
         g.edge(31, 4, 1, true);
 
@@ -350,52 +350,77 @@ public class PrepareContractionHierarchiesTest {
         g.edge(25, 26, 1, false);
         g.edge(26, 25, 1, false);
 
-        // Make three edges customizable by
-        // a) marking their incident nodes to belong to an uncontractable core
-        //      (so their edges are never parts of shortcuts)
-        // b) giving the edges a high weight, so that they don't lie on witness paths,
-        //    preventing necessary shortcuts from being created
-        //      (this should mean we can customize those edges from 0 to 1000 without losing correctness)
-
+        // So we want edge 2->3 to be customizable.
+        // For that to work, we have to do two independent things when we create the contraction hierarchies:
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        // a) mark the incident nodes as 'core', meaning they are never contracted,
+        //    meaning that those edges are never part of shortcuts, so our customization
+        //    can't remain unnoticed.
         final IntHashSet blockedNodes = new IntHashSet();
         blockedNodes.add(2);
         blockedNodes.add(3);
-        blockedNodes.add(0);
-        blockedNodes.add(9);
-        blockedNodes.add(29);
-        blockedNodes.add(30);
-
-        edge2_3.setDistance(1000.0);
-        edge0_9.setDistance(1000.0);
-        edge29_30.setDistance(1000.0);
-
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.useNodeFilter(new IntPredicate() {
             @Override
             public boolean apply(int node) {
                 return !blockedNodes.contains(node);
             }
         });
+        // b) give the edge a high weight in the witness search, so that it doesn't lie on any witness paths,
+        //    so that we don't prevent any shortcuts from being created
+        //    that become necessary only when our edge is customized.
+        //    The highest weight we want to customize the edge with
+        //    should work.
+        prepare.useWeightingForNodeBasedWitnessSearch(new Weighting() {
+            @Override
+            public double getMinWeight(double distance) {
+                return weighting.getMinWeight(distance);
+            }
 
+            @Override
+            public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                if (blockedNodes.contains(edgeState.getBaseNode()) && blockedNodes.contains(edgeState.getAdjNode())) {
+                    return 1000 * weighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+                }
+                return weighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+            }
+
+            @Override
+            public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                return weighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+            }
+
+            @Override
+            public FlagEncoder getFlagEncoder() {
+                return weighting.getFlagEncoder();
+            }
+
+            @Override
+            public String getName() {
+                return weighting.getName();
+            }
+
+            @Override
+            public boolean matches(HintsMap map) {
+                return weighting.matches(map);
+            }
+        });
         prepare.doWork();
 
-        RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
-        Path p = algo.calcPath(4, 7);
-        assertEquals(IntArrayList.from(4, 5, 6, 7), p.calcNodes());
+        // Shortest path for the uncustomized edge.
+        // This will already fail if the "core" doesn't work, since with the modified witness search weight,
+        // it's equivalent to having a customizable edge and making it faster.
+        Path pathBefore = new RoutingAlgorithmFactorySimple().createAlgo(g, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode)).calcPath(1, 4);
+        Path pathBeforeCH = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode)).calcPath(1, 4);
+        assertEquals(IntArrayList.from(1, 2, 3, 4), pathBefore.calcNodes());
+        assertEquals(IntArrayList.from(1, 2, 3, 4), pathBeforeCH.calcNodes());
 
-        RoutingAlgorithm wurst = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
-        Path path = wurst.calcPath(1, 4);
-        System.out.println(path.calcNodes());
+        // Hackily customize our edge by making it 1000 times longer.
+        edge2_3.setDistance(1000.0);
 
-        // edge.setDistance(1.0);
-        edge0_9.setDistance(1.0);
-        edge29_30.setDistance(1.0);
-
-
-        RoutingAlgorithm pups = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
-        Path pupsPath = pups.calcPath(1, 4);
-        System.out.println(pupsPath.calcNodes());
-
+        Path pathAfter = new RoutingAlgorithmFactorySimple().createAlgo(g, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode)).calcPath(1, 4);
+        Path pathAfterCH = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode)).calcPath(1, 4);
+        assertEquals(IntArrayList.from(1, 17, 0, 9, 10, 11, 28, 29, 30, 31, 4), pathAfter.calcNodes());
+        assertEquals(IntArrayList.from(1, 17, 0, 9, 10, 11, 28, 29, 30, 31, 4), pathAfterCH.calcNodes());
     }
 
 

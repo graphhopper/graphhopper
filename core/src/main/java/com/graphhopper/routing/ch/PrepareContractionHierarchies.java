@@ -55,6 +55,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final CHProfile chProfile;
     private final PreparationWeighting prepareWeighting;
+    private Weighting nodeBasedWitnessSearchWeighting;
     private final CHGraph prepareGraph;
     private final Random rand = new Random(123);
     private final IntSet updatedNeighbors;
@@ -85,6 +86,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         this.prepareGraph = chGraph;
         this.chProfile = chGraph.getCHProfile();
         prepareWeighting = new PreparationWeighting(chProfile.getWeighting());
+        nodeBasedWitnessSearchWeighting = chProfile.getWeighting();
         this.params = Params.forTraversalMode(chProfile.getTraversalMode());
         updatedNeighbors = new IntHashSet(50);
     }
@@ -121,6 +123,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     public PrepareContractionHierarchies useNodeFilter(IntPredicate allowContraction) {
         this.allowContraction = allowContraction;
         return this;
+    }
+
+    public void useWeightingForNodeBasedWitnessSearch(Weighting weighting) {
+        nodeBasedWitnessSearchWeighting = weighting;
     }
 
     @Override
@@ -484,7 +490,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased(graph);
             return new EdgeBasedNodeContractor(prepareGraph, chTurnWeighting, pMap);
         } else {
-            return new NodeBasedNodeContractor(prepareGraph, chProfile.getWeighting(), pMap);
+            return new NodeBasedNodeContractor(prepareGraph, nodeBasedWitnessSearchWeighting, pMap);
         }
     }
 

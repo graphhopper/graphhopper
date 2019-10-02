@@ -17,19 +17,21 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.IntDoubleHashMap;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.predicates.IntPredicate;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Routing;
@@ -333,14 +335,13 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHProfile chProfile) {
         CHGraph chGraph = ghStorage.getCHGraph(chProfile);
+        final Weighting weighting = chProfile.getWeighting();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(chGraph);
         BooleanEncodedValue conditional = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
         AllEdgesIterator edgeCursor = ghStorage.getAllEdges();
         final IntHashSet blockedNodes = new IntHashSet();
-        final IntHashSet blockedEdges = new IntHashSet();
         while (edgeCursor.next()) {
             if (edgeCursor.get(conditional)) {
-                blockedEdges.add(edgeCursor.getEdge());
                 blockedNodes.add(edgeCursor.getBaseNode());
                 blockedNodes.add(edgeCursor.getAdjNode());
             }
@@ -349,6 +350,40 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             @Override
             public boolean apply(int node) {
                 return !blockedNodes.contains(node);
+            }
+        });
+        prepare.useWeightingForNodeBasedWitnessSearch(new Weighting() {
+            @Override
+            public double getMinWeight(double distance) {
+                return weighting.getMinWeight(distance);
+            }
+
+            @Override
+            public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                if (blockedNodes.contains(edgeState.getBaseNode()) && blockedNodes.contains(edgeState.getAdjNode())) {
+                    return Double.MAX_VALUE;
+                }
+                return weighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+            }
+
+            @Override
+            public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                return weighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+            }
+
+            @Override
+            public FlagEncoder getFlagEncoder() {
+                return weighting.getFlagEncoder();
+            }
+
+            @Override
+            public String getName() {
+                return weighting.getName();
+            }
+
+            @Override
+            public boolean matches(HintsMap map) {
+                return weighting.matches(map);
             }
         });
         prepare.setParams(pMap);
