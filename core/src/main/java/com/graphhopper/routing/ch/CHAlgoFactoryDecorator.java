@@ -334,10 +334,21 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     private PrepareContractionHierarchies createCHPreparation(GraphHopperStorage ghStorage, CHProfile chProfile) {
+        BooleanEncodedValue conditional = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
+
+        AllEdgesIterator allEdges = ghStorage.getAllEdges();
+        int nConditional = 0;
+        while (allEdges.next()) {
+            if (allEdges.get(conditional)) {
+                nConditional++;
+            }
+        }
+        System.out.println(conditional);
+        System.out.println(nConditional + " of " + ghStorage.getEdges() + " are tagged with a conditional.");
+
         CHGraph chGraph = ghStorage.getCHGraph(chProfile);
         final Weighting weighting = chProfile.getWeighting();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(chGraph);
-        BooleanEncodedValue conditional = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
         AllEdgesIterator edgeCursor = ghStorage.getAllEdges();
         final IntHashSet blockedNodes = new IntHashSet();
         while (edgeCursor.next()) {
