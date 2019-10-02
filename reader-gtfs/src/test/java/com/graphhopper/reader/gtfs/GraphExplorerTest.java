@@ -179,7 +179,6 @@ public class GraphExplorerTest {
         extraEdges.add(h);
 
         WrapperGraph wrapperGraph = new WrapperGraph(graph, extraEdges);
-        QueryGraph queryGraph = new QueryGraph(wrapperGraph);
 
         QueryResult point1 = new QueryResult(3.5, 3.5);
         QueryResult point2 = new QueryResult(4.5, 4.5);
@@ -193,7 +192,7 @@ public class GraphExplorerTest {
         point2.setWayIndex(0);
         point2.setSnappedPosition(QueryResult.Position.EDGE);
         point2.calcSnappedPoint(new DistanceCalc2D());
-        queryGraph.lookup(point1, point2);
+        QueryGraph queryGraph = QueryGraph.lookup(wrapperGraph, Arrays.asList(point1, point2));
 
         GraphExplorer testee = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, false, 5.0);
         assertThat(() -> testee.exploreEdgesAround(new Label(0, -1, 0, 0, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
