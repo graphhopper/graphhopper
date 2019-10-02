@@ -59,12 +59,12 @@ public class QueryGraph implements Graph {
     private final Map<EdgeFilter, EdgeExplorer> cacheMap = new HashMap<>(4);
 
     // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
-    List<VirtualEdgeIteratorState> virtualEdges;
-    private List<QueryResult> queryResults;
+    final List<VirtualEdgeIteratorState> virtualEdges;
+    private final List<QueryResult> queryResults;
     /**
      * Store lat,lon of virtual tower nodes.
      */
-    private PointList virtualNodes;
+    private final PointList virtualNodes;
     private final NodeAccess nodeAccess = new NodeAccess() {
         @Override
         public void ensureNode(int nodeId) {
@@ -147,16 +147,20 @@ public class QueryGraph implements Graph {
 
     // todonow: maybe add convenience methods for one and two query results ?
     public static QueryGraph lookup(Graph graph, List<QueryResult> queryResults) {
-        QueryGraph result = new QueryGraph(graph);
-        result.lookup(queryResults);
-        return result;
+        return new QueryGraph(graph, queryResults);
     }
 
-    public QueryGraph(Graph graph) {
+    public QueryGraph(Graph graph, List<QueryResult> queryResults) {
         mainGraph = graph;
         mainNodeAccess = graph.getNodeAccess();
         mainNodes = graph.getNodes();
-        mainEdges = graph.getAllEdges().length();
+        mainEdges = graph.getEdges();
+
+        virtualEdges = new ArrayList<>(queryResults.size() * 2);
+        virtualNodes = new PointList(queryResults.size(), mainNodeAccess.is3D());
+        this.queryResults = new ArrayList<>(queryResults.size());
+
+        lookup(queryResults);
 
         if (mainGraph.getExtension() instanceof TurnCostExtension)
             wrappedExtension = new QueryGraphTurnExt();
@@ -184,6 +188,9 @@ public class QueryGraph implements Graph {
         mainNodeAccess = graph.getNodeAccess();
         mainNodes = superQueryGraph.mainNodes;
         mainEdges = superQueryGraph.mainEdges;
+        virtualEdges = superQueryGraph.virtualEdges;
+        virtualNodes = superQueryGraph.virtualNodes;
+        queryResults = superQueryGraph.queryResults;
     }
 
     /**
@@ -194,17 +201,6 @@ public class QueryGraph implements Graph {
      * @see QueryGraph
      */
     private void lookup(List<QueryResult> resList) {
-        if (isInitialized())
-            throw new IllegalStateException("Call lookup only once. Otherwise you'll have problems for queries sharing the same edge.");
-
-        // initialize all none-final variables
-        virtualEdges = new ArrayList<>(resList.size() * 2);
-        virtualNodes = new PointList(resList.size(), mainNodeAccess.is3D());
-        queryResults = new ArrayList<>(resList.size());
-        baseGraph.virtualEdges = virtualEdges;
-        baseGraph.virtualNodes = virtualNodes;
-        baseGraph.queryResults = queryResults;
-
         GHIntObjectHashMap<List<QueryResult>> edge2res = new GHIntObjectHashMap<>(resList.size());
 
         // Phase 1
