@@ -48,7 +48,7 @@ like finding and fixing bugs and improving our documentation or translations!
 
 ## For the Web
 
-See GraphHopper in action on [GraphHopper Maps](https://graphhopper.com/maps)
+See GraphHopper in action on [GraphHopper Maps](https://graphhopper.com/maps) and [install it](./docs/index.md) on your own machine:
 
 [![GraphHopper Maps](https://karussell.files.wordpress.com/2014/12/graphhopper-maps-0-4-preview.png)](https://graphhopper.com/maps)
 
