@@ -105,8 +105,8 @@
                     <!-- suppress warning about Unsafe functionality -->
                     <compilerArgument>-XDignore.symbol.file</compilerArgument>
                     <fork>true</fork>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>13</source>
+                    <target>13</target>
                 </configuration>
             </plugin>
 

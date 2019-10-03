@@ -42,14 +42,14 @@ import java.util.StringTokenizer;
 /**
  * A DataAccess implementation using a memory-mapped file, i.e. a facility of the
  * operating system to access a file like an area of RAM.
- *
- * Java presents the mapped memory as a ByteBuffer, and ByteBuffer is not
- * thread-safe, which means that access to a ByteBuffer must be externally
- * synchronized.
- *
+ * <p>
+ * Java presents the mapped memory as a ByteBuffer, and ByteBuffer can be made
+ * thread-safe since JDK 13, which means that access to a ByteBuffer must no longer
+ * be externally synchronized.
+ * <p>
  * This class itself is intended to be as thread-safe as other DataAccess
  * implementations are.
- *
+ * <p>
  * The exact behavior of memory-mapping is reported to be wildly platform-dependent.
  *
  * @author Peter Karich
@@ -335,9 +335,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
-        synchronized (byteBuffer) {
-            byteBuffer.putInt(index, value);
-        }
+        byteBuffer.putInt(index, value);
     }
 
     @Override
@@ -345,9 +343,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
-        synchronized (byteBuffer) {
-            return byteBuffer.getInt(index);
-        }
+        return byteBuffer.getInt(index);
     }
 
     @Override
@@ -355,9 +351,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
-        synchronized (byteBuffer) {
-            byteBuffer.putShort(index, value);
-        }
+        byteBuffer.putShort(index, value);
     }
 
     @Override
@@ -365,9 +359,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
-        synchronized (byteBuffer) {
-            return byteBuffer.getShort(index);
-        }
+        return byteBuffer.getShort(index);
     }
 
     @Override
@@ -377,21 +369,15 @@ public final class MMapDataAccess extends AbstractDataAccess {
         final int index = (int) (bytePos & indexDivisor);
         final int delta = index + length - segmentSizeInBytes;
         final ByteBuffer bb1 = segments.get(bufferIndex);
-        synchronized (bb1) {
-            bb1.position(index);
-            if (delta > 0) {
-                length -= delta;
-                bb1.put(values, 0, length);
-            } else {
-                bb1.put(values, 0, length);
-            }
+        if (delta > 0) {
+            length -= delta;
+            bb1.put(index, values, 0, length);
+        } else {
+            bb1.put(index, values, 0, length);
         }
         if (delta > 0) {
             final ByteBuffer bb2 = segments.get(bufferIndex + 1);
-            synchronized (bb2) {
-                bb2.position(0);
-                bb2.put(values, length, delta);
-            }
+            bb2.put(0, values, length, delta);
         }
     }
 
@@ -402,21 +388,15 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int index = (int) (bytePos & indexDivisor);
         int delta = index + length - segmentSizeInBytes;
         final ByteBuffer bb1 = segments.get(bufferIndex);
-        synchronized (bb1) {
-            bb1.position(index);
-            if (delta > 0) {
-                length -= delta;
-                bb1.get(values, 0, length);
-            } else {
-                bb1.get(values, 0, length);
-            }
+        if (delta > 0) {
+            length -= delta;
+            bb1.get(index, values, 0, length);
+        } else {
+            bb1.get(index, values, 0, length);
         }
         if (delta > 0) {
             final ByteBuffer bb2 = segments.get(bufferIndex + 1);
-            synchronized (bb2) {
-                bb2.position(0);
-                bb2.get(values, length, delta);
-            }
+            bb2.get(0, values, length, delta);
         }
     }
 

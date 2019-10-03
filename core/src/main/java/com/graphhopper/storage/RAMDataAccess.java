@@ -27,7 +27,7 @@ import java.util.Arrays;
 
 /**
  * This is an in-memory byte-based data structure with the possibility to be stored on flush().
- * Thread safe.
+ * Read thread-safe.
  * <p>
  *
  * @author Peter Karich
@@ -77,7 +77,7 @@ public class RAMDataAccess extends AbstractDataAccess {
     public RAMDataAccess create(long bytes) {
         if (segments.length > 0)
             throw new IllegalThreadStateException("already created");
-        
+
         setSegmentSize(segmentSizeInBytes);
         ensureCapacity(Math.max(10 * 4, bytes));
         return this;

@@ -117,8 +117,7 @@ public class Measurement {
             }
         };
 
-        hopper.init(args).
-                forDesktop();
+        hopper.init(args).setMemoryMapped();
         if (cleanGraph) {
             hopper.clean();
         }
