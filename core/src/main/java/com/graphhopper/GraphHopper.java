@@ -24,10 +24,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
-import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
-import com.graphhopper.routing.profiles.EncodedValueFactory;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -924,6 +921,45 @@ public class GraphHopper implements GraphHopperAPI {
             return new BlockAreaWeighting(weighting, blockArea);
         }
 
+        if (hintsMap.has("block_property")) {
+            String propertyName = hintsMap.get("block_property", "");
+            final BooleanEncodedValue property = ghStorage.getEncodingManager().getBooleanEncodedValue(propertyName);
+            final Weighting finalWeighting = weighting;
+            return new Weighting() {
+                @Override
+                public double getMinWeight(double distance) {
+                    return finalWeighting.getMinWeight(distance);
+                }
+
+                @Override
+                public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    if (edgeState.get(property)) {
+                        return Double.POSITIVE_INFINITY;
+                    }
+                    return finalWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+                }
+
+                @Override
+                public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    return finalWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+                }
+
+                @Override
+                public FlagEncoder getFlagEncoder() {
+                    return finalWeighting.getFlagEncoder();
+                }
+
+                @Override
+                public String getName() {
+                    return finalWeighting.getName();
+                }
+
+                @Override
+                public boolean matches(HintsMap map) {
+                    return finalWeighting.matches(map);
+                }
+            };
+        }
         return weighting;
     }
 
