@@ -351,10 +351,12 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(chGraph);
         AllEdgesIterator edgeCursor = ghStorage.getAllEdges();
         final IntHashSet blockedNodes = new IntHashSet();
+        final IntHashSet blockedEdges = new IntHashSet();
         while (edgeCursor.next()) {
             if (edgeCursor.get(conditional)) {
                 blockedNodes.add(edgeCursor.getBaseNode());
                 blockedNodes.add(edgeCursor.getAdjNode());
+                blockedEdges.add(edgeCursor.getEdge());
             }
         }
         prepare.useNodeFilter(new IntPredicate() {
@@ -371,8 +373,8 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
             @Override
             public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-                if (blockedNodes.contains(edgeState.getBaseNode()) && blockedNodes.contains(edgeState.getAdjNode())) {
-                    return Double.MAX_VALUE;
+                if (blockedEdges.contains(edgeState.getEdge())) {
+                    return Double.POSITIVE_INFINITY;
                 }
                 return weighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
             }
