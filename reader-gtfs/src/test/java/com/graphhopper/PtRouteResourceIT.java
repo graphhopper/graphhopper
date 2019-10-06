@@ -26,12 +26,15 @@ import com.graphhopper.reader.gtfs.PtFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.TranslationMap;
 import io.dropwizard.testing.junit.ResourceTestRule;
+import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -47,6 +50,9 @@ public class PtRouteResourceIT {
 
     private static final String GRAPH_LOC = "target/PtRouteResourceIT";
     private static GraphHopperGtfs graphHopper;
+    private static GtfsStorage gtfsStorage;
+    private static GraphHopperStorage graphHopperStorage;
+    private static LocationIndex locationIndex;
 
     static {
         Helper.removeDir(new File(GRAPH_LOC));
@@ -55,11 +61,11 @@ public class PtRouteResourceIT {
         final FootFlagEncoder footFlagEncoder = new FootFlagEncoder();
 
         EncodingManager encodingManager = EncodingManager.create(Arrays.asList(carFlagEncoder, ptFlagEncoder, footFlagEncoder));
-        GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
-        GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
-        GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Collections.singleton("files/sample-feed.zip"), Collections.singleton("files/beatty.osm"));
-        LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
-        graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
+        GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
+        gtfsStorage = GtfsStorage.createOrLoad(directory);
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Collections.singleton("files/sample-feed.zip"), Collections.singleton("files/beatty.osm"));
+        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
+        graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage)
                 .createWithoutRealtimeFeed();
     }
 
@@ -92,6 +98,13 @@ public class PtRouteResourceIT {
         assertEquals(200, response.getStatus());
         GHResponse ghResponse = response.readEntity(GHResponse.class);
         assertFalse(ghResponse.hasErrors());
+    }
+
+    @AfterClass
+    public static void close() {
+        graphHopperStorage.close();
+        locationIndex.close();
+        gtfsStorage.close();
     }
 
 }

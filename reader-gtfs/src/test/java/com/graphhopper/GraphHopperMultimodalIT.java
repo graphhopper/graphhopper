@@ -24,10 +24,12 @@ import com.graphhopper.reader.gtfs.PtFlagEncoder;
 import com.graphhopper.reader.gtfs.Request;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -48,17 +50,18 @@ public class GraphHopperMultimodalIT {
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopperStorage graphHopperStorage;
     private static LocationIndex locationIndex;
+    private static GtfsStorage gtfsStorage;
 
     @BeforeClass
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(Arrays.asList(ptFlagEncoder, new FootFlagEncoder()));
-        GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
-        GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
+        GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
+        gtfsStorage = GtfsStorage.createOrLoad(directory);
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Collections.singleton("files/sample-feed.zip"), Collections.singleton("files/beatty.osm"));
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
-        graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
+        graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage)
                 .createWithoutRealtimeFeed();
     }
 
@@ -66,6 +69,7 @@ public class GraphHopperMultimodalIT {
     public static void close() {
         graphHopperStorage.close();
         locationIndex.close();
+        gtfsStorage.close();
     }
 
     @Test

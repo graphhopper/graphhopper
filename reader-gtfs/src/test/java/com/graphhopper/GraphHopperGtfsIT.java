@@ -25,11 +25,13 @@ import com.graphhopper.reader.gtfs.Request;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
+import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
@@ -66,11 +68,11 @@ public class GraphHopperGtfsIT {
         final FootFlagEncoder footFlagEncoder = new FootFlagEncoder();
 
         EncodingManager encodingManager = EncodingManager.create(Arrays.asList(carFlagEncoder, ptFlagEncoder, footFlagEncoder));
-        GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
-        gtfsStorage = GraphHopperGtfs.createGtfsStorage();
+        GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
+        gtfsStorage = GtfsStorage.createOrLoad(directory);
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
-        graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
+        graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage)
                 .createWithoutRealtimeFeed();
     }
 
@@ -78,6 +80,7 @@ public class GraphHopperGtfsIT {
     public static void close() {
         graphHopperStorage.close();
         locationIndex.close();
+        gtfsStorage.close();
     }
 
     @Test

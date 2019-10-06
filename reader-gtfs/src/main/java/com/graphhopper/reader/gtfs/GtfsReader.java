@@ -258,7 +258,6 @@ class GtfsReader {
             Stop stop = feed.stops.get(stopTime.stop_id);
             arrivalNode = i++;
             nodeAccess.setNode(arrivalNode, stop.stop_lat, stop.stop_lon);
-            nodeAccess.setAdditionalNodeField(arrivalNode, NodeType.INTERNAL_PT.ordinal());
             arrivalTime = stopTime.arrival_time + time;
             if (prev != null) {
                 Stop fromStop = feed.stops.get(prev.stop_id);
@@ -286,7 +285,6 @@ class GtfsReader {
             int departureTimelineNode = departureTimeline.computeIfAbsent((stopTime.departure_time + time) % (24 * 60 * 60), t -> {
                 final int _departureTimelineNode = i++;
                 nodeAccess.setNode(_departureTimelineNode, stop.stop_lat, stop.stop_lon);
-                nodeAccess.setAdditionalNodeField(_departureTimelineNode, NodeType.INTERNAL_PT.ordinal());
                 return _departureTimelineNode;
             });
 
@@ -300,12 +298,10 @@ class GtfsReader {
             int arrivalTimelineNode = arrivalTimeline.computeIfAbsent((stopTime.arrival_time + time) % (24 * 60 * 60), t -> {
                 final int _arrivalTimelineNode = i++;
                 nodeAccess.setNode(_arrivalTimelineNode, stop.stop_lat, stop.stop_lon);
-                nodeAccess.setAdditionalNodeField(_arrivalTimelineNode, NodeType.INTERNAL_PT.ordinal());
                 return _arrivalTimelineNode;
             });
             departureNode = i++;
             nodeAccess.setNode(departureNode, stop.stop_lat, stop.stop_lon);
-            nodeAccess.setAdditionalNodeField(departureNode, NodeType.INTERNAL_PT.ordinal());
             int dayShift = stopTime.departure_time / (24 * 60 * 60);
             GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(trip.validOnDay, dayShift), zoneId, startDate);
             int validityId;
@@ -364,7 +360,6 @@ class GtfsReader {
     private void wireUpDepartureTimeline(int streetNode, Stop stop, NavigableMap<Integer, Integer> departureTimeline, int route_type, GtfsStorageI.PlatformDescriptor platformDescriptorIfStatic) {
         nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
         int stopEnterNode = i - 1;
-        nodeAccess.setAdditionalNodeField(stopEnterNode, NodeType.STOP_ENTER_NODE.ordinal());
         EdgeIteratorState entryEdge = graph.edge(streetNode, stopEnterNode);
         entryEdge.set(accessEnc, true).setReverse(accessEnc, false);
         setEdgeTypeAndClearDistance(entryEdge, GtfsStorage.EdgeType.ENTER_PT);
@@ -379,7 +374,6 @@ class GtfsReader {
     private void wireUpArrivalTimeline(int streetNode, Stop stop, NavigableMap<Integer, Integer> arrivalTimeline, int route_type, GtfsStorageI.PlatformDescriptor platformDescriptorIfStatic) {
         nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
         int stopExitNode = i - 1;
-        nodeAccess.setAdditionalNodeField(stopExitNode, NodeType.STOP_EXIT_NODE.ordinal());
         EdgeIteratorState exitEdge = graph.edge(stopExitNode, streetNode);
         exitEdge.set(accessEnc, true).setReverse(accessEnc, false);
         setEdgeTypeAndClearDistance(exitEdge, GtfsStorage.EdgeType.EXIT_PT);
@@ -494,7 +488,6 @@ class GtfsReader {
         int departureTimelineNode = departureTimelineNodes.computeIfAbsent(departureTime % (24 * 60 * 60), t -> {
             final int _departureTimelineNode = i++;
             nodeAccess.setNode(_departureTimelineNode, stop.stop_lat, stop.stop_lon);
-            nodeAccess.setAdditionalNodeField(_departureTimelineNode, NodeType.INTERNAL_PT.ordinal());
             return _departureTimelineNode;
         });
 
@@ -588,7 +581,6 @@ class GtfsReader {
                     gtfsStorage.getOperatingDayPatterns().put(blockTransferValidOn, blockTransferValidityId);
                 }
                 nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
-                nodeAccess.setAdditionalNodeField(i - 1, NodeType.INTERNAL_PT.ordinal());
                 EdgeIteratorState transferEdge = graph.edge(lastTrip.arrivalNode, i - 1);
                 transferEdge.set(accessEnc, true).setReverse(accessEnc, false);
                 setEdgeTypeAndClearDistance(transferEdge, GtfsStorage.EdgeType.TRANSFER);

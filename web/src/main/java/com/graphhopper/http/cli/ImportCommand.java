@@ -26,6 +26,7 @@ import com.graphhopper.reader.gtfs.PtFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import io.dropwizard.cli.ConfiguredCommand;
@@ -45,13 +46,14 @@ public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfigurat
     protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace namespace, GraphHopperServerConfiguration configuration) throws Exception {
         if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
             final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
-            final GHDirectory ghDirectory = GraphHopperGtfs.createGHDirectory(configuration.getGraphHopperConfiguration().get("graph.location", "target/tmp"));
-            final GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
+            final GHDirectory ghDirectory = new GHDirectory(configuration.getGraphHopperConfiguration().get("graph.location", "target/tmp"), DAType.RAM_STORE);
+            final GtfsStorage gtfsStorage = GtfsStorage.createOrLoad(ghDirectory);
             final EncodingManager encodingManager = EncodingManager.create(Arrays.asList(ptFlagEncoder, new FootFlagEncoder(), new CarFlagEncoder()));
             final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, ptFlagEncoder, gtfsStorage,
                     configuration.getGraphHopperConfiguration().has("gtfs.file") ? Arrays.asList(configuration.getGraphHopperConfiguration().get("gtfs.file", "").split(",")) : Collections.emptyList(),
                     configuration.getGraphHopperConfiguration().has("datareader.file") ? Arrays.asList(configuration.getGraphHopperConfiguration().get("datareader.file", "").split(",")) : Collections.emptyList());
             graphHopperStorage.close();
+            gtfsStorage.close();
         } else {
             final GraphHopperManaged graphHopper = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), bootstrap.getObjectMapper());
             graphHopper.start();

@@ -26,10 +26,12 @@ import com.graphhopper.reader.gtfs.Request;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -54,29 +56,33 @@ public class RealtimeIT {
     private static GraphHopperGtfs.Factory graphHopperFactory;
     private static GraphHopperStorage graphHopperStorage;
     private static LocationIndex locationIndex;
+    private static GtfsStorage gtfsStorage;
 
     @BeforeClass
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(Arrays.asList(new CarFlagEncoder(), ptFlagEncoder, new FootFlagEncoder()));
-        GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
-        GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
+        GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
+        gtfsStorage = GtfsStorage.createOrLoad(directory);
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         graphHopperStorage.close();
+        gtfsStorage.close();
         locationIndex.close();
         // Re-load read only
-        directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
+        directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
+        gtfsStorage = GtfsStorage.createOrLoad(directory);
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
-        graphHopperFactory = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage);
+        graphHopperFactory = GraphHopperGtfs.createFactory(ptFlagEncoder, new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage);
     }
 
     @AfterClass
     public static void close() {
         graphHopperStorage.close();
         locationIndex.close();
+        gtfsStorage.close();
     }
 
 

@@ -40,6 +40,7 @@ import com.graphhopper.resources.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
@@ -208,13 +209,13 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
     private void runPtGraphHopper(CmdArgs configuration, Environment environment) {
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
-        final GHDirectory ghDirectory = GraphHopperGtfs.createGHDirectory(configuration.get("graph.location", "target/tmp"));
-        final GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
+        final GHDirectory ghDirectory = new GHDirectory(configuration.get("graph.location", "target/tmp"), DAType.RAM_STORE);
+        final GtfsStorage gtfsStorage = GtfsStorage.createOrLoad(ghDirectory);
         final EncodingManager encodingManager = new EncodingManager.Builder().add(ptFlagEncoder).add(new FootFlagEncoder()).add(new CarFlagEncoder()).build();
         final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, ptFlagEncoder, gtfsStorage,
                 configuration.has("gtfs.file") ? Arrays.asList(configuration.get("gtfs.file", "").split(",")) : Collections.emptyList(),
                 configuration.has("datareader.file") ? Arrays.asList(configuration.get("datareader.file", "").split(",")) : Collections.emptyList());
-        final TranslationMap translationMap = GraphHopperGtfs.createTranslationMap();
+        final TranslationMap translationMap = new TranslationMap().doImport();
         final LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(ghDirectory, graphHopperStorage);
         environment.jersey().register(new AbstractBinder() {
             @Override
@@ -254,6 +255,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             @Override
             public void stop() throws Exception {
                 locationIndex.close();
+                gtfsStorage.close();
                 graphHopperStorage.close();
             }
         });

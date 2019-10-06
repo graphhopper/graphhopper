@@ -117,7 +117,6 @@ public final class GraphHopperGtfs {
         private final GHResponse response = new GHResponse();
         private final Graph graphWithExtraEdges = new WrapperGraph(graphHopperStorage, extraEdges);
         private QueryGraph queryGraph = new QueryGraph(graphWithExtraEdges);
-        private GraphExplorer graphExplorer;
         private int visitedNodes;
 
         RequestHandler(Request request) {
@@ -238,7 +237,7 @@ public final class GraphHopperGtfs {
                 reverseSettledSet.put(stationLabel.adjNode, stationLabel);
             }
 
-            graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, flagEncoder, gtfsStorage, realtimeFeed, arriveBy, false, walkSpeedKmH);
+            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, flagEncoder, gtfsStorage, realtimeFeed, arriveBy, false, walkSpeedKmH);
             List<Label> discoveredSolutions = new ArrayList<>();
             final long smallestStationLabelWeight;
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, flagEncoder, arriveBy, maxWalkDistancePerLeg, true, !ignoreTransfers, profileQuery, maxVisitedNodesForRequest, discoveredSolutions);
@@ -333,20 +332,8 @@ public final class GraphHopperGtfs {
         this.tripFromLabel = new TripFromLabel(this.gtfsStorage, this.realtimeFeed);
     }
 
-    public static GtfsStorage createGtfsStorage() {
-        return new GtfsStorage();
-    }
-
-    public static GHDirectory createGHDirectory(String graphHopperFolder) {
-        return new GHDirectory(graphHopperFolder, DAType.RAM_STORE);
-    }
-
-    public static TranslationMap createTranslationMap() {
-        return new TranslationMap().doImport();
-    }
-
     public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, PtFlagEncoder ptFlagEncoder, GtfsStorage gtfsStorage, Collection<String> gtfsFiles, Collection<String> osmFiles) {
-        GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, gtfsStorage);
+        GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, new GraphExtension.NoOpExtension());
         if (graphHopperStorage.loadExisting()) {
             return graphHopperStorage;
         } else {
@@ -366,7 +353,7 @@ public final class GraphHopperGtfs {
             int id = 0;
             for (String gtfsFile : gtfsFiles) {
                 try {
-                    ((GtfsStorage) graphHopperStorage.getExtension()).loadGtfsFromFile("gtfs_" + id++, new ZipFile(gtfsFile));
+                    gtfsStorage.loadGtfsFromFile("gtfs_" + id++, new ZipFile(gtfsFile));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -377,7 +364,7 @@ public final class GraphHopperGtfs {
             } else {
                 walkNetworkIndex = new EmptyLocationIndex();
             }
-            GraphHopperGtfs graphHopperGtfs = new GraphHopperGtfs(ptFlagEncoder, createTranslationMap(), graphHopperStorage, walkNetworkIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
+            GraphHopperGtfs graphHopperGtfs = new GraphHopperGtfs(ptFlagEncoder, new TranslationMap().doImport(), graphHopperStorage, walkNetworkIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
             for (int i = 0; i < id; i++) {
                 GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get("gtfs_" + i);
                 GtfsReader gtfsReader = new GtfsReader("gtfs_" + i, graphHopperStorage, gtfsStorage, ptFlagEncoder, walkNetworkIndex);
@@ -443,7 +430,7 @@ public final class GraphHopperGtfs {
         return new RequestHandler(request).route();
     }
 
-    private class TransferWithTime {
+    private static class TransferWithTime {
         public String id;
         Transfer transfer;
         long time;
