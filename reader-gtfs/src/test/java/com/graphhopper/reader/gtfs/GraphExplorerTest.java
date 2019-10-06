@@ -46,14 +46,14 @@ import static org.mockito.Mockito.mock;
 
 public class GraphExplorerTest {
 
-    private final PtFlagEncoder pt;
+    private final PtEncodedValues pt;
     private final FootFlagEncoder foot;
     private final EncodingManager encodingManager;
 
     public GraphExplorerTest() {
-        pt = new PtFlagEncoder();
         foot = new FootFlagEncoder();
-        encodingManager = EncodingManager.create(Arrays.asList(pt, foot));
+        encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(foot).build();
+        pt = PtEncodedValues.fromEncodingManager(encodingManager);
     }
 
     @Test

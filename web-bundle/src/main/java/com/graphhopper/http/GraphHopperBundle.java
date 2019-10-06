@@ -35,7 +35,7 @@ import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
-import com.graphhopper.reader.gtfs.PtFlagEncoder;
+import com.graphhopper.reader.gtfs.PtEncodedValues;
 import com.graphhopper.resources.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -208,11 +208,10 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
     }
 
     private void runPtGraphHopper(CmdArgs configuration, Environment environment) {
-        final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
         final GHDirectory ghDirectory = new GHDirectory(configuration.get("graph.location", "target/tmp"), DAType.RAM_STORE);
         final GtfsStorage gtfsStorage = GtfsStorage.createOrLoad(ghDirectory);
-        final EncodingManager encodingManager = new EncodingManager.Builder().add(ptFlagEncoder).add(new FootFlagEncoder()).add(new CarFlagEncoder()).build();
-        final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, ptFlagEncoder, gtfsStorage,
+        EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
+        final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, gtfsStorage,
                 configuration.has("gtfs.file") ? Arrays.asList(configuration.get("gtfs.file", "").split(",")) : Collections.emptyList(),
                 configuration.has("datareader.file") ? Arrays.asList(configuration.get("datareader.file", "").split(",")) : Collections.emptyList());
         final TranslationMap translationMap = new TranslationMap().doImport();
@@ -225,7 +224,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(locationIndex).to(LocationIndex.class);
                 bind(translationMap).to(TranslationMap.class);
                 bind(encodingManager).to(EncodingManager.class);
-                bind(ptFlagEncoder).to(PtFlagEncoder.class);
                 bind(graphHopperStorage).to(GraphHopperStorage.class);
                 bind(gtfsStorage).to(GtfsStorage.class);
                 bindFactory(RasterHullBuilderFactory.class).to(DelaunayTriangulationIsolineBuilder.class);

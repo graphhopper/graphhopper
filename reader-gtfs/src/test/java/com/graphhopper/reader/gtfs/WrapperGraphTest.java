@@ -25,21 +25,16 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 
 public class WrapperGraphTest {
 
-    private final PtFlagEncoder pt;
-    private final FootFlagEncoder foot;
     private final EncodingManager encodingManager;
 
     public WrapperGraphTest() {
-        pt = new PtFlagEncoder();
-        foot = new FootFlagEncoder();
-        encodingManager = EncodingManager.create(Arrays.asList(pt, foot));
+        encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new FootFlagEncoder()).build();
     }
 
     @Test

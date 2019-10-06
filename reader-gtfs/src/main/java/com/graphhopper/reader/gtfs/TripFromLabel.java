@@ -122,7 +122,7 @@ class TripFromLabel {
         return legs;
     }
 
-    List<Label.Transition> getTransitions(boolean arriveBy, PtFlagEncoder encoder, Graph queryGraph, Label solution) {
+    List<Label.Transition> getTransitions(boolean arriveBy, PtEncodedValues encoder, Graph queryGraph, Label solution) {
         List<Label.Transition> transitions = new ArrayList<>();
         if (arriveBy) {
             reverseEdges(solution, queryGraph, encoder, false)
