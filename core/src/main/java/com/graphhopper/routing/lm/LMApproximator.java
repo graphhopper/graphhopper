@@ -197,7 +197,7 @@ public class LMApproximator implements WeightApproximator {
     @Override
     public void setTo(int to) {
         this.fallBackApproximation.setTo(to);
-        this.toTowerNode = to >= maxBaseNodes ? virtNodeMap.get(toTowerNode).towerNode : to;
+        this.toTowerNode = to >= maxBaseNodes ? virtNodeMap.get(to).towerNode : to;
     }
 
     @Override
