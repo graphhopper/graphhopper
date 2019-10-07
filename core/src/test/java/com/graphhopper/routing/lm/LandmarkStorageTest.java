@@ -103,11 +103,11 @@ public class LandmarkStorageTest {
         lms.setWeight(0, 0, 16, 999999, false);
         // The important property is that the weight that is returned
         // is _not bigger_ than the weight that was set.
-        assertTrue(lms.getToWeight(0, 0) <= 999999);
+        assertTrue(lms.getToWeight(0, 0) * lms.getFactor() <= 999999);
         lms.setWeight(0, 0, 16, 1, false);
         // This is an underrun of the 'delta' field -- but still, the important property is that the weight that is returned
         // is _not bigger_ than the weight that was set.
-        assertTrue(lms.getToWeight(0, 0) <= 1);
+        assertTrue(lms.getToWeight(0, 0) * lms.getFactor() <= 1);
 
         da.setInt(0, Integer.MAX_VALUE);
         assertTrue(lms.isInfinity(0));
