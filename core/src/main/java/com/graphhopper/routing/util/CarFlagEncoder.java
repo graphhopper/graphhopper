@@ -317,35 +317,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 || way.hasTag("motor_vehicle:forward");
     }
 
-    public String getWayInfo(ReaderWay way) {
-        String str = "";
-        String highwayValue = way.getTag("highway");
-        // for now only motorway links
-        if ("motorway_link".equals(highwayValue)) {
-            String destination = way.getTag("destination");
-            if (!Helper.isEmpty(destination)) {
-                int counter = 0;
-                for (String d : destination.split(";")) {
-                    if (d.trim().isEmpty())
-                        continue;
-
-                    if (counter > 0)
-                        str += ", ";
-
-                    str += d.trim();
-                    counter++;
-                }
-            }
-        }
-        if (str.isEmpty())
-            return str;
-        // I18N
-        if (str.contains(","))
-            return "destinations: " + str;
-        else
-            return "destination: " + str;
-    }
-
     /**
      * @param way   needed to retrieve tags
      * @param speed speed guessed e.g. from the road type or other tags
