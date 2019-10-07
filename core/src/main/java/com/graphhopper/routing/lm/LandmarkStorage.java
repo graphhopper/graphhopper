@@ -503,6 +503,11 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             return Integer.MAX_VALUE;
         // throw new IllegalStateException("Do not call getToWeight for wrong landmark[" + landmarkIndex + "]=" + landmarkIDs[landmarkIndex] + " and node " + node);
 
+        // If delta is 'maxed out' (minned out, really), we can only return 0, since we can't give a better
+        // under-approximation of the weight, since it can be arbitrarily smaller than 'from'.
+        if (delta == DELTA_MIN)
+            return 0;
+
         //the right bits of "res" store the backward value
         int from = res & FROM_WEIGHT_INF;
 
