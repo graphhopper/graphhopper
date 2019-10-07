@@ -194,13 +194,11 @@ public class LMApproximator implements WeightApproximator {
         return maxWeightInt;
     }
 
-    final int getNode(int node) {
-        return node >= maxBaseNodes ? virtNodeMap.get(node).node : node;
-    }
-
     @Override
     public void setTo(int to) {
-        this.to = getNode(to);
+        int realNode = to >= maxBaseNodes ? virtNodeMap.get(to).node : to;
+        this.to = realNode;
+        this.fallBackApproximation.setTo(realNode);
     }
 
     @Override
