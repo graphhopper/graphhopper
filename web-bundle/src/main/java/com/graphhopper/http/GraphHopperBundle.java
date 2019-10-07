@@ -234,13 +234,14 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(new PtIsochroneResource(gtfsStorage, encodingManager, graphHopperStorage, locationIndex));
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
-        // Say we only support pt, even though we now have several flag encoders. Yes, I know, we're almost there.
+        // The included web client works best if we say we only support pt.
+        // Does not have anything to do with FlagEncoders anymore.
         environment.jersey().register((WriterInterceptor) context -> {
             if (context.getEntity() instanceof InfoResource.Info) {
                 InfoResource.Info info = (InfoResource.Info) context.getEntity();
                 info.supported_vehicles = new String[]{"pt"};
-                info.features.remove("car");
-                info.features.remove("foot");
+                info.features.clear();
+                info.features.put("pt", new InfoResource.Info.PerVehicle());
                 context.setEntity(info);
             }
             context.proceed();
