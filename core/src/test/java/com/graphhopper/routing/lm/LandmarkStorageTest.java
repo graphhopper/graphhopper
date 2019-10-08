@@ -100,18 +100,14 @@ public class LandmarkStorageTest {
         lms.setWeight(0, 0, 16, 999999, true);
         assertEquals((int) Math.pow(2, 18) - 2, lms.getFromWeight(0, 0));
 
-        /* FROM_WEIGHT_BITS = 18 --> remaining bits: 32-18 = 14
-        The delta value is signed and will therefore go from -2^(14-1) to 2^(14-1).
-        Now 2^13-1 is used for infinity, 2^13-2 as maximum and -2^13 as minimum.
-        If the difference between forward and backward weight is too large it will use
-        the maximum (if positive) or the minimum (if negative) instead of 0 or infinity
-        The delta will then be added to the backward weight*/
         lms.setWeight(0, 0, 16, 999999, false);
-        assertEquals((int) (Math.pow(2, 18) - 2 + Math.pow(2, 13) - 2), lms.getToWeight(0, 0));
-        //                 {backward weight}   {delta weight}
+        // The important property is that the weight that is returned
+        // is _not bigger_ than the weight that was set.
+        assertTrue(lms.getToWeight(0, 0) * lms.getFactor() <= 999999);
         lms.setWeight(0, 0, 16, 1, false);
-        assertEquals((int) (Math.pow(2, 18) - 2 + -Math.pow(2, 13)), lms.getToWeight(0, 0));
-        //                 {backward weight}   {delta weight}
+        // This is an underrun of the 'delta' field -- but still, the important property is that the weight that is returned
+        // is _not bigger_ than the weight that was set.
+        assertTrue(lms.getToWeight(0, 0) * lms.getFactor() <= 1);
 
         da.setInt(0, Integer.MAX_VALUE);
         assertTrue(lms.isInfinity(0));
@@ -317,6 +313,5 @@ public class LandmarkStorageTest {
         assertEquals(9, storage.getLandmarks(1)[1]);
 
         assertEquals((int) Math.pow(2, 13) - 2, storage.getToWeight(0, 9) - storage.getFromWeight(0, 9));
-        assertEquals((int) -Math.pow(2, 13), storage.getToWeight(1, 12) - storage.getFromWeight(1, 12));
     }
 }
