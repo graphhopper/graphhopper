@@ -17,6 +17,7 @@
  */
 package com.graphhopper.tools;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -67,16 +68,23 @@ public class Measurement {
     // creates properties file in the format key=value
     // Every value is one y-value in a separate diagram with an identical x-value for every Measurement.start call
     void start(CmdArgs args) {
-        String graphLocation = args.get("graph.location", "");
-        String propLocation = args.get("measurement.location", "");
+        final String graphLocation = args.get("graph.location", "");
+        final boolean useJson = args.getBool("measurement.json", false);
         boolean cleanGraph = args.getBool("measurement.clean", false);
         String summaryLocation = args.get("measurement.summaryfile", "");
-        String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date());
+        final String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date());
         put("measurement.timestamp", timeStamp);
+        String propLocation = args.get("measurement.location", "");
         if (isEmpty(propLocation)) {
-            propLocation = "measurement" + timeStamp + ".properties";
+            if (useJson) {
+                String gitInfo = Constants.GIT_INFO;
+                // if we start from IDE or otherwise jar was not built using maven the git commit id will be unknown
+                String prefix = gitInfo.startsWith("${git.commit.id}") ? "unknown" : gitInfo.split("\\|")[0].substring(0, 8);
+                propLocation = prefix + "_" + timeStamp + ".json";
+            } else {
+                propLocation = "measurement" + timeStamp + ".properties";
+            }
         }
-
         seed = args.getLong("measurement.seed", 123);
         put("measurement.gitinfo", args.get("measurement.gitinfo", ""));
         int count = args.getInt("measurement.count", 5000);
@@ -211,7 +219,11 @@ public class Measurement {
             if (!summaryLocation.trim().isEmpty()) {
                 writeSummary(summaryLocation, propLocation);
             }
-            storeProperties(graphLocation, propLocation);
+            if (useJson) {
+                storeJson(graphLocation, propLocation);
+            } else {
+                storeProperties(graphLocation, propLocation);
+            }
         }
     }
 
@@ -561,6 +573,33 @@ public class Measurement {
     void put(String key, Object val) {
         // convert object to string to make serialization possible
         properties.put(key, "" + val);
+    }
+
+    private void storeJson(String graphLocation, String jsonLocation) {
+        logger.info("storing measurement json in " + jsonLocation);
+        String gitInfo = properties.get("gh.gitinfo");
+        if (gitInfo == null) {
+            logger.error("gitinfo not available, writing properties instead of json");
+            storeProperties(graphLocation, jsonLocation);
+            return;
+        }
+        properties.remove("gh.gitinfo");
+        Map<String, String> gitInfoMap = new HashMap<>();
+        String[] gitInfos = gitInfo.split("\\|");
+        gitInfoMap.put("commit", gitInfos[0]);
+        gitInfoMap.put("branch", gitInfos[1]);
+        gitInfoMap.put("dirty", gitInfos[2].startsWith("${git.commit.id}") ? "true" : gitInfos[2].split("=")[1]);
+        gitInfoMap.put("time", gitInfos[3]);
+        Map<String, Object> result = new HashMap<>();
+        result.put("gitinfo", gitInfoMap);
+        result.put("metrics", properties);
+        try {
+            new ObjectMapper()
+                    .writerWithDefaultPrettyPrinter()
+                    .writeValue(new File(jsonLocation), result);
+        } catch (IOException e) {
+            logger.error("Problem while storing json " + graphLocation + ", " + jsonLocation, e);
+        }
     }
 
     private void storeProperties(String graphLocation, String propLocation) {
