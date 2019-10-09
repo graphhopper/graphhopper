@@ -1,14 +1,20 @@
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,23 +23,29 @@ import org.junit.runners.Parameterized;
 
 import java.util.*;
 
+import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
+import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
  * This test compares the different bidirectional routing algorithms with {@link DijkstraBidirectionRef}
- * // todo: no real need of emphasizing bidirectional here ?
  *
  * @author easbar
+ * @see RandomCHRoutingTest - similar but only tests CH algorithms
+ * @see DirectedRoutingTest - similar but focusses on edge-based algorithms an directed queries
  */
 @RunWith(Parameterized.class)
 public class BidirectionalRoutingTest {
     private final Algo algo;
     private final boolean prepareCH;
     private final boolean prepareLM;
+    private final TraversalMode traversalMode;
     private Directory dir;
     private GraphHopperStorage graph;
+    private List<CHProfile> chProfiles;
     private CHGraph chGraph;
     private CarFlagEncoder encoder;
     private Weighting weighting;
@@ -44,14 +56,17 @@ public class BidirectionalRoutingTest {
     @Rule
     public RepeatRule repeatRule = new RepeatRule();
 
-    @Parameterized.Parameters(name = "{0}")
+    @Parameterized.Parameters(name = "{0}, {3}")
     public static Collection<Object[]> params() {
-        // todonow: run node & edge-based ?
         return Arrays.asList(new Object[][]{
-                {Algo.ASTAR, false, false},
-                {Algo.CH_ASTAR, true, false},
-                {Algo.CH_DIJKSTRA, true, false},
-                {Algo.LM, false, true}
+                {Algo.ASTAR, false, false, NODE_BASED},
+                {Algo.CH_ASTAR, true, false, NODE_BASED},
+                {Algo.CH_DIJKSTRA, true, false, NODE_BASED},
+                {Algo.LM, false, true, NODE_BASED},
+                {Algo.ASTAR, false, false, EDGE_BASED},
+                {Algo.CH_ASTAR, true, false, EDGE_BASED},
+                {Algo.CH_DIJKSTRA, true, false, EDGE_BASED},
+                {Algo.LM, false, true, EDGE_BASED}
         });
     }
 
@@ -62,21 +77,23 @@ public class BidirectionalRoutingTest {
         LM
     }
 
-    public BidirectionalRoutingTest(Algo algo, boolean prepareCH, boolean prepareLM) {
+    public BidirectionalRoutingTest(Algo algo, boolean prepareCH, boolean prepareLM, TraversalMode traversalMode) {
         this.algo = algo;
         this.prepareCH = prepareCH;
         this.prepareLM = prepareLM;
+        this.traversalMode = traversalMode;
     }
 
     @Before
     public void init() {
         dir = new RAMDirectory();
         // todonow: make this work with speed_both_directions=true!
-        encoder = new CarFlagEncoder(5, 5, 0);
+        encoder = new CarFlagEncoder(5, 5, 1);
         encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
+        chProfiles = Arrays.asList(CHProfile.nodeBased(weighting), CHProfile.edgeBased(weighting, TurnWeighting.INFINITE_U_TURN_COSTS));
         graph = createGraph();
-        chGraph = graph.getCHGraph();
+        chGraph = graph.getCHGraph(!traversalMode.isEdgeBased() ? chProfiles.get(0) : chProfiles.get(1));
     }
 
     private void preProcessGraph() {
@@ -99,13 +116,13 @@ public class BidirectionalRoutingTest {
     private AbstractBidirAlgo createAlgo(Graph graph) {
         switch (algo) {
             case ASTAR:
-                return new AStarBidirection(graph, weighting, TraversalMode.NODE_BASED);
+                return new AStarBidirection(graph, weighting, traversalMode);
             case CH_DIJKSTRA:
                 return (AbstractBidirAlgo) pch.createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
             case CH_ASTAR:
                 return (AbstractBidirAlgo) pch.createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
             case LM:
-                AStarBidirection astarbi = new AStarBidirection(graph, weighting, TraversalMode.NODE_BASED);
+                AStarBidirection astarbi = new AStarBidirection(graph, weighting, traversalMode);
                 return (AbstractBidirAlgo) lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
@@ -114,10 +131,11 @@ public class BidirectionalRoutingTest {
 
     @Test
     public void lm_problem_to_node_of_fallback_approximator() {
-        // this test would fail because when the distance is approximated for the start node 0 the LMApproximator
-        // uses the fall back approximator for which the to node is never set. This in turn means that the to coordinates
-        // are zero and a way too large approximation is returned. Eventually the best path is not updated correctly
-        // because the spt entry of the fwd search already has a way too large weight.
+        // Before #1745 this test used to fail for LM, because when the distance was approximated for the start node 0
+        // the LMApproximator used the fall back approximator for which the to node was never set. This in turn meant
+        // that the to coordinates were zero and a way too large approximation was returned.
+        // Eventually the best path was not updated correctly because the spt entry of the fwd search already had a way
+        // too large weight.
 
         //   ---<---
         //   |     |
@@ -147,7 +165,7 @@ public class BidirectionalRoutingTest {
         int source = 0;
         int target = 3;
 
-        Path refPath = new DijkstraBidirectionRef(graph, weighting, TraversalMode.NODE_BASED)
+        Path refPath = new DijkstraBidirectionRef(graph, weighting, NODE_BASED)
                 .calcPath(source, target);
         Path path = createAlgo()
                 .calcPath(0, 3);
@@ -156,8 +174,8 @@ public class BidirectionalRoutingTest {
 
     @Test
     public void lm_issue2() {
-        // This would fail because an underrun of 'delta' would not be treated correctly, and the remaining
-        // weight would be over-approximated
+        // Before #1745 This would fail for LM, because an underrun of 'delta' would not be treated correctly,
+        // and the remaining weight would be over-approximated
 
         //                    ---
         //                  /     \
@@ -186,13 +204,121 @@ public class BidirectionalRoutingTest {
         preProcessGraph();
         int source = 5;
         int target = 4;
-        Path refPath = new DijkstraBidirectionRef(graph, weighting, TraversalMode.NODE_BASED)
+        Path refPath = new DijkstraBidirectionRef(graph, weighting, NODE_BASED)
                 .calcPath(source, target);
         Path path = createAlgo()
                 .calcPath(source, target);
         comparePaths(refPath, path, source, target);
     }
 
+    @Test
+    @Repeat(times = 5)
+    public void randomGraph() {
+        // todo: there are some problems with random graph testing for LM, see #1687
+        Assume.assumeFalse(algo.equals(Algo.LM));
+
+        final long seed = System.nanoTime();
+        System.out.println("random Graph seed: " + seed);
+        final int numQueries = 50;
+        Random rnd = new Random(seed);
+        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
+//        GHUtility.printGraphForUnitTest(graph, encoder);
+        preProcessGraph();
+        List<String> strictViolations = new ArrayList<>();
+        for (int i = 0; i < numQueries; i++) {
+            int source = getRandom(rnd);
+            int target = getRandom(rnd);
+//            System.out.println("source: " + source + ", target: " + target);
+            Path refPath = new DijkstraBidirectionRef(graph, weighting, NODE_BASED)
+                    .calcPath(source, target);
+            Path path = createAlgo()
+                    .calcPath(source, target);
+            strictViolations.addAll(comparePaths(refPath, path, source, target));
+        }
+        if (strictViolations.size() > Math.max(1, 0.20 * numQueries)) {
+            for (String strictViolation : strictViolations) {
+                System.out.println("strict violation: " + strictViolation);
+            }
+            fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
+        }
+    }
+
+    /**
+     * Similar to {@link #randomGraph()}, but using the {@link QueryGraph} as it is done in real usage.
+     */
+    @Test
+    @Repeat(times = 5)
+    public void randomGraph_withQueryGraph() {
+        // todo: there are some problems with random graph testing for LM, see #1687
+        Assume.assumeFalse(algo.equals(Algo.LM));
+
+        final long seed = System.nanoTime();
+        System.out.println("randomGraph_withQueryGraph seed: " + seed);
+        final int numQueries = 50;
+
+        // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
+        // the same as taking the direct edge!
+        double pOffset = 0;
+        Random rnd = new Random(seed);
+        GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, pOffset);
+//        GHUtility.printGraphForUnitTest(graph, encoder);
+        preProcessGraph();
+        LocationIndexTree index = new LocationIndexTree(graph, dir);
+        index.prepareIndex();
+        List<String> strictViolations = new ArrayList<>();
+        for (int i = 0; i < numQueries; i++) {
+            List<GHPoint> points = getRandomPoints(2, index, rnd);
+
+            List<QueryResult> chQueryResults = findQueryResults(index, points);
+            List<QueryResult> queryResults = findQueryResults(index, points);
+
+            QueryGraph chQueryGraph = new QueryGraph(prepareCH ? chGraph : graph);
+            QueryGraph queryGraph = new QueryGraph(graph);
+
+            chQueryGraph.lookup(chQueryResults);
+            queryGraph.lookup(queryResults);
+
+            int source = queryResults.get(0).getClosestNode();
+            int target = queryResults.get(1).getClosestNode();
+
+            Path refPath = new DijkstraBidirectionRef(queryGraph, weighting, traversalMode)
+                    .calcPath(source, target);
+            Path path = createAlgo(chQueryGraph)
+                    .calcPath(source, target);
+            strictViolations.addAll(comparePaths(refPath, path, source, target));
+        }
+        // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
+        // however, when there are too many deviations we fail
+        if (strictViolations.size() > Math.max(1, 0.20 * numQueries)) {
+            fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries);
+        }
+    }
+
+    private List<GHPoint> getRandomPoints(int numPoints, LocationIndex index, Random rnd) {
+        List<GHPoint> points = new ArrayList<>(numPoints);
+        BBox bounds = graph.getBounds();
+        final int maxAttempts = 100 * numPoints;
+        int attempts = 0;
+        while (attempts < maxAttempts && points.size() < numPoints) {
+            double lat = rnd.nextDouble() * (bounds.maxLat - bounds.minLat) + bounds.minLat;
+            double lon = rnd.nextDouble() * (bounds.maxLon - bounds.minLon) + bounds.minLon;
+            QueryResult queryResult = index.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
+            if (queryResult.isValid()) {
+                points.add(new GHPoint(lat, lon));
+            }
+            attempts++;
+        }
+        assertEquals("could not find valid random points after " + attempts + " attempts", numPoints, points.size());
+        return points;
+    }
+
+    private List<QueryResult> findQueryResults(LocationIndexTree index, List<GHPoint> ghPoints) {
+        List<QueryResult> result = new ArrayList<>(ghPoints.size());
+        for (GHPoint ghPoint : ghPoints) {
+            result.add(index.findClosest(ghPoint.getLat(), ghPoint.getLon(), DefaultEdgeFilter.ALL_EDGES));
+        }
+        return result;
+    }
 
     private List<String> comparePaths(Path refPath, Path path, int source, int target) {
         List<String> strictViolations = new ArrayList<>();
@@ -216,10 +342,13 @@ public class BidirectionalRoutingTest {
     }
 
     private GraphHopperStorage createGraph() {
-        GraphHopperStorage gh = new GraphHopperStorage(Collections.singletonList(weighting), dir, encodingManager,
-                false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage gh = new GraphHopperStorage(chProfiles, dir, encodingManager, false, new TurnCostExtension());
         gh.create(1000);
         return gh;
+    }
+
+    private int getRandom(Random rnd) {
+        return rnd.nextInt(graph.getNodes());
     }
 
 }

@@ -37,6 +37,7 @@ import static org.junit.Assert.fail;
  * target edges, by comparing with {@link DijkstraBidirectionRef}
  *
  * @author easbar
+ * @see BidirectionalRoutingTest
  * @see DirectedBidirectionalDijkstraTest
  */
 @RunWith(Parameterized.class)
@@ -65,12 +66,12 @@ public class DirectedRoutingTest {
                 {Algo.ASTAR, INFINITE_U_TURN_COSTS, false, false},
                 {Algo.CH_ASTAR, INFINITE_U_TURN_COSTS, true, false},
                 {Algo.CH_DIJKSTRA, INFINITE_U_TURN_COSTS, true, false},
-                // todo: yields warnings and fails, see #1665, #1687
+                // todo: yields warnings and fails, see #1665, #1687, #1745
 //                {Algo.LM, INFINITE_UTURN_COSTS, false, true}
                 {Algo.ASTAR, 40, false, false},
                 {Algo.CH_ASTAR, 40, true, false},
                 {Algo.CH_DIJKSTRA, 40, true, false},
-                // todo: yields warnings and fails, see #1665, 1687
+                // todo: yields warnings and fails, see #1665, 1687, #1745
 //                {Algo.LM, 40, false, true}
                 // todo: add AlternativeRoute ?
         });
