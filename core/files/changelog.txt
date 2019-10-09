@@ -1,4 +1,4 @@
-0.14
+1.0
     removed PathNative,PathBidirRef,Path4CH,EdgeBasedPathCH and moved path extraction code out of Path class, added PathExtractor,BidirPathExtractor(+subclasses for CH) instead, #1730
     conditional turn restrictions now supported, #1683
     added new `curbside` feature, #1697
