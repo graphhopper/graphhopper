@@ -71,6 +71,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         if (ghRequest.identicalLists) {
             requestJson.putArray("points").addAll(createPointList(ghRequest.getFromPoints()));
             requestJson.putArray("point_hints").addAll(createStringList(ghRequest.getFromPointHints()));
+            requestJson.putArray("curbsides").addAll(createStringList(ghRequest.getFromCurbSides()));
         } else {
             ArrayNode fromPointList = createPointList(ghRequest.getFromPoints());
             ArrayNode toPointList = createPointList(ghRequest.getToPoints());
@@ -78,6 +79,8 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
             requestJson.putArray("from_point_hints").addAll(createStringList(ghRequest.getFromPointHints()));
             requestJson.putArray("to_points").addAll(toPointList);
             requestJson.putArray("to_point_hints").addAll(createStringList(ghRequest.getToPointHints()));
+            requestJson.putArray("from_curbsides").addAll(createStringList(ghRequest.getFromCurbSides()));
+            requestJson.putArray("to_curbsides").addAll(createStringList(ghRequest.getToPointHints()));
         }
 
         requestJson.putArray("out_arrays").addAll(outArrayListJson);
@@ -168,9 +171,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
                 throw new IllegalStateException("Maximum number of iterations reached " + maxIterations + ", increasing should only be necessary for big matrices. For smaller ones this is a bug, please contact us");
             }
 
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        } catch (IOException ex) {
+        } catch (InterruptedException | IOException ex) {
             throw new RuntimeException(ex);
         }
 
