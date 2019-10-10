@@ -17,6 +17,7 @@
  */
 package com.graphhopper;
 
+import com.conveyal.osmlib.Way;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
@@ -32,6 +33,7 @@ import com.graphhopper.routing.template.RoutingTemplate;
 import com.graphhopper.routing.template.ViaRoutingTemplate;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
+import com.graphhopper.routing.util.parsers.OSMIDParser;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.*;
@@ -662,6 +664,7 @@ public class GraphHopper implements GraphHopperAPI {
         DataReader reader = createReader(ghStorage);
         logger.info("using " + ghStorage.toString() + ", memory:" + getMemInfo());
         reader.readGraph();
+        ghStorage.getOsm().readFromFile(dataReaderFile);
         return reader;
     }
 
@@ -922,6 +925,7 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         if (hintsMap.has("block_property")) {
+            final OSMIDParser osmidParser = OSMIDParser.fromEncodingManager(ghStorage.getEncodingManager());
             String propertyName = hintsMap.get("block_property", "");
             final BooleanEncodedValue property = ghStorage.getEncodingManager().getBooleanEncodedValue(propertyName);
             final Weighting finalWeighting = weighting;
@@ -934,6 +938,9 @@ public class GraphHopper implements GraphHopperAPI {
                 @Override
                 public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
                     if (edgeState.get(property)) {
+                        long osmid = osmidParser.getOSMID(edgeState.getFlags());
+                        Way way = ghStorage.getOsm().ways.get(osmid);
+                        System.out.println(way.tags);
                         return Double.POSITIVE_INFINITY;
                     }
                     return finalWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);

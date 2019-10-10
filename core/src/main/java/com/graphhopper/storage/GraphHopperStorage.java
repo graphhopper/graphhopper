@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.conveyal.osmlib.OSM;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -47,6 +48,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     private final BaseGraph baseGraph;
     // same flush order etc
     private final Collection<CHGraphImpl> chGraphs;
+    private OSM osm;
 
     public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage) {
         this(Collections.<CHProfile>emptyList(), dir, encodingManager, withElevation, extendedStorage);
@@ -87,6 +89,8 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         for (CHProfile chProfile : chProfiles) {
             chGraphs.add(new CHGraphImpl(chProfile, dir, baseGraph));
         }
+        dir.create();
+        osm = new OSM(dir.getLocation()+"/osm.db");
     }
 
     public CHGraph getCHGraph() {
@@ -330,6 +334,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         for (CHGraphImpl cg : getAllCHGraphs()) {
             cg.close();
         }
+        osm.close();
     }
 
     @Override
@@ -469,5 +474,9 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             result.add(CHProfile.nodeBased(weighting));
         }
         return result;
+    }
+
+    public OSM getOsm() {
+        return osm;
     }
 }

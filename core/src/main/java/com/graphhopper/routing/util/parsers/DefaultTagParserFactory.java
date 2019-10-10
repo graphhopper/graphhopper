@@ -60,6 +60,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMTrackTypeParser();
         else if (name.equals("conditional"))
             return new OSMConditionalRestrictionParser();
+        else if (name.equals("osmid"))
+            return new OSMIDParser();
         throw new IllegalArgumentException("entry in tag parser list not supported " + name);
     }
 }
