@@ -56,7 +56,7 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
  */
 public class Measurement {
     private static final Logger logger = LoggerFactory.getLogger(Measurement.class);
-    private final Map<String, String> properties = new TreeMap<>();
+    private final Map<String, Object> properties = new TreeMap<>();
     private long seed;
     private int maxNode;
 
@@ -578,13 +578,12 @@ public class Measurement {
     }
 
     void put(String key, Object val) {
-        // convert object to string to make serialization possible
-        properties.put(key, "" + val);
+        properties.put(key, val);
     }
 
     private void storeJson(String graphLocation, String jsonLocation) {
         logger.info("storing measurement json in " + jsonLocation);
-        String gitInfo = properties.get("gh.gitinfo");
+        String gitInfo = properties.get("gh.gitinfo").toString();
         if (gitInfo == null) {
             logger.error("gitinfo not available, writing properties instead of json");
             storeProperties(graphLocation, jsonLocation);
@@ -615,10 +614,10 @@ public class Measurement {
         try (FileWriter fileWriter = new FileWriter(propLocation)) {
             String comment = "measurement finish, " + new Date().toString() + ", " + Constants.BUILD_DATE;
             fileWriter.append("#" + comment + "\n");
-            for (Entry<String, String> e : properties.entrySet()) {
+            for (Entry<String, Object> e : properties.entrySet()) {
                 fileWriter.append(e.getKey());
                 fileWriter.append("=");
-                fileWriter.append(e.getValue());
+                fileWriter.append(e.getValue().toString());
                 fileWriter.append("\n");
             }
             fileWriter.flush();
@@ -693,10 +692,8 @@ public class Measurement {
     }
 
     private String getFormattedProperty(String property) {
-        String result = properties.get(property);
-        if (result == null) {
-            result = "missing";
-        }
+        Object resultObj = properties.get(property);
+        String result = resultObj == null ? "missing" : resultObj.toString();
         // limit number of decimal places for floating point numbers
         try {
             double doubleValue = Double.parseDouble(result.trim());
