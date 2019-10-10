@@ -56,6 +56,16 @@
             <artifactId>osm-lib</artifactId>
             <version>1.5.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>ch.poole</groupId>
+            <artifactId>ConditionalRestrictionParser</artifactId>
+            <version>0.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.poole</groupId>
+            <artifactId>OpeningHoursParser</artifactId>
+            <version>0.16.1</version>
+        </dependency>
 
         <!-- for using CGIAR: elevation data importing via tif files-->
         <dependency>

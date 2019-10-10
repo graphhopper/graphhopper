@@ -90,6 +90,14 @@
         <module>web</module>
         <module>client-hc</module>
     </modules>
+
+    <repositories>
+    <repository>
+        <id>matsim</id>
+        <url>http://dl.bintray.com/simonpoole/osm</url>
+    </repository>
+    </repositories>
+
     <build>
         <plugins>
             <plugin>

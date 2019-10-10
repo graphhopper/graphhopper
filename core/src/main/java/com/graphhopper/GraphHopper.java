@@ -17,6 +17,13 @@
  */
 package com.graphhopper;
 
+import ch.poole.conditionalrestrictionparser.Condition;
+import ch.poole.conditionalrestrictionparser.ConditionalRestrictionParser;
+import ch.poole.conditionalrestrictionparser.ParseException;
+import ch.poole.conditionalrestrictionparser.Restriction;
+import ch.poole.openinghoursparser.OpeningHoursParser;
+import ch.poole.openinghoursparser.Rule;
+import com.conveyal.osmlib.OSMEntity;
 import com.conveyal.osmlib.Way;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
@@ -54,6 +61,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
@@ -940,7 +948,29 @@ public class GraphHopper implements GraphHopperAPI {
                     if (edgeState.get(property)) {
                         long osmid = osmidParser.getOSMID(edgeState.getFlags());
                         Way way = ghStorage.getOsm().ways.get(osmid);
-                        System.out.println(way.tags);
+//                        System.out.println(way.tags);
+                        for (OSMEntity.Tag tag : way.tags) {
+                            if (tag.value.contains("@") && tag.key.contains("motor_vehicle")) {
+                                ConditionalRestrictionParser parser = new ConditionalRestrictionParser(new ByteArrayInputStream(tag.value.getBytes()));
+                                try {
+                                    for (Restriction restriction : parser.restrictions()) {
+                                        for (Condition condition : restriction.getConditions()) {
+                                            if (condition.isOpeningHours()) {
+                                                System.out.println(tag);
+                                                System.out.println(restriction);
+                                                OpeningHoursParser ohParser = new OpeningHoursParser(new ByteArrayInputStream(condition.toString().getBytes()));
+                                                ArrayList<Rule> rules = ohParser.rules(false);
+                                                for (Rule rule : rules) {
+                                                    System.out.println(rule);
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch (ParseException | ch.poole.openinghoursparser.ParseException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
                         return Double.POSITIVE_INFINITY;
                     }
                     return finalWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
