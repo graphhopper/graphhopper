@@ -1,0 +1,23 @@
+variables:
+  MAVEN_CLI_OPTS: ""
+  MAVEN_OPTS: "-Dmaven.repo.local=cache/.m2/repository"
+
+cache:
+  paths:
+    - cache/.m2/repository/
+
+run_measurement:
+  stage: test
+  script:
+    - export BENCHMARK_DIR=/ext_data/
+    - export BENCHMARK_RESULT_DIR=${BENCHMARK_DIR}results/$(date '+%d-%m-%Y-%s%N')/
+    - export BENCHMARK_MAP_NAME=andorra-190101.osm.pbf
+    - export BENCHMARK_MAP_URL=http://download.geofabrik.de/europe/${BENCHMARK_MAP_NAME}
+    - mkdir -p ${BENCHMARK_DIR}osm
+    - export BENCHMARK_MAP_PATH=${BENCHMARK_DIR}osm/${BENCHMARK_MAP_NAME}
+    - mvn $MAVEN_CLI_OPTS package -DskipTests -pl tools -am
+    - chmod +x -R benchmark
+    - benchmark/download_map.sh $BENCHMARK_MAP_URL $BENCHMARK_MAP_PATH
+    - benchmark/benchmark.sh $BENCHMARK_DIR $BENCHMARK_RESULT_DIR $BENCHMARK_MAP_PATH
+    - benchmark/post_benchmark.sh $BENCHMARK_RESULT_DIR $BENCHMARK_DB_USER $BENCHMARK_DB_PWD $BENCHMARK_DB_URL
+    - rm -rf $BENCHMARK_RESULT_DIR

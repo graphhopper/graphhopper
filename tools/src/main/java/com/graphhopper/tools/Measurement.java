@@ -40,6 +40,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
@@ -58,7 +60,7 @@ public class Measurement {
     private long seed;
     private int maxNode;
 
-    public static void main(String[] strs) {
+    public static void main(String[] strs) throws IOException {
         CmdArgs cmdArgs = CmdArgs.read(strs);
         int repeats = cmdArgs.getInt("measurement.repeats", 1);
         for (int i = 0; i < repeats; ++i)
@@ -67,24 +69,29 @@ public class Measurement {
 
     // creates properties file in the format key=value
     // Every value is one y-value in a separate diagram with an identical x-value for every Measurement.start call
-    void start(CmdArgs args) {
+    void start(CmdArgs args) throws IOException {
         final String graphLocation = args.get("graph.location", "");
         final boolean useJson = args.getBool("measurement.json", false);
         boolean cleanGraph = args.getBool("measurement.clean", false);
         String summaryLocation = args.get("measurement.summaryfile", "");
         final String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date());
         put("measurement.timestamp", timeStamp);
-        String propLocation = args.get("measurement.location", "");
-        if (isEmpty(propLocation)) {
+        String propFolder = args.get("measurement.folder", "");
+        if (!propFolder.isEmpty()) {
+            Files.createDirectories(Paths.get(propFolder));
+        }
+        String propFilename = args.get("measurement.filename", "");
+        if (isEmpty(propFilename)) {
             if (useJson) {
                 String gitInfo = Constants.GIT_INFO;
                 // if we start from IDE or otherwise jar was not built using maven the git commit id will be unknown
-                String prefix = gitInfo.startsWith("${git.commit.id}") ? "unknown" : gitInfo.split("\\|")[0].substring(0, 8);
-                propLocation = prefix + "_" + timeStamp + ".json";
+                String id = gitInfo.startsWith("${git.commit.id}") ? "unknown" : gitInfo.split("\\|")[0].substring(0, 8);
+                propFilename = "measurement_" + id + "_" + timeStamp + ".json";
             } else {
-                propLocation = "measurement" + timeStamp + ".properties";
+                propFilename = "measurement" + timeStamp + ".properties";
             }
         }
+        final String propLocation = Paths.get(propFolder).resolve(propFilename).toString();
         seed = args.getLong("measurement.seed", 123);
         put("measurement.gitinfo", args.get("measurement.gitinfo", ""));
         int count = args.getInt("measurement.count", 5000);
@@ -594,9 +601,10 @@ public class Measurement {
         result.put("gitinfo", gitInfoMap);
         result.put("metrics", properties);
         try {
+            File file = new File(jsonLocation);
             new ObjectMapper()
                     .writerWithDefaultPrettyPrinter()
-                    .writeValue(new File(jsonLocation), result);
+                    .writeValue(file, result);
         } catch (IOException e) {
             logger.error("Problem while storing json " + graphLocation + ", " + jsonLocation, e);
         }
