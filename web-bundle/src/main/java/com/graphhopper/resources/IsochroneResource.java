@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.http.WebHelper;
-import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
+import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.QueryGraph;
@@ -17,6 +17,12 @@ import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
+import org.locationtech.jts.triangulate.ConstraintVertex;
+import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
+import org.locationtech.jts.triangulate.quadedge.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,10 +33,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @Path("isochrone")
 public class IsochroneResource {
@@ -39,14 +42,12 @@ public class IsochroneResource {
 
     private final GraphHopper graphHopper;
     private final EncodingManager encodingManager;
-    private final DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder;
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
     @Inject
-    public IsochroneResource(GraphHopper graphHopper, EncodingManager encodingManager, DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder) {
+    public IsochroneResource(GraphHopper graphHopper, EncodingManager encodingManager) {
         this.graphHopper = graphHopper;
         this.encodingManager = encodingManager;
-        this.delaunayTriangulationIsolineBuilder = delaunayTriangulationIsolineBuilder;
     }
 
     @GET
@@ -103,7 +104,7 @@ public class IsochroneResource {
         if ("polygon".equalsIgnoreCase(resultStr)) {
             List<List<Coordinate>> buckets = isochrone.searchGPS(qr.getClosestNode(), nBuckets);
             if (isochrone.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
-                throw new IllegalArgumentException("Server side reset: too many junction nodes would have to explored (" + isochrone.getVisitedNodes() + "). Let us know if you need this increased.");
+                throw new IllegalArgumentException("Too many nodes would have to explored (" + isochrone.getVisitedNodes() + "). Let us know if you need this increased.");
             }
 
             int counter = 0;
@@ -116,7 +117,7 @@ public class IsochroneResource {
                 counter++;
             }
             ArrayList<JsonFeature> features = new ArrayList<>();
-            List<Coordinate[]> polygonShells = delaunayTriangulationIsolineBuilder.calcList(buckets, buckets.size() - 1);
+            List<Coordinate[]> polygonShells = calcPolygons(buckets);
             for (Coordinate[] polygonShell : polygonShells) {
                 JsonFeature feature = new JsonFeature();
                 HashMap<String, Object> properties = new HashMap<>();
@@ -149,4 +150,48 @@ public class IsochroneResource {
             throw new IllegalArgumentException("type not supported:" + resultStr);
         }
     }
+
+    @SuppressWarnings("unchecked")
+    private static List<Coordinate[]> calcPolygons(List<List<Coordinate>> pointLists) {
+        Collection<ConstraintVertex> sites = new ArrayList<>();
+        for (int i = 0; i < pointLists.size(); i++) {
+            List<Coordinate> level = pointLists.get(i);
+            for (Coordinate coord : level) {
+                ConstraintVertex site = new ConstraintVertex(coord);
+                site.setZ((double) i);
+                sites.add(site);
+            }
+        }
+        ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
+        conformingDelaunayTriangulator.setConstraints(new ArrayList(), new ArrayList());
+        conformingDelaunayTriangulator.formInitialDelaunay();
+        QuadEdgeSubdivision tin = conformingDelaunayTriangulator.getSubdivision();
+        for (Vertex vertex : (Collection<Vertex>) tin.getVertices(true)) {
+            if (tin.isFrameVertex(vertex)) {
+                vertex.setZ(Double.MAX_VALUE);
+            }
+        }
+        ArrayList<Coordinate[]> polygonShells = new ArrayList<>();
+        ContourBuilder contourBuilder = new ContourBuilder(tin);
+        // ignore the last isoline as it forms just the convex hull
+        for (int i = 0; i < pointLists.size() - 1; i++) {
+            MultiPolygon multiPolygon = contourBuilder.computeIsoline((double) i + 0.5);
+            int maxPoints = 0;
+            Polygon maxPolygon = null;
+            for (int j = 0; j < multiPolygon.getNumGeometries(); j++) {
+                Polygon polygon = (Polygon) multiPolygon.getGeometryN(j);
+                if (polygon.getNumPoints() > maxPoints) {
+                    maxPoints = polygon.getNumPoints();
+                    maxPolygon = polygon;
+                }
+            }
+            if (maxPolygon == null) {
+                throw new IllegalStateException("no maximum polygon was found?");
+            } else {
+                polygonShells.add(maxPolygon.getExteriorRing().getCoordinates());
+            }
+        }
+        return polygonShells;
+    }
+
 }
