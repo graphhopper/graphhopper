@@ -500,13 +500,11 @@ public class EncodingManager implements EncodedValueLookup {
         }
     }
 
-    public IntsRef handleRelationTags(ReaderRelation relation) {
-        IntsRef flags = createRelationFlags();
-        for (RelationTagParser encoder : relationTagParsers) {
-            encoder.handleRelationTags(flags, relation);
+    public IntsRef handleRelationTags(ReaderRelation relation, IntsRef relFlags) {
+        for (RelationTagParser relParser : relationTagParsers) {
+            relParser.handleRelationTags(relFlags, relation);
         }
-
-        return flags;
+        return relFlags;
     }
 
     /**

@@ -214,7 +214,7 @@ public class GpxFromInstructionsTest {
         way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
         encodingManager.acceptWay(way, map);
-        return encodingManager.handleWayTags(way, map, 0);
+        return encodingManager.handleWayTags(way, map, encodingManager.createRelationFlags());
     }
 
     private void verifyGPX(String gpx) {

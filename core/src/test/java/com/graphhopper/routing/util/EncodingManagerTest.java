@@ -146,7 +146,7 @@ public class EncodingManagerTest {
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        IntsRef relFlags = manager.handleRelationTags(osmRel);
+        IntsRef relFlags = manager.handleRelationTags(osmRel,manager.createRelationFlags());
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
         manager.acceptWay(osmWay, map);
         IntsRef edgeFlags = manager.handleWayTags(osmWay, map, relFlags);
@@ -172,7 +172,7 @@ public class EncodingManagerTest {
         // relation code for network rcn is VERY_NICE for bike and PREFER for mountainbike
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "rcn");
-        IntsRef relFlags = manager.handleRelationTags(osmRel);
+        IntsRef relFlags = manager.handleRelationTags(osmRel,manager.createRelationFlags());
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
         manager.acceptWay(osmWay, map);
         IntsRef edgeFlags = manager.handleWayTags(osmWay, map, relFlags);

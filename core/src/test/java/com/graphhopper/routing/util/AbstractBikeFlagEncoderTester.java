@@ -22,7 +22,6 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
@@ -67,7 +66,7 @@ public abstract class AbstractBikeFlagEncoderTester {
     }
 
     protected IntsRef assertPriority(int expectedPrio, ReaderWay way, ReaderRelation rel) {
-        IntsRef relFlags = encodingManager.handleRelationTags(rel);
+        IntsRef relFlags = encodingManager.handleRelationTags(rel, encodingManager.createRelationFlags());
         IntsRef edgeFlags = encodingManager.handleWayTags(way, new EncodingManager.AcceptWay().put(encoder.toString(), WAY), relFlags);
         DecimalEncodedValue enc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder.toString(), "priority"));
         assertEquals((double) expectedPrio / BEST.getValue(), enc.getDecimal(false, edgeFlags), 0.01);

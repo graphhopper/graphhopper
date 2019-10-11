@@ -24,7 +24,6 @@ import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
 import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
-import static com.graphhopper.routing.util.EncodingManager.Access.WAY;
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.Assert.*;
 
@@ -467,7 +466,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmWay.setTag("surface", "grass");
 
         // First tests without a cycle route relation, this is a get off the bike
-        IntsRef relFlags = encodingManager.handleRelationTags(osmRel);
+        IntsRef relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         String wayType = getWayTypeFromFlags(osmWay, relFlags);
         assertEquals("get off the bike, unpaved", wayType);
 
@@ -475,14 +474,14 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmRel.setTag("type", "route");
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        relFlags = encodingManager.handleRelationTags(osmRel);
+        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         wayType = getWayTypeFromFlags(osmWay, relFlags);
         assertEquals("small way, unpaved", wayType);
 
         // steps are still shown as get off the bike
         osmWay.clearTags();
         osmWay.setTag("highway", "steps");
-        relFlags = encodingManager.handleRelationTags(osmRel);
+        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         wayType = getWayTypeFromFlags(osmWay, relFlags);
         assertEquals("get off the bike", wayType);
 
@@ -492,7 +491,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmWay.setTag("highway", "platform");
 
         // First tests without a cycle route relation, this is a get off the bike
-        relFlags = encodingManager.handleRelationTags(osmRel);
+        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         wayType = getWayTypeFromFlags(osmWay, relFlags);
         assertEquals("get off the bike", wayType);
 
@@ -500,7 +499,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmRel.setTag("type", "route");
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        relFlags = encodingManager.handleRelationTags(osmRel);
+        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         wayType = getWayTypeFromFlags(osmWay, relFlags);
         assertEquals("", wayType);
     }
@@ -543,7 +542,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "icn");
-        IntsRef relFlags = encodingManager.handleRelationTags(osmRel);
+        IntsRef relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         IntsRef flags = encodingManager.handleWayTags(osmWay, accessMap, relFlags);
         assertEquals(PriorityCode.getFactor(BEST.getValue()), priorityEnc.getDecimal(false, flags), .1);
 

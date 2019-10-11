@@ -18,8 +18,8 @@
 package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.*;
-import com.graphhopper.coll.*;
 import com.graphhopper.coll.LongIntMap;
+import com.graphhopper.coll.*;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
@@ -114,6 +114,7 @@ public class OSMReader implements DataReader {
     private File osmFile;
     private Date osmDataDate;
     private boolean createStorage = true;
+    private final IntsRef tempFelFlags;
 
     public OSMReader(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
@@ -125,6 +126,9 @@ public class OSMReader implements DataReader {
         osmNodeIdToNodeFlagsMap = new GHLongLongHashMap(200, .5f);
         osmWayIdToRouteWeightMap = new GHLongLongHashMap(200, .5f);
         pillarInfo = new PillarInfo(nodeAccess.is3D(), ghStorage.getDirectory());
+        tempFelFlags = encodingManager.createRelationFlags();
+        if (tempFelFlags.length != 2)
+            throw new IllegalArgumentException("Cannot use relation flags with != 2 integers");
     }
 
     @Override
@@ -186,7 +190,7 @@ public class OSMReader implements DataReader {
                     }
 
                     if (++tmpRelationCounter % 100_000 == 0) {
-                        LOGGER.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMap().size())
+                        LOGGER.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMapSize())
                                 + " " + Helper.getMemInfo());
                     }
                 } else if (item.isType(ReaderElement.FILEHEADER)) {
@@ -323,7 +327,7 @@ public class OSMReader implements DataReader {
         if (!encodingManager.acceptWay(way, acceptWay))
             return;
 
-        long relationFlags = getRelFlagsMap().get(way.getId());
+        IntsRef relationFlags = getRelFlagsMap(way.getId());
 
         // TODO move this after we have created the edge and know the coordinates => encodingManager.applyWayTags
         LongArrayList osmNodeIds = way.getNodes();
@@ -566,21 +570,16 @@ public class OSMReader implements DataReader {
     }
 
     void prepareWaysWithRelationInfo(ReaderRelation osmRelation) {
-        // is there at least one tag interesting for the registered encoders?
-        if (encodingManager.handleRelationTags(osmRelation) == 0)
-            return;
-
         for (ReaderRelation.Member member : osmRelation.getMembers()) {
             if (member.getType() != ReaderRelation.Member.WAY)
                 continue;
 
             long osmId = member.getRef();
-            long oldRelationFlags = getRelFlagsMap().get(osmId);
+            IntsRef oldRelationFlags = getRelFlagsMap(osmId);
 
-            // Check if our new relation data is better comparated to the the last one
-            long newRelationFlags = encodingManager.handleRelationTags(oldRelationFlags, osmRelation);
-            if (oldRelationFlags != newRelationFlags)
-                getRelFlagsMap().put(osmId, newRelationFlags);
+            // Check if our new relation data is better compared to the last one
+            IntsRef newRelationFlags = encodingManager.handleRelationTags(osmRelation, oldRelationFlags);
+            putRelFlagsMap(osmId, newRelationFlags);
         }
     }
 
@@ -865,7 +864,7 @@ public class OSMReader implements DataReader {
      */
     List<OSMTurnRelation> createTurnRelations(ReaderRelation relation) {
         List<OSMTurnRelation> osmTurnRelations = new ArrayList<>();
-        String vehicleTypeRestricted= "";
+        String vehicleTypeRestricted = "";
         List<String> vehicleTypesExcept = new ArrayList<>();
         if (relation.hasTag("except")) {
             String tagExcept = relation.getTag("except");
@@ -933,7 +932,7 @@ public class OSMReader implements DataReader {
      * @return a collection of node cost entries which can be added to the graph later
      */
     public static Collection<TurnCostTableEntry> getRestrictionAsEntries(OSMTurnRelation osmTurnRelation, TurnCostEncoder encoder,
-                                                                  EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, OSMReader osmReader) {
+                                                                         EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, OSMReader osmReader) {
         int nodeVia = osmReader.getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
 
         try {
@@ -1024,8 +1023,20 @@ public class OSMReader implements DataReader {
         return osmNodeIdToNodeFlagsMap;
     }
 
-    GHLongLongHashMap getRelFlagsMap() {
-        return osmWayIdToRouteWeightMap;
+    int getRelFlagsMapSize() {
+        return osmWayIdToRouteWeightMap.size();
+    }
+
+    IntsRef getRelFlagsMap(long osmId) {
+        long relFlagsAsLong = osmWayIdToRouteWeightMap.get(osmId);
+        tempFelFlags.ints[0] = (int) relFlagsAsLong;
+        tempFelFlags.ints[1] = (int) (relFlagsAsLong >> 32);
+        return tempFelFlags;
+    }
+
+    void putRelFlagsMap(long osmId, IntsRef relFlags) {
+        long relFlagsAsLong = ((long) relFlags.ints[1] << 32) | (relFlags.ints[0] & 0xFFFFFFFFL);
+        osmWayIdToRouteWeightMap.put(osmId, relFlagsAsLong);
     }
 
     @Override
@@ -1068,7 +1079,7 @@ public class OSMReader implements DataReader {
     private void printInfo(String str) {
         LOGGER.info("finished " + str + " processing." + " nodes: " + graph.getNodes()
                 + ", osmIdMap.size:" + getNodeMap().getSize() + ", osmIdMap:" + getNodeMap().getMemoryUsage() + "MB"
-                + ", nodeFlagsMap.size:" + getNodeFlagsMap().size() + ", relFlagsMap.size:" + getRelFlagsMap().size()
+                + ", nodeFlagsMap.size:" + getNodeFlagsMap().size() + ", relFlagsMap.size:" + getRelFlagsMapSize()
                 + ", zeroCounter:" + zeroCounter
                 + " " + Helper.getMemInfo());
     }

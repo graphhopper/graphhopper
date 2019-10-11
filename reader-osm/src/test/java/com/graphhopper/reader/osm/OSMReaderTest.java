@@ -476,20 +476,19 @@ public class OSMReaderTest {
         osmRel.setTag("network", "lcn");
         reader.prepareWaysWithRelationInfo(osmRel);
 
-        long flags = reader.getRelFlagsMap().get(1);
-        assertTrue(flags != 0);
+        IntsRef flags = IntsRef.deepCopyOf(reader.getRelFlagsMap(1));
+        assertFalse(flags.isEmpty());
 
-        // do NOT overwrite with UNCHANGED
-        osmRel.setTag("network", "mtb");
+        // unchanged network
         reader.prepareWaysWithRelationInfo(osmRel);
-        long flags2 = reader.getRelFlagsMap().get(1);
+        IntsRef flags2 = reader.getRelFlagsMap(1);
         assertEquals(flags, flags2);
 
-        // overwrite with outstanding
+        // overwrite network
         osmRel.setTag("network", "ncn");
         reader.prepareWaysWithRelationInfo(osmRel);
-        long flags3 = reader.getRelFlagsMap().get(1);
-        assertTrue(flags != flags3);
+        IntsRef flags3 = reader.getRelFlagsMap(1);
+        assertNotEquals(flags, flags3);
     }
 
     @Test
@@ -728,7 +727,7 @@ public class OSMReaderTest {
         final OSMReader.TurnCostTableEntry turnCostEntry_foot = new OSMReader.TurnCostTableEntry();
         final OSMReader.TurnCostTableEntry turnCostEntry_bike = new OSMReader.TurnCostTableEntry();
 
-        final OSMTurnRelation osmTurnRelation = new OSMTurnRelation(1, 1,1, OSMTurnRelation.Type.NOT);
+        final OSMTurnRelation osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.Type.NOT);
 
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
         FootFlagEncoder foot = new FootFlagEncoder();
@@ -739,7 +738,7 @@ public class OSMReaderTest {
         OSMReader reader = new OSMReader(ghStorage) {
             @Override
             public Collection<OSMReader.TurnCostTableEntry> analyzeTurnRelation(FlagEncoder encoder,
-                                                                                      OSMTurnRelation turnRelation) {
+                                                                                OSMTurnRelation turnRelation) {
                 // simulate by returning one turn cost entry directly
                 if (encoder.toString().equalsIgnoreCase("car")) {
 

@@ -138,7 +138,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmRel.setTag("network", "lcn");
         IntsRef flags = assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, osmRel);
         assertEquals(2, encoder.getSpeed(flags), 1e-1);
-        IntsRef relFlags = encodingManager.handleRelationTags(osmRel);
+        IntsRef relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         assertEquals("small way, unpaved", getWayTypeFromFlags(osmWay, relFlags));
 
         // relation code is OUTSTANDING NICE but as unpaved, the speed is still PUSHING_SECTION_SPEED/2
@@ -155,7 +155,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmWay.setTag("tracktype", "grade1");
         flags = assertPriority(PREFER.getValue(), osmWay, osmRel);
         assertEquals(20, encoder.getSpeed(flags), 1e-1);
-        relFlags = encodingManager.handleRelationTags(osmRel);
+        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         assertEquals("cycleway", getWayTypeFromFlags(osmWay, relFlags));
 
         // Now we assume bicycle=yes, and unpaved as part of a cycle relation
@@ -163,7 +163,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmWay.setTag("bicycle", "yes");
         flags = assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, osmRel);
         assertEquals(10, encoder.getSpeed(flags), 1e-1);
-        relFlags = encodingManager.handleRelationTags(osmRel);
+        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         assertEquals("small way, unpaved", getWayTypeFromFlags(osmWay, relFlags));
 
         // Now we assume bicycle=yes, and unpaved not part of a cycle relation
@@ -172,7 +172,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmWay.setTag("tracktype", "grade3");
         flags = assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay);
         assertEquals(PUSHING_SECTION_SPEED, encoder.getSpeed(flags), 1e-1);
-        relFlags = encodingManager.handleRelationTags(new ReaderRelation(1));
+        relFlags = encodingManager.handleRelationTags(new ReaderRelation(1), encodingManager.createRelationFlags());
         assertEquals("get off the bike, unpaved", getWayTypeFromFlags(osmWay, relFlags));
 
         // Now we assume bicycle=yes, and tracktype = null
@@ -180,7 +180,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmWay.setTag("highway", "track");
         flags = assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay);
         assertEquals(2, encoder.getSpeed(flags), 1e-1);
-        relFlags = encodingManager.handleRelationTags(new ReaderRelation(1));
+        relFlags = encodingManager.handleRelationTags(new ReaderRelation(1), encodingManager.createRelationFlags());
         assertEquals("small way, unpaved", getWayTypeFromFlags(osmWay, relFlags));
     }
 
