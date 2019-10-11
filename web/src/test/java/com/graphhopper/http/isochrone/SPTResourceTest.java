@@ -1,7 +1,5 @@
 package com.graphhopper.http.isochrone;
 
-import com.graphhopper.directions.api.client.ApiClient;
-import com.graphhopper.directions.api.client.api.IsochroneApi;
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.util.CmdArgs;
@@ -25,8 +23,6 @@ public class SPTResourceTest {
 
     private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
-    private static IsochroneApi client;
-
     static {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
                 put("prepare.ch.weightings", "no").
@@ -34,8 +30,6 @@ public class SPTResourceTest {
                 put("graph.encoded_values", "max_speed,road_class").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.location", DIR));
-        client = new IsochroneApi();
-        client.setApiClient(new ApiClient().setBasePath("http://localhost:8080"));
     }
 
     @ClassRule
