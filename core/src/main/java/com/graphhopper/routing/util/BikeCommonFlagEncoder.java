@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.weighting.PriorityWeighting;
@@ -28,6 +27,7 @@ import com.graphhopper.util.Translation;
 
 import java.util.*;
 
+import static com.graphhopper.routing.profiles.RouteNetwork.*;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
@@ -55,15 +55,15 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     private final Map<String, Integer> surfaceSpeeds = new HashMap<>();
     private final Set<String> roadValues = new HashSet<>();
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
-    // convert network tag of bicycle routes into a way route code
-    private final Map<String, Integer> bikeNetworkToCode = new HashMap<>();
-    protected EncodedValueOld relationCodeEncoder;
     protected boolean speedTwoDirections;
-    DecimalEncodedValue priorityWayEncoder;
-    private BooleanEncodedValue unpavedEncoder;
-    private IntEncodedValue wayTypeEncoder;
+    DecimalEncodedValue priorityEnc;
+    private BooleanEncodedValue unpavedEnc;
+    private IntEncodedValue wayTypeEnc;
     // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
     private int avoidSpeedLimit;
+    EnumEncodedValue<RouteNetwork> bikeRouteEnc;
+    EnumEncodedValue<Route> routeEnc;
+    Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     // This is the specific bicycle class
     private String classBicycleKey;
@@ -193,13 +193,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         avoidHighwayTags.add("motorway");
         avoidHighwayTags.add("motorway_link");
 
-        setCyclingNetworkPreference("icn", BEST.getValue());
-        setCyclingNetworkPreference("ncn", BEST.getValue());
-        setCyclingNetworkPreference("rcn", VERY_NICE.getValue());
-        setCyclingNetworkPreference("lcn", PREFER.getValue());
-        setCyclingNetworkPreference("mtb", UNCHANGED.getValue());
-
-        setCyclingNetworkPreference("deprecated", AVOID_AT_ALL_COSTS.getValue());
+        routeMap.put(INTERNATIONAL, BEST.getValue());
+        routeMap.put(NATIONAL, BEST.getValue());
+        routeMap.put(REGIONAL, VERY_NICE.getValue());
+        routeMap.put(LOCAL, PREFER.getValue());
 
         speedDefault = highwaySpeeds.get("cycleway");
         setAvoidSpeedLimit(71);
@@ -214,16 +211,13 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
-        registerNewEncodedValue.add(speedEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
-        registerNewEncodedValue.add(unpavedEncoder = new SimpleBooleanEncodedValue(getKey(prefix, "paved"), false));
-        registerNewEncodedValue.add(wayTypeEncoder = new UnsignedIntEncodedValue(getKey(prefix, "waytype"), 2, false));
-        registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
-    }
+        registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
+        registerNewEncodedValue.add(unpavedEnc = new SimpleBooleanEncodedValue(getKey(prefix, "paved"), false));
+        registerNewEncodedValue.add(wayTypeEnc = new UnsignedIntEncodedValue(getKey(prefix, "waytype"), 2, false));
+        registerNewEncodedValue.add(priorityEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
 
-    @Override
-    public int defineRelationBits(int index, int shift) {
-        relationCodeEncoder = new EncodedValueOld("RelationCode", shift, 3, 1, 0, 7);
-        return shift + relationCodeEncoder.getBits();
+        bikeRouteEnc = getEnumEncodedValue(getKey("bike", PART_NAME), RouteNetwork.class);
+        routeEnc = getEnumEncodedValue(Route.KEY, Route.class);
     }
 
     @Override
@@ -299,25 +293,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         return "hiking".equals(sacScale);
     }
 
-    @Override
-    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
-        int code = 0;
-        if (relation.hasTag("route", "bicycle")) {
-            Integer val = bikeNetworkToCode.get(relation.getTag("network"));
-            if (val != null)
-                code = val;
-            else
-                code = PriorityCode.PREFER.getValue();  // Assume priority of network "lcn" as bicycle route default
-        } else if (relation.hasTag("route", "ferry")) {
-            code = AVOID_IF_POSSIBLE.getValue();
-        }
-
-        int oldCode = (int) relationCodeEncoder.getValue(oldRelationFlags);
-        if (oldCode < code)
-            return relationCodeEncoder.setValue(0, code);
-        return oldRelationFlags;
-    }
-
     /**
      * Apply maxspeed: In contrast to the implementation of the AbstractFlagEncoder, we assume that
      * we can reach the maxspeed for bicycles in case that the road type speed is higher and not
@@ -341,26 +316,25 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
         if (access.canSkip())
             return edgeFlags;
 
+        Integer priorityFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeFlags));
         double wayTypeSpeed = getSpeed(way);
         if (!access.isFerry()) {
             wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
             handleSpeed(edgeFlags, way, wayTypeSpeed);
-            handleBikeRelated(edgeFlags, way, relationFlags > UNCHANGED.getValue());
+            handleBikeRelated(edgeFlags, way, priorityFromRelation != null && priorityFromRelation > UNCHANGED.getValue());
         } else {
             double ferrySpeed = getFerrySpeed(way);
             handleSpeed(edgeFlags, way, ferrySpeed);
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
+            priorityFromRelation = AVOID_IF_POSSIBLE.getValue();
         }
-        int priorityFromRelation = 0;
-        if (relationFlags != 0)
-            priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
-        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(way, wayTypeSpeed, priorityFromRelation)));
+        priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(way, wayTypeSpeed, priorityFromRelation)));
         return edgeFlags;
     }
 
@@ -428,10 +402,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     @Override
     public InstructionAnnotation getAnnotation(IntsRef edgeFlags, Translation tr) {
         int paveType = 0; // paved
-        if (unpavedEncoder.getBool(false, edgeFlags))
+        if (unpavedEnc.getBool(false, edgeFlags))
             paveType = 1; // unpaved
 
-        int wayType = wayTypeEncoder.getInt(false, edgeFlags);
+        int wayType = wayTypeEnc.getInt(false, edgeFlags);
         String wayName = getWayName(paveType, wayType, tr);
         return new InstructionAnnotation(0, wayName);
     }
@@ -473,9 +447,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
      *
      * @return new priority based on priorityFromRelation and on the tags in ReaderWay.
      */
-    protected int handlePriority(ReaderWay way, double wayTypeSpeed, int priorityFromRelation) {
+    int handlePriority(ReaderWay way, double wayTypeSpeed, Integer priorityFromRelation) {
         TreeMap<Double, Integer> weightToPrioMap = new TreeMap<>();
-        if (priorityFromRelation == 0)
+        if (priorityFromRelation == null)
             weightToPrioMap.put(0d, UNCHANGED.getValue());
         else
             weightToPrioMap.put(110d, priorityFromRelation);
@@ -596,10 +570,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         String trackType = way.getTag("tracktype");
 
         // Populate unpavedBit
-        if ("track".equals(highway) && (trackType == null || !"grade1".equals(trackType))
+        if ("track".equals(highway) && !"grade1".equals(trackType)
                 || "path".equals(highway) && surfaceTag == null
                 || unpavedSurfaceTags.contains(surfaceTag)) {
-            unpavedEncoder.setBool(false, edgeFlags, true);
+            unpavedEnc.setBool(false, edgeFlags, true);
         }
 
         WayType wayType;
@@ -620,7 +594,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         } else if ("cycleway".equals(highway))
             wayType = WayType.CYCLEWAY;
 
-        wayTypeEncoder.setInt(false, edgeFlags, wayType.getValue());
+        wayTypeEnc.setInt(false, edgeFlags, wayType.getValue());
     }
 
     boolean isPushingSection(ReaderWay way) {
@@ -628,7 +602,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     protected void handleSpeed(IntsRef edgeFlags, ReaderWay way, double speed) {
-        speedEncoder.setDecimal(false, edgeFlags, speed);
+        avgSpeedEnc.setDecimal(false, edgeFlags, speed);
 
         // handle oneways        
         boolean isOneway = way.hasTag("oneway", oneways)
@@ -672,10 +646,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     void setSurfaceSpeed(String surface, int speed) {
         surfaceSpeeds.put(surface, speed);
-    }
-
-    void setCyclingNetworkPreference(String network, int code) {
-        bikeNetworkToCode.put(network, code);
     }
 
     void addPushingSection(String highway) {

@@ -566,8 +566,8 @@ public class OSMReader implements DataReader {
     }
 
     void prepareWaysWithRelationInfo(ReaderRelation osmRelation) {
-        // is there at least one tag interesting for the registed encoders?
-        if (encodingManager.handleRelationTags(0, osmRelation) == 0)
+        // is there at least one tag interesting for the registered encoders?
+        if (encodingManager.handleRelationTags(osmRelation) == 0)
             return;
 
         for (ReaderRelation.Member member : osmRelation.getMembers()) {

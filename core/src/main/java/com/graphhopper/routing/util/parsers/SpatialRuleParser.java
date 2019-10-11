@@ -49,7 +49,7 @@ public class SpatialRuleParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags) {
         GHPoint estimatedCenter = way.getTag("estimated_center", null);
         if (estimatedCenter != null) {
             SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);

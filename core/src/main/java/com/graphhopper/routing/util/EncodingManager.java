@@ -21,9 +21,7 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.parsers.OSMRoundaboutParser;
-import com.graphhopper.routing.util.parsers.TagParser;
-import com.graphhopper.routing.util.parsers.TagParserFactory;
+import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.IntsRef;
@@ -52,12 +50,13 @@ public class EncodingManager implements EncodedValueLookup {
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
     private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
     private final List<TagParser> tagParserList = new ArrayList<>();
+    private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
     private int nextNodeBit = 0;
-    private int nextRelBit = 0;
     private int nextTurnBit = 0;
     private boolean enableInstructions = true;
     private String preferredLanguage = "";
-    private EncodedValue.InitializerConfig config;
+    private EncodedValue.InitializerConfig relationConfig;
+    private EncodedValue.InitializerConfig edgeConfig;
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
@@ -134,7 +133,8 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private EncodingManager() {
-        this.config = new EncodedValue.InitializerConfig();
+        this.relationConfig = new EncodedValue.InitializerConfig();
+        this.edgeConfig = new EncodedValue.InitializerConfig();
     }
 
     public static class Builder {
@@ -197,8 +197,39 @@ public class EncodingManager implements EncodedValueLookup {
             return this;
         }
 
+        public Builder addRelationTagParsers() {
+            addRelationTagParser(new OSMBikeNetworkTagParser());
+            addRelationTagParser(new OSMFootNetworkTagParser());
+            return this;
+        }
+
+        public Builder addRelationTagParser(RelationTagParser tagParser) {
+            List<EncodedValue> list = new ArrayList<>();
+            tagParser.createRelationEncodedValues(em, list);
+            for (EncodedValue ev : list) {
+                ev.init(em.relationConfig);
+                // do we need this for the transformer encoded values?
+                // encodedValueMap.put(ev.getName(), ev);
+            }
+            em.relationTagParsers.add(tagParser);
+
+            // add as "edge" TagParser
+            // TODO NOW for now we only have encoder specific TagParsers
+            add(tagParser, true);
+            return this;
+        }
+
         public Builder add(FlagEncoder encoder) {
             check();
+
+            // TODO NOW workaround for now
+            if (!em.hasEncodedValue(Route.KEY))
+                em.addEncodedValue(new EnumEncodedValue<>(Route.KEY, Route.class), false);
+            if (encoder instanceof BikeCommonFlagEncoder && !em.hasEncodedValue(getKey("bike", RouteNetwork.PART_NAME)))
+                addRelationTagParser(new OSMBikeNetworkTagParser());
+            else if (encoder instanceof FootFlagEncoder && !em.hasEncodedValue(getKey("foot", RouteNetwork.PART_NAME)))
+                addRelationTagParser(new OSMFootNetworkTagParser());
+
             em.addEncoder((AbstractFlagEncoder) encoder);
             return this;
         }
@@ -217,10 +248,14 @@ public class EncodingManager implements EncodedValueLookup {
          * createEncodedValues.
          */
         public Builder add(TagParser tagParser) {
+            return add(tagParser, false);
+        }
+
+        private Builder add(TagParser tagParser, boolean encValBoundToFlagEncoder) {
             List<EncodedValue> list = new ArrayList<>();
             tagParser.createEncodedValues(em, list);
             for (EncodedValue ev : list) {
-                em.addEncodedValue(ev, false);
+                em.addEncodedValue(ev, encValBoundToFlagEncoder);
             }
             em.tagParserList.add(tagParser);
             return this;
@@ -307,7 +342,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public int getIntsForFlags() {
-        return (int) Math.ceil((double) config.getRequiredBits() / 32.0);
+        return (int) Math.ceil((double) edgeConfig.getRequiredBits() / 32.0);
     }
 
     private void setEnableInstructions(boolean enableInstructions) {
@@ -348,10 +383,6 @@ public class EncodingManager implements EncodedValueLookup {
             addEncodedValue(ev, true);
         }
 
-        usedBits = encoder.defineRelationBits(encoderCount, nextRelBit);
-        encoder.setRelBitMask(usedBits - nextRelBit, nextRelBit);
-        nextRelBit = usedBits;
-
         // turn flag bits are independent from edge encoder bits
         usedBits = encoder.defineTurnBits(encoderCount, nextTurnBit);
         if (usedBits > BITS_FOR_TURN_FLAGS)
@@ -366,7 +397,7 @@ public class EncodingManager implements EncodedValueLookup {
             throw new IllegalStateException("EncodedValue " + ev.getName() + " already exists " + encodedValueMap.get(ev.getName()) + " vs " + ev);
         if (!encValBoundToFlagEncoder && ev.getName().contains(SPECIAL_SEPARATOR))
             throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must not contain '" + SPECIAL_SEPARATOR + "' as reserved for FlagEncoder");
-        ev.init(config);
+        ev.init(edgeConfig);
         encodedValueMap.put(ev.getName(), ev);
     }
 
@@ -469,10 +500,10 @@ public class EncodingManager implements EncodedValueLookup {
         }
     }
 
-    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
-        long flags = 0;
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
-            flags |= encoder.handleRelationTags(oldRelationFlags, relation);
+    public IntsRef handleRelationTags(ReaderRelation relation) {
+        IntsRef flags = createRelationFlags();
+        for (RelationTagParser encoder : relationTagParsers) {
+            encoder.handleRelationTags(flags, relation);
         }
 
         return flags;
@@ -484,7 +515,7 @@ public class EncodingManager implements EncodedValueLookup {
      *
      * @param relationFlags The preprocessed relation flags is used to influence the way properties.
      */
-    public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, long relationFlags) {
+    public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay, IntsRef relationFlags) {
         IntsRef edgeFlags = createEdgeFlags();
         // return if way or ferry
         Access access = acceptWay.getAccess();
@@ -492,7 +523,7 @@ public class EncodingManager implements EncodedValueLookup {
             parser.handleWayTags(edgeFlags, way, access, relationFlags);
         }
         for (AbstractFlagEncoder encoder : edgeEncoders) {
-            encoder.handleWayTags(edgeFlags, way, acceptWay.get(encoder.toString()), relationFlags & encoder.getRelBitMask());
+            encoder.handleWayTags(edgeFlags, way, acceptWay.get(encoder.toString()));
         }
         return edgeFlags;
     }
@@ -544,6 +575,12 @@ public class EncodingManager implements EncodedValueLookup {
     // TODO hide IntsRef even more in a later version: https://gist.github.com/karussell/f4c2b2b1191be978d7ee9ec8dd2cd48f
     public IntsRef createEdgeFlags() {
         return new IntsRef(getIntsForFlags());
+    }
+
+    public IntsRef createRelationFlags() {
+        // for backward compatibility use 2 ints
+        // TODO NOW we need a long value to store this in the map in OSMReader, but in handleWayTags the relation encoded values will become edge encoded values
+        return new IntsRef(2);
     }
 
     public IntsRef flagsDefault(boolean forward, boolean backward) {

@@ -23,6 +23,7 @@ import com.graphhopper.util.PMap;
 
 import java.util.TreeMap;
 
+import static com.graphhopper.routing.profiles.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
@@ -52,10 +53,10 @@ public class HikeFlagEncoder extends FootFlagEncoder {
     public HikeFlagEncoder(int speedBits, double speedFactor) {
         super(speedBits, speedFactor);
 
-        hikingNetworkToCode.put("iwn", BEST.getValue());
-        hikingNetworkToCode.put("nwn", BEST.getValue());
-        hikingNetworkToCode.put("rwn", VERY_NICE.getValue());
-        hikingNetworkToCode.put("lwn", VERY_NICE.getValue());
+        routeMap.put(INTERNATIONAL, BEST.getValue());
+        routeMap.put(NATIONAL, BEST.getValue());
+        routeMap.put(REGIONAL, VERY_NICE.getValue());
+        routeMap.put(LOCAL, VERY_NICE.getValue());
 
         init();
     }

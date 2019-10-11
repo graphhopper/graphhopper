@@ -15,23 +15,34 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.parsers;
+package com.graphhopper.routing.profiles;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.Helper;
 
-import java.util.List;
+public enum Route {
 
-/**
- * This interface defines how parts of the information from 'way' is converted into IntsRef. A TagParser usually
- * has one corresponding EncodedValue. Other situations like multiple tags for one EncodedValue are possible too.
- */
-public interface TagParser {
+    OTHER("other"), HIKE("hike"), BIKE("bike"), MTB("mtb");
 
-    void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
+    public static final String KEY = "route";
 
-    IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags);
+    private final String name;
+
+    Route(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
+    public static Route find(String name) {
+        if (name == null)
+            return OTHER;
+        try {
+            return Route.valueOf(Helper.toUpperCase(name));
+        } catch (IllegalArgumentException ex) {
+            return OTHER;
+        }
+    }
 }

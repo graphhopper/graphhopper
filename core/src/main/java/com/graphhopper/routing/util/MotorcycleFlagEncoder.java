@@ -184,7 +184,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access accept, long priorityFromRelation) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access accept) {
         if (accept.canSkip())
             return edgeFlags;
 
@@ -225,14 +225,14 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
             setSpeed(true, edgeFlags, ferrySpeed);
         }
 
-        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(priorityFromRelation, way)));
+        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(way)));
 
         // Set the curvature to the Maximum
         curvatureEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(10));
         return edgeFlags;
     }
 
-    private int handlePriority(long relationFlags, ReaderWay way) {
+    private int handlePriority(ReaderWay way) {
         String highway = way.getTag("highway", "");
         if (avoidSet.contains(highway)) {
             return PriorityCode.WORST.getValue();
@@ -245,7 +245,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
 
     @Override
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        double speed = edge.get(speedEncoder);
+        double speed = edge.get(avgSpeedEnc);
         double roadDistance = edge.getDistance();
         double beelineDistance = getBeelineDistance(way);
         double bendiness = beelineDistance / roadDistance;

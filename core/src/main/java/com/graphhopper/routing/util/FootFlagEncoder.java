@@ -18,17 +18,15 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.UnsignedDecimalEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
 
+import static com.graphhopper.routing.profiles.RouteNetwork.*;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
@@ -49,12 +47,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     final Set<String> safeHighwayTags = new HashSet<>();
     final Set<String> allowedHighwayTags = new HashSet<>();
     final Set<String> avoidHighwayTags = new HashSet<>();
-    // convert network tag of hiking routes into a way route code
-    final Map<String, Integer> hikingNetworkToCode = new HashMap<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
     private DecimalEncodedValue priorityWayEncoder;
-    private EncodedValueOld relationCodeEncoder;
+    private EnumEncodedValue<RouteNetwork> footRouteEnc;
+    Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     /**
      * Should be only instantiated via EncodingManager
@@ -132,10 +129,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         // disallowed in some countries
         //allowedHighwayTags.add("bridleway");
 
-        hikingNetworkToCode.put("iwn", UNCHANGED.getValue());
-        hikingNetworkToCode.put("nwn", UNCHANGED.getValue());
-        hikingNetworkToCode.put("rwn", UNCHANGED.getValue());
-        hikingNetworkToCode.put("lwn", UNCHANGED.getValue());
+        routeMap.put(INTERNATIONAL, UNCHANGED.getValue());
+        routeMap.put(NATIONAL, UNCHANGED.getValue());
+        routeMap.put(REGIONAL, UNCHANGED.getValue());
+        routeMap.put(LOCAL, UNCHANGED.getValue());
 
         maxPossibleSpeed = FERRY_SPEED;
         speedDefault = MEAN_SPEED;
@@ -152,14 +149,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
         // larger value required - ferries are faster than pedestrians
-        registerNewEncodedValue.add(speedEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, false));
+        registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, false));
         registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
-    }
 
-    @Override
-    public int defineRelationBits(int index, int shift) {
-        relationCodeEncoder = new EncodedValueOld("RelationCode", shift, 3, 1, 0, 7);
-        return shift + relationCodeEncoder.getBits();
+        footRouteEnc = getEnumEncodedValue(getKey("foot", PART_NAME), RouteNetwork.class);
     }
 
     /**
@@ -269,59 +262,38 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
-        int code = 0;
-        if (relation.hasTag("route", "hiking") || relation.hasTag("route", "foot")) {
-            Integer val = hikingNetworkToCode.get(relation.getTag("network"));
-            if (val != null)
-                code = val;
-            else
-                code = hikingNetworkToCode.get("lwn");
-        } else if (relation.hasTag("route", "ferry")) {
-            code = PriorityCode.AVOID_IF_POSSIBLE.getValue();
-        }
-
-        int oldCode = (int) relationCodeEncoder.getValue(oldRelationFlags);
-        if (oldCode < code)
-            return relationCodeEncoder.setValue(0, code);
-        return oldRelationFlags;
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
         if (access.canSkip())
             return edgeFlags;
 
+        Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
         if (!access.isFerry()) {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null) {
                 if ("hiking".equals(sacScale))
-                    speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED);
+                    avgSpeedEnc.setDecimal(false, edgeFlags, MEAN_SPEED);
                 else
-                    speedEncoder.setDecimal(false, edgeFlags, SLOW_SPEED);
+                    avgSpeedEnc.setDecimal(false, edgeFlags, SLOW_SPEED);
             } else {
-                speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED);
+                avgSpeedEnc.setDecimal(false, edgeFlags, MEAN_SPEED);
             }
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
         } else {
+            priorityFromRelation = PriorityCode.AVOID_IF_POSSIBLE.getValue();
             double ferrySpeed = getFerrySpeed(way);
             setSpeed(false, edgeFlags, ferrySpeed);
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
         }
 
-        int priorityFromRelation = 0;
-        if (relationFlags != 0)
-            priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
-
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(way, priorityFromRelation)));
         return edgeFlags;
     }
 
-    protected int handlePriority(ReaderWay way, int priorityFromRelation) {
+    int handlePriority(ReaderWay way, Integer priorityFromRelation) {
         TreeMap<Double, Integer> weightToPrioMap = new TreeMap<>();
-        if (priorityFromRelation == 0)
+        if (priorityFromRelation == null)
             weightToPrioMap.put(0d, UNCHANGED.getValue());
         else
             weightToPrioMap.put(110d, priorityFromRelation);

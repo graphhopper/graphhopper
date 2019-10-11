@@ -38,7 +38,7 @@ public class OSMRoadClassLinkParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, IntsRef relationFlags) {
         String highwayTag = readerWay.getTag("highway");
         if (!Helper.isEmpty(highwayTag) && highwayTag.endsWith("_link"))
             linkEnc.setBool(false, edgeFlags, true);

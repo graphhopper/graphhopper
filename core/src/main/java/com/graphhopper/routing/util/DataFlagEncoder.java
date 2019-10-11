@@ -18,7 +18,6 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.weighting.GenericWeighting;
@@ -102,18 +101,13 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
 
         // workaround to init AbstractWeighting.avSpeedEnc variable that GenericWeighting does not need
-        speedEncoder = new UnsignedDecimalEncodedValue("fake", 1, 1, false);
+        avgSpeedEnc = new UnsignedDecimalEncodedValue("fake", 1, 1, false);
         roadEnvironmentEnc = getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
     }
 
     protected void flagsDefault(IntsRef edgeFlags, boolean forward, boolean backward) {
         accessEnc.setBool(false, edgeFlags, forward);
         accessEnc.setBool(true, edgeFlags, backward);
-    }
-
-    @Override
-    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
-        return oldRelationFlags;
     }
 
     @Override
@@ -152,7 +146,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
         if (access.canSkip())
             return edgeFlags;
 
