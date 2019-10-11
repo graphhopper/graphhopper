@@ -15,10 +15,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.MultiPolygon;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
@@ -137,20 +134,8 @@ public class IsochroneResource {
         ContourBuilder contourBuilder = new ContourBuilder(tin);
         for (int i = 0; i < buckets.size() - 1; i++) {
             MultiPolygon multiPolygon = contourBuilder.computeIsoline((double) i + 0.5);
-            int maxPoints = 0;
-            Polygon maxPolygon = null;
-            for (int j = 0; j < multiPolygon.getNumGeometries(); j++) {
-                Polygon polygon = (Polygon) multiPolygon.getGeometryN(j);
-                if (polygon.getNumPoints() > maxPoints) {
-                    maxPoints = polygon.getNumPoints();
-                    maxPolygon = polygon;
-                }
-            }
-            if (maxPolygon == null) {
-                throw new IllegalStateException("no maximum polygon was found?");
-            } else {
-                polygonShells.add(maxPolygon.getExteriorRing().getCoordinates());
-            }
+            Polygon maxPolygon = heuristicallyFindMainConnectedComponent(multiPolygon, geometryFactory.createPoint(new Coordinate(point.lon, point.lat)));
+            polygonShells.add(maxPolygon.getExteriorRing().getCoordinates());
         }
         for (Coordinate[] polygonShell : polygonShells) {
             JsonFeature feature = new JsonFeature();
@@ -179,6 +164,22 @@ public class IsochroneResource {
         logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
         return Response.ok(finalJson).header("X-GH-Took", "" + sw.getSeconds() * 1000).
                 build();
+    }
+
+    private Polygon heuristicallyFindMainConnectedComponent(MultiPolygon multiPolygon, Point point) {
+        int maxPoints = 0;
+        Polygon maxPolygon = null;
+        for (int j = 0; j < multiPolygon.getNumGeometries(); j++) {
+            Polygon polygon = (Polygon) multiPolygon.getGeometryN(j);
+            if (polygon.contains(point)) {
+                return polygon;
+            }
+            if (polygon.getNumPoints() > maxPoints) {
+                maxPoints = polygon.getNumPoints();
+                maxPolygon = polygon;
+            }
+        }
+        return maxPolygon;
     }
 
 }
