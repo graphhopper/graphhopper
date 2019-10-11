@@ -59,7 +59,6 @@ public class IsochroneResource {
             @QueryParam("buckets") @DefaultValue("1") int nBuckets,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("point") GHPoint point,
-            @QueryParam("result") @DefaultValue("polygon") String resultStr,
             @QueryParam("time_limit") @DefaultValue("600") long timeLimitInSeconds,
             @QueryParam("distance_limit") @DefaultValue("-1") double distanceInMeter,
             @QueryParam("type") @DefaultValue("json") String respType) {
@@ -74,7 +73,7 @@ public class IsochroneResource {
 
         if (!encodingManager.hasEncoder(vehicle))
             throw new IllegalArgumentException("vehicle not supported:" + vehicle);
-        
+
         if (respType != null && !respType.equalsIgnoreCase("json") && !respType.equalsIgnoreCase("geojson")) {
             throw new IllegalArgumentException("Format not supported:" + respType);
         }
@@ -101,90 +100,85 @@ public class IsochroneResource {
             isochrone.setTimeLimit(timeLimitInSeconds);
         }
 
-        if ("polygon".equalsIgnoreCase(resultStr)) {
-            List<List<Coordinate>> buckets = isochrone.searchGPS(qr.getClosestNode(), nBuckets);
-            if (isochrone.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
-                throw new IllegalArgumentException("Too many nodes would have to explored (" + isochrone.getVisitedNodes() + "). Let us know if you need this increased.");
-            }
-
-            int counter = 0;
-            for (List<Coordinate> bucket : buckets) {
-                if (bucket.size() < 2) {
-                    throw new IllegalArgumentException("Too few points found for bucket " + counter + ". "
-                            + "Please try a different 'point', a smaller 'buckets' count or a larger 'time_limit'. "
-                            + "And let us know if you think this is a bug!");
-                }
-                counter++;
-            }
-            ArrayList<JsonFeature> features = new ArrayList<>();
-            Collection<ConstraintVertex> sites = new ArrayList<>();
-            for (int i = 0; i < buckets.size(); i++) {
-                List<Coordinate> level = buckets.get(i);
-                for (Coordinate coord : level) {
-                    ConstraintVertex site = new ConstraintVertex(coord);
-                    site.setZ(i);
-                    sites.add(site);
-                }
-            }
-            ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
-            conformingDelaunayTriangulator.setConstraints(new ArrayList(), new ArrayList());
-            conformingDelaunayTriangulator.formInitialDelaunay();
-            QuadEdgeSubdivision tin = conformingDelaunayTriangulator.getSubdivision();
-            for (Vertex vertex : (Collection<Vertex>) tin.getVertices(true)) {
-                if (tin.isFrameVertex(vertex)) {
-                    vertex.setZ(Double.MAX_VALUE);
-                }
-            }
-            ArrayList<Coordinate[]> polygonShells = new ArrayList<>();
-            ContourBuilder contourBuilder = new ContourBuilder(tin);
-            for (int i = 0; i < buckets.size() - 1; i++) {
-                MultiPolygon multiPolygon = contourBuilder.computeIsoline((double) i + 0.5);
-                int maxPoints = 0;
-                Polygon maxPolygon = null;
-                for (int j = 0; j < multiPolygon.getNumGeometries(); j++) {
-                    Polygon polygon = (Polygon) multiPolygon.getGeometryN(j);
-                    if (polygon.getNumPoints() > maxPoints) {
-                        maxPoints = polygon.getNumPoints();
-                        maxPolygon = polygon;
-                    }
-                }
-                if (maxPolygon == null) {
-                    throw new IllegalStateException("no maximum polygon was found?");
-                } else {
-                    polygonShells.add(maxPolygon.getExteriorRing().getCoordinates());
-                }
-            }
-            for (Coordinate[] polygonShell : polygonShells) {
-                JsonFeature feature = new JsonFeature();
-                HashMap<String, Object> properties = new HashMap<>();
-                properties.put("bucket", features.size());
-                if (respType.equalsIgnoreCase("geojson")) {
-                    properties.put("copyrights", WebHelper.COPYRIGHTS);
-                }
-                feature.setProperties(properties);
-                feature.setGeometry(geometryFactory.createPolygon(polygonShell));
-                features.add(feature);
-            }
-            ObjectNode json = JsonNodeFactory.instance.objectNode();
-            
-            ObjectNode finalJson = null;
-            if (respType.equalsIgnoreCase("geojson")) {
-            	json.put("type", "FeatureCollection");
-                json.putPOJO("features", features);
-                finalJson = json;
-            } else {
-            	json.putPOJO("polygons", features);
-            	finalJson = WebHelper.jsonResponsePutInfo(json, sw.getSeconds());
-            }
-            
-            sw.stop();
-            logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
-            return Response.ok(finalJson).header("X-GH-Took", "" + sw.getSeconds() * 1000).
-                    build();
-
-        } else {
-            throw new IllegalArgumentException("type not supported:" + resultStr);
+        List<List<Coordinate>> buckets = isochrone.searchGPS(qr.getClosestNode(), nBuckets);
+        if (isochrone.getVisitedNodes() > graphHopper.getMaxVisitedNodes() / 5) {
+            throw new IllegalArgumentException("Too many nodes would have to explored (" + isochrone.getVisitedNodes() + "). Let us know if you need this increased.");
         }
+
+        int counter = 0;
+        for (List<Coordinate> bucket : buckets) {
+            if (bucket.size() < 2) {
+                throw new IllegalArgumentException("Too few points found for bucket " + counter + ". "
+                        + "Please try a different 'point', a smaller 'buckets' count or a larger 'time_limit'. "
+                        + "And let us know if you think this is a bug!");
+            }
+            counter++;
+        }
+        ArrayList<JsonFeature> features = new ArrayList<>();
+        Collection<ConstraintVertex> sites = new ArrayList<>();
+        for (int i = 0; i < buckets.size(); i++) {
+            List<Coordinate> level = buckets.get(i);
+            for (Coordinate coord : level) {
+                ConstraintVertex site = new ConstraintVertex(coord);
+                site.setZ(i);
+                sites.add(site);
+            }
+        }
+        ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
+        conformingDelaunayTriangulator.setConstraints(new ArrayList(), new ArrayList());
+        conformingDelaunayTriangulator.formInitialDelaunay();
+        QuadEdgeSubdivision tin = conformingDelaunayTriangulator.getSubdivision();
+        for (Vertex vertex : (Collection<Vertex>) tin.getVertices(true)) {
+            if (tin.isFrameVertex(vertex)) {
+                vertex.setZ(Double.MAX_VALUE);
+            }
+        }
+        ArrayList<Coordinate[]> polygonShells = new ArrayList<>();
+        ContourBuilder contourBuilder = new ContourBuilder(tin);
+        for (int i = 0; i < buckets.size() - 1; i++) {
+            MultiPolygon multiPolygon = contourBuilder.computeIsoline((double) i + 0.5);
+            int maxPoints = 0;
+            Polygon maxPolygon = null;
+            for (int j = 0; j < multiPolygon.getNumGeometries(); j++) {
+                Polygon polygon = (Polygon) multiPolygon.getGeometryN(j);
+                if (polygon.getNumPoints() > maxPoints) {
+                    maxPoints = polygon.getNumPoints();
+                    maxPolygon = polygon;
+                }
+            }
+            if (maxPolygon == null) {
+                throw new IllegalStateException("no maximum polygon was found?");
+            } else {
+                polygonShells.add(maxPolygon.getExteriorRing().getCoordinates());
+            }
+        }
+        for (Coordinate[] polygonShell : polygonShells) {
+            JsonFeature feature = new JsonFeature();
+            HashMap<String, Object> properties = new HashMap<>();
+            properties.put("bucket", features.size());
+            if (respType.equalsIgnoreCase("geojson")) {
+                properties.put("copyrights", WebHelper.COPYRIGHTS);
+            }
+            feature.setProperties(properties);
+            feature.setGeometry(geometryFactory.createPolygon(polygonShell));
+            features.add(feature);
+        }
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
+
+        ObjectNode finalJson = null;
+        if (respType.equalsIgnoreCase("geojson")) {
+            json.put("type", "FeatureCollection");
+            json.putPOJO("features", features);
+            finalJson = json;
+        } else {
+            json.putPOJO("polygons", features);
+            finalJson = WebHelper.jsonResponsePutInfo(json, sw.getSeconds());
+        }
+
+        sw.stop();
+        logger.info("took: " + sw.getSeconds() + ", visited nodes:" + isochrone.getVisitedNodes() + ", " + uriInfo.getQueryParameters());
+        return Response.ok(finalJson).header("X-GH-Took", "" + sw.getSeconds() * 1000).
+                build();
     }
 
 }
