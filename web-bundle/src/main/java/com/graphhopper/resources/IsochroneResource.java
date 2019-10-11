@@ -117,7 +117,43 @@ public class IsochroneResource {
                 counter++;
             }
             ArrayList<JsonFeature> features = new ArrayList<>();
-            List<Coordinate[]> polygonShells = calcPolygons(buckets);
+            Collection<ConstraintVertex> sites = new ArrayList<>();
+            for (int i = 0; i < buckets.size(); i++) {
+                List<Coordinate> level = buckets.get(i);
+                for (Coordinate coord : level) {
+                    ConstraintVertex site = new ConstraintVertex(coord);
+                    site.setZ(i);
+                    sites.add(site);
+                }
+            }
+            ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
+            conformingDelaunayTriangulator.setConstraints(new ArrayList(), new ArrayList());
+            conformingDelaunayTriangulator.formInitialDelaunay();
+            QuadEdgeSubdivision tin = conformingDelaunayTriangulator.getSubdivision();
+            for (Vertex vertex : (Collection<Vertex>) tin.getVertices(true)) {
+                if (tin.isFrameVertex(vertex)) {
+                    vertex.setZ(Double.MAX_VALUE);
+                }
+            }
+            ArrayList<Coordinate[]> polygonShells = new ArrayList<>();
+            ContourBuilder contourBuilder = new ContourBuilder(tin);
+            for (int i = 0; i < buckets.size() - 1; i++) {
+                MultiPolygon multiPolygon = contourBuilder.computeIsoline((double) i + 0.5);
+                int maxPoints = 0;
+                Polygon maxPolygon = null;
+                for (int j = 0; j < multiPolygon.getNumGeometries(); j++) {
+                    Polygon polygon = (Polygon) multiPolygon.getGeometryN(j);
+                    if (polygon.getNumPoints() > maxPoints) {
+                        maxPoints = polygon.getNumPoints();
+                        maxPolygon = polygon;
+                    }
+                }
+                if (maxPolygon == null) {
+                    throw new IllegalStateException("no maximum polygon was found?");
+                } else {
+                    polygonShells.add(maxPolygon.getExteriorRing().getCoordinates());
+                }
+            }
             for (Coordinate[] polygonShell : polygonShells) {
                 JsonFeature feature = new JsonFeature();
                 HashMap<String, Object> properties = new HashMap<>();
@@ -149,49 +185,6 @@ public class IsochroneResource {
         } else {
             throw new IllegalArgumentException("type not supported:" + resultStr);
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<Coordinate[]> calcPolygons(List<List<Coordinate>> pointLists) {
-        Collection<ConstraintVertex> sites = new ArrayList<>();
-        for (int i = 0; i < pointLists.size(); i++) {
-            List<Coordinate> level = pointLists.get(i);
-            for (Coordinate coord : level) {
-                ConstraintVertex site = new ConstraintVertex(coord);
-                site.setZ((double) i);
-                sites.add(site);
-            }
-        }
-        ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
-        conformingDelaunayTriangulator.setConstraints(new ArrayList(), new ArrayList());
-        conformingDelaunayTriangulator.formInitialDelaunay();
-        QuadEdgeSubdivision tin = conformingDelaunayTriangulator.getSubdivision();
-        for (Vertex vertex : (Collection<Vertex>) tin.getVertices(true)) {
-            if (tin.isFrameVertex(vertex)) {
-                vertex.setZ(Double.MAX_VALUE);
-            }
-        }
-        ArrayList<Coordinate[]> polygonShells = new ArrayList<>();
-        ContourBuilder contourBuilder = new ContourBuilder(tin);
-        // ignore the last isoline as it forms just the convex hull
-        for (int i = 0; i < pointLists.size() - 1; i++) {
-            MultiPolygon multiPolygon = contourBuilder.computeIsoline((double) i + 0.5);
-            int maxPoints = 0;
-            Polygon maxPolygon = null;
-            for (int j = 0; j < multiPolygon.getNumGeometries(); j++) {
-                Polygon polygon = (Polygon) multiPolygon.getGeometryN(j);
-                if (polygon.getNumPoints() > maxPoints) {
-                    maxPoints = polygon.getNumPoints();
-                    maxPolygon = polygon;
-                }
-            }
-            if (maxPolygon == null) {
-                throw new IllegalStateException("no maximum polygon was found?");
-            } else {
-                polygonShells.add(maxPolygon.getExteriorRing().getCoordinates());
-            }
-        }
-        return polygonShells;
     }
 
 }
