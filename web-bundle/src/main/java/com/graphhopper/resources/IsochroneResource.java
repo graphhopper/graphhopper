@@ -100,15 +100,6 @@ public class IsochroneResource {
             throw new IllegalArgumentException("Too many nodes would have to explored (" + isochrone.getVisitedNodes() + "). Let us know if you need this increased.");
         }
 
-        int counter = 0;
-        for (List<Coordinate> bucket : buckets) {
-            if (bucket.size() < 2) {
-                throw new IllegalArgumentException("Too few points found for bucket " + counter + ". "
-                        + "Please try a different 'point', a smaller 'buckets' count or a larger 'time_limit'. "
-                        + "And let us know if you think this is a bug!");
-            }
-            counter++;
-        }
         ArrayList<JsonFeature> features = new ArrayList<>();
         Collection<ConstraintVertex> sites = new ArrayList<>();
         for (int i = 0; i < buckets.size(); i++) {
@@ -119,9 +110,28 @@ public class IsochroneResource {
                 sites.add(site);
             }
         }
+
         ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
         conformingDelaunayTriangulator.setConstraints(new ArrayList(), new ArrayList());
         conformingDelaunayTriangulator.formInitialDelaunay();
+        conformingDelaunayTriangulator.enforceConstraints();
+        Geometry convexHull = conformingDelaunayTriangulator.getConvexHull();
+
+        // If there's only one site (and presumably also if the convex hull is otherwise degenerated),
+        // the triangulation only contains the frame, and not the site within the frame. Not sure if I agree with that.
+        // See ConformingDelaunayTriangulator, it does include a buffer for the frame, but that buffer is zero
+        // in these cases.
+        // It leads to the following follow-up defect:
+        // computeIsoline fails (returns an empty Multipolygon). This is clearly wrong, since
+        // the idea is that every real (non-frame) vertex has positive-length-edges around it that can be traversed
+        // to get a non-empty polygon.
+        // So we exclude this case for now (it is indeed only a corner-case).
+
+        if (!(convexHull instanceof Polygon)) {
+            throw new IllegalArgumentException("Too few points found. "
+                    + "Please try a different 'point' or a larger 'time_limit'.");
+        }
+
         QuadEdgeSubdivision tin = conformingDelaunayTriangulator.getSubdivision();
         for (Vertex vertex : (Collection<Vertex>) tin.getVertices(true)) {
             if (tin.isFrameVertex(vertex)) {
