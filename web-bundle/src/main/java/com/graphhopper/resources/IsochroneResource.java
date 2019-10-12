@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -50,7 +49,6 @@ public class IsochroneResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response doGet(
-            @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
             @QueryParam("vehicle") @DefaultValue("car") String vehicle,
             @QueryParam("buckets") @DefaultValue("1") int nBuckets,
