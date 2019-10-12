@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -47,7 +46,6 @@ public class SPTResource {
     @GET
     @Produces("text/csv")
     public Response doGet(
-            @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
             @QueryParam("vehicle") @DefaultValue("car") String vehicle,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
