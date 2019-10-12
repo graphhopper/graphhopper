@@ -324,20 +324,19 @@ public class RoutingAlgorithmWithOSMIT {
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
-    // TODO fix later, see #1525, #1531
-//    @Test
-//    public void testLandmarkBug() {
-//        List<OneRun> list = new ArrayList<>();
-//        OneRun run = new OneRun();
-//        run.add(50.016923, 11.514187, 0, 0);
-//        run.add(50.019129, 11.500325, 0, 0);
-//        run.add(50.023623, 11.56929, 7069, 178);
-//        list.add(run);
-//
-//        runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
-//                list, "bike", true, "bike", "fastest", false);
-//        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
-//    }
+    @Test
+    public void testLandmarkBug() {
+        List<OneRun> list = new ArrayList<>();
+        OneRun run = new OneRun();
+        run.add(50.016923, 11.514187, 0, 0);
+        run.add(50.019129, 11.500325, 0, 0);
+        run.add(50.023623, 11.56929, 7069, 178);
+        list.add(run);
+
+        runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
+                list, "bike", true, "bike", "fastest", false);
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
 
     @Test
     public void testBug1014() {
