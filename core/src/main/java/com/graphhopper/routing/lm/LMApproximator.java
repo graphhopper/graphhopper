@@ -17,14 +17,15 @@
  */
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.coll.GHIntObjectHashMap;
-import com.graphhopper.routing.QueryGraph;
+import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class is a weight approximation based on precalculated landmarks.
@@ -32,17 +33,9 @@ import java.util.Arrays;
  * @author Peter Karich
  */
 public class LMApproximator implements WeightApproximator {
-    private static class VirtEntry {
-        private int towerNode;
-        private int weight;
-
-        @Override
-        public String toString() {
-            return towerNode + ", " + weight;
-        }
-    }
 
     private final LandmarkStorage lms;
+    private final Weighting weighting;
     // store node ids
     private int[] activeLandmarks;
     // store weights as int
@@ -58,9 +51,8 @@ public class LMApproximator implements WeightApproximator {
     private final Graph graph;
     private final WeightApproximator fallBackApproximation;
     private boolean fallback = false;
-    private final GHIntObjectHashMap<VirtEntry> virtNodeMap;
 
-    public LMApproximator(Graph graph, int maxBaseNodes, LandmarkStorage lms, int activeCount,
+    public LMApproximator(Graph graph, Weighting weighting, int maxBaseNodes, LandmarkStorage lms, int activeCount,
                           double factor, boolean reverse) {
         this.reverse = reverse;
         this.lms = lms;
@@ -75,35 +67,9 @@ public class LMApproximator implements WeightApproximator {
         activeToIntWeights = new int[activeCount];
 
         this.graph = graph;
+        this.weighting = weighting;
         this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), lms.getWeighting());
         this.maxBaseNodes = maxBaseNodes;
-        int idxVirtNode = maxBaseNodes;
-        virtNodeMap = new GHIntObjectHashMap(graph.getNodes() - idxVirtNode, 0.5f);
-        // virtual nodes handling: calculate the minimum weight for the virtual nodes, i.e. pick the correct neighbouring node
-        if (graph instanceof QueryGraph) {
-            QueryGraph qGraph = (QueryGraph) graph;
-            // there are at least two virtual nodes (start & destination)
-            for (; idxVirtNode < qGraph.getNodes(); idxVirtNode++) {
-                // we need the real underlying edge as neighboring nodes could be virtual too
-                EdgeIteratorState edge = qGraph.getOriginalEdgeFromVirtNode(idxVirtNode);
-
-                int weight = lms.calcWeight(edge, reverse);
-                int reverseWeight = lms.calcWeight(edge, !reverse);
-                VirtEntry virtEntry = new VirtEntry();
-                if (weight < Integer.MAX_VALUE && (reverseWeight >= Integer.MAX_VALUE || weight < reverseWeight)) {
-                    virtEntry.weight = weight;
-                    virtEntry.towerNode = reverse ? edge.getBaseNode() : edge.getAdjNode();
-                } else {
-                    virtEntry.weight = reverseWeight;
-                    if (reverseWeight >= Integer.MAX_VALUE)
-                        throw new IllegalStateException("At least one direction of edge (" + edge + ") should be accessible but wasn't!");
-
-                    virtEntry.towerNode = reverse ? edge.getAdjNode() : edge.getBaseNode();
-                }
-
-                virtNodeMap.put(idxVirtNode, virtEntry);
-            }
-        }
     }
 
     /**
@@ -169,12 +135,25 @@ public class LMApproximator implements WeightApproximator {
     @Override
     public void setTo(int to) {
         this.fallBackApproximation.setTo(to);
-        this.toTowerNode = to >= maxBaseNodes ? virtNodeMap.get(to).towerNode : to;
+        this.toTowerNode = findClosestRealNode(to);
+    }
+
+    private int findClosestRealNode(int to) {
+        final AtomicInteger currentNode = new AtomicInteger(-1);
+        Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED) {
+            @Override
+            protected boolean finished() {
+                currentNode.set(currEdge.adjNode);
+                return currEdge.adjNode < maxBaseNodes;
+            }
+        };
+        dijkstra.calcPath(to, -1);
+        return currentNode.get();
     }
 
     @Override
     public WeightApproximator reverse() {
-        return new LMApproximator(graph, maxBaseNodes, lms, activeLandmarks.length, factor, !reverse);
+        return new LMApproximator(graph, weighting, maxBaseNodes, lms, activeLandmarks.length, factor, !reverse);
     }
 
     /**
