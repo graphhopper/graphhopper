@@ -106,7 +106,7 @@ public class LMApproximator implements WeightApproximator {
             }
         }
 
-        return getRemainingWeightUnderestimationUpToTowerNode(queryNode) - distanceToToToTowerNode;
+        return (getRemainingWeightUnderestimationUpToTowerNode(queryNode) - distanceToToToTowerNode) * epsilon;
     }
 
     private double getRemainingWeightUnderestimationUpToTowerNode(int v) {
@@ -130,7 +130,7 @@ public class LMApproximator implements WeightApproximator {
             if (tmpMaxWeightInt > maxWeightInt)
                 maxWeightInt = tmpMaxWeightInt;
         }
-        return maxWeightInt * factor * epsilon;
+        return maxWeightInt * factor;
     }
 
     @Override
