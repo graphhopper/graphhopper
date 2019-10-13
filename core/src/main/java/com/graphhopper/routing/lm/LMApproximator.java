@@ -147,6 +147,12 @@ public class LMApproximator implements WeightApproximator {
                 distanceToToToTowerNode = currEdge.weight;
                 return currEdge.adjNode < maxBaseNodes;
             }
+
+            // We only expect a very short search
+            @Override
+            protected void initCollections(int size) {
+                super.initCollections(2);
+            }
         };
         dijkstra.calcPath(to, -1);
     }
