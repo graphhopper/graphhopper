@@ -19,7 +19,12 @@ package com.graphhopper.http.resources;
 
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
+import com.graphhopper.resources.MVTResource;
+import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.MvtReader;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.TagKeyValueMapConverter;
@@ -112,5 +117,23 @@ public class MvtResourceTest {
 
         map = (Map) ((Geometry) layerGeoList.get(12)).getUserData();
         assertEquals("bridge", map.get("road_environment"));
+    }
+
+    @Test
+    public void testExpression() {
+        EnumEncodedValue<RoadClass> roadClassEnc = new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
+        EnumEncodedValue<Surface> surfaceEnc = new EnumEncodedValue<>(Surface.KEY, Surface.class);
+        DecimalEncodedValue maxSpeedEnc = new UnsignedDecimalEncodedValue(MaxSpeed.KEY, 7, 2, false);
+        EncodingManager em = new EncodingManager.Builder(12).add(roadClassEnc).add(surfaceEnc).add(maxSpeedEnc).build();
+        IntsRef edgeFlags = em.createEdgeFlags();
+        roadClassEnc.setEnum(false, edgeFlags, RoadClass.PRIMARY);
+        surfaceEnc.setEnum(false, edgeFlags, Surface.COBBLESTONE);
+        maxSpeedEnc.setDecimal(false, edgeFlags, 30);
+        assertEquals(1, MVTResource.countMatches(em, GHUtility.createMockedEdgeIteratorState(1, edgeFlags), "surface:cobblestone OR max_speed:50"));
+        assertEquals(2, MVTResource.countMatches(em, GHUtility.createMockedEdgeIteratorState(1, edgeFlags), "surface:cobblestone OR max_speed<50"));
+        assertEquals(1, MVTResource.countMatches(em, GHUtility.createMockedEdgeIteratorState(1, edgeFlags), "!surface:cobblestone OR max_speed<50"));
+        surfaceEnc.setEnum(false, edgeFlags, Surface.ASPHALT);
+        assertEquals(2, MVTResource.countMatches(em, GHUtility.createMockedEdgeIteratorState(1, edgeFlags), "!surface:cobblestone OR max_speed<50"));
+        assertEquals(2, MVTResource.countMatches(em, GHUtility.createMockedEdgeIteratorState(1, edgeFlags), "!surface:cobblestone AND max_speed<50"));
     }
 }

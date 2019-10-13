@@ -99,7 +99,8 @@ if(ghenv.environment === 'development') {
     availableTileLayers["Omniscale Dev"] = omniscaleGray;
 
     require('leaflet.vectorgrid');
-    var vtLayer = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment&details=bike.priority&details=bike.access", {
+    var search = window.location.search == "" ? "?point=51.039235,13.700638&details=max_speed&details=road_class&details=road_environment&details=bike.priority&details=bike.access&details=surface" : window.location.search;
+    var vtLayer = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt" + search, {
       rendererFactory: L.canvas.tile,
       maxZoom: 20,
       minZoom: 8,

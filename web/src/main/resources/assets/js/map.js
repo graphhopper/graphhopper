@@ -137,9 +137,10 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
 
     new L.Control.loading().addTo(map);
 
-    if(tileLayers.getOverlays())
+    if(tileLayers.getOverlays()) {
+        map.addLayer(tileLayers.getOverlays()["Local MVT"]);
         L.control.layers(tileLayers.getAvailableTileLayers(), tileLayers.getOverlays()).addTo(map);
-    else
+    } else
         L.control.layers(tileLayers.getAvailableTileLayers()).addTo(map);
 
     map.on('baselayerchange', function (a) {

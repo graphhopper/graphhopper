@@ -58,7 +58,8 @@ public class MVTResource {
             @PathParam("z") int zInfo,
             @PathParam("x") int xInfo,
             @PathParam("y") int yInfo,
-            @QueryParam(Parameters.Details.PATH_DETAILS) List<String> pathDetails) {
+            @QueryParam(Parameters.Details.PATH_DETAILS) List<String> pathDetails,
+            @QueryParam("query") String query) {
 
         if (zInfo <= 9) {
             VectorTile.Tile.Builder mvtBuilder = VectorTile.Tile.newBuilder();
@@ -118,20 +119,19 @@ public class MVTResource {
                 edgeCounter.incrementAndGet();
                 Map<String, Object> map = new HashMap<>(2);
                 map.put("name", edge.getName());
+
+                if (!Helper.isEmpty(query)) {
+                    int count = countMatches(encodingManager, edge, query);
+                    if (count == 0)
+                        return;
+                }
+
                 for (String str : pathDetails) {
                     // how to indicate an erroneous parameter?
                     if (str.contains(",") || !encodingManager.hasEncodedValue(str))
                         continue;
 
-                    EncodedValue ev = encodingManager.getEncodedValue(str, EncodedValue.class);
-                    if (ev instanceof EnumEncodedValue)
-                        map.put(ev.getName(), edge.get((EnumEncodedValue) ev).toString());
-                    else if (ev instanceof DecimalEncodedValue)
-                        map.put(ev.getName(), edge.get((DecimalEncodedValue) ev));
-                    else if (ev instanceof BooleanEncodedValue)
-                        map.put(ev.getName(), edge.get((BooleanEncodedValue) ev));
-                    else if (ev instanceof IntEncodedValue)
-                        map.put(ev.getName(), edge.get((IntEncodedValue) ev));
+                    map.put(str, getValue(encodingManager, edge, str));
                 }
 
                 lineString.setUserData(map);
@@ -156,6 +156,19 @@ public class MVTResource {
                 .build();
     }
 
+    static Object getValue(EncodingManager em, EdgeIteratorState edge, String encVal) {
+        EncodedValue ev = em.getEncodedValue(encVal, EncodedValue.class);
+        if (ev instanceof EnumEncodedValue)
+            return edge.get((EnumEncodedValue) ev).toString();
+        else if (ev instanceof DecimalEncodedValue)
+            return edge.get((DecimalEncodedValue) ev);
+        else if (ev instanceof BooleanEncodedValue)
+            return edge.get((BooleanEncodedValue) ev);
+        else if (ev instanceof IntEncodedValue)
+            return edge.get((IntEncodedValue) ev);
+        return null;
+    }
+
     Coordinate num2deg(int xInfo, int yInfo, int zoom) {
         double n = Math.pow(2, zoom);
         double lonDeg = xInfo / n * 360.0 - 180.0;
@@ -163,5 +176,58 @@ public class MVTResource {
         double latRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * yInfo / n)));
         double latDeg = Math.toDegrees(latRad);
         return new Coordinate(lonDeg, latDeg);
+    }
+
+    public static int countMatches(EncodingManager em, EdgeIteratorState edge, String query) {
+        // simple expressions ala !road_class:primary OR max_speed:
+        String expressions[] = query.split("OR");
+        String tmpExpressions[] = query.split("AND");
+        boolean and = false;
+        if (tmpExpressions.length > expressions.length) {
+            expressions = tmpExpressions;
+            and = true;
+        }
+
+        int matchCount = 0;
+        for (String expression : expressions) {
+            String leftRight[] = expression.split(":");
+            boolean lt = false;
+            if (leftRight.length != 2) {
+                leftRight = expression.split("<");
+                if (leftRight.length != 2)
+                    continue;
+                lt = true;
+            }
+            String ev = leftRight[0].trim();
+            boolean negate = ev.startsWith("!");
+            if (negate)
+                ev = ev.substring(1).trim();
+            if (!em.hasEncodedValue(ev))
+                continue;
+            String expectedValue = leftRight[1].trim();
+            Object value = getValue(em, edge, ev), parsedExpectedValue = expectedValue;
+            if (value == null)
+                continue;
+            try {
+                parsedExpectedValue = Double.parseDouble(expectedValue);
+                if (lt) {
+                    if (!negate && ((Number) value).doubleValue() < (Double) parsedExpectedValue
+                            || negate && ((Number) value).doubleValue() > (Double) parsedExpectedValue)
+                        matchCount++;
+                    continue;
+                }
+            } catch (Exception ex) {
+                if (expectedValue.equals("true") || expectedValue.equals("false"))
+                    parsedExpectedValue = Boolean.parseBoolean(expectedValue);
+            }
+            if (!negate && parsedExpectedValue.equals(value) || negate && !parsedExpectedValue.equals(value))
+                matchCount++;
+        }
+        if (and) {
+            if (matchCount == expressions.length)
+                return matchCount;
+            return 0;
+        }
+        return matchCount;
     }
 }
