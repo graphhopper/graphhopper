@@ -38,7 +38,7 @@ import static org.junit.Assert.fail;
  * @see DirectedRoutingTest - similar but focusses on edge-based algorithms an directed queries
  */
 @RunWith(Parameterized.class)
-public class BidirectionalRoutingTest {
+public class RandomizedRoutingTest {
     private final Algo algo;
     private final boolean prepareCH;
     private final boolean prepareLM;
@@ -62,11 +62,13 @@ public class BidirectionalRoutingTest {
                 {Algo.ASTAR, false, false, NODE_BASED},
                 {Algo.CH_ASTAR, true, false, NODE_BASED},
                 {Algo.CH_DIJKSTRA, true, false, NODE_BASED},
-                {Algo.LM, false, true, NODE_BASED},
+                {Algo.LM_UNIDIR, false, true, NODE_BASED},
+                {Algo.LM_BIDIR, false, true, NODE_BASED},
                 {Algo.ASTAR, false, false, EDGE_BASED},
                 {Algo.CH_ASTAR, true, false, EDGE_BASED},
                 {Algo.CH_DIJKSTRA, true, false, EDGE_BASED},
-                {Algo.LM, false, true, EDGE_BASED}
+                {Algo.LM_UNIDIR, false, true, EDGE_BASED},
+                {Algo.LM_BIDIR, false, true, EDGE_BASED}
         });
     }
 
@@ -74,10 +76,11 @@ public class BidirectionalRoutingTest {
         ASTAR,
         CH_ASTAR,
         CH_DIJKSTRA,
-        LM
+        LM_BIDIR,
+        LM_UNIDIR
     }
 
-    public BidirectionalRoutingTest(Algo algo, boolean prepareCH, boolean prepareLM, TraversalMode traversalMode) {
+    public RandomizedRoutingTest(Algo algo, boolean prepareCH, boolean prepareLM, TraversalMode traversalMode) {
         this.algo = algo;
         this.prepareCH = prepareCH;
         this.prepareLM = prepareLM;
@@ -104,26 +107,28 @@ public class BidirectionalRoutingTest {
         }
         if (prepareLM) {
             lm = new PrepareLandmarks(dir, graph, weighting, 16, 8);
-            lm.setMaximumWeight(1000);
             lm.doWork();
         }
     }
 
-    private AbstractBidirAlgo createAlgo() {
+    private RoutingAlgorithm createAlgo() {
         return createAlgo(prepareCH ? chGraph : graph);
     }
 
-    private AbstractBidirAlgo createAlgo(Graph graph) {
+    private RoutingAlgorithm createAlgo(Graph graph) {
         switch (algo) {
             case ASTAR:
                 return new AStarBidirection(graph, weighting, traversalMode);
             case CH_DIJKSTRA:
-                return (AbstractBidirAlgo) pch.createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
+                return pch.createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
             case CH_ASTAR:
-                return (AbstractBidirAlgo) pch.createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
-            case LM:
+                return pch.createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
+            case LM_BIDIR:
                 AStarBidirection astarbi = new AStarBidirection(graph, weighting, traversalMode);
-                return (AbstractBidirAlgo) lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
+                return lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
+            case LM_UNIDIR:
+                AStar astar = new AStar(graph, weighting, traversalMode);
+                return lm.getDecoratedAlgorithm(graph, astar, AlgorithmOptions.start().build());
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
         }
@@ -214,9 +219,6 @@ public class BidirectionalRoutingTest {
     @Test
     @Repeat(times = 5)
     public void randomGraph() {
-        // todo: there are some problems with random graph testing for LM, see #1687
-        Assume.assumeFalse(algo.equals(Algo.LM));
-
         final long seed = System.nanoTime();
         System.out.println("random Graph seed: " + seed);
         final int numQueries = 50;
@@ -249,9 +251,6 @@ public class BidirectionalRoutingTest {
     @Test
     @Repeat(times = 5)
     public void randomGraph_withQueryGraph() {
-        // todo: there are some problems with random graph testing for LM, see #1687
-        Assume.assumeFalse(algo.equals(Algo.LM));
-
         final long seed = System.nanoTime();
         System.out.println("randomGraph_withQueryGraph seed: " + seed);
         final int numQueries = 50;

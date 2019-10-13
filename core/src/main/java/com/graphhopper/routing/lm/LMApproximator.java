@@ -118,8 +118,14 @@ public class LMApproximator implements WeightApproximator {
             //    LMv + vb >= LMb therefor vb >= LMb - LMv => 'getFromWeight'
             //    vb + bLM >= vLM therefor vb >= vLM - bLM => 'getToWeight'
             // 2. for the case a->v the sign is reverse as we need to know the vector av not va => if(reverse) "-weight"
-            int fromWeightInt = activeFromIntWeights[activeLMIdx] - lms.getFromWeight(landmarkIndex, v);
-            int toWeightInt = lms.getToWeight(landmarkIndex, v) - activeToIntWeights[activeLMIdx];
+            // 3. if any of the terms are -1 (meaning "don't know because of storage precision"), don't use that inequality
+            int LMb = activeFromIntWeights[activeLMIdx];
+            int LMv = lms.getFromWeight(landmarkIndex, v);
+            int fromWeightInt = LMb != -1 && LMv != -1 ? LMb - LMv : 0;
+            int vLM = lms.getToWeight(landmarkIndex, v);
+            int bLM = activeToIntWeights[activeLMIdx];
+            int toWeightInt = vLM != -1 && bLM != -1 ? vLM - bLM : 0;
+
             if (reverse) {
                 fromWeightInt = -fromWeightInt;
                 toWeightInt = -toWeightInt;

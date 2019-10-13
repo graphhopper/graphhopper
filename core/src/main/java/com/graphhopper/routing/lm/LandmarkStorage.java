@@ -483,7 +483,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         int res = landmarkWeightDA.getInt((long) node * LM_ROW_LENGTH + landmarkIndex * 4) & FROM_WEIGHT_INF;
 
         if (res == FROM_WEIGHT_INF)
-            return Integer.MAX_VALUE;
+            return -1;
         // throw new IllegalStateException("Do not call getFromWeight for wrong landmark[" + landmarkIndex + "]=" + landmarkIDs[landmarkIndex] + " and node " + node);
 
         assert res >= 0 : "Negative backward weight " + res + ", landmark index:" + landmarkIndex + ", node:" + node;
@@ -499,20 +499,18 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         //the left bits of "res" store the difference between forward and backward value
         int delta = res >> FROM_WEIGHT_BITS;
 
-        if (delta == DELTA_INF)
-            return Integer.MAX_VALUE;
-        // throw new IllegalStateException("Do not call getToWeight for wrong landmark[" + landmarkIndex + "]=" + landmarkIDs[landmarkIndex] + " and node " + node);
-
         // If delta is 'maxed out' (minned out, really), we can only return 0, since we can't give a better
         // under-approximation of the weight, since it can be arbitrarily smaller than 'from'.
         if (delta == DELTA_MIN)
-            return 0;
+            return -1;
+        if (delta == DELTA_MAX)
+            return -1;
 
         //the right bits of "res" store the backward value
         int from = res & FROM_WEIGHT_INF;
 
         if (from == FROM_WEIGHT_INF) {
-            from = DELTA_INF + 1;
+            return -1;
         }
 
         //to get the forward value you have to add the backward to the delta value
