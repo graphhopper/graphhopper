@@ -25,7 +25,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class is a weight approximation based on precalculated landmarks.
@@ -43,6 +42,8 @@ public class LMApproximator implements WeightApproximator {
     private int[] activeToIntWeights;
     private double epsilon = 1;
     private int toTowerNode = -1;
+    private double distanceToToToTowerNode;
+
     // do activate landmark recalculation
     private boolean doALMRecalc = true;
     private final double factor;
@@ -105,10 +106,10 @@ public class LMApproximator implements WeightApproximator {
             }
         }
 
-        return getRemainingWeightUnderestimation(queryNode) * factor * epsilon;
+        return getRemainingWeightUnderestimationUpToTowerNode(queryNode) - distanceToToToTowerNode;
     }
 
-    private int getRemainingWeightUnderestimation(int v) {
+    private double getRemainingWeightUnderestimationUpToTowerNode(int v) {
         int maxWeightInt = -1;
         for (int activeLMIdx = 0; activeLMIdx < activeLandmarks.length; activeLMIdx++) {
             int landmarkIndex = activeLandmarks[activeLMIdx];
@@ -129,26 +130,25 @@ public class LMApproximator implements WeightApproximator {
             if (tmpMaxWeightInt > maxWeightInt)
                 maxWeightInt = tmpMaxWeightInt;
         }
-        return maxWeightInt;
+        return maxWeightInt * factor * epsilon;
     }
 
     @Override
     public void setTo(int to) {
         this.fallBackApproximation.setTo(to);
-        this.toTowerNode = findClosestRealNode(to);
+        findClosestRealNode(to);
     }
 
-    private int findClosestRealNode(int to) {
-        final AtomicInteger currentNode = new AtomicInteger(-1);
+    private void findClosestRealNode(int to) {
         Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED) {
             @Override
             protected boolean finished() {
-                currentNode.set(currEdge.adjNode);
+                toTowerNode = currEdge.adjNode;
+                distanceToToToTowerNode = currEdge.weight;
                 return currEdge.adjNode < maxBaseNodes;
             }
         };
         dijkstra.calcPath(to, -1);
-        return currentNode.get();
     }
 
     @Override
