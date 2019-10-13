@@ -25,6 +25,7 @@ debug.sh
 !/reader-osm/src/test/resources/com/graphhopper/reader/osm/*.pbf
 *.dem
 *.log
+cache/
 core/TODO*.txt
 srtmprovider/
 core/docs/
@@ -47,3 +48,4 @@ local.properties
 !malta-latest.osm.pbf
 /graph-cache
 package-lock.json
+osm_data/

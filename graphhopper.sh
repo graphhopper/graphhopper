@@ -94,7 +94,7 @@ fi
 # default init, https://stackoverflow.com/a/28085062/194609
 : "${CONFIG:=config.yml}"
 if [ ! -f "config.yml" ]; then
-  cp config-example.yml $CONFIG
+  cp config.yml $CONFIG
 fi
 
 function ensureOsm { 
