@@ -272,11 +272,8 @@ public class BidirectionalRoutingTest {
             List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
 
-            QueryGraph chQueryGraph = new QueryGraph(prepareCH ? chGraph : graph);
-            QueryGraph queryGraph = new QueryGraph(graph);
-
-            chQueryGraph.lookup(chQueryResults);
-            queryGraph.lookup(queryResults);
+            QueryGraph chQueryGraph = QueryGraph.lookup(prepareCH ? chGraph : graph, chQueryResults);
+            QueryGraph queryGraph = QueryGraph.lookup(graph, queryResults);
 
             int source = queryResults.get(0).getClosestNode();
             int target = queryResults.get(1).getClosestNode();
