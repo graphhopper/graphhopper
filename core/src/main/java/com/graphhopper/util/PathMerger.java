@@ -18,11 +18,13 @@
 package com.graphhopper.util;
 
 import com.graphhopper.PathWrapper;
+import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
@@ -46,6 +48,9 @@ import java.util.List;
  */
 public class PathMerger {
     private static final DouglasPeucker DP = new DouglasPeucker();
+    private final Graph graph;
+    private final Weighting weighting;
+
     private boolean enableInstructions = true;
     private boolean simplifyResponse = true;
     private DouglasPeucker douglasPeucker = DP;
@@ -53,9 +58,9 @@ public class PathMerger {
     private PathDetailsBuilderFactory pathBuilderFactory;
     private List<String> requestedPathDetails = Collections.EMPTY_LIST;
     private double favoredHeading = Double.NaN;
-    private Weighting weighting;
 
-    public PathMerger(Weighting weighting) {
+    public PathMerger(Graph graph, Weighting weighting) {
+        this.graph = graph;
         this.weighting = weighting;
     }
 
@@ -107,7 +112,7 @@ public class PathMerger {
             fullDistance += path.getDistance();
             fullWeight += path.getWeight();
             if (enableInstructions) {
-                InstructionList il = path.calcInstructions(roundaboutEnc, tr);
+                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, roundaboutEnc, tr);
 
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);

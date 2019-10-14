@@ -20,18 +20,17 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHIntArrayList;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
-import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.details.PathDetailsBuilder;
-import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import com.graphhopper.util.details.PathDetailsFromEdges;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PointList;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This class represents the result of a shortest path calculation. It also provides methods to extract further
@@ -50,7 +49,6 @@ public class Path {
     protected int endNode = -1;
     private List<String> description;
     protected Weighting weighting;
-    private FlagEncoder encoder;
     private boolean found;
     private int fromNode = -1;
     private GHIntArrayList edgeIds;
@@ -63,7 +61,6 @@ public class Path {
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
         this.weighting = weighting;
-        this.encoder = weighting.getFlagEncoder();
         this.edgeIds = new GHIntArrayList();
     }
 
@@ -84,6 +81,10 @@ public class Path {
 
     public void addEdge(int edge) {
         edgeIds.add(edge);
+    }
+
+    public int getEndNode() {
+        return endNode;
     }
 
     protected Path setEndNode(int end) {
@@ -268,7 +269,7 @@ public class Path {
      * This method calculated a list of points for this path
      * <p>
      *
-     * @return this path its geometry
+     * @return the geometry of this path
      */
     public PointList calcPoints() {
         final PointList points = new PointList(edgeIds.size() + 1, nodeAccess.is3D());
@@ -298,35 +299,13 @@ public class Path {
         return points;
     }
 
-    /**
-     * @return the list of instructions for this path.
-     */
-    public InstructionList calcInstructions(BooleanEncodedValue roundaboutEnc, final Translation tr) {
-        final InstructionList ways = new InstructionList(edgeIds.size() / 4, tr);
-        if (edgeIds.isEmpty()) {
-            if (isFound()) {
-                ways.add(new FinishInstruction(nodeAccess, endNode));
-            }
-            return ways;
-        }
-        forEveryEdge(new InstructionsFromEdges(getFromNode(), graph, weighting, encoder, roundaboutEnc, nodeAccess, tr, ways));
-        return ways;
+    public int getSize() {
+        return edgeIds.size();
     }
 
     @Override
     public String toString() {
         return "found: " + found + ", weight: " + weight + ", time: " + time + ", distance: " + distance + ", edges: " + edgeIds.size();
-    }
-
-    public String toDetailsString() {
-        String str = "";
-        for (int i = 0; i < edgeIds.size(); i++) {
-            if (i > 0)
-                str += "->";
-
-            str += edgeIds.get(i);
-        }
-        return toString() + ", found:" + isFound() + ", " + str;
     }
 
     /**
