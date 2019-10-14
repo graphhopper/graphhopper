@@ -54,22 +54,11 @@ public class QueryGraph implements Graph {
     private final QueryGraph baseGraph;
     private final GraphExtension wrappedExtension;
     private final Map<EdgeFilter, EdgeExplorer> cacheMap = new HashMap<>(4);
-
-    // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
-    final List<VirtualEdgeIteratorState> virtualEdges;
-    private final List<QueryResult> queryResults;
-    private final IntObjectMap<List<EdgeIteratorState>> node2EdgeMap;
-    private final IntObjectMap<IntArrayList> ignoredEdgesMap;
-
-    /**
-     * Store lat,lon of virtual tower nodes.
-     */
-    private final PointList virtualNodes;
     private final NodeAccess nodeAccess;
+    private final GraphModification graphModification;
 
     // Use LinkedHashSet for predictable iteration order.
     private final Set<VirtualEdgeIteratorState> unfavoredEdges = new LinkedHashSet<>(5);
-
     private boolean useEdgeExplorerCache = false;
 
     // todonow: maybe add convenience methods for one and two query results ?
@@ -83,18 +72,11 @@ public class QueryGraph implements Graph {
         mainEdges = graph.getEdges();
 
         VirtualEdgeBuilder virtualEdgeBuilder = new VirtualEdgeBuilder(mainNodes, mainEdges, graph.getNodeAccess().is3D());
-        virtualEdgeBuilder.lookup(queryResults);
-
-        virtualEdges = virtualEdgeBuilder.getVirtualEdges();
-        virtualNodes = virtualEdgeBuilder.getVirtualNodes();
-        this.queryResults = virtualEdgeBuilder.getQueryResults();
-        node2EdgeMap = virtualEdgeBuilder.getNode2EdgeMap();
-        ignoredEdgesMap = virtualEdgeBuilder.getIgnoreEdgesMap();
-
-        nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), virtualNodes, mainNodes);
+        graphModification = virtualEdgeBuilder.lookup(queryResults);
+        nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), graphModification.getVirtualNodes(), mainNodes);
 
         if (mainGraph.getExtension() instanceof TurnCostExtension)
-            wrappedExtension = new QueryGraphTurnExt(mainGraph, this.queryResults);
+            wrappedExtension = new QueryGraphTurnExt(mainGraph, graphModification.getQueryResults());
         else
             wrappedExtension = mainGraph.getExtension();
 
@@ -118,11 +100,7 @@ public class QueryGraph implements Graph {
         wrappedExtension = superQueryGraph.wrappedExtension;
         mainNodes = superQueryGraph.mainNodes;
         mainEdges = superQueryGraph.mainEdges;
-        virtualEdges = superQueryGraph.virtualEdges;
-        node2EdgeMap = superQueryGraph.node2EdgeMap;
-        ignoredEdgesMap = superQueryGraph.ignoredEdgesMap;
-        virtualNodes = superQueryGraph.virtualNodes;
-        queryResults = superQueryGraph.queryResults;
+        graphModification = superQueryGraph.graphModification;
         nodeAccess = superQueryGraph.nodeAccess;
     }
 
@@ -135,7 +113,7 @@ public class QueryGraph implements Graph {
     }
 
     public EdgeIteratorState getOriginalEdgeFromVirtNode(int nodeId) {
-        return queryResults.get(nodeId - mainNodes).getClosestEdge();
+        return graphModification.getQueryResults().get(nodeId - mainNodes).getClosestEdge();
     }
 
     public boolean isVirtualEdge(int edgeId) {
@@ -184,7 +162,7 @@ public class QueryGraph implements Graph {
         List<Integer> edgePositions = incoming ? Arrays.asList(VE_BASE, VE_ADJ_REV) : Arrays.asList(VE_BASE_REV, VE_ADJ);
         boolean enforcementOccurred = false;
         for (int edgePos : edgePositions) {
-            VirtualEdgeIteratorState edge = virtualEdges.get(virtNodeIDintern * 4 + edgePos);
+            VirtualEdgeIteratorState edge = getVirtualEdge(virtNodeIDintern * 4 + edgePos);
 
             PointList wayGeo = edge.fetchWayGeometry(3);
             double edgeOrientation;
@@ -205,7 +183,7 @@ public class QueryGraph implements Graph {
                 edge.setUnfavored(true);
                 unfavoredEdges.add(edge);
                 //also apply to opposite edge for reverse routing
-                VirtualEdgeIteratorState reverseEdge = virtualEdges.get(virtNodeIDintern * 4 + getPosOfReverseEdge(edgePos));
+                VirtualEdgeIteratorState reverseEdge = getVirtualEdge(virtNodeIDintern * 4 + getPosOfReverseEdge(edgePos));
                 reverseEdge.setUnfavored(true);
                 unfavoredEdges.add(reverseEdge);
                 enforcementOccurred = true;
@@ -263,12 +241,12 @@ public class QueryGraph implements Graph {
 
     @Override
     public int getNodes() {
-        return virtualNodes.getSize() + mainNodes;
+        return graphModification.getVirtualNodes().getSize() + mainNodes;
     }
 
     @Override
     public int getEdges() {
-        return virtualEdges.size() + mainEdges;
+        return graphModification.getVirtualEdges().size() + mainEdges;
     }
 
     @Override
@@ -287,16 +265,20 @@ public class QueryGraph implements Graph {
             return mainGraph.getEdgeIteratorState(origEdgeId, adjNode);
 
         int edgeId = origEdgeId - mainEdges;
-        EdgeIteratorState eis = virtualEdges.get(edgeId);
+        EdgeIteratorState eis = getVirtualEdge(edgeId);
         if (eis.getAdjNode() == adjNode || adjNode == Integer.MIN_VALUE)
             return eis;
         edgeId = getPosOfReverseEdge(edgeId);
 
-        EdgeIteratorState eis2 = virtualEdges.get(edgeId);
+        EdgeIteratorState eis2 = getVirtualEdge(edgeId);
         if (eis2.getAdjNode() == adjNode)
             return eis2;
         throw new IllegalStateException("Edge " + origEdgeId + " not found with adjNode:" + adjNode
                 + ". found edges were:" + eis + ", " + eis2);
+    }
+
+    private VirtualEdgeIteratorState getVirtualEdge(int edgeId) {
+        return graphModification.getVirtualEdges().get(edgeId);
     }
 
     private int getPosOfReverseEdge(int edgeId) {
@@ -329,13 +311,16 @@ public class QueryGraph implements Graph {
         // This needs to be a HashMap (and cannot be an array) as we also need to tweak edges for some mainNodes!
         // The more query points we have the more inefficient this map could be. Hmmh.
         final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
-        final GHIntObjectHashMap<VirtualEdgeIterator> vIterMap = new GHIntObjectHashMap<>(node2EdgeMap.size());
+        final GHIntObjectHashMap<VirtualEdgeIterator> vIterMap = new GHIntObjectHashMap<>(graphModification.getNode2EdgeMap().size());
 
+        // todonow: this can be more efficient: e.g.
+        // 1) we can build a map node->filteredEdges already when the edge explorer is created (instead of in set base node)
+        // 2) we can keep the virtual edges and ignored edges in a single map
         return new EdgeExplorer() {
             @Override
             public EdgeIterator setBaseNode(int baseNode) {
-                List<EdgeIteratorState> virtualEdges = node2EdgeMap.get(baseNode);
-                IntArrayList ignoredEdges = ignoredEdgesMap.get(baseNode);
+                List<EdgeIteratorState> virtualEdges = graphModification.getNode2EdgeMap().get(baseNode);
+                IntArrayList ignoredEdges = graphModification.getIgnoredEdgesMap().get(baseNode);
                 if (virtualEdges == null && ignoredEdges == null) {
                     return mainExplorer.setBaseNode(baseNode);
                 }
@@ -411,7 +396,51 @@ public class QueryGraph implements Graph {
         return mainGraph.isAdjacentToNode(edge, node);
     }
 
+    List<VirtualEdgeIteratorState> getVirtualEdges() {
+        return graphModification.getVirtualEdges();
+    }
+
     private UnsupportedOperationException exc() {
         return new UnsupportedOperationException("QueryGraph cannot be modified.");
+    }
+
+    public static class GraphModification {
+        // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
+        private final List<VirtualEdgeIteratorState> virtualEdges;
+        private final IntObjectMap<List<EdgeIteratorState>> node2EdgeMap;
+        private final IntObjectMap<IntArrayList> ignoredEdgesMap;
+        /**
+         * Store lat,lon of virtual tower nodes.
+         */
+        private final PointList virtualNodes;
+        private final List<QueryResult> queryResults;
+
+        public GraphModification(List<VirtualEdgeIteratorState> virtualEdges, IntObjectMap<List<EdgeIteratorState>> node2EdgeMap, IntObjectMap<IntArrayList> ignoredEdgesMap, PointList virtualNodes, List<QueryResult> queryResults) {
+            this.virtualEdges = virtualEdges;
+            this.node2EdgeMap = node2EdgeMap;
+            this.ignoredEdgesMap = ignoredEdgesMap;
+            this.virtualNodes = virtualNodes;
+            this.queryResults = queryResults;
+        }
+
+        public List<VirtualEdgeIteratorState> getVirtualEdges() {
+            return virtualEdges;
+        }
+
+        public IntObjectMap<List<EdgeIteratorState>> getNode2EdgeMap() {
+            return node2EdgeMap;
+        }
+
+        public IntObjectMap<IntArrayList> getIgnoredEdgesMap() {
+            return ignoredEdgesMap;
+        }
+
+        public PointList getVirtualNodes() {
+            return virtualNodes;
+        }
+
+        public List<QueryResult> getQueryResults() {
+            return queryResults;
+        }
     }
 }

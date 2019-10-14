@@ -53,26 +53,6 @@ class VirtualEdgeBuilder {
         this.is3D = is3D;
     }
 
-    PointList getVirtualNodes() {
-        return virtualNodes;
-    }
-
-    List<VirtualEdgeIteratorState> getVirtualEdges() {
-        return virtualEdges;
-    }
-
-    public IntObjectMap<List<EdgeIteratorState>> getNode2EdgeMap() {
-        return node2EdgeMap;
-    }
-
-    public IntObjectMap<IntArrayList> getIgnoreEdgesMap() {
-        return ignoreEdgesMap;
-    }
-
-    List<QueryResult> getQueryResults() {
-        return queryResults;
-    }
-
     /**
      * For all specified query results calculate the snapped point and if necessary set closest node
      * to a virtual one and reverse closest edge. Additionally the wayIndex can change if an edge is
@@ -86,10 +66,11 @@ class VirtualEdgeBuilder {
      *
      * @see QueryGraph
      */
-    void lookup(List<QueryResult> resList) {
+    QueryGraph.GraphModification lookup(List<QueryResult> resList) {
         buildVirtualEdges(resList);
         // todonow: rename
         buildTheMaps();
+        return new QueryGraph.GraphModification(virtualEdges, node2EdgeMap, ignoreEdgesMap, virtualNodes, queryResults);
     }
 
     private void buildVirtualEdges(List<QueryResult> resList) {

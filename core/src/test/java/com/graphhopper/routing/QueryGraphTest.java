@@ -532,7 +532,7 @@ public class QueryGraphTest {
     }
 
     private boolean isAvoidEdge(QueryGraph queryGraph, int virtualEdgeTypeId) {
-        return queryGraph.virtualEdges.get(virtualEdgeTypeId).get(EdgeIteratorState.UNFAVORED_EDGE);
+        return queryGraph.getVirtualEdges().get(virtualEdgeTypeId).get(EdgeIteratorState.UNFAVORED_EDGE);
     }
 
     @Test
