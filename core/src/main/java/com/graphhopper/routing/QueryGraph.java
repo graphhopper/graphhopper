@@ -47,7 +47,6 @@ public class QueryGraph implements Graph {
     static final int VE_BASE = 0, VE_BASE_REV = 1, VE_ADJ = 2, VE_ADJ_REV = 3;
     private static final AngleCalc AC = Helper.ANGLE_CALC;
     private final Graph mainGraph;
-    private final NodeAccess mainNodeAccess;
     private final int mainNodes;
     private final int mainEdges;
     private final QueryGraph baseGraph;
@@ -75,18 +74,17 @@ public class QueryGraph implements Graph {
 
     public QueryGraph(Graph graph, List<QueryResult> queryResults) {
         mainGraph = graph;
-        mainNodeAccess = graph.getNodeAccess();
         mainNodes = graph.getNodes();
         mainEdges = graph.getEdges();
 
-        VirtualEdgeBuilder virtualEdgeBuilder = new VirtualEdgeBuilder(mainNodes, mainEdges, mainNodeAccess.is3D());
+        VirtualEdgeBuilder virtualEdgeBuilder = new VirtualEdgeBuilder(mainNodes, mainEdges, graph.getNodeAccess().is3D());
         virtualEdgeBuilder.lookup(queryResults);
 
         virtualEdges = virtualEdgeBuilder.getVirtualEdges();
         virtualNodes = virtualEdgeBuilder.getVirtualNodes();
         this.queryResults = virtualEdgeBuilder.getQueryResults();
 
-        nodeAccess = new ExtendedNodeAccess(mainNodeAccess, virtualNodes, mainNodes);
+        nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), virtualNodes, mainNodes);
 
         if (mainGraph.getExtension() instanceof TurnCostExtension)
             wrappedExtension = new QueryGraphTurnExt(mainGraph, this.queryResults);
@@ -111,7 +109,6 @@ public class QueryGraph implements Graph {
         mainGraph = graph;
         baseGraph = this;
         wrappedExtension = superQueryGraph.wrappedExtension;
-        mainNodeAccess = graph.getNodeAccess();
         mainNodes = superQueryGraph.mainNodes;
         mainEdges = superQueryGraph.mainEdges;
         virtualEdges = superQueryGraph.virtualEdges;

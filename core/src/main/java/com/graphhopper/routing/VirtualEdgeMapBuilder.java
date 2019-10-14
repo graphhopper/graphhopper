@@ -143,7 +143,6 @@ class VirtualEdgeMapBuilder {
         }
     }
 
-
     private boolean isVirtualNode(int nodeId) {
         return nodeId >= firstVirtualNodeId;
     }
