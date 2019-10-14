@@ -165,6 +165,7 @@ class VirtualEdgeBuilder {
                 int virtNodeId = virtualNodes.getSize() + firstVirtualNodeId;
                 boolean addedEdges = false;
 
+                // todonow: maybe update these comments
                 // Create base and adjacent PointLists for all none-equal virtual nodes.
                 // We do so via inserting them at the correct position of fullPL and cutting the
                 // fullPL into the right pieces.
@@ -249,6 +250,7 @@ class VirtualEdgeBuilder {
     }
 
     private void buildTheMaps() {
+        // todonow: make this static, do we need another class here ?
         VirtualEdgeMapBuilder virtualEdgeMapBuilder = new VirtualEdgeMapBuilder(virtualEdges, queryResults, firstVirtualNodeId);
         virtualEdgeMapBuilder.build();
         node2EdgeMap = virtualEdgeMapBuilder.getNode2EdgeMap();

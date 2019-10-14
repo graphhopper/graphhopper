@@ -40,6 +40,7 @@ class VirtualEdgeMapBuilder {
     private final List<VirtualEdgeIteratorState> virtualEdges;
     private final List<QueryResult> queryResults;
     private final int firstVirtualNodeId;
+    // todonow: rename
     private final IntObjectMap<List<EdgeIteratorState>> node2EdgeMap;
     private final IntObjectMap<IntArrayList> ignoreEdgesMap;
 
@@ -62,6 +63,7 @@ class VirtualEdgeMapBuilder {
     void build() {
         final GHIntHashSet towerNodesToChange = new GHIntHashSet(queryResults.size());
 
+        // todonow: update comments like this
         // 1. virtualEdges should also get fresh EdgeIterators on every createEdgeExplorer call!
         for (int i = 0; i < queryResults.size(); i++) {
             // create outgoing edges
@@ -104,6 +106,7 @@ class VirtualEdgeMapBuilder {
     }
 
     /**
+     * // todonow: wording - 'fake' is rather misleading here
      * Creates a fake edge iterator pointing to multiple edge states.
      */
     private void addVirtualEdges(boolean base, int node, int virtNode) {

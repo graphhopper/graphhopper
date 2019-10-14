@@ -71,6 +71,7 @@ public class QueryGraph implements Graph {
         mainNodes = graph.getNodes();
         mainEdges = graph.getEdges();
 
+        //todonow: turn this into a static function
         VirtualEdgeBuilder virtualEdgeBuilder = new VirtualEdgeBuilder(mainNodes, mainEdges, graph.getNodeAccess().is3D());
         graphModification = virtualEdgeBuilder.lookup(queryResults);
         nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), graphModification.getVirtualNodes(), mainNodes);
@@ -306,6 +307,7 @@ public class QueryGraph implements Graph {
     }
 
     private EdgeExplorer createUncachedEdgeExplorer(final EdgeFilter edgeFilter) {
+        // todonow: remove/update comment
         // Iteration over virtual nodes needs to be thread safe if done from different explorer
         // so we need to create the mapping on EVERY call!
         // This needs to be a HashMap (and cannot be an array) as we also need to tweak edges for some mainNodes!
@@ -406,10 +408,15 @@ public class QueryGraph implements Graph {
 
     public static class GraphModification {
         // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
+        // todonow: clarify comment: different virtual edges appear consecutively
         private final List<VirtualEdgeIteratorState> virtualEdges;
+        // todonow: rename
         private final IntObjectMap<List<EdgeIteratorState>> node2EdgeMap;
+        // todonow: rename
+        // todonow: maybe use a single map ? are the two nodes (mostly/always) acting on the same nodes ?
         private final IntObjectMap<IntArrayList> ignoredEdgesMap;
         /**
+         * // todonow: move this comment ?
          * Store lat,lon of virtual tower nodes.
          */
         private final PointList virtualNodes;
