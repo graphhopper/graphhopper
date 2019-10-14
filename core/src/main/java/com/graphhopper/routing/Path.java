@@ -25,14 +25,11 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilder;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -197,7 +194,7 @@ public class Path {
      * @param visitor callback to handle every edge. The edge is decoupled from the iterator and can
      *                be stored.
      */
-    private void forEveryEdge(EdgeVisitor visitor) {
+    public void forEveryEdge(EdgeVisitor visitor) {
         int tmpNode = getFromNode();
         int len = edgeIds.size();
         int prevEdgeId = EdgeIterator.NO_EDGE;
@@ -314,32 +311,6 @@ public class Path {
         }
         forEveryEdge(new InstructionsFromEdges(getFromNode(), graph, weighting, encoder, roundaboutEnc, nodeAccess, tr, ways));
         return ways;
-    }
-
-    /**
-     * Calculates the PathDetails for this Path. This method will return fast, if there are no calculators.
-     *
-     * @param pathBuilderFactory Generates the relevant PathBuilders
-     * @return List of PathDetails for this Path
-     */
-    public Map<String, List<PathDetail>> calcDetails(List<String> requestedPathDetails, PathDetailsBuilderFactory pathBuilderFactory, int previousIndex) {
-        if (!isFound() || requestedPathDetails.isEmpty())
-            return Collections.emptyMap();
-        List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders(requestedPathDetails, encoder, weighting);
-        if (pathBuilders.isEmpty())
-            return Collections.emptyMap();
-
-        forEveryEdge(new PathDetailsFromEdges(pathBuilders, previousIndex));
-
-        Map<String, List<PathDetail>> pathDetails = new HashMap<>(pathBuilders.size());
-        for (PathDetailsBuilder builder : pathBuilders) {
-            Map.Entry<String, List<PathDetail>> entry = builder.build();
-            List<PathDetail> existing = pathDetails.put(entry.getKey(), entry.getValue());
-            if (existing != null)
-                throw new IllegalStateException("Some PathDetailsBuilders use duplicate key: " + entry.getKey());
-        }
-
-        return pathDetails;
     }
 
     @Override

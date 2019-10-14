@@ -22,7 +22,9 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.util.details.PathDetailsFromEdges;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 
 import java.util.ArrayList;
@@ -51,6 +53,11 @@ public class PathMerger {
     private PathDetailsBuilderFactory pathBuilderFactory;
     private List<String> requestedPathDetails = Collections.EMPTY_LIST;
     private double favoredHeading = Double.NaN;
+    private Weighting weighting;
+
+    public PathMerger(Weighting weighting) {
+        this.weighting = weighting;
+    }
 
     public PathMerger setCalcPoints(boolean calcPoints) {
         this.calcPoints = calcPoints;
@@ -125,7 +132,7 @@ public class PathMerger {
                 }
 
                 fullPoints.add(tmpPoints);
-                altRsp.addPathDetails(path.calcDetails(requestedPathDetails, pathBuilderFactory, origPoints));
+                altRsp.addPathDetails(PathDetailsFromEdges.calcDetails(path, weighting, requestedPathDetails, pathBuilderFactory, origPoints));
                 origPoints = fullPoints.size();
             }
 
