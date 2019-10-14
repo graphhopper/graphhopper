@@ -18,10 +18,9 @@
 
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntObjectHashMap;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
@@ -36,47 +35,43 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+// todonow: not happy with this name yet... right now it builds a 'graph modification'...
 class VirtualEdgeBuilder {
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
     private final boolean is3D;
-    private List<VirtualEdgeIteratorState> virtualEdges;
-    private List<QueryResult> queryResults;
-    private PointList virtualNodes;
+    private VirtualGraphModification graphModification;
 
-    private IntObjectMap<List<EdgeIteratorState>> node2EdgeMap;
-    private IntObjectMap<IntArrayList> ignoreEdgesMap;
+    public static VirtualGraphModification build(Graph graph, List<QueryResult> queryResults) {
+        return build(graph.getNodes(), graph.getEdges(), graph.getNodeAccess().is3D(), queryResults);
+    }
 
-    VirtualEdgeBuilder(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D) {
+    public static VirtualGraphModification build(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D, List<QueryResult> queryResults) {
+        return new VirtualEdgeBuilder(firstVirtualNodeId, firstVirtualEdgeId, is3D).build(queryResults);
+    }
+
+    private VirtualEdgeBuilder(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D) {
         this.firstVirtualNodeId = firstVirtualNodeId;
         this.firstVirtualEdgeId = firstVirtualEdgeId;
         this.is3D = is3D;
     }
 
+    private VirtualGraphModification build(List<QueryResult> resList) {
+        graphModification = new VirtualGraphModification(resList.size(), is3D);
+        buildVirtualEdges(resList);
+        buildAdditionalAndRemovedEdges();
+        return graphModification;
+    }
+
     /**
+     * // todonow: improve docs
      * For all specified query results calculate the snapped point and if necessary set closest node
      * to a virtual one and reverse closest edge. Additionally the wayIndex can change if an edge is
      * swapped.
      *
-     * todonow: fix docs
-     * AND
-     * build two maps:
-     *  - one maps node ids to adjacent virtual edges
-     *  - the other maps node ids to edge ids that shall be skipped
-     *
      * @see QueryGraph
      */
-    QueryGraph.GraphModification lookup(List<QueryResult> resList) {
-        buildVirtualEdges(resList);
-        // todonow: rename
-        buildTheMaps();
-        return new QueryGraph.GraphModification(virtualEdges, node2EdgeMap, ignoreEdgesMap, virtualNodes, queryResults);
-    }
-
     private void buildVirtualEdges(List<QueryResult> resList) {
-        this.virtualNodes = new PointList(resList.size(), is3D);
-        this.virtualEdges = new ArrayList<>(resList.size() * 2);
-        this.queryResults = new ArrayList<>(resList.size());
         GHIntObjectHashMap<List<QueryResult>> edge2res = new GHIntObjectHashMap<>(resList.size());
 
         // Phase 1
@@ -162,7 +157,7 @@ class VirtualEdgeBuilder {
                 int origRevEdgeKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), true);
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
-                int virtNodeId = virtualNodes.getSize() + firstVirtualNodeId;
+                int virtNodeId = graphModification.getVirtualNodes().getSize() + firstVirtualNodeId;
                 boolean addedEdges = false;
 
                 // todonow: maybe update these comments
@@ -181,19 +176,19 @@ class VirtualEdgeBuilder {
                         continue;
                     }
 
-                    queryResults.add(res);
+                    graphModification.getQueryResults().add(res);
                     boolean isPillar = res.getSnappedPosition() == QueryResult.Position.PILLAR;
                     createEdges(origEdgeKey, origRevEdgeKey,
                             prevPoint, prevWayIndex, isPillar,
                             res.getSnappedPoint(), res.getWayIndex(),
                             fullPL, closestEdge, prevNodeId, virtNodeId);
 
-                    virtualNodes.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
+                    graphModification.getVirtualNodes().add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
 
                     // add edges again to set adjacent edges for newVirtNodeId
                     if (addedEdges) {
-                        virtualEdges.add(virtualEdges.get(virtualEdges.size() - 2));
-                        virtualEdges.add(virtualEdges.get(virtualEdges.size() - 2));
+                        graphModification.getVirtualEdges().add(graphModification.getVirtualEdges().get(graphModification.getVirtualEdges().size() - 2));
+                        graphModification.getVirtualEdges().add(graphModification.getVirtualEdges().get(graphModification.getVirtualEdges().size() - 2));
                     }
 
                     addedEdges = true;
@@ -234,7 +229,7 @@ class VirtualEdgeBuilder {
 
         PointList baseReversePoints = basePoints.clone(true);
         double baseDistance = basePoints.calcDistance(Helper.DIST_PLANE);
-        int virtEdgeId = firstVirtualEdgeId + virtualEdges.size();
+        int virtEdgeId = firstVirtualEdgeId + graphModification.getVirtualEdges().size();
 
         boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);
         // edges between base and snapped point
@@ -245,15 +240,18 @@ class VirtualEdgeBuilder {
 
         baseEdge.setReverseEdge(baseReverseEdge);
         baseReverseEdge.setReverseEdge(baseEdge);
-        virtualEdges.add(baseEdge);
-        virtualEdges.add(baseReverseEdge);
+        graphModification.getVirtualEdges().add(baseEdge);
+        graphModification.getVirtualEdges().add(baseReverseEdge);
     }
 
-    private void buildTheMaps() {
+    /**
+     * // todonow: cleanup docs
+     * * build two maps:
+     * *  - one maps node ids to adjacent virtual edges
+     * *  - the other maps node ids to edge ids that shall be skipped
+     */
+    private void buildAdditionalAndRemovedEdges() {
         // todonow: make this static, do we need another class here ?
-        VirtualEdgeMapBuilder virtualEdgeMapBuilder = new VirtualEdgeMapBuilder(virtualEdges, queryResults, firstVirtualNodeId);
-        virtualEdgeMapBuilder.build();
-        node2EdgeMap = virtualEdgeMapBuilder.getNode2EdgeMap();
-        ignoreEdgesMap = virtualEdgeMapBuilder.getIgnoreEdgesMap();
+        VirtualEdgeMapBuilder.build(graphModification, firstVirtualNodeId);
     }
 }

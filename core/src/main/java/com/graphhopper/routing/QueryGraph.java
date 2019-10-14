@@ -18,7 +18,6 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -51,11 +50,12 @@ public class QueryGraph implements Graph {
     private final Graph mainGraph;
     private final int mainNodes;
     private final int mainEdges;
+    // todonow: why do we need this and do we still need it when we stop wrapping CHGraph with QueryGraph ?
     private final QueryGraph baseGraph;
     private final GraphExtension wrappedExtension;
     private final Map<EdgeFilter, EdgeExplorer> cacheMap = new HashMap<>(4);
     private final NodeAccess nodeAccess;
-    private final GraphModification graphModification;
+    private final VirtualGraphModification graphModification;
 
     // Use LinkedHashSet for predictable iteration order.
     private final Set<VirtualEdgeIteratorState> unfavoredEdges = new LinkedHashSet<>(5);
@@ -71,9 +71,7 @@ public class QueryGraph implements Graph {
         mainNodes = graph.getNodes();
         mainEdges = graph.getEdges();
 
-        //todonow: turn this into a static function
-        VirtualEdgeBuilder virtualEdgeBuilder = new VirtualEdgeBuilder(mainNodes, mainEdges, graph.getNodeAccess().is3D());
-        graphModification = virtualEdgeBuilder.lookup(queryResults);
+        graphModification = VirtualEdgeBuilder.build(graph, queryResults);
         nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), graphModification.getVirtualNodes(), mainNodes);
 
         if (mainGraph.getExtension() instanceof TurnCostExtension)
@@ -313,7 +311,7 @@ public class QueryGraph implements Graph {
         // This needs to be a HashMap (and cannot be an array) as we also need to tweak edges for some mainNodes!
         // The more query points we have the more inefficient this map could be. Hmmh.
         final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
-        final GHIntObjectHashMap<VirtualEdgeIterator> vIterMap = new GHIntObjectHashMap<>(graphModification.getNode2EdgeMap().size());
+        final GHIntObjectHashMap<VirtualEdgeIterator> vIterMap = new GHIntObjectHashMap<>(graphModification.getAdditionalEdges().size());
 
         // todonow: this can be more efficient: e.g.
         // 1) we can build a map node->filteredEdges already when the edge explorer is created (instead of in set base node)
@@ -321,8 +319,8 @@ public class QueryGraph implements Graph {
         return new EdgeExplorer() {
             @Override
             public EdgeIterator setBaseNode(int baseNode) {
-                List<EdgeIteratorState> virtualEdges = graphModification.getNode2EdgeMap().get(baseNode);
-                IntArrayList ignoredEdges = graphModification.getIgnoredEdgesMap().get(baseNode);
+                List<EdgeIteratorState> virtualEdges = graphModification.getAdditionalEdges().get(baseNode);
+                IntArrayList ignoredEdges = graphModification.getRemovedEdges().get(baseNode);
                 if (virtualEdges == null && ignoredEdges == null) {
                     return mainExplorer.setBaseNode(baseNode);
                 }
@@ -406,48 +404,4 @@ public class QueryGraph implements Graph {
         return new UnsupportedOperationException("QueryGraph cannot be modified.");
     }
 
-    public static class GraphModification {
-        // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
-        // todonow: clarify comment: different virtual edges appear consecutively
-        private final List<VirtualEdgeIteratorState> virtualEdges;
-        // todonow: rename
-        private final IntObjectMap<List<EdgeIteratorState>> node2EdgeMap;
-        // todonow: rename
-        // todonow: maybe use a single map ? are the two nodes (mostly/always) acting on the same nodes ?
-        private final IntObjectMap<IntArrayList> ignoredEdgesMap;
-        /**
-         * // todonow: move this comment ?
-         * Store lat,lon of virtual tower nodes.
-         */
-        private final PointList virtualNodes;
-        private final List<QueryResult> queryResults;
-
-        public GraphModification(List<VirtualEdgeIteratorState> virtualEdges, IntObjectMap<List<EdgeIteratorState>> node2EdgeMap, IntObjectMap<IntArrayList> ignoredEdgesMap, PointList virtualNodes, List<QueryResult> queryResults) {
-            this.virtualEdges = virtualEdges;
-            this.node2EdgeMap = node2EdgeMap;
-            this.ignoredEdgesMap = ignoredEdgesMap;
-            this.virtualNodes = virtualNodes;
-            this.queryResults = queryResults;
-        }
-
-        public List<VirtualEdgeIteratorState> getVirtualEdges() {
-            return virtualEdges;
-        }
-
-        public IntObjectMap<List<EdgeIteratorState>> getNode2EdgeMap() {
-            return node2EdgeMap;
-        }
-
-        public IntObjectMap<IntArrayList> getIgnoredEdgesMap() {
-            return ignoredEdgesMap;
-        }
-
-        public PointList getVirtualNodes() {
-            return virtualNodes;
-        }
-
-        public List<QueryResult> getQueryResults() {
-            return queryResults;
-        }
-    }
 }
