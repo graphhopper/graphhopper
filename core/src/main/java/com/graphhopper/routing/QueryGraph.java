@@ -17,11 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
-import com.carrotsearch.hppc.procedures.IntProcedure;
-import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
@@ -326,53 +322,8 @@ public class QueryGraph implements Graph {
         // so we need to create the mapping on EVERY call!
         // This needs to be a HashMap (and cannot be an array) as we also need to tweak edges for some mainNodes!
         // The more query points we have the more inefficient this map could be. Hmmh.
-        final IntObjectMap<VirtualEdgeIterator> node2EdgeMap
-                = new GHIntObjectHashMap<>(queryResults.size() * 3);
-
         final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
-        final GHIntHashSet towerNodesToChange = new GHIntHashSet(queryResults.size());
-
-        // 1. virtualEdges should also get fresh EdgeIterators on every createEdgeExplorer call!
-        for (int i = 0; i < queryResults.size(); i++) {
-            // create outgoing edges
-            VirtualEdgeIterator virtEdgeIter = new VirtualEdgeIterator(2);
-            EdgeIteratorState baseRevEdge = virtualEdges.get(i * 4 + VE_BASE_REV);
-            if (edgeFilter.accept(baseRevEdge))
-                virtEdgeIter.add(baseRevEdge);
-            EdgeIteratorState adjEdge = virtualEdges.get(i * 4 + VE_ADJ);
-            if (edgeFilter.accept(adjEdge))
-                virtEdgeIter.add(adjEdge);
-
-            int virtNode = mainNodes + i;
-            node2EdgeMap.put(virtNode, virtEdgeIter);
-
-            // replace edge list of neighboring tower nodes:
-            // add virtual edges only and collect tower nodes where real edges will be added in step 2.
-            //
-            // base node
-            int towerNode = baseRevEdge.getAdjNode();
-            if (!isVirtualNode(towerNode)) {
-                towerNodesToChange.add(towerNode);
-                addVirtualEdges(node2EdgeMap, edgeFilter, true, towerNode, i);
-            }
-
-            // adj node
-            towerNode = adjEdge.getAdjNode();
-            if (!isVirtualNode(towerNode)) {
-                towerNodesToChange.add(towerNode);
-                addVirtualEdges(node2EdgeMap, edgeFilter, false, towerNode, i);
-            }
-        }
-
-        // 2. the connected tower nodes from mainGraph need fresh EdgeIterators with possible fakes
-        // where 'fresh' means independent of previous call and respecting the edgeFilter
-        // -> setup fake iterators of detected tower nodes (virtual edges are already added)
-        towerNodesToChange.forEach(new IntProcedure() {
-            @Override
-            public void apply(int value) {
-                fillVirtualEdges(node2EdgeMap, value, mainExplorer);
-            }
-        });
+        final IntObjectMap<VirtualEdgeIterator> node2EdgeMap = VirtualEdgeMapBuilder.buildMap(virtualEdges, queryResults, mainExplorer, edgeFilter, mainNodes);
 
         return new EdgeExplorer() {
             @Override
@@ -384,41 +335,6 @@ public class QueryGraph implements Graph {
                 return mainExplorer.setBaseNode(baseNode);
             }
         };
-    }
-
-    /**
-     * Creates a fake edge iterator pointing to multiple edge states.
-     */
-    private void addVirtualEdges(IntObjectMap<VirtualEdgeIterator> node2EdgeMap, EdgeFilter filter, boolean base,
-                                 int node, int virtNode) {
-        VirtualEdgeIterator existingIter = node2EdgeMap.get(node);
-        if (existingIter == null) {
-            existingIter = new VirtualEdgeIterator(10);
-            node2EdgeMap.put(node, existingIter);
-        }
-        EdgeIteratorState edge = base
-                ? virtualEdges.get(virtNode * 4 + VE_BASE)
-                : virtualEdges.get(virtNode * 4 + VE_ADJ_REV);
-        if (filter.accept(edge))
-            existingIter.add(edge);
-    }
-
-    void fillVirtualEdges(IntObjectMap<VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl) {
-        if (isVirtualNode(towerNode))
-            throw new IllegalStateException("Node should not be virtual:" + towerNode + ", " + node2Edge);
-
-        VirtualEdgeIterator vIter = node2Edge.get(towerNode);
-        IntArrayList ignoreEdges = new IntArrayList(vIter.count() * 2);
-        while (vIter.next()) {
-            EdgeIteratorState edge = queryResults.get(vIter.getAdjNode() - mainNodes).getClosestEdge();
-            ignoreEdges.add(edge.getEdge());
-        }
-        vIter.reset();
-        EdgeIterator iter = mainExpl.setBaseNode(towerNode);
-        while (iter.next()) {
-            if (!ignoreEdges.contains(iter.getEdge()))
-                vIter.add(iter.detach(false));
-        }
     }
 
     @Override

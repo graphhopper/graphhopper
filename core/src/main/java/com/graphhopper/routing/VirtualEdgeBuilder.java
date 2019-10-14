@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class VirtualEdgeBuilder {
+class VirtualEdgeBuilder {
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
     private final boolean is3D;
@@ -42,21 +42,21 @@ public class VirtualEdgeBuilder {
     private List<QueryResult> queryResults;
     private PointList virtualNodes;
 
-    public VirtualEdgeBuilder(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D) {
+    VirtualEdgeBuilder(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D) {
         this.firstVirtualNodeId = firstVirtualNodeId;
         this.firstVirtualEdgeId = firstVirtualEdgeId;
         this.is3D = is3D;
     }
 
-    public PointList getVirtualNodes() {
+    PointList getVirtualNodes() {
         return virtualNodes;
     }
 
-    public List<VirtualEdgeIteratorState> getVirtualEdges() {
+    List<VirtualEdgeIteratorState> getVirtualEdges() {
         return virtualEdges;
     }
 
-    public List<QueryResult> getQueryResults() {
+    List<QueryResult> getQueryResults() {
         return queryResults;
     }
 
