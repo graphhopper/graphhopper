@@ -169,9 +169,6 @@ public class QueryGraph implements Graph {
      * @return boolean indicating if enforcement took place
      */
     public boolean enforceHeading(int nodeId, double favoredHeading, boolean incoming) {
-        if (!isInitialized())
-            throw new IllegalStateException("QueryGraph.lookup has to be called in before heading enforcement");
-
         if (Double.isNaN(favoredHeading))
             return false;
 
@@ -312,9 +309,6 @@ public class QueryGraph implements Graph {
 
     @Override
     public EdgeExplorer createEdgeExplorer(final EdgeFilter edgeFilter) {
-        if (!isInitialized())
-            throw new IllegalStateException("Call lookup before using this graph");
-
         if (useEdgeExplorerCache) {
             EdgeExplorer cached = cacheMap.get(edgeFilter);
             if (cached == null) {
@@ -425,10 +419,6 @@ public class QueryGraph implements Graph {
             if (!ignoreEdges.contains(iter.getEdge()))
                 vIter.add(iter.detach(false));
         }
-    }
-
-    private boolean isInitialized() {
-        return queryResults != null;
     }
 
     @Override
