@@ -145,6 +145,7 @@ public class QueryGraph implements Graph {
 
     private boolean useEdgeExplorerCache = false;
 
+    // todonow: maybe add convenience methods for one and two query results ?
     public static QueryGraph lookup(Graph graph, List<QueryResult> queryResults) {
         QueryGraph result = new QueryGraph(graph);
         result.lookup(queryResults);
@@ -186,26 +187,13 @@ public class QueryGraph implements Graph {
     }
 
     /**
-     * Convenient method to initialize this QueryGraph with the two specified query results.
-     *
-     * @see #lookup(List)
-     */
-    public QueryGraph lookup(QueryResult fromRes, QueryResult toRes) {
-        List<QueryResult> results = new ArrayList<>(2);
-        results.add(fromRes);
-        results.add(toRes);
-        lookup(results);
-        return this;
-    }
-
-    /**
      * For all specified query results calculate snapped point and if necessary set closest node
      * to a virtual one and reverse closest edge. Additionally the wayIndex can change if an edge is
      * swapped.
      *
      * @see QueryGraph
      */
-    public void lookup(List<QueryResult> resList) {
+    private void lookup(List<QueryResult> resList) {
         if (isInitialized())
             throw new IllegalStateException("Call lookup only once. Otherwise you'll have problems for queries sharing the same edge.");
 
