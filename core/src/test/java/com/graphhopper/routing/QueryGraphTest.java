@@ -240,10 +240,8 @@ public class QueryGraphTest {
 
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(0);
         iter.next();
-
-        VirtualEdgeIterator vi = new VirtualEdgeIterator(2);
-        vi.add(iter.detach(false));
-
+        List<EdgeIteratorState> vEdges = Collections.singletonList(iter.detach(false));
+        VirtualEdgeIterator vi = new VirtualEdgeIterator(vEdges);
         assertTrue(vi.next());
     }
 

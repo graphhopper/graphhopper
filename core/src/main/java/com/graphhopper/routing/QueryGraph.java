@@ -17,7 +17,9 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
@@ -56,6 +58,9 @@ public class QueryGraph implements Graph {
     // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
     final List<VirtualEdgeIteratorState> virtualEdges;
     private final List<QueryResult> queryResults;
+    private final IntObjectMap<List<EdgeIteratorState>> node2EdgeMap;
+    private final IntObjectMap<IntArrayList> ignoredEdgesMap;
+
     /**
      * Store lat,lon of virtual tower nodes.
      */
@@ -83,6 +88,8 @@ public class QueryGraph implements Graph {
         virtualEdges = virtualEdgeBuilder.getVirtualEdges();
         virtualNodes = virtualEdgeBuilder.getVirtualNodes();
         this.queryResults = virtualEdgeBuilder.getQueryResults();
+        node2EdgeMap = virtualEdgeBuilder.getNode2EdgeMap();
+        ignoredEdgesMap = virtualEdgeBuilder.getIgnoreEdgesMap();
 
         nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), virtualNodes, mainNodes);
 
@@ -112,6 +119,8 @@ public class QueryGraph implements Graph {
         mainNodes = superQueryGraph.mainNodes;
         mainEdges = superQueryGraph.mainEdges;
         virtualEdges = superQueryGraph.virtualEdges;
+        node2EdgeMap = superQueryGraph.node2EdgeMap;
+        ignoredEdgesMap = superQueryGraph.ignoredEdgesMap;
         virtualNodes = superQueryGraph.virtualNodes;
         queryResults = superQueryGraph.queryResults;
         nodeAccess = superQueryGraph.nodeAccess;
@@ -314,22 +323,39 @@ public class QueryGraph implements Graph {
         }
     }
 
-    private EdgeExplorer createUncachedEdgeExplorer(EdgeFilter edgeFilter) {
+    private EdgeExplorer createUncachedEdgeExplorer(final EdgeFilter edgeFilter) {
         // Iteration over virtual nodes needs to be thread safe if done from different explorer
         // so we need to create the mapping on EVERY call!
         // This needs to be a HashMap (and cannot be an array) as we also need to tweak edges for some mainNodes!
         // The more query points we have the more inefficient this map could be. Hmmh.
         final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
-        final IntObjectMap<VirtualEdgeIterator> node2EdgeMap = VirtualEdgeMapBuilder.buildMap(virtualEdges, queryResults, mainExplorer, edgeFilter, mainNodes);
+        final GHIntObjectHashMap<VirtualEdgeIterator> vIterMap = new GHIntObjectHashMap<>(node2EdgeMap.size());
 
         return new EdgeExplorer() {
             @Override
             public EdgeIterator setBaseNode(int baseNode) {
-                VirtualEdgeIterator iter = node2EdgeMap.get(baseNode);
-                if (iter != null)
-                    return iter.reset();
-
-                return mainExplorer.setBaseNode(baseNode);
+                List<EdgeIteratorState> virtualEdges = node2EdgeMap.get(baseNode);
+                IntArrayList ignoredEdges = ignoredEdgesMap.get(baseNode);
+                if (virtualEdges == null && ignoredEdges == null) {
+                    return mainExplorer.setBaseNode(baseNode);
+                }
+                List<EdgeIteratorState> filteredEdges = new ArrayList<>(10);
+                if (virtualEdges != null) {
+                    for (EdgeIteratorState virtualEdge : virtualEdges) {
+                        if (edgeFilter.accept(virtualEdge)) {
+                            filteredEdges.add(virtualEdge);
+                        }
+                    }
+                }
+                if (!isVirtualNode(baseNode)) {
+                    EdgeIterator mainIter = mainExplorer.setBaseNode(baseNode);
+                    while (mainIter.next()) {
+                        if (ignoredEdges == null || !ignoredEdges.contains(mainIter.getEdge())) {
+                            filteredEdges.add(mainIter.detach(false));
+                        }
+                    }
+                }
+                return new VirtualEdgeIterator(filteredEdges);
             }
         };
     }

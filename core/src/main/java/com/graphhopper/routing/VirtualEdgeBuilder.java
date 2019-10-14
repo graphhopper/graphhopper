@@ -18,6 +18,8 @@
 
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.storage.IntsRef;
@@ -42,6 +44,9 @@ class VirtualEdgeBuilder {
     private List<QueryResult> queryResults;
     private PointList virtualNodes;
 
+    private IntObjectMap<List<EdgeIteratorState>> node2EdgeMap;
+    private IntObjectMap<IntArrayList> ignoreEdgesMap;
+
     VirtualEdgeBuilder(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D) {
         this.firstVirtualNodeId = firstVirtualNodeId;
         this.firstVirtualEdgeId = firstVirtualEdgeId;
@@ -56,6 +61,14 @@ class VirtualEdgeBuilder {
         return virtualEdges;
     }
 
+    public IntObjectMap<List<EdgeIteratorState>> getNode2EdgeMap() {
+        return node2EdgeMap;
+    }
+
+    public IntObjectMap<IntArrayList> getIgnoreEdgesMap() {
+        return ignoreEdgesMap;
+    }
+
     List<QueryResult> getQueryResults() {
         return queryResults;
     }
@@ -65,14 +78,25 @@ class VirtualEdgeBuilder {
      * to a virtual one and reverse closest edge. Additionally the wayIndex can change if an edge is
      * swapped.
      *
+     * todonow: fix docs
+     * AND
+     * build two maps:
+     *  - one maps node ids to adjacent virtual edges
+     *  - the other maps node ids to edge ids that shall be skipped
+     *
      * @see QueryGraph
      */
     void lookup(List<QueryResult> resList) {
+        buildVirtualEdges(resList);
+        // todonow: rename
+        buildTheMaps();
+    }
+
+    private void buildVirtualEdges(List<QueryResult> resList) {
         this.virtualNodes = new PointList(resList.size(), is3D);
         this.virtualEdges = new ArrayList<>(resList.size() * 2);
         this.queryResults = new ArrayList<>(resList.size());
-
-        GHIntObjectHashMap<List<QueryResult>> edge2res = new GHIntObjectHashMap<List<QueryResult>>(resList.size());
+        GHIntObjectHashMap<List<QueryResult>> edge2res = new GHIntObjectHashMap<>(resList.size());
 
         // Phase 1
         // calculate snapped point and swap direction of closest edge if necessary
@@ -241,5 +265,12 @@ class VirtualEdgeBuilder {
         baseReverseEdge.setReverseEdge(baseEdge);
         virtualEdges.add(baseEdge);
         virtualEdges.add(baseReverseEdge);
+    }
+
+    private void buildTheMaps() {
+        VirtualEdgeMapBuilder virtualEdgeMapBuilder = new VirtualEdgeMapBuilder(virtualEdges, queryResults, firstVirtualNodeId);
+        virtualEdgeMapBuilder.build();
+        node2EdgeMap = virtualEdgeMapBuilder.getNode2EdgeMap();
+        ignoreEdgesMap = virtualEdgeMapBuilder.getIgnoreEdgesMap();
     }
 }

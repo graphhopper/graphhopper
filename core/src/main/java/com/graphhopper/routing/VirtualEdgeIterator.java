@@ -27,7 +27,6 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,22 +36,14 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     private final List<EdgeIteratorState> edges;
     private int current;
 
-    public VirtualEdgeIterator(int edgeCount) {
-        edges = new ArrayList<>(edgeCount);
+    public VirtualEdgeIterator(List<EdgeIteratorState> edges) {
+        this.edges = edges;
         reset();
-    }
-
-    void add(EdgeIteratorState edge) {
-        edges.add(edge);
     }
 
     EdgeIterator reset() {
         current = -1;
         return this;
-    }
-
-    int count() {
-        return edges.size();
     }
 
     @Override
