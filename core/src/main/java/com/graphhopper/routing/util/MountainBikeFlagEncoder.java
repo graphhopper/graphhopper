@@ -40,12 +40,9 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     public MountainBikeFlagEncoder(PMap properties) {
-        this(
-                (int) properties.getLong("speed_bits", 4),
+        this((int) properties.getLong("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
-                properties.getBool("turn_costs", false) ? 1 : 0
-        );
-        this.properties = properties;
+                properties.getBool("turn_costs", false) ? 1 : 0);
         this.setBlockFords(properties.getBool("block_fords", true));
     }
 

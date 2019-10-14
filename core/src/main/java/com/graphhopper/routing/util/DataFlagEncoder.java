@@ -77,7 +77,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         this((int) properties.getLong("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
-        this.properties = properties;
     }
 
     public DataFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {

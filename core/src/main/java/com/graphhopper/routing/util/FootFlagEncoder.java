@@ -47,6 +47,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     final Set<String> safeHighwayTags = new HashSet<>();
     final Set<String> allowedHighwayTags = new HashSet<>();
     final Set<String> avoidHighwayTags = new HashSet<>();
+    final Set<String> allowedSacScale = new HashSet<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
     private DecimalEncodedValue priorityWayEncoder;
@@ -63,7 +64,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     public FootFlagEncoder(PMap properties) {
         this((int) properties.getLong("speedBits", 4),
                 properties.getDouble("speedFactor", 1));
-        this.properties = properties;
         this.setBlockFords(properties.getBool("block_fords", true));
     }
 
@@ -133,6 +133,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         routeMap.put(NATIONAL, UNCHANGED.getValue());
         routeMap.put(REGIONAL, UNCHANGED.getValue());
         routeMap.put(LOCAL, UNCHANGED.getValue());
+
+        allowedSacScale.add("hiking");
+        allowedSacScale.add("mountain_hiking");
+        allowedSacScale.add("demanding_mountain_hiking");
 
         maxPossibleSpeed = FERRY_SPEED;
         speedDefault = MEAN_SPEED;
@@ -226,13 +230,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             return EncodingManager.Access.CAN_SKIP;
         }
 
-        String sacScale = way.getTag("sac_scale");
-        if (sacScale != null) {
-            if (!"hiking".equals(sacScale) && !"mountain_hiking".equals(sacScale)
-                    && !"demanding_mountain_hiking".equals(sacScale) && !"alpine_hiking".equals(sacScale))
-                // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
-                return EncodingManager.Access.CAN_SKIP;
-        }
+        // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
+        if (way.getTag("sac_scale") != null && !way.hasTag("sac_scale", allowedSacScale))
+            return EncodingManager.Access.CAN_SKIP;
 
         // no need to evaluate ferries or fords - already included here
         if (way.hasTag("foot", intendedValues))

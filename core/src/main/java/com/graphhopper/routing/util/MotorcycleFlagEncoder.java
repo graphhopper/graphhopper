@@ -52,9 +52,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     public MotorcycleFlagEncoder(PMap properties) {
         this(properties.getInt("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
-                properties.getBool("turn_costs", false) ? 1 : 0
-        );
-        this.properties = properties;
+                properties.getBool("turn_costs", false) ? 1 : 0);
         this.setBlockFords(properties.getBool("block_fords", true));
     }
 

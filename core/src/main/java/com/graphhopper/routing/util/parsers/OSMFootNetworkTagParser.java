@@ -32,7 +32,7 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 public class OSMFootNetworkTagParser implements RelationTagParser {
     private EnumEncodedValue<RouteNetwork> footRouteEnc;
-    // used only for internal transformation from relations into way flags -> priorityHikeRoute
+    // used for internal transformation from relations into footRouteEnc
     private EnumEncodedValue<RouteNetwork> transformerRouteRelEnc;
 
     @Override

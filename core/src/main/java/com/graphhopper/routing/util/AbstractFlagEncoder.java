@@ -60,7 +60,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected BooleanEncodedValue accessEnc;
     protected BooleanEncodedValue roundaboutEnc;
     protected DecimalEncodedValue avgSpeedEnc;
-    protected PMap properties;
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected int maxPossibleSpeed;

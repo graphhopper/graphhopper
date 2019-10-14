@@ -58,7 +58,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         this((int) properties.getLong("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
-        this.properties = properties;
         this.speedTwoDirections = properties.getBool("speed_two_directions", false);
         this.setBlockFords(properties.getBool("block_fords", true));
         this.setBlockByDefault(properties.getBool("block_barriers", true));
