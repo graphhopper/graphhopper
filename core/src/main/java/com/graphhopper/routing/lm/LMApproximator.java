@@ -78,7 +78,7 @@ public class LMApproximator implements WeightApproximator {
         this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), lms.getWeighting());
         this.maxBaseNodes = maxBaseNodes;
         int idxVirtNode = maxBaseNodes;
-        virtNodeMap = new GHIntObjectHashMap(graph.getNodes() - idxVirtNode, 0.5f);
+        virtNodeMap = new GHIntObjectHashMap<>(graph.getNodes() - idxVirtNode, 0.5f);
         // virtual nodes handling: calculate the minimum weight for the virtual nodes, i.e. pick the correct neighbouring node
         if (graph instanceof QueryGraph) {
             QueryGraph qGraph = (QueryGraph) graph;
