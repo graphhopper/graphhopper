@@ -21,6 +21,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
@@ -182,16 +183,8 @@ public class HikeFlagEncoder extends FootFlagEncoder {
             // s_3d/v=h/v_vert + s_2d/v_hor => v = s_3d / (h/v_vert + s_2d/v_hor) = sqrt(s²_2d + h²) / (h/v_vert + s_2d/v_hor)
             // slope=h/s_2d=~h/2_3d              = sqrt(1+slope²)/(slope+1/4.5) km/h
             // maximum slope is 0.37 (Ffordd Pen Llech)
-            if (slope < 0.06)
-                speedEncoder.setDecimal(false, edgeFlags, 4);
-            else if (slope < 0.19)
-                speedEncoder.setDecimal(false, edgeFlags, 3);
-            else if (slope < 0.33)
-                speedEncoder.setDecimal(false, edgeFlags, 2);
-            else
-                speedEncoder.setDecimal(false, edgeFlags, 1);
-
-            edge.setFlags(edgeFlags);
+            double newSpeed = Math.sqrt(1 + slope * slope) / (slope + 1 / 5.4);
+            edge.set(speedEncoder, Helper.keepIn(newSpeed, 1, 5));
         }
     }
 
