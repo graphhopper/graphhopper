@@ -37,7 +37,7 @@ public class PathExtractor {
     protected PathExtractor(Graph graph, Weighting weighting) {
         this.graph = graph;
         this.weighting = weighting;
-        path = new Path(graph, weighting);
+        path = new Path(graph);
     }
 
     protected Path extract(SPTEntry sptEntry) {

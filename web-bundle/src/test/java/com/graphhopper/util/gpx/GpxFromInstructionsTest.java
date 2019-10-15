@@ -20,6 +20,7 @@ package com.graphhopper.util.gpx;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.Roundabout;
@@ -89,8 +90,9 @@ public class GpxFromInstructionsTest {
         g.edge(3, 7, 10000, true).setName("3-7").setFlags(flagsForSpeed(carManager, 10));
         g.edge(4, 5, 10000, true).setName("4-5").setFlags(flagsForSpeed(carManager, 100));
 
-        Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), TraversalMode.NODE_BASED).calcPath(1, 5);
-        InstructionList wayList = p.calcInstructions(roundaboutEnc, trMap.getWithFallBack(Locale.US));
+        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, roundaboutEnc, trMap.getWithFallBack(Locale.US));
         PointList points = p.calcPoints();
         assertEquals(4, wayList.size());
 

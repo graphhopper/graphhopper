@@ -370,8 +370,8 @@ class TripFromLabel {
             return result;
         } else {
             InstructionList instructions = new InstructionList(tr);
-            InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(path.get(1).edge.edgeIteratorState.getBaseNode(), graph,
-                    weighting, weighting.getFlagEncoder(), weighting.getFlagEncoder().getBooleanEncodedValue(Roundabout.KEY), graph.getNodeAccess(), tr, instructions);
+            InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(graph,
+                    weighting, weighting.getFlagEncoder().getBooleanEncodedValue(Roundabout.KEY), tr, instructions);
             int prevEdgeId = -1;
             for (int i = 1; i < path.size(); i++) {
                 if (path.get(i).edge.edgeType != GtfsStorage.EdgeType.HIGHWAY) {

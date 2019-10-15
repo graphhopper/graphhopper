@@ -73,7 +73,7 @@ public class TestAlgoCollector {
             altPaths.add(path);
         }
 
-        PathMerger pathMerger = new PathMerger().
+        PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), algoEntry.getAlgorithmOptions().getWeighting()).
                 setCalcPoints(true).
                 setSimplifyResponse(false).
                 setEnableInstructions(true);

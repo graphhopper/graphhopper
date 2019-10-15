@@ -44,7 +44,7 @@ public class BidirPathExtractor {
     protected BidirPathExtractor(Graph graph, Weighting weighting) {
         this.graph = graph;
         this.weighting = weighting;
-        this.path = new Path(graph, weighting);
+        this.path = new Path(graph);
     }
 
     protected Path extract(SPTEntry fwdEntry, SPTEntry bwdEntry, double weight) {
