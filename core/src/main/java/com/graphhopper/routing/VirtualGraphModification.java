@@ -34,11 +34,11 @@ public class VirtualGraphModification {
     // todonow: clarify comment: different virtual edges appear consecutively
     private final List<VirtualEdgeIteratorState> virtualEdges;
     // todonow: document
-    private final IntObjectMap<List<EdgeIteratorState>> additionalEdges;
+    private final IntObjectMap<List<EdgeIteratorState>> virtualEdgesAtRealNodes;
     // todonow: document
     // todonow: maybe use a single map ? are the two nodes (mostly/always) acting on the same nodes ? <- removed edges
     // are on real nodes only!
-    private final IntObjectMap<IntArrayList> removedEdges;
+    private final IntObjectMap<IntArrayList> removedEdgesAtRealNodes;
     /**
      * // todonow: move this comment ?
      * Store lat,lon of virtual tower nodes.
@@ -50,20 +50,20 @@ public class VirtualGraphModification {
         this.virtualNodes = new PointList(numQueryResults, is3D);
         this.virtualEdges = new ArrayList<>(numQueryResults * 2);
         this.closestEdges = new IntArrayList(numQueryResults);
-        this.additionalEdges = new GHIntObjectHashMap<>(numQueryResults * 3);
-        this.removedEdges = new GHIntObjectHashMap<>(numQueryResults * 3);
+        this.virtualEdgesAtRealNodes = new GHIntObjectHashMap<>(numQueryResults * 3);
+        this.removedEdgesAtRealNodes = new GHIntObjectHashMap<>(numQueryResults * 3);
     }
 
     public List<VirtualEdgeIteratorState> getVirtualEdges() {
         return virtualEdges;
     }
 
-    public IntObjectMap<List<EdgeIteratorState>> getAdditionalEdges() {
-        return additionalEdges;
+    public IntObjectMap<List<EdgeIteratorState>> getVirtualEdgesAtRealNodes() {
+        return virtualEdgesAtRealNodes;
     }
 
-    public IntObjectMap<IntArrayList> getRemovedEdges() {
-        return removedEdges;
+    public IntObjectMap<IntArrayList> getRemovedEdgesAtRealNodes() {
+        return removedEdgesAtRealNodes;
     }
 
     public PointList getVirtualNodes() {
