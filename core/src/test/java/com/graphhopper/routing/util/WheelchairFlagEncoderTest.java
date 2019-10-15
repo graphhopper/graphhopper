@@ -37,7 +37,7 @@ import static org.junit.Assert.*;
  * @author don-philipe
  */
 public class WheelchairFlagEncoderTest {
-    private final EncodingManager encodingManager = EncodingManager.create("car,bike,wheelchair");
+    private final EncodingManager encodingManager = EncodingManager.create("car,wheelchair");
     private final WheelchairFlagEncoder wheelchairEncoder = (WheelchairFlagEncoder) encodingManager.getEncoder("wheelchair");
     private final DecimalEncodedValue wheelchairAvSpeedEnc = wheelchairEncoder.getAverageSpeedEnc();
     private final BooleanEncodedValue wheelchairAccessEnc = wheelchairEncoder.getAccessEnc();
@@ -50,21 +50,21 @@ public class WheelchairFlagEncoderTest {
         wheelchairAccessEnc.setBool(false, fl, true);
         wheelchairAccessEnc.setBool(true, fl, true);
         wheelchairAvSpeedEnc.setDecimal(false, fl, 10);
-        assertEquals(10, wheelchairEncoder.getSpeed(fl), 1e-1);
+        assertEquals(10, wheelchairAvSpeedEnc.getDecimal(false, fl), .1);
     }
 
     @Test
     public void testBasics() {
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
         wheelchairEncoder.flagsDefault(edgeFlags, true, true);
-        assertEquals(FootFlagEncoder.MEAN_SPEED, wheelchairEncoder.getSpeed(edgeFlags), 1e-1);
+        assertEquals(FootFlagEncoder.MEAN_SPEED, wheelchairAvSpeedEnc.getDecimal(false, edgeFlags), .1);
 
         IntsRef ef1 = encodingManager.createEdgeFlags();
         wheelchairEncoder.flagsDefault(ef1, true, false);
         IntsRef ef2 = encodingManager.createEdgeFlags();
         wheelchairEncoder.flagsDefault(ef2, false, true);
         assertEquals(wheelchairAccessEnc.getBool(false, ef1), wheelchairAccessEnc.getBool(true, ef2));
-        assertEquals(wheelchairEncoder.getSpeed(ef1), wheelchairEncoder.getSpeed(ef1), 1e-1);
+        assertEquals(wheelchairAvSpeedEnc.getDecimal(false, ef1), wheelchairAvSpeedEnc.getDecimal(false, ef1), .1);
     }
 
     @Test
@@ -75,11 +75,11 @@ public class WheelchairFlagEncoderTest {
         edge.set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true).setReverse(wheelchairAccessEnc, true);
         edge.set(carAvSpeedEnc, 100.0).set(carAccessEnc, true).setReverse(carAccessEnc, false);
 
-        assertEquals(10, edge.get(wheelchairAvSpeedEnc), 1e-1);
+        assertEquals(10, edge.get(wheelchairAvSpeedEnc), .1);
         assertTrue(edge.get(wheelchairAccessEnc));
         assertTrue(edge.getReverse(wheelchairAccessEnc));
 
-        assertEquals(100, edge.get(carAvSpeedEnc), 1e-1);
+        assertEquals(100, edge.get(carAvSpeedEnc), .1);
         assertTrue(edge.get(carAccessEnc));
         assertFalse(edge.getReverse(carAccessEnc));
 
@@ -87,7 +87,7 @@ public class WheelchairFlagEncoderTest {
         wheelchairAvSpeedEnc.setDecimal(false, raw, 10);
         wheelchairAccessEnc.setBool(false, raw, true);
         wheelchairAccessEnc.setBool(true, raw, true);
-        assertEquals(0, carAvSpeedEnc.getDecimal(false, raw), 1e-1);
+        assertEquals(0, carAvSpeedEnc.getDecimal(false, raw), .1);
     }
 
     @Test
@@ -289,7 +289,7 @@ public class WheelchairFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("man_made", "pier");
         IntsRef flags = wheelchairEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, wheelchairEncoder.getAccess(way), 0);
-        assertNotEquals(0, flags.ints[0]);
+        assertFalse(flags.isEmpty());
     }
 
     @Test
@@ -308,16 +308,16 @@ public class WheelchairFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
         IntsRef flags = wheelchairEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, wheelchairEncoder.getAccess(way), 0);
-        assertEquals(0, flags.ints[0]);
+        assertTrue(flags.isEmpty());
 
         way.setTag("sidewalk", "yes");
         flags = wheelchairEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, wheelchairEncoder.getAccess(way), 0);
-        assertEquals(5, wheelchairEncoder.getSpeed(flags), 1e-1);
+        assertEquals(5, wheelchairAvSpeedEnc.getDecimal(false, flags), .1);
 
         way.clearTags();
         way.setTag("highway", "track");
         flags = wheelchairEncoder.handleWayTags(encodingManager.createEdgeFlags(), way, wheelchairEncoder.getAccess(way), 0);
-        assertEquals(0, wheelchairEncoder.getSpeed(flags), 1e-1);
+        assertEquals(0, wheelchairAvSpeedEnc.getDecimal(false, flags), .1);
     }
 
     @Test
@@ -574,8 +574,8 @@ public class WheelchairFlagEncoderTest {
         ReaderWay way0 = new ReaderWay(1);
         wheelchairEncoder.applyWayTags(way0, edge0);
 
-        assertTrue(edge0.get(wheelchairEncoder.accessEnc));
-        assertTrue(edge0.getReverse(wheelchairEncoder.accessEnc));
+        assertTrue(edge0.get(wheelchairAccessEnc));
+        assertTrue(edge0.getReverse(wheelchairAccessEnc));
         assertEquals(2, edge0.get(wheelchairEncoder.getAverageSpeedEnc()), 0);
         assertEquals(5, edge0.getReverse(wheelchairEncoder.getAverageSpeedEnc()), 0);
 
@@ -583,7 +583,7 @@ public class WheelchairFlagEncoderTest {
         ReaderWay way1 = new ReaderWay(2);
         wheelchairEncoder.applyWayTags(way1, edge1);
 
-        assertFalse(edge1.get(wheelchairEncoder.accessEnc));
-        assertFalse(edge1.getReverse(wheelchairEncoder.accessEnc));
+        assertFalse(edge1.get(wheelchairAccessEnc));
+        assertFalse(edge1.getReverse(wheelchairAccessEnc));
     }
 }
