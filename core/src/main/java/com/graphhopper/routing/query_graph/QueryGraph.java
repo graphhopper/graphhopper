@@ -50,7 +50,7 @@ public class QueryGraph implements Graph {
     private final GraphExtension wrappedExtension;
     private final Map<EdgeFilter, EdgeExplorer> cacheMap = new HashMap<>(4);
     private final NodeAccess nodeAccess;
-    private final QueryGraphModification graphModification;
+    private final GraphModification graphModification;
 
     // Use LinkedHashSet for predictable iteration order.
     private final Set<VirtualEdgeIteratorState> unfavoredEdges = new LinkedHashSet<>(5);
@@ -73,7 +73,7 @@ public class QueryGraph implements Graph {
         mainNodes = graph.getNodes();
         mainEdges = graph.getEdges();
 
-        graphModification = VirtualEdgeBuilder.build(graph, queryResults);
+        graphModification = GraphModificationBuilder.build(graph, queryResults);
         nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), graphModification.getVirtualNodes(), mainNodes);
 
         if (mainGraph.getExtension() instanceof TurnCostExtension)
@@ -334,7 +334,7 @@ public class QueryGraph implements Graph {
                     }
                     return new VirtualEdgeIterator(filteredEdges);
                 } else {
-                    QueryGraphModification.EdgeChanges edgeChanges = graphModification.getEdgeChangesAtRealNodes().get(baseNode);
+                    GraphModification.EdgeChanges edgeChanges = graphModification.getEdgeChangesAtRealNodes().get(baseNode);
                     if (edgeChanges == null) {
                         return mainExplorer.setBaseNode(baseNode);
                     }

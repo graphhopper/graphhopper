@@ -27,9 +27,11 @@ import com.graphhopper.util.PointList;
 import java.util.ArrayList;
 import java.util.List;
 
-// todonow: not happy with this name. this class has the data we need to add the right virtual nodes/and edges
-// but compared to QueryGraph it simply provides this data instead of using it to implement the Graph interface
-class QueryGraphModification {
+/**
+ * This class holds the data that is necessary to add additional nodes and edges to an existing graph, as it is needed
+ * when we want to start/end a route at a location that is in between the actual nodes of the graph (virtual nodes+edges).
+ */
+class GraphModification {
     // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
     // todonow: clarify comment: different virtual edges appear consecutively
     private final List<VirtualEdgeIteratorState> virtualEdges;
@@ -42,7 +44,7 @@ class QueryGraphModification {
     private final PointList virtualNodes;
     private final IntArrayList closestEdges;
 
-    QueryGraphModification(int numVirtualNodes, boolean is3D) {
+    GraphModification(int numVirtualNodes, boolean is3D) {
         this.virtualNodes = new PointList(numVirtualNodes, is3D);
         this.virtualEdges = new ArrayList<>(numVirtualNodes * 2);
         this.closestEdges = new IntArrayList(numVirtualNodes);

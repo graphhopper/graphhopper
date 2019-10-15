@@ -35,41 +35,40 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-// todonow: not happy with this name yet... right now it builds a 'graph modification'...
-class VirtualEdgeBuilder {
+/**
+ * Builds the data structures that represent the changes to a graph as realized by {@link QueryGraph}
+ */
+class GraphModificationBuilder {
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
     private final boolean is3D;
-    private QueryGraphModification graphModification;
+    private GraphModification graphModification;
 
-    public static QueryGraphModification build(Graph graph, List<QueryResult> queryResults) {
+    public static GraphModification build(Graph graph, List<QueryResult> queryResults) {
         return build(graph.getNodes(), graph.getEdges(), graph.getNodeAccess().is3D(), queryResults);
     }
 
-    public static QueryGraphModification build(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D, List<QueryResult> queryResults) {
-        return new VirtualEdgeBuilder(firstVirtualNodeId, firstVirtualEdgeId, is3D).build(queryResults);
+    public static GraphModification build(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D, List<QueryResult> queryResults) {
+        return new GraphModificationBuilder(firstVirtualNodeId, firstVirtualEdgeId, is3D).build(queryResults);
     }
 
-    private VirtualEdgeBuilder(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D) {
+    private GraphModificationBuilder(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D) {
         this.firstVirtualNodeId = firstVirtualNodeId;
         this.firstVirtualEdgeId = firstVirtualEdgeId;
         this.is3D = is3D;
     }
 
-    private QueryGraphModification build(List<QueryResult> resList) {
-        graphModification = new QueryGraphModification(resList.size(), is3D);
+    private GraphModification build(List<QueryResult> resList) {
+        graphModification = new GraphModification(resList.size(), is3D);
         buildVirtualEdges(resList);
         buildEdgeChangesAtRealNodes();
         return graphModification;
     }
 
     /**
-     * // todonow: improve docs
-     * For all specified query results calculate the snapped point and if necessary set closest node
-     * to a virtual one and reverse closest edge. Additionally the wayIndex can change if an edge is
+     * For all specified query results calculate the snapped point and if necessary set the closest node
+     * to a virtual one and reverse the closest edge. Additionally the wayIndex can change if an edge is
      * swapped.
-     *
-     * @see QueryGraph
      */
     private void buildVirtualEdges(List<QueryResult> resList) {
         GHIntObjectHashMap<List<QueryResult>> edge2res = new GHIntObjectHashMap<>(resList.size());
@@ -244,12 +243,6 @@ class VirtualEdgeBuilder {
         graphModification.addVirtualEdge(baseReverseEdge);
     }
 
-    /**
-     * // todonow: cleanup docs
-     * * build two maps:
-     * *  - one maps node ids to adjacent virtual edges
-     * *  - the other maps node ids to edge ids that shall be skipped
-     */
     private void buildEdgeChangesAtRealNodes() {
         EdgeChangeBuilder.build(graphModification.getClosestEdges(), graphModification.getVirtualEdges(), firstVirtualNodeId, graphModification.getEdgeChangesAtRealNodes());
     }
