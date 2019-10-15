@@ -25,7 +25,6 @@ import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.graphhopper.routing.QueryGraph.*;
@@ -36,24 +35,32 @@ import static com.graphhopper.routing.QueryGraph.*;
  * todonow: naming & cleanup and do we need this class or can it just be a part of Virtual Edge Builder
  */
 class VirtualEdgeMapBuilder {
-    private final VirtualGraphModification graphModification;
+    private final IntArrayList closestEdges;
+    private final List<VirtualEdgeIteratorState> virtualEdges;
+    private final IntObjectMap<VirtualGraphModification.RealNodeModification> realNodeModifications;
     private final int firstVirtualNodeId;
 
-    static void build(VirtualGraphModification graphModification, int firstVirtualNodeId) {
-        new VirtualEdgeMapBuilder(graphModification, firstVirtualNodeId).build();
+    // todonow: documentation, realnodemodificatinos are modified ...
+    static void build(IntArrayList closestEdges, List<VirtualEdgeIteratorState> virtualEdges, int firstVirtualNodeId, IntObjectMap<VirtualGraphModification.RealNodeModification> realNodeModifications) {
+        new VirtualEdgeMapBuilder(closestEdges, virtualEdges, firstVirtualNodeId, realNodeModifications).build();
     }
 
-    private VirtualEdgeMapBuilder(VirtualGraphModification graphModification, int firstVirtualNodeId) {
-        this.graphModification = graphModification;
+    private VirtualEdgeMapBuilder(IntArrayList closestEdges, List<VirtualEdgeIteratorState> virtualEdges, int firstVirtualNodeId, IntObjectMap<VirtualGraphModification.RealNodeModification> realNodeModifications) {
+        this.closestEdges = closestEdges;
+        this.virtualEdges = virtualEdges;
         this.firstVirtualNodeId = firstVirtualNodeId;
+        if (!realNodeModifications.isEmpty()) {
+            throw new IllegalArgumentException("real node modifications need to be empty");
+        }
+        this.realNodeModifications = realNodeModifications;
     }
 
     private void build() {
-        final GHIntHashSet towerNodesToChange = new GHIntHashSet(getNumQueryResults());
+        final GHIntHashSet towerNodesToChange = new GHIntHashSet(getNumVirtualNodes());
 
         // todonow: update comments like this
         // 1. virtualEdges should also get fresh EdgeIterators on every createEdgeExplorer call!
-        for (int i = 0; i < getNumQueryResults(); i++) {
+        for (int i = 0; i < getNumVirtualNodes(); i++) {
             // replace edge list of neighboring tower nodes:
             // add virtual edges only and collect tower nodes where real edges will be added in step 2.
             //
@@ -90,50 +97,47 @@ class VirtualEdgeMapBuilder {
      * Creates a fake edge iterator pointing to multiple edge states.
      */
     private void addVirtualEdges(boolean base, int node, int virtNode) {
-        List<EdgeIteratorState> existingEdges = virtualEdgesAtRealNodes().get(node);
-        if (existingEdges == null) {
-            existingEdges = new ArrayList<>(10);
-            virtualEdgesAtRealNodes().put(node, existingEdges);
+        VirtualGraphModification.RealNodeModification realNodeModification = realNodeModifications().get(node);
+        if (realNodeModification == null) {
+            realNodeModification = new VirtualGraphModification.RealNodeModification(2, 2);
+            realNodeModifications().put(node, realNodeModification);
         }
         EdgeIteratorState edge = base
                 ? getVirtualEdge(virtNode * 4 + VE_BASE)
                 : getVirtualEdge(virtNode * 4 + VE_ADJ_REV);
-        existingEdges.add(edge);
+        realNodeModification.getAdditionalEdges().add(edge);
     }
 
     private void fillVirtualEdges(int towerNode) {
         if (isVirtualNode(towerNode))
-            throw new IllegalStateException("Node should not be virtual:" + towerNode + ", " + virtualEdgesAtRealNodes());
+            throw new IllegalStateException("Node should not be virtual:" + towerNode + ", " + realNodeModifications());
 
-        List<EdgeIteratorState> existingEdges = virtualEdgesAtRealNodes().get(towerNode);
-        IntArrayList ignoreEdges = new IntArrayList(existingEdges.size() * 2);
+        VirtualGraphModification.RealNodeModification realNodeModification = realNodeModifications().get(towerNode);
+        List<EdgeIteratorState> existingEdges = realNodeModification.getAdditionalEdges();
+        IntArrayList removedEdges = realNodeModification.getRemovedEdges();
         for (EdgeIteratorState existingEdge : existingEdges) {
-            ignoreEdges.add(getClosestEdge(existingEdge.getAdjNode()));
+            removedEdges.add(getClosestEdge(existingEdge.getAdjNode()));
         }
-        removedEdgesAtRealNodes().put(towerNode, ignoreEdges);
     }
 
     private boolean isVirtualNode(int nodeId) {
         return nodeId >= firstVirtualNodeId;
     }
 
-    private int getNumQueryResults() {
-        return graphModification.getClosestEdges().size();
+    private int getNumVirtualNodes() {
+        return closestEdges.size();
     }
 
     private int getClosestEdge(int node) {
-        return graphModification.getClosestEdges().get(node - firstVirtualNodeId);
+        return closestEdges.get(node - firstVirtualNodeId);
     }
 
     private VirtualEdgeIteratorState getVirtualEdge(int virtualEdgeId) {
-        return graphModification.getVirtualEdges().get(virtualEdgeId);
+        return virtualEdges.get(virtualEdgeId);
     }
 
-    private IntObjectMap<List<EdgeIteratorState>> virtualEdgesAtRealNodes() {
-        return graphModification.getVirtualEdgesAtRealNodes();
+    private IntObjectMap<VirtualGraphModification.RealNodeModification> realNodeModifications() {
+        return realNodeModifications;
     }
 
-    private IntObjectMap<IntArrayList> removedEdgesAtRealNodes() {
-        return graphModification.getRemovedEdgesAtRealNodes();
-    }
 }

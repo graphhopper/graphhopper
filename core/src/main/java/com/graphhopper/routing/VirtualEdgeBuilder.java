@@ -252,6 +252,6 @@ class VirtualEdgeBuilder {
      */
     private void buildAdditionalAndRemovedEdges() {
         // todonow: make this static, do we need another class here ?
-        VirtualEdgeMapBuilder.build(graphModification, firstVirtualNodeId);
+        VirtualEdgeMapBuilder.build(graphModification.getClosestEdges(), graphModification.getVirtualEdges(), firstVirtualNodeId, graphModification.getRealNodeModifications());
     }
 }

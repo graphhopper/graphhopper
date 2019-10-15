@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
@@ -314,7 +313,10 @@ public class QueryGraph implements Graph {
         // todonow: this can be more efficient: e.g.
         // 1) we can build a map node->filteredEdges already when the edge explorer is created (instead of in set base node)
         // 2) we can keep the virtual edges and ignored edges in a single map
+        // 3) do not create virtual edge iterator objects on every setBaseNode call, rather use only one such
+        //    object and reset it
         return new EdgeExplorer() {
+            // todonow: not too sure about this, eventually we should do some checksome comparisons with master!
             private final int[] VIRTUAL_EDGES_AT_VIRTUAL_NODES = new int[]{VE_BASE_REV, VE_ADJ};
 
             @Override
@@ -328,22 +330,19 @@ public class QueryGraph implements Graph {
                     }
                     return new VirtualEdgeIterator(filteredEdges);
                 } else {
-                    List<EdgeIteratorState> virtualEdges = graphModification.getVirtualEdgesAtRealNodes().get(baseNode);
-                    IntArrayList ignoredEdges = graphModification.getRemovedEdgesAtRealNodes().get(baseNode);
-                    if (virtualEdges == null && ignoredEdges == null) {
+                    VirtualGraphModification.RealNodeModification realNodeModification = graphModification.getRealNodeModifications().get(baseNode);
+                    if (realNodeModification == null) {
                         return mainExplorer.setBaseNode(baseNode);
                     }
                     List<EdgeIteratorState> filteredEdges = new ArrayList<>(10);
-                    if (virtualEdges != null) {
-                        for (EdgeIteratorState virtualEdge : virtualEdges) {
-                            if (edgeFilter.accept(virtualEdge)) {
-                                filteredEdges.add(virtualEdge);
-                            }
+                    for (EdgeIteratorState virtualEdge : realNodeModification.getAdditionalEdges()) {
+                        if (edgeFilter.accept(virtualEdge)) {
+                            filteredEdges.add(virtualEdge);
                         }
                     }
                     EdgeIterator mainIter = mainExplorer.setBaseNode(baseNode);
                     while (mainIter.next()) {
-                        if (ignoredEdges == null || !ignoredEdges.contains(mainIter.getEdge())) {
+                        if (!realNodeModification.getRemovedEdges().contains(mainIter.getEdge())) {
                             filteredEdges.add(mainIter.detach(false));
                         }
                     }
