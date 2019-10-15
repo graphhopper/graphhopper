@@ -347,6 +347,7 @@ public class QueryGraph implements Graph {
             }
             virtualEdgeOverlay.put(mainNodes + i, filteredEdges);
         }
+        final VirtualEdgeIterator virtualEdgeIterator = new VirtualEdgeIterator(null);
         // todonow: this can be more efficient: e.g.
         // 1) we can build a map node->filteredEdges already when the edge explorer is created (instead of in set base node)
         // 2) we can keep the virtual edges and ignored edges in a single map
@@ -361,7 +362,7 @@ public class QueryGraph implements Graph {
                 if (filteredEdges == null) {
                     return mainExplorer.setBaseNode(baseNode);
                 } else {
-                    return new VirtualEdgeIterator(filteredEdges);
+                    return virtualEdgeIterator.reset(filteredEdges);
                 }
             }
         };

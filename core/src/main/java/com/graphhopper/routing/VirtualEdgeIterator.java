@@ -33,16 +33,17 @@ import java.util.List;
  * @author Peter Karich
  */
 class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
-    private final List<EdgeIteratorState> edges;
+    private List<EdgeIteratorState> edges;
     private int current;
 
     public VirtualEdgeIterator(List<EdgeIteratorState> edges) {
         this.edges = edges;
-        reset();
+        this.current = -1;
     }
 
-    EdgeIterator reset() {
+    EdgeIterator reset(List<EdgeIteratorState> edges) {
         current = -1;
+        this.edges = edges;
         return this;
     }
 
