@@ -292,7 +292,7 @@ public class RoutingAlgorithmWithOSMIT {
     public void testNorthBayreuthHikeFastestAnd3D() {
         List<OneRun> list = new ArrayList<>();
         // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'        
-        list.add(new OneRun(49.974972, 11.515657, 49.991022, 11.512299, 2342, 80));
+        list.add(new OneRun(49.974972, 11.515657, 49.991022, 11.512299, 2384, 93));
         // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
         list.add(new OneRun(49.990967, 11.545258, 50.023182, 11.555386, 4746, 119));
         runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
