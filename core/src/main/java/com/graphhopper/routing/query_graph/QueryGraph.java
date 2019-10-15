@@ -160,7 +160,7 @@ public class QueryGraph implements Graph {
         favoredHeading = AC.convertAzimuth2xaxisAngle(favoredHeading);
 
         // either penalize incoming or outgoing edges
-        List<Integer> edgePositions = incoming ? Arrays.asList(VE_BASE, VE_ADJ_REV) : Arrays.asList(VE_BASE_REV, VE_ADJ);
+        int[] edgePositions = incoming ? new int[]{VE_BASE, VE_ADJ_REV} : new int[]{VE_BASE_REV, VE_ADJ};
         boolean enforcementOccurred = false;
         for (int edgePos : edgePositions) {
             VirtualEdgeIteratorState edge = getVirtualEdge(virtNodeIDintern * 4 + edgePos);

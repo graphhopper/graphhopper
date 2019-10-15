@@ -32,17 +32,14 @@ import java.util.List;
  * when we want to start/end a route at a location that is in between the actual nodes of the graph (virtual nodes+edges).
  */
 class GraphModification {
-    // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
-    // todonow: clarify comment: different virtual edges appear consecutively
-    private final List<VirtualEdgeIteratorState> virtualEdges;
-    // todonow: document
-    private final IntObjectMap<EdgeChanges> edgeChangesAtRealNodes;
-    /**
-     * // todonow: move this comment ?
-     * Store lat,lon of virtual tower nodes.
-     */
+    // stores the coordinates of the additional/virtual nodes
     private final PointList virtualNodes;
+    // stores the closest edge id for each virtual node
     private final IntArrayList closestEdges;
+    // stores the virtual edges, for every virtual node there are four such edges: base-snap, snap-base, snap-adj, adj-snap.
+    private final List<VirtualEdgeIteratorState> virtualEdges;
+    // stores the changes that need to be done to the real nodes
+    private final IntObjectMap<EdgeChanges> edgeChangesAtRealNodes;
 
     GraphModification(int numVirtualNodes, boolean is3D) {
         this.virtualNodes = new PointList(numVirtualNodes, is3D);
