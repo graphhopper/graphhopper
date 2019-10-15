@@ -22,7 +22,6 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -117,8 +116,7 @@ class VirtualEdgeMapBuilder {
         List<EdgeIteratorState> existingEdges = additionalEdges().get(towerNode);
         IntArrayList ignoreEdges = new IntArrayList(existingEdges.size() * 2);
         for (EdgeIteratorState existingEdge : existingEdges) {
-            EdgeIteratorState edge = getQueryResult(existingEdge.getAdjNode() - firstVirtualNodeId).getClosestEdge();
-            ignoreEdges.add(edge.getEdge());
+            ignoreEdges.add(getClosestEdge(existingEdge.getAdjNode()));
         }
         removedEdges().put(towerNode, ignoreEdges);
     }
@@ -128,11 +126,11 @@ class VirtualEdgeMapBuilder {
     }
 
     private int getNumQueryResults() {
-        return graphModification.getQueryResults().size();
+        return graphModification.getClosestEdges().size();
     }
 
-    private QueryResult getQueryResult(int nodeId) {
-        return graphModification.getQueryResults().get(nodeId);
+    private int getClosestEdge(int node) {
+        return graphModification.getClosestEdges().get(node - firstVirtualNodeId);
     }
 
     private VirtualEdgeIteratorState getVirtualEdge(int virtualEdgeId) {

@@ -21,7 +21,6 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 
@@ -45,12 +44,12 @@ public class VirtualGraphModification {
      * Store lat,lon of virtual tower nodes.
      */
     private final PointList virtualNodes;
-    private final List<QueryResult> queryResults;
+    private final IntArrayList closestEdges;
 
     public VirtualGraphModification(int numQueryResults, boolean is3D) {
         this.virtualNodes = new PointList(numQueryResults, is3D);
         this.virtualEdges = new ArrayList<>(numQueryResults * 2);
-        this.queryResults = new ArrayList<>(numQueryResults);
+        this.closestEdges = new IntArrayList(numQueryResults);
         this.additionalEdges = new GHIntObjectHashMap<>(numQueryResults * 3);
         this.removedEdges = new GHIntObjectHashMap<>(numQueryResults * 3);
     }
@@ -71,7 +70,7 @@ public class VirtualGraphModification {
         return virtualNodes;
     }
 
-    public List<QueryResult> getQueryResults() {
-        return queryResults;
+    public IntArrayList getClosestEdges() {
+        return closestEdges;
     }
 }

@@ -18,11 +18,9 @@
 
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostExtension;
-import com.graphhopper.storage.index.QueryResult;
-
-import java.util.List;
 
 /**
  * special {@link TurnCostExtension} that handles virtual nodes and edges
@@ -31,13 +29,13 @@ class QueryGraphTurnExt extends TurnCostExtension {
     private final TurnCostExtension mainTurnExtension;
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
-    private final List<QueryResult> queryResults;
+    private final IntArrayList closestEdges;
 
-    QueryGraphTurnExt(Graph mainGraph, List<QueryResult> queryResults) {
+    QueryGraphTurnExt(Graph mainGraph, IntArrayList closestEdges) {
         this.mainTurnExtension = (TurnCostExtension) mainGraph.getExtension();
         this.firstVirtualNodeId = mainGraph.getNodes();
         this.firstVirtualEdgeId = mainGraph.getEdges();
-        this.queryResults = queryResults;
+        this.closestEdges = closestEdges;
     }
 
     @Override
@@ -77,8 +75,8 @@ class QueryGraphTurnExt extends TurnCostExtension {
         return !isVirtualNode(node);
     }
 
-    private int getOriginalEdge(int edgeFrom) {
-        return queryResults.get((edgeFrom - firstVirtualEdgeId) / 4).getClosestEdge().getEdge();
+    private int getOriginalEdge(int edge) {
+        return closestEdges.get((edge - firstVirtualEdgeId) / 4);
     }
 
     private boolean isVirtualNode(int nodeId) {

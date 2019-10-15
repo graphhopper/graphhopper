@@ -176,7 +176,7 @@ class VirtualEdgeBuilder {
                         continue;
                     }
 
-                    graphModification.getQueryResults().add(res);
+                    graphModification.getClosestEdges().add(res.getClosestEdge().getEdge());
                     boolean isPillar = res.getSnappedPosition() == QueryResult.Position.PILLAR;
                     createEdges(origEdgeKey, origRevEdgeKey,
                             prevPoint, prevWayIndex, isPillar,

@@ -75,7 +75,7 @@ public class QueryGraph implements Graph {
         nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), graphModification.getVirtualNodes(), mainNodes);
 
         if (mainGraph.getExtension() instanceof TurnCostExtension)
-            wrappedExtension = new QueryGraphTurnExt(mainGraph, graphModification.getQueryResults());
+            wrappedExtension = new QueryGraphTurnExt(mainGraph, graphModification.getClosestEdges());
         else
             wrappedExtension = mainGraph.getExtension();
 
@@ -112,7 +112,7 @@ public class QueryGraph implements Graph {
     }
 
     public EdgeIteratorState getOriginalEdgeFromVirtNode(int nodeId) {
-        return graphModification.getQueryResults().get(nodeId - mainNodes).getClosestEdge();
+        return getEdgeIteratorState(graphModification.getClosestEdges().get(nodeId - mainNodes), Integer.MIN_VALUE);
     }
 
     public boolean isVirtualEdge(int edgeId) {
