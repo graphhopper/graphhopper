@@ -310,14 +310,14 @@ public class QueryGraph implements Graph {
     }
 
     private EdgeExplorer createUncachedEdgeExplorer(final EdgeFilter edgeFilter) {
-        // build a map of virtual edge lists for every node that is modified compared to the mainGraph. this map
-        // depends on the given edgeFilter, but we could just as well build this map independent from the edge filter
-        // and apply the filter while iterating the edges
-        final IntObjectMap<List<EdgeIteratorState>> virtualEdgeOverlay =
-                new GHIntObjectHashMap<>(graphModification.getEdgeChangesAtRealNodes().size() + graphModification.getVirtualNodes().size());
-        final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
+        // build data structures holding the virtual edges at all real/virtual nodes that are modified compared to the
+        // mainGraph. the result depends on the given edgeFilter, but we could just as well build this map independent
+        // from the edge filter and apply the filter while iterating the edges
 
-        // add virtual edge lists for real neighbor nodes of the virtual nodes
+        // build map of virtual edge lists for real neighbor nodes of the virtual nodes
+        final IntObjectMap<List<EdgeIteratorState>> virtualEdgesAtRealNodes =
+                new GHIntObjectHashMap<>(graphModification.getEdgeChangesAtRealNodes().size());
+        final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
         graphModification.getEdgeChangesAtRealNodes().forEach(new IntObjectProcedure<GraphModification.EdgeChanges>() {
             @Override
             public void apply(int node, GraphModification.EdgeChanges edgeChanges) {
@@ -333,20 +333,22 @@ public class QueryGraph implements Graph {
                         filteredEdges.add(mainIter.detach(false));
                     }
                 }
-                virtualEdgeOverlay.put(node, filteredEdges);
+                virtualEdgesAtRealNodes.put(node, filteredEdges);
             }
         });
 
         // add virtual edge lists for virtual nodes
+        final List<List<EdgeIteratorState>> virtualEdgesAtVirtualNodes = new ArrayList<>();
+        final int[] vEdges = {VE_BASE_REV, VE_ADJ};
         for (int i = 0; i < graphModification.getVirtualNodes().size(); i++) {
             List<EdgeIteratorState> filteredEdges = new ArrayList<>(2);
-            for (int vEdge : new int[]{VE_BASE_REV, VE_ADJ}) {
+            for (int vEdge : vEdges) {
                 VirtualEdgeIteratorState virtualEdge = graphModification.getVirtualEdge(i * 4 + vEdge);
                 if (edgeFilter.accept(virtualEdge)) {
                     filteredEdges.add(virtualEdge);
                 }
             }
-            virtualEdgeOverlay.put(mainNodes + i, filteredEdges);
+            virtualEdgesAtVirtualNodes.add(filteredEdges);
         }
 
         // re-use this iterator object between setBaseNode calls to prevent GC
@@ -354,11 +356,15 @@ public class QueryGraph implements Graph {
         return new EdgeExplorer() {
             @Override
             public EdgeIterator setBaseNode(int baseNode) {
-                List<EdgeIteratorState> filteredEdges = virtualEdgeOverlay.get(baseNode);
-                if (filteredEdges == null) {
-                    return mainExplorer.setBaseNode(baseNode);
+                if (isVirtualNode(baseNode)) {
+                    return virtualEdgeIterator.reset(virtualEdgesAtVirtualNodes.get(baseNode - mainNodes));
                 } else {
-                    return virtualEdgeIterator.reset(filteredEdges);
+                    List<EdgeIteratorState> filteredEdges = virtualEdgesAtRealNodes.get(baseNode);
+                    if (filteredEdges == null) {
+                        return mainExplorer.setBaseNode(baseNode);
+                    } else {
+                        return virtualEdgeIterator.reset(filteredEdges);
+                    }
                 }
             }
         };
