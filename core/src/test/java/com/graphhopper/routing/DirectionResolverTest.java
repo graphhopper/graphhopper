@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;

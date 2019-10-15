@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
+package com.graphhopper.routing.querygraph;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -36,7 +36,7 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     private List<EdgeIteratorState> edges;
     private int current;
 
-    public VirtualEdgeIterator(List<EdgeIteratorState> edges) {
+    VirtualEdgeIterator(List<EdgeIteratorState> edges) {
         this.edges = edges;
         this.current = -1;
     }

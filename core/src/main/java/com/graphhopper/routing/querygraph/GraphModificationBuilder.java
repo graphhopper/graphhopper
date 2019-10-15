@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing;
+package com.graphhopper.routing.querygraph;
 
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntObjectHashMap;
