@@ -59,12 +59,19 @@ public class QueryGraph implements Graph {
     private final Set<VirtualEdgeIteratorState> unfavoredEdges = new LinkedHashSet<>(5);
     private boolean useEdgeExplorerCache = false;
 
-    // todonow: maybe add convenience methods for one and two query results ?
+    public static QueryGraph lookup(Graph graph, QueryResult qr) {
+        return QueryGraph.lookup(graph, Collections.singletonList(qr));
+    }
+
+    public static QueryGraph lookup(Graph graph, QueryResult fromQR, QueryResult toQR) {
+        return QueryGraph.lookup(graph, Arrays.asList(fromQR, toQR));
+    }
+
     public static QueryGraph lookup(Graph graph, List<QueryResult> queryResults) {
         return new QueryGraph(graph, queryResults);
     }
 
-    public QueryGraph(Graph graph, List<QueryResult> queryResults) {
+    private QueryGraph(Graph graph, List<QueryResult> queryResults) {
         mainGraph = graph;
         mainNodes = graph.getNodes();
         mainEdges = graph.getEdges();
@@ -316,7 +323,7 @@ public class QueryGraph implements Graph {
         // 3) do not create virtual edge iterator objects on every setBaseNode call, rather use only one such
         //    object and reset it
         return new EdgeExplorer() {
-            // todonow: not too sure about this, eventually we should do some checksome comparisons with master!
+            // todonow: not too sure about this, eventually we should do some checksum comparisons with master!
             private final int[] VIRTUAL_EDGES_AT_VIRTUAL_NODES = new int[]{VE_BASE_REV, VE_ADJ};
 
             @Override

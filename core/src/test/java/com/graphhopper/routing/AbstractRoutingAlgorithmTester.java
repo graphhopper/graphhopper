@@ -726,7 +726,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         // correct order for CH: in factory do prepare and afterwards wrap in query graph
         AlgorithmOptions opts = AlgorithmOptions.start().weighting(weighting).build();
         RoutingAlgorithmFactory factory = createFactory(ghStorage, opts);
-        QueryGraph qGraph = QueryGraph.lookup(getGraph(ghStorage, weighting), Arrays.asList(from, to));
+        QueryGraph qGraph = QueryGraph.lookup(getGraph(ghStorage, weighting), from, to);
         return factory.createAlgo(qGraph, opts).
                 calcPath(from.getClosestNode(), to.getClosestNode());
     }
@@ -737,7 +737,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         QueryResult to = newQR(ghStorage, toNode1, toNode2);
 
         RoutingAlgorithmFactory factory = createFactory(ghStorage, defaultOpts);
-        QueryGraph qGraph = QueryGraph.lookup(getGraph(ghStorage, defaultOpts.getWeighting()), Arrays.asList(from, to));
+        QueryGraph qGraph = QueryGraph.lookup(getGraph(ghStorage, defaultOpts.getWeighting()), from, to);
         return factory.createAlgo(qGraph, defaultOpts).calcPath(from.getClosestNode(), to.getClosestNode());
     }
 
@@ -872,7 +872,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         QueryResult to = newQR(graph, 10, 9);
 
         RoutingAlgorithmFactory factory = createFactory(graph, fakeOpts);
-        QueryGraph qGraph = QueryGraph.lookup(getGraph(graph, fakeWeighting), Arrays.asList(from, to));
+        QueryGraph qGraph = QueryGraph.lookup(getGraph(graph, fakeWeighting), from, to);
         p = factory.createAlgo(qGraph, fakeOpts).calcPath(from.getClosestNode(), to.getClosestNode());
         assertEquals(IntArrayList.from(12, 0, 1, 2, 11, 7, 10, 13), p.calcNodes());
         assertEquals(37009621, p.getTime());

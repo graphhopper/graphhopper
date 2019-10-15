@@ -883,7 +883,7 @@ public class CHTurnCostTest {
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
         QueryResult qr = index.findClosest(0.1, 0.15, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.lookup(chGraph, Collections.singletonList(qr));
+        QueryGraph queryGraph = QueryGraph.lookup(chGraph, qr);
         assertEquals("expected one virtual node", 1, queryGraph.getNodes() - chGraph.getNodes());
         RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
                 .traversalMode(TraversalMode.EDGE_BASED)
@@ -912,7 +912,7 @@ public class CHTurnCostTest {
         index.prepareIndex();
         QueryResult qr1 = index.findClosest(49.400772, 9.706245, EdgeFilter.ALL_EDGES);
         QueryResult qr2 = index.findClosest(49.403167, 9.704774, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.lookup(chGraph, Arrays.asList(qr1, qr2));
+        QueryGraph queryGraph = QueryGraph.lookup(chGraph, qr1, qr2);
 
         // before fixing #1623 this test only worked for a disabled edge explorer cache
         queryGraph.setUseEdgeExplorerCache(true);
@@ -942,7 +942,7 @@ public class CHTurnCostTest {
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
         QueryResult qr = index.findClosest(0.01, 0.01, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.lookup(chGraph, Collections.singletonList(qr));
+        QueryGraph queryGraph = QueryGraph.lookup(chGraph, qr);
         assertEquals(3, qr.getClosestNode());
         assertEquals(0, qr.getClosestEdge().getEdge());
         RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
@@ -971,7 +971,7 @@ public class CHTurnCostTest {
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
         QueryResult qr = index.findClosest(0.01, 0.01, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.lookup(chGraph, Collections.singletonList(qr));
+        QueryGraph queryGraph = QueryGraph.lookup(chGraph, qr);
         assertEquals(3, qr.getClosestNode());
         assertEquals(0, qr.getClosestEdge().getEdge());
         RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
@@ -1010,7 +1010,7 @@ public class CHTurnCostTest {
         index.prepareIndex();
         GHPoint virtualPoint = new GHPoint(0.1, 0.35);
         QueryResult qr = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
-        QueryGraph chQueryGraph = QueryGraph.lookup(chGraph, Collections.singletonList(qr));
+        QueryGraph chQueryGraph = QueryGraph.lookup(chGraph, qr);
         assertEquals(3, qr.getClosestEdge().getEdge());
         RoutingAlgorithm chAlgo = pch.createAlgo(chQueryGraph, AlgorithmOptions.start()
                 .traversalMode(TraversalMode.EDGE_BASED)
@@ -1020,7 +1020,7 @@ public class CHTurnCostTest {
         assertEquals(IntArrayList.from(4, 3, 2, 1, 0, 1, 5, 6), path.calcNodes());
 
         QueryResult qr2 = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.lookup(graph, Collections.singletonList(qr2));
+        QueryGraph queryGraph = QueryGraph.lookup(graph, qr2);
         assertEquals(3, qr2.getClosestEdge().getEdge());
         Dijkstra dijkstra = new Dijkstra(queryGraph, new TurnWeighting(weighting, (TurnCostExtension) queryGraph.getExtension(), chGraph.getCHProfile().getUTurnCosts()), TraversalMode.EDGE_BASED);
         Path dijkstraPath = dijkstra.calcPath(4, 6);
