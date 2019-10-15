@@ -159,8 +159,7 @@ class GraphModificationBuilder {
                 int virtNodeId = graphModification.getVirtualNodes().getSize() + firstVirtualNodeId;
                 boolean addedEdges = false;
 
-                // todonow: maybe update these comments
-                // Create base and adjacent PointLists for all none-equal virtual nodes.
+                // Create base and adjacent PointLists for all non-equal virtual nodes.
                 // We do so via inserting them at the correct position of fullPL and cutting the
                 // fullPL into the right pieces.
                 for (QueryResult res : results) {
