@@ -18,7 +18,7 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.coll.GHIntObjectHashMap;
-import com.graphhopper.routing.QueryGraph;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.storage.Graph;

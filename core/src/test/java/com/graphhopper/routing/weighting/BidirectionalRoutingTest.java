@@ -6,6 +6,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;

@@ -27,7 +27,7 @@ import com.conveyal.gtfs.model.Frequency;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.routing.VirtualEdgeIteratorState;
+import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
