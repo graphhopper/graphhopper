@@ -22,7 +22,7 @@ import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.gtfs.*;
-import com.graphhopper.routing.QueryGraph;
+import com.graphhopper.routing.query_graph.QueryGraph;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;

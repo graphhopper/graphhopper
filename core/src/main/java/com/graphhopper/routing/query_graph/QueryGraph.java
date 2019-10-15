@@ -15,14 +15,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
+package com.graphhopper.routing.query_graph;
 
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -53,7 +50,7 @@ public class QueryGraph implements Graph {
     private final GraphExtension wrappedExtension;
     private final Map<EdgeFilter, EdgeExplorer> cacheMap = new HashMap<>(4);
     private final NodeAccess nodeAccess;
-    private final VirtualGraphModification graphModification;
+    private final QueryGraphModification graphModification;
 
     // Use LinkedHashSet for predictable iteration order.
     private final Set<VirtualEdgeIteratorState> unfavoredEdges = new LinkedHashSet<>(5);
@@ -250,7 +247,7 @@ public class QueryGraph implements Graph {
 
     @Override
     public int getEdges() {
-        return graphModification.getVirtualEdges().size() + mainEdges;
+        return graphModification.getNumVirtualEdges() + mainEdges;
     }
 
     @Override
@@ -282,7 +279,7 @@ public class QueryGraph implements Graph {
     }
 
     private VirtualEdgeIteratorState getVirtualEdge(int edgeId) {
-        return graphModification.getVirtualEdges().get(edgeId);
+        return graphModification.getVirtualEdge(edgeId);
     }
 
     private int getPosOfReverseEdge(int edgeId) {
@@ -331,25 +328,25 @@ public class QueryGraph implements Graph {
                 if (isVirtualNode(baseNode)) {
                     List<EdgeIteratorState> filteredEdges = new ArrayList<>(2);
                     for (int vEdge : VIRTUAL_EDGES_AT_VIRTUAL_NODES) {
-                        VirtualEdgeIteratorState virtualEdge = graphModification.getVirtualEdges().get((baseNode - mainNodes) * 4 + vEdge);
+                        VirtualEdgeIteratorState virtualEdge = graphModification.getVirtualEdge((baseNode - mainNodes) * 4 + vEdge);
                         if (edgeFilter.accept(virtualEdge))
                             filteredEdges.add(virtualEdge);
                     }
                     return new VirtualEdgeIterator(filteredEdges);
                 } else {
-                    VirtualGraphModification.RealNodeModification realNodeModification = graphModification.getRealNodeModifications().get(baseNode);
-                    if (realNodeModification == null) {
+                    QueryGraphModification.EdgeChanges edgeChanges = graphModification.getEdgeChangesAtRealNodes().get(baseNode);
+                    if (edgeChanges == null) {
                         return mainExplorer.setBaseNode(baseNode);
                     }
                     List<EdgeIteratorState> filteredEdges = new ArrayList<>(10);
-                    for (EdgeIteratorState virtualEdge : realNodeModification.getAdditionalEdges()) {
+                    for (EdgeIteratorState virtualEdge : edgeChanges.getAdditionalEdges()) {
                         if (edgeFilter.accept(virtualEdge)) {
                             filteredEdges.add(virtualEdge);
                         }
                     }
                     EdgeIterator mainIter = mainExplorer.setBaseNode(baseNode);
                     while (mainIter.next()) {
-                        if (!realNodeModification.getRemovedEdges().contains(mainIter.getEdge())) {
+                        if (!edgeChanges.getRemovedEdges().contains(mainIter.getEdge())) {
                             filteredEdges.add(mainIter.detach(false));
                         }
                     }

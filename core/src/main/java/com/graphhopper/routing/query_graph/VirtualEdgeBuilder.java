@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing;
+package com.graphhopper.routing.query_graph;
 
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntObjectHashMap;
@@ -40,13 +40,13 @@ class VirtualEdgeBuilder {
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
     private final boolean is3D;
-    private VirtualGraphModification graphModification;
+    private QueryGraphModification graphModification;
 
-    public static VirtualGraphModification build(Graph graph, List<QueryResult> queryResults) {
+    public static QueryGraphModification build(Graph graph, List<QueryResult> queryResults) {
         return build(graph.getNodes(), graph.getEdges(), graph.getNodeAccess().is3D(), queryResults);
     }
 
-    public static VirtualGraphModification build(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D, List<QueryResult> queryResults) {
+    public static QueryGraphModification build(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D, List<QueryResult> queryResults) {
         return new VirtualEdgeBuilder(firstVirtualNodeId, firstVirtualEdgeId, is3D).build(queryResults);
     }
 
@@ -56,10 +56,10 @@ class VirtualEdgeBuilder {
         this.is3D = is3D;
     }
 
-    private VirtualGraphModification build(List<QueryResult> resList) {
-        graphModification = new VirtualGraphModification(resList.size(), is3D);
+    private QueryGraphModification build(List<QueryResult> resList) {
+        graphModification = new QueryGraphModification(resList.size(), is3D);
         buildVirtualEdges(resList);
-        buildAdditionalAndRemovedEdges();
+        buildEdgeChangesAtRealNodes();
         return graphModification;
     }
 
@@ -187,8 +187,8 @@ class VirtualEdgeBuilder {
 
                     // add edges again to set adjacent edges for newVirtNodeId
                     if (addedEdges) {
-                        graphModification.getVirtualEdges().add(graphModification.getVirtualEdges().get(graphModification.getVirtualEdges().size() - 2));
-                        graphModification.getVirtualEdges().add(graphModification.getVirtualEdges().get(graphModification.getVirtualEdges().size() - 2));
+                        graphModification.addVirtualEdge(graphModification.getVirtualEdge(graphModification.getNumVirtualEdges() - 2));
+                        graphModification.addVirtualEdge(graphModification.getVirtualEdge(graphModification.getNumVirtualEdges() - 2));
                     }
 
                     addedEdges = true;
@@ -229,7 +229,7 @@ class VirtualEdgeBuilder {
 
         PointList baseReversePoints = basePoints.clone(true);
         double baseDistance = basePoints.calcDistance(Helper.DIST_PLANE);
-        int virtEdgeId = firstVirtualEdgeId + graphModification.getVirtualEdges().size();
+        int virtEdgeId = firstVirtualEdgeId + graphModification.getNumVirtualEdges();
 
         boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);
         // edges between base and snapped point
@@ -240,8 +240,8 @@ class VirtualEdgeBuilder {
 
         baseEdge.setReverseEdge(baseReverseEdge);
         baseReverseEdge.setReverseEdge(baseEdge);
-        graphModification.getVirtualEdges().add(baseEdge);
-        graphModification.getVirtualEdges().add(baseReverseEdge);
+        graphModification.addVirtualEdge(baseEdge);
+        graphModification.addVirtualEdge(baseReverseEdge);
     }
 
     /**
@@ -250,7 +250,7 @@ class VirtualEdgeBuilder {
      * *  - one maps node ids to adjacent virtual edges
      * *  - the other maps node ids to edge ids that shall be skipped
      */
-    private void buildAdditionalAndRemovedEdges() {
-        VirtualEdgeMapBuilder.build(graphModification.getClosestEdges(), graphModification.getVirtualEdges(), firstVirtualNodeId, graphModification.getRealNodeModifications());
+    private void buildEdgeChangesAtRealNodes() {
+        EdgeChangeBuilder.build(graphModification.getClosestEdges(), graphModification.getVirtualEdges(), firstVirtualNodeId, graphModification.getEdgeChangesAtRealNodes());
     }
 }

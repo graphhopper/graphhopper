@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing;
+package com.graphhopper.routing.query_graph;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
@@ -29,12 +29,12 @@ import java.util.List;
 
 // todonow: not happy with this name. this class has the data we need to add the right virtual nodes/and edges
 // but compared to QueryGraph it simply provides this data instead of using it to implement the Graph interface
-public class VirtualGraphModification {
+class QueryGraphModification {
     // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
     // todonow: clarify comment: different virtual edges appear consecutively
     private final List<VirtualEdgeIteratorState> virtualEdges;
     // todonow: document
-    private final IntObjectMap<RealNodeModification> realNodeModifications;
+    private final IntObjectMap<EdgeChanges> edgeChangesAtRealNodes;
     /**
      * // todonow: move this comment ?
      * Store lat,lon of virtual tower nodes.
@@ -42,43 +42,55 @@ public class VirtualGraphModification {
     private final PointList virtualNodes;
     private final IntArrayList closestEdges;
 
-    public VirtualGraphModification(int numVirtualNodes, boolean is3D) {
+    QueryGraphModification(int numVirtualNodes, boolean is3D) {
         this.virtualNodes = new PointList(numVirtualNodes, is3D);
         this.virtualEdges = new ArrayList<>(numVirtualNodes * 2);
         this.closestEdges = new IntArrayList(numVirtualNodes);
-        realNodeModifications = new GHIntObjectHashMap<>(numVirtualNodes * 3);
+        edgeChangesAtRealNodes = new GHIntObjectHashMap<>(numVirtualNodes * 3);
     }
 
-    public List<VirtualEdgeIteratorState> getVirtualEdges() {
+    int getNumVirtualEdges() {
+        return virtualEdges.size();
+    }
+
+    void addVirtualEdge(VirtualEdgeIteratorState virtualEdge) {
+        virtualEdges.add(virtualEdge);
+    }
+
+    VirtualEdgeIteratorState getVirtualEdge(int edgeId) {
+        return virtualEdges.get(edgeId);
+    }
+
+    List<VirtualEdgeIteratorState> getVirtualEdges() {
         return virtualEdges;
     }
 
-    public IntObjectMap<RealNodeModification> getRealNodeModifications() {
-        return realNodeModifications;
+    IntObjectMap<EdgeChanges> getEdgeChangesAtRealNodes() {
+        return edgeChangesAtRealNodes;
     }
 
-    public PointList getVirtualNodes() {
+    PointList getVirtualNodes() {
         return virtualNodes;
     }
 
-    public IntArrayList getClosestEdges() {
+    IntArrayList getClosestEdges() {
         return closestEdges;
     }
 
-    public static class RealNodeModification {
+    static class EdgeChanges {
         private final List<EdgeIteratorState> additionalEdges;
         private final IntArrayList removedEdges;
 
-        RealNodeModification(int expectedNumAdditionalEdges, int expectedNumRemovedEdges) {
+        EdgeChanges(int expectedNumAdditionalEdges, int expectedNumRemovedEdges) {
             additionalEdges = new ArrayList<>(expectedNumAdditionalEdges);
             removedEdges = new IntArrayList(expectedNumRemovedEdges);
         }
 
-        public List<EdgeIteratorState> getAdditionalEdges() {
+        List<EdgeIteratorState> getAdditionalEdges() {
             return additionalEdges;
         }
 
-        public IntArrayList getRemovedEdges() {
+        IntArrayList getRemovedEdges() {
             return removedEdges;
         }
     }

@@ -16,15 +16,14 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing;
+package com.graphhopper.storage;
 
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.PointList;
 
 /**
  * {@link NodeAccess} that allows adding additional points
  */
-class ExtendedNodeAccess implements NodeAccess {
+public class ExtendedNodeAccess implements NodeAccess {
     private final NodeAccess nodeAccess;
     private final PointList additionalNodes;
     private final int firstAdditionalNodeId;
@@ -35,7 +34,7 @@ class ExtendedNodeAccess implements NodeAccess {
      * @param firstAdditionalNodeId the node id that is used for the first additional point (all other nodes will
      *                              use consecutive ids)
      */
-    ExtendedNodeAccess(NodeAccess nodeAccess, PointList additionalNodes, int firstAdditionalNodeId) {
+    public ExtendedNodeAccess(NodeAccess nodeAccess, PointList additionalNodes, int firstAdditionalNodeId) {
         this.nodeAccess = nodeAccess;
         this.firstAdditionalNodeId = firstAdditionalNodeId;
         this.additionalNodes = additionalNodes;

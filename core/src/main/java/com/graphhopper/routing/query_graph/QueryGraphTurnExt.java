@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing;
+package com.graphhopper.routing.query_graph;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.storage.Graph;

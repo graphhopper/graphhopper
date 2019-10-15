@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
+package com.graphhopper.routing.query_graph;
 
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
@@ -160,8 +160,8 @@ public class QueryGraphTest {
         // this query result is not very intuitive as we would expect snapping to the 1-0 edge, but this is how this
         // test was written initially...
         QueryResult qr = createLocationResult(2, 1.7, iter, 1, PILLAR);
-        VirtualGraphModification graphModification = VirtualEdgeBuilder.build(g, Collections.singletonList(qr));
-        IntObjectMap<VirtualGraphModification.RealNodeModification> realNodeModifications = graphModification.getRealNodeModifications();
+        QueryGraphModification graphModification = VirtualEdgeBuilder.build(g, Collections.singletonList(qr));
+        IntObjectMap<QueryGraphModification.EdgeChanges> realNodeModifications = graphModification.getEdgeChangesAtRealNodes();
         assertEquals(2, realNodeModifications.size());
         // ignore nodes should include baseNode == 1
         assertEquals("[3->4]", realNodeModifications.get(3).getAdditionalEdges().toString());
