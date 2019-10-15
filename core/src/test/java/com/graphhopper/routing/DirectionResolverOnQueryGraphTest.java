@@ -33,7 +33,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.routing.DirectionResolverResult.unrestricted;
@@ -300,7 +299,7 @@ public class DirectionResolverOnQueryGraphTest {
 
     private void assertUnrestricted(double lat, double lon) {
         QueryResult qr = getQueryResult(lat, lon);
-        queryGraph = QueryGraph.lookup(g, Collections.singletonList(qr));
+        queryGraph = QueryGraph.lookup(g, qr);
         DirectionResolver resolver = new DirectionResolver(queryGraph, encoder);
         assertEquals(unrestricted(), resolver.resolveDirections(qr.getClosestNode(), qr.getQueryPoint()));
     }

@@ -145,6 +145,14 @@ public class QueryGraph implements Graph {
 
     private boolean useEdgeExplorerCache = false;
 
+    public static QueryGraph lookup(Graph graph, QueryResult qr) {
+        return QueryGraph.lookup(graph, Collections.singletonList(qr));
+    }
+
+    public static QueryGraph lookup(Graph graph, QueryResult fromQR, QueryResult toQR) {
+        return QueryGraph.lookup(graph, Arrays.asList(fromQR, toQR));
+    }
+
     public static QueryGraph lookup(Graph graph, List<QueryResult> queryResults) {
         QueryGraph result = new QueryGraph(graph);
         result.lookup(queryResults);
@@ -432,9 +440,6 @@ public class QueryGraph implements Graph {
      * @return boolean indicating if enforcement took place
      */
     public boolean enforceHeading(int nodeId, double favoredHeading, boolean incoming) {
-        if (!isInitialized())
-            throw new IllegalStateException("QueryGraph.lookup has to be called in before heading enforcement");
-
         if (Double.isNaN(favoredHeading))
             return false;
 
@@ -445,7 +450,7 @@ public class QueryGraph implements Graph {
         favoredHeading = AC.convertAzimuth2xaxisAngle(favoredHeading);
 
         // either penalize incoming or outgoing edges
-        List<Integer> edgePositions = incoming ? Arrays.asList(VE_BASE, VE_ADJ_REV) : Arrays.asList(VE_BASE_REV, VE_ADJ);
+        int[] edgePositions = incoming ? new int[]{VE_BASE, VE_ADJ_REV} : new int[]{VE_BASE_REV, VE_ADJ};
         boolean enforcementOccurred = false;
         for (int edgePos : edgePositions) {
             VirtualEdgeIteratorState edge = virtualEdges.get(virtNodeIDintern * 4 + edgePos);
@@ -575,9 +580,6 @@ public class QueryGraph implements Graph {
 
     @Override
     public EdgeExplorer createEdgeExplorer(final EdgeFilter edgeFilter) {
-        if (!isInitialized())
-            throw new IllegalStateException("Call lookup before using this graph");
-
         if (useEdgeExplorerCache) {
             EdgeExplorer cached = cacheMap.get(edgeFilter);
             if (cached == null) {

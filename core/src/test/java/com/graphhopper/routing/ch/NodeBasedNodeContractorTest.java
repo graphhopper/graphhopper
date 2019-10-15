@@ -34,7 +34,10 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Parameters.Routing.HEADING_PENALTY;
@@ -425,11 +428,9 @@ public class NodeBasedNodeContractorTest {
         LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
         locationIndex.prepareIndex();
 
-        QueryGraph chQueryGraph = QueryGraph.lookup(lg,
-                Collections.singletonList(locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES)));
+        QueryGraph chQueryGraph = QueryGraph.lookup(lg, locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES));
 
-        QueryGraph queryGraph = QueryGraph.lookup(graph,
-                Collections.singletonList(locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES)));
+        QueryGraph queryGraph = QueryGraph.lookup(graph, locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES));
 
         // without heading
         {

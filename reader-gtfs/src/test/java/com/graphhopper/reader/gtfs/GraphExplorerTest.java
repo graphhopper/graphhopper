@@ -33,7 +33,6 @@ import com.graphhopper.util.PointList;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -192,7 +191,7 @@ public class GraphExplorerTest {
         point2.setWayIndex(0);
         point2.setSnappedPosition(QueryResult.Position.EDGE);
         point2.calcSnappedPoint(new DistanceCalc2D());
-        QueryGraph queryGraph = QueryGraph.lookup(wrapperGraph, Arrays.asList(point1, point2));
+        QueryGraph queryGraph = QueryGraph.lookup(wrapperGraph, point1, point2);
 
         GraphExplorer testee = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, false, 5.0);
         assertThat(() -> testee.exploreEdgesAround(new Label(0, -1, 0, 0, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
