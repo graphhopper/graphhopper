@@ -286,4 +286,8 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     private EdgeIteratorState getCurrentEdge() {
         return edges.get(current);
     }
+
+    public List<EdgeIteratorState> getEdges() {
+        return edges;
+    }
 }
