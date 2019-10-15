@@ -17,7 +17,7 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.routing.query_graph.VirtualEdgeIteratorState;
+import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 

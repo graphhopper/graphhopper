@@ -18,14 +18,10 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.Dijkstra;
-import com.graphhopper.routing.DijkstraBidirectionCH;
-import com.graphhopper.routing.DijkstraOneToMany;
-import com.graphhopper.routing.Path;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.SimpleBooleanEncodedValue;
-import com.graphhopper.routing.query_graph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;

@@ -2,8 +2,8 @@ package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.isochrone.algorithm.Isochrone;
+import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.query_graph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;

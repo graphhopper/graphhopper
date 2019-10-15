@@ -19,11 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.Dijkstra;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.query_graph.QueryGraph;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;

@@ -18,8 +18,8 @@
 
 package com.graphhopper.reader.gtfs;
 
-import com.graphhopper.routing.query_graph.QueryGraph;
-import com.graphhopper.routing.query_graph.VirtualEdgeIteratorState;
+import com.graphhopper.routing.QueryGraph;
+import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;

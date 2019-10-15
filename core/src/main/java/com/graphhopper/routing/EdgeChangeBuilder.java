@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.query_graph;
+package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
@@ -26,7 +26,7 @@ import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.List;
 
-import static com.graphhopper.routing.query_graph.QueryGraph.*;
+import static com.graphhopper.routing.QueryGraph.*;
 
 /**
  * Helper class for {@link GraphModificationBuilder}
