@@ -310,15 +310,14 @@ public class QueryGraph implements Graph {
     }
 
     private EdgeExplorer createUncachedEdgeExplorer(final EdgeFilter edgeFilter) {
-        // todonow: remove/update comment
-        // Iteration over virtual nodes needs to be thread safe if done from different explorer
-        // so we need to create the mapping on EVERY call!
-        // This needs to be a HashMap (and cannot be an array) as we also need to tweak edges for some mainNodes!
-        // The more query points we have the more inefficient this map could be. Hmmh.
+        // build a map of virtual edge lists for every node that is modified compared to the mainGraph. this map
+        // depends on the given edgeFilter, but we could just as well build this map independent from the edge filter
+        // and apply the filter while iterating the edges
+        final IntObjectMap<List<EdgeIteratorState>> virtualEdgeOverlay =
+                new GHIntObjectHashMap<>(graphModification.getEdgeChangesAtRealNodes().size() + graphModification.getVirtualNodes().size());
         final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
 
-        final int[] VIRTUAL_EDGES_AT_VIRTUAL_NODES = new int[]{VE_BASE_REV, VE_ADJ};
-        final IntObjectMap<List<EdgeIteratorState>> virtualEdgeOverlay = new GHIntObjectHashMap<>(graphModification.getEdgeChangesAtRealNodes().size() + graphModification.getVirtualNodes().size());
+        // add virtual edge lists for real neighbor nodes of the virtual nodes
         graphModification.getEdgeChangesAtRealNodes().forEach(new IntObjectProcedure<GraphModification.EdgeChanges>() {
             @Override
             public void apply(int node, GraphModification.EdgeChanges edgeChanges) {
@@ -337,9 +336,11 @@ public class QueryGraph implements Graph {
                 virtualEdgeOverlay.put(node, filteredEdges);
             }
         });
+
+        // add virtual edge lists for virtual nodes
         for (int i = 0; i < graphModification.getVirtualNodes().size(); i++) {
             List<EdgeIteratorState> filteredEdges = new ArrayList<>(2);
-            for (int vEdge : VIRTUAL_EDGES_AT_VIRTUAL_NODES) {
+            for (int vEdge : new int[]{VE_BASE_REV, VE_ADJ}) {
                 VirtualEdgeIteratorState virtualEdge = graphModification.getVirtualEdge(i * 4 + vEdge);
                 if (edgeFilter.accept(virtualEdge)) {
                     filteredEdges.add(virtualEdge);
@@ -347,15 +348,10 @@ public class QueryGraph implements Graph {
             }
             virtualEdgeOverlay.put(mainNodes + i, filteredEdges);
         }
-        final VirtualEdgeIterator virtualEdgeIterator = new VirtualEdgeIterator(null);
-        // todonow: this can be more efficient: e.g.
-        // 1) we can build a map node->filteredEdges already when the edge explorer is created (instead of in set base node)
-        // 2) we can keep the virtual edges and ignored edges in a single map
-        // 3) do not create virtual edge iterator objects on every setBaseNode call, rather use only one such
-        //    object and reset it
-        return new EdgeExplorer() {
-            // todonow: not too sure about this, eventually we should do some checksum comparisons with master!
 
+        // re-use this iterator object between setBaseNode calls to prevent GC
+        final VirtualEdgeIterator virtualEdgeIterator = new VirtualEdgeIterator(null);
+        return new EdgeExplorer() {
             @Override
             public EdgeIterator setBaseNode(int baseNode) {
                 List<EdgeIteratorState> filteredEdges = virtualEdgeOverlay.get(baseNode);

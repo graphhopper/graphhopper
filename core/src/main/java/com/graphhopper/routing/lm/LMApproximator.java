@@ -85,8 +85,6 @@ public class LMApproximator implements WeightApproximator {
             // there are at least two virtual nodes (start & destination)
             for (; idxVirtNode < qGraph.getNodes(); idxVirtNode++) {
                 // we need the real underlying edge as neighboring nodes could be virtual too
-                // todonow: this changed internally: instead of getting the virtual edge from query results we get
-                // it via its id. make sure this is ok
                 EdgeIteratorState edge = qGraph.getOriginalEdgeFromVirtNode(idxVirtNode);
 
                 int weight = lms.calcWeight(edge, reverse);
