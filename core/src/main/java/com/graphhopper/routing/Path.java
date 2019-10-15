@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHIntArrayList;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIterator;
@@ -47,7 +46,6 @@ public class Path {
     protected long time;
     protected int endNode = -1;
     private List<String> description;
-    protected Weighting weighting;
     private boolean found;
     private int fromNode = -1;
     private GHIntArrayList edgeIds;
@@ -55,11 +53,10 @@ public class Path {
     private NodeAccess nodeAccess;
     private String debugInfo = "";
 
-    public Path(Graph graph, Weighting weighting) {
+    public Path(Graph graph) {
         this.weight = Double.MAX_VALUE;
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
-        this.weighting = weighting;
         this.edgeIds = new GHIntArrayList();
     }
 
