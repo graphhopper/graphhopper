@@ -18,30 +18,28 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.UnsignedDecimalEncodedValue;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeMap;
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.routing.util.PriorityCode.*;
+import static com.graphhopper.routing.util.PriorityCode.REACH_DEST;
+import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
 
 /**
  * A flag encoder for wheelchairs.
- * <p>
  *
  * @author don-philipe
  */
 public class WheelchairFlagEncoder extends FootFlagEncoder {
-    final Set<String> excludeSurfaces = new HashSet<>();
-    final Set<String> excludeSmoothness = new HashSet<>();
-    final int maxInclinePercent = 6;
-    final int smallInclinePercent = 3;
-    final int maxKerbHeightCm = 3;
+    private final Set<String> excludeSurfaces = new HashSet<>();
+    private final Set<String> excludeSmoothness = new HashSet<>();
+    private final Set<String> excludeHighwayTags = new HashSet<>();
+    private final int maxInclinePercent = 6;
 
     /**
      * Should be only instantiated via EncodingManager
@@ -55,10 +53,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
                 properties.getDouble("speed_factor", 1));
         this.properties = properties;
         this.setBlockFords(properties.getBool("block_fords", true));
-    }
-
-    public WheelchairFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
     }
 
     public WheelchairFlagEncoder(int speedBits, double speedFactor) {
@@ -80,16 +74,16 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         safeHighwayTags.add("service");
         safeHighwayTags.add("platform");
 
-        avoidHighwayTags.add("trunk");
-        avoidHighwayTags.add("trunk_link");
-        avoidHighwayTags.add("primary");
-        avoidHighwayTags.add("primary_link");
-        avoidHighwayTags.add("secondary");
-        avoidHighwayTags.add("secondary_link");
-        avoidHighwayTags.add("tertiary");
-        avoidHighwayTags.add("tertiary_link");
-        avoidHighwayTags.add("steps");
-        avoidHighwayTags.add("track");
+        excludeHighwayTags.add("trunk");
+        excludeHighwayTags.add("trunk_link");
+        excludeHighwayTags.add("primary");
+        excludeHighwayTags.add("primary_link");
+        excludeHighwayTags.add("secondary");
+        excludeHighwayTags.add("secondary_link");
+        excludeHighwayTags.add("tertiary");
+        excludeHighwayTags.add("tertiary_link");
+        excludeHighwayTags.add("steps");
+        excludeHighwayTags.add("track");
 
         excludeSurfaces.add("cobblestone");
         excludeSurfaces.add("gravel");
@@ -102,7 +96,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         excludeSmoothness.add("impassable");
 
         allowedHighwayTags.addAll(safeHighwayTags);
-        allowedHighwayTags.addAll(avoidHighwayTags);
+        allowedHighwayTags.addAll(excludeHighwayTags);
         allowedHighwayTags.add("cycleway");
         allowedHighwayTags.add("unclassified");
         allowedHighwayTags.add("road");
@@ -119,25 +113,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     /**
-     * Remove speedEncoder from super class FootFlagEncoder and add a speedEncoder which supports two directions for
-     * speed calculation at slopes.
-     * @param registerNewEncodedValue
-     * @param prefix
-     * @param index
-     */
-    @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue, String prefix, int index) {
-        super.createEncodedValues(registerNewEncodedValue, prefix, index);
-        for (int i = 0; i < registerNewEncodedValue.size(); i++) {
-            if (registerNewEncodedValue.get(i).getName().endsWith("average_speed")) {
-                registerNewEncodedValue.remove(i);
-                registerNewEncodedValue.add(speedEncoder = new UnsignedDecimalEncodedValue(
-                        getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
-            }
-        }
-    }
-
-    /**
      * Avoid some more ways than for pedestrian like hiking trails.
      */
     @Override
@@ -150,7 +125,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
             return EncodingManager.Access.CAN_SKIP;
         }
 
-        if (way.hasTag("highway", avoidHighwayTags) && !way.hasTag("sidewalk", sidewalkValues)) {
+        if (way.hasTag("highway", excludeHighwayTags) && !way.hasTag("sidewalk", sidewalkValues)) {
             return EncodingManager.Access.CAN_SKIP;
         }
 
@@ -188,7 +163,8 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
                     if (-maxInclinePercent > incline || incline > maxInclinePercent) {
                         return EncodingManager.Access.CAN_SKIP;
                     }
-                } catch (NumberFormatException ex) { }
+                } catch (NumberFormatException ex) {
+                }
             }
         }
 
@@ -205,10 +181,12 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
                         kerbHeight /= 100;
                     }
 
+                    int maxKerbHeightCm = 3;
                     if (kerbHeight > maxKerbHeightCm) {
                         return EncodingManager.Access.CAN_SKIP;
                     }
-                } catch (NumberFormatException ex) { }
+                } catch (NumberFormatException ex) {
+                }
             }
         }
 
@@ -221,15 +199,15 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
             return edgeFlags;
         }
 
+        accessEnc.setBool(false, edgeFlags, true);
+        accessEnc.setBool(true, edgeFlags, true);
         if (!access.isFerry()) {
-            speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED);
+            setSpeed(edgeFlags, true, true, MEAN_SPEED);
         } else {
             double ferrySpeed = getFerrySpeed(way);
             setSpeed(false, edgeFlags, ferrySpeed);
+            setSpeed(true, edgeFlags, ferrySpeed);
         }
-
-        accessEnc.setBool(false, edgeFlags, true);
-        accessEnc.setBool(true, edgeFlags, true);
 
         return edgeFlags;
     }
@@ -238,8 +216,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
      * Calculate slopes from elevation data and set speed according to that. In-/declines between smallInclinePercent
      * and maxInclinePercent will reduce speed to SLOW_SPEED. In-/declines above maxInclinePercent will result in zero
      * speed.
-     * @param way
-     * @param edge
      */
     @Override
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
@@ -258,7 +234,8 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
 
         double eleDelta = pl.getElevation(pl.size() - 1) - prevEle;
         double elePercent = eleDelta / fullDist2D * 100;
-        if (elePercent> smallInclinePercent && elePercent < maxInclinePercent) {
+        int smallInclinePercent = 3;
+        if (elePercent > smallInclinePercent && elePercent < maxInclinePercent) {
             setFwdBwdSpeed(edge, SLOW_SPEED, MEAN_SPEED);
         } else if (elePercent < -smallInclinePercent && elePercent > -maxInclinePercent) {
             setFwdBwdSpeed(edge, MEAN_SPEED, SLOW_SPEED);
@@ -270,24 +247,23 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
 
     /**
      * Sets the given speed values to the given edge depending on the forward and backward accessibility of the edge.
-     * @param edge the edge to set speed for
+     *
+     * @param edge     the edge to set speed for
      * @param fwdSpeed speed value in forward direction
      * @param bwdSpeed speed value in backward direction
      */
     private void setFwdBwdSpeed(EdgeIteratorState edge, int fwdSpeed, int bwdSpeed) {
-        if (edge.get(accessEnc)) {
+        if (edge.get(accessEnc))
             edge.set(speedEncoder, fwdSpeed);
-        }
-        if (edge.getReverse(accessEnc)) {
+
+        if (edge.getReverse(accessEnc))
             edge.setReverse(speedEncoder, bwdSpeed);
-        }
     }
 
     /**
      * First get priority from {@link FootFlagEncoder#handlePriority(ReaderWay, int)} then evaluate wheelchair specific
      * tags.
-     * @param way
-     * @param priorityFromRelation
+     *
      * @return a priority for the given way
      */
     @Override

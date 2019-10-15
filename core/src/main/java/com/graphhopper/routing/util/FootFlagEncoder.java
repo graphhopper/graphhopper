@@ -294,23 +294,23 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         if (access.canSkip())
             return edgeFlags;
 
+        accessEnc.setBool(false, edgeFlags, true);
+        accessEnc.setBool(true, edgeFlags, true);
         if (!access.isFerry()) {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null) {
                 if ("hiking".equals(sacScale))
-                    speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED);
+                    setSpeed(edgeFlags, true, true, MEAN_SPEED);
                 else
-                    speedEncoder.setDecimal(false, edgeFlags, SLOW_SPEED);
+                    setSpeed(edgeFlags, true, true, SLOW_SPEED);
             } else {
-                speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED);
+                setSpeed(edgeFlags, true, true, MEAN_SPEED);
             }
-            accessEnc.setBool(false, edgeFlags, true);
-            accessEnc.setBool(true, edgeFlags, true);
         } else {
             double ferrySpeed = getFerrySpeed(way);
             setSpeed(false, edgeFlags, ferrySpeed);
-            accessEnc.setBool(false, edgeFlags, true);
-            accessEnc.setBool(true, edgeFlags, true);
+            if (speedTwoDirections)
+                setSpeed(true, edgeFlags, ferrySpeed);
         }
 
         int priorityFromRelation = 0;
@@ -319,6 +319,13 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(way, priorityFromRelation)));
         return edgeFlags;
+    }
+
+    protected void setSpeed(IntsRef edgeFlags, boolean fwd, boolean bwd, double speed) {
+        if (fwd)
+            speedEncoder.setDecimal(false, edgeFlags, speed);
+        if (bwd && speedTwoDirections)
+            speedEncoder.setDecimal(true, edgeFlags, speed);
     }
 
     protected int handlePriority(ReaderWay way, int priorityFromRelation) {
