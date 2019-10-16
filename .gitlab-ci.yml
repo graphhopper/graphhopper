@@ -11,7 +11,7 @@ run_measurement:
   script:
     - export BENCHMARK_DIR=/ext_data/
     - export BENCHMARK_RESULT_DIR=${BENCHMARK_DIR}results/$(date '+%d-%m-%Y-%s%N')/
-    - export BENCHMARK_MAP_NAME=andorra-190101.osm.pbf
+    - export BENCHMARK_MAP_NAME=germany-190101.osm.pbf
     - export BENCHMARK_MAP_URL=http://download.geofabrik.de/europe/${BENCHMARK_MAP_NAME}
     - mkdir -p ${BENCHMARK_DIR}osm
     - export BENCHMARK_MAP_PATH=${BENCHMARK_DIR}osm/${BENCHMARK_MAP_NAME}

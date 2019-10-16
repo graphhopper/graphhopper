@@ -12,7 +12,7 @@ set -euo pipefail
 
 defaultDataDir=measurements/
 defaultSingleResultsDir=measurements/results/$(date '+%d-%m-%Y-%s%N')/
-defaultMap=core/files/germany-190101.osm.pbf
+defaultMap=core/files/andorra.osm.pbf
 
 # this is the directory where we read/write data from/to
 DATA_DIR=${1:-$defaultDataDir}
