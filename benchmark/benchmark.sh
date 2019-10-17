@@ -40,8 +40,8 @@ prepare.lm.weightings=fastest \
 graph.flag_encoders=car \
 prepare.ch.edge_based=off \
 graph.location=${TMP_DIR}measurement-gh \
-prepare.min_network_size=200 \
-prepare.min_oneway_network_size=200 \
+prepare.min_network_size=10000 \
+prepare.min_oneway_network_size=10000 \
 measurement.json=true \
-measurement.count=10
+measurement.count=5000
 
