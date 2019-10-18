@@ -122,7 +122,8 @@ public class MapMatchingResource {
         } else {
             Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
             DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
-            PathMerger pathMerger = new PathMerger().
+            // todonow
+            PathMerger pathMerger = new PathMerger(whichGraph, whichWeighting).
                     setEnableInstructions(instructions).
                     setPathDetailsBuilders(graphHopper.getPathDetailsBuilderFactory(), pathDetails).
                     setDouglasPeucker(peucker).

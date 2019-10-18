@@ -114,7 +114,8 @@ public class MatchCommand extends Command {
                 System.out.println("\texport results to:" + outFile);
 
                 PathWrapper pathWrapper = new PathWrapper();
-                new PathMerger().doWork(pathWrapper, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), tr);
+                // todonow: is this right ?
+                new PathMerger(hopper.getGraphHopperStorage(), opts.getWeighting()).doWork(pathWrapper, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), tr);
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter(outFile))) {
                     long time = gpx.trk.get(0).getStartTime()
                             .map(Date::getTime)

@@ -25,6 +25,8 @@ import com.graphhopper.matching.util.TimeStep;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PreparationWeighting;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -157,12 +159,12 @@ public class MapMatching {
 
         // Add virtual nodes and edges to the graph so that candidates on edges can be represented
         // by virtual nodes.
-        QueryGraph queryGraph = new QueryGraph(routingGraph).setUseEdgeExplorerCache(true);
         List<QueryResult> allQueryResults = new ArrayList<>();
         for (Collection<QueryResult> qrs : queriesPerEntry) {
             allQueryResults.addAll(qrs);
         }
-        queryGraph.lookup(allQueryResults);
+        QueryGraph queryGraph = QueryGraph.lookup(routingGraph, allQueryResults);
+        queryGraph.setUseEdgeExplorerCache(true);
 
         // Different QueryResults can have the same tower node as their closest node.
         // Hence, we now dedupe the query results of each GPX entry by their closest node (#91).
@@ -702,7 +704,7 @@ public class MapMatching {
 
     private static class MapMatchedPath extends Path {
         MapMatchedPath(Graph graph, Weighting weighting, List<EdgeIteratorState> edges) {
-            super(graph, weighting);
+            super(graph);
             int prevEdge = EdgeIterator.NO_EDGE;
             for (EdgeIteratorState edge : edges) {
                 addDistance(edge.getDistance());

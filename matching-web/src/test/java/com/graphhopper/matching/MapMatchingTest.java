@@ -25,6 +25,7 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -117,7 +118,8 @@ public class MapMatchingTest {
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 1.5);
 
         PathWrapper matchGHRsp = new PathWrapper();
-        new PathMerger().doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), translationMap.get("en"));
+        // todonow
+        new PathMerger(whichGraph, whichWeighting).doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), translationMap.get("en"));
         InstructionList il = matchGHRsp.getInstructions();
 
         assertEquals(il.toString(), 2, il.size());
@@ -133,7 +135,8 @@ public class MapMatchingTest {
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), .1);
 
         matchGHRsp = new PathWrapper();
-        new PathMerger().doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), translationMap.get("en"));
+        // todonow
+        new PathMerger(whichGraph, whichWeighting).doWork(matchGHRsp, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), translationMap.get("en"));
         il = matchGHRsp.getInstructions();
 
         assertEquals(il.toString(), 3, il.size());
@@ -313,7 +316,7 @@ public class MapMatchingTest {
     private List<Observation> createRandomGPXEntries(GHPoint start, GHPoint end) {
         List<Path> paths = hopper.calcPaths(new GHRequest(start, end).setWeighting("fastest"), new GHResponse());
         Translation tr = hopper.getTranslationMap().get("en");
-        InstructionList instr = paths.get(0).calcInstructions(hopper.getEncodingManager().getBooleanEncodedValue(Roundabout.KEY), tr);
+        InstructionList instr = InstructionsFromEdges.calcInstructions(paths.get(0), whichGraph, whichWeighting, hopper.getGr, hopper.getEncodingManager().getBooleanEncodedValue(Roundabout.KEY), tr);
         return GpxFromInstructions.createGPXList(instr).stream()
                 .map(gpx -> new Observation(gpx.getPoint())).collect(Collectors.toList());
     }
