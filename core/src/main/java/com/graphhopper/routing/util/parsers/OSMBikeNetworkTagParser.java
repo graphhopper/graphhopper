@@ -25,6 +25,7 @@ import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RouteNetwork;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.Helper;
 
 import java.util.List;
 
@@ -44,7 +45,7 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
     public IntsRef handleRelationTags(IntsRef relFlags, ReaderRelation relation) {
         RouteNetwork bikeNetwork = RouteNetwork.OTHER;
         if (relation.hasTag("route", "bicycle")) {
-            String tag = relation.getTag("network", "lcn").toLowerCase();
+            String tag = Helper.toLowerCase(relation.getTag("network", "lcn"));
             if ("lcn".equals(tag)) {
                 bikeNetwork = RouteNetwork.LOCAL;
             } else if ("rcn".equals(tag)) {

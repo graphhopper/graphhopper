@@ -25,6 +25,7 @@ import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RouteNetwork;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.Helper;
 
 import java.util.List;
 
@@ -44,7 +45,7 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
     public IntsRef handleRelationTags(IntsRef relFlags, ReaderRelation relation) {
         RouteNetwork footNetwork = RouteNetwork.OTHER;
         if (relation.hasTag("route", "hiking") || relation.hasTag("route", "foot")) {
-            String tag = relation.getTag("network", "lwn").toLowerCase();
+            String tag = Helper.toLowerCase(relation.getTag("network", "lwn"));
             if ("lwn".equals(tag)) {
                 footNetwork = RouteNetwork.LOCAL;
             } else if ("rwn".equals(tag)) {
