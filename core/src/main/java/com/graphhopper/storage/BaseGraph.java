@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
@@ -1079,12 +1080,25 @@ class BaseGraph implements Graph {
      * Include all edges of this storage in the iterator.
      */
     protected static class AllEdgeIterator extends CommonEdgeIterator implements AllEdgesIterator {
+        private IntIndexedContainer edgeOrder = null;
+        private int edgeNumber = -1;
         public AllEdgeIterator(BaseGraph baseGraph) {
             this(baseGraph, baseGraph.edgeAccess);
         }
 
         private AllEdgeIterator(BaseGraph baseGraph, EdgeAccess edgeAccess) {
             super(-1, edgeAccess, baseGraph);
+        }
+
+        @Override
+        public void setEdgeOrder(IntIndexedContainer order) {
+            if (edgeNumber >= 0) {
+                throw new IllegalStateException("Cannot set edge order while traversing");
+            }
+            if (order.size() != baseGraph.edgeCount) {
+                throw new IllegalArgumentException("Invalid edge order, size was " + order.size() + " but should be " + baseGraph.edgeCount);
+            }
+            this.edgeOrder = order;
         }
 
         @Override
@@ -1095,7 +1109,12 @@ class BaseGraph implements Graph {
         @Override
         public boolean next() {
             while (true) {
-                edgeId++;
+                edgeNumber++;
+                if (edgeOrder != null && edgeNumber < baseGraph.edgeCount) {
+                    edgeId = edgeOrder.get(edgeNumber);
+                } else {
+                    edgeId = edgeNumber;
+                }
                 edgePointer = (long) edgeId * edgeAccess.getEntryBytes();
                 if (!checkRange())
                     return false;
@@ -1113,7 +1132,7 @@ class BaseGraph implements Graph {
         }
 
         protected boolean checkRange() {
-            return edgeId < baseGraph.edgeCount;
+            return edgeNumber < baseGraph.edgeCount;
         }
 
         @Override
@@ -1122,6 +1141,7 @@ class BaseGraph implements Graph {
                 throw new IllegalStateException("call next before detaching");
 
             AllEdgeIterator iter = new AllEdgeIterator(baseGraph, edgeAccess);
+            iter.edgeOrder = edgeOrder;
             iter.edgeId = edgeId;
             iter.edgePointer = edgePointer;
             if (reverseArg) {

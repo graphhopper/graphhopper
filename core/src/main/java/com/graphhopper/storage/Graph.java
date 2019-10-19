@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.EdgeExplorer;
@@ -121,5 +122,4 @@ public interface Graph {
      * @return the graph extension like a TurnCostExtension
      */
     GraphExtension getExtension();
-
 }

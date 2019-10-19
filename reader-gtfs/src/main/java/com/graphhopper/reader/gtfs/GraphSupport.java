@@ -18,6 +18,7 @@
 
 package com.graphhopper.reader.gtfs;
 
+import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
@@ -96,6 +97,11 @@ class GraphSupport {
                     @Override
                     public int length() {
                         return edge.length();
+                    }
+
+                    @Override
+                    public void setEdgeOrder(IntIndexedContainer order) {
+                        edge.setEdgeOrder(order);
                     }
 
                     @Override

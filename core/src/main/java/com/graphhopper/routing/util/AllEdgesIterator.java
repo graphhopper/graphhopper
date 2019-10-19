@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.util.EdgeIterator;
 
 /**
@@ -27,4 +28,9 @@ public interface AllEdgesIterator extends EdgeIterator {
      * @return the maximum edgeId in the graph plus 1
      */
     int length();
+
+    /**
+     * @param order The order in which edge IDs should be traversed
+     */
+    void setEdgeOrder(IntIndexedContainer order);
 }
