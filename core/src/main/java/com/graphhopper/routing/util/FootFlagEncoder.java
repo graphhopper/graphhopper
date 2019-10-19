@@ -169,7 +169,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     /**
      * Foot flag encoder does not provide any turn cost / restrictions
-     * <p>
      *
      * @return <code>false</code>
      */
@@ -180,7 +179,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     /**
      * Foot flag encoder does not provide any turn cost / restrictions
-     * <p>
      *
      * @return 0
      */

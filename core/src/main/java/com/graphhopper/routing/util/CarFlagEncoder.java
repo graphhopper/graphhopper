@@ -98,10 +98,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         absoluteBarriers.add("bus_trap");
         absoluteBarriers.add("sump_buster");
 
-        trackTypeSpeedMap.put("grade1", 20); // paved
-        trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with ...
-        trackTypeSpeedMap.put("grade3", 10); // ... hard and soft materials        
-
         badSurfaceSpeedMap.add("cobblestone");
         badSurfaceSpeedMap.add("grass_paver");
         badSurfaceSpeedMap.add("gravel");
@@ -138,6 +134,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         defaultSpeedMap.put("road", 20);
         // forestry stuff
         defaultSpeedMap.put("track", 15);
+
+        trackTypeSpeedMap.put("grade1", 20); // paved
+        trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with ...
+        trackTypeSpeedMap.put("grade3", 10); // ... hard and soft materials
+        trackTypeSpeedMap.put(null, defaultSpeedMap.get("track"));
 
         // limit speed on bad surfaces to 30 km/h
         badSurfaceSpeed = 30;
@@ -207,11 +208,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             return EncodingManager.Access.CAN_SKIP;
         }
 
-        if ("track".equals(highwayValue)) {
-            String tt = way.getTag("tracktype");
-            if (tt != null && !tt.equals("grade1") && !tt.equals("grade2") && !tt.equals("grade3"))
-                return EncodingManager.Access.CAN_SKIP;
-        }
+        if ("track".equals(highwayValue) && trackTypeSpeedMap.get(way.getTag("tracktype")) == null)
+            return EncodingManager.Access.CAN_SKIP;
 
         if (!defaultSpeedMap.containsKey(highwayValue))
             return EncodingManager.Access.CAN_SKIP;

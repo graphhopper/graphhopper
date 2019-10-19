@@ -40,12 +40,15 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class CarFlagEncoderTest {
-    private final EncodingManager em = EncodingManager.create(Arrays.asList(new CarFlagEncoder(new PMap("speed_two_directions=true")),
-            new BikeFlagEncoder(), new FootFlagEncoder()));
-    private final CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("car");
+    final CarFlagEncoder encoder = createEncoder();
+    private final EncodingManager em = EncodingManager.create(Arrays.asList(encoder, new BikeFlagEncoder(), new FootFlagEncoder()));
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
     private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+
+    CarFlagEncoder createEncoder() {
+        return new CarFlagEncoder(new PMap("speed_two_directions=true"));
+    }
 
     @Test
     public void testAccess() {
