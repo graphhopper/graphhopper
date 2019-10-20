@@ -1109,11 +1109,15 @@ class BaseGraph implements Graph {
         @Override
         public boolean next() {
             while (true) {
-                edgeNumber++;
-                if (edgeOrder != null && edgeNumber < baseGraph.edgeCount) {
-                    edgeId = edgeOrder.get(edgeNumber);
+                if (edgeOrder != null) {
+                    edgeNumber++;
+                    if (edgeNumber < baseGraph.edgeCount) {
+                        edgeId = edgeOrder.get(edgeNumber);
+                    } else {
+                        edgeId = edgeNumber;
+                    }
                 } else {
-                    edgeId = edgeNumber;
+                    edgeId++;
                 }
                 edgePointer = (long) edgeId * edgeAccess.getEntryBytes();
                 if (!checkRange())
@@ -1132,7 +1136,7 @@ class BaseGraph implements Graph {
         }
 
         protected boolean checkRange() {
-            return edgeNumber < baseGraph.edgeCount;
+            return edgeId < baseGraph.edgeCount;
         }
 
         @Override
@@ -1142,6 +1146,7 @@ class BaseGraph implements Graph {
 
             AllEdgeIterator iter = new AllEdgeIterator(baseGraph, edgeAccess);
             iter.edgeOrder = edgeOrder;
+            iter.edgeNumber = edgeNumber;
             iter.edgeId = edgeId;
             iter.edgePointer = edgePointer;
             if (reverseArg) {
