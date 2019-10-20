@@ -1,0 +1,24 @@
+.legDescriptionDetails {
+  display: flex;
+  flex-direction: row;
+}
+
+.carrotContainer {
+  height: 1rem;
+  width: 1rem;
+  margin-left: 0.5rem;
+  stroke: currentColor;
+}
+
+.carrotContainerFlipped {
+  composes: carrotContainer;
+}
+
+.carrotContainer > svg {
+  transition: 0.3s ease;
+}
+
+.carrotContainerFlipped > svg {
+  transition: 0.3s ease;
+  transform: rotateX(180deg);
+}

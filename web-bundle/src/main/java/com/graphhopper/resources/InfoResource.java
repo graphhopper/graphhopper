@@ -52,6 +52,7 @@ public class InfoResource {
         }
 
         public BBox bbox;
+        public double[][] examplePoints;
         public String[] supported_vehicles;
         public final Map<String, PerVehicle> features = new HashMap<>();
         public String version = Constants.VERSION;

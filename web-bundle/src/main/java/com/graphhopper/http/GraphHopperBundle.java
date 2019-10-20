@@ -226,6 +226,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 info.supported_vehicles = new String[]{"pt"};
                 info.features.clear();
                 info.features.put("pt", new InfoResource.Info.PerVehicle());
+                info.examplePoints = new double[][]{new double[]{36.425288,-117.133162}, new double[]{36.868446,-116.784582}};
                 context.setEntity(info);
             }
             context.proceed();
