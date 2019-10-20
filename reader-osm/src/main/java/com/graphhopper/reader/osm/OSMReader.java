@@ -453,9 +453,6 @@ public class OSMReader implements DataReader {
     }
 
     public Collection<TurnCostTableEntry> analyzeTurnRelation(FlagEncoder encoder, OSMTurnRelation turnRelation) {
-        if (!encoder.supports(TurnWeighting.class))
-            return Collections.emptyList();
-
         EdgeExplorer edgeOutExplorer = outExplorerMap.get(encoder);
         EdgeExplorer edgeInExplorer = inExplorerMap.get(encoder);
 
@@ -466,7 +463,7 @@ public class OSMReader implements DataReader {
             edgeInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
             inExplorerMap.put(encoder, edgeInExplorer);
         }
-        return getRestrictionAsEntries(turnRelation, encoder, edgeOutExplorer, edgeInExplorer, this);
+        return getRestrictionAsEntries(turnRelation, encoder, edgeOutExplorer, edgeInExplorer);
     }
 
     /**
@@ -925,15 +922,14 @@ public class OSMReader implements DataReader {
 
     /**
      * Transforms this relation into a collection of turn cost entries
-     * <p>
      *
      * @param edgeOutExplorer an edge filter which only allows outgoing edges
      * @param edgeInExplorer  an edge filter which only allows incoming edges
      * @return a collection of node cost entries which can be added to the graph later
      */
-    public static Collection<TurnCostTableEntry> getRestrictionAsEntries(OSMTurnRelation osmTurnRelation, TurnCostEncoder encoder,
-                                                                         EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, OSMReader osmReader) {
-        int nodeVia = osmReader.getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
+    Collection<TurnCostTableEntry> getRestrictionAsEntries(OSMTurnRelation osmTurnRelation, TurnCostEncoder encoder,
+                                                           EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer) {
+        int nodeVia = getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
 
         try {
             // street with restriction was not included (access or tag limits etc)
@@ -946,7 +942,7 @@ public class OSMReader implements DataReader {
             EdgeIterator iter = edgeInExplorer.setBaseNode(nodeVia);
 
             while (iter.next()) {
-                if (osmReader.getOsmIdOfInternalEdge(iter.getEdge()) == osmTurnRelation.getOsmIdFrom()) {
+                if (getOsmIdOfInternalEdge(iter.getEdge()) == osmTurnRelation.getOsmIdFrom()) {
                     edgeIdFrom = iter.getEdge();
                     break;
                 }
@@ -962,7 +958,7 @@ public class OSMReader implements DataReader {
             // for TYPE_NOT_*  we add ONE restriction  (from, via, to)
             while (iter.next()) {
                 int edgeId = iter.getEdge();
-                long wayId = osmReader.getOsmIdOfInternalEdge(edgeId);
+                long wayId = getOsmIdOfInternalEdge(edgeId);
                 if (edgeId != edgeIdFrom && osmTurnRelation.getRestriction() == OSMTurnRelation.Type.ONLY && wayId != osmTurnRelation.getOsmIdTo()
                         || osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT && wayId == osmTurnRelation.getOsmIdTo() && wayId >= 0) {
                     final TurnCostTableEntry entry = new TurnCostTableEntry();

@@ -77,7 +77,7 @@ public class OSMTurnRelationTest {
         // TYPE == ONLY
         OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, Type.ONLY);
         Collection<OSMReader.TurnCostTableEntry> result
-                = OSMReader.getRestrictionAsEntries(instance, encoder, edgeExplorer, edgeExplorer, osmReader);
+                = osmReader.getRestrictionAsEntries(instance, encoder, edgeExplorer, edgeExplorer);
 
         assertEquals(2, result.size());
         Iterator<OSMReader.TurnCostTableEntry> iter = result.iterator();
@@ -93,7 +93,7 @@ public class OSMTurnRelationTest {
 
         // TYPE == NOT
         instance = new OSMTurnRelation(4, 3, 3, Type.NOT);
-        result = OSMReader.getRestrictionAsEntries(instance, encoder, edgeExplorer, edgeExplorer, osmReader);
+        result = osmReader.getRestrictionAsEntries(instance, encoder, edgeExplorer, edgeExplorer);
 
         assertEquals(1, result.size());
         iter = result.iterator();
