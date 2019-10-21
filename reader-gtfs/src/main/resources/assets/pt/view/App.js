@@ -18,7 +18,6 @@
 
 import Sidebar from "./sidebar/Sidebar.js";
 import Map from "./map/Map.js";
-import Point from "../data/Point.js";
 import {TimeOption} from "../data/Search.js";
 import {CreateQuery, ParseQuery} from "../data/Query.js";
 import Path from "../data/Path.js";
@@ -46,65 +45,56 @@ export default class App extends React.Component {
     componentDidMount() {
         window.fetch("/info")
             .then(response => response.ok ? response.json() : Promise.reject(response.statusText))
-            .then(info => {
-                this.setState(prevState => {
-                    let stateUpdate = {
-                        info: info
-                    };
-                    if (prevState.from == null) {
-                        stateUpdate.from = Point.createFromArray(info.examplePoints[0]);
-                    }
-                    if (prevState.to == null) {
-                        stateUpdate.to = Point.createFromArray(info.examplePoints[1]);
-                    }
-                    return stateUpdate;
-                });
-            })
+            .then(info => this.setState({info: info}))
             .catch(error => console.log("Error in Webrequest. Code: " + error));
     }
 
     componentDidUpdate(prevProps, prevState) {
-        let query = CreateQuery(new URL("/route", window.location), this.state);
-        let appQuery = CreateQuery(window.location, this.state);
-        if (this.state.info !== null && this.state.routes.query !== query) {
-            // What we are currently seeing or fetching is not want we want to see.
-            // So we make a request.
-            console.log(query);
-            this.setState({
-                routes: {
-                    query: query,
-                    isFetching: true
-                }
-            });
-            window.fetch(query)
-                .then(response => response.ok ? response.json() : Promise.reject())
-                .then(ghResponse => {
-                    this.setState(prevState => {
-                        if (CreateQuery(new URL("/route", window.location), prevState) !== query) return {}; // This reply is not what we want to know anymore
-                        console.log(ghResponse);
-                        const paths = ghResponse.paths.map(path => new Path(path));
-                        const selectedPath = this._selectPathOnReceive(paths);
-                        return {
+        if (this.state.info !== null) { // Maybe better: Create a wrapper component that only renders this one when info is ready
+            if (this.state.from !== null && this.state.to !== null) { // The only ways our state would not correspond to a valid query
+                let query = CreateQuery(new URL("/route", window.location), this.state);
+                let appQuery = CreateQuery(window.location, this.state);
+                if (this.state.routes.query !== query) {
+                    // What we are currently seeing or fetching is not want we want to see.
+                    // So we make a request.
+                    console.log(query);
+                    this.setState({
+                        routes: {
+                            query: query,
+                            isFetching: true
+                        }
+                    });
+                    window.fetch(query)
+                        .then(response => response.ok ? response.json() : Promise.reject())
+                        .then(ghResponse => {
+                            this.setState(prevState => {
+                                if (CreateQuery(new URL("/route", window.location), prevState) !== query) return {}; // This reply is not what we want to know anymore
+                                console.log(ghResponse);
+                                const paths = ghResponse.paths.map(path => new Path(path));
+                                const selectedPath = this._selectPathOnReceive(paths);
+                                return {
+                                    routes: {
+                                        query: query,
+                                        paths: paths,
+                                        isLastQuerySuccess: true,
+                                        isFetching: false,
+                                        selectedRouteIndex: selectedPath
+                                    }
+                                };
+                            });
+                        })
+                        .catch(() => this.setState({
                             routes: {
                                 query: query,
-                                paths: paths,
-                                isLastQuerySuccess: true,
                                 isFetching: false,
-                                selectedRouteIndex: selectedPath
+                                isLastQuerySuccess: false
                             }
-                        };
-                    });
-                })
-                .catch(() => this.setState({
-                    routes: {
-                        query: query,
-                        isFetching: false,
-                        isLastQuerySuccess: false
-                    }
-                }));
-            window.history.replaceState({
-                name: "last state"
-            }, "", appQuery);
+                        }));
+                    window.history.replaceState({
+                        name: "last state"
+                    }, "", appQuery);
+                }
+            }
         }
     }
 
