@@ -60,22 +60,20 @@ class LeafletComponent extends React.Component {
     }));
     let bbox = this.props.info.bbox;
     this.map.fitBounds(Leaflet.latLngBounds(Leaflet.latLng(bbox[1], bbox[0]), Leaflet.latLng(bbox[3], bbox[2])));
+    this.map.on('click', e => this.props.onSubmit((prevState) => {
+      if (prevState.from === null) return {from: Point.createFromArray([e.latlng.lat, e.latlng.lng])};
+      else if (prevState.to === null) return {to: Point.createFromArray([e.latlng.lat, e.latlng.lng])};
+    }));
     this.setMarkers(this.props.from, this.props.to);
   }
 
-  componentWillReceiveProps({
-                              info,
-                              routes,
-                              from,
-                              to
-                            }) {
-    if (routes.isFetching || !routes.isLastQuerySuccess) {
+  componentDidUpdate() {
+    if (this.props.routes.isFetching || !this.props.routes.isLastQuerySuccess) {
       this.clearPaths();
-    } else if (routes.paths && routes.paths.length > 0) {
-      this.setNewPaths(routes.paths, routes.selectedRouteIndex);
+    } else if (this.props.routes.paths && this.props.routes.paths.length > 0) {
+      this.setNewPaths(this.props.routes.paths, this.props.routes.selectedRouteIndex);
     }
-
-    this.setMarkers(from, to);
+    this.setMarkers(this.props.from, this.props.to);
   }
 
   setMarkers(from, to) {
@@ -112,10 +110,6 @@ class LeafletComponent extends React.Component {
 
       this._markers.push(marker2);
     }
-  }
-
-  shouldComponentUpdate(nextProps, nextState) {
-    return false;
   }
 
   render() {
