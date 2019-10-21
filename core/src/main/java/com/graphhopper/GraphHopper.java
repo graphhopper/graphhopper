@@ -96,6 +96,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean allowWrites = true;
     private boolean fullyLoaded = false;
     private boolean smoothElevation = false;
+    private boolean conserveMemory = false;
     // for routing
     private int maxRoundTripRetries = 3;
     private boolean simplifyResponse = true;
@@ -533,6 +534,8 @@ public class GraphHopper implements GraphHopperAPI {
         else
             lockFactory = new NativeFSLockFactory();
 
+        conserveMemory = args.getBool("graph.conserve_memory", false);
+
         // elevation
         String eleProviderStr = toLowerCase(args.get("graph.elevation.provider", "noop"));
         this.smoothElevation = args.getBool("graph.elevation.smoothing", false);
@@ -852,6 +855,12 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         initLocationIndex();
+
+        if (conserveMemory) {
+            locationIndex.flush();
+            locationIndex.close();
+            ghStorage.flushAndFreeEarly();
+        }
 
         if (chFactoryDecorator.isEnabled())
             chFactoryDecorator.createPreparations(ghStorage);

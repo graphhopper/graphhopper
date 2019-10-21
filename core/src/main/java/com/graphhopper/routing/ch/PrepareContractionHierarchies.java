@@ -478,6 +478,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return new TurnWeighting(prepareWeighting, turnCostExtension, chProfile.getUTurnCosts());
     }
 
+    public void flushAndFree() {
+        CHGraphImpl cg = ((CHGraphImpl) prepareGraph);
+        cg.setNodesHeader();
+        cg.setEdgesHeader();
+        cg.flush();
+        cg.close();
+    }
+
     private static class Params {
         /**
          * Specifies after how many contracted nodes a full refresh of the queue of remaining/not contracted nodes

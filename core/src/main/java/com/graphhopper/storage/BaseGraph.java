@@ -413,21 +413,34 @@ class BaseGraph implements Graph {
         }
     }
 
-    void flush() {
-        setNodesHeader();
-        setEdgesHeader();
+    /**
+     * Flush and free resources that are not needed for post-processing (way geometries and name index).
+     */
+    public void flushAndFreeEarly() {
         setWayGeometryHeader();
 
         wayGeometry.flush();
+        wayGeometry.close();
+
         nameIndex.flush();
+        nameIndex.close();
+    }
+
+    public void flush() {
+        setNodesHeader();
+        setEdgesHeader();
+        if (!wayGeometry.isClosed()) setWayGeometryHeader();
+
+        if (!wayGeometry.isClosed() )wayGeometry.flush();
+        if (!nameIndex.isClosed()) nameIndex.flush();
         edges.flush();
         nodes.flush();
         extStorage.flush();
     }
 
-    void close() {
-        wayGeometry.close();
-        nameIndex.close();
+    public void close() {
+        if (!wayGeometry.isClosed()) wayGeometry.close();
+        if (!nameIndex.isClosed()) nameIndex.close();
         edges.close();
         nodes.close();
         extStorage.close();

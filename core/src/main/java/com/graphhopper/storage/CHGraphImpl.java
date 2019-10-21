@@ -283,7 +283,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         isReadyForContraction = nodesCH.getHeader(0 * 4) == 1;
     }
 
-    void setNodesHeader() {
+    public void setNodesHeader() {
         nodesCH.setHeader(0 * 4, isReadyForContraction ? 1 : 0);
     }
 
@@ -293,7 +293,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return 3;
     }
 
-    protected int setEdgesHeader() {
+    public int setEdgesHeader() {
         shortcuts.setHeader(0 * 4, shortcutCount);
         shortcuts.setHeader(1 * 4, shortcutEntryBytes);
         return 3;
