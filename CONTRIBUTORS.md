@@ -48,7 +48,7 @@ Here is an overview:
  * michalmac, fixes like #1467
  * michaz, one of the core developers
  * mprins, improvements for travis CI and regarding JDK9 #806
- * msb5014, fixes like #1733
+ * msbarry, fixes like #1733
  * njanakiev, fixes like #1560
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
  * ocampana, initial implementation for instructions
