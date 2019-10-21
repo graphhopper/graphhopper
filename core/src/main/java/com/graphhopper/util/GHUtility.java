@@ -367,9 +367,14 @@ public class GHUtility {
     }
 
     static Graph createSortedGraph(Graph fromGraph, Graph toSortedGraph, final IntIndexedContainer oldToNewNodeList, final IntIndexedContainer newToOldEdgeList) {
-        AllEdgesIterator eIter = fromGraph.getAllEdges();
-        eIter.setEdgeOrder(newToOldEdgeList);
-        while (eIter.next()) {
+        int edges = fromGraph.getEdges();
+        for (int i = 0; i < edges; i++) {
+            int edgeId = newToOldEdgeList.get(i);
+            if (edgeId < 0)
+                continue;
+
+            EdgeIteratorState eIter = fromGraph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
+
             int base = eIter.getBaseNode();
             int newBaseIndex = oldToNewNodeList.get(base);
             int adj = eIter.getAdjNode();

@@ -18,7 +18,6 @@
 
 package com.graphhopper.reader.gtfs;
 
-import com.carrotsearch.hppc.IntIndexedContainer;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.google.common.collect.ArrayListMultimap;
@@ -124,11 +123,6 @@ public class WrapperGraph implements Graph {
                         IntStream.of(mainGraph.getAllEdges().length() - 1),
                         StreamSupport.stream(extraEdges.values().spliterator(), false).mapToInt(cursor -> cursor.value.getEdge()))
                         .max().getAsInt() + 1;
-            }
-
-            @Override
-            public void setEdgeOrder(IntIndexedContainer order) {
-                throw new UnsupportedOperationException();
             }
 
             @Override
