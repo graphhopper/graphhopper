@@ -635,15 +635,7 @@ public class GraphHopper implements GraphHopperAPI {
                     throw new RuntimeException("To avoid multiple writers we need to obtain a write lock but it failed. In " + graphHopperLocation, lock.getObtainFailedReason());
             }
 
-            try {
-                DataReader reader = importData();
-                DateFormat f = createFormatter();
-                ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
-                if (reader.getDataDate() != null)
-                    ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
-            } catch (IOException ex) {
-                throw new RuntimeException("Cannot read file " + getDataReaderFile(), ex);
-            }
+            readData();
             cleanUp();
             postProcessing();
             flush();
@@ -652,6 +644,18 @@ public class GraphHopper implements GraphHopperAPI {
                 lock.release();
         }
         return this;
+    }
+
+    private void readData() {
+        try {
+            DataReader reader = importData();
+            DateFormat f = createFormatter();
+            ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
+            if (reader.getDataDate() != null)
+                ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
+        } catch (IOException ex) {
+            throw new RuntimeException("Cannot read file " + getDataReaderFile(), ex);
+        }
     }
 
     protected DataReader importData() throws IOException {
