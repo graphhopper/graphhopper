@@ -37,8 +37,8 @@ measurement.repeats=1 \
 measurement.run_slow_routing=false \
 prepare.ch.weightings=fastest \
 prepare.lm.weightings=fastest \
-graph.flag_encoders=car \
-prepare.ch.edge_based=off \
+"graph.flag_encoders=car|turn_costs=true" \
+prepare.ch.edge_based=edge_or_node \
 graph.location=${TMP_DIR}measurement-gh \
 prepare.min_network_size=10000 \
 prepare.min_oneway_network_size=10000 \
