@@ -45,16 +45,17 @@ import static com.graphhopper.util.Helper.toLowerCase;
  * @author Nop
  */
 public class EncodingManager implements EncodedValueLookup {
-    private static final int BITS_FOR_TURN_FLAGS = 8 * 4;
-
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
     private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
-    private final List<TagParser> tagParserList = new ArrayList<>();
+    // TODO NOW should we really put this in the same map? Makes it easier as we do not have to provide yet another EncodedValueLookup interface
+    // private final Map<String, EncodedValue> tcEVMap = new LinkedHashMap<>();
+    private final List<OSMTurnCostParser> tcParsers = new ArrayList<>();
     private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
+    private final List<TagParser> tagParserList = new ArrayList<>();
     private int nextNodeBit = 0;
-    private int nextTurnBit = 0;
     private boolean enableInstructions = true;
     private String preferredLanguage = "";
+    private EncodedValue.InitializerConfig turnCostConfig;
     private EncodedValue.InitializerConfig relationConfig;
     private EncodedValue.InitializerConfig edgeConfig;
 
@@ -133,6 +134,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private EncodingManager() {
+        this.turnCostConfig = new EncodedValue.InitializerConfig();
         this.relationConfig = new EncodedValue.InitializerConfig();
         this.edgeConfig = new EncodedValue.InitializerConfig();
     }
@@ -197,6 +199,20 @@ public class EncodingManager implements EncodedValueLookup {
             return this;
         }
 
+        public Builder addTurnCostParser(OSMTurnCostParser parser) {
+            List<EncodedValue> list = new ArrayList<>();
+            parser.createRelationEncodedValues(list);
+            for (EncodedValue ev : list) {
+                ev.init(em.turnCostConfig);
+                // em.tcEVMap.put(ev.getName(), ev);
+                if (em.encodedValueMap.containsKey(ev.getName()))
+                    throw new IllegalArgumentException("For now EncodedValues for edges and turn cost are in the same name space and cannot use the same names");
+                em.encodedValueMap.put(ev.getName(), ev);
+            }
+            em.tcParsers.add(parser);
+            return this;
+        }
+
         public Builder addRelationTagParsers() {
             addRelationTagParser(new OSMBikeNetworkTagParser());
             addRelationTagParser(new OSMFootNetworkTagParser());
@@ -231,6 +247,10 @@ public class EncodingManager implements EncodedValueLookup {
                 addRelationTagParser(new OSMFootNetworkTagParser());
 
             em.addEncoder((AbstractFlagEncoder) encoder);
+
+            if (encoder.supports(TurnWeighting.class))
+                addTurnCostParser(new OSMTurnCostParser(encoder.toString(), em, ((AbstractFlagEncoder) encoder).getMaxTurnCosts()));
+
             return this;
         }
 
@@ -382,12 +402,6 @@ public class EncodingManager implements EncodedValueLookup {
         for (EncodedValue ev : list) {
             addEncodedValue(ev, true);
         }
-
-        // turn flag bits are independent from edge encoder bits
-        usedBits = encoder.defineTurnBits(encoderCount, nextTurnBit);
-        if (usedBits > BITS_FOR_TURN_FLAGS)
-            throw new IllegalArgumentException(String.format(Locale.ROOT, "Encoders are requesting %s bits, more than %s bits of turn flags. ", usedBits, BITS_FOR_TURN_FLAGS));
-        nextTurnBit = usedBits;
 
         edgeEncoders.add(encoder);
     }
@@ -577,8 +591,12 @@ public class EncodingManager implements EncodedValueLookup {
 
     public IntsRef createRelationFlags() {
         // for backward compatibility use 2 ints
-        // TODO NOW we need a long value to store this in the map in OSMReader, but in handleWayTags the relation encoded values will become edge encoded values
         return new IntsRef(2);
+    }
+
+    // TODO NOW use this instead of long
+    public IntsRef createTurnCostFlags() {
+        return new IntsRef(1);
     }
 
     public IntsRef flagsDefault(boolean forward, boolean backward) {
@@ -646,6 +664,10 @@ public class EncodingManager implements EncodedValueLookup {
 
     public List<FlagEncoder> fetchEdgeEncoders() {
         return new ArrayList<FlagEncoder>(edgeEncoders);
+    }
+
+    public List<OSMTurnCostParser> fetchTurnCostParsers() {
+        return new ArrayList<>(tcParsers);
     }
 
     public boolean needsTurnCostsSupport() {

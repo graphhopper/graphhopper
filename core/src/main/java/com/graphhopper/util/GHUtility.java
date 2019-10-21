@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.Helper.DIST_EARTH;
 
 /**
@@ -228,13 +229,16 @@ public class GHUtility {
         return Helper.DIST_PLANE.calcDist(fromLat, fromLon, toLat, toLon);
     }
 
-    public static void addRandomTurnCosts(Graph graph, long seed, FlagEncoder encoder, int maxTurnCost, TurnCostExtension turnCostExtension) {
+    public static void addRandomTurnCosts(Graph graph, long seed, EncodingManager em, FlagEncoder encoder, int maxTurnCost, TurnCostExtension turnCostExtension) {
         Random random = new Random(seed);
         double pNodeHasTurnCosts = 0.3;
         double pEdgePairHasTurnCosts = 0.6;
         double pCostIsRestriction = 0.1;
+
+        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(getKey(encoder.toString(), "turn_cost"));
         EdgeExplorer inExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
         EdgeExplorer outExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+        IntsRef tcFlags = em.createTurnCostFlags();
         for (int node = 0; node < graph.getNodes(); ++node) {
             if (random.nextDouble() < pNodeHasTurnCosts) {
                 EdgeIterator inIter = inExplorer.setBaseNode(node);
@@ -246,12 +250,9 @@ public class GHUtility {
                             continue;
                         }
                         if (random.nextDouble() < pEdgePairHasTurnCosts) {
-                            boolean restricted = false;
-                            if (random.nextDouble() < pCostIsRestriction) {
-                                restricted = true;
-                            }
-                            double cost = restricted ? 0 : random.nextDouble() * maxTurnCost;
-                            turnCostExtension.addTurnInfo(inIter.getEdge(), node, outIter.getEdge(), encoder.getTurnFlags(restricted, cost));
+                            double cost = random.nextDouble() < pCostIsRestriction ? Double.POSITIVE_INFINITY : random.nextDouble() * maxTurnCost;
+                            turnCostEnc.setDecimal(false, tcFlags, cost);
+                            turnCostExtension.addTurnCost(tcFlags, inIter.getEdge(), node, outIter.getEdge());
                         }
                     }
                 }

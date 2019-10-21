@@ -26,11 +26,11 @@ public class ShortcutUnpackerTest {
     private final static int PREV_EDGE = 12;
     private final static int NEXT_EDGE = 13;
     private final boolean edgeBased;
+    private EncodingManager encodingManager;
     private FlagEncoder encoder;
     private Weighting weighting;
     private GraphHopperStorage graph;
     private CHGraph chGraph;
-    private TurnCostExtension turnCostExtension;
 
     @Parameterized.Parameters(name = "{0}")
     public static Object[] params() {
@@ -48,13 +48,10 @@ public class ShortcutUnpackerTest {
     public void init() {
         // use motorcycle to be able to set different fwd/bwd speeds
         encoder = new MotorcycleFlagEncoder(5, 5, 10);
-        EncodingManager encodingManager = EncodingManager.create(encoder);
+        encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
         graph = new GraphBuilder(encodingManager).setCHProfiles(new CHProfile(weighting, edgeBased, INFINITE_U_TURN_COSTS)).create();
         chGraph = graph.getCHGraph();
-        if (edgeBased) {
-            turnCostExtension = (TurnCostExtension) graph.getExtension();
-        }
     }
 
     @Test
@@ -234,21 +231,22 @@ public class ShortcutUnpackerTest {
         graph.freeze();
 
         // turn costs ->
-        turnCostExtension.addTurnInfo(PREV_EDGE, 0, edge0.getEdge(), encoder.getTurnFlags(false, 2));
-        addTurnCost(edge0, edge1, 1, 5);
-        addTurnCost(edge1, edge2, 2, 3);
-        addTurnCost(edge2, edge3, 3, 2);
-        addTurnCost(edge3, edge4, 4, 1);
-        addTurnCost(edge4, edge5, 5, 4);
-        turnCostExtension.addTurnInfo(edge5.getEdge(), 6, NEXT_EDGE, encoder.getTurnFlags(false, 6));
+        TurnCostAccess tcAccess = new TurnCostAccess(encoder.toString(), graph, encodingManager).
+                add(PREV_EDGE, 0, edge0.getEdge(), 2.0).
+                add(edge0.getEdge(), edge1.getEdge(), 1, 5.0).
+                add(edge1.getEdge(), edge2.getEdge(), 2, 3).
+                add(edge2.getEdge(), edge3.getEdge(), 3, 2.0).
+                add(edge3.getEdge(), edge4.getEdge(), 4, 1.0).
+                add(edge4.getEdge(), edge5.getEdge(), 5, 4.0).
+                add(edge5.getEdge(), 6, NEXT_EDGE, 6.0);
         // turn costs <-
-        turnCostExtension.addTurnInfo(NEXT_EDGE, 6, edge5.getEdge(), encoder.getTurnFlags(false, 2));
-        addTurnCost(edge5, edge4, 5, 3);
-        addTurnCost(edge4, edge3, 4, 2);
-        addTurnCost(edge3, edge2, 3, 4);
-        addTurnCost(edge2, edge1, 2, 1);
-        addTurnCost(edge1, edge0, 1, 0);
-        turnCostExtension.addTurnInfo(edge0.getEdge(), 0, PREV_EDGE, encoder.getTurnFlags(false, 1));
+        tcAccess.add(NEXT_EDGE, 6, edge5.getEdge(), 2.0).
+                add(edge5.getEdge(), edge4.getEdge(), 5, 3.0).
+                add(edge4.getEdge(), edge3.getEdge(), 4, 2.0).
+                add(edge3.getEdge(), edge2.getEdge(), 3, 4.0).
+                add(edge2.getEdge(), edge1.getEdge(), 2, 1.0).
+                add(edge1.getEdge(), edge0.getEdge(), 1, 0.0).
+                add(edge0.getEdge(), 0, PREV_EDGE, 1.0);
 
         shortcut(0, 2, 0, 1, 0, 1);
         shortcut(2, 4, 2, 3, 2, 3);
@@ -289,10 +287,6 @@ public class ShortcutUnpackerTest {
         }
     }
 
-    private void addTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double costs) {
-        turnCostExtension.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, costs));
-    }
-
     private void shortcut(int baseNode, int adjNode, int skip1, int skip2, int origFirst, int origLast) {
         // shortcut weight/distance is not important for us here
         double weight = 1;
@@ -325,7 +319,7 @@ public class ShortcutUnpackerTest {
     }
 
     private class TurnWeightingVisitor implements ShortcutUnpacker.Visitor {
-        private final TurnWeighting turnWeighting = new TurnWeighting(weighting, turnCostExtension);
+        private final TurnWeighting turnWeighting = new TurnWeighting(weighting, edgeBased ? (TurnCostExtension) graph.getExtension() : null);
         private long time = 0;
         private double weight = 0;
 

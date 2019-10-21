@@ -26,10 +26,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
@@ -116,7 +113,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         return ghStorage;
     }
 
-    private void initTurnRestrictions(Graph g) {
+    private void initTurnRestrictions(GraphHopperStorage g) {
         // only forward from 2-3 to 3-4 => limit 2,3->3,6 and 2,3->3,1
         addTurnRestriction(g, 2, 3, 6);
         addTurnRestriction(g, 2, 3, 1);
@@ -154,9 +151,10 @@ public class EdgeBasedRoutingAlgorithmTest {
         long seed = System.nanoTime();
         final int numQueries = 100;
         Random rnd = new Random(seed);
-        GraphHopperStorage g = createStorage(createEncodingManager(false));
+        EncodingManager em = createEncodingManager(false);
+        GraphHopperStorage g = createStorage(em);
         GHUtility.buildRandomGraph(g, rnd, 50, 2.2, true, true, carEncoder.getAverageSpeedEnc(), 0.8, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(g, seed, carEncoder, 3, tcs);
+        GHUtility.addRandomTurnCosts(g, seed, em, carEncoder, 3, tcs);
         g.freeze();
         int numPathsNotFound = 0;
         // todo: reduce redundancy with RandomCHRoutingTest
@@ -230,7 +228,6 @@ public class EdgeBasedRoutingAlgorithmTest {
         g.edge(4, 1, 1, true);
         g.edge(4, 3, 1, true);
         g.edge(1, 1, 10, true);
-        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
         addTurnRestriction(g, 0, 4, 3);
 
         Path p = calcPath(g, 0, 3);
@@ -274,7 +271,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         assertEquals("wrong time", 1000 * (numEdges * weightPerEdge + turnCost), path.getTime(), 1.e-6);
     }
 
-    private void blockNode3(Graph g) {
+    private void blockNode3(GraphHopperStorage g) {
         // Totally block this node (all 9 turn relations)
         addTurnRestriction(g, 2, 3, 1);
         addTurnRestriction(g, 2, 3, 4);
@@ -457,17 +454,13 @@ public class EdgeBasedRoutingAlgorithmTest {
         assertEquals(11 * 0.06 * 1000, p.getTime(), 1.e-3);
     }
 
-    private void addTurnRestriction(Graph g, int from, int via, int to) {
-        long turnFlags = carEncoder.getTurnFlags(true, 0);
-        addTurnFlags(g, from, via, to, turnFlags);
+    private void addTurnRestriction(GraphHopperStorage g, int from, int via, int to) {
+        new TurnCostAccess(carEncoder.toString(), g).
+                addRestriction(getEdge(g, from, via).getEdge(), via, getEdge(g, via, to).getEdge());
     }
 
-    private void addTurnCost(Graph g, double costs, int from, int via, int to) {
-        long turnFlags = carEncoder.getTurnFlags(false, costs);
-        addTurnFlags(g, from, via, to, turnFlags);
-    }
-
-    private void addTurnFlags(Graph g, int from, int via, int to, long turnFlags) {
-        tcs.addTurnInfo(getEdge(g, from, via).getEdge(), via, getEdge(g, via, to).getEdge(), turnFlags);
+    private void addTurnCost(GraphHopperStorage g, double costs, int from, int via, int to) {
+        new TurnCostAccess(carEncoder.toString(), g).
+                add(getEdge(g, from, via).getEdge(), via, getEdge(g, via, to).getEdge(), costs);
     }
 }

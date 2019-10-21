@@ -478,10 +478,11 @@ public class QueryGraphTest {
     public void testTurnCostsProperlyPropagated_Issue282() {
         TurnCostExtension turnExt = new TurnCostExtension();
         FlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
-
-        GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(),
-                EncodingManager.create(encoder), false, turnExt).
+        EncodingManager em = EncodingManager.create(encoder);
+        GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(), em, false, turnExt).
                 create(100);
+        IntsRef tcFlags = em.createTurnCostFlags();
+        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(EncodingManager.getKey(encoder.toString(), "turn_cost"));
         NodeAccess na = graphWithTurnCosts.getNodeAccess();
         na.setNode(0, .00, .00);
         na.setNode(1, .00, .01);
@@ -497,7 +498,8 @@ public class QueryGraphTest {
         assertEquals(0, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 
         // now use turn costs and QueryGraph
-        turnExt.addTurnInfo(edge0.getEdge(), 1, edge1.getEdge(), encoder.getTurnFlags(false, 10));
+        turnCostEnc.setDecimal(false, tcFlags, 10);
+        turnExt.addTurnCost(tcFlags, edge0.getEdge(), 1, edge1.getEdge());
         assertEquals(10, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 
         QueryResult res1 = createLocationResult(0.000, 0.005, edge0, 0, QueryResult.Position.EDGE);

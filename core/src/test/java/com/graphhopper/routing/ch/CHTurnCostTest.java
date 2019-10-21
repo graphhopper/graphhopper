@@ -58,6 +58,8 @@ public class CHTurnCostTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHTurnCostTest.class);
     private int maxCost;
     private CarFlagEncoder encoder;
+    private EncodingManager encodingManager;
+    private TurnCostAccess tcAccess;
     private Weighting weighting;
     private GraphHopperStorage graph;
     private TurnCostExtension turnCostExtension;
@@ -73,10 +75,11 @@ public class CHTurnCostTest {
         // its important to use @Before when using Repeat Rule!
         maxCost = 10;
         encoder = new CarFlagEncoder(5, 5, maxCost);
-        EncodingManager encodingManager = EncodingManager.create(encoder);
+        encodingManager = EncodingManager.create(encoder);
         weighting = new ShortestWeighting(encoder);
         chProfiles = createCHProfiles();
         graph = new GraphBuilder(encodingManager).setCHProfiles(chProfiles).create();
+        tcAccess = new TurnCostAccess(encoder.toString(), graph, encodingManager);
         // the default CH graph with infinite u-turn costs, can be reset in tests that should run with finite u-turn
         // costs
         chGraph = graph.getCHGraph(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS));
@@ -1058,7 +1061,7 @@ public class CHTurnCostTest {
         final Random rnd = new Random(seed);
         // for larger graphs preparation takes much longer the higher the degree is!
         GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxCost, turnCostExtension);
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostExtension);
         graph.freeze();
         checkStrict = false;
         List<Integer> contractionOrder = getRandomIntegerSequence(chGraph.getNodes(), rnd);
@@ -1088,7 +1091,7 @@ public class CHTurnCostTest {
 
     private void compareWithDijkstraOnRandomGraph_heuristic(long seed) {
         GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxCost, turnCostExtension);
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostExtension);
         graph.freeze();
         checkStrict = false;
         automaticCompareCHWithDijkstra(100);
@@ -1253,7 +1256,7 @@ public class CHTurnCostTest {
     }
 
     private void addRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode) {
-        turnCostExtension.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(true, 0));
+        tcAccess.addRestriction(inEdge.getEdge(), viaNode, outEdge.getEdge());
     }
 
     private void addTurnCost(int from, int via, int to, double cost) {
@@ -1261,7 +1264,7 @@ public class CHTurnCostTest {
     }
 
     private void addTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double costs) {
-        turnCostExtension.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, costs));
+        tcAccess.add(inEdge.getEdge(), viaNode, outEdge.getEdge(), costs);
     }
 
     private void addCostOrRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, int cost) {

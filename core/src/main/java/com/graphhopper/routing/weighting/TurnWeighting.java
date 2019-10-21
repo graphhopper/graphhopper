@@ -17,29 +17,30 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.routing.util.TurnCostEncoder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
+import static com.graphhopper.routing.util.EncodingManager.getKey;
+
 /**
  * Provides methods to retrieve turn costs for a specific turn.
- * <p>
  *
  * @author Karl Hübner
  * @author Peter Karich
  */
 public class TurnWeighting implements Weighting {
     public static final int INFINITE_U_TURN_COSTS = -1;
-    /**
-     * Encoder, which decodes the turn flags
-     */
-    private final TurnCostEncoder turnCostEncoder;
+    private final DecimalEncodedValue turnCostEnc;
     private final TurnCostExtension turnCostExt;
     private final Weighting superWeighting;
     private final double uTurnCosts;
+    // TODO NOW how to use EncodingManager.createTurnCostFlags !?
+    private final IntsRef tcFlags = new IntsRef(1);
 
     public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
         this(superWeighting, turnCostExt, INFINITE_U_TURN_COSTS);
@@ -56,7 +57,10 @@ public class TurnWeighting implements Weighting {
         if (turnCostExt == null) {
             throw new RuntimeException("No storage set to calculate turn weight");
         }
-        this.turnCostEncoder = superWeighting.getFlagEncoder();
+        FlagEncoder encoder = superWeighting.getFlagEncoder();
+        String key = getKey(encoder.toString(), "turn_cost");
+        // TODO NOW ugly and unsafe? if null TurnWeighting can be still useful for edge based routing
+        this.turnCostEnc = encoder.hasEncodedValue(key) ? encoder.getDecimalEncodedValue(key) : null;
         this.superWeighting = superWeighting;
         this.turnCostExt = turnCostExt;
         this.uTurnCosts = uTurnCosts < 0 ? Double.POSITIVE_INFINITY : uTurnCosts;
@@ -81,7 +85,6 @@ public class TurnWeighting implements Weighting {
         double turnCosts = reverse
                 ? calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
-
         return weight + turnCosts;
     }
 
@@ -119,11 +122,10 @@ public class TurnWeighting implements Weighting {
             }
             return uTurnCosts;
         }
-        long turnFlags = turnCostExt.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
-        if (turnCostEncoder.isTurnRestricted(turnFlags))
-            return Double.POSITIVE_INFINITY;
-
-        return turnCostEncoder.getTurnCost(turnFlags);
+        if (turnCostEnc == null)
+            return 0;
+        turnCostExt.readTurnCostFlags(tcFlags, edgeFrom, nodeVia, edgeTo);
+        return turnCostEnc.getDecimal(false, tcFlags);
     }
 
     @Override

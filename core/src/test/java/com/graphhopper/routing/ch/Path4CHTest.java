@@ -13,11 +13,11 @@ import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
 import org.junit.Before;
 import org.junit.Test;
 
 import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.Assert.assertEquals;
 
 public class Path4CHTest {
@@ -26,7 +26,7 @@ public class Path4CHTest {
     private CHGraph chGraph;
     private FlagEncoder encoder;
     private Weighting weighting;
-    private TurnCostExtension turnCostExtension;
+    private TurnCostAccess tcAccess;
 
     @Before
     public void init() {
@@ -35,7 +35,7 @@ public class Path4CHTest {
         weighting = new FastestWeighting(encoder);
         graph = new GraphBuilder(em).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
         chGraph = graph.getCHGraph();
-        turnCostExtension = (TurnCostExtension) graph.getExtension();
+        tcAccess = new TurnCostAccess(encoder.toString(), graph, em);
     }
 
     @Test
@@ -129,15 +129,11 @@ public class Path4CHTest {
     }
 
     private void addTurnCost(int from, int via, int to, int cost) {
-        addTurnCost(getEdge(from, via), getEdge(via, to), via, cost);
+        tcAccess.add(getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), cost);
     }
 
     private void addTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, int cost) {
-        turnCostExtension.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, cost));
-    }
-
-    private EdgeIteratorState getEdge(int from, int to) {
-        return GHUtility.getEdge(graph, from, to);
+        tcAccess.add(inEdge.getEdge(), viaNode, outEdge.getEdge(), cost);
     }
 
     private void addShortcut(int from, int to, int origFirst, int origLast, int skip1, int skip2, double edgeWeight, int turnCost) {
@@ -154,7 +150,7 @@ public class Path4CHTest {
     }
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
-        TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension);
+        TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), tcAccess.getTurnCostExtension());
         CHGraph lg = graph.getCHGraph();
         AbstractBidirectionEdgeCHNoSOD algo = new DijkstraBidirectionEdgeCHNoSOD(lg, chTurnWeighting);
         algo.setEdgeFilter(new LevelEdgeFilter(lg));

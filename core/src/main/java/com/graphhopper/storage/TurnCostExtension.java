@@ -29,9 +29,9 @@ import com.graphhopper.util.EdgeIterator;
  * @author Peter Karich
  */
 public class TurnCostExtension implements GraphExtension {
-    /* pointer for no cost entry */
+    // pointer for no cost entry
     private static final int NO_TURN_ENTRY = -1;
-    private static final long EMPTY_FLAGS = 0L;
+    private static final int EMPTY_FLAGS = 0;
 
     /*
      * items in turn cost tables: edge from, edge to, getCosts, pointer to next
@@ -109,30 +109,26 @@ public class TurnCostExtension implements GraphExtension {
     /**
      * Add an entry which is a turn restriction or cost information via the turnFlags. Overwrite existing information
      * if it is the same edges and node.
+     *
+     * @param fromEdge edge ID
+     * @param viaNode  node ID
+     * @param toEdge   edge ID
+     * @param tcFlags  flags to be written
      */
-    public void addTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags) {
-        // no need to store turn information
-        if (turnFlags == EMPTY_FLAGS)
+    public void addTurnCost(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
+        if (tcFlags.length != 1)
+            throw new IllegalArgumentException("Cannot use IntsRef with length != 1");
+        if (tcFlags.ints[0] == 0)
             return;
 
-        mergeOrOverwriteTurnInfo(fromEdge, viaNode, toEdge, turnFlags, true);
+        mergeOrOverwriteTurnInfo(tcFlags, fromEdge, viaNode, toEdge, true);
     }
 
-    /**
-     * Add a new turn cost entry or clear an existing. See tests for usage examples.
-     *
-     * @param fromEdge  edge ID
-     * @param viaNode   node ID
-     * @param toEdge    edge ID
-     * @param turnFlags flags to be written
-     * @param merge     If true don't overwrite existing entries with the new flag but do a bitwise OR of the old and
-     *                  new flags and write this merged flag.
-     */
-    public void mergeOrOverwriteTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags, boolean merge) {
+    void mergeOrOverwriteTurnInfo(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge, boolean merge) {
         int newEntryIndex = turnCostsCount;
         ensureTurnCostIndex(newEntryIndex);
         boolean oldEntryFound = false;
-        long newFlags = turnFlags;
+        int newFlags = tcFlags.ints[0];
         int next = NO_TURN_ENTRY;
 
         // determine if we already have a cost entry for this node
@@ -143,7 +139,7 @@ public class TurnCostExtension implements GraphExtension {
         } else {
             int i = 0;
             next = turnCosts.getInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT);
-            long existingFlags = 0;
+            int existingFlags = 0;
             while (true) {
                 long costsIdx = (long) previousEntryIndex * turnCostsEntryBytes;
                 if (fromEdge == turnCosts.getInt(costsIdx + TC_FROM)
@@ -181,20 +177,20 @@ public class TurnCostExtension implements GraphExtension {
         }
         turnCosts.setInt(costsBase + TC_FROM, fromEdge);
         turnCosts.setInt(costsBase + TC_TO, toEdge);
-        turnCosts.setInt(costsBase + TC_FLAGS, (int) newFlags);
+        turnCosts.setInt(costsBase + TC_FLAGS, newFlags);
         turnCosts.setInt(costsBase + TC_NEXT, next);
     }
 
     /**
      * @return turn flags of the specified node and edge properties.
      */
-    public long getTurnCostFlags(int edgeFrom, int nodeVia, int edgeTo) {
+    public void readTurnCostFlags(IntsRef tcFlags, int edgeFrom, int nodeVia, int edgeTo) {
         if (!EdgeIterator.Edge.isValid(edgeFrom) || !EdgeIterator.Edge.isValid(edgeTo))
             throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
         if (nodeVia < 0)
             throw new IllegalArgumentException("via node cannot be negative");
 
-        return nextCostFlags(edgeFrom, nodeVia, edgeTo);
+        nextCostFlags(tcFlags, edgeFrom, nodeVia, edgeTo);
     }
 
     public boolean isUTurn(int edgeFrom, int edgeTo) {
@@ -205,7 +201,7 @@ public class TurnCostExtension implements GraphExtension {
         return true;
     }
 
-    private long nextCostFlags(int edgeFrom, int nodeVia, int edgeTo) {
+    private void nextCostFlags(IntsRef tcFlags, int edgeFrom, int nodeVia, int edgeTo) {
         int turnCostIndex = nodeAccess.getAdditionalNodeField(nodeVia);
         int i = 0;
         for (; i < 1000; i++) {
@@ -213,8 +209,10 @@ public class TurnCostExtension implements GraphExtension {
                 break;
             long turnCostPtr = (long) turnCostIndex * turnCostsEntryBytes;
             if (edgeFrom == turnCosts.getInt(turnCostPtr + TC_FROM)) {
-                if (edgeTo == turnCosts.getInt(turnCostPtr + TC_TO))
-                    return turnCosts.getInt(turnCostPtr + TC_FLAGS);
+                if (edgeTo == turnCosts.getInt(turnCostPtr + TC_TO)) {
+                    tcFlags.ints[0] = turnCosts.getInt(turnCostPtr + TC_FLAGS);
+                    return;
+                }
             }
 
             int nextTurnCostIndex = turnCosts.getInt(turnCostPtr + TC_NEXT);
@@ -226,7 +224,7 @@ public class TurnCostExtension implements GraphExtension {
         // so many turn restrictions on one node? here is something wrong
         if (i >= 1000)
             throw new IllegalStateException("something went wrong: there seems to be no end of the turn cost-list!?");
-        return EMPTY_FLAGS;
+        tcFlags.ints[0] = EMPTY_FLAGS;
     }
 
     private void ensureTurnCostIndex(int nodeIndex) {

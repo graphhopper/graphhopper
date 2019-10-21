@@ -34,13 +34,8 @@ public class TurnCostExtensionTest {
         EncodingManager manager = EncodingManager.create(carEncoder, bikeEncoder);
         GraphHopperStorage g = new GraphBuilder(manager).create();
         initGraph(g);
-        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
-
-        // introduce some turn costs
-        long carRestricted = carEncoder.getTurnFlags(true, 0);
-        long carCosts = carEncoder.getTurnFlags(false, 2);
-        long bikeRestricted = bikeEncoder.getTurnFlags(true, 0);
-        long bikeCosts = bikeEncoder.getTurnFlags(false, 2);
+        TurnCostAccess bikeTCAccess = new TurnCostAccess(bikeEncoder.toString(), g);
+        TurnCostAccess carTCAccess = new TurnCostAccess(carEncoder.toString(), g);
 
         int edge42 = getEdge(g, 4, 2).getEdge();
         int edge23 = getEdge(g, 2, 3).getEdge();
@@ -49,49 +44,44 @@ public class TurnCostExtensionTest {
         int edge02 = getEdge(g, 0, 2).getEdge();
         int edge24 = getEdge(g, 2, 4).getEdge();
 
-        tcs.mergeOrOverwriteTurnInfo(edge42, 2, edge23, carRestricted, true);
-        tcs.mergeOrOverwriteTurnInfo(edge42, 2, edge23, bikeRestricted, true);
-        tcs.mergeOrOverwriteTurnInfo(edge23, 3, edge31, carRestricted, true);
-        tcs.mergeOrOverwriteTurnInfo(edge23, 3, edge31, bikeCosts, true);
-        tcs.mergeOrOverwriteTurnInfo(edge31, 1, edge10, carCosts, true);
-        tcs.mergeOrOverwriteTurnInfo(edge31, 1, edge10, bikeRestricted, true);
-        tcs.mergeOrOverwriteTurnInfo(edge02, 2, edge24, carRestricted, false);
-        tcs.mergeOrOverwriteTurnInfo(edge02, 2, edge24, bikeRestricted, false);
+        carTCAccess.addRestriction(edge42, 2, edge23);
+        bikeTCAccess.addRestriction(edge42, 2, edge23);
+        carTCAccess.addRestriction(edge23, 3, edge31);
+        bikeTCAccess.add(edge23, 3, edge31, 2.0);
+        carTCAccess.add(edge31, 1, edge10, 2.0);
+        bikeTCAccess.addRestriction(edge31, 1, edge10);
+        bikeTCAccess.clear(edge02, 2, edge24);
+        bikeTCAccess.addRestriction(edge02, 2, edge24);
 
-        long flags423 = tcs.getTurnCostFlags(edge42, 2, edge23);
-        assertEquals(Double.POSITIVE_INFINITY, carEncoder.getTurnCost(flags423), 0);
-        assertEquals(Double.POSITIVE_INFINITY, bikeEncoder.getTurnCost(flags423), 0);
+        assertEquals(Double.POSITIVE_INFINITY, carTCAccess.get(edge42, 2, edge23), 0);
+        assertEquals(Double.POSITIVE_INFINITY, bikeTCAccess.get(edge42, 2, edge23), 0);
 
-        long flags231 = tcs.getTurnCostFlags(edge23, 3, edge31);
-        assertEquals(Double.POSITIVE_INFINITY, carEncoder.getTurnCost(flags231), 0);
-        assertEquals(2.0, bikeEncoder.getTurnCost(flags231), 0);
+        assertEquals(Double.POSITIVE_INFINITY, carTCAccess.get(edge23, 3, edge31), 0);
+        assertEquals(2.0, bikeTCAccess.get(edge23, 3, edge31), 0);
 
-        long flags310 = tcs.getTurnCostFlags(edge31, 1, edge10);
-        assertEquals(2.0, carEncoder.getTurnCost(flags310), 0);
-        assertEquals(Double.POSITIVE_INFINITY, bikeEncoder.getTurnCost(flags310), 0);
+        assertEquals(2.0, carTCAccess.get(edge31, 1, edge10), 0);
+        assertEquals(Double.POSITIVE_INFINITY, bikeTCAccess.get(edge31, 1, edge10), 0);
 
-        long flags024 = tcs.getTurnCostFlags(edge02, 2, edge24);
-        assertEquals(0.0, carEncoder.getTurnCost(flags024), 0);
-        assertEquals(Double.POSITIVE_INFINITY, bikeEncoder.getTurnCost(flags024), 0);
+        assertEquals(0.0, carTCAccess.get(edge02, 2, edge24), 0);
+        assertEquals(Double.POSITIVE_INFINITY, bikeTCAccess.get(edge02, 2, edge24), 0);
 
         // merge per default
-        tcs.addTurnInfo(edge02, 2, edge23, carRestricted);
-        tcs.addTurnInfo(edge02, 2, edge23, bikeRestricted);
-        long flags023 = tcs.getTurnCostFlags(edge02, 2, edge23);
-        assertEquals(Double.POSITIVE_INFINITY, carEncoder.getTurnCost(flags023), 0);
-        assertEquals(Double.POSITIVE_INFINITY, bikeEncoder.getTurnCost(flags023), 0);
+        carTCAccess.addRestriction(edge02, 2, edge23);
+        bikeTCAccess.addRestriction(edge02, 2, edge23);
+        assertEquals(Double.POSITIVE_INFINITY, carTCAccess.get(edge02, 2, edge23), 0);
+        assertEquals(Double.POSITIVE_INFINITY, bikeTCAccess.get(edge02, 2, edge23), 0);
 
-        // overwrite
-        tcs.mergeOrOverwriteTurnInfo(edge02, 2, edge23, bikeRestricted, false);
-        flags023 = tcs.getTurnCostFlags(edge02, 2, edge23);
-        assertEquals(0, carEncoder.getTurnCost(flags023), 0);
-        assertEquals(Double.POSITIVE_INFINITY, bikeEncoder.getTurnCost(flags023), 0);
+        // overwrite unrelated turn cost value
+        bikeTCAccess.clear(edge02, 2, edge23);
+        carTCAccess.clear(edge02, 2, edge23);
+        bikeTCAccess.addRestriction(edge02, 2, edge23);
+        assertEquals(0, carTCAccess.get(edge02, 2, edge23), 0);
+        assertEquals(Double.POSITIVE_INFINITY, bikeTCAccess.get(edge02, 2, edge23), 0);
 
         // clear
-        tcs.mergeOrOverwriteTurnInfo(edge02, 2, edge23, 0, false);
-        flags023 = tcs.getTurnCostFlags(edge02, 2, edge23);
-        assertEquals(0, carEncoder.getTurnCost(flags023), 0);
-        assertEquals(0, bikeEncoder.getTurnCost(flags023), 0);
+        bikeTCAccess.clear(edge02, 2, edge23);
+        assertEquals(0, carTCAccess.get(edge02, 2, edge23), 0);
+        assertEquals(0, bikeTCAccess.get(edge02, 2, edge23), 0);
     }
 
     @Test
@@ -101,18 +91,12 @@ public class TurnCostExtensionTest {
         EncodingManager manager = EncodingManager.create(carEncoder, bikeEncoder);
         GraphHopperStorage g = new GraphBuilder(manager).create();
         initGraph(g);
-        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
-
-        long carRestricted = carEncoder.getTurnFlags(true, 0);
-        long bikeRestricted = bikeEncoder.getTurnFlags(true, 0);
 
         int edge23 = getEdge(g, 2, 3).getEdge();
         int edge02 = getEdge(g, 0, 2).getEdge();
-
-        tcs.addTurnInfo(edge02, 2, edge23, carRestricted | bikeRestricted);
-
-        long flags023 = tcs.getTurnCostFlags(edge02, 2, edge23);
-        assertEquals(Double.POSITIVE_INFINITY, carEncoder.getTurnCost(flags023), 0);
-        assertEquals(Double.POSITIVE_INFINITY, bikeEncoder.getTurnCost(flags023), 0);
+        TurnCostAccess carTCAccess = new TurnCostAccess(carEncoder.toString(), g).addRestriction(edge02, 2, edge23);
+        TurnCostAccess bikeTCAccess = new TurnCostAccess(bikeEncoder.toString(), g).addRestriction(edge02, 2, edge23);
+        assertEquals(Double.POSITIVE_INFINITY, carTCAccess.get(edge02, 2, edge23), 0);
+        assertEquals(Double.POSITIVE_INFINITY, bikeTCAccess.get(edge02, 2, edge23), 0);
     }
 }

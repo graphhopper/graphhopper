@@ -31,7 +31,7 @@ import com.graphhopper.util.Translation;
  *
  * @author Peter Karich
  */
-public interface FlagEncoder extends TurnCostEncoder, EncodedValueLookup {
+public interface FlagEncoder extends EncodedValueLookup {
 
     /**
      * @return the version of this FlagEncoder to enforce none-compatibility when new attributes are

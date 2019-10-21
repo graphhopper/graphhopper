@@ -21,7 +21,6 @@ import java.util.*;
 
 /**
  * Helper object which gives node cost entries for a given OSM-relation of type "restriction"
- * <p>
  *
  * @author Karl Hübner
  */

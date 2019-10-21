@@ -159,39 +159,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         footRouteEnc = getEnumEncodedValue(getKey("foot", PART_NAME), RouteNetwork.class);
     }
 
-    /**
-     * Foot flag encoder does not provide any turn cost / restrictions
-     */
-    @Override
-    public int defineTurnBits(int index, int shift) {
-        return shift;
-    }
-
-    /**
-     * Foot flag encoder does not provide any turn cost / restrictions
-     *
-     * @return <code>false</code>
-     */
-    @Override
-    public boolean isTurnRestricted(long flags) {
-        return false;
-    }
-
-    /**
-     * Foot flag encoder does not provide any turn cost / restrictions
-     *
-     * @return 0
-     */
-    @Override
-    public double getTurnCost(long flag) {
-        return 0;
-    }
-
-    @Override
-    public long getTurnFlags(boolean restricted, double costs) {
-        return 0;
-    }
-
     @Override
     public boolean acceptsTurnRelation(OSMTurnRelation relation) {
         return false;

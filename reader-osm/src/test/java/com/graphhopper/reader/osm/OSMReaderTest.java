@@ -27,10 +27,7 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
-import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
-import com.graphhopper.routing.util.parsers.OSMMaxWidthParser;
-import com.graphhopper.routing.util.parsers.OSMRoadClassParser;
+import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -723,9 +720,9 @@ public class OSMReaderTest {
      */
     @Test
     public void testTurnFlagCombination() {
-        final OSMReader.TurnCostTableEntry turnCostEntry_car = new OSMReader.TurnCostTableEntry();
-        final OSMReader.TurnCostTableEntry turnCostEntry_foot = new OSMReader.TurnCostTableEntry();
-        final OSMReader.TurnCostTableEntry turnCostEntry_bike = new OSMReader.TurnCostTableEntry();
+        final OSMTurnCostParser.TurnCostTableEntry turnCostEntry_car = new OSMTurnCostParser.TurnCostTableEntry();
+        final OSMTurnCostParser.TurnCostTableEntry turnCostEntry_foot = new OSMTurnCostParser.TurnCostTableEntry();
+        final OSMTurnCostParser.TurnCostTableEntry turnCostEntry_bike = new OSMTurnCostParser.TurnCostTableEntry();
 
         final OSMTurnRelation osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.Type.NOT);
 
@@ -737,19 +734,9 @@ public class OSMReaderTest {
         GraphHopperStorage ghStorage = new GraphBuilder(manager).create();
         OSMReader reader = new OSMReader(ghStorage) {
             @Override
-            public Collection<OSMReader.TurnCostTableEntry> analyzeTurnRelation(FlagEncoder encoder,
-                                                                                OSMTurnRelation turnRelation) {
+            public Collection<OSMTurnCostParser.TurnCostTableEntry> storeTurnRelation(List<OSMTurnRelation> turnRelations) {
                 // simulate by returning one turn cost entry directly
-                if (encoder.toString().equalsIgnoreCase("car")) {
-
-                    return Collections.singleton(turnCostEntry_car);
-                } else if (encoder.toString().equalsIgnoreCase("foot")) {
-                    return Collections.singleton(turnCostEntry_foot);
-                } else if (encoder.toString().equalsIgnoreCase("bike")) {
-                    return Collections.singleton(turnCostEntry_bike);
-                } else {
-                    throw new IllegalArgumentException("illegal encoder " + encoder.toString());
-                }
+                return Arrays.asList(turnCostEntry_car, turnCostEntry_foot, turnCostEntry_bike);
             }
         };
 
@@ -770,12 +757,12 @@ public class OSMReaderTest {
         long assertFlag2 = turnCostEntry_bike.flags;
 
         // combine flags of all encoders
-        Collection<OSMReader.TurnCostTableEntry> entries = reader.analyzeTurnRelation(osmTurnRelation);
+        Collection<OSMTurnCostParser.TurnCostTableEntry> entries = reader.storeTurnRelation(Collections.singletonList(osmTurnRelation));
 
         // we expect two different turnCost entries
         assertEquals(2, entries.size());
 
-        for (OSMReader.TurnCostTableEntry entry : entries) {
+        for (OSMTurnCostParser.TurnCostTableEntry entry : entries) {
             if (entry.edgeFrom == 1) {
                 // the first entry provides turn flags for car and foot only
                 assertEquals(assertFlag1, entry.flags);

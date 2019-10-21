@@ -295,6 +295,7 @@ public class QueryGraph implements Graph {
                             return diff;
                         }
                     }
+
                     private double distanceOfSnappedPointToPillarNode(QueryResult o) {
                         GHPoint snappedPoint = o.getSnappedPoint();
                         double fromLat = fullPL.getLatitude(o.getWayIndex());
@@ -759,20 +760,18 @@ public class QueryGraph implements Graph {
         }
 
         @Override
-        public long getTurnCostFlags(int edgeFrom, int nodeVia, int edgeTo) {
+        public void readTurnCostFlags(IntsRef tcFlags, int edgeFrom, int nodeVia, int edgeTo) {
             if (isVirtualNode(nodeVia)) {
-                return 0;
+                tcFlags.ints[0] = 0;
+                return;
             } else if (isVirtualEdge(edgeFrom) || isVirtualEdge(edgeTo)) {
-                if (isVirtualEdge(edgeFrom)) {
+                if (isVirtualEdge(edgeFrom))
                     edgeFrom = getOriginalEdge(edgeFrom);
-                }
-                if (isVirtualEdge(edgeTo)) {
+
+                if (isVirtualEdge(edgeTo))
                     edgeTo = getOriginalEdge(edgeTo);
-                }
-                return mainTurnExtension.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
-            } else {
-                return mainTurnExtension.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
             }
+            mainTurnExtension.readTurnCostFlags(tcFlags, edgeFrom, nodeVia, edgeTo);
         }
 
         @Override

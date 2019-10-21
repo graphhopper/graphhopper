@@ -53,7 +53,7 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
     /**
      * Runs the same test with each of the supported traversal modes
      */
-    @Parameters(name = "{0}")
+    @Parameters(name = "{0} {1}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {TraversalMode.NODE_BASED, false},
