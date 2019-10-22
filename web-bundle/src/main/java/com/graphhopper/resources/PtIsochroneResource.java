@@ -114,25 +114,25 @@ public class PtIsochroneResource {
         };
 
         if (format.equals("multipoint")) {
-            router.calcLabels(queryResult.getClosestNode(), -1, initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
+            router.calcLabels(queryResult.getClosestNode(), initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
             MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
             return wrap(exploredPoints);
         } else {
-            router.calcLabelsAndNeighbors(queryResult.getClosestNode(), -1, initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
-            MultiPoint exploredPointsAndNeighbors = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
+            router.calcLabels(queryResult.getClosestNode(), initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
+            MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
 
             // Get at least all nodes within our bounding box (I think convex hull would be enough.)
             // I think then we should have all possible encroaching points. (Proof needed.)
-            locationIndex.query(BBox.fromEnvelope(exploredPointsAndNeighbors.getEnvelopeInternal()), new LocationIndex.Visitor() {
+            locationIndex.query(BBox.fromEnvelope(exploredPoints.getEnvelopeInternal()), new LocationIndex.Visitor() {
                 @Override
                 public void onNode(int nodeId) {
                     Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(nodeId), nodeAccess.getLatitude(nodeId));
                     z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
                 }
             });
-            exploredPointsAndNeighbors = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
+            exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
 
-            CoordinateList siteCoords = DelaunayTriangulationBuilder.extractUniqueCoordinates(exploredPointsAndNeighbors);
+            CoordinateList siteCoords = DelaunayTriangulationBuilder.extractUniqueCoordinates(exploredPoints);
             List<ConstraintVertex> constraintVertices = new ArrayList<>();
             for (Object siteCoord : siteCoords) {
                 Coordinate coord = (Coordinate) siteCoord;

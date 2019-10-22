@@ -83,35 +83,21 @@ public class MultiCriteriaLabelSetting {
         fromMap = new IntObjectHashMap<>();
     }
 
-    Stream<Label> calcLabels(int from, int to, Instant startTime, int blockedRouteTypes) {
+    Stream<Label> calcLabels(int from, Instant startTime, int blockedRouteTypes) {
         this.startTime = startTime.toEpochMilli();
         this.blockedRouteTypes = blockedRouteTypes;
-        return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false)
+        return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false)
                 .limit(maxVisitedNodes)
                 .peek(label -> visitedNodes++);
     }
 
-    public void calcLabels(int from, int to, Instant startTime, int blockedRouteTypes, SPTVisitor visitor, Predicate<Label> predicate) {
+    public void calcLabels(int from, Instant startTime, int blockedRouteTypes, SPTVisitor visitor, Predicate<Label> predicate) {
         this.startTime = startTime.toEpochMilli();
         this.blockedRouteTypes = blockedRouteTypes;
-        Iterator<Label> iterator = StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false).iterator();
+        Iterator<Label> iterator = StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false).iterator();
         Label l;
         while (iterator.hasNext() && predicate.test(l = iterator.next())) {
             visitor.visit(l);
-        }
-    }
-
-
-    public void calcLabelsAndNeighbors(int from, int to, Instant startTime, int blockedRouteTypes, SPTVisitor visitor, Predicate<Label> predicate) {
-        this.startTime = startTime.toEpochMilli();
-        this.blockedRouteTypes = blockedRouteTypes;
-        Iterator<Label> iterator = StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false).iterator();
-        Label l;
-        while (iterator.hasNext() && predicate.test(l = iterator.next())) {
-            visitor.visit(l);
-        }
-        for (Label label : fromHeap) {
-            visitor.visit(label);
         }
     }
 
@@ -127,13 +113,8 @@ public class MultiCriteriaLabelSetting {
 
     private class MultiCriteriaLabelSettingSpliterator extends Spliterators.AbstractSpliterator<Label> {
 
-        private final int from;
-        private final int to;
-
-        MultiCriteriaLabelSettingSpliterator(int from, int to) {
+        MultiCriteriaLabelSettingSpliterator(int from) {
             super(0, 0);
-            this.from = from;
-            this.to = to;
             Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0, 0.0, null, 0, 0, false, null);
             ArrayList<Label> labels = new ArrayList<>(1);
             labels.add(label);
