@@ -59,11 +59,10 @@ const Trip = ({
 const TripHeader = ({
                       trip
                     }) => {
-  const tripTimeClassName = trip.isPossible ? "tripTime" : "tripTimeImpossible";
   return React.createElement("div", {
     className: "tripHeader"
   }, React.createElement("div", {
-    className: tripTimeClassName
+    className: trip.isPossible ? "tripTime" : "tripTimeImpossible"
   }, React.createElement("span", null, moment(trip.departureTime).format("HH:mm"), " \u2013", " ", moment(trip.arrivalTime).format("HH:mm")), React.createElement("span", null, trip.durationInMinutes, " min")), React.createElement(SecondaryText, null, "Transfers: ", trip.transfers, " \u2013 ", trip.fare, " "));
 };
 

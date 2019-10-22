@@ -61,7 +61,10 @@
 }
 
 .waypointNameImpossible {
-  composes: waypointName;
+  font-weight: bold;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   text-decoration: line-through;
 }
 
