@@ -840,19 +840,20 @@ public class GraphHopperIT {
     @Test
     public void testIfCHIsUsed() {
         // route directly after import
-        executeCHFootRoute();
+        executeCHFootRoute(false);
 
         // now only load is called
-        executeCHFootRoute();
+        executeCHFootRoute(false);
     }
 
-    private void executeCHFootRoute() {
+    private void executeCHFootRoute(boolean sort) {
         String tmpOsmFile = DIR + "/monaco.osm.gz";
         String tmpImportVehicles = "foot";
 
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
+                setSortGraph(sort).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles));
         tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr);
@@ -871,6 +872,15 @@ public class GraphHopperIT {
         assertEquals(87, bestPath.getPoints().getSize());
 
         tmpHopper.close();
+    }
+
+    @Test
+    public void testSortWhileImporting() {
+        // route after importing a sorted graph
+        executeCHFootRoute(true);
+
+        // route after loading a sorted graph
+        executeCHFootRoute(false);
     }
 
     @Test
