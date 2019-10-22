@@ -353,7 +353,7 @@ public class PrepareContractionHierarchiesTest {
         CHGraph lg = g.getCHGraph();
         initUnpackingGraph(g, lg, weighting);
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
-        prepare.doWork();
+        // do not call prepare.doWork() here
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.getDistance(), 1e-5);
@@ -368,7 +368,7 @@ public class PrepareContractionHierarchiesTest {
         initUnpackingGraph(g, lg, w);
 
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
-        prepare.doWork();
+        // do not call prepare.doWork() here
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.getDistance(), 1e-1);
