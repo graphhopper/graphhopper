@@ -449,6 +449,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 totalTime, periodicUpdateTime, lazyUpdateTime, neighborUpdateTime, contractionTime, otherTime, dijkstraTime / totalTime * 100);
     }
 
+    public long getTotalPrepareTime() {
+        return allSW.getMillis();
+    }
+
     private float calculatePriority(int node) {
         return nodeContractor.calculatePriority(node);
     }
