@@ -68,7 +68,6 @@ public class Label {
     public final int adjNode;
 
     public final int nTransfers;
-    public final int nWalkDistanceConstraintViolations;
 
     public final double walkDistanceOnCurrentLeg;
     public final Long departureTime;
@@ -78,14 +77,12 @@ public class Label {
     final boolean impossible;
 
     public final Label parent;
-    public boolean deleted = false;
 
-    Label(long currentTime, int edgeId, int adjNode, int nTransfers, int nWalkDistanceConstraintViolations, double walkDistance, Long departureTime, long walkTime, long residualDelay, boolean impossible, Label parent) {
+    Label(long currentTime, int edgeId, int adjNode, int nTransfers, double walkDistance, Long departureTime, long walkTime, long residualDelay, boolean impossible, Label parent) {
         this.currentTime = currentTime;
         this.edge = edgeId;
         this.adjNode = adjNode;
         this.nTransfers = nTransfers;
-        this.nWalkDistanceConstraintViolations = nWalkDistanceConstraintViolations;
         this.walkDistanceOnCurrentLeg = walkDistance;
         this.departureTime = departureTime;
         this.walkTime = walkTime;
@@ -96,7 +93,7 @@ public class Label {
 
     @Override
     public String toString() {
-        return adjNode + " " + Instant.ofEpochMilli(currentTime) + " " + nTransfers + " " + nWalkDistanceConstraintViolations + " " +  (departureTime != null ? Instant.ofEpochMilli(departureTime) : "");
+        return adjNode + " " + Instant.ofEpochMilli(currentTime) + " " + nTransfers + " " +  (departureTime != null ? Instant.ofEpochMilli(departureTime) : "");
     }
 
     static Iterable<Transition> reverseEdges(Label leaf, Graph graph, PtEncodedValues flagEncoder, boolean reverseEdgeFlags) {

@@ -17,7 +17,6 @@ const CreateQuery = (baseUrl, search) => {
   } else {
     url.searchParams.set("arrive_by", false);
   }
-  url.searchParams.set("pt.max_walk_distance_per_leg", search.maxWalkDistance);
   url.searchParams.set("pt.limit_solutions", search.limitSolutions);
   url.searchParams.set("locale", "en-US");
   url.searchParams.set("vehicle", "pt");
@@ -57,7 +56,6 @@ const ParseQuery = (search, searchParams) => {
 
   parsePoints(searchParams);
   parseDepartureTime(searchParams);
-  parse("pt.max_walk_distance_per_leg", "maxWalkDistance", searchParams);
   parse("pt.limit_solutions", "limitSolutions", searchParams);
   return search;
 };

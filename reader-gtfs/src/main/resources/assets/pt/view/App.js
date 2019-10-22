@@ -30,7 +30,6 @@ export default class App extends React.Component {
             from: null,
             to: null,
             departureDateTime: new moment(),
-            maxWalkDistance: 1000,
             limitSolutions: 5,
             timeOption: TimeOption.NOW,
             routes: {
