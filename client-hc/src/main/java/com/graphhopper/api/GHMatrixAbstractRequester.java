@@ -21,7 +21,7 @@ import static com.graphhopper.api.GraphHopperMatrixWeb.*;
 public abstract class GHMatrixAbstractRequester {
 
     protected final ObjectMapper objectMapper;
-    protected final Set<String> ignoreSet = new HashSet<>(10);
+    protected final Set<String> ignoreSet = new HashSet<>();
     protected final String serviceUrl;
     private OkHttpClient downloader;
 

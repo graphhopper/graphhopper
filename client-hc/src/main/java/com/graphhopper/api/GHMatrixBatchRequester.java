@@ -2,7 +2,6 @@ package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.jackson.PathWrapperDeserializer;
 import com.graphhopper.util.shapes.GHPoint;
@@ -20,7 +19,6 @@ import java.util.Map;
  * @author Peter Karich
  */
 public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
-    final JsonNodeFactory factory = JsonNodeFactory.instance;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private int maxIterations = 100;
     private long sleepAfterGET = 1000;
@@ -55,14 +53,14 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
 
     @Override
     public MatrixResponse route(GHMRequest ghRequest) {
-        ObjectNode requestJson = factory.objectNode();
+        ObjectNode requestJson = objectMapper.createObjectNode();
 
         List<String> outArraysList = new ArrayList<>(ghRequest.getOutArrays());
         if (outArraysList.isEmpty()) {
             outArraysList.add("weights");
         }
 
-        ArrayNode outArrayListJson = factory.arrayNode();
+        ArrayNode outArrayListJson = objectMapper.createArrayNode();
         for (String str : outArraysList) {
             outArrayListJson.add(str);
         }
@@ -82,6 +80,10 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
             requestJson.putArray("from_curbsides").addAll(createStringList(ghRequest.getFromCurbSides()));
             requestJson.putArray("to_curbsides").addAll(createStringList(ghRequest.getToPointHints()));
         }
+
+        // TODO NOW was this really missing before? also update api-doc.md for /route endpoint
+        requestJson.putArray("snap_preventions").addAll(createStringList(ghRequest.getSnapPreventions()));
+        requestJson.putArray("details").addAll(createStringList(ghRequest.getPathDetails()));
 
         requestJson.putArray("out_arrays").addAll(outArrayListJson);
         requestJson.put("vehicle", ghRequest.getVehicle());
@@ -178,18 +180,18 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         return matrixResponse;
     }
 
-    private final ArrayNode createStringList(List<String> list) {
-        ArrayNode outList = factory.arrayNode();
+    private ArrayNode createStringList(List<String> list) {
+        ArrayNode outList = objectMapper.createArrayNode();
         for (String str : list) {
             outList.add(str);
         }
         return outList;
     }
 
-    protected final ArrayNode createPointList(List<GHPoint> list) {
-        ArrayNode outList = factory.arrayNode();
+    private ArrayNode createPointList(List<GHPoint> list) {
+        ArrayNode outList = objectMapper.createArrayNode();
         for (GHPoint p : list) {
-            ArrayNode entry = factory.arrayNode();
+            ArrayNode entry = objectMapper.createArrayNode();
             entry.add(p.lon);
             entry.add(p.lat);
             outList.add(entry);

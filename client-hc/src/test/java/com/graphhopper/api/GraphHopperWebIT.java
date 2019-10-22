@@ -31,7 +31,8 @@ public class GraphHopperWebIT {
 
     public static final String KEY = System.getProperty("key", "78da6e9a-273e-43d1-bdda-8f24e007a1fa");
 
-    private final GraphHopperWeb gh = new GraphHopperWeb();
+    // TODO NOW use 'true' when possible in production
+    private final GraphHopperWeb gh = new GraphHopperWeb().setPostRequest(false);
     private final GraphHopperMatrixWeb ghMatrix = new GraphHopperMatrixWeb();
 
     @Before

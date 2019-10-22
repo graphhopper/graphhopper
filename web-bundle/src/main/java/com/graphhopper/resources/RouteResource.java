@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.*;
@@ -142,11 +143,61 @@ public class RouteResource {
 
         GHResponse ghResponse = graphHopper.route(request);
 
-        // TODO: Request logging and timing should perhaps be done somewhere outside
         float took = sw.stop().getSeconds();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
                 + took + ", " + algoStr + ", " + weighting + ", " + vehicleStr;
+
+        if (ghResponse.hasErrors()) {
+            logger.error(logStr + ", errors:" + ghResponse.getErrors());
+            throw new MultiException(ghResponse.getErrors());
+        } else {
+            logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
+                    + ", distance0: " + ghResponse.getBest().getDistance()
+                    + ", weight0: " + ghResponse.getBest().getRouteWeight()
+                    + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
+                    + ", points0: " + ghResponse.getBest().getPoints().getSize()
+                    + ", debugInfo: " + ghResponse.getDebugInfo());
+            return writeGPX ?
+                    gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
+                            header("X-GH-Took", "" + Math.round(took * 1000)).
+                            build()
+                    :
+                    Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+                            header("X-GH-Took", "" + Math.round(took * 1000)).
+                            build();
+        }
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
+    public Response doPost(GHRequest request, @Context UriInfo uriInfo,
+                                      @Context HttpServletRequest httpReq,
+                                      @Context HttpServletResponse httpRsp) {
+        if (request == null)
+            throw new IllegalArgumentException("Empty request");
+
+        StopWatch sw = new StopWatch().start();
+        GHResponse ghResponse = graphHopper.route(request);
+
+        boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
+        boolean writeGPX = "gpx".equalsIgnoreCase(request.getHints().get("type", "json"));
+        instructions = writeGPX || instructions;
+        boolean enableElevation = request.getHints().getBool("elevation", false);
+        boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
+        boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
+
+        /* default to false for the route part in next API version, see #437 */
+        boolean withRoute = request.getHints().getBool("gpx.route", true);
+        boolean withTrack = request.getHints().getBool("gpx.track", true);
+        boolean withWayPoints = request.getHints().getBool("gpx.waypoints", false);
+        String trackName = request.getHints().get("gpx.trackname", "GraphHopper Track");
+        String timeString = request.getHints().get("gpx.millis", "");
+        float took = sw.stop().getSeconds();
+        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
+        String logStr = httpReq.getQueryString() + " " + infoStr + " " + request.getPoints().size() + ", took:"
+                + took + ", " + request.getAlgorithm() + ", " + request.getWeighting() + ", " + request.getVehicle();
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
