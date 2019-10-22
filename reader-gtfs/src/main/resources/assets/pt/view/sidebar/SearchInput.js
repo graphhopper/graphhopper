@@ -127,7 +127,7 @@ class SearchInput extends React.Component {
 
             case SearchActionType.TIME_OPTION:
                 this.props.onSearchChange({
-                    timeOption: action.value
+                    timeOption: parseInt(action.value)
                 });
                 break;
 

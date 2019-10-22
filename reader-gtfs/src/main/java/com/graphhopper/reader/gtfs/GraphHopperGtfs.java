@@ -399,6 +399,7 @@ public final class GraphHopperGtfs {
     @Produces(MediaType.APPLICATION_JSON)
     public ObjectNode route(@QueryParam("point") List<GHLocation> requestPoints,
                             @QueryParam("pt.earliest_departure_time") String departureTimeString,
+                            @QueryParam("pt.arrive_by") @DefaultValue("false") boolean arriveBy,
                             @QueryParam("locale") String localeStr,
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
                             @QueryParam("pt.profile") Boolean profileQuery,
@@ -415,6 +416,7 @@ public final class GraphHopperGtfs {
         }
 
         Request request = new Request(requestPoints, departureTime);
+        request.setArriveBy(arriveBy);
         Optional.ofNullable(profileQuery).ifPresent(request::setProfileQuery);
         Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
         Optional.ofNullable(localeStr).ifPresent(s -> request.setLocale(Helper.getLocale(s)));
