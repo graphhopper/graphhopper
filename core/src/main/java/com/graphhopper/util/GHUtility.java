@@ -334,7 +334,7 @@ public class GHUtility {
         int edges = g.getEdges();
         final GHIntArrayList edgeList = new GHIntArrayList(edges);
         edgeList.fill(edges, -1);
-        final GHBitSetImpl edgeBitset = new GHBitSetImpl(nodes);
+        final GHBitSetImpl edgeBitset = new GHBitSetImpl(edges);
         final AtomicInteger edgeRef = new AtomicInteger(-1);
 
         EdgeExplorer explorer = g.createEdgeExplorer();
