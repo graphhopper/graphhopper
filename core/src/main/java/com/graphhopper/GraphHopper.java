@@ -935,10 +935,10 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * Potentially wraps the specified weighting into a TurnWeighting instance.
      */
-    public Weighting createTurnWeighting(Weighting weighting, TurnCostExtension turnCostExtension, TraversalMode tMode, double uTurnCosts) {
+    public Weighting createTurnWeighting(Graph graph, Weighting weighting, TraversalMode tMode, double uTurnCosts) {
         FlagEncoder encoder = weighting.getFlagEncoder();
         if (encoder.supports(TurnWeighting.class) && tMode.isEdgeBased())
-            return new TurnWeighting(weighting, turnCostExtension, uTurnCosts);
+            return new TurnWeighting(weighting, (TurnCostExtension) graph.getExtension(), uTurnCosts);
         return weighting;
     }
 
@@ -1062,7 +1062,7 @@ public class GraphHopper implements GraphHopperAPI {
                     throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, use `" + Routing.EDGE_BASED + "=true'");
                 }
                 double uTurnCosts = uTurnCostInt == INFINITE_U_TURN_COSTS ? Double.POSITIVE_INFINITY : uTurnCostInt;
-                weighting = createTurnWeighting(weighting, (TurnCostExtension) queryGraph.getExtension(), tMode, uTurnCosts);
+                weighting = createTurnWeighting(queryGraph, weighting, tMode, uTurnCosts);
 
                 AlgorithmOptions algoOpts = AlgorithmOptions.start().
                         algorithm(algoStr).traversalMode(tMode).weighting(weighting).
