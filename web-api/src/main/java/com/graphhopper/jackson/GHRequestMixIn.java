@@ -13,7 +13,7 @@ interface GHRequestMixIn {
 
     // a good trick to serialize unknown properties into the HintsMap
     @JsonAnySetter
-    void put(String fieldName, Object value);
+    void putHint(String fieldName, Object value);
 
     @JsonProperty("point_hints")
     GHRequest setPointHints(List<String> pointHints);
