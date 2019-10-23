@@ -320,8 +320,8 @@ public class QueryGraph implements Graph {
     }
 
     private EdgeExplorer createUncachedEdgeExplorer(final EdgeFilter edgeFilter) {
-        final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
         // re-use these objects between setBaseNode calls to prevent GC
+        final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
         final VirtualEdgeIterator virtualEdgeIterator = new VirtualEdgeIterator(edgeFilter, null);
         return new EdgeExplorer() {
             @Override
