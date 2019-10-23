@@ -14,12 +14,14 @@ import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -27,18 +29,32 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
+@RunWith(Parameterized.class)
 public class GraphHopperWebIT {
 
-    public static final String KEY = System.getProperty("key", "78da6e9a-273e-43d1-bdda-8f24e007a1fa");
+    static final String KEY = System.getProperty("key", "78da6e9a-273e-43d1-bdda-8f24e007a1fa");
+    private final GraphHopperWeb gh;
+    private final GraphHopperMatrixWeb ghMatrix;
 
-    // TODO use 'true' when possible in production
-    private final GraphHopperWeb gh = new GraphHopperWeb().setPostRequest(false);
-    private final GraphHopperMatrixWeb ghMatrix = new GraphHopperMatrixWeb();
+    public GraphHopperWebIT(boolean postRequest, int unzippedLength) {
+        gh = new GraphHopperWeb().setPostRequest(postRequest).
+                setKey(KEY);
+        gh.unzippedLength = unzippedLength;
 
-    @Before
-    public void setUp() {
-        gh.setKey(KEY);
-        ghMatrix.setKey(KEY);
+        GHMatrixBatchRequester requester = new GHMatrixBatchRequester();
+        requester.unzippedLength = unzippedLength;
+        ghMatrix = new GraphHopperMatrixWeb(requester).
+                setKey(KEY);
+    }
+
+    @Parameterized.Parameters(name = "POST = {0}, unzippedLength = {1}")
+    public static Collection<Object[]> configs() {
+        return Arrays.asList(new Object[][]{
+                {false, -1},
+                // TODO later: test post request against API
+//                {true, 1000},
+//                {true, 0}
+        });
     }
 
     @Test

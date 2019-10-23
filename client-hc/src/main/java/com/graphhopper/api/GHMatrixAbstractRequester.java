@@ -87,22 +87,6 @@ public abstract class GHMatrixAbstractRequester {
         }
     }
 
-    protected String postJson(String url, JsonNode data) throws IOException {
-        String stringData = data.toString();
-        Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
-        // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
-        if (stringData.length() < 1000)
-            builder.header("Content-Encoding", "identity");
-        Request okRequest = builder.build();
-        ResponseBody body = null;
-        try {
-            body = downloader.newCall(okRequest).execute().body();
-            return body.string();
-        } finally {
-            Helper.close(body);
-        }
-    }
-
     protected JsonNode toJSON(String url, String str) {
         try {
             return objectMapper.readTree(str);

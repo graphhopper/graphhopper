@@ -66,6 +66,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private boolean elevation = false;
     private String optimize = "false";
     private boolean postRequest = true;
+    int unzippedLength = 1000;
     private final Set<String> ignoreSet;
     private final Set<String> ignoreSetForPost;
 
@@ -189,6 +190,10 @@ public class GraphHopperWeb implements GraphHopperAPI {
     public GHResponse route(GHRequest ghRequest) {
         ResponseBody rspBody = null;
         try {
+            boolean tmpElevation = ghRequest.getHints().getBool("elevation", elevation);
+            boolean tmpTurnDescription = ghRequest.getHints().getBool("turn_description", true);
+            ghRequest.getHints().remove("turn_description"); // do not include in request
+
             Request okRequest = postRequest ? createPostRequest(ghRequest) : createGetRequest(ghRequest);
             rspBody = getClientForRequest(ghRequest).newCall(okRequest).execute().body();
             JsonNode json = objectMapper.reader().readTree(rspBody.byteStream());
@@ -200,9 +205,6 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
             JsonNode paths = json.get("paths");
 
-            boolean tmpElevation = ghRequest.getHints().getBool("elevation", elevation);
-            boolean tmpTurnDescription = ghRequest.getHints().getBool("turn_description", true);
-            ghRequest.getHints().remove("turn_description");
             for (JsonNode path : paths) {
                 PathWrapper altRsp = PathWrapperDeserializer.createPathWrapper(objectMapper, path, tmpElevation, tmpTurnDescription);
                 res.add(altRsp);
@@ -233,7 +235,6 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private Request createPostRequest(GHRequest ghRequest) {
         String tmpServiceURL = ghRequest.getHints().get(SERVICE_URL, routeServiceUrl);
         String url = tmpServiceURL + "?";
-        String key = ghRequest.getHints().get(KEY, "");
         if (!Helper.isEmpty(key))
             url += "key=" + key;
 
@@ -269,7 +270,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
         String stringData = requestJson.toString();
         Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
         // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
-        if (stringData.length() < 1000)
+        if (stringData.length() < unzippedLength)
             builder.header("Content-Encoding", "identity");
         return builder.build();
     }

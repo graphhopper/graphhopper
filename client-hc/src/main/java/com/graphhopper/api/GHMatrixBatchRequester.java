@@ -21,8 +21,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.jackson.PathWrapperDeserializer;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.graphhopper.api.GraphHopperMatrixWeb.MT_JSON;
+
 /**
  * @author Peter Karich
  */
@@ -40,6 +46,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private int maxIterations = 100;
     private long sleepAfterGET = 1000;
+    int unzippedLength = 1000;
 
     public GHMatrixBatchRequester() {
         this(MATRIX_URL);
@@ -200,6 +207,22 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         }
 
         return matrixResponse;
+    }
+
+    protected String postJson(String url, JsonNode data) throws IOException {
+        String stringData = data.toString();
+        Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
+        // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
+        if (stringData.length() < unzippedLength)
+            builder.header("Content-Encoding", "identity");
+        Request okRequest = builder.build();
+        ResponseBody body = null;
+        try {
+            body = getDownloader().newCall(okRequest).execute().body();
+            return body.string();
+        } finally {
+            Helper.close(body);
+        }
     }
 
     private ArrayNode createStringList(List<String> list) {
