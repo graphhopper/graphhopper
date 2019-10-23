@@ -322,19 +322,19 @@ public class QueryGraph implements Graph {
     private EdgeExplorer createUncachedEdgeExplorer(final EdgeFilter edgeFilter) {
         final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
         // re-use these objects between setBaseNode calls to prevent GC
-        final VirtualEdgeIterator virtualEdgeIterator = new VirtualEdgeIterator(null);
+        final VirtualEdgeIterator virtualEdgeIterator = new VirtualEdgeIterator(edgeFilter, null);
         return new EdgeExplorer() {
             @Override
             public EdgeIterator setBaseNode(int baseNode) {
                 if (isVirtualNode(baseNode)) {
                     List<EdgeIteratorState> virtualEdges = virtualEdgesAtVirtualNodes.get(baseNode - mainNodes);
-                    return virtualEdgeIterator.reset(virtualEdges, edgeFilter);
+                    return virtualEdgeIterator.reset(virtualEdges);
                 } else {
                     List<EdgeIteratorState> virtualEdges = virtualEdgesAtRealNodes.get(baseNode);
                     if (virtualEdges == null) {
                         return mainExplorer.setBaseNode(baseNode);
                     } else {
-                        return virtualEdgeIterator.reset(virtualEdges, edgeFilter);
+                        return virtualEdgeIterator.reset(virtualEdges);
                     }
                 }
             }
