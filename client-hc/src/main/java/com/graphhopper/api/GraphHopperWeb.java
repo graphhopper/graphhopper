@@ -81,8 +81,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
         downloader = new OkHttpClient.Builder().
                 connectTimeout(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS).
                 readTimeout(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS).
+                addInterceptor(new GzipRequestInterceptor()).
                 build();
-
         // some parameters are supported directly via Java API so ignore them when writing the getHints map
         ignoreSetForPost = new HashSet<>();
         ignoreSetForPost.add(KEY);
@@ -231,9 +231,6 @@ public class GraphHopperWeb implements GraphHopperAPI {
     }
 
     private Request createPostRequest(GHRequest ghRequest) {
-        // TODO NOW
-        // for more than 50 or 100 locations we could zip the body: https://gist.github.com/karussell/82851e303ea7b3459b2dea01f18949f4
-
         String tmpServiceURL = ghRequest.getHints().get(SERVICE_URL, routeServiceUrl);
         String url = tmpServiceURL + "?";
         String key = ghRequest.getHints().get(KEY, "");
@@ -269,7 +266,12 @@ public class GraphHopperWeb implements GraphHopperAPI {
             String hint = hintsMap.get(hintKey);
             requestJson.put(hintKey, hint);
         }
-        return new Request.Builder().url(url).post(RequestBody.create(MT_JSON, requestJson.toString())).build();
+        String stringData = requestJson.toString();
+        Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
+        // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
+        if (stringData.length() < 1000)
+            builder.header("Content-Encoding", "identity");
+        return builder.build();
     }
 
     private Request createGetRequest(GHRequest ghRequest) {

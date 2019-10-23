@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.*;
@@ -172,9 +171,7 @@ public class RouteResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
-    public Response doPost(GHRequest request, @Context UriInfo uriInfo,
-                                      @Context HttpServletRequest httpReq,
-                                      @Context HttpServletResponse httpRsp) {
+    public Response doPost(GHRequest request, @Context HttpServletRequest httpReq) {
         if (request == null)
             throw new IllegalArgumentException("Empty request");
 
