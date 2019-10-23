@@ -17,9 +17,9 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -258,7 +258,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         QueryResult fromRes = createQR(1.004, 1.01, 0, edge1);
         QueryResult toRes = createQR(1.019, 1.00, 0, edge1);
-        QueryGraph qGraph = QueryGraph.lookup(chGraph, Arrays.asList(fromRes, toRes));
+        QueryGraph qGraph = QueryGraph.lookup(chGraph, fromRes, toRes);
 
         Graph baseGraph = qGraph.getBaseGraph();
         EdgeExplorer explorer = baseGraph.createEdgeExplorer();

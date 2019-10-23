@@ -19,7 +19,11 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -349,7 +353,7 @@ public class PrepareContractionHierarchiesTest {
         CHGraph lg = g.getCHGraph();
         initUnpackingGraph(g, lg, weighting);
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
-        prepare.doWork();
+        // do not call prepare.doWork() here
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.getDistance(), 1e-5);
@@ -364,7 +368,7 @@ public class PrepareContractionHierarchiesTest {
         initUnpackingGraph(g, lg, w);
 
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
-        prepare.doWork();
+        // do not call prepare.doWork() here
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(10, 6);
         assertEquals(7, p.getDistance(), 1e-1);
@@ -501,7 +505,7 @@ public class PrepareContractionHierarchiesTest {
         qr.setClosestNode(8);
         qr.setWayIndex(0);
         qr.calcSnappedPoint(new DistanceCalc2D());
-        QueryGraph queryGraph = QueryGraph.lookup(lg, Collections.singletonList(qr));
+        QueryGraph queryGraph = QueryGraph.lookup(lg, qr);
 
         // we make sure our weight fine tunings do what they are supposed to
         double weight03 = getWeight(queryGraph, fastestWeighting, 0, 3, false);

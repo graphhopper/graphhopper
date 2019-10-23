@@ -255,12 +255,16 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         Boolean edgeBased = map.has(Routing.EDGE_BASED) ? map.getBool(Routing.EDGE_BASED, false) : null;
         Integer uTurnCosts = map.has(Routing.U_TURN_COSTS) ? map.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS) : null;
         CHProfile selectedProfile = selectProfile(map, edgeBased, uTurnCosts);
+        return getPreparation(selectedProfile);
+    }
+
+    public PrepareContractionHierarchies getPreparation(CHProfile chProfile) {
         for (PrepareContractionHierarchies p : getPreparations()) {
-            if (p.getCHProfile().equals(selectedProfile)) {
+            if (p.getCHProfile().equals(chProfile)) {
                 return p;
             }
         }
-        throw new IllegalStateException("Could not find CH preparation for selected profile: " + selectedProfile);
+        throw new IllegalStateException("Could not find CH preparation for profile: " + chProfile);
     }
 
     private CHProfile selectProfile(HintsMap map, Boolean edgeBased, Integer uTurnCosts) {

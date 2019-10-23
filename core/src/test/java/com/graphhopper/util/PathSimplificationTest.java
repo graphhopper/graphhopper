@@ -20,6 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -33,6 +34,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.Parameters.Details;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -137,9 +139,10 @@ public class PathSimplificationTest {
         tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
 
         // Path is: [0 0-1, 3 1-4, 6 4-7, 9 7-8, 11 8-9, 10 9-10]
-        Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(0, 10);
-        InstructionList wayList = p.calcInstructions(carManager.getBooleanEncodedValue(Roundabout.KEY), usTR);
-        Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(Details.AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 10);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager.getBooleanEncodedValue(Roundabout.KEY), usTR);
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, weighting, Arrays.asList(Details.AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
 
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.setInstructions(wayList);

@@ -2,8 +2,8 @@ package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.isochrone.algorithm.Isochrone;
-import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -24,7 +24,10 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This resource provides the entire shortest path tree as response. In a simple CSV format discussed at #1577.
@@ -70,8 +73,7 @@ public class SPTResource {
             throw new IllegalArgumentException("Point not found:" + point);
 
         Graph graph = graphHopper.getGraphHopperStorage();
-        QueryGraph queryGraph = QueryGraph.lookup(graph, Collections.singletonList(qr));
-
+        QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
         HintsMap hintsMap = new HintsMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
 

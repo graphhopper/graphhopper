@@ -27,8 +27,8 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.Trip;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.reader.osm.OSMReader;
-import com.graphhopper.routing.QueryGraph;
-import com.graphhopper.routing.VirtualEdgeIteratorState;
+import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -116,7 +116,7 @@ public final class GraphHopperGtfs {
 
         private final GHResponse response = new GHResponse();
         private final Graph graphWithExtraEdges = new WrapperGraph(graphHopperStorage, extraEdges);
-        private QueryGraph queryGraph = new QueryGraph(graphWithExtraEdges);
+        private QueryGraph queryGraph;
         private int visitedNodes;
 
         RequestHandler(Request request) {
@@ -170,7 +170,7 @@ public final class GraphHopperGtfs {
                 allQueryResults.add(station);
                 points.add(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
             }
-            queryGraph.lookup(pointQueryResults); // modifies queryGraph and queryResults!
+            queryGraph = QueryGraph.lookup(graphWithExtraEdges, pointQueryResults); // modifies queryResults
             response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
             int startNode;

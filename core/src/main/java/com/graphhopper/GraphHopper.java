@@ -28,6 +28,7 @@ import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -634,15 +635,7 @@ public class GraphHopper implements GraphHopperAPI {
                     throw new RuntimeException("To avoid multiple writers we need to obtain a write lock but it failed. In " + graphHopperLocation, lock.getObtainFailedReason());
             }
 
-            try {
-                DataReader reader = importData();
-                DateFormat f = createFormatter();
-                ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
-                if (reader.getDataDate() != null)
-                    ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
-            } catch (IOException ex) {
-                throw new RuntimeException("Cannot read file " + getDataReaderFile(), ex);
-            }
+            readData();
             cleanUp();
             postProcessing();
             flush();
@@ -651,6 +644,18 @@ public class GraphHopper implements GraphHopperAPI {
                 lock.release();
         }
         return this;
+    }
+
+    private void readData() {
+        try {
+            DataReader reader = importData();
+            DateFormat f = createFormatter();
+            ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
+            if (reader.getDataDate() != null)
+                ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
+        } catch (IOException ex) {
+            throw new RuntimeException("Cannot read file " + getDataReaderFile(), ex);
+        }
     }
 
     protected DataReader importData() throws IOException {
@@ -980,7 +985,7 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("You need a turn cost extension to make use of edge_based=true, e.g. use car|turn_costs=true");
             }
 
-            if (!tMode.isEdgeBased() && !request.getCurbSides().isEmpty()) {
+            if (!tMode.isEdgeBased() && !request.getCurbsides().isEmpty()) {
                 throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to set " + Routing.EDGE_BASED + " to true");
             }
 
@@ -1073,7 +1078,7 @@ public class GraphHopper implements GraphHopperAPI {
                 double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
 
                 DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
-                PathMerger pathMerger = new PathMerger().
+                PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), weighting).
                         setCalcPoints(tmpCalcPoints).
                         setDouglasPeucker(peucker).
                         setEnableInstructions(tmpEnableInstructions).

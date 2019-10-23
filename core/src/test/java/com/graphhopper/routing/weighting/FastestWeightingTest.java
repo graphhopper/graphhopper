@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.VirtualEdgeIteratorState;
+import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;

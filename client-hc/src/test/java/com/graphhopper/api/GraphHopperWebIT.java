@@ -104,7 +104,7 @@ public class GraphHopperWebIT {
 
         req.getHints().put(GraphHopperWeb.TIMEOUT, 1);
         try {
-            res = gh.route(req);
+            gh.route(req);
             fail();
         } catch (RuntimeException e) {
             assertEquals(SocketTimeoutException.class, e.getCause().getClass());
@@ -140,7 +140,7 @@ public class GraphHopperWebIT {
                 RoundaboutInstruction ri = (RoundaboutInstruction) i;
                 assertEquals("turn_angle was incorrect:" + ri.getTurnAngle(), -1.5, ri.getTurnAngle(), 0.1);
                 // This route contains only one roundabout and no (via) point in a roundabout
-                assertEquals("exited was incorrect:" + ri.isExited(), ri.isExited(), true);
+                assertTrue("exited was incorrect:" + ri.isExited(), ri.isExited());
             }
         }
         assertTrue("no roundabout in route?", counter > 0);
@@ -167,7 +167,7 @@ public class GraphHopperWebIT {
                 addPoint(new GHPoint(39.909736, -91.054687));
 
         GHResponse res = gh.route(req);
-        assertTrue("no erros found?", res.hasErrors());
+        assertTrue("no errors found?", res.hasErrors());
         assertTrue(res.getErrors().get(0) instanceof PointNotFoundException);
     }
 
@@ -178,7 +178,7 @@ public class GraphHopperWebIT {
                 addPoint(new GHPoint(39.909736, -91.054687));
 
         GHResponse res = gh.route(req);
-        assertTrue("no erros found?", res.hasErrors());
+        assertTrue("no errors found?", res.hasErrors());
         assertTrue(res.getErrors().get(0) instanceof PointOutOfBoundsException);
     }
 

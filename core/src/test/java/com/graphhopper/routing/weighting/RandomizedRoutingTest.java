@@ -6,6 +6,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -271,11 +272,8 @@ public class RandomizedRoutingTest {
             List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
 
-            QueryGraph chQueryGraph = new QueryGraph(prepareCH ? chGraph : graph);
-            QueryGraph queryGraph = new QueryGraph(graph);
-
-            chQueryGraph.lookup(chQueryResults);
-            queryGraph.lookup(queryResults);
+            QueryGraph chQueryGraph = QueryGraph.lookup(prepareCH ? chGraph : graph, chQueryResults);
+            QueryGraph queryGraph = QueryGraph.lookup(graph, queryResults);
 
             int source = queryResults.get(0).getClosestNode();
             int target = queryResults.get(1).getClosestNode();

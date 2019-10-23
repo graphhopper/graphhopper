@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
@@ -53,7 +54,7 @@ public class QueryResult {
 
     /**
      * Returns the closest matching node. This is either a tower node of the base graph
-     * or a virtual node (see also {@link com.graphhopper.routing.QueryGraph#lookup(List)}).
+     * or a virtual node (see also {@link QueryGraph#lookup(List)}).
      *
      * @return {@link #INVALID_NODE} if nothing found, this should be avoided via a call of 'isValid'
      */

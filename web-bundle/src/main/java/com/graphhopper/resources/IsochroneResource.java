@@ -7,7 +7,7 @@ import com.graphhopper.http.WebHelper;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.Isochrone;
 import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.routing.QueryGraph;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -29,7 +29,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 
 @Path("isochrone")
 public class IsochroneResource {
@@ -81,7 +84,7 @@ public class IsochroneResource {
             throw new IllegalArgumentException("Point not found:" + point);
 
         Graph graph = graphHopper.getGraphHopperStorage();
-        QueryGraph queryGraph = QueryGraph.lookup(graph, Collections.singletonList(qr));
+        QueryGraph queryGraph = QueryGraph.lookup(graph, qr);
 
         HintsMap hintsMap = new HintsMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());

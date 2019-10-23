@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
@@ -72,7 +73,7 @@ public class TestAlgoCollector {
             altPaths.add(path);
         }
 
-        PathMerger pathMerger = new PathMerger().
+        PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), algoEntry.getAlgorithmOptions().getWeighting()).
                 setCalcPoints(true).
                 setSimplifyResponse(false).
                 setEnableInstructions(true);

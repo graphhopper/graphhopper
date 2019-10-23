@@ -19,7 +19,6 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -82,28 +81,46 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     private final int MAX_U_TURN_DISTANCE = 35;
 
-    public InstructionsFromEdges(int tmpNode, Graph graph, Weighting weighting, FlagEncoder encoder,
-                                 BooleanEncodedValue roundaboutEnc, NodeAccess nodeAccess,
+    public InstructionsFromEdges(Graph graph, Weighting weighting,
+                                 BooleanEncodedValue roundaboutEnc,
                                  Translation tr, InstructionList ways) {
         this.weighting = weighting;
-        this.encoder = encoder;
-        this.accessEnc = encoder.getAccessEnc();
+        this.encoder = weighting.getFlagEncoder();
+        this.accessEnc = this.encoder.getAccessEnc();
         this.roundaboutEnc = roundaboutEnc;
-        this.nodeAccess = nodeAccess;
+        this.nodeAccess = graph.getNodeAccess();
         this.tr = tr;
         this.ways = ways;
-        prevLat = this.nodeAccess.getLatitude(tmpNode);
-        prevLon = this.nodeAccess.getLongitude(tmpNode);
         prevNode = -1;
         prevInRoundabout = false;
         prevName = null;
-        outEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
-        crossingExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder));
+        outEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(this.encoder));
+        crossingExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.allEdges(this.encoder));
+    }
+
+    /**
+     * @return the list of instructions for this path.
+     */
+    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, BooleanEncodedValue roundaboutEnc, final Translation tr) {
+        final InstructionList ways = new InstructionList(tr);
+        if (path.isFound()) {
+            if (path.getSize() == 0) {
+                ways.add(new FinishInstruction(graph.getNodeAccess(), path.getEndNode()));
+            } else {
+                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, roundaboutEnc, tr, ways));
+            }
+        }
+        return ways;
     }
 
 
     @Override
     public void next(EdgeIteratorState edge, int index, int prevEdgeId) {
+        if (prevNode == -1) {
+            prevLat = this.nodeAccess.getLatitude(edge.getBaseNode());
+            prevLon = this.nodeAccess.getLongitude(edge.getBaseNode());
+        }
+
         // baseNode is the current node and adjNode is the next
         int adjNode = edge.getAdjNode();
         int baseNode = edge.getBaseNode();
