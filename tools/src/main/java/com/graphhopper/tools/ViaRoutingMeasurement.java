@@ -37,12 +37,12 @@ import java.util.Random;
 public class ViaRoutingMeasurement {
 
     public static void main(String[] args) {
-        String pathToMap = "germany-140101.osm.pbf";
-        String ghFolder = "gmeasurement2-gh";
+        String pathToMap = "/home/andi/maps_and_graphs/osm/germany-140101.osm.pbf";
+        String ghFolder = "/home/andi/maps_and_graphs/gh/qgmeasurement2-gh";
         GraphHopper hopper = new GraphHopperOSM()
                 // use forDesktop, because forServer is very slow because of path simplification
-                .forDesktop()
-//                .forServer()
+//                .forDesktop()
+                .forServer()
                 .setDataReaderFile(pathToMap)
                 .setEncodingManager(EncodingManager.create("car"))
                 .setGraphHopperLocation(ghFolder)
