@@ -540,6 +540,8 @@ public class MapMatching {
         matchResult.setMatchMillis(time);
         matchResult.setMatchLength(distance);
         matchResult.setGPXEntriesLength(gpxLength(gpxList));
+        matchResult.setGraph(queryGraph.getBaseGraph());
+        matchResult.setWeighting(weighting);
         return matchResult;
     }
 

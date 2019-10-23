@@ -18,6 +18,8 @@
 package com.graphhopper.matching;
 
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.Graph;
 
 import java.util.List;
 
@@ -29,6 +31,8 @@ public class MatchResult {
 
     private List<EdgeMatch> edgeMatches;
     private Path mergedPath;
+    private Weighting weighting;
+    private Graph graph;
     private double matchLength;
     private long matchMillis;
     private double gpxEntriesLength;
@@ -102,5 +106,21 @@ public class MatchResult {
     @Override
     public String toString() {
         return "length:" + matchLength + ", seconds:" + matchMillis / 1000f + ", matches:" + edgeMatches.toString();
+    }
+
+    public Weighting getWeighting() {
+        return weighting;
+    }
+
+    public void setWeighting(Weighting weighting) {
+        this.weighting = weighting;
+    }
+
+    public Graph getGraph() {
+        return graph;
+    }
+
+    public void setGraph(Graph graph) {
+        this.graph = graph;
     }
 }
