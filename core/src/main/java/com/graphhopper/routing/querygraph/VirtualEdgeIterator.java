@@ -21,6 +21,7 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
@@ -34,6 +35,7 @@ import java.util.List;
  */
 class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     private List<EdgeIteratorState> edges;
+    private EdgeFilter edgeFilter;
     private int current;
 
     VirtualEdgeIterator(List<EdgeIteratorState> edges) {
@@ -41,15 +43,19 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
         this.current = -1;
     }
 
-    EdgeIterator reset(List<EdgeIteratorState> edges) {
+    EdgeIterator reset(List<EdgeIteratorState> edges, EdgeFilter edgeFilter) {
         current = -1;
         this.edges = edges;
+        this.edgeFilter = edgeFilter;
         return this;
     }
 
     @Override
     public boolean next() {
         current++;
+        while (current < edges.size() && !edgeFilter.accept(edges.get(current))) {
+            current++;
+        }
         return current < edges.size();
     }
 

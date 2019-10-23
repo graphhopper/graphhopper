@@ -322,35 +322,24 @@ public class QueryGraph implements Graph {
     private EdgeExplorer createUncachedEdgeExplorer(final EdgeFilter edgeFilter) {
         final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
         // re-use these objects between setBaseNode calls to prevent GC
-        final List<EdgeIteratorState> filteredEdges = new ArrayList<>();
-        final VirtualEdgeIterator virtualEdgeIterator = new VirtualEdgeIterator(filteredEdges);
-        return new EdgeExplorer() {
+        final VirtualEdgeIterator virtualEdgeIterator = new VirtualEdgeIterator(null);
+        EdgeExplorer result = new EdgeExplorer() {
             @Override
             public EdgeIterator setBaseNode(int baseNode) {
                 if (isVirtualNode(baseNode)) {
                     List<EdgeIteratorState> virtualEdges = virtualEdgesAtVirtualNodes.get(baseNode - mainNodes);
-                    resetEdges(virtualEdges);
-                    return virtualEdgeIterator.reset(filteredEdges);
+                    return virtualEdgeIterator.reset(virtualEdges, edgeFilter);
                 } else {
                     List<EdgeIteratorState> virtualEdges = virtualEdgesAtRealNodes.get(baseNode);
                     if (virtualEdges == null) {
                         return mainExplorer.setBaseNode(baseNode);
                     } else {
-                        resetEdges(virtualEdges);
-                        return virtualEdgeIterator.reset(filteredEdges);
-                    }
-                }
-            }
-
-            private void resetEdges(List<EdgeIteratorState> virtualEdges) {
-                filteredEdges.clear();
-                for (EdgeIteratorState virtualEdge : virtualEdges) {
-                    if (edgeFilter.accept(virtualEdge)) {
-                        filteredEdges.add(virtualEdge);
+                        return virtualEdgeIterator.reset(virtualEdges, edgeFilter);
                     }
                 }
             }
         };
+        return result;
     }
 
     private IntObjectMap<List<EdgeIteratorState>> buildVirtualEdgesAtRealNodes(final EdgeExplorer mainExplorer) {
