@@ -48,6 +48,8 @@ import java.util.*;
  * @author Peter Karich
  */
 public class QueryGraph implements Graph {
+    public static int count = 0;
+    public static StopWatch sw = new StopWatch();
     static final int VE_BASE = 0, VE_BASE_REV = 1, VE_ADJ = 2, VE_ADJ_REV = 3;
     private static final AngleCalc AC = Helper.ANGLE_CALC;
     private final Graph mainGraph;
@@ -583,12 +585,19 @@ public class QueryGraph implements Graph {
         if (useEdgeExplorerCache) {
             EdgeExplorer cached = cacheMap.get(edgeFilter);
             if (cached == null) {
+                count++;
+                sw.start();
                 cached = createUncachedEdgeExplorer(edgeFilter);
                 cacheMap.put(edgeFilter, cached);
+                sw.stop();
             }
             return cached;
         } else {
-            return createUncachedEdgeExplorer(edgeFilter);
+            count++;
+            sw.start();
+            EdgeExplorer result = createUncachedEdgeExplorer(edgeFilter);
+            sw.stop();
+            return result;
         }
     }
 

@@ -78,6 +78,7 @@ import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
  * @see GraphHopperAPI
  */
 public class GraphHopper implements GraphHopperAPI {
+    public static boolean useQueryGraphCache = false;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final String fileLockName = "gh.lock";
     private final Set<RoutingAlgorithmFactoryDecorator> algoDecorators = new LinkedHashSet<>();
@@ -1042,6 +1043,7 @@ public class GraphHopper implements GraphHopperAPI {
                     if (chAlgoFactory instanceof PrepareContractionHierarchies) {
                         CHProfile chProfile = ((PrepareContractionHierarchies) chAlgoFactory).getCHProfile();
                         queryGraph = QueryGraph.lookup(ghStorage.getCHGraph(chProfile), qResults);
+                        queryGraph.setUseEdgeExplorerCache(useQueryGraphCache);
                         weighting = chProfile.getWeighting();
                     } else {
                         throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
@@ -1049,6 +1051,7 @@ public class GraphHopper implements GraphHopperAPI {
                 } else {
                     checkNonChMaxWaypointDistance(points);
                     queryGraph = QueryGraph.lookup(ghStorage, qResults);
+                    queryGraph.setUseEdgeExplorerCache(useQueryGraphCache);
                     weighting = createWeighting(hints, encoder, queryGraph);
                 }
                 ghRsp.addDebugInfo("tmode:" + tMode.toString());

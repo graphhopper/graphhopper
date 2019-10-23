@@ -47,6 +47,7 @@ import java.util.List;
  * @author Robin Boldt
  */
 public class PathMerger {
+    public static StopWatch sw = new StopWatch();
     private static final DouglasPeucker DP = new DouglasPeucker();
     private final Graph graph;
     private final Weighting weighting;
@@ -167,8 +168,10 @@ public class PathMerger {
                 setTime(fullTimeInMillis);
 
         if (allFound && simplifyResponse && (calcPoints || enableInstructions)) {
+            sw.start();
             PathSimplification ps = new PathSimplification(altRsp, douglasPeucker, enableInstructions);
             ps.simplify();
+            sw.stop();
         }
     }
 
