@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 import static com.graphhopper.api.GraphHopperMatrixWeb.*;
 import static com.graphhopper.util.Helper.round6;
 import static com.graphhopper.util.Helper.toLowerCase;
-import static com.graphhopper.util.Parameters.CurbSides.CURBSIDE_ANY;
+import static com.graphhopper.util.Parameters.Curbsides.CURBSIDE_ANY;
 import static com.graphhopper.util.Parameters.Routing.CALC_POINTS;
 import static com.graphhopper.util.Parameters.Routing.INSTRUCTIONS;
 
@@ -244,8 +244,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
         requestJson.putArray("points").addAll(createPointList(ghRequest.getPoints()));
         if (!ghRequest.getPointHints().isEmpty())
             requestJson.putArray("point_hints").addAll(createStringList(ghRequest.getPointHints()));
-        if (!ghRequest.getCurbSides().isEmpty())
-            requestJson.putArray("curbsides").addAll(createStringList(ghRequest.getCurbSides()));
+        if (!ghRequest.getCurbsides().isEmpty())
+            requestJson.putArray("curbsides").addAll(createStringList(ghRequest.getCurbsides()));
         if (!ghRequest.getSnapPreventions().isEmpty())
             requestJson.putArray("snap_preventions").addAll(createStringList(ghRequest.getSnapPreventions()));
         if (!ghRequest.getPathDetails().isEmpty())
@@ -322,10 +322,10 @@ public class GraphHopperWeb implements GraphHopperAPI {
         }
 
         // append *all* curbsides only if at least *one* is not CURBSIDE_ANY
-        for (String checkEitherSide : ghRequest.getCurbSides()) {
+        for (String checkEitherSide : ghRequest.getCurbsides()) {
             if (!checkEitherSide.equals(CURBSIDE_ANY)) {
-                for (String curbSide : ghRequest.getCurbSides()) {
-                    url += "&" + Parameters.Routing.CURBSIDE + "=" + WebHelper.encodeURL(curbSide);
+                for (String curbside : ghRequest.getCurbsides()) {
+                    url += "&" + Parameters.Routing.CURBSIDE + "=" + WebHelper.encodeURL(curbside);
                 }
                 break;
             }

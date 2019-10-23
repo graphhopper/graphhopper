@@ -24,7 +24,6 @@ interface GHRequestMixIn {
     @JsonProperty("details")
     GHRequest setPathDetails(List<String> pathDetails);
 
-    // TODO NOW should we better rename this method?
     @JsonProperty("curbsides")
-    GHRequest setCurbSides(List<String> curbSides);
+    GHRequest setCurbsides(List<String> curbsides);
 }
