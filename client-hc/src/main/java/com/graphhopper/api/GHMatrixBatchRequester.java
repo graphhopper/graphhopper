@@ -71,7 +71,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         if (ghRequest.identicalLists) {
             requestJson.putArray("points").addAll(createPointList(ghRequest.getFromPoints()));
             requestJson.putArray("point_hints").addAll(createStringList(ghRequest.getFromPointHints()));
-            requestJson.putArray("curbsides").addAll(createStringList(ghRequest.getFromCurbSides()));
+            requestJson.putArray("curbsides").addAll(createStringList(ghRequest.getFromCurbsides()));
         } else {
             ArrayNode fromPointList = createPointList(ghRequest.getFromPoints());
             ArrayNode toPointList = createPointList(ghRequest.getToPoints());
@@ -79,7 +79,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
             requestJson.putArray("from_point_hints").addAll(createStringList(ghRequest.getFromPointHints()));
             requestJson.putArray("to_points").addAll(toPointList);
             requestJson.putArray("to_point_hints").addAll(createStringList(ghRequest.getToPointHints()));
-            requestJson.putArray("from_curbsides").addAll(createStringList(ghRequest.getFromCurbSides()));
+            requestJson.putArray("from_curbsides").addAll(createStringList(ghRequest.getFromCurbsides()));
             requestJson.putArray("to_curbsides").addAll(createStringList(ghRequest.getToPointHints()));
         }
 
