@@ -67,15 +67,22 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
         }
 
         for (String type : outArraysList) {
-            if (!type.isEmpty()) {
+            if (!type.isEmpty())
                 outArrayStr += "&";
-            }
 
             outArrayStr += "out_array=" + type;
         }
 
+        String snapPreventionStr = "";
+        for (String snapPrevention : ghRequest.getSnapPreventions()) {
+            if (!snapPreventionStr.isEmpty())
+                snapPreventionStr += "&";
+
+            snapPreventionStr += "snap_prevention=" + snapPrevention;
+        }
+
         String url = buildURL("", ghRequest);
-        url += "&" + pointsStr + "&" + pointHintsStr + "&" + curbsidesStr + "&" + outArrayStr;
+        url += "&" + pointsStr + "&" + pointHintsStr + "&" + curbsidesStr + "&" + outArrayStr + "&" + snapPreventionStr;
         if (!Helper.isEmpty(ghRequest.getVehicle())) {
             url += "&vehicle=" + ghRequest.getVehicle();
         }

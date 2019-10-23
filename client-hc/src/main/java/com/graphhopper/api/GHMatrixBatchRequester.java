@@ -110,10 +110,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
             requestJson.putArray("to_curbsides").addAll(createStringList(ghRequest.getToPointHints()));
         }
 
-        // TODO NOW was this really missing before? also update api-doc.md for /route endpoint
         requestJson.putArray("snap_preventions").addAll(createStringList(ghRequest.getSnapPreventions()));
-        requestJson.putArray("details").addAll(createStringList(ghRequest.getPathDetails()));
-
         requestJson.putArray("out_arrays").addAll(outArrayListJson);
         requestJson.put("vehicle", ghRequest.getVehicle());
         requestJson.put("elevation", hasElevation);
