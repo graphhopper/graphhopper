@@ -575,7 +575,7 @@ public class GraphHopperIT {
                 setVehicle(vehicle).setWeighting("fastest");
         rq.getHints().put(Routing.PASS_THROUGH, true);
         GHResponse rsp = hopper.route(rq);
-        assertFalse(rsp.getErrors().get(0).getMessage(),rsp.hasErrors());
+        assertFalse(rsp.hasErrors());
     }
 
     @Test

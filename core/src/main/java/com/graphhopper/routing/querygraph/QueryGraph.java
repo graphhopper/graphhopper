@@ -216,12 +216,11 @@ public class QueryGraph implements Graph {
      *
      * @param virtualNodeId virtual node at which edges get unfavored
      * @param virtualEdgeId this edge and the reverse virtual edge become unfavored
+     * @return boolean indicating if unfavor took place
      */
-    public void unfavorVirtualEdgePair(int virtualNodeId, int virtualEdgeId) {
-        if (!isVirtualNode(virtualNodeId)) {
-            throw new IllegalArgumentException("Node id " + virtualNodeId
-                    + " must be a virtual node.");
-        }
+    public boolean unfavorVirtualEdgePair(int virtualNodeId, int virtualEdgeId) {
+        if (!isVirtualNode(virtualNodeId))
+            return false;
 
         VirtualEdgeIteratorState incomingEdge =
                 (VirtualEdgeIteratorState) getEdgeIteratorState(virtualEdgeId, virtualNodeId);
@@ -231,6 +230,8 @@ public class QueryGraph implements Graph {
         unfavoredEdges.add(incomingEdge);
         reverseEdge.setUnfavored(true);
         unfavoredEdges.add(reverseEdge);
+
+        return true;
     }
 
     /**
