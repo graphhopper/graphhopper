@@ -100,10 +100,7 @@ public class MeasurementCommand extends Command {
         GraphHopperStorage graph = graphHopper.getGraphHopperStorage();
         bbox = graph.getBounds();
         LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
-        AlgorithmOptions algoOpts = AlgorithmOptions.start()
-                .maxVisitedNodes((int) 1e20)
-                .build();
-        MapMatching mapMatching = new MapMatching(graphHopper, algoOpts);
+        MapMatching mapMatching = new MapMatching(graphHopper, new HintsMap());
         
         // start tests:
         StopWatch sw = new StopWatch().start();

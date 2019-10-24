@@ -23,10 +23,13 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.util.*;
+import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.Parameters;
+import com.graphhopper.util.PathMerger;
+import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Before;
@@ -55,7 +58,7 @@ public class MapMatchingTest {
 
     private final String parameterName;
     private GraphHopper graphHopper;
-    private final AlgorithmOptions algoOptions;
+    private final HintsMap algoOptions;
 
 
     @Before
@@ -72,16 +75,12 @@ public class MapMatchingTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> algoOptions() {
         return Arrays.asList(new Object[][]{
-                {"non-CH", AlgorithmOptions.start()
-                        .hints(new PMap().put(Parameters.CH.DISABLE, true))
-                        .build()},
-                {"CH", AlgorithmOptions.start()
-                        .hints(new PMap().put(Parameters.CH.DISABLE, false))
-                        .build()}
+                {"non-CH", new HintsMap().put(Parameters.CH.DISABLE, true)},
+                {"CH", new HintsMap().put(Parameters.CH.DISABLE, false)}
         });
     }
 
-    public MapMatchingTest(String parameterName, AlgorithmOptions algoOption) {
+    public MapMatchingTest(String parameterName, HintsMap algoOption) {
         this.parameterName = parameterName;
         this.algoOptions = algoOption;
     }
@@ -180,7 +179,7 @@ public class MapMatchingTest {
         assertThat(Math.abs(route.getTime() - mr.getMatchMillis()), is(lessThan(1000L)));
 
         // not OK when we only allow a small number of visited nodes:
-        AlgorithmOptions opts = AlgorithmOptions.start(algoOptions).maxVisitedNodes(1).build();
+        HintsMap opts = new HintsMap(algoOptions).put(Parameters.Routing.MAX_VISITED_NODES, 1);
         mapMatching = new MapMatching(graphHopper, opts);
         try {
             mr = mapMatching.doWork(inputGPXEntries);
@@ -273,10 +272,9 @@ public class MapMatchingTest {
      */
     @Test
     public void testUTurns() throws IOException {
-        final AlgorithmOptions algoOptions = AlgorithmOptions.start(this.algoOptions)
+        final HintsMap algoOptions = new HintsMap(this.algoOptions)
                 // Reduce penalty to allow U-turns
-                .hints(new PMap().put(Parameters.Routing.HEADING_PENALTY, 50))
-                .build();
+                .put(Parameters.Routing.HEADING_PENALTY, 50);
 
         MapMatching mapMatching = new MapMatching(graphHopper, algoOptions);
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour4-with-uturn.gpx"), Gpx.class);

@@ -98,12 +98,7 @@ public class MapMatchingResource {
 
         StopWatch sw = new StopWatch().start();
 
-        AlgorithmOptions opts = AlgorithmOptions.start()
-                .traversalMode(graphHopper.getEncodingManager().needsTurnCostsSupport() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED)
-                .maxVisitedNodes(maxVisitedNodes)
-                .hints(new HintsMap().put("vehicle", vehicleStr))
-                .build();
-        MapMatching matching = new MapMatching(graphHopper, opts);
+        MapMatching matching = new MapMatching(graphHopper, new HintsMap());
         matching.setMeasurementErrorSigma(gpsAccuracy);
 
         List<Observation> measurements = gpx.trk.get(0).getEntries();

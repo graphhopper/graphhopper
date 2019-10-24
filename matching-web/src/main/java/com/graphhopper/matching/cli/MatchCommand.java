@@ -80,7 +80,7 @@ public class MatchCommand extends Command {
                 // shortest weighting does not apply penalties to unfavored virtual edges.
                 hints(new HintsMap().put("weighting", "fastest").put("vehicle", firstEncoder.toString())).
                 build();
-        MapMatching mapMatching = new MapMatching(hopper, opts);
+        MapMatching mapMatching = new MapMatching(hopper, new HintsMap());
         mapMatching.setTransitionProbabilityBeta(args.getDouble("transition_probability_beta"));
         mapMatching.setMeasurementErrorSigma(args.getInt("gps_accuracy"));
 

@@ -21,9 +21,9 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.index.QueryResult;
 import org.junit.Test;
 
@@ -50,7 +50,7 @@ public class MapMatching2Test {
         hopper.getCHFactoryDecorator().setDisablingAllowed(true);
         hopper.importOrLoad();
 
-        AlgorithmOptions opts = AlgorithmOptions.start().build();
+        HintsMap opts = new HintsMap();
         MapMatching mapMatching = new MapMatching(hopper, opts);
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-13.gpx"), Gpx.class);
@@ -81,7 +81,7 @@ public class MapMatching2Test {
         hopper.getCHFactoryDecorator().setDisablingAllowed(true);
         hopper.importOrLoad();
 
-        AlgorithmOptions opts = AlgorithmOptions.start().build();
+        HintsMap opts = new HintsMap();
         MapMatching mapMatching = new MapMatching(hopper, opts);
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-70.gpx"), Gpx.class);
@@ -107,7 +107,7 @@ public class MapMatching2Test {
         hopper.getCHFactoryDecorator().setDisablingAllowed(true);
         hopper.importOrLoad();
 
-        AlgorithmOptions opts = AlgorithmOptions.start().build();
+        HintsMap opts = new HintsMap();
         MapMatching mapMatching = new MapMatching(hopper, opts);
 
         // query with two identical points
