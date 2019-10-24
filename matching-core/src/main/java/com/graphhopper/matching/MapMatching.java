@@ -72,10 +72,10 @@ public class MapMatching {
     private double measurementErrorSigma = 50.0;
     private double transitionProbabilityBeta = 2.0;
     private final int maxVisitedNodes;
-    private final int nodeCount;
     private DistanceCalc distanceCalc = new DistancePlaneProjection();
     private final Weighting weighting;
     private final boolean ch;
+    private QueryGraph queryGraph;
 
     public MapMatching(GraphHopper graphHopper, HintsMap hints) {
         this.graphHopper = graphHopper;
@@ -97,7 +97,6 @@ public class MapMatching {
             ch = false;
             routingGraph = graphHopper.getGraphHopperStorage();
         }
-        this.nodeCount = routingGraph.getNodes();
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
     }
 
@@ -137,7 +136,7 @@ public class MapMatching {
         for (Collection<QueryResult> qrs : queriesPerEntry) {
             allQueryResults.addAll(qrs);
         }
-        QueryGraph queryGraph = QueryGraph.lookup(routingGraph, allQueryResults);
+        queryGraph = QueryGraph.lookup(routingGraph, allQueryResults);
         queryGraph.setUseEdgeExplorerCache(true);
 
         // Different QueryResults can have the same tower node as their closest node.
@@ -156,7 +155,7 @@ public class MapMatching {
             for (QueryResult qr : entries) {
                 logger.debug("Node id: {}, virtual: {}, snapped on: {}, pos: {},{}, "
                                 + "query distance: {}", qr.getClosestNode(),
-                        isVirtualNode(qr.getClosestNode()), qr.getSnappedPosition(),
+                        queryGraph.isVirtualNode(qr.getClosestNode()), qr.getSnappedPosition(),
                         qr.getSnappedPoint().getLat(), qr.getSnappedPoint().getLon(),
                         qr.getQueryDistance());
             }
@@ -599,16 +598,12 @@ public class MapMatching {
 
     private EdgeIteratorState resolveToRealEdge(Map<String, EdgeIteratorState> virtualEdgesMap,
                                                 EdgeIteratorState edgeIteratorState) {
-        if (isVirtualNode(edgeIteratorState.getBaseNode())
-                || isVirtualNode(edgeIteratorState.getAdjNode())) {
+        if (queryGraph.isVirtualNode(edgeIteratorState.getBaseNode())
+                || queryGraph.isVirtualNode(edgeIteratorState.getAdjNode())) {
             return virtualEdgesMap.get(virtualEdgesMapKey(edgeIteratorState));
         } else {
             return edgeIteratorState;
         }
-    }
-
-    private boolean isVirtualNode(int node) {
-        return node >= nodeCount;
     }
 
     /**
@@ -620,7 +615,7 @@ public class MapMatching {
         Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<>();
         for (Collection<QueryResult> queryResults : queriesPerEntry) {
             for (QueryResult qr : queryResults) {
-                if (isVirtualNode(qr.getClosestNode())) {
+                if (queryGraph.isVirtualNode(qr.getClosestNode())) {
                     EdgeIterator iter = explorer.setBaseNode(qr.getClosestNode());
                     while (iter.next()) {
                         int node = traverseToClosestRealAdj(explorer, iter);
@@ -653,7 +648,7 @@ public class MapMatching {
     }
 
     private int traverseToClosestRealAdj(EdgeExplorer explorer, EdgeIteratorState edge) {
-        if (!isVirtualNode(edge.getAdjNode())) {
+        if (!queryGraph.isVirtualNode(edge.getAdjNode())) {
             return edge.getAdjNode();
         }
 
