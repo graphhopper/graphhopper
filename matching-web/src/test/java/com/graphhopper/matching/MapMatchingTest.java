@@ -170,8 +170,8 @@ public class MapMatchingTest {
         List<Observation> inputGPXEntries = createRandomGPXEntriesAlongRoute(route);
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
 
-        assertEquals(57650, mr.getMatchLength(), 1);
-        assertEquals(2681705, mr.getMatchMillis(), 1);
+        assertEquals(route.getDistance(), mr.getMatchLength(), 2);
+        assertEquals(route.getTime(), mr.getMatchMillis());
 
         // not OK when we only allow a small number of visited nodes:
         AlgorithmOptions opts = AlgorithmOptions.start(algoOptions).maxVisitedNodes(1).build();
@@ -200,7 +200,7 @@ public class MapMatchingTest {
 
         assertFalse(mr.getEdgeMatches().isEmpty());
         assertEquals(3, mr.getMatchLength(), 1);
-        assertEquals(284, mr.getMatchMillis(), 1);
+        assertEquals(284, mr.getMatchMillis());
     }
 
     /**
