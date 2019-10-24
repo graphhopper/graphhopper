@@ -92,9 +92,6 @@ public class MapMatching {
         RoutingAlgorithmFactory routingAlgorithmFactory = graphHopper.getAlgorithmFactory(hints);
         if (routingAlgorithmFactory instanceof PrepareContractionHierarchies) {
             ch = true;
-            // I want to use my own instance of FastestWeighting because it uses its own heading penalty,
-            // but here it is ok to use the CH preparation that was prepared for a different FastestWeighting (without
-            // the heading penalty), because we are only using it for map-matching (but not CH routing)
             routingGraph = graphHopper.getGraphHopperStorage().getCHGraph(((PrepareContractionHierarchies) routingAlgorithmFactory).getCHProfile());
         } else {
             ch = false;
