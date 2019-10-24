@@ -28,7 +28,6 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
@@ -84,11 +83,16 @@ public class MapMatching {
         if (!hints.has("vehicle")) hints.put("vehicle", "car");
 
         // Convert heading penalty [s] into U-turn penalty [m]
+        // The heading penalty is automatically taken into account by GraphHopper routing,
+        // for all links that we set to "unfavored" on the QueryGraph.
+        // We use that mechanism to softly enforce a heading for each map-matching state.
+        // We want to consistently use the same parameter for our own objective function (independent of the routing),
+        // which has meters as unit, not seconds.
+
         final double PENALTY_CONVERSION_VELOCITY = 5;  // [m/s]
-        final double headingTimePenalty = hints.getDouble(
-                Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY);
+        final double headingTimePenalty = hints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY);
         uTurnDistancePenalty = headingTimePenalty * PENALTY_CONVERSION_VELOCITY;
-        weighting = new FastestWeighting(graphHopper.getEncodingManager().getEncoder(hints.getVehicle()), hints);
+
         RoutingAlgorithmFactory routingAlgorithmFactory = graphHopper.getAlgorithmFactory(hints);
         if (routingAlgorithmFactory instanceof PrepareContractionHierarchies) {
             ch = true;
@@ -97,6 +101,7 @@ public class MapMatching {
             ch = false;
             routingGraph = graphHopper.getGraphHopperStorage();
         }
+        weighting = graphHopper.createWeighting(hints, graphHopper.getEncodingManager().getEncoder(hints.getVehicle()), null);
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
     }
 
