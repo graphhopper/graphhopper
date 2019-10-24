@@ -38,6 +38,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 
 /**
@@ -143,7 +146,9 @@ public class MapMatchingTest {
         mapMatching.setMeasurementErrorSigma(20);
         mr = mapMatching.doWork(inputGPXEntries);
 
-        assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 0.5);
+        assertEquals(route.getDistance(), mr.getMatchLength(), 0.5);
+        // GraphHopper travel times aren't exactly additive
+        assertThat(Math.abs(route.getTime() - mr.getMatchMillis()), is(lessThan(1000L)));
         assertEquals(138, mr.getEdgeMatches().size());
 
         // TODO with 20m distortion
@@ -171,7 +176,8 @@ public class MapMatchingTest {
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
 
         assertEquals(route.getDistance(), mr.getMatchLength(), 2);
-        assertEquals(route.getTime(), mr.getMatchMillis());
+        // GraphHopper travel times aren't exactly additive
+        assertThat(Math.abs(route.getTime() - mr.getMatchMillis()), is(lessThan(1000L)));
 
         // not OK when we only allow a small number of visited nodes:
         AlgorithmOptions opts = AlgorithmOptions.start(algoOptions).maxVisitedNodes(1).build();
@@ -200,7 +206,8 @@ public class MapMatchingTest {
 
         assertFalse(mr.getEdgeMatches().isEmpty());
         assertEquals(3, mr.getMatchLength(), 1);
-        assertEquals(284, mr.getMatchMillis());
+        // GraphHopper travel times aren't exactly additive
+        assertThat(Math.abs(route.getTime() - mr.getMatchMillis()), is(lessThan(1000L)));
     }
 
     /**
