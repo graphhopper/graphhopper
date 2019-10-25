@@ -25,7 +25,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.List;
 
+import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 /**
  *
@@ -36,7 +38,7 @@ public class TrkTest {
     private XmlMapper xmlMapper = new XmlMapper();
 
     @Test
-    public void testDoImport() throws IOException {
+    public void test1() throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/test1.gpx"), Gpx.class);
         List<Observation> gpxEntries = gpx.trk.get(0).getEntries();
         assertEquals(264, gpxEntries.size());
@@ -45,19 +47,37 @@ public class TrkTest {
     }
 
     @Test
-    public void testDoImport2() throws IOException {
+    public void test2() throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/test2.gpx"), Gpx.class);
         List<Observation> gpxEntries = gpx.trk.get(0).getEntries();
         assertEquals(2, gpxEntries.size());
     }
 
     @Test
-    public void testDoImportNoMillis() throws IOException {
+    public void test2NoMillis() throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/test2_no_millis.gpx"), Gpx.class);
         List<Observation> gpxEntries = gpx.trk.get(0).getEntries();
         assertEquals(3, gpxEntries.size());
         assertEquals(51.377719, gpxEntries.get(0).getPoint().lat, 0.0);
         assertEquals(12.338217, gpxEntries.get(0).getPoint().lon, 0.0);
+    }
+
+    @Test
+    public void testNoTrk() throws IOException {
+        Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/no_trk.gpx"), Gpx.class);
+        assertThat(gpx.trk, empty());
+    }
+
+    @Test
+    public void testNoTrkseg() throws IOException {
+        Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/no_trkseg.gpx"), Gpx.class);
+        assertThat(gpx.trk.get(0).getEntries(), empty());
+    }
+
+    @Test
+    public void testNoTrkpt() throws IOException {
+        Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/no_trkpt.gpx"), Gpx.class);
+        assertThat(gpx.trk.get(0).getEntries(), empty());
     }
 
 }

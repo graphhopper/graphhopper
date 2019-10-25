@@ -87,7 +87,7 @@ public class MapMatchingResource {
             @QueryParam("gps_accuracy") @DefaultValue("40") double gpsAccuracy) {
 
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
-        if (gpx.trk == null) {
+        if (gpx.trk.isEmpty()) {
             throw new IllegalArgumentException("No tracks found in GPX document. Are you using waypoints or routes instead?");
         }
         if (gpx.trk.size() > 1) {

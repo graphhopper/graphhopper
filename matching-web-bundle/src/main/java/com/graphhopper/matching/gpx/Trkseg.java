@@ -20,13 +20,15 @@ package com.graphhopper.matching.gpx;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Trkseg {
 
     @JacksonXmlElementWrapper(useWrapping = false)
-    public List<Trkpt> trkpt;
+    public List<Trkpt> trkpt = new ArrayList<>();
 
 }
