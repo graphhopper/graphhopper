@@ -10,7 +10,15 @@ The URL path of the local instance is [http://localhost:8989](http://localhost:8
 
 The endpoint to obtain the route is `/route` via GET.
 
-An alternative is to POST to `/route` using JSON instead of URL encoded parameters, see #1762.
+## HTTP POST
+
+The GET request has an URL length limitation, so it won't work for many locations per request. In those cases use a HTTP POST request with JSON data as input. The POST request is identical except that all singular parameter names are named as their plural for a POST request. All effected parameters are: `points`, `snap_preventions`, `curbsides` and `point_hints`. (`details` stays `details`)
+
+Please note that unlike to the GET endpoint, points are specified in `[longitude, latitude]` order. For example `point=10,11&point=20,22` will be the following JSON:
+
+```json
+{ "points": [[11,10], [22,20]] }
+```
 
 ## Parameters
 
