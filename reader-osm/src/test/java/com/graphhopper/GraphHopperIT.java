@@ -183,7 +183,7 @@ public class GraphHopperIT {
         assertEquals(2, rsp.getAll().size());
 
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
-        assertEquals(1356, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(1432, rsp.getAll().get(1).getTime() / 1000);
 
         req.getHints().put("alternative_route.max_paths", "3");
         req.getHints().put("alternative_route.min_plateau_factor", "0.1");
@@ -192,8 +192,8 @@ public class GraphHopperIT {
         assertEquals(3, rsp.getAll().size());
 
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
-        assertEquals(1356, rsp.getAll().get(1).getTime() / 1000);
-        assertEquals(1416, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(1432, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(1492, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -449,10 +449,11 @@ public class GraphHopperIT {
         Map<String, List<PathDetail>> details = arsp.getPathDetails();
         assertEquals(1, details.size());
         List<PathDetail> detailList = details.get(Parameters.Details.AVERAGE_SPEED);
-        assertEquals(1, detailList.size());
+        assertEquals(9, detailList.size());
         assertEquals(5.0, detailList.get(0).getValue());
         assertEquals(0, detailList.get(0).getFirst());
-        assertEquals(arsp.getPoints().size() - 1, detailList.get(0).getLast());
+        assertEquals(3.0, detailList.get(1).getValue());
+        assertEquals(arsp.getPoints().size() - 1, detailList.get(8).getLast());
     }
 
     @Test
@@ -465,8 +466,8 @@ public class GraphHopperIT {
         GHResponse rsp = hopper.route(req);
 
         PathWrapper arsp = rsp.getBest();
-        assertEquals(874., arsp.getDistance(), 10.);
-        assertEquals(31, arsp.getPoints().getSize());
+        assertEquals(839., arsp.getDistance(), 10.);
+        assertEquals(27, arsp.getPoints().getSize());
     }
 
     @Test
@@ -886,9 +887,9 @@ public class GraphHopperIT {
 
         assertEquals(1, rsp.getAll().size());
         PathWrapper pw = rsp.getBest();
-        assertEquals(1.45, rsp.getBest().getDistance() / 1000f, .01);
-        assertEquals(17, rsp.getBest().getTime() / 1000f / 60, 1);
-        assertEquals(63, pw.getPoints().size());
+        assertEquals(1.49, rsp.getBest().getDistance() / 1000f, .01);
+        assertEquals(19, rsp.getBest().getTime() / 1000f / 60, 1);
+        assertEquals(68, pw.getPoints().size());
     }
 
     @Test
