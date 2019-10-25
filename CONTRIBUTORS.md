@@ -37,6 +37,7 @@ Here is an overview:
  * henningvs, doc improvements
  * highsource, more efficient geometry update, UI fixes
  * IsNull, improvements like #708
+ * Janekdererste, GUI for public transit
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config
  * JohannesPelzer, improved GPX information and various other things
