@@ -37,7 +37,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.CurbSides.*;
+import static com.graphhopper.util.Parameters.Curbsides.*;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.*;
 
@@ -1157,7 +1157,7 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testCurbSides() {
+    public void testCurbsides() {
         GraphHopper h = new GraphHopperOSM().
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(true).
@@ -1176,18 +1176,18 @@ public class GraphHopperIT {
         final String kulmbach = "Kulmbacher Straße, KU 18";
         final String adamSeiler = "Adam-Seiler-Straße";
         final String friedhof = "Friedhofsweg";
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 344, asList(itz, rotmain, rotmain));
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 1564, asList(itz, rotmain, rotmain, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, rotmain));
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 1199, asList(itz, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, itz, rotmain, rotmain));
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 266, asList(itz, bayreuth, rotmain));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 344, asList(itz, rotmain, rotmain));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 1564, asList(itz, rotmain, rotmain, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, rotmain));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 1199, asList(itz, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, itz, rotmain, rotmain));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 266, asList(itz, bayreuth, rotmain));
         // without restricting anything we get the shortest path
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 266, asList(itz, bayreuth, rotmain));
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_ANY, ""), 266, asList(itz, bayreuth, rotmain));
-        assertCurbSidesPath(h, p, q, Collections.<String>emptyList(), 266, asList(itz, bayreuth, rotmain));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 266, asList(itz, bayreuth, rotmain));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_ANY, ""), 266, asList(itz, bayreuth, rotmain));
+        assertCurbsidesPath(h, p, q, Collections.<String>emptyList(), 266, asList(itz, bayreuth, rotmain));
     }
 
     @Test
-    public void testForceCurbSides() {
+    public void testForceCurbsides() {
         GraphHopper h = new GraphHopperOSM().
                 setOSMFile(DIR + "/monaco.osm.gz").
                 setCHEnabled(true).
@@ -1205,26 +1205,26 @@ public class GraphHopperIT {
         GHPoint q = new GHPoint(43.737949, 7.423523);
         final String boulevard = "Boulevard de Suisse";
         final String avenue = "Avenue de la Costa";
-        assertCurbSidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), "Impossible curbside constraint: 'curbside=right' at point 0", true);
-        assertCurbSidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=right' at point 0", true);
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue));
-        assertCurbSidesPathError(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=left' at point 1", true);
+        assertCurbsidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), "Impossible curbside constraint: 'curbside=right' at point 0", true);
+        assertCurbsidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=right' at point 0", true);
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue));
+        assertCurbsidesPathError(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=left' at point 1", true);
         // without restricting anything we get the shortest path
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 463, asList(boulevard, avenue, avenue));
-        assertCurbSidesPath(h, p, q, Collections.<String>emptyList(), 463, asList(boulevard, avenue, avenue));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 463, asList(boulevard, avenue, avenue));
+        assertCurbsidesPath(h, p, q, Collections.<String>emptyList(), 463, asList(boulevard, avenue, avenue));
         // if we set force_curbside to false impossible curbside constraints will be ignored
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue), false);
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 463, asList(boulevard, avenue, avenue), false);
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue), false);
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 463, asList(boulevard, avenue, avenue), false);
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue), false);
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 463, asList(boulevard, avenue, avenue), false);
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue), false);
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 463, asList(boulevard, avenue, avenue), false);
     }
 
-    private void assertCurbSidesPath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbSides, int expectedDistance, List<String> expectedStreets) {
-        assertCurbSidesPath(tmpHopper, source, target, curbSides, expectedDistance, expectedStreets, true);
+    private void assertCurbsidesPath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbsides, int expectedDistance, List<String> expectedStreets) {
+        assertCurbsidesPath(tmpHopper, source, target, curbsides, expectedDistance, expectedStreets, true);
     }
 
-    private void assertCurbSidesPath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbSides, int expectedDistance, List<String> expectedStreets, boolean force) {
-        GHResponse rsp = calcCurbSidePath(tmpHopper, source, target, curbSides, force);
+    private void assertCurbsidesPath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbsides, int expectedDistance, List<String> expectedStreets, boolean force) {
+        GHResponse rsp = calcCurbsidePath(tmpHopper, source, target, curbsides, force);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         PathWrapper path = rsp.getBest();
         List<String> streets = new ArrayList<>(path.getInstructions().size());
@@ -1237,18 +1237,18 @@ public class GraphHopperIT {
         assertEquals(expectedDistance, path.getDistance(), 1);
     }
 
-    private void assertCurbSidesPathError(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbSides, String errorMessage, boolean force) {
-        GHResponse rsp = calcCurbSidePath(tmpHopper, source, target, curbSides, force);
+    private void assertCurbsidesPathError(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbsides, String errorMessage, boolean force) {
+        GHResponse rsp = calcCurbsidePath(tmpHopper, source, target, curbsides, force);
         assertTrue(rsp.hasErrors());
         assertTrue("unexpected error. expected message containing: " + errorMessage + ", but got: " +
                 rsp.getErrors(), rsp.getErrors().toString().contains(errorMessage));
     }
 
-    private GHResponse calcCurbSidePath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbSides, boolean force) {
+    private GHResponse calcCurbsidePath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbsides, boolean force) {
         GHRequest req = new GHRequest(source, target);
         req.getHints().put(Routing.EDGE_BASED, true);
         req.getHints().put(Routing.FORCE_CURBSIDE, force);
-        req.setCurbSides(curbSides);
+        req.setCurbsides(curbsides);
         return tmpHopper.route(req);
     }
 

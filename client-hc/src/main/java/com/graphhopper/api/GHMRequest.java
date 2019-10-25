@@ -18,8 +18,8 @@ public class GHMRequest extends GHRequest {
     private List<GHPoint> toPoints;
     private List<String> fromPointHints;
     private List<String> toPointHints;
-    private List<String> fromCurbSides;
-    private List<String> toCurbSides;
+    private List<String> fromCurbsides;
+    private List<String> toCurbsides;
     private int called = 0;
     boolean identicalLists = true;
     private final Set<String> outArrays = new HashSet<>(5);
@@ -35,8 +35,8 @@ public class GHMRequest extends GHRequest {
         toPoints = new ArrayList<>(size);
         fromPointHints = new ArrayList<>(size);
         toPointHints = new ArrayList<>(size);
-        fromCurbSides = new ArrayList<>(size);
-        toCurbSides = new ArrayList<>(size);
+        fromCurbsides = new ArrayList<>(size);
+        toCurbsides = new ArrayList<>(size);
     }
 
     /**
@@ -109,18 +109,18 @@ public class GHMRequest extends GHRequest {
         return fromPointHints;
     }
 
-    public GHMRequest addFromCurbSide(String curbSide) {
-        fromCurbSides.add(curbSide);
+    public GHMRequest addFromCurbside(String curbside) {
+        fromCurbsides.add(curbside);
         return this;
     }
 
-    public GHMRequest setFromCurbSides(List<String> curbSides) {
-        fromCurbSides = curbSides;
+    public GHMRequest setFromCurbsides(List<String> curbsides) {
+        fromCurbsides = curbsides;
         return this;
     }
 
-    public List<String> getFromCurbSides() {
-        return fromCurbSides;
+    public List<String> getFromCurbsides() {
+        return fromCurbsides;
     }
 
     public GHMRequest addToPoint(GHPoint point) {
@@ -149,18 +149,18 @@ public class GHMRequest extends GHRequest {
         return toPointHints;
     }
 
-    public GHMRequest addToCurbSide(String curbSide) {
-        toCurbSides.add(curbSide);
+    public GHMRequest addToCurbside(String curbside) {
+        toCurbsides.add(curbside);
         return this;
     }
 
-    public GHMRequest setToCurbSides(List<String> curbSides) {
-        toCurbSides = curbSides;
+    public GHMRequest setToCurbsides(List<String> curbsides) {
+        toCurbsides = curbsides;
         return this;
     }
 
-    public List<String> getToCurbSides() {
-        return toCurbSides;
+    public List<String> getToCurbsides() {
+        return toCurbsides;
     }
 
     @Override
@@ -182,21 +182,21 @@ public class GHMRequest extends GHRequest {
     }
 
     @Override
-    public GHRequest setCurbSides(List<String> curbSides) {
-        fromCurbSides = curbSides;
-        toCurbSides = curbSides;
+    public GHRequest setCurbsides(List<String> curbsides) {
+        fromCurbsides = curbsides;
+        toCurbsides = curbsides;
         return this;
     }
 
     @Override
-    public List<String> getCurbSides() {
-        throw new IllegalStateException("Use getFromCurbSides or getToCurbSides");
+    public List<String> getCurbsides() {
+        throw new IllegalStateException("Use getFromCurbsides or getToCurbsides");
     }
 
     @Override
-    public boolean hasCurbSides() {
-        return fromCurbSides.size() == fromPoints.size() && !fromPoints.isEmpty() &&
-                toCurbSides.size() == toPoints.size() && !toPoints.isEmpty();
+    public boolean hasCurbsides() {
+        return fromCurbsides.size() == fromPoints.size() && !fromPoints.isEmpty() &&
+                toCurbsides.size() == toPoints.size() && !toPoints.isEmpty();
     }
 
     /**

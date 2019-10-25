@@ -47,11 +47,11 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
     public MatrixResponse route(GHMRequest ghRequest) {
         String pointsStr;
         String pointHintsStr;
-        String curbSidesStr;
+        String curbsidesStr;
         if (ghRequest.identicalLists) {
             pointsStr = createPointQuery("point", ghRequest.getFromPoints());
             pointHintsStr = createUrlString("point_hint", ghRequest.getFromPointHints());
-            curbSidesStr = createUrlString("curbside", ghRequest.getFromCurbSides());
+            curbsidesStr = createUrlString("curbside", ghRequest.getFromCurbsides());
         } else {
             pointsStr = createPointQuery("from_point", ghRequest.getFromPoints());
             pointsStr += "&" + createPointQuery("to_point", ghRequest.getToPoints());
@@ -59,8 +59,8 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
             pointHintsStr = createUrlString("from_point_hint", ghRequest.getFromPointHints());
             pointHintsStr += "&" + createUrlString("to_point_hint", ghRequest.getToPointHints());
 
-            curbSidesStr = createUrlString("from_curbside", ghRequest.getFromCurbSides());
-            curbSidesStr += "&" + createUrlString("to_curbside", ghRequest.getToCurbSides());
+            curbsidesStr = createUrlString("from_curbside", ghRequest.getFromCurbsides());
+            curbsidesStr += "&" + createUrlString("to_curbside", ghRequest.getToCurbsides());
         }
 
         String outArrayStr = "";
@@ -78,7 +78,7 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
         }
 
         String url = buildURL("", ghRequest);
-        url += "&" + pointsStr + "&" + pointHintsStr + "&" + curbSidesStr + "&" + outArrayStr;
+        url += "&" + pointsStr + "&" + pointHintsStr + "&" + curbsidesStr + "&" + outArrayStr;
         if (!Helper.isEmpty(ghRequest.getVehicle())) {
             url += "&vehicle=" + ghRequest.getVehicle();
         }

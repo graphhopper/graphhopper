@@ -84,7 +84,7 @@ public class RouteResource {
             @QueryParam("algorithm") @DefaultValue("") String algoStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
             @QueryParam(POINT_HINT) List<String> pointHints,
-            @QueryParam(CURBSIDE) List<String> curbSides,
+            @QueryParam(CURBSIDE) List<String> curbsides,
             @QueryParam(SNAP_PREVENTION) List<String> snapPreventions,
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
             @QueryParam("heading") List<Double> favoredHeadings,
@@ -107,7 +107,7 @@ public class RouteResource {
                     + "or equal to the number of points (" + requestPoints.size() + ")");
         if (pointHints.size() > 0 && pointHints.size() != requestPoints.size())
             throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass exactly one hint for every point, empty hints will be ignored");
-        if (curbSides.size() > 0 && curbSides.size() != requestPoints.size())
+        if (curbsides.size() > 0 && curbsides.size() != requestPoints.size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
 
         GHRequest request;
@@ -126,13 +126,13 @@ public class RouteResource {
 
         initHints(request.getHints(), uriInfo.getQueryParameters());
         translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
-        enableEdgeBasedIfThereAreCurbSides(curbSides, request);
+        enableEdgeBasedIfThereAreCurbsides(curbsides, request);
         request.setVehicle(vehicleStr).
                 setWeighting(weighting).
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
                 setPointHints(pointHints).
-                setCurbSides(curbSides).
+                setCurbsides(curbsides).
                 setSnapPreventions(snapPreventions).
                 setPathDetails(pathDetails).
                 getHints().
@@ -169,8 +169,8 @@ public class RouteResource {
         }
     }
 
-    private void enableEdgeBasedIfThereAreCurbSides(List<String> curbSides, GHRequest request) {
-        if (!curbSides.isEmpty()) {
+    private void enableEdgeBasedIfThereAreCurbsides(List<String> curbsides, GHRequest request) {
+        if (!curbsides.isEmpty()) {
             if (!request.getHints().getBool(EDGE_BASED, true)) {
                 throw new IllegalArgumentException("Disabling '" + EDGE_BASED + "' when using '" + CURBSIDE + "' is not allowed");
             } else {

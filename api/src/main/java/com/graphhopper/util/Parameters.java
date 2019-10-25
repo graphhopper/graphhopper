@@ -134,7 +134,7 @@ public class Parameters {
     /**
      * Possible values of {@link Parameters.Routing#CURBSIDE}
      */
-    public static final class CurbSides {
+    public static final class Curbsides {
         public static final String CURBSIDE_LEFT = "left";
         public static final String CURBSIDE_RIGHT = "right";
         public static final String CURBSIDE_ANY = "any";
