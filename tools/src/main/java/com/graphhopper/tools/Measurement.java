@@ -98,9 +98,9 @@ public class Measurement {
 
         GraphHopper hopper = new GraphHopperOSM() {
             @Override
-            protected void prepareCH() {
+            protected void prepareCH(boolean freeWhenDone) {
                 StopWatch sw = new StopWatch().start();
-                super.prepareCH();
+                super.prepareCH(freeWhenDone);
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 int edges = getGraphHopperStorage().getEdges();

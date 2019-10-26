@@ -96,7 +96,6 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean allowWrites = true;
     private boolean fullyLoaded = false;
     private boolean smoothElevation = false;
-    private boolean conserveMemory = false;
     // for routing
     private int maxRoundTripRetries = 3;
     private boolean simplifyResponse = true;
@@ -534,8 +533,6 @@ public class GraphHopper implements GraphHopperAPI {
         else
             lockFactory = new NativeFSLockFactory();
 
-        conserveMemory = args.getBool("graph.conserve_memory", false);
-
         // elevation
         String eleProviderStr = toLowerCase(args.get("graph.elevation.provider", "noop"));
         this.smoothElevation = args.getBool("graph.elevation.smoothing", false);
@@ -617,7 +614,7 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper importOrLoad() {
         if (!load(ghLocation)) {
             printInfo();
-            process(ghLocation);
+            process(ghLocation, false);
         } else {
             printInfo();
         }
@@ -625,9 +622,22 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
+     * Imports and processes data, storing it to disk when complete.
+     */
+    public void importAndProcess() {
+        if (!load(ghLocation)) {
+            printInfo();
+            process(ghLocation, true);
+        } else {
+            logger.info("Graph already imported into " + ghLocation);
+        }
+        close();
+    }
+
+    /**
      * Creates the graph from OSM data.
      */
-    private GraphHopper process(String graphHopperLocation) {
+    private GraphHopper process(String graphHopperLocation, boolean freeWhenDone) {
         setGraphHopperLocation(graphHopperLocation);
         GHLock lock = null;
         try {
@@ -640,7 +650,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             readData();
             cleanUp();
-            postProcessing();
+            postProcessing(freeWhenDone);
             flush();
         } finally {
             if (lock != null)
@@ -841,6 +851,15 @@ public class GraphHopper implements GraphHopperAPI {
      * Does the preparation and creates the location index
      */
     public void postProcessing() {
+        postProcessing(false);
+    }
+
+    /**
+     * Does the preparation and creates the location index
+     *
+     * @param freeWhenDone release resources after importing
+     */
+    public void postProcessing(boolean freeWhenDone) {
         // Later: move this into the GraphStorage.optimize method
         // Or: Doing it after preparation to optimize shortcuts too. But not possible yet #12
 
@@ -860,7 +879,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         initLocationIndex();
 
-        if (conserveMemory) {
+        if (freeWhenDone) {
             locationIndex.flush();
             locationIndex.close();
             ghStorage.flushAndFreeEarly();
@@ -869,7 +888,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (chFactoryDecorator.isEnabled())
             chFactoryDecorator.createPreparations(ghStorage);
         if (!isCHPrepared())
-            prepareCH();
+            prepareCH(freeWhenDone);
 
         if (lmFactoryDecorator.isEnabled())
             lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
@@ -1199,13 +1218,13 @@ public class GraphHopper implements GraphHopperAPI {
         return "true".equals(ghStorage.getProperties().get(Landmark.PREPARE + "done"));
     }
 
-    protected void prepareCH() {
+    protected void prepareCH(boolean freeWhenDone) {
         boolean tmpPrepare = chFactoryDecorator.isEnabled();
         if (tmpPrepare) {
             ensureWriteAccess();
 
             ghStorage.freeze();
-            chFactoryDecorator.prepare(ghStorage.getProperties());
+            chFactoryDecorator.prepare(ghStorage.getProperties(), freeWhenDone);
             ghStorage.getProperties().put(CH.PREPARE + "done", true);
         }
     }

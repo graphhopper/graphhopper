@@ -267,7 +267,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      * This method calculates the landmark data for all weightings (optionally in parallel) or if already existent loads it.
      *
      * @return true if the preparation data for at least one weighting was calculated.
-     * @see com.graphhopper.routing.ch.CHAlgoFactoryDecorator#prepare(StorableProperties) for a very similar method
+     * @see com.graphhopper.routing.ch.CHAlgoFactoryDecorator#prepare(StorableProperties, boolean) for a very similar method
      */
     public boolean loadOrDoWork(final StorableProperties properties) {
         ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(threadPool);

@@ -119,10 +119,6 @@ graphhopper:
   # graph.do_sort: true
 
 
-  # Flush generated resources to disk early in the import process that are not needed later on to reduce memory usage.
-  # graph.conserve_memory: true
-
-
 
   ##### Spatial Rules #####
   # Spatial Rules require some configuration and only work with the DataFlagEncoder.

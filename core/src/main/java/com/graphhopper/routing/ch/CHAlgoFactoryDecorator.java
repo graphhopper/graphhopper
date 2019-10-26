@@ -59,7 +59,6 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private int preparationThreads;
     private ExecutorService threadPool;
     private PMap pMap = new PMap();
-    private boolean conserveMemory = false;
 
     public CHAlgoFactoryDecorator() {
         setPreparationThreads(1);
@@ -74,7 +73,6 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (!args.get("prepare.chWeighting", "").isEmpty() || !args.get("prepare.chWeightings", "").isEmpty())
             throw new IllegalStateException("Use " + CH.PREPARE + "weightings and a comma separated list instead of prepare.chWeighting or prepare.chWeightings");
 
-        conserveMemory = args.getBool("graph.conserve_memory", false);
         setPreparationThreads(args.getInt(CH.PREPARE + "threads", getPreparationThreads()));
 
         // default is enabled & fastest
@@ -286,7 +284,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         this.threadPool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
     }
 
-    public void prepare(final StorableProperties properties) {
+    public void prepare(final StorableProperties properties, final boolean freeWhenDone) {
         ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;
         for (final PrepareContractionHierarchies prepare : getPreparations()) {
@@ -299,7 +297,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                     // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                     Thread.currentThread().setName(name);
                     prepare.doWork();
-                    if (conserveMemory) {
+                    if (freeWhenDone) {
                         prepare.flushAndFree();
                     }
                     properties.put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));

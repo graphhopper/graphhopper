@@ -174,6 +174,43 @@ public class GraphHopperIT {
     }
 
     @Test
+    public void testImportThenLoad() {
+        String tmpOsmFile = DIR + "/monaco.osm.gz";
+        String tmpImportVehicles = "foot";
+
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(tmpOsmFile).
+                setStoreOnFlush(true).
+                setCHEnabled(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create(tmpImportVehicles));
+        tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr);
+        tmpHopper.importAndProcess();
+        tmpHopper = new GraphHopperOSM().
+                setOSMFile(tmpOsmFile).
+                setStoreOnFlush(true).
+                setCHEnabled(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create(tmpImportVehicles));
+        tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr);
+        tmpHopper.importOrLoad();
+
+        // same query as in testMonacoWithInstructions
+        GHResponse rsp = tmpHopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setVehicle(vehicle));
+
+        PathWrapper bestPath = rsp.getBest();
+        // identify the number of counts to compare with none-CH foot route which had nearly 700 counts
+        long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        assertNotEquals(sum, 0);
+        assertTrue("Too many nodes visited " + sum, sum < 120);
+        assertEquals(3437.6, bestPath.getDistance(), .1);
+        assertEquals(87, bestPath.getPoints().getSize());
+
+        tmpHopper.close();
+    }
+
+    @Test
     public void testAlternativeRoutes() {
         GHRequest req = new GHRequest(43.729057, 7.41251, 43.740298, 7.423561).
                 setAlgorithm(ALT_ROUTE).setVehicle(vehicle).setWeighting(weightCalcStr);
