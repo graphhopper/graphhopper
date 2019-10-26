@@ -55,7 +55,7 @@ public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfigurat
             gtfsStorage.close();
         } else {
             final GraphHopperManaged graphHopper = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), bootstrap.getObjectMapper());
-            graphHopper.getGraphHopper().importAndProcess();
+            graphHopper.getGraphHopper().importAndClose();
         }
 
     }

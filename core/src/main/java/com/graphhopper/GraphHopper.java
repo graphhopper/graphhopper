@@ -624,7 +624,7 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * Imports and processes data, storing it to disk when complete.
      */
-    public void importAndProcess() {
+    public void importAndClose() {
         if (!load(ghLocation)) {
             printInfo();
             process(ghLocation, true);
