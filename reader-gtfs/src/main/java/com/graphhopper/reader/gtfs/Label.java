@@ -21,7 +21,9 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.time.Instant;
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class Label {
 
@@ -96,49 +98,39 @@ public class Label {
         return adjNode + " " + Instant.ofEpochMilli(currentTime) + " " + nTransfers + " " +  (departureTime != null ? Instant.ofEpochMilli(departureTime) : "");
     }
 
-    static Iterable<Transition> reverseEdges(Label leaf, Graph graph, PtEncodedValues flagEncoder, boolean reverseEdgeFlags) {
-        return new Iterable<Transition>() {
-            @Override
-            public Iterator<Transition> iterator() {
-                return new Iterator<Transition>() {
-                    int i = 0;
-                    Label label = leaf;
-                    @Override
-                    public boolean hasNext() {
-                        return reverseEdgeFlags ? label != null : label.parent != null;
-                    }
-
-                    @Override
-                    public Transition next() {
-                        if (i==0 && !reverseEdgeFlags) {
-                            ++i;
-                            return new Transition(label, null);
-                        } else {
-                            EdgeIteratorState edgeIteratorState = label.parent == null ? null :
-                                    graph.getEdgeIteratorState(label.edge, reverseEdgeFlags ? label.adjNode : label.parent.adjNode).detach(false);
-                            if (reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getBaseNode() != label.parent.adjNode || edgeIteratorState.getAdjNode() != label.adjNode)) {
-                                throw new IllegalStateException();
-                            }
-                            if (!reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getAdjNode() != label.parent.adjNode || edgeIteratorState.getBaseNode() != label.adjNode)) {
-                                throw new IllegalStateException();
-                            }
-
-                            Transition transition;
-                            if (reverseEdgeFlags) {
-                                transition = new Transition(label, edgeIteratorState != null ? getEdgeLabel(edgeIteratorState, flagEncoder) : null);
-                            } else {
-                                transition = new Transition(label.parent, edgeIteratorState != null ? getEdgeLabel(edgeIteratorState, flagEncoder) : null);
-                            }
-                            label = label.parent;
-                            return transition;
-                        }
-                    }
-                };
+    static List<Label.Transition> getTransitions(Label _label, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph) {
+        Label label = _label;
+        boolean reverseEdgeFlags = !arriveBy;
+        List<Label.Transition> result = new ArrayList<>();
+        if (!reverseEdgeFlags) {
+            result.add(new Label.Transition(label, null));
+        }
+        while (label.parent != null) {
+            EdgeIteratorState edgeIteratorState = queryGraph.getEdgeIteratorState(label.edge, reverseEdgeFlags ? label.adjNode : label.parent.adjNode).detach(false);
+            if (reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getBaseNode() != label.parent.adjNode || edgeIteratorState.getAdjNode() != label.adjNode)) {
+                throw new IllegalStateException();
             }
-        };
+            if (!reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getAdjNode() != label.parent.adjNode || edgeIteratorState.getBaseNode() != label.adjNode)) {
+                throw new IllegalStateException();
+            }
+
+            Label.Transition transition;
+            if (reverseEdgeFlags) {
+                transition = new Label.Transition(label, edgeIteratorState != null ? Label.getEdgeLabel(edgeIteratorState, encoder) : null);
+            } else {
+                transition = new Label.Transition(label.parent, edgeIteratorState != null ? Label.getEdgeLabel(edgeIteratorState, encoder) : null);
+            }
+            label = label.parent;
+            result.add(transition);
+        }
+        if (reverseEdgeFlags) {
+            result.add(new Label.Transition(label, null));
+            Collections.reverse(result);
+        }
+        return result;
     }
 
-    private static EdgeLabel getEdgeLabel(EdgeIteratorState edgeIteratorState, PtEncodedValues flagEncoder) {
+    static EdgeLabel getEdgeLabel(EdgeIteratorState edgeIteratorState, PtEncodedValues flagEncoder) {
         return new EdgeLabel(edgeIteratorState, edgeIteratorState.get(flagEncoder.getTypeEnc()), edgeIteratorState.get(flagEncoder.getValidityIdEnc()),
                 edgeIteratorState.get(flagEncoder.getTransfersEnc()), edgeIteratorState.getDistance());
     }

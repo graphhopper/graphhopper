@@ -274,31 +274,30 @@ public final class GraphHopperGtfs {
                 }
             }
 
-            List<List<Label.Transition>> pathsToStations = discoveredSolutions.stream()
-                    .map(originalSolutions::get)
-                    .map(l -> tripFromLabel.getTransitions(arriveBy, ptEncodedValues, queryGraph, l)).collect(Collectors.toList());
-
-            List<List<Label.Transition>> paths = pathsToStations.stream().map(p -> {
+            List<List<Label.Transition>> paths = new ArrayList<>();
+            for (Label discoveredSolution : discoveredSolutions) {
+                Label originalSolution = originalSolutions.get(discoveredSolution);
+                List<Label.Transition> pathToDestinationStop = Label.getTransitions(originalSolution, arriveBy, ptEncodedValues, queryGraph);
                 if (arriveBy) {
-                    List<Label.Transition> pp = new ArrayList<>(p.subList(1, p.size()));
-                    List<Label.Transition> pathFromStation = pathFromStation(reverseSettledSet.get(p.get(0).label.adjNode));
-                    long diff = p.get(0).label.currentTime - pathFromStation.get(pathFromStation.size() - 1).label.currentTime;
+                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(0).label.adjNode), false, ptEncodedValues, queryGraph);
+                    long diff = pathToDestinationStop.get(0).label.currentTime - pathFromStation.get(pathFromStation.size() - 1).label.currentTime;
                     List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
                         return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.walkDistanceOnCurrentLeg, t.label.departureTime, t.label.walkTime, t.label.residualDelay, t.label.impossible, null), t.edge);
                     }).collect(Collectors.toList());
+                    List<Label.Transition> pp = new ArrayList<>(pathToDestinationStop.subList(1, pathToDestinationStop.size()));
                     pp.addAll(0, patchedPathFromStation);
-                    return pp;
+                    paths.add(pp);
                 } else {
-                    List<Label.Transition> pp = new ArrayList<>(p);
-                    List<Label.Transition> pathFromStation = pathFromStation(reverseSettledSet.get(p.get(p.size() - 1).label.adjNode));
-                    long diff = p.get(p.size() - 1).label.currentTime - pathFromStation.get(0).label.currentTime;
-                    List<Label.Transition> patchedPathFromStation = pathFromStation.subList(1, pathFromStation.size()).stream().map(t -> {
+                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(pathToDestinationStop.size() - 1).label.adjNode), true, ptEncodedValues, queryGraph);
+                    long diff = pathToDestinationStop.get(pathToDestinationStop.size() - 1).label.currentTime - pathFromStation.get(0).label.currentTime;
+                    List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
                         return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.walkDistanceOnCurrentLeg, t.label.departureTime, t.label.walkTime, t.label.residualDelay, t.label.impossible, null), t.edge);
                     }).collect(Collectors.toList());
-                    pp.addAll(patchedPathFromStation);
-                    return pp;
+                    List<Label.Transition> pp = new ArrayList<>(pathToDestinationStop);
+                    pp.addAll(patchedPathFromStation.subList(1, pathFromStation.size()));
+                    paths.add(pp);
                 }
-            }).collect(Collectors.toList());
+            }
 
             visitedNodes += router.getVisitedNodes();
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
@@ -313,9 +312,6 @@ public final class GraphHopperGtfs {
             return paths;
         }
 
-        private List<Label.Transition> pathFromStation(Label l) {
-            return tripFromLabel.getTransitions(!arriveBy, ptEncodedValues, queryGraph, l);
-        }
     }
 
     @Inject

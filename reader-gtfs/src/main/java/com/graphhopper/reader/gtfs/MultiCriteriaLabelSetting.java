@@ -148,7 +148,7 @@ public class MultiCriteriaLabelSetting {
                         }
                     } else if (reverse && (edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK || edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL)) {
                         if (label.nTransfers == 0) {
-                            firstPtDepartureTime = nextTime - label.walkTime;
+                            firstPtDepartureTime = nextTime + label.walkTime;
                         }
                     }
                     double walkDistanceOnCurrentLeg = (!reverse && edgeType == GtfsStorage.EdgeType.BOARD || reverse && edgeType == GtfsStorage.EdgeType.ALIGHT) ? 0 : (label.walkDistanceOnCurrentLeg + edge.getDistance());

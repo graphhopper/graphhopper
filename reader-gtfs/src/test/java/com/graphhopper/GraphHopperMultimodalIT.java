@@ -130,6 +130,19 @@ public class GraphHopperMultimodalIT {
     }
 
     @Test
+    public void testArriveBy() {
+        Request ghRequest = new Request(
+                36.92311729030539, -116.76769495010377,
+                36.91260259593356, -116.76149368286134
+        );
+        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 7, 0, 0).atZone(zoneId).toInstant());
+        ghRequest.setArriveBy(true);
+
+        GHResponse response = graphHopper.route(ghRequest);
+        assertThat(response.getAll()).isNotEmpty();
+    }
+
+    @Test
     public void testFastWalking() {
         Request ghRequest = new Request(
                 36.91311729030539, -116.76769495010377,
