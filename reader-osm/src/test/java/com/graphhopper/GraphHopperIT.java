@@ -185,7 +185,7 @@ public class GraphHopperIT {
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles));
         tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr);
-        tmpHopper.importAndProcess();
+        tmpHopper.importAndClose();
         tmpHopper = new GraphHopperOSM().
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
