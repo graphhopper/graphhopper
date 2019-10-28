@@ -21,43 +21,41 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Peter Karich
  */
 class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
-    private final List<EdgeIteratorState> edges;
+    private final EdgeFilter edgeFilter;
+    private List<EdgeIteratorState> edges;
     private int current;
 
-    VirtualEdgeIterator(int edgeCount) {
-        edges = new ArrayList<>(edgeCount);
-        reset();
+    VirtualEdgeIterator(EdgeFilter edgeFilter, List<EdgeIteratorState> edges) {
+        this.edges = edges;
+        this.current = -1;
+        this.edgeFilter = edgeFilter;
     }
 
-    void add(EdgeIteratorState edge) {
-        edges.add(edge);
-    }
-
-    EdgeIterator reset() {
+    EdgeIterator reset(List<EdgeIteratorState> edges) {
+        this.edges = edges;
         current = -1;
         return this;
-    }
-
-    int count() {
-        return edges.size();
     }
 
     @Override
     public boolean next() {
         current++;
+        while (current < edges.size() && !edgeFilter.accept(edges.get(current))) {
+            current++;
+        }
         return current < edges.size();
     }
 
@@ -65,156 +63,156 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     public EdgeIteratorState detach(boolean reverse) {
         if (reverse)
             throw new IllegalStateException("Not yet supported");
-        return edges.get(current);
+        return getCurrentEdge();
     }
 
     @Override
     public int getEdge() {
-        return edges.get(current).getEdge();
+        return getCurrentEdge().getEdge();
     }
 
     @Override
     public int getBaseNode() {
-        return edges.get(current).getBaseNode();
+        return getCurrentEdge().getBaseNode();
     }
 
     @Override
     public int getAdjNode() {
-        return edges.get(current).getAdjNode();
+        return getCurrentEdge().getAdjNode();
     }
 
     @Override
     public PointList fetchWayGeometry(int mode) {
-        return edges.get(current).fetchWayGeometry(mode);
+        return getCurrentEdge().fetchWayGeometry(mode);
     }
 
     @Override
     public EdgeIteratorState setWayGeometry(PointList list) {
-        return edges.get(current).setWayGeometry(list);
+        return getCurrentEdge().setWayGeometry(list);
     }
 
     @Override
     public double getDistance() {
-        return edges.get(current).getDistance();
+        return getCurrentEdge().getDistance();
     }
 
     @Override
     public EdgeIteratorState setDistance(double dist) {
-        return edges.get(current).setDistance(dist);
+        return getCurrentEdge().setDistance(dist);
     }
 
     @Override
     public IntsRef getFlags() {
-        return edges.get(current).getFlags();
+        return getCurrentEdge().getFlags();
     }
 
     @Override
     public EdgeIteratorState setFlags(IntsRef flags) {
-        return edges.get(current).setFlags(flags);
+        return getCurrentEdge().setFlags(flags);
     }
 
     @Override
     public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
-        edges.get(current).set(property, value);
+        getCurrentEdge().set(property, value);
         return this;
     }
 
     @Override
     public boolean get(BooleanEncodedValue property) {
-        return edges.get(current).get(property);
+        return getCurrentEdge().get(property);
     }
 
     @Override
     public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
-        edges.get(current).setReverse(property, value);
+        getCurrentEdge().setReverse(property, value);
         return this;
     }
 
     @Override
     public boolean getReverse(BooleanEncodedValue property) {
-        return edges.get(current).getReverse(property);
+        return getCurrentEdge().getReverse(property);
     }
 
     @Override
     public EdgeIteratorState set(IntEncodedValue property, int value) {
-        edges.get(current).set(property, value);
+        getCurrentEdge().set(property, value);
         return this;
     }
 
     @Override
     public int get(IntEncodedValue property) {
-        return edges.get(current).get(property);
+        return getCurrentEdge().get(property);
     }
 
     @Override
     public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
-        edges.get(current).setReverse(property, value);
+        getCurrentEdge().setReverse(property, value);
         return this;
     }
 
     @Override
     public int getReverse(IntEncodedValue property) {
-        return edges.get(current).getReverse(property);
+        return getCurrentEdge().getReverse(property);
     }
 
     @Override
     public EdgeIteratorState set(DecimalEncodedValue property, double value) {
-        edges.get(current).set(property, value);
+        getCurrentEdge().set(property, value);
         return this;
     }
 
     @Override
     public double get(DecimalEncodedValue property) {
-        return edges.get(current).get(property);
+        return getCurrentEdge().get(property);
     }
 
     @Override
     public EdgeIteratorState setReverse(DecimalEncodedValue property, double value) {
-        edges.get(current).setReverse(property, value);
+        getCurrentEdge().setReverse(property, value);
         return this;
     }
 
     @Override
     public double getReverse(DecimalEncodedValue property) {
-        return edges.get(current).getReverse(property);
+        return getCurrentEdge().getReverse(property);
     }
 
     @Override
     public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
-        edges.get(current).set(property, value);
+        getCurrentEdge().set(property, value);
         return this;
     }
 
     @Override
     public <T extends Enum> T get(EnumEncodedValue<T> property) {
-        return edges.get(current).get(property);
+        return getCurrentEdge().get(property);
     }
 
     @Override
     public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
-        edges.get(current).setReverse(property, value);
+        getCurrentEdge().setReverse(property, value);
         return this;
     }
 
     @Override
     public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
-        return edges.get(current).getReverse(property);
+        return getCurrentEdge().getReverse(property);
     }
 
     @Override
     public String getName() {
-        return edges.get(current).getName();
+        return getCurrentEdge().getName();
     }
 
     @Override
     public EdgeIteratorState setName(String name) {
-        return edges.get(current).setName(name);
+        return getCurrentEdge().setName(name);
     }
 
     @Override
     public String toString() {
         if (current >= 0 && current < edges.size()) {
-            return "virtual edge: " + edges.get(current) + ", all: " + edges.toString();
+            return "virtual edge: " + getCurrentEdge() + ", all: " + edges.toString();
         } else {
             return "virtual edge: (invalid)" + ", all: " + edges.toString();
         }
@@ -222,29 +220,29 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
 
     @Override
     public int getAdditionalField() {
-        return edges.get(current).getAdditionalField();
+        return getCurrentEdge().getAdditionalField();
     }
 
     @Override
     public EdgeIteratorState setAdditionalField(int value) {
-        return edges.get(current).setAdditionalField(value);
+        return getCurrentEdge().setAdditionalField(value);
     }
 
     @Override
     public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState edge) {
-        return edges.get(current).copyPropertiesFrom(edge);
+        return getCurrentEdge().copyPropertiesFrom(edge);
     }
 
     @Override
     public boolean isShortcut() {
-        EdgeIteratorState edge = edges.get(current);
+        EdgeIteratorState edge = getCurrentEdge();
         return edge instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) edge).isShortcut();
     }
 
     @Override
     public double getWeight() {
         // will be called only from PreparationWeighting and if isShortcut is true
-        return ((CHEdgeIteratorState) edges.get(current)).getWeight();
+        return ((CHEdgeIteratorState) getCurrentEdge()).getWeight();
     }
 
     @Override
@@ -279,16 +277,24 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
 
     @Override
     public int getOrigEdgeFirst() {
-        return edges.get(current).getOrigEdgeFirst();
+        return getCurrentEdge().getOrigEdgeFirst();
     }
 
     @Override
     public int getOrigEdgeLast() {
-        return edges.get(current).getOrigEdgeLast();
+        return getCurrentEdge().getOrigEdgeLast();
     }
 
     @Override
     public int getMergeStatus(int flags) {
         throw new UnsupportedOperationException("Not supported.");
+    }
+
+    private EdgeIteratorState getCurrentEdge() {
+        return edges.get(current);
+    }
+
+    public List<EdgeIteratorState> getEdges() {
+        return edges;
     }
 }

@@ -19,7 +19,11 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.weighting.PriorityWeighting;
+import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.PointList;
 
 import java.util.TreeMap;
 
@@ -146,6 +150,42 @@ public class HikeFlagEncoder extends FootFlagEncoder {
 
         if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))
             weightToPrioMap.put(44d, AVOID_IF_POSSIBLE.getValue());
+    }
+
+
+    @Override
+    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
+        PointList pl = edge.fetchWayGeometry(3);
+        if (!pl.is3D())
+            return;
+
+        if (way.hasTag("tunnel", "yes") || way.hasTag("bridge", "yes") || way.hasTag("highway", "steps"))
+            // do not change speed
+            // note: although tunnel can have a difference in elevation it is unlikely that the elevation data is correct for a tunnel
+            return;
+
+        // Decrease the speed for ele increase (incline), and slightly decrease the speed for ele decrease (decline)
+        double prevEle = pl.getElevation(0);
+        double fullDistance = edge.getDistance();
+
+        // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
+        if (fullDistance < 2)
+            return;
+
+        double eleDelta = Math.abs(pl.getElevation(pl.size() - 1) - prevEle);
+        double slope = eleDelta / fullDistance;
+
+        IntsRef edgeFlags = edge.getFlags();
+        if ((accessEnc.getBool(false, edgeFlags) || accessEnc.getBool(true, edgeFlags))
+                && slope > 0.005) {
+
+            // see #1679 => v_hor=4.5km/h for horizontal speed; v_vert=2*0.5km/h for vertical speed (assumption: elevation < edge distance/4.5)
+            // s_3d/v=h/v_vert + s_2d/v_hor => v = s_3d / (h/v_vert + s_2d/v_hor) = sqrt(s²_2d + h²) / (h/v_vert + s_2d/v_hor)
+            // slope=h/s_2d=~h/2_3d              = sqrt(1+slope²)/(slope+1/4.5) km/h
+            // maximum slope is 0.37 (Ffordd Pen Llech)
+            double newSpeed = Math.sqrt(1 + slope * slope) / (slope + 1 / 5.4);
+            edge.set(speedEncoder, Helper.keepIn(newSpeed, 1, 5));
+        }
     }
 
     @Override
