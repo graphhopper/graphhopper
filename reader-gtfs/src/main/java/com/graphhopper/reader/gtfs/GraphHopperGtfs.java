@@ -266,7 +266,7 @@ public final class GraphHopperGtfs {
                 // On the other hand, we may simply want to limit the amount of output that an arbitrarily complex profile
                 // can produce, so maybe we should keep both.
                 //
-                if ((!profileQuery || discoveredSolutions.size() >= limitSolutions || router.timeSinceStartTime(label) > maxProfileDuration) && router.weight(label) + smallestStationLabelWeight > highestWeightForDominationTest) {
+                if ((!profileQuery || discoveredSolutions.size() >= limitSolutions || (!discoveredSolutions.isEmpty() && router.timeSinceStartTime(discoveredSolutions.get(discoveredSolutions.size()-1)) > maxProfileDuration)) && router.weight(label) + smallestStationLabelWeight > highestWeightForDominationTest) {
                     break;
                 }
                 Label reverseLabel = reverseSettledSet.get(label.adjNode);
