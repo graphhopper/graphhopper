@@ -126,7 +126,7 @@ public final class GraphHopperGtfs {
             ignoreTransfers = Optional.ofNullable(request.getIgnoreTransfers()).orElse(request.isProfileQuery());
             betaTransfers = request.getBetaTransfers();
             betaWalkTime = request.getBetaWalkTime();
-            limitSolutions = Optional.ofNullable(request.getLimitSolutions()).orElse(ignoreTransfers && !profileQuery ? 1 : Integer.MAX_VALUE);
+            limitSolutions = Optional.ofNullable(request.getLimitSolutions()).orElse(profileQuery ? 5 : ignoreTransfers ? 1 : Integer.MAX_VALUE);
             initialTime = request.getEarliestDepartureTime();
             arriveBy = request.isArriveBy();
             walkSpeedKmH = request.getWalkSpeedKmH();
