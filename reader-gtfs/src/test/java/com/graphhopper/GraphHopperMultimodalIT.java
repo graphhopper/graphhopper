@@ -78,6 +78,7 @@ public class GraphHopperMultimodalIT {
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
         ghRequest.setProfileQuery(true);
+        ghRequest.setLimitSolutions(5);
 
         GHResponse response = graphHopper.route(ghRequest);
         assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(243);

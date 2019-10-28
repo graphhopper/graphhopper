@@ -193,18 +193,16 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
+        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 0).atZone(zoneId).toInstant());
         ghRequest.setProfileQuery(true);
         ghRequest.setIgnoreTransfers(true);
-        ghRequest.setLimitSolutions(21);
 
         GHResponse response = graphHopper.route(ghRequest);
         List<LocalTime> actualDepartureTimes = response.getAll().stream()
-                .map(path -> LocalTime.from(((Trip.PtLeg) path.getLegs().get(0)).getDepartureTime().toInstant().atZone(zoneId)))
+                .map(path -> LocalTime.from(path.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId)))
                 .collect(Collectors.toList());
         List<LocalTime> expectedDepartureTimes = Stream.of(
-                "06:44", "07:14", "07:44", "08:14", "08:44", "08:54", "09:04", "09:14", "09:24", "09:34", "09:44", "09:54",
-                "10:04", "10:14", "10:24", "10:34", "10:44", "11:14", "11:44", "12:14", "12:44")
+                "06:44", "07:14", "07:44", "08:14", "08:44", "08:54", "09:04", "09:14", "09:24", "09:34", "09:44", "09:54") // TODO: 10:04 (minor issue, since unspecified and not wrong)
                 .map(LocalTime::parse)
                 .collect(Collectors.toList());
         assertEquals(expectedDepartureTimes, actualDepartureTimes);
@@ -221,15 +219,14 @@ public class GraphHopperGtfsIT {
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 23, 0).atZone(zoneId).toInstant());
         ghRequest.setProfileQuery(true);
         ghRequest.setIgnoreTransfers(true);
-        ghRequest.setLimitSolutions(21);
 
         GHResponse response = graphHopper.route(ghRequest);
         List<LocalTime> actualDepartureTimes = response.getAll().stream()
-                .map(path -> LocalTime.from(((Trip.PtLeg) path.getLegs().get(0)).getDepartureTime().toInstant().atZone(zoneId)))
+                .map(path -> LocalTime.from(path.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId)))
                 .collect(Collectors.toList());
-        List<LocalTime> expectedDepartureTimes = Stream.of(
-                "06:44", "07:14", "07:44", "08:14", "08:44", "08:54", "09:04", "09:14", "09:24", "09:34", "09:44", "09:54",
-                "10:04", "10:14", "10:24", "10:34", "10:44", "11:14", "11:44", "12:14", "12:44")
+        // Find exactly the next departure, tomorrow. It departs outside the profile time window, but there is no
+        // walk alternative, so this remains the best solution for the entire time window.
+        List<LocalTime> expectedDepartureTimes = Stream.of("06:44")
                 .map(LocalTime::parse)
                 .collect(Collectors.toList());
         assertEquals(expectedDepartureTimes, actualDepartureTimes);
