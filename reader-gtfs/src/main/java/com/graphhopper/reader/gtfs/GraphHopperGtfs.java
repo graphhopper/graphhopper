@@ -48,6 +48,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -100,6 +101,7 @@ public final class GraphHopperGtfs {
     private class RequestHandler {
         private final int maxVisitedNodesForRequest;
         private final int limitSolutions;
+        private final long maxProfileDuration = Duration.ofHours(4).toMillis();
         private final Instant initialTime;
         private final boolean profileQuery;
         private final boolean arriveBy;
@@ -252,8 +254,19 @@ public final class GraphHopperGtfs {
             long highestWeightForDominationTest = Long.MAX_VALUE;
             while (iterator.hasNext()) {
                 Label label = iterator.next();
-                final long weight = router.weight(label);
-                if ((!profileQuery || discoveredSolutions.size() >= limitSolutions) && weight + smallestStationLabelWeight > highestWeightForDominationTest) {
+                // For single-criterion or pareto queries, we run to the end.
+                //
+                // For profile queries, we need a limited time window. Limiting the number of solutions is not
+                // enough, as there may not be that many solutions - perhaps only walking - and we would run until the end of the calendar
+                // because the router can't know that a super-fast PT departure isn't going to happen some day.
+                //
+                // Arguably, the number of solutions doesn't even make sense as a parameter, since they are not really
+                // alternatives to choose from, but points in time where the optimal solution changes, which isn't really
+                // a criterion for a PT user to limit their search. Some O/D relations just have more complicated profiles than others.
+                // On the other hand, we may simply want to limit the amount of output that an arbitrarily complex profile
+                // can produce, so maybe we should keep both.
+                //
+                if ((!profileQuery || discoveredSolutions.size() >= limitSolutions || router.timeSinceStartTime(label) > maxProfileDuration) && router.weight(label) + smallestStationLabelWeight > highestWeightForDominationTest) {
                     break;
                 }
                 Label reverseLabel = reverseSettledSet.get(label.adjNode);

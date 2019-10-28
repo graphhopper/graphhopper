@@ -152,7 +152,6 @@ public class MultiCriteriaLabelSetting {
                         }
                     }
                     double walkDistanceOnCurrentLeg = (!reverse && edgeType == GtfsStorage.EdgeType.BOARD || reverse && edgeType == GtfsStorage.EdgeType.ALIGHT) ? 0 : (label.walkDistanceOnCurrentLeg + edge.getDistance());
-                    boolean isTryingToReEnterPtAfterWalking = (!reverse && edgeType == GtfsStorage.EdgeType.ENTER_PT || reverse && edgeType == GtfsStorage.EdgeType.EXIT_PT) && label.nTransfers > 0;
                     long walkTime = label.walkTime + (edgeType == GtfsStorage.EdgeType.HIGHWAY || edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT ? ((reverse ? -1 : 1) * (nextTime - label.currentTime)) : 0);
                     List<Label> sptEntries = fromMap.get(edge.getAdjNode());
                     if (sptEntries == null) {
@@ -268,7 +267,11 @@ public class MultiCriteriaLabelSetting {
     }
 
     long weight(Label label) {
-        return (reverse ? -1 : 1) * (label.currentTime - startTime) + (long) (label.nTransfers * betaTransfers) + (long) (label.walkTime * (betaWalkTime - 1.0));
+        return timeSinceStartTime(label) + (long) (label.nTransfers * betaTransfers) + (long) (label.walkTime * (betaWalkTime - 1.0));
+    }
+
+    long timeSinceStartTime(Label label) {
+        return (reverse ? -1 : 1) * (label.currentTime - startTime);
     }
 
     private long travelTimeCriterion(Label label) {
