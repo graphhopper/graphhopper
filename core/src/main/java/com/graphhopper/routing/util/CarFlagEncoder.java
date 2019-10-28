@@ -41,8 +41,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     // This value determines the maximal possible on roads with bad surfaces
     protected int badSurfaceSpeed;
 
-    // This value determines the speed for roads with access=destination
-    protected int destinationSpeed;
     protected boolean speedTwoDirections;
     /**
      * A map which associates string to speed. Get some impression:
@@ -143,7 +141,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
         // limit speed on bad surfaces to 30 km/h
         badSurfaceSpeed = 30;
-        destinationSpeed = 5;
         maxPossibleSpeed = 140;
         speedDefault = defaultSpeedMap.get("secondary");
 
@@ -280,14 +277,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 setSpeed(true, edgeFlags, ferrySpeed);
         }
 
-        for (String restriction : restrictions) {
-            if (way.hasTag(restriction, "destination")) {
-                // This is problematic as Speed != Time
-                setSpeed(false, edgeFlags, destinationSpeed);
-                if (speedTwoDirections)
-                    setSpeed(true, edgeFlags, destinationSpeed);
-            }
-        }
         return edgeFlags;
     }
 
