@@ -42,6 +42,7 @@ public class FastestWeighting extends AbstractWeighting {
     private final long headingPenaltyMillis;
     private final double maxSpeed;
     private EnumEncodedValue<RoadAccess> roadAccessEnc = null;
+    // this factor puts a penalty on roads with a "destination"-only access, see #733
     private double roadAccessPenalty;
 
     public FastestWeighting(FlagEncoder encoder, PMap map) {
@@ -51,7 +52,7 @@ public class FastestWeighting extends AbstractWeighting {
         maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;
 
         if (encoder.hasEncodedValue(RoadAccess.KEY)) {
-            // ensure that we do not need to change getMinWeight, i.e. road_access_delay is actual a penalty
+            // ensure that we do not need to change getMinWeight, i.e. road_access_factor >= 1
             roadAccessPenalty = checkBounds("road_access_factor", map.getDouble("road_access_factor", 10), 1, 10);
             roadAccessEnc = encoder.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         }
