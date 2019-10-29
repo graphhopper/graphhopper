@@ -56,6 +56,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
+import static java.util.Comparator.comparingLong;
+
 @Path("route")
 public final class GraphHopperGtfs {
 
@@ -275,11 +277,25 @@ public final class GraphHopperGtfs {
                 Label reverseLabel = reverseSettledSet.get(label.adjNode);
                 if (reverseLabel != null) {
                     Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), -1, label.adjNode, label.nTransfers + reverseLabel.nTransfers, label.walkDistanceOnCurrentLeg + reverseLabel.walkDistanceOnCurrentLeg, label.departureTime, label.walkTime + reverseLabel.walkTime, 0, label.impossible, null);
+                    if (label.adjNode == 3419182) {
+                        System.out.println("wurst");
+                    }
                     if (router.isNotDominatedByAnyOf(combinedSolution, discoveredSolutions)) {
+                        int before = discoveredSolutions.size();
                         router.removeDominated(combinedSolution, discoveredSolutions);
-                        if (discoveredSolutions.size() >= limitSolutions) continue;
-                        if (profileQuery && discoveredSolutions.size() > 0 && discoveredSolutions.get(discoveredSolutions.size()-1).departureTime != null && discoveredSolutions.get(discoveredSolutions.size()-1).departureTime - initialTime.toEpochMilli() > maxProfileDuration) continue;
+                        int after = discoveredSolutions.size();
+                        if (before-after > 0 ) {
+                            System.out.println("+++ \t"+combinedSolution);
+                            for (Label discoveredSolution : discoveredSolutions) {
+                                System.out.println(discoveredSolution);
+                            }
+                            System.out.println();
+                        }
+                        List<Label> closedSolutions = discoveredSolutions.stream().filter(s -> router.weight(s) < router.weight(label) + smallestStationLabelWeight).collect(Collectors.toList());
+                        if (closedSolutions.size() >= limitSolutions) continue;
+                        if (profileQuery && combinedSolution.departureTime != null && (combinedSolution.departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration && closedSolutions.size() > 0 && closedSolutions.get(closedSolutions.size()-1).departureTime != null && (closedSolutions.get(closedSolutions.size()-1).departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration) continue;
                         discoveredSolutions.add(combinedSolution);
+                        Collections.sort(discoveredSolutions, comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));
                         originalSolutions.put(combinedSolution, label);
                         if (label.nTransfers == 0 && reverseLabel.nTransfers == 0) {
                             walkSolution = combinedSolution;
@@ -287,8 +303,10 @@ public final class GraphHopperGtfs {
                         if (profileQuery) {
                             highestWeightForDominationTest = discoveredSolutions.stream().mapToLong(router::weight).max().orElse(Long.MAX_VALUE);
                             if (walkSolution != null && discoveredSolutions.size() < limitSolutions) {
-                                // If we have a walk solution, we have it at every point in the profile.
-                                // Here we just pretend that if there is still room in our result set,
+                                // If we have a walk solution, we have it at every point in time in the profile.
+                                // (I can start walking any time I want, unlike with bus departures.)
+                                // Here we virtually add it to the end of the profile, so it acts as a sentinel
+                                // to remind us that we still have to search that far to close the set.
                                 highestWeightForDominationTest = Math.max(highestWeightForDominationTest, router.weight(walkSolution) + maxProfileDuration);
                             }
                         } else {

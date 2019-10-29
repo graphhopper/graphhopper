@@ -95,7 +95,7 @@ public class Label {
 
     @Override
     public String toString() {
-        return adjNode + " " + Instant.ofEpochMilli(currentTime) + " " + nTransfers + " " +  (departureTime != null ? Instant.ofEpochMilli(departureTime) : "");
+        return adjNode + " " + (departureTime != null ? Instant.ofEpochMilli(departureTime) : "---") + "\t" + nTransfers + "\t" + Instant.ofEpochMilli(currentTime);
     }
 
     static List<Label.Transition> getTransitions(Label _label, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph) {
