@@ -251,6 +251,7 @@ public final class GraphHopperGtfs {
             Iterator<Label> iterator = router.calcLabels(startNode, initialTime, blockedRouteTypes).iterator();
             Map<Label, Label> originalSolutions = new HashMap<>();
 
+            Label walkSolution = null;
             long highestWeightForDominationTest = Long.MAX_VALUE;
             while (iterator.hasNext()) {
                 Label label = iterator.next();
@@ -266,7 +267,9 @@ public final class GraphHopperGtfs {
                 // On the other hand, we may simply want to limit the amount of output that an arbitrarily complex profile
                 // can produce, so maybe we should keep both.
                 //
-                if ((!profileQuery || discoveredSolutions.size() >= limitSolutions || (!discoveredSolutions.isEmpty() && router.timeSinceStartTime(discoveredSolutions.get(discoveredSolutions.size()-1)) > maxProfileDuration)) && router.weight(label) + smallestStationLabelWeight > highestWeightForDominationTest) {
+                // But no matter what, we always have to run past the highest weight in the open set. If we don't,
+                // the last couple of routes in a profile will be suboptimal while the rest is good.
+                if ((!profileQuery || profileFinished(router, discoveredSolutions, walkSolution)) && router.weight(label) + smallestStationLabelWeight > highestWeightForDominationTest) {
                     break;
                 }
                 Label reverseLabel = reverseSettledSet.get(label.adjNode);
@@ -274,14 +277,22 @@ public final class GraphHopperGtfs {
                     Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), -1, label.adjNode, label.nTransfers + reverseLabel.nTransfers, label.walkDistanceOnCurrentLeg + reverseLabel.walkDistanceOnCurrentLeg, label.departureTime, label.walkTime + reverseLabel.walkTime, 0, label.impossible, null);
                     if (router.isNotDominatedByAnyOf(combinedSolution, discoveredSolutions)) {
                         router.removeDominated(combinedSolution, discoveredSolutions);
-                        if (discoveredSolutions.size() < limitSolutions) {
-                            discoveredSolutions.add(combinedSolution);
-                            originalSolutions.put(combinedSolution, label);
-                            if (profileQuery) {
-                                highestWeightForDominationTest = discoveredSolutions.stream().mapToLong(router::weight).max().orElse(Long.MAX_VALUE);
-                            } else {
-                                highestWeightForDominationTest = discoveredSolutions.stream().filter(s -> !s.impossible && (ignoreTransfers || s.nTransfers <= 1)).mapToLong(router::weight).min().orElse(Long.MAX_VALUE);
+                        if (discoveredSolutions.size() >= limitSolutions) continue;
+                        if (profileQuery && discoveredSolutions.size() > 0 && discoveredSolutions.get(discoveredSolutions.size()-1).departureTime != null && discoveredSolutions.get(discoveredSolutions.size()-1).departureTime - initialTime.toEpochMilli() > maxProfileDuration) continue;
+                        discoveredSolutions.add(combinedSolution);
+                        originalSolutions.put(combinedSolution, label);
+                        if (label.nTransfers == 0 && reverseLabel.nTransfers == 0) {
+                            walkSolution = combinedSolution;
+                        }
+                        if (profileQuery) {
+                            highestWeightForDominationTest = discoveredSolutions.stream().mapToLong(router::weight).max().orElse(Long.MAX_VALUE);
+                            if (walkSolution != null && discoveredSolutions.size() < limitSolutions) {
+                                // If we have a walk solution, we have it at every point in the profile.
+                                // Here we just pretend that if there is still room in our result set,
+                                highestWeightForDominationTest = Math.max(highestWeightForDominationTest, router.weight(walkSolution) + maxProfileDuration);
                             }
+                        } else {
+                            highestWeightForDominationTest = discoveredSolutions.stream().filter(s -> !s.impossible && (ignoreTransfers || s.nTransfers <= 1)).mapToLong(router::weight).min().orElse(Long.MAX_VALUE);
                         }
                     }
                 }
@@ -323,6 +334,14 @@ public final class GraphHopperGtfs {
                 response.addError(new RuntimeException("No route found"));
             }
             return paths;
+        }
+
+        private boolean profileFinished(MultiCriteriaLabelSetting router, List<Label> discoveredSolutions, Label walkSolution) {
+            return discoveredSolutions.size() >= limitSolutions ||
+                    (!discoveredSolutions.isEmpty() && router.timeSinceStartTime(discoveredSolutions.get(discoveredSolutions.size() - 1)) > maxProfileDuration) ||
+                    walkSolution != null;
+            // Imagine we can always add the walk solution again to the end of the list (it can start any time).
+            // In turn, we must also think of this virtual walk solution in the other test (where we check if all labels are closed).
         }
 
     }
