@@ -11,7 +11,10 @@
 }
 
 .carrotContainerFlipped {
-  composes: carrotContainer;
+  height: 1rem;
+  width: 1rem;
+  margin-left: 0.5rem;
+  stroke: currentColor;
 }
 
 .carrotContainer > svg {

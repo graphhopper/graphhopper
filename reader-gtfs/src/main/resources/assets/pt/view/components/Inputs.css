@@ -7,8 +7,11 @@
 }
 
 .select {
-  composes: input;
   min-height: 2rem;
+  padding: 0.2rem 0.4rem;
+  margin-top: 0.16rem;
+  border: 1px solid black;
+  border-radius: 2px;
 }
 
 .inputContainer {

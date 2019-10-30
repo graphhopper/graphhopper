@@ -69,11 +69,6 @@ class SearchInput extends React.Component {
                 isShowingOptions: !prevState.isShowingOptions
             }))
         }, "Options"), this.state.isShowingOptions ? React.createElement("div", null, React.createElement(TextInput, {
-            value: this.props.search.maxWalkDistance,
-            label: "Max. Walking Distance",
-            actionType: SearchActionType.MAX_WALK_DISTANCE,
-            onChange: this.onChange
-        }), React.createElement(TextInput, {
             value: this.props.search.limitSolutions,
             label: "# Alternatives",
             actionType: SearchActionType.LIMIT_SOLUTIONS,
@@ -124,12 +119,6 @@ class SearchInput extends React.Component {
 
                 break;
 
-            case SearchActionType.MAX_WALK_DISTANCE:
-                this.props.onSearchChange({
-                    maxWalkDistance: action.value
-                });
-                break;
-
             case SearchActionType.LIMIT_SOLUTIONS:
                 this.props.onSearchChange({
                     limitSolutions: action.value
@@ -138,7 +127,7 @@ class SearchInput extends React.Component {
 
             case SearchActionType.TIME_OPTION:
                 this.props.onSearchChange({
-                    timeOption: action.value
+                    timeOption: parseInt(action.value)
                 });
                 break;
 

@@ -30,7 +30,6 @@ export default class App extends React.Component {
             from: null,
             to: null,
             departureDateTime: new moment(),
-            maxWalkDistance: 1000,
             limitSolutions: 5,
             timeOption: TimeOption.NOW,
             routes: {
@@ -38,8 +37,7 @@ export default class App extends React.Component {
                 isFetching: false
             }
         };
-        let currentURL = new URL(window.location.href);
-        ParseQuery(this.state, currentURL.searchParams);
+        ParseQuery(this.state, new URL(window.location).searchParams);
     }
 
     componentDidMount() {
@@ -110,7 +108,8 @@ export default class App extends React.Component {
     }
 
     render() {
-        if (this.state.info === null) return null; else return React.createElement("div", {
+        if (this.state.info === null) return null;
+        else return React.createElement("div", {
             className: "appWrapper"
         }, React.createElement("div", {
             className: "sidebar"
@@ -118,13 +117,7 @@ export default class App extends React.Component {
             routes: this.state.routes,
             search: this.state,
             onSearchChange: e => this.setState(e),
-            onSelectIndex: i => {
-                this.setState(prevState => {
-                    return {
-                        route: this._selectRoute(prevState.routes, i)
-                    };
-                });
-            }
+            onSelectIndex: i => this.setState(prevState => ({routes: this._selectRoute(prevState.routes, i)}))
         })), React.createElement("div", {
             className: "map"
         }, React.createElement(Map, {
