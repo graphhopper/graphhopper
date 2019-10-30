@@ -1,11 +1,9 @@
 target/
 *~
-TODO.txt
 *-gh/
 *.osm
 nbactions*.xml
-config.properties
-config.yml
+/config.yml
 build.xml
 queries.sh
 maven/
@@ -25,13 +23,10 @@ debug.sh
 !/reader-osm/src/test/resources/com/graphhopper/reader/osm/*.pbf
 *.dem
 *.log
-core/TODO*.txt
 srtmprovider/
-core/docs/
-.*#
 cgiarprovider/
+.*#
 /nbactions.xml
-tools/nb-configuration.xml
 android/build/
 android/app/build/
 android/.gradle
@@ -42,8 +37,5 @@ local.properties
 **/node_modules
 *.zip
 .DS_Store
-/core/nbproject/
-/reader-overlay-data/nbproject/
-!malta-latest.osm.pbf
 /graph-cache
 package-lock.json

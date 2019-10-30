@@ -604,6 +604,8 @@ public class EncodingManager implements EncodedValueLookup {
             edge.setName(name);
         }
 
+        if (Double.isInfinite(edge.getDistance()))
+            throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
         for (AbstractFlagEncoder encoder : edgeEncoders) {
             encoder.applyWayTags(way, edge);
         }

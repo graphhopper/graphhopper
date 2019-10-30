@@ -86,6 +86,7 @@ public class GHUtilityTest {
         Graph g = initUnsorted(createGraph());
         Graph newG = GHUtility.sortDFS(g, createGraph());
         assertEquals(g.getNodes(), newG.getNodes());
+        assertEquals(g.getEdges(), newG.getEdges());
         NodeAccess na = newG.getNodeAccess();
         assertEquals(0, na.getLatitude(0), 1e-4); // 0
         assertEquals(2.5, na.getLatitude(1), 1e-4); // 1
@@ -95,18 +96,18 @@ public class GHUtilityTest {
         assertEquals(5.0, na.getLatitude(5), 1e-4); // 7
         assertEquals(4.2, na.getLatitude(6), 1e-4); // 5
         assertEquals(getLengthOfAllEdges(g), getLengthOfAllEdges(newG), 1e-4);
-    }
 
-    @Test
-    public void testSort2() {
-        Graph g = initUnsorted(createGraph());
-        Graph newG = GHUtility.sortDFS(g, createGraph());
-        assertEquals(g.getNodes(), newG.getNodes());
-        NodeAccess na = newG.getNodeAccess();
-        assertEquals(0, na.getLatitude(0), 1e-4); // 0
-        assertEquals(2.5, na.getLatitude(1), 1e-4); // 1
-        assertEquals(4.5, na.getLatitude(2), 1e-4); // 2
-        assertEquals(4.6, na.getLatitude(3), 1e-4); // 8        
+        // 0 => 1
+        assertEquals(0, newG.getEdgeIteratorState(0, Integer.MIN_VALUE).getAdjNode());
+        assertEquals(1, newG.getEdgeIteratorState(0, Integer.MIN_VALUE).getBaseNode());
+
+        // 1 => 3 (was 8)
+        assertEquals(1, newG.getEdgeIteratorState(1, Integer.MIN_VALUE).getAdjNode());
+        assertEquals(3, newG.getEdgeIteratorState(1, Integer.MIN_VALUE).getBaseNode());
+
+        // 2 => 1
+        assertEquals(2, newG.getEdgeIteratorState(2, Integer.MIN_VALUE).getAdjNode());
+        assertEquals(1, newG.getEdgeIteratorState(2, Integer.MIN_VALUE).getBaseNode());
     }
 
     @Test

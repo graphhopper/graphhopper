@@ -46,6 +46,7 @@ Here is an overview:
  * legraina, improved docker for dockerhub
  * lmar, improved instructions
  * manueltimita, fixes like #1651
+ * mathstpierre, fixes like #1753
  * michalmac, fixes like #1467
  * michaz, one of the core developers
  * mprins, improvements for travis CI and regarding JDK9 #806

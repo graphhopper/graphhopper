@@ -9,7 +9,6 @@ import okhttp3.OkHttpClient;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Peter Karich
@@ -21,15 +20,13 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
         initIgnore();
     }
 
-    public GHMatrixSyncRequester(String serviceUrl, OkHttpClient client) {
-        super(serviceUrl, client);
+    public GHMatrixSyncRequester(String serviceUrl) {
+        super(serviceUrl);
         initIgnore();
     }
 
-    public GHMatrixSyncRequester(String serviceUrl) {
-        super(serviceUrl, new OkHttpClient.Builder().
-                connectTimeout(15, TimeUnit.SECONDS).
-                readTimeout(15, TimeUnit.SECONDS).build());
+    public GHMatrixSyncRequester(String serviceUrl, OkHttpClient client) {
+        super(serviceUrl, client);
         initIgnore();
     }
 
@@ -70,15 +67,22 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
         }
 
         for (String type : outArraysList) {
-            if (!type.isEmpty()) {
+            if (!type.isEmpty())
                 outArrayStr += "&";
-            }
 
             outArrayStr += "out_array=" + type;
         }
 
+        String snapPreventionStr = "";
+        for (String snapPrevention : ghRequest.getSnapPreventions()) {
+            if (!snapPreventionStr.isEmpty())
+                snapPreventionStr += "&";
+
+            snapPreventionStr += "snap_prevention=" + snapPrevention;
+        }
+
         String url = buildURL("", ghRequest);
-        url += "&" + pointsStr + "&" + pointHintsStr + "&" + curbsidesStr + "&" + outArrayStr;
+        url += "&" + pointsStr + "&" + pointHintsStr + "&" + curbsidesStr + "&" + outArrayStr + "&" + snapPreventionStr;
         if (!Helper.isEmpty(ghRequest.getVehicle())) {
             url += "&vehicle=" + ghRequest.getVehicle();
         }

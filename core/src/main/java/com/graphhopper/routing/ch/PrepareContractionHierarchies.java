@@ -516,6 +516,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         private int nodesContractedPercentage;
         /**
          * Specifies how often a log message should be printed.
+         *
          * @see #periodicUpdatesPercentage
          */
         private int logMessagesPercentage;

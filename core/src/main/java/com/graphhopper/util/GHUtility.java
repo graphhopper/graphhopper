@@ -308,7 +308,16 @@ public class GHUtility {
             list.set(i, i);
         }
         list.shuffle(new Random());
-        return createSortedGraph(g, sortedGraph, list);
+
+        int edges = g.getEdges();
+        GHIntArrayList edgesList = new GHIntArrayList(edges);
+        edgesList.fill(edges, -1);
+        for (int i = 0; i < edges; i++) {
+            edgesList.set(i, i);
+        }
+        edgesList.shuffle(new Random());
+
+        return createSortedGraph(g, sortedGraph, list, edgesList);
     }
 
     /**
@@ -317,32 +326,55 @@ public class GHUtility {
      */
     public static Graph sortDFS(Graph g, Graph sortedGraph) {
         int nodes = g.getNodes();
-        final GHIntArrayList list = new GHIntArrayList(nodes);
-        list.fill(nodes, -1);
-        final GHBitSetImpl bitset = new GHBitSetImpl(nodes);
-        final AtomicInteger ref = new AtomicInteger(-1);
+        final GHIntArrayList nodeList = new GHIntArrayList(nodes);
+        nodeList.fill(nodes, -1);
+        final GHBitSetImpl nodeBitset = new GHBitSetImpl(nodes);
+        final AtomicInteger nodeRef = new AtomicInteger(-1);
+
+        int edges = g.getEdges();
+        final GHIntArrayList edgeList = new GHIntArrayList(edges);
+        edgeList.fill(edges, -1);
+        final GHBitSetImpl edgeBitset = new GHBitSetImpl(edges);
+        final AtomicInteger edgeRef = new AtomicInteger(-1);
+
         EdgeExplorer explorer = g.createEdgeExplorer();
         for (int startNode = 0; startNode >= 0 && startNode < nodes;
-             startNode = bitset.nextClear(startNode + 1)) {
+             startNode = nodeBitset.nextClear(startNode + 1)) {
             new DepthFirstSearch() {
                 @Override
                 protected GHBitSet createBitSet() {
-                    return bitset;
+                    return nodeBitset;
+                }
+
+                @Override
+                protected boolean checkAdjacent(EdgeIteratorState edge) {
+                    int edgeId = edge.getEdge();
+                    if (!edgeBitset.contains(edgeId)) {
+                        edgeBitset.add(edgeId);
+                        edgeList.set(edgeRef.incrementAndGet(), edgeId);
+                    }
+                    return super.checkAdjacent(edge);
                 }
 
                 @Override
                 protected boolean goFurther(int nodeId) {
-                    list.set(nodeId, ref.incrementAndGet());
+                    nodeList.set(nodeId, nodeRef.incrementAndGet());
                     return super.goFurther(nodeId);
                 }
             }.start(explorer, startNode);
         }
-        return createSortedGraph(g, sortedGraph, list);
+        return createSortedGraph(g, sortedGraph, nodeList, edgeList);
     }
 
-    static Graph createSortedGraph(Graph fromGraph, Graph toSortedGraph, final IntIndexedContainer oldToNewNodeList) {
-        AllEdgesIterator eIter = fromGraph.getAllEdges();
-        while (eIter.next()) {
+    static Graph createSortedGraph(Graph fromGraph, Graph toSortedGraph, final IntIndexedContainer oldToNewNodeList, final IntIndexedContainer newToOldEdgeList) {
+        int edges = fromGraph.getEdges();
+        for (int i = 0; i < edges; i++) {
+            int edgeId = newToOldEdgeList.get(i);
+            if (edgeId < 0)
+                continue;
+
+            EdgeIteratorState eIter = fromGraph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
+
             int base = eIter.getBaseNode();
             int newBaseIndex = oldToNewNodeList.get(base);
             int adj = eIter.getAdjNode();
