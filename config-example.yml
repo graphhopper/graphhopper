@@ -15,7 +15,7 @@ graphhopper:
 
   # Add additional information to every edge. Used for path details.
   # If road_environment is added and elevation is enabled then also a tunnel and bridge interpolation is done, see #798.
-  # More options are: surface,max_width,max_height,max_weight,max_axle_load,max_length,toll,track_type
+  # More options are: surface,max_width,max_height,max_weight,max_axle_load,max_length,hazmat,toll,track_type
   graph.encoded_values: road_class,road_class_link,road_environment,max_speed,road_access
 
   ##### Elevation #####

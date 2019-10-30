@@ -59,6 +59,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = new EnumEncodedValue<>(Toll.KEY, Toll.class);
         } else if (TrackType.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(TrackType.KEY, TrackType.class);
+        } else if (Hazmat.KEY.equals(name)) {
+            enc = new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class);
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
         }

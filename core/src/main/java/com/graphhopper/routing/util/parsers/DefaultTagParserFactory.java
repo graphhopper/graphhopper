@@ -58,6 +58,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMTollParser();
         else if (name.equals(TrackType.KEY))
             return new OSMTrackTypeParser();
+        else if (name.equals(Hazmat.KEY))
+            return new OSMHazmatParser();
         throw new IllegalArgumentException("entry in encoder list not supported " + name);
     }
 }
