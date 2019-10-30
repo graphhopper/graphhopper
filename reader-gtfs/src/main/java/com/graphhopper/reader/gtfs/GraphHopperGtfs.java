@@ -277,25 +277,13 @@ public final class GraphHopperGtfs {
                 Label reverseLabel = reverseSettledSet.get(label.adjNode);
                 if (reverseLabel != null) {
                     Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), -1, label.adjNode, label.nTransfers + reverseLabel.nTransfers, label.walkDistanceOnCurrentLeg + reverseLabel.walkDistanceOnCurrentLeg, label.departureTime, label.walkTime + reverseLabel.walkTime, 0, label.impossible, null);
-                    if (label.adjNode == 3419182) {
-                        System.out.println("wurst");
-                    }
                     if (router.isNotDominatedByAnyOf(combinedSolution, discoveredSolutions)) {
-                        int before = discoveredSolutions.size();
                         router.removeDominated(combinedSolution, discoveredSolutions);
-                        int after = discoveredSolutions.size();
-                        if (before-after > 0 ) {
-                            System.out.println("+++ \t"+combinedSolution);
-                            for (Label discoveredSolution : discoveredSolutions) {
-                                System.out.println(discoveredSolution);
-                            }
-                            System.out.println();
-                        }
                         List<Label> closedSolutions = discoveredSolutions.stream().filter(s -> router.weight(s) < router.weight(label) + smallestStationLabelWeight).collect(Collectors.toList());
                         if (closedSolutions.size() >= limitSolutions) continue;
                         if (profileQuery && combinedSolution.departureTime != null && (combinedSolution.departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration && closedSolutions.size() > 0 && closedSolutions.get(closedSolutions.size()-1).departureTime != null && (closedSolutions.get(closedSolutions.size()-1).departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration) continue;
                         discoveredSolutions.add(combinedSolution);
-                        Collections.sort(discoveredSolutions, comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));
+                        discoveredSolutions.sort(comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));
                         originalSolutions.put(combinedSolution, label);
                         if (label.nTransfers == 0 && reverseLabel.nTransfers == 0) {
                             walkSolution = combinedSolution;
