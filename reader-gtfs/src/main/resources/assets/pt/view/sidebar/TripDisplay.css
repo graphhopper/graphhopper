@@ -1,0 +1,111 @@
+.tripDisplay {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.tripDisplay > * {
+  border-top: 1px solid #e6e6e6;
+}
+
+.tripToggle {
+  background-color: transparent;
+  width: 100%;
+  border: none;
+  font-family: inherit;
+  padding: 0;
+  margin: 0;
+  text-align: inherit;
+  font-size: inherit;
+  transition-duration: 0.2s;
+  cursor: pointer;
+}
+
+.tripToggle:hover {
+  background-color: #e6e6e6;
+}
+
+.tripToggle:active {
+  background-color: #e6e6e6;
+}
+
+.tripHeader {
+  margin: 1rem;
+}
+
+.tripDetails {
+  margin: 1rem;
+}
+
+.tripTime {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.tripTimeImpossible {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  text-decoration: line-through;
+}
+
+.tripElementLeftColumn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 4rem;
+  padding-right: 1rem;
+}
+
+.legRowLeftColumn {
+  margin-right: 1rem;
+}
+
+.tripElement {
+  display: flex;
+  flex-direction: row;
+  align-content: stretch;
+}
+
+.tripElementContent {
+  display: flex;
+  flex-direction: row;
+  flex: 5;
+}
+
+.waypointCircle {
+  border-radius: 50%;
+  background-color: white;
+  border: 2px solid black;
+  height: 8px;
+  width: 8px;
+  top: 7px;
+  position: relative;
+}
+
+.tripElementDetails {
+  margin-left: 1rem;
+}
+
+.waypointName {
+  font-weight: bold;
+}
+
+.line {
+  background-color: #1eddff;
+  flex: 1;
+  width: 4px;
+  position: relative;
+  top: 7px;
+}
+
+.tripElementDecoration {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 8px;
+}
+
+.legRowDescription {
+  margin: 1rem 0 1rem 1rem;
+}

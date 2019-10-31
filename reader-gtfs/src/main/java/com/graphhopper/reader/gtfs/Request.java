@@ -39,7 +39,6 @@ public class Request {
     private double walkSpeedKmH = 5.0;
     private int blockedRouteTypes;
     private Locale locale = Helper.getLocale("en");
-    private double maxWalkDistancePerLeg = Integer.MAX_VALUE;
 
     public Request(List<GHLocation> points, Instant departureTime) {
         this.points = points;
@@ -142,11 +141,4 @@ public class Request {
         return points;
     }
 
-    public double getMaxWalkDistancePerLeg() {
-        return maxWalkDistancePerLeg;
-    }
-
-    public void setMaxWalkDistancePerLeg(double maxWalkDistancePerLeg) {
-        this.maxWalkDistancePerLeg = maxWalkDistancePerLeg;
-    }
 }

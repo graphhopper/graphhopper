@@ -48,12 +48,15 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
+
+import static java.util.Comparator.comparingLong;
 
 @Path("route")
 public final class GraphHopperGtfs {
@@ -100,6 +103,7 @@ public final class GraphHopperGtfs {
     private class RequestHandler {
         private final int maxVisitedNodesForRequest;
         private final int limitSolutions;
+        private final long maxProfileDuration = Duration.ofHours(4).toMillis();
         private final Instant initialTime;
         private final boolean profileQuery;
         private final boolean arriveBy;
@@ -107,7 +111,6 @@ public final class GraphHopperGtfs {
         private final double betaTransfers;
         private final double betaWalkTime;
         private final double walkSpeedKmH;
-        private final double maxWalkDistancePerLeg;
         private final int blockedRouteTypes;
         private final GHLocation enter;
         private final GHLocation exit;
@@ -136,7 +139,6 @@ public final class GraphHopperGtfs {
             }
             enter = request.getPoints().get(0);
             exit = request.getPoints().get(1);
-            maxWalkDistancePerLeg = request.getMaxWalkDistancePerLeg();
         }
 
         GHResponse route() {
@@ -217,9 +219,9 @@ public final class GraphHopperGtfs {
             final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, !arriveBy, true, walkSpeedKmH);
             boolean reverse = !arriveBy;
             GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
-            MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, reverse, maxWalkDistancePerLeg, false, false, false, maxVisitedNodesForRequest, new ArrayList<>());
+            MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, reverse, false, false, false, maxVisitedNodesForRequest, new ArrayList<>());
             stationRouter.setBetaWalkTime(betaWalkTime);
-            Iterator<Label> stationIterator = stationRouter.calcLabels(destNode, startNode, initialTime, blockedRouteTypes).iterator();
+            Iterator<Label> stationIterator = stationRouter.calcLabels(destNode, initialTime, blockedRouteTypes).iterator();
             List<Label> stationLabels = new ArrayList<>();
             while (stationIterator.hasNext()) {
                 Label label = stationIterator.next();
@@ -240,7 +242,7 @@ public final class GraphHopperGtfs {
             GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, arriveBy, false, walkSpeedKmH);
             List<Label> discoveredSolutions = new ArrayList<>();
             final long smallestStationLabelWeight;
-            MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, arriveBy, maxWalkDistancePerLeg, true, !ignoreTransfers, profileQuery, maxVisitedNodesForRequest, discoveredSolutions);
+            MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, arriveBy, true, !ignoreTransfers, profileQuery, maxVisitedNodesForRequest, discoveredSolutions);
             router.setBetaTransfers(betaTransfers);
             router.setBetaWalkTime(betaWalkTime);
             if (!stationLabels.isEmpty()) {
@@ -248,59 +250,84 @@ public final class GraphHopperGtfs {
             } else {
                 smallestStationLabelWeight = Long.MAX_VALUE;
             }
-            Iterator<Label> iterator = router.calcLabels(startNode, destNode, initialTime, blockedRouteTypes).iterator();
+            Iterator<Label> iterator = router.calcLabels(startNode, initialTime, blockedRouteTypes).iterator();
             Map<Label, Label> originalSolutions = new HashMap<>();
 
+            Label walkSolution = null;
             long highestWeightForDominationTest = Long.MAX_VALUE;
             while (iterator.hasNext()) {
                 Label label = iterator.next();
-                final long weight = router.weight(label);
-                if ((!profileQuery || discoveredSolutions.size() >= limitSolutions) && weight + smallestStationLabelWeight > highestWeightForDominationTest) {
+                // For single-criterion or pareto queries, we run to the end.
+                //
+                // For profile queries, we need a limited time window. Limiting the number of solutions is not
+                // enough, as there may not be that many solutions - perhaps only walking - and we would run until the end of the calendar
+                // because the router can't know that a super-fast PT departure isn't going to happen some day.
+                //
+                // Arguably, the number of solutions doesn't even make sense as a parameter, since they are not really
+                // alternatives to choose from, but points in time where the optimal solution changes, which isn't really
+                // a criterion for a PT user to limit their search. Some O/D relations just have more complicated profiles than others.
+                // On the other hand, we may simply want to limit the amount of output that an arbitrarily complex profile
+                // can produce, so maybe we should keep both.
+                //
+                // But no matter what, we always have to run past the highest weight in the open set. If we don't,
+                // the last couple of routes in a profile will be suboptimal while the rest is good.
+                if ((!profileQuery || profileFinished(router, discoveredSolutions, walkSolution)) && router.weight(label) + smallestStationLabelWeight > highestWeightForDominationTest) {
                     break;
                 }
                 Label reverseLabel = reverseSettledSet.get(label.adjNode);
                 if (reverseLabel != null) {
-                    Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), -1, label.adjNode, label.nTransfers + reverseLabel.nTransfers, label.nWalkDistanceConstraintViolations + reverseLabel.nWalkDistanceConstraintViolations, label.walkDistanceOnCurrentLeg + reverseLabel.walkDistanceOnCurrentLeg, label.departureTime, label.walkTime + reverseLabel.walkTime, 0, label.impossible, null);
+                    Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), -1, label.adjNode, label.nTransfers + reverseLabel.nTransfers, label.walkDistanceOnCurrentLeg + reverseLabel.walkDistanceOnCurrentLeg, label.departureTime, label.walkTime + reverseLabel.walkTime, 0, label.impossible, null);
                     if (router.isNotDominatedByAnyOf(combinedSolution, discoveredSolutions)) {
                         router.removeDominated(combinedSolution, discoveredSolutions);
-                        if (discoveredSolutions.size() < limitSolutions) {
-                            discoveredSolutions.add(combinedSolution);
-                            originalSolutions.put(combinedSolution, label);
-                            if (profileQuery) {
-                                highestWeightForDominationTest = router.weight(discoveredSolutions.get(discoveredSolutions.size() - 1));
-                            } else {
-                                highestWeightForDominationTest = discoveredSolutions.stream().filter(s -> !s.impossible && (ignoreTransfers || s.nTransfers <= 1)).mapToLong(router::weight).min().orElse(Long.MAX_VALUE);
+                        List<Label> closedSolutions = discoveredSolutions.stream().filter(s -> router.weight(s) < router.weight(label) + smallestStationLabelWeight).collect(Collectors.toList());
+                        if (closedSolutions.size() >= limitSolutions) continue;
+                        if (profileQuery && combinedSolution.departureTime != null && (combinedSolution.departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration && closedSolutions.size() > 0 && closedSolutions.get(closedSolutions.size()-1).departureTime != null && (closedSolutions.get(closedSolutions.size()-1).departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration) continue;
+                        discoveredSolutions.add(combinedSolution);
+                        discoveredSolutions.sort(comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));
+                        originalSolutions.put(combinedSolution, label);
+                        if (label.nTransfers == 0 && reverseLabel.nTransfers == 0) {
+                            walkSolution = combinedSolution;
+                        }
+                        if (profileQuery) {
+                            highestWeightForDominationTest = discoveredSolutions.stream().mapToLong(router::weight).max().orElse(Long.MAX_VALUE);
+                            if (walkSolution != null && discoveredSolutions.size() < limitSolutions) {
+                                // If we have a walk solution, we have it at every point in time in the profile.
+                                // (I can start walking any time I want, unlike with bus departures.)
+                                // Here we virtually add it to the end of the profile, so it acts as a sentinel
+                                // to remind us that we still have to search that far to close the set.
+                                highestWeightForDominationTest = Math.max(highestWeightForDominationTest, router.weight(walkSolution) + maxProfileDuration);
                             }
+                        } else {
+                            highestWeightForDominationTest = discoveredSolutions.stream().filter(s -> !s.impossible && (ignoreTransfers || s.nTransfers <= 1)).mapToLong(router::weight).min().orElse(Long.MAX_VALUE);
                         }
                     }
                 }
             }
 
-            List<List<Label.Transition>> pathsToStations = discoveredSolutions.stream()
-                    .map(originalSolutions::get)
-                    .map(l -> tripFromLabel.getTransitions(arriveBy, ptEncodedValues, queryGraph, l)).collect(Collectors.toList());
-
-            List<List<Label.Transition>> paths = pathsToStations.stream().map(p -> {
+            List<List<Label.Transition>> paths = new ArrayList<>();
+            for (Label discoveredSolution : discoveredSolutions) {
+                Label originalSolution = originalSolutions.get(discoveredSolution);
+                List<Label.Transition> pathToDestinationStop = Label.getTransitions(originalSolution, arriveBy, ptEncodedValues, queryGraph);
                 if (arriveBy) {
-                    List<Label.Transition> pp = new ArrayList<>(p.subList(1, p.size()));
-                    List<Label.Transition> pathFromStation = pathFromStation(reverseSettledSet.get(p.get(0).label.adjNode));
-                    long diff = p.get(0).label.currentTime - pathFromStation.get(pathFromStation.size() - 1).label.currentTime;
+                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(0).label.adjNode), false, ptEncodedValues, queryGraph);
+                    long diff = pathToDestinationStop.get(0).label.currentTime - pathFromStation.get(pathFromStation.size() - 1).label.currentTime;
                     List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
-                        return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.nWalkDistanceConstraintViolations, t.label.walkDistanceOnCurrentLeg, t.label.departureTime, t.label.walkTime, t.label.residualDelay, t.label.impossible, null), t.edge);
+                        return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.walkDistanceOnCurrentLeg, t.label.departureTime, t.label.walkTime, t.label.residualDelay, t.label.impossible, null), t.edge);
                     }).collect(Collectors.toList());
+                    List<Label.Transition> pp = new ArrayList<>(pathToDestinationStop.subList(1, pathToDestinationStop.size()));
                     pp.addAll(0, patchedPathFromStation);
-                    return pp;
+                    paths.add(pp);
                 } else {
-                    List<Label.Transition> pp = new ArrayList<>(p);
-                    List<Label.Transition> pathFromStation = pathFromStation(reverseSettledSet.get(p.get(p.size() - 1).label.adjNode));
-                    long diff = p.get(p.size() - 1).label.currentTime - pathFromStation.get(0).label.currentTime;
-                    List<Label.Transition> patchedPathFromStation = pathFromStation.subList(1, pathFromStation.size()).stream().map(t -> {
-                        return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.nWalkDistanceConstraintViolations, t.label.walkDistanceOnCurrentLeg, t.label.departureTime, t.label.walkTime, t.label.residualDelay, t.label.impossible, null), t.edge);
+                    List<Label.Transition> pathFromStation = Label.getTransitions(reverseSettledSet.get(pathToDestinationStop.get(pathToDestinationStop.size() - 1).label.adjNode), true, ptEncodedValues, queryGraph);
+                    long diff = pathToDestinationStop.get(pathToDestinationStop.size() - 1).label.currentTime - pathFromStation.get(0).label.currentTime;
+                    List<Label.Transition> patchedPathFromStation = pathFromStation.stream().map(t -> {
+                        return new Label.Transition(new Label(t.label.currentTime + diff, t.label.edge, t.label.adjNode, t.label.nTransfers, t.label.walkDistanceOnCurrentLeg, t.label.departureTime, t.label.walkTime, t.label.residualDelay, t.label.impossible, null), t.edge);
                     }).collect(Collectors.toList());
-                    pp.addAll(patchedPathFromStation);
-                    return pp;
+                    List<Label.Transition> pp = new ArrayList<>(pathToDestinationStop);
+                    pp.addAll(patchedPathFromStation.subList(1, pathFromStation.size()));
+                    paths.add(pp);
                 }
-            }).collect(Collectors.toList());
+            }
 
             visitedNodes += router.getVisitedNodes();
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
@@ -315,9 +342,14 @@ public final class GraphHopperGtfs {
             return paths;
         }
 
-        private List<Label.Transition> pathFromStation(Label l) {
-            return tripFromLabel.getTransitions(!arriveBy, ptEncodedValues, queryGraph, l);
+        private boolean profileFinished(MultiCriteriaLabelSetting router, List<Label> discoveredSolutions, Label walkSolution) {
+            return discoveredSolutions.size() >= limitSolutions ||
+                    (!discoveredSolutions.isEmpty() && router.timeSinceStartTime(discoveredSolutions.get(discoveredSolutions.size() - 1)) > maxProfileDuration) ||
+                    walkSolution != null;
+            // Imagine we can always add the walk solution again to the end of the list (it can start any time).
+            // In turn, we must also think of this virtual walk solution in the other test (where we check if all labels are closed).
         }
+
     }
 
     @Inject
@@ -401,6 +433,7 @@ public final class GraphHopperGtfs {
     @Produces(MediaType.APPLICATION_JSON)
     public ObjectNode route(@QueryParam("point") List<GHLocation> requestPoints,
                             @QueryParam("pt.earliest_departure_time") String departureTimeString,
+                            @QueryParam("pt.arrive_by") @DefaultValue("false") boolean arriveBy,
                             @QueryParam("locale") String localeStr,
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
                             @QueryParam("pt.profile") Boolean profileQuery,
@@ -417,6 +450,7 @@ public final class GraphHopperGtfs {
         }
 
         Request request = new Request(requestPoints, departureTime);
+        request.setArriveBy(arriveBy);
         Optional.ofNullable(profileQuery).ifPresent(request::setProfileQuery);
         Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
         Optional.ofNullable(localeStr).ifPresent(s -> request.setLocale(Helper.getLocale(s)));
@@ -455,8 +489,8 @@ public final class GraphHopperGtfs {
                     QueryGraph queryGraph = QueryGraph.lookup(graphHopperStorage, Collections.emptyList());
                     final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, false, true, 5.0);
 
-                    MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, Double.MAX_VALUE, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
-                    Iterator<Label> iterator = router.calcLabels(fromnode, tonode, Instant.ofEpochMilli(0), 0).iterator();
+                    MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
+                    Iterator<Label> iterator = router.calcLabels(fromnode, Instant.ofEpochMilli(0), 0).iterator();
                     Label solution = null;
                     while (iterator.hasNext()) {
                         Label label = iterator.next();
