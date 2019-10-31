@@ -288,6 +288,11 @@ public class RealtimeFeed {
                 }
 
                 @Override
+                public Map<Integer, GtfsStorage.FeedIdWithTimezone> getTimeZones() {
+                    return staticGtfs.getTimeZones();
+                }
+
+                @Override
                 public Map<Integer, byte[]> getTripDescriptors() {
                     return tripDescriptors;
                 }
