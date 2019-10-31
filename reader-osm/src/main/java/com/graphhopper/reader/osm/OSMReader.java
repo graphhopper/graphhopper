@@ -25,7 +25,6 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.parsers.OSMTurnCostParser;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
@@ -64,7 +63,7 @@ import static com.graphhopper.util.Helper.nf;
  *
  * @author Peter Karich
  */
-public class OSMReader implements DataReader, OSMTurnCostParser.OSMInternalMap {
+public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap {
     protected static final int EMPTY_NODE = -1;
     // pillar node is >= 3
     protected static final int PILLAR_NODE = 1;
@@ -421,19 +420,13 @@ public class OSMReader implements DataReader, OSMTurnCostParser.OSMInternalMap {
             storeTurnRelation(createTurnRelations(relation));
     }
 
-    Collection<TurnCostParser.TCEntry> storeTurnRelation(List<OSMTurnRelation> turnRelations) {
-        Map<Long, TurnCostParser.TCEntry> entries = new LinkedHashMap<>();
+    void storeTurnRelation(List<OSMTurnRelation> turnRelations) {
         for (OSMTurnRelation turnRelation : turnRelations) {
             int viaNode = getInternalNodeIdOfOsmNode(turnRelation.getViaOsmNodeId());
             // street with restriction was not included (access or tag limits etc)
             if (viaNode != EMPTY_NODE)
-                encodingManager.handleTurnRelationTags(turnRelation, entries, this, graph);
+                encodingManager.handleTurnRelationTags(turnRelation, this, graph);
         }
-
-        for (TurnCostParser.TCEntry entry : entries.values()) {
-            tcs.addTurnCost(entry);
-        }
-        return entries.values();
     }
 
     /**

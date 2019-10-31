@@ -23,7 +23,6 @@ import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -35,45 +34,12 @@ public interface TurnCostParser {
 
     void createTurnCostEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
 
-    Collection<TCEntry> handleTurnRelationTags(OSMTurnRelation turnRelation, IntsRef turnCostFlags,
-                                               OSMInternalMap map, Graph graph);
+    void handleTurnRelationTags(OSMTurnRelation turnRelation, IntsRef turnCostFlags, ExternalInternalMap map, Graph graph);
 
     /**
-     * Helper class to processing purposes. We could remove it if TurnCostExtension is similarly fast with merging
-     * existing turn cost relations.
+     * This map associates the internal nodes IDs with external IDs and similarly for the edge IDs.
      */
-    class TCEntry {
-        public final int edgeFrom;
-        public final int nodeVia;
-        public final int edgeTo;
-        public final IntsRef flags;
-
-        public TCEntry(IntsRef flags, int edgeFrom, int nodeVia, int edgeTo) {
-            this.edgeFrom = edgeFrom;
-            this.nodeVia = nodeVia;
-            this.edgeTo = edgeTo;
-            this.flags = flags;
-        }
-
-        /**
-         * @return an unique id (edgeFrom, edgeTo) to avoid duplicate entries if multiple encoders
-         * are involved.
-         */
-        public long getItemId() {
-            return ((long) edgeFrom) << 32 | ((long) edgeTo);
-        }
-
-        public void mergeFlags(TCEntry tce) {
-            flags.ints[0] |= tce.flags.ints[0];
-        }
-
-        @Override
-        public String toString() {
-            return "*-(" + edgeFrom + ")->" + nodeVia + "-(" + edgeTo + ")->*";
-        }
-    }
-
-    interface OSMInternalMap {
+    interface ExternalInternalMap {
         int getInternalNodeIdOfOsmNode(long nodeOsmId);
 
         long getOsmIdOfInternalEdge(int edgeId);

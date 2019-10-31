@@ -22,12 +22,18 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperIT;
-import com.graphhopper.reader.*;
+import com.graphhopper.reader.DataReader;
+import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.parsers.*;
+import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
+import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
+import com.graphhopper.routing.util.parsers.OSMMaxWidthParser;
+import com.graphhopper.routing.util.parsers.OSMRoadClassParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -729,45 +735,35 @@ public class OSMReaderTest {
         BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
         EncodingManager manager = new EncodingManager.Builder().add(bike).add(truck).add(car).build();
 
-        final List<TurnCostParser.TCEntry> list = new ArrayList<>();
-        new GraphHopperOSM() {
-            @Override
-            protected DataReader createReader(GraphHopperStorage tmpGraph) {
-                return initDataReader(new OSMReader(tmpGraph) {
-                    @Override
-                    public Collection<TurnCostParser.TCEntry> storeTurnRelation(List<OSMTurnRelation> turnRelations) {
-                        Collection<TurnCostParser.TCEntry> res = super.storeTurnRelation(turnRelations);
-                        list.addAll(res);
-                        return res;
-                    }
-                });
-            }
-        }.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
+        GraphHopper hopper = new GraphHopperOSM().
+                setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).setEncodingManager(manager).importOrLoad();
 
         DecimalEncodedValue carTCEnc = manager.getDecimalEncodedValue(getKey("car", EV_SUFFIX));
         DecimalEncodedValue truckTCEnc = manager.getDecimalEncodedValue(getKey("truck", EV_SUFFIX));
         DecimalEncodedValue bikeTCEnc = manager.getDecimalEncodedValue(getKey("bike", EV_SUFFIX));
 
-        assertEquals(3, list.size());
-        for (TurnCostParser.TCEntry entry : list) {
-            if (entry.edgeFrom == 0) {
-                // the 2nd entry provides turn flags for bike only
-                assertTrue(Double.isInfinite(carTCEnc.getDecimal(false, entry.flags)));
-                assertTrue(Double.isInfinite(truckTCEnc.getDecimal(false, entry.flags)));
-                assertEquals(0, bikeTCEnc.getDecimal(false, entry.flags), .1);
-            } else if (entry.edgeFrom == 1) {
-                // the first entry provides turn flags for car and foot only
-                assertEquals(0, carTCEnc.getDecimal(false, entry.flags), .1);
-                assertEquals(0, truckTCEnc.getDecimal(false, entry.flags), .1);
-                assertTrue(Double.isInfinite(bikeTCEnc.getDecimal(false, entry.flags)));
+        Graph graph = hopper.getGraphHopperStorage();
+        EdgeExplorer explorer = graph.createEdgeExplorer();
+        TurnCostExtension tcExtension = (TurnCostExtension) graph.getExtension();
 
-            } else if (entry.edgeFrom == 2) {
-                assertEquals(0, carTCEnc.getDecimal(false, entry.flags), .1);
-                assertTrue(Double.isInfinite(truckTCEnc.getDecimal(false, entry.flags)));
-                assertEquals(0, bikeTCEnc.getDecimal(false, entry.flags), .1);
-            }
-        }
+        IntsRef tcFlags = manager.createTurnCostFlags();
+        tcExtension.readFlags(tcFlags, GHUtility.getEdge(graph, 1, 0).getEdge(), 0, GHUtility.getEdge(graph, 0, 2).getEdge());
+        // the 2nd entry provides turn flags for bike only
+        assertTrue(Double.isInfinite(carTCEnc.getDecimal(false, tcFlags)));
+        assertTrue(Double.isInfinite(truckTCEnc.getDecimal(false, tcFlags)));
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcFlags), .1);
+
+        tcExtension.readFlags(tcFlags, GHUtility.getEdge(graph, 2, 0).getEdge(), 0, GHUtility.getEdge(graph, 0, 3).getEdge());
+        // the first entry provides turn flags for car and foot only
+        assertEquals(0, carTCEnc.getDecimal(false, tcFlags), .1);
+        assertEquals(0, truckTCEnc.getDecimal(false, tcFlags), .1);
+        assertTrue(Double.isInfinite(bikeTCEnc.getDecimal(false, tcFlags)));
+
+        tcExtension.readFlags(tcFlags, GHUtility.getEdge(graph, 3, 0).getEdge(), 0, GHUtility.getEdge(graph, 0, 2).getEdge());
+        assertEquals(0, carTCEnc.getDecimal(false, tcFlags), .1);
+        assertTrue(Double.isInfinite(truckTCEnc.getDecimal(false, tcFlags)));
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcFlags), .1);
     }
 
     @Test

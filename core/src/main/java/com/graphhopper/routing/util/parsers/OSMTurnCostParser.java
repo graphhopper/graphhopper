@@ -22,6 +22,7 @@ import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
@@ -88,11 +89,11 @@ public class OSMTurnCostParser implements TurnCostParser {
     }
 
     @Override
-    public Collection<TCEntry> handleTurnRelationTags(OSMTurnRelation turnRelation, IntsRef turnCostFlags,
-                                                      OSMInternalMap map, Graph graph) {
+    public void handleTurnRelationTags(OSMTurnRelation turnRelation, IntsRef turnCostFlags, ExternalInternalMap map, Graph graph) {
         if (!turnRelation.isVehicleTypeConcernedByTurnRestriction(restrictions))
-            return Collections.emptyList();
-        return getRestrictionAsEntries(turnRelation, turnCostFlags, map, graph);
+            return;
+
+        getRestrictionAsEntries(turnRelation, turnCostFlags, map, graph);
     }
 
     /**
@@ -101,7 +102,8 @@ public class OSMTurnCostParser implements TurnCostParser {
      * @return a collection of node cost entries which can be added to the graph later
      */
     Collection<TCEntry> getRestrictionAsEntries(OSMTurnRelation osmTurnRelation, IntsRef turnCostFlags,
-                                                OSMInternalMap map, Graph graph) {
+                                                ExternalInternalMap map, Graph graph) {
+        TurnCostExtension tcs = (TurnCostExtension) graph.getExtension();
         int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
         EdgeExplorer edgeOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc)),
                 edgeInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(accessEnc));
@@ -135,6 +137,7 @@ public class OSMTurnCostParser implements TurnCostParser {
                     final TCEntry entry = new TCEntry(new IntsRef(turnCostFlags.length), edgeIdFrom, viaNode, iter.getEdge());
                     getTurnCostEnc().setDecimal(false, entry.flags, Double.POSITIVE_INFINITY);
                     entries.add(entry);
+                    tcs.addTurnCost(entry.flags, edgeIdFrom, viaNode, iter.getEdge());
                     if (osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT)
                         break;
                 }
@@ -153,5 +156,40 @@ public class OSMTurnCostParser implements TurnCostParser {
     @Override
     public String toString() {
         return getName();
+    }
+
+    /**
+     * Helper class to processing purposes. We could remove it if TurnCostExtension is similarly fast with merging
+     * existing turn cost relations.
+     */
+    class TCEntry {
+        public final int edgeFrom;
+        public final int nodeVia;
+        public final int edgeTo;
+        public final IntsRef flags;
+
+        public TCEntry(IntsRef flags, int edgeFrom, int nodeVia, int edgeTo) {
+            this.edgeFrom = edgeFrom;
+            this.nodeVia = nodeVia;
+            this.edgeTo = edgeTo;
+            this.flags = flags;
+        }
+
+        /**
+         * @return an unique id (edgeFrom, edgeTo) to avoid duplicate entries if multiple encoders
+         * are involved.
+         */
+        public long getItemId() {
+            return ((long) edgeFrom) << 32 | ((long) edgeTo);
+        }
+
+        public void mergeFlags(TCEntry tce) {
+            flags.ints[0] |= tce.flags.ints[0];
+        }
+
+        @Override
+        public String toString() {
+            return "*-(" + edgeFrom + ")->" + nodeVia + "-(" + edgeTo + ")->*";
+        }
     }
 }

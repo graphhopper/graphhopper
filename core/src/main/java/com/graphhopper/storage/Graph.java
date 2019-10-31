@@ -121,5 +121,4 @@ public interface Graph {
      * @return the graph extension like a TurnCostExtension
      */
     GraphExtension getExtension();
-
 }

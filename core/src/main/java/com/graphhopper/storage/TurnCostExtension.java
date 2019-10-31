@@ -106,10 +106,6 @@ public class TurnCostExtension implements GraphExtension {
         return true;
     }
 
-    public void addTurnCost(TurnCostParser.TCEntry tce) {
-        addTurnCost(tce.flags, tce.edgeFrom, tce.nodeVia, tce.edgeTo);
-    }
-
     /**
      * Add an entry which is a turn restriction or cost information via the turnFlags. Overwrite existing information
      * if it is the same edges and node.

@@ -511,16 +511,9 @@ public class EncodingManager implements EncodedValueLookup {
         return relFlags;
     }
 
-    public void handleTurnRelationTags(OSMTurnRelation turnRelation, Map<Long, TurnCostParser.TCEntry> inOutEntries, OSMTurnCostParser.OSMInternalMap map, Graph graph) {
+    public void handleTurnRelationTags(OSMTurnRelation turnRelation, TurnCostParser.ExternalInternalMap map, Graph graph) {
         for (TurnCostParser parser : turnCostParsers.values()) {
-            Collection<TurnCostParser.TCEntry> entries = parser.handleTurnRelationTags(turnRelation, createTurnCostFlags(), map, graph);
-            for (TurnCostParser.TCEntry entry : entries) {
-                TurnCostParser.TCEntry oldEntry = inOutEntries.get(entry.getItemId());
-                if (oldEntry != null)
-                    oldEntry.mergeFlags(entry);
-                else
-                    inOutEntries.put(entry.getItemId(), entry);
-            }
+            parser.handleTurnRelationTags(turnRelation, createTurnCostFlags(), map, graph);
         }
     }
 
