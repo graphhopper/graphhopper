@@ -37,64 +37,6 @@ import static org.junit.Assert.*;
  */
 public class OSMTurnRelationTest {
     @Test
-    public void testGetRestrictionAsEntries() {
-        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
-        final Map<Long, Integer> osmNodeToInternal = new HashMap<>();
-        final Map<Integer, Long> internalToOSMEdge = new HashMap<>();
-
-        osmNodeToInternal.put(3L, 3);
-        // edge ids are only stored if they occurred before in an OSMRelation
-        internalToOSMEdge.put(3, 3L);
-        internalToOSMEdge.put(4, 4L);
-
-        OSMTurnCostParser parser = new OSMTurnCostParser(encoder.toString(), 1);
-        GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager.Builder().add(encoder).addTurnCostParser(parser).build()).create();
-        EdgeBasedRoutingAlgorithmTest.initGraph(ghStorage);
-        OSMReader osmReader = new OSMReader(ghStorage) {
-
-            @Override
-            public int getInternalNodeIdOfOsmNode(long nodeOsmId) {
-                return osmNodeToInternal.get(nodeOsmId);
-            }
-
-            @Override
-            public long getOsmIdOfInternalEdge(int edgeId) {
-                Long l = internalToOSMEdge.get(edgeId);
-                if (l == null)
-                    return -1;
-                return l;
-            }
-        };
-
-        // TYPE == ONLY
-        OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, Type.ONLY);
-        Collection<OSMTurnCostParser.TurnCostTableEntry> result = osmReader.getRestrictionAsEntries(parser, instance);
-
-        assertEquals(2, result.size());
-        Iterator<OSMTurnCostParser.TurnCostTableEntry> iter = result.iterator();
-        OSMTurnCostParser.TurnCostTableEntry entry = iter.next();
-        assertEquals(4, entry.edgeFrom);
-        assertEquals(6, entry.edgeTo);
-        assertEquals(3, entry.nodeVia);
-
-        entry = iter.next();
-        assertEquals(4, entry.edgeFrom);
-        assertEquals(2, entry.edgeTo);
-        assertEquals(3, entry.nodeVia);
-
-        // TYPE == NOT
-        instance = new OSMTurnRelation(4, 3, 3, Type.NOT);
-        result = osmReader.getRestrictionAsEntries(parser, instance);
-
-        assertEquals(1, result.size());
-        iter = result.iterator();
-        entry = iter.next();
-        assertEquals(4, entry.edgeFrom);
-        assertEquals(3, entry.edgeTo);
-        assertEquals(3, entry.nodeVia);
-    }
-
-    @Test
     public void testAcceptsTurnRelation() {
         List<String> vehicleTypes = new ArrayList<>(Arrays.asList("motorcar", "motor_vehicle", "vehicle"));
         List<String> vehicleTypesExcept = new ArrayList<>();

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.parsers.OSMTurnCostParser;
+import com.graphhopper.routing.util.parsers.TurnCostParser;
 import com.graphhopper.util.EdgeIterator;
 
 /**
@@ -106,7 +106,7 @@ public class TurnCostExtension implements GraphExtension {
         return true;
     }
 
-    public void addTurnCost(OSMTurnCostParser.TurnCostTableEntry tce) {
+    public void addTurnCost(TurnCostParser.TCEntry tce) {
         addTurnCost(tce.flags, tce.edgeFrom, tce.nodeVia, tce.edgeTo);
     }
 

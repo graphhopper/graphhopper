@@ -729,14 +729,14 @@ public class OSMReaderTest {
         BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
         EncodingManager manager = new EncodingManager.Builder().add(bike).add(truck).add(car).build();
 
-        final List<OSMTurnCostParser.TurnCostTableEntry> list = new ArrayList<>();
+        final List<TurnCostParser.TCEntry> list = new ArrayList<>();
         new GraphHopperOSM() {
             @Override
             protected DataReader createReader(GraphHopperStorage tmpGraph) {
                 return initDataReader(new OSMReader(tmpGraph) {
                     @Override
-                    public Collection<OSMTurnCostParser.TurnCostTableEntry> storeTurnRelation(List<OSMTurnRelation> turnRelations) {
-                        Collection<OSMTurnCostParser.TurnCostTableEntry> res = super.storeTurnRelation(turnRelations);
+                    public Collection<TurnCostParser.TCEntry> storeTurnRelation(List<OSMTurnRelation> turnRelations) {
+                        Collection<TurnCostParser.TCEntry> res = super.storeTurnRelation(turnRelations);
                         list.addAll(res);
                         return res;
                     }
@@ -750,7 +750,7 @@ public class OSMReaderTest {
         DecimalEncodedValue bikeTCEnc = manager.getDecimalEncodedValue(getKey("bike", EV_SUFFIX));
 
         assertEquals(3, list.size());
-        for (OSMTurnCostParser.TurnCostTableEntry entry : list) {
+        for (TurnCostParser.TCEntry entry : list) {
             if (entry.edgeFrom == 0) {
                 // the 2nd entry provides turn flags for bike only
                 assertTrue(Double.isInfinite(carTCEnc.getDecimal(false, entry.flags)));

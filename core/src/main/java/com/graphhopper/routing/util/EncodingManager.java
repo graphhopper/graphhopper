@@ -17,16 +17,14 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.StorableProperties;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -511,6 +509,19 @@ public class EncodingManager implements EncodedValueLookup {
             relParser.handleRelationTags(relFlags, relation);
         }
         return relFlags;
+    }
+
+    public void handleTurnRelationTags(OSMTurnRelation turnRelation, Map<Long, TurnCostParser.TCEntry> inOutEntries, OSMTurnCostParser.OSMInternalMap map, Graph graph) {
+        for (TurnCostParser parser : turnCostParsers.values()) {
+            Collection<TurnCostParser.TCEntry> entries = parser.handleTurnRelationTags(turnRelation, createTurnCostFlags(), map, graph);
+            for (TurnCostParser.TCEntry entry : entries) {
+                TurnCostParser.TCEntry oldEntry = inOutEntries.get(entry.getItemId());
+                if (oldEntry != null)
+                    oldEntry.mergeFlags(entry);
+                else
+                    inOutEntries.put(entry.getItemId(), entry);
+            }
+        }
     }
 
     /**

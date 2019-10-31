@@ -23,24 +23,16 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 
-/**
- * The TurnCostParser requires a fully established topology of the graph and existing.
- * This makes it different to the RelationTagParser that can even convert its tags to way tags.
- */
 public class OSMTurnCostParser implements TurnCostParser {
     private String name;
     private DecimalEncodedValue turnCostEnc;
-    private EdgeExplorer edgeInExplorer;
-    private EdgeExplorer edgeOutExplorer;
     private final int maxTurnCosts;
     private final Collection<String> restrictions;
     private BooleanEncodedValue accessEnc;
@@ -78,27 +70,7 @@ public class OSMTurnCostParser implements TurnCostParser {
         }
     }
 
-    @Override
-    public boolean acceptsTurnRelation(OSMTurnRelation relation) {
-        return relation.isVehicleTypeConcernedByTurnRestriction(restrictions);
-    }
-
-    @Override
-    public EdgeExplorer createEdgeOutExplorer(Graph graph) {
-        if (edgeOutExplorer == null)
-            edgeOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc));
-        return edgeOutExplorer;
-    }
-
-    @Override
-    public EdgeExplorer createEdgeInExplorer(Graph graph) {
-        if (edgeInExplorer == null)
-            edgeInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(accessEnc));
-        return edgeInExplorer;
-    }
-
-    @Override
-    public DecimalEncodedValue getTurnCostEnc() {
+    DecimalEncodedValue getTurnCostEnc() {
         if (turnCostEnc == null)
             throw new IllegalStateException("Cannot access turn cost encoded value. Not initialized. Call createRelationEncodedValues before");
         return turnCostEnc;
@@ -116,41 +88,60 @@ public class OSMTurnCostParser implements TurnCostParser {
     }
 
     @Override
-    public void create(Graph graph) {
-        // TODO NOW here the code from turn cost related parsing from OSMReader should end up
+    public Collection<TCEntry> handleTurnRelationTags(OSMTurnRelation turnRelation, IntsRef turnCostFlags,
+                                                      OSMInternalMap map, Graph graph) {
+        if (!turnRelation.isVehicleTypeConcernedByTurnRestriction(restrictions))
+            return Collections.emptyList();
+        return getRestrictionAsEntries(turnRelation, turnCostFlags, map, graph);
     }
 
     /**
-     * Helper class to processing purposes only
+     * Transforms this relation into a collection of turn cost entries
+     *
+     * @return a collection of node cost entries which can be added to the graph later
      */
-    public static class TurnCostTableEntry {
-        public final int edgeFrom;
-        public final int nodeVia;
-        public final int edgeTo;
-        public final IntsRef flags;
+    Collection<TCEntry> getRestrictionAsEntries(OSMTurnRelation osmTurnRelation, IntsRef turnCostFlags,
+                                                OSMInternalMap map, Graph graph) {
+        int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
+        EdgeExplorer edgeOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc)),
+                edgeInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(accessEnc));
 
-        public TurnCostTableEntry(IntsRef flags, int edgeFrom, int nodeVia, int edgeTo) {
-            this.edgeFrom = edgeFrom;
-            this.nodeVia = nodeVia;
-            this.edgeTo = edgeTo;
-            this.flags = flags;
-        }
+        try {
+            int edgeIdFrom = EdgeIterator.NO_EDGE;
 
-        /**
-         * @return an unique id (edgeFrom, edgeTo) to avoid duplicate entries if multiple encoders
-         * are involved.
-         */
-        public long getItemId() {
-            return ((long) edgeFrom) << 32 | ((long) edgeTo);
-        }
+            // get all incoming edges and receive the edge which is defined by fromOsm
+            EdgeIterator iter = edgeInExplorer.setBaseNode(viaNode);
 
-        public void mergeFlags(TurnCostTableEntry tce) {
-            flags.ints[0] |= tce.flags.ints[0];
-        }
+            while (iter.next()) {
+                if (map.getOsmIdOfInternalEdge(iter.getEdge()) == osmTurnRelation.getOsmIdFrom()) {
+                    edgeIdFrom = iter.getEdge();
+                    break;
+                }
+            }
 
-        @Override
-        public String toString() {
-            return "*-(" + edgeFrom + ")->" + nodeVia + "-(" + edgeTo + ")->*";
+            if (!EdgeIterator.Edge.isValid(edgeIdFrom))
+                return Collections.emptyList();
+
+            final Collection<TCEntry> entries = new ArrayList<>();
+            // get all outgoing edges of the via node
+            iter = edgeOutExplorer.setBaseNode(viaNode);
+            // for TYPE_ONLY_* we add ALL restrictions (from, via, * ) EXCEPT the given turn
+            // for TYPE_NOT_*  we add ONE restriction  (from, via, to)
+            while (iter.next()) {
+                int edgeId = iter.getEdge();
+                long wayId = map.getOsmIdOfInternalEdge(edgeId);
+                if (edgeId != edgeIdFrom && osmTurnRelation.getRestriction() == OSMTurnRelation.Type.ONLY && wayId != osmTurnRelation.getOsmIdTo()
+                        || osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT && wayId == osmTurnRelation.getOsmIdTo() && wayId >= 0) {
+                    final TCEntry entry = new TCEntry(new IntsRef(turnCostFlags.length), edgeIdFrom, viaNode, iter.getEdge());
+                    getTurnCostEnc().setDecimal(false, entry.flags, Double.POSITIVE_INFINITY);
+                    entries.add(entry);
+                    if (osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT)
+                        break;
+                }
+            }
+            return entries;
+        } catch (Exception e) {
+            throw new IllegalStateException("Could not built turn table entry for relation of node with osmId:" + osmTurnRelation.getViaOsmNodeId(), e);
         }
     }
 

@@ -18,12 +18,12 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.storage.IntsRef;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -35,19 +35,47 @@ public interface TurnCostParser {
 
     void createTurnCostEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
 
-    // TODO NOW move OSMReader methods into implementation and see what we need here
-    void create(Graph graph);
+    Collection<TCEntry> handleTurnRelationTags(OSMTurnRelation turnRelation, IntsRef turnCostFlags,
+                                               OSMInternalMap map, Graph graph);
 
     /**
-     * @return whether or not this parser should consider the given turn restriction
-     * @see OSMTurnRelation
+     * Helper class to processing purposes. We could remove it if TurnCostExtension is similarly fast with merging
+     * existing turn cost relations.
      */
-    boolean acceptsTurnRelation(OSMTurnRelation relation);
+    class TCEntry {
+        public final int edgeFrom;
+        public final int nodeVia;
+        public final int edgeTo;
+        public final IntsRef flags;
 
-    // TODO NOW remove the following 3 methods from the interface:
-    DecimalEncodedValue getTurnCostEnc();
+        public TCEntry(IntsRef flags, int edgeFrom, int nodeVia, int edgeTo) {
+            this.edgeFrom = edgeFrom;
+            this.nodeVia = nodeVia;
+            this.edgeTo = edgeTo;
+            this.flags = flags;
+        }
 
-    EdgeExplorer createEdgeOutExplorer(Graph graph);
+        /**
+         * @return an unique id (edgeFrom, edgeTo) to avoid duplicate entries if multiple encoders
+         * are involved.
+         */
+        public long getItemId() {
+            return ((long) edgeFrom) << 32 | ((long) edgeTo);
+        }
 
-    EdgeExplorer createEdgeInExplorer(Graph graph);
+        public void mergeFlags(TCEntry tce) {
+            flags.ints[0] |= tce.flags.ints[0];
+        }
+
+        @Override
+        public String toString() {
+            return "*-(" + edgeFrom + ")->" + nodeVia + "-(" + edgeTo + ")->*";
+        }
+    }
+
+    interface OSMInternalMap {
+        int getInternalNodeIdOfOsmNode(long nodeOsmId);
+
+        long getOsmIdOfInternalEdge(int edgeId);
+    }
 }
