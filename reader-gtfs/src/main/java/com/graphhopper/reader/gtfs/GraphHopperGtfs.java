@@ -216,7 +216,7 @@ public final class GraphHopperGtfs {
 
         private List<List<Label.Transition>> findPaths(int startNode, int destNode) {
             StopWatch stopWatch = new StopWatch().start();
-            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, !arriveBy, true, walkSpeedKmH);
+            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, !arriveBy, true, walkSpeedKmH, false);
             boolean reverse = !arriveBy;
             GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, reverse, false, false, false, maxVisitedNodesForRequest, new ArrayList<>());
@@ -239,7 +239,7 @@ public final class GraphHopperGtfs {
                 reverseSettledSet.put(stationLabel.adjNode, stationLabel);
             }
 
-            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, arriveBy, false, walkSpeedKmH);
+            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, arriveBy, false, walkSpeedKmH, false);
             List<Label> discoveredSolutions = new ArrayList<>();
             final long smallestStationLabelWeight;
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, arriveBy, true, !ignoreTransfers, profileQuery, maxVisitedNodesForRequest, discoveredSolutions);
@@ -487,7 +487,7 @@ public final class GraphHopperGtfs {
                     points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
 
                     QueryGraph queryGraph = QueryGraph.lookup(graphHopperStorage, Collections.emptyList());
-                    final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, false, true, 5.0);
+                    final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, false, true, 5.0, false);
 
                     MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
                     Iterator<Label> iterator = router.calcLabels(fromnode, Instant.ofEpochMilli(0), 0).iterator();

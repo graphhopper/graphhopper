@@ -102,7 +102,7 @@ public class PtIsochroneResource {
         }
 
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(encodingManager);
-        GraphExplorer graphExplorer = new GraphExplorer(queryGraph, new FastestWeighting(encodingManager.getEncoder("foot")), ptEncodedValues, gtfsStorage, RealtimeFeed.empty(gtfsStorage), reverseFlow, false, 5.0);
+        GraphExplorer graphExplorer = new GraphExplorer(queryGraph, new FastestWeighting(encodingManager.getEncoder("foot")), ptEncodedValues, gtfsStorage, RealtimeFeed.empty(gtfsStorage), reverseFlow, false, 5.0, reverseFlow);
         MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, reverseFlow, false, false, false, 1000000, Collections.emptyList());
 
         Map<Coordinate, Double> z1 = new HashMap<>();

@@ -81,7 +81,7 @@ public class MultiCriteriaLabelSetting {
         fromMap = new IntObjectHashMap<>();
     }
 
-    Stream<Label> calcLabels(int from, Instant startTime, int blockedRouteTypes) {
+    public Stream<Label> calcLabels(int from, Instant startTime, int blockedRouteTypes) {
         this.startTime = startTime.toEpochMilli();
         this.blockedRouteTypes = blockedRouteTypes;
         return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from), false)
