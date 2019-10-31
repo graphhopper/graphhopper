@@ -25,7 +25,6 @@ import com.graphhopper.routing.profiles.EnumEncodedValue;
 import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.profiles.RouteNetwork;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.BitUtil;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -84,7 +83,7 @@ public class EncodingManagerTest {
 
     @Test
     public void testToDetailsStringIncludesEncoderVersionNumber() {
-        FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 3) {
+        FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 0) {
             @Override
             public int getVersion() {
                 return 10;
@@ -98,11 +97,6 @@ public class EncodingManagerTest {
             @Override
             protected String getPropertiesString() {
                 return "my_properties";
-            }
-
-            @Override
-            public boolean acceptsTurnRelation(OSMTurnRelation relation) {
-                return relation.isVehicleTypeConcernedByTurnRestriction(restrictions);
             }
 
             @Override
@@ -151,7 +145,7 @@ public class EncodingManagerTest {
         manager.acceptWay(osmWay, map);
         IntsRef edgeFlags = manager.handleWayTags(osmWay, map, relFlags);
 
-        EnumEncodedValue enc = manager.getEnumEncodedValue(EncodingManager.getKey("bike", RouteNetwork.PART_NAME), RouteNetwork.class);
+        EnumEncodedValue enc = manager.getEnumEncodedValue(EncodingManager.getKey("bike", RouteNetwork.EV_SUFFIX), RouteNetwork.class);
 
         assertTrue(defaultBike.priorityEnc.getDecimal(false, edgeFlags)
                 > lessRelationCodes.priorityEnc.getDecimal(false, edgeFlags));

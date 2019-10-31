@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.weighting.GenericWeighting;
@@ -107,11 +106,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     protected void flagsDefault(IntsRef edgeFlags, boolean forward, boolean backward) {
         accessEnc.setBool(false, edgeFlags, forward);
         accessEnc.setBool(true, edgeFlags, backward);
-    }
-
-    @Override
-    public boolean acceptsTurnRelation(OSMTurnRelation relation) {
-        return relation.isVehicleTypeConcernedByTurnRestriction(restrictions);
     }
 
     @Override

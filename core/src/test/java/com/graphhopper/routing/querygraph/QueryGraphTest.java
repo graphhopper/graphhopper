@@ -35,6 +35,7 @@ import org.junit.Test;
 
 import java.util.*;
 
+import static com.graphhopper.routing.util.parsers.OSMTurnCostParser.EV_SUFFIX;
 import static com.graphhopper.storage.index.QueryResult.Position.*;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.*;
@@ -482,7 +483,7 @@ public class QueryGraphTest {
         GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(), em, false, turnExt).
                 create(100);
         IntsRef tcFlags = em.createTurnCostFlags();
-        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(EncodingManager.getKey(encoder.toString(), "turn_cost"));
+        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(EncodingManager.getKey(encoder.toString(), EV_SUFFIX));
         NodeAccess na = graphWithTurnCosts.getNodeAccess();
         na.setNode(0, .00, .00);
         na.setNode(1, .00, .01);

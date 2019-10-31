@@ -24,9 +24,10 @@ import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.parsers.OSMTurnCostParser;
 import com.graphhopper.routing.util.parsers.OSMTurnCostParser.TurnCostTableEntry;
+import com.graphhopper.routing.util.parsers.TurnCostParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -114,7 +115,7 @@ public class OSMReader implements DataReader {
     private boolean createStorage = true;
     private final IntsRef tempRelFlags;
     private final TurnCostExtension tcs;
-    private List<OSMTurnCostParser> tcParsers;
+    private List<TurnCostParser> tcParsers;
 
     public OSMReader(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
@@ -151,7 +152,7 @@ public class OSMReader implements DataReader {
         sw1.stop();
 
         StopWatch sw2 = new StopWatch().start();
-        writeOsm2Graph(osmFile);
+        writeOsmToGraph(osmFile);
         sw2.stop();
 
         LOGGER.info("time pass1:" + (int) sw1.getSeconds() + "s, "
@@ -211,10 +212,8 @@ public class OSMReader implements DataReader {
     private void prepareRestrictionRelation(ReaderRelation relation) {
         List<OSMTurnRelation> turnRelations = createTurnRelations(relation);
         for (OSMTurnRelation turnRelation : turnRelations) {
-            if (turnRelation != null) {
-                getOsmWayIdSet().add(turnRelation.getOsmIdFrom());
-                getOsmWayIdSet().add(turnRelation.getOsmIdTo());
-            }
+            getOsmWayIdSet().add(turnRelation.getOsmIdFrom());
+            getOsmWayIdSet().add(turnRelation.getOsmIdTo());
         }
     }
 
@@ -252,7 +251,7 @@ public class OSMReader implements DataReader {
     /**
      * Creates the graph with edges and nodes from the specified osm file.
      */
-    private void writeOsm2Graph(File osmFile) {
+    private void writeOsmToGraph(File osmFile) {
         int tmp = (int) Math.max(getNodeMap().getSize() / 50, 100);
         LOGGER.info("creating graph. Found nodes (pillar+tower):" + nf(getNodeMap().getSize()) + ", " + Helper.getMemInfo());
         if (createStorage)
@@ -428,21 +427,22 @@ public class OSMReader implements DataReader {
     Collection<TurnCostTableEntry> storeTurnRelation(List<OSMTurnRelation> turnRelations) {
         Map<Long, TurnCostTableEntry> entries = new LinkedHashMap<>();
         for (OSMTurnRelation turnRelation : turnRelations) {
-            for (OSMTurnCostParser parser : tcParsers) {
-                for (TurnCostTableEntry entry : getRestrictionAsEntries(parser, turnRelation)) {
-                    TurnCostTableEntry oldEntry = entries.get(entry.getItemId());
-                    if (oldEntry != null) {
-                        // merging different vehicles <- TODO NOW move this to EncodedValue
-                        oldEntry.flags |= entry.flags;
-                    } else {
-                        entries.put(entry.getItemId(), entry);
+            // TODO NOW somehow move this to OSMTurnCostParser.create?
+            for (TurnCostParser parser : tcParsers) {
+                if (parser.acceptsTurnRelation(turnRelation))
+                    for (TurnCostTableEntry entry : getRestrictionAsEntries(parser, turnRelation)) {
+                        TurnCostTableEntry oldEntry = entries.get(entry.getItemId());
+                        if (oldEntry != null) {
+                            oldEntry.mergeFlags(entry);
+                        } else {
+                            entries.put(entry.getItemId(), entry);
+                        }
                     }
-                }
             }
         }
 
         for (TurnCostTableEntry entry : entries.values()) {
-            tcs.addTurnCost(entry.flags, entry.edgeFrom, entry.nodeVia, entry.edgeTo);
+            tcs.addTurnCost(entry);
         }
         return entries.values();
     }
@@ -463,7 +463,7 @@ public class OSMReader implements DataReader {
         return EMPTY_NODE;
     }
 
-    // TODO remove this ugly stuff via better preparsing phase! E.g. putting every tags etc into a helper file!
+    // TODO remove this ugly stuff via better preprocessing phase! E.g. putting every tags etc into a helper file!
     double getTmpLatitude(int id) {
         if (id == EMPTY_NODE)
             return Double.NaN;
@@ -476,7 +476,7 @@ public class OSMReader implements DataReader {
             id = id - 3;
             return pillarInfo.getLatitude(id);
         } else
-            // e.g. if id is not handled from preparse (e.g. was ignored via isInBounds)
+            // e.g. if id is not handled from preprocessing (e.g. was ignored via isInBounds)
             return Double.NaN;
     }
 
@@ -492,7 +492,7 @@ public class OSMReader implements DataReader {
             id = id - 3;
             return pillarInfo.getLon(id);
         } else
-            // e.g. if id is not handled from preparse (e.g. was ignored via isInBounds)
+            // e.g. if id is not handled from preprocessing (e.g. was ignored via isInBounds)
             return Double.NaN;
     }
 
@@ -835,7 +835,7 @@ public class OSMReader implements DataReader {
     }
 
     /**
-     * Creates an OSM turn relation out of an unspecified OSM relation
+     * Creates turn relations out of an unspecified OSM relation
      */
     List<OSMTurnRelation> createTurnRelations(ReaderRelation relation) {
         List<OSMTurnRelation> osmTurnRelations = new ArrayList<>();
@@ -903,19 +903,20 @@ public class OSMReader implements DataReader {
      *
      * @return a collection of node cost entries which can be added to the graph later
      */
-    Collection<TurnCostTableEntry> getRestrictionAsEntries(OSMTurnCostParser parser, OSMTurnRelation osmTurnRelation) {
-        int nodeVia = getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
+    Collection<TurnCostTableEntry> getRestrictionAsEntries(TurnCostParser parser, OSMTurnRelation osmTurnRelation) {
+        DecimalEncodedValue turnCostEnc = parser.getTurnCostEnc();
+        int viaNode = getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
         EdgeExplorer edgeOutExplorer = parser.createEdgeOutExplorer(graph), edgeInExplorer = parser.createEdgeInExplorer(graph);
 
         try {
             // street with restriction was not included (access or tag limits etc)
-            if (nodeVia == OSMReader.EMPTY_NODE)
+            if (viaNode == OSMReader.EMPTY_NODE)
                 return Collections.emptyList();
 
             int edgeIdFrom = EdgeIterator.NO_EDGE;
 
             // get all incoming edges and receive the edge which is defined by fromOsm
-            EdgeIterator iter = edgeInExplorer.setBaseNode(nodeVia);
+            EdgeIterator iter = edgeInExplorer.setBaseNode(viaNode);
 
             while (iter.next()) {
                 if (getOsmIdOfInternalEdge(iter.getEdge()) == osmTurnRelation.getOsmIdFrom()) {
@@ -929,7 +930,7 @@ public class OSMReader implements DataReader {
 
             final Collection<TurnCostTableEntry> entries = new ArrayList<>();
             // get all outgoing edges of the via node
-            iter = edgeOutExplorer.setBaseNode(nodeVia);
+            iter = edgeOutExplorer.setBaseNode(viaNode);
             // for TYPE_ONLY_* we add ALL restrictions (from, via, * ) EXCEPT the given turn
             // for TYPE_NOT_*  we add ONE restriction  (from, via, to)
             while (iter.next()) {
@@ -937,11 +938,8 @@ public class OSMReader implements DataReader {
                 long wayId = getOsmIdOfInternalEdge(edgeId);
                 if (edgeId != edgeIdFrom && osmTurnRelation.getRestriction() == OSMTurnRelation.Type.ONLY && wayId != osmTurnRelation.getOsmIdTo()
                         || osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT && wayId == osmTurnRelation.getOsmIdTo() && wayId >= 0) {
-                    final TurnCostTableEntry entry = new TurnCostTableEntry();
-                    entry.nodeVia = nodeVia;
-                    entry.edgeFrom = edgeIdFrom;
-                    entry.edgeTo = iter.getEdge();
-                    entry.flags = parser.getTurnFlags(true, 0);
+                    final TurnCostTableEntry entry = new TurnCostTableEntry(encodingManager.createTurnCostFlags(), edgeIdFrom, viaNode, iter.getEdge());
+                    turnCostEnc.setDecimal(false, entry.flags, Double.POSITIVE_INFINITY);
                     entries.add(entry);
 
                     if (osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT)

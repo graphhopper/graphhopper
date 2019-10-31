@@ -37,6 +37,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
+import static com.graphhopper.routing.util.parsers.OSMTurnCostParser.EV_SUFFIX;
 import static com.graphhopper.util.Helper.DIST_EARTH;
 
 /**
@@ -235,7 +236,7 @@ public class GHUtility {
         double pEdgePairHasTurnCosts = 0.6;
         double pCostIsRestriction = 0.1;
 
-        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(getKey(encoder.toString(), "turn_cost"));
+        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(getKey(encoder.toString(), EV_SUFFIX));
         EdgeExplorer inExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
         EdgeExplorer outExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
         IntsRef tcFlags = em.createTurnCostFlags();

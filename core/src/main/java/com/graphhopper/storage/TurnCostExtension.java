@@ -17,13 +17,13 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.util.parsers.OSMTurnCostParser;
 import com.graphhopper.util.EdgeIterator;
 
 /**
  * Holds turn cost tables for each node. The additional field of a node will be used to point
  * towards the first entry within a node cost table to identify turn restrictions, or later, turn
  * getCosts.
- * <p>
  *
  * @author Karl Hübner
  * @author Peter Karich
@@ -106,6 +106,10 @@ public class TurnCostExtension implements GraphExtension {
         return true;
     }
 
+    public void addTurnCost(OSMTurnCostParser.TurnCostTableEntry tce) {
+        addTurnCost(tce.flags, tce.edgeFrom, tce.nodeVia, tce.edgeTo);
+    }
+
     /**
      * Add an entry which is a turn restriction or cost information via the turnFlags. Overwrite existing information
      * if it is the same edges and node.
@@ -182,15 +186,16 @@ public class TurnCostExtension implements GraphExtension {
     }
 
     /**
-     * @return turn flags of the specified node and edge properties.
+     * @return turn cost flags of the specified triple "from edge", "via node" and "to edge"
      */
-    public void readTurnCostFlags(IntsRef tcFlags, int edgeFrom, int nodeVia, int edgeTo) {
-        if (!EdgeIterator.Edge.isValid(edgeFrom) || !EdgeIterator.Edge.isValid(edgeTo))
+    public IntsRef readFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
+        if (!EdgeIterator.Edge.isValid(fromEdge) || !EdgeIterator.Edge.isValid(toEdge))
             throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
-        if (nodeVia < 0)
+        if (viaNode < 0)
             throw new IllegalArgumentException("via node cannot be negative");
 
-        nextCostFlags(tcFlags, edgeFrom, nodeVia, edgeTo);
+        nextCostFlags(tcFlags, fromEdge, viaNode, toEdge);
+        return tcFlags;
     }
 
     public boolean isUTurn(int edgeFrom, int edgeTo) {
@@ -201,15 +206,15 @@ public class TurnCostExtension implements GraphExtension {
         return true;
     }
 
-    private void nextCostFlags(IntsRef tcFlags, int edgeFrom, int nodeVia, int edgeTo) {
-        int turnCostIndex = nodeAccess.getAdditionalNodeField(nodeVia);
+    private void nextCostFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
+        int turnCostIndex = nodeAccess.getAdditionalNodeField(viaNode);
         int i = 0;
         for (; i < 1000; i++) {
             if (turnCostIndex == NO_TURN_ENTRY)
                 break;
             long turnCostPtr = (long) turnCostIndex * turnCostsEntryBytes;
-            if (edgeFrom == turnCosts.getInt(turnCostPtr + TC_FROM)) {
-                if (edgeTo == turnCosts.getInt(turnCostPtr + TC_TO)) {
+            if (fromEdge == turnCosts.getInt(turnCostPtr + TC_FROM)) {
+                if (toEdge == turnCosts.getInt(turnCostPtr + TC_TO)) {
                     tcFlags.ints[0] = turnCosts.getInt(turnCostPtr + TC_FLAGS);
                     return;
                 }

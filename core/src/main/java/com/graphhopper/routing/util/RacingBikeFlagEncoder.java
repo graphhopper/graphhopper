@@ -29,7 +29,6 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
  * Specifies the settings for race biking
- * <p>
  *
  * @author ratrun
  * @author Peter Karich

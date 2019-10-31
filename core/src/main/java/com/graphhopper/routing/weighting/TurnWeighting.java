@@ -26,6 +26,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
+import static com.graphhopper.routing.util.parsers.OSMTurnCostParser.EV_SUFFIX;
 
 /**
  * Provides methods to retrieve turn costs for a specific turn.
@@ -58,7 +59,7 @@ public class TurnWeighting implements Weighting {
             throw new RuntimeException("No storage set to calculate turn weight");
         }
         FlagEncoder encoder = superWeighting.getFlagEncoder();
-        String key = getKey(encoder.toString(), "turn_cost");
+        String key = getKey(encoder.toString(), EV_SUFFIX);
         // TODO NOW ugly and unsafe? if null TurnWeighting can be still useful for edge based routing
         this.turnCostEnc = encoder.hasEncodedValue(key) ? encoder.getDecimalEncodedValue(key) : null;
         this.superWeighting = superWeighting;
@@ -124,7 +125,7 @@ public class TurnWeighting implements Weighting {
         }
         if (turnCostEnc == null)
             return 0;
-        turnCostExt.readTurnCostFlags(tcFlags, edgeFrom, nodeVia, edgeTo);
+        turnCostExt.readFlags(tcFlags, edgeFrom, nodeVia, edgeTo);
         return turnCostEnc.getDecimal(false, tcFlags);
     }
 

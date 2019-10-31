@@ -62,7 +62,7 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = new EnumEncodedValue<>(TrackType.KEY, TrackType.class);
         } else if (Route.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(Route.KEY, Route.class);
-        } else if (name.endsWith(EncodingManager.getKey("", RouteNetwork.PART_NAME))) {
+        } else if (name.endsWith(EncodingManager.getKey("", RouteNetwork.EV_SUFFIX))) {
             enc = new EnumEncodedValue<>(name, RouteNetwork.class);
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);

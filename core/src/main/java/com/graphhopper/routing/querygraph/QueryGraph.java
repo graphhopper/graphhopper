@@ -760,18 +760,18 @@ public class QueryGraph implements Graph {
         }
 
         @Override
-        public void readTurnCostFlags(IntsRef tcFlags, int edgeFrom, int nodeVia, int edgeTo) {
-            if (isVirtualNode(nodeVia)) {
+        public IntsRef readFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
+            if (isVirtualNode(viaNode)) {
                 tcFlags.ints[0] = 0;
-                return;
-            } else if (isVirtualEdge(edgeFrom) || isVirtualEdge(edgeTo)) {
-                if (isVirtualEdge(edgeFrom))
-                    edgeFrom = getOriginalEdge(edgeFrom);
+                return tcFlags;
+            } else if (isVirtualEdge(fromEdge) || isVirtualEdge(toEdge)) {
+                if (isVirtualEdge(fromEdge))
+                    fromEdge = getOriginalEdge(fromEdge);
 
-                if (isVirtualEdge(edgeTo))
-                    edgeTo = getOriginalEdge(edgeTo);
+                if (isVirtualEdge(toEdge))
+                    toEdge = getOriginalEdge(toEdge);
             }
-            mainTurnExtension.readTurnCostFlags(tcFlags, edgeFrom, nodeVia, edgeTo);
+            return mainTurnExtension.readFlags(tcFlags, fromEdge, viaNode, toEdge);
         }
 
         @Override

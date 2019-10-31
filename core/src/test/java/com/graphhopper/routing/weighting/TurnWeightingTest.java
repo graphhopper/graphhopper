@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
+import static com.graphhopper.routing.util.parsers.OSMTurnCostParser.EV_SUFFIX;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.Assert.assertEquals;
 
@@ -67,7 +68,7 @@ public class TurnWeightingTest {
 
     private void addTurnCost(int from, int via, int to, double turnCost) {
         IntsRef tcFlags = encodingManager.createTurnCostFlags();
-        DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(encoder.toString(), "turn_cost"));
+        DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(encoder.toString(), EV_SUFFIX));
         turnCostEnc.setDecimal(false, tcFlags, turnCost);
         turnCostExt.addTurnCost(tcFlags, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge());
     }

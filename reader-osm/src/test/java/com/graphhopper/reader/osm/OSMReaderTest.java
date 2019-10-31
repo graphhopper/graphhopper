@@ -43,6 +43,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import static com.graphhopper.routing.util.EncodingManager.getKey;
+import static com.graphhopper.routing.util.parsers.OSMTurnCostParser.EV_SUFFIX;
 import static org.junit.Assert.*;
 
 /**
@@ -59,16 +61,10 @@ public class OSMReaderTest {
     // The osmconvert tool can be found here: http://wiki.openstreetmap.org/wiki/Osmconvert
     private final String file6 = "test-osm6.pbf";
     private final String file7 = "test-osm7.xml";
-    private final String fileNegIds = "test-osm-negative-ids.xml";
     private final String fileBarriers = "test-barriers.xml";
-    private final String fileTurnRestrictions = "test-restrictions.xml";
-    private final String fileRoadAttributes = "test-road-attributes.xml";
-    private final String fileConditionalTurnRestrictions = "test-conditional-turn-restrictions.xml";
-    private final String fileMultipleConditionalTurnRestrictions = "test-multiple-conditional-turn-restrictions.xml";
     private final String dir = "./target/tmp/test-db";
     private CarFlagEncoder carEncoder;
     private BooleanEncodedValue carAccessEnc;
-    private BikeFlagEncoder bikeEncoder;
     private FlagEncoder footEncoder;
     private EdgeExplorer carOutExplorer;
     private EdgeExplorer carAllExplorer;
@@ -329,6 +325,7 @@ public class OSMReaderTest {
 
     @Test
     public void testNegativeIds() {
+        String fileNegIds = "test-osm-negative-ids.xml";
         GraphHopper hopper = new GraphHopperFacade(fileNegIds).importOrLoad();
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(4, graph.getNodes());
@@ -490,6 +487,7 @@ public class OSMReaderTest {
 
     @Test
     public void testTurnRestrictions() {
+        String fileTurnRestrictions = "test-restrictions.xml";
         GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
                 importOrLoad();
 
@@ -517,29 +515,30 @@ public class OSMReaderTest {
 
         // (2-3)->(3-4) only_straight_on = (2-3)->(3-8) restricted
         // (4-3)->(3-8) no_right_turn = (4-3)->(3-8) restricted
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_8)) > 0);
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge4_3, n3, edge3_8)) > 0);
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_4)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_2)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_4)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge4_3, n3, edge3_2)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge8_3, n3, edge3_2)));
+        IntsRef tcFlags = hopper.getEncodingManager().createTurnCostFlags();
+        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(getKey("car", EV_SUFFIX));
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge2_3, n3, edge3_8)) > 0);
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_3, n3, edge3_8)) > 0);
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge2_3, n3, edge3_4)) == 0);
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge2_3, n3, edge3_2)) == 0);
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge2_3, n3, edge3_4)) == 0);
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_3, n3, edge3_2)) == 0);
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge8_3, n3, edge3_2)) == 0);
 
         // u-turn restriction for (6-1)->(1-6) but not for (1-6)->(6-1)
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge1_6, n1, edge1_6)) > 0);
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge1_6, n6, edge1_6)));
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge1_6, n1, edge1_6)) > 0);
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge1_6, n6, edge1_6)) == 0);
 
         int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
         int edge5_6 = GHUtility.getEdge(graph, n5, n6).getEdge();
         int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
 
         // (4-5)->(5-1) right_turn_only = (4-5)->(5-6) restricted
-        long costsFlags = tcStorage.getTurnCostFlags(edge4_5, n5, edge5_6);
-        assertFalse(carEncoder.isTurnRestricted(costsFlags));
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge4_5, n5, edge5_1)) > 0);
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_5, n5, edge5_6)) == 0);
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_5, n5, edge5_1)) > 0);
 
-        // for bike
-        assertFalse(bikeEncoder.isTurnRestricted(costsFlags));
+        DecimalEncodedValue bikeTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(getKey("bike", EV_SUFFIX));
+        assertTrue(bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_5, n5, edge5_6)) == 0);
 
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 40, 10);
         int n11 = AbstractGraphStorageTester.getIdOf(graph, 40, 11);
@@ -548,15 +547,15 @@ public class OSMReaderTest {
         int edge10_11 = GHUtility.getEdge(graph, n10, n11).getEdge();
         int edge11_14 = GHUtility.getEdge(graph, n11, n14).getEdge();
 
-        assertEquals(0, tcStorage.getTurnCostFlags(edge11_14, n11, edge10_11));
+        assertTrue(tcStorage.readFlags(tcFlags, edge11_14, n11, edge10_11).isEmpty());
 
-        costsFlags = tcStorage.getTurnCostFlags(edge10_11, n11, edge11_14);
-        assertFalse(carEncoder.isTurnRestricted(costsFlags));
-        assertTrue(bikeEncoder.isTurnRestricted(costsFlags));
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge10_11, n11, edge11_14)) == 0);
+        assertTrue(bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge10_11, n11, edge11_14)) > 0);
     }
 
     @Test
     public void testRoadAttributes() {
+        String fileRoadAttributes = "test-road-attributes.xml";
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
         DataFlagEncoder dataFlagEncoder = new DataFlagEncoder();
         hopper.setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).
@@ -720,75 +719,60 @@ public class OSMReaderTest {
      */
     @Test
     public void testTurnFlagCombination() {
-        final OSMTurnCostParser.TurnCostTableEntry turnCostEntry_car = new OSMTurnCostParser.TurnCostTableEntry();
-        final OSMTurnCostParser.TurnCostTableEntry turnCostEntry_foot = new OSMTurnCostParser.TurnCostTableEntry();
-        final OSMTurnCostParser.TurnCostTableEntry turnCostEntry_bike = new OSMTurnCostParser.TurnCostTableEntry();
-
-        final OSMTurnRelation osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.Type.NOT);
-
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
-        FootFlagEncoder foot = new FootFlagEncoder();
-        BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
-        EncodingManager manager = EncodingManager.create(Arrays.asList(bike, foot, car));
-
-        GraphHopperStorage ghStorage = new GraphBuilder(manager).create();
-        OSMReader reader = new OSMReader(ghStorage) {
+        CarFlagEncoder truck = new CarFlagEncoder(5, 5, 24) {
             @Override
-            public Collection<OSMTurnCostParser.TurnCostTableEntry> storeTurnRelation(List<OSMTurnRelation> turnRelations) {
-                // simulate by returning one turn cost entry directly
-                return Arrays.asList(turnCostEntry_car, turnCostEntry_foot, turnCostEntry_bike);
+            public String toString() {
+                return "truck";
             }
         };
+        BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
+        EncodingManager manager = new EncodingManager.Builder().add(bike).add(truck).add(car).build();
 
-        // turn cost entries for car and foot are for the same relations (same viaNode, edgeFrom and edgeTo),
-        // turn cost entry for bike is for another relation (different viaNode)
-        turnCostEntry_car.edgeFrom = 1;
-        turnCostEntry_foot.edgeFrom = 1;
-        turnCostEntry_bike.edgeFrom = 2;
+        final List<OSMTurnCostParser.TurnCostTableEntry> list = new ArrayList<>();
+        new GraphHopperOSM() {
+            @Override
+            protected DataReader createReader(GraphHopperStorage tmpGraph) {
+                return initDataReader(new OSMReader(tmpGraph) {
+                    @Override
+                    public Collection<OSMTurnCostParser.TurnCostTableEntry> storeTurnRelation(List<OSMTurnRelation> turnRelations) {
+                        Collection<OSMTurnCostParser.TurnCostTableEntry> res = super.storeTurnRelation(turnRelations);
+                        list.addAll(res);
+                        return res;
+                    }
+                });
+            }
+        }.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
+                setGraphHopperLocation(dir).setEncodingManager(manager).importOrLoad();
 
-        // calculating arbitrary flags using the encoders
-        turnCostEntry_car.flags = car.getTurnFlags(true, 0);
-        turnCostEntry_foot.flags = foot.getTurnFlags(true, 0);
-        turnCostEntry_bike.flags = bike.getTurnFlags(false, 10);
+        DecimalEncodedValue carTCEnc = manager.getDecimalEncodedValue(getKey("car", EV_SUFFIX));
+        DecimalEncodedValue truckTCEnc = manager.getDecimalEncodedValue(getKey("truck", EV_SUFFIX));
+        DecimalEncodedValue bikeTCEnc = manager.getDecimalEncodedValue(getKey("bike", EV_SUFFIX));
 
-        // we expect two different entries: the first one is a combination of turn flags of car and foot,
-        // since they provide the same relation, the other one is for bike only
-        long assertFlag1 = turnCostEntry_car.flags | turnCostEntry_foot.flags;
-        long assertFlag2 = turnCostEntry_bike.flags;
-
-        // combine flags of all encoders
-        Collection<OSMTurnCostParser.TurnCostTableEntry> entries = reader.storeTurnRelation(Collections.singletonList(osmTurnRelation));
-
-        // we expect two different turnCost entries
-        assertEquals(2, entries.size());
-
-        for (OSMTurnCostParser.TurnCostTableEntry entry : entries) {
-            if (entry.edgeFrom == 1) {
-                // the first entry provides turn flags for car and foot only
-                assertEquals(assertFlag1, entry.flags);
-                assertTrue(car.isTurnRestricted(entry.flags));
-                assertFalse(foot.isTurnRestricted(entry.flags));
-                assertFalse(bike.isTurnRestricted(entry.flags));
-
-                assertTrue(Double.isInfinite(car.getTurnCost(entry.flags)));
-                assertEquals(0, foot.getTurnCost(entry.flags), 1e-1);
-                assertEquals(0, bike.getTurnCost(entry.flags), 1e-1);
-            } else if (entry.edgeFrom == 2) {
+        assertEquals(3, list.size());
+        for (OSMTurnCostParser.TurnCostTableEntry entry : list) {
+            if (entry.edgeFrom == 0) {
                 // the 2nd entry provides turn flags for bike only
-                assertEquals(assertFlag2, entry.flags);
-                assertFalse(car.isTurnRestricted(entry.flags));
-                assertFalse(foot.isTurnRestricted(entry.flags));
-                assertFalse(bike.isTurnRestricted(entry.flags));
+                assertTrue(Double.isInfinite(carTCEnc.getDecimal(false, entry.flags)));
+                assertTrue(Double.isInfinite(truckTCEnc.getDecimal(false, entry.flags)));
+                assertEquals(0, bikeTCEnc.getDecimal(false, entry.flags), .1);
+            } else if (entry.edgeFrom == 1) {
+                // the first entry provides turn flags for car and foot only
+                assertEquals(0, carTCEnc.getDecimal(false, entry.flags), .1);
+                assertEquals(0, truckTCEnc.getDecimal(false, entry.flags), .1);
+                assertTrue(Double.isInfinite(bikeTCEnc.getDecimal(false, entry.flags)));
 
-                assertEquals(0, car.getTurnCost(entry.flags), 1e-1);
-                assertEquals(0, foot.getTurnCost(entry.flags), 1e-1);
-                assertEquals(10, bike.getTurnCost(entry.flags), 1e-1);
+            } else if (entry.edgeFrom == 2) {
+                assertEquals(0, carTCEnc.getDecimal(false, entry.flags), .1);
+                assertTrue(Double.isInfinite(truckTCEnc.getDecimal(false, entry.flags)));
+                assertEquals(0, bikeTCEnc.getDecimal(false, entry.flags), .1);
             }
         }
     }
 
     @Test
     public void testConditionalTurnRestriction() {
+        String fileConditionalTurnRestrictions = "test-conditional-turn-restrictions.xml";
         GraphHopper hopper = new GraphHopperFacade(fileConditionalTurnRestrictions, true, "").
                 importOrLoad();
 
@@ -820,39 +804,44 @@ public class OSMReaderTest {
 
         // (2-3)->(3-4) only_straight_on except bicycle = (2-3)->(3-8) restricted for car
         // (4-3)->(3-8) no_right_turn dedicated to motorcar = (4-3)->(3-8) restricted for car
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_8)) > 0);
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge4_3, n3, edge3_8)) > 0);
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_4)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_2)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_4)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge4_3, n3, edge3_2)));
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge8_3, n3, edge3_2)));
 
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_8)));
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge4_3, n3, edge3_8)));
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_4)));
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_2)));
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge2_3, n3, edge3_4)));
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge4_3, n3, edge3_2)));
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge8_3, n3, edge3_2)));
+        IntsRef tcFlags = hopper.getEncodingManager().createTurnCostFlags();
+        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(getKey("car", EV_SUFFIX));
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge2_3, n3, edge3_8)) > 0);
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_3, n3, edge3_8)) > 0);
+        assertEquals(0, carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge2_3, n3, edge3_4)), .1);
+        assertEquals(0, carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge2_3, n3, edge3_2)), .1);
+        assertEquals(0, carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge2_3, n3, edge3_4)), .1);
+        assertEquals(0, carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_3, n3, edge3_2)), .1);
+        assertEquals(0, carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge8_3, n3, edge3_2)), .1);
+
+        DecimalEncodedValue bikeTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(getKey("bike", EV_SUFFIX));
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge2_3, n3, edge3_8)), .1);
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_3, n3, edge3_8)), .1);
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge2_3, n3, edge3_4)), .1);
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge2_3, n3, edge3_2)), .1);
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge2_3, n3, edge3_4)), .1);
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_3, n3, edge3_2)), .1);
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge8_3, n3, edge3_2)), .1);
 
         // u-turn except bus;bicycle restriction for (6-1)->(1-6) but not for (1-6)->(6-1)
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge1_6, n1, edge1_6)) > 0);
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge1_6, n6, edge1_6)));
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge1_6, n1, edge1_6)) > 0);
+        assertEquals(0, carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge1_6, n6, edge1_6)), .1);
 
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge1_6, n1, edge1_6)));
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge1_6, n6, edge1_6)));
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge1_6, n1, edge1_6)), .1);
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge1_6, n6, edge1_6)), .1);
 
         // (4-5)->(5-6) right_turn_only dedicated to motorcar = (4-5)->(5-1) restricted
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge4_5, n5, edge5_6)));
-        assertTrue(carEncoder.getTurnCost(tcStorage.getTurnCostFlags(edge4_5, n5, edge5_1)) > 0);
+        assertEquals(0, carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_5, n5, edge5_6)), .1);
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_5, n5, edge5_1)) > 0);
 
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge4_5, n5, edge5_6)));
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge4_5, n5, edge5_1)));
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_5, n5, edge5_6)), .1);
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_5, n5, edge5_1)), .1);
     }
 
     @Test
     public void testMultipleTurnRestrictions() {
+        String fileMultipleConditionalTurnRestrictions = "test-multiple-conditional-turn-restrictions.xml";
         GraphHopper hopper = new GraphHopperFacade(fileMultipleConditionalTurnRestrictions, true, "").
                 importOrLoad();
 
@@ -873,21 +862,25 @@ public class OSMReaderTest {
         int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
         int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
 
+        IntsRef tcFlags = hopper.getEncodingManager().createTurnCostFlags();
+        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(getKey("car", EV_SUFFIX));
+        DecimalEncodedValue bikeTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(getKey("bike", EV_SUFFIX));
+
         // (1-2)->(2-3) no_right_turn for motorcar and bus
-        assertTrue(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge1_2, n2, edge2_3)));
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge1_2, n2, edge2_3)));
+        assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge1_2, n2, edge2_3)) > 0);
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge1_2, n2, edge2_3)), .1);
 
         // (3-4)->(4-5) no_right_turn for motorcycle and motorcar
-        assertTrue(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge3_4, n4, edge4_5)));
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge3_4, n4, edge4_5)));
+        assertTrue(Double.isInfinite(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge3_4, n4, edge4_5))));
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge3_4, n4, edge4_5)), .1);
 
         // (5-1)->(1-2) no_right_turn for bus and psv except for motorcar and bicycle
-        assertFalse(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge4_5, n5, edge5_1)));
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge4_5, n5, edge5_1)));
+        assertEquals(0, carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_5, n5, edge5_1)), .1);
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_5, n5, edge5_1)), .1);
 
         // (5-1)->(1-2) no_right_turn for motorcar and motorcycle except for bus and bicycle
-        assertTrue(carEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge5_1, n1, edge1_2)));
-        assertFalse(bikeEncoder.isTurnRestricted(tcStorage.getTurnCostFlags(edge5_1, n1, edge1_2)));
+        assertTrue(Double.isInfinite(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge5_1, n1, edge1_2))));
+        assertEquals(0, bikeTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge5_1, n1, edge1_2)), .1);
     }
 
     @Test
@@ -962,7 +955,7 @@ public class OSMReaderTest {
                     throw new RuntimeException(e);
                 }
             }
-        }.setEncodingManager(new EncodingManager.Builder().add(carEncoder = new CarFlagEncoder()).add(new OSMRoadClassParser()).build()).
+        }.setEncodingManager(new EncodingManager.Builder().add(new CarFlagEncoder()).add(new OSMRoadClassParser()).build()).
                 setGraphHopperLocation(dir).setCHEnabled(false).
                 importOrLoad();
 
@@ -987,6 +980,7 @@ public class OSMReaderTest {
             setGraphHopperLocation(dir);
             setCHEnabled(false);
 
+            BikeFlagEncoder bikeEncoder;
             if (turnCosts) {
                 carEncoder = new CarFlagEncoder(5, 5, 1);
                 bikeEncoder = new BikeFlagEncoder(4, 2, 1);

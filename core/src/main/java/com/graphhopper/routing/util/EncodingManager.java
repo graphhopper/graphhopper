@@ -47,11 +47,9 @@ import static com.graphhopper.util.Helper.toLowerCase;
 public class EncodingManager implements EncodedValueLookup {
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
     private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
-    // TODO NOW should we really put this in the same map? Makes it easier as we do not have to provide yet another EncodedValueLookup interface
-    // private final Map<String, EncodedValue> tcEVMap = new LinkedHashMap<>();
-    private final List<OSMTurnCostParser> tcParsers = new ArrayList<>();
     private final List<RelationTagParser> relationTagParsers = new ArrayList<>();
-    private final List<TagParser> tagParserList = new ArrayList<>();
+    private final List<TagParser> edgeTagParsers = new ArrayList<>();
+    private final Map<String, TurnCostParser> turnCostParsers = new LinkedHashMap<>();
     private int nextNodeBit = 0;
     private boolean enableInstructions = true;
     private String preferredLanguage = "";
@@ -62,7 +60,6 @@ public class EncodingManager implements EncodedValueLookup {
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
      * encoders ignoring case.
-     * <p>
      *
      * @param flagEncodersStr comma delimited list of encoders. The order does not matter.
      */
@@ -199,23 +196,17 @@ public class EncodingManager implements EncodedValueLookup {
             return this;
         }
 
-        public Builder addTurnCostParser(OSMTurnCostParser parser) {
+        public Builder addTurnCostParser(TurnCostParser parser) {
             List<EncodedValue> list = new ArrayList<>();
-            parser.createRelationEncodedValues(list);
+            parser.createTurnCostEncodedValues(em, list);
             for (EncodedValue ev : list) {
                 ev.init(em.turnCostConfig);
-                // em.tcEVMap.put(ev.getName(), ev);
                 if (em.encodedValueMap.containsKey(ev.getName()))
-                    throw new IllegalArgumentException("For now EncodedValues for edges and turn cost are in the same name space and cannot use the same names");
+                    throw new IllegalArgumentException("Already defined: " + ev.getName() + ". Please note that " +
+                            "EncodedValues for edges and turn cost are in the same namespace.");
                 em.encodedValueMap.put(ev.getName(), ev);
             }
-            em.tcParsers.add(parser);
-            return this;
-        }
-
-        public Builder addRelationTagParsers() {
-            addRelationTagParser(new OSMBikeNetworkTagParser());
-            addRelationTagParser(new OSMFootNetworkTagParser());
+            em.turnCostParsers.put(parser.getName(), parser);
             return this;
         }
 
@@ -224,33 +215,26 @@ public class EncodingManager implements EncodedValueLookup {
             tagParser.createRelationEncodedValues(em, list);
             for (EncodedValue ev : list) {
                 ev.init(em.relationConfig);
-                // do we need this for the transformer encoded values?
-                // encodedValueMap.put(ev.getName(), ev);
             }
             em.relationTagParsers.add(tagParser);
 
             // add as "edge" TagParser
-            // TODO NOW for now we only have encoder specific TagParsers
             add(tagParser, true);
             return this;
         }
 
         public Builder add(FlagEncoder encoder) {
             check();
-
             // TODO NOW workaround for now
+            if (encoder instanceof BikeCommonFlagEncoder && !em.hasEncodedValue(getKey("bike", RouteNetwork.EV_SUFFIX))) {
+                addRelationTagParser(new OSMBikeNetworkTagParser());
+            } else if (encoder instanceof FootFlagEncoder && !em.hasEncodedValue(getKey("foot", RouteNetwork.EV_SUFFIX))) {
+                addRelationTagParser(new OSMFootNetworkTagParser());
+            }
             if (!em.hasEncodedValue(Route.KEY))
                 em.addEncodedValue(new EnumEncodedValue<>(Route.KEY, Route.class), false);
-            if (encoder instanceof BikeCommonFlagEncoder && !em.hasEncodedValue(getKey("bike", RouteNetwork.PART_NAME)))
-                addRelationTagParser(new OSMBikeNetworkTagParser());
-            else if (encoder instanceof FootFlagEncoder && !em.hasEncodedValue(getKey("foot", RouteNetwork.PART_NAME)))
-                addRelationTagParser(new OSMFootNetworkTagParser());
 
             em.addEncoder((AbstractFlagEncoder) encoder);
-
-            if (encoder.supports(TurnWeighting.class))
-                addTurnCostParser(new OSMTurnCostParser(encoder.toString(), em, ((AbstractFlagEncoder) encoder).getMaxTurnCosts()));
-
             return this;
         }
 
@@ -277,7 +261,7 @@ public class EncodingManager implements EncodedValueLookup {
             for (EncodedValue ev : list) {
                 em.addEncodedValue(ev, encValBoundToFlagEncoder);
             }
-            em.tagParserList.add(tagParser);
+            em.edgeTagParsers.add(tagParser);
             return this;
         }
 
@@ -290,6 +274,12 @@ public class EncodingManager implements EncodedValueLookup {
             check();
             if (em.encodedValueMap.isEmpty())
                 throw new IllegalStateException("No EncodedValues found");
+
+            // TODO NOW workaround for now
+            for (AbstractFlagEncoder encoder : em.edgeEncoders) {
+                if (encoder.supports(TurnWeighting.class) && !em.turnCostParsers.containsKey(encoder.toString()))
+                    addTurnCostParser(new OSMTurnCostParser(encoder.toString(), encoder.getMaxTurnCosts()));
+            }
 
             EncodingManager tmp = em;
             em = null;
@@ -410,7 +400,9 @@ public class EncodingManager implements EncodedValueLookup {
         if (encodedValueMap.containsKey(ev.getName()))
             throw new IllegalStateException("EncodedValue " + ev.getName() + " already exists " + encodedValueMap.get(ev.getName()) + " vs " + ev);
         if (!encValBoundToFlagEncoder && ev.getName().contains(SPECIAL_SEPARATOR))
-            throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must not contain '" + SPECIAL_SEPARATOR + "' as reserved for FlagEncoder");
+            throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must not contain '" + SPECIAL_SEPARATOR + "'");
+        if (encValBoundToFlagEncoder && !ev.getName().contains(SPECIAL_SEPARATOR))
+            throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must contain '" + SPECIAL_SEPARATOR + "' as reserved for a single profile");
         ev.init(edgeConfig);
         encodedValueMap.put(ev.getName(), ev);
     }
@@ -531,7 +523,7 @@ public class EncodingManager implements EncodedValueLookup {
         IntsRef edgeFlags = createEdgeFlags();
         // return if way or ferry
         Access access = acceptWay.getAccess();
-        for (TagParser parser : tagParserList) {
+        for (TagParser parser : edgeTagParsers) {
             parser.handleWayTags(edgeFlags, way, access, relationFlags);
         }
         for (AbstractFlagEncoder encoder : edgeEncoders) {
@@ -594,7 +586,6 @@ public class EncodingManager implements EncodedValueLookup {
         return new IntsRef(2);
     }
 
-    // TODO NOW use this instead of long
     public IntsRef createTurnCostFlags() {
         return new IntsRef(1);
     }
@@ -666,8 +657,8 @@ public class EncodingManager implements EncodedValueLookup {
         return new ArrayList<FlagEncoder>(edgeEncoders);
     }
 
-    public List<OSMTurnCostParser> fetchTurnCostParsers() {
-        return new ArrayList<>(tcParsers);
+    public List<TurnCostParser> fetchTurnCostParsers() {
+        return new ArrayList<>(turnCostParsers.values());
     }
 
     public boolean needsTurnCostsSupport() {
@@ -718,7 +709,7 @@ public class EncodingManager implements EncodedValueLookup {
         return (T) ev;
     }
 
-    private static String SPECIAL_SEPARATOR = "-";
+    private static String SPECIAL_SEPARATOR = ".";
 
     /**
      * All EncodedValue names that are created from a FlagEncoder should use this method to mark them as

@@ -216,7 +216,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         registerNewEncodedValue.add(wayTypeEnc = new UnsignedIntEncodedValue(getKey(prefix, "waytype"), 2, false));
         registerNewEncodedValue.add(priorityEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
 
-        bikeRouteEnc = getEnumEncodedValue(getKey("bike", PART_NAME), RouteNetwork.class);
+        bikeRouteEnc = getEnumEncodedValue(getKey("bike", EV_SUFFIX), RouteNetwork.class);
         routeEnc = getEnumEncodedValue(Route.KEY, Route.class);
     }
 

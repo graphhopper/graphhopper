@@ -4,6 +4,7 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
+import static com.graphhopper.routing.util.parsers.OSMTurnCostParser.EV_SUFFIX;
 
 /**
  * A stateful possibility to access turn cost of the TurnCostExtension. Reuse for optimal speed. Use one per thread.
@@ -26,14 +27,14 @@ public class TurnCostAccess {
         this.turnCostExtension = extension;
         tcFlags = encodingManager.createTurnCostFlags();
         EMPTY = new IntsRef(tcFlags.length);
-        turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(name, "turn_cost"));
+        turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(name, EV_SUFFIX));
     }
 
     /**
      * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
      */
     public double get(int fromEdge, int viaNode, int toEdge) {
-        turnCostExtension.readTurnCostFlags(tcFlags, fromEdge, viaNode, toEdge);
+        turnCostExtension.readFlags(tcFlags, fromEdge, viaNode, toEdge);
         return turnCostEnc.getDecimal(false, tcFlags);
     }
 

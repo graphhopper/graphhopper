@@ -55,12 +55,6 @@ public interface FlagEncoder extends EncodedValueLookup {
     DecimalEncodedValue getAverageSpeedEnc();
 
     /**
-     * @return whether or not this encoder should apply the given turn restriction
-     * @see OSMTurnRelation
-     */
-    boolean acceptsTurnRelation(OSMTurnRelation relation);
-
-    /**
      * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.
      * Use support(String) instead.
      */

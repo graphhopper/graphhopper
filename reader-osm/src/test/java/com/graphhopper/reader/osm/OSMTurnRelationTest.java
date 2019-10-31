@@ -22,22 +22,15 @@ import com.graphhopper.reader.OSMTurnRelation.Type;
 import com.graphhopper.routing.EdgeBasedRoutingAlgorithmTest;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.parsers.OSMTurnCostParser;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeExplorer;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -50,11 +43,12 @@ public class OSMTurnRelationTest {
         final Map<Integer, Long> internalToOSMEdge = new HashMap<>();
 
         osmNodeToInternal.put(3L, 3);
-        // edge ids are only stored if they occured before in an OSMRelation
+        // edge ids are only stored if they occurred before in an OSMRelation
         internalToOSMEdge.put(3, 3L);
         internalToOSMEdge.put(4, 4L);
 
-        GraphHopperStorage ghStorage = new GraphBuilder(EncodingManager.create(encoder)).create();
+        OSMTurnCostParser parser = new OSMTurnCostParser(encoder.toString(), 1);
+        GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager.Builder().add(encoder).addTurnCostParser(parser).build()).create();
         EdgeBasedRoutingAlgorithmTest.initGraph(ghStorage);
         OSMReader osmReader = new OSMReader(ghStorage) {
 
@@ -72,16 +66,13 @@ public class OSMTurnRelationTest {
             }
         };
 
-        EdgeExplorer edgeExplorer = ghStorage.createEdgeExplorer();
-
         // TYPE == ONLY
         OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, Type.ONLY);
-        Collection<OSMReader.TurnCostTableEntry> result
-                = osmReader.getRestrictionAsEntries(instance, encoder, edgeExplorer, edgeExplorer);
+        Collection<OSMTurnCostParser.TurnCostTableEntry> result = osmReader.getRestrictionAsEntries(parser, instance);
 
         assertEquals(2, result.size());
-        Iterator<OSMReader.TurnCostTableEntry> iter = result.iterator();
-        OSMReader.TurnCostTableEntry entry = iter.next();
+        Iterator<OSMTurnCostParser.TurnCostTableEntry> iter = result.iterator();
+        OSMTurnCostParser.TurnCostTableEntry entry = iter.next();
         assertEquals(4, entry.edgeFrom);
         assertEquals(6, entry.edgeTo);
         assertEquals(3, entry.nodeVia);
@@ -93,7 +84,7 @@ public class OSMTurnRelationTest {
 
         // TYPE == NOT
         instance = new OSMTurnRelation(4, 3, 3, Type.NOT);
-        result = osmReader.getRestrictionAsEntries(instance, encoder, edgeExplorer, edgeExplorer);
+        result = osmReader.getRestrictionAsEntries(parser, instance);
 
         assertEquals(1, result.size());
         iter = result.iterator();

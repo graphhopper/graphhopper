@@ -25,9 +25,9 @@ public enum RouteNetwork {
     LOCAL("local");
 
     /**
-     * You need to call EncodingManager.getKey(prefix, PART_NAME) as this EncodedValue can be used for e.g. bike and hike
+     * You need to call EncodingManager.getKey(prefix, EV_SUFFIX) as this EncodedValue can be used for e.g. bike and hike
      */
-    public static final String PART_NAME = "network";
+    public static final String EV_SUFFIX = "network";
 
     private final String name;
 

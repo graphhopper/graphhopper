@@ -63,7 +63,7 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
 
     @Override
     public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(footRouteEnc = new EnumEncodedValue<>(getKey("foot", RouteNetwork.PART_NAME), RouteNetwork.class));
+        registerNewEncodedValue.add(footRouteEnc = new EnumEncodedValue<>(getKey("foot", RouteNetwork.EV_SUFFIX), RouteNetwork.class));
     }
 
     @Override
