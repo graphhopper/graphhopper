@@ -629,6 +629,7 @@ public class GraphHopper implements GraphHopperAPI {
             printInfo();
             process(ghLocation, true);
         } else {
+            printInfo();
             logger.info("Graph already imported into " + ghLocation);
         }
         close();
@@ -860,10 +861,6 @@ public class GraphHopper implements GraphHopperAPI {
      * @param closeEarly release resources as early as possible
      */
     public void postProcessing(boolean closeEarly) {
-        if (closeEarly) {
-            ghStorage.flushAndCloseEarly();
-        }
-
         // Later: move this into the GraphStorage.optimize method
         // Or: Doing it after preparation to optimize shortcuts too. But not possible yet #12
 
@@ -883,14 +880,14 @@ public class GraphHopper implements GraphHopperAPI {
 
         initLocationIndex();
 
+        if (lmFactoryDecorator.isEnabled())
+            lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
+        loadOrPrepareLM();
+
         if (chFactoryDecorator.isEnabled())
             chFactoryDecorator.createPreparations(ghStorage);
         if (!isCHPrepared())
             prepareCH(closeEarly);
-
-        if (lmFactoryDecorator.isEnabled())
-            lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
-        loadOrPrepareLM();
     }
 
     private static final String INTERPOLATION_KEY = "prepare.elevation_interpolation.done";
@@ -1222,6 +1219,8 @@ public class GraphHopper implements GraphHopperAPI {
             ensureWriteAccess();
 
             ghStorage.freeze();
+            if (closeEarly)
+                ghStorage.flushAndCloseEarly();
             chFactoryDecorator.prepare(ghStorage.getProperties(), closeEarly);
             ghStorage.getProperties().put(CH.PREPARE + "done", true);
         }

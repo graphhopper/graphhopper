@@ -472,7 +472,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     /**
-     * Flush and free resources that are not needed for post-processing
+     * Flush and close resources like wayGeometry that are not needed for CH preparation.
      */
     public void flushAndCloseEarly() {
         baseGraph.flushAndCloseGeometryAndNameStorage();
