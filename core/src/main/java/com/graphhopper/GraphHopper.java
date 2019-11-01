@@ -637,7 +637,7 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * Creates the graph from OSM data.
      */
-    private GraphHopper process(String graphHopperLocation, boolean freeWhenDone) {
+    private GraphHopper process(String graphHopperLocation, boolean closeEarly) {
         setGraphHopperLocation(graphHopperLocation);
         GHLock lock = null;
         try {
@@ -650,7 +650,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             readData();
             cleanUp();
-            postProcessing(freeWhenDone);
+            postProcessing(closeEarly);
             flush();
         } finally {
             if (lock != null)
@@ -857,9 +857,13 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * Does the preparation and creates the location index
      *
-     * @param freeWhenDone release resources after importing
+     * @param closeEarly release resources as early as possible
      */
-    public void postProcessing(boolean freeWhenDone) {
+    public void postProcessing(boolean closeEarly) {
+        if (closeEarly) {
+            ghStorage.flushAndCloseEarly();
+        }
+
         // Later: move this into the GraphStorage.optimize method
         // Or: Doing it after preparation to optimize shortcuts too. But not possible yet #12
 
@@ -879,16 +883,10 @@ public class GraphHopper implements GraphHopperAPI {
 
         initLocationIndex();
 
-        if (freeWhenDone) {
-            locationIndex.flush();
-            locationIndex.close();
-            ghStorage.flushAndFreeEarly();
-        }
-
         if (chFactoryDecorator.isEnabled())
             chFactoryDecorator.createPreparations(ghStorage);
         if (!isCHPrepared())
-            prepareCH(freeWhenDone);
+            prepareCH(closeEarly);
 
         if (lmFactoryDecorator.isEnabled())
             lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
@@ -1218,13 +1216,13 @@ public class GraphHopper implements GraphHopperAPI {
         return "true".equals(ghStorage.getProperties().get(Landmark.PREPARE + "done"));
     }
 
-    protected void prepareCH(boolean freeWhenDone) {
+    protected void prepareCH(boolean closeEarly) {
         boolean tmpPrepare = chFactoryDecorator.isEnabled();
         if (tmpPrepare) {
             ensureWriteAccess();
 
             ghStorage.freeze();
-            chFactoryDecorator.prepare(ghStorage.getProperties(), freeWhenDone);
+            chFactoryDecorator.prepare(ghStorage.getProperties(), closeEarly);
             ghStorage.getProperties().put(CH.PREPARE + "done", true);
         }
     }

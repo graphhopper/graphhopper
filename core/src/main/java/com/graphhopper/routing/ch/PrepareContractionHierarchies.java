@@ -478,12 +478,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return new TurnWeighting(prepareWeighting, turnCostExtension, chProfile.getUTurnCosts());
     }
 
-    public void flushAndFree() {
-        CHGraphImpl cg = ((CHGraphImpl) prepareGraph);
-        cg.setNodesHeader();
-        cg.setEdgesHeader();
-        cg.flush();
-        cg.close();
+    CHGraph getCHGraph() {
+        return prepareGraph;
     }
 
     private static class Params {
@@ -517,6 +513,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         private int nodesContractedPercentage;
         /**
          * Specifies how often a log message should be printed.
+         *
          * @see #periodicUpdatesPercentage
          */
         private int logMessagesPercentage;
