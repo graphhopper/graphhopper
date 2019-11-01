@@ -43,12 +43,12 @@ public class Label {
 
     }
 
-    static class EdgeLabel {
-        final EdgeIteratorState edgeIteratorState;
-        final GtfsStorage.EdgeType edgeType;
-        final int timeZoneId;
-        final int nTransfers;
-        final double distance;
+    public static class EdgeLabel {
+        public final EdgeIteratorState edgeIteratorState;
+        public final GtfsStorage.EdgeType edgeType;
+        public final int timeZoneId;
+        public final int nTransfers;
+        public final double distance;
 
         public EdgeLabel(EdgeIteratorState edgeIteratorState, GtfsStorage.EdgeType edgeType, int timeZoneId, int nTransfers, double distance) {
             this.edgeIteratorState = edgeIteratorState;
@@ -130,7 +130,7 @@ public class Label {
         return result;
     }
 
-    static EdgeLabel getEdgeLabel(EdgeIteratorState edgeIteratorState, PtEncodedValues flagEncoder) {
+    public static EdgeLabel getEdgeLabel(EdgeIteratorState edgeIteratorState, PtEncodedValues flagEncoder) {
         return new EdgeLabel(edgeIteratorState, edgeIteratorState.get(flagEncoder.getTypeEnc()), edgeIteratorState.get(flagEncoder.getValidityIdEnc()),
                 edgeIteratorState.get(flagEncoder.getTransfersEnc()), edgeIteratorState.getDistance());
     }

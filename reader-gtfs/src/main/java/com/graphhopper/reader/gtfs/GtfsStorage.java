@@ -213,7 +213,8 @@ public class GtfsStorage implements GtfsStorageI {
         return operatingDayPatterns;
     }
 
-	Map<Integer, FeedIdWithTimezone> getTimeZones() {
+    @Override
+	public Map<Integer, FeedIdWithTimezone> getTimeZones() {
 		return readableTimeZones;
 	}
 

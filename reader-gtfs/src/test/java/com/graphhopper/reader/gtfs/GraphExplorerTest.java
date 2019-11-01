@@ -68,7 +68,7 @@ public class GraphExplorerTest {
         List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>();
 
         QueryGraph queryGraph = QueryGraph.lookup(graph, Collections.emptyList());
-        GraphExplorer testee = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, false, 5.0);
+        GraphExplorer testee = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, false, 5.0, false);
 
         assertThat(() -> testee.exploreEdgesAround(new Label(0, -1, 4, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
                 contains(d.toString()));
@@ -93,7 +93,7 @@ public class GraphExplorerTest {
 
         WrapperGraph wrapperGraph = new WrapperGraph(graph, extraEdges);
         QueryGraph queryGraph = QueryGraph.lookup(wrapperGraph, Collections.emptyList());
-        GraphExplorer testee = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, false, 5.0);
+        GraphExplorer testee = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, false, 5.0, false);
         assertThat(() -> testee.exploreEdgesAround(new Label(0, -1, 0, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
                 contains(e.toString()));
         assertThat(() -> testee.exploreEdgesAround(new Label(0, -1, 1, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
@@ -128,14 +128,14 @@ public class GraphExplorerTest {
 
         WrapperGraph wrapperGraph = new WrapperGraph(graph, extraEdges);
         QueryGraph queryGraph = QueryGraph.lookup(wrapperGraph, emptyList());
-        GraphExplorer forward = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, false, 5.0);
+        GraphExplorer forward = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, false, 5.0, false);
         assertThat(() -> forward.exploreEdgesAround(new Label(0, -1, 0, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
                 contains("0->1"));
         assertThat(() -> forward.exploreEdgesAround(new Label(0, -1, 1, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
                 contains("1->2", "1->3"));
         assertThat(() -> forward.exploreEdgesAround(new Label(0, -1, 4, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
                 contains("0 4-5", "4->7"));
-        GraphExplorer backward = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, true, false, 5.0);
+        GraphExplorer backward = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, true, false, 5.0, false);
         assertThat(() -> backward.exploreEdgesAround(new Label(0, -1, 1, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
                 contains("1->0"));
     }
@@ -193,7 +193,7 @@ public class GraphExplorerTest {
         point2.calcSnappedPoint(new DistanceCalc2D());
         QueryGraph queryGraph = QueryGraph.lookup(wrapperGraph, point1, point2);
 
-        GraphExplorer testee = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, false, 5.0);
+        GraphExplorer testee = new GraphExplorer(queryGraph, new FastestWeighting(foot), pt, gtfsStorage, realtimeFeed, false, false, 5.0, false);
         assertThat(() -> testee.exploreEdgesAround(new Label(0, -1, 0, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
                 contains(e.toString()));
         assertThat(() -> testee.exploreEdgesAround(new Label(0, -1, 1, 0, 0.0, 0L, 0, 0, false, null)).map(Object::toString).iterator(),
