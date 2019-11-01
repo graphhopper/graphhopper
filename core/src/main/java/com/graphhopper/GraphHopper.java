@@ -1218,9 +1218,13 @@ public class GraphHopper implements GraphHopperAPI {
         if (tmpPrepare) {
             ensureWriteAccess();
 
-            ghStorage.freeze();
-            if (closeEarly)
+            if (closeEarly) {
+                locationIndex.flush();
+                locationIndex.close();
                 ghStorage.flushAndCloseEarly();
+            }
+
+            ghStorage.freeze();
             chFactoryDecorator.prepare(ghStorage.getProperties(), closeEarly);
             ghStorage.getProperties().put(CH.PREPARE + "done", true);
         }
