@@ -37,7 +37,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.routing.util.parsers.OSMTurnCostParser.EV_SUFFIX;
+import static com.graphhopper.routing.util.parsers.OSMTurnRelationParser.EV_SUFFIX;
 import static com.graphhopper.util.Helper.DIST_EARTH;
 
 /**

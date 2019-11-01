@@ -18,14 +18,6 @@
 package com.graphhopper.reader.osm;
 
 import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.OSMTurnRelation.Type;
-import com.graphhopper.routing.EdgeBasedRoutingAlgorithmTest;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.parsers.OSMTurnCostParser;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.EdgeExplorer;
 import org.junit.Test;
 
 import java.util.*;

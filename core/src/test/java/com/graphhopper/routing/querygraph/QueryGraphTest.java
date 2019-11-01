@@ -35,7 +35,7 @@ import org.junit.Test;
 
 import java.util.*;
 
-import static com.graphhopper.routing.util.parsers.OSMTurnCostParser.EV_SUFFIX;
+import static com.graphhopper.routing.util.parsers.OSMTurnRelationParser.EV_SUFFIX;
 import static com.graphhopper.storage.index.QueryResult.Position.*;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.*;

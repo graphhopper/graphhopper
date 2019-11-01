@@ -37,7 +37,8 @@ public interface TurnCostParser {
     void handleTurnRelationTags(OSMTurnRelation turnRelation, IntsRef turnCostFlags, ExternalInternalMap map, Graph graph);
 
     /**
-     * This map associates the internal nodes IDs with external IDs and similarly for the edge IDs.
+     * This map associates the internal GraphHopper nodes IDs with external IDs (OSM) and similarly for the edge IDs
+     * required to write the turn costs.
      */
     interface ExternalInternalMap {
         int getInternalNodeIdOfOsmNode(long nodeOsmId);

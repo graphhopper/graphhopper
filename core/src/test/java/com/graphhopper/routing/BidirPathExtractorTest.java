@@ -29,7 +29,7 @@ import com.graphhopper.util.EdgeIterator;
 import org.junit.Test;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.routing.util.parsers.OSMTurnCostParser.EV_SUFFIX;
+import static com.graphhopper.routing.util.parsers.OSMTurnRelationParser.EV_SUFFIX;
 import static org.junit.Assert.assertEquals;
 
 /**

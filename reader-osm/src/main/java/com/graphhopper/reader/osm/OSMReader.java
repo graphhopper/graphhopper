@@ -769,6 +769,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     protected void finishedReading() {
         printInfo("way");
         pillarInfo.clear();
+        encodingManager.releaseParsers();
         eleProvider.release();
         osmNodeIdToInternalNodeMap = null;
         osmNodeIdToNodeFlagsMap = null;

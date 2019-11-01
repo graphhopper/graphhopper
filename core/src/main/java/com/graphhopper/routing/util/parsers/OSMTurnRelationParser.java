@@ -31,7 +31,10 @@ import java.util.*;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 
-public class OSMTurnCostParser implements TurnCostParser {
+/**
+ * This parser takes the turn restrictions from OSM and creates the appropriated infinite turn costs.
+ */
+public class OSMTurnRelationParser implements TurnCostParser {
     private String name;
     private DecimalEncodedValue turnCostEnc;
     private final int maxTurnCosts;
@@ -47,11 +50,11 @@ public class OSMTurnCostParser implements TurnCostParser {
      * @param maxTurnCosts specify the maximum value used for turn costs, if this value is reached a
      *                     turn is forbidden and results in costs of positive infinity.
      */
-    public OSMTurnCostParser(String name, int maxTurnCosts) {
+    public OSMTurnRelationParser(String name, int maxTurnCosts) {
         this(name, maxTurnCosts, Collections.<String>emptyList());
     }
 
-    public OSMTurnCostParser(String name, int maxTurnCosts, Collection<String> restrictions) {
+    public OSMTurnRelationParser(String name, int maxTurnCosts, Collection<String> restrictions) {
         this.name = name;
         this.maxTurnCosts = maxTurnCosts;
         if (restrictions.isEmpty()) {

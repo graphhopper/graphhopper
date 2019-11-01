@@ -134,6 +134,12 @@ public class EncodingManager implements EncodedValueLookup {
         this.edgeConfig = new EncodedValue.InitializerConfig();
     }
 
+    public void releaseParsers() {
+        turnCostParsers.clear();
+        edgeTagParsers.clear();
+        relationTagParsers.clear();
+    }
+
     public static class Builder {
         private EncodingManager em;
 
@@ -276,7 +282,7 @@ public class EncodingManager implements EncodedValueLookup {
             // TODO NOW workaround for now
             for (AbstractFlagEncoder encoder : em.edgeEncoders) {
                 if (encoder.supports(TurnWeighting.class) && !em.turnCostParsers.containsKey(encoder.toString()))
-                    addTurnCostParser(new OSMTurnCostParser(encoder.toString(), encoder.getMaxTurnCosts()));
+                    addTurnCostParser(new OSMTurnRelationParser(encoder.toString(), encoder.getMaxTurnCosts()));
             }
 
             EncodingManager tmp = em;

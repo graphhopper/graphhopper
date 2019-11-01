@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.Random;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.routing.util.parsers.OSMTurnCostParser.EV_SUFFIX;
+import static com.graphhopper.routing.util.parsers.OSMTurnRelationParser.EV_SUFFIX;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.Assert.*;

@@ -4,7 +4,7 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.routing.util.parsers.OSMTurnCostParser.EV_SUFFIX;
+import static com.graphhopper.routing.util.parsers.OSMTurnRelationParser.EV_SUFFIX;
 
 /**
  * A stateful possibility to access turn cost of the TurnCostExtension. Reuse for optimal speed. Use one per thread.

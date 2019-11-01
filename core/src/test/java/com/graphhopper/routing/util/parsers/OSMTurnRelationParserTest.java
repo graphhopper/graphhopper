@@ -15,7 +15,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
-public class OSMTurnCostParserTest {
+public class OSMTurnRelationParserTest {
 
     @Test
     public void testGetRestrictionAsEntries() {
@@ -28,7 +28,7 @@ public class OSMTurnCostParserTest {
         internalToOSMEdge.put(3, 3L);
         internalToOSMEdge.put(4, 4L);
 
-        OSMTurnCostParser parser = new OSMTurnCostParser(encoder.toString(), 1);
+        OSMTurnRelationParser parser = new OSMTurnRelationParser(encoder.toString(), 1);
         GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager.Builder().add(encoder).addTurnCostParser(parser).build()).create();
         EdgeBasedRoutingAlgorithmTest.initGraph(ghStorage);
         TurnCostParser.ExternalInternalMap map = new TurnCostParser.ExternalInternalMap() {
@@ -49,12 +49,12 @@ public class OSMTurnCostParserTest {
 
         // TYPE == ONLY
         OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.ONLY);
-        Collection<OSMTurnCostParser.TCEntry> result = parser.getRestrictionAsEntries(instance,
+        Collection<OSMTurnRelationParser.TCEntry> result = parser.getRestrictionAsEntries(instance,
                 ghStorage.getEncodingManager().createTurnCostFlags(), map, ghStorage);
 
         assertEquals(2, result.size());
-        Iterator<OSMTurnCostParser.TCEntry> iter = result.iterator();
-        OSMTurnCostParser.TCEntry entry = iter.next();
+        Iterator<OSMTurnRelationParser.TCEntry> iter = result.iterator();
+        OSMTurnRelationParser.TCEntry entry = iter.next();
         assertEquals(4, entry.edgeFrom);
         assertEquals(6, entry.edgeTo);
         assertEquals(3, entry.nodeVia);

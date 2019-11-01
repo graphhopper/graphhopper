@@ -26,7 +26,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.routing.util.parsers.OSMTurnCostParser.EV_SUFFIX;
+import static com.graphhopper.routing.util.parsers.OSMTurnRelationParser.EV_SUFFIX;
 
 /**
  * Provides methods to retrieve turn costs for a specific turn.

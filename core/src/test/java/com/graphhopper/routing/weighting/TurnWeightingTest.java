@@ -13,7 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.routing.util.parsers.OSMTurnCostParser.EV_SUFFIX;
+import static com.graphhopper.routing.util.parsers.OSMTurnRelationParser.EV_SUFFIX;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.Assert.assertEquals;
 
