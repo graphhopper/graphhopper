@@ -142,7 +142,6 @@ public class MapMatching {
             allQueryResults.addAll(qrs);
         }
         queryGraph = QueryGraph.lookup(routingGraph, allQueryResults);
-        queryGraph.setUseEdgeExplorerCache(true);
 
         // Different QueryResults can have the same tower node as their closest node.
         // Hence, we now dedupe the query results of each GPX entry by their closest node (#91).
@@ -190,8 +189,7 @@ public class MapMatching {
             i++;
         }
 
-        final EdgeExplorer explorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()));
-        final Map<String, EdgeIteratorState> virtualEdgesMap = createVirtualEdgesMap(queriesPerEntry, explorer);
+        final Map<String, EdgeIteratorState> virtualEdgesMap = createVirtualEdgesMap(queriesPerEntry);
         MatchResult matchResult = computeMatchResult(seq, virtualEdgesMap, gpxList, queryGraph);
         logger.debug("=============== Matched real edges =============== ");
         i = 1;
@@ -200,6 +198,10 @@ public class MapMatching {
             i++;
         }
         return matchResult;
+    }
+
+    private EdgeExplorer createAllEdgeExplorer() {
+        return queryGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(weighting.getFlagEncoder()));
     }
 
     /**
@@ -614,8 +616,8 @@ public class MapMatching {
     /**
      * Returns a map where every virtual edge maps to its real edge with correct orientation.
      */
-    private Map<String, EdgeIteratorState> createVirtualEdgesMap(
-            List<Collection<QueryResult>> queriesPerEntry, EdgeExplorer explorer) {
+    private Map<String, EdgeIteratorState> createVirtualEdgesMap(List<Collection<QueryResult>> queriesPerEntry) {
+        EdgeExplorer explorer = createAllEdgeExplorer();
         // TODO For map key, use the traversal key instead of string!
         Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<>();
         for (Collection<QueryResult> queryResults : queriesPerEntry) {
@@ -623,7 +625,7 @@ public class MapMatching {
                 if (queryGraph.isVirtualNode(qr.getClosestNode())) {
                     EdgeIterator iter = explorer.setBaseNode(qr.getClosestNode());
                     while (iter.next()) {
-                        int node = traverseToClosestRealAdj(explorer, iter);
+                        int node = traverseToClosestRealAdj(iter);
                         if (node == qr.getClosestEdge().getAdjNode()) {
                             virtualEdgesMap.put(virtualEdgesMapKey(iter),
                                     qr.getClosestEdge().detach(false));
@@ -652,15 +654,15 @@ public class MapMatching {
         return iter.getAdjNode() + "-" + iter.getEdge() + "-" + iter.getBaseNode();
     }
 
-    private int traverseToClosestRealAdj(EdgeExplorer explorer, EdgeIteratorState edge) {
+    private int traverseToClosestRealAdj(EdgeIteratorState edge) {
         if (!queryGraph.isVirtualNode(edge.getAdjNode())) {
             return edge.getAdjNode();
         }
-
+        EdgeExplorer explorer = createAllEdgeExplorer();
         EdgeIterator iter = explorer.setBaseNode(edge.getAdjNode());
         while (iter.next()) {
             if (iter.getAdjNode() != edge.getBaseNode()) {
-                return traverseToClosestRealAdj(explorer, iter);
+                return traverseToClosestRealAdj(iter);
             }
         }
         throw new IllegalStateException("Cannot find adjacent edge " + edge);
