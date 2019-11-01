@@ -216,6 +216,12 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
 
         way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("bicycle", "use_sidepath");
+        assertEquals(18, encoder.getSpeed(way));
+        assertPriority(PREFER.getValue(), way);
+        
+        way.clearTags();
         way.setTag("highway", "steps");
         way.setTag("surface", "wood");
         assertEquals(PUSHING_SECTION_SPEED / 2, encoder.getSpeed(way));
@@ -408,6 +414,13 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
         assertTrue(encoder.getAccessEnc().getBool(true, flags));
 
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("bicycle:forward", "use_sidepath");
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        assertTrue(encoder.getAccessEnc().getBool(false, flags));
+        assertTrue(encoder.getAccessEnc().getBool(true, flags));
+        
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("oneway", "yes");

@@ -46,9 +46,13 @@ public class DijkstraBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTeste
     @Override
     public RoutingAlgorithmFactory createFactory(GraphHopperStorage ghStorage, AlgorithmOptions opts) {
         ghStorage.freeze();
-        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(
-                ghStorage, CHProfile.edgeBased(opts.getWeighting(), INFINITE_U_TURN_COSTS));
-        ch.doWork();
+        CHProfile chProfile = CHProfile.edgeBased(opts.getWeighting(), INFINITE_U_TURN_COSTS);
+        CHGraph chGraph = ghStorage.getCHGraph(chProfile);
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph);
+        // make sure the contraction runs only once
+        if (chGraph.getEdges() == chGraph.getBaseGraph().getEdges()) {
+            ch.doWork();
+        }
         return ch;
     }
 

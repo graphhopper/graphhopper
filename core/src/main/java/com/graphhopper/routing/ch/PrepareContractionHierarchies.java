@@ -116,6 +116,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         if (!prepareGraph.isReadyForContraction()) {
             throw new IllegalStateException("Given CHGraph has not been frozen yet");
         }
+        if (prepareGraph.getEdges() > prepareGraph.getBaseGraph().getEdges()) {
+            throw new IllegalStateException("Given CHGraph has been contracted already");
+        }
         allSW.start();
         initFromGraph();
         runGraphContraction();
@@ -447,6 +450,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return String.format(Locale.ROOT,
                 "t(total): %6.2f,  t(period): %6.2f, t(lazy): %6.2f, t(neighbor): %6.2f, t(contr): %6.2f, t(other) : %6.2f, dijkstra-ratio: %6.2f%%",
                 totalTime, periodicUpdateTime, lazyUpdateTime, neighborUpdateTime, contractionTime, otherTime, dijkstraTime / totalTime * 100);
+    }
+
+    public long getTotalPrepareTime() {
+        return allSW.getMillis();
     }
 
     private float calculatePriority(int node) {

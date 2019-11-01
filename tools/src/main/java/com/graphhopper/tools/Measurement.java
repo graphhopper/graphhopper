@@ -74,7 +74,7 @@ public class Measurement {
         final boolean useJson = args.getBool("measurement.json", false);
         boolean cleanGraph = args.getBool("measurement.clean", false);
         String summaryLocation = args.get("measurement.summaryfile", "");
-        final String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date());
+        final String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date());
         put("measurement.timestamp", timeStamp);
         String propFolder = args.get("measurement.folder", "");
         if (!propFolder.isEmpty()) {
@@ -83,18 +83,18 @@ public class Measurement {
         String propFilename = args.get("measurement.filename", "");
         if (isEmpty(propFilename)) {
             if (useJson) {
-                String gitInfo = Constants.GIT_INFO;
                 // if we start from IDE or otherwise jar was not built using maven the git commit id will be unknown
-                String id = gitInfo.startsWith("${git.commit.id}") ? "unknown" : gitInfo.split("\\|")[0].substring(0, 8);
+                String id = Constants.GIT_INFO != null ? Constants.GIT_INFO.getCommitHash().substring(0, 8) : "unknown";
                 propFilename = "measurement_" + id + "_" + timeStamp + ".json";
             } else {
-                propFilename = "measurement" + timeStamp + ".properties";
+                propFilename = "measurement_" + timeStamp + ".properties";
             }
         }
         final String propLocation = Paths.get(propFolder).resolve(propFilename).toString();
         seed = args.getLong("measurement.seed", 123);
         put("measurement.gitinfo", args.get("measurement.gitinfo", ""));
         int count = args.getInt("measurement.count", 5000);
+        put("measurement.map", args.get("datareader.file", "unknown"));
 
         GraphHopper hopper = new GraphHopperOSM() {
             @Override
@@ -108,11 +108,13 @@ public class Measurement {
                     CHProfile chProfile = getCHFactoryDecorator().getNodeBasedCHProfiles().get(0);
                     int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chProfile).getEdges();
                     put(Parameters.CH.PREPARE + "node.shortcuts", edgesAndShortcuts - edges);
+                    put(Parameters.CH.PREPARE + "node.time", getCHFactoryDecorator().getPreparation(chProfile).getTotalPrepareTime());
                 }
                 if (!getCHFactoryDecorator().getEdgeBasedCHProfiles().isEmpty()) {
                     CHProfile chProfile = getCHFactoryDecorator().getEdgeBasedCHProfiles().get(0);
                     int edgesAndShortcuts = getGraphHopperStorage().getCHGraph(chProfile).getEdges();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", edgesAndShortcuts - edges);
+                    put(Parameters.CH.PREPARE + "edge.time", getCHFactoryDecorator().getPreparation(chProfile).getTotalPrepareTime());
                 }
             }
 
@@ -215,7 +217,7 @@ public class Measurement {
             logger.error("Problem while measuring " + graphLocation, ex);
             put("error", ex.toString());
         } finally {
-            put("gh.gitinfo", Constants.GIT_INFO);
+            put("gh.gitinfo", Constants.GIT_INFO != null ? Constants.GIT_INFO.toString() : "unknown");
             put("measurement.count", count);
             put("measurement.seed", seed);
             put("measurement.time", sw.stop().getMillis());
@@ -583,20 +585,16 @@ public class Measurement {
 
     private void storeJson(String graphLocation, String jsonLocation) {
         logger.info("storing measurement json in " + jsonLocation);
-        String gitInfo = properties.get("gh.gitinfo").toString();
-        if (gitInfo == null) {
-            logger.error("gitinfo not available, writing properties instead of json");
-            storeProperties(graphLocation, jsonLocation);
-            return;
-        }
-        properties.remove("gh.gitinfo");
-        Map<String, String> gitInfoMap = new HashMap<>();
-        String[] gitInfos = gitInfo.split("\\|");
-        gitInfoMap.put("commit", gitInfos[0]);
-        gitInfoMap.put("branch", gitInfos[1]);
-        gitInfoMap.put("dirty", gitInfos[2].startsWith("${git.commit.id}") ? "true" : gitInfos[2].split("=")[1]);
-        gitInfoMap.put("time", gitInfos[3]);
         Map<String, Object> result = new HashMap<>();
+        Map<String, String> gitInfoMap = new HashMap<>();
+        if (Constants.GIT_INFO != null) {
+            properties.remove("gh.gitinfo");
+            gitInfoMap.put("commitHash", Constants.GIT_INFO.getCommitHash());
+            gitInfoMap.put("commitMessage", Constants.GIT_INFO.getCommitMessage());
+            gitInfoMap.put("commitTime", Constants.GIT_INFO.getCommitTime());
+            gitInfoMap.put("branch", Constants.GIT_INFO.getBranch());
+            gitInfoMap.put("dirty", String.valueOf(Constants.GIT_INFO.isDirty()));
+        }
         result.put("gitinfo", gitInfoMap);
         result.put("metrics", properties);
         try {
@@ -638,6 +636,8 @@ public class Measurement {
                 "graph.edges",
                 "graph.import_time",
                 CH.PREPARE + "time",
+                CH.PREPARE + "node.time",
+                CH.PREPARE + "edge.time",
                 CH.PREPARE + "node.shortcuts",
                 CH.PREPARE + "edge.shortcuts",
                 Landmark.PREPARE + "time",

@@ -45,7 +45,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static com.graphhopper.reader.gtfs.Label.reverseEdges;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 class TripFromLabel {
@@ -120,19 +119,6 @@ class TripFromLabel {
         final List<List<Label.Transition>> partitions = getPartitions(transitions);
         final List<Trip.Leg> legs = getLegs(tr, queryGraph, weighting, partitions);
         return legs;
-    }
-
-    List<Label.Transition> getTransitions(boolean arriveBy, PtEncodedValues encoder, Graph queryGraph, Label solution) {
-        List<Label.Transition> transitions = new ArrayList<>();
-        if (arriveBy) {
-            reverseEdges(solution, queryGraph, encoder, false)
-                    .forEach(transitions::add);
-        } else {
-            reverseEdges(solution, queryGraph, encoder, true)
-                    .forEach(transitions::add);
-            Collections.reverse(transitions);
-        }
-        return transitions;
     }
 
     private List<List<Label.Transition>> getPartitions(List<Label.Transition> transitions) {
