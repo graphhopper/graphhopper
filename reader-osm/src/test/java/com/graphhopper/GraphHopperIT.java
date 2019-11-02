@@ -173,41 +173,122 @@ public class GraphHopperIT {
         assertEquals("make a U-turn onto Avenue Princesse Grace", il.get(1).getTurnDescription(tr));
     }
 
-    @Test
-    public void testImportThenLoad() {
+    private void testImportCloseAndLoad(boolean ch, boolean lm, boolean sort) {
+
         String tmpOsmFile = DIR + "/monaco.osm.gz";
         String tmpImportVehicles = "foot";
 
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
-                setCHEnabled(true).
+                setCHEnabled(ch).
+                setSortGraph(sort).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles));
-        tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr);
+        if (ch) {
+            tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr).setDisablingAllowed(true);
+        }
+        if (lm) {
+            tmpHopper.getLMFactoryDecorator().
+                    setEnabled(true).
+                    setWeightingsAsStrings(Collections.singletonList(weightCalcStr)).
+                    setDisablingAllowed(true);
+        }
         tmpHopper.importAndClose();
         tmpHopper = new GraphHopperOSM().
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
-                setCHEnabled(true).
+                setCHEnabled(ch).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles));
-        tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr);
+        if (ch) {
+            tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr).setDisablingAllowed(true);
+        }
+        if (lm) {
+            tmpHopper.getLMFactoryDecorator().
+                    setEnabled(true).
+                    setWeightingsAsStrings(Collections.singletonList(weightCalcStr)).
+                    setDisablingAllowed(true);
+        }
         tmpHopper.importOrLoad();
 
         // same query as in testMonacoWithInstructions
-        GHResponse rsp = tmpHopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
-                setVehicle(vehicle));
+        // visited nodes >700 for flexible, <120 for CH or LM
+
+        if (ch) {
+            GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                    setWeighting(weightCalcStr).
+                    setVehicle(tmpImportVehicles);
+            req.getHints().put(CH.DISABLE, false);
+            req.getHints().put(Landmark.DISABLE, true);
+            GHResponse rsp = tmpHopper.route(req);
+
+            PathWrapper bestPath = rsp.getBest();
+            long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
+            assertNotEquals(sum, 0);
+            assertTrue("Too many nodes visited " + sum, sum < 120);
+            assertEquals(3437.6, bestPath.getDistance(), .1);
+            assertEquals(87, bestPath.getPoints().getSize());
+        }
+
+        if (lm) {
+            GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                    setVehicle(tmpImportVehicles).
+                    setWeighting(weightCalcStr).
+                    setAlgorithm(Parameters.Algorithms.ASTAR_BI);
+            req.getHints().put(CH.DISABLE, true);
+            req.getHints().put(Landmark.DISABLE, false);
+            GHResponse rsp = tmpHopper.route(req);
+
+            PathWrapper bestPath = rsp.getBest();
+            long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
+            assertNotEquals(sum, 0);
+            assertTrue("Too many nodes visited " + sum, sum < 120);
+            assertEquals(3437.6, bestPath.getDistance(), .1);
+            assertEquals(87, bestPath.getPoints().getSize());
+        }
+
+        // flexible
+        GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setVehicle(tmpImportVehicles).
+                setWeighting(weightCalcStr);
+        req.getHints().put(CH.DISABLE, true);
+        req.getHints().put(Landmark.DISABLE, true);
+        GHResponse rsp = tmpHopper.route(req);
 
         PathWrapper bestPath = rsp.getBest();
-        // identify the number of counts to compare with none-CH foot route which had nearly 700 counts
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
-        assertTrue("Too many nodes visited " + sum, sum < 120);
+        assertTrue("Too few nodes visited " + sum, sum > 120);
         assertEquals(3437.6, bestPath.getDistance(), .1);
         assertEquals(87, bestPath.getPoints().getSize());
 
         tmpHopper.close();
+    }
+
+    @Test
+    public void testImportThenLoadCH() {
+        testImportCloseAndLoad(true, false, false);
+    }
+
+    @Test
+    public void testImportThenLoadLM() {
+        testImportCloseAndLoad(false, true, false);
+    }
+
+    @Test
+    public void testImportThenLoadCHLM() {
+        testImportCloseAndLoad(true, true, false);
+    }
+
+    @Test
+    public void testImportThenLoadCHLMAndSort() {
+        testImportCloseAndLoad(true, true, true);
+    }
+
+    @Test
+    public void testImportThenLoadFlexible() {
+        testImportCloseAndLoad(false, false, false);
     }
 
     @Test
