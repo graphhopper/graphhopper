@@ -23,6 +23,7 @@ import ch.poole.conditionalrestrictionparser.ParseException;
 import ch.poole.conditionalrestrictionparser.Restriction;
 import ch.poole.openinghoursparser.OpeningHoursParser;
 import ch.poole.openinghoursparser.Rule;
+import ch.poole.openinghoursparser.TimeSpan;
 import com.conveyal.osmlib.OSMEntity;
 import com.conveyal.osmlib.Way;
 import com.graphhopper.json.geo.JsonFeature;
@@ -65,6 +66,10 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -933,10 +938,18 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         if (hintsMap.has("block_property")) {
+            Instant startTime = Instant.now();
+            if (hintsMap.has("pt.earliest_departure_time")) {
+                startTime = Instant.parse(hintsMap.get("pt.earliest_departure_time", ""));
+            }
+            ZoneId zoneId = ZoneId.of("Europe/Berlin");
+            final ZonedDateTime zonedDateTime = startTime.atZone(zoneId);
+
             final OSMIDParser osmidParser = OSMIDParser.fromEncodingManager(ghStorage.getEncodingManager());
             String propertyName = hintsMap.get("block_property", "");
             final BooleanEncodedValue property = ghStorage.getEncodingManager().getBooleanEncodedValue(propertyName);
             final Weighting finalWeighting = weighting;
+
             return new Weighting() {
                 @Override
                 public double getMinWeight(double distance) {
@@ -949,7 +962,7 @@ public class GraphHopper implements GraphHopperAPI {
                         long osmid = osmidParser.getOSMID(edgeState.getFlags());
                         Way way = ghStorage.getOsm().ways.get(osmid);
                         for (OSMEntity.Tag tag : way.tags) {
-                            if (tag.value.contains("@") && (tag.key.contains("access") || tag.key.contains("vehicle"))) {
+                            if (tag.value.contains("yes") && tag.value.contains("@") && (tag.key.contains("access") || tag.key.contains("vehicle"))) {
                                 ConditionalRestrictionParser parser = new ConditionalRestrictionParser(new ByteArrayInputStream(tag.value.getBytes()));
                                 try {
                                     for (Restriction restriction : parser.restrictions()) {
@@ -961,6 +974,15 @@ public class GraphHopper implements GraphHopperAPI {
                                                 ArrayList<Rule> rules = ohParser.rules(false);
                                                 for (Rule rule : rules) {
                                                     System.out.println(rule);
+                                                    for (TimeSpan time : rule.getTimes()) {
+                                                        int startMinute = time.getStart();
+                                                        int endMinute = time.getEnd();
+                                                        int minuteOfDay = (int) ChronoUnit.MINUTES.between(zonedDateTime.toLocalDate().atStartOfDay(zoneId), zonedDateTime);
+                                                        System.out.println(startMinute + " " + endMinute + " vs. "+minuteOfDay);
+                                                        if (minuteOfDay >= startMinute && minuteOfDay <= endMinute) {
+                                                            return finalWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -968,9 +990,9 @@ public class GraphHopper implements GraphHopperAPI {
                                 } catch (ParseException | ch.poole.openinghoursparser.ParseException e) {
                                     e.printStackTrace();
                                 }
+                                return Double.POSITIVE_INFINITY;
                             }
                         }
-                        return Double.POSITIVE_INFINITY;
                     }
                     return finalWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
                 }
