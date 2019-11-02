@@ -948,9 +948,8 @@ public class GraphHopper implements GraphHopperAPI {
                     if (edgeState.get(property)) {
                         long osmid = osmidParser.getOSMID(edgeState.getFlags());
                         Way way = ghStorage.getOsm().ways.get(osmid);
-//                        System.out.println(way.tags);
                         for (OSMEntity.Tag tag : way.tags) {
-                            if (tag.value.contains("@") && tag.key.contains("motor_vehicle")) {
+                            if (tag.value.contains("@") && (tag.key.contains("access") || tag.key.contains("vehicle"))) {
                                 ConditionalRestrictionParser parser = new ConditionalRestrictionParser(new ByteArrayInputStream(tag.value.getBytes()));
                                 try {
                                     for (Restriction restriction : parser.restrictions()) {
