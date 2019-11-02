@@ -119,9 +119,9 @@ public class Measurement {
             }
 
             @Override
-            protected void loadOrPrepareLM() {
+            protected void loadOrPrepareLM(boolean closeEarly) {
                 StopWatch sw = new StopWatch().start();
-                super.loadOrPrepareLM();
+                super.loadOrPrepareLM(closeEarly);
                 put(Landmark.PREPARE + "time", sw.stop().getMillis());
             }
 

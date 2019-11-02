@@ -882,7 +882,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         if (lmFactoryDecorator.isEnabled())
             lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
-        loadOrPrepareLM();
+        loadOrPrepareLM(closeEarly);
 
         if (chFactoryDecorator.isEnabled())
             chFactoryDecorator.createPreparations(ghStorage);
@@ -1233,12 +1233,12 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * For landmarks it is required to always call this method: either it creates the landmark data or it loads it.
      */
-    protected void loadOrPrepareLM() {
+    protected void loadOrPrepareLM(boolean closeEarly) {
         boolean tmpPrepare = lmFactoryDecorator.isEnabled() && !lmFactoryDecorator.getPreparations().isEmpty();
         if (tmpPrepare) {
             ensureWriteAccess();
             ghStorage.freeze();
-            if (lmFactoryDecorator.loadOrDoWork(ghStorage.getProperties()))
+            if (lmFactoryDecorator.loadOrDoWork(ghStorage.getProperties(), closeEarly))
                 ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
         }
     }

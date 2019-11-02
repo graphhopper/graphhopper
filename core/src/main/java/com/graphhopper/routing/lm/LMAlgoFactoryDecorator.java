@@ -269,7 +269,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      * @return true if the preparation data for at least one weighting was calculated.
      * @see com.graphhopper.routing.ch.CHAlgoFactoryDecorator#prepare(StorableProperties, boolean) for a very similar method
      */
-    public boolean loadOrDoWork(final StorableProperties properties) {
+    public boolean loadOrDoWork(final StorableProperties properties, final boolean closeEarly) {
         ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;
         final AtomicBoolean prepared = new AtomicBoolean(false);
@@ -287,6 +287,9 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                     prepared.set(true);
                     Thread.currentThread().setName(name);
                     plm.doWork();
+                    if (closeEarly) {
+                        plm.close();
+                    }
                     properties.put(Landmark.PREPARE + "date." + name, createFormatter().format(new Date()));
                 }
             }, name);
