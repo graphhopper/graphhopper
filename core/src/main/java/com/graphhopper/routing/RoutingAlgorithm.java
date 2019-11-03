@@ -36,6 +36,8 @@ public interface RoutingAlgorithm {
      */
     Path calcPath(int from, int to);
 
+    Path calcTDPath(int from, int to, long at);
+
     /**
      * Calculates multiple possibilities for a path.
      *

@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.TDWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
@@ -57,9 +58,25 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
 
     @Override
     public Path calcPath(int from, int to) {
+        if (weighting instanceof TDWeighting) throw new RuntimeException();
         checkAlreadyRun();
         this.to = to;
         currEdge = new SPTEntry(from, 0);
+        currEdge.time = 0;
+        if (!traversalMode.isEdgeBased()) {
+            fromMap.put(from, currEdge);
+        }
+        runAlgo();
+        return extractPath();
+    }
+
+    @Override
+    public Path calcTDPath(int from, int to, long at) {
+        if (!(weighting instanceof TDWeighting)) throw new RuntimeException();
+        checkAlreadyRun();
+        this.to = to;
+        currEdge = new SPTEntry(from, 0);
+        currEdge.time = at;
         if (!traversalMode.isEdgeBased()) {
             fromMap.put(from, currEdge);
         }
@@ -80,7 +97,12 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
                 if (!accept(iter, currEdge.edge))
                     continue;
 
-                double tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
+                double tmpWeight;
+                if (weighting instanceof TDWeighting) {
+                    tmpWeight = ((TDWeighting) weighting).calcTDWeight(iter, false, currEdge.edge, currEdge.time) + currEdge.weight;
+                } else {
+                    tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
+                }
                 if (Double.isInfinite(tmpWeight)) {
                     continue;
                 }
@@ -90,6 +112,9 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
                 if (nEdge == null) {
                     nEdge = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight);
                     nEdge.parent = currEdge;
+                    if (weighting instanceof TDWeighting) {
+                        nEdge.time = ((TDWeighting) weighting).calcTDMillis(iter, false, currEdge.edge, currEdge.time) + currEdge.time;
+                    }
                     fromMap.put(traversalId, nEdge);
                     fromHeap.add(nEdge);
                 } else if (nEdge.weight > tmpWeight) {
@@ -97,6 +122,9 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
                     nEdge.edge = iter.getEdge();
                     nEdge.weight = tmpWeight;
                     nEdge.parent = currEdge;
+                    if (weighting instanceof TDWeighting) {
+                        nEdge.time = ((TDWeighting) weighting).calcTDMillis(iter, false, currEdge.edge, currEdge.time) + currEdge.time;
+                    }
                     fromHeap.add(nEdge);
                 } else
                     continue;

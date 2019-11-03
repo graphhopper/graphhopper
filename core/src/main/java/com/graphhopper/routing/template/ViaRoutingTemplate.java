@@ -24,6 +24,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.TDWeighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
@@ -34,6 +35,7 @@ import com.graphhopper.util.Translation;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -148,6 +150,13 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                     tmpPathList = Collections.singletonList(((AbstractBidirAlgo) algo)
                             .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
                 }
+            } else if (algoOpts.getWeighting() instanceof TDWeighting) {
+                String departureTimeString = ghRequest.getHints().get("pt.earliest_departure_time", "");
+                if (departureTimeString.equals("")) {
+                    throw new IllegalArgumentException("Must specify pt.earliest_departure_time in request.");
+                }
+                Instant departureTime = Instant.parse(departureTimeString);
+                tmpPathList = ((AbstractRoutingAlgorithm) algo).calcTDPaths(fromQResult.getClosestNode(), toQResult.getClosestNode(), departureTime.toEpochMilli());
             } else {
                 tmpPathList = algo.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode());
             }

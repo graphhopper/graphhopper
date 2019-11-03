@@ -938,19 +938,20 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         if (hintsMap.has("block_property")) {
-            Instant startTime = Instant.now();
-            if (hintsMap.has("pt.earliest_departure_time")) {
-                startTime = Instant.parse(hintsMap.get("pt.earliest_departure_time", ""));
-            }
             ZoneId zoneId = ZoneId.of("Europe/Berlin");
-            final ZonedDateTime zonedDateTime = startTime.atZone(zoneId);
 
             final OSMIDParser osmidParser = OSMIDParser.fromEncodingManager(ghStorage.getEncodingManager());
             String propertyName = hintsMap.get("block_property", "");
             final BooleanEncodedValue property = ghStorage.getEncodingManager().getBooleanEncodedValue(propertyName);
             final Weighting finalWeighting = weighting;
 
-            return new Weighting() {
+            return new TDWeighting() {
+
+                @Override
+                public long calcTDMillis(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId, long linkEnterTime) {
+                    return calcMillis(edge, reverse, prevOrNextEdgeId);
+                }
+
                 @Override
                 public double getMinWeight(double distance) {
                     return finalWeighting.getMinWeight(distance);
@@ -958,11 +959,18 @@ public class GraphHopper implements GraphHopperAPI {
 
                 @Override
                 public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                    return finalWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+                }
+
+                @Override
+                public double calcTDWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId, long linkEnterTimeMilli) {
                     if (edgeState.get(property)) {
                         long osmid = osmidParser.getOSMID(edgeState.getFlags());
                         Way way = ghStorage.getOsm().ways.get(osmid);
                         for (OSMEntity.Tag tag : way.tags) {
                             if (tag.value.contains("yes") && tag.value.contains("@") && (tag.key.contains("access") || tag.key.contains("vehicle"))) {
+                                Instant linkEnterTime = Instant.ofEpochMilli(linkEnterTimeMilli);
+                                final ZonedDateTime zonedDateTime = linkEnterTime.atZone(zoneId);
                                 ConditionalRestrictionParser parser = new ConditionalRestrictionParser(new ByteArrayInputStream(tag.value.getBytes()));
                                 try {
                                     for (Restriction restriction : parser.restrictions()) {

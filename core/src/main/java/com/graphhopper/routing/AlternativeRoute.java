@@ -186,6 +186,11 @@ public class AlternativeRoute implements RoutingAlgorithm {
     }
 
     @Override
+    public Path calcTDPath(int from, int to, long at) {
+        throw new RuntimeException();
+    }
+
+    @Override
     public List<Path> calcPaths(int from, int to) {
         List<AlternativeInfo> alts = calcAlternatives(from, to);
         List<Path> paths = new ArrayList<>(alts.size());

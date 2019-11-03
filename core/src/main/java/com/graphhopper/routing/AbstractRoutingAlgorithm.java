@@ -109,6 +109,14 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         return Collections.singletonList(calcPath(from, to));
     }
 
+    public List<Path> calcTDPaths(int from, int to, long at) {
+        return Collections.singletonList(calcTDPath(from, to, at));
+    }
+
+    public Path calcTDPath(int from, int to, long at) {
+        throw new RuntimeException("Unsupported. (Add algorithm=dijkstra to request?)");
+    }
+
     protected Path createEmptyPath() {
         return new Path(graph, weighting);
     }
