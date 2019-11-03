@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
+import com.graphhopper.routing.weighting.TDWeighting;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -81,6 +82,22 @@ public class AStar extends AbstractRoutingAlgorithm {
         return extractPath();
     }
 
+    @Override
+    public Path calcTDPath(int from, int to, long at) {
+        if (!(weighting instanceof TDWeighting)) throw new RuntimeException();
+        checkAlreadyRun();
+        this.to = to;
+        weightApprox.setTo(to);
+        double weightToGoal = weightApprox.approximate(from);
+        currEdge = new AStarEntry(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
+        currEdge.time = at;
+        if (!traversalMode.isEdgeBased()) {
+            fromMap.put(from, currEdge);
+        }
+        runAlgo();
+        return extractPath();
+    }
+
     private void runAlgo() {
         double currWeightToGoal, estimationFullWeight;
         EdgeExplorer explorer = outEdgeExplorer;
@@ -95,7 +112,12 @@ public class AStar extends AbstractRoutingAlgorithm {
                 if (!accept(iter, currEdge.edge))
                     continue;
 
-                double tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weightOfVisitedPath;
+                double tmpWeight;
+                if (weighting instanceof TDWeighting) {
+                    tmpWeight = ((TDWeighting) weighting).calcTDWeight(iter, false, currEdge.edge, currEdge.time) + currEdge.weightOfVisitedPath;
+                } else {
+                    tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weightOfVisitedPath;
+                }
                 if (Double.isInfinite(tmpWeight)) {
                     continue;
                 }
@@ -108,6 +130,9 @@ public class AStar extends AbstractRoutingAlgorithm {
                     estimationFullWeight = tmpWeight + currWeightToGoal;
                     if (ase == null) {
                         ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, tmpWeight);
+                        if (weighting instanceof TDWeighting) {
+                            ase.time = ((TDWeighting) weighting).calcTDMillis(iter, false, currEdge.edge, currEdge.time) + currEdge.time;
+                        }
                         fromMap.put(traversalId, ase);
                     } else {
 //                        assert (ase.weight > 0.9999999 * estimationFullWeight) : "Inconsistent distance estimate. It is expected weight >= estimationFullWeight but was "
@@ -118,6 +143,9 @@ public class AStar extends AbstractRoutingAlgorithm {
                         ase.edge = iter.getEdge();
                         ase.weight = estimationFullWeight;
                         ase.weightOfVisitedPath = tmpWeight;
+                        if (weighting instanceof TDWeighting) {
+                            ase.time = ((TDWeighting) weighting).calcTDMillis(iter, false, currEdge.edge, currEdge.time) + currEdge.time;
+                        }
                     }
 
                     ase.parent = currEdge;
