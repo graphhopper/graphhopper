@@ -667,10 +667,6 @@ public class EncodingManager implements EncodedValueLookup {
         return new ArrayList<FlagEncoder>(edgeEncoders);
     }
 
-    public List<TurnCostParser> fetchTurnCostParsers() {
-        return new ArrayList<>(turnCostParsers.values());
-    }
-
     public boolean needsTurnCostsSupport() {
         for (FlagEncoder encoder : edgeEncoders) {
             if (encoder.supports(TurnWeighting.class))
