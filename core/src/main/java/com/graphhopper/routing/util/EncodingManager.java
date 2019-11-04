@@ -223,8 +223,6 @@ public class EncodingManager implements EncodedValueLookup {
             check();
 
             // TODO NOW workaround for now
-            if (!em.hasEncodedValue(Route.KEY))
-                em.addEncodedValue(new EnumEncodedValue<>(Route.KEY, Route.class), false);
             if (encoder instanceof BikeCommonFlagEncoder && !em.hasEncodedValue(getKey("bike", RouteNetwork.PART_NAME)))
                 addRelationTagParser(new OSMBikeNetworkTagParser());
             else if (encoder instanceof FootFlagEncoder && !em.hasEncodedValue(getKey("foot", RouteNetwork.PART_NAME)))

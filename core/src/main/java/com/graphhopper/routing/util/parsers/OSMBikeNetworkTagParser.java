@@ -33,7 +33,7 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 public class OSMBikeNetworkTagParser implements RelationTagParser {
     private EnumEncodedValue<RouteNetwork> bikeRouteEnc;
-    // used only for internal transformation from relations into way flags -> priorityBikeRoute
+    // used only for internal transformation from relations into edge flags
     private EnumEncodedValue<RouteNetwork> transformerRouteRelEnc;
 
     @Override
@@ -43,21 +43,23 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
 
     @Override
     public IntsRef handleRelationTags(IntsRef relFlags, ReaderRelation relation) {
-        RouteNetwork bikeNetwork = RouteNetwork.OTHER;
+        RouteNetwork oldBikeNetwork = transformerRouteRelEnc.getEnum(false, relFlags);
         if (relation.hasTag("route", "bicycle")) {
-            String tag = Helper.toLowerCase(relation.getTag("network", "lcn"));
+            String tag = Helper.toLowerCase(relation.getTag("network", ""));
+            RouteNetwork newBikeNetwork = RouteNetwork.LOCAL;
             if ("lcn".equals(tag)) {
-                bikeNetwork = RouteNetwork.LOCAL;
+                newBikeNetwork = RouteNetwork.LOCAL;
             } else if ("rcn".equals(tag)) {
-                bikeNetwork = RouteNetwork.REGIONAL;
+                newBikeNetwork = RouteNetwork.REGIONAL;
             } else if ("ncn".equals(tag)) {
-                bikeNetwork = RouteNetwork.NATIONAL;
+                newBikeNetwork = RouteNetwork.NATIONAL;
             } else if ("icn".equals(tag)) {
-                bikeNetwork = RouteNetwork.INTERNATIONAL;
+                newBikeNetwork = RouteNetwork.INTERNATIONAL;
             }
+            if (oldBikeNetwork == RouteNetwork.OTHER || oldBikeNetwork.ordinal() > newBikeNetwork.ordinal())
+                transformerRouteRelEnc.setEnum(false, relFlags, newBikeNetwork);
         }
 
-        transformerRouteRelEnc.setEnum(false, relFlags, bikeNetwork);
         return relFlags;
     }
 
