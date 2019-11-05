@@ -18,8 +18,6 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.Route;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.TreeMap;
@@ -156,15 +154,6 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
             else if (trackType.startsWith("grade"))
                 weightToPrioMap.put(100d, VERY_NICE.getValue());
         }
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
-        // if MTB and not already BEST prio (local cycling network) then set it to PREFER prio
-        if (routeEnc.getEnum(false, edgeFlags) == Route.MTB && bikeRouteEnc.getEnum(false, edgeFlags) != LOCAL)
-            bikeRouteEnc.setEnum(false, edgeFlags, NATIONAL);
-
-        return super.handleWayTags(edgeFlags, way, access);
     }
 
     @Override

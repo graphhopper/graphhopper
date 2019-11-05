@@ -62,7 +62,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
     private int avoidSpeedLimit;
     EnumEncodedValue<RouteNetwork> bikeRouteEnc;
-    EnumEncodedValue<Route> routeEnc;
     Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     // This is the specific bicycle class
@@ -217,7 +216,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         registerNewEncodedValue.add(priorityEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
 
         bikeRouteEnc = getEnumEncodedValue(getKey("bike", EV_SUFFIX), RouteNetwork.class);
-        routeEnc = getEnumEncodedValue(Route.KEY, Route.class);
     }
 
     @Override

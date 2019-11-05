@@ -18,7 +18,6 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.Route;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
@@ -127,14 +126,6 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
         setSpecificClassBicycle("roadcycling");
 
         init();
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
-        if (routeEnc.getEnum(false, edgeFlags) == Route.MTB)
-            bikeRouteEnc.setEnum(false, edgeFlags, LOCAL);
-
-        return super.handleWayTags(edgeFlags, way, access);
     }
 
     @Override

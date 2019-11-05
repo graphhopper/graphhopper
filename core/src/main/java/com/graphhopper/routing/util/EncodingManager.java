@@ -235,8 +235,6 @@ public class EncodingManager implements EncodedValueLookup {
             } else if (encoder instanceof FootFlagEncoder && !em.hasEncodedValue(getKey("foot", RouteNetwork.EV_SUFFIX))) {
                 addRelationTagParser(new OSMFootNetworkTagParser());
             }
-            if (!em.hasEncodedValue(Route.KEY))
-                em.addEncodedValue(new EnumEncodedValue<>(Route.KEY, Route.class), false);
 
             em.addEncoder((AbstractFlagEncoder) encoder);
             return this;

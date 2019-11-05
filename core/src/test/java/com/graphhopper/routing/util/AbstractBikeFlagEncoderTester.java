@@ -20,9 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.Roundabout;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Translation;
@@ -34,6 +32,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import static com.graphhopper.routing.util.EncodingManager.Access.WAY;
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static com.graphhopper.util.TranslationMapTest.SINGLETON;
 import static org.junit.Assert.*;
@@ -213,6 +212,35 @@ public abstract class AbstractBikeFlagEncoderTester {
         way.setTag("access", "no");
         way.setTag("bicycle:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
         assertTrue(encoder.getAccess(way).isWay());
+    }
+
+    @Test
+    public void testBike() {
+        ReaderWay way = new ReaderWay(1);
+
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "yes");
+        way.setTag("foot", "yes");
+        way.setTag("motor_vehicle", "agricultural");
+        way.setTag("surface", "gravel");
+        way.setTag("tracktype", "grade3");
+
+        ReaderRelation rel = new ReaderRelation(0);
+        rel.setTag("type", "route");
+        rel.setTag("network", "rcn");
+        rel.setTag("route", "bicycle");
+
+        ReaderRelation rel2 = new ReaderRelation(1);
+        rel2.setTag("type", "route");
+        rel2.setTag("network", "lcn");
+        rel2.setTag("route", "bicycle");
+
+        // two relation tags => we currently cannot store a list, so pick the lower ordinal 'regional'
+        // Example https://www.openstreetmap.org/way/213492914 => two hike 84544, 2768803 and two bike relations 3162932, 5254650
+        IntsRef relFlags = encodingManager.handleRelationTags(rel2, encodingManager.handleRelationTags(rel, encodingManager.createRelationFlags()));
+        IntsRef edgeFlags = encodingManager.handleWayTags(way, new EncodingManager.AcceptWay().put(encoder.toString(), WAY), relFlags);
+        EnumEncodedValue<RouteNetwork> enc = encodingManager.getEnumEncodedValue(getKey("bike", RouteNetwork.PART_NAME), RouteNetwork.class);
+        assertEquals(RouteNetwork.REGIONAL, enc.getEnum(false, edgeFlags));
     }
 
     @Test
