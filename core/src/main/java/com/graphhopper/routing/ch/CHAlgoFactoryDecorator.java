@@ -302,11 +302,9 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                     // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                     Thread.currentThread().setName(name);
                     prepare.doWork();
-                    if (closeEarly) {
-                        CHGraphImpl cg = (CHGraphImpl) prepare.getCHGraph();
-                        cg.flush();
-                        cg.close();
-                    }
+                    if (closeEarly)
+                        prepare.close();
+
                     properties.put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
                 }
             }, name);

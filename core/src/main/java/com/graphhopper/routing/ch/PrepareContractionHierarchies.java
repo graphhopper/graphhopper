@@ -337,7 +337,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         // Preparation works only once so we can release temporary data.
         // The preparation object itself has to be intact to create the algorithm.
-        close();
+        _close();
     }
 
     private void contractNodesUsingFixedNodeOrdering() {
@@ -402,12 +402,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 nodeContractor.getStatisticsString(),
                 Helper.getMemInfo())
         );
-    }
-
-    private void close() {
-        nodeContractor.close();
-        sortedNodes = null;
-        oldPriorities = null;
     }
 
     public long getDijkstraCount() {
@@ -485,8 +479,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return new TurnWeighting(prepareWeighting, turnCostExtension, chProfile.getUTurnCosts());
     }
 
-    CHGraph getCHGraph() {
-        return prepareGraph;
+    private void _close() {
+        nodeContractor.close();
+        sortedNodes = null;
+        oldPriorities = null;
+    }
+
+    void close() {
+        CHGraphImpl cg = (CHGraphImpl) prepareGraph;
+        cg.flush();
+        cg.close();
     }
 
     private static class Params {
