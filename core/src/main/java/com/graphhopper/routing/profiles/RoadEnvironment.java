@@ -25,7 +25,8 @@ import com.graphhopper.util.Helper;
  */
 public enum RoadEnvironment {
     OTHER("other"), ROAD("road"), FERRY("ferry"),
-    TUNNEL("tunnel"), BRIDGE("bridge"), FORD("ford"), SHUTTLE_TRAIN("shuttle_train");
+    TUNNEL("tunnel"), BRIDGE("bridge"), FORD("ford"), SHUTTLE_TRAIN("shuttle_train"),
+    PEDESTRIAN_AREA("pedestrian_area");
 
     public static final String KEY = "road_environment";
 

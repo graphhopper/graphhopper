@@ -18,7 +18,7 @@ public class SnapPreventionEdgeFilter implements EdgeFilter {
     private final EnumEncodedValue<RoadClass> rcEnc;
     private final EdgeFilter filter;
     private boolean avoidMotorway = false, avoidTrunk;
-    private boolean avoidTunnel, avoidBridge, avoidFerry, avoidFord;
+    private boolean avoidTunnel, avoidBridge, avoidFerry, avoidFord, avoidPedestrianArea;
 
     public SnapPreventionEdgeFilter(EdgeFilter filter, EnumEncodedValue<RoadClass> rcEnc,
                                     EnumEncodedValue<RoadEnvironment> reEnc, List<String> snapPreventions) {
@@ -44,6 +44,8 @@ public class SnapPreventionEdgeFilter implements EdgeFilter {
                 avoidFerry = true;
             else if (rc == FORD)
                 avoidFord = true;
+            else if (rc == PEDESTRIAN_AREA)
+                avoidPedestrianArea = true;
             else
                 throw new IllegalArgumentException("Cannot find " + Parameters.Routing.SNAP_PREVENTION + ": " + roadClassOrRoadEnv);
         }
@@ -57,6 +59,7 @@ public class SnapPreventionEdgeFilter implements EdgeFilter {
                 && !(avoidTunnel && edgeState.get(reEnc) == TUNNEL)
                 && !(avoidBridge && edgeState.get(reEnc) == BRIDGE)
                 && !(avoidFord && edgeState.get(reEnc) == FORD)
-                && !(avoidFerry && edgeState.get(reEnc) == FERRY);
+                && !(avoidFerry && edgeState.get(reEnc) == FERRY)
+                && !(avoidPedestrianArea && edgeState.get(reEnc) == PEDESTRIAN_AREA);
     }
 }
