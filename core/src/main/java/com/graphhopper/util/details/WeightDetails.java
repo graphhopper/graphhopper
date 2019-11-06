@@ -18,24 +18,24 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
-import static com.graphhopper.util.Parameters.Details.TIME;
+import static com.graphhopper.util.Parameters.Details.WEIGHT;
 
 /**
- * Calculate the time segments for a Path
+ * Calculate the weight segments for a Path
  *
- * @author Robin Boldt
+ * @author Peter Karich
  */
-public class TimeDetails extends AbstractPathDetailsBuilder {
+public class WeightDetails extends AbstractPathDetailsBuilder {
 
     private final Weighting weighting;
+    private int edgeId = EdgeIterator.NO_EDGE;
+    private double weight = Double.NaN;
 
-    private int edgeId = -1;
-    private long time = 0;
-
-    public TimeDetails(Weighting weighting) {
-        super(TIME);
+    public WeightDetails(Weighting weighting) {
+        super(WEIGHT);
         this.weighting = weighting;
     }
 
@@ -43,7 +43,7 @@ public class TimeDetails extends AbstractPathDetailsBuilder {
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
         if (edge.getEdge() != edgeId) {
             edgeId = edge.getEdge();
-            time = weighting.calcMillis(edge, false, edgeId);
+            weight = weighting.calcWeight(edge, false, edgeId);
             return true;
         }
         return false;
@@ -51,6 +51,6 @@ public class TimeDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public Object getCurrentValue() {
-        return this.time;
+        return this.weight;
     }
 }
