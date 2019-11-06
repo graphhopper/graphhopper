@@ -20,7 +20,10 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -413,21 +416,40 @@ class BaseGraph implements Graph {
         }
     }
 
-    void flush() {
-        setNodesHeader();
-        setEdgesHeader();
+    /**
+     * Flush and free resources that are not needed for post-processing (way geometries and name index).
+     */
+    void flushAndCloseGeometryAndNameStorage() {
         setWayGeometryHeader();
 
         wayGeometry.flush();
+        wayGeometry.close();
+
         nameIndex.flush();
+        nameIndex.close();
+    }
+
+    public void flush() {
+        if (!wayGeometry.isClosed()) {
+            setWayGeometryHeader();
+            wayGeometry.flush();
+        }
+
+        if (!nameIndex.isClosed())
+            nameIndex.flush();
+
+        setNodesHeader();
+        setEdgesHeader();
         edges.flush();
         nodes.flush();
         extStorage.flush();
     }
 
-    void close() {
-        wayGeometry.close();
-        nameIndex.close();
+    public void close() {
+        if (!wayGeometry.isClosed())
+            wayGeometry.close();
+        if (!nameIndex.isClosed())
+            nameIndex.close();
         edges.close();
         nodes.close();
         extStorage.close();

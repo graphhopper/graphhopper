@@ -313,9 +313,8 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public void flush() {
         for (CHGraphImpl cg : getAllCHGraphs()) {
-            cg.setNodesHeader();
-            cg.setEdgesHeader();
-            cg.flush();
+            if (!cg.isClosed())
+                cg.flush();
         }
 
         baseGraph.flush();
@@ -328,7 +327,8 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         baseGraph.close();
 
         for (CHGraphImpl cg : getAllCHGraphs()) {
-            cg.close();
+            if (!cg.isClosed())
+                cg.close();
         }
     }
 
@@ -469,5 +469,12 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             result.add(CHProfile.nodeBased(weighting));
         }
         return result;
+    }
+
+    /**
+     * Flush and close resources like wayGeometry that are not needed for CH preparation.
+     */
+    public void flushAndCloseEarly() {
+        baseGraph.flushAndCloseGeometryAndNameStorage();
     }
 }
