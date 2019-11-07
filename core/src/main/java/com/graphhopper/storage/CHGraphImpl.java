@@ -461,41 +461,20 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         };
     }
 
-    class CHEdgeIteratorImpl implements CHEdgeExplorer, CHEdgeIterator {
+    class CHEdgeIteratorImpl extends CommonCHIterator implements CHEdgeExplorer, CHEdgeIterator {
         private final EdgeIterable edgeIterable;
-
         public CHEdgeIteratorImpl(BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter) {
-            edgeIterable = new EdgeIterable(baseGraph, edgeAccess, filter);
+            super(new EdgeIterable(baseGraph, edgeAccess, filter));
+            this.edgeIterable = (EdgeIterable) super.edgeIterable;
         }
 
-        @Override
-        public int getBaseNode() {
-            return edgeIterable.getBaseNode();
-        }
+        public final CHEdgeIterator setBaseNode(int baseNode) {
+            assert edgeIterable.baseGraph.isFrozen() : "Traversal CHGraph is only possible if BaseGraph is frozen";
 
-        @Override
-        public int getAdjNode() {
-            return edgeIterable.getAdjNode();
-        }
-
-        @Override
-        public EdgeIteratorState setFlags(IntsRef edgeFlags) {
-            return edgeIterable.setFlags(edgeFlags);
-        }
-
-        @Override
-        public int getAdditionalField() {
-            return edgeIterable.getAdditionalField();
-        }
-
-        @Override
-        public EdgeIteratorState setAdditionalField(int value) {
-            return edgeIterable.setAdditionalField(value);
-        }
-
-        @Override
-        public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState e) {
-            return edgeIterable.copyPropertiesFrom(e);
+            // always use ch edge access
+            edgeIterable.setEdgeId(chEdgeAccess.getEdgeRef(baseNode));
+            edgeIterable._setBaseNode(baseNode);
+            return this;
         }
 
         @Override
@@ -517,125 +496,12 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public double getDistance() {
-            checkShortcut(false, "getDistance");
-            return edgeIterable.getDistance();
-        }
-
-        @Override
-        public EdgeIteratorState setDistance(double dist) {
-            checkShortcut(false, "setDistance");
-            return edgeIterable.setDistance(dist);
-        }
-
-        @Override
-        public final IntsRef getFlags() {
-            checkShortcut(false, "getFlags");
-            return edgeIterable.getFlags();
-        }
-
-        int getShortcutFlags() {
-            if (!edgeIterable.freshFlags) {
-                edgeIterable.chFlags = chEdgeAccess.getShortcutFlags(edgeIterable.edgePointer);
-                edgeIterable.freshFlags = true;
-            }
-            return edgeIterable.chFlags;
-        }
-
-        @Override
-        public final CHEdgeIterator setBaseNode(int baseNode) {
-            assert edgeIterable.baseGraph.isFrozen() : "Traversal CHGraph is only possible if BaseGraph is frozen";
-
-            // always use ch edge access
-            edgeIterable.setEdgeId(chEdgeAccess.getEdgeRef(baseNode));
-            edgeIterable._setBaseNode(baseNode);
-            return this;
-        }
-
-        @Override
-        public final CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
-            checkShortcut(true, "setSkippedEdges");
-            chEdgeAccess.setSkippedEdges(edgeIterable.edgePointer, edge1, edge2);
-            return this;
-        }
-
-        @Override
-        public final int getSkippedEdge1() {
-            checkShortcut(true, "getSkippedEdge1");
-            return shortcuts.getInt(edgeIterable.edgePointer + S_SKIP_EDGE1);
-        }
-
-        @Override
-        public final int getSkippedEdge2() {
-            checkShortcut(true, "getSkippedEdge2");
-            return shortcuts.getInt(edgeIterable.edgePointer + S_SKIP_EDGE2);
-        }
-
-        @Override
-        public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
-            checkShortcutAndEdgeBased("setFirstAndLastOrigEdges");
-            chEdgeAccess.setFirstAndLastOrigEdges(edgeIterable.edgePointer, firstOrigEdge, lastOrigEdge);
-            return this;
-        }
-
-        @Override
-        public int getOrigEdgeFirst() {
-            if (!isShortcut() || !chProfile.isEdgeBased()) {
-                return getEdge();
-            }
-            return shortcuts.getInt(edgeIterable.edgePointer + S_ORIG_FIRST);
-        }
-
-        @Override
-        public int getOrigEdgeLast() {
-            if (!isShortcut() || !chProfile.isEdgeBased()) {
-                return getEdge();
-            }
-            return shortcuts.getInt(edgeIterable.edgePointer + S_ORIG_LAST);
-        }
-
-        @Override
-        public final boolean isShortcut() {
-            // assert baseGraph.isFrozen() : "chgraph not yet frozen";
-            return edgeIterable.edgeId >= edgeIterable.baseGraph.edgeCount;
-        }
-
-        @Override
-        public boolean get(BooleanEncodedValue property) {
-            // TODO assert equality of "access boolean encoded value" that is specifically created for CHGraph to make it possible we can use other BooleanEncodedValue objects for CH too!
-            if (isShortcut())
-                return (getShortcutFlags() & (edgeIterable.reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir())) != 0;
-
-            return property.getBool(edgeIterable.reverse, getFlags());
-        }
-
-        @Override
-        public boolean getReverse(BooleanEncodedValue property) {
-            if (isShortcut())
-                return (getShortcutFlags() & (edgeIterable.reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir())) != 0;
-
-            return property.getBool(!edgeIterable.reverse, getFlags());
-        }
-
-        @Override
-        public final CHEdgeIteratorState setWeight(double weight) {
-            checkShortcut(true, "setWeight");
-            chEdgeAccess.setShortcutWeight(edgeIterable.edgePointer, weight);
-            return this;
-        }
-
-        @Override
-        public void setFlagsAndWeight(int flags, double weight) {
-            checkShortcut(true, "setFlagsAndWeight");
-            chEdgeAccess.setAccessAndWeight(edgeIterable.edgePointer, flags, weight);
-            edgeIterable.chFlags = flags;
-            edgeIterable.freshFlags = true;
-        }
-
-        @Override
-        public final double getWeight() {
-            checkShortcut(true, "getWeight");
-            return chEdgeAccess.getShortcutWeight(edgeIterable.edgePointer);
+        public EdgeIteratorState detach(boolean reverseArg) {
+            if (edgeIterable.edgeId == edgeIterable.nextEdgeId || !EdgeIterator.Edge.isValid(edgeIterable.edgeId))
+                throw new IllegalStateException("call next before detaching or setEdgeId (edgeId:" + edgeIterable.edgeId + " vs. next " + edgeIterable.nextEdgeId + ")");
+            EdgeIteratorState iter = edgeIterable.edgeAccess.getEdgeProps(edgeIterable.edgeId, reverseArg ? edgeIterable.baseNode : edgeIterable.adjNode, edgeIterable.filter);
+            assert iter != null;
+            return iter;
         }
 
         private void selectEdgeAccess(int edgeId) {
@@ -643,134 +509,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             edgeIterable.edgeAccess = edgeId < edgeIterable.baseGraph.edgeCount ? edgeIterable.baseGraph.edgeAccess : chEdgeAccess;
         }
 
-        public void checkShortcut(boolean shouldBeShortcut, String methodName) {
-            if (isShortcut()) {
-                if (!shouldBeShortcut)
-                    throw new IllegalStateException("Cannot call " + methodName + " on shortcut " + getEdge());
-            } else if (shouldBeShortcut)
-                throw new IllegalStateException("Method " + methodName + " only for shortcuts " + getEdge());
-        }
-
-        private void checkShortcutAndEdgeBased(String method) {
-            checkShortcut(true, method);
-            if (!chProfile.isEdgeBased()) {
-                throw new IllegalStateException("Method " + method + " only allowed when CH graph is configured for edge based traversal");
-            }
-        }
-
-        @Override
-        public final String getName() {
-            checkShortcut(false, "getName");
-            return edgeIterable.getName();
-        }
-
-        @Override
-        public final EdgeIteratorState setName(String name) {
-            checkShortcut(false, "setName");
-            return edgeIterable.setName(name);
-        }
-
-        @Override
-        public final PointList fetchWayGeometry(int mode) {
-            checkShortcut(false, "fetchWayGeometry");
-            return edgeIterable.fetchWayGeometry(mode);
-        }
-
-        @Override
-        public final EdgeIteratorState setWayGeometry(PointList list) {
-            checkShortcut(false, "setWayGeometry");
-            return edgeIterable.setWayGeometry(list);
-        }
-
-        @Override
-        public int getMergeStatus(int flags) {
-            return PrepareEncoder.getScMergeStatus(getShortcutFlags(), flags);
-        }
-
-        @Override
-        public int getEdge() {
-            return edgeIterable.getEdge();
-        }
-
-        @Override
-        public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
-            return edgeIterable.set(property, value);
-        }
-
-        @Override
-        public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
-            return edgeIterable.setReverse(property, value);
-        }
-
-        @Override
-        public int get(IntEncodedValue property) {
-            return edgeIterable.get(property);
-        }
-
-        @Override
-        public EdgeIteratorState set(IntEncodedValue property, int value) {
-            return edgeIterable.set(property, value);
-        }
-
-        @Override
-        public int getReverse(IntEncodedValue property) {
-            return edgeIterable.getReverse(property);
-        }
-
-        @Override
-        public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
-            return edgeIterable.setReverse(property, value);
-        }
-
-        @Override
-        public double get(DecimalEncodedValue property) {
-            return edgeIterable.get(property);
-        }
-
-        @Override
-        public EdgeIteratorState set(DecimalEncodedValue property, double value) {
-            return edgeIterable.set(property, value);
-        }
-
-        @Override
-        public double getReverse(DecimalEncodedValue property) {
-            return edgeIterable.getReverse(property);
-        }
-
-        @Override
-        public EdgeIteratorState setReverse(DecimalEncodedValue property, double value) {
-            return edgeIterable.setReverse(property, value);
-        }
-
-        @Override
-        public <T extends Enum> T get(EnumEncodedValue<T> property) {
-            return edgeIterable.get(property);
-        }
-
-        @Override
-        public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
-            return edgeIterable.set(property, value);
-        }
-
-        @Override
-        public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
-            return edgeIterable.getReverse(property);
-        }
-
-        @Override
-        public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
-            return edgeIterable.setReverse(property, value);
-        }
-
-        @Override
-        public EdgeIteratorState detach(boolean reverseArg) {
-            if (edgeIterable.edgeId == edgeIterable.nextEdgeId || !Edge.isValid(edgeIterable.edgeId))
-                throw new IllegalStateException("call next before detaching or setEdgeId (edgeId:" + edgeIterable.edgeId + " vs. next " + edgeIterable.nextEdgeId + ")");
-
-            EdgeIteratorState iter = edgeIterable.edgeAccess.getEdgeProps(edgeIterable.edgeId, reverseArg ? edgeIterable.baseNode : edgeIterable.adjNode, edgeIterable.filter);
-            assert iter != null;
-            return iter;
-        }
     }
 
     class AllCHEdgesIteratorImpl extends AllEdgeIterator implements AllCHEdgesIterator {
@@ -1047,6 +785,277 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         public String toString() {
             return "ch edge access " + name;
+        }
+    }
+
+    private abstract class CommonCHIterator implements CHEdgeIteratorState {
+        final BaseGraph.CommonEdgeIterator edgeIterable;
+
+        private CommonCHIterator(BaseGraph.CommonEdgeIterator edgeIterable) {
+            this.edgeIterable = edgeIterable;
+        }
+
+        @Override
+        public int getBaseNode() {
+            return edgeIterable.getBaseNode();
+        }
+
+        @Override
+        public int getAdjNode() {
+            return edgeIterable.getAdjNode();
+        }
+
+        @Override
+        public EdgeIteratorState setFlags(IntsRef edgeFlags) {
+            return edgeIterable.setFlags(edgeFlags);
+        }
+
+        @Override
+        public int getAdditionalField() {
+            return edgeIterable.getAdditionalField();
+        }
+
+        @Override
+        public EdgeIteratorState setAdditionalField(int value) {
+            return edgeIterable.setAdditionalField(value);
+        }
+
+        @Override
+        public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState e) {
+            return edgeIterable.copyPropertiesFrom(e);
+        }
+
+        @Override
+        public double getDistance() {
+            checkShortcut(false, "getDistance");
+            return edgeIterable.getDistance();
+        }
+
+        @Override
+        public EdgeIteratorState setDistance(double dist) {
+            checkShortcut(false, "setDistance");
+            return edgeIterable.setDistance(dist);
+        }
+
+        @Override
+        public final IntsRef getFlags() {
+            checkShortcut(false, "getFlags");
+            return edgeIterable.getFlags();
+        }
+
+        @Override
+        public final CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
+            checkShortcut(true, "setSkippedEdges");
+            chEdgeAccess.setSkippedEdges(edgeIterable.edgePointer, edge1, edge2);
+            return this;
+        }
+
+        @Override
+        public final int getSkippedEdge1() {
+            checkShortcut(true, "getSkippedEdge1");
+            return shortcuts.getInt(edgeIterable.edgePointer + S_SKIP_EDGE1);
+        }
+
+        @Override
+        public final int getSkippedEdge2() {
+            checkShortcut(true, "getSkippedEdge2");
+            return shortcuts.getInt(edgeIterable.edgePointer + S_SKIP_EDGE2);
+        }
+
+        @Override
+        public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
+            checkShortcutAndEdgeBased("setFirstAndLastOrigEdges");
+            chEdgeAccess.setFirstAndLastOrigEdges(edgeIterable.edgePointer, firstOrigEdge, lastOrigEdge);
+            return this;
+        }
+
+        @Override
+        public int getOrigEdgeFirst() {
+            if (!isShortcut() || !chProfile.isEdgeBased()) {
+                return getEdge();
+            }
+            return shortcuts.getInt(edgeIterable.edgePointer + S_ORIG_FIRST);
+        }
+
+        @Override
+        public int getOrigEdgeLast() {
+            if (!isShortcut() || !chProfile.isEdgeBased()) {
+                return getEdge();
+            }
+            return shortcuts.getInt(edgeIterable.edgePointer + S_ORIG_LAST);
+        }
+
+        @Override
+        public final boolean isShortcut() {
+            // assert baseGraph.isFrozen() : "chgraph not yet frozen";
+            return edgeIterable.edgeId >= edgeIterable.baseGraph.edgeCount;
+        }
+
+        @Override
+        public boolean get(BooleanEncodedValue property) {
+            // TODO assert equality of "access boolean encoded value" that is specifically created for CHGraph to make it possible we can use other BooleanEncodedValue objects for CH too!
+            if (isShortcut())
+                return (getShortcutFlags() & (edgeIterable.reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir())) != 0;
+
+            return property.getBool(edgeIterable.reverse, getFlags());
+        }
+
+        @Override
+        public boolean getReverse(BooleanEncodedValue property) {
+            if (isShortcut())
+                return (getShortcutFlags() & (edgeIterable.reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir())) != 0;
+
+            return property.getBool(!edgeIterable.reverse, getFlags());
+        }
+
+        @Override
+        public final CHEdgeIteratorState setWeight(double weight) {
+            checkShortcut(true, "setWeight");
+            chEdgeAccess.setShortcutWeight(edgeIterable.edgePointer, weight);
+            return this;
+        }
+
+        @Override
+        public void setFlagsAndWeight(int flags, double weight) {
+            checkShortcut(true, "setFlagsAndWeight");
+            chEdgeAccess.setAccessAndWeight(edgeIterable.edgePointer, flags, weight);
+            edgeIterable.chFlags = flags;
+            edgeIterable.freshFlags = true;
+        }
+
+        @Override
+        public final double getWeight() {
+            checkShortcut(true, "getWeight");
+            return chEdgeAccess.getShortcutWeight(edgeIterable.edgePointer);
+        }
+
+        void checkShortcut(boolean shouldBeShortcut, String methodName) {
+            if (isShortcut()) {
+                if (!shouldBeShortcut)
+                    throw new IllegalStateException("Cannot call " + methodName + " on shortcut " + getEdge());
+            } else if (shouldBeShortcut)
+                throw new IllegalStateException("Method " + methodName + " only for shortcuts " + getEdge());
+        }
+
+        private void checkShortcutAndEdgeBased(String method) {
+            checkShortcut(true, method);
+            if (!chProfile.isEdgeBased()) {
+                throw new IllegalStateException("Method " + method + " only allowed when CH graph is configured for edge based traversal");
+            }
+        }
+
+        @Override
+        public final String getName() {
+            checkShortcut(false, "getName");
+            return edgeIterable.getName();
+        }
+
+        @Override
+        public final EdgeIteratorState setName(String name) {
+            checkShortcut(false, "setName");
+            return edgeIterable.setName(name);
+        }
+
+        @Override
+        public final PointList fetchWayGeometry(int mode) {
+            checkShortcut(false, "fetchWayGeometry");
+            return edgeIterable.fetchWayGeometry(mode);
+        }
+
+        @Override
+        public final EdgeIteratorState setWayGeometry(PointList list) {
+            checkShortcut(false, "setWayGeometry");
+            return edgeIterable.setWayGeometry(list);
+        }
+
+        @Override
+        public int getEdge() {
+            return edgeIterable.getEdge();
+        }
+
+        @Override
+        public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
+            return edgeIterable.set(property, value);
+        }
+
+        @Override
+        public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
+            return edgeIterable.setReverse(property, value);
+        }
+
+        @Override
+        public int get(IntEncodedValue property) {
+            return edgeIterable.get(property);
+        }
+
+        @Override
+        public EdgeIteratorState set(IntEncodedValue property, int value) {
+            return edgeIterable.set(property, value);
+        }
+
+        @Override
+        public int getReverse(IntEncodedValue property) {
+            return edgeIterable.getReverse(property);
+        }
+
+        @Override
+        public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
+            return edgeIterable.setReverse(property, value);
+        }
+
+        @Override
+        public double get(DecimalEncodedValue property) {
+            return edgeIterable.get(property);
+        }
+
+        @Override
+        public EdgeIteratorState set(DecimalEncodedValue property, double value) {
+            return edgeIterable.set(property, value);
+        }
+
+        @Override
+        public double getReverse(DecimalEncodedValue property) {
+            return edgeIterable.getReverse(property);
+        }
+
+        @Override
+        public EdgeIteratorState setReverse(DecimalEncodedValue property, double value) {
+            return edgeIterable.setReverse(property, value);
+        }
+
+        @Override
+        public <T extends Enum> T get(EnumEncodedValue<T> property) {
+            return edgeIterable.get(property);
+        }
+
+        @Override
+        public <T extends Enum> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
+            return edgeIterable.set(property, value);
+        }
+
+        @Override
+        public <T extends Enum> T getReverse(EnumEncodedValue<T> property) {
+            return edgeIterable.getReverse(property);
+        }
+
+        @Override
+        public <T extends Enum> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
+            return edgeIterable.setReverse(property, value);
+        }
+
+        @Override
+        public int getMergeStatus(int flags) {
+            return PrepareEncoder.getScMergeStatus(getShortcutFlags(), flags);
+        }
+
+        public abstract EdgeIteratorState detach(boolean reverseArg);
+
+        int getShortcutFlags() {
+            if (!edgeIterable.freshFlags) {
+                edgeIterable.chFlags = chEdgeAccess.getShortcutFlags(edgeIterable.edgePointer);
+                edgeIterable.freshFlags = true;
+            }
+            return edgeIterable.chFlags;
         }
     }
 }
