@@ -162,6 +162,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
         setHighwaySpeed("living_street", 6);
         setHighwaySpeed("steps", PUSHING_SECTION_SPEED / 2);
+        avoidHighwayTags.add("steps");
 
         final int CYCLEWAY_SPEED = 18;  // Make sure cycleway and path use same speed value, see #634
         setHighwaySpeed("cycleway", CYCLEWAY_SPEED);
@@ -523,9 +524,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         }
 
         if (pushingSectionsHighways.contains(highway)
-                || way.hasTag("bicycle", "use_sidepath")
                 || "parking_aisle".equals(service)) {
             int pushingSectionPrio = AVOID_IF_POSSIBLE.getValue();
+            if (way.hasTag("bicycle", "use_sidepath"))  {
+                pushingSectionPrio = PREFER.getValue();
+            }
             if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
                 pushingSectionPrio = PREFER.getValue();
             if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official"))
@@ -602,12 +605,12 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected void handleSpeed(IntsRef edgeFlags, ReaderWay way, double speed) {
         avgSpeedEnc.setDecimal(false, edgeFlags, speed);
 
-        // handle oneways        
+        // handle oneways
         boolean isOneway = way.hasTag("oneway", oneways)
                 || way.hasTag("oneway:bicycle", oneways)
                 || way.hasTag("vehicle:backward")
                 || way.hasTag("vehicle:forward")
-                || way.hasTag("bicycle:forward");
+                || way.hasTag("bicycle:forward") && (way.hasTag("bicycle:forward", "yes") || way.hasTag("bicycle:forward", "no"));
 
         if ((isOneway || roundaboutEnc.getBool(false, edgeFlags))
                 && !way.hasTag("oneway:bicycle", "no")

@@ -81,7 +81,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
     public EdgeBasedNodeContractor(CHGraph prepareGraph,
                                    TurnWeighting turnWeighting, PMap pMap) {
-        super(prepareGraph, turnWeighting);
+        super(prepareGraph, turnWeighting.getFlagEncoder());
         this.turnWeighting = turnWeighting;
         this.encoder = turnWeighting.getFlagEncoder();
         this.pMap = pMap;

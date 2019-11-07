@@ -99,7 +99,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         pathList = new ArrayList<>(pointsCount - 1);
 
         List<DirectionResolverResult> directions = Collections.emptyList();
-        if (!ghRequest.getCurbSides().isEmpty()) {
+        if (!ghRequest.getCurbsides().isEmpty()) {
             DirectionResolver directionResolver = new DirectionResolver(queryGraph, encoder);
             directions = new ArrayList<>(queryResults.size());
             for (QueryResult qr : queryResults) {
@@ -107,7 +107,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             }
         }
 
-        final boolean forceCurbSides = ghRequest.getHints().getBool(Routing.FORCE_CURBSIDE, true);
+        final boolean forceCurbsides = ghRequest.getHints().getBool(Routing.FORCE_CURBSIDE, true);
         QueryResult fromQResult = queryResults.get(0);
         StopWatch sw;
         for (int placeIndex = 1; placeIndex < pointsCount; placeIndex++) {
@@ -137,14 +137,14 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             // calculate paths
             List<Path> tmpPathList;
             if (!directions.isEmpty()) {
-                assert ghRequest.getCurbSides().size() == directions.size();
+                assert ghRequest.getCurbsides().size() == directions.size();
                 if (!(algo instanceof AbstractBidirAlgo)) {
                     throw new IllegalArgumentException("To make use of the " + Routing.CURBSIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
                 } else {
-                    int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), ghRequest.getCurbSides().get(placeIndex - 1));
-                    int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), ghRequest.getCurbSides().get(placeIndex));
-                    sourceOutEdge = ignoreThrowOrAcceptImpossibleCurbSides(sourceOutEdge, placeIndex - 1, forceCurbSides);
-                    targetInEdge = ignoreThrowOrAcceptImpossibleCurbSides(targetInEdge, placeIndex, forceCurbSides);
+                    int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), ghRequest.getCurbsides().get(placeIndex - 1));
+                    int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), ghRequest.getCurbsides().get(placeIndex));
+                    sourceOutEdge = ignoreThrowOrAcceptImpossibleCurbsides(sourceOutEdge, placeIndex - 1, forceCurbsides);
+                    targetInEdge = ignoreThrowOrAcceptImpossibleCurbsides(targetInEdge, placeIndex, forceCurbsides);
                     // todo: enable curbside feature for alternative routes as well ?
                     tmpPathList = Collections.singletonList(((AbstractBidirAlgo) algo)
                             .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));
@@ -185,19 +185,19 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         return pathList;
     }
 
-    private int ignoreThrowOrAcceptImpossibleCurbSides(int edge, int placeIndex, boolean forceCurbSides) {
+    private int ignoreThrowOrAcceptImpossibleCurbsides(int edge, int placeIndex, boolean forceCurbsides) {
         if (edge != NO_EDGE) {
             return edge;
         }
-        if (forceCurbSides) {
-            return throwImpossibleCurbSideConstraint(placeIndex);
+        if (forceCurbsides) {
+            return throwImpossibleCurbsideConstraint(placeIndex);
         } else {
             return ANY_EDGE;
         }
     }
 
-    private int throwImpossibleCurbSideConstraint(int placeIndex) {
-        throw new IllegalArgumentException("Impossible curbside constraint: 'curbside=" + ghRequest.getCurbSides().get(placeIndex) + "' at point " + placeIndex);
+    private int throwImpossibleCurbsideConstraint(int placeIndex) {
+        throw new IllegalArgumentException("Impossible curbside constraint: 'curbside=" + ghRequest.getCurbsides().get(placeIndex) + "' at point " + placeIndex);
     }
 
     @Override

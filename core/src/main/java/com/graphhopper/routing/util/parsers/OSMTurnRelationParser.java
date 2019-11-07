@@ -88,7 +88,11 @@ public class OSMTurnRelationParser implements TurnCostParser {
         accessEnc = lookup.getEncodedValue(accessKey, BooleanEncodedValue.class);
 
         int turnBits = Helper.countBitValue(maxTurnCosts);
-        registerNewEncodedValue.add(turnCostEnc = new UnsignedDecimalEncodedValue(getKey(name, EV_SUFFIX), turnBits, 1, 0, false, true));
+        registerNewEncodedValue.add(turnCostEnc = new UnsignedDecimalEncodedValue(getKey(name, EV_SUFFIX), turnBits, 1, 0, false, true) {
+//            protected int toInt(double val) {
+//                return (int) val;
+//            }
+        });
     }
 
     @Override

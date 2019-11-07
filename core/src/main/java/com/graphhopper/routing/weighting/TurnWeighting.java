@@ -40,7 +40,7 @@ public class TurnWeighting implements Weighting {
     private final TurnCostExtension turnCostExt;
     private final Weighting superWeighting;
     private final double uTurnCosts;
-    // TODO NOW how to use EncodingManager.createTurnCostFlags !?
+    // TODO NOW call EncodingManager.createTurnCostFlags via TurnCostExtension?
     private final IntsRef tcFlags = new IntsRef(1);
 
     public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
@@ -101,7 +101,6 @@ public class TurnWeighting implements Weighting {
         long turnCostsInSeconds = (long) (reverse
                 ? calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId));
-
         return millis + 1000 * turnCostsInSeconds;
     }
 
@@ -112,21 +111,19 @@ public class TurnWeighting implements Weighting {
         if (!EdgeIterator.Edge.isValid(edgeFrom) || !EdgeIterator.Edge.isValid(edgeTo)) {
             return 0;
         }
+        double tCost = 0;
         if (turnCostExt.isUTurn(edgeFrom, edgeTo)) {
-            // note that the u-turn costs overwrite any turn costs set in TurnCostExtension
-            // todo:
-            // also this does not allow TurnCostEncoder to set the u-turn costs to zero explicitly, like FootFlagEncoder!
-            // this problem is a bit hidden, because if you do not apply any turn restrictions (like FootFlagEncoder)
-            // you never do a u-turn anyway.
-            if (!turnCostExt.isUTurnAllowed(nodeVia)) {
-                return Double.POSITIVE_INFINITY;
+            tCost = turnCostExt.isUTurnAllowed(nodeVia) ? uTurnCosts : Double.POSITIVE_INFINITY;
+        } else {
+            if (turnCostEnc != null) {
+                // TODO NOW ugly caching
+                tcFlags.ints[0] = 0;
+                turnCostExt.readFlags(tcFlags, edgeFrom, nodeVia, edgeTo);
+                tCost = turnCostEnc.getDecimal(false, tcFlags);
             }
-            return uTurnCosts;
         }
-        if (turnCostEnc == null)
-            return 0;
-        turnCostExt.readFlags(tcFlags, edgeFrom, nodeVia, edgeTo);
-        return turnCostEnc.getDecimal(false, tcFlags);
+//        System.out.println((turnCostExt.isUTurn(edgeFrom, edgeTo) ? "U" : "X") + "| " + edgeFrom + "->" + nodeVia + "->" + edgeTo + " \t" + tCost);
+        return tCost;
     }
 
     @Override

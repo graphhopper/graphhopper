@@ -23,14 +23,16 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.Roundabout;
+import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -41,7 +43,11 @@ import static org.junit.Assert.*;
  */
 public class CarFlagEncoderTest {
     final CarFlagEncoder encoder = createEncoder();
-    private final EncodingManager em = EncodingManager.create(Arrays.asList(encoder, new BikeFlagEncoder(), new FootFlagEncoder()));
+    private final EncodingManager em = new EncodingManager.Builder().
+            add(new OSMRoadAccessParser()).
+            add(encoder).
+            add(new BikeFlagEncoder()).add(new FootFlagEncoder()).build();
+
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
     private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
@@ -214,13 +220,20 @@ public class CarFlagEncoderTest {
 
     @Test
     public void testDestinationTag() {
+        IntsRef relFlags = em.createRelationFlags();
+
+        FastestWeighting weighting = new FastestWeighting(encoder);
+
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
-        assertEquals(60, encoder.getSpeed(way), 1e-1);
+        EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
+        assertTrue(em.acceptWay(way, acceptWay));
+        IntsRef edgeFlags = em.handleWayTags(way, acceptWay, relFlags);
+        assertEquals(60, weighting.calcWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false, -1), 0.1);
 
         way.setTag("vehicle", "destination");
-        IntsRef flags = encoder.handleWayTags(em.createEdgeFlags(), way, encoder.getAccess(way));
-        assertEquals(5, avSpeedEnc.getDecimal(false, flags), 1e-1);
+        edgeFlags = em.handleWayTags(way, acceptWay, relFlags);
+        assertEquals(600, weighting.calcWeight(GHUtility.createMockedEdgeIteratorState(1000, edgeFlags), false, -1), 0.1);
     }
 
     @Test

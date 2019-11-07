@@ -27,6 +27,8 @@ import io.dropwizard.setup.Environment;
 
 import javax.servlet.DispatcherType;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class GraphHopperApplication extends Application<GraphHopperServerConfiguration> {
 
@@ -38,8 +40,12 @@ public final class GraphHopperApplication extends Application<GraphHopperServerC
     public void initialize(Bootstrap<GraphHopperServerConfiguration> bootstrap) {
         bootstrap.addBundle(new GraphHopperBundle());
         bootstrap.addBundle(new RealtimeBundle());
-        bootstrap.addBundle(new ConfiguredAssetsBundle("/assets/", "/maps/", "index.html"));
         bootstrap.addCommand(new ImportCommand());
+
+        Map<String, String> resourceToURIMappings = new HashMap<>();
+        resourceToURIMappings.put("/assets/", "/maps/");
+        resourceToURIMappings.put("/META-INF/resources/webjars", "/webjars"); // https://www.webjars.org/documentation#dropwizard
+        bootstrap.addBundle(new ConfiguredAssetsBundle(resourceToURIMappings, "index.html"));
     }
 
     @Override
