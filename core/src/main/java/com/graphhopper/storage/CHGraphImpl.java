@@ -463,6 +463,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     class CHEdgeIteratorImpl extends CommonCHEdgeIteratorState implements CHEdgeExplorer, CHEdgeIterator {
         private final EdgeIterable edgeIterable;
+
         public CHEdgeIteratorImpl(BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter) {
             super(new EdgeIterable(baseGraph, edgeAccess, filter));
             this.edgeIterable = (EdgeIterable) super.edgeIterable;
