@@ -461,7 +461,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         };
     }
 
-    class CHEdgeIteratorImpl extends CommonCHIterator implements CHEdgeExplorer, CHEdgeIterator {
+    class CHEdgeIteratorImpl extends CommonCHEdgeIteratorState implements CHEdgeExplorer, CHEdgeIterator {
         private final EdgeIterable edgeIterable;
         public CHEdgeIteratorImpl(BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter) {
             super(new EdgeIterable(baseGraph, edgeAccess, filter));
@@ -511,154 +511,69 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     }
 
-    class AllCHEdgesIteratorImpl extends AllEdgeIterator implements AllCHEdgesIterator {
+    class AllCHEdgesIteratorImpl extends CommonCHEdgeIteratorState implements AllCHEdgesIterator {
+        private final AllEdgeIterator allEdgeIterator;
+
         public AllCHEdgesIteratorImpl(BaseGraph baseGraph) {
-            super(baseGraph);
+            super(new AllEdgeIterator(baseGraph));
+            this.allEdgeIterator = (AllEdgeIterator) super.edgeIterable;
         }
 
         @Override
-        protected final boolean checkRange() {
-            if (isShortcut())
-                return edgeId < shortcutCount;
+        public boolean next() {
+            while (true) {
+                allEdgeIterator.edgeId++;
+                allEdgeIterator.edgePointer = (long) allEdgeIterator.edgeId * allEdgeIterator.edgeAccess.getEntryBytes();
+                if (!checkRange())
+                    return false;
 
-            if (super.checkRange())
+                allEdgeIterator.adjNode = allEdgeIterator.edgeAccess.getNodeB(allEdgeIterator.edgePointer);
+                // some edges are deleted and are marked via a negative node
+                if (EdgeAccess.isInvalidNodeB(allEdgeIterator.adjNode))
+                    continue;
+
+                allEdgeIterator.baseNode = allEdgeIterator.edgeAccess.getNodeA(allEdgeIterator.edgePointer);
+                allEdgeIterator.freshFlags = false;
+                allEdgeIterator.reverse = false;
+                return true;
+            }
+        }
+
+        @Override
+        public EdgeIteratorState detach(boolean reverseArg) {
+            return allEdgeIterator.detach(reverseArg);
+        }
+
+        private boolean checkRange() {
+            if (isShortcut())
+                return allEdgeIterator.edgeId < shortcutCount;
+
+            if (allEdgeIterator.edgeId < baseGraph.edgeCount)
                 return true;
 
             // iterate over shortcuts
-            edgeAccess = chEdgeAccess;
-            edgeId = 0;
-            edgePointer = (long) edgeId * shortcutEntryBytes;
-            return edgeId < shortcutCount;
-        }
-
-        int getShortcutFlags() {
-            if (!freshFlags) {
-                chFlags = chEdgeAccess.getShortcutFlags(edgePointer);
-                freshFlags = true;
-            }
-            return chFlags;
+            allEdgeIterator.edgeAccess = chEdgeAccess;
+            allEdgeIterator.edgeId = 0;
+            allEdgeIterator.edgePointer = (long) allEdgeIterator.edgeId * shortcutEntryBytes;
+            return allEdgeIterator.edgeId < shortcutCount;
         }
 
         @Override
         public int getEdge() {
             if (isShortcut())
-                return baseGraph.edgeCount + edgeId;
+                return baseGraph.edgeCount + allEdgeIterator.edgeId;
             return super.getEdge();
         }
 
         @Override
-        public boolean get(BooleanEncodedValue property) {
-            // TODO assert equality of "access boolean encoded value" that is specifically created for CHGraph!
-            if (isShortcut())
-                return (getShortcutFlags() & (reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir())) != 0;
-
-            return property.getBool(reverse, getFlags());
-        }
-
-        @Override
-        public boolean getReverse(BooleanEncodedValue property) {
-            if (isShortcut())
-                return (getShortcutFlags() & (reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir())) != 0;
-
-            return property.getBool(!reverse, getFlags());
-        }
-
-        @Override
-        public final IntsRef getFlags() {
-            if (isShortcut())
-                throw new IllegalStateException("Shortcut should not need to return raw flags!");
-            return super.getFlags();
-        }
-
-        @Override
         public int length() {
-            return super.length() + shortcutCount;
-        }
-
-        @Override
-        public final CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
-            checkShortcut(true, "setSkippedEdges");
-            chEdgeAccess.setSkippedEdges(edgePointer, edge1, edge2);
-            return this;
-        }
-
-        @Override
-        public final int getSkippedEdge1() {
-            checkShortcut(true, "getSkippedEdge1");
-            return shortcuts.getInt(edgePointer + S_SKIP_EDGE1);
-        }
-
-        @Override
-        public final int getSkippedEdge2() {
-            checkShortcut(true, "getSkippedEdge2");
-            return shortcuts.getInt(edgePointer + S_SKIP_EDGE2);
-        }
-
-        @Override
-        public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
-            checkShortcutAndEdgeBased("setFirstAndLastOrigEdges");
-            shortcuts.setInt(edgePointer + S_ORIG_FIRST, firstOrigEdge);
-            shortcuts.setInt(edgePointer + S_ORIG_LAST, lastOrigEdge);
-            return this;
-        }
-
-        @Override
-        public int getOrigEdgeFirst() {
-            checkShortcutAndEdgeBased("getOrigEdgeFirst");
-            return shortcuts.getInt(edgePointer + S_ORIG_FIRST);
-        }
-
-        @Override
-        public int getOrigEdgeLast() {
-            checkShortcutAndEdgeBased("getOrigEdgeLast");
-            return shortcuts.getInt(edgePointer + S_ORIG_LAST);
+            return baseGraph.edgeCount + shortcutCount;
         }
 
         @Override
         public final boolean isShortcut() {
             assert baseGraph.isFrozen() : "level graph not yet frozen";
-            return edgeAccess == chEdgeAccess;
-        }
-
-        @Override
-        public final CHEdgeIteratorState setWeight(double weight) {
-            checkShortcut(true, "setWeight");
-            chEdgeAccess.setShortcutWeight(edgePointer, weight);
-            return this;
-        }
-
-        @Override
-        public void setFlagsAndWeight(int flags, double weight) {
-            checkShortcut(true, "setFlagsAndWeight");
-            chEdgeAccess.setAccessAndWeight(edgePointer, flags, weight);
-            chFlags = flags;
-            freshFlags = true;
-        }
-
-        @Override
-        public final double getWeight() {
-            checkShortcut(true, "getWeight");
-            return chEdgeAccess.getShortcutWeight(edgePointer);
-        }
-
-        @Override
-        public int getMergeStatus(int flags) {
-            return PrepareEncoder.getScMergeStatus(getShortcutFlags(), flags);
-        }
-
-        void checkShortcut(boolean shouldBeShortcut, String methodName) {
-            if (isShortcut()) {
-                if (!shouldBeShortcut)
-                    throw new IllegalStateException("Cannot call " + methodName + " on shortcut " + getEdge());
-            } else if (shouldBeShortcut)
-                throw new IllegalStateException("Method " + methodName + " only for shortcuts " + getEdge());
-        }
-
-        private void checkShortcutAndEdgeBased(String method) {
-            checkShortcut(true, method);
-            if (!chProfile.isEdgeBased()) {
-                throw new IllegalStateException("Method " + method + " not supported when turn costs are disabled");
-            }
+            return edgeIterable.edgeAccess == chEdgeAccess;
         }
     }
 
@@ -788,10 +703,10 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
     }
 
-    private abstract class CommonCHIterator implements CHEdgeIteratorState {
+    private abstract class CommonCHEdgeIteratorState implements CHEdgeIteratorState {
         final BaseGraph.CommonEdgeIterator edgeIterable;
 
-        private CommonCHIterator(BaseGraph.CommonEdgeIterator edgeIterable) {
+        private CommonCHEdgeIteratorState(BaseGraph.CommonEdgeIterator edgeIterable) {
             this.edgeIterable = edgeIterable;
         }
 
@@ -806,8 +721,19 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
+        public int getEdge() {
+            return edgeIterable.getEdge();
+        }
+
+        @Override
         public EdgeIteratorState setFlags(IntsRef edgeFlags) {
             return edgeIterable.setFlags(edgeFlags);
+        }
+
+        @Override
+        public final IntsRef getFlags() {
+            checkShortcut(false, "getFlags");
+            return edgeIterable.getFlags();
         }
 
         @Override
@@ -835,12 +761,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public EdgeIteratorState setDistance(double dist) {
             checkShortcut(false, "setDistance");
             return edgeIterable.setDistance(dist);
-        }
-
-        @Override
-        public final IntsRef getFlags() {
-            checkShortcut(false, "getFlags");
-            return edgeIterable.getFlags();
         }
 
         @Override
@@ -886,7 +806,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public final boolean isShortcut() {
+        public boolean isShortcut() {
             // assert baseGraph.isFrozen() : "chgraph not yet frozen";
             return edgeIterable.edgeId >= edgeIterable.baseGraph.edgeCount;
         }
@@ -966,11 +886,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public final EdgeIteratorState setWayGeometry(PointList list) {
             checkShortcut(false, "setWayGeometry");
             return edgeIterable.setWayGeometry(list);
-        }
-
-        @Override
-        public int getEdge() {
-            return edgeIterable.getEdge();
         }
 
         @Override

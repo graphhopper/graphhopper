@@ -1125,7 +1125,7 @@ class BaseGraph implements Graph {
             while (true) {
                 edgeId++;
                 edgePointer = (long) edgeId * edgeAccess.getEntryBytes();
-                if (!checkRange())
+                if (edgeId >= baseGraph.edgeCount)
                     return false;
 
                 adjNode = edgeAccess.getNodeB(edgePointer);
@@ -1138,10 +1138,6 @@ class BaseGraph implements Graph {
                 reverse = false;
                 return true;
             }
-        }
-
-        protected boolean checkRange() {
-            return edgeId < baseGraph.edgeCount;
         }
 
         @Override
