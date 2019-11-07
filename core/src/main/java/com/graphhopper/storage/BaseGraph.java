@@ -1025,8 +1025,7 @@ class BaseGraph implements Graph {
         /**
          * @return false if the edge has not a node equal to expectedAdjNode
          */
-        // todonow: make final when no longer overridden in subclass
-        boolean init(int tmpEdgeId, int expectedAdjNode) {
+        final boolean init(int tmpEdgeId, int expectedAdjNode) {
             if (!EdgeIterator.Edge.isValid(tmpEdgeId))
                 throw new IllegalArgumentException("fetching the edge requires a valid edgeId but was " + tmpEdgeId);
             setEdgeId(tmpEdgeId);
@@ -1068,8 +1067,9 @@ class BaseGraph implements Graph {
                 if (!EdgeIterator.Edge.isValid(nextEdgeId))
                     return false;
                 goToNext();
-                if (filter.accept(this))
+                if (filter.accept(this)) {
                     return true;
+                }
             }
         }
 
