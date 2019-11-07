@@ -464,6 +464,18 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
+        void goToNext() {
+            selectEdgeAccess(nextEdgeId);
+            super.goToNext();
+        }
+
+        @Override
+        boolean init(int tmpEdgeId, int expectedAdjNode) {
+            selectEdgeAccess(tmpEdgeId);
+            return super.init(tmpEdgeId, expectedAdjNode);
+        }
+
+        @Override
         public double getDistance() {
             checkShortcut(false, "getDistance");
             return super.getDistance();
@@ -585,10 +597,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             return chEdgeAccess.getShortcutWeight(edgePointer);
         }
 
-        @Override
-        protected final void selectEdgeAccess() {
+        private void selectEdgeAccess(int edgeId) {
             // iterate over edges or shortcuts
-            edgeAccess = nextEdgeId < baseGraph.edgeCount ? baseGraph.edgeAccess : chEdgeAccess;
+            edgeAccess = edgeId < baseGraph.edgeCount ? baseGraph.edgeAccess : chEdgeAccess;
         }
 
         public void checkShortcut(boolean shouldBeShortcut, String methodName) {

@@ -1013,12 +1013,11 @@ class BaseGraph implements Graph {
         /**
          * @return false if the edge has not a node equal to expectedAdjNode
          */
-        final boolean init(int tmpEdgeId, int expectedAdjNode) {
+        // todonow: make final when no longer overridden in subclass
+        boolean init(int tmpEdgeId, int expectedAdjNode) {
+            if (!EdgeIterator.Edge.isValid(tmpEdgeId))
+                throw new IllegalArgumentException("fetching the edge requires a valid edgeId but was " + tmpEdgeId);
             setEdgeId(tmpEdgeId);
-            if (!EdgeIterator.Edge.isValid(edgeId))
-                throw new IllegalArgumentException("fetching the edge requires a valid edgeId but was " + edgeId);
-
-            selectEdgeAccess();
             edgePointer = edgeAccess.toPointer(tmpEdgeId);
             baseNode = edgeAccess.getNodeA(edgePointer);
             adjNode = edgeAccess.getNodeB(edgePointer);
@@ -1051,32 +1050,30 @@ class BaseGraph implements Graph {
             return this;
         }
 
-        protected void selectEdgeAccess() {
-        }
-
         @Override
         public final boolean next() {
             while (true) {
                 if (!EdgeIterator.Edge.isValid(nextEdgeId))
                     return false;
-
-                selectEdgeAccess();
-                edgePointer = edgeAccess.toPointer(nextEdgeId);
-                edgeId = nextEdgeId;
-                int nodeA = edgeAccess.getNodeA(edgePointer);
-                boolean baseNodeIsNodeA = baseNode == nodeA;
-                adjNode = baseNodeIsNodeA ? edgeAccess.getNodeB(edgePointer) : nodeA;
-                reverse = !baseNodeIsNodeA;
-                freshFlags = false;
-
-                // position to next edge
-                nextEdgeId = baseNodeIsNodeA ? edgeAccess.getLinkA(edgePointer) : edgeAccess.getLinkB(edgePointer);
-                assert nextEdgeId != edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
-                        + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
-
+                goToNext();
                 if (filter.accept(this))
                     return true;
             }
+        }
+
+        void goToNext() {
+            edgePointer = edgeAccess.toPointer(nextEdgeId);
+            edgeId = nextEdgeId;
+            int nodeA = edgeAccess.getNodeA(edgePointer);
+            boolean baseNodeIsNodeA = baseNode == nodeA;
+            adjNode = baseNodeIsNodeA ? edgeAccess.getNodeB(edgePointer) : nodeA;
+            reverse = !baseNodeIsNodeA;
+            freshFlags = false;
+
+            // position to next edge
+            nextEdgeId = baseNodeIsNodeA ? edgeAccess.getLinkA(edgePointer) : edgeAccess.getLinkB(edgePointer);
+            assert nextEdgeId != edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
+                    + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
         }
 
         @Override
