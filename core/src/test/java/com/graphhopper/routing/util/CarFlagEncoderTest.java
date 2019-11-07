@@ -223,7 +223,6 @@ public class CarFlagEncoderTest {
         IntsRef relFlags = em.createRelationFlags();
 
         FastestWeighting weighting = new FastestWeighting(encoder);
-
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();

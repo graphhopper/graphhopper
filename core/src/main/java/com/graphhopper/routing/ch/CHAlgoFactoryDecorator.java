@@ -20,6 +20,7 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.storage.CHGraphImpl;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
@@ -288,7 +289,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         this.threadPool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
     }
 
-    public void prepare(final StorableProperties properties) {
+    public void prepare(final StorableProperties properties, final boolean closeEarly) {
         ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;
         for (final PrepareContractionHierarchies prepare : getPreparations()) {
@@ -301,6 +302,9 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                     // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                     Thread.currentThread().setName(name);
                     prepare.doWork();
+                    if (closeEarly)
+                        prepare.close();
+
                     properties.put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
                 }
             }, name);

@@ -170,10 +170,12 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     public void testGetWeight() {
         graph = createGHStorage();
         CHGraph g = getGraph(graph);
-        assertFalse(((CHEdgeIteratorState) g.edge(0, 1)).isShortcut());
-        assertFalse(((CHEdgeIteratorState) g.edge(1, 2)).isShortcut());
-
+        EdgeIteratorState edge1 = graph.edge(0, 1);
+        EdgeIteratorState edge2 = graph.edge(1, 2);
         graph.freeze();
+        assertFalse(g.getEdgeIteratorState(edge1.getEdge(), Integer.MIN_VALUE).isShortcut());
+        assertFalse(g.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).isShortcut());
+
 
         // only remove edges
         int flags = PrepareEncoder.getScDirMask();
@@ -251,8 +253,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         na.setNode(1, 1.02, 1.00);
         na.setNode(2, 1.04, 1.00);
 
-        EdgeIteratorState edge1 = chGraph.edge(0, 1);
-        chGraph.edge(1, 2);
+        EdgeIteratorState edge1 = graph.edge(0, 1);
+        graph.edge(1, 2);
         graph.freeze();
         chGraph.shortcut(0, 1, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
 

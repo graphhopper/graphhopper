@@ -43,6 +43,11 @@ public class OSMHazmatParserTest {
         readerWay.setTag("hazmat", "designated");
         parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
         assertEquals(Hazmat.YES, hazEnc.getEnum(false, intsRef));
+
+        intsRef = em.createEdgeFlags();
+        readerWay.setTag("hazmat", "designated");
+        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
+        assertEquals(Hazmat.YES, hazEnc.getEnum(false, intsRef));
     }
 
     @Test
