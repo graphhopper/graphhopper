@@ -41,8 +41,6 @@ abstract class EdgeAccess {
         this.E_FLAGS = E_FLAGS;
     }
 
-    abstract BaseGraph.EdgeIterable createSingleEdge(EdgeFilter edgeFilter);
-
     abstract long toPointer(int edgeOrShortcutId);
 
     abstract boolean isInBounds(int edgeOrShortcutId);
@@ -157,15 +155,5 @@ abstract class EdgeAccess {
         return edgeToRemovePointer;
     }
 
-    final EdgeIteratorState getEdgeProps(int edgeId, int adjNode) {
-        if (edgeId <= EdgeIterator.NO_EDGE)
-            throw new IllegalStateException("edgeId invalid " + edgeId + ", " + this);
-
-        BaseGraph.EdgeIterable edge = createSingleEdge(EdgeFilter.ALL_EDGES);
-        if (edge.init(edgeId, adjNode))
-            return edge;
-
-        // if edgeId exists but adjacent nodes do not match
-        return null;
-    }
+    abstract EdgeIteratorState getEdgeProps(int edgeId, int adjNode, EdgeFilter edgeFilter);
 }

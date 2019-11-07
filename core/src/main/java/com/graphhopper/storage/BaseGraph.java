@@ -108,7 +108,19 @@ class BaseGraph implements Graph {
         this.listener = listener;
         this.edgeAccess = new EdgeAccess(edges) {
             @Override
-            final EdgeIterable createSingleEdge(EdgeFilter filter) {
+            EdgeIteratorState getEdgeProps(int edgeId, int adjNode, EdgeFilter edgeFilter) {
+                if (edgeId <= EdgeIterator.NO_EDGE)
+                    throw new IllegalStateException("edgeId invalid " + edgeId + ", " + this);
+
+                BaseGraph.EdgeIterable edge = createSingleEdge(edgeFilter);
+                if (edge.init(edgeId, adjNode))
+                    return edge;
+
+                // if edgeId exists but adjacent nodes do not match
+                return null;
+            }
+
+            private EdgeIterable createSingleEdge(EdgeFilter filter) {
                 return new EdgeIterable(BaseGraph.this, this, filter);
             }
 
@@ -558,7 +570,7 @@ class BaseGraph implements Graph {
         if (!edgeAccess.isInBounds(edgeId))
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds");
         checkAdjNodeBounds(adjNode);
-        return edgeAccess.getEdgeProps(edgeId, adjNode);
+        return edgeAccess.getEdgeProps(edgeId, adjNode, EdgeFilter.ALL_EDGES);
     }
 
     final void checkAdjNodeBounds(int adjNode) {
@@ -1081,15 +1093,12 @@ class BaseGraph implements Graph {
             if (edgeId == nextEdgeId || !EdgeIterator.Edge.isValid(edgeId))
                 throw new IllegalStateException("call next before detaching or setEdgeId (edgeId:" + edgeId + " vs. next " + nextEdgeId + ")");
 
-            EdgeIterable iter = edgeAccess.createSingleEdge(filter);
-            boolean ret;
+            EdgeIteratorState iter = edgeAccess.getEdgeProps(edgeId, reverseArg ? baseNode : adjNode, filter);
+            assert iter != null;
             if (reverseArg) {
-                ret = iter.init(edgeId, baseNode);
                 // for #162
-                iter.reverse = !reverse;
-            } else
-                ret = iter.init(edgeId, adjNode);
-            assert ret;
+                ((EdgeIterable) iter).reverse = !reverse;
+            }
             return iter;
         }
     }

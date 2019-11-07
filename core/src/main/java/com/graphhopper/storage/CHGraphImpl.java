@@ -181,7 +181,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         } else if (!baseGraph.edgeAccess.isInBounds(edgeId))
             throw new IllegalStateException("edgeId " + edgeId + " out of bounds");
 
-        return (CHEdgeIteratorState) chEdgeAccess.getEdgeProps(edgeId, endNode);
+        return (CHEdgeIteratorState) chEdgeAccess.getEdgeProps(edgeId, endNode, EdgeFilter.ALL_EDGES);
     }
 
     @Override
@@ -645,6 +645,16 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public int getMergeStatus(int flags) {
             return PrepareEncoder.getScMergeStatus(getShortcutFlags(), flags);
         }
+
+        @Override
+        public EdgeIteratorState detach(boolean reverseArg) {
+            if (edgeId == nextEdgeId || !Edge.isValid(edgeId))
+                throw new IllegalStateException("call next before detaching or setEdgeId (edgeId:" + edgeId + " vs. next " + nextEdgeId + ")");
+
+            EdgeIteratorState iter = edgeAccess.getEdgeProps(edgeId, reverseArg ? baseNode : adjNode, filter);
+            assert iter != null;
+            return iter;
+        }
     }
 
     class AllCHEdgesIteratorImpl extends AllEdgeIterator implements AllCHEdgesIterator {
@@ -807,7 +817,19 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        final EdgeIterable createSingleEdge(EdgeFilter edgeFilter) {
+        EdgeIteratorState getEdgeProps(int edgeId, int adjNode, EdgeFilter edgeFilter) {
+            if (edgeId <= EdgeIterator.NO_EDGE)
+                throw new IllegalStateException("edgeId invalid " + edgeId + ", " + this);
+
+            CHEdgeIteratorImpl edge = createSingleEdge(edgeFilter);
+            if (edge.init(edgeId, adjNode))
+                return edge;
+
+            // if edgeId exists but adjacent nodes do not match
+            return null;
+        }
+
+        private CHEdgeIteratorImpl createSingleEdge(EdgeFilter edgeFilter) {
             return new CHEdgeIteratorImpl(baseGraph, this, edgeFilter);
         }
 
