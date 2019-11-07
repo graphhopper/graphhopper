@@ -100,25 +100,25 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     @Test
     public void testEdgeFilter() {
         graph = createGHStorage();
-        CHGraph g = getGraph(graph);
-        g.edge(0, 1, 10, true);
-        g.edge(0, 2, 20, true);
-        g.edge(2, 3, 30, true);
-        g.edge(10, 11, 1, true);
-
+        graph.edge(0, 1, 10, true);
+        graph.edge(0, 2, 20, true);
+        graph.edge(2, 3, 30, true);
+        graph.edge(10, 11, 1, true);
         graph.freeze();
-        g.shortcut(3, 4, PrepareEncoder.getScDirMask(), 0, NO_EDGE, NO_EDGE);
-        g.shortcut(0, 4, PrepareEncoder.getScDirMask(), 0, NO_EDGE, NO_EDGE);
-        g.setLevel(0, 1);
-        g.setLevel(4, 1);
 
-        EdgeIterator iter = g.createEdgeExplorer(new LevelEdgeFilter(g)).setBaseNode(0);
+        CHGraph lg = getGraph(graph);
+        lg.shortcut(3, 4, PrepareEncoder.getScDirMask(), 0, NO_EDGE, NO_EDGE);
+        lg.shortcut(0, 4, PrepareEncoder.getScDirMask(), 0, NO_EDGE, NO_EDGE);
+        lg.setLevel(0, 1);
+        lg.setLevel(4, 1);
+
+        EdgeIterator iter = lg.createEdgeExplorer(new LevelEdgeFilter(lg)).setBaseNode(0);
         assertEquals(1, GHUtility.count(iter));
-        iter = g.createEdgeExplorer().setBaseNode(2);
+        iter = lg.createEdgeExplorer().setBaseNode(2);
         assertEquals(2, GHUtility.count(iter));
 
-        int sc = g.shortcut(5, 6, PrepareEncoder.getScDirMask(), 0, 1, 2);
-        CHEdgeIteratorState tmpIter = g.getEdgeIteratorState(sc, 6);
+        int sc = lg.shortcut(5, 6, PrepareEncoder.getScDirMask(), 0, 1, 2);
+        CHEdgeIteratorState tmpIter = lg.getEdgeIteratorState(sc, 6);
         assertEquals(1, tmpIter.getSkippedEdge1());
         assertEquals(2, tmpIter.getSkippedEdge2());
     }
