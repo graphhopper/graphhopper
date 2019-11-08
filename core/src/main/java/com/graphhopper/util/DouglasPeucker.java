@@ -96,40 +96,9 @@ public class DouglasPeucker {
         }
 
         if (removed > 0 && compress)
-            compress(points, removed);
+            points.compress(removed);
 
         return removed;
-    }
-
-    /**
-     * compress list: move points into EMPTY slots
-     */
-    void compress(PointList points, int removed) {
-        int freeIndex = -1;
-        for (int currentIndex = 0; currentIndex < points.getSize(); currentIndex++) {
-            if (Double.isNaN(points.getLatitude(currentIndex))) {
-                if (freeIndex < 0)
-                    freeIndex = currentIndex;
-
-                continue;
-            } else if (freeIndex < 0) {
-                continue;
-            }
-
-            points.set(freeIndex, points.getLatitude(currentIndex), points.getLongitude(currentIndex), points.getElevation(currentIndex));
-            points.set(currentIndex, Double.NaN, Double.NaN, Double.NaN);
-            // find next free index
-            int max = currentIndex;
-            int searchIndex = freeIndex + 1;
-            freeIndex = currentIndex;
-            for (; searchIndex < max; searchIndex++) {
-                if (Double.isNaN(points.getLatitude(searchIndex))) {
-                    freeIndex = searchIndex;
-                    break;
-                }
-            }
-        }
-        points.trimToSize(points.getSize() - removed);
     }
 
     // keep the points of fromIndex and lastIndex

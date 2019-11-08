@@ -101,6 +101,11 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
 
         @Override
+        public void compress(int removed) {
+            throw new RuntimeException("cannot change EMPTY PointList");
+        }
+
+        @Override
         public double getElevation(int index) {
             throw new UnsupportedOperationException("cannot access EMPTY PointList");
         }
@@ -513,6 +518,39 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     /**
+     * Fills all entries of the point list that are NaN with the subsequent values (and therefore shortens the list)
+     */
+    public void compress(int removed) {
+        ensureMutability();
+        int freeIndex = -1;
+        for (int currentIndex = 0; currentIndex < size; currentIndex++) {
+            if (Double.isNaN(latitudes[currentIndex])) {
+                if (freeIndex < 0)
+                    freeIndex = currentIndex;
+
+                continue;
+            } else if (freeIndex < 0) {
+                continue;
+            }
+
+            set(freeIndex, latitudes[currentIndex], longitudes[currentIndex], getElevation(currentIndex));
+            set(currentIndex, Double.NaN, Double.NaN, Double.NaN);
+            // find next free index
+            int max = currentIndex;
+            int searchIndex = freeIndex + 1;
+            freeIndex = currentIndex;
+            for (; searchIndex < max; searchIndex++) {
+                if (Double.isNaN(latitudes[searchIndex])) {
+                    freeIndex = searchIndex;
+                    break;
+                }
+            }
+        }
+        trimToSize(size - removed);
+    }
+
+
+    /**
      * Create a shallow copy of this Pointlist from from to end, excluding end.
      *
      * @param makeImmutable makes this PointList immutable. If you don't ensure the consistency it might happen that due to changes of this
@@ -565,7 +603,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             if (latlon.trim().length() == 0)
                 continue;
 
-            String ll[] = latlon.split(",");
+            String[] ll = latlon.split(",");
             String lat = ll[1].replace("]", "").trim();
             add(Double.parseDouble(lat), Double.parseDouble(ll[0].trim()), Double.NaN);
         }

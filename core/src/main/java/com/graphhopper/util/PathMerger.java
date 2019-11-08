@@ -117,7 +117,7 @@ public class PathMerger {
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);
 
-                    // for all paths except the last replace the FinishInstruction with a ViaInstructionn
+                    // for all paths except the last replace the FinishInstruction with a ViaInstruction
                     if (pathIndex + 1 < paths.size()) {
                         ViaInstruction newInstr = new ViaInstruction(fullInstructions.get(fullInstructions.size() - 1));
                         newInstr.setViaCount(pathIndex + 1);

@@ -20,6 +20,10 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import static org.junit.Assert.*;
 
 /**
@@ -243,5 +247,39 @@ public class PointListTest {
         PointList oneLength = new PointList(3, true);
         oneLength.add(0, 0, 0);
         assertEquals(2, oneLength.toLineString(false).getNumPoints());
+    }
+
+    @Test
+    public void testRemoveNaN() {
+        PointList pl = new PointList(10, true);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(1, 1, 1);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(5, 5, 5);
+        pl.add(6, 6, 6);
+        pl.add(7, 7, 7);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(8, 8, 8);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(9, 9, 9);
+        pl.add(10, 10, 10);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(14, 14, 14);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+
+        pl.compress(10);
+        assertEquals(8, pl.size());
+        List<Integer> expected = Arrays.asList(1, 5, 6, 7, 8, 9, 10, 14);
+        List<Integer> given = new ArrayList<>();
+        for (int i = 0; i < pl.size(); i++) {
+            assertEquals(pl.getLat(i), pl.getEle(i), 1.e-6);
+            assertEquals(pl.getLon(i), pl.getEle(i), 1.e-6);
+            given.add((int) pl.getLat(i));
+        }
+        assertEquals(expected, given);
     }
 }
