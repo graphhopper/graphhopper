@@ -362,28 +362,6 @@ public class FootFlagEncoderTest {
         assertEquals(FootFlagEncoder.SLOW_SPEED, footEncoder.getSpeed(flags), 1e-1);
     }
 
-// TODO NOW include again
-//    @Test
-//    public void testTurnFlagEncoding_noCostsAndRestrictions() {
-//        long flags_r0 = footEncoder.getTurnFlags(true, 0);
-//        long flags_0 = footEncoder.getTurnFlags(false, 0);
-//
-//        long flags_r20 = footEncoder.getTurnFlags(true, 20);
-//        long flags_20 = footEncoder.getTurnFlags(false, 20);
-//
-//        assertEquals(0, footEncoder.getTurnCost(flags_r0), 1e-1);
-//        assertEquals(0, footEncoder.getTurnCost(flags_0), 1e-1);
-//
-//        assertEquals(0, footEncoder.getTurnCost(flags_r20), 1e-1);
-//        assertEquals(0, footEncoder.getTurnCost(flags_20), 1e-1);
-//
-//        assertFalse(footEncoder.isTurnRestricted(flags_r0));
-//        assertFalse(footEncoder.isTurnRestricted(flags_0));
-//
-//        assertFalse(footEncoder.isTurnRestricted(flags_r20));
-//        assertFalse(footEncoder.isTurnRestricted(flags_20));
-//    }
-
     @Test
     public void testBarrierAccess() {
         // by default allow access through the gate for bike & foot!

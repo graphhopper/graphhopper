@@ -23,7 +23,7 @@ import com.graphhopper.storage.IntsRef;
  * This class holds a decimal value and stores it as an unsigned integer value via a conversion factor and a maximum number
  * of bits.
  */
-public class UnsignedDecimalEncodedValue extends UnsignedIntEncodedValue implements DecimalEncodedValue {
+public final class UnsignedDecimalEncodedValue extends UnsignedIntEncodedValue implements DecimalEncodedValue {
     protected final double factor;
     private final double defaultValue;
     private final boolean useMaximumAsInfinity;
@@ -52,7 +52,7 @@ public class UnsignedDecimalEncodedValue extends UnsignedIntEncodedValue impleme
             throw new IllegalArgumentException("Default value and maximum value cannot be both infinity");
     }
 
-    protected int toInt(double val) {
+    private int toInt(double val) {
         return (int) Math.round(val / factor);
     }
 

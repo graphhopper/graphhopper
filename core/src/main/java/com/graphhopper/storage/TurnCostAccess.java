@@ -7,7 +7,7 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.parsers.OSMTurnRelationParser.EV_SUFFIX;
 
 /**
- * A stateful possibility to access turn cost of the TurnCostExtension. Reuse for optimal speed. Use one per thread.
+ * A stateful possibility to access turn cost of the TurnCostExtension. Use one per thread and reuse for optimal speed.
  */
 public class TurnCostAccess {
     private final IntsRef EMPTY;
@@ -34,6 +34,8 @@ public class TurnCostAccess {
      * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
      */
     public double get(int fromEdge, int viaNode, int toEdge) {
+        // reset is required as we could have a QueryGraph that does not set tcFlags
+        tcFlags.ints[0] = 0;
         turnCostExtension.readFlags(tcFlags, fromEdge, viaNode, toEdge);
         return turnCostEnc.getDecimal(false, tcFlags);
     }
@@ -62,10 +64,5 @@ public class TurnCostAccess {
         // clears only this vehicle although all bits are 0 for EMPTY
         turnCostExtension.mergeOrOverwriteTurnInfo(EMPTY, fromEdge, viaNode, toEdge, false);
         return this;
-    }
-
-    // TODO NOW instead of this directly use graph.getExtension for TurnCostExtension
-    public TurnCostExtension getTurnCostExtension() {
-        return turnCostExtension;
     }
 }

@@ -88,11 +88,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
         accessEnc = lookup.getEncodedValue(accessKey, BooleanEncodedValue.class);
 
         int turnBits = Helper.countBitValue(maxTurnCosts);
-        registerNewEncodedValue.add(turnCostEnc = new UnsignedDecimalEncodedValue(getKey(name, EV_SUFFIX), turnBits, 1, 0, false, true) {
-//            protected int toInt(double val) {
-//                return (int) val;
-//            }
-        });
+        registerNewEncodedValue.add(turnCostEnc = new UnsignedDecimalEncodedValue(getKey(name, EV_SUFFIX), turnBits, 1, 0, false, true));
     }
 
     @Override
@@ -169,13 +165,13 @@ public class OSMTurnRelationParser implements TurnCostParser {
      * Helper class to processing purposes. We could remove it if TurnCostExtension is similarly fast with merging
      * existing turn cost relations.
      */
-    class TCEntry {
-        public final int edgeFrom;
-        public final int nodeVia;
-        public final int edgeTo;
+    static class TCEntry {
+        final int edgeFrom;
+        final int nodeVia;
+        final int edgeTo;
         public final IntsRef flags;
 
-        public TCEntry(IntsRef flags, int edgeFrom, int nodeVia, int edgeTo) {
+        TCEntry(IntsRef flags, int edgeFrom, int nodeVia, int edgeTo) {
             this.edgeFrom = edgeFrom;
             this.nodeVia = nodeVia;
             this.edgeTo = edgeTo;
@@ -188,10 +184,6 @@ public class OSMTurnRelationParser implements TurnCostParser {
          */
         public long getItemId() {
             return ((long) edgeFrom) << 32 | ((long) edgeTo);
-        }
-
-        public void mergeFlags(TCEntry tce) {
-            flags.ints[0] |= tce.flags.ints[0];
         }
 
         @Override

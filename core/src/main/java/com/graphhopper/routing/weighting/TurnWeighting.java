@@ -60,7 +60,7 @@ public class TurnWeighting implements Weighting {
         }
         FlagEncoder encoder = superWeighting.getFlagEncoder();
         String key = getKey(encoder.toString(), EV_SUFFIX);
-        // TODO NOW ugly and unsafe? if null TurnWeighting can be still useful for edge based routing
+        // if null the TurnWeighting can be still useful for edge-based routing
         this.turnCostEnc = encoder.hasEncodedValue(key) ? encoder.getDecimalEncodedValue(key) : null;
         this.superWeighting = superWeighting;
         this.turnCostExt = turnCostExt;
@@ -115,14 +115,13 @@ public class TurnWeighting implements Weighting {
         if (turnCostExt.isUTurn(edgeFrom, edgeTo)) {
             tCost = turnCostExt.isUTurnAllowed(nodeVia) ? uTurnCosts : Double.POSITIVE_INFINITY;
         } else {
+            // TODO NOW should we use TurnCostAccess?
             if (turnCostEnc != null) {
-                // TODO NOW ugly caching
                 tcFlags.ints[0] = 0;
                 turnCostExt.readFlags(tcFlags, edgeFrom, nodeVia, edgeTo);
                 tCost = turnCostEnc.getDecimal(false, tcFlags);
             }
         }
-//        System.out.println((turnCostExt.isUTurn(edgeFrom, edgeTo) ? "U" : "X") + "| " + edgeFrom + "->" + nodeVia + "->" + edgeTo + " \t" + tCost);
         return tCost;
     }
 
