@@ -382,10 +382,10 @@ public final class GraphHopperGtfs {
             }
             new PrepareRoutingSubnetworks(graphHopperStorage, Collections.singletonList(encodingManager.getEncoder("foot"))).doWork();
 
-            int id = 0;
+            int idx = 0;
             for (String gtfsFile : gtfsFiles) {
                 try {
-                    gtfsStorage.loadGtfsFromFile("gtfs_" + id++, new ZipFile(gtfsFile));
+                    gtfsStorage.loadGtfsFromFile("gtfs_" + idx++, new ZipFile(gtfsFile));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -397,9 +397,8 @@ public final class GraphHopperGtfs {
                 walkNetworkIndex = new EmptyLocationIndex();
             }
             GraphHopperGtfs graphHopperGtfs = new GraphHopperGtfs(new TranslationMap().doImport(), graphHopperStorage, walkNetworkIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
-            for (int i = 0; i < id; i++) {
-                GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get("gtfs_" + i);
-                GtfsReader gtfsReader = new GtfsReader("gtfs_" + i, graphHopperStorage, graphHopperStorage.getEncodingManager(), gtfsStorage, walkNetworkIndex);
+            gtfsStorage.getGtfsFeeds().forEach((id, gtfsFeed) -> {
+                GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), gtfsStorage, walkNetworkIndex);
                 gtfsReader.connectStopsToStreetNetwork();
                 graphHopperGtfs.getType0TransferWithTimes(gtfsFeed)
                         .forEach(t -> {
@@ -412,7 +411,7 @@ public final class GraphHopperGtfs {
                 } catch (Exception e) {
                     throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
                 }
-            }
+            });
             graphHopperStorage.flush();
             return graphHopperStorage;
         }
