@@ -33,9 +33,6 @@ import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 
-import java.util.Arrays;
-import java.util.Collections;
-
 public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfiguration> {
 
     public ImportCommand() {
@@ -48,9 +45,7 @@ public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfigurat
             final GHDirectory ghDirectory = new GHDirectory(configuration.getGraphHopperConfiguration().get("graph.location", "target/tmp"), DAType.RAM_STORE);
             final GtfsStorage gtfsStorage = GtfsStorage.createOrLoad(ghDirectory);
             EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-            final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, gtfsStorage,
-                    configuration.getGraphHopperConfiguration().has("gtfs.file") ? Arrays.asList(configuration.getGraphHopperConfiguration().get("gtfs.file", "").split(",")) : Collections.emptyList(),
-                    configuration.getGraphHopperConfiguration());
+            final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, gtfsStorage, configuration.getGraphHopperConfiguration());
             graphHopperStorage.close();
             gtfsStorage.close();
         } else {

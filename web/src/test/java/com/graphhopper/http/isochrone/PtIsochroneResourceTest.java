@@ -46,7 +46,6 @@ import javax.ws.rs.client.WebTarget;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Collections;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -63,11 +62,12 @@ public class PtIsochroneResourceTest {
 
     static {
         CmdArgs cmdArgs = new CmdArgs();
+        cmdArgs.put("gtfs.file", "../reader-gtfs/files/sample-feed.zip");
         Helper.removeDir(new File(GRAPH_LOC));
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
         GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
         gtfsStorage = GtfsStorage.createOrLoad(directory);
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, Collections.singleton("../reader-gtfs/files/sample-feed.zip"), cmdArgs);
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, cmdArgs);
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         isochroneResource = new PtIsochroneResource(gtfsStorage, graphHopperStorage.getEncodingManager(), graphHopperStorage, locationIndex);
     }

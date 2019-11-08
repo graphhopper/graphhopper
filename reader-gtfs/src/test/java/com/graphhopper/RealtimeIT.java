@@ -40,7 +40,6 @@ import org.junit.Test;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.*;
-import java.util.Collections;
 
 import static com.google.transit.realtime.GtfsRealtime.TripDescriptor.ScheduleRelationship.ADDED;
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SCHEDULED;
@@ -61,11 +60,12 @@ public class RealtimeIT {
     @BeforeClass
     public static void init() {
         CmdArgs cmdArgs = new CmdArgs();
+        cmdArgs.put("gtfs.file", "files/sample-feed.zip");
         Helper.removeDir(new File(GRAPH_LOC));
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
         GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
         gtfsStorage = GtfsStorage.createOrLoad(directory);
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, Collections.singleton("files/sample-feed.zip"), cmdArgs);
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, cmdArgs);
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         graphHopperStorage.close();
         gtfsStorage.close();
@@ -73,7 +73,7 @@ public class RealtimeIT {
         // Re-load read only
         directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
         gtfsStorage = GtfsStorage.createOrLoad(directory);
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, Collections.singleton("files/sample-feed.zip"), cmdArgs);
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, cmdArgs);
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         graphHopperFactory = GraphHopperGtfs.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage);
     }

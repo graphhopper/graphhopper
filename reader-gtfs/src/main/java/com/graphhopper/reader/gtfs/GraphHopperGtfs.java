@@ -26,7 +26,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.Trip;
 import com.graphhopper.http.WebHelper;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
@@ -365,7 +364,7 @@ public final class GraphHopperGtfs {
         this.tripFromLabel = new TripFromLabel(this.gtfsStorage, this.realtimeFeed);
     }
 
-    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, Collection<String> gtfsFiles, CmdArgs cmdArgs) {
+    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, CmdArgs cmdArgs) {
 //        GraphHopperOSM graphHopperOSM = new GraphHopperOSM();
 //        graphHopperOSM.init(cmdArgs);
         GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, new GraphExtension.NoOpExtension());
@@ -387,6 +386,7 @@ public final class GraphHopperGtfs {
             new PrepareRoutingSubnetworks(graphHopperStorage, Collections.singletonList(encodingManager.getEncoder("foot"))).doWork();
 
             int idx = 0;
+            List<String> gtfsFiles = cmdArgs.has("gtfs.file") ? Arrays.asList(cmdArgs.get("gtfs.file", "").split(",")) : Collections.emptyList();
             for (String gtfsFile : gtfsFiles) {
                 try {
                     gtfsStorage.loadGtfsFromFile("gtfs_" + idx++, new ZipFile(gtfsFile));
