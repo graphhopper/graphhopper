@@ -151,7 +151,7 @@ public class PathSimplification {
 
         // now we finally have to compress the pointList (actually remove the deleted points). note only after this
         // call the (now shifted) indices in path details and instructions are correct
-        pointList.compress(totalRemoved);
+        pointList.compress();
 
         // run a consistency check
         for (Map.Entry<String, List<PathDetail>> pdEntry : pathDetails.entrySet()) {

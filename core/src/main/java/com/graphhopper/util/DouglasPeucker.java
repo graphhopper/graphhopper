@@ -96,7 +96,7 @@ public class DouglasPeucker {
         }
 
         if (removed > 0 && compress)
-            points.compress(removed);
+            points.compress();
 
         return removed;
     }

@@ -162,7 +162,7 @@ public final class ShallowImmutablePointList extends PointList {
     }
 
     @Override
-    public void compress(int removed) {
+    public void compress() {
         throw new UnsupportedOperationException(IMMUTABLE_ERR);
     }
 

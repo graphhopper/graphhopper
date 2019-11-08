@@ -101,7 +101,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
 
         @Override
-        public void compress(int removed) {
+        public void compress() {
             throw new RuntimeException("cannot change EMPTY PointList");
         }
 
@@ -520,33 +520,16 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     /**
      * Fills all entries of the point list that are NaN with the subsequent values (and therefore shortens the list)
      */
-    public void compress(int removed) {
+    public void compress() {
         ensureMutability();
-        int freeIndex = -1;
-        for (int currentIndex = 0; currentIndex < size; currentIndex++) {
-            if (Double.isNaN(latitudes[currentIndex])) {
-                if (freeIndex < 0)
-                    freeIndex = currentIndex;
-
-                continue;
-            } else if (freeIndex < 0) {
-                continue;
-            }
-
-            set(freeIndex, latitudes[currentIndex], longitudes[currentIndex], getElevation(currentIndex));
-            set(currentIndex, Double.NaN, Double.NaN, Double.NaN);
-            // find next free index
-            int max = currentIndex;
-            int searchIndex = freeIndex + 1;
-            freeIndex = currentIndex;
-            for (; searchIndex < max; searchIndex++) {
-                if (Double.isNaN(latitudes[searchIndex])) {
-                    freeIndex = searchIndex;
-                    break;
-                }
+        int curr = 0;
+        for (int i = 0; i < size; i++) {
+            if (!Double.isNaN(latitudes[i])) {
+                set(curr, latitudes[i], longitudes[i], getElevation(i));
+                curr++;
             }
         }
-        trimToSize(size - removed);
+        trimToSize(curr);
     }
 
 

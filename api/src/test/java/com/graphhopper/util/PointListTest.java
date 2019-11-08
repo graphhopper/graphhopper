@@ -271,7 +271,10 @@ public class PointListTest {
         pl.add(14, 14, 14);
         pl.add(Double.NaN, Double.NaN, Double.NaN);
 
-        pl.compress(10);
+        pl.compress();
+        // doing it again should be no problem
+        pl.compress();
+        pl.compress();
         assertEquals(8, pl.size());
         List<Integer> expected = Arrays.asList(1, 5, 6, 7, 8, 9, 10, 14);
         List<Integer> given = new ArrayList<>();
