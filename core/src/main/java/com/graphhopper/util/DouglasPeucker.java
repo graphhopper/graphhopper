@@ -77,7 +77,6 @@ public class DouglasPeucker {
      * @param lastIndex Simplify up to this index
      * @param compress  Whether or not the <code>points</code> shall be compressed or not, if set to false no points
      *                  are actually removed, but instead their lat/lon/ele is only set to NaN
-     *
      * @return The number of removed points
      */
     public int simplify(PointList points, int fromIndex, int lastIndex, boolean compress) {
@@ -96,9 +95,8 @@ public class DouglasPeucker {
             removed = subSimplify(points, fromIndex, lastIndex);
         }
 
-        if (removed > 0 && compress) {
-            compressNew(points, removed);
-        }
+        if (removed > 0 && compress)
+            compress(points, removed);
 
         return removed;
     }
@@ -106,7 +104,7 @@ public class DouglasPeucker {
     /**
      * compress list: move points into EMPTY slots
      */
-    void compressNew(PointList points, int removed) {
+    void compress(PointList points, int removed) {
         int freeIndex = -1;
         for (int currentIndex = 0; currentIndex < points.getSize(); currentIndex++) {
             if (Double.isNaN(points.getLatitude(currentIndex))) {

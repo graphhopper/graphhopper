@@ -86,12 +86,12 @@ public class PathSimplification {
         int totalRemoved = 0;
         while (true) {
             boolean simplificationPossible = true;
+            boolean doSimplify = false;
             int nonConflictingStart = 0;
             int nonConflictingEnd = Integer.MAX_VALUE;
-            int listIndexToSimplify = -1;
             int listIndexToShift = -1;
 
-            endIntervals = calculateEndIntervals(endIntervals, startIntervals, offsets, listsToSimplify);
+            updateEndIntervals(endIntervals, startIntervals, offsets, listsToSimplify);
 
             // Find the intervals to run a simplification, if possible, and where to shift
             for (int i = 0; i < listsToSimplify.size(); i++) {
@@ -99,21 +99,21 @@ public class PathSimplification {
                     simplificationPossible = false;
                 }
                 if (startIntervals[i] > nonConflictingStart) {
-                    listIndexToSimplify = -1;
+                    doSimplify = false;
                     nonConflictingStart = startIntervals[i];
                 }
                 if (endIntervals[i] < nonConflictingEnd) {
-                    listIndexToSimplify = -1;
+                    doSimplify = false;
                     nonConflictingEnd = endIntervals[i];
                     // Remember the lowest endInterval
                     listIndexToShift = i;
                 }
                 if (startIntervals[i] >= nonConflictingStart && endIntervals[i] <= nonConflictingEnd) {
-                    listIndexToSimplify = i;
+                    doSimplify = true;
                 }
             }
 
-            if (listIndexToSimplify >= 0 && simplificationPossible) {
+            if (doSimplify && simplificationPossible) {
                 // Only simplify if there is more than one point
                 if (nonConflictingEnd - nonConflictingStart > 1) {
                     // This is important for performance: we must not compress the point list after each call to
@@ -151,7 +151,7 @@ public class PathSimplification {
 
         // now we finally have to compress the pointList (actually remove the deleted points). note only after this
         // call the (now shifted) indices in path details and instructions are correct
-        douglasPeucker.compressNew(pointList, totalRemoved);
+        douglasPeucker.compress(pointList, totalRemoved);
 
         // run a consistency check
         for (Map.Entry<String, List<PathDetail>> pdEntry : pathDetails.entrySet()) {
@@ -194,7 +194,7 @@ public class PathSimplification {
         }
     }
 
-    private int[] calculateEndIntervals(int[] endIntervals, int[] startIntervals, int[] offset, List<List> toSimplify) {
+    private int[] updateEndIntervals(int[] endIntervals, int[] startIntervals, int[] offset, List<List> toSimplify) {
         for (int i = 0; i < toSimplify.size(); i++) {
             endIntervals[i] = startIntervals[i] + getLength(toSimplify.get(i), offset[i]);
         }
