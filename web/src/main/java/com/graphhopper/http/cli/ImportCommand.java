@@ -29,7 +29,6 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;
-import com.graphhopper.storage.GraphHopperStorage;
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -46,7 +45,7 @@ public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfigurat
             final GHDirectory ghDirectory = new GHDirectory(configuration.getGraphHopperConfiguration().get("graph.location", "target/tmp"), DAType.RAM_STORE);
             final GtfsStorage gtfsStorage = GtfsStorage.createOrLoad(ghDirectory);
             EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-            final GraphHopper graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, gtfsStorage, configuration.getGraphHopperConfiguration());
+            final GraphHopper graphHopperStorage = GraphHopperGtfs.createOrLoad(encodingManager, gtfsStorage, configuration.getGraphHopperConfiguration());
             graphHopperStorage.close();
             gtfsStorage.close();
         } else {

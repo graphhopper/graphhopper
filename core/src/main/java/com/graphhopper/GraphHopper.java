@@ -880,6 +880,8 @@ public class GraphHopper implements GraphHopperAPI {
 
         initLocationIndex();
 
+        importPublicTransit();
+
         if (lmFactoryDecorator.isEnabled())
             lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
         loadOrPrepareLM(closeEarly);
@@ -888,6 +890,10 @@ public class GraphHopper implements GraphHopperAPI {
             chFactoryDecorator.createPreparations(ghStorage);
         if (!isCHPrepared())
             prepareCH(closeEarly);
+    }
+
+    protected void importPublicTransit() {
+
     }
 
     private static final String INTERPOLATION_KEY = "prepare.elevation_interpolation.done";

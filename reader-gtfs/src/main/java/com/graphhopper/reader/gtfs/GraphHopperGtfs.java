@@ -28,18 +28,16 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.Trip;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
-import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.exceptions.PointNotFoundException;
@@ -48,7 +46,6 @@ import com.graphhopper.util.shapes.GHPoint;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -62,6 +59,145 @@ import static java.util.Comparator.comparingLong;
 
 @Path("route")
 public final class GraphHopperGtfs {
+
+    private final TranslationMap translationMap;
+    private final PtEncodedValues ptEncodedValues;
+    private final Weighting accessEgressWeighting;
+    private final GraphHopperStorage graphHopperStorage;
+    private final LocationIndex locationIndex;
+    private final GtfsStorage gtfsStorage;
+    private final RealtimeFeed realtimeFeed;
+    private final TripFromLabel tripFromLabel;
+
+    @Inject
+    public GraphHopperGtfs(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed) {
+        this.ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
+        this.accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
+        this.translationMap = translationMap;
+        this.graphHopperStorage = graphHopperStorage;
+        this.locationIndex = locationIndex;
+        this.gtfsStorage = gtfsStorage;
+        this.realtimeFeed = realtimeFeed;
+        this.tripFromLabel = new TripFromLabel(this.gtfsStorage, this.realtimeFeed);
+    }
+
+    public static Factory createFactory(TranslationMap translationMap, GraphHopper graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        return new Factory(translationMap, graphHopperStorage.getGraphHopperStorage(), locationIndex, gtfsStorage);
+    }
+
+    public static GraphHopper createOrLoad(EncodingManager encodingManager, GtfsStorage gtfsStorage, CmdArgs cmdArgs) {
+        GraphHopperOSM graphHopperOSM = new GraphHopperOSM() {
+            @Override
+            protected void importPublicTransit() {
+                GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
+                int idx = 0;
+                List<String> gtfsFiles = cmdArgs.has("gtfs.file") ? Arrays.asList(cmdArgs.get("gtfs.file", "").split(",")) : Collections.emptyList();
+                for (String gtfsFile : gtfsFiles) {
+                    try {
+                        gtfsStorage.loadGtfsFromFile("gtfs_" + idx++, new ZipFile(gtfsFile));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                LocationIndex walkNetworkIndex = getLocationIndex();
+                GraphHopperGtfs graphHopperGtfs = new GraphHopperGtfs(new TranslationMap().doImport(), graphHopperStorage, walkNetworkIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
+                gtfsStorage.getGtfsFeeds().forEach((id, gtfsFeed) -> {
+                    GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), gtfsStorage, walkNetworkIndex);
+                    gtfsReader.connectStopsToStreetNetwork();
+                    graphHopperGtfs.getType0TransferWithTimes(gtfsFeed)
+                            .forEach(t -> {
+                                t.transfer.transfer_type = 2;
+                                t.transfer.min_transfer_time = (int) (t.time / 1000L);
+                                gtfsFeed.transfers.put(t.id, t.transfer);
+                            });
+                    try {
+                        gtfsReader.buildPtNetwork();
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
+                    }
+                });
+            }
+        };
+        graphHopperOSM.init(cmdArgs);
+        graphHopperOSM.setEncodingManager(encodingManager);
+        graphHopperOSM.importOrLoad();
+        return graphHopperOSM;
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public ObjectNode route(@QueryParam("point") List<GHLocation> requestPoints,
+                            @QueryParam("pt.earliest_departure_time") String departureTimeString,
+                            @QueryParam("pt.arrive_by") @DefaultValue("false") boolean arriveBy,
+                            @QueryParam("locale") String localeStr,
+                            @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
+                            @QueryParam("pt.profile") Boolean profileQuery,
+                            @QueryParam("pt.limit_solutions") Integer limitSolutions) {
+
+        if (departureTimeString == null) {
+            throw new BadRequestException(String.format(Locale.ROOT, "Illegal value for required parameter %s: [%s]", "pt.earliest_departure_time", departureTimeString));
+        }
+        Instant departureTime;
+        try {
+            departureTime = Instant.parse(departureTimeString);
+        } catch (DateTimeParseException e) {
+            throw new BadRequestException(String.format(Locale.ROOT, "Illegal value for required parameter %s: [%s]", "pt.earliest_departure_time", departureTimeString));
+        }
+
+        Request request = new Request(requestPoints, departureTime);
+        request.setArriveBy(arriveBy);
+        Optional.ofNullable(profileQuery).ifPresent(request::setProfileQuery);
+        Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
+        Optional.ofNullable(localeStr).ifPresent(s -> request.setLocale(Helper.getLocale(s)));
+        Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
+
+        GHResponse route = new RequestHandler(request).route();
+        return WebHelper.jsonObject(route, true, true, false, false, 0.0f);
+    }
+
+    public GHResponse route(Request request) {
+        return new RequestHandler(request).route();
+    }
+
+    private Stream<TransferWithTime> getType0TransferWithTimes(GTFSFeed gtfsFeed) {
+        return gtfsFeed.transfers.entrySet()
+                .parallelStream()
+                .filter(e -> e.getValue().transfer_type == 0)
+                .map(e -> {
+                    PointList points = new PointList(2, false);
+                    final int fromnode = gtfsStorage.getStationNodes().get(e.getValue().from_stop_id);
+                    final QueryResult fromstation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
+                    fromstation.setClosestNode(fromnode);
+                    points.add(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
+
+                    final int tonode = gtfsStorage.getStationNodes().get(e.getValue().to_stop_id);
+                    final QueryResult tostation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
+                    tostation.setClosestNode(tonode);
+                    points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
+
+                    QueryGraph queryGraph = QueryGraph.lookup(graphHopperStorage, Collections.emptyList());
+                    final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, false, true, 5.0, false);
+
+                    MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
+                    Iterator<Label> iterator = router.calcLabels(fromnode, Instant.ofEpochMilli(0), 0).iterator();
+                    Label solution = null;
+                    while (iterator.hasNext()) {
+                        Label label = iterator.next();
+                        if (tonode == label.adjNode) {
+                            solution = label;
+                            break;
+                        }
+                    }
+                    if (solution == null) {
+                        throw new RuntimeException("Can't find a transfer walk route.");
+                    }
+                    TransferWithTime transferWithTime = new TransferWithTime();
+                    transferWithTime.id = e.getKey();
+                    transferWithTime.transfer = e.getValue();
+                    transferWithTime.time = solution.currentTime;
+                    return transferWithTime;
+                });
+    }
 
     public static class Factory {
         private final TranslationMap translationMap;
@@ -89,18 +225,11 @@ public final class GraphHopperGtfs {
         }
     }
 
-    public static Factory createFactory(TranslationMap translationMap, GraphHopper graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-        return new Factory(translationMap, graphHopperStorage.getGraphHopperStorage(), locationIndex, gtfsStorage);
+    private static class TransferWithTime {
+        public String id;
+        Transfer transfer;
+        long time;
     }
-
-    private final TranslationMap translationMap;
-    private final PtEncodedValues ptEncodedValues;
-    private final Weighting accessEgressWeighting;
-    private final GraphHopperStorage graphHopperStorage;
-    private final LocationIndex locationIndex;
-    private final GtfsStorage gtfsStorage;
-    private final RealtimeFeed realtimeFeed;
-    private final TripFromLabel tripFromLabel;
 
     private class RequestHandler {
         private final int maxVisitedNodesForRequest;
@@ -283,7 +412,8 @@ public final class GraphHopperGtfs {
                         router.removeDominated(combinedSolution, discoveredSolutions);
                         List<Label> closedSolutions = discoveredSolutions.stream().filter(s -> router.weight(s) < router.weight(label) + smallestStationLabelWeight).collect(Collectors.toList());
                         if (closedSolutions.size() >= limitSolutions) continue;
-                        if (profileQuery && combinedSolution.departureTime != null && (combinedSolution.departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration && closedSolutions.size() > 0 && closedSolutions.get(closedSolutions.size()-1).departureTime != null && (closedSolutions.get(closedSolutions.size()-1).departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration) continue;
+                        if (profileQuery && combinedSolution.departureTime != null && (combinedSolution.departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration && closedSolutions.size() > 0 && closedSolutions.get(closedSolutions.size() - 1).departureTime != null && (closedSolutions.get(closedSolutions.size() - 1).departureTime - initialTime.toEpochMilli()) * (arriveBy ? -1L : 1L) > maxProfileDuration)
+                            continue;
                         discoveredSolutions.add(combinedSolution);
                         discoveredSolutions.sort(comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));
                         originalSolutions.put(combinedSolution, label);
@@ -352,172 +482,6 @@ public final class GraphHopperGtfs {
             // In turn, we must also think of this virtual walk solution in the other test (where we check if all labels are closed).
         }
 
-    }
-
-    @Inject
-    public GraphHopperGtfs(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed) {
-        this.ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
-        this.accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
-        this.translationMap = translationMap;
-        this.graphHopperStorage = graphHopperStorage;
-        this.locationIndex = locationIndex;
-        this.gtfsStorage = gtfsStorage;
-        this.realtimeFeed = realtimeFeed;
-        this.tripFromLabel = new TripFromLabel(this.gtfsStorage, this.realtimeFeed);
-    }
-
-    public static GraphHopper createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, CmdArgs cmdArgs) {
-        GraphHopperOSM graphHopperOSM = new GraphHopperOSM();
-        graphHopperOSM.init(cmdArgs);
-        graphHopperOSM.setEncodingManager(encodingManager);
-        graphHopperOSM.importOrLoad();
-        GraphHopperStorage graphHopperStorage = graphHopperOSM.getGraphHopperStorage();
-        LocationIndex walkNetworkIndex = graphHopperOSM.getLocationIndex();
-        return graphHopperOSM;
-//        GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, new GraphExtension.NoOpExtension());
-//        if (graphHopperStorage.loadExisting()) {
-//            return graphHopperStorage;
-//        } else {
-//            String osmFile = cmdArgs.get("datareader.file", "");
-//            graphHopperStorage.create(1000);
-//            if (!Helper.isEmpty(osmFile)) {
-//                OSMReader osmReader = new OSMReader(graphHopperStorage);
-//                osmReader.setFile(new File(osmFile));
-//                osmReader.setCreateStorage(false);
-//                try {
-//                    osmReader.readGraph();
-//                } catch (IOException e) {
-//                    throw new RuntimeException(e);
-//                }
-//            }
-//            new PrepareRoutingSubnetworks(graphHopperStorage, Collections.singletonList(encodingManager.getEncoder("foot"))).doWork();
-//
-//            int idx = 0;
-//            List<String> gtfsFiles = cmdArgs.has("gtfs.file") ? Arrays.asList(cmdArgs.get("gtfs.file", "").split(",")) : Collections.emptyList();
-//            for (String gtfsFile : gtfsFiles) {
-//                try {
-//                    gtfsStorage.loadGtfsFromFile("gtfs_" + idx++, new ZipFile(gtfsFile));
-//                } catch (IOException e) {
-//                    throw new RuntimeException(e);
-//                }
-//            }
-//            LocationIndex walkNetworkIndex;
-//            if (graphHopperStorage.getNodes() > 0) {
-//                walkNetworkIndex = new LocationIndexTree(graphHopperStorage, new RAMDirectory()).prepareIndex();
-//            } else {
-//                walkNetworkIndex = new EmptyLocationIndex();
-//            }
-//            GraphHopperGtfs graphHopperGtfs = new GraphHopperGtfs(new TranslationMap().doImport(), graphHopperStorage, walkNetworkIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
-//            gtfsStorage.getGtfsFeeds().forEach((id, gtfsFeed) -> {
-//                GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), gtfsStorage, walkNetworkIndex);
-//                gtfsReader.connectStopsToStreetNetwork();
-//                graphHopperGtfs.getType0TransferWithTimes(gtfsFeed)
-//                        .forEach(t -> {
-//                            t.transfer.transfer_type = 2;
-//                            t.transfer.min_transfer_time = (int) (t.time / 1000L);
-//                            gtfsFeed.transfers.put(t.id, t.transfer);
-//                        });
-//                try {
-//                    gtfsReader.buildPtNetwork();
-//                } catch (Exception e) {
-//                    throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
-//                }
-//            });
-//            graphHopperStorage.flush();
-//            return graphHopperStorage;
-//        }
-    }
-
-
-    public static LocationIndex createOrLoadIndex(GHDirectory directory, GraphHopperStorage graphHopperStorage) {
-        final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot"));
-        Graph walkNetwork = GraphSupport.filteredView(graphHopperStorage, filter);
-        LocationIndex locationIndex = new LocationIndexTree(walkNetwork, directory);
-        if (!locationIndex.loadExisting()) {
-            locationIndex.prepareIndex();
-        }
-        return locationIndex;
-    }
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public ObjectNode route(@QueryParam("point") List<GHLocation> requestPoints,
-                            @QueryParam("pt.earliest_departure_time") String departureTimeString,
-                            @QueryParam("pt.arrive_by") @DefaultValue("false") boolean arriveBy,
-                            @QueryParam("locale") String localeStr,
-                            @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
-                            @QueryParam("pt.profile") Boolean profileQuery,
-                            @QueryParam("pt.limit_solutions") Integer limitSolutions) {
-
-        if (departureTimeString == null) {
-            throw new BadRequestException(String.format(Locale.ROOT, "Illegal value for required parameter %s: [%s]", "pt.earliest_departure_time", departureTimeString));
-        }
-        Instant departureTime;
-        try {
-            departureTime = Instant.parse(departureTimeString);
-        } catch (DateTimeParseException e) {
-            throw new BadRequestException(String.format(Locale.ROOT, "Illegal value for required parameter %s: [%s]", "pt.earliest_departure_time", departureTimeString));
-        }
-
-        Request request = new Request(requestPoints, departureTime);
-        request.setArriveBy(arriveBy);
-        Optional.ofNullable(profileQuery).ifPresent(request::setProfileQuery);
-        Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
-        Optional.ofNullable(localeStr).ifPresent(s -> request.setLocale(Helper.getLocale(s)));
-        Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
-
-        GHResponse route = new RequestHandler(request).route();
-        return WebHelper.jsonObject(route, true, true, false, false, 0.0f);
-    }
-
-    public GHResponse route(Request request) {
-        return new RequestHandler(request).route();
-    }
-
-    private static class TransferWithTime {
-        public String id;
-        Transfer transfer;
-        long time;
-    }
-
-    private Stream<TransferWithTime> getType0TransferWithTimes(GTFSFeed gtfsFeed) {
-        return gtfsFeed.transfers.entrySet()
-                .parallelStream()
-                .filter(e -> e.getValue().transfer_type == 0)
-                .map(e -> {
-                    PointList points = new PointList(2, false);
-                    final int fromnode = gtfsStorage.getStationNodes().get(e.getValue().from_stop_id);
-                    final QueryResult fromstation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
-                    fromstation.setClosestNode(fromnode);
-                    points.add(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
-
-                    final int tonode = gtfsStorage.getStationNodes().get(e.getValue().to_stop_id);
-                    final QueryResult tostation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
-                    tostation.setClosestNode(tonode);
-                    points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
-
-                    QueryGraph queryGraph = QueryGraph.lookup(graphHopperStorage, Collections.emptyList());
-                    final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, false, true, 5.0, false);
-
-                    MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
-                    Iterator<Label> iterator = router.calcLabels(fromnode, Instant.ofEpochMilli(0), 0).iterator();
-                    Label solution = null;
-                    while (iterator.hasNext()) {
-                        Label label = iterator.next();
-                        if (tonode == label.adjNode) {
-                            solution = label;
-                            break;
-                        }
-                    }
-                    if (solution == null) {
-                        throw new RuntimeException("Can't find a transfer walk route.");
-                    }
-                    TransferWithTime transferWithTime = new TransferWithTime();
-                    transferWithTime.id = e.getKey();
-                    transferWithTime.transfer = e.getValue();
-                    transferWithTime.time = solution.currentTime;
-                    return transferWithTime;
-                });
     }
 
 }

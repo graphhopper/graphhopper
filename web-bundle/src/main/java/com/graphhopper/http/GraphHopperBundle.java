@@ -194,7 +194,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         final GHDirectory ghDirectory = new GHDirectory(configuration.get("graph.location", "target/tmp"), DAType.RAM_STORE);
         final GtfsStorage gtfsStorage = GtfsStorage.createOrLoad(ghDirectory);
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-        final GraphHopper graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, gtfsStorage, configuration);
+        final GraphHopper graphHopperStorage = GraphHopperGtfs.createOrLoad(encodingManager, gtfsStorage, configuration);
         final TranslationMap translationMap = new TranslationMap().doImport();
         final LocationIndex locationIndex = graphHopperStorage.getLocationIndex();
         environment.jersey().register(new AbstractBinder() {
