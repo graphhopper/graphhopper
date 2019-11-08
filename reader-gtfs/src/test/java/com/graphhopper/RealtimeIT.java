@@ -53,7 +53,7 @@ public class RealtimeIT {
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static final String agencyId = "DTA";
     private static GraphHopperGtfs.Factory graphHopperFactory;
-    private static GraphHopperStorage graphHopperStorage;
+    private static GraphHopper graphHopperStorage;
     private static LocationIndex locationIndex;
     private static GtfsStorage gtfsStorage;
 
@@ -66,7 +66,7 @@ public class RealtimeIT {
         GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
         gtfsStorage = GtfsStorage.createOrLoad(directory);
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, cmdArgs);
-        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
+        locationIndex = graphHopperStorage.getLocationIndex();
         graphHopperStorage.close();
         gtfsStorage.close();
         locationIndex.close();
@@ -74,7 +74,7 @@ public class RealtimeIT {
         directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
         gtfsStorage = GtfsStorage.createOrLoad(directory);
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, cmdArgs);
-        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
+        locationIndex = graphHopperStorage.getLocationIndex();
         graphHopperFactory = GraphHopperGtfs.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage);
     }
 

@@ -48,7 +48,7 @@ public class ExtendedRouteTypeIT {
     private static final String GRAPH_LOC = "target/ExtendedRouteType";
     private static GraphHopperGtfs graphHopper;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static GraphHopperStorage graphHopperStorage;
+    private static GraphHopper graphHopperStorage;
     private static LocationIndex locationIndex;
     private static GtfsStorage gtfsStorage;
 
@@ -61,7 +61,7 @@ public class ExtendedRouteTypeIT {
         GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
         gtfsStorage = GtfsStorage.createOrLoad(directory);
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, cmdArgs);
-        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
+        locationIndex = graphHopperStorage.getLocationIndex();
         graphHopper = GraphHopperGtfs.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage)
                 .createWithoutRealtimeFeed();
     }

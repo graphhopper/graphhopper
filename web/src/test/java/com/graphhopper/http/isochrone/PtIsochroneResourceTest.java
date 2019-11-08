@@ -18,6 +18,7 @@
 
 package com.graphhopper.http.isochrone;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.http.GHPointConverterProvider;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
@@ -54,7 +55,7 @@ public class PtIsochroneResourceTest {
 
     private static final String GRAPH_LOC = "target/PtIsochroneResourceTest";
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static GraphHopperStorage graphHopperStorage;
+    private static GraphHopper graphHopperStorage;
     private static LocationIndex locationIndex;
     private static PtIsochroneResource isochroneResource;
     private static GtfsStorage gtfsStorage;
@@ -68,8 +69,8 @@ public class PtIsochroneResourceTest {
         GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
         gtfsStorage = GtfsStorage.createOrLoad(directory);
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, cmdArgs);
-        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
-        isochroneResource = new PtIsochroneResource(gtfsStorage, graphHopperStorage.getEncodingManager(), graphHopperStorage, locationIndex);
+        locationIndex = graphHopperStorage.getLocationIndex();
+        isochroneResource = new PtIsochroneResource(gtfsStorage, graphHopperStorage.getEncodingManager(), graphHopperStorage.getGraphHopperStorage(), locationIndex);
     }
 
     @ClassRule

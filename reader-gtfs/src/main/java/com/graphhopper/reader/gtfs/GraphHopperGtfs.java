@@ -23,9 +23,11 @@ import com.conveyal.gtfs.model.Transfer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.Trip;
 import com.graphhopper.http.WebHelper;
+import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
@@ -87,8 +89,8 @@ public final class GraphHopperGtfs {
         }
     }
 
-    public static Factory createFactory(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-        return new Factory(translationMap, graphHopperStorage, locationIndex, gtfsStorage);
+    public static Factory createFactory(TranslationMap translationMap, GraphHopper graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        return new Factory(translationMap, graphHopperStorage.getGraphHopperStorage(), locationIndex, gtfsStorage);
     }
 
     private final TranslationMap translationMap;
@@ -364,61 +366,65 @@ public final class GraphHopperGtfs {
         this.tripFromLabel = new TripFromLabel(this.gtfsStorage, this.realtimeFeed);
     }
 
-    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, CmdArgs cmdArgs) {
-//        GraphHopperOSM graphHopperOSM = new GraphHopperOSM();
-//        graphHopperOSM.init(cmdArgs);
-        GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, new GraphExtension.NoOpExtension());
-        if (graphHopperStorage.loadExisting()) {
-            return graphHopperStorage;
-        } else {
-            String osmFile = cmdArgs.get("datareader.file", "");
-            graphHopperStorage.create(1000);
-            if (!Helper.isEmpty(osmFile)) {
-                OSMReader osmReader = new OSMReader(graphHopperStorage);
-                osmReader.setFile(new File(osmFile));
-                osmReader.setCreateStorage(false);
-                try {
-                    osmReader.readGraph();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            new PrepareRoutingSubnetworks(graphHopperStorage, Collections.singletonList(encodingManager.getEncoder("foot"))).doWork();
-
-            int idx = 0;
-            List<String> gtfsFiles = cmdArgs.has("gtfs.file") ? Arrays.asList(cmdArgs.get("gtfs.file", "").split(",")) : Collections.emptyList();
-            for (String gtfsFile : gtfsFiles) {
-                try {
-                    gtfsStorage.loadGtfsFromFile("gtfs_" + idx++, new ZipFile(gtfsFile));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            LocationIndex walkNetworkIndex;
-            if (graphHopperStorage.getNodes() > 0) {
-                walkNetworkIndex = new LocationIndexTree(graphHopperStorage, new RAMDirectory()).prepareIndex();
-            } else {
-                walkNetworkIndex = new EmptyLocationIndex();
-            }
-            GraphHopperGtfs graphHopperGtfs = new GraphHopperGtfs(new TranslationMap().doImport(), graphHopperStorage, walkNetworkIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
-            gtfsStorage.getGtfsFeeds().forEach((id, gtfsFeed) -> {
-                GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), gtfsStorage, walkNetworkIndex);
-                gtfsReader.connectStopsToStreetNetwork();
-                graphHopperGtfs.getType0TransferWithTimes(gtfsFeed)
-                        .forEach(t -> {
-                            t.transfer.transfer_type = 2;
-                            t.transfer.min_transfer_time = (int) (t.time / 1000L);
-                            gtfsFeed.transfers.put(t.id, t.transfer);
-                        });
-                try {
-                    gtfsReader.buildPtNetwork();
-                } catch (Exception e) {
-                    throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
-                }
-            });
-            graphHopperStorage.flush();
-            return graphHopperStorage;
-        }
+    public static GraphHopper createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, CmdArgs cmdArgs) {
+        GraphHopperOSM graphHopperOSM = new GraphHopperOSM();
+        graphHopperOSM.init(cmdArgs);
+        graphHopperOSM.importOrLoad();
+        GraphHopperStorage graphHopperStorage = graphHopperOSM.getGraphHopperStorage();
+        LocationIndex walkNetworkIndex = graphHopperOSM.getLocationIndex();
+        return graphHopperOSM;
+//        GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, new GraphExtension.NoOpExtension());
+//        if (graphHopperStorage.loadExisting()) {
+//            return graphHopperStorage;
+//        } else {
+//            String osmFile = cmdArgs.get("datareader.file", "");
+//            graphHopperStorage.create(1000);
+//            if (!Helper.isEmpty(osmFile)) {
+//                OSMReader osmReader = new OSMReader(graphHopperStorage);
+//                osmReader.setFile(new File(osmFile));
+//                osmReader.setCreateStorage(false);
+//                try {
+//                    osmReader.readGraph();
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
+//            }
+//            new PrepareRoutingSubnetworks(graphHopperStorage, Collections.singletonList(encodingManager.getEncoder("foot"))).doWork();
+//
+//            int idx = 0;
+//            List<String> gtfsFiles = cmdArgs.has("gtfs.file") ? Arrays.asList(cmdArgs.get("gtfs.file", "").split(",")) : Collections.emptyList();
+//            for (String gtfsFile : gtfsFiles) {
+//                try {
+//                    gtfsStorage.loadGtfsFromFile("gtfs_" + idx++, new ZipFile(gtfsFile));
+//                } catch (IOException e) {
+//                    throw new RuntimeException(e);
+//                }
+//            }
+//            LocationIndex walkNetworkIndex;
+//            if (graphHopperStorage.getNodes() > 0) {
+//                walkNetworkIndex = new LocationIndexTree(graphHopperStorage, new RAMDirectory()).prepareIndex();
+//            } else {
+//                walkNetworkIndex = new EmptyLocationIndex();
+//            }
+//            GraphHopperGtfs graphHopperGtfs = new GraphHopperGtfs(new TranslationMap().doImport(), graphHopperStorage, walkNetworkIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
+//            gtfsStorage.getGtfsFeeds().forEach((id, gtfsFeed) -> {
+//                GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), gtfsStorage, walkNetworkIndex);
+//                gtfsReader.connectStopsToStreetNetwork();
+//                graphHopperGtfs.getType0TransferWithTimes(gtfsFeed)
+//                        .forEach(t -> {
+//                            t.transfer.transfer_type = 2;
+//                            t.transfer.min_transfer_time = (int) (t.time / 1000L);
+//                            gtfsFeed.transfers.put(t.id, t.transfer);
+//                        });
+//                try {
+//                    gtfsReader.buildPtNetwork();
+//                } catch (Exception e) {
+//                    throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
+//                }
+//            });
+//            graphHopperStorage.flush();
+//            return graphHopperStorage;
+//        }
     }
 
 

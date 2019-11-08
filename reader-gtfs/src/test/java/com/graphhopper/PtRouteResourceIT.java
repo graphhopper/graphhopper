@@ -49,7 +49,7 @@ public class PtRouteResourceIT {
     private static final String GRAPH_LOC = "target/PtRouteResourceIT";
     private static GraphHopperGtfs graphHopper;
     private static GtfsStorage gtfsStorage;
-    private static GraphHopperStorage graphHopperStorage;
+    private static GraphHopper graphHopperStorage;
     private static LocationIndex locationIndex;
 
     static {
@@ -61,7 +61,7 @@ public class PtRouteResourceIT {
         GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
         gtfsStorage = GtfsStorage.createOrLoad(directory);
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, cmdArgs);
-        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
+        locationIndex = graphHopperStorage.getLocationIndex();
         graphHopper = GraphHopperGtfs.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage)
                 .createWithoutRealtimeFeed();
     }

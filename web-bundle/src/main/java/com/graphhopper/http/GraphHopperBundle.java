@@ -194,9 +194,9 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         final GHDirectory ghDirectory = new GHDirectory(configuration.get("graph.location", "target/tmp"), DAType.RAM_STORE);
         final GtfsStorage gtfsStorage = GtfsStorage.createOrLoad(ghDirectory);
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-        final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, gtfsStorage, configuration);
+        final GraphHopper graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, gtfsStorage, configuration);
         final TranslationMap translationMap = new TranslationMap().doImport();
-        final LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(ghDirectory, graphHopperStorage);
+        final LocationIndex locationIndex = graphHopperStorage.getLocationIndex();
         environment.jersey().register(new AbstractBinder() {
             @Override
             protected void configure() {
@@ -205,13 +205,13 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(locationIndex).to(LocationIndex.class);
                 bind(translationMap).to(TranslationMap.class);
                 bind(encodingManager).to(EncodingManager.class);
-                bind(graphHopperStorage).to(GraphHopperStorage.class);
+                bind(graphHopperStorage.getGraphHopperStorage()).to(GraphHopperStorage.class);
                 bind(gtfsStorage).to(GtfsStorage.class);
             }
         });
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(GraphHopperGtfs.class);
-        environment.jersey().register(new PtIsochroneResource(gtfsStorage, encodingManager, graphHopperStorage, locationIndex));
+        environment.jersey().register(new PtIsochroneResource(gtfsStorage, encodingManager, graphHopperStorage.getGraphHopperStorage(), locationIndex));
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
         // The included web client works best if we say we only support pt.
@@ -238,7 +238,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 graphHopperStorage.close();
             }
         });
-        environment.healthChecks().register("graphhopper-storage", new GraphHopperStorageHealthCheck(graphHopperStorage));
+        environment.healthChecks().register("graphhopper-storage", new GraphHopperStorageHealthCheck(graphHopperStorage.getGraphHopperStorage()));
     }
 
     private void runRegularGraphHopper(CmdArgs configuration, Environment environment) {
