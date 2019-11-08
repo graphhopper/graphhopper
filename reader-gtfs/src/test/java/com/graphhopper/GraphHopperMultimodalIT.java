@@ -56,6 +56,7 @@ public class GraphHopperMultimodalIT {
         CmdArgs cmdArgs = new CmdArgs();
         cmdArgs.put("datareader.file", "files/beatty.osm");
         cmdArgs.put("gtfs.file", "files/sample-feed.zip");
+        cmdArgs.put("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new FootFlagEncoder()).build();
         GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);

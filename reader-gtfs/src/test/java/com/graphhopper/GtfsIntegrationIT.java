@@ -42,6 +42,7 @@ public class GtfsIntegrationIT {
         CmdArgs cmdArgs = new CmdArgs();
         cmdArgs.put("datareader.file", "files/beatty.osm");
         cmdArgs.put("gtfs.file", "files/sample-feed.zip");
+        cmdArgs.put("graph.location", "target/GtfsIntegrationIT");
         Helper.removeDir(new File("target/GtfsIntegrationIT"));
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
         GHDirectory directory = new GHDirectory("target/GtfsIntegrationIT", DAType.RAM_STORE);

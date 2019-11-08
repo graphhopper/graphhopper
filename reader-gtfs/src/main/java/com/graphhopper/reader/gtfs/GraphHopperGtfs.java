@@ -369,6 +369,7 @@ public final class GraphHopperGtfs {
     public static GraphHopper createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, CmdArgs cmdArgs) {
         GraphHopperOSM graphHopperOSM = new GraphHopperOSM();
         graphHopperOSM.init(cmdArgs);
+        graphHopperOSM.setEncodingManager(encodingManager);
         graphHopperOSM.importOrLoad();
         GraphHopperStorage graphHopperStorage = graphHopperOSM.getGraphHopperStorage();
         LocationIndex walkNetworkIndex = graphHopperOSM.getLocationIndex();
