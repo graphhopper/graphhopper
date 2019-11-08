@@ -30,6 +30,7 @@ import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
@@ -59,11 +60,12 @@ public class RealtimeIT {
 
     @BeforeClass
     public static void init() {
+        CmdArgs cmdArgs = new CmdArgs();
         Helper.removeDir(new File(GRAPH_LOC));
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
         GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
         gtfsStorage = GtfsStorage.createOrLoad(directory);
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, Collections.singleton("files/sample-feed.zip"), cmdArgs);
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         graphHopperStorage.close();
         gtfsStorage.close();
@@ -71,7 +73,7 @@ public class RealtimeIT {
         // Re-load read only
         directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
         gtfsStorage = GtfsStorage.createOrLoad(directory);
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, Collections.singleton("files/sample-feed.zip"), cmdArgs);
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         graphHopperFactory = GraphHopperGtfs.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage);
     }

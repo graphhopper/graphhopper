@@ -26,6 +26,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.Trip;
 import com.graphhopper.http.WebHelper;
+import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
@@ -364,13 +365,16 @@ public final class GraphHopperGtfs {
         this.tripFromLabel = new TripFromLabel(this.gtfsStorage, this.realtimeFeed);
     }
 
-    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, Collection<String> gtfsFiles, Collection<String> osmFiles) {
+    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, Collection<String> gtfsFiles, CmdArgs cmdArgs) {
+//        GraphHopperOSM graphHopperOSM = new GraphHopperOSM();
+//        graphHopperOSM.init(cmdArgs);
         GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, new GraphExtension.NoOpExtension());
         if (graphHopperStorage.loadExisting()) {
             return graphHopperStorage;
         } else {
+            String osmFile = cmdArgs.get("datareader.file", "");
             graphHopperStorage.create(1000);
-            for (String osmFile : osmFiles) {
+            if (!Helper.isEmpty(osmFile)) {
                 OSMReader osmReader = new OSMReader(graphHopperStorage);
                 osmReader.setFile(new File(osmFile));
                 osmReader.setCreateStorage(false);

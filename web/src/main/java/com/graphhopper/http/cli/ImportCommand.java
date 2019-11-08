@@ -50,7 +50,7 @@ public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfigurat
             EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
             final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, gtfsStorage,
                     configuration.getGraphHopperConfiguration().has("gtfs.file") ? Arrays.asList(configuration.getGraphHopperConfiguration().get("gtfs.file", "").split(",")) : Collections.emptyList(),
-                    configuration.getGraphHopperConfiguration().has("datareader.file") ? Arrays.asList(configuration.getGraphHopperConfiguration().get("datareader.file", "").split(",")) : Collections.emptyList());
+                    configuration.getGraphHopperConfiguration());
             graphHopperStorage.close();
             gtfsStorage.close();
         } else {

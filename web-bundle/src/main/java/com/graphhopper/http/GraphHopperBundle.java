@@ -198,7 +198,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
         final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, gtfsStorage,
                 configuration.has("gtfs.file") ? Arrays.asList(configuration.get("gtfs.file", "").split(",")) : Collections.emptyList(),
-                configuration.has("datareader.file") ? Arrays.asList(configuration.get("datareader.file", "").split(",")) : Collections.emptyList());
+                configuration);
         final TranslationMap translationMap = new TranslationMap().doImport();
         final LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(ghDirectory, graphHopperStorage);
         environment.jersey().register(new AbstractBinder() {
