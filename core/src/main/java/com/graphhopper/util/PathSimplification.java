@@ -71,12 +71,19 @@ public class PathSimplification {
             return pointList;
         }
 
+        // When there are instructions or path details we have to make sure certain points (the first and last ones
+        // of each instruction/path detail interval) do not get removed by Douglas-Peucker. Douglas-Peucker never
+        // removes the first/last point of a given interval, so we call it for each interval separately.
+        // We have to make sure to update the point indices in path details and instructions as well, for example if
+        // a path detail goes from point 4 to 9 and we remove points 5 and 7 we have to update the interval to [4,7].
+
         // The offset of already included points
         int[] offsets = new int[listsToSimplify.size()];
         int[] endIntervals = new int[listsToSimplify.size()];
         // All start at 0
         int[] startIntervals = new int[listsToSimplify.size()];
 
+        int totalRemoved = 0;
         while (true) {
             boolean simplificationPossible = true;
             int nonConflictingStart = 0;
@@ -109,7 +116,12 @@ public class PathSimplification {
             if (listIndexToSimplify >= 0 && simplificationPossible) {
                 // Only simplify if there is more than one point
                 if (nonConflictingEnd - nonConflictingStart > 1) {
-                    int removed = douglasPeucker.simplify(pointList, nonConflictingStart, nonConflictingEnd);
+                    // This is important for performance: we must not compress the point list after each call to
+                    // simplify, otherwise a lot of data is copied, especially for long routes (e.g. many via nodes),
+                    // see #1764. Note that since the point list does not get compressed we have to keep track of the
+                    // total number of removed points to shift the indices into pointList correctly.
+                    final boolean compress = false;
+                    int removed = douglasPeucker.simplify(pointList, nonConflictingStart + totalRemoved, nonConflictingEnd + totalRemoved, compress);
                     if (removed > 0) {
                         for (int i = 0; i < listsToSimplify.size(); i++) {
                             List pathDetails = listsToSimplify.get(i);
@@ -122,6 +134,7 @@ public class PathSimplification {
                                 }
                             }
                         }
+                        totalRemoved += removed;
                     }
                 }
             }
@@ -136,6 +149,11 @@ public class PathSimplification {
                 break;
         }
 
+        // now we finally have to compress the pointList (actually remove the deleted points). note only after this
+        // call the (now shifted) indices in path details and instructions are correct
+        douglasPeucker.compressNew(pointList, totalRemoved);
+
+        // run a consistency check
         for (Map.Entry<String, List<PathDetail>> pdEntry : pathDetails.entrySet()) {
             List<PathDetail> list = pdEntry.getValue();
             if (list.isEmpty())
