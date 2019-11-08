@@ -982,7 +982,7 @@ public class GraphHopper implements GraphHopperAPI {
                                                 ArrayList<Rule> rules = ohParser.rules(false);
                                                 for (Rule rule : rules) {
                                                     System.out.println(rule);
-                                                    for (TimeSpan time : rule.getTimes()) {
+                                                    for (TimeSpan time : Optional.ofNullable(rule.getTimes()).orElse(Collections.emptyList())) {
                                                         int startMinute = time.getStart();
                                                         int endMinute = time.getEnd();
                                                         int minuteOfDay = (int) ChronoUnit.MINUTES.between(zonedDateTime.toLocalDate().atStartOfDay(zoneId), zonedDateTime);
