@@ -30,10 +30,6 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.error.*;
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
-import org.apache.commons.io.input.BOMInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -44,6 +40,10 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+import org.apache.commons.io.input.BOMInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * An abstract base class that represents a row in a GTFS table, e.g. a Stop, Trip, or Agency.
@@ -120,13 +120,24 @@ public abstract class Entity implements Serializable {
             return getIntField(column, required, min, max, 0);
         }
 
-        protected int getIntField(String column, boolean required, int min, int max, int defaultValue) throws IOException {
+
+        protected int getIntField (String column, boolean required, int min, int max, int defaultValue) throws IOException {            
+            Map<Integer, Integer> mapping = null;            
+            return getIntField (column, required, min, max, defaultValue, mapping);            
+        }
+
+        protected int getIntField(String column, boolean required, int min, int max, int defaultValue, final Map<Integer, Integer> mapping) throws IOException {
             String str = getFieldCheckRequired(column, required);
             int val = INT_MISSING;
             if (str == null) {
                 val = defaultValue; // defaults to 0 per overloaded function, unless provided.
             } else try {
                 val = Integer.parseInt(str);
+                if (mapping != null) {
+                    Integer mappedVal = mapping.get(new Integer(val));
+                    if (mappedVal != null)
+                        val = mappedVal.intValue();
+                }
                 checkRangeInclusive(min, max, val);
             } catch (NumberFormatException nfe) {
                 feed.errors.add(new NumberParseError(tableName, row, column));

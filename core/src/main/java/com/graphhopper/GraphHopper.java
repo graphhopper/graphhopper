@@ -615,7 +615,7 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper importOrLoad() {
         if (!load(ghLocation)) {
             printInfo();
-            process(ghLocation);
+            process(ghLocation, false);
         } else {
             printInfo();
         }
@@ -623,9 +623,23 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
+     * Imports and processes data, storing it to disk when complete.
+     */
+    public void importAndClose() {
+        if (!load(ghLocation)) {
+            printInfo();
+            process(ghLocation, true);
+        } else {
+            printInfo();
+            logger.info("Graph already imported into " + ghLocation);
+        }
+        close();
+    }
+
+    /**
      * Creates the graph from OSM data.
      */
-    private GraphHopper process(String graphHopperLocation) {
+    private GraphHopper process(String graphHopperLocation, boolean closeEarly) {
         setGraphHopperLocation(graphHopperLocation);
         GHLock lock = null;
         try {
@@ -638,7 +652,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             readData();
             cleanUp();
-            postProcessing();
+            postProcessing(closeEarly);
             flush();
         } finally {
             if (lock != null)
@@ -839,6 +853,15 @@ public class GraphHopper implements GraphHopperAPI {
      * Does the preparation and creates the location index
      */
     public void postProcessing() {
+        postProcessing(false);
+    }
+
+    /**
+     * Does the preparation and creates the location index
+     *
+     * @param closeEarly release resources as early as possible
+     */
+    public void postProcessing(boolean closeEarly) {
         // Later: move this into the GraphStorage.optimize method
         // Or: Doing it after preparation to optimize shortcuts too. But not possible yet #12
 
@@ -858,14 +881,14 @@ public class GraphHopper implements GraphHopperAPI {
 
         initLocationIndex();
 
+        if (lmFactoryDecorator.isEnabled())
+            lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
+        loadOrPrepareLM(closeEarly);
+
         if (chFactoryDecorator.isEnabled())
             chFactoryDecorator.createPreparations(ghStorage);
         if (!isCHPrepared())
-            prepareCH();
-
-        if (lmFactoryDecorator.isEnabled())
-            lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
-        loadOrPrepareLM();
+            prepareCH(closeEarly);
     }
 
     private static final String INTERPOLATION_KEY = "prepare.elevation_interpolation.done";
@@ -1193,13 +1216,19 @@ public class GraphHopper implements GraphHopperAPI {
         return "true".equals(ghStorage.getProperties().get(Landmark.PREPARE + "done"));
     }
 
-    protected void prepareCH() {
+    protected void prepareCH(boolean closeEarly) {
         boolean tmpPrepare = chFactoryDecorator.isEnabled();
         if (tmpPrepare) {
             ensureWriteAccess();
 
+            if (closeEarly) {
+                locationIndex.flush();
+                locationIndex.close();
+                ghStorage.flushAndCloseEarly();
+            }
+
             ghStorage.freeze();
-            chFactoryDecorator.prepare(ghStorage.getProperties());
+            chFactoryDecorator.prepare(ghStorage.getProperties(), closeEarly);
             ghStorage.getProperties().put(CH.PREPARE + "done", true);
         }
     }
@@ -1207,12 +1236,12 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * For landmarks it is required to always call this method: either it creates the landmark data or it loads it.
      */
-    protected void loadOrPrepareLM() {
+    protected void loadOrPrepareLM(boolean closeEarly) {
         boolean tmpPrepare = lmFactoryDecorator.isEnabled() && !lmFactoryDecorator.getPreparations().isEmpty();
         if (tmpPrepare) {
             ensureWriteAccess();
             ghStorage.freeze();
-            if (lmFactoryDecorator.loadOrDoWork(ghStorage.getProperties()))
+            if (lmFactoryDecorator.loadOrDoWork(ghStorage.getProperties(), closeEarly))
                 ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
         }
     }

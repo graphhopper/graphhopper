@@ -1,0 +1,44 @@
+.searchInput {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.locationInput {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeSelect {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.dateTimeContainer {
+  display: flex;
+  flex-direction: row;
+}
+
+.dateTimeContainer > * {
+  margin-left: 0.5rem;
+}
+
+.optionsButton {
+  border: 1px solid black;
+  border-radius: 2px;
+  background-color: transparent;
+  min-height: 2rem;
+  margin: 0.9rem 0 0.5rem 0;
+  transition-duration: 0.2s;
+  cursor: pointer;
+}
+
+.optionsButton:hover {
+  background-color: #98cbed;
+}
+
+.optionsButton:active {
+  background-color: #98cbed;
+}

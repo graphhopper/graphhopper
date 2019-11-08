@@ -139,35 +139,47 @@ public class QueryGraphTest {
 
     @Test
     public void testFillVirtualEdges() {
-        initGraph(g);
-        g.getNodeAccess().setNode(3, 0, 1);
+        //       x (4)
+        //  /*-*\
+        // 0     1
+        // |    /
+        // 2  3
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 1, 0);
+        na.setNode(1, 1, 2.5);
+        na.setNode(2, 0, 0);
+        na.setNode(3, 0, 1);
+        g.edge(0, 2, 10, true);
+        g.edge(0, 1, 10, true).setWayGeometry(Helper.createPointList(1.5, 1, 1.5, 1.5));
         g.edge(1, 3);
 
         final int baseNode = 1;
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(baseNode);
         iter.next();
-        QueryResult res1 = createLocationResult(2, 1.7, iter, 1, PILLAR);
-        QueryGraph queryGraph = new QueryGraph(g) {
+        // note that we do not really do a location index lookup, but rather create a query result artificially, also
+        // this query result is not very intuitive as we would expect snapping to the 1-0 edge, but this is how this
+        // test was written initially...
+        QueryResult qr = createLocationResult(2, 1.7, iter, 1, PILLAR);
+        GraphModification graphModification = GraphModificationBuilder.build(g, Collections.singletonList(qr));
+        IntObjectMap<GraphModification.EdgeChanges> realNodeModifications = graphModification.getEdgeChangesAtRealNodes();
+        assertEquals(2, realNodeModifications.size());
+        // ignore nodes should include baseNode == 1
+        assertEquals("[3->4]", realNodeModifications.get(3).getAdditionalEdges().toString());
+        assertEquals("[2]", realNodeModifications.get(3).getRemovedEdges().toString());
+        assertEquals("[1->4]", realNodeModifications.get(1).getAdditionalEdges().toString());
+        assertEquals("[2]", realNodeModifications.get(1).getRemovedEdges().toString());
 
-            @Override
-            void fillVirtualEdges(IntObjectMap<VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl) {
-                super.fillVirtualEdges(node2Edge, towerNode, mainExpl);
-                // ignore nodes should include baseNode == 1
-                if (towerNode == 3)
-                    assertEquals("virtual edge: (invalid), all: [3->4]", node2Edge.get(towerNode).toString());
-                else if (towerNode == 1)
-                    assertEquals("virtual edge: (invalid), all: [1->4, 1 1-0]", node2Edge.get(towerNode).toString());
-                else
-                    throw new IllegalStateException("not allowed " + towerNode);
-            }
-        };
-        queryGraph.lookup(Arrays.asList(res1));
+        QueryGraph queryGraph = QueryGraph.lookup(g, qr);
         EdgeIteratorState state = GHUtility.getEdge(queryGraph, 0, 1);
         assertEquals(4, state.fetchWayGeometry(3).size());
 
-        // fetch virtual edge and check way geometry
+        //  fetch virtual edge and check way geometry
         state = GHUtility.getEdge(queryGraph, 4, 3);
         assertEquals(2, state.fetchWayGeometry(3).size());
+
+        // now we actually test the edges at the real tower nodes (virtual ones should be added and some real ones removed)
+        assertEquals("[1->4, 1 1-0]", ((VirtualEdgeIterator) queryGraph.createEdgeExplorer().setBaseNode(1)).getEdges().toString());
+        assertEquals("[3->4]", ((VirtualEdgeIterator) queryGraph.createEdgeExplorer().setBaseNode(3)).getEdges().toString());
     }
 
     @Test
@@ -242,10 +254,8 @@ public class QueryGraphTest {
 
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(0);
         iter.next();
-
-        VirtualEdgeIterator vi = new VirtualEdgeIterator(2);
-        vi.add(iter.detach(false));
-
+        List<EdgeIteratorState> vEdges = Collections.singletonList(iter.detach(false));
+        VirtualEdgeIterator vi = new VirtualEdgeIterator(EdgeFilter.ALL_EDGES, vEdges);
         assertTrue(vi.next());
     }
 
@@ -490,20 +500,21 @@ public class QueryGraphTest {
         EdgeIteratorState edge0 = graphWithTurnCosts.edge(0, 1, 10, true);
         EdgeIteratorState edge1 = graphWithTurnCosts.edge(2, 1, 10, true);
 
-        QueryGraph qGraph = new QueryGraph(graphWithTurnCosts);
         FastestWeighting weighting = new FastestWeighting(encoder);
-        TurnWeighting turnWeighting = new TurnWeighting(weighting, (TurnCostExtension) qGraph.getExtension());
+        TurnWeighting turnWeighting = new TurnWeighting(weighting, (TurnCostExtension) graphWithTurnCosts.getExtension());
 
+        // no turn costs initially
         assertEquals(0, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 
-        // now use turn costs and QueryGraph
+        //  now use turn costs
         turnExt.addTurnInfo(edge0.getEdge(), 1, edge1.getEdge(), encoder.getTurnFlags(false, 10));
         assertEquals(10, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 
+        // now use turn costs with query graph
         QueryResult res1 = createLocationResult(0.000, 0.005, edge0, 0, QueryResult.Position.EDGE);
         QueryResult res2 = createLocationResult(0.005, 0.010, edge1, 0, QueryResult.Position.EDGE);
-
-        qGraph.lookup(Arrays.asList(res1, res2));
+        QueryGraph qGraph = QueryGraph.lookup(graphWithTurnCosts, res1, res2);
+        turnWeighting = new TurnWeighting(weighting, (TurnCostExtension) qGraph.getExtension());
 
         int fromQueryEdge = GHUtility.getEdge(qGraph, res1.getClosestNode(), 1).getEdge();
         int toQueryEdge = GHUtility.getEdge(qGraph, res2.getClosestNode(), 1).getEdge();
@@ -535,7 +546,7 @@ public class QueryGraphTest {
     }
 
     private boolean isAvoidEdge(QueryGraph queryGraph, int virtualEdgeTypeId) {
-        return queryGraph.virtualEdges.get(virtualEdgeTypeId).get(EdgeIteratorState.UNFAVORED_EDGE);
+        return queryGraph.getVirtualEdges().get(virtualEdgeTypeId).get(EdgeIteratorState.UNFAVORED_EDGE);
     }
 
     @Test

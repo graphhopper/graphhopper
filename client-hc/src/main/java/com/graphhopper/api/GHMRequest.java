@@ -2,6 +2,7 @@ package com.graphhopper.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.GHRequest;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
@@ -221,7 +222,7 @@ public class GHMRequest extends GHRequest {
         called++;
         boolean clear = true;
         for (String hint : toPointHints) {
-            if (!hint.isEmpty()) {
+            if (!Helper.isEmpty(hint)) {
                 clear = false;
                 break;
             }
@@ -231,7 +232,7 @@ public class GHMRequest extends GHRequest {
 
         clear = true;
         for (String hint : fromPointHints) {
-            if (!hint.isEmpty()) {
+            if (!Helper.isEmpty(hint)) {
                 clear = false;
                 break;
             }

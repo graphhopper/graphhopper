@@ -607,13 +607,16 @@ class GtfsReader {
                     EdgeIterator j = graph.createEdgeExplorer().setBaseNode(i.getAdjNode());
                     while (j.next()) {
                         if (j.get(ptEncodedValues.getTypeEnc()) == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK) {
-                            int arrivalTime = j.get(timeEnc);
-                            SortedMap<Integer, Integer> tailSet = toStopTimelineNode.tailMap(arrivalTime + minimumTransferTime);
-                            if (!tailSet.isEmpty()) {
-                                EdgeIteratorState edge = graph.edge(j.getAdjNode(), tailSet.get(tailSet.firstKey()));
-                                edge.set(accessEnc, true).setReverse(accessEnc, false);
-                                setEdgeTypeAndClearDistance(edge, GtfsStorage.EdgeType.TRANSFER);
-                                edge.set(timeEnc, tailSet.firstKey() - arrivalTime);
+                            GtfsStorage.FeedIdWithTimezone feedIdWithTimezone = gtfsStorage.getTimeZones().get(j.get(validityIdEnc));
+                            if (id.equals(feedIdWithTimezone.feedId)) { // Only transfer within this feed
+                                int arrivalTime = j.get(timeEnc);
+                                SortedMap<Integer, Integer> tailSet = toStopTimelineNode.tailMap(arrivalTime + minimumTransferTime);
+                                if (!tailSet.isEmpty()) {
+                                    EdgeIteratorState edge = graph.edge(j.getAdjNode(), tailSet.get(tailSet.firstKey()));
+                                    edge.set(accessEnc, true).setReverse(accessEnc, false);
+                                    setEdgeTypeAndClearDistance(edge, GtfsStorage.EdgeType.TRANSFER);
+                                    edge.set(timeEnc, tailSet.firstKey() - arrivalTime);
+                                }
                             }
                         }
                     }

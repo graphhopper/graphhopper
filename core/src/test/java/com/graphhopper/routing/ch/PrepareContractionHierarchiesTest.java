@@ -178,9 +178,9 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testMoreComplexGraph() {
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getCHGraph();
-        initShortcutsGraph(lg);
+        initShortcutsGraph(g);
         int oldCount = g.getAllEdges().length();
+        CHGraph lg = g.getCHGraph();
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
         prepare.doWork();
         assertEquals(oldCount, g.getEdges());
@@ -299,7 +299,7 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(IntArrayList.from(4, 5, 6, 7), p.calcNodes());
     }
 
-    void initUnpackingGraph(GraphHopperStorage ghStorage, CHGraph g, Weighting w) {
+    private void initUnpackingGraph(GraphHopperStorage g, CHGraph lg, Weighting w) {
         final IntsRef edgeFlags = encodingManager.createEdgeFlags();
         carEncoder.getAccessEnc().setBool(false, edgeFlags, true);
         carEncoder.getAccessEnc().setBool(true, edgeFlags, false);
@@ -316,35 +316,35 @@ public class PrepareContractionHierarchiesTest {
         int oneDirFlags = PrepareEncoder.getScFwdDir();
 
         int tmpEdgeId = edgeState01.getEdge();
-        ghStorage.freeze();
+        g.freeze();
         int x = EdgeIterator.NO_EDGE;
         double weight = w.calcWeight(edgeState01, false, x) + w.calcWeight(edgeState12, false, x);
-        int sc0_2 = g.shortcut(0, 2, oneDirFlags, w.calcWeight(edgeState01, false, x) + w.calcWeight(edgeState12, false, x), tmpEdgeId, edgeState12.getEdge());
+        int sc0_2 = lg.shortcut(0, 2, oneDirFlags, w.calcWeight(edgeState01, false, x) + w.calcWeight(edgeState12, false, x), tmpEdgeId, edgeState12.getEdge());
 
         tmpEdgeId = sc0_2;
         weight += w.calcWeight(edgeState23, false, x);
-        int sc0_3 = g.shortcut(0, 3, oneDirFlags, weight, tmpEdgeId, edgeState23.getEdge());
+        int sc0_3 = lg.shortcut(0, 3, oneDirFlags, weight, tmpEdgeId, edgeState23.getEdge());
 
         tmpEdgeId = sc0_3;
         weight += w.calcWeight(edgeState34, false, x);
-        int sc0_4 = g.shortcut(0, 4, oneDirFlags, weight, tmpEdgeId, edgeState34.getEdge());
+        int sc0_4 = lg.shortcut(0, 4, oneDirFlags, weight, tmpEdgeId, edgeState34.getEdge());
 
         tmpEdgeId = sc0_4;
         weight += w.calcWeight(edgeState45, false, x);
-        int sc0_5 = g.shortcut(0, 5, oneDirFlags, weight, tmpEdgeId, edgeState45.getEdge());
+        int sc0_5 = lg.shortcut(0, 5, oneDirFlags, weight, tmpEdgeId, edgeState45.getEdge());
 
         tmpEdgeId = sc0_5;
         weight += w.calcWeight(edgeState56, false, x);
-        int sc0_6 = g.shortcut(0, 6, oneDirFlags, weight, tmpEdgeId, edgeState56.getEdge());
+        int sc0_6 = lg.shortcut(0, 6, oneDirFlags, weight, tmpEdgeId, edgeState56.getEdge());
 
-        g.setLevel(0, 10);
-        g.setLevel(6, 9);
-        g.setLevel(5, 8);
-        g.setLevel(4, 7);
-        g.setLevel(3, 6);
-        g.setLevel(2, 5);
-        g.setLevel(1, 4);
-        g.setLevel(10, 3);
+        lg.setLevel(0, 10);
+        lg.setLevel(6, 9);
+        lg.setLevel(5, 8);
+        lg.setLevel(4, 7);
+        lg.setLevel(3, 6);
+        lg.setLevel(2, 5);
+        lg.setLevel(1, 4);
+        lg.setLevel(10, 3);
     }
 
     @Test
