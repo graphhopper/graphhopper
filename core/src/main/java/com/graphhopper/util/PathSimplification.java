@@ -37,14 +37,14 @@ public class PathSimplification {
 
     private PointList pointList;
     private Map<String, List<PathDetail>> pathDetails;
-    private List<List> listsToSimplify;
+    private List<List> pathSegmentations;
     private DouglasPeucker douglasPeucker;
 
     public PathSimplification(PathWrapper pathWrapper, DouglasPeucker douglasPeucker, boolean enableInstructions) {
         this.pointList = pathWrapper.getPoints();
-        listsToSimplify = new ArrayList<>();
+        pathSegmentations = new ArrayList<>();
         if (enableInstructions)
-            listsToSimplify.add(pathWrapper.getInstructions());
+            pathSegmentations.add(pathWrapper.getInstructions());
 
         this.pathDetails = pathWrapper.getPathDetails();
         for (String name : pathDetails.keySet()) {
@@ -53,7 +53,7 @@ public class PathSimplification {
             if (pathDetailList.isEmpty() && pointList.size() > 1)
                 throw new IllegalStateException("PathDetails " + name + " must not be empty");
 
-            listsToSimplify.add(pathDetailList);
+            pathSegmentations.add(pathDetailList);
         }
         this.douglasPeucker = douglasPeucker;
     }
@@ -65,7 +65,7 @@ public class PathSimplification {
         }
 
         // no constraints
-        if (listsToSimplify.isEmpty()) {
+        if (pathSegmentations.isEmpty()) {
             douglasPeucker.simplify(pointList, 0, pointList.size() - 1);
             pointList.makeImmutable();
             return pointList;
@@ -73,87 +73,90 @@ public class PathSimplification {
 
         // When there are instructions or path details we have to make sure certain points (the first and last ones
         // of each instruction/path detail interval) do not get removed by Douglas-Peucker. Douglas-Peucker never
-        // removes the first/last point of a given interval, so we call it for each interval separately.
+        // removes the first/last point of a given interval, so we call it for each interval separately to make sure
+        // none of these points get deleted.
         // We have to make sure to update the point indices in path details and instructions as well, for example if
         // a path detail goes from point 4 to 9 and we remove points 5 and 7 we have to update the interval to [4,7].
 
-        // The offset of already included points
-        int[] offsets = new int[listsToSimplify.size()];
-        int[] endIntervals = new int[listsToSimplify.size()];
-        // All start at 0
-        int[] startIntervals = new int[listsToSimplify.size()];
+        // The basic idea is as follows: the instructions/path details we iterate through the point list and whenever we hit an interval end (q) in
+        // one of the path segmentations we run Douglas-Peucker for the interval [p,q], where p is the point where the
+        // last interval ended. we need to keep track of the interval starts/ends and the interval indices in the different
+        // path segmentations.
+        final int pathSegmentations = this.pathSegmentations.size();
+        final int[] currIntervalIndex = new int[pathSegmentations];
+        final int[] currIntervalStart = new int[pathSegmentations];
+        final int[] currIntervalEnd = new int[pathSegmentations];
+        final boolean[] segmentsFinished = new boolean[pathSegmentations];
+        int intervalStart = 0;
+        for (int i = 0; i < pathSegmentations; i++) {
+            currIntervalEnd[i] = getLength(this.pathSegmentations.get(i), currIntervalIndex[i]);
+        }
 
-        int totalRemoved = 0;
-        while (true) {
-            boolean simplificationPossible = true;
-            boolean doSimplify = false;
-            int nonConflictingStart = 0;
-            int nonConflictingEnd = Integer.MAX_VALUE;
-            int listIndexToShift = -1;
+        // to correctly update the interval indices in path details and instructions we need to keep track of how
+        // many points were removed by Douglas-Peucker in the current and previous intervals
+        final int[] removedPointsInCurrInterval = new int[pathSegmentations];
+        final int[] removedPointsInPrevIntervals = new int[pathSegmentations];
 
-            updateEndIntervals(endIntervals, startIntervals, offsets, listsToSimplify);
-
-            // Find the intervals to run a simplification, if possible, and where to shift
-            for (int i = 0; i < listsToSimplify.size(); i++) {
-                if (startIntervals[i] >= nonConflictingEnd || endIntervals[i] <= nonConflictingStart) {
-                    simplificationPossible = false;
+        for (int p = 0; p < pointList.size(); p++) {
+            int removed = 0;
+            // first we check if we hit an interval end for one of the segmenations and run douglas peucker if so
+            for (int s = 0; s < pathSegmentations; s++) {
+                if (segmentsFinished[s]) {
+                    continue;
                 }
-                if (startIntervals[i] > nonConflictingStart) {
-                    doSimplify = false;
-                    nonConflictingStart = startIntervals[i];
-                }
-                if (endIntervals[i] < nonConflictingEnd) {
-                    doSimplify = false;
-                    nonConflictingEnd = endIntervals[i];
-                    // Remember the lowest endInterval
-                    listIndexToShift = i;
-                }
-                if (startIntervals[i] >= nonConflictingStart && endIntervals[i] <= nonConflictingEnd) {
-                    doSimplify = true;
-                }
-            }
-
-            if (doSimplify && simplificationPossible) {
-                // Only simplify if there is more than one point
-                if (nonConflictingEnd - nonConflictingStart > 1) {
+                if (p == currIntervalEnd[s]) {
                     // This is important for performance: we must not compress the point list after each call to
                     // simplify, otherwise a lot of data is copied, especially for long routes (e.g. many via nodes),
                     // see #1764. Note that since the point list does not get compressed we have to keep track of the
                     // total number of removed points to shift the indices into pointList correctly.
                     final boolean compress = false;
-                    int removed = douglasPeucker.simplify(pointList, nonConflictingStart + totalRemoved, nonConflictingEnd + totalRemoved, compress);
-                    if (removed > 0) {
-                        for (int i = 0; i < listsToSimplify.size(); i++) {
-                            List pathDetails = listsToSimplify.get(i);
-                            reduceLength(pathDetails, offsets[i], startIntervals[i], endIntervals[i] - removed);
-                            // This is not needed for Instructions, as they don't contain references, but PointLists
-                            if (pathDetails.get(0) instanceof PathDetail) {
-                                for (int j = offsets[i] + 1; j < pathDetails.size(); j++) {
-                                    PathDetail pd = (PathDetail) pathDetails.get(j);
-                                    reduceLength(pathDetails, j, pd.getFirst() - removed, pd.getLast() - removed);
-                                }
-                            }
-                        }
-                        totalRemoved += removed;
-                    }
+                    removed = douglasPeucker.simplify(pointList, intervalStart, currIntervalEnd[s], compress);
+                    intervalStart = p;
+                    break;
                 }
             }
+            // in case we hit an interval end we have to updated our indices for the next interval, also we need
+            // to keep track of the number of removed points (for all segmentations)
+            for (int s = 0; s < pathSegmentations; s++) {
+                if (segmentsFinished[s]) {
+                    continue;
+                }
+                removedPointsInCurrInterval[s] += removed;
+                // need to use >= instead of == here, because there can be empty intervals (e.g. at via nodes)
+                if (p >= currIntervalEnd[s]) {
+                    // we hit an interval end
+                    // update the point indices for path details and instructions
+                    final int updatedStart = currIntervalStart[s] - removedPointsInPrevIntervals[s];
+                    final int updatedEnd = currIntervalEnd[s] - removedPointsInPrevIntervals[s] - removedPointsInCurrInterval[s];
+                    reduceLength(this.pathSegmentations.get(s), currIntervalIndex[s], updatedStart, updatedEnd);
 
-            if (listIndexToShift < 0)
-                throw new IllegalStateException("toShiftIndex cannot be negative");
+                    // prepare for the next interval
+                    currIntervalIndex[s]++;
+                    currIntervalStart[s] = p;
+                    if (currIntervalIndex[s] >= this.pathSegmentations.get(s).size()) {
+                        segmentsFinished[s] = true;
+                    } else {
+                        currIntervalEnd[s] += getLength(this.pathSegmentations.get(s), currIntervalIndex[s]);
+                    }
 
-            int length = getLength(listsToSimplify.get(listIndexToShift), offsets[listIndexToShift]);
-            startIntervals[listIndexToShift] += length;
-            offsets[listIndexToShift]++;
-            if (offsets[listIndexToShift] >= listsToSimplify.get(listIndexToShift).size())
-                break;
+                    // update the removed point counters
+                    removedPointsInPrevIntervals[s] += removedPointsInCurrInterval[s];
+                    removedPointsInCurrInterval[s] = 0;
+                }
+            }
         }
 
         // now we finally have to compress the pointList (actually remove the deleted points). note only after this
         // call the (now shifted) indices in path details and instructions are correct
         pointList.compress();
 
-        // run a consistency check
+        assert assertConsistencyOfPathDetails();
+        // Make sure that the instruction references are not broken
+        pointList.makeImmutable();
+        return pointList;
+    }
+
+    private boolean assertConsistencyOfPathDetails() {
         for (Map.Entry<String, List<PathDetail>> pdEntry : pathDetails.entrySet()) {
             List<PathDetail> list = pdEntry.getValue();
             if (list.isEmpty())
@@ -167,9 +170,7 @@ public class PathSimplification {
                 prevPD = list.get(i);
             }
         }
-        // Make sure that the instruction references are not broken
-        pointList.makeImmutable();
-        return pointList;
+        return true;
     }
 
     private int getLength(Object o, int index) {
@@ -192,13 +193,6 @@ public class PathSimplification {
         } else {
             throw new IllegalStateException("We can only handle List<PathDetail> or InstructionList");
         }
-    }
-
-    private int[] updateEndIntervals(int[] endIntervals, int[] startIntervals, int[] offset, List<List> toSimplify) {
-        for (int i = 0; i < toSimplify.size(); i++) {
-            endIntervals[i] = startIntervals[i] + getLength(toSimplify.get(i), offset[i]);
-        }
-        return endIntervals;
     }
 
 }
