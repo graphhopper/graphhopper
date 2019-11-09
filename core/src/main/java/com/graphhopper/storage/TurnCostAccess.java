@@ -1,10 +1,11 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
 
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.routing.util.parsers.OSMTurnRelationParser.EV_SUFFIX;
 
 /**
  * A stateful possibility to access turn cost of the TurnCostExtension. Use one per thread and reuse for optimal speed.
@@ -25,7 +26,7 @@ public class TurnCostAccess {
 
     public TurnCostAccess(String name, TurnCostExtension extension, EncodingManager encodingManager) {
         this.turnCostExtension = extension;
-        tcFlags = encodingManager.createTurnCostFlags();
+        tcFlags = TurnCost.createFlags();
         EMPTY = new IntsRef(tcFlags.length);
         turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(name, EV_SUFFIX));
     }

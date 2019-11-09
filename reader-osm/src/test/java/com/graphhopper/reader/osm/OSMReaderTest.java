@@ -49,8 +49,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.routing.util.parsers.OSMTurnRelationParser.EV_SUFFIX;
 import static org.junit.Assert.*;
 
 /**
@@ -521,7 +521,7 @@ public class OSMReaderTest {
 
         // (2-3)->(3-4) only_straight_on = (2-3)->(3-8) restricted
         // (4-3)->(3-8) no_right_turn = (4-3)->(3-8) restricted
-        IntsRef tcFlags = hopper.getEncodingManager().createTurnCostFlags();
+        IntsRef tcFlags = TurnCost.createFlags();
         DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(getKey("car", EV_SUFFIX));
         assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge2_3, n3, edge3_8)) > 0);
         assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_3, n3, edge3_8)) > 0);
@@ -747,7 +747,7 @@ public class OSMReaderTest {
         EdgeExplorer explorer = graph.createEdgeExplorer();
         TurnCostExtension tcExtension = (TurnCostExtension) graph.getExtension();
 
-        IntsRef tcFlags = manager.createTurnCostFlags();
+        IntsRef tcFlags = TurnCost.createFlags();
         tcExtension.readFlags(tcFlags, GHUtility.getEdge(graph, 1, 0).getEdge(), 0, GHUtility.getEdge(graph, 0, 2).getEdge());
         // the 2nd entry provides turn flags for bike only
         assertTrue(Double.isInfinite(carTCEnc.getDecimal(false, tcFlags)));
@@ -801,7 +801,7 @@ public class OSMReaderTest {
         // (2-3)->(3-4) only_straight_on except bicycle = (2-3)->(3-8) restricted for car
         // (4-3)->(3-8) no_right_turn dedicated to motorcar = (4-3)->(3-8) restricted for car
 
-        IntsRef tcFlags = hopper.getEncodingManager().createTurnCostFlags();
+        IntsRef tcFlags = TurnCost.createFlags();
         DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(getKey("car", EV_SUFFIX));
         assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge2_3, n3, edge3_8)) > 0);
         assertTrue(carTCEnc.getDecimal(false, tcStorage.readFlags(tcFlags, edge4_3, n3, edge3_8)) > 0);
@@ -858,7 +858,7 @@ public class OSMReaderTest {
         int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
         int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
 
-        IntsRef tcFlags = hopper.getEncodingManager().createTurnCostFlags();
+        IntsRef tcFlags = TurnCost.createFlags();
         DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(getKey("car", EV_SUFFIX));
         DecimalEncodedValue bikeTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(getKey("bike", EV_SUFFIX));
 

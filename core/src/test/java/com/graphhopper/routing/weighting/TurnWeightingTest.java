@@ -1,6 +1,7 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -12,8 +13,8 @@ import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.routing.util.parsers.OSMTurnRelationParser.EV_SUFFIX;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.Assert.assertEquals;
 
@@ -67,7 +68,7 @@ public class TurnWeightingTest {
     }
 
     private void addTurnCost(int from, int via, int to, double turnCost) {
-        IntsRef tcFlags = encodingManager.createTurnCostFlags();
+        IntsRef tcFlags = TurnCost.createFlags();
         DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(encoder.toString(), EV_SUFFIX));
         turnCostEnc.setDecimal(false, tcFlags, turnCost);
         turnCostExt.addTurnCost(tcFlags, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge());

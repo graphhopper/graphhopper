@@ -18,6 +18,7 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.IntsRef;
@@ -25,8 +26,8 @@ import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.routing.util.parsers.OSMTurnRelationParser.EV_SUFFIX;
 
 /**
  * Provides methods to retrieve turn costs for a specific turn.
@@ -40,8 +41,7 @@ public class TurnWeighting implements Weighting {
     private final TurnCostExtension turnCostExt;
     private final Weighting superWeighting;
     private final double uTurnCosts;
-    // TODO NOW call EncodingManager.createTurnCostFlags via TurnCostExtension?
-    private final IntsRef tcFlags = new IntsRef(1);
+    private final IntsRef tcFlags = TurnCost.createFlags();
 
     public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
         this(superWeighting, turnCostExt, INFINITE_U_TURN_COSTS);

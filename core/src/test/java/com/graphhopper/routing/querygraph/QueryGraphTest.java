@@ -20,6 +20,7 @@ package com.graphhopper.routing.querygraph;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
@@ -35,7 +36,7 @@ import org.junit.Test;
 
 import java.util.*;
 
-import static com.graphhopper.routing.util.parsers.OSMTurnRelationParser.EV_SUFFIX;
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
 import static com.graphhopper.storage.index.QueryResult.Position.*;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.*;
@@ -492,7 +493,7 @@ public class QueryGraphTest {
         EncodingManager em = EncodingManager.create(encoder);
         GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(), em, false, turnExt).
                 create(100);
-        IntsRef tcFlags = em.createTurnCostFlags();
+        IntsRef tcFlags = TurnCost.createFlags();
         DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(EncodingManager.getKey(encoder.toString(), EV_SUFFIX));
         NodeAccess na = graphWithTurnCosts.getNodeAccess();
         na.setNode(0, .00, .00);

@@ -2,6 +2,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.EdgeBasedRoutingAlgorithmTest;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
@@ -50,7 +51,7 @@ public class OSMTurnRelationParserTest {
         // TYPE == ONLY
         OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.ONLY);
         Collection<OSMTurnRelationParser.TCEntry> result = parser.getRestrictionAsEntries(instance,
-                ghStorage.getEncodingManager().createTurnCostFlags(), map, ghStorage);
+                TurnCost.createFlags(), map, ghStorage);
 
         assertEquals(2, result.size());
         Iterator<OSMTurnRelationParser.TCEntry> iter = result.iterator();
@@ -66,7 +67,7 @@ public class OSMTurnRelationParserTest {
 
         // TYPE == NOT
         instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
-        result = parser.getRestrictionAsEntries(instance, ghStorage.getEncodingManager().createTurnCostFlags(), map, ghStorage);
+        result = parser.getRestrictionAsEntries(instance, TurnCost.createFlags(), map, ghStorage);
 
         assertEquals(1, result.size());
         iter = result.iterator();

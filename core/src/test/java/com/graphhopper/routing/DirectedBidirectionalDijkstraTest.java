@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.*;
@@ -22,8 +23,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
 
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
 import static com.graphhopper.routing.util.EncodingManager.getKey;
-import static com.graphhopper.routing.util.parsers.OSMTurnRelationParser.EV_SUFFIX;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.Assert.*;
@@ -517,7 +518,7 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     private void addRestriction(int fromNode, int node, int toNode) {
-        IntsRef tcFlags = encodingManager.createTurnCostFlags();
+        IntsRef tcFlags = TurnCost.createFlags();
         turnCostEnc.setDecimal(false, tcFlags, Double.POSITIVE_INFINITY);
         turnCostExtension.addTurnCost(
                 tcFlags,
@@ -528,7 +529,7 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     private void addTurnCost(int fromNode, int node, int toNode, double turnCost) {
-        IntsRef tcFlags = encodingManager.createTurnCostFlags();
+        IntsRef tcFlags = TurnCost.createFlags();
         turnCostEnc.setDecimal(false, tcFlags, turnCost);
         turnCostExtension.addTurnCost(
                 tcFlags,

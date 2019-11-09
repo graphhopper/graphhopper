@@ -25,7 +25,6 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
 
 import java.util.*;
 
@@ -40,11 +39,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
     private final int maxTurnCosts;
     private final Collection<String> restrictions;
     private BooleanEncodedValue accessEnc;
-    // TODO NOW separate the EncodedValue creation, see RouteNetwork for a similar case
-    /**
-     * You need to call EncodingManager.getKey(prefix, EV_SUFFIX) as this EncodedValue can be used for e.g. car and bike
-     */
-    public final static String EV_SUFFIX = "turn_cost";
+    private EdgeExplorer cachedOutExplorer, cachedInExplorer;
 
     /**
      * @param maxTurnCosts specify the maximum value used for turn costs, if this value is reached a
@@ -68,7 +63,8 @@ public class OSMTurnRelationParser implements TurnCostParser {
             else if (name.contains("bike") || name.contains("bicycle"))
                 this.restrictions = Arrays.asList("bicycle", "vehicle", "access");
             else
-                throw new IllegalArgumentException("restrictions collection must be specified for parser " + name + ", e.g. [\"motorcar\", \"motor_vehicle\", \"vehicle\", \"access\"]");
+                throw new IllegalArgumentException("restrictions collection must be specified for parser " + name
+                        + ", e.g. [\"motorcar\", \"motor_vehicle\", \"vehicle\", \"access\"]");
         } else {
             this.restrictions = restrictions;
         }
@@ -76,7 +72,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
 
     DecimalEncodedValue getTurnCostEnc() {
         if (turnCostEnc == null)
-            throw new IllegalStateException("Cannot access turn cost encoded value. Not initialized. Call createRelationEncodedValues before");
+            throw new IllegalStateException("Cannot access turn cost encoded value. Not initialized. Call createTurnCostEncodedValues before");
         return turnCostEnc;
     }
 
@@ -86,9 +82,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
         if (!lookup.hasEncodedValue(accessKey))
             throw new IllegalArgumentException("Add TurnCostParsers to EncodingManager after everything else");
         accessEnc = lookup.getEncodedValue(accessKey, BooleanEncodedValue.class);
-
-        int turnBits = Helper.countBitValue(maxTurnCosts);
-        registerNewEncodedValue.add(turnCostEnc = new UnsignedDecimalEncodedValue(getKey(name, EV_SUFFIX), turnBits, 1, 0, false, true));
+        registerNewEncodedValue.add(turnCostEnc = TurnCost.create(name, maxTurnCosts));
     }
 
     @Override
@@ -97,6 +91,14 @@ public class OSMTurnRelationParser implements TurnCostParser {
             return;
 
         getRestrictionAsEntries(turnRelation, turnCostFlags, map, graph);
+    }
+
+    private EdgeExplorer getInExplorer(Graph graph) {
+        return cachedInExplorer == null ? cachedInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(accessEnc)) : cachedInExplorer;
+    }
+
+    EdgeExplorer getOutExplorer(Graph graph) {
+        return cachedOutExplorer == null ? cachedOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc)) : cachedOutExplorer;
     }
 
     /**
@@ -108,8 +110,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
                                                 ExternalInternalMap map, Graph graph) {
         TurnCostExtension tcs = (TurnCostExtension) graph.getExtension();
         int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
-        EdgeExplorer edgeOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc)),
-                edgeInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(accessEnc));
+        EdgeExplorer edgeOutExplorer = getOutExplorer(graph), edgeInExplorer = getInExplorer(graph);
 
         try {
             int edgeIdFrom = EdgeIterator.NO_EDGE;

@@ -517,7 +517,7 @@ public class EncodingManager implements EncodedValueLookup {
 
     public void handleTurnRelationTags(OSMTurnRelation turnRelation, TurnCostParser.ExternalInternalMap map, Graph graph) {
         for (TurnCostParser parser : turnCostParsers.values()) {
-            parser.handleTurnRelationTags(turnRelation, createTurnCostFlags(), map, graph);
+            parser.handleTurnRelationTags(turnRelation, TurnCost.createFlags(), map, graph);
         }
     }
 
@@ -592,10 +592,6 @@ public class EncodingManager implements EncodedValueLookup {
     public IntsRef createRelationFlags() {
         // for backward compatibility use 2 ints
         return new IntsRef(2);
-    }
-
-    public IntsRef createTurnCostFlags() {
-        return new IntsRef(1);
     }
 
     public IntsRef flagsDefault(boolean forward, boolean backward) {
