@@ -332,6 +332,14 @@ public abstract class DataAccessTest {
     }
 
     @Test
+    public void testSet_GetByte() {
+        DataAccess da = createDataAccess(name);
+        da.create(300);
+        da.setByte(8, (byte) 120);
+        assertEquals(120, da.getByte(8));
+    }
+
+    @Test
     public void testSet_Get_Short_Long() {
         DataAccess da = createDataAccess(name);
         da.create(300);

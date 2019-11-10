@@ -334,6 +334,8 @@ public final class MMapDataAccess extends AbstractDataAccess {
     public final void setInt(long bytePos, int value) {
         int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
+        if (index + 4 > segmentSizeInBytes)
+            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
         synchronized (byteBuffer) {
             byteBuffer.putInt(index, value);
@@ -344,6 +346,8 @@ public final class MMapDataAccess extends AbstractDataAccess {
     public final int getInt(long bytePos) {
         int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
+        if (index + 4 > segmentSizeInBytes)
+            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
         synchronized (byteBuffer) {
             return byteBuffer.getInt(index);
@@ -435,6 +439,28 @@ public final class MMapDataAccess extends AbstractDataAccess {
                 bb2.position(0);
                 bb2.get(values, length, delta);
             }
+        }
+    }
+
+    @Override
+    public void setByte(long bytePos, byte value) {
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        final ByteBuffer bb1 = segments.get(bufferIndex);
+        synchronized (bb1) {
+            bb1.position(index);
+            bb1.put(value);
+        }
+    }
+
+    @Override
+    public byte getByte(long bytePos) {
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        final ByteBuffer bb1 = segments.get(bufferIndex);
+        synchronized (bb1) {
+            bb1.position(index);
+            return bb1.get();
         }
     }
 

@@ -58,21 +58,20 @@ public class StringIndexTest {
     public void putEmpty() {
         StringIndex index = create();
         assertEquals(1, index.add(createMap("", "")));
-        assertEquals(2, index.add(createMap("", null)));
-        assertEquals(3, index.add(createMap(null, null)));
+        assertEquals(4, index.add(createMap("", null)));
+        assertEquals(7, index.add(createMap(null, null)));
         assertEquals("", index.get(0, ""));
 
-        assertEquals(4, index.add(createMap("else", "else")));
+        assertEquals(10, index.add(createMap("else", "else")));
     }
 
     @Test
     public void putMany() {
-        StringIndex index = create();
+        StringIndex index = new StringIndex(new RAMDirectory()).create(1000);
         long aPointer = 0, tmpPointer = 0;
 
         for (int i = 0; i < 10000; i++) {
             aPointer = index.add(createMap("a", "a name " + i, "b", "b name " + i, "c", "c name " + i));
-
             if (i == 567)
                 tmpPointer = aPointer;
         }

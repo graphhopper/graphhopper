@@ -23,7 +23,6 @@ import com.graphhopper.storage.Storable;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -35,18 +34,18 @@ public class StringIndex implements Storable<StringIndex> {
     private static final long EMPTY_POINTER = 0, START_POINTER = 1;
     // store size of byte array into *one* byte and use maximum value to indicate reference (see duplicate handling)
     private static final int MAX_LENGTH = 254;
-    // special length for duplicate handling
-    private static final int DUP_MARKER = MAX_LENGTH + 1;
+    // pseudo length for duplicate handling
+    private static final int DUP_MARKER_LENGTH = MAX_LENGTH + 1;
     // store key count in one byte
     static final int MAX_UNIQUE_KEYS = 255;
     boolean throwExceptionIfTooLong = false;
     private final DataAccess keys;
     // storage layout per entry:
-    // vals count, val_length_0, val_0, val_length_1, val_1 ...
+    // vals count, key_idx_0, val_length_0, val_0, key_idx_1, val_length_1, val_1 ...
     // Drawback: we need to loop through the entries to get the start of val_x
-    // Note, that we store duplicate values via an absolute reference (64 bytes) in smallCache and use negative val_length as marker DUP_MARKER
+    // Note, that we store duplicate values via an absolute reference (8 bytes) in smallCache and use pseudo val_length as 'duplicate' marker (DUP_MARKER_LENGTH)
     private final DataAccess vals;
-    // array.indexOf could be faster than hashmap.get if not too many keys
+    // array.indexOf could be faster than hashmap.get if not too many keys or even sort keys and use binarySearch
     private final Map<String, Integer> keysInMem = new LinkedHashMap<>();
     private final Map<String, Long> smallCache;
     private long bytePointer = START_POINTER;
@@ -113,17 +112,15 @@ public class StringIndex implements Storable<StringIndex> {
     public long add(Map<String, String> entryMap) {
         if (entryMap.isEmpty())
             return EMPTY_POINTER;
+        else if (entryMap.size() > 200)
+            throw new IllegalArgumentException("Cannot store more than 200 entries per entry");
 
         long oldPointer = bytePointer;
         // while adding there could be exceptions and we need to avoid that the bytePointer is modified
         long currentPointer = bytePointer;
 
-        // set only 1 byte for key count but ensure two as we cal DataAccess.setShort
-        vals.ensureCapacity(currentPointer + 2);
-        if (entryMap.size() > 127)
-            throw new IllegalArgumentException("Cannot store more than 127 entries per entry");
-
-        vals.setShort(currentPointer, (byte) entryMap.size());
+        vals.ensureCapacity(currentPointer + 1);
+        vals.setByte(currentPointer, (byte) entryMap.size());
         currentPointer += 1;
         for (Map.Entry<String, String> entry : entryMap.entrySet()) {
             String key = entry.getKey(), value = entry.getValue();
@@ -137,26 +134,31 @@ public class StringIndex implements Storable<StringIndex> {
 
             if (value == null || value.isEmpty()) {
                 vals.ensureCapacity(currentPointer + 2);
-                vals.setShort(currentPointer, (short) (0 | keyIndex));
+                vals.setByte(currentPointer, keyIndex.byteValue());
+                currentPointer += 2;
             } else {
                 Long existingRef = smallCache.get(value);
                 if (existingRef != null) {
-                    vals.ensureCapacity(currentPointer + 1 + 8);
-                    // length of reference is 8 byte => store special case of valueBytes.length == 0
-                    vals.setShort(currentPointer, (short) (DUP_MARKER << 8 | keyIndex));
-                    currentPointer += 2;
-                    vals.setInt(currentPointer, BitUtil.LITTLE.getIntLow(existingRef));
-                    vals.setInt(currentPointer + 4, BitUtil.LITTLE.getIntHigh(existingRef));
-                    currentPointer += 8;
+                    vals.ensureCapacity(currentPointer + 2 + 8);
+                    vals.setByte(currentPointer, keyIndex.byteValue());
+                    currentPointer++;
+                    // store 'pseudo length' DUP_MARKER_LENGTH
+                    vals.setByte(currentPointer, (byte) DUP_MARKER_LENGTH);
+                    currentPointer++;
+                    byte[] valueBytes = BitUtil.LITTLE.fromLong(existingRef);
+                    vals.setBytes(currentPointer, valueBytes, valueBytes.length);
+                    currentPointer += valueBytes.length;
                 } else {
                     byte[] valueBytes = getBytesForString("Value for key" + key, value);
-                    // only store value to cache if storing via DUP_MARKER is valuable (costs 8 bytes for the long reference)
+                    // only store value to cache if storing via DUP_MARKER_LENGTH is valuable (the reference costs 8 bytes)
                     if (valueBytes.length > 8)
                         smallCache.put(value, currentPointer);
 
                     vals.ensureCapacity(currentPointer + 2 + valueBytes.length);
-                    vals.setShort(currentPointer, (short) ((valueBytes.length << 8) | keyIndex));
-                    currentPointer += 2;
+                    vals.setByte(currentPointer, keyIndex.byteValue());
+                    currentPointer++;
+                    vals.setByte(currentPointer, (byte) valueBytes.length);
+                    currentPointer++;
                     vals.setBytes(currentPointer, valueBytes, valueBytes.length);
                     currentPointer += valueBytes.length;
                 }
@@ -173,7 +175,7 @@ public class StringIndex implements Storable<StringIndex> {
         if (entryPointer == EMPTY_POINTER)
             return "";
 
-        int keyCount = vals.getShort(entryPointer) & 0xFF;
+        int keyCount = vals.getByte(entryPointer) & 0xFF;
         if (keyCount == 0)
             return null;
 
@@ -184,22 +186,23 @@ public class StringIndex implements Storable<StringIndex> {
 
         long tmpPointer = entryPointer + 1;
         for (int i = 0; i < keyCount; i++) {
-            short keyIndexAndValueLength = vals.getShort(tmpPointer);
-            int currentKeyIndex = keyIndexAndValueLength & 0xFF;
-            int valueLength = (keyIndexAndValueLength >> 8) & 0xFF;
+            int currentKeyIndex = vals.getByte(tmpPointer) & 0xFF;
+            int valueLength = vals.getByte(tmpPointer + 1) & 0xFF;
             tmpPointer += 2;
             if (currentKeyIndex == keyIndex) {
-                if (valueLength == DUP_MARKER) {
-                    tmpPointer = BitUtil.LITTLE.combineIntsToLong(vals.getInt(tmpPointer), vals.getInt(tmpPointer + 4));
+                if (valueLength == DUP_MARKER_LENGTH) {
+                    byte[] valueBytes = new byte[8];
+                    vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
+                    tmpPointer = BitUtil.LITTLE.toLong(valueBytes);
                     if (tmpPointer > bytePointer)
                         throw new IllegalStateException("dup marker " + bytePointer + " should exist but points into not yet allocated area " + tmpPointer);
-                    valueLength = (vals.getShort(tmpPointer) >> 8) & 0xFF;
+                    valueLength = vals.getByte(tmpPointer + 1) & 0xFF;
                     tmpPointer += 2;
                 }
 
-                byte[] stringBytes = new byte[valueLength];
-                vals.getBytes(tmpPointer, stringBytes, stringBytes.length);
-                return new String(stringBytes, Helper.UTF_CS);
+                byte[] valueBytes = new byte[valueLength];
+                vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
+                return new String(valueBytes, Helper.UTF_CS);
             }
             tmpPointer += valueLength;
         }
