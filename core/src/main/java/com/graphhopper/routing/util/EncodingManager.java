@@ -521,10 +521,6 @@ public class EncodingManager implements EncodedValueLookup {
         }
     }
 
-    public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay) {
-        return handleWayTags(way, acceptWay, 0);
-    }
-
     /**
      * Processes way properties of different kind to determine speed and direction. Properties are
      * directly encoded in 8 bytes.
