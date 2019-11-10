@@ -36,7 +36,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
     }
 
     private Graph initExampleGraph() {
-        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension()).create(1000);
+        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), encodingManager, true).create(1000);
         NodeAccess na = gs.getNodeAccess();
         // 50--(0.0001)-->49--(0.0004)-->55--(0.0005)-->60
         na.setNode(0, 51.1, 12.001, 50);
@@ -90,7 +90,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
 
     @Test
     public void testRoutingFailsWithInvalidGraph_issue665() {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension());
+        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, true);
         graph.create(100);
 
         ReaderWay way = new ReaderWay(0);

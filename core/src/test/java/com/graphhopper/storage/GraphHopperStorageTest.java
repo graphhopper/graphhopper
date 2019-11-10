@@ -40,7 +40,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     }
 
     protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D) {
-        return new GraphHopperStorage(dir, encodingManager, enabled3D, new GraphExtension.NoOpExtension());
+        return new GraphHopperStorage(dir, encodingManager, enabled3D);
     }
 
     @Test
@@ -189,7 +189,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     @Test
     public void testBigDataEdge() {
         Directory dir = new RAMDirectory();
-        GraphHopperStorage graph = new GraphHopperStorage(dir, encodingManager, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage graph = new GraphHopperStorage(dir, encodingManager, false);
         graph.create(defaultSize);
         ((BaseGraph) graph.getBaseGraph()).setEdgeCount(Integer.MAX_VALUE / 2);
         assertTrue(graph.getAllEdges().next());
@@ -213,7 +213,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
     @Test
     public void testIdentical() {
-        GraphHopperStorage store = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension());
+        GraphHopperStorage store = new GraphHopperStorage(new RAMDirectory(), encodingManager, true);
         assertEquals(store.getNodes(), store.getBaseGraph().getNodes());
         assertEquals(store.getAllEdges().length(), store.getBaseGraph().getAllEdges().length());
     }

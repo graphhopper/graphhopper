@@ -51,7 +51,7 @@ public class QueryGraphTest {
     public void setUp() {
         carEncoder = new CarFlagEncoder();
         encodingManager = EncodingManager.create(carEncoder);
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension()).create(100);
+        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
     }
 
     @After
@@ -262,7 +262,7 @@ public class QueryGraphTest {
     @Test
     public void testUseMeanElevation() {
         g.close();
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension()).create(100);
+        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, true).create(100);
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0, 0);
         na.setNode(1, 0, 0.0001, 20);

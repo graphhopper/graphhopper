@@ -61,7 +61,7 @@ public class PrepareLandmarksTest
         tm = TraversalMode.NODE_BASED;
         encodingManager = EncodingManager.create(encoder);
         GraphHopperStorage tmp = new GraphHopperStorage(new RAMDirectory(),
-                encodingManager, false, new GraphExtension.NoOpExtension());
+                encodingManager, false);
         tmp.create(1000);
         graph = tmp;
     }

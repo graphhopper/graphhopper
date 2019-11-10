@@ -365,7 +365,7 @@ public final class GraphHopperGtfs {
     }
 
     public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, Collection<String> gtfsFiles, Collection<String> osmFiles) {
-        GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false);
         if (graphHopperStorage.loadExisting()) {
             return graphHopperStorage;
         } else {

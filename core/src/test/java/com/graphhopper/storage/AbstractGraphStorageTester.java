@@ -101,7 +101,7 @@ public abstract class AbstractGraphStorageTester {
     abstract GraphHopperStorage createGHStorage(String location, boolean is3D);
 
     protected final GraphHopperStorage newRAMGHStorage() {
-        return new GraphHopperStorage(new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension());
+        return new GraphHopperStorage(new RAMDirectory(), encodingManager, false);
     }
 
     @Before
@@ -987,7 +987,7 @@ public abstract class AbstractGraphStorageTester {
         });
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
         EncodingManager manager = EncodingManager.create(list);
-        graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
+        graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
 
         EdgeIteratorState edge = graph.edge(0, 1);
         IntsRef intsRef = manager.createEdgeFlags();
@@ -997,7 +997,7 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(Integer.MAX_VALUE / 3, edge.getFlags().ints[0]);
         graph.close();
 
-        graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
+        graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
 
         DecimalEncodedValue avSpeed0Enc = manager.getDecimalEncodedValue(getKey("car0", "average_speed"));
         BooleanEncodedValue access0Enc = manager.getBooleanEncodedValue(getKey("car0", "access"));
@@ -1036,7 +1036,7 @@ public abstract class AbstractGraphStorageTester {
             }
         });
         manager = EncodingManager.create(list);
-        graph = new GraphHopperStorage(new RAMDirectory(), manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
+        graph = new GraphHopperStorage(new RAMDirectory(), manager, false).create(defaultSize);
         edgeIter = graph.edge(0, 1).set(access0Enc, true).setReverse(access0Enc, false);
         assertTrue(edgeIter.get(access0Enc));
         assertFalse(edgeIter.getReverse(access0Enc));

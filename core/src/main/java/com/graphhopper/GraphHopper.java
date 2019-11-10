@@ -743,18 +743,21 @@ public class GraphHopper implements GraphHopperAPI {
             dataAccessType = DAType.MMAP_RO;
 
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
-        GraphExtension ext = encodingManager.needsTurnCostsSupport()
-                ? new TurnCostExtension() : new GraphExtension.NoOpExtension();
 
         if (lmFactoryDecorator.isEnabled())
             initLMAlgoFactoryDecorator();
 
+        List<CHProfile> chProfiles;
         if (chFactoryDecorator.isEnabled()) {
             initCHAlgoFactoryDecorator();
-            ghStorage = new GraphHopperStorage(chFactoryDecorator.getCHProfiles(), dir, encodingManager, hasElevation(), ext);
+            chProfiles = chFactoryDecorator.getCHProfiles();
         } else {
-            ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), ext);
+            chProfiles = Collections.emptyList();
         }
+
+        ghStorage =  encodingManager.needsTurnCostsSupport() ?
+                new GraphHopperStorage(chProfiles, dir, encodingManager, hasElevation(), new TurnCostExtension()) :
+                new GraphHopperStorage(chProfiles, dir, encodingManager, hasElevation());
 
         ghStorage.setSegmentSize(defaultSegmentSize);
 

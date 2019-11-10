@@ -39,7 +39,7 @@ public class WrapperGraphTest {
 
     @Test
     public void testEternalOffByOneError() {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false);
         assertEquals(0, graph.getNodes());
         assertEquals(0, graph.getAllEdges().length());
         WrapperGraph wrapperGraph = new WrapperGraph(graph, Collections.emptyList());

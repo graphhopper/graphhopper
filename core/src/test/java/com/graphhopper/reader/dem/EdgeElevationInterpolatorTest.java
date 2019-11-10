@@ -57,7 +57,7 @@ public abstract class EdgeElevationInterpolatorTest {
         graph = new GraphHopperStorage(new RAMDirectory(),
                 encodingManager = new EncodingManager.Builder().add(new CarFlagEncoder()).add(new FootFlagEncoder()).
                         add(new OSMRoadEnvironmentParser()).build(),
-                true, new GraphExtension.NoOpExtension()).create(100);
+                true).create(100);
         roadEnvEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         edgeElevationInterpolator = createEdgeElevationInterpolator();
         relFlags = 0;

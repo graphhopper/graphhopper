@@ -20,7 +20,6 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
@@ -48,12 +47,16 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     // same flush order etc
     private final Collection<CHGraphImpl> chGraphs;
 
+    public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation) {
+        this(dir, encodingManager, withElevation, new NoOpExtension());
+    }
+
     public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage) {
         this(Collections.<CHProfile>emptyList(), dir, encodingManager, withElevation, extendedStorage);
     }
 
-    public GraphHopperStorage(Collection<? extends Weighting> nodeBasedCHWeightings, Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage) {
-        this(createProfilesForWeightings(nodeBasedCHWeightings), dir, encodingManager, withElevation, extendedStorage);
+    public GraphHopperStorage(List<CHProfile> chProfiles, Directory dir, EncodingManager encodingManager, boolean withElevation) {
+        this(chProfiles, dir, encodingManager, withElevation, new NoOpExtension());
     }
 
     public GraphHopperStorage(List<CHProfile> chProfiles, Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage) {
@@ -463,18 +466,86 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         return chGraphs;
     }
 
-    private static List<CHProfile> createProfilesForWeightings(Collection<? extends Weighting> weightings) {
-        List<CHProfile> result = new ArrayList<>(weightings.size());
-        for (Weighting weighting : weightings) {
-            result.add(CHProfile.nodeBased(weighting));
-        }
-        return result;
-    }
-
     /**
      * Flush and close resources like wayGeometry that are not needed for CH preparation.
      */
     public void flushAndCloseEarly() {
         baseGraph.flushAndCloseGeometryAndNameStorage();
+    }
+
+    private static class NoOpExtension implements GraphExtension {
+
+        @Override
+        public boolean isRequireNodeField() {
+            return false;
+        }
+
+        @Override
+        public boolean isRequireEdgeField() {
+            return false;
+        }
+
+        @Override
+        public int getDefaultNodeFieldValue() {
+            return 0;
+        }
+
+        @Override
+        public int getDefaultEdgeFieldValue() {
+            return 0;
+        }
+
+        @Override
+        public void init(Graph graph, Directory dir) {
+            // noop
+        }
+
+        @Override
+        public GraphExtension create(long byteCount) {
+            // noop
+            return this;
+        }
+
+        @Override
+        public boolean loadExisting() {
+            // noop
+            return true;
+        }
+
+        @Override
+        public void setSegmentSize(int bytes) {
+            // noop
+        }
+
+        @Override
+        public void flush() {
+            // noop
+        }
+
+        @Override
+        public void close() {
+            // noop
+        }
+
+        @Override
+        public long getCapacity() {
+            return 0;
+        }
+
+        @Override
+        public GraphExtension copyTo(GraphExtension extStorage) {
+            // noop
+            return extStorage;
+        }
+
+        @Override
+        public String toString() {
+            return "NoExt";
+        }
+
+        @Override
+        public boolean isClosed() {
+            return false;
+        }
     }
 }

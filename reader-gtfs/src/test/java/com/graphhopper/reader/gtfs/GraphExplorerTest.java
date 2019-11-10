@@ -57,7 +57,7 @@ public class GraphExplorerTest {
 
     @Test
     public void testNonEmptyGraph() {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false);
         graph.create(0);
         EdgeIteratorState d = graph.edge(4, 5);
         d.set(pt.getAccessEnc(), true);
@@ -76,7 +76,7 @@ public class GraphExplorerTest {
 
     @Test
     public void testExtraEdgesWithEmptyGraph() {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false);
 
         GtfsStorage gtfsStorage = mock(GtfsStorage.class);
         RealtimeFeed realtimeFeed = mock(RealtimeFeed.class);
@@ -102,7 +102,7 @@ public class GraphExplorerTest {
 
     @Test
     public void testExtraEdgesWithNonEmptyGraph() {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false);
         graph.create(0);
         EdgeIteratorState d = graph.edge(4, 5);
         d.set(pt.getAccessEnc(), true);
@@ -142,7 +142,7 @@ public class GraphExplorerTest {
 
     @Test
     public void testExtraEdgesWithNonEmptyGraphAndQueryGraph() {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false);
         graph.create(0);
         EdgeIteratorState c = graph.edge(4, 3);
         c.set(pt.getAccessEnc(), true);

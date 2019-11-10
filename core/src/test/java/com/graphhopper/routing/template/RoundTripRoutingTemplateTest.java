@@ -149,7 +149,7 @@ public class RoundTripRoutingTemplateTest {
         // ---|------
         //    |-1 0 1
         GraphHopperStorage graph =
-                new GraphHopperStorage(new RAMDirectory(), em, false, new GraphExtension.NoOpExtension());
+                new GraphHopperStorage(new RAMDirectory(), em, false);
         graph.create(1000);
         for (int i = 0; i < 8; ++i) {
             graph.edge(i, (i + 1) % 8, 1, true);
