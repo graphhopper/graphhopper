@@ -1,3 +1,9 @@
+1.0
+    removed PathNative,PathBidirRef,Path4CH,EdgeBasedPathCH and moved path extraction code out of Path class, added PathExtractor,BidirPathExtractor(+subclasses for CH) instead, #1730
+    conditional turn restrictions now supported, #1683
+    added new `curbside` feature, #1697
+    moved QueryGraph to new routing.querygraph package
+
 0.13
     removed docker compose file
     PathDetails return null instead of -1 for Infinity by default
@@ -14,7 +20,13 @@
     removed TraversalMode.EDGE_BASED_1DIR and TraversalMode.EDGE_BASED_2DIR_UTURN, renamed TraversalMode.EDGE_BASED_2DIR to TraversalMode.EDGE_BASED
     to prevent u-turns when using edge-based algorithms it is now required to use TurnWeighting, #1640
     GraphHopperStorage.getGraph(Class) was replaced by GraphHopperStorage.getBase/CHGraph(), #1669
-    CHGraph.shortcut(int, int) was removed (use .shortcut(int, int, ...) and/or .shortcutEdgeBased(int, int, ...) instead
+    CHGraph.shortcut(int, int) was removed (use .shortcut(int, int, ...) and/or .shortcutEdgeBased(int, int, ...) instead, #1693
+    CH graphs are now identified using CHProfile instead of Weighting, #1670
+    removed the 'traversal_mode` request parameter for /route, instead of 'traversal_mode=edge_based_2dir' use edge_based=true
+    removed GraphHopper.set/getTraversalMode() methods, #1705
+    edge-based CH is now chosen by default if it was prepared, #1706
+    it is now possible to specify finite u-turn costs for CH preparation, #1671
+    removed distances from CH shortcuts, reduces memory consumption per shortcut by 4 bytes (about 8-10%), #1719
 
 0.12
     renamed VirtualEdgeIteratorState.getOriginalEdgeKey to more precise getOriginalEdgeKey #1549

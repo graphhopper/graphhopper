@@ -3,6 +3,10 @@ var tfAddition = '';
 if (ghenv.thunderforest.api_key)
     tfAddition = '?apikey=' + ghenv.thunderforest.api_key;
 
+var mapilionAddition = '';
+if (ghenv.mapilion.api_key)
+    mapilionAddition = '?key=' + ghenv.mapilion.api_key;
+
 var osAPIKey = 'mapsgraph-bf48cc0b';
 if (ghenv.omniscale.api_key)
     osAPIKey = ghenv.omniscale.api_key;
@@ -19,10 +23,6 @@ var lyrk = L.tileLayer('https://tiles.lyrk.org/' + (retinaTiles ? 'lr' : 'ls') +
 var omniscale = L.tileLayer('https://maps.omniscale.net/v2/' +osAPIKey + '/style.default/{z}/{x}/{y}.png' + (retinaTiles ? '?hq=true' : ''), {
     layers: 'osm',
     attribution: osmAttr + ', &copy; <a href="https://maps.omniscale.com/">Omniscale</a>'
-});
-
-var openMapSurfer = L.tileLayer('http://korona.geog.uni-heidelberg.de/tiles/roads/x={x}&y={y}&z={z}', {
-    attribution: osmAttr + ', <a href="http://korona.geog.uni-heidelberg.de/contact.html">GIScience Heidelberg</a>'
 });
 
 // Not an option as too fast over limit.
@@ -48,6 +48,11 @@ var thunderOutdoors = L.tileLayer('https://{s}.tile.thunderforest.com/outdoors/{
 
 var thunderNeighbourhood = L.tileLayer('https://{s}.tile.thunderforest.com/neighbourhood/{z}/{x}/{y}.png' + tfAddition, {
     attribution: osmAttr + ', <a href="https://thunderforest.com/maps/neighbourhood/" target="_blank">Thunderforest Neighbourhood</a>'
+});
+
+var kurvigerLiberty = L.tileLayer('https://{s}-tiles.mapilion.com/raster/styles/kurviger-liberty/{z}/{x}/{y}{r}.png'+mapilionAddition, {
+    subdomains: ['a', 'b', 'c', 'd', 'e'],
+    attribution: osmAttr + ',&copy; <a href="https://kurviger.de/" target="_blank">Kurviger</a> &copy; <a href="https://mapilion.com/attribution" target="_blank">Mapilion</a> <a href="http://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a>'
 });
 
 var wrk = L.tileLayer('http://{s}.wanderreitkarte.de/topo/{z}/{x}/{y}.png', {
@@ -78,9 +83,9 @@ var availableTileLayers = {
     "TF Cycle": thunderCycle,
     "TF Outdoors": thunderOutdoors,
     "TF Neighbourhood": thunderNeighbourhood,
+    "Kurviger Liberty": kurvigerLiberty,
     "Lyrk": lyrk,
     "WanderReitKarte": wrk,
-    "OpenMapSurfer": openMapSurfer,
     "Sorbian Language": sorbianLang,
     "OpenStreetMap.de": osmde
 };

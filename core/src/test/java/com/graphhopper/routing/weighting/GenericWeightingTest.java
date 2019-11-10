@@ -18,21 +18,19 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
-import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -47,7 +45,7 @@ public class GenericWeightingTest {
 
     public GenericWeightingTest() {
         encoder = new DataFlagEncoder();
-        em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).add(new OSMMaxHeightParser()).
+        em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).add(new OSMMaxHeightParser()).
                 add(encoder).build();
     }
 
@@ -61,8 +59,8 @@ public class GenericWeightingTest {
         graph = new GraphBuilder(em).create();
         // 0-1
         graph.edge(0, 1, 1, true);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
+        updateDistancesFor(graph, 0, 0.00, 0.00);
+        updateDistancesFor(graph, 1, 0.01, 0.01);
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay().put(encoder.toString(), EncodingManager.Access.WAY);
         graph.getEdgeIteratorState(0, 1).setFlags(em.handleWayTags(way, map, 0));
     }
@@ -87,7 +85,7 @@ public class GenericWeightingTest {
     @Test
     public void testDisabledRoadAttributes() {
         DataFlagEncoder simpleEncoder = new DataFlagEncoder();
-        EncodingManager simpleEncodingManager = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(8)).add(simpleEncoder).build();
+        EncodingManager simpleEncodingManager = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).add(simpleEncoder).build();
         Graph simpleGraph = new GraphBuilder(simpleEncodingManager).create();
 
         ReaderWay way = new ReaderWay(27l);
@@ -97,8 +95,8 @@ public class GenericWeightingTest {
 
         // 0-1
         simpleGraph.edge(0, 1, 1, true);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(simpleGraph, 0, 0.00, 0.00);
-        AbstractRoutingAlgorithmTester.updateDistancesFor(simpleGraph, 1, 0.01, 0.01);
+        updateDistancesFor(simpleGraph, 0, 0.00, 0.00);
+        updateDistancesFor(simpleGraph, 1, 0.01, 0.01);
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay().put(encoder.toString(), EncodingManager.Access.WAY);
         simpleGraph.getEdgeIteratorState(0, 1).setFlags(simpleEncodingManager.handleWayTags(way, map, 0));
 

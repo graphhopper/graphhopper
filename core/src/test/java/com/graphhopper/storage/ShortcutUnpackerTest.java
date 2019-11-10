@@ -18,6 +18,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
@@ -49,8 +50,8 @@ public class ShortcutUnpackerTest {
         encoder = new MotorcycleFlagEncoder(5, 5, 10);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
-        graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(edgeBased).create();
-        chGraph = graph.getCHGraph(weighting);
+        graph = new GraphBuilder(encodingManager).setCHProfiles(new CHProfile(weighting, edgeBased, INFINITE_U_TURN_COSTS)).create();
+        chGraph = graph.getCHGraph();
         if (edgeBased) {
             turnCostExtension = (TurnCostExtension) graph.getExtension();
         }
@@ -295,11 +296,10 @@ public class ShortcutUnpackerTest {
     private void shortcut(int baseNode, int adjNode, int skip1, int skip2, int origFirst, int origLast) {
         // shortcut weight/distance is not important for us here
         double weight = 1;
-        double distance = 1;
         if (edgeBased) {
-            chGraph.shortcutEdgeBased(baseNode, adjNode, PrepareEncoder.getScFwdDir(), weight, distance, skip1, skip2, origFirst, origLast);
+            chGraph.shortcutEdgeBased(baseNode, adjNode, PrepareEncoder.getScFwdDir(), weight, skip1, skip2, origFirst, origLast);
         } else {
-            chGraph.shortcut(baseNode, adjNode, PrepareEncoder.getScFwdDir(), weight, distance, skip1, skip2);
+            chGraph.shortcut(baseNode, adjNode, PrepareEncoder.getScFwdDir(), weight, skip1, skip2);
         }
     }
 

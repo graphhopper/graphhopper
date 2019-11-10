@@ -23,19 +23,21 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.CHProfile;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIterator;
 import org.junit.Test;
 
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 
 public class DefaultEdgeFilterTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
+    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
     private final CHGraph chGraph = graph.getCHGraph();
 
     @Test
@@ -69,7 +71,7 @@ public class DefaultEdgeFilterTest {
 
     private void addShortcut(CHGraph chGraph, int from, int to, boolean fwd, int skip1, int skip2) {
         int accessFlags = fwd ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir();
-        chGraph.shortcut(from, to, accessFlags, 5, 5, skip1, skip2);
+        chGraph.shortcut(from, to, accessFlags, 5, skip1, skip2);
     }
 
 }

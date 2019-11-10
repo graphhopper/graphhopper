@@ -105,6 +105,17 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
     }
 
     @Test
+    public void testMatrixSnapPrevention() {
+        GHMRequest req = new GHMRequest();
+        req.addPoint(new GHPoint(52.480271, 13.418941));
+        req.addPoint(new GHPoint(52.462834, 13.438854));
+        req.addOutArray("distances");
+        req.setSnapPreventions(Arrays.asList("motorway"));
+        MatrixResponse res = ghMatrix.route(req);
+        assertEquals(2860, res.getDistance(0, 1), 30);
+    }
+
+    @Test
     public void testConnectionNotFound() {
         GHMRequest req = new GHMRequest();
         req.addPoint(new GHPoint(-7.126486, -34.833741));
@@ -157,7 +168,7 @@ public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
                 } else if (i == 0 && j == 3) {
                     assertTrue(connected);
                     assertEquals(4931, weight, 100);
-                    assertEquals(78643, distance, 100);
+                    assertEquals(78812, distance, 100);
                     assertEquals(3752000, time, 100000);
                 } else if (i == 3 && j == 0) {
                     assertTrue(connected);

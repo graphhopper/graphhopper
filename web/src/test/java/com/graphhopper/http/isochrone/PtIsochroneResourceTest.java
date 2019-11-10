@@ -22,11 +22,12 @@ import com.graphhopper.http.GHPointConverterProvider;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
-import com.graphhopper.reader.gtfs.PtFlagEncoder;
+import com.graphhopper.reader.gtfs.PtEncodedValues;
 import com.graphhopper.resources.PtIsochroneResource;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
@@ -56,18 +57,15 @@ public class PtIsochroneResourceTest {
     private static GraphHopperStorage graphHopperStorage;
     private static LocationIndex locationIndex;
     private static PtIsochroneResource isochroneResource;
+    private static GtfsStorage gtfsStorage;
     private GeometryFactory geometryFactory = new GeometryFactory();
 
     static {
         Helper.removeDir(new File(GRAPH_LOC));
-        final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
-        final CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
-        final FootFlagEncoder footFlagEncoder = new FootFlagEncoder();
-
-        EncodingManager encodingManager = new EncodingManager.Builder(12).add(carFlagEncoder).add(footFlagEncoder).add(ptFlagEncoder).build();
-        GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
-        GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Collections.singleton("../reader-gtfs/files/sample-feed.zip"), Collections.emptyList());
+        EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
+        GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
+        gtfsStorage = GtfsStorage.createOrLoad(directory);
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, Collections.singleton("../reader-gtfs/files/sample-feed.zip"), Collections.emptyList());
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         isochroneResource = new PtIsochroneResource(gtfsStorage, graphHopperStorage.getEncodingManager(), graphHopperStorage, locationIndex);
     }
@@ -112,6 +110,7 @@ public class PtIsochroneResourceTest {
     public static void close() {
         graphHopperStorage.close();
         locationIndex.close();
+        gtfsStorage.close();
     }
 
 }

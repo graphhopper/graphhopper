@@ -45,12 +45,12 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
 
     @Override
     protected boolean fwdSearchCanBeStopped() {
-        return getMinCurrFromPathWeight() > bestPath.getWeight();
+        return getMinCurrFromPathWeight() > bestWeight;
     }
 
     @Override
     protected boolean bwdSearchCanBeStopped() {
-        return getMinCurrToPathWeight() > bestPath.getWeight();
+        return getMinCurrToPathWeight() > bestWeight;
     }
 
     @Override

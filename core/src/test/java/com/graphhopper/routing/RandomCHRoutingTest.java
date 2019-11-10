@@ -2,6 +2,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -23,10 +24,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -34,24 +34,26 @@ import static org.junit.Assert.fail;
 public class RandomCHRoutingTest {
     private final TraversalMode traversalMode;
     private final int maxTurnCosts;
+    private final int uTurnCosts;
     private Directory dir;
     private CarFlagEncoder encoder;
     private Weighting weighting;
     private GraphHopperStorage graph;
     private LocationIndexTree locationIndex;
-    private CHGraph chGraph;
 
-    @Parameterized.Parameters(name = "{0}")
-    public static Object[] params() {
-        return new Object[]{
-                TraversalMode.NODE_BASED,
-                TraversalMode.EDGE_BASED
-        };
+    @Parameterized.Parameters(name = "{0}, u-turn-costs={1}")
+    public static Collection<Object[]> params() {
+        return Arrays.asList(new Object[][]{
+                {TraversalMode.NODE_BASED, INFINITE_U_TURN_COSTS},
+                {TraversalMode.EDGE_BASED, 40},
+                {TraversalMode.EDGE_BASED, INFINITE_U_TURN_COSTS}
+        });
     }
 
-    public RandomCHRoutingTest(TraversalMode traversalMode) {
+    public RandomCHRoutingTest(TraversalMode traversalMode, int uTurnCosts) {
         this.traversalMode = traversalMode;
         this.maxTurnCosts = 10;
+        this.uTurnCosts = uTurnCosts;
     }
 
     @Before
@@ -60,10 +62,9 @@ public class RandomCHRoutingTest {
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         EncodingManager em = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
-        GraphBuilder graphBuilder = new GraphBuilder(em);
-        graphBuilder.setEdgeBasedCH(traversalMode.isEdgeBased());
-        graph = graphBuilder.setCHGraph(weighting).create();
-        chGraph = graph.getCHGraph();
+        graph = new GraphBuilder(em)
+                .setCHProfiles(new CHProfile(weighting, traversalMode.isEdgeBased(), uTurnCosts))
+                .create();
     }
 
     /**
@@ -135,16 +136,18 @@ public class RandomCHRoutingTest {
         locationIndex.prepareIndex();
 
         graph.freeze();
-        PrepareContractionHierarchies pch = new PrepareContractionHierarchies(chGraph, weighting, traversalMode);
+        CHProfile chProfile = new CHProfile(weighting, traversalMode, uTurnCosts);
+        CHGraph chGraph = graph.getCHGraph(chProfile);
+        PrepareContractionHierarchies pch = new PrepareContractionHierarchies(chGraph);
         pch.doWork();
 
         int numQueryGraph = 25;
         for (int j = 0; j < numQueryGraph; j++) {
-            QueryGraph queryGraph = new QueryGraph(graph);
-            QueryGraph chQueryGraph = new QueryGraph(chGraph);
             // add virtual nodes and edges, because they can change the routing behavior and/or produce bugs, e.g.
             // when via-points are used
-            addVirtualNodesAndEdges(rnd, queryGraph, chQueryGraph, numVirtualNodes);
+            List<QueryResult> qrs = createQueryResults(rnd, numVirtualNodes);
+            QueryGraph queryGraph = QueryGraph.lookup(graph, qrs);
+            QueryGraph chQueryGraph = QueryGraph.lookup(chGraph, qrs);
 
             int numQueries = 100;
             int numPathsNotFound = 0;
@@ -154,7 +157,7 @@ public class RandomCHRoutingTest {
                 int from = rnd.nextInt(queryGraph.getNodes());
                 int to = rnd.nextInt(queryGraph.getNodes());
                 Weighting w = traversalMode.isEdgeBased()
-                        ? new TurnWeighting(weighting, (TurnCostExtension) queryGraph.getExtension())
+                        ? new TurnWeighting(weighting, (TurnCostExtension) queryGraph.getExtension(), uTurnCosts == INFINITE_U_TURN_COSTS ? Double.POSITIVE_INFINITY : uTurnCosts)
                         : weighting;
                 // using plain dijkstra instead of bidirectional, because of #1592
                 RoutingAlgorithm refAlgo = new Dijkstra(queryGraph, w, traversalMode);
@@ -194,7 +197,7 @@ public class RandomCHRoutingTest {
         }
     }
 
-    private void addVirtualNodesAndEdges(Random rnd, QueryGraph queryGraph, QueryGraph chQueryGraph, int numVirtualNodes) {
+    private List<QueryResult> createQueryResults(Random rnd, int numVirtualNodes) {
         BBox bbox = graph.getBounds();
         int count = 0;
         List<QueryResult> qrs = new ArrayList<>(numVirtualNodes);
@@ -208,8 +211,7 @@ public class RandomCHRoutingTest {
             }
             count++;
         }
-        queryGraph.lookup(qrs);
-        chQueryGraph.lookup(qrs);
+        return qrs;
     }
 
     private QueryResult findQueryResult(Random rnd, BBox bbox) {

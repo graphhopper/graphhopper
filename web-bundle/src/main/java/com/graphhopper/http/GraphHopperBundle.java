@@ -31,15 +31,15 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.http.health.GraphHopperStorageHealthCheck;
-import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
-import com.graphhopper.reader.gtfs.PtFlagEncoder;
+import com.graphhopper.reader.gtfs.PtEncodedValues;
 import com.graphhopper.resources.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
@@ -141,20 +141,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
-    static class RasterHullBuilderFactory implements Factory<DelaunayTriangulationIsolineBuilder> {
-
-        DelaunayTriangulationIsolineBuilder builder = new DelaunayTriangulationIsolineBuilder();
-
-        @Override
-        public DelaunayTriangulationIsolineBuilder provide() {
-            return builder;
-        }
-
-        @Override
-        public void dispose(DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder) {
-        }
-    }
-
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
         // See #1440: avoids warning regarding com.fasterxml.jackson.module.afterburner.util.MyClassLoader
@@ -207,14 +193,13 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
     }
 
     private void runPtGraphHopper(CmdArgs configuration, Environment environment) {
-        final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
-        final GHDirectory ghDirectory = GraphHopperGtfs.createGHDirectory(configuration.get("graph.location", "target/tmp"));
-        final GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
-        final EncodingManager encodingManager = new EncodingManager.Builder(configuration.getInt("graph.bytes_for_flags", 8)).add(ptFlagEncoder).add(new FootFlagEncoder()).add(new CarFlagEncoder()).build();
-        final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, ptFlagEncoder, gtfsStorage,
+        final GHDirectory ghDirectory = new GHDirectory(configuration.get("graph.location", "target/tmp"), DAType.RAM_STORE);
+        final GtfsStorage gtfsStorage = GtfsStorage.createOrLoad(ghDirectory);
+        EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
+        final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, gtfsStorage,
                 configuration.has("gtfs.file") ? Arrays.asList(configuration.get("gtfs.file", "").split(",")) : Collections.emptyList(),
                 configuration.has("datareader.file") ? Arrays.asList(configuration.get("datareader.file", "").split(",")) : Collections.emptyList());
-        final TranslationMap translationMap = GraphHopperGtfs.createTranslationMap();
+        final TranslationMap translationMap = new TranslationMap().doImport();
         final LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(ghDirectory, graphHopperStorage);
         environment.jersey().register(new AbstractBinder() {
             @Override
@@ -224,10 +209,8 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(locationIndex).to(LocationIndex.class);
                 bind(translationMap).to(TranslationMap.class);
                 bind(encodingManager).to(EncodingManager.class);
-                bind(ptFlagEncoder).to(PtFlagEncoder.class);
                 bind(graphHopperStorage).to(GraphHopperStorage.class);
                 bind(gtfsStorage).to(GtfsStorage.class);
-                bindFactory(RasterHullBuilderFactory.class).to(DelaunayTriangulationIsolineBuilder.class);
             }
         });
         environment.jersey().register(NearestResource.class);
@@ -235,25 +218,27 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(new PtIsochroneResource(gtfsStorage, encodingManager, graphHopperStorage, locationIndex));
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
-        // Say we only support pt, even though we now have several flag encoders. Yes, I know, we're almost there.
+        // The included web client works best if we say we only support pt.
+        // Does not have anything to do with FlagEncoders anymore.
         environment.jersey().register((WriterInterceptor) context -> {
             if (context.getEntity() instanceof InfoResource.Info) {
                 InfoResource.Info info = (InfoResource.Info) context.getEntity();
                 info.supported_vehicles = new String[]{"pt"};
-                info.features.remove("car");
-                info.features.remove("foot");
+                info.features.clear();
+                info.features.put("pt", new InfoResource.Info.PerVehicle());
                 context.setEntity(info);
             }
             context.proceed();
         });
         environment.lifecycle().manage(new Managed() {
             @Override
-            public void start() throws Exception {
+            public void start() {
             }
 
             @Override
-            public void stop() throws Exception {
+            public void stop() {
                 locationIndex.close();
+                gtfsStorage.close();
                 graphHopperStorage.close();
             }
         });
@@ -276,7 +261,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
                 bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
                 bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
-                bindFactory(RasterHullBuilderFactory.class).to(DelaunayTriangulationIsolineBuilder.class);
             }
         });
 

@@ -36,6 +36,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.graphhopper.util.Helper.DIST_EARTH;
+
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
  * methods are useful for unit tests or debugging only.
@@ -306,7 +308,16 @@ public class GHUtility {
             list.set(i, i);
         }
         list.shuffle(new Random());
-        return createSortedGraph(g, sortedGraph, list);
+
+        int edges = g.getEdges();
+        GHIntArrayList edgesList = new GHIntArrayList(edges);
+        edgesList.fill(edges, -1);
+        for (int i = 0; i < edges; i++) {
+            edgesList.set(i, i);
+        }
+        edgesList.shuffle(new Random());
+
+        return createSortedGraph(g, sortedGraph, list, edgesList);
     }
 
     /**
@@ -315,32 +326,55 @@ public class GHUtility {
      */
     public static Graph sortDFS(Graph g, Graph sortedGraph) {
         int nodes = g.getNodes();
-        final GHIntArrayList list = new GHIntArrayList(nodes);
-        list.fill(nodes, -1);
-        final GHBitSetImpl bitset = new GHBitSetImpl(nodes);
-        final AtomicInteger ref = new AtomicInteger(-1);
+        final GHIntArrayList nodeList = new GHIntArrayList(nodes);
+        nodeList.fill(nodes, -1);
+        final GHBitSetImpl nodeBitset = new GHBitSetImpl(nodes);
+        final AtomicInteger nodeRef = new AtomicInteger(-1);
+
+        int edges = g.getEdges();
+        final GHIntArrayList edgeList = new GHIntArrayList(edges);
+        edgeList.fill(edges, -1);
+        final GHBitSetImpl edgeBitset = new GHBitSetImpl(edges);
+        final AtomicInteger edgeRef = new AtomicInteger(-1);
+
         EdgeExplorer explorer = g.createEdgeExplorer();
         for (int startNode = 0; startNode >= 0 && startNode < nodes;
-             startNode = bitset.nextClear(startNode + 1)) {
+             startNode = nodeBitset.nextClear(startNode + 1)) {
             new DepthFirstSearch() {
                 @Override
                 protected GHBitSet createBitSet() {
-                    return bitset;
+                    return nodeBitset;
+                }
+
+                @Override
+                protected boolean checkAdjacent(EdgeIteratorState edge) {
+                    int edgeId = edge.getEdge();
+                    if (!edgeBitset.contains(edgeId)) {
+                        edgeBitset.add(edgeId);
+                        edgeList.set(edgeRef.incrementAndGet(), edgeId);
+                    }
+                    return super.checkAdjacent(edge);
                 }
 
                 @Override
                 protected boolean goFurther(int nodeId) {
-                    list.set(nodeId, ref.incrementAndGet());
+                    nodeList.set(nodeId, nodeRef.incrementAndGet());
                     return super.goFurther(nodeId);
                 }
             }.start(explorer, startNode);
         }
-        return createSortedGraph(g, sortedGraph, list);
+        return createSortedGraph(g, sortedGraph, nodeList, edgeList);
     }
 
-    static Graph createSortedGraph(Graph fromGraph, Graph toSortedGraph, final IntIndexedContainer oldToNewNodeList) {
-        AllEdgesIterator eIter = fromGraph.getAllEdges();
-        while (eIter.next()) {
+    static Graph createSortedGraph(Graph fromGraph, Graph toSortedGraph, final IntIndexedContainer oldToNewNodeList, final IntIndexedContainer newToOldEdgeList) {
+        int edges = fromGraph.getEdges();
+        for (int i = 0; i < edges; i++) {
+            int edgeId = newToOldEdgeList.get(i);
+            if (edgeId < 0)
+                continue;
+
+            EdgeIteratorState eIter = fromGraph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
+
             int base = eIter.getBaseNode();
             int newBaseIndex = oldToNewNodeList.get(base);
             int adj = eIter.getAdjNode();
@@ -406,7 +440,7 @@ public class GHUtility {
         Directory outdir = guessDirectory(store);
         boolean is3D = store.getNodeAccess().is3D();
 
-        return new GraphHopperStorage(store.getNodeBasedCHWeightings(), store.getEdgeBasedCHWeightings(), outdir, store.getEncodingManager(),
+        return new GraphHopperStorage(store.getCHProfiles(), outdir, store.getEncodingManager(),
                 is3D, store.getExtension()).
                 create(store.getNodes());
     }
@@ -544,15 +578,6 @@ public class GHUtility {
         return edgeKey / 2;
     }
 
-    /**
-     * Returns the edge key for a given edge id and adjacent node. This is needed in a few places where
-     * the base node is not known.
-     */
-    public static int getEdgeKey(Graph graph, int edgeId, int node, boolean reverse) {
-        EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(edgeId, node);
-        return GHUtility.createEdgeKey(edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode(), edgeId, reverse);
-    }
-
     public static IntsRef setProperties(IntsRef edgeFlags, FlagEncoder encoder, double averageSpeed, boolean fwd, boolean bwd) {
         if (averageSpeed < 0.0001 && (fwd || bwd))
             throw new IllegalStateException("Zero speed is only allowed if edge will get inaccessible. Otherwise Weighting can produce inconsistent results");
@@ -599,10 +624,20 @@ public class GHUtility {
         return edge;
     }
 
-    public static final EncodingManager.Builder addDefaultEncodedValues(EncodingManager.Builder builder) {
+    public static EncodingManager.Builder addDefaultEncodedValues(EncodingManager.Builder builder) {
         return builder.add(new OSMRoadClassParser()).add(new OSMRoadClassLinkParser()).
                 add(new OSMRoadEnvironmentParser()).add(new OSMMaxSpeedParser()).add(new OSMRoadAccessParser()).
                 add(new OSMSurfaceParser());
+    }
+
+    public static void updateDistancesFor(Graph g, int node, double lat, double lon) {
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(node, lat, lon);
+        EdgeIterator iter = g.createEdgeExplorer().setBaseNode(node);
+        while (iter.next()) {
+            iter.setDistance(iter.fetchWayGeometry(3).calcDistance(DIST_EARTH));
+            // System.out.println(node + "->" + adj + ": " + iter.getDistance());
+        }
     }
 
     /**

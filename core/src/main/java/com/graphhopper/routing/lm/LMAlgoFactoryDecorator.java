@@ -267,16 +267,16 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      * This method calculates the landmark data for all weightings (optionally in parallel) or if already existent loads it.
      *
      * @return true if the preparation data for at least one weighting was calculated.
-     * @see com.graphhopper.routing.ch.CHAlgoFactoryDecorator#prepare(StorableProperties) for a very similar method
+     * @see com.graphhopper.routing.ch.CHAlgoFactoryDecorator#prepare(StorableProperties, boolean) for a very similar method
      */
-    public boolean loadOrDoWork(final StorableProperties properties) {
-        ExecutorCompletionService completionService = new ExecutorCompletionService<>(threadPool);
+    public boolean loadOrDoWork(final StorableProperties properties, final boolean closeEarly) {
+        ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;
         final AtomicBoolean prepared = new AtomicBoolean(false);
         for (final PrepareLandmarks plm : preparations) {
             counter++;
             final int tmpCounter = counter;
-            final String name = AbstractWeighting.weightingToFileName(plm.getWeighting(), false);
+            final String name = AbstractWeighting.weightingToFileName(plm.getWeighting());
             completionService.submit(new Runnable() {
                 @Override
                 public void run() {
@@ -287,6 +287,9 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                     prepared.set(true);
                     Thread.currentThread().setName(name);
                     plm.doWork();
+                    if (closeEarly) {
+                        plm.close();
+                    }
                     properties.put(Landmark.PREPARE + "date." + name, createFormatter().format(new Date()));
                 }
             }, name);

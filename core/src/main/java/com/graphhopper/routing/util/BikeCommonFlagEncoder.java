@@ -45,7 +45,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
      */
     public static final int K_UNPAVED = 100;
     protected static final int PUSHING_SECTION_SPEED = 4;
-    // Pushing section heighways are parts where you need to get off your bike and push it (German: Schiebestrecke)
+    // Pushing section highways are parts where you need to get off your bike and push it (German: Schiebestrecke)
     protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
     protected final HashSet<String> oppositeLanes = new HashSet<>();
     protected final Set<String> preferHighwayTags = new HashSet<>();
@@ -163,6 +163,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
         setHighwaySpeed("living_street", 6);
         setHighwaySpeed("steps", PUSHING_SECTION_SPEED / 2);
+        avoidHighwayTags.add("steps");
 
         final int CYCLEWAY_SPEED = 18;  // Make sure cycleway and path use same speed value, see #634
         setHighwaySpeed("cycleway", CYCLEWAY_SPEED);
@@ -551,9 +552,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         }
 
         if (pushingSectionsHighways.contains(highway)
-                || way.hasTag("bicycle", "use_sidepath")
                 || "parking_aisle".equals(service)) {
             int pushingSectionPrio = AVOID_IF_POSSIBLE.getValue();
+            if (way.hasTag("bicycle", "use_sidepath"))  {
+                pushingSectionPrio = PREFER.getValue();
+            }
             if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
                 pushingSectionPrio = PREFER.getValue();
             if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official"))
@@ -630,12 +633,12 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected void handleSpeed(IntsRef edgeFlags, ReaderWay way, double speed) {
         speedEncoder.setDecimal(false, edgeFlags, speed);
 
-        // handle oneways        
+        // handle oneways
         boolean isOneway = way.hasTag("oneway", oneways)
                 || way.hasTag("oneway:bicycle", oneways)
                 || way.hasTag("vehicle:backward")
                 || way.hasTag("vehicle:forward")
-                || way.hasTag("bicycle:forward");
+                || way.hasTag("bicycle:forward") && (way.hasTag("bicycle:forward", "yes") || way.hasTag("bicycle:forward", "no"));
 
         if ((isOneway || roundaboutEnc.getBool(false, edgeFlags))
                 && !way.hasTag("oneway:bicycle", "no")

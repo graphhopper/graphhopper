@@ -115,7 +115,7 @@ public class GraphHopperAPITest {
     public void testDoNotInterpolateTwice1645() {
         String loc = "./target/issue1645";
         Helper.removeDir(new File(loc));
-        EncodingManager em = new EncodingManager.Builder(4).add(new OSMRoadEnvironmentParser()).add(new CarFlagEncoder()).build();
+        EncodingManager em = new EncodingManager.Builder().add(new OSMRoadEnvironmentParser()).add(new CarFlagEncoder()).build();
         GraphHopperStorage graph = new GraphBuilder(em).setLocation(loc).set3D(true).setStore(true).create();
 
         // we need elevation

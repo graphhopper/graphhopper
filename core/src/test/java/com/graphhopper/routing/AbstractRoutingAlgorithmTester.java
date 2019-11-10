@@ -21,6 +21,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -29,7 +30,10 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,6 +41,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
+import static com.graphhopper.util.Helper.DIST_EARTH;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.*;
 
@@ -45,7 +51,6 @@ import static org.junit.Assert.*;
  */
 public abstract class AbstractRoutingAlgorithmTester {
     protected static final EncodingManager encodingManager = EncodingManager.create("car,foot");
-    private static final DistanceCalc distCalc = new DistanceCalcEarth();
     protected FlagEncoder carEncoder;
     protected DecimalEncodedValue carAvSpeedEnc;
     protected BooleanEncodedValue carAccessEnc;
@@ -84,16 +89,6 @@ public abstract class AbstractRoutingAlgorithmTester {
         updateDistancesFor(graph, 6, 0, 0.001);
         updateDistancesFor(graph, 5, 0, 0.004);
         return graph;
-    }
-
-    public static void updateDistancesFor(Graph g, int node, double lat, double lon) {
-        NodeAccess na = g.getNodeAccess();
-        na.setNode(node, lat, lon);
-        EdgeIterator iter = g.createEdgeExplorer().setBaseNode(node);
-        while (iter.next()) {
-            iter.setDistance(iter.fetchWayGeometry(3).calcDistance(distCalc));
-            // System.out.println(node + "->" + adj + ": " + iter.getDistance());
-        }
     }
 
     protected static GraphHopperStorage createMatrixAlikeGraph(GraphHopperStorage tmpGraph) {
@@ -238,8 +233,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     public void testCalcFastestPath() {
         GraphHopperStorage graphShortest = createGHStorage(false);
         initDirectedAndDiffSpeed(graphShortest, carEncoder);
-        Path p1 = createAlgo(graphShortest, defaultOpts).
-                calcPath(0, 3);
+        Path p1 = createAlgo(graphShortest, defaultOpts).calcPath(0, 3);
         assertEquals(IntArrayList.from(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 402.3, p1.getDistance(), .1);
         assertEquals(p1.toString(), 144823, p1.getTime());
@@ -733,7 +727,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         // correct order for CH: in factory do prepare and afterwards wrap in query graph
         AlgorithmOptions opts = AlgorithmOptions.start().weighting(weighting).build();
         RoutingAlgorithmFactory factory = createFactory(ghStorage, opts);
-        QueryGraph qGraph = new QueryGraph(getGraph(ghStorage, weighting)).lookup(from, to);
+        QueryGraph qGraph = QueryGraph.lookup(getGraph(ghStorage, weighting), from, to);
         return factory.createAlgo(qGraph, opts).
                 calcPath(from.getClosestNode(), to.getClosestNode());
     }
@@ -744,7 +738,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         QueryResult to = newQR(ghStorage, toNode1, toNode2);
 
         RoutingAlgorithmFactory factory = createFactory(ghStorage, defaultOpts);
-        QueryGraph qGraph = new QueryGraph(getGraph(ghStorage, defaultOpts.getWeighting())).lookup(from, to);
+        QueryGraph qGraph = QueryGraph.lookup(getGraph(ghStorage, defaultOpts.getWeighting()), from, to);
         return factory.createAlgo(qGraph, defaultOpts).calcPath(from.getClosestNode(), to.getClosestNode());
     }
 
@@ -767,7 +761,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         res.setClosestEdge(edge);
         res.setWayIndex(0);
         res.setSnappedPosition(QueryResult.Position.EDGE);
-        res.calcSnappedPoint(distCalc);
+        res.calcSnappedPoint(DIST_EARTH);
         return res;
     }
 
@@ -879,7 +873,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         QueryResult to = newQR(graph, 10, 9);
 
         RoutingAlgorithmFactory factory = createFactory(graph, fakeOpts);
-        QueryGraph qGraph = new QueryGraph(getGraph(graph, fakeWeighting)).lookup(from, to);
+        QueryGraph qGraph = QueryGraph.lookup(getGraph(graph, fakeWeighting), from, to);
         p = factory.createAlgo(qGraph, fakeOpts).calcPath(from.getClosestNode(), to.getClosestNode());
         assertEquals(IntArrayList.from(12, 0, 1, 2, 11, 7, 10, 13), p.calcNodes());
         assertEquals(37009621, p.getTime());

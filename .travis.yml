@@ -13,10 +13,10 @@ env:
 matrix:
   include:
     - jdk: openjdk8
-    - env: JDK='OpenJDK 12'
-      install: . ./install-jdk.sh -F 12 -C
-    - env: JDK='OpenJDK 13' SKIP_EXT_TESTS=true
+    - env: JDK='OpenJDK 13'
       install: . ./install-jdk.sh -F 13 -C
+    - env: JDK='OpenJDK 14' SKIP_EXT_TESTS=true
+      install: . ./install-jdk.sh -F 14 -C
     
 # avoid default dependency command for maven, 'true' means 'return true' and continue
 install: true
@@ -42,12 +42,12 @@ before_script:
   - cd web && npm install && BROWSERIFYSWAP_ENV='development' npm run bundleProduction && cd ..
 
 script:
-  - "mvn -Dkey=$API_KEY clean test verify -B"
+  - "mvn -Dkey=$API_KEY clean install -B"
 
 after_success:
   # often spotbugs etc take long to be compatible with a future JDK version so skip them
   - if [ "$SKIP_EXT_TESTS" != "true" ]; then
-        mvn checkstyle:check spotbugs:check forbiddenapis:check;
+        mvn checkstyle:check forbiddenapis:check;
     fi
   # if tagged deploy then release to maven central or deploy snapshot artifacts to sonatype 
   - if [ "$TRAVIS_JDK_VERSION" == "openjdk8" ] && [ "$TRAVIS_TAG" != "" ]; then
@@ -66,4 +66,4 @@ notifications:
 
 cache:
   directories:
-  - $HOME/.m2
+    - $HOME/.m2

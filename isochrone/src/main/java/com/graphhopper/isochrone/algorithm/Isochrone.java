@@ -22,6 +22,7 @@ import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AbstractRoutingAlgorithm;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.PathExtractor;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -107,7 +108,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
     public static class IsoLabelWithCoordinates {
         public final int nodeId;
         public int edgeId, prevEdgeId, prevNodeId;
-        public int timeInSec, prevTimeInSec;
+        public int timeMillis, prevTimeMillis;
         public int distance, prevDistance;
         public GHPoint coordinate, prevCoordinate;
 
@@ -132,7 +133,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                 double lon = na.getLongitude(nodeId);
                 IsoLabelWithCoordinates isoLabelWC = new IsoLabelWithCoordinates(nodeId);
                 isoLabelWC.coordinate = new GHPoint(lat, lon);
-                isoLabelWC.timeInSec = Math.round(label.time);
+                isoLabelWC.timeMillis = Math.round(label.time);
                 isoLabelWC.distance = (int) Math.round(label.distance);
                 isoLabelWC.edgeId = label.edge;
                 if (label.parent != null) {
@@ -144,7 +145,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                     isoLabelWC.prevEdgeId = prevLabel.edge;
                     isoLabelWC.prevCoordinate = new GHPoint(prevLat, prevLon);
                     isoLabelWC.prevDistance = (int) Math.round(prevLabel.distance);
-                    isoLabelWC.prevTimeInSec = Math.round(prevLabel.time);
+                    isoLabelWC.prevTimeMillis = Math.round(prevLabel.time);
                 }
                 callback.add(isoLabelWC);
             }
@@ -291,7 +292,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
         if (currEdge == null || !finished()) {
             return createEmptyPath();
         }
-        return new Path(graph, weighting).setSPTEntry(currEdge).extract();
+        return PathExtractor.extractPath(graph, weighting, currEdge);
     }
 
     @Override

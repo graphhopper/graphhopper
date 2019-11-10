@@ -19,7 +19,7 @@ public class OSMTollParserTest {
     @Before
     public void setUp() {
         parser = new OSMTollParser();
-        em = new EncodingManager.Builder(4).add(parser).build();
+        em = new EncodingManager.Builder().add(parser).build();
         tollEnc = em.getEnumEncodedValue(Toll.KEY, Toll.class);
     }
 
@@ -36,6 +36,18 @@ public class OSMTollParserTest {
         readerWay.setTag("toll:hgv", "yes");
         parser.handleWayTags(intsRef, readerWay, WAY, 0);
         assertEquals(Toll.HGV, tollEnc.getEnum(false, intsRef));
+        
+        intsRef = em.createEdgeFlags();
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("toll:N2", "yes");
+        parser.handleWayTags(intsRef, readerWay, WAY, 0);
+        assertEquals(Toll.HGV, tollEnc.getEnum(false, intsRef));
+        
+        intsRef = em.createEdgeFlags();
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("toll:N3", "yes");
+        parser.handleWayTags(intsRef, readerWay, WAY, 0);
+        assertEquals(Toll.HGV, tollEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
@@ -47,6 +59,8 @@ public class OSMTollParserTest {
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll", "yes");
         readerWay.setTag("toll:hgv", "yes");
+        readerWay.setTag("toll:N2", "yes");
+        readerWay.setTag("toll:N3", "yes");
         parser.handleWayTags(intsRef, readerWay, WAY, 0);
         assertEquals(Toll.ALL, tollEnc.getEnum(false, intsRef));
     }

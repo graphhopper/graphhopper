@@ -21,15 +21,17 @@ package com.graphhopper;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
-import com.graphhopper.reader.gtfs.PtFlagEncoder;
+import com.graphhopper.reader.gtfs.PtEncodedValues;
 import com.graphhopper.reader.gtfs.Request;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.TranslationMap;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,7 +39,6 @@ import org.junit.Test;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.*;
-import java.util.Arrays;
 import java.util.Collections;
 
 import static com.google.transit.realtime.GtfsRealtime.TripDescriptor.ScheduleRelationship.ADDED;
@@ -54,29 +55,32 @@ public class RealtimeIT {
     private static GraphHopperGtfs.Factory graphHopperFactory;
     private static GraphHopperStorage graphHopperStorage;
     private static LocationIndex locationIndex;
+    private static GtfsStorage gtfsStorage;
 
     @BeforeClass
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
-        final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
-        EncodingManager encodingManager = EncodingManager.create(Arrays.asList(new CarFlagEncoder(), ptFlagEncoder, new FootFlagEncoder()), 8);
-        GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
-        GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
+        EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
+        GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
+        gtfsStorage = GtfsStorage.createOrLoad(directory);
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         graphHopperStorage.close();
+        gtfsStorage.close();
         locationIndex.close();
         // Re-load read only
-        directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
+        directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
+        gtfsStorage = GtfsStorage.createOrLoad(directory);
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
-        graphHopperFactory = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage);
+        graphHopperFactory = GraphHopperGtfs.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage);
     }
 
     @AfterClass
     public static void close() {
         graphHopperStorage.close();
         locationIndex.close();
+        gtfsStorage.close();
     }
 
 
@@ -91,7 +95,6 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         // But the 6:00 departure of my line is going to skip my departure stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
@@ -128,7 +131,6 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         // But the 6:00 departure of my line is going to be super-late :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
@@ -170,7 +172,6 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,6,46).atZone(zoneId).toInstant());
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         // But the 6:00 departure of my line is going to be super-late :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
@@ -202,7 +203,6 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         // But the 6:00 departure of my line is going to skip my arrival stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
@@ -238,7 +238,6 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         // But the 6:00 departure of my line is going to skip my transfer stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
@@ -275,7 +274,6 @@ public class RealtimeIT {
         // I want to go at 6:44
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
         ghRequest.setIgnoreTransfers(true);
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         // But the 6:00 departure of my line is going to skip my transfer stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
@@ -335,7 +333,6 @@ public class RealtimeIT {
         // I want to go at 6:45, but tomorrow
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,2,6,45).atZone(zoneId).toInstant());
         ghRequest.setIgnoreTransfers(true);
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
         feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
@@ -379,7 +376,6 @@ public class RealtimeIT {
         // I want to go at 6:44
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
         ghRequest.setIgnoreTransfers(true);
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         GHResponse responseWithoutRealtimeUpdate = graphHopperFactory.createWithoutRealtimeFeed().route(ghRequest);
 
@@ -420,7 +416,6 @@ public class RealtimeIT {
         Instant initialTime = LocalDateTime.of(2007, 1, 1, 6, 44).atZone(zoneId).toInstant();
         ghRequest.setEarliestDepartureTime(initialTime);
         ghRequest.setIgnoreTransfers(true);
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         // The 6:00 departure of my line is going to be late by 3 minutes
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
@@ -454,7 +449,6 @@ public class RealtimeIT {
         Instant initialTime = LocalDateTime.of(2007, 1, 1, 6, 44).atZone(zoneId).toInstant();
         ghRequest.setEarliestDepartureTime(initialTime);
         ghRequest.setIgnoreTransfers(true);
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         // The 6:00 departure of my line is going to be "late" by 0 minutes
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
@@ -488,7 +482,6 @@ public class RealtimeIT {
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,8,0).atZone(zoneId).toInstant());
         ghRequest.setIgnoreTransfers(true);
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         // My line does not stop at Bullfrog today. If this was a real transfer, I would not be
         // able to change lines there. But it is not a real transfer, so I can go on as planned.
@@ -552,7 +545,6 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         // But the 6:00 departure of my line is going to be 5 minutes late at my transfer stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
@@ -588,7 +580,6 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         // But the 6:00 departure of my line is going to be 5 minutes late at my transfer stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
@@ -636,7 +627,6 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         // But the 6:00 departure of my line is going to be 5 minutes late at my transfer stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
@@ -687,7 +677,6 @@ public class RealtimeIT {
         // I want to be there at 7:20
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,8,20).atZone(zoneId).toInstant());
         ghRequest.setArriveBy(true);
-        ghRequest.setMaxWalkDistancePerLeg(30);
 
         // But the 6:00 departure of my line is going to skip my transfer stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();

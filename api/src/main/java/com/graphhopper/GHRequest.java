@@ -33,12 +33,13 @@ import java.util.Locale;
  * @author ratrun
  */
 public class GHRequest {
-    private final List<GHPoint> points;
+    private List<GHPoint> points;
     private final HintsMap hints = new HintsMap();
     // List of favored start (1st element) and arrival heading (all other).
     // Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference
-    private final List<Double> favoredHeadings;
+    private List<Double> favoredHeadings;
     private List<String> pointHints = new ArrayList<>();
+    private List<String> curbsides = new ArrayList<>();
     private List<String> snapPreventions = new ArrayList<>();
     private List<String> pathDetails = new ArrayList<>();
     private String algo = "";
@@ -100,7 +101,6 @@ public class GHRequest {
 
     /**
      * Set routing request
-     * <p>
      *
      * @param points          List of stopover points in order: start, 1st stop, 2nd stop, ..., end
      * @param favoredHeadings List of favored headings for starting (start point) and arrival (via
@@ -120,7 +120,6 @@ public class GHRequest {
 
     /**
      * Set routing request
-     * <p>
      *
      * @param points List of stopover points in order: start, 1st stop, 2nd stop, ..., end
      */
@@ -130,7 +129,6 @@ public class GHRequest {
 
     /**
      * Add stopover point to routing request.
-     * <p>
      *
      * @param point          geographical position (see GHPoint)
      * @param favoredHeading north based azimuth (clockwise) in (0, 360) or NaN for equal preference
@@ -151,7 +149,6 @@ public class GHRequest {
 
     /**
      * Add stopover point to routing request.
-     * <p>
      *
      * @param point geographical position (see GHPoint)
      */
@@ -160,10 +157,22 @@ public class GHRequest {
         return this;
     }
 
+    public void setPoints(List<GHPoint> points) {
+        this.points = points;
+        if (favoredHeadings.isEmpty())
+            this.favoredHeadings = Collections.nCopies(points.size(), Double.NaN);
+    }
+
+    public void setHeadings(List<Double> favoredHeadings) {
+        this.favoredHeadings = favoredHeadings;
+    }
+
     /**
      * @return north based azimuth (clockwise) in (0, 360) or NaN for equal preference
      */
     public double getFavoredHeading(int i) {
+        if (favoredHeadings.size() != points.size())
+            throw new IllegalStateException("Wrong size of headings " + favoredHeadings.size() + " vs. point count " + points.size());
         return favoredHeadings.get(i);
     }
 
@@ -242,6 +251,16 @@ public class GHRequest {
         return hints;
     }
 
+    /**
+     * This method sets a key value pair in the hints and is equivalent to getHints().put(String, String) but unrelated
+     * to the setPointHints method. It is mainly used for deserialization with Jackson.
+     *
+     * @see #setPointHints(List)
+     */
+    public void putHint(String fieldName, Object value) {
+        this.hints.put(fieldName, value);
+    }
+
     public GHRequest setPointHints(List<String> pointHints) {
         this.pointHints = pointHints;
         return this;
@@ -253,6 +272,19 @@ public class GHRequest {
 
     public boolean hasPointHints() {
         return pointHints.size() == points.size() && !points.isEmpty();
+    }
+
+    public GHRequest setCurbsides(List<String> curbsides) {
+        this.curbsides = curbsides;
+        return this;
+    }
+
+    public List<String> getCurbsides() {
+        return curbsides;
+    }
+
+    public boolean hasCurbsides() {
+        return curbsides.size() == points.size() && !points.isEmpty();
     }
 
     public GHRequest setSnapPreventions(List<String> snapPreventions) {

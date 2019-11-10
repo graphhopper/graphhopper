@@ -17,7 +17,8 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.graphhopper.reader.osm.OSMTurnRelation.Type;
+import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.OSMTurnRelation.Type;
 import com.graphhopper.routing.EdgeBasedRoutingAlgorithmTest;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -26,12 +27,17 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeExplorer;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
@@ -70,12 +76,12 @@ public class OSMTurnRelationTest {
 
         // TYPE == ONLY
         OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, Type.ONLY);
-        Collection<OSMTurnRelation.TurnCostTableEntry> result
-                = instance.getRestrictionAsEntries(encoder, edgeExplorer, edgeExplorer, osmReader);
+        Collection<OSMReader.TurnCostTableEntry> result
+                = OSMReader.getRestrictionAsEntries(instance, encoder, edgeExplorer, edgeExplorer, osmReader);
 
         assertEquals(2, result.size());
-        Iterator<OSMTurnRelation.TurnCostTableEntry> iter = result.iterator();
-        OSMTurnRelation.TurnCostTableEntry entry = iter.next();
+        Iterator<OSMReader.TurnCostTableEntry> iter = result.iterator();
+        OSMReader.TurnCostTableEntry entry = iter.next();
         assertEquals(4, entry.edgeFrom);
         assertEquals(6, entry.edgeTo);
         assertEquals(3, entry.nodeVia);
@@ -87,7 +93,7 @@ public class OSMTurnRelationTest {
 
         // TYPE == NOT
         instance = new OSMTurnRelation(4, 3, 3, Type.NOT);
-        result = instance.getRestrictionAsEntries(encoder, edgeExplorer, edgeExplorer, osmReader);
+        result = OSMReader.getRestrictionAsEntries(instance, encoder, edgeExplorer, edgeExplorer, osmReader);
 
         assertEquals(1, result.size());
         iter = result.iterator();
@@ -97,4 +103,34 @@ public class OSMTurnRelationTest {
         assertEquals(3, entry.nodeVia);
     }
 
+    @Test
+    public void testAcceptsTurnRelation() {
+        List<String> vehicleTypes = new ArrayList<>(Arrays.asList("motorcar", "motor_vehicle", "vehicle"));
+        List<String> vehicleTypesExcept = new ArrayList<>();
+        OSMTurnRelation osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.Type.NOT);
+        assertTrue(osmTurnRelation.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
+
+        vehicleTypesExcept.add("bus");
+        osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
+        assertTrue(osmTurnRelation.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
+
+        vehicleTypesExcept.clear();
+        vehicleTypesExcept.add("vehicle");
+        osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
+        assertFalse(osmTurnRelation.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
+
+        vehicleTypesExcept.clear();
+        vehicleTypesExcept.add("motor_vehicle");
+        vehicleTypesExcept.add("vehicle");
+        osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
+        assertFalse(osmTurnRelation.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
+
+        vehicleTypesExcept.clear();
+        osmTurnRelation.setVehicleTypeRestricted("bus");
+        osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
+        assertFalse(osmTurnRelation.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
+
+        osmTurnRelation.setVehicleTypeRestricted("vehicle");
+        assertTrue(osmTurnRelation.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
+    }
 }
