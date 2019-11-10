@@ -28,7 +28,7 @@ import com.graphhopper.util.EdgeIterator;
  * @author Karl Hübner
  * @author Peter Karich
  */
-public class TurnCostExtension implements GraphExtension {
+public class TurnCostExtension implements Storable<TurnCostExtension> {
     static final int NO_TURN_ENTRY = -1;
     private static final long EMPTY_FLAGS = 0L;
     // we store each turn cost entry in the format |from_edge|to_edge|flags|next|. each entry has 4 bytes -> 16 bytes total

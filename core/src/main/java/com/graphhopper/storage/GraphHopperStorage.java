@@ -372,7 +372,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
                 + encodingManager
                 + "|" + getDirectory().getDefaultType()
                 + "|" + baseGraph.nodeAccess.getDimension() + "D"
-                + "|" + baseGraph.turnCostExtension
+                + "|" + (baseGraph.supportsTurnCosts() ? baseGraph.turnCostExtension : "no_turn_cost")
                 + "|" + getProperties().versionsToString();
     }
 

@@ -57,7 +57,8 @@ class BaseGraph implements Graph {
     final DataAccess nodes;
     final BBox bounds;
     final NodeAccess nodeAccess;
-    final GraphExtension turnCostExtension;
+    // can be null if turn costs are not supported
+    final TurnCostExtension turnCostExtension;
     final NameIndex nameIndex;
     final BitUtil bitUtil;
     final EncodingManager encodingManager;
@@ -94,7 +95,6 @@ class BaseGraph implements Graph {
     private int edgeEntryIndex, nodeEntryIndex;
     private long maxGeoRef;
     private boolean frozen = false;
-    private final boolean withTurnCosts;
 
     public BaseGraph(Directory dir, final EncodingManager encodingManager, boolean withElevation,
                      InternalGraphEventListener listener, boolean withTurnCosts) {
@@ -146,11 +146,10 @@ class BaseGraph implements Graph {
         };
         this.bounds = BBox.createInverse(withElevation);
         this.nodeAccess = new GHNodeAccess(this, withElevation);
-        this.withTurnCosts = withTurnCosts;
         if (withTurnCosts) {
             turnCostExtension = new TurnCostExtension(nodeAccess, dir.find("turn_costs"));
         } else {
-            turnCostExtension = new NoOpExtension();
+            turnCostExtension = null;
         }
     }
 
@@ -214,7 +213,7 @@ class BaseGraph implements Graph {
         edges.setHeader(0, edgeEntryBytes);
         edges.setHeader(1 * 4, edgeCount);
         edges.setHeader(2 * 4, encodingManager.hashCode());
-        edges.setHeader(3 * 4, turnCostExtension.hashCode());
+        edges.setHeader(3 * 4, supportsTurnCosts() ? turnCostExtension.hashCode() : -1);
         return 5;
     }
 
@@ -261,7 +260,7 @@ class BaseGraph implements Graph {
     }
 
     boolean supportsTurnCosts() {
-        return withTurnCosts;
+        return turnCostExtension != null;
     }
 
     /**
@@ -347,7 +346,7 @@ class BaseGraph implements Graph {
         wayGeometry.setSegmentSize(bytes);
         nameIndex.setSegmentSize(bytes);
         if (supportsTurnCosts()) {
-            ((TurnCostExtension)turnCostExtension).setSegmentSize(bytes);
+            turnCostExtension.setSegmentSize(bytes);
         }
     }
 
@@ -375,7 +374,9 @@ class BaseGraph implements Graph {
         initSize = Math.min(initSize, 2000);
         wayGeometry.create(initSize);
         nameIndex.create(initSize);
-        turnCostExtension.create(initSize);
+        if (supportsTurnCosts()) {
+            turnCostExtension.create(initSize);
+        }
         initStorage();
         // 0 stands for no separate geoRef
         maxGeoRef = 4;
@@ -449,7 +450,9 @@ class BaseGraph implements Graph {
         setEdgesHeader();
         edges.flush();
         nodes.flush();
-        turnCostExtension.flush();
+        if (supportsTurnCosts()) {
+            turnCostExtension.flush();
+        }
     }
 
     public void close() {
@@ -459,12 +462,14 @@ class BaseGraph implements Graph {
             nameIndex.close();
         edges.close();
         nodes.close();
-        turnCostExtension.close();
+        if (supportsTurnCosts()) {
+            turnCostExtension.close();
+        }
     }
 
     long getCapacity() {
         return edges.getCapacity() + nodes.getCapacity() + nameIndex.getCapacity()
-                + wayGeometry.getCapacity() + turnCostExtension.getCapacity();
+                + wayGeometry.getCapacity() + (supportsTurnCosts() ? turnCostExtension.getCapacity() : 0);
     }
 
     long getMaxGeoRef() {
@@ -488,8 +493,8 @@ class BaseGraph implements Graph {
         if (!nameIndex.loadExisting())
             throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
 
-        if (!turnCostExtension.loadExisting())
-            throw new IllegalStateException("Cannot load extended storage. corrupt file or directory? " + dir);
+        if (supportsTurnCosts() && !turnCostExtension.loadExisting())
+            throw new IllegalStateException("Cannot load turn cost storage. corrupt file or directory? " + dir);
 
         // first define header indices of this storage
         initStorage();
@@ -627,7 +632,7 @@ class BaseGraph implements Graph {
 
         // turn cost extension
         if (supportsTurnCosts()) {
-            ((TurnCostExtension)turnCostExtension).copyTo((TurnCostExtension)clonedG.turnCostExtension);
+            turnCostExtension.copyTo(clonedG.turnCostExtension);
         }
 
         if (removedNodes == null)
@@ -812,7 +817,7 @@ class BaseGraph implements Graph {
 
     @Override
     public TurnCostExtension getTurnCostExtension() {
-        return withTurnCosts ? (TurnCostExtension) turnCostExtension : null;
+        return turnCostExtension;
     }
 
     @Override
@@ -1362,46 +1367,6 @@ class BaseGraph implements Graph {
         @Override
         public final String toString() {
             return getEdge() + " " + getBaseNode() + "-" + getAdjNode();
-        }
-    }
-
-    private static class NoOpExtension implements GraphExtension {
-
-        @Override
-        public NoOpExtension create(long byteCount) {
-            // noop
-            return this;
-        }
-
-        @Override
-        public boolean loadExisting() {
-            // noop
-            return true;
-        }
-
-        @Override
-        public void flush() {
-            // noop
-        }
-
-        @Override
-        public void close() {
-            // noop
-        }
-
-        @Override
-        public long getCapacity() {
-            return 0;
-        }
-
-        @Override
-        public String toString() {
-            return "NoExt";
-        }
-
-        @Override
-        public boolean isClosed() {
-            return false;
         }
     }
 }
