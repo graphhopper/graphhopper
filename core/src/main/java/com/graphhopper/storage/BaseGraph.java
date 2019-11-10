@@ -264,7 +264,7 @@ class BaseGraph implements Graph {
     }
 
     /**
-     * Initializes the node area with the empty edge value and default additional value.
+     * Initializes the node storage such that each node has no edge and no turn cost entry
      */
     void initNodeRefs(long oldCapacity, long newCapacity) {
         for (long pointer = oldCapacity + N_EDGE_REF; pointer < newCapacity; pointer += nodeEntryBytes) {

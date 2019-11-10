@@ -50,7 +50,7 @@ public class TurnCostExtension implements Storable<TurnCostExtension> {
     public TurnCostExtension(TurnCostExtension turnCostExtension) {
         this.nodeAccess = turnCostExtension.nodeAccess;
         this.turnCosts =  turnCostExtension.turnCosts;
-        // reset turnCostsCount to 0
+        this.turnCostsCount = turnCostExtension.turnCostsCount;
     }
 
     public void setSegmentSize(int bytes) {
