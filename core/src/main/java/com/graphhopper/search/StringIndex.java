@@ -33,81 +33,89 @@ import java.util.*;
 public class StringIndex implements Storable<StringIndex> {
     private static final Logger logger = LoggerFactory.getLogger(StringIndex.class);
     private static final long EMPTY_POINTER = 0, START_POINTER = 1;
-    private final DataAccess strings;
-    private final List<String> keys = new ArrayList<>(32);
+    private final DataAccess keys;
+    // storage layout per entry:
+    // vals count, val_length_0, ..., val_0, ...
+    // Drawback: we need to loop through val_length_x entries to get the start of val_x+1
+    // Note that we store duplicate values via an absolute reference (64 bytes) and use negative val_length as marker
+    private final DataAccess vals;
+    // array.indexOf could be faster than hashmap.get if not too many keys
+    private final Map<String, Integer> keysInMem = new HashMap<>();
     private long bytePointer = START_POINTER;
 
     public StringIndex(Directory dir) {
-        strings = dir.find("string_index");
+        keys = dir.find("string_index_keys");
+        vals = dir.find("string_index_vals");
     }
 
     @Override
     public StringIndex create(long initBytes) {
-        strings.create(initBytes);
+        keys.create(initBytes);
+        vals.create(initBytes);
         return this;
     }
 
     @Override
     public boolean loadExisting() {
-        if (strings.loadExisting()) {
-            bytePointer = BitUtil.LITTLE.combineIntsToLong(strings.getHeader(0), strings.getHeader(4));
+        if (vals.loadExisting()) {
+            if (!keys.loadExisting())
+                throw new IllegalStateException("Loaded values but cannot load keys");
+            bytePointer = BitUtil.LITTLE.combineIntsToLong(vals.getHeader(0), vals.getHeader(4));
+
+            // load keys into memory
+            int count = keys.getShort(0);
+            long keyBytePointer = 2 + 2 * count, indexPointer = 2;
+            for (int i = 0; i < count; i++) {
+                int keyLength = keys.getShort(indexPointer);
+                indexPointer += 2;
+
+                byte[] keyBytes = new byte[keyLength];
+                keys.getBytes(keyBytePointer, keyBytes, keyLength);
+                keysInMem.put(new String(keyBytes, Helper.UTF_CS), keysInMem.size());
+                keyBytePointer += keyLength;
+            }
             return true;
         }
 
         return false;
     }
 
-    /**
-     * This method remove keys of one duplicated value and puts this value as the first to optimize this map for storage.
-     */
-    public static Map<String, String> cleanup(Map<String, String> entryMap) {
-        if (entryMap.isEmpty())
-            return entryMap;
-        Set<String> existingStrings = new HashSet<>(Math.min(10, entryMap.size()));
-        for (Map.Entry<String, String> entry : entryMap.entrySet()) {
-            if (existingStrings.contains(entry.getValue())) {
-                Map<String, String> orderedMap = new LinkedHashMap<>(entryMap.size() - 1); // eventually even smaller
-                orderedMap.put(entry.getKey(), entry.getValue());
-                for (Map.Entry<String, String> newEntry : entryMap.entrySet()) {
-                    if (!newEntry.getValue().equals(entry.getValue()))
-                        orderedMap.put(newEntry.getKey(), newEntry.getValue());
-                }
-                return orderedMap;
-            }
-
-            existingStrings.add(entry.getValue());
-        }
-        return entryMap;
+    Set<String> getKeys() {
+        return keysInMem.keySet();
     }
 
     /**
-     * This method writes the specified map into the storage.
+     * This method writes the specified key-value pairs into the storage.
      */
     public long add(Map<String, String> entryMap) {
         if (entryMap.isEmpty())
             return EMPTY_POINTER;
 
         long oldPointer = bytePointer;
-        strings.setShort(bytePointer, (short) entryMap.size());
+        vals.ensureCapacity(bytePointer + 1 + 2 * entryMap.size());
+        // set only 1 byte for key count
+        if (entryMap.size() > 127)
+            throw new IllegalArgumentException("Cannot store more than 127 entries per entry");
+
+        vals.setShort(bytePointer, (byte) entryMap.size());
         bytePointer += 1 + 2 * entryMap.size();
-        strings.ensureCapacity(bytePointer);
         int entryIndex = 0;
         for (Map.Entry<String, String> entry : entryMap.entrySet()) {
             String key = entry.getKey(), value = entry.getValue();
-            int keyIndex = keys.indexOf(key);
-            if (keyIndex < 0) {
-                keyIndex = keys.size();
-                keys.add(key);
+            Integer keyIndex = keysInMem.get(key);
+            if (keyIndex == null) {
+                keyIndex = keysInMem.size();
+                keysInMem.put(key, keyIndex);
             }
 
             if (value == null || value.isEmpty()) {
-                strings.setShort(oldPointer + 1 + 2 * entryIndex, (short) (0 | keyIndex));
+                vals.setShort(oldPointer + 1 + 2 * entryIndex, (short) (0 | keyIndex));
             } else {
-                byte[] nameBytes = getBytesForString(key, value);
-                strings.ensureCapacity(bytePointer + nameBytes.length);
-                strings.setShort(oldPointer + 1 + 2 * entryIndex, (short) ((nameBytes.length << 8) | keyIndex));
-                strings.setBytes(bytePointer, nameBytes, nameBytes.length);
-                bytePointer += nameBytes.length;
+                byte[] valueBytes = getBytesForString("Value for key" + key, value);
+                vals.ensureCapacity(bytePointer + valueBytes.length);
+                vals.setShort(oldPointer + 1 + 2 * entryIndex, (short) ((valueBytes.length << 8) | keyIndex));
+                vals.setBytes(bytePointer, valueBytes, valueBytes.length);
+                bytePointer += valueBytes.length;
             }
             entryIndex++;
         }
@@ -125,75 +133,95 @@ public class StringIndex implements Storable<StringIndex> {
         if (pointer == EMPTY_POINTER)
             return "";
 
-        int keyCount = strings.getShort(pointer) & 0xFF;
-        int keyIndex = keys.indexOf(key);
-        if (!key.isEmpty() && keyIndex < 0)
+        int keyCount = vals.getShort(pointer) & 0xFF;
+        Integer keyIndex = keysInMem.get(key);
+        if (key.isEmpty())
+            keyIndex = 0;
+        if (keyIndex == null)
             throw new IllegalArgumentException("Cannot find key " + key);
 
         byte[] bytes = new byte[1 + 2 * keyCount];
-        strings.getBytes(pointer, bytes, bytes.length);
+        vals.getBytes(pointer, bytes, bytes.length);
         pointer += 1 + 2 * keyCount;
         long tmpPointer = pointer;
         for (int i = 0; i < keyCount; i++) {
             int currentKeyIndex = bytes[i * 2 + 1] & 0xFF;
             if (currentKeyIndex == keyIndex) {
                 byte[] stringBytes = new byte[bytes[i * 2 + 2] & 0xFF];
-                strings.getBytes(tmpPointer, stringBytes, stringBytes.length);
+                vals.getBytes(tmpPointer, stringBytes, stringBytes.length);
                 return new String(stringBytes, Helper.UTF_CS);
             }
 
             tmpPointer += bytes[i * 2 + 2] & 0xFF;
         }
-        if (!key.isEmpty())
-            throw new IllegalStateException("Something went wrong with key " + key);
+        if (!key.isEmpty() || bytes.length < 2)
+            return null;
         byte[] stringBytes = new byte[bytes[2] & 0xFF];
-        strings.getBytes(pointer, stringBytes, stringBytes.length);
+        vals.getBytes(pointer, stringBytes, stringBytes.length);
         return new String(stringBytes, Helper.UTF_CS);
     }
 
-    private byte[] getBytesForString(String key, String name) {
+    private byte[] getBytesForString(String info, String name) {
         byte[] bytes = name.getBytes(Helper.UTF_CS);
         // store size of byte array into *one* byte
         if (bytes.length > 255) {
             String newName = name.substring(0, 256 / 4);
-            logger.warn("Name for key " + key + " is too long: " + name + " truncated to " + newName);
+            logger.warn(info + " is too long: " + name + " truncated to " + newName);
             bytes = newName.getBytes(Helper.UTF_CS);
         }
 
         if (bytes.length > 255)
             // really make sure no such problem exists
-            throw new IllegalStateException("Name for key " + key + " is too long: " + name);
+            throw new IllegalStateException(info + " is too long: " + name);
 
         return bytes;
     }
 
     @Override
     public void flush() {
-        strings.setHeader(0, BitUtil.LITTLE.getIntLow(bytePointer));
-        strings.setHeader(4, BitUtil.LITTLE.getIntHigh(bytePointer));
-        strings.flush();
+        // store: key count, length_0, length_1, ... length_n-1, key_0, key_1, ...
+        keys.ensureCapacity(2 + 2 * keysInMem.size());
+        keys.setShort(0, (short) keysInMem.size());
+        long keyBytePointer = 2 + 2 * keysInMem.size(), indexPointer = 2;
+        for (String key : keysInMem.keySet()) {
+            byte[] keyBytes = getBytesForString("key", key);
+            keys.setShort(indexPointer, (short) keyBytes.length);
+            indexPointer += 2;
+
+            keys.ensureCapacity(keyBytePointer + keyBytes.length);
+            keys.setBytes(keyBytePointer, keyBytes, keyBytes.length);
+            keyBytePointer += keyBytes.length;
+        }
+        keys.flush();
+
+        vals.setHeader(0, BitUtil.LITTLE.getIntLow(bytePointer));
+        vals.setHeader(4, BitUtil.LITTLE.getIntHigh(bytePointer));
+        vals.flush();
     }
 
     @Override
     public void close() {
-        strings.close();
+        keys.close();
+        vals.close();
     }
 
     @Override
     public boolean isClosed() {
-        return strings.isClosed();
+        return vals.isClosed() && keys.isClosed();
     }
 
     public void setSegmentSize(int segments) {
-        strings.setSegmentSize(segments);
+        keys.setSegmentSize(segments);
+        vals.setSegmentSize(segments);
     }
 
     @Override
     public long getCapacity() {
-        return strings.getCapacity();
+        return vals.getCapacity() + keys.getCapacity();
     }
 
-    public void copyTo(StringIndex nameIndex) {
-        strings.copyTo(nameIndex.strings);
+    public void copyTo(StringIndex stringIndex) {
+        keys.copyTo(stringIndex.keys);
+        vals.copyTo(stringIndex.vals);
     }
 }

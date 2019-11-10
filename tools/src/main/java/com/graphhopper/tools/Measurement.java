@@ -27,10 +27,8 @@ import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.search.StringIndex;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Algorithms;
@@ -64,8 +62,32 @@ public class Measurement {
     public static void main(String[] strs) {
         CmdArgs cmdArgs = CmdArgs.read(strs);
         int repeats = cmdArgs.getInt("measurement.repeats", 1);
-        for (int i = 0; i < repeats; ++i)
-            new Measurement().start(cmdArgs);
+
+        // 5.6s for StringIndex vs. 5.5s for NameIndex
+        final StringIndex sIndex = new StringIndex(new RAMDirectory()).create(1000);
+//        final NameIndex sIndex = new NameIndex(new RAMDirectory()).create(1000);
+        final int K = 50_000_000;
+        final long[] indices = new long[K];
+        final Random r = new Random(123);
+        for (int i = 0; i < indices.length; i++) {
+            Map<String, String> map = new HashMap<>(1);
+            map.put("", "test street " + i);
+            long tmp = sIndex.add(map);
+//            long tmp = sIndex.put("test street " + i);
+            indices[i] = tmp;
+        }
+
+        for (int i = 0; i < repeats; ++i) {
+//            new Measurement().start(cmdArgs);
+            MiniPerfTest m = new MiniPerfTest() {
+                @Override
+                public int doCalc(boolean warmup, int run) {
+                    String str = sIndex.get(indices[r.nextInt(K)]);
+                    return str.length();
+                }
+            }.setIterations(K / 5).start();
+            System.out.println(m.getReport());
+        }
     }
 
     // creates properties file in the format key=value

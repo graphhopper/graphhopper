@@ -2,6 +2,7 @@ package com.graphhopper.search;
 
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -10,8 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class StringIndexTest {
 
@@ -30,23 +30,9 @@ public class StringIndexTest {
     }
 
     @Test
-    public void cleanup() {
-        Map<String, String> map = createMap("a", "same name",
-                "b", "same name",
-                "c", "other name");
-        Map<String, String> res = StringIndex.cleanup(map);
-        assertEquals(2, res.size());
-
-        res.put("d", "other name");
-        res = StringIndex.cleanup(map);
-        assertEquals(2, res.size());
-    }
-
-    @Test
     public void putSame() {
         StringIndex index = create();
-        long aPointer = index.add(createMap("a", "same name",
-                "b", "same name"));
+        long aPointer = index.add(createMap("a", "same name", "b", "same name"));
 
         assertEquals("same name", index.get(aPointer));
         assertEquals("same name", index.get(aPointer, "a"));
@@ -80,16 +66,16 @@ public class StringIndexTest {
         assertEquals("b name", index.get(aPointer, "b"));
     }
 
-    // TODO NOW
     @Test
     public void putEmpty() {
         StringIndex index = create();
+        // TODO NOW indices will change once de-duplication is implemented
         assertEquals(1, index.add(createMap("", "")));
-        assertEquals(1, index.add(createMap("", null)));
-        assertEquals(1, index.add(createMap(null, null)));
+        assertEquals(4, index.add(createMap("", null)));
+        assertEquals(7, index.add(createMap(null, null)));
         assertEquals("", index.get(0));
 
-        assertEquals(1 + 2, index.add(createMap("else", "else")));
+        assertEquals(10, index.add(createMap("else", "else")));
     }
 
     @Test
@@ -112,8 +98,8 @@ public class StringIndexTest {
         assertEquals("c name 567", index.get(tmpPointer, "c"));
     }
 
-    // TODO NOW
     @Test
+    @Ignore
     public void putDuplicate() {
         StringIndex index = create();
         long aPointer = index.add(createMap("a", "name", "b", "name"));
@@ -172,7 +158,6 @@ public class StringIndexTest {
         Helper.removeDir(new File(location));
     }
 
-    // TODO NOW
     @Test
     public void testLoadKeys() {
         String location = "./target/stringindex-store";
@@ -180,7 +165,9 @@ public class StringIndexTest {
 
         StringIndex index = new StringIndex(new RAMDirectory(location, true).create()).create(1000);
         long pointerA = index.add(createMap("", "test value"));
+        assertEquals(1, index.getKeys().size());
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
+        assertEquals("[, a, b]", index.getKeys().toString());
         index.flush();
         index.close();
 
@@ -188,10 +175,11 @@ public class StringIndexTest {
         assertTrue(index.loadExisting());
         assertEquals("test value", index.get(pointerA));
         assertEquals("test value", index.get(pointerA, ""));
+        assertNull(index.get(pointerA, "b"));
 
         assertEquals("value", index.get(pointerB, ""));
         assertEquals("value", index.get(pointerB, "a"));
-        assertEquals("another value", index.get(pointerA, "b"));
+        assertEquals("another value", index.get(pointerB, "b"));
         index.close();
 
         Helper.removeDir(new File(location));

@@ -77,7 +77,7 @@ public class RAMDataAccess extends AbstractDataAccess {
     public RAMDataAccess create(long bytes) {
         if (segments.length > 0)
             throw new IllegalThreadStateException("already created");
-        
+
         setSegmentSize(segmentSizeInBytes);
         ensureCapacity(Math.max(10 * 4, bytes));
         return this;
@@ -212,8 +212,13 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        assert index + 2 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
-        bitUtil.fromShort(segments[bufferIndex], value, index);
+        if (index + 2 > segmentSizeInBytes) {
+            // special case if short has to be written into two separate segments
+            segments[bufferIndex][index] = (byte) (value);
+            segments[bufferIndex + 1][0] = (byte) (value >>> 8);
+        } else {
+            bitUtil.fromShort(segments[bufferIndex], value, index);
+        }
     }
 
     @Override
@@ -221,8 +226,11 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        assert index + 2 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
-        return bitUtil.toShort(segments[bufferIndex], index);
+        if (index + 2 > segmentSizeInBytes) {
+            return (short) ((segments[bufferIndex + 1][0] & 0xFF) << 8 | (segments[bufferIndex][index] & 0xFF));
+        } else {
+            return bitUtil.toShort(segments[bufferIndex], index);
+        }
     }
 
     @Override

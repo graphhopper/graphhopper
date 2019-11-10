@@ -354,6 +354,10 @@ public abstract class DataAccessTest {
             assertEquals(Short.MAX_VALUE / 3, da.getShort(7));
             // should be overwritten
             assertNotEquals(Short.MAX_VALUE / 3, da.getShort(8));
+
+            long pointer = da.getSegmentSize() - 1;
+            da.setShort(pointer, (short) (Short.MAX_VALUE / 3));
+            assertEquals(Short.MAX_VALUE / 3, da.getShort(pointer));
         }
         da.close();
     }
