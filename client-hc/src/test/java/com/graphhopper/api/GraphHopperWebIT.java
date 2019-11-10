@@ -166,7 +166,7 @@ public class GraphHopperWebIT {
     @Test
     public void testRetrieveOnlyStreetname() {
         GHRequest req = new GHRequest().
-                addPoint(new GHPoint(52.261434, 13.485718)).
+                addPoint(new GHPoint(52.266949, 13.478916)).
                 addPoint(new GHPoint(52.399067, 13.469238));
 
         GHResponse res = gh.route(req);
