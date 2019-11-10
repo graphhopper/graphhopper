@@ -226,11 +226,10 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        if (index + 2 > segmentSizeInBytes) {
+        if (index + 2 > segmentSizeInBytes)
             return (short) ((segments[bufferIndex + 1][0] & 0xFF) << 8 | (segments[bufferIndex][index] & 0xFF));
-        } else {
+        else
             return bitUtil.toShort(segments[bufferIndex], index);
-        }
     }
 
     @Override

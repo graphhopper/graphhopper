@@ -55,6 +55,7 @@ class BaseGraph implements Graph {
     final BBox bounds;
     final NodeAccess nodeAccess;
     final GraphExtension extStorage;
+    private final static String STRING_IDX_NAME_KEY = "name";
     final StringIndex stringIndex;
     final BitUtil bitUtil;
     final EncodingManager encodingManager;
@@ -926,7 +927,7 @@ class BaseGraph implements Graph {
     }
 
     private void setName(long edgePointer, String name) {
-        int nameIndexRef = (int) stringIndex.add(Collections.singletonMap("", name));
+        int nameIndexRef = (int) stringIndex.add(Collections.singletonMap(STRING_IDX_NAME_KEY, name));
         if (nameIndexRef < 0)
             throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
 
@@ -1323,7 +1324,9 @@ class BaseGraph implements Graph {
         @Override
         public String getName() {
             int nameIndexRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_NAME);
-            return baseGraph.stringIndex.get(nameIndexRef);
+            String name = baseGraph.stringIndex.get(nameIndexRef, STRING_IDX_NAME_KEY);
+            // preserve backward compatibility (returns null if not explicitly set)
+            return name == null ? "" : name;
         }
 
         @Override

@@ -2,14 +2,14 @@ package com.graphhopper.search;
 
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.graphhopper.search.StringIndex.MAX_UNIQUE_KEYS;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 
@@ -22,7 +22,7 @@ public class StringIndexTest {
     Map<String, String> createMap(String... strings) {
         if (strings.length % 2 != 0)
             throw new IllegalArgumentException("Cannot create map from strings " + Arrays.toString(strings));
-        Map<String, String> map = new HashMap<>();
+        Map<String, String> map = new LinkedHashMap<>();
         for (int i = 0; i < strings.length; i += 2) {
             map.put(strings[i], strings[i + 1]);
         }
@@ -34,34 +34,22 @@ public class StringIndexTest {
         StringIndex index = create();
         long aPointer = index.add(createMap("a", "same name", "b", "same name"));
 
-        assertEquals("same name", index.get(aPointer));
+        assertNull(index.get(aPointer, ""));
         assertEquals("same name", index.get(aPointer, "a"));
         assertEquals("same name", index.get(aPointer, "b"));
-        // fallback vs. fail fast ?
-        try {
-            index.get(aPointer, "c");
-            fail("get should fail fast");
-        } catch (Exception ex) {
-            assertTrue(true);
-        }
-    }
+        assertNull(index.get(aPointer, "c"));
 
-    @Test
-    public void putSame2() {
-        StringIndex index = create();
-        long aPointer = index.add(createMap("a", "a name",
-                "b", "same name"));
-
-        assertEquals("a name", index.get(aPointer));
+        index = create();
+        aPointer = index.add(createMap("a", "a name", "b", "same name"));
+        assertEquals("a name", index.get(aPointer, "a"));
     }
 
     @Test
     public void putAB() {
         StringIndex index = create();
-        long aPointer = index.add(createMap("a", "a name",
-                "b", "b name"));
+        long aPointer = index.add(createMap("a", "a name", "b", "b name"));
 
-        assertEquals("a name", index.get(aPointer));
+        assertNull(index.get(aPointer, ""));
         assertEquals("a name", index.get(aPointer, "a"));
         assertEquals("b name", index.get(aPointer, "b"));
     }
@@ -69,13 +57,12 @@ public class StringIndexTest {
     @Test
     public void putEmpty() {
         StringIndex index = create();
-        // TODO NOW indices will change once de-duplication is implemented
         assertEquals(1, index.add(createMap("", "")));
-        assertEquals(4, index.add(createMap("", null)));
-        assertEquals(7, index.add(createMap(null, null)));
-        assertEquals("", index.get(0));
+        assertEquals(2, index.add(createMap("", null)));
+        assertEquals(3, index.add(createMap(null, null)));
+        assertEquals("", index.get(0, ""));
 
-        assertEquals(10, index.add(createMap("else", "else")));
+        assertEquals(4, index.add(createMap("else", "else")));
     }
 
     @Test
@@ -96,20 +83,37 @@ public class StringIndexTest {
         assertEquals("a name 567", index.get(tmpPointer, "a"));
         assertEquals("b name 567", index.get(tmpPointer, "b"));
         assertEquals("c name 567", index.get(tmpPointer, "c"));
+
+        for (int i = 3; i < MAX_UNIQUE_KEYS; i++) {
+            index.add(createMap("a" + i, "a name"));
+        }
+        try {
+            index.add(createMap("new", "a name"));
+            fail();
+        } catch (IllegalArgumentException ex) {
+        }
     }
 
     @Test
-    @Ignore
     public void putDuplicate() {
         StringIndex index = create();
-        long aPointer = index.add(createMap("a", "name", "b", "name"));
-        long bPointer = index.add(createMap("else", "else"));
-        assertEquals(aPointer + 1 + 2 + "name".getBytes(Helper.UTF_CS).length, bPointer);
+        long aPointer = index.add(createMap("a", "longer name", "b", "longer name"));
+        long bPointer = index.add(createMap("c", "longer other name"));
+        // value storage: 1 byte for count, 2*2 bytes for length and keyIndex and 8 bytes for pointer of dup_marker and length for "longer name"
+        assertEquals(aPointer + 1 + 4 + 8 + "longer name".getBytes(Helper.UTF_CS).length, bPointer);
+        // no de-duplication as too short:
+        long cPointer = index.add(createMap("temp", "temp"));
+        assertEquals(bPointer + 1 + 2 + "longer other name".getBytes(Helper.UTF_CS).length, cPointer);
+        assertEquals("longer name", index.get(aPointer, "a"));
+        assertEquals("longer name", index.get(aPointer, "b"));
+        assertEquals("longer other name", index.get(bPointer, "c"));
+        assertEquals("temp", index.get(cPointer, "temp"));
 
         index = create();
-        aPointer = index.add(createMap("a", "name", "b", "name"));
-        bPointer = index.add(createMap("a", "name", "b", "name"));
-        assertEquals(aPointer, bPointer);
+        index.add(createMap("a", "longer name", "b", "longer name"));
+        bPointer = index.add(createMap("a", "longer name", "b", "longer name"));
+        cPointer = index.add(createMap("a", "longer name", "b", "longer name"));
+        assertEquals(bPointer + 1 + 2 * (2 + 8), cPointer);
     }
 
     @Test
@@ -121,20 +125,33 @@ public class StringIndexTest {
             str += "ß";
         }
         long result = index.add(createMap("", str));
-        assertEquals(127, index.get(result).length());
+        assertEquals(127, index.get(result, "").length());
     }
 
     @Test
     public void testTooLongNameNoError() {
         StringIndex index = create();
-        // WTH are they doing in OSM? There are exactly two names in the full planet export which violates this limitation!
-        index.add(createMap("", "Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))"));
+
+        index.throwExceptionIfTooLong = true;
+        try {
+            index.add(createMap("", "Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))"));
+            fail();
+        } catch (IllegalStateException ex) {
+        }
 
         String str = "sdfsdfds";
         for (int i = 0; i < 256 * 3; i++) {
             str += "Б";
         }
-        index.add(createMap("", str));
+        try {
+            index.add(createMap("", str));
+            fail();
+        } catch (IllegalStateException ex) {
+        }
+
+        index.throwExceptionIfTooLong = false;
+        long pointer = index.add(createMap("", "Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))"));
+        assertTrue(index.get(pointer, "").startsWith("Бухарестская улица (h"));
     }
 
     @Test
@@ -149,7 +166,7 @@ public class StringIndexTest {
 
         index = new StringIndex(new RAMDirectory(location, true));
         assertTrue(index.loadExisting());
-        assertEquals("test", index.get(pointer));
+        assertEquals("test", index.get(pointer, ""));
         // make sure bytePointer is correctly set after loadExisting
         long newPointer = index.add(createMap("", "testing"));
         assertEquals(newPointer + ">" + pointer, pointer + "test".getBytes().length + 1 + 2, newPointer);
@@ -164,24 +181,37 @@ public class StringIndexTest {
         Helper.removeDir(new File(location));
 
         StringIndex index = new StringIndex(new RAMDirectory(location, true).create()).create(1000);
-        long pointerA = index.add(createMap("", "test value"));
+        long pointerA = index.add(createMap("c", "test value"));
         assertEquals(1, index.getKeys().size());
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
-        assertEquals("[, a, b]", index.getKeys().toString());
+        assertEquals("[c, a, b]", index.getKeys().toString());
         index.flush();
         index.close();
 
         index = new StringIndex(new RAMDirectory(location, true));
         assertTrue(index.loadExisting());
-        assertEquals("test value", index.get(pointerA));
-        assertEquals("test value", index.get(pointerA, ""));
+        assertEquals("[c, a, b]", index.getKeys().toString());
+        assertEquals("test value", index.get(pointerA, "c"));
         assertNull(index.get(pointerA, "b"));
 
-        assertEquals("value", index.get(pointerB, ""));
+        assertNull(index.get(pointerB, ""));
         assertEquals("value", index.get(pointerB, "a"));
         assertEquals("another value", index.get(pointerB, "b"));
         index.close();
 
         Helper.removeDir(new File(location));
+    }
+
+    @Test
+    public void testEmptyKey() {
+        StringIndex index = create();
+        long pointerA = index.add(createMap("", "test value"));
+        long pointerB = index.add(createMap("a", "value", "b", "another value"));
+
+        assertEquals("test value", index.get(pointerA, ""));
+        assertNull(index.get(pointerA, "a"));
+
+        assertEquals("value", index.get(pointerB, "a"));
+        assertNull(index.get(pointerB, ""));
     }
 }
