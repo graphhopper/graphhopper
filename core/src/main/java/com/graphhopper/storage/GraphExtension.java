@@ -17,44 +17,5 @@
  */
 package com.graphhopper.storage;
 
-/**
- * If you need custom storages, like turn cost tables, or osmid tables for your graph you implement
- * this interface and add it to any graph storage you want.
- */
 public interface GraphExtension extends Storable<GraphExtension> {
-    /**
-     * @return true, if and only if an additional field at the graphs node storage is required
-     */
-    boolean isRequireNodeField();
-
-    /**
-     * @return true, if and only if an additional field at the graphs edge storage is required
-     */
-    boolean isRequireEdgeField();
-
-    /**
-     * @return the default field value which will be set for default when creating nodes
-     */
-    int getDefaultNodeFieldValue();
-
-    /**
-     * @return the default field value which will be set for default when creating edges
-     */
-    int getDefaultEdgeFieldValue();
-
-    /**
-     * initializes the extended storage by giving the base graph
-     */
-    void init(Graph graph, Directory dir);
-
-    /**
-     * sets the segment size in all additional data storages
-     */
-    void setSegmentSize(int bytes);
-
-    /**
-     * creates a copy of this extended storage
-     */
-    GraphExtension copyTo(GraphExtension extStorage);
-
 }

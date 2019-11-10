@@ -388,10 +388,6 @@ public class QueryGraph implements Graph {
         throw exc();
     }
 
-    public EdgeIteratorState edge(int a, int b, double distance, int flags) {
-        throw exc();
-    }
-
     @Override
     public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
         throw exc();

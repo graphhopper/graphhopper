@@ -127,4 +127,18 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         // A new segment should be added, which will support 128 / 16 = 8 more entries.
         assertEquals(112, turnCostStorage.getCapacity() / 16);
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Override
+    public void testClone() {
+        // todo: implement graph coyping in the presence of turn costs
+        super.testClone();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Override
+    public void testCopyTo() {
+        // todo: implement graph coyping in the presence of turn costs
+        super.testCopyTo();
+    }
 }

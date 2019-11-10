@@ -183,16 +183,6 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
-            public int getAdditionalField() {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public EdgeIteratorState setAdditionalField(int value) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
             public boolean get(BooleanEncodedValue property) {
                 throw new UnsupportedOperationException();
             }
@@ -390,17 +380,6 @@ public class WrapperGraph implements Graph {
                     @Override
                     public EdgeIteratorState setFlags(IntsRef edgeFlags) {
                         current.setFlags(edgeFlags);
-                        return this;
-                    }
-
-                    @Override
-                    public int getAdditionalField() {
-                        return current.getAdditionalField();
-                    }
-
-                    @Override
-                    public EdgeIteratorState setAdditionalField(int value) {
-                        current.setAdditionalField(value);
                         return this;
                     }
 

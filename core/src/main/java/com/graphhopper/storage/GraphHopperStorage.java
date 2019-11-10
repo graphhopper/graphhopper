@@ -201,10 +201,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         return properties;
     }
 
-    public void setAdditionalEdgeField(long edgePointer, int value) {
-        baseGraph.setAdditionalEdgeField(edgePointer, value);
-    }
-
     @Override
     public void markNodeRemoved(int index) {
         baseGraph.getRemovedNodes().add(index);
@@ -376,7 +372,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
                 + encodingManager
                 + "|" + getDirectory().getDefaultType()
                 + "|" + baseGraph.nodeAccess.getDimension() + "D"
-                + "|" + baseGraph.extStorage
+                + "|" + baseGraph.turnCostExtension
                 + "|" + getProperties().versionsToString();
     }
 

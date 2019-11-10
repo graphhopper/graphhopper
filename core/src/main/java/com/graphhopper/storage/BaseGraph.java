@@ -57,7 +57,7 @@ class BaseGraph implements Graph {
     final DataAccess nodes;
     final BBox bounds;
     final NodeAccess nodeAccess;
-    final GraphExtension extStorage;
+    final GraphExtension turnCostExtension;
     final NameIndex nameIndex;
     final BitUtil bitUtil;
     final EncodingManager encodingManager;
@@ -73,9 +73,9 @@ class BaseGraph implements Graph {
      */
     protected int edgeCount;
     // node memory layout:
-    protected int N_EDGE_REF, N_LAT, N_LON, N_ELE, N_ADDITIONAL;
+    protected int N_EDGE_REF, N_LAT, N_LON, N_ELE, N_TC;
     // edge memory layout not found in EdgeAccess:
-    int E_DIST, E_GEO, E_NAME, E_ADDITIONAL;
+    int E_DIST, E_GEO, E_NAME;
     /**
      * Specifies how many entries (integers) are used per edge.
      */
@@ -94,6 +94,7 @@ class BaseGraph implements Graph {
     private int edgeEntryIndex, nodeEntryIndex;
     private long maxGeoRef;
     private boolean frozen = false;
+    private final boolean withTurnCosts;
 
     public BaseGraph(Directory dir, final EncodingManager encodingManager, boolean withElevation,
                      InternalGraphEventListener listener, boolean withTurnCosts) {
@@ -145,8 +146,12 @@ class BaseGraph implements Graph {
         };
         this.bounds = BBox.createInverse(withElevation);
         this.nodeAccess = new GHNodeAccess(this, withElevation);
-        this.extStorage = withTurnCosts ? new TurnCostExtension() : new NoOpExtension();
-        this.extStorage.init(this, dir);
+        this.withTurnCosts = withTurnCosts;
+        if (withTurnCosts) {
+            turnCostExtension = new TurnCostExtension(nodeAccess, dir.find("turn_costs"));
+        } else {
+            turnCostExtension = new NoOpExtension();
+        }
     }
 
     private static boolean isTestingEnabled() {
@@ -209,7 +214,7 @@ class BaseGraph implements Graph {
         edges.setHeader(0, edgeEntryBytes);
         edges.setHeader(1 * 4, edgeCount);
         edges.setHeader(2 * 4, encodingManager.hashCode());
-        edges.setHeader(3 * 4, extStorage.hashCode());
+        edges.setHeader(3 * 4, turnCostExtension.hashCode());
         return 5;
     }
 
@@ -236,10 +241,6 @@ class BaseGraph implements Graph {
         E_DIST = nextEdgeEntryIndex(4);
         E_GEO = nextEdgeEntryIndex(4);
         E_NAME = nextEdgeEntryIndex(4);
-        if (extStorage.isRequireEdgeField())
-            E_ADDITIONAL = nextEdgeEntryIndex(4);
-        else
-            E_ADDITIONAL = -1;
 
         N_EDGE_REF = nextNodeEntryIndex(4);
         N_LAT = nextNodeEntryIndex(4);
@@ -249,14 +250,18 @@ class BaseGraph implements Graph {
         else
             N_ELE = -1;
 
-        if (extStorage.isRequireNodeField())
-            N_ADDITIONAL = nextNodeEntryIndex(4);
+        if (supportsTurnCosts())
+            N_TC = nextNodeEntryIndex(4);
         else
-            N_ADDITIONAL = -1;
+            N_TC = -1;
 
         initNodeAndEdgeEntrySize();
         listener.initStorage();
         initialized = true;
+    }
+
+    boolean supportsTurnCosts() {
+        return withTurnCosts;
     }
 
     /**
@@ -266,9 +271,9 @@ class BaseGraph implements Graph {
         for (long pointer = oldCapacity + N_EDGE_REF; pointer < newCapacity; pointer += nodeEntryBytes) {
             nodes.setInt(pointer, EdgeIterator.NO_EDGE);
         }
-        if (extStorage.isRequireNodeField()) {
-            for (long pointer = oldCapacity + N_ADDITIONAL; pointer < newCapacity; pointer += nodeEntryBytes) {
-                nodes.setInt(pointer, extStorage.getDefaultNodeFieldValue());
+        if (supportsTurnCosts()) {
+            for (long pointer = oldCapacity + N_TC; pointer < newCapacity; pointer += nodeEntryBytes) {
+                nodes.setInt(pointer, TurnCostExtension.NO_TURN_ENTRY);
             }
         }
     }
@@ -341,7 +346,9 @@ class BaseGraph implements Graph {
         edges.setSegmentSize(bytes);
         wayGeometry.setSegmentSize(bytes);
         nameIndex.setSegmentSize(bytes);
-        extStorage.setSegmentSize(bytes);
+        if (supportsTurnCosts()) {
+            ((TurnCostExtension)turnCostExtension).setSegmentSize(bytes);
+        }
     }
 
     synchronized void freeze() {
@@ -368,7 +375,7 @@ class BaseGraph implements Graph {
         initSize = Math.min(initSize, 2000);
         wayGeometry.create(initSize);
         nameIndex.create(initSize);
-        extStorage.create(initSize);
+        turnCostExtension.create(initSize);
         initStorage();
         // 0 stands for no separate geoRef
         maxGeoRef = 4;
@@ -442,7 +449,7 @@ class BaseGraph implements Graph {
         setEdgesHeader();
         edges.flush();
         nodes.flush();
-        extStorage.flush();
+        turnCostExtension.flush();
     }
 
     public void close() {
@@ -452,12 +459,12 @@ class BaseGraph implements Graph {
             nameIndex.close();
         edges.close();
         nodes.close();
-        extStorage.close();
+        turnCostExtension.close();
     }
 
     long getCapacity() {
         return edges.getCapacity() + nodes.getCapacity() + nameIndex.getCapacity()
-                + wayGeometry.getCapacity() + extStorage.getCapacity();
+                + wayGeometry.getCapacity() + turnCostExtension.getCapacity();
     }
 
     long getMaxGeoRef() {
@@ -481,7 +488,7 @@ class BaseGraph implements Graph {
         if (!nameIndex.loadExisting())
             throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
 
-        if (!extStorage.loadExisting())
+        if (!turnCostExtension.loadExisting())
             throw new IllegalStateException("Cannot load extended storage. corrupt file or directory? " + dir);
 
         // first define header indices of this storage
@@ -507,8 +514,6 @@ class BaseGraph implements Graph {
                 setName(from.getName()).
                 setWayGeometry(from.fetchWayGeometry(0));
 
-        if (E_ADDITIONAL >= 0)
-            to.setAdditionalField(from.getAdditionalField());
         return to;
     }
 
@@ -527,9 +532,6 @@ class BaseGraph implements Graph {
         EdgeIterable iter = new EdgeIterable(this, edgeAccess, EdgeFilter.ALL_EDGES);
         boolean ret = iter.init(edgeId, nodeB);
         assert ret;
-        if (extStorage.isRequireEdgeField())
-            iter.setAdditionalField(extStorage.getDefaultEdgeFieldValue());
-
         return iter;
     }
 
@@ -623,8 +625,10 @@ class BaseGraph implements Graph {
         wayGeometry.copyTo(clonedG.wayGeometry);
         clonedG.loadWayGeometryHeader();
 
-        // extStorage
-        extStorage.copyTo(clonedG.extStorage);
+        // turn cost extension
+        if (supportsTurnCosts()) {
+            ((TurnCostExtension)turnCostExtension).copyTo((TurnCostExtension)clonedG.turnCostExtension);
+        }
 
         if (removedNodes == null)
             clonedG.removedNodes = null;
@@ -808,7 +812,7 @@ class BaseGraph implements Graph {
 
     @Override
     public TurnCostExtension getTurnCostExtension() {
-        return extStorage instanceof NoOpExtension ? null : (TurnCostExtension) extStorage;
+        return withTurnCosts ? (TurnCostExtension) turnCostExtension : null;
     }
 
     @Override
@@ -849,13 +853,6 @@ class BaseGraph implements Graph {
         int val = edges.getInt(pointer + E_DIST);
         // do never return infinity even if INT MAX, see #435
         return val / INT_DIST_FACTOR;
-    }
-
-    public void setAdditionalEdgeField(long edgePointer, int value) {
-        if (extStorage.isRequireEdgeField() && E_ADDITIONAL >= 0)
-            edges.setInt(edgePointer + E_ADDITIONAL, value);
-        else
-            throw new AssertionError("This graph does not support an additional edge field.");
     }
 
     private void setWayGeometry_(PointList pillarNodes, long edgePointer, boolean reverse) {
@@ -1224,17 +1221,6 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public final int getAdditionalField() {
-            return baseGraph.edges.getInt(edgePointer + baseGraph.E_ADDITIONAL);
-        }
-
-        @Override
-        public final EdgeIteratorState setAdditionalField(int value) {
-            baseGraph.setAdditionalEdgeField(edgePointer, value);
-            return this;
-        }
-
-        @Override
         public boolean get(BooleanEncodedValue property) {
             return property.getBool(reverse, getFlags());
         }
@@ -1380,33 +1366,9 @@ class BaseGraph implements Graph {
     }
 
     private static class NoOpExtension implements GraphExtension {
-        @Override
-        public boolean isRequireNodeField() {
-            return false;
-        }
 
         @Override
-        public boolean isRequireEdgeField() {
-            return false;
-        }
-
-        @Override
-        public int getDefaultNodeFieldValue() {
-            return 0;
-        }
-
-        @Override
-        public int getDefaultEdgeFieldValue() {
-            return 0;
-        }
-
-        @Override
-        public void init(Graph graph, Directory dir) {
-            // noop
-        }
-
-        @Override
-        public GraphExtension create(long byteCount) {
+        public NoOpExtension create(long byteCount) {
             // noop
             return this;
         }
@@ -1415,11 +1377,6 @@ class BaseGraph implements Graph {
         public boolean loadExisting() {
             // noop
             return true;
-        }
-
-        @Override
-        public void setSegmentSize(int bytes) {
-            // noop
         }
 
         @Override
@@ -1435,12 +1392,6 @@ class BaseGraph implements Graph {
         @Override
         public long getCapacity() {
             return 0;
-        }
-
-        @Override
-        public GraphExtension copyTo(GraphExtension extStorage) {
-            // noop
-            return extStorage;
         }
 
         @Override

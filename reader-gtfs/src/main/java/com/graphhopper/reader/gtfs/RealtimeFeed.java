@@ -102,16 +102,16 @@ public class RealtimeFeed {
             int firstEdge = graphHopperStorage.getAllEdges().length();
             EncodingManager encodingManager = graphHopperStorage.getEncodingManager();
             final NodeAccess nodeAccess = new NodeAccess() {
-                IntIntHashMap additionalNodeFields = new IntIntHashMap();
+                IntIntHashMap turnCostIndices = new IntIntHashMap();
 
                 @Override
-                public int getAdditionalNodeField(int nodeId) {
+                public int getTurnCostIndex(int nodeId) {
                     return 0;
                 }
 
                 @Override
-                public void setAdditionalNodeField(int nodeId, int additionalValue) {
-                    additionalNodeFields.put(nodeId, additionalValue);
+                public void setTurnCostIndex(int nodeId, int additionalValue) {
+                    turnCostIndices.put(nodeId, additionalValue);
                 }
 
                 @Override
