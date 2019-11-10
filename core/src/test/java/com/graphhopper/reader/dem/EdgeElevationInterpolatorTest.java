@@ -48,6 +48,7 @@ public abstract class EdgeElevationInterpolatorTest {
     protected GraphHopperStorage graph;
     protected EnumEncodedValue<RoadEnvironment> roadEnvEnc;
     protected EncodingManager encodingManager;
+    protected long relFlags;
     protected EdgeElevationInterpolator edgeElevationInterpolator;
 
     @SuppressWarnings("resource")
@@ -59,7 +60,7 @@ public abstract class EdgeElevationInterpolatorTest {
                 true, new GraphExtension.NoOpExtension()).create(100);
         roadEnvEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         edgeElevationInterpolator = createEdgeElevationInterpolator();
-
+        relFlags = 0;
         interpolatableWay = createInterpolatableWay();
         normalWay = new ReaderWay(0);
         normalWay.setTag("highway", "primary");

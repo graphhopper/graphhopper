@@ -33,7 +33,8 @@ public class GraphHopperStorageLMTest {
         graph.edge(0, 1, 1, true);
         updateDistancesFor(graph, 0, 0.00, 0.00);
         updateDistancesFor(graph, 1, 0.01, 0.01);
-        graph.getEdgeIteratorState(0, 1).setFlags(carFlagEncoder.handleWayTags(encodingManager.createEdgeFlags(), way_0_1, Access.WAY, 0));
+        graph.getEdgeIteratorState(0, 1).setFlags(
+                carFlagEncoder.handleWayTags(encodingManager.createEdgeFlags(), way_0_1, Access.WAY));
 
         // 1-2
         ReaderWay way_1_2 = new ReaderWay(28l);
@@ -42,7 +43,8 @@ public class GraphHopperStorageLMTest {
 
         graph.edge(1, 2, 1, true);
         updateDistancesFor(graph, 2, 0.02, 0.02);
-        graph.getEdgeIteratorState(1, 2).setFlags(carFlagEncoder.handleWayTags(encodingManager.createEdgeFlags(), way_1_2, Access.WAY, 0));
+        graph.getEdgeIteratorState(1, 2).setFlags(
+                carFlagEncoder.handleWayTags(encodingManager.createEdgeFlags(), way_1_2, Access.WAY));
 
         graph.flush();
         graph.close();

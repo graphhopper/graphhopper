@@ -89,45 +89,46 @@ public class PathSimplificationTest {
         w.setTag("highway", "tertiary");
         w.setTag("maxspeed", "10");
 
+        long relFlags = 0;
         EdgeIteratorState tmpEdge;
         tmpEdge = g.edge(0, 1, 10000, true).setName("0-1");
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
         assertTrue(carManager.acceptWay(w, map));
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
         tmpEdge = g.edge(1, 2, 11000, true).setName("1-2");
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         w.setTag("maxspeed", "20");
         tmpEdge = g.edge(0, 3, 11000, true);
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
         tmpEdge = g.edge(1, 4, 10000, true).setName("1-4");
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
         tmpEdge = g.edge(2, 5, 11000, true).setName("5-2");
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         w.setTag("maxspeed", "30");
         tmpEdge = g.edge(3, 6, 11000, true).setName("3-6");
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
         tmpEdge = g.edge(4, 7, 10000, true).setName("4-7");
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
         tmpEdge = g.edge(5, 8, 10000, true).setName("5-8");
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         w.setTag("maxspeed", "40");
         tmpEdge = g.edge(6, 7, 11000, true).setName("6-7");
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
         tmpEdge = g.edge(7, 8, 10000, true);
         PointList list = new PointList();
         list.add(1.0, 1.15);
         list.add(1.0, 1.16);
         tmpEdge.setWayGeometry(list);
         tmpEdge.setName("7-8");
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         w.setTag("maxspeed", "50");
         // missing edge name
         tmpEdge = g.edge(9, 10, 10000, true);
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
         tmpEdge = g.edge(8, 9, 20000, true);
         list.clear();
         list.add(1.0, 1.3);
@@ -136,7 +137,7 @@ public class PathSimplificationTest {
         list.add(1.0, 1.3003);
         tmpEdge.setName("8-9");
         tmpEdge.setWayGeometry(list);
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         // Path is: [0 0-1, 3 1-4, 6 4-7, 9 7-8, 11 8-9, 10 9-10]
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);

@@ -56,7 +56,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
     }
 
     protected void handleSpeed(IntsRef edgeFlags, ReaderWay way, double speed) {
-        speedEncoder.setDecimal(true, edgeFlags, speed);
+        avgSpeedEnc.setDecimal(true, edgeFlags, speed);
         super.handleSpeed(edgeFlags, way, speed);
     }
 

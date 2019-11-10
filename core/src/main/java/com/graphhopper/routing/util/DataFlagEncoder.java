@@ -78,7 +78,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         this((int) properties.getLong("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
-        this.properties = properties;
     }
 
     public DataFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
@@ -102,7 +101,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
 
         // workaround to init AbstractWeighting.avSpeedEnc variable that GenericWeighting does not need
-        speedEncoder = new UnsignedDecimalEncodedValue("fake", 1, 1, false);
+        avgSpeedEnc = new UnsignedDecimalEncodedValue("fake", 1, 1, false);
         roadEnvironmentEnc = getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
     }
 
