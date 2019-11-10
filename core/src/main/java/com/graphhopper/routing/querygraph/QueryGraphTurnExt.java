@@ -32,7 +32,7 @@ class QueryGraphTurnExt extends TurnCostExtension {
     private final IntArrayList closestEdges;
 
     QueryGraphTurnExt(Graph mainGraph, IntArrayList closestEdges) {
-        this.mainTurnExtension = (TurnCostExtension) mainGraph.getExtension();
+        this.mainTurnExtension = mainGraph.getTurnCostExtension();
         this.firstVirtualNodeId = mainGraph.getNodes();
         this.firstVirtualEdgeId = mainGraph.getEdges();
         this.closestEdges = closestEdges;

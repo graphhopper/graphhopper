@@ -28,10 +28,7 @@ import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -536,8 +533,8 @@ public class WrapperGraph implements Graph {
     }
 
     @Override
-    public GraphExtension getExtension() {
-        return mainGraph.getExtension();
+    public TurnCostExtension getTurnCostExtension() {
+        return mainGraph.getTurnCostExtension();
     }
 
     @Override

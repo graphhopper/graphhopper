@@ -96,7 +96,7 @@ class BaseGraph implements Graph {
     private boolean frozen = false;
 
     public BaseGraph(Directory dir, final EncodingManager encodingManager, boolean withElevation,
-                     InternalGraphEventListener listener, GraphExtension extendedStorage) {
+                     InternalGraphEventListener listener, boolean withTurnCosts) {
         this.dir = dir;
         this.encodingManager = encodingManager;
         this.intsForFlags = encodingManager.getIntsForFlags();
@@ -145,7 +145,7 @@ class BaseGraph implements Graph {
         };
         this.bounds = BBox.createInverse(withElevation);
         this.nodeAccess = new GHNodeAccess(this, withElevation);
-        this.extStorage = extendedStorage;
+        this.extStorage = withTurnCosts ? new TurnCostExtension() : new NoOpExtension();
         this.extStorage.init(this, dir);
     }
 
@@ -807,8 +807,8 @@ class BaseGraph implements Graph {
     }
 
     @Override
-    public GraphExtension getExtension() {
-        return extStorage;
+    public TurnCostExtension getTurnCostExtension() {
+        return extStorage instanceof NoOpExtension ? null : (TurnCostExtension) extStorage;
     }
 
     @Override
@@ -1376,6 +1376,81 @@ class BaseGraph implements Graph {
         @Override
         public final String toString() {
             return getEdge() + " " + getBaseNode() + "-" + getAdjNode();
+        }
+    }
+
+    private static class NoOpExtension implements GraphExtension {
+        @Override
+        public boolean isRequireNodeField() {
+            return false;
+        }
+
+        @Override
+        public boolean isRequireEdgeField() {
+            return false;
+        }
+
+        @Override
+        public int getDefaultNodeFieldValue() {
+            return 0;
+        }
+
+        @Override
+        public int getDefaultEdgeFieldValue() {
+            return 0;
+        }
+
+        @Override
+        public void init(Graph graph, Directory dir) {
+            // noop
+        }
+
+        @Override
+        public GraphExtension create(long byteCount) {
+            // noop
+            return this;
+        }
+
+        @Override
+        public boolean loadExisting() {
+            // noop
+            return true;
+        }
+
+        @Override
+        public void setSegmentSize(int bytes) {
+            // noop
+        }
+
+        @Override
+        public void flush() {
+            // noop
+        }
+
+        @Override
+        public void close() {
+            // noop
+        }
+
+        @Override
+        public long getCapacity() {
+            return 0;
+        }
+
+        @Override
+        public GraphExtension copyTo(GraphExtension extStorage) {
+            // noop
+            return extStorage;
+        }
+
+        @Override
+        public String toString() {
+            return "NoExt";
+        }
+
+        @Override
+        public boolean isClosed() {
+            return false;
         }
     }
 }

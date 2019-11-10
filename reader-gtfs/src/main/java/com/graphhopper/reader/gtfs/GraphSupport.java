@@ -304,7 +304,7 @@ class GraphSupport {
             }
 
             @Override
-            public GraphExtension getExtension() {
+            public TurnCostExtension getTurnCostExtension() {
                 throw new UnsupportedOperationException();
             }
 

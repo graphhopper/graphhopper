@@ -35,7 +35,7 @@ public class Path4CHTest {
         weighting = new FastestWeighting(encoder);
         graph = new GraphBuilder(em).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
         chGraph = graph.getCHGraph();
-        turnCostExtension = (TurnCostExtension) graph.getExtension();
+        turnCostExtension = graph.getTurnCostExtension();
     }
 
     @Test

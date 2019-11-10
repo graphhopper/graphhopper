@@ -34,7 +34,7 @@ public class TurnCostExtensionTest {
         EncodingManager manager = EncodingManager.create(carEncoder, bikeEncoder);
         GraphHopperStorage g = new GraphBuilder(manager).create();
         initGraph(g);
-        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
+        TurnCostExtension tcs = g.getTurnCostExtension();
 
         // introduce some turn costs
         long carRestricted = carEncoder.getTurnFlags(true, 0);
@@ -101,7 +101,7 @@ public class TurnCostExtensionTest {
         EncodingManager manager = EncodingManager.create(carEncoder, bikeEncoder);
         GraphHopperStorage g = new GraphBuilder(manager).create();
         initGraph(g);
-        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
+        TurnCostExtension tcs = g.getTurnCostExtension();
 
         long carRestricted = carEncoder.getTurnFlags(true, 0);
         long bikeRestricted = bikeEncoder.getTurnFlags(true, 0);

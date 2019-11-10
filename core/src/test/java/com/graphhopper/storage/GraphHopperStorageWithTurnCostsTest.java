@@ -35,13 +35,14 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
 
     @Override
     protected GraphHopperStorage newGHStorage(Directory dir, boolean is3D) {
-        turnCostStorage = new TurnCostExtension();
-        return new GraphHopperStorage(dir, encodingManager, is3D, turnCostStorage);
+        GraphHopperStorage g = new GraphHopperStorage(dir, encodingManager, is3D, true);
+        turnCostStorage = g.getTurnCostExtension();
+        return g;
     }
 
     @Override
     @Test
-    public void testSave_and_fileFormat() throws IOException {
+    public void testSave_and_fileFormat() {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
@@ -87,7 +88,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
     }
 
     @Test
-    public void testEnsureCapacity() throws IOException {
+    public void testEnsureCapacity() {
         graph = newGHStorage(new MMapDirectory(defaultGraphLoc), false);
         graph.setSegmentSize(128);
         graph.create(100); // 100 is the minimum size

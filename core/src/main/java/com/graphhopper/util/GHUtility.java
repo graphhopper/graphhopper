@@ -439,10 +439,7 @@ public class GHUtility {
     public static GraphHopperStorage newStorage(GraphHopperStorage store) {
         Directory outdir = guessDirectory(store);
         boolean is3D = store.getNodeAccess().is3D();
-
-        return new GraphHopperStorage(store.getCHProfiles(), outdir, store.getEncodingManager(),
-                is3D, store.getExtension()).
-                create(store.getNodes());
+        return new GraphHopperStorage(store.getCHProfiles(), outdir, store.getEncodingManager(), is3D, store.getTurnCostExtension() != null).create(store.getNodes());
     }
 
     public static int getAdjNode(Graph g, int edge, int adjNode) {

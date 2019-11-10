@@ -100,9 +100,9 @@ public class DirectedRoutingTest {
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
-        turnCostExtension = new TurnCostExtension();
         graph = createGraph();
         chGraph = graph.getCHGraph();
+        turnCostExtension = graph.getTurnCostExtension();
     }
 
     private void preProcessGraph() {
@@ -142,7 +142,7 @@ public class DirectedRoutingTest {
     }
 
     private TurnWeighting createTurnWeighting(Graph g) {
-        return new TurnWeighting(weighting, (TurnCostExtension) g.getExtension(), uTurnCosts);
+        return new TurnWeighting(weighting, g.getTurnCostExtension(), uTurnCosts);
     }
 
     @Test
@@ -282,7 +282,7 @@ public class DirectedRoutingTest {
 
     private GraphHopperStorage createGraph() {
         GraphHopperStorage gh = new GraphHopperStorage(Collections.singletonList(CHProfile.edgeBased(weighting, uTurnCosts)), dir, encodingManager,
-                false, turnCostExtension);
+                false, true);
         gh.create(1000);
         return gh;
     }
