@@ -50,7 +50,7 @@ public abstract class AbstractLocationIndexTester {
     }
 
     GraphHopperStorage createGHStorage(Directory dir, EncodingManager encodingManager, boolean is3D) {
-        return new GraphHopperStorage(dir, encodingManager, is3D, new GraphExtension.NoOpExtension()).create(100);
+        return new GraphHopperStorage(dir, encodingManager, is3D).create(100);
     }
 
     protected int findID(LocationIndex index, double lat, double lon) {

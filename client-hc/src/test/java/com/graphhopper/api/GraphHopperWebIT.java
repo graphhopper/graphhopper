@@ -20,6 +20,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -170,11 +171,28 @@ public class GraphHopperWebIT {
                 addPoint(new GHPoint(52.399067, 13.469238));
 
         GHResponse res = gh.route(req);
-        assertEquals("Continue onto B 96", res.getBest().getInstructions().get(4).getName());
+        List<String> given = extractInstructionNames(res.getBest(), 7);
+        assertEquals(Arrays.asList(
+                "Continue", "Turn left", "Turn right", "Keep left", "Turn right onto B 246", "Turn sharp right onto Dorfaue, K 6156", "Turn right onto B 96"
+        ), given);
 
         req.getHints().put("turn_description", false);
         res = gh.route(req);
-        assertEquals("B 96", res.getBest().getInstructions().get(4).getName());
+        given = extractInstructionNames(res.getBest(), 7);
+        assertEquals(Arrays.asList(
+                "", "", "", "", "B 246", "Dorfaue, K 6156", "B 96"
+        ), given);
+    }
+
+    private List<String> extractInstructionNames(PathWrapper path, int count) {
+        List<String> result = new ArrayList<>();
+        for (Instruction instruction : path.getInstructions()) {
+            result.add(instruction.getName());
+            if (result.size() >= count) {
+                return result;
+            }
+        }
+        return result;
     }
 
     @Test

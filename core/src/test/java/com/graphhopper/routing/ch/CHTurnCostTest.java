@@ -80,7 +80,7 @@ public class CHTurnCostTest {
         // the default CH graph with infinite u-turn costs, can be reset in tests that should run with finite u-turn
         // costs
         chGraph = graph.getCHGraph(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS));
-        turnCostExtension = (TurnCostExtension) graph.getExtension();
+        turnCostExtension = graph.getTurnCostExtension();
         checkStrict = true;
     }
 
@@ -1023,7 +1023,7 @@ public class CHTurnCostTest {
         QueryResult qr2 = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.lookup(graph, qr2);
         assertEquals(3, qr2.getClosestEdge().getEdge());
-        Dijkstra dijkstra = new Dijkstra(queryGraph, new TurnWeighting(weighting, (TurnCostExtension) queryGraph.getExtension(), chGraph.getCHProfile().getUTurnCosts()), TraversalMode.EDGE_BASED);
+        Dijkstra dijkstra = new Dijkstra(queryGraph, new TurnWeighting(weighting, queryGraph.getTurnCostExtension(), chGraph.getCHProfile().getUTurnCosts()), TraversalMode.EDGE_BASED);
         Path dijkstraPath = dijkstra.calcPath(4, 6);
         assertEquals(IntArrayList.from(4, 3, 2, 1, 7, 0, 7, 1, 5, 6), dijkstraPath.calcNodes());
         assertEquals(dijkstraPath.getWeight(), path.getWeight(), 1.e-3);

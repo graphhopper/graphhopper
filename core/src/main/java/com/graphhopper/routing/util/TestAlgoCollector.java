@@ -23,7 +23,6 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -57,7 +56,7 @@ public class TestAlgoCollector {
                 errors.add("Cannot use TurnWeighting with node based traversal");
                 return this;
             }
-            algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(new TurnWeighting(opts.getWeighting(), (TurnCostExtension) queryGraph.getExtension())).build());
+            algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(new TurnWeighting(opts.getWeighting(), queryGraph.getTurnCostExtension())).build());
         }
 
         RoutingAlgorithmFactory factory = algoEntry.createRoutingFactory();

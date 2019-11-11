@@ -45,7 +45,6 @@ public class HikeFlagEncoder extends FootFlagEncoder {
     public HikeFlagEncoder(PMap properties) {
         this((int) properties.getLong("speedBits", 4),
                 properties.getDouble("speedFactor", 1));
-        this.properties = properties;
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 
@@ -184,7 +183,7 @@ public class HikeFlagEncoder extends FootFlagEncoder {
             // slope=h/s_2d=~h/2_3d              = sqrt(1+slope²)/(slope+1/4.5) km/h
             // maximum slope is 0.37 (Ffordd Pen Llech)
             double newSpeed = Math.sqrt(1 + slope * slope) / (slope + 1 / 5.4);
-            edge.set(speedEncoder, Helper.keepIn(newSpeed, 1, 5));
+            edge.set(avgSpeedEnc, Helper.keepIn(newSpeed, 1, 5));
         }
     }
 
