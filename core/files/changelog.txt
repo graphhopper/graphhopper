@@ -3,6 +3,7 @@
     conditional turn restrictions now supported, #1683
     added new `curbside` feature, #1697
     moved QueryGraph to new routing.querygraph package
+    removed GraphExtension, #1783
 
 0.13
     removed docker compose file

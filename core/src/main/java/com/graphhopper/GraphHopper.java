@@ -755,10 +755,7 @@ public class GraphHopper implements GraphHopperAPI {
             chProfiles = Collections.emptyList();
         }
 
-        ghStorage =  encodingManager.needsTurnCostsSupport() ?
-                new GraphHopperStorage(chProfiles, dir, encodingManager, hasElevation(), new TurnCostExtension()) :
-                new GraphHopperStorage(chProfiles, dir, encodingManager, hasElevation());
-
+        ghStorage =  new GraphHopperStorage(chProfiles, dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport());
         ghStorage.setSegmentSize(defaultSegmentSize);
 
         if (!new File(graphHopperFolder).exists())
@@ -964,7 +961,7 @@ public class GraphHopper implements GraphHopperAPI {
     public Weighting createTurnWeighting(Graph graph, Weighting weighting, TraversalMode tMode, double uTurnCosts) {
         FlagEncoder encoder = weighting.getFlagEncoder();
         if (encoder.supports(TurnWeighting.class) && tMode.isEdgeBased())
-            return new TurnWeighting(weighting, (TurnCostExtension) graph.getExtension(), uTurnCosts);
+            return new TurnWeighting(weighting, graph.getTurnCostExtension(), uTurnCosts);
         return weighting;
     }
 

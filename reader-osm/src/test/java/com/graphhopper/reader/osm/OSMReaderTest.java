@@ -87,9 +87,7 @@ public class OSMReaderTest {
     }
 
     GraphHopperStorage newGraph(String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport) {
-        return turnRestrictionsImport ?
-                new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D, new TurnCostExtension()) :
-                new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D);
+        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D, turnRestrictionsImport);
     }
 
     @Test
@@ -500,8 +498,8 @@ public class OSMReaderTest {
 
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(15, graph.getNodes());
-        assertTrue(graph.getExtension() instanceof TurnCostExtension);
-        TurnCostExtension tcStorage = (TurnCostExtension) graph.getExtension();
+        TurnCostExtension tcStorage = graph.getTurnCostExtension();
+        assertNotNull(tcStorage);
 
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
         int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);
@@ -809,8 +807,8 @@ public class OSMReaderTest {
 
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(8, graph.getNodes());
-        assertTrue(graph.getExtension() instanceof TurnCostExtension);
-        TurnCostExtension tcStorage = (TurnCostExtension) graph.getExtension();
+        TurnCostExtension tcStorage = graph.getTurnCostExtension();
+        assertNotNull(tcStorage);
 
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
         int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);
@@ -873,8 +871,8 @@ public class OSMReaderTest {
 
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(5, graph.getNodes());
-        assertTrue(graph.getExtension() instanceof TurnCostExtension);
-        TurnCostExtension tcStorage = (TurnCostExtension) graph.getExtension();
+        TurnCostExtension tcStorage = graph.getTurnCostExtension();
+        assertNotNull(tcStorage);
 
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
         int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);

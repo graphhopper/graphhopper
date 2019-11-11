@@ -48,21 +48,18 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     private final Collection<CHGraphImpl> chGraphs;
 
     public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation) {
-        this(dir, encodingManager, withElevation, new NoOpExtension());
+        this(dir, encodingManager, withElevation, false);
     }
 
-    public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage) {
-        this(Collections.<CHProfile>emptyList(), dir, encodingManager, withElevation, extendedStorage);
+    public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, boolean withTurnCosts) {
+        this(Collections.<CHProfile>emptyList(), dir, encodingManager, withElevation, withTurnCosts);
     }
 
     public GraphHopperStorage(List<CHProfile> chProfiles, Directory dir, EncodingManager encodingManager, boolean withElevation) {
-        this(chProfiles, dir, encodingManager, withElevation, new NoOpExtension());
+        this(chProfiles, dir, encodingManager, withElevation, false);
     }
 
-    public GraphHopperStorage(List<CHProfile> chProfiles, Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage) {
-        if (extendedStorage == null)
-            throw new IllegalArgumentException("GraphExtension cannot be null, use NoOpExtension");
-
+    public GraphHopperStorage(List<CHProfile> chProfiles, Directory dir, EncodingManager encodingManager, boolean withElevation, boolean withTurnCosts) {
         if (encodingManager == null)
             throw new IllegalArgumentException("EncodingManager needs to be non-null since 0.7. Create one using EncodingManager.create or EncodingManager.create(flagEncoderFactory, ghLocation)");
 
@@ -85,7 +82,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             }
         };
 
-        baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, extendedStorage);
+        baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, withTurnCosts);
         this.chGraphs = new ArrayList<>(chProfiles.size());
         for (CHProfile chProfile : chProfiles) {
             chGraphs.add(new CHGraphImpl(chProfile, dir, baseGraph));
@@ -202,10 +199,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public StorableProperties getProperties() {
         return properties;
-    }
-
-    public void setAdditionalEdgeField(long edgePointer, int value) {
-        baseGraph.setAdditionalEdgeField(edgePointer, value);
     }
 
     @Override
@@ -379,7 +372,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
                 + encodingManager
                 + "|" + getDirectory().getDefaultType()
                 + "|" + baseGraph.nodeAccess.getDimension() + "D"
-                + "|" + baseGraph.extStorage
+                + "|" + (baseGraph.supportsTurnCosts() ? baseGraph.turnCostExtension : "no_turn_cost")
                 + "|" + getProperties().versionsToString();
     }
 
@@ -448,8 +441,8 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     @Override
-    public GraphExtension getExtension() {
-        return baseGraph.getExtension();
+    public TurnCostExtension getTurnCostExtension() {
+        return baseGraph.getTurnCostExtension();
     }
 
     @Override
@@ -473,79 +466,4 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         baseGraph.flushAndCloseGeometryAndNameStorage();
     }
 
-    private static class NoOpExtension implements GraphExtension {
-
-        @Override
-        public boolean isRequireNodeField() {
-            return false;
-        }
-
-        @Override
-        public boolean isRequireEdgeField() {
-            return false;
-        }
-
-        @Override
-        public int getDefaultNodeFieldValue() {
-            return 0;
-        }
-
-        @Override
-        public int getDefaultEdgeFieldValue() {
-            return 0;
-        }
-
-        @Override
-        public void init(Graph graph, Directory dir) {
-            // noop
-        }
-
-        @Override
-        public GraphExtension create(long byteCount) {
-            // noop
-            return this;
-        }
-
-        @Override
-        public boolean loadExisting() {
-            // noop
-            return true;
-        }
-
-        @Override
-        public void setSegmentSize(int bytes) {
-            // noop
-        }
-
-        @Override
-        public void flush() {
-            // noop
-        }
-
-        @Override
-        public void close() {
-            // noop
-        }
-
-        @Override
-        public long getCapacity() {
-            return 0;
-        }
-
-        @Override
-        public GraphExtension copyTo(GraphExtension extStorage) {
-            // noop
-            return extStorage;
-        }
-
-        @Override
-        public String toString() {
-            return "NoExt";
-        }
-
-        @Override
-        public boolean isClosed() {
-            return false;
-        }
-    }
 }
