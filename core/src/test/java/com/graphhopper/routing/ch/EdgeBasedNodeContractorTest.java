@@ -1383,7 +1383,7 @@ public class EdgeBasedNodeContractorTest {
 
     private EdgeBasedNodeContractor createNodeContractor() {
         PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
-        TurnWeighting turnWeighting = new TurnWeighting(preparationWeighting, (TurnCostExtension) graph.getExtension(), uTurnCosts);
+        TurnWeighting turnWeighting = new TurnWeighting(preparationWeighting, graph.getTurnCostExtension(), uTurnCosts);
         EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(chGraph, turnWeighting, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;

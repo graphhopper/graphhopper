@@ -108,7 +108,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
      */
     Collection<TCEntry> getRestrictionAsEntries(OSMTurnRelation osmTurnRelation, IntsRef turnCostFlags,
                                                 ExternalInternalMap map, Graph graph) {
-        TurnCostExtension tcs = (TurnCostExtension) graph.getExtension();
+        TurnCostExtension tcs = graph.getTurnCostExtension();
         int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
         EdgeExplorer edgeOutExplorer = getOutExplorer(graph), edgeInExplorer = getInExplorer(graph);
 

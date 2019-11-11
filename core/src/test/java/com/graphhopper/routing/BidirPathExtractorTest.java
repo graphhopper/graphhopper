@@ -65,7 +65,7 @@ public class BidirPathExtractorTest {
         g.edge(2, 3, 20, false);
         // add some turn costs at node 2 where fwd&bwd searches meet. these costs have to be included in the
         // weight and the time of the path
-        TurnCostExtension turnCostExtension = (TurnCostExtension) g.getExtension();
+        TurnCostExtension turnCostExtension = g.getTurnCostExtension();
         DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(carEncoder.toString(), EV_SUFFIX));
         IntsRef tcFlags = TurnCost.createFlags();
         turnCostEnc.setDecimal(false, tcFlags, 5);

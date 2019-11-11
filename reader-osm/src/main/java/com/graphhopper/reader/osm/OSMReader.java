@@ -128,8 +128,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
         if (tempRelFlags.length != 2)
             throw new IllegalArgumentException("Cannot use relation flags with != 2 integers");
 
-        GraphExtension extendedStorage = graph.getExtension();
-        tcs = extendedStorage instanceof TurnCostExtension ? (TurnCostExtension) extendedStorage : null;
+        tcs = graph.getTurnCostExtension();
     }
 
     @Override

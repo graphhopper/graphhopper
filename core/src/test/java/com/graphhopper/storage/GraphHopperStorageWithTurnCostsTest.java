@@ -39,7 +39,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
 
     @Override
     protected GraphHopperStorage newGHStorage(Directory dir, boolean is3D) {
-        return new GraphHopperStorage(dir, encodingManager, is3D, new TurnCostExtension());
+        return new GraphHopperStorage(dir, encodingManager, is3D, true);
     }
 
     @Override
@@ -92,12 +92,12 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
     }
 
     @Test
-    public void testEnsureCapacity() throws IOException {
+    public void testEnsureCapacity() {
         graph = newGHStorage(new MMapDirectory(defaultGraphLoc), false);
         graph.setSegmentSize(128);
         graph.create(100); // 100 is the minimum size
 
-        TurnCostExtension turnCostStorage = (TurnCostExtension) graph.getExtension();
+        TurnCostExtension turnCostStorage = graph.getTurnCostExtension();
         TurnCostAccess tca = new TurnCostAccess("car", graph);
         // assert that turnCostStorage can hold 104 turn cost entries at the beginning
         assertEquals(128, turnCostStorage.getCapacity());
@@ -132,5 +132,19 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         tca.add(0, 50, 2, 1337);
         // A new segment should be added, which will support 128 / 16 = 8 more entries.
         assertEquals(112, turnCostStorage.getCapacity() / 16);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Override
+    public void testClone() {
+        // todo: implement graph coyping in the presence of turn costs
+        super.testClone();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Override
+    public void testCopyTo() {
+        // todo: implement graph coyping in the presence of turn costs
+        super.testCopyTo();
     }
 }

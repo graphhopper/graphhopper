@@ -626,7 +626,7 @@ public class PrepareContractionHierarchiesTest {
         CHProfile bikeProfile = CHProfile.nodeBased(new ShortestWeighting(tmpBikeEncoder));
 
         List<CHProfile> profiles = Arrays.asList(carProfile, bikeProfile);
-        GraphHopperStorage ghStorage = new GraphHopperStorage(profiles, dir, tmpEncodingManager, false, new GraphExtension.NoOpExtension()).create(1000);
+        GraphHopperStorage ghStorage = new GraphHopperStorage(profiles, dir, tmpEncodingManager, false).create(1000);
         initShortcutsGraph(ghStorage);
 
         ghStorage.freeze();
@@ -646,7 +646,7 @@ public class PrepareContractionHierarchiesTest {
         CHProfile bikeProfile = CHProfile.nodeBased(new FastestWeighting(tmpBikeEncoder));
 
         List<CHProfile> profiles = Arrays.asList(carProfile, bikeProfile);
-        GraphHopperStorage ghStorage = new GraphHopperStorage(profiles, dir, tmpEncodingManager, false, new GraphExtension.NoOpExtension()).create(1000);
+        GraphHopperStorage ghStorage = new GraphHopperStorage(profiles, dir, tmpEncodingManager, false).create(1000);
         initShortcutsGraph(ghStorage);
         EdgeIteratorState edge = GHUtility.getEdge(ghStorage, 9, 14).
                 set(tmpBikeEncoder.getAccessEnc(), false).setReverse(tmpBikeEncoder.getAccessEnc(), false);
@@ -666,7 +666,7 @@ public class PrepareContractionHierarchiesTest {
         CHProfile carProfile = CHProfile.nodeBased(new FastestWeighting(carFlagEncoder));
         CHProfile motorCycleProfile = CHProfile.nodeBased(new FastestWeighting(motorCycleEncoder));
         Directory dir = new RAMDirectory();
-        GraphHopperStorage ghStorage = new GraphHopperStorage(Arrays.asList(carProfile, motorCycleProfile), dir, em, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage ghStorage = new GraphHopperStorage(Arrays.asList(carProfile, motorCycleProfile), dir, em, false);
         ghStorage.create(1000);
 
         int numNodes = 5_000;

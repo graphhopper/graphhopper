@@ -17,11 +17,11 @@ public class TurnCostAccess {
     private final DecimalEncodedValue turnCostEnc;
 
     public TurnCostAccess(String name, GraphHopperStorage graph) {
-        this(name, (TurnCostExtension) graph.getExtension(), graph.getEncodingManager());
+        this(name, graph.getTurnCostExtension(), graph.getEncodingManager());
     }
 
     public TurnCostAccess(String name, Graph graph, EncodingManager encodingManager) {
-        this(name, (TurnCostExtension) graph.getExtension(), encodingManager);
+        this(name, graph.getTurnCostExtension(), encodingManager);
     }
 
     public TurnCostAccess(String name, TurnCostExtension extension, EncodingManager encodingManager) {

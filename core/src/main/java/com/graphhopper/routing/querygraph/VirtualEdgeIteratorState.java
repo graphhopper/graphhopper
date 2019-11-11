@@ -253,11 +253,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public int getAdditionalField() {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
     public int getMergeStatus(int flags) {
         throw new UnsupportedOperationException("Not supported.");
     }
@@ -304,12 +299,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         } else {
             return this;
         }
-    }
-
-
-    @Override
-    public EdgeIteratorState setAdditionalField(int value) {
-        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override

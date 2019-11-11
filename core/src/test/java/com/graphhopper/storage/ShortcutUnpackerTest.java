@@ -319,7 +319,7 @@ public class ShortcutUnpackerTest {
     }
 
     private class TurnWeightingVisitor implements ShortcutUnpacker.Visitor {
-        private final TurnWeighting turnWeighting = new TurnWeighting(weighting, edgeBased ? (TurnCostExtension) graph.getExtension() : null);
+        private final TurnWeighting turnWeighting = new TurnWeighting(weighting, edgeBased ? graph.getTurnCostExtension() : null);
         private long time = 0;
         private double weight = 0;
 

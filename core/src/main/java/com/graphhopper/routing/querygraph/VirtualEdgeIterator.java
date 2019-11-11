@@ -219,16 +219,6 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
-    public int getAdditionalField() {
-        return getCurrentEdge().getAdditionalField();
-    }
-
-    @Override
-    public EdgeIteratorState setAdditionalField(int value) {
-        return getCurrentEdge().setAdditionalField(value);
-    }
-
-    @Override
     public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState edge) {
         return getCurrentEdge().copyPropertiesFrom(edge);
     }

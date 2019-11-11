@@ -24,7 +24,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.storage.TurnCostExtension;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -70,7 +69,7 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
                 Weighting w = opts.getWeighting();
                 if (traversalMode.isEdgeBased()) {
                     double uTurnCost = allowUTurns ? 40 : Double.POSITIVE_INFINITY;
-                    w = new TurnWeighting(w, (TurnCostExtension) g.getExtension(), uTurnCost);
+                    w = new TurnWeighting(w, g.getTurnCostExtension(), uTurnCost);
                 }
                 return new AStarBidirection(g, w, traversalMode);
             }

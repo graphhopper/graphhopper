@@ -109,7 +109,7 @@ public class EdgeBasedRoutingAlgorithmTest {
 
     private GraphHopperStorage createStorage(EncodingManager em) {
         GraphHopperStorage ghStorage = new GraphBuilder(em).create();
-        tcs = (TurnCostExtension) ghStorage.getExtension();
+        tcs = ghStorage.getTurnCostExtension();
         return ghStorage;
     }
 

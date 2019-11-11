@@ -55,7 +55,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
 
     @Override
     GraphHopperStorage createGHStorage(Directory dir, EncodingManager encodingManager, boolean is3D) {
-        return new GraphHopperStorage(Arrays.asList(new FastestWeighting(encodingManager.getEncoder("car"))), dir, encodingManager, is3D, new GraphExtension.NoOpExtension()).
+        return new GraphHopperStorage(Arrays.asList(CHProfile.nodeBased(new FastestWeighting(encodingManager.getEncoder("car")))), dir, encodingManager, is3D).
                 create(100);
     }
 
