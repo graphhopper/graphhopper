@@ -31,12 +31,12 @@ import static org.junit.Assert.assertTrue;
  * @author Karl Hübner
  */
 public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest {
-    private TurnCostExtensionImpl turnCostStorage;
+    private TurnCostExtension turnCostStorage;
 
     @Override
     protected GraphHopperStorage newGHStorage(Directory dir, boolean is3D) {
         GraphHopperStorage g = new GraphHopperStorage(dir, encodingManager, is3D, true);
-        turnCostStorage = (TurnCostExtensionImpl) g.getTurnCostExtension();
+        turnCostStorage = g.getTurnCostExtension();
         return g;
     }
 

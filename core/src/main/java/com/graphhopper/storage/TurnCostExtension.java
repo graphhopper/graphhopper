@@ -15,10 +15,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package com.graphhopper.storage;
 
-public interface TurnCostExtension {
+public interface TurnCostExtension extends Storable<TurnCostExtension> {
     int NO_TURN_ENTRY = -1;
+
+    void setSegmentSize(int bytes);
 
     void addTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags);
 
@@ -27,5 +30,10 @@ public interface TurnCostExtension {
     boolean isUTurn(int edgeFrom, int edgeTo);
 
     boolean isUTurnAllowed(int node);
+
+    TurnCostExtension copyTo(TurnCostExtension turnCostExtension);
+
+    @Override
+    boolean isClosed();
 
 }

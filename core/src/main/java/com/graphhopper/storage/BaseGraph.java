@@ -58,7 +58,7 @@ class BaseGraph implements Graph {
     final BBox bounds;
     final NodeAccess nodeAccess;
     // can be null if turn costs are not supported
-    final TurnCostExtensionImpl turnCostExtension;
+    final TurnCostExtension turnCostExtension;
     final NameIndex nameIndex;
     final BitUtil bitUtil;
     final EncodingManager encodingManager;
@@ -149,7 +149,7 @@ class BaseGraph implements Graph {
         if (withTurnCosts) {
             turnCostExtension = new TurnCostExtensionImpl(nodeAccess, dir.find("turn_costs"));
         } else {
-            turnCostExtension = null;
+            turnCostExtension = new NoOpTurnCostExtension();
         }
     }
 
@@ -213,7 +213,7 @@ class BaseGraph implements Graph {
         edges.setHeader(0, edgeEntryBytes);
         edges.setHeader(1 * 4, edgeCount);
         edges.setHeader(2 * 4, encodingManager.hashCode());
-        edges.setHeader(3 * 4, supportsTurnCosts() ? turnCostExtension.hashCode() : -1);
+        edges.setHeader(3 * 4, turnCostExtension.hashCode());
         return 5;
     }
 
@@ -345,9 +345,7 @@ class BaseGraph implements Graph {
         edges.setSegmentSize(bytes);
         wayGeometry.setSegmentSize(bytes);
         nameIndex.setSegmentSize(bytes);
-        if (supportsTurnCosts()) {
-            turnCostExtension.setSegmentSize(bytes);
-        }
+        turnCostExtension.setSegmentSize(bytes);
     }
 
     synchronized void freeze() {
@@ -374,9 +372,7 @@ class BaseGraph implements Graph {
         initSize = Math.min(initSize, 2000);
         wayGeometry.create(initSize);
         nameIndex.create(initSize);
-        if (supportsTurnCosts()) {
-            turnCostExtension.create(initSize);
-        }
+        turnCostExtension.create(initSize);
         initStorage();
         // 0 stands for no separate geoRef
         maxGeoRef = 4;
@@ -450,9 +446,7 @@ class BaseGraph implements Graph {
         setEdgesHeader();
         edges.flush();
         nodes.flush();
-        if (supportsTurnCosts()) {
-            turnCostExtension.flush();
-        }
+        turnCostExtension.flush();
     }
 
     public void close() {
@@ -462,14 +456,12 @@ class BaseGraph implements Graph {
             nameIndex.close();
         edges.close();
         nodes.close();
-        if (supportsTurnCosts()) {
-            turnCostExtension.close();
-        }
+        turnCostExtension.close();
     }
 
     long getCapacity() {
         return edges.getCapacity() + nodes.getCapacity() + nameIndex.getCapacity()
-                + wayGeometry.getCapacity() + (supportsTurnCosts() ? turnCostExtension.getCapacity() : 0);
+                + wayGeometry.getCapacity() + turnCostExtension.getCapacity();
     }
 
     long getMaxGeoRef() {
@@ -493,7 +485,7 @@ class BaseGraph implements Graph {
         if (!nameIndex.loadExisting())
             throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
 
-        if (supportsTurnCosts() && !turnCostExtension.loadExisting())
+        if (!turnCostExtension.loadExisting())
             throw new IllegalStateException("Cannot load turn cost storage. corrupt file or directory? " + dir);
 
         // first define header indices of this storage
@@ -631,9 +623,7 @@ class BaseGraph implements Graph {
         clonedG.loadWayGeometryHeader();
 
         // turn cost extension
-        if (supportsTurnCosts()) {
-            turnCostExtension.copyTo(clonedG.turnCostExtension);
-        }
+        turnCostExtension.copyTo(clonedG.turnCostExtension);
 
         if (removedNodes == null)
             clonedG.removedNodes = null;
@@ -817,7 +807,7 @@ class BaseGraph implements Graph {
 
     @Override
     public TurnCostExtension getTurnCostExtension() {
-        return turnCostExtension;
+        return turnCostExtension instanceof NoOpTurnCostExtension ? null : turnCostExtension;
     }
 
     @Override
@@ -1367,6 +1357,64 @@ class BaseGraph implements Graph {
         @Override
         public final String toString() {
             return getEdge() + " " + getBaseNode() + "-" + getAdjNode();
+        }
+    }
+
+    private static class NoOpTurnCostExtension implements TurnCostExtension {
+        @Override
+        public void setSegmentSize(int bytes) {
+        }
+
+        @Override
+        public void addTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags) {
+        }
+
+        @Override
+        public long getTurnCostFlags(int edgeFrom, int nodeVia, int edgeTo) {
+            return 0;
+        }
+
+        @Override
+        public boolean isUTurn(int edgeFrom, int edgeTo) {
+            return false;
+        }
+
+        @Override
+        public boolean isUTurnAllowed(int node) {
+            return false;
+        }
+
+        @Override
+        public TurnCostExtension copyTo(TurnCostExtension turnCostExtension) {
+            return turnCostExtension;
+        }
+
+        @Override
+        public boolean isClosed() {
+            return false;
+        }
+
+        @Override
+        public boolean loadExisting() {
+            return true;
+        }
+
+        @Override
+        public TurnCostExtension create(long byteCount) {
+            return this;
+        }
+
+        @Override
+        public void flush() {
+        }
+
+        @Override
+        public void close() {
+        }
+
+        @Override
+        public long getCapacity() {
+            return 0;
         }
     }
 }
