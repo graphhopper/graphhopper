@@ -337,6 +337,7 @@ public abstract class DataAccessTest {
         da.create(300);
         da.setByte(8, (byte) 120);
         assertEquals(120, da.getByte(8));
+        da.close();
     }
 
     @Test
