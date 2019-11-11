@@ -15,8 +15,12 @@ Then do:
 ```bash
 git clone git://github.com/graphhopper/graphhopper.git
 cd graphhopper; git checkout 0.13
-# fetches main.js, can be omitted if no UI is needed
+# Build main.js. This can be omitted if no UI is needed.
+# If you have a working JavaScript development environment, you can build main.js yourself:
+cd web && npm install && npm run bundleProduction && cd ..
+# Otherwiese you can extract it from published JAR files:
 cd web/src/main/resources/ && ZFILE=/tmp/gh.jar && wget -O $ZFILE "https://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.graphhopper&a=graphhopper-web&v=LATEST" && unzip $ZFILE assets/js/main.js && rm $ZFILE && cd ../../../..
+# Build JAR file from source, download an OSM data extract, build the routing graph and start the web service:
 ./graphhopper.sh -a web -i europe_germany_berlin.pbf
 # now go to http://localhost:8989/ and you should see something similar to GraphHopper Maps: https://graphhopper.com/maps/
 ```
