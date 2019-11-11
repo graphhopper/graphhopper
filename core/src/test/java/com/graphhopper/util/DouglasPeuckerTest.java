@@ -19,6 +19,10 @@ package com.graphhopper.util;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
@@ -95,5 +99,42 @@ public class DouglasPeuckerTest {
         assertEquals("(50.203764443183644,9.961074440801317), (50.20318963087774,9.960999562464645), (50.202952888673984,9.96094144793469), (50.20267889356641,9.96223002587773), (50.201853928011374,9.961859918278305), "
                         + "(50.20138565901039,9.961668810881722), (50.20128507617008,9.96216874485095), (50.20088553877664,9.961953795595925), (50.200686794534775,9.961899033827313), (50.20014066696481,9.961716680863127), (50.199798499043254,9.961588158344957)",
                 pointList.toString());
+    }
+
+    @Test
+    public void testRemoveNaN() {
+        PointList pl = new PointList(10, true);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(1, 1, 1);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(5, 5, 5);
+        pl.add(6, 6, 6);
+        pl.add(7, 7, 7);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(8, 8, 8);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(9, 9, 9);
+        pl.add(10, 10, 10);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+        pl.add(14, 14, 14);
+        pl.add(Double.NaN, Double.NaN, Double.NaN);
+
+        DouglasPeucker.removeNaN(pl);
+        // doing it again should be no problem
+        DouglasPeucker.removeNaN(pl);
+        DouglasPeucker.removeNaN(pl);
+        assertEquals(8, pl.size());
+        List<Integer> expected = Arrays.asList(1, 5, 6, 7, 8, 9, 10, 14);
+        List<Integer> given = new ArrayList<>();
+        for (int i = 0; i < pl.size(); i++) {
+            assertEquals(pl.getLat(i), pl.getEle(i), 1.e-6);
+            assertEquals(pl.getLon(i), pl.getEle(i), 1.e-6);
+            given.add((int) pl.getLat(i));
+        }
+        assertEquals(expected, given);
     }
 }

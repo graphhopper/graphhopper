@@ -96,7 +96,7 @@ public class DouglasPeucker {
         }
 
         if (removed > 0 && compress)
-            points.compress();
+            removeNaN(points);
 
         return removed;
     }
@@ -140,6 +140,20 @@ public class DouglasPeucker {
             counter += subSimplify(points, indexWithMaxDist, lastIndex);
         }
         return counter;
+    }
+
+    /**
+     * Fills all entries of the point list that are NaN with the subsequent values (and therefore shortens the list)
+     */
+    static void removeNaN(PointList pointList) {
+        int curr = 0;
+        for (int i = 0; i < pointList.size(); i++) {
+            if (!Double.isNaN(pointList.getLatitude(i))) {
+                pointList.set(curr, pointList.getLatitude(i), pointList.getLongitude(i), pointList.getElevation(i));
+                curr++;
+            }
+        }
+        pointList.trimToSize(curr);
     }
 
 }

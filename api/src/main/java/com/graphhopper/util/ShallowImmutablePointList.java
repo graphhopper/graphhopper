@@ -162,11 +162,6 @@ public final class ShallowImmutablePointList extends PointList {
     }
 
     @Override
-    public void compress() {
-        throw new UnsupportedOperationException(IMMUTABLE_ERR);
-    }
-
-    @Override
     public void parse2DJSON(String str) {
         throw new UnsupportedOperationException(IMMUTABLE_ERR);
     }

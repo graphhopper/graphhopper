@@ -101,11 +101,6 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
 
         @Override
-        public void compress() {
-            throw new RuntimeException("cannot change EMPTY PointList");
-        }
-
-        @Override
         public double getElevation(int index) {
             throw new UnsupportedOperationException("cannot access EMPTY PointList");
         }
@@ -516,22 +511,6 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             System.arraycopy(thisPL.elevations, from, copyPL.elevations, 0, len);
         return copyPL;
     }
-
-    /**
-     * Fills all entries of the point list that are NaN with the subsequent values (and therefore shortens the list)
-     */
-    public void compress() {
-        ensureMutability();
-        int curr = 0;
-        for (int i = 0; i < size; i++) {
-            if (!Double.isNaN(latitudes[i])) {
-                set(curr, latitudes[i], longitudes[i], getElevation(i));
-                curr++;
-            }
-        }
-        trimToSize(curr);
-    }
-
 
     /**
      * Create a shallow copy of this Pointlist from from to end, excluding end.

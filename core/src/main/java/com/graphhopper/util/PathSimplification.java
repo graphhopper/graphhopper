@@ -148,7 +148,7 @@ public class PathSimplification {
 
         // now we finally have to compress the pointList (actually remove the deleted points). note only after this
         // call the (now shifted) indices in path details and instructions are correct
-        pointList.compress();
+        DouglasPeucker.removeNaN(pointList);
 
         assert assertConsistencyOfPathDetails();
         // Make sure that the instruction references are not broken
