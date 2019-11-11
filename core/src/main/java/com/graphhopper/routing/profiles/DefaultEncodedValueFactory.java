@@ -61,6 +61,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = new EnumEncodedValue<>(TrackType.KEY, TrackType.class);
         } else if (Hazmat.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class);
+        } else if (HazmatTunnel.KEY.equals(name)) {
+            enc = new EnumEncodedValue<>(HazmatTunnel.KEY, HazmatTunnel.class);
         } else if (HazmatWater.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(HazmatWater.KEY, HazmatWater.class);
         } else {
