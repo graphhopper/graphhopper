@@ -58,11 +58,11 @@ public class StringIndexTest {
     public void putEmpty() {
         StringIndex index = create();
         assertEquals(1, index.add(createMap("", "")));
-        assertEquals(4, index.add(createMap("", null)));
-        assertEquals(7, index.add(createMap(null, null)));
+        assertEquals(5, index.add(createMap("", null)));
+        assertEquals(9, index.add(createMap(null, null)));
         assertEquals("", index.get(0, ""));
 
-        assertEquals(10, index.add(createMap("else", "else")));
+        assertEquals(13, index.add(createMap("else", "else")));
     }
 
     @Test
@@ -83,7 +83,7 @@ public class StringIndexTest {
         assertEquals("b name 567", index.get(tmpPointer, "b"));
         assertEquals("c name 567", index.get(tmpPointer, "c"));
 
-        for (int i = 3; i < MAX_UNIQUE_KEYS; i++) {
+        for (int i = 1 + 3; i < MAX_UNIQUE_KEYS; i++) {
             index.add(createMap("a" + i, "a name"));
         }
         try {
@@ -98,11 +98,11 @@ public class StringIndexTest {
         StringIndex index = create();
         long aPointer = index.add(createMap("a", "longer name", "b", "longer name"));
         long bPointer = index.add(createMap("c", "longer other name"));
-        // value storage: 1 byte for count, 2*2 bytes for length and keyIndex and 8 bytes for pointer of dup_marker and length for "longer name"
-        assertEquals(aPointer + 1 + 4 + 8 + "longer name".getBytes(Helper.UTF_CS).length, bPointer);
+        // value storage: 1 byte for count, 2 bytes for keyIndex and 4 bytes for delta of dup_marker and 3 bytes (keyIndex + length for "longer name")
+        assertEquals(aPointer + 1 + (2 + 4) + 3 + "longer name".getBytes(Helper.UTF_CS).length, bPointer);
         // no de-duplication as too short:
         long cPointer = index.add(createMap("temp", "temp"));
-        assertEquals(bPointer + 1 + 2 + "longer other name".getBytes(Helper.UTF_CS).length, cPointer);
+        assertEquals(bPointer + 1 + 3 + "longer other name".getBytes(Helper.UTF_CS).length, cPointer);
         assertEquals("longer name", index.get(aPointer, "a"));
         assertEquals("longer name", index.get(aPointer, "b"));
         assertEquals("longer other name", index.get(bPointer, "c"));
@@ -112,7 +112,7 @@ public class StringIndexTest {
         index.add(createMap("a", "longer name", "b", "longer name"));
         bPointer = index.add(createMap("a", "longer name", "b", "longer name"));
         cPointer = index.add(createMap("a", "longer name", "b", "longer name"));
-        assertEquals(bPointer + 1 + 2 * (2 + 8), cPointer);
+        assertEquals(bPointer, cPointer);
     }
 
     @Test
@@ -130,7 +130,6 @@ public class StringIndexTest {
     @Test
     public void testTooLongNameNoError() {
         StringIndex index = create();
-
         index.throwExceptionIfTooLong = true;
         try {
             index.add(createMap("", "Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))"));
@@ -168,7 +167,7 @@ public class StringIndexTest {
         assertEquals("test", index.get(pointer, ""));
         // make sure bytePointer is correctly set after loadExisting
         long newPointer = index.add(createMap("", "testing"));
-        assertEquals(newPointer + ">" + pointer, pointer + "test".getBytes().length + 1 + 2, newPointer);
+        assertEquals(newPointer + ">" + pointer, pointer + 1 + 3 + "test".getBytes().length, newPointer);
         index.close();
 
         Helper.removeDir(new File(location));
@@ -181,15 +180,16 @@ public class StringIndexTest {
 
         StringIndex index = new StringIndex(new RAMDirectory(location, true).create()).create(1000);
         long pointerA = index.add(createMap("c", "test value"));
-        assertEquals(1, index.getKeys().size());
+        assertEquals(2, index.getKeys().size());
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
-        assertEquals("[c, a, b]", index.getKeys().toString());
+        // empty string is always the first key
+        assertEquals("[, c, a, b]", index.getKeys().toString());
         index.flush();
         index.close();
 
         index = new StringIndex(new RAMDirectory(location, true));
         assertTrue(index.loadExisting());
-        assertEquals("[c, a, b]", index.getKeys().toString());
+        assertEquals("[, c, a, b]", index.getKeys().toString());
         assertEquals("test value", index.get(pointerA, "c"));
         assertNull(index.get(pointerA, "b"));
 
