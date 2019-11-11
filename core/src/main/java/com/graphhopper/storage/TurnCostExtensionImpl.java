@@ -52,35 +52,29 @@ public class TurnCostExtensionImpl implements TurnCostExtension {
         this.turnCostsCount = turnCostExtension.turnCostsCount;
     }
 
-    @Override
     public void setSegmentSize(int bytes) {
         turnCosts.setSegmentSize(bytes);
     }
 
-    @Override
     public TurnCostExtension create(long initBytes) {
         turnCosts.create(initBytes);
         return this;
     }
 
-    @Override
     public void flush() {
         turnCosts.setHeader(0, BYTES_PER_ENTRY);
         turnCosts.setHeader(1 * 4, turnCostsCount);
         turnCosts.flush();
     }
 
-    @Override
     public void close() {
         turnCosts.close();
     }
 
-    @Override
     public long getCapacity() {
         return turnCosts.getCapacity();
     }
 
-    @Override
     public boolean loadExisting() {
         if (!turnCosts.loadExisting())
             return false;
@@ -223,17 +217,12 @@ public class TurnCostExtensionImpl implements TurnCostExtension {
         turnCosts.ensureCapacity(((long) nodeIndex + 4) * BYTES_PER_ENTRY);
     }
 
-    @Override
     public TurnCostExtension copyTo(TurnCostExtension turnCostExtension) {
-        if (!(turnCostExtension instanceof TurnCostExtensionImpl)) {
-            throw new IllegalArgumentException("Expected TurnCostExtensionImpl, but got: " + turnCostExtension.getClass().getSimpleName());
-        }
         turnCosts.copyTo(((TurnCostExtensionImpl)turnCostExtension).turnCosts);
         ((TurnCostExtensionImpl)turnCostExtension).turnCostsCount = turnCostsCount;
         return turnCostExtension;
     }
 
-    @Override
     public boolean isClosed() {
         return turnCosts.isClosed();
     }
