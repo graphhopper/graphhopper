@@ -191,15 +191,15 @@ public class TurnCostExtension implements Storable<TurnCostExtension> {
         return true;
     }
 
-    private long nextCostFlags(int edgeFrom, int nodeVia, int edgeTo) {
-        int turnCostIndex = nodeAccess.getTurnCostIndex(nodeVia);
+    private long nextCostFlags(int fromEdge, int viaNode, int toEdge) {
+        int turnCostIndex = nodeAccess.getTurnCostIndex(viaNode);
         int i = 0;
         for (; i < 1000; i++) {
             if (turnCostIndex == NO_TURN_ENTRY)
                 break;
             long turnCostPtr = (long) turnCostIndex * BYTES_PER_ENTRY;
-            if (edgeFrom == turnCosts.getInt(turnCostPtr + TC_FROM)) {
-                if (edgeTo == turnCosts.getInt(turnCostPtr + TC_TO))
+            if (fromEdge == turnCosts.getInt(turnCostPtr + TC_FROM)) {
+                if (toEdge == turnCosts.getInt(turnCostPtr + TC_TO))
                     return turnCosts.getInt(turnCostPtr + TC_FLAGS);
             }
 
