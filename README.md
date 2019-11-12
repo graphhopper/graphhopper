@@ -47,7 +47,7 @@ Before re-importing, you need to delete the `graph-cache` directory, which is cr
 
 Now you can match GPX traces against the map:
 ```bash
-java -jar matching-web/target/graphhopper-map-matching-web-1.0-SNAPSHOT.jar match matching-core/src/test/resources/*.gpx
+java -jar matching-web/target/graphhopper-map-matching-web-1.0-SNAPSHOT.jar match matching-web/src/test/resources/*.gpx
 ```
 
 ### Web app
@@ -61,14 +61,14 @@ Access the simple UI via `localhost:8989`.
 
 You can post GPX files and get back snapped results as GPX or as compatible GraphHopper JSON. An example curl request is:
 ```bash
-curl -XPOST -H "Content-Type: application/gpx+xml" -d @matching-core/src/test/resources/test1.gpx "localhost:8989/match?vehicle=car&type=json"
+curl -XPOST -H "Content-Type: application/gpx+xml" -d @matching-web/src/test/resources/test1.gpx "localhost:8989/match?vehicle=car&type=json"
 ```
 
 #### Tools
 
 Determine the bounding box of one or more GPX files:
 ```bash
-java -jar matching-web/target/graphhopper-map-matching-web-1.0-SNAPSHOT.jar getbounds matching-core/src/test/resources/*.gpx
+java -jar matching-web/target/graphhopper-map-matching-web-1.0-SNAPSHOT.jar getbounds matching-web/src/test/resources/*.gpx
 ```
 
 #### Java usage
