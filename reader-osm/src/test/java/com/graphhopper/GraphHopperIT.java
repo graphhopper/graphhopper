@@ -1207,7 +1207,7 @@ public class GraphHopperIT {
         GHResponse rsp = runMoscow(tmpHopper, "true", true);
         assertEquals(1, rsp.getErrors().size());
         assertTrue("unexpected error: " + rsp.getErrors().toString(), rsp.getErrors().toString().contains(
-                "Cannot find CH profile for hints map {edge_based=true, ch.disable=false, vehicle=car} in entries: [fastest|car|edge_based=false|u_turn_costs=-1]"));
+                "Cannot find matching CH profile for your request.\nrequested:  *|car|edge_based=true|u_turn_costs=*\navailable: [fastest|car|edge_based=false|u_turn_costs=-1]"));
     }
 
     @Test
@@ -1230,7 +1230,7 @@ public class GraphHopperIT {
         GHResponse rsp = runMoscow(tmpHopper, "false", true);
         assertTrue(rsp.hasErrors());
         assertTrue("unexpected error: " + rsp.getErrors(), rsp.getErrors().toString().contains(
-                "Cannot find CH profile for hints map {edge_based=false, ch.disable=false, vehicle=car} in entries: [fastest|car|edge_based=true|u_turn_costs=-1]"));
+                "Cannot find matching CH profile for your request.\nrequested:  *|car|edge_based=false|u_turn_costs=*\navailable: [fastest|car|edge_based=true|u_turn_costs=-1]"));
     }
 
     private GHResponse assertMoscowNodeBased(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {

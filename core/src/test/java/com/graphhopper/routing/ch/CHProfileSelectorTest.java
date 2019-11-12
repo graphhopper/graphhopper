@@ -38,6 +38,9 @@ import static org.junit.Assert.*;
 
 public class CHProfileSelectorTest {
 
+    private static final String MULTIPLE_MATCHES_ERROR = "There are multiple CH profiles matching your request. Use the `weighting`,`vehicle`,`edge_based` and/or `u_turn_costs` parameters to be more specific";
+    private static final String NO_MATCH_ERROR = "Cannot find matching CH profile for your request";
+
     private Weighting weightingFastestCar;
     private Weighting weightingFastestBike;
     private Weighting weightingShortestCar;
@@ -59,13 +62,13 @@ public class CHProfileSelectorTest {
         List<CHProfile> chProfiles = Collections.singletonList(
                 CHProfile.nodeBased(weightingFastestCar)
         );
-        assertCHProfileSelectionError("Found a node-based CH profile for hints map {weighting=fastest, vehicle=car, edge_based=true}, but requested edge-based CH", chProfiles, true, null);
-        assertCHProfileSelectionError("Found a node-based CH profile for hints map {weighting=fastest, vehicle=car, edge_based=true, u_turn_costs=20}, but requested edge-based CH", chProfiles, true, 20);
+        assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, true, null);
+        assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, true, 20);
         assertProfileFound(chProfiles.get(0), chProfiles, false, null);
-        assertProfileFound(chProfiles.get(0), chProfiles, false, 20);
+        assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, false, 20);
         assertProfileFound(chProfiles.get(0), chProfiles, null, null);
-        assertProfileFound(chProfiles.get(0), chProfiles, null, 30);
-        assertCHProfileSelectionError("Cannot find CH profile for hints map", chProfiles, "foot", "fastest", false, null);
+        assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, null, 30);
+        assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, "foot", "fastest", false, null);
     }
 
     @Test
@@ -73,8 +76,8 @@ public class CHProfileSelectorTest {
         List<CHProfile> chProfiles = Collections.singletonList(
                 CHProfile.edgeBased(weightingFastestCar, INFINITE_U_TURN_COSTS)
         );
-        assertCHProfileSelectionError("Found 1 edge-based CH profile(s) for hints map {weighting=fastest, vehicle=car, edge_based=false}, but requested node-based CH", chProfiles, false, null);
-        assertCHProfileSelectionError("Found 1 edge-based CH profile(s) for hints map {weighting=fastest, vehicle=car, edge_based=false, u_turn_costs=20}, but requested node-based CH", chProfiles, false, 20);
+        assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, false, null);
+        assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, false, 20);
         assertProfileFound(chProfiles.get(0), chProfiles, true, null);
         assertProfileFound(chProfiles.get(0), chProfiles, null, null);
     }
@@ -99,17 +102,16 @@ public class CHProfileSelectorTest {
                 CHProfile.edgeBased(weightingFastestCar, 50)
         );
         // when no u-turns are specified we throw
-        assertCHProfileSelectionError("Found matching edge-based CH profiles for multiple values of u-turn costs: [30, 50].",
-                chProfiles, true, null);
+        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, true, null);
         // when we request one that does not exist we throw
-        assertCHProfileSelectionError("but none for requested u-turn costs: 40, available: [30, 50]", chProfiles, true, 40);
+        assertCHProfileSelectionError(" " + NO_MATCH_ERROR, chProfiles, true, 40);
         // when we request one that exists it works
         assertProfileFound(chProfiles.get(1), chProfiles, true, 30);
 
         // without specifying edge-based
         assertProfileFound(chProfiles.get(1), chProfiles, null, 30);
-        assertCHProfileSelectionError("but none for requested u-turn costs: 40, available: [30, 50]", chProfiles, null, 40);
-        assertCHProfileSelectionError("Found matching edge-based CH profiles for multiple values of u-turn costs: [30, 50].", chProfiles, null, null);
+        assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, null, 40);
+        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, null, null);
     }
 
     @Test
@@ -142,11 +144,11 @@ public class CHProfileSelectorTest {
         // the vehicle is not given but only bike is used so its fine. note that we prefer edge-based because no edge_based parameter is specified
         assertProfileFound(chProfiles.get(2), chProfiles, "", "fastest", null, null);
         // if we do not specify the weighting its not clear what to return -> there is an error
-        assertCHProfileSelectionError("Found CH profiles for multiple weightings: [fastest, shortest], but the request did not specify a weighting", chProfiles, "", "", null, null);
+        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, "", "", null, null);
         // if we do not specify the weighting but edge_based=true its clear what to return because for edge-based there is only one weighting
         assertProfileFound(chProfiles.get(2), chProfiles, "", "", true, null);
         // ... for edge_based=false this is an error because there are two node-based profiles
-        assertCHProfileSelectionError("Found CH profiles for multiple weightings: [fastest, shortest] for edge_based=false, but the request did not specify a weighting", chProfiles, "", "", false, null);
+        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, "", "", false, null);
     }
 
     @Test
@@ -159,13 +161,13 @@ public class CHProfileSelectorTest {
         // the weighting is not given but only fastest is used so its fine. note that we prefer edge-based because no edge_based parameter is specified
         assertProfileFound(chProfiles.get(2), chProfiles, "bike", "", null, null);
         // if we do not specify the vehicle its not clear what to return -> there is an error
-        assertCHProfileSelectionError("Found CH profiles for multiple vehicles: [bike, car], but the request did not specify a vehicle", chProfiles, "", "", null, null);
+        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, "", "", null, null);
         // if we do not specify the vehicle but edge_based=false its clear what to return because for node-based there is only one weighting
         assertProfileFound(chProfiles.get(0), chProfiles, "", "", false, null);
         // ... for edge_based=true this is an error, because there are two edge_based profiles
-        assertCHProfileSelectionError("Found CH profiles for multiple vehicles: [car, bike] for edge_based=true, but the request did not specify a vehicle", chProfiles, "", "", true, null);
+        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, "", "", true, null);
         // .. we can however get a clear match if we specify the u-turn costs
-        assertCHProfileSelectionError("Found CH profiles for multiple vehicles: [car, bike] for edge_based=true, but the request did not specify a vehicle", chProfiles, "", "", true, 10);
+        assertProfileFound(chProfiles.get(1), chProfiles, "", "", true, 10);
     }
 
     @Test
@@ -191,7 +193,7 @@ public class CHProfileSelectorTest {
         List<CHProfile> chProfiles = Arrays.asList(
                 CHProfile.nodeBased(weightingFastestBike), CHProfile.nodeBased(weightingFastestCar)
         );
-        assertCHProfileSelectionError("Found CH profiles for multiple vehicles: [bike, car], but the request did not specify a vehicle", chProfiles, "", "fastest", null, null);
+        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, "", "fastest", null, null);
     }
 
     @Test
@@ -199,7 +201,7 @@ public class CHProfileSelectorTest {
         List<CHProfile> chProfiles = Arrays.asList(
                 CHProfile.nodeBased(weightingFastestBike), CHProfile.nodeBased(weightingShortestBike)
         );
-        assertCHProfileSelectionError("Found CH profiles for multiple weightings: [fastest, shortest], but the request did not specify a weighting", chProfiles, "bike", "", null, null);
+        assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, "bike", "", null, null);
     }
 
     private void assertProfileFound(CHProfile expectedProfile, List<CHProfile> profiles, Boolean edgeBased, Integer uTurnCosts) {
@@ -212,7 +214,7 @@ public class CHProfileSelectorTest {
             CHProfile selectedProfile = CHProfileSelector.select(profiles, hintsMap);
             assertEquals(expectedProfile, selectedProfile);
         } catch (CHProfileSelectionException e) {
-            fail("no profile found, but expected: " + expectedProfile + ", error: " + e.getMessage());
+            fail("no profile found\nexpected: " + expectedProfile + "\nerror: " + e.getMessage());
         }
     }
 
@@ -226,7 +228,7 @@ public class CHProfileSelectorTest {
             CHProfileSelector.select(profiles, hintsMap);
             fail("There should have been an error");
         } catch (CHProfileSelectionException e) {
-            assertTrue("There should have been an error message containing '" + expectedError + "', but was: '" + e.getMessage() + "'",
+            assertTrue("There should have been an error message containing:\n'" + expectedError + "'\nbut was:\n'" + e.getMessage() + "'",
                     e.getMessage().contains(expectedError));
         }
     }
