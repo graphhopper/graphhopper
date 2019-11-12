@@ -17,7 +17,7 @@
  */
 package com.graphhopper.util;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -34,20 +34,22 @@ public class PMap {
     }
 
     public PMap(int capacity) {
-        this(new HashMap<>(capacity));
+        // use linked hash map for predictable order
+        this(new LinkedHashMap<>(capacity));
     }
 
     public PMap(Map<String, String> map) {
-        this.map = new HashMap<>(map);
+        // use linked hash map for predictable order
+        this.map = new LinkedHashMap<>(map);
     }
 
     public PMap(PMap map) {
-        this.map = new HashMap<>(map.map);
+        this(map.map);
     }
 
     public PMap(String propertiesString) {
         // five chosen as arbitrary initial capacity
-        this.map = new HashMap<>(5);
+        this(5);
 
         for (String s : propertiesString.split("\\|")) {
             s = s.trim();
@@ -163,7 +165,7 @@ public class PMap {
      * This method copies the underlying structure into a new Map object
      */
     public Map<String, String> toMap() {
-        return new HashMap<>(map);
+        return new LinkedHashMap<>(map);
     }
 
     private Map<String, String> getMap() {

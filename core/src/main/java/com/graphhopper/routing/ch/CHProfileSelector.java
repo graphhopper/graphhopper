@@ -24,42 +24,55 @@ import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.CHProfile;
 import com.graphhopper.util.Parameters;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+
+import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 
 /**
  * This class is used to determine the appropriate CH profile given (or not given) some (request) parameters
  */
 public class CHProfileSelector {
     private final List<CHProfile> chProfiles;
-    private HintsMap weightingMap;
+    private final HintsMap hintsMap;
     private IntObjectMap<CHProfile> edgeBasedCHProfilesByUTurnCosts;
     private CHProfile nodeBasedCHProfile;
     private List<String> entriesStrs;
 
-    private CHProfileSelector(List<CHProfile> chProfiles) {
+    private CHProfileSelector(List<CHProfile> chProfiles, HintsMap hintsMap) {
         this.chProfiles = chProfiles;
+        // do not modify the outer object
+        this.hintsMap = new HintsMap(hintsMap);
     }
 
     /**
-     * @param chProfiles   the CH profiles to choose from
-     * @param weightingMap a map used to specify the weighting that shall be used
-     * @param edgeBased    whether or not edge-based CH shall be used or null if not specified explicitly
-     * @param uTurnCosts   specifies which value the u-turn costs of the CH profile should have, or null
+     * @param chProfiles the CH profiles to choose from
+     * @param hintsMap   a map used to describe the CH profile that shall be selected
      * @throws CHProfileSelectionException if no CH profile could be selected for the given parameters
      */
-    public static CHProfile select(
-            List<CHProfile> chProfiles, HintsMap weightingMap, Boolean edgeBased, Integer uTurnCosts) {
-        return new CHProfileSelector(chProfiles).select(weightingMap, edgeBased, uTurnCosts);
+    public static CHProfile select(List<CHProfile> chProfiles, HintsMap hintsMap) {
+        return new CHProfileSelector(chProfiles, hintsMap).select();
     }
 
-    private CHProfile select(HintsMap weightingMap, Boolean edgeBased, Integer uTurnCosts) {
-        this.weightingMap = weightingMap;
-        findCHProfilesMatchingWeighting();
+    private CHProfile select() {
+        final Boolean edgeBased = hintsMap.has(Parameters.Routing.EDGE_BASED) ? hintsMap.getBool(Parameters.Routing.EDGE_BASED, false) : null;
+        final Integer uTurnCosts = hintsMap.has(Parameters.Routing.U_TURN_COSTS) ? hintsMap.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS) : null;
+
+        Set<String> availableWeightings = getAvailableWeightings(edgeBased);
+        if (hintsMap.getWeighting().isEmpty() && availableWeightings.size() > 1) {
+            throwFieldNotGivenAndMultiplePossibilities(edgeBased, "weighting", availableWeightings);
+        }
+
+        Set<String> availableVehicles = getAvailableVehicles(edgeBased);
+        if (hintsMap.getVehicle().isEmpty() && availableVehicles.size() > 1) {
+            throwFieldNotGivenAndMultiplePossibilities(edgeBased, "vehicle", availableVehicles);
+        }
+
+        String weighting = (hintsMap.getWeighting().isEmpty() && !availableWeightings.isEmpty()) ? availableWeightings.iterator().next() : hintsMap.getWeighting();
+        String vehicle = (hintsMap.getVehicle().isEmpty() && !availableVehicles.isEmpty()) ? availableVehicles.iterator().next() : hintsMap.getVehicle();
+        findProfilesWithMatchingVehicleAndWeighting(weighting, vehicle);
 
         if (!foundCHProfilesMatchingWeighting()) {
-            throw new CHProfileSelectionException("Cannot find CH profile for weighting map " + weightingMap + " in entries: " + entriesStrs + ".");
+            throw new CHProfileSelectionException("Cannot find CH profile for hints map " + hintsMap + " in entries: " + entriesStrs + ".");
         }
 
         if (edgeBased != null && uTurnCosts != null) {
@@ -135,12 +148,14 @@ public class CHProfileSelector {
         }
     }
 
-    private void findCHProfilesMatchingWeighting() {
+    private void findProfilesWithMatchingVehicleAndWeighting(String weighting, String vehicle) {
         entriesStrs = new ArrayList<>();
         edgeBasedCHProfilesByUTurnCosts = new IntObjectHashMap<>(3);
         nodeBasedCHProfile = null;
         for (CHProfile p : chProfiles) {
-            boolean weightingMatches = p.getWeighting().matches(weightingMap);
+            boolean weightingMatches =
+                    p.getWeighting().getName().equals(weighting) &&
+                            p.getWeighting().getFlagEncoder().toString().equals(vehicle);
             if (weightingMatches) {
                 if (p.isEdgeBased()) {
                     edgeBasedCHProfilesByUTurnCosts.put(p.getUTurnCostsInt(), p);
@@ -152,8 +167,36 @@ public class CHProfileSelector {
         }
     }
 
+    private Set<String> getAvailableVehicles(Boolean edgeBased) {
+        Set<String> result = new LinkedHashSet<>();
+        for (CHProfile p : chProfiles) {
+            if (edgeBased != null && p.isEdgeBased() != edgeBased) {
+                continue;
+            }
+            result.add(p.getWeighting().getFlagEncoder().toString());
+        }
+        return result;
+    }
+
+    private Set<String> getAvailableWeightings(Boolean edgeBased) {
+        Set<String> result = new LinkedHashSet<>();
+        for (CHProfile profile : chProfiles) {
+            if (edgeBased != null && profile.isEdgeBased() != edgeBased) {
+                continue;
+            }
+            result.add(profile.getWeighting().getName());
+        }
+        return result;
+    }
+
     private boolean foundCHProfilesMatchingWeighting() {
         return !edgeBasedCHProfilesByUTurnCosts.isEmpty() || nodeBasedCHProfile != null;
+    }
+
+    private void throwFieldNotGivenAndMultiplePossibilities(Boolean edgeBased, String field, Set<String> available) {
+        throw new CHProfileSelectionException("Found CH profiles for multiple " + field + "s: " + available +
+                ((edgeBased != null ? (" for edge_based=" + edgeBased) : "")) +
+                ", but the request did not specify a " + field + " (requested hints map: " + hintsMap + ").");
     }
 
     private CHProfile throwFoundEdgeBasedButUnclearWhichOneToTake() {
@@ -164,13 +207,13 @@ public class CHProfileSelector {
     }
 
     private CHProfile throwRequestedNodeBasedButOnlyFoundEdgeBased() {
-        throw new CHProfileSelectionException("Found " + edgeBasedCHProfilesByUTurnCosts.size() + " edge-based CH profile(s) for weighting map " + weightingMap
+        throw new CHProfileSelectionException("Found " + edgeBasedCHProfilesByUTurnCosts.size() + " edge-based CH profile(s) for hints map " + hintsMap
                 + ", but requested node-based CH. You either need to configure a node-based CH profile or set the '" + Parameters.Routing.EDGE_BASED + "' " +
                 "request parameter to 'true' (was 'false'). all entries: " + entriesStrs);
     }
 
     private CHProfile throwRequestedEdgeBasedButOnlyFoundNodeBased() {
-        throw new CHProfileSelectionException("Found a node-based CH profile for weighting map " + weightingMap + ", but requested edge-based CH. " +
+        throw new CHProfileSelectionException("Found a node-based CH profile for hints map " + hintsMap + ", but requested edge-based CH. " +
                 "You either need to configure an edge-based CH profile or set the '" + Parameters.Routing.EDGE_BASED + "' " +
                 "request parameter to 'false' (was 'true'). all entries: " + entriesStrs);
     }
@@ -178,7 +221,7 @@ public class CHProfileSelector {
     private CHProfile throwFoundEdgeBasedButNotForRequestedUTurnCosts(int uTurnCosts) {
         int[] availableUTurnCosts = edgeBasedCHProfilesByUTurnCosts.keys().toArray();
         Arrays.sort(availableUTurnCosts);
-        throw new CHProfileSelectionException("Found edge-based CH profiles for weighting map " + weightingMap + " but none for requested u-turn costs: " +
+        throw new CHProfileSelectionException("Found edge-based CH profiles for hints map " + hintsMap + " but none for requested u-turn costs: " +
                 uTurnCosts + ", available: " + Arrays.toString(availableUTurnCosts) + ". You need to configure an edge-based CH profile for this value of u-turn costs or" +
                 " choose another value using the '" + Parameters.Routing.U_TURN_COSTS + "' request parameter.");
     }

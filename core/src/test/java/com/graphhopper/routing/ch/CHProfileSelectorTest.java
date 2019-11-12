@@ -18,15 +18,17 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.ShortFastestWeighting;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHProfile;
+import com.graphhopper.util.Parameters;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -36,36 +38,43 @@ import static org.junit.Assert.*;
 
 public class CHProfileSelectorTest {
 
-    private Weighting fastestWeighting;
+    private Weighting weightingFastestCar;
+    private Weighting weightingFastestBike;
+    private Weighting weightingShortestCar;
+    private Weighting weightingShortestBike;
 
     @Before
     public void setup() {
-        EncodingManager em = EncodingManager.create("car");
-        FlagEncoder carEncoder = em.fetchEdgeEncoders().iterator().next();
-        fastestWeighting = new FastestWeighting(carEncoder);
+        FlagEncoder carEncoder = new CarFlagEncoder();
+        FlagEncoder bikeEncoder = new BikeFlagEncoder();
+        EncodingManager.create(carEncoder, bikeEncoder);
+        weightingFastestCar = new FastestWeighting(carEncoder);
+        weightingFastestBike = new FastestWeighting(bikeEncoder);
+        weightingShortestCar = new ShortestWeighting(carEncoder);
+        weightingShortestBike = new ShortestWeighting(bikeEncoder);
     }
 
     @Test
     public void onlyNodeBasedPresent() {
         List<CHProfile> chProfiles = Collections.singletonList(
-                CHProfile.nodeBased(fastestWeighting)
+                CHProfile.nodeBased(weightingFastestCar)
         );
-        assertCHProfileSelectionError("Found a node-based CH profile for weighting map {weighting=fastest, vehicle=car}, but requested edge-based CH", chProfiles, true, null);
-        assertCHProfileSelectionError("Found a node-based CH profile for weighting map {weighting=fastest, vehicle=car}, but requested edge-based CH", chProfiles, true, 20);
+        assertCHProfileSelectionError("Found a node-based CH profile for hints map {weighting=fastest, vehicle=car, edge_based=true}, but requested edge-based CH", chProfiles, true, null);
+        assertCHProfileSelectionError("Found a node-based CH profile for hints map {weighting=fastest, vehicle=car, edge_based=true, u_turn_costs=20}, but requested edge-based CH", chProfiles, true, 20);
         assertProfileFound(chProfiles.get(0), chProfiles, false, null);
         assertProfileFound(chProfiles.get(0), chProfiles, false, 20);
         assertProfileFound(chProfiles.get(0), chProfiles, null, null);
         assertProfileFound(chProfiles.get(0), chProfiles, null, 30);
-        assertCHProfileSelectionError("Cannot find CH profile for weighting map", chProfiles, "foot", "fastest", false, null);
+        assertCHProfileSelectionError("Cannot find CH profile for hints map", chProfiles, "foot", "fastest", false, null);
     }
 
     @Test
     public void onlyEdgeBasedPresent() {
         List<CHProfile> chProfiles = Collections.singletonList(
-                CHProfile.edgeBased(fastestWeighting, INFINITE_U_TURN_COSTS)
+                CHProfile.edgeBased(weightingFastestCar, INFINITE_U_TURN_COSTS)
         );
-        assertCHProfileSelectionError("Found 1 edge-based CH profile(s) for weighting map {weighting=fastest, vehicle=car}, but requested node-based CH", chProfiles, false, null);
-        assertCHProfileSelectionError("Found 1 edge-based CH profile(s) for weighting map {weighting=fastest, vehicle=car}, but requested node-based CH", chProfiles, false, 20);
+        assertCHProfileSelectionError("Found 1 edge-based CH profile(s) for hints map {weighting=fastest, vehicle=car, edge_based=false}, but requested node-based CH", chProfiles, false, null);
+        assertCHProfileSelectionError("Found 1 edge-based CH profile(s) for hints map {weighting=fastest, vehicle=car, edge_based=false, u_turn_costs=20}, but requested node-based CH", chProfiles, false, 20);
         assertProfileFound(chProfiles.get(0), chProfiles, true, null);
         assertProfileFound(chProfiles.get(0), chProfiles, null, null);
     }
@@ -73,8 +82,8 @@ public class CHProfileSelectorTest {
     @Test
     public void edgeAndNodePresent() {
         List<CHProfile> chProfiles = Arrays.asList(
-                CHProfile.nodeBased(fastestWeighting),
-                CHProfile.edgeBased(fastestWeighting, INFINITE_U_TURN_COSTS)
+                CHProfile.nodeBased(weightingFastestCar),
+                CHProfile.edgeBased(weightingFastestCar, INFINITE_U_TURN_COSTS)
         );
         // in case edge-based is not specified we prefer the edge-based profile over the node-based one
         assertProfileFound(chProfiles.get(1), chProfiles, null, null);
@@ -85,9 +94,9 @@ public class CHProfileSelectorTest {
     @Test
     public void multipleEdgeBased() {
         List<CHProfile> chProfiles = Arrays.asList(
-                CHProfile.nodeBased(fastestWeighting),
-                CHProfile.edgeBased(fastestWeighting, 30),
-                CHProfile.edgeBased(fastestWeighting, 50)
+                CHProfile.nodeBased(weightingFastestCar),
+                CHProfile.edgeBased(weightingFastestCar, 30),
+                CHProfile.edgeBased(weightingFastestCar, 50)
         );
         // when no u-turns are specified we throw
         assertCHProfileSelectionError("Found matching edge-based CH profiles for multiple values of u-turn costs: [30, 50].",
@@ -99,8 +108,98 @@ public class CHProfileSelectorTest {
 
         // without specifying edge-based
         assertProfileFound(chProfiles.get(1), chProfiles, null, 30);
-        assertCHProfileSelectionError("but none for requested u-turn costs: 40, available: [30, 50", chProfiles, null, 40);
+        assertCHProfileSelectionError("but none for requested u-turn costs: 40, available: [30, 50]", chProfiles, null, 40);
         assertCHProfileSelectionError("Found matching edge-based CH profiles for multiple values of u-turn costs: [30, 50].", chProfiles, null, null);
+    }
+
+    @Test
+    public void missingVehicleOrWeighting() {
+        // when we do not set the weighting and/or the car but it can be derived from the profile the profile is returned
+        List<CHProfile> chProfiles = Collections.singletonList(CHProfile.nodeBased(weightingFastestCar));
+        assertProfileFound(chProfiles.get(0), chProfiles, "car", "fastest", null, null);
+        assertProfileFound(chProfiles.get(0), chProfiles, "car", "", null, null);
+        assertProfileFound(chProfiles.get(0), chProfiles, "", "fastest", null, null);
+        assertProfileFound(chProfiles.get(0), chProfiles, "", "", null, null);
+    }
+
+    @Test
+    public void missingVehicleOrWeighting_otherVehicleAndCar() {
+        List<CHProfile> chProfiles = Collections.singletonList(CHProfile.nodeBased(weightingShortestBike));
+        assertProfileFound(chProfiles.get(0), chProfiles, "bike", "shortest", null, null);
+        assertProfileFound(chProfiles.get(0), chProfiles, "bike", "", null, null);
+        assertProfileFound(chProfiles.get(0), chProfiles, "", "shortest", null, null);
+        assertProfileFound(chProfiles.get(0), chProfiles, "", "", null, null);
+    }
+
+
+    @Test
+    public void missingVehicleMultipleProfiles() {
+        List<CHProfile> chProfiles = Arrays.asList(
+                CHProfile.nodeBased(weightingFastestBike),
+                CHProfile.nodeBased(weightingShortestBike),
+                CHProfile.edgeBased(weightingFastestBike, 40)
+        );
+        // the vehicle is not given but only bike is used so its fine. note that we prefer edge-based because no edge_based parameter is specified
+        assertProfileFound(chProfiles.get(2), chProfiles, "", "fastest", null, null);
+        // if we do not specify the weighting its not clear what to return -> there is an error
+        assertCHProfileSelectionError("Found CH profiles for multiple weightings: [fastest, shortest], but the request did not specify a weighting", chProfiles, "", "", null, null);
+        // if we do not specify the weighting but edge_based=true its clear what to return because for edge-based there is only one weighting
+        assertProfileFound(chProfiles.get(2), chProfiles, "", "", true, null);
+        // ... for edge_based=false this is an error because there are two node-based profiles
+        assertCHProfileSelectionError("Found CH profiles for multiple weightings: [fastest, shortest] for edge_based=false, but the request did not specify a weighting", chProfiles, "", "", false, null);
+    }
+
+    @Test
+    public void missingWeightingMultipleProfiles() {
+        List<CHProfile> chProfiles = Arrays.asList(
+                CHProfile.nodeBased(weightingFastestBike),
+                CHProfile.edgeBased(weightingFastestCar, 10),
+                CHProfile.edgeBased(weightingFastestBike, 40)
+        );
+        // the weighting is not given but only fastest is used so its fine. note that we prefer edge-based because no edge_based parameter is specified
+        assertProfileFound(chProfiles.get(2), chProfiles, "bike", "", null, null);
+        // if we do not specify the vehicle its not clear what to return -> there is an error
+        assertCHProfileSelectionError("Found CH profiles for multiple vehicles: [bike, car], but the request did not specify a vehicle", chProfiles, "", "", null, null);
+        // if we do not specify the vehicle but edge_based=false its clear what to return because for node-based there is only one weighting
+        assertProfileFound(chProfiles.get(0), chProfiles, "", "", false, null);
+        // ... for edge_based=true this is an error, because there are two edge_based profiles
+        assertCHProfileSelectionError("Found CH profiles for multiple vehicles: [car, bike] for edge_based=true, but the request did not specify a vehicle", chProfiles, "", "", true, null);
+        // .. we can however get a clear match if we specify the u-turn costs
+        assertCHProfileSelectionError("Found CH profiles for multiple vehicles: [car, bike] for edge_based=true, but the request did not specify a vehicle", chProfiles, "", "", true, 10);
+    }
+
+    @Test
+    public void multipleVehiclesMissingWeighting() {
+        // this is a common use-case, there are multiple vehicles for one weighting
+        EncodingManager em = EncodingManager.create("car,bike,motorcycle,bike2,foot");
+        List<CHProfile> chProfiles = new ArrayList<>();
+        for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
+            chProfiles.add(CHProfile.nodeBased(new ShortFastestWeighting(encoder, 1)));
+        }
+        // we do not specify the weighting but this is ok, because there is only one in use
+        String weighting = "";
+        assertProfileFound(chProfiles.get(0), chProfiles, "car", weighting, null, null);
+        assertProfileFound(chProfiles.get(1), chProfiles, "bike", weighting, null, null);
+        assertProfileFound(chProfiles.get(2), chProfiles, "motorcycle", weighting, null, null);
+        assertProfileFound(chProfiles.get(3), chProfiles, "bike2", weighting, null, null);
+        assertProfileFound(chProfiles.get(4), chProfiles, "foot", weighting, null, null);
+    }
+
+
+    @Test
+    public void missingVehicle_multiplePossibilities_throws() {
+        List<CHProfile> chProfiles = Arrays.asList(
+                CHProfile.nodeBased(weightingFastestBike), CHProfile.nodeBased(weightingFastestCar)
+        );
+        assertCHProfileSelectionError("Found CH profiles for multiple vehicles: [bike, car], but the request did not specify a vehicle", chProfiles, "", "fastest", null, null);
+    }
+
+    @Test
+    public void missingWeighting_multiplePossibilities_throws() {
+        List<CHProfile> chProfiles = Arrays.asList(
+                CHProfile.nodeBased(weightingFastestBike), CHProfile.nodeBased(weightingShortestBike)
+        );
+        assertCHProfileSelectionError("Found CH profiles for multiple weightings: [fastest, shortest], but the request did not specify a weighting", chProfiles, "bike", "", null, null);
     }
 
     private void assertProfileFound(CHProfile expectedProfile, List<CHProfile> profiles, Boolean edgeBased, Integer uTurnCosts) {
@@ -108,9 +207,9 @@ public class CHProfileSelectorTest {
     }
 
     private void assertProfileFound(CHProfile expectedProfile, List<CHProfile> profiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
-        HintsMap weightingMap = new HintsMap().setWeighting(weighting).setVehicle(vehicle);
+        HintsMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
-            CHProfile selectedProfile = CHProfileSelector.select(profiles, weightingMap, edgeBased, uTurnCosts);
+            CHProfile selectedProfile = CHProfileSelector.select(profiles, hintsMap);
             assertEquals(expectedProfile, selectedProfile);
         } catch (CHProfileSelectionException e) {
             fail("no profile found, but expected: " + expectedProfile + ", error: " + e.getMessage());
@@ -122,13 +221,24 @@ public class CHProfileSelectorTest {
     }
 
     private void assertCHProfileSelectionError(String expectedError, List<CHProfile> profiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
-        HintsMap weightingMap = new HintsMap().setWeighting(weighting).setVehicle(vehicle);
+        HintsMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
-            CHProfileSelector.select(profiles, weightingMap, edgeBased, uTurnCosts);
+            CHProfileSelector.select(profiles, hintsMap);
             fail("There should have been an error");
         } catch (CHProfileSelectionException e) {
             assertTrue("There should have been an error message containing '" + expectedError + "', but was: '" + e.getMessage() + "'",
                     e.getMessage().contains(expectedError));
         }
+    }
+
+    private HintsMap createHintsMap(String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
+        HintsMap hintsMap = new HintsMap().setWeighting(weighting).setVehicle(vehicle);
+        if (edgeBased != null) {
+            hintsMap.put(Parameters.Routing.EDGE_BASED, edgeBased);
+        }
+        if (uTurnCosts != null) {
+            hintsMap.put(Parameters.Routing.U_TURN_COSTS, uTurnCosts);
+        }
+        return hintsMap;
     }
 }
