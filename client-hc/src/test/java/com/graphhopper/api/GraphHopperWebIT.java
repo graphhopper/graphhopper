@@ -167,7 +167,8 @@ public class GraphHopperWebIT {
     @Test
     public void testRetrieveOnlyStreetname() {
         GHRequest req = new GHRequest().
-                addPoint(new GHPoint(52.255024, 13.506103));
+                addPoint(new GHPoint(52.255024, 13.506103)).
+                addPoint(new GHPoint(52.399067, 13.469238));
         GHResponse res = gh.route(req);
         List<String> given = extractInstructionNames(res.getBest(), 5);
         assertEquals(Arrays.asList(
