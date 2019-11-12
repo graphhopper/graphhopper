@@ -340,7 +340,7 @@ public class BidirectionalRoutingTest {
     }
 
     private GraphHopperStorage createGraph() {
-        GraphHopperStorage gh = new GraphHopperStorage(chProfiles, dir, encodingManager, false, new TurnCostExtension());
+        GraphHopperStorage gh = new GraphHopperStorage(chProfiles, dir, encodingManager, false, true);
         gh.create(1000);
         return gh;
     }

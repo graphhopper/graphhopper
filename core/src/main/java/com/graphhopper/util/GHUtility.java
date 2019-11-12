@@ -301,6 +301,9 @@ public class GHUtility {
     }
 
     public static Graph shuffle(Graph g, Graph sortedGraph) {
+        if (g.getTurnCostExtension() != null) {
+            throw new IllegalArgumentException("Shuffling the graph is currently not supported in the presence of turn costs");
+        }
         int nodes = g.getNodes();
         GHIntArrayList list = new GHIntArrayList(nodes);
         list.fill(nodes, -1);
@@ -325,6 +328,9 @@ public class GHUtility {
      * significant difference (bfs) for querying or are worse (z-curve).
      */
     public static Graph sortDFS(Graph g, Graph sortedGraph) {
+        if (g.getTurnCostExtension() != null) {
+            throw new IllegalArgumentException("Sorting the graph is currently not supported in the presence of turn costs");
+        }
         int nodes = g.getNodes();
         final GHIntArrayList nodeList = new GHIntArrayList(nodes);
         nodeList.fill(nodes, -1);
@@ -367,6 +373,9 @@ public class GHUtility {
     }
 
     static Graph createSortedGraph(Graph fromGraph, Graph toSortedGraph, final IntIndexedContainer oldToNewNodeList, final IntIndexedContainer newToOldEdgeList) {
+        if (fromGraph.getTurnCostExtension() != null) {
+            throw new IllegalArgumentException("Sorting the graph is currently not supported in the presence of turn costs");
+        }
         int edges = fromGraph.getEdges();
         for (int i = 0; i < edges; i++) {
             int edgeId = newToOldEdgeList.get(i);
@@ -405,6 +414,9 @@ public class GHUtility {
      */
     // TODO very similar to createSortedGraph -> use a 'int map(int)' interface
     public static Graph copyTo(Graph fromGraph, Graph toGraph) {
+        if (fromGraph.getTurnCostExtension() != null) {
+            throw new IllegalArgumentException("Copying a graph is currently not supported in the presence of turn costs");
+        }
         AllEdgesIterator eIter = fromGraph.getAllEdges();
         while (eIter.next()) {
             int base = eIter.getBaseNode();
@@ -439,10 +451,7 @@ public class GHUtility {
     public static GraphHopperStorage newStorage(GraphHopperStorage store) {
         Directory outdir = guessDirectory(store);
         boolean is3D = store.getNodeAccess().is3D();
-
-        return new GraphHopperStorage(store.getCHProfiles(), outdir, store.getEncodingManager(),
-                is3D, store.getExtension()).
-                create(store.getNodes());
+        return new GraphHopperStorage(store.getCHProfiles(), outdir, store.getEncodingManager(), is3D, store.getTurnCostExtension() != null).create(store.getNodes());
     }
 
     public static int getAdjNode(Graph g, int edge, int adjNode) {
@@ -707,16 +716,6 @@ public class GHUtility {
 
         @Override
         public EdgeIteratorState setName(String name) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getAdditionalField() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState setAdditionalField(int value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

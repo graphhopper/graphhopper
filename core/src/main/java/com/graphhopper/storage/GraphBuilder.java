@@ -110,13 +110,8 @@ public class GraphBuilder {
                 new MMapDirectory(location) :
                 new RAMDirectory(location, store);
 
-        GraphExtension graphExtension = encodingManager.needsTurnCostsSupport() || turnCosts ?
-                new TurnCostExtension() :
-                new TurnCostExtension.NoOpExtension();
-
-        return chProfiles.isEmpty() ?
-                new GraphHopperStorage(dir, encodingManager, elevation, graphExtension) :
-                new GraphHopperStorage(chProfiles, dir, encodingManager, elevation, graphExtension);
+        boolean withTurnCosts = encodingManager.needsTurnCostsSupport() || turnCosts;
+        return new GraphHopperStorage(chProfiles, dir, encodingManager, elevation, withTurnCosts);
     }
 
     /**

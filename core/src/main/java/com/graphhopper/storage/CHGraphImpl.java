@@ -300,8 +300,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
-    public GraphExtension getExtension() {
-        return baseGraph.getExtension();
+    public TurnCostExtension getTurnCostExtension() {
+        return baseGraph.getTurnCostExtension();
     }
 
     @Override

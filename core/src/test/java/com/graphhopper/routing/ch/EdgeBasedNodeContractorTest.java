@@ -73,7 +73,7 @@ public class EdgeBasedNodeContractorTest {
         weighting = new ShortestWeighting(encoder);
         uTurnCosts = INFINITE_U_TURN_COSTS;
         graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, uTurnCosts)).create();
-        turnCostExtension = (TurnCostExtension) graph.getExtension();
+        turnCostExtension = graph.getTurnCostExtension();
         chGraph = graph.getCHGraph();
     }
 

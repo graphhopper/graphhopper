@@ -49,8 +49,8 @@ public class DirectedBidirectionalDijkstraTest {
         maxTurnCosts = 10;
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
-        turnCostExtension = new TurnCostExtension();
-        graph = new GraphHopperStorage(dir, encodingManager, false, turnCostExtension).create(1000);
+        graph = new GraphHopperStorage(dir, encodingManager, false, true).create(1000);
+        turnCostExtension = graph.getTurnCostExtension();
         weighting = createWeighting(Double.POSITIVE_INFINITY);
     }
 

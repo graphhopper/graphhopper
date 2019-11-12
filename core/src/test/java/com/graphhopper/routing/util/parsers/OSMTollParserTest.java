@@ -26,33 +26,34 @@ public class OSMTollParserTest {
     @Test
     public void testSimpleTags() {
         ReaderWay readerWay = new ReaderWay(1);
+        long relFlags = 0;
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
+        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
         assertEquals(Toll.NO, tollEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll:hgv", "yes");
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
+        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
         assertEquals(Toll.HGV, tollEnc.getEnum(false, intsRef));
-        
+
         intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll:N2", "yes");
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
+        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
         assertEquals(Toll.HGV, tollEnc.getEnum(false, intsRef));
-        
+
         intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll:N3", "yes");
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
+        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
         assertEquals(Toll.HGV, tollEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll", "yes");
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
+        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
         assertEquals(Toll.ALL, tollEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
@@ -61,7 +62,7 @@ public class OSMTollParserTest {
         readerWay.setTag("toll:hgv", "yes");
         readerWay.setTag("toll:N2", "yes");
         readerWay.setTag("toll:N3", "yes");
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
+        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
         assertEquals(Toll.ALL, tollEnc.getEnum(false, intsRef));
     }
 }

@@ -66,7 +66,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     public FootFlagEncoder(PMap properties) {
         this((int) properties.getLong("speedBits", 4),
                 properties.getDouble("speedFactor", 1));
-        this.properties = properties;
         this.setBlockFords(properties.getBool("block_fords", true));
     }
 
@@ -152,7 +151,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
         // larger value required - ferries are faster than pedestrians
-        registerNewEncodedValue.add(speedEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, false));
+        registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, false));
         registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
     }
 
@@ -296,14 +295,14 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null) {
                 if ("hiking".equals(sacScale))
-                    speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED);
+                    avgSpeedEnc.setDecimal(false, edgeFlags, MEAN_SPEED);
                 else
-                    speedEncoder.setDecimal(false, edgeFlags, SLOW_SPEED);
+                    avgSpeedEnc.setDecimal(false, edgeFlags, SLOW_SPEED);
             } else {
                 if (way.hasTag("highway", "steps"))
-                    speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED - 2);
+                    avgSpeedEnc.setDecimal(false, edgeFlags, MEAN_SPEED - 2);
                 else
-                    speedEncoder.setDecimal(false, edgeFlags, MEAN_SPEED);
+                    avgSpeedEnc.setDecimal(false, edgeFlags, MEAN_SPEED);
             }
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
