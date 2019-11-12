@@ -1398,7 +1398,6 @@ public class GraphHopperIT {
         GHRequest req = new GHRequest(p, q);
         // note that we do *not* set the weighting on the request, it will be determined automatically from the
         // CH profile, see #1788
-        req.setWeighting("fastest");
         // we force the start/target directions such that there are u-turns right after we start and right before
         // we reach the target
         req.setCurbsides(Arrays.asList("right", "right"));
