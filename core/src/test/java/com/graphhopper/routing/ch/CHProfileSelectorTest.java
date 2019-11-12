@@ -104,7 +104,7 @@ public class CHProfileSelectorTest {
         // when no u-turns are specified we throw
         assertCHProfileSelectionError(MULTIPLE_MATCHES_ERROR, chProfiles, true, null);
         // when we request one that does not exist we throw
-        assertCHProfileSelectionError(" " + NO_MATCH_ERROR, chProfiles, true, 40);
+        assertCHProfileSelectionError(NO_MATCH_ERROR, chProfiles, true, 40);
         // when we request one that exists it works
         assertProfileFound(chProfiles.get(1), chProfiles, true, 30);
 
