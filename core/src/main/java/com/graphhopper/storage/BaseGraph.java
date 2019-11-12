@@ -971,11 +971,11 @@ class BaseGraph implements Graph {
     }
 
     private void setName(long edgePointer, String name) {
-        int nameIndexRef = (int) stringIndex.add(Collections.singletonMap(STRING_IDX_NAME_KEY, name));
-        if (nameIndexRef < 0)
+        int stringIndexRef = (int) stringIndex.add(Collections.singletonMap(STRING_IDX_NAME_KEY, name));
+        if (stringIndexRef < 0)
             throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
 
-        edges.setInt(edgePointer + E_NAME, nameIndexRef);
+        edges.setInt(edgePointer + E_NAME, stringIndexRef);
     }
 
     GHBitSet getRemovedNodes() {
@@ -1356,8 +1356,8 @@ class BaseGraph implements Graph {
 
         @Override
         public String getName() {
-            int nameIndexRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_NAME);
-            String name = baseGraph.stringIndex.get(nameIndexRef, STRING_IDX_NAME_KEY);
+            int stringIndexRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_NAME);
+            String name = baseGraph.stringIndex.get(stringIndexRef, STRING_IDX_NAME_KEY);
             // preserve backward compatibility (returns null if not explicitly set)
             return name == null ? "" : name;
         }
