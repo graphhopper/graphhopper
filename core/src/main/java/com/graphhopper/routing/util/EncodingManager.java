@@ -583,25 +583,38 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        // storing the road name does not yet depend on the flagEncoder so manage it directly
         if (enableInstructions) {
-            // String wayInfo = carFlagEncoder.getWayInfo(way);
-            // http://wiki.openstreetmap.org/wiki/Key:name
-            String name = "";
-            if (!preferredLanguage.isEmpty())
-                name = fixWayName(way.getTag("name:" + preferredLanguage));
-            if (name.isEmpty())
-                name = fixWayName(way.getTag("name"));
-            // http://wiki.openstreetmap.org/wiki/Key:ref
-            String refName = fixWayName(way.getTag("ref"));
-            if (!refName.isEmpty()) {
-                if (name.isEmpty())
-                    name = refName;
-                else
-                    name += ", " + refName;
+            Map<String, String> stringTags = way.toStringTagEntries();
+            Map<String, String> map = new HashMap<>(stringTags.size());
+            for (Map.Entry<String, String> entry : stringTags.entrySet()) {
+                String k = entry.getKey();
+                if (!k.startsWith("estimated_") && !k.equals("duration") && !k.startsWith("note") &&
+                        // stuff we already have in the graph:
+                        !k.equals("oneway") && !k.equals("highway") && !k.equals("maxspeed") && !k.equals("surface"))
+                    map.put(entry.getKey(), entry.getValue());
             }
 
-            edge.setName(name);
+            // http://wiki.openstreetmap.org/wiki/Key:name
+            String name = fixWayName(way.getTag("name"));
+            if (!name.isEmpty())
+                map.put("name", name);
+
+            if (!preferredLanguage.isEmpty()) {
+                String langName = fixWayName(way.getTag("name:" + preferredLanguage));
+                if (!langName.isEmpty()) {
+                    map.put("name_" + preferredLanguage, langName);
+                    if (name.isEmpty())
+                        map.put("name", langName);
+                }
+            }
+
+            // http://wiki.openstreetmap.org/wiki/Key:ref
+            String refName = fixWayName(way.getTag("ref"));
+            if (!refName.isEmpty())
+                map.put("ref", refName);
+
+            map.put("id", Long.toString(way.getId()));
+            edge.add(map);
         }
 
         if (Double.isInfinite(edge.getDistance()))

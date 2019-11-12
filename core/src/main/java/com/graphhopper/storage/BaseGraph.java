@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Locale;
+import java.util.Map;
 
 import static com.graphhopper.util.Helper.nf;
 
@@ -968,6 +969,14 @@ class BaseGraph implements Graph {
         return pillarNodes;
     }
 
+    private void addKVEntry(long edgePointer, Map<String, String> entries) {
+        int nameIndexRef = (int) stringIndex.add(entries);
+        if (nameIndexRef < 0)
+            throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
+
+        edges.setInt(edgePointer + E_NAME, nameIndexRef);
+    }
+
     private void setName(long edgePointer, String name) {
         int nameIndexRef = (int) stringIndex.add(Collections.singletonMap(STRING_IDX_NAME_KEY, name));
         if (nameIndexRef < 0)
@@ -1372,8 +1381,26 @@ class BaseGraph implements Graph {
         }
 
         @Override
+        public String get(String key) {
+            int nameIndexRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_NAME);
+            return baseGraph.stringIndex.get(nameIndexRef, key);
+        }
+
+        @Override
+        public Map<String, String> getAll() {
+            int nameIndexRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_NAME);
+            return baseGraph.stringIndex.getAll(nameIndexRef);
+        }
+
+        @Override
         public EdgeIteratorState setName(String name) {
             baseGraph.setName(edgePointer, name);
+            return this;
+        }
+
+        @Override
+        public EdgeIteratorState add(Map<String, String> kvEntry) {
+            baseGraph.addKVEntry(edgePointer, kvEntry);
             return this;
         }
 

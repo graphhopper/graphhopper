@@ -41,6 +41,7 @@ import com.graphhopper.util.shapes.BBox;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
@@ -286,6 +287,21 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
+            public String get(String key) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Map<String, String> getAll() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState add(Map<String, String> kvEntry) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
             public EdgeIteratorState detach(boolean reverse) {
                 throw new UnsupportedOperationException();
             }
@@ -311,6 +327,7 @@ public class WrapperGraph implements Graph {
 
                     EdgeIteratorState current = null;
                     EdgeIterator baseGraphEdgeIterator = baseGraphIterator();
+
                     private EdgeIterator baseGraphIterator() {
                         if (baseNode < mainGraph.getNodes()) {
                             return baseGraphEdgeExplorer.setBaseNode(baseNode);
@@ -329,7 +346,7 @@ public class WrapperGraph implements Graph {
                                 baseGraphEdgeIterator = null;
                             }
                         }
-                        while(iterator.hasNext()) {
+                        while (iterator.hasNext()) {
                             current = iterator.next();
                             if (filter.accept(current)) {
                                 return true;
@@ -504,6 +521,21 @@ public class WrapperGraph implements Graph {
                     public EdgeIteratorState setName(String name) {
                         current.setName(name);
                         return this;
+                    }
+
+                    @Override
+                    public Map<String, String> getAll() {
+                        return current.getAll();
+                    }
+
+                    @Override
+                    public String get(String key) {
+                        return current.get(key);
+                    }
+
+                    @Override
+                    public EdgeIteratorState add(Map<String, String> kvEntry) {
+                        return current.add(kvEntry);
                     }
 
                     @Override

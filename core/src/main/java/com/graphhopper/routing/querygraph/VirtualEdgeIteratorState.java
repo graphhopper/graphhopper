@@ -27,6 +27,9 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PointList;
 
+import java.util.Collections;
+import java.util.Map;
+
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
  * <p>
@@ -250,6 +253,21 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     @Override
     public boolean isShortcut() {
         return false;
+    }
+
+    @Override
+    public EdgeIteratorState add(Map<String, String> kvEntry) {
+        return this;
+    }
+
+    @Override
+    public String get(String key) {
+        return null;
+    }
+
+    @Override
+    public Map<String, String> getAll() {
+        return Collections.emptyMap();
     }
 
     @Override

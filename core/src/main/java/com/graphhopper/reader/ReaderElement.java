@@ -68,6 +68,15 @@ public abstract class ReaderElement {
         return properties;
     }
 
+    public Map<String, String> toStringTagEntries() {
+        Map<String, String> map = new LinkedHashMap<>(properties.size());
+        for (Entry<String, Object> entry : properties.entrySet()) {
+            if (entry.getValue() != null)
+                map.put(entry.getKey(), entry.getValue().toString());
+        }
+        return map;
+    }
+
     public void setTags(Map<String, String> newTags) {
         properties.clear();
         if (newTags != null)

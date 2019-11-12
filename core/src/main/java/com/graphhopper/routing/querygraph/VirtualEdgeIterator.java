@@ -29,6 +29,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Peter Karich
@@ -207,6 +208,21 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     @Override
     public EdgeIteratorState setName(String name) {
         return getCurrentEdge().setName(name);
+    }
+
+    @Override
+    public EdgeIteratorState add(Map<String, String> kvEntry) {
+        return getCurrentEdge().add(kvEntry);
+    }
+
+    @Override
+    public String get(String key) {
+        return getCurrentEdge().get(key);
+    }
+
+    @Override
+    public Map<String, String> getAll() {
+        return getCurrentEdge().getAll();
     }
 
     @Override

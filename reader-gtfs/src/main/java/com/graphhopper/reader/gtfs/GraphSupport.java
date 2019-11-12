@@ -30,6 +30,8 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 
+import java.util.Map;
+
 class GraphSupport {
 
     private GraphSupport() {
@@ -186,6 +188,21 @@ class GraphSupport {
                     public EdgeIteratorState setName(String name) {
                         edge.setName(name);
                         return this;
+                    }
+
+                    @Override
+                    public Map<String, String> getAll() {
+                        return edge.getAll();
+                    }
+
+                    @Override
+                    public String get(String key) {
+                        return edge.get(key);
+                    }
+
+                    @Override
+                    public EdgeIteratorState add(Map<String, String> kvEntry) {
+                        return edge.add(kvEntry);
                     }
 
                     @Override

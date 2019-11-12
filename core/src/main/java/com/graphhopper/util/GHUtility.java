@@ -701,6 +701,21 @@ public class GHUtility {
         }
 
         @Override
+        public EdgeIteratorState add(Map<String, String> kvEntry) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public String get(String key) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public Map<String, String> getAll() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
         public String getName() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }

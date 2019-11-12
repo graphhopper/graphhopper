@@ -116,8 +116,7 @@ public class MVTResource {
                 }
 
                 edgeCounter.incrementAndGet();
-                Map<String, Object> map = new HashMap<>(2);
-                map.put("name", edge.getName());
+                Map<String, Object> map = new HashMap<>(edge.getAll());
                 for (String str : pathDetails) {
                     // how to indicate an erroneous parameter?
                     if (str.contains(",") || !encodingManager.hasEncodedValue(str))

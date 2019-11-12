@@ -20,6 +20,8 @@ package com.graphhopper.util;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Map;
+
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
  * Example:
@@ -183,6 +185,12 @@ public interface EdgeIteratorState {
     String getName();
 
     EdgeIteratorState setName(String name);
+
+    EdgeIteratorState add(Map<String, String> kvEntry);
+
+    String get(String key);
+
+    Map<String, String> getAll();
 
     /**
      * Clones this EdgeIteratorState.
