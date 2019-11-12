@@ -23,9 +23,7 @@ import com.graphhopper.storage.Storable;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Peter Karich
@@ -42,11 +40,12 @@ public class StringIndex implements Storable<StringIndex> {
     // 1 byte    | 2 bytes  | 1 byte      | x    | 2 bytes  | 1 byte      | x    | 2 bytes  (dup example) | 4 bytes | ...
     // vals count| key_idx_0| val_length_0| val_0| key_idx_1| val_length_1| val_1| -key_idx_2             | delta_2 | key_idx_3 | val_length_3 | val_3
     // Drawback: we need to loop through the entries to get the start of val_x.
-    // Note, that we detect duplicate values via an absolute reference (8 bytes) in smallCache and then use the negative key index as 'duplicate' marker.
-    // We then store only the delta (4 bytes) to reduce memory usage when duplicate entries.
+    // Note, that we detect duplicate values via smallCache and then use the negative key index as 'duplicate' marker.
+    // We then store only the delta (signed int) instead the absolute unsigned long value to reduce memory usage when duplicate entries.
     private final DataAccess vals;
     // array.indexOf could be faster than hashmap.get if not too many keys or even sort keys and use binarySearch
     private final Map<String, Integer> keysInMem = new LinkedHashMap<>();
+    private final List<String> keyList = new ArrayList<>();
     private final Map<String, Long> smallCache;
     private long bytePointer = START_POINTER;
     private long lastEntryPointer = -1;
@@ -77,6 +76,7 @@ public class StringIndex implements Storable<StringIndex> {
         vals.create(initBytes);
         // add special empty case to have a reliable duplicate detection via negative keyIndex
         keysInMem.put("", 0);
+        keyList.add("");
         return this;
     }
 
@@ -96,7 +96,9 @@ public class StringIndex implements Storable<StringIndex> {
 
                 byte[] keyBytes = new byte[keyLength];
                 keys.getBytes(keyBytePointer, keyBytes, keyLength);
-                keysInMem.put(new String(keyBytes, Helper.UTF_CS), keysInMem.size());
+                String valueStr = new String(keyBytes, Helper.UTF_CS);
+                keysInMem.put(valueStr, keysInMem.size());
+                keyList.add(valueStr);
                 keyBytePointer += keyLength;
             }
             return true;
@@ -137,14 +139,19 @@ public class StringIndex implements Storable<StringIndex> {
             Integer keyIndex = keysInMem.get(key);
             if (keyIndex == null) {
                 keyIndex = keysInMem.size();
+                if (keyIndex.shortValue() < 0)
+                    throw new IllegalStateException("KeyIndex too large " + keyIndex);
                 if (keyIndex + 1 > MAX_UNIQUE_KEYS)
                     throw new IllegalArgumentException("Cannot store more than " + MAX_UNIQUE_KEYS + " unique keys");
                 keysInMem.put(key, keyIndex);
+                keyList.add(key);
             }
 
             if (value == null || value.isEmpty()) {
                 vals.ensureCapacity(currentPointer + 3);
                 vals.setShort(currentPointer, keyIndex.shortValue());
+                // ensure that also in case of MMap value is set to 0
+                vals.setByte(currentPointer + 2, (byte) 0);
                 currentPointer += 3;
             } else {
                 Long existingRef = smallCache.get(value);
@@ -154,25 +161,24 @@ public class StringIndex implements Storable<StringIndex> {
                         vals.ensureCapacity(currentPointer + 2 + 4);
                         vals.setShort(currentPointer, (short) -keyIndex);
                         currentPointer += 2;
+                        // do not store valueBytes.length as we know it already: it is 4!
                         byte[] valueBytes = new byte[4];
                         BitUtil.LITTLE.fromInt(valueBytes, (int) delta);
                         vals.setBytes(currentPointer, valueBytes, valueBytes.length);
                         currentPointer += valueBytes.length;
                         continue;
                     } else {
-                        System.out.println("Cache miss " + value + ", size:" + smallCache.size()
-                                + ", current:" + lastEntryPointer + ", delta:" + delta + ", existing:" + existingRef);
                         smallCache.remove(value);
                     }
                 }
 
                 byte[] valueBytes = getBytesForString("Value for key" + key, value);
-                // only store value to cache if storing via duplicate marker is valuable (the delta costs 4 bytes minus 1 due to omitted valueBytes.length storage)
+                // only cache value if storing via duplicate marker is valuable (the delta costs 4 bytes minus 1 due to omitted valueBytes.length storage)
                 if (valueBytes.length > 3)
                     smallCache.put(value, currentPointer);
 
                 vals.ensureCapacity(currentPointer + 2 + 1 + valueBytes.length);
-                vals.setShort(currentPointer, keyIndex.byteValue());
+                vals.setShort(currentPointer, keyIndex.shortValue());
                 currentPointer += 2;
                 vals.setByte(currentPointer, (byte) valueBytes.length);
                 currentPointer++;
@@ -182,6 +188,60 @@ public class StringIndex implements Storable<StringIndex> {
         }
         bytePointer = currentPointer;
         return lastEntryPointer;
+    }
+
+    public Map<String, String> getAll(final long entryPointer) {
+        if (entryPointer < 0)
+            throw new IllegalStateException("Pointer to access StringIndex cannot be negative:" + entryPointer);
+
+        if (entryPointer == EMPTY_POINTER)
+            return Collections.emptyMap();
+
+        int keyCount = vals.getByte(entryPointer) & 0xFF;
+        if (keyCount == 0)
+            return Collections.emptyMap();
+
+        Map<String, String> map = new HashMap<>(keyCount);
+        long tmpPointer = entryPointer + 1;
+        for (int i = 0; i < keyCount; i++) {
+            int currentKeyIndex = vals.getShort(tmpPointer);
+            tmpPointer += 2;
+
+            if (currentKeyIndex < 0) {
+                currentKeyIndex = -currentKeyIndex;
+                byte[] valueBytes = new byte[4];
+                vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
+                tmpPointer += 4;
+
+                long dupPointer = entryPointer - BitUtil.LITTLE.toInt(valueBytes);
+                dupPointer += 2;
+                if (dupPointer > bytePointer)
+                    throw new IllegalStateException("dup marker should exist but points into not yet allocated area " + dupPointer + " > " + bytePointer);
+                putIntoMap(map, dupPointer, currentKeyIndex);
+            } else {
+                int valueLength = putIntoMap(map, tmpPointer, currentKeyIndex);
+                tmpPointer += 1 + valueLength;
+            }
+        }
+
+        // value for specified key does not existing for the specified pointer
+        return map;
+    }
+
+    private int putIntoMap(Map<String, String> map, long tmpPointer, int currentKeyIndex) {
+        int valueLength = vals.getByte(tmpPointer) & 0xFF;
+        tmpPointer++;
+        String valueStr;
+        if (valueLength == 0) {
+            valueStr = "";
+        } else {
+            byte[] valueBytes = new byte[valueLength];
+            vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
+            valueStr = new String(valueBytes, Helper.UTF_CS);
+        }
+
+        map.put(keyList.get(currentKeyIndex), valueStr);
+        return valueLength;
     }
 
     public String get(final long entryPointer, String key) {
@@ -245,7 +305,6 @@ public class StringIndex implements Storable<StringIndex> {
 
     @Override
     public void flush() {
-        // store: key count, length_0, length_1, ... length_n-1, key_0, key_1, ...
         keys.ensureCapacity(2);
         keys.setShort(0, (short) keysInMem.size());
         long keyBytePointer = 2;

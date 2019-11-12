@@ -1,13 +1,13 @@
 package com.graphhopper.search;
 
+import com.carrotsearch.hppc.LongArrayList;
+import com.graphhopper.Repeat;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.graphhopper.search.StringIndex.MAX_UNIQUE_KEYS;
 import static junit.framework.TestCase.assertTrue;
@@ -113,6 +113,9 @@ public class StringIndexTest {
         bPointer = index.add(createMap("a", "longer name", "b", "longer name"));
         cPointer = index.add(createMap("a", "longer name", "b", "longer name"));
         assertEquals(bPointer, cPointer);
+
+        assertEquals("{a=longer name, b=longer name}", index.getAll(aPointer).toString());
+        assertEquals("{a=longer name, b=longer name}", index.getAll(cPointer).toString());
     }
 
     @Test
@@ -196,6 +199,7 @@ public class StringIndexTest {
         assertNull(index.get(pointerB, ""));
         assertEquals("value", index.get(pointerB, "a"));
         assertEquals("another value", index.get(pointerB, "b"));
+        assertEquals("{a=value, b=another value}", index.getAll(pointerB).toString());
         index.close();
 
         Helper.removeDir(new File(location));
@@ -212,5 +216,51 @@ public class StringIndexTest {
 
         assertEquals("value", index.get(pointerB, "a"));
         assertNull(index.get(pointerB, ""));
+    }
+
+    @Test
+    @Repeat(times = 100)
+    public void testRandom() {
+        StringIndex index = create();
+        long seed = new Random().nextLong();
+        System.out.println("StringIndexText.testRandom seed:" + seed);
+        Random random = new Random(seed);
+        List<String> keys = createRandomList(random, "_key", 1000);
+        List<String> values = createRandomList(random, "_value", 5000);
+
+        int size = 20000;
+        LongArrayList pointers = new LongArrayList(size);
+        for (int i = 0; i < size; i++) {
+            Map<String, String> map = createRandomMap(random, keys, values);
+            long pointer = index.add(map);
+            try {
+                assertEquals("" + i, map.size(), index.getAll(pointer).size());
+            } catch (Exception ex) {
+                throw new RuntimeException(i + " " + map + ", " + pointer, ex);
+            }
+            pointers.add(pointer);
+        }
+
+        for (int i = 0; i < size; i++) {
+            Map<String, String> map = index.getAll(pointers.get(i));
+            assertTrue(i + " " + map, map.size() > 0);
+        }
+    }
+
+    private List<String> createRandomList(Random random, String postfix, int size) {
+        List<String> list = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            list.add(random.nextInt(size * 5) + postfix);
+        }
+        return list;
+    }
+
+    private Map<String, String> createRandomMap(Random random, List<String> keys, List<String> values) {
+        int count = random.nextInt(10) + 2;
+        Map<String, String> map = new HashMap<>();
+        for (int i = 0; i < count; i++) {
+            map.put(keys.get(random.nextInt(keys.size())), values.get(random.nextInt(values.size())));
+        }
+        return map;
     }
 }
