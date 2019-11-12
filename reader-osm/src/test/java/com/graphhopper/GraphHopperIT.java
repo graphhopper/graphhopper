@@ -1206,8 +1206,8 @@ public class GraphHopperIT {
         assertMoscowNodeBased(tmpHopper, "false", true);
         GHResponse rsp = runMoscow(tmpHopper, "true", true);
         assertEquals(1, rsp.getErrors().size());
-        assertTrue(rsp.getErrors().toString().contains("Found a node-based CH profile"));
-        assertTrue(rsp.getErrors().toString().contains("but requested edge-based CH"));
+        assertTrue("unexpected error: " + rsp.getErrors().toString(), rsp.getErrors().toString().contains(
+                "Cannot find matching CH profile for your request.\nrequested:  *|car|edge_based=true|u_turn_costs=*\navailable: [fastest|car|edge_based=false|u_turn_costs=-1]"));
     }
 
     @Test
@@ -1229,8 +1229,8 @@ public class GraphHopperIT {
         assertMoscowEdgeBased(tmpHopper, "true", true);
         GHResponse rsp = runMoscow(tmpHopper, "false", true);
         assertTrue(rsp.hasErrors());
-        assertTrue(rsp.getErrors().toString().contains("Found 1 edge-based CH profile"));
-        assertTrue(rsp.getErrors().toString().contains("but requested node-based CH"));
+        assertTrue("unexpected error: " + rsp.getErrors(), rsp.getErrors().toString().contains(
+                "Cannot find matching CH profile for your request.\nrequested:  *|car|edge_based=false|u_turn_costs=*\navailable: [fastest|car|edge_based=true|u_turn_costs=-1]"));
     }
 
     private GHResponse assertMoscowNodeBased(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
@@ -1379,6 +1379,34 @@ public class GraphHopperIT {
         req.getHints().put(Routing.FORCE_CURBSIDE, force);
         req.setCurbsides(curbsides);
         return tmpHopper.route(req);
+    }
+
+    @Test
+    public void testCHWithFiniteUTurnCostsAndMissingWeighting() {
+        GraphHopper h = new GraphHopperOSM().
+                setDataReaderFile(DIR + "/monaco.osm.gz").
+                setCHEnabled(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create("car|turn_costs=true"));
+        h.getCHFactoryDecorator()
+                .setCHProfileStrings("fastest|u_turn_costs=40")
+                .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE);
+        h.importOrLoad();
+
+        GHPoint p = new GHPoint(43.73397, 7.414173);
+        GHPoint q = new GHPoint(43.73222, 7.415557);
+        GHRequest req = new GHRequest(p, q);
+        // note that we do *not* set the weighting on the request, it will be determined automatically from the
+        // CH profile, see #1788
+        req.setWeighting("fastest");
+        // we force the start/target directions such that there are u-turns right after we start and right before
+        // we reach the target
+        req.setCurbsides(Arrays.asList("right", "right"));
+        GHResponse res = h.route(req);
+        assertFalse("routing should not fail", res.hasErrors());
+        assertEquals(266.8, res.getBest().getRouteWeight(), 0.1);
+        assertEquals(2116, res.getBest().getDistance(), 1);
+        assertEquals(266800, res.getBest().getTime(), 1000);
     }
 
 }
