@@ -61,6 +61,7 @@ public class GraphHopperGtfsIT {
     @BeforeClass
     public static void init() {
         CmdArgs cmdArgs = new CmdArgs();
+        cmdArgs.put("graph.location", GRAPH_LOC);
         cmdArgs.put("gtfs.file", "files/sample-feed.zip");
         Helper.removeDir(new File(GRAPH_LOC));
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();

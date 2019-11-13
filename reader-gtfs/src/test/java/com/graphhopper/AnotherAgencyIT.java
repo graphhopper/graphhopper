@@ -53,6 +53,7 @@ public class AnotherAgencyIT {
     @BeforeClass
     public static void init() {
         CmdArgs cmdArgs = new CmdArgs();
+        cmdArgs.put("graph.location", GRAPH_LOC);
         cmdArgs.put("datareader.file", "files/beatty.osm");
         cmdArgs.put("gtfs.file", "files/sample-feed.zip,files/another-sample-feed.zip");
         Helper.removeDir(new File(GRAPH_LOC));
