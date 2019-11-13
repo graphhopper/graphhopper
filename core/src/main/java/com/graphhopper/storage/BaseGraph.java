@@ -348,6 +348,9 @@ class BaseGraph implements Graph {
         edges.setSegmentSize(bytes);
         wayGeometry.setSegmentSize(bytes);
         nameIndex.setSegmentSize(bytes);
+        if (supportsTurnCosts()) {
+            turnCostExtension.setSegmentSize(bytes);
+        }
     }
 
     synchronized void freeze() {
