@@ -44,7 +44,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
-    protected CHGraph getGraph(GraphHopperStorage ghStorage) {
+    private CHGraph getGraph(GraphHopperStorage ghStorage) {
         return ghStorage.getCHGraph();
     }
 
@@ -126,16 +126,14 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     @Test
     public void testDisconnectEdge() {
         graph = createGHStorage();
-        CHGraph lg = getGraph(graph);
+        EdgeExplorer baseCarOutExplorer = graph.createEdgeExplorer(carOutFilter);
+        // only remove edges
+        graph.edge(4, 1, 30, true);
+        graph.freeze();
 
+        CHGraph lg = getGraph(graph);
         EdgeExplorer chCarOutExplorer = lg.createEdgeExplorer(carOutFilter);
         EdgeExplorer tmpCarInExplorer = lg.createEdgeExplorer(carInFilter);
-
-        EdgeExplorer baseCarOutExplorer = graph.createEdgeExplorer(carOutFilter);
-
-        // only remove edges
-        lg.edge(4, 1, 30, true);
-        graph.freeze();
         lg.shortcut(1, 2, PrepareEncoder.getScDirMask(), 0, 10, 11);
         lg.shortcut(1, 0, PrepareEncoder.getScFwdDir(), 0, 12, 13);
         lg.shortcut(3, 1, PrepareEncoder.getScFwdDir(), 0, 14, 15);
