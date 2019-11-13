@@ -308,9 +308,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             }
         } else {
             double ferrySpeed = getFerrySpeed(way);
-            setSpeed(false, edgeFlags, ferrySpeed);
-            if (speedTwoDirections)
-                setSpeed(true, edgeFlags, ferrySpeed);
+            setSpeed(edgeFlags, true, true, ferrySpeed);
         }
 
         int priorityFromRelation = 0;
@@ -321,7 +319,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         return edgeFlags;
     }
 
-    protected void setSpeed(IntsRef edgeFlags, boolean fwd, boolean bwd, double speed) {
+    void setSpeed(IntsRef edgeFlags, boolean fwd, boolean bwd, double speed) {
+        if (speed > getMaxSpeed())
+            speed = getMaxSpeed();
         if (fwd)
             speedEncoder.setDecimal(false, edgeFlags, speed);
         if (bwd && speedTwoDirections)

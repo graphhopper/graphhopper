@@ -205,8 +205,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
             setSpeed(edgeFlags, true, true, MEAN_SPEED);
         } else {
             double ferrySpeed = getFerrySpeed(way);
-            setSpeed(false, edgeFlags, ferrySpeed);
-            setSpeed(true, edgeFlags, ferrySpeed);
+            setSpeed(edgeFlags, true, true, ferrySpeed);
         }
 
         return edgeFlags;
