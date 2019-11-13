@@ -755,8 +755,7 @@ public class GraphHopper implements GraphHopperAPI {
             chProfiles = Collections.emptyList();
         }
 
-        ghStorage =  new GraphHopperStorage(chProfiles, dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport());
-        ghStorage.setSegmentSize(defaultSegmentSize);
+        ghStorage = new GraphHopperStorage(chProfiles, dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
 
         if (!new File(graphHopperFolder).exists())
             return false;

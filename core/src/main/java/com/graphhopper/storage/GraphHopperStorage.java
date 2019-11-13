@@ -60,6 +60,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     public GraphHopperStorage(List<CHProfile> chProfiles, Directory dir, EncodingManager encodingManager, boolean withElevation, boolean withTurnCosts) {
+        this(chProfiles, dir, encodingManager, withElevation, withTurnCosts, -1);
+    }
+
+    public GraphHopperStorage(List<CHProfile> chProfiles, Directory dir, EncodingManager encodingManager, boolean withElevation, boolean withTurnCosts, int segmentSize) {
         if (encodingManager == null)
             throw new IllegalArgumentException("EncodingManager needs to be non-null since 0.7. Create one using EncodingManager.create or EncodingManager.create(flagEncoderFactory, ghLocation)");
 
@@ -82,10 +86,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             }
         };
 
-        baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, withTurnCosts);
+        baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, withTurnCosts, segmentSize);
         this.chGraphs = new ArrayList<>(chProfiles.size());
         for (CHProfile chProfile : chProfiles) {
-            chGraphs.add(new CHGraphImpl(chProfile, dir, baseGraph));
+            chGraphs.add(new CHGraphImpl(chProfile, dir, baseGraph, segmentSize));
         }
     }
 
@@ -150,15 +154,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public Directory getDirectory() {
         return dir;
-    }
-
-    @Override
-    public void setSegmentSize(int bytes) {
-        baseGraph.setSegmentSize(bytes);
-
-        for (CHGraphImpl cg : getAllCHGraphs()) {
-            cg.setSegmentSize(bytes);
-        }
     }
 
     /**
