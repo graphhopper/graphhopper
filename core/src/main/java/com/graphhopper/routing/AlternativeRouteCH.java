@@ -27,10 +27,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  *
@@ -57,6 +54,9 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
         init(s, 0, t, 0);
         runAlgo();
         extractPath();
+        if (!bestPath.isFound()) {
+            return Collections.emptyList();
+        }
 
         final TreeSet<AlternativeInfo> alternatives = new TreeSet<>(new Comparator<AlternativeInfo>() {
             @Override
@@ -145,8 +145,8 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
                 while (i > 0 && !nodesInCurrentAlternativeSetContains(nodes.get(i))) {
                     i--;
                 }
-                while (i >= 0) {
-                    sharedDistance += edges.get(i).getDistance();
+                while (i > 0) {
+                    sharedDistance += edges.get(i-1).getDistance();
                     i--;
                 }
                 int j = vIndex;
@@ -210,6 +210,10 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
     @Override
     public List<Path> calcPaths(int from, int to) {
         List<AlternativeInfo> alts = calcAlternatives(from, to);
+        // If no path was found, return the list of the path that was not found. (Ew.)
+        if (alts.isEmpty()) {
+            return Collections.singletonList((Path) bestPath);
+        }
         List<Path> paths = new ArrayList<>(alts.size());
         for (AlternativeInfo a : alts) {
             paths.add(a.path);
