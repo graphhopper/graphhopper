@@ -62,6 +62,7 @@ public class CHTurnCostTest {
     private GraphHopperStorage graph;
     private TurnCostExtension turnCostExtension;
     private List<CHProfile> chProfiles;
+    private CHProfile chProfile;
     private CHGraph chGraph;
     private boolean checkStrict;
 
@@ -77,9 +78,9 @@ public class CHTurnCostTest {
         weighting = new ShortestWeighting(encoder);
         chProfiles = createCHProfiles();
         graph = new GraphBuilder(encodingManager).setCHProfiles(chProfiles).create();
-        // the default CH graph with infinite u-turn costs, can be reset in tests that should run with finite u-turn
+        // the default CH profile with infinite u-turn costs, can be reset in tests that should run with finite u-turn
         // costs
-        chGraph = graph.getCHGraph(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS));
+        chProfile = CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS);
         turnCostExtension = graph.getTurnCostExtension();
         checkStrict = true;
     }
@@ -591,7 +592,7 @@ public class CHTurnCostTest {
             }
         }
 
-        List<Integer> contractionOrder = getRandomIntegerSequence(chGraph.getNodes(), rnd);
+        List<Integer> contractionOrder = getRandomIntegerSequence(graph.getNodes(), rnd);
         checkStrict = false;
         compareCHWithDijkstra(numQueries, contractionOrder);
     }
@@ -662,7 +663,7 @@ public class CHTurnCostTest {
         graph.edge(3, 1, 100, false);
         addRestriction(0, 3, 1);
         graph.freeze();
-        chGraph = graph.getCHGraph(CHProfile.edgeBased(weighting, 50));
+        chProfile = CHProfile.edgeBased(weighting, 50);
         RoutingAlgorithmFactory pch = prepareCH(Arrays.asList(4, 0, 2, 3, 1));
         Path path = pch.createAlgo(chGraph, AlgorithmOptions.start().build()).calcPath(0, 1);
         assertEquals(IntArrayList.from(0, 3, 4, 3, 1), path.calcNodes());
@@ -1005,7 +1006,7 @@ public class CHTurnCostTest {
         // not allowed to turn right at node 1 -> we have to take a u-turn at node 0 (or at the virtual node...)
         addRestriction(2, 1, 5);
         graph.freeze();
-        chGraph = graph.getCHGraph(CHProfile.edgeBased(weighting, 50));
+        chProfile = CHProfile.edgeBased(weighting, 50);
         RoutingAlgorithmFactory pch = prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
@@ -1049,8 +1050,8 @@ public class CHTurnCostTest {
     public void testFindPath_random_compareWithDijkstra_finiteUTurnCost() {
         long seed = System.nanoTime();
         LOGGER.info("Seed for testFindPath_random_compareWithDijkstra_finiteUTurnCost: {}", seed);
-        chGraph = graph.getCHGraph(chProfiles.get(1 + new Random(seed).nextInt(chProfiles.size() - 1)));
-        LOGGER.info("U-turn-costs: " + chGraph.getCHProfile().getUTurnCostsInt());
+        chProfile = chProfiles.get(1 + new Random(seed).nextInt(chProfiles.size() - 1));
+        LOGGER.info("U-turn-costs: " + chProfile.getUTurnCostsInt());
         compareWithDijkstraOnRandomGraph(seed);
     }
 
@@ -1061,7 +1062,7 @@ public class CHTurnCostTest {
         GHUtility.addRandomTurnCosts(graph, seed, encoder, maxCost, turnCostExtension);
         graph.freeze();
         checkStrict = false;
-        List<Integer> contractionOrder = getRandomIntegerSequence(chGraph.getNodes(), rnd);
+        List<Integer> contractionOrder = getRandomIntegerSequence(graph.getNodes(), rnd);
         compareCHWithDijkstra(100, contractionOrder);
     }
 
@@ -1081,8 +1082,8 @@ public class CHTurnCostTest {
     public void testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost() {
         long seed = System.nanoTime();
         LOGGER.info("Seed for testFindPath_heuristic_compareWithDijkstra_finiteUTurnCost: {}", seed);
-        chGraph = graph.getCHGraph(chProfiles.get(1 + new Random(seed).nextInt(chProfiles.size() - 1)));
-        LOGGER.info("U-turn-costs: " + chGraph.getCHProfile().getUTurnCostsInt());
+        chProfile = chProfiles.get(1 + new Random(seed).nextInt(chProfiles.size() - 1));
+        LOGGER.info("U-turn-costs: " + chProfile.getUTurnCostsInt());
         compareWithDijkstraOnRandomGraph_heuristic(seed);
     }
 
@@ -1104,7 +1105,7 @@ public class CHTurnCostTest {
     }
 
     private void checkPathUsingRandomContractionOrder(IntArrayList expectedPath, int expectedWeight, int expectedTurnCosts, int from, int to) {
-        List<Integer> contractionOrder = getRandomIntegerSequence(chGraph.getNodes());
+        List<Integer> contractionOrder = getRandomIntegerSequence(graph.getNodes());
         checkPath(expectedPath, expectedWeight, expectedTurnCosts, from, to, contractionOrder);
     }
 
@@ -1136,7 +1137,7 @@ public class CHTurnCostTest {
     }
 
     private Path findPathUsingDijkstra(int from, int to) {
-        Dijkstra dijkstra = new Dijkstra(graph, new TurnWeighting(weighting, turnCostExtension, chGraph.getCHProfile().getUTurnCosts()), TraversalMode.EDGE_BASED);
+        Dijkstra dijkstra = new Dijkstra(graph, new TurnWeighting(weighting, turnCostExtension, chProfile.getUTurnCosts()), TraversalMode.EDGE_BASED);
         return dijkstra.calcPath(from, to);
     }
 
@@ -1160,9 +1161,10 @@ public class CHTurnCostTest {
                 return contractionOrder.size();
             }
         };
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph)
+        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         ch.doWork();
+        chGraph = graph.getCHGraph(chProfile);
         return ch;
     }
 
@@ -1172,9 +1174,10 @@ public class CHTurnCostTest {
         pMap.put(LAST_LAZY_NODES_UPDATES, 100);
         pMap.put(NEIGHBOR_UPDATES, 4);
         pMap.put(LOG_MESSAGES, 10);
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph);
+        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
         ch.setParams(pMap);
         ch.doWork();
+        chGraph = graph.getCHGraph(chProfile);
         return ch;
     }
 
