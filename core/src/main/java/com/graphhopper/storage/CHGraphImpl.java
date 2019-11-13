@@ -470,7 +470,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         public final CHEdgeIterator setBaseNode(int baseNode) {
-            assert edgeIterable.baseGraph.isFrozen() : "Traversal CHGraph is only possible if BaseGraph is frozen";
+            assert edgeIterable.baseGraph.isFrozen() : "Traversing CHGraph is only possible if BaseGraph is frozen";
 
             // always use ch edge access
             edgeIterable.setEdgeId(chEdgeAccess.getEdgeRef(baseNode));
@@ -735,16 +735,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public final IntsRef getFlags() {
             checkShortcut(false, "getFlags");
             return edgeIterable.getFlags();
-        }
-
-        @Override
-        public int getAdditionalField() {
-            return edgeIterable.getAdditionalField();
-        }
-
-        @Override
-        public EdgeIteratorState setAdditionalField(int value) {
-            return edgeIterable.setAdditionalField(value);
         }
 
         @Override
