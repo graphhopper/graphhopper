@@ -134,7 +134,7 @@ public class Parameters {
     /**
      * Possible values of {@link Parameters.Routing#CURBSIDE}
      */
-    public static final class CurbSides {
+    public static final class Curbsides {
         public static final String CURBSIDE_LEFT = "left";
         public static final String CURBSIDE_RIGHT = "right";
         public static final String CURBSIDE_ANY = "any";
@@ -211,17 +211,8 @@ public class Parameters {
         public static final String STREET_NAME = "street_name";
         public static final String EDGE_ID = "edge_id";
         public static final String TIME = "time";
+        public static final String WEIGHT = "weight";
         public static final String DISTANCE = "distance";
     }
 
-    public static final class PT {
-        public static final String EARLIEST_DEPARTURE_TIME = "pt.earliest_departure_time";
-        public static final String PROFILE_QUERY = "pt.profile";
-        public static final String ARRIVE_BY = "pt.arrive_by";
-        public static final String IGNORE_TRANSFERS = "pt.ignore_transfers";
-        public static final String WALK_SPEED = "pt.walk_speed";
-        public static final String MAX_WALK_DISTANCE_PER_LEG = "pt.max_walk_distance_per_leg";
-        public static final String LIMIT_SOLUTIONS = "pt.limit_solutions";
-        public static final String BLOCKED_ROUTE_TYPES = "pt.blocked_route_types";
-    }
 }

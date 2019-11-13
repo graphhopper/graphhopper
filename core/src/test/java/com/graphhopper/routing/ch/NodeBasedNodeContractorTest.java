@@ -18,10 +18,14 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.DijkstraBidirectionCH;
+import com.graphhopper.routing.DijkstraOneToMany;
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -34,7 +38,10 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Parameters.Routing.HEADING_PENALTY;
@@ -425,11 +432,9 @@ public class NodeBasedNodeContractorTest {
         LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
         locationIndex.prepareIndex();
 
-        QueryGraph chQueryGraph = new QueryGraph(lg);
-        chQueryGraph.lookup(Collections.singletonList(locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES)));
+        QueryGraph chQueryGraph = QueryGraph.lookup(lg, locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES));
 
-        QueryGraph queryGraph = new QueryGraph(graph);
-        queryGraph.lookup(Collections.singletonList(locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES)));
+        QueryGraph queryGraph = QueryGraph.lookup(graph, locationIndex.findClosest(0.021, 0.02, EdgeFilter.ALL_EDGES));
 
         // without heading
         {

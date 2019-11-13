@@ -5,6 +5,7 @@ import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -37,6 +38,7 @@ import static org.junit.Assert.fail;
  * target edges, by comparing with {@link DijkstraBidirectionRef}
  *
  * @author easbar
+ * @see BidirectionalRoutingTest
  * @see DirectedBidirectionalDijkstraTest
  */
 @RunWith(Parameterized.class)
@@ -65,12 +67,12 @@ public class DirectedRoutingTest {
                 {Algo.ASTAR, INFINITE_U_TURN_COSTS, false, false},
                 {Algo.CH_ASTAR, INFINITE_U_TURN_COSTS, true, false},
                 {Algo.CH_DIJKSTRA, INFINITE_U_TURN_COSTS, true, false},
-                // todo: yields warnings and fails, see #1665, #1687
+                // todo: yields warnings and fails, see #1665, #1687, #1745
 //                {Algo.LM, INFINITE_UTURN_COSTS, false, true}
                 {Algo.ASTAR, 40, false, false},
                 {Algo.CH_ASTAR, 40, true, false},
                 {Algo.CH_DIJKSTRA, 40, true, false},
-                // todo: yields warnings and fails, see #1665, 1687
+                // todo: yields warnings and fails, see #1665, 1687, #1745
 //                {Algo.LM, 40, false, true}
                 // todo: add AlternativeRoute ?
         });
@@ -98,9 +100,9 @@ public class DirectedRoutingTest {
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
-        turnCostExtension = new TurnCostExtension();
         graph = createGraph();
         chGraph = graph.getCHGraph();
+        turnCostExtension = graph.getTurnCostExtension();
     }
 
     private void preProcessGraph() {
@@ -140,7 +142,7 @@ public class DirectedRoutingTest {
     }
 
     private TurnWeighting createTurnWeighting(Graph g) {
-        return new TurnWeighting(weighting, (TurnCostExtension) g.getExtension(), uTurnCosts);
+        return new TurnWeighting(weighting, g.getTurnCostExtension(), uTurnCosts);
     }
 
     @Test
@@ -205,11 +207,8 @@ public class DirectedRoutingTest {
             List<QueryResult> chQueryResults = findQueryResults(index, points);
             List<QueryResult> queryResults = findQueryResults(index, points);
 
-            QueryGraph chQueryGraph = new QueryGraph(prepareCH ? chGraph : graph);
-            QueryGraph queryGraph = new QueryGraph(graph);
-
-            chQueryGraph.lookup(chQueryResults);
-            queryGraph.lookup(queryResults);
+            QueryGraph chQueryGraph = QueryGraph.lookup(prepareCH ? chGraph : graph, chQueryResults);
+            QueryGraph queryGraph = QueryGraph.lookup(graph, queryResults);
 
             int source = queryResults.get(0).getClosestNode();
             int target = queryResults.get(1).getClosestNode();
@@ -283,7 +282,7 @@ public class DirectedRoutingTest {
 
     private GraphHopperStorage createGraph() {
         GraphHopperStorage gh = new GraphHopperStorage(Collections.singletonList(CHProfile.edgeBased(weighting, uTurnCosts)), dir, encodingManager,
-                false, turnCostExtension);
+                false, true);
         gh.create(1000);
         return gh;
     }

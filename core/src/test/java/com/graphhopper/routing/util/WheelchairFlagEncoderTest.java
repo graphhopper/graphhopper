@@ -548,7 +548,7 @@ public class WheelchairFlagEncoderTest {
     }
 
     private Graph initExampleGraph() {
-        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension()).create(1000);
+        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, false).create(1000);
         NodeAccess na = gs.getNodeAccess();
         // incline of 5% over all
         na.setNode(0, 51.1, 12.001, 50);

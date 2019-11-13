@@ -49,15 +49,18 @@ public class AStarBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTester {
         for (Weighting w : weightings) {
             chProfiles.add(CHProfile.edgeBased(w, INFINITE_U_TURN_COSTS));
         }
-        return new GraphHopperStorage(chProfiles, new RAMDirectory(), em, is3D, new TurnCostExtension()).create(1000);
+        return new GraphHopperStorage(chProfiles, new RAMDirectory(), em, is3D, true).create(1000);
     }
 
     @Override
     public RoutingAlgorithmFactory createFactory(GraphHopperStorage ghStorage, AlgorithmOptions opts) {
         ghStorage.freeze();
-        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(
-                ghStorage, CHProfile.edgeBased(opts.getWeighting(), INFINITE_U_TURN_COSTS));
-        ch.doWork();
+        CHGraph chGraph = ghStorage.getCHGraph(CHProfile.edgeBased(opts.getWeighting(), INFINITE_U_TURN_COSTS));
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph);
+        // make sure the contraction runs only once
+        if (chGraph.getEdges() == chGraph.getBaseGraph().getEdges()) {
+            ch.doWork();
+        }
         return ch;
     }
 

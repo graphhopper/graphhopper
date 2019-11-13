@@ -87,8 +87,7 @@ public class OSMReaderTest {
     }
 
     GraphHopperStorage newGraph(String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport) {
-        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D,
-                turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoOpExtension());
+        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D, turnRestrictionsImport);
     }
 
     @Test
@@ -466,7 +465,7 @@ public class OSMReaderTest {
     @Test
     public void testRelation() {
         EncodingManager manager = EncodingManager.create("bike");
-        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false);
         OSMReader reader = new OSMReader(ghStorage);
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
@@ -499,8 +498,8 @@ public class OSMReaderTest {
 
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(15, graph.getNodes());
-        assertTrue(graph.getExtension() instanceof TurnCostExtension);
-        TurnCostExtension tcStorage = (TurnCostExtension) graph.getExtension();
+        TurnCostExtension tcStorage = graph.getTurnCostExtension();
+        assertNotNull(tcStorage);
 
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
         int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);
@@ -728,7 +727,7 @@ public class OSMReaderTest {
         final OSMReader.TurnCostTableEntry turnCostEntry_foot = new OSMReader.TurnCostTableEntry();
         final OSMReader.TurnCostTableEntry turnCostEntry_bike = new OSMReader.TurnCostTableEntry();
 
-        final OSMTurnRelation osmTurnRelation = new OSMTurnRelation(1, 1,1, OSMTurnRelation.Type.NOT);
+        final OSMTurnRelation osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.Type.NOT);
 
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
         FootFlagEncoder foot = new FootFlagEncoder();
@@ -739,7 +738,7 @@ public class OSMReaderTest {
         OSMReader reader = new OSMReader(ghStorage) {
             @Override
             public Collection<OSMReader.TurnCostTableEntry> analyzeTurnRelation(FlagEncoder encoder,
-                                                                                      OSMTurnRelation turnRelation) {
+                                                                                OSMTurnRelation turnRelation) {
                 // simulate by returning one turn cost entry directly
                 if (encoder.toString().equalsIgnoreCase("car")) {
 
@@ -808,8 +807,8 @@ public class OSMReaderTest {
 
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(8, graph.getNodes());
-        assertTrue(graph.getExtension() instanceof TurnCostExtension);
-        TurnCostExtension tcStorage = (TurnCostExtension) graph.getExtension();
+        TurnCostExtension tcStorage = graph.getTurnCostExtension();
+        assertNotNull(tcStorage);
 
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
         int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);
@@ -872,8 +871,8 @@ public class OSMReaderTest {
 
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(5, graph.getNodes());
-        assertTrue(graph.getExtension() instanceof TurnCostExtension);
-        TurnCostExtension tcStorage = (TurnCostExtension) graph.getExtension();
+        TurnCostExtension tcStorage = graph.getTurnCostExtension();
+        assertNotNull(tcStorage);
 
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
         int n2 = AbstractGraphStorageTester.getIdOf(graph, 52, 10);

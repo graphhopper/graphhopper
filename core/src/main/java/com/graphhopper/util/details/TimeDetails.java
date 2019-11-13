@@ -43,7 +43,7 @@ public class TimeDetails extends AbstractPathDetailsBuilder {
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
         if (edge.getEdge() != edgeId) {
             edgeId = edge.getEdge();
-            time = weighting.calcMillis(edge, false, -1);
+            time = weighting.calcMillis(edge, false, edgeId);
             return true;
         }
         return false;

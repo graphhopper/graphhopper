@@ -478,6 +478,10 @@ public class EncodingManager implements EncodedValueLookup {
         return flags;
     }
 
+    public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay) {
+        return handleWayTags(way, acceptWay, 0);
+    }
+
     /**
      * Processes way properties of different kind to determine speed and direction. Properties are
      * directly encoded in 8 bytes.
@@ -604,6 +608,8 @@ public class EncodingManager implements EncodedValueLookup {
             edge.setName(name);
         }
 
+        if (Double.isInfinite(edge.getDistance()))
+            throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
         for (AbstractFlagEncoder encoder : edgeEncoders) {
             encoder.applyWayTags(way, edge);
         }

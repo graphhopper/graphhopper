@@ -78,7 +78,7 @@ public class GraphHopperManaged implements Managed {
                 + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
     }
 
-    GraphHopper getGraphHopper() {
+    public GraphHopper getGraphHopper() {
         return graphHopper;
     }
 

@@ -17,9 +17,6 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import java.util.Collections;
-import java.util.List;
-
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
@@ -29,8 +26,11 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Collections;
+import java.util.List;
+
 public class OSMMaxAxleLoadParser implements TagParser {
-    
+
     private final DecimalEncodedValue maxAxleLoadEncoder;
     private final boolean enableLog;
 
@@ -44,16 +44,15 @@ public class OSMMaxAxleLoadParser implements TagParser {
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup,
-                    List<EncodedValue> registerNewEncodedValue) {
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
         registerNewEncodedValue.add(maxAxleLoadEncoder);
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access,
-                    long relationFlags) {
+                                 long relationFlags) {
         OSMValueExtractor.extractTons(edgeFlags, way, maxAxleLoadEncoder,
-                        Collections.singletonList("maxaxleload"), enableLog);
+                Collections.singletonList("maxaxleload"), enableLog);
         return edgeFlags;
     }
 }

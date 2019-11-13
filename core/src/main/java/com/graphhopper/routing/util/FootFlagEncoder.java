@@ -67,7 +67,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     public FootFlagEncoder(PMap properties) {
         this((int) properties.getLong("speed_bits", 4),
                 properties.getDouble("speed_factor", 1));
-        this.properties = properties;
         this.setBlockFords(properties.getBool("block_fords", true));
         this.speedTwoDirections = properties.getBool("speed_two_directions", false);
     }
@@ -154,7 +153,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
         // larger value required - ferries are faster than pedestrians
-        registerNewEncodedValue.add(speedEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
+        registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
         registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), speedTwoDirections));
     }
 
@@ -299,12 +298,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         if (!access.isFerry()) {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null) {
-                if ("hiking".equals(sacScale))
-                    setSpeed(edgeFlags, true, true, MEAN_SPEED);
-                else
-                    setSpeed(edgeFlags, true, true, SLOW_SPEED);
+                setSpeed(edgeFlags, true, true, "hiking".equals(sacScale)? MEAN_SPEED : SLOW_SPEED);
             } else {
-                setSpeed(edgeFlags, true, true, MEAN_SPEED);
+                setSpeed(edgeFlags, true, true, way.hasTag("highway", "steps")? MEAN_SPEED - 2 : MEAN_SPEED);
             }
         } else {
             double ferrySpeed = getFerrySpeed(way);
@@ -323,9 +319,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         if (speed > getMaxSpeed())
             speed = getMaxSpeed();
         if (fwd)
-            speedEncoder.setDecimal(false, edgeFlags, speed);
+            avgSpeedEnc.setDecimal(false, edgeFlags, speed);
         if (bwd && speedTwoDirections)
-            speedEncoder.setDecimal(true, edgeFlags, speed);
+            avgSpeedEnc.setDecimal(true, edgeFlags, speed);
     }
 
     protected int handlePriority(ReaderWay way, int priorityFromRelation) {
@@ -376,11 +372,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
-    @Override
-    public String toString() {
-        return "foot";
-    }
-
     /*
      * This method is a current hack, to allow ferries to be actually faster than our current storable maxSpeed.
      */
@@ -392,5 +383,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             return SHORT_TRIP_FERRY_SPEED;
         }
         return speed;
+    }
+
+    @Override
+    public String toString() {
+        return "foot";
     }
 }

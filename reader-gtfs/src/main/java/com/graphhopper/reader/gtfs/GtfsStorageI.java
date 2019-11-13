@@ -89,6 +89,8 @@ public interface GtfsStorageI {
 
     Map<GtfsStorage.FeedIdWithTimezone, Integer> getWritableTimeZones();
 
+    Map<Integer, GtfsStorage.FeedIdWithTimezone> getTimeZones();
+
     Map<Integer, byte[]> getTripDescriptors();
 
     Map<Integer, Integer> getStopSequences();

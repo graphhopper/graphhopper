@@ -84,7 +84,7 @@ public class RouteResource {
             @QueryParam("algorithm") @DefaultValue("") String algoStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
             @QueryParam(POINT_HINT) List<String> pointHints,
-            @QueryParam(CURBSIDE) List<String> curbSides,
+            @QueryParam(CURBSIDE) List<String> curbsides,
             @QueryParam(SNAP_PREVENTION) List<String> snapPreventions,
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
             @QueryParam("heading") List<Double> favoredHeadings,
@@ -107,7 +107,7 @@ public class RouteResource {
                     + "or equal to the number of points (" + requestPoints.size() + ")");
         if (pointHints.size() > 0 && pointHints.size() != requestPoints.size())
             throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass exactly one hint for every point, empty hints will be ignored");
-        if (curbSides.size() > 0 && curbSides.size() != requestPoints.size())
+        if (curbsides.size() > 0 && curbsides.size() != requestPoints.size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
 
         GHRequest request;
@@ -126,13 +126,13 @@ public class RouteResource {
 
         initHints(request.getHints(), uriInfo.getQueryParameters());
         translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
-        enableEdgeBasedIfThereAreCurbSides(curbSides, request);
+        enableEdgeBasedIfThereAreCurbsides(curbsides, request);
         request.setVehicle(vehicleStr).
                 setWeighting(weighting).
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
                 setPointHints(pointHints).
-                setCurbSides(curbSides).
+                setCurbsides(curbsides).
                 setSnapPreventions(snapPreventions).
                 setPathDetails(pathDetails).
                 getHints().
@@ -142,7 +142,6 @@ public class RouteResource {
 
         GHResponse ghResponse = graphHopper.route(request);
 
-        // TODO: Request logging and timing should perhaps be done somewhere outside
         float took = sw.stop().getSeconds();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
@@ -169,8 +168,57 @@ public class RouteResource {
         }
     }
 
-    private void enableEdgeBasedIfThereAreCurbSides(List<String> curbSides, GHRequest request) {
-        if (!curbSides.isEmpty()) {
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
+    public Response doPost(GHRequest request, @Context HttpServletRequest httpReq) {
+        if (request == null)
+            throw new IllegalArgumentException("Empty request");
+
+        StopWatch sw = new StopWatch().start();
+        GHResponse ghResponse = graphHopper.route(request);
+
+        boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
+        boolean writeGPX = "gpx".equalsIgnoreCase(request.getHints().get("type", "json"));
+        instructions = writeGPX || instructions;
+        boolean enableElevation = request.getHints().getBool("elevation", false);
+        boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
+        boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
+
+        /* default to false for the route part in next API version, see #437 */
+        boolean withRoute = request.getHints().getBool("gpx.route", true);
+        boolean withTrack = request.getHints().getBool("gpx.track", true);
+        boolean withWayPoints = request.getHints().getBool("gpx.waypoints", false);
+        String trackName = request.getHints().get("gpx.trackname", "GraphHopper Track");
+        String timeString = request.getHints().get("gpx.millis", "");
+        float took = sw.stop().getSeconds();
+        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
+        String logStr = httpReq.getQueryString() + " " + infoStr + " " + request.getPoints().size() + ", took:"
+                + took + ", " + request.getAlgorithm() + ", " + request.getWeighting() + ", " + request.getVehicle();
+
+        if (ghResponse.hasErrors()) {
+            logger.error(logStr + ", errors:" + ghResponse.getErrors());
+            throw new MultiException(ghResponse.getErrors());
+        } else {
+            logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
+                    + ", distance0: " + ghResponse.getBest().getDistance()
+                    + ", weight0: " + ghResponse.getBest().getRouteWeight()
+                    + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
+                    + ", points0: " + ghResponse.getBest().getPoints().getSize()
+                    + ", debugInfo: " + ghResponse.getDebugInfo());
+            return writeGPX ?
+                    gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
+                            header("X-GH-Took", "" + Math.round(took * 1000)).
+                            build()
+                    :
+                    Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+                            header("X-GH-Took", "" + Math.round(took * 1000)).
+                            build();
+        }
+    }
+
+    private void enableEdgeBasedIfThereAreCurbsides(List<String> curbsides, GHRequest request) {
+        if (!curbsides.isEmpty()) {
             if (!request.getHints().getBool(EDGE_BASED, true)) {
                 throw new IllegalArgumentException("Disabling '" + EDGE_BASED + "' when using '" + CURBSIDE + "' is not allowed");
             } else {

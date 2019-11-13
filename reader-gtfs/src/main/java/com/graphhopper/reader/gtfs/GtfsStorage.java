@@ -24,8 +24,6 @@ import com.conveyal.gtfs.model.FareRule;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.gtfs.fare.FixedFareAttributeLoader;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
 import org.mapdb.Bind;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
@@ -40,7 +38,7 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.zip.ZipFile;
 
-public class GtfsStorage implements GraphExtension, GtfsStorageI {
+public class GtfsStorage implements GtfsStorageI {
 
 	public static class Validity implements Serializable {
 		final BitSet validity;
@@ -114,44 +112,26 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 
 	private DB data;
 
-	@Override
-	public boolean isRequireNodeField() {
-		return true;
+	public static GtfsStorage createOrLoad(Directory directory) {
+		GtfsStorage gtfsStorage = new GtfsStorage(directory);
+		if (gtfsStorage.loadExisting()) {
+			return gtfsStorage;
+		} else {
+			gtfsStorage.create();
+			return gtfsStorage;
+		}
 	}
 
-	@Override
-	public boolean isRequireEdgeField() {
-		return false;
-	}
-
-	@Override
-	public int getDefaultNodeFieldValue() {
-		return 0;
-	}
-
-	@Override
-	public int getDefaultEdgeFieldValue() {
-		return EdgeType.HIGHWAY.ordinal();
-	}
-
-	@Override
-	public void init(Graph graph, Directory dir) {
+	private GtfsStorage(Directory dir) {
 		this.dir = dir;
 	}
 
-	@Override
-	public void setSegmentSize(int bytes) {
-
-	}
-
-	@Override
-	public GraphExtension copyTo(GraphExtension extStorage) {
-		throw new UnsupportedOperationException("copyTo not yet supported");
-	}
-
-	@Override
-	public boolean loadExisting() {
-		this.data = DBMaker.newFileDB(new File(dir.getLocation() + "/transit_schedule")).transactionDisable().mmapFileEnable().readOnly().make();
+	private boolean loadExisting() {
+		File file = new File(dir.getLocation() + "/transit_schedule");
+		if (!file.exists()) {
+			return false;
+		}
+		this.data = DBMaker.newFileDB(file).transactionDisable().mmapFileEnable().readOnly().make();
 		init();
 		for (String gtfsFeedId : this.gtfsFeedIds) {
 			GTFSFeed feed = new GTFSFeed(new File(dir.getLocation() + "/" + gtfsFeedId));
@@ -161,8 +141,8 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 		return true;
 	}
 
-	@Override
-	public GraphExtension create(long byteCount) {
+	private void create() {
+		this.dir.create();
 		final File file = new File(dir.getLocation() + "/transit_schedule");
 		try {
 			Files.deleteIfExists(file.toPath());
@@ -171,7 +151,6 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 		}
 		this.data = DBMaker.newFileDB(file).transactionDisable().mmapFileEnable().asyncWriteEnable().make();
 		init();
-		return this;
 	}
 
     private void init() {
@@ -219,11 +198,6 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 		feed.fares.putAll(fares);
 	}
 
-	@Override
-	public void flush() {
-	}
-
-	@Override
 	public void close() {
 		if (!isClosed) {
 			isClosed = true;
@@ -234,22 +208,13 @@ public class GtfsStorage implements GraphExtension, GtfsStorageI {
 		}
 	}
 
-	@Override
-	public boolean isClosed() {
-		return isClosed;
-	}
-
-	@Override
-	public long getCapacity() {
-		return 0;
-	}
-
     @Override
 	public Map<Validity, Integer> getOperatingDayPatterns() {
         return operatingDayPatterns;
     }
 
-	Map<Integer, FeedIdWithTimezone> getTimeZones() {
+    @Override
+	public Map<Integer, FeedIdWithTimezone> getTimeZones() {
 		return readableTimeZones;
 	}
 

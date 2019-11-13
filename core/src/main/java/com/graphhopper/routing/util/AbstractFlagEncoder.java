@@ -59,8 +59,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     private long encoderBit;
     protected BooleanEncodedValue accessEnc;
     protected BooleanEncodedValue roundaboutEnc;
-    protected DecimalEncodedValue speedEncoder;
-    protected PMap properties;
+    protected DecimalEncodedValue avgSpeedEnc;
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected int maxPossibleSpeed;
@@ -178,7 +177,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return shift;
     }
 
-    public boolean acceptsTurnRelation(OSMTurnRelation relation) { return true; }
+    public boolean acceptsTurnRelation(OSMTurnRelation relation) {
+        return true;
+    }
 
     /**
      * Analyze the properties of a relation and create the routing flags for the second read step.
@@ -199,6 +200,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * parsing step.
      */
     public abstract IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags);
+
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
+        return handleWayTags(edgeFlags, way, access, 0);
+    }
 
     /**
      * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
@@ -251,9 +256,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      */
     protected void flagsDefault(IntsRef edgeFlags, boolean forward, boolean backward) {
         if (forward)
-            speedEncoder.setDecimal(false, edgeFlags, speedDefault);
-        if (backward && speedEncoder.isStoreTwoDirections())
-            speedEncoder.setDecimal(true, edgeFlags, speedDefault);
+            avgSpeedEnc.setDecimal(false, edgeFlags, speedDefault);
+        if (backward && avgSpeedEnc.isStoreTwoDirections())
+            avgSpeedEnc.setDecimal(true, edgeFlags, speedDefault);
         accessEnc.setBool(false, edgeFlags, forward);
         accessEnc.setBool(true, edgeFlags, backward);
     }
@@ -519,9 +524,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     public final DecimalEncodedValue getAverageSpeedEnc() {
-        if (speedEncoder == null)
+        if (avgSpeedEnc == null)
             throw new NullPointerException("FlagEncoder " + toString() + " not yet initialized");
-        return speedEncoder;
+        return avgSpeedEnc;
     }
 
     public final BooleanEncodedValue getAccessEnc() {
@@ -541,7 +546,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
             throw new IllegalArgumentException("Speed cannot be negative or NaN: " + speed + ", flags:" + BitUtil.LITTLE.toBitString(edgeFlags));
 
         if (speed < speedFactor / 2) {
-            speedEncoder.setDecimal(reverse, edgeFlags, 0);
+            avgSpeedEnc.setDecimal(reverse, edgeFlags, 0);
             accessEnc.setBool(reverse, edgeFlags, false);
             return;
         }
@@ -549,7 +554,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         if (speed > getMaxSpeed())
             speed = getMaxSpeed();
 
-        speedEncoder.setDecimal(reverse, edgeFlags, speed);
+        avgSpeedEnc.setDecimal(reverse, edgeFlags, speed);
     }
 
     double getSpeed(IntsRef edgeFlags) {
@@ -557,7 +562,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     double getSpeed(boolean reverse, IntsRef edgeFlags) {
-        double speedVal = speedEncoder.getDecimal(reverse, edgeFlags);
+        double speedVal = avgSpeedEnc.getDecimal(reverse, edgeFlags);
         if (speedVal < 0)
             throw new IllegalStateException("Speed was negative!? " + speedVal);
 

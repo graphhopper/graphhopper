@@ -22,8 +22,8 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.index.LocationIndex;
@@ -32,13 +32,12 @@ import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.Translation;
+import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.util.Parameters.Routing.PASS_THROUGH;
-
-import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * Implementation of a route with no via points but multiple path lists ('alternatives').

@@ -58,7 +58,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         CHProfile baseProfile = CHProfile.nodeBased(new FastestWeighting(encoder));
         CHProfile trafficProfile = CHProfile.nodeBased(new RandomDeviationWeighting(baseProfile.getWeighting(), maxDeviationPercentage));
         Directory dir = new RAMDirectory("traffic-change-test");
-        ghStorage = new GraphHopperStorage(Arrays.asList(baseProfile, trafficProfile), dir, em, false, new GraphExtension.NoOpExtension());
+        ghStorage = new GraphHopperStorage(Arrays.asList(baseProfile, trafficProfile), dir, em, false);
         baseCHGraph = ghStorage.getCHGraph(baseProfile);
         trafficCHGraph = ghStorage.getCHGraph(trafficProfile);
     }

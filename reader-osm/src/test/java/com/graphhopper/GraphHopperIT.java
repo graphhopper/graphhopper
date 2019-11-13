@@ -37,7 +37,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.CurbSides.*;
+import static com.graphhopper.util.Parameters.Curbsides.*;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.*;
 
@@ -173,6 +173,124 @@ public class GraphHopperIT {
         assertEquals("make a U-turn onto Avenue Princesse Grace", il.get(1).getTurnDescription(tr));
     }
 
+    private void testImportCloseAndLoad(boolean ch, boolean lm, boolean sort) {
+
+        String tmpOsmFile = DIR + "/monaco.osm.gz";
+        String tmpImportVehicles = "foot";
+
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(tmpOsmFile).
+                setStoreOnFlush(true).
+                setCHEnabled(ch).
+                setSortGraph(sort).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create(tmpImportVehicles));
+        if (ch) {
+            tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr).setDisablingAllowed(true);
+        }
+        if (lm) {
+            tmpHopper.getLMFactoryDecorator().
+                    setEnabled(true).
+                    setWeightingsAsStrings(Collections.singletonList(weightCalcStr)).
+                    setDisablingAllowed(true);
+        }
+        tmpHopper.importAndClose();
+        tmpHopper = new GraphHopperOSM().
+                setOSMFile(tmpOsmFile).
+                setStoreOnFlush(true).
+                setCHEnabled(ch).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create(tmpImportVehicles));
+        if (ch) {
+            tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr).setDisablingAllowed(true);
+        }
+        if (lm) {
+            tmpHopper.getLMFactoryDecorator().
+                    setEnabled(true).
+                    setWeightingsAsStrings(Collections.singletonList(weightCalcStr)).
+                    setDisablingAllowed(true);
+        }
+        tmpHopper.importOrLoad();
+
+        // same query as in testMonacoWithInstructions
+        // visited nodes >700 for flexible, <120 for CH or LM
+
+        if (ch) {
+            GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                    setWeighting(weightCalcStr).
+                    setVehicle(tmpImportVehicles);
+            req.getHints().put(CH.DISABLE, false);
+            req.getHints().put(Landmark.DISABLE, true);
+            GHResponse rsp = tmpHopper.route(req);
+
+            PathWrapper bestPath = rsp.getBest();
+            long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
+            assertNotEquals(sum, 0);
+            assertTrue("Too many nodes visited " + sum, sum < 120);
+            assertEquals(3437.6, bestPath.getDistance(), .1);
+            assertEquals(87, bestPath.getPoints().getSize());
+        }
+
+        if (lm) {
+            GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                    setVehicle(tmpImportVehicles).
+                    setWeighting(weightCalcStr).
+                    setAlgorithm(Parameters.Algorithms.ASTAR_BI);
+            req.getHints().put(CH.DISABLE, true);
+            req.getHints().put(Landmark.DISABLE, false);
+            GHResponse rsp = tmpHopper.route(req);
+
+            PathWrapper bestPath = rsp.getBest();
+            long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
+            assertNotEquals(sum, 0);
+            assertTrue("Too many nodes visited " + sum, sum < 120);
+            assertEquals(3437.6, bestPath.getDistance(), .1);
+            assertEquals(87, bestPath.getPoints().getSize());
+        }
+
+        // flexible
+        GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setVehicle(tmpImportVehicles).
+                setWeighting(weightCalcStr);
+        req.getHints().put(CH.DISABLE, true);
+        req.getHints().put(Landmark.DISABLE, true);
+        GHResponse rsp = tmpHopper.route(req);
+
+        PathWrapper bestPath = rsp.getBest();
+        long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        assertNotEquals(sum, 0);
+        assertTrue("Too few nodes visited " + sum, sum > 120);
+        assertEquals(3437.6, bestPath.getDistance(), .1);
+        assertEquals(87, bestPath.getPoints().getSize());
+
+        tmpHopper.close();
+    }
+
+    @Test
+    public void testImportThenLoadCH() {
+        testImportCloseAndLoad(true, false, false);
+    }
+
+    @Test
+    public void testImportThenLoadLM() {
+        testImportCloseAndLoad(false, true, false);
+    }
+
+    @Test
+    public void testImportThenLoadCHLM() {
+        testImportCloseAndLoad(true, true, false);
+    }
+
+    @Test
+    public void testImportThenLoadCHLMAndSort() {
+        testImportCloseAndLoad(true, true, true);
+    }
+
+    @Test
+    public void testImportThenLoadFlexible() {
+        testImportCloseAndLoad(false, false, false);
+    }
+
     @Test
     public void testAlternativeRoutes() {
         GHRequest req = new GHRequest(43.729057, 7.41251, 43.740298, 7.423561).
@@ -183,7 +301,7 @@ public class GraphHopperIT {
         assertEquals(2, rsp.getAll().size());
 
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
-        assertEquals(1356, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(1432, rsp.getAll().get(1).getTime() / 1000);
 
         req.getHints().put("alternative_route.max_paths", "3");
         req.getHints().put("alternative_route.min_plateau_factor", "0.1");
@@ -192,8 +310,8 @@ public class GraphHopperIT {
         assertEquals(3, rsp.getAll().size());
 
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
-        assertEquals(1356, rsp.getAll().get(1).getTime() / 1000);
-        assertEquals(1416, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(1432, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(1492, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -449,10 +567,11 @@ public class GraphHopperIT {
         Map<String, List<PathDetail>> details = arsp.getPathDetails();
         assertEquals(1, details.size());
         List<PathDetail> detailList = details.get(Parameters.Details.AVERAGE_SPEED);
-        assertEquals(1, detailList.size());
+        assertEquals(9, detailList.size());
         assertEquals(5.0, detailList.get(0).getValue());
         assertEquals(0, detailList.get(0).getFirst());
-        assertEquals(arsp.getPoints().size() - 1, detailList.get(0).getLast());
+        assertEquals(3.0, detailList.get(1).getValue());
+        assertEquals(arsp.getPoints().size() - 1, detailList.get(8).getLast());
     }
 
     @Test
@@ -465,8 +584,8 @@ public class GraphHopperIT {
         GHResponse rsp = hopper.route(req);
 
         PathWrapper arsp = rsp.getBest();
-        assertEquals(874., arsp.getDistance(), 10.);
-        assertEquals(31, arsp.getPoints().getSize());
+        assertEquals(839., arsp.getDistance(), 10.);
+        assertEquals(27, arsp.getPoints().getSize());
     }
 
     @Test
@@ -840,19 +959,20 @@ public class GraphHopperIT {
     @Test
     public void testIfCHIsUsed() {
         // route directly after import
-        executeCHFootRoute();
+        executeCHFootRoute(false);
 
         // now only load is called
-        executeCHFootRoute();
+        executeCHFootRoute(false);
     }
 
-    private void executeCHFootRoute() {
+    private void executeCHFootRoute(boolean sort) {
         String tmpOsmFile = DIR + "/monaco.osm.gz";
         String tmpImportVehicles = "foot";
 
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
+                setSortGraph(sort).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(EncodingManager.create(tmpImportVehicles));
         tmpHopper.getCHFactoryDecorator().setCHProfileStrings(weightCalcStr);
@@ -874,6 +994,15 @@ public class GraphHopperIT {
     }
 
     @Test
+    public void testSortWhileImporting() {
+        // route after importing a sorted graph
+        executeCHFootRoute(true);
+
+        // route after loading a sorted graph
+        executeCHFootRoute(false);
+    }
+
+    @Test
     public void testRoundTour() {
         GHRequest rq = new GHRequest().
                 addPoint(new GHPoint(43.741069, 7.426854), 50).
@@ -886,9 +1015,9 @@ public class GraphHopperIT {
 
         assertEquals(1, rsp.getAll().size());
         PathWrapper pw = rsp.getBest();
-        assertEquals(1.45, rsp.getBest().getDistance() / 1000f, .01);
-        assertEquals(17, rsp.getBest().getTime() / 1000f / 60, 1);
-        assertEquals(63, pw.getPoints().size());
+        assertEquals(1.49, rsp.getBest().getDistance() / 1000f, .01);
+        assertEquals(19, rsp.getBest().getTime() / 1000f / 60, 1);
+        assertEquals(68, pw.getPoints().size());
     }
 
     @Test
@@ -1077,8 +1206,8 @@ public class GraphHopperIT {
         assertMoscowNodeBased(tmpHopper, "false", true);
         GHResponse rsp = runMoscow(tmpHopper, "true", true);
         assertEquals(1, rsp.getErrors().size());
-        assertTrue(rsp.getErrors().toString().contains("Found a node-based CH profile"));
-        assertTrue(rsp.getErrors().toString().contains("but requested edge-based CH"));
+        assertTrue("unexpected error: " + rsp.getErrors().toString(), rsp.getErrors().toString().contains(
+                "Cannot find matching CH profile for your request.\nrequested:  *|car|edge_based=true|u_turn_costs=*\navailable: [fastest|car|edge_based=false|u_turn_costs=-1]"));
     }
 
     @Test
@@ -1100,8 +1229,8 @@ public class GraphHopperIT {
         assertMoscowEdgeBased(tmpHopper, "true", true);
         GHResponse rsp = runMoscow(tmpHopper, "false", true);
         assertTrue(rsp.hasErrors());
-        assertTrue(rsp.getErrors().toString().contains("Found 1 edge-based CH profile"));
-        assertTrue(rsp.getErrors().toString().contains("but requested node-based CH"));
+        assertTrue("unexpected error: " + rsp.getErrors(), rsp.getErrors().toString().contains(
+                "Cannot find matching CH profile for your request.\nrequested:  *|car|edge_based=false|u_turn_costs=*\navailable: [fastest|car|edge_based=true|u_turn_costs=-1]"));
     }
 
     private GHResponse assertMoscowNodeBased(GraphHopper tmpHopper, String edgeBasedParam, boolean ch) {
@@ -1157,7 +1286,7 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testCurbSides() {
+    public void testCurbsides() {
         GraphHopper h = new GraphHopperOSM().
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(true).
@@ -1176,18 +1305,18 @@ public class GraphHopperIT {
         final String kulmbach = "Kulmbacher Straße, KU 18";
         final String adamSeiler = "Adam-Seiler-Straße";
         final String friedhof = "Friedhofsweg";
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 344, asList(itz, rotmain, rotmain));
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 1564, asList(itz, rotmain, rotmain, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, rotmain));
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 1199, asList(itz, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, itz, rotmain, rotmain));
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 266, asList(itz, bayreuth, rotmain));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 344, asList(itz, rotmain, rotmain));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 1564, asList(itz, rotmain, rotmain, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, rotmain));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 1199, asList(itz, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, itz, rotmain, rotmain));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 266, asList(itz, bayreuth, rotmain));
         // without restricting anything we get the shortest path
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 266, asList(itz, bayreuth, rotmain));
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_ANY, ""), 266, asList(itz, bayreuth, rotmain));
-        assertCurbSidesPath(h, p, q, Collections.<String>emptyList(), 266, asList(itz, bayreuth, rotmain));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 266, asList(itz, bayreuth, rotmain));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_ANY, ""), 266, asList(itz, bayreuth, rotmain));
+        assertCurbsidesPath(h, p, q, Collections.<String>emptyList(), 266, asList(itz, bayreuth, rotmain));
     }
 
     @Test
-    public void testForceCurbSides() {
+    public void testForceCurbsides() {
         GraphHopper h = new GraphHopperOSM().
                 setOSMFile(DIR + "/monaco.osm.gz").
                 setCHEnabled(true).
@@ -1205,26 +1334,26 @@ public class GraphHopperIT {
         GHPoint q = new GHPoint(43.737949, 7.423523);
         final String boulevard = "Boulevard de Suisse";
         final String avenue = "Avenue de la Costa";
-        assertCurbSidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), "Impossible curbside constraint: 'curbside=right' at point 0", true);
-        assertCurbSidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=right' at point 0", true);
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue));
-        assertCurbSidesPathError(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=left' at point 1", true);
+        assertCurbsidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), "Impossible curbside constraint: 'curbside=right' at point 0", true);
+        assertCurbsidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=right' at point 0", true);
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue));
+        assertCurbsidesPathError(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=left' at point 1", true);
         // without restricting anything we get the shortest path
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 463, asList(boulevard, avenue, avenue));
-        assertCurbSidesPath(h, p, q, Collections.<String>emptyList(), 463, asList(boulevard, avenue, avenue));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 463, asList(boulevard, avenue, avenue));
+        assertCurbsidesPath(h, p, q, Collections.<String>emptyList(), 463, asList(boulevard, avenue, avenue));
         // if we set force_curbside to false impossible curbside constraints will be ignored
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue), false);
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 463, asList(boulevard, avenue, avenue), false);
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue), false);
-        assertCurbSidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 463, asList(boulevard, avenue, avenue), false);
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue), false);
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 463, asList(boulevard, avenue, avenue), false);
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue), false);
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 463, asList(boulevard, avenue, avenue), false);
     }
 
-    private void assertCurbSidesPath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbSides, int expectedDistance, List<String> expectedStreets) {
-        assertCurbSidesPath(tmpHopper, source, target, curbSides, expectedDistance, expectedStreets, true);
+    private void assertCurbsidesPath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbsides, int expectedDistance, List<String> expectedStreets) {
+        assertCurbsidesPath(tmpHopper, source, target, curbsides, expectedDistance, expectedStreets, true);
     }
 
-    private void assertCurbSidesPath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbSides, int expectedDistance, List<String> expectedStreets, boolean force) {
-        GHResponse rsp = calcCurbSidePath(tmpHopper, source, target, curbSides, force);
+    private void assertCurbsidesPath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbsides, int expectedDistance, List<String> expectedStreets, boolean force) {
+        GHResponse rsp = calcCurbsidePath(tmpHopper, source, target, curbsides, force);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         PathWrapper path = rsp.getBest();
         List<String> streets = new ArrayList<>(path.getInstructions().size());
@@ -1237,19 +1366,46 @@ public class GraphHopperIT {
         assertEquals(expectedDistance, path.getDistance(), 1);
     }
 
-    private void assertCurbSidesPathError(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbSides, String errorMessage, boolean force) {
-        GHResponse rsp = calcCurbSidePath(tmpHopper, source, target, curbSides, force);
+    private void assertCurbsidesPathError(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbsides, String errorMessage, boolean force) {
+        GHResponse rsp = calcCurbsidePath(tmpHopper, source, target, curbsides, force);
         assertTrue(rsp.hasErrors());
         assertTrue("unexpected error. expected message containing: " + errorMessage + ", but got: " +
                 rsp.getErrors(), rsp.getErrors().toString().contains(errorMessage));
     }
 
-    private GHResponse calcCurbSidePath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbSides, boolean force) {
+    private GHResponse calcCurbsidePath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbsides, boolean force) {
         GHRequest req = new GHRequest(source, target);
         req.getHints().put(Routing.EDGE_BASED, true);
         req.getHints().put(Routing.FORCE_CURBSIDE, force);
-        req.setCurbSides(curbSides);
+        req.setCurbsides(curbsides);
         return tmpHopper.route(req);
+    }
+
+    @Test
+    public void testCHWithFiniteUTurnCostsAndMissingWeighting() {
+        GraphHopper h = new GraphHopperOSM().
+                setDataReaderFile(DIR + "/monaco.osm.gz").
+                setCHEnabled(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(EncodingManager.create("car|turn_costs=true"));
+        h.getCHFactoryDecorator()
+                .setCHProfileStrings("fastest|u_turn_costs=40")
+                .setEdgeBasedCHMode(CHAlgoFactoryDecorator.EdgeBasedCHMode.EDGE_OR_NODE);
+        h.importOrLoad();
+
+        GHPoint p = new GHPoint(43.73397, 7.414173);
+        GHPoint q = new GHPoint(43.73222, 7.415557);
+        GHRequest req = new GHRequest(p, q);
+        // note that we do *not* set the weighting on the request, it will be determined automatically from the
+        // CH profile, see #1788
+        // we force the start/target directions such that there are u-turns right after we start and right before
+        // we reach the target
+        req.setCurbsides(Arrays.asList("right", "right"));
+        GHResponse res = h.route(req);
+        assertFalse("routing should not fail", res.hasErrors());
+        assertEquals(266.8, res.getBest().getRouteWeight(), 0.1);
+        assertEquals(2116, res.getBest().getDistance(), 1);
+        assertEquals(266800, res.getBest().getTime(), 1000);
     }
 
 }

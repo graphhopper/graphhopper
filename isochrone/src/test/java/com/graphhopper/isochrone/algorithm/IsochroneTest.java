@@ -4,10 +4,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.After;
@@ -31,8 +28,7 @@ public class IsochroneTest {
 
     @Before
     public void setUp() {
-        graph = new GraphHopperStorage(Collections.<Weighting>emptyList(),
-                new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension());
+        graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, false);
         graph.create(1000);
     }
 

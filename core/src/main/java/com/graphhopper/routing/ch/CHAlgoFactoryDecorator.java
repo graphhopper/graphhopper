@@ -26,7 +26,6 @@ import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.CH;
-import com.graphhopper.util.Parameters.Routing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +33,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 
-import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.CH.DISABLE;
 
@@ -62,7 +60,8 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     public CHAlgoFactoryDecorator() {
         setPreparationThreads(1);
-        setCHProfilesAsStrings(Arrays.asList(getDefaultProfile()));
+        // use fastest by default
+        setCHProfilesAsStrings(Collections.singletonList("fastest"));
     }
 
     @Override
@@ -228,10 +227,6 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         return this;
     }
 
-    private String getDefaultProfile() {
-        return chProfileStrings.isEmpty() ? "fastest" : chProfileStrings.iterator().next();
-    }
-
     public List<PrepareContractionHierarchies> getPreparations() {
         return preparations;
     }
@@ -245,27 +240,26 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (preparations.isEmpty())
             throw new IllegalStateException("No preparations added to this decorator");
 
-        if (map.getWeighting().isEmpty())
-            map.setWeighting(getDefaultProfile());
-
         return getPreparation(map);
     }
 
     public PrepareContractionHierarchies getPreparation(HintsMap map) {
-        Boolean edgeBased = map.has(Routing.EDGE_BASED) ? map.getBool(Routing.EDGE_BASED, false) : null;
-        Integer uTurnCosts = map.has(Routing.U_TURN_COSTS) ? map.getInt(Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS) : null;
-        CHProfile selectedProfile = selectProfile(map, edgeBased, uTurnCosts);
+        CHProfile selectedProfile = selectProfile(map);
+        return getPreparation(selectedProfile);
+    }
+
+    public PrepareContractionHierarchies getPreparation(CHProfile chProfile) {
         for (PrepareContractionHierarchies p : getPreparations()) {
-            if (p.getCHProfile().equals(selectedProfile)) {
+            if (p.getCHProfile().equals(chProfile)) {
                 return p;
             }
         }
-        throw new IllegalStateException("Could not find CH preparation for selected profile: " + selectedProfile);
+        throw new IllegalStateException("Could not find CH preparation for profile: " + chProfile);
     }
 
-    private CHProfile selectProfile(HintsMap map, Boolean edgeBased, Integer uTurnCosts) {
+    private CHProfile selectProfile(HintsMap map) {
         try {
-            return CHProfileSelector.select(chProfiles, map, edgeBased, uTurnCosts);
+            return CHProfileSelector.select(chProfiles, map);
         } catch (CHProfileSelectionException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
@@ -284,7 +278,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         this.threadPool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
     }
 
-    public void prepare(final StorableProperties properties) {
+    public void prepare(final StorableProperties properties, final boolean closeEarly) {
         ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;
         for (final PrepareContractionHierarchies prepare : getPreparations()) {
@@ -297,6 +291,9 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                     // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                     Thread.currentThread().setName(name);
                     prepare.doWork();
+                    if (closeEarly)
+                        prepare.close();
+
                     properties.put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
                 }
             }, name);

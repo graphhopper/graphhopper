@@ -45,7 +45,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static com.graphhopper.reader.gtfs.Label.reverseEdges;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 class TripFromLabel {
@@ -120,19 +119,6 @@ class TripFromLabel {
         final List<List<Label.Transition>> partitions = getPartitions(transitions);
         final List<Trip.Leg> legs = getLegs(tr, queryGraph, weighting, partitions);
         return legs;
-    }
-
-    List<Label.Transition> getTransitions(boolean arriveBy, PtFlagEncoder encoder, Graph queryGraph, Label solution) {
-        List<Label.Transition> transitions = new ArrayList<>();
-        if (arriveBy) {
-            reverseEdges(solution, queryGraph, encoder, false)
-                    .forEach(transitions::add);
-        } else {
-            reverseEdges(solution, queryGraph, encoder, true)
-                    .forEach(transitions::add);
-            Collections.reverse(transitions);
-        }
-        return transitions;
     }
 
     private List<List<Label.Transition>> getPartitions(List<Label.Transition> transitions) {
@@ -370,8 +356,8 @@ class TripFromLabel {
             return result;
         } else {
             InstructionList instructions = new InstructionList(tr);
-            InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(path.get(1).edge.edgeIteratorState.getBaseNode(), graph,
-                    weighting, weighting.getFlagEncoder(), weighting.getFlagEncoder().getBooleanEncodedValue(Roundabout.KEY), graph.getNodeAccess(), tr, instructions);
+            InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(graph,
+                    weighting, weighting.getFlagEncoder().getBooleanEncodedValue(Roundabout.KEY), tr, instructions);
             int prevEdgeId = -1;
             for (int i = 1; i < path.size(); i++) {
                 if (path.get(i).edge.edgeType != GtfsStorage.EdgeType.HIGHWAY) {

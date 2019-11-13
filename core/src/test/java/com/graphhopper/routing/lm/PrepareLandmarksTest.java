@@ -20,11 +20,11 @@ package com.graphhopper.routing.lm;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
@@ -60,7 +60,7 @@ public class PrepareLandmarksTest
         tm = TraversalMode.NODE_BASED;
         encodingManager = EncodingManager.create(encoder);
         GraphHopperStorage tmp = new GraphHopperStorage(new RAMDirectory(),
-                encodingManager, false, new GraphExtension.NoOpExtension());
+                encodingManager, false);
         tmp.create(1000);
         graph = tmp;
     }
@@ -164,10 +164,9 @@ public class PrepareLandmarksTest
 
         // landmarks with A* and a QueryGraph. We expect slightly less optimal as two more cycles needs to be traversed
         // due to the two more virtual nodes but this should not harm in practise
-        QueryGraph qGraph = new QueryGraph(graph);
         QueryResult fromQR = index.findClosest(-0.0401, 0.2201, EdgeFilter.ALL_EDGES);
         QueryResult toQR = index.findClosest(-0.2401, 0.0601, EdgeFilter.ALL_EDGES);
-        qGraph.lookup(fromQR, toQR);
+        QueryGraph qGraph = QueryGraph.lookup(graph, fromQR, toQR);
         RoutingAlgorithm qGraphOneDirAlgo = prepare.getDecoratedAlgorithm(qGraph,
                 new AStar(qGraph, weighting, tm), opts);
         path = qGraphOneDirAlgo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());

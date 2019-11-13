@@ -27,14 +27,11 @@ import com.conveyal.gtfs.model.Frequency;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.routing.VirtualEdgeIteratorState;
+import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
@@ -43,7 +40,6 @@ import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -97,7 +93,7 @@ public class RealtimeFeed {
         return new RealtimeFeed(staticGtfs, Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), staticGtfs.getOperatingDayPatterns(), staticGtfs.getWritableTimeZones());
     }
 
-    public static RealtimeFeed fromProtobuf(GraphHopperStorage graphHopperStorage, GtfsStorage staticGtfs, PtFlagEncoder encoder, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
+    public static RealtimeFeed fromProtobuf(GraphHopperStorage graphHopperStorage, GtfsStorage staticGtfs, PtEncodedValues encoder, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
         final IntHashSet blockedEdges = new IntHashSet();
         final IntLongHashMap delaysForBoardEdges = new IntLongHashMap();
         final IntLongHashMap delaysForAlightEdges = new IntLongHashMap();
@@ -106,16 +102,16 @@ public class RealtimeFeed {
             int firstEdge = graphHopperStorage.getAllEdges().length();
             EncodingManager encodingManager = graphHopperStorage.getEncodingManager();
             final NodeAccess nodeAccess = new NodeAccess() {
-                IntIntHashMap additionalNodeFields = new IntIntHashMap();
+                IntIntHashMap turnCostIndices = new IntIntHashMap();
 
                 @Override
-                public int getAdditionalNodeField(int nodeId) {
+                public int getTurnCostIndex(int nodeId) {
                     return 0;
                 }
 
                 @Override
-                public void setAdditionalNodeField(int nodeId, int additionalValue) {
-                    additionalNodeFields.put(nodeId, additionalValue);
+                public void setTurnCostIndex(int nodeId, int additionalValue) {
+                    turnCostIndices.put(nodeId, additionalValue);
                 }
 
                 @Override
@@ -246,7 +242,7 @@ public class RealtimeFeed {
             }
 
             @Override
-            public GraphExtension getExtension() {
+            public TurnCostExtension getTurnCostExtension() {
                 throw new RuntimeException();
             }
 
@@ -286,6 +282,11 @@ public class RealtimeFeed {
                 @Override
                 public Map<GtfsStorage.FeedIdWithTimezone, Integer> getWritableTimeZones() {
                     return writableTimeZones;
+                }
+
+                @Override
+                public Map<Integer, GtfsStorage.FeedIdWithTimezone> getTimeZones() {
+                    return staticGtfs.getTimeZones();
                 }
 
                 @Override
@@ -330,7 +331,7 @@ public class RealtimeFeed {
                     return staticGtfs.getRoutes();
                 }
             };
-            final GtfsReader gtfsReader = new GtfsReader(feedKey, overlayGraph, gtfsStorage, encoder, null);
+            final GtfsReader gtfsReader = new GtfsReader(feedKey, overlayGraph, graphHopperStorage.getEncodingManager(), gtfsStorage, null);
             Instant timestamp = Instant.ofEpochSecond(feedMessage.getHeader().getTimestamp());
             LocalDate dateToChange = timestamp.atZone(timezone).toLocalDate(); //FIXME
             BitSet validOnDay = new BitSet();

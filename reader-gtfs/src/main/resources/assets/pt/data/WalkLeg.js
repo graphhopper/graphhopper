@@ -16,8 +16,23 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.gtfs;
+import Leg, { LegMode } from "./Leg.js";
 
-enum NodeType {
-    REGULAR, STOP_EXIT_NODE, STOP_ENTER_NODE, INTERNAL_PT;
+export default class WalkLeg extends Leg {
+  constructor(apiLeg) {
+    super(apiLeg, LegMode.WALK);
+  }
+
+  initializeTurns(apiLeg) {
+    return apiLeg.instructions.map(instruction => {
+      return {
+        description: instruction.text,
+        sign: instruction.sign
+      };
+    });
+  }
+
+  initializeDistance(apiLeg) {
+    return Math.round(apiLeg.distance / 100 * 100) + "m";
+  }
 }

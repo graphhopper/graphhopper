@@ -26,7 +26,9 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RAMDirectory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -41,13 +43,16 @@ import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 public class AlternativeRouteTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
-    private final EncodingManager em = EncodingManager.create(carFE);
-    private final TurnCostExtension turnCostExtension = new TurnCostExtension();
-    private final Weighting weighting = new TurnWeighting(new FastestWeighting(carFE), turnCostExtension);
+    private final Weighting weighting;
     private final TraversalMode traversalMode;
+    private final GraphHopperStorage graph;
 
     public AlternativeRouteTest(TraversalMode tMode) {
         this.traversalMode = tMode;
+        EncodingManager em = EncodingManager.create(carFE);
+        graph = new GraphHopperStorage(new RAMDirectory(), em, false, true);
+        graph.create(1000);
+        weighting = new TurnWeighting(new FastestWeighting(carFE), graph.getTurnCostExtension());
     }
 
     /**
@@ -61,10 +66,7 @@ public class AlternativeRouteTest {
         });
     }
 
-    public GraphHopperStorage createTestGraph(boolean fullGraph, EncodingManager tmpEM) {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false, turnCostExtension);
-        graph.create(1000);
-
+    public static void initTestGraph(Graph graph) {
         /* 9
          _/\
          1  2-3-4-10
@@ -74,8 +76,7 @@ public class AlternativeRouteTest {
          */
         graph.edge(1, 9, 1, true);
         graph.edge(9, 2, 1, true);
-        if (fullGraph)
-            graph.edge(2, 3, 1, true);
+        graph.edge(2, 3, 1, true);
         graph.edge(3, 4, 1, true);
         graph.edge(4, 10, 1, true);
 
@@ -84,8 +85,7 @@ public class AlternativeRouteTest {
         graph.edge(6, 7, 1, true);
         graph.edge(7, 8, 1, true);
 
-        if (fullGraph)
-            graph.edge(1, 5, 2, true);
+        graph.edge(1, 5, 2, true);
         graph.edge(6, 3, 1, true);
         graph.edge(4, 8, 1, true);
 
@@ -100,20 +100,19 @@ public class AlternativeRouteTest {
         updateDistancesFor(graph, 3, 0.05, 0.15);
         updateDistancesFor(graph, 4, 0.05, 0.25);
         updateDistancesFor(graph, 10, 0.05, 0.30);
-        return graph;
     }
 
     @Test
     public void testCalcAlternatives() {
-        GraphHopperStorage g = createTestGraph(true, em);
-        AlternativeRoute altDijkstra = new AlternativeRoute(g, weighting, traversalMode);
+        initTestGraph(graph);
+        AlternativeRoute altDijkstra = new AlternativeRoute(graph, weighting, traversalMode);
         altDijkstra.setMaxShareFactor(0.5);
         altDijkstra.setMaxWeightFactor(2);
         List<AlternativeRoute.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4);
         checkAlternatives(pathInfos);
         assertEquals(2, pathInfos.size());
 
-        DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g, weighting, traversalMode);
+        DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(graph, weighting, traversalMode);
         Path bestPath = dijkstra.calcPath(5, 4);
 
         Path bestAlt = pathInfos.get(0).getPath();
@@ -133,8 +132,8 @@ public class AlternativeRouteTest {
 
     @Test
     public void testCalcAlternatives2() {
-        Graph g = createTestGraph(true, em);
-        AlternativeRoute altDijkstra = new AlternativeRoute(g, weighting, traversalMode);
+        initTestGraph(graph);
+        AlternativeRoute altDijkstra = new AlternativeRoute(graph, weighting, traversalMode);
         altDijkstra.setMaxPaths(3);
         altDijkstra.setMaxShareFactor(0.7);
         altDijkstra.setMinPlateauFactor(0.15);
@@ -169,13 +168,13 @@ public class AlternativeRouteTest {
 
     @Test
     public void testDisconnectedAreas() {
-        Graph g = createTestGraph(true, em);
+        initTestGraph(graph);
 
         // one single disconnected node
-        updateDistancesFor(g, 20, 0.00, -0.01);
+        updateDistancesFor(graph, 20, 0.00, -0.01);
 
         Weighting weighting = new FastestWeighting(carFE);
-        AlternativeBidirSearch altDijkstra = new AlternativeBidirSearch(g, weighting, traversalMode, 1);
+        AlternativeBidirSearch altDijkstra = new AlternativeBidirSearch(graph, weighting, traversalMode, 1);
         Path path = altDijkstra.calcPath(1, 20);
         assertFalse(path.isFound());
 

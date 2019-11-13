@@ -27,7 +27,7 @@ public class TurnWeightingTest {
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager).create();
         weighting = new FastestWeighting(encoder);
-        turnCostExt = (TurnCostExtension) graph.getExtension();
+        turnCostExt = graph.getTurnCostExtension();
     }
 
     @Test
