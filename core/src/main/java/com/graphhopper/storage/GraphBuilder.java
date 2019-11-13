@@ -44,6 +44,7 @@ public class GraphBuilder {
 
     public GraphBuilder(EncodingManager encodingManager) {
         this.encodingManager = encodingManager;
+        this.turnCosts = encodingManager.needsTurnCostsSupport();
     }
 
     public GraphBuilder setCHProfiles(List<CHProfile> chProfiles) {
@@ -102,8 +103,7 @@ public class GraphBuilder {
      * {@link #create} directly.
      */
     public GraphHopperStorage build() {
-        boolean withTurnCosts = encodingManager.needsTurnCostsSupport() || turnCosts;
-        return new GraphHopperStorage(chProfiles, dir, encodingManager, elevation, withTurnCosts, segmentSize);
+        return new GraphHopperStorage(chProfiles, dir, encodingManager, elevation, turnCosts, segmentSize);
     }
 
     /**
