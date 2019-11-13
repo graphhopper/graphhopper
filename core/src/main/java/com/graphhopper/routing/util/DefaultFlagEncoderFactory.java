@@ -57,6 +57,9 @@ public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
         if (name.equals(MOTORCYCLE))
             return new MotorcycleFlagEncoder(configuration);
 
+        if (name.equals(WHEELCHAIR))
+            return new WheelchairFlagEncoder(configuration);
+
         throw new IllegalArgumentException("entry in encoder list not supported " + name);
     }
 }

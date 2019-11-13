@@ -195,16 +195,6 @@ public class EncodingManagerTest {
                 > mtbEncoder.relationCodeEncoder.getValue(flags.ints[0]));
     }
 
-    public void testFullBitMask() {
-        BitUtil bitUtil = BitUtil.LITTLE;
-        EncodingManager manager = EncodingManager.create("car,foot");
-        AbstractFlagEncoder carr = (AbstractFlagEncoder) manager.getEncoder("car");
-        assertTrue(bitUtil.toBitString(carr.getNodeBitMask()).endsWith("00000000001111111"));
-
-        AbstractFlagEncoder foot = (AbstractFlagEncoder) manager.getEncoder("foot");
-        assertTrue(bitUtil.toBitString(foot.getNodeBitMask()).endsWith("00011111110000000"));
-    }
-
     @Test
     public void testFixWayName() {
         assertEquals("B8, B12", EncodingManager.fixWayName("B8;B12"));

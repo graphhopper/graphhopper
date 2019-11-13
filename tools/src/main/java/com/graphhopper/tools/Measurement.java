@@ -135,7 +135,8 @@ public class Measurement {
         };
 
         hopper.init(args).
-                forDesktop();
+                // use server to allow path simplification
+                        forServer();
         if (cleanGraph) {
             hopper.clean();
         }
@@ -163,7 +164,7 @@ public class Measurement {
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
             if (runSlow) {
                 printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr,
-                        true, false, -1, true, false);
+                        true, false, -1, true, false, false);
             }
 
             if (hopper.getLMFactoryDecorator().isEnabled()) {
@@ -172,7 +173,7 @@ public class Measurement {
                 int activeLMCount = 12;
                 for (; activeLMCount > 3; activeLMCount -= 4) {
                     printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr,
-                            true, false, activeLMCount, true, false);
+                            true, false, activeLMCount, true, false, false);
                 }
 
                 // compareRouting(hopper, vehicleStr, count / 5);
@@ -187,7 +188,7 @@ public class Measurement {
                     // try just one constellation, often ~4-6 is best
                     int lmCount = 5;
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr,
-                            true, false, lmCount, true, false);
+                            true, false, lmCount, true, false, false);
                 }
 
                 isLM = false;
@@ -198,19 +199,23 @@ public class Measurement {
                     fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                     printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr,
-                            true, false, -1, true, false);
+                            true, false, -1, true, false, false);
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_with_hints", vehicleStr,
-                            true, true, -1, true, false);
+                            true, true, -1, true, false, false);
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr,
-                            true, false, -1, false, false);
+                            true, false, -1, false, false, false);
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr,
-                            false, false, -1, true, false);
+                            false, false, -1, true, false, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_full", vehicleStr,
+                            true, true, -1, true, false, true);
                 }
                 if (!hopper.getCHFactoryDecorator().getEdgeBasedCHProfiles().isEmpty()) {
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge", vehicleStr,
-                            true, false, -1, false, true);
+                            true, false, -1, false, true, false);
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge_no_instr", vehicleStr,
-                            false, false, -1, false, true);
+                            false, false, -1, false, true, false);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_edge_full", vehicleStr,
+                            true, true, -1, false, true, true);
                 }
             }
         } catch (Exception ex) {
@@ -225,13 +230,13 @@ public class Measurement {
             put("measurement.totalMB", getTotalMB());
             put("measurement.usedMB", getUsedMB());
 
-            if (!summaryLocation.trim().isEmpty()) {
+            if (!isEmpty(summaryLocation)) {
                 writeSummary(summaryLocation, propLocation);
             }
             if (useJson) {
-                storeJson(graphLocation, propLocation);
+                storeJson(propLocation);
             } else {
-                storeProperties(graphLocation, propLocation);
+                storeProperties(propLocation);
             }
         }
     }
@@ -442,7 +447,8 @@ public class Measurement {
     private void printTimeOfRouteQuery(final GraphHopper hopper, final boolean ch, final boolean lm,
                                        int count, String prefix, final String vehicle,
                                        final boolean withInstructions, final boolean withPointHints,
-                                       final int activeLandmarks, final boolean sod, final boolean edgeBased) {
+                                       final int activeLandmarks, final boolean sod, final boolean edgeBased,
+                                       final boolean simplify) {
         final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
@@ -484,6 +490,12 @@ public class Measurement {
                 if (withInstructions)
                     req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED));
 
+                if (simplify) {
+                    req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED, Parameters.Details.EDGE_ID, Parameters.Details.STREET_NAME));
+                } else {
+                    // disable path simplification by setting the distance to zero
+                    req.getHints().put(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 0);
+                }
 
                 if (withPointHints) {
                     EdgeIterator iter = edgeExplorer.setBaseNode(from);
@@ -583,7 +595,7 @@ public class Measurement {
         properties.put(key, val);
     }
 
-    private void storeJson(String graphLocation, String jsonLocation) {
+    private void storeJson(String jsonLocation) {
         logger.info("storing measurement json in " + jsonLocation);
         Map<String, Object> result = new HashMap<>();
         Map<String, String> gitInfoMap = new HashMap<>();
@@ -603,11 +615,11 @@ public class Measurement {
                     .writerWithDefaultPrettyPrinter()
                     .writeValue(file, result);
         } catch (IOException e) {
-            logger.error("Problem while storing json " + graphLocation + ", " + jsonLocation, e);
+            logger.error("Problem while storing json in: " + jsonLocation, e);
         }
     }
 
-    private void storeProperties(String graphLocation, String propLocation) {
+    private void storeProperties(String propLocation) {
         logger.info("storing measurement properties in " + propLocation);
         try (FileWriter fileWriter = new FileWriter(propLocation)) {
             String comment = "measurement finish, " + new Date().toString() + ", " + Constants.BUILD_DATE;
@@ -620,7 +632,7 @@ public class Measurement {
             }
             fileWriter.flush();
         } catch (IOException e) {
-            logger.error("Problem while storing properties " + graphLocation + ", " + propLocation, e);
+            logger.error("Problem while storing properties in: " + propLocation, e);
         }
     }
 
@@ -648,10 +660,12 @@ public class Measurement {
                 "routingCH.mean",
                 "routingCH.visited_nodes_mean",
                 "routingCH_no_instr.mean",
+                "routingCH_full.mean",
                 "routingCH_edge.distance_mean",
                 "routingCH_edge.mean",
                 "routingCH_edge.visited_nodes_mean",
                 "routingCH_edge_no_instr.mean",
+                "routingCH_edge_full.mean",
                 "routingLM8.distance_mean",
                 "routingLM8.mean",
                 "routingLM8.visited_nodes_mean",

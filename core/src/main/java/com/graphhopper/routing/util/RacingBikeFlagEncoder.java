@@ -26,7 +26,6 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
  * Specifies the settings for race biking
- * <p>
  *
  * @author ratrun
  * @author Peter Karich
@@ -37,12 +36,9 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     public RacingBikeFlagEncoder(PMap properties) {
-        this(
-                (int) properties.getLong("speed_bits", 4),
+        this((int) properties.getLong("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
-                properties.getBool("turn_costs", false) ? 1 : 0
-        );
-        this.properties = properties;
+                properties.getBool("turn_costs", false) ? 1 : 0);
         this.setBlockFords(properties.getBool("block_fords", true));
     }
 
@@ -132,11 +128,6 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     @Override
-    public int getVersion() {
-        return 2;
-    }
-
-    @Override
     void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
         super.collect(way, wayTypeSpeed, weightToPrioMap);
 
@@ -166,6 +157,11 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     boolean isSacScaleAllowed(String sacScale) {
         // for racing bike it is only allowed if empty
         return false;
+    }
+
+    @Override
+    public int getVersion() {
+        return 2;
     }
 
     @Override

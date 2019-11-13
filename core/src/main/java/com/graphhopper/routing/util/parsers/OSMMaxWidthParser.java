@@ -17,9 +17,6 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
@@ -28,6 +25,9 @@ import com.graphhopper.routing.profiles.MaxWidth;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class OSMMaxWidthParser implements TagParser {
 

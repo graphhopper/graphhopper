@@ -794,8 +794,8 @@ public class GraphHopperOSMTest {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(carEncoder);
         Weighting weighting = new FastestWeighting(carEncoder);
-        GraphHopperStorage g = new GraphHopperStorage(Collections.singletonList(weighting), new RAMDirectory(), encodingManager,
-                false, new GraphExtension.NoOpExtension()).
+        GraphHopperStorage g = new GraphHopperStorage(Collections.singletonList(CHProfile.nodeBased(weighting)), new RAMDirectory(), encodingManager,
+                false).
                 create(20);
 
         //   2---3---4
@@ -992,7 +992,7 @@ public class GraphHopperOSMTest {
         Weighting fwSimpleTruck = new FastestWeighting(simpleTruck);
         Weighting fwTruck = new FastestWeighting(truck);
         RAMDirectory ramDir = new RAMDirectory();
-        GraphHopperStorage storage = new GraphHopperStorage(Arrays.asList(fwSimpleTruck, fwTruck), ramDir, em, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage storage = new GraphHopperStorage(CHProfile.createProfilesForWeightings(Arrays.asList(fwSimpleTruck, fwTruck)), ramDir, em, false);
         decorator.addCHProfile(CHProfile.nodeBased(fwSimpleTruck));
         decorator.addCHProfile(CHProfile.nodeBased(fwTruck));
         decorator.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, CHProfile.nodeBased(fwSimpleTruck)));

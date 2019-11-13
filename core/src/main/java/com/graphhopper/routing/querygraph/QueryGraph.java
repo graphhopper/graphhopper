@@ -50,7 +50,7 @@ public class QueryGraph implements Graph {
     private final int mainEdges;
     // todo: why do we need this and do we still need it when we stop wrapping CHGraph with QueryGraph ?
     private final QueryGraph baseGraph;
-    private final GraphExtension wrappedExtension;
+    private final TurnCostExtension wrappedExtension;
     private final Map<EdgeFilter, EdgeExplorer> cacheMap = new HashMap<>(4);
     private final NodeAccess nodeAccess;
     private final GraphModification graphModification;
@@ -81,10 +81,10 @@ public class QueryGraph implements Graph {
         graphModification = GraphModificationBuilder.build(graph, queryResults);
         nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), graphModification.getVirtualNodes(), mainNodes);
 
-        if (mainGraph.getExtension() instanceof TurnCostExtension)
+        if (mainGraph.getTurnCostExtension() != null)
             wrappedExtension = new QueryGraphTurnExt(mainGraph, graphModification.getClosestEdges());
         else
-            wrappedExtension = mainGraph.getExtension();
+            wrappedExtension = null;
 
         // build data structures holding the virtual edges at all real/virtual nodes that are modified compared to the
         // mainGraph.
@@ -388,10 +388,6 @@ public class QueryGraph implements Graph {
         throw exc();
     }
 
-    public EdgeIteratorState edge(int a, int b, double distance, int flags) {
-        throw exc();
-    }
-
     @Override
     public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
         throw exc();
@@ -403,7 +399,7 @@ public class QueryGraph implements Graph {
     }
 
     @Override
-    public GraphExtension getExtension() {
+    public TurnCostExtension getTurnCostExtension() {
         return wrappedExtension;
     }
 
