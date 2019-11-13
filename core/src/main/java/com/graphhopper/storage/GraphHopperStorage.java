@@ -24,10 +24,7 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class manages all storage related methods and delegates the calls to the associated graphs.
@@ -66,6 +63,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     public GraphHopperStorage(List<CHProfile> chProfiles, Directory dir, EncodingManager encodingManager, boolean withElevation, boolean withTurnCosts, int segmentSize) {
         if (encodingManager == null)
             throw new IllegalArgumentException("EncodingManager needs to be non-null since 0.7. Create one using EncodingManager.create or EncodingManager.create(flagEncoderFactory, ghLocation)");
+
+        if (chProfiles.size() != new HashSet<>(chProfiles).size()) {
+            throw new IllegalArgumentException("Given CH profiles contain duplicates, given: " + chProfiles);
+        }
 
         this.encodingManager = encodingManager;
         this.dir = dir;
