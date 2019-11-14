@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.weighting.PriorityWeighting;
@@ -50,6 +49,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     final Set<String> allowedSacScale = new HashSet<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
+    protected boolean speedTwoDirections;
     private DecimalEncodedValue priorityWayEncoder;
     private EnumEncodedValue<RouteNetwork> footRouteEnc;
     Map<RouteNetwork, Integer> routeMap = new HashMap<>();
@@ -62,9 +62,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     public FootFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speedBits", 4),
-                properties.getDouble("speedFactor", 1));
+        this((int) properties.getLong("speed_bits", 4),
+                properties.getDouble("speed_factor", 1));
         this.setBlockFords(properties.getBool("block_fords", true));
+        this.speedTwoDirections = properties.getBool("speed_two_directions", false);
     }
 
     public FootFlagEncoder(String propertiesStr) {
@@ -153,8 +154,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
         // larger value required - ferries are faster than pedestrians
-        registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, false));
-        registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
+        registerNewEncodedValue.add(avgSpeedEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
+        registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), speedTwoDirections));
 
         footRouteEnc = getEnumEncodedValue(getKey("foot", EV_SUFFIX), RouteNetwork.class);
     }
@@ -227,31 +228,32 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             return edgeFlags;
 
         Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
+        accessEnc.setBool(false, edgeFlags, true);
+        accessEnc.setBool(true, edgeFlags, true);
         if (!access.isFerry()) {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null) {
-                if ("hiking".equals(sacScale))
-                    avgSpeedEnc.setDecimal(false, edgeFlags, MEAN_SPEED);
-                else
-                    avgSpeedEnc.setDecimal(false, edgeFlags, SLOW_SPEED);
+                setSpeed(edgeFlags, true, true, "hiking".equals(sacScale) ? MEAN_SPEED : SLOW_SPEED);
             } else {
-                if (way.hasTag("highway", "steps"))
-                    avgSpeedEnc.setDecimal(false, edgeFlags, MEAN_SPEED - 2);
-                else
-                    avgSpeedEnc.setDecimal(false, edgeFlags, MEAN_SPEED);
+                setSpeed(edgeFlags, true, true, way.hasTag("highway", "steps") ? MEAN_SPEED - 2 : MEAN_SPEED);
             }
-            accessEnc.setBool(false, edgeFlags, true);
-            accessEnc.setBool(true, edgeFlags, true);
         } else {
             priorityFromRelation = PriorityCode.AVOID_IF_POSSIBLE.getValue();
             double ferrySpeed = getFerrySpeed(way);
-            setSpeed(false, edgeFlags, ferrySpeed);
-            accessEnc.setBool(false, edgeFlags, true);
-            accessEnc.setBool(true, edgeFlags, true);
+            setSpeed(edgeFlags, true, true, ferrySpeed);
         }
 
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(way, priorityFromRelation)));
         return edgeFlags;
+    }
+
+    void setSpeed(IntsRef edgeFlags, boolean fwd, boolean bwd, double speed) {
+        if (speed > getMaxSpeed())
+            speed = getMaxSpeed();
+        if (fwd)
+            avgSpeedEnc.setDecimal(false, edgeFlags, speed);
+        if (bwd && speedTwoDirections)
+            avgSpeedEnc.setDecimal(true, edgeFlags, speed);
     }
 
     int handlePriority(ReaderWay way, Integer priorityFromRelation) {

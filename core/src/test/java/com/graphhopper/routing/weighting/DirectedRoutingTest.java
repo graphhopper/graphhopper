@@ -46,6 +46,7 @@ public class DirectedRoutingTest {
     private final boolean prepareLM;
     private Directory dir;
     private GraphHopperStorage graph;
+    private CHProfile chProfile;
     private CHGraph chGraph;
     private CarFlagEncoder encoder;
     private TurnCostExtension turnCostExtension;
@@ -97,8 +98,8 @@ public class DirectedRoutingTest {
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
+        chProfile = CHProfile.edgeBased(weighting, uTurnCosts);
         graph = createGraph();
-        chGraph = graph.getCHGraph();
         turnCostExtension = graph.getTurnCostExtension();
     }
 
@@ -108,8 +109,9 @@ public class DirectedRoutingTest {
             return;
         }
         if (prepareCH) {
-            pch = new PrepareContractionHierarchies(chGraph);
+            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
             pch.doWork();
+            chGraph = graph.getCHGraph(chProfile);
         }
         if (prepareLM) {
             lm = new PrepareLandmarks(dir, graph, weighting, 16, 8);
@@ -280,7 +282,7 @@ public class DirectedRoutingTest {
     }
 
     private GraphHopperStorage createGraph() {
-        GraphHopperStorage gh = new GraphHopperStorage(Collections.singletonList(CHProfile.edgeBased(weighting, uTurnCosts)), dir, encodingManager,
+        GraphHopperStorage gh = new GraphHopperStorage(Collections.singletonList(chProfile), dir, encodingManager,
                 false, true);
         gh.create(1000);
         return gh;

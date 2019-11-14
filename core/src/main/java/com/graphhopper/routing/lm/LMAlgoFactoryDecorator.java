@@ -229,6 +229,11 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (preparations.isEmpty())
             throw new IllegalStateException("No preparations added to this decorator");
 
+        // if no weighting or vehicle is specified for this request and there is only one preparation, use it
+        if ((map.getWeighting().isEmpty() || map.getVehicle().isEmpty()) && preparations.size() == 1) {
+            return new LMRAFactory(preparations.get(0), defaultAlgoFactory);
+        }
+
         for (final PrepareLandmarks p : preparations) {
             if (p.getWeighting().matches(map))
                 return new LMRAFactory(p, defaultAlgoFactory);

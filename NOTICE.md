@@ -16,6 +16,7 @@ The core module includes the following software:
  * java-string-similarity - we copied the implementation of JaroWinkler (MIT license)
  * com.fasterxml.jackson.core:jackson-annotations (Apache License)
  * org.locationtech:jts (EDL), see #1039
+ * AngleCalc.atan2 from Jim Shima, 1999 (public domain)
 
 reader-osm:
 

@@ -22,7 +22,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
@@ -39,7 +38,13 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
 
     @Override
     protected GraphHopperStorage newGHStorage(Directory dir, boolean is3D) {
-        return new GraphHopperStorage(dir, encodingManager, is3D, true);
+        return newGHStorage(dir, is3D, -1);
+    }
+
+    @Override
+    protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
+        GraphHopperStorage g = GraphBuilder.start(encodingManager).setDir(dir).set3D(enabled3D).withTurnCosts(true).setSegmentSize(segmentSize).build();
+        return g;
     }
 
     @Override
@@ -93,8 +98,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
 
     @Test
     public void testEnsureCapacity() {
-        graph = newGHStorage(new MMapDirectory(defaultGraphLoc), false);
-        graph.setSegmentSize(128);
+        graph = newGHStorage(new MMapDirectory(defaultGraphLoc), false, 128);
         graph.create(100); // 100 is the minimum size
 
         TurnCostExtension turnCostStorage = graph.getTurnCostExtension();

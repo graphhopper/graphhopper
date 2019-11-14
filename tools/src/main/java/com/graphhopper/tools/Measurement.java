@@ -230,13 +230,13 @@ public class Measurement {
             put("measurement.totalMB", getTotalMB());
             put("measurement.usedMB", getUsedMB());
 
-            if (!summaryLocation.trim().isEmpty()) {
+            if (!isEmpty(summaryLocation)) {
                 writeSummary(summaryLocation, propLocation);
             }
             if (useJson) {
-                storeJson(graphLocation, propLocation);
+                storeJson(propLocation);
             } else {
-                storeProperties(graphLocation, propLocation);
+                storeProperties(propLocation);
             }
         }
     }
@@ -595,7 +595,7 @@ public class Measurement {
         properties.put(key, val);
     }
 
-    private void storeJson(String graphLocation, String jsonLocation) {
+    private void storeJson(String jsonLocation) {
         logger.info("storing measurement json in " + jsonLocation);
         Map<String, Object> result = new HashMap<>();
         Map<String, String> gitInfoMap = new HashMap<>();
@@ -615,11 +615,11 @@ public class Measurement {
                     .writerWithDefaultPrettyPrinter()
                     .writeValue(file, result);
         } catch (IOException e) {
-            logger.error("Problem while storing json " + graphLocation + ", " + jsonLocation, e);
+            logger.error("Problem while storing json in: " + jsonLocation, e);
         }
     }
 
-    private void storeProperties(String graphLocation, String propLocation) {
+    private void storeProperties(String propLocation) {
         logger.info("storing measurement properties in " + propLocation);
         try (FileWriter fileWriter = new FileWriter(propLocation)) {
             String comment = "measurement finish, " + new Date().toString() + ", " + Constants.BUILD_DATE;
@@ -632,7 +632,7 @@ public class Measurement {
             }
             fileWriter.flush();
         } catch (IOException e) {
-            logger.error("Problem while storing properties " + graphLocation + ", " + propLocation, e);
+            logger.error("Problem while storing properties in: " + propLocation, e);
         }
     }
 
