@@ -112,10 +112,10 @@ public class StringIndexTest {
         long aPointer = index.add(createMap("a", "longer name", "b", "longer name"));
         long bPointer = index.add(createMap("c", "longer other name"));
         // value storage: 1 byte for count, 2 bytes for keyIndex and 4 bytes for delta of dup_marker and 3 bytes (keyIndex + length for "longer name")
-        assertEquals(aPointer + 1 + (2 + 4) + 3 + "longer name".getBytes(Helper.UTF_CS).length, bPointer);
+        assertEquals(aPointer + 1 + (2 + 4) + 3 + "longer name".getBytes(Helper.UTF_CS).length + 10, bPointer);
         // no de-duplication as too short:
         long cPointer = index.add(createMap("temp", "temp"));
-        assertEquals(bPointer + 1 + 3 + "longer other name".getBytes(Helper.UTF_CS).length, cPointer);
+        assertEquals(bPointer + 1 + 3 + "longer other name".getBytes(Helper.UTF_CS).length + 2, cPointer);
         assertEquals("longer name", index.get(aPointer, "a"));
         assertEquals("longer name", index.get(aPointer, "b"));
         assertEquals("longer other name", index.get(bPointer, "c"));
@@ -146,14 +146,15 @@ public class StringIndexTest {
     public void testTooLongNameNoError() {
         index.throwExceptionIfTooLong = true;
         try {
-            index.add(createMap("", "Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))"));
+            index.add(createMap("", "73nd82mds9sisjq09somj2sts8s0wkjiwpiuriueufezucxtgasuo8ssosöwaöwa093p9832qhz743" +
+                    " Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))"));
             fail();
         } catch (IllegalStateException ex) {
         }
 
         String str = "sdfsdfds";
-        for (int i = 0; i < 256 * 3; i++) {
-            str += "Б";
+        for (int i = 0; i < 30 * 3; i++) {
+            str += "Б" + i;
         }
         try {
             index.add(createMap("", str));
@@ -181,7 +182,7 @@ public class StringIndexTest {
         assertEquals("test", index.get(pointer, ""));
         // make sure bytePointer is correctly set after loadExisting
         long newPointer = index.add(createMap("", "testing"));
-        assertEquals(newPointer + ">" + pointer, pointer + 1 + 3 + "test".getBytes().length, newPointer);
+        assertEquals(newPointer + ">" + pointer, pointer + 1 + 3 + "test".getBytes().length  + 1, newPointer);
         index.close();
 
         Helper.removeDir(new File(location));

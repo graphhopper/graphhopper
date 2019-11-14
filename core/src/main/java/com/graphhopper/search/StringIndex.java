@@ -186,7 +186,7 @@ public class StringIndex implements Storable<StringIndex> {
                     }
                 }
 
-                byte[] valueBytes = getBytesForString("Value for key" + key, value);
+                byte[] valueBytes = getBytesForString("Value for key" + key, value, true);
                 // only cache value if storing via duplicate marker is valuable (the delta costs 4 bytes minus 1 due to omitted valueBytes.length storage)
 //                if (valueBytes.length > 3)
 //                    smallCache.put(value, currentPointer);
@@ -309,17 +309,19 @@ public class StringIndex implements Storable<StringIndex> {
         return null;
     }
 
-    private byte[] getBytesForString(String info, String name) {
+    private byte[] getBytesForString(String info, String name, boolean compress) {
         byte[] bytes = name.getBytes(Helper.UTF_CS);
         // TODO NOW this is inefficient => create byte array that we then pass to 'new String' with a known length instead of copying
-        bytes = compressor.compress(bytes);
+        if (compress)
+            bytes = compressor.compress(bytes);
 
         if (bytes.length > MAX_LENGTH) {
             String newString = new String(bytes, 0, MAX_LENGTH, Helper.UTF_CS);
             if (throwExceptionIfTooLong)
                 throw new IllegalStateException(info + " is too long: " + name + " truncated to " + newString);
             bytes = newString.getBytes(Helper.UTF_CS);
-            return compressor.compress(bytes);
+            if (compress)
+                bytes = compressor.compress(bytes);
         }
 
         return bytes;
@@ -331,7 +333,7 @@ public class StringIndex implements Storable<StringIndex> {
         keys.setShort(0, (short) keysInMem.size());
         long keyBytePointer = 2;
         for (String key : keysInMem.keySet()) {
-            byte[] keyBytes = getBytesForString("key", key);
+            byte[] keyBytes = getBytesForString("key", key, false);
             keys.ensureCapacity(keyBytePointer + 2 + keyBytes.length);
             keys.setShort(keyBytePointer, (short) keyBytes.length);
             keyBytePointer += 2;
@@ -341,7 +343,7 @@ public class StringIndex implements Storable<StringIndex> {
         }
         keys.flush();
 
-        System.out.println("bytes: " + bytePointer / 1024f);
+//        System.out.println("bytes: " + bytePointer / 1024f);
 
         vals.setHeader(0, BitUtil.LITTLE.getIntLow(bytePointer));
         vals.setHeader(4, BitUtil.LITTLE.getIntHigh(bytePointer));
