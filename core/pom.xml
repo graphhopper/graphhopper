@@ -37,6 +37,11 @@
     </licenses>
     <dependencies>
         <dependency>
+            <groupId>org.lz4</groupId>
+            <artifactId>lz4-java</artifactId>
+            <version>1.6.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-api</artifactId>
             <version>${project.parent.version}</version>

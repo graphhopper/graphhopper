@@ -22,6 +22,9 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Storable;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
+import net.jpountz.lz4.LZ4Compressor;
+import net.jpountz.lz4.LZ4Factory;
+import net.jpountz.lz4.LZ4SafeDecompressor;
 
 import java.util.*;
 
@@ -50,15 +53,24 @@ public class StringIndex implements Storable<StringIndex> {
     private long bytePointer = START_POINTER;
     private long lastEntryPointer = -1;
     private Map<String, String> lastEntryMap;
+    private final LZ4Compressor compressor;
+    private final LZ4SafeDecompressor decompressor;
 
     public StringIndex(Directory dir) {
-        this(dir, 1000);
+        this(dir, 500);
     }
 
     /**
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
      */
     public StringIndex(Directory dir, final int cacheSize) {
+        LZ4Factory factory = LZ4Factory.fastestJavaInstance();
+        // compression for fastCompressor is from 100% down to 34%
+        // with highCompressor the storing will be much slower and we do not get any better compression for our tests
+        compressor = factory.fastCompressor();
+        // to use the fastDecompressor we would need to store the original AND the compressed size
+        decompressor = factory.safeDecompressor();
+
         keys = dir.find("string_index_keys");
         keys.setSegmentSize(10 * 1024);
         vals = dir.find("string_index_vals");
@@ -111,6 +123,8 @@ public class StringIndex implements Storable<StringIndex> {
         return keysInMem.keySet();
     }
 
+//    private long counter = 0;
+
     /**
      * This method writes the specified key-value pairs into the storage.
      *
@@ -130,7 +144,9 @@ public class StringIndex implements Storable<StringIndex> {
         lastEntryPointer = bytePointer;
         // while adding there could be exceptions and we need to avoid that the bytePointer is modified
         long currentPointer = bytePointer;
-
+//        counter++;
+//        if (counter % 1000 == 0)
+//            System.out.println(counter);
         vals.ensureCapacity(currentPointer + 1);
         vals.setByte(currentPointer, (byte) entryMap.size());
         currentPointer += 1;
@@ -172,8 +188,8 @@ public class StringIndex implements Storable<StringIndex> {
 
                 byte[] valueBytes = getBytesForString("Value for key" + key, value);
                 // only cache value if storing via duplicate marker is valuable (the delta costs 4 bytes minus 1 due to omitted valueBytes.length storage)
-                if (valueBytes.length > 3)
-                    smallCache.put(value, currentPointer);
+//                if (valueBytes.length > 3)
+//                    smallCache.put(value, currentPointer);
 
                 vals.ensureCapacity(currentPointer + 2 + 1 + valueBytes.length);
                 vals.setShort(currentPointer, keyIndex.shortValue());
@@ -233,9 +249,11 @@ public class StringIndex implements Storable<StringIndex> {
         if (valueLength == 0) {
             valueStr = "";
         } else {
-            byte[] valueBytes = new byte[valueLength];
+            // we need a rather large array, see special cases that are compressed very well in testNoErrorOnLargeName
+            byte[] valueBytes = new byte[valueLength], output = new byte[Math.max(valueLength, 10) * 50];
             vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
-            valueStr = new String(valueBytes, Helper.UTF_CS);
+            int ret = decompressor.decompress(valueBytes, 0, valueLength, output, 0);
+            valueStr = new String(output, 0, ret, Helper.UTF_CS);
         }
 
         map.put(keyList.get(currentKeyIndex), valueStr);
@@ -277,9 +295,11 @@ public class StringIndex implements Storable<StringIndex> {
                     return "";
 
                 tmpPointer++;
-                byte[] valueBytes = new byte[valueLength];
+                // see testNoErrorOnLargeName of why we need such a large value
+                byte[] valueBytes = new byte[valueLength], output = new byte[Math.max(valueLength, 10) * 50];
                 vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
-                return new String(valueBytes, Helper.UTF_CS);
+                int ret = decompressor.decompress(valueBytes, 0, valueLength, output, 0);
+                return new String(output, 0, ret, Helper.UTF_CS);
             }
             int valueLength = vals.getByte(tmpPointer) & 0xFF;
             tmpPointer += 1 + valueLength;
@@ -291,11 +311,15 @@ public class StringIndex implements Storable<StringIndex> {
 
     private byte[] getBytesForString(String info, String name) {
         byte[] bytes = name.getBytes(Helper.UTF_CS);
+        // TODO NOW this is inefficient => create byte array that we then pass to 'new String' with a known length instead of copying
+        bytes = compressor.compress(bytes);
+
         if (bytes.length > MAX_LENGTH) {
             String newString = new String(bytes, 0, MAX_LENGTH, Helper.UTF_CS);
             if (throwExceptionIfTooLong)
                 throw new IllegalStateException(info + " is too long: " + name + " truncated to " + newString);
-            return newString.getBytes(Helper.UTF_CS);
+            bytes = newString.getBytes(Helper.UTF_CS);
+            return compressor.compress(bytes);
         }
 
         return bytes;
@@ -316,6 +340,8 @@ public class StringIndex implements Storable<StringIndex> {
             keyBytePointer += keyBytes.length;
         }
         keys.flush();
+
+        System.out.println("bytes: " + bytePointer / 1024f);
 
         vals.setHeader(0, BitUtil.LITTLE.getIntLow(bytePointer));
         vals.setHeader(4, BitUtil.LITTLE.getIntHigh(bytePointer));

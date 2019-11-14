@@ -4,6 +4,11 @@ import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.Repeat;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
+import net.jpountz.lz4.LZ4Compressor;
+import net.jpountz.lz4.LZ4Factory;
+import net.jpountz.lz4.LZ4SafeDecompressor;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -15,8 +20,16 @@ import static org.junit.Assert.*;
 
 public class StringIndexTest {
 
-    private StringIndex create() {
-        return new StringIndex(new RAMDirectory()).create(1000);
+    StringIndex index;
+
+    @Before
+    public void setUp() {
+        index = new StringIndex(new RAMDirectory()).create(1000);
+    }
+
+    @After
+    public void close() {
+        Helper.close(index);
     }
 
     Map<String, String> createMap(String... strings) {
@@ -31,22 +44,21 @@ public class StringIndexTest {
 
     @Test
     public void putSame() {
-        StringIndex index = create();
         long aPointer = index.add(createMap("a", "same name", "b", "same name"));
 
         assertNull(index.get(aPointer, ""));
         assertEquals("same name", index.get(aPointer, "a"));
         assertEquals("same name", index.get(aPointer, "b"));
         assertNull(index.get(aPointer, "c"));
+        index.close();
 
-        index = create();
+        index = new StringIndex(new RAMDirectory()).create(1000);
         aPointer = index.add(createMap("a", "a name", "b", "same name"));
         assertEquals("a name", index.get(aPointer, "a"));
     }
 
     @Test
     public void putAB() {
-        StringIndex index = create();
         long aPointer = index.add(createMap("a", "a name", "b", "b name"));
 
         assertNull(index.get(aPointer, ""));
@@ -56,7 +68,6 @@ public class StringIndexTest {
 
     @Test
     public void putEmpty() {
-        StringIndex index = create();
         assertEquals(1, index.add(createMap("", "")));
         assertEquals(5, index.add(createMap("", null)));
         assertEquals(9, index.add(createMap(null, null)));
@@ -67,7 +78,6 @@ public class StringIndexTest {
 
     @Test
     public void putMany() {
-        StringIndex index = create();
         long aPointer = 0, tmpPointer = 0;
 
         for (int i = 0; i < 10000; i++) {
@@ -86,7 +96,6 @@ public class StringIndexTest {
 
     @Test
     public void putManyKeys() {
-        StringIndex index = create();
         // one key is already stored => empty key
         for (int i = 1; i < MAX_UNIQUE_KEYS; i++) {
             index.add(createMap("a" + i, "a name"));
@@ -100,7 +109,6 @@ public class StringIndexTest {
 
     @Test
     public void putDuplicate() {
-        StringIndex index = create();
         long aPointer = index.add(createMap("a", "longer name", "b", "longer name"));
         long bPointer = index.add(createMap("c", "longer other name"));
         // value storage: 1 byte for count, 2 bytes for keyIndex and 4 bytes for delta of dup_marker and 3 bytes (keyIndex + length for "longer name")
@@ -113,7 +121,7 @@ public class StringIndexTest {
         assertEquals("longer other name", index.get(bPointer, "c"));
         assertEquals("temp", index.get(cPointer, "temp"));
 
-        index = create();
+        index = new StringIndex(new RAMDirectory()).create(1000);
         index.add(createMap("a", "longer name", "b", "longer name"));
         bPointer = index.add(createMap("a", "longer name", "b", "longer name"));
         cPointer = index.add(createMap("a", "longer name", "b", "longer name"));
@@ -125,7 +133,6 @@ public class StringIndexTest {
 
     @Test
     public void testNoErrorOnLargeName() {
-        StringIndex index = create();
         // 127 => bytes.length == 254
         String str = "";
         for (int i = 0; i < 127; i++) {
@@ -137,7 +144,6 @@ public class StringIndexTest {
 
     @Test
     public void testTooLongNameNoError() {
-        StringIndex index = create();
         index.throwExceptionIfTooLong = true;
         try {
             index.add(createMap("", "Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))"));
@@ -212,7 +218,6 @@ public class StringIndexTest {
 
     @Test
     public void testEmptyKey() {
-        StringIndex index = create();
         long pointerA = index.add(createMap("", "test value"));
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
 
@@ -226,7 +231,6 @@ public class StringIndexTest {
     @Test
     @Repeat(times = 100)
     public void testRandom() {
-        StringIndex index = create();
         long seed = new Random().nextLong();
         System.out.println("StringIndexText.testRandom seed:" + seed);
         Random random = new Random(seed);
