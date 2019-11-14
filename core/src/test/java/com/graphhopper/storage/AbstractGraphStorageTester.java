@@ -100,10 +100,6 @@ public abstract class AbstractGraphStorageTester {
 
     abstract GraphHopperStorage createGHStorage(String location, boolean is3D);
 
-    protected final GraphHopperStorage newRAMGHStorage() {
-        return new GraphHopperStorage(new RAMDirectory(), encodingManager, false);
-    }
-
     @Before
     public void setUp() {
         Helper.removeDir(new File(locationParent));
@@ -316,9 +312,7 @@ public abstract class AbstractGraphStorageTester {
     public void testCopyTo() {
         graph = createGHStorage();
         initExampleGraph(graph);
-        GraphHopperStorage gs = newRAMGHStorage();
-        gs.setSegmentSize(8000);
-        gs.create(10);
+        GraphHopperStorage gs = GraphBuilder.start(encodingManager).setSegmentSize(8000).setBytes(10).create();
         graph.copyTo(gs);
         checkExampleGraph(gs);
 

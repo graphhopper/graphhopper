@@ -97,7 +97,7 @@ class BaseGraph implements Graph {
     private boolean frozen = false;
 
     public BaseGraph(Directory dir, final EncodingManager encodingManager, boolean withElevation,
-                     InternalGraphEventListener listener, boolean withTurnCosts) {
+                     InternalGraphEventListener listener, boolean withTurnCosts, int segmentSize) {
         this.dir = dir;
         this.encodingManager = encodingManager;
         this.intsForFlags = encodingManager.getIntsForFlags();
@@ -150,6 +150,9 @@ class BaseGraph implements Graph {
             turnCostExtension = new TurnCostExtension(nodeAccess, dir.find("turn_costs"));
         } else {
             turnCostExtension = null;
+        }
+        if (segmentSize >= 0) {
+            setSegmentSize(segmentSize);
         }
     }
 
@@ -339,7 +342,7 @@ class BaseGraph implements Graph {
         return edge(a, b).setDistance(distance).setFlags(encodingManager.flagsDefault(true, bothDirection));
     }
 
-    void setSegmentSize(int bytes) {
+    private void setSegmentSize(int bytes) {
         checkInit();
         nodes.setSegmentSize(bytes);
         edges.setSegmentSize(bytes);

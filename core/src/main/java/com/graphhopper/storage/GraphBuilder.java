@@ -19,38 +19,35 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EncodingManager;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 /**
- * For now this is just a helper class to quickly create a {@link GraphHopperStorage}
- * <p>
+ * Used to build {@link GraphHopperStorage}
  *
  * @author Peter Karich
+ * @author easbar
  */
 public class GraphBuilder {
     private final EncodingManager encodingManager;
-    private String location;
-    private boolean mmap;
-    private boolean store;
+    private Directory dir = new RAMDirectory();
     private boolean elevation;
     private boolean turnCosts;
-    private long byteCapacity = 100;
-    private List<CHProfile> chProfiles = Collections.emptyList();
+    private long bytes = 100;
+    private int segmentSize = -1;
+    private List<CHProfile> chProfiles = new ArrayList<>();
+
+    public static GraphBuilder start(EncodingManager encodingManager) {
+        return new GraphBuilder(encodingManager);
+    }
 
     public GraphBuilder(EncodingManager encodingManager) {
         this.encodingManager = encodingManager;
+        this.turnCosts = encodingManager.needsTurnCostsSupport();
     }
 
-    /**
-     * This method enables creating CHGraphs with the specified CHProfiles
-     */
     public GraphBuilder setCHProfiles(List<CHProfile> chProfiles) {
-        if (chProfiles.size() != new HashSet<>(chProfiles).size()) {
-            throw new IllegalArgumentException("Given CH profiles contain duplicates, given: " + chProfiles);
-        }
         this.chProfiles = chProfiles;
         return this;
     }
@@ -59,23 +56,29 @@ public class GraphBuilder {
         return setCHProfiles(Arrays.asList(chProfiles));
     }
 
-    public GraphBuilder setLocation(String location) {
-        this.location = location;
+    public GraphBuilder setDir(Directory dir) {
+        this.dir = dir;
         return this;
     }
 
-    public GraphBuilder setStore(boolean store) {
-        this.store = store;
-        return this;
+    public GraphBuilder setMMap(String location) {
+        return setDir(new MMapDirectory(location));
     }
 
-    public GraphBuilder setMmap(boolean mmap) {
-        this.mmap = mmap;
-        return this;
+    public GraphBuilder setRAM() {
+        return setDir(new RAMDirectory());
     }
 
-    public GraphBuilder setExpectedSize(byte cap) {
-        this.byteCapacity = cap;
+    public GraphBuilder setRAM(String location) {
+        return setDir(new RAMDirectory(location));
+    }
+
+    public GraphBuilder setRAM(String location, boolean store) {
+        return setDir(new RAMDirectory(location, store));
+    }
+
+    public GraphBuilder setBytes(long bytes) {
+        this.bytes = bytes;
         return this;
     }
 
@@ -89,15 +92,9 @@ public class GraphBuilder {
         return this;
     }
 
-    public boolean hasElevation() {
-        return elevation;
-    }
-
-    /**
-     * Creates a CHGraph
-     */
-    public CHGraph chGraphCreate(CHProfile chProfile) {
-        return setCHProfiles(chProfile).create().getCHGraph();
+    public GraphBuilder setSegmentSize(int segmentSize) {
+        this.segmentSize = segmentSize;
+        return this;
     }
 
     /**
@@ -106,29 +103,13 @@ public class GraphBuilder {
      * {@link #create} directly.
      */
     public GraphHopperStorage build() {
-        Directory dir = mmap ?
-                new MMapDirectory(location) :
-                new RAMDirectory(location, store);
-
-        boolean withTurnCosts = encodingManager.needsTurnCostsSupport() || turnCosts;
-        return new GraphHopperStorage(chProfiles, dir, encodingManager, elevation, withTurnCosts);
+        return new GraphHopperStorage(chProfiles, dir, encodingManager, elevation, turnCosts, segmentSize);
     }
 
     /**
      * Default graph is a {@link GraphHopperStorage} with an in memory directory and disabled storing on flush.
      */
     public GraphHopperStorage create() {
-        return build().create(byteCapacity);
-    }
-
-    /**
-     * @throws IllegalStateException if not loadable.
-     */
-    public GraphHopperStorage load() {
-        GraphHopperStorage gs = build();
-        if (!gs.loadExisting()) {
-            throw new IllegalStateException("Cannot load graph " + location);
-        }
-        return gs;
+        return build().create(bytes);
     }
 }

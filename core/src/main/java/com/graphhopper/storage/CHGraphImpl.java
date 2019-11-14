@@ -63,7 +63,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private int shortcutCount = 0;
     private boolean isReadyForContraction;
 
-    CHGraphImpl(CHProfile chProfile, Directory dir, final BaseGraph baseGraph) {
+    CHGraphImpl(CHProfile chProfile, Directory dir, final BaseGraph baseGraph, int segmentSize) {
         if (chProfile.getWeighting() == null)
             throw new IllegalStateException("Weighting for CHGraph cannot be null");
         this.chProfile = chProfile;
@@ -72,6 +72,10 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         this.nodesCH = dir.find("nodes_ch_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         this.shortcuts = dir.find("shortcuts_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         this.chEdgeAccess = new CHEdgeAccess(name);
+        if (segmentSize >= 0) {
+            nodesCH.setSegmentSize(segmentSize);
+            shortcuts.setSegmentSize(segmentSize);
+        }
     }
 
     @Override
@@ -340,11 +344,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         N_LEVEL = 0;
         N_CH_REF = N_LEVEL + 4;
         nodeCHEntryBytes = N_CH_REF + 4;
-    }
-
-    void setSegmentSize(int bytes) {
-        nodesCH.setSegmentSize(bytes);
-        shortcuts.setSegmentSize(bytes);
     }
 
     @Override
