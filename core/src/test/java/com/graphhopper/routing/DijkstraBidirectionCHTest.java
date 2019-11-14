@@ -25,7 +25,10 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Parameters;
@@ -58,10 +61,11 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     @Override
     public RoutingAlgorithmFactory createFactory(GraphHopperStorage ghStorage, AlgorithmOptions opts) {
         ghStorage.freeze();
-        CHGraph chGraph = ghStorage.getCHGraph(CHProfile.nodeBased(opts.getWeighting()));
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph);
+        CHProfile chProfile = CHProfile.nodeBased(opts.getWeighting());
+        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chProfile);
+
         // make sure the contraction runs only once
-        if (chGraph.getEdges() == chGraph.getBaseGraph().getEdges()) {
+        if (ghStorage.getCHGraph(chProfile).getEdges() == ghStorage.getEdges()) {
             ch.doWork();
         }
         return ch;

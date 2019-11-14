@@ -3,8 +3,8 @@
 # benchmark/benchmark.sh <data_dir> <results_dir> <small_osm_map_path> <big_osm_map_path>
 #
 # where:
-# <data_dir> = directory used to download map and store results
-# <results_dir> = name of directory where results of this run are stored
+# <data_dir> = base directory used to store results
+# <results_dir> = name of directory where results of this run are stored (inside <data_dir>)
 # <small_osm_map_path> = path to osm map the measurement is run on for slow measurements
 # <big_osm_map_path> = path to osm map the measurement is run on for fast measurements
 
