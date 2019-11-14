@@ -947,7 +947,7 @@ public abstract class AbstractGraphStorageTester {
     }
 
     @Test
-    public void testNameIndex() {
+    public void testStringIndex() {
         graph = createGHStorage();
         EdgeIteratorState iter1 = graph.edge(0, 1, 10, true);
         iter1.setName("named street1");

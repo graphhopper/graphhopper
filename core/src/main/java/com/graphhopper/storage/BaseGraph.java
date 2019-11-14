@@ -27,11 +27,12 @@ import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.search.NameIndex;
+import com.graphhopper.search.StringIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Locale;
 
 import static com.graphhopper.util.Helper.nf;
@@ -57,9 +58,10 @@ class BaseGraph implements Graph {
     final DataAccess nodes;
     final BBox bounds;
     final NodeAccess nodeAccess;
+    private final static String STRING_IDX_NAME_KEY = "name";
+    final StringIndex stringIndex;
     // can be null if turn costs are not supported
     final TurnCostExtension turnCostExtension;
-    final NameIndex nameIndex;
     final BitUtil bitUtil;
     final EncodingManager encodingManager;
     final EdgeAccess edgeAccess;
@@ -103,7 +105,7 @@ class BaseGraph implements Graph {
         this.intsForFlags = encodingManager.getIntsForFlags();
         this.bitUtil = BitUtil.get(dir.getByteOrder());
         this.wayGeometry = dir.find("geometry");
-        this.nameIndex = new NameIndex(dir);
+        this.stringIndex = new StringIndex(dir);
         this.nodes = dir.find("nodes", DAType.getPreferredInt(dir.getDefaultType()));
         this.edges = dir.find("edges", DAType.getPreferredInt(dir.getDefaultType()));
         this.listener = listener;
@@ -347,7 +349,7 @@ class BaseGraph implements Graph {
         nodes.setSegmentSize(bytes);
         edges.setSegmentSize(bytes);
         wayGeometry.setSegmentSize(bytes);
-        nameIndex.setSegmentSize(bytes);
+        stringIndex.setSegmentSize(bytes);
         if (supportsTurnCosts()) {
             turnCostExtension.setSegmentSize(bytes);
         }
@@ -376,7 +378,7 @@ class BaseGraph implements Graph {
 
         initSize = Math.min(initSize, 2000);
         wayGeometry.create(initSize);
-        nameIndex.create(initSize);
+        stringIndex.create(initSize);
         if (supportsTurnCosts()) {
             turnCostExtension.create(initSize);
         }
@@ -390,7 +392,7 @@ class BaseGraph implements Graph {
     String toDetailsString() {
         return "edges:" + nf(edgeCount) + "(" + edges.getCapacity() / Helper.MB + "MB), "
                 + "nodes:" + nf(getNodes()) + "(" + nodes.getCapacity() / Helper.MB + "MB), "
-                + "name:(" + nameIndex.getCapacity() / Helper.MB + "MB), "
+                + "name:(" + stringIndex.getCapacity() / Helper.MB + "MB), "
                 + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB), "
                 + "bounds:" + bounds;
     }
@@ -436,8 +438,8 @@ class BaseGraph implements Graph {
         wayGeometry.flush();
         wayGeometry.close();
 
-        nameIndex.flush();
-        nameIndex.close();
+        stringIndex.flush();
+        stringIndex.close();
     }
 
     public void flush() {
@@ -446,8 +448,8 @@ class BaseGraph implements Graph {
             wayGeometry.flush();
         }
 
-        if (!nameIndex.isClosed())
-            nameIndex.flush();
+        if (!stringIndex.isClosed())
+            stringIndex.flush();
 
         setNodesHeader();
         setEdgesHeader();
@@ -461,8 +463,8 @@ class BaseGraph implements Graph {
     public void close() {
         if (!wayGeometry.isClosed())
             wayGeometry.close();
-        if (!nameIndex.isClosed())
-            nameIndex.close();
+        if (!stringIndex.isClosed())
+            stringIndex.close();
         edges.close();
         nodes.close();
         if (supportsTurnCosts()) {
@@ -471,7 +473,7 @@ class BaseGraph implements Graph {
     }
 
     long getCapacity() {
-        return edges.getCapacity() + nodes.getCapacity() + nameIndex.getCapacity()
+        return edges.getCapacity() + nodes.getCapacity() + stringIndex.getCapacity()
                 + wayGeometry.getCapacity() + (supportsTurnCosts() ? turnCostExtension.getCapacity() : 0);
     }
 
@@ -493,7 +495,7 @@ class BaseGraph implements Graph {
         if (!wayGeometry.loadExisting())
             throw new IllegalStateException("Cannot load geometry. corrupt file or directory? " + dir);
 
-        if (!nameIndex.loadExisting())
+        if (!stringIndex.loadExisting())
             throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
 
         if (supportsTurnCosts() && !turnCostExtension.loadExisting())
@@ -626,7 +628,7 @@ class BaseGraph implements Graph {
         clonedG.loadEdgesHeader();
 
         // name
-        nameIndex.copyTo(clonedG.nameIndex);
+        stringIndex.copyTo(clonedG.stringIndex);
 
         // geometry
         setWayGeometryHeader();
@@ -972,11 +974,11 @@ class BaseGraph implements Graph {
     }
 
     private void setName(long edgePointer, String name) {
-        int nameIndexRef = (int) nameIndex.put(name);
-        if (nameIndexRef < 0)
+        int stringIndexRef = (int) stringIndex.add(Collections.singletonMap(STRING_IDX_NAME_KEY, name));
+        if (stringIndexRef < 0)
             throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
 
-        edges.setInt(edgePointer + E_NAME, nameIndexRef);
+        edges.setInt(edgePointer + E_NAME, stringIndexRef);
     }
 
     GHBitSet getRemovedNodes() {
@@ -1357,8 +1359,10 @@ class BaseGraph implements Graph {
 
         @Override
         public String getName() {
-            int nameIndexRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_NAME);
-            return baseGraph.nameIndex.get(nameIndexRef);
+            int stringIndexRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_NAME);
+            String name = baseGraph.stringIndex.get(stringIndexRef, STRING_IDX_NAME_KEY);
+            // preserve backward compatibility (returns null if not explicitly set)
+            return name == null ? "" : name;
         }
 
         @Override

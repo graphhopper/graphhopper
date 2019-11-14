@@ -17,8 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -77,7 +75,7 @@ public class RAMDataAccess extends AbstractDataAccess {
     public RAMDataAccess create(long bytes) {
         if (segments.length > 0)
             throw new IllegalThreadStateException("already created");
-        
+
         setSegmentSize(segmentSizeInBytes);
         ensureCapacity(Math.max(10 * 4, bytes));
         return this;
@@ -189,7 +187,8 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        assert index + 4 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
+        if (index + 4 > segmentSizeInBytes)
+            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         bitUtil.fromInt(segments[bufferIndex], value, index);
     }
 
@@ -198,12 +197,8 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        assert index + 4 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
-        if (bufferIndex > segments.length) {
-            LoggerFactory.getLogger(getClass()).error(getName() + ", segments:" + segments.length
-                    + ", bufIndex:" + bufferIndex + ", bytePos:" + bytePos
-                    + ", segPower:" + segmentSizePower);
-        }
+        if (index + 4 > segmentSizeInBytes)
+            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         return bitUtil.toInt(segments[bufferIndex], index);
     }
 
@@ -212,8 +207,13 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        assert index + 2 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
-        bitUtil.fromShort(segments[bufferIndex], value, index);
+        if (index + 2 > segmentSizeInBytes) {
+            // special case if short has to be written into two separate segments
+            segments[bufferIndex][index] = (byte) (value);
+            segments[bufferIndex + 1][0] = (byte) (value >>> 8);
+        } else {
+            bitUtil.fromShort(segments[bufferIndex], value, index);
+        }
     }
 
     @Override
@@ -221,8 +221,10 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        assert index + 2 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
-        return bitUtil.toShort(segments[bufferIndex], index);
+        if (index + 2 > segmentSizeInBytes)
+            return (short) ((segments[bufferIndex + 1][0] & 0xFF) << 8 | (segments[bufferIndex][index] & 0xFF));
+        else
+            return bitUtil.toShort(segments[bufferIndex], index);
     }
 
     @Override
@@ -259,6 +261,22 @@ public class RAMDataAccess extends AbstractDataAccess {
         } else {
             System.arraycopy(seg, index, values, 0, length);
         }
+    }
+
+    @Override
+    public final void setByte(long bytePos, byte value) {
+        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        segments[bufferIndex][index] = value;
+    }
+
+    @Override
+    public final byte getByte(long bytePos) {
+        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        return segments[bufferIndex][index];
     }
 
     @Override
