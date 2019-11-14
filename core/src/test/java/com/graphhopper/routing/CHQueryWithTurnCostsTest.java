@@ -55,7 +55,7 @@ public class CHQueryWithTurnCostsTest {
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
-    private final TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
+    private final TurnCostExtension turnCostExtension = graph.getTurnCostExtension();
     private final CHGraph chGraph = graph.getCHGraph();
     private String algoString;
 

@@ -24,7 +24,6 @@ import org.junit.Test;
 import java.text.DateFormat;
 import java.util.Date;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**

@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 public class OSMRoadClassParserTest {
 
     private EncodingManager em;
+    private long relFlags;
     private EnumEncodedValue<RoadClass> rcEnc;
     private OSMRoadClassParser parser;
 
@@ -22,6 +23,7 @@ public class OSMRoadClassParserTest {
     public void setUp() {
         parser = new OSMRoadClassParser();
         em = new EncodingManager.Builder().add(parser).build();
+        relFlags = 0;
         rcEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
     }
 
@@ -30,12 +32,12 @@ public class OSMRoadClassParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
+        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
         assertEquals(RoadClass.PRIMARY, rcEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "unknownstuff");
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
+        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
         assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, intsRef));
 
         intsRef = em.createEdgeFlags();

@@ -29,7 +29,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
@@ -107,7 +106,7 @@ public class RoundTripRoutingTemplateTest {
     @Test
     public void testCalcRoundTrip() {
         Weighting weighting = new FastestWeighting(carFE);
-        Graph g = createTestGraph(true);
+        Graph g = createTestGraph();
 
         RoundTripRoutingTemplate rTripRouting =
                 new RoundTripRoutingTemplate(new GHRequest(), new GHResponse(), null, em, 1);
@@ -137,8 +136,10 @@ public class RoundTripRoutingTemplateTest {
         assertEquals(IntArrayList.from(4, 8, 7, 6), paths.get(1).calcNodes());
     }
 
-    private Graph createTestGraph(boolean fullGraph) {
-        return new AlternativeRouteTest(tMode).createTestGraph(fullGraph, em);
+    private Graph createTestGraph() {
+        Graph graph = new GraphHopperStorage(new RAMDirectory(), em, false, true).create(1000);
+        AlternativeRouteTest.initTestGraph(graph);
+        return graph;
     }
 
     private Graph createSquareGraph() {
@@ -149,7 +150,7 @@ public class RoundTripRoutingTemplateTest {
         // ---|------
         //    |-1 0 1
         GraphHopperStorage graph =
-                new GraphHopperStorage(new RAMDirectory(), em, false, new GraphExtension.NoOpExtension());
+                new GraphHopperStorage(new RAMDirectory(), em, false);
         graph.create(1000);
         for (int i = 0; i < 8; ++i) {
             graph.edge(i, (i + 1) % 8, 1, true);

@@ -67,7 +67,7 @@ public class StringIndexTest {
 
     @Test
     public void putMany() {
-        StringIndex index = new StringIndex(new RAMDirectory()).create(1000);
+        StringIndex index = create();
         long aPointer = 0, tmpPointer = 0;
 
         for (int i = 0; i < 10000; i++) {
@@ -82,8 +82,13 @@ public class StringIndexTest {
         assertEquals("a name 567", index.get(tmpPointer, "a"));
         assertEquals("b name 567", index.get(tmpPointer, "b"));
         assertEquals("c name 567", index.get(tmpPointer, "c"));
+    }
 
-        for (int i = 1 + 3; i < MAX_UNIQUE_KEYS; i++) {
+    @Test
+    public void putManyKeys() {
+        StringIndex index = create();
+        // one key is already stored => empty key
+        for (int i = 1; i < MAX_UNIQUE_KEYS; i++) {
             index.add(createMap("a" + i, "a name"));
         }
         try {

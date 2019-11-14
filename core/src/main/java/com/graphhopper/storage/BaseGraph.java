@@ -59,9 +59,10 @@ class BaseGraph implements Graph {
     final DataAccess nodes;
     final BBox bounds;
     final NodeAccess nodeAccess;
-    final GraphExtension extStorage;
     private final static String STRING_IDX_NAME_KEY = "name";
     final StringIndex stringIndex;
+    // can be null if turn costs are not supported
+    final TurnCostExtension turnCostExtension;
     final BitUtil bitUtil;
     final EncodingManager encodingManager;
     final EdgeAccess edgeAccess;
@@ -76,9 +77,9 @@ class BaseGraph implements Graph {
      */
     protected int edgeCount;
     // node memory layout:
-    protected int N_EDGE_REF, N_LAT, N_LON, N_ELE, N_ADDITIONAL;
+    protected int N_EDGE_REF, N_LAT, N_LON, N_ELE, N_TC;
     // edge memory layout not found in EdgeAccess:
-    int E_DIST, E_GEO, E_NAME, E_ADDITIONAL;
+    int E_DIST, E_GEO, E_NAME;
     /**
      * Specifies how many entries (integers) are used per edge.
      */
@@ -99,7 +100,7 @@ class BaseGraph implements Graph {
     private boolean frozen = false;
 
     public BaseGraph(Directory dir, final EncodingManager encodingManager, boolean withElevation,
-                     InternalGraphEventListener listener, GraphExtension extendedStorage) {
+                     InternalGraphEventListener listener, boolean withTurnCosts) {
         this.dir = dir;
         this.encodingManager = encodingManager;
         this.intsForFlags = encodingManager.getIntsForFlags();
@@ -148,8 +149,11 @@ class BaseGraph implements Graph {
         };
         this.bounds = BBox.createInverse(withElevation);
         this.nodeAccess = new GHNodeAccess(this, withElevation);
-        this.extStorage = extendedStorage;
-        this.extStorage.init(this, dir);
+        if (withTurnCosts) {
+            turnCostExtension = new TurnCostExtension(nodeAccess, dir.find("turn_costs"));
+        } else {
+            turnCostExtension = null;
+        }
     }
 
     private static boolean isTestingEnabled() {
@@ -212,7 +216,7 @@ class BaseGraph implements Graph {
         edges.setHeader(0, edgeEntryBytes);
         edges.setHeader(1 * 4, edgeCount);
         edges.setHeader(2 * 4, encodingManager.hashCode());
-        edges.setHeader(3 * 4, extStorage.hashCode());
+        edges.setHeader(3 * 4, supportsTurnCosts() ? turnCostExtension.hashCode() : -1);
         return 5;
     }
 
@@ -239,10 +243,6 @@ class BaseGraph implements Graph {
         E_DIST = nextEdgeEntryIndex(4);
         E_GEO = nextEdgeEntryIndex(4);
         E_NAME = nextEdgeEntryIndex(4);
-        if (extStorage.isRequireEdgeField())
-            E_ADDITIONAL = nextEdgeEntryIndex(4);
-        else
-            E_ADDITIONAL = -1;
 
         N_EDGE_REF = nextNodeEntryIndex(4);
         N_LAT = nextNodeEntryIndex(4);
@@ -252,26 +252,30 @@ class BaseGraph implements Graph {
         else
             N_ELE = -1;
 
-        if (extStorage.isRequireNodeField())
-            N_ADDITIONAL = nextNodeEntryIndex(4);
+        if (supportsTurnCosts())
+            N_TC = nextNodeEntryIndex(4);
         else
-            N_ADDITIONAL = -1;
+            N_TC = -1;
 
         initNodeAndEdgeEntrySize();
         listener.initStorage();
         initialized = true;
     }
 
+    boolean supportsTurnCosts() {
+        return turnCostExtension != null;
+    }
+
     /**
-     * Initializes the node area with the empty edge value and default additional value.
+     * Initializes the node storage such that each node has no edge and no turn cost entry
      */
     void initNodeRefs(long oldCapacity, long newCapacity) {
         for (long pointer = oldCapacity + N_EDGE_REF; pointer < newCapacity; pointer += nodeEntryBytes) {
             nodes.setInt(pointer, EdgeIterator.NO_EDGE);
         }
-        if (extStorage.isRequireNodeField()) {
-            for (long pointer = oldCapacity + N_ADDITIONAL; pointer < newCapacity; pointer += nodeEntryBytes) {
-                nodes.setInt(pointer, extStorage.getDefaultNodeFieldValue());
+        if (supportsTurnCosts()) {
+            for (long pointer = oldCapacity + N_TC; pointer < newCapacity; pointer += nodeEntryBytes) {
+                nodes.setInt(pointer, TurnCostExtension.NO_TURN_ENTRY);
             }
         }
     }
@@ -344,7 +348,9 @@ class BaseGraph implements Graph {
         edges.setSegmentSize(bytes);
         wayGeometry.setSegmentSize(bytes);
         stringIndex.setSegmentSize(bytes);
-        extStorage.setSegmentSize(bytes);
+        if (supportsTurnCosts()) {
+            turnCostExtension.setSegmentSize(bytes);
+        }
     }
 
     synchronized void freeze() {
@@ -371,7 +377,9 @@ class BaseGraph implements Graph {
         initSize = Math.min(initSize, 2000);
         wayGeometry.create(initSize);
         stringIndex.create(initSize);
-        extStorage.create(initSize);
+        if (supportsTurnCosts()) {
+            turnCostExtension.create(initSize);
+        }
         initStorage();
         // 0 stands for no separate geoRef
         maxGeoRef = 4;
@@ -445,7 +453,9 @@ class BaseGraph implements Graph {
         setEdgesHeader();
         edges.flush();
         nodes.flush();
-        extStorage.flush();
+        if (supportsTurnCosts()) {
+            turnCostExtension.flush();
+        }
     }
 
     public void close() {
@@ -455,12 +465,14 @@ class BaseGraph implements Graph {
             stringIndex.close();
         edges.close();
         nodes.close();
-        extStorage.close();
+        if (supportsTurnCosts()) {
+            turnCostExtension.close();
+        }
     }
 
     long getCapacity() {
         return edges.getCapacity() + nodes.getCapacity() + stringIndex.getCapacity()
-                + wayGeometry.getCapacity() + extStorage.getCapacity();
+                + wayGeometry.getCapacity() + (supportsTurnCosts() ? turnCostExtension.getCapacity() : 0);
     }
 
     long getMaxGeoRef() {
@@ -484,8 +496,8 @@ class BaseGraph implements Graph {
         if (!stringIndex.loadExisting())
             throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
 
-        if (!extStorage.loadExisting())
-            throw new IllegalStateException("Cannot load extended storage. corrupt file or directory? " + dir);
+        if (supportsTurnCosts() && !turnCostExtension.loadExisting())
+            throw new IllegalStateException("Cannot load turn cost storage. corrupt file or directory? " + dir);
 
         // first define header indices of this storage
         initStorage();
@@ -510,8 +522,6 @@ class BaseGraph implements Graph {
                 setName(from.getName()).
                 setWayGeometry(from.fetchWayGeometry(0));
 
-        if (E_ADDITIONAL >= 0)
-            to.setAdditionalField(from.getAdditionalField());
         return to;
     }
 
@@ -530,9 +540,6 @@ class BaseGraph implements Graph {
         EdgeIterable iter = new EdgeIterable(this, edgeAccess, EdgeFilter.ALL_EDGES);
         boolean ret = iter.init(edgeId, nodeB);
         assert ret;
-        if (extStorage.isRequireEdgeField())
-            iter.setAdditionalField(extStorage.getDefaultEdgeFieldValue());
-
         return iter;
     }
 
@@ -626,8 +633,10 @@ class BaseGraph implements Graph {
         wayGeometry.copyTo(clonedG.wayGeometry);
         clonedG.loadWayGeometryHeader();
 
-        // extStorage
-        extStorage.copyTo(clonedG.extStorage);
+        // turn cost extension
+        if (supportsTurnCosts()) {
+            turnCostExtension.copyTo(clonedG.turnCostExtension);
+        }
 
         if (removedNodes == null)
             clonedG.removedNodes = null;
@@ -810,8 +819,8 @@ class BaseGraph implements Graph {
     }
 
     @Override
-    public GraphExtension getExtension() {
-        return extStorage;
+    public TurnCostExtension getTurnCostExtension() {
+        return turnCostExtension;
     }
 
     @Override
@@ -852,13 +861,6 @@ class BaseGraph implements Graph {
         int val = edges.getInt(pointer + E_DIST);
         // do never return infinity even if INT MAX, see #435
         return val / INT_DIST_FACTOR;
-    }
-
-    public void setAdditionalEdgeField(long edgePointer, int value) {
-        if (extStorage.isRequireEdgeField() && E_ADDITIONAL >= 0)
-            edges.setInt(edgePointer + E_ADDITIONAL, value);
-        else
-            throw new AssertionError("This graph does not support an additional edge field.");
     }
 
     private void setWayGeometry_(PointList pillarNodes, long edgePointer, boolean reverse) {
@@ -978,11 +980,11 @@ class BaseGraph implements Graph {
     }
 
     private void setName(long edgePointer, String name) {
-        int nameIndexRef = (int) stringIndex.add(Collections.singletonMap(STRING_IDX_NAME_KEY, name));
-        if (nameIndexRef < 0)
+        int stringIndexRef = (int) stringIndex.add(Collections.singletonMap(STRING_IDX_NAME_KEY, name));
+        if (stringIndexRef < 0)
             throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
 
-        edges.setInt(edgePointer + E_NAME, nameIndexRef);
+        edges.setInt(edgePointer + E_NAME, stringIndexRef);
     }
 
     GHBitSet getRemovedNodes() {
@@ -1235,17 +1237,6 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public final int getAdditionalField() {
-            return baseGraph.edges.getInt(edgePointer + baseGraph.E_ADDITIONAL);
-        }
-
-        @Override
-        public final EdgeIteratorState setAdditionalField(int value) {
-            baseGraph.setAdditionalEdgeField(edgePointer, value);
-            return this;
-        }
-
-        @Override
         public boolean get(BooleanEncodedValue property) {
             return property.getBool(reverse, getFlags());
         }
@@ -1374,8 +1365,8 @@ class BaseGraph implements Graph {
 
         @Override
         public String getName() {
-            int nameIndexRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_NAME);
-            String name = baseGraph.stringIndex.get(nameIndexRef, STRING_IDX_NAME_KEY);
+            int stringIndexRef = baseGraph.edges.getInt(edgePointer + baseGraph.E_NAME);
+            String name = baseGraph.stringIndex.get(stringIndexRef, STRING_IDX_NAME_KEY);
             // preserve backward compatibility (returns null if not explicitly set)
             return name == null ? "" : name;
         }

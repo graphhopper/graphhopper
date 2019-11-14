@@ -26,7 +26,6 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
-import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
@@ -48,6 +47,7 @@ public abstract class EdgeElevationInterpolatorTest {
     protected GraphHopperStorage graph;
     protected EnumEncodedValue<RoadEnvironment> roadEnvEnc;
     protected EncodingManager encodingManager;
+    protected long relFlags;
     protected EdgeElevationInterpolator edgeElevationInterpolator;
 
     @SuppressWarnings("resource")
@@ -56,10 +56,10 @@ public abstract class EdgeElevationInterpolatorTest {
         graph = new GraphHopperStorage(new RAMDirectory(),
                 encodingManager = new EncodingManager.Builder().add(new CarFlagEncoder()).add(new FootFlagEncoder()).
                         add(new OSMRoadEnvironmentParser()).build(),
-                true, new GraphExtension.NoOpExtension()).create(100);
+                true).create(100);
         roadEnvEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         edgeElevationInterpolator = createEdgeElevationInterpolator();
-
+        relFlags = 0;
         interpolatableWay = createInterpolatableWay();
         normalWay = new ReaderWay(0);
         normalWay.setTag("highway", "primary");

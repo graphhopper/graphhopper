@@ -169,17 +169,6 @@ class GraphSupport {
                     }
 
                     @Override
-                    public int getAdditionalField() {
-                        return edge.getAdditionalField();
-                    }
-
-                    @Override
-                    public EdgeIteratorState setAdditionalField(int value) {
-                        edge.setAdditionalField(value);
-                        return this;
-                    }
-
-                    @Override
                     public String getName() {
                         return edge.getName();
                     }
@@ -321,7 +310,7 @@ class GraphSupport {
             }
 
             @Override
-            public GraphExtension getExtension() {
+            public TurnCostExtension getTurnCostExtension() {
                 throw new UnsupportedOperationException();
             }
 

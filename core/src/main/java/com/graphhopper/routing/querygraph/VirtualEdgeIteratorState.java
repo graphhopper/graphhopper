@@ -238,23 +238,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         return this;
     }
 
-    /**
-     * This method sets edge to unfavored status for routing from the start or to the stop location.
-     */
-    public void setUnfavored(boolean unfavored) {
-        this.unfavored = unfavored;
-    }
-
-    @Override
-    public String toString() {
-        return baseNode + "->" + adjNode;
-    }
-
-    @Override
-    public boolean isShortcut() {
-        return false;
-    }
-
     @Override
     public EdgeIteratorState add(Map<String, String> kvEntry) {
         return this;
@@ -270,9 +253,21 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         return Collections.emptyMap();
     }
 
+    /**
+     * This method sets edge to unfavored status for routing from the start or to the stop location.
+     */
+    public void setUnfavored(boolean unfavored) {
+        this.unfavored = unfavored;
+    }
+
     @Override
-    public int getAdditionalField() {
-        throw new UnsupportedOperationException("Not supported.");
+    public String toString() {
+        return baseNode + "->" + adjNode;
+    }
+
+    @Override
+    public boolean isShortcut() {
+        return false;
     }
 
     @Override
@@ -322,12 +317,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         } else {
             return this;
         }
-    }
-
-
-    @Override
-    public EdgeIteratorState setAdditionalField(int value) {
-        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override

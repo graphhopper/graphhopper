@@ -49,7 +49,7 @@ public class AStarBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTester {
         for (Weighting w : weightings) {
             chProfiles.add(CHProfile.edgeBased(w, INFINITE_U_TURN_COSTS));
         }
-        return new GraphHopperStorage(chProfiles, new RAMDirectory(), em, is3D, new TurnCostExtension()).create(1000);
+        return new GraphHopperStorage(chProfiles, new RAMDirectory(), em, is3D, true).create(1000);
     }
 
     @Override

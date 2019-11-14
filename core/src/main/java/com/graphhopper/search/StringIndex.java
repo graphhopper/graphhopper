@@ -31,7 +31,7 @@ import java.util.*;
 public class StringIndex implements Storable<StringIndex> {
     private static final long EMPTY_POINTER = 0, START_POINTER = 1;
     // Store the key index in 2 bytes. Use negative values for marking the value as duplicate.
-    static final int MAX_UNIQUE_KEYS = (1 << 16) - 2;
+    static final int MAX_UNIQUE_KEYS = (1 << 15);
     // Store string value as byte array and store the length into 1 byte
     private static final int MAX_LENGTH = (1 << 8) - 1;
     boolean throwExceptionIfTooLong = false;
@@ -139,9 +139,7 @@ public class StringIndex implements Storable<StringIndex> {
             Integer keyIndex = keysInMem.get(key);
             if (keyIndex == null) {
                 keyIndex = keysInMem.size();
-                if (keyIndex.shortValue() < 0)
-                    throw new IllegalStateException("KeyIndex too large " + keyIndex);
-                if (keyIndex + 1 > MAX_UNIQUE_KEYS)
+                if (keyIndex >= MAX_UNIQUE_KEYS)
                     throw new IllegalArgumentException("Cannot store more than " + MAX_UNIQUE_KEYS + " unique keys");
                 keysInMem.put(key, keyIndex);
                 keyList.add(key);
