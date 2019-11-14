@@ -49,17 +49,22 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     }
 
     @Override
-    public GraphHopperStorage newGHStorage(Directory dir, boolean is3D) {
-        return newGHStorage(dir, is3D, false);
+    protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D) {
+        return newGHStorage(dir, enabled3D, -1);
+    }
+
+    @Override
+    public GraphHopperStorage newGHStorage(Directory dir, boolean is3D, int segmentSize) {
+        return newGHStorage(dir, is3D, false, segmentSize);
     }
 
     private GraphHopperStorage newGHStorage(boolean is3D, boolean forEdgeBasedTraversal) {
-        return newGHStorage(new RAMDirectory(defaultGraphLoc, true), is3D, forEdgeBasedTraversal).create(defaultSize);
+        return newGHStorage(new RAMDirectory(defaultGraphLoc, true), is3D, forEdgeBasedTraversal, -1).create(defaultSize);
     }
 
-    private GraphHopperStorage newGHStorage(Directory dir, boolean is3D, boolean forEdgeBasedTraversal) {
+    private GraphHopperStorage newGHStorage(Directory dir, boolean is3D, boolean forEdgeBasedTraversal, int segmentSize) {
         CHProfile chProfile = new CHProfile(new FastestWeighting(carEncoder), forEdgeBasedTraversal, INFINITE_U_TURN_COSTS);
-        return new GraphHopperStorage(Collections.singletonList(chProfile), dir, encodingManager, is3D);
+        return new GraphHopperStorage(Collections.singletonList(chProfile), dir, encodingManager, is3D, false, segmentSize);
     }
 
     @Test
@@ -68,7 +73,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph.flush();
         graph.close();
 
-        graph = new GraphBuilder(encodingManager).setLocation(defaultGraphLoc).setMmap(false).setStore(true).create();
+        graph = GraphBuilder.start(encodingManager).setRAM(defaultGraphLoc, true).create();
         try {
             graph.loadExisting();
             fail();
@@ -521,7 +526,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
     private void testLoadingWithWrongWeighting_throws(boolean edgeBased) {
         // we start with one weighting
-        GraphHopperStorage ghStorage = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), false, edgeBased);
+        GraphHopperStorage ghStorage = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), false, edgeBased, -1);
         ghStorage.create(defaultSize);
         ghStorage.flush();
 

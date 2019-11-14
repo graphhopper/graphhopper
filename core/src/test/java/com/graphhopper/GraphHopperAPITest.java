@@ -116,7 +116,7 @@ public class GraphHopperAPITest {
         String loc = "./target/issue1645";
         Helper.removeDir(new File(loc));
         EncodingManager em = new EncodingManager.Builder().add(new OSMRoadEnvironmentParser()).add(new CarFlagEncoder()).build();
-        GraphHopperStorage graph = new GraphBuilder(em).setLocation(loc).set3D(true).setStore(true).create();
+        GraphHopperStorage graph = GraphBuilder.start(em).setRAM(loc, true).set3D(true).create();
 
         // we need elevation
         NodeAccess na = graph.getNodeAccess();
