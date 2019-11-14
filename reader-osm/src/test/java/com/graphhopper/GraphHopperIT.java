@@ -1473,7 +1473,7 @@ public class GraphHopperIT {
 
     private void assertInstruction(Instruction instruction, String expectedName, String expectedInterval) {
         assertEquals(expectedName, instruction.getName());
-        assertEquals(expectedInterval, instruction.getPoints().toString());
+        assertEquals(expectedInterval, ((ShallowImmutablePointList) instruction.getPoints()).getIntervalString());
     }
 
     private void assertDetail(PathDetail detail, String expected) {
