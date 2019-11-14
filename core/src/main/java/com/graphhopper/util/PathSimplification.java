@@ -25,20 +25,45 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class simplifies the path, using {@link DouglasPeucker} and by considering the intervals
- * specified by <code>listsToSimplify</code>. We have to reference the points specified by the objects
- * in <code>listsToSimplify</code>. Therefore, we can only simplify in between these intervals, without
- * simplifying over one of the points, as it might get lost during the simplification
- * and we could not reference this point anymore.
+ * This class simplifies the path, using {@link DouglasPeucker}, but also considers a given list of partitions of
+ * the path. Each partition separates the points of the path into non-overlapping intervals and the simplification is
+ * done such that we never simplify across the boundaries of these intervals. This is important, because the points
+ * at the interval boundaries must not be removed, e.g. when they are referenced by instructions.
+ * For example for a path with twenty points and three partitions like this
+ * <p>
+ * - (0,1,2,3)(3,4)(4,4)(4,5,6,7)(7,8,9,10,11,12)(12,13,14,15,16)(17,18,19)
+ * - (0,1)(1,2,3,4)(4,5,6,7)(7,7)(8,9,10,11)(12,13,14,15)(16,17,18,19)
+ * - (0,1,2,3,4,5)(6,7,8,9,10,11,12,13,14),(14,15,16,17,18)(18,18)(18,19)
+ * <p>
+ * we run the simplification for the following intervals:
+ * <p>
+ * (0,1)(1,2,3)(3,4)(4,5)(5,6,7)(7,8,9,10,11)(11,12)(12,13,14)(14,15)(15,16)(16,17,18)(18,19)
  *
  * @author Robin Boldt
+ * @author easbar
  */
 public class PathSimplification {
 
     private final PointList pointList;
-    private final DouglasPeucker douglasPeucker;
+    /**
+     * @see PathSimplification
+     */
     private final List<Partition> partitions;
+    private final DouglasPeucker douglasPeucker;
 
+    // temporary variables used when traversing the different partitions
+    private final int numPartitions;
+    private final int[] currIntervalIndex;
+    private final int[] currIntervalStart;
+    private final int[] currIntervalEnd;
+    private final boolean[] partitionFinished;
+    // keep track of how many points were removed by Douglas-Peucker in the current and previous intervals
+    private final int[] removedPointsInCurrInterval;
+    private final int[] removedPointsInPrevIntervals;
+
+    /**
+     * Convenience method used to obtain the partitions from a calculated path with details and instructions
+     */
     public static PointList simplify(PathWrapper pathWrapper, DouglasPeucker douglasPeucker, boolean enableInstructions) {
         final PointList pointList = pathWrapper.getPoints();
         List<Partition> partitions = new ArrayList<>();
@@ -85,64 +110,65 @@ public class PathSimplification {
                     pd.setFirst(start);
                     pd.setLast(end);
                 }
-
             });
         }
 
-        new PathSimplification(pathWrapper.getPoints(), partitions, douglasPeucker).simplify();
+        simplify(pathWrapper.getPoints(), partitions, douglasPeucker);
         assertConsistencyOfPathDetails(pathWrapper.getPathDetails());
         assertConsistencyOfInstructions(pathWrapper.getInstructions(), pathWrapper.getPoints().size());
         return pointList;
     }
 
-    PathSimplification(PointList pointList, List<Partition> partitions, DouglasPeucker douglasPeucker) {
+    public static void simplify(PointList pointList, List<Partition> partitions, DouglasPeucker douglasPeucker) {
+        new PathSimplification(pointList, partitions, douglasPeucker).simplify();
+    }
+
+    private PathSimplification(PointList pointList, List<Partition> partitions, DouglasPeucker douglasPeucker) {
         this.pointList = pointList;
         this.partitions = partitions;
         this.douglasPeucker = douglasPeucker;
+        numPartitions = this.partitions.size();
+        currIntervalIndex = new int[numPartitions];
+        currIntervalStart = new int[numPartitions];
+        currIntervalEnd = new int[numPartitions];
+        partitionFinished = new boolean[numPartitions];
+        removedPointsInCurrInterval = new int[numPartitions];
+        removedPointsInPrevIntervals = new int[numPartitions];
     }
 
-    void simplify() {
+    private void simplify() {
         if (pointList.size() <= 2) {
             pointList.makeImmutable();
             return;
         }
 
-        // no constraints
+        // no partitions -> no constraints, just simplify the entire point list
         if (partitions.isEmpty()) {
             douglasPeucker.simplify(pointList, 0, pointList.size() - 1);
             pointList.makeImmutable();
             return;
         }
 
-        // When there are instructions or path details we have to make sure certain points (the first and last ones
-        // of each instruction/path detail interval) do not get removed by Douglas-Peucker. Douglas-Peucker never
-        // removes the first/last point of a given interval, so we call it for each interval separately to make sure
-        // none of these points get deleted.
-        // We have to make sure to update the point indices in path details and instructions as well, for example if
-        // a path detail goes from point 4 to 9 and we remove points 5 and 7 we have to update the interval to [4,7].
+        // Douglas-Peucker never removes the first/last point of a given interval, so as long as we only run it
+        // on each interval we can be sure that the interval boundaries will remain in the point list.
+        // Whenever we remove points from an interval we have to update the interval indices of all partitions.
+        // For example if an interval goes from point 4 to 9 and we remove points 5 and 7 we have to update the interval
+        // to [4,7].
+        // The basic idea to do this is as follows: We iterate through the point list and whenever we hit an interval
+        // end (q) in one of the partitions we run Douglas-Peucker for the interval [p,q], where p is the point where the
+        // last interval ended. We keep track of the number of removed points in the current and previous intervals
+        // to be able to calculate the updated indices.
 
-        // The basic idea is as follows: we iterate through the point list and whenever we hit an interval end (q) in
-        // one of the partitions we run Douglas-Peucker for the interval [p,q], where p is the point where the
-        // last interval ended. we need to keep track of the interval starts/ends and the interval indices in the different
-        // partitions
-        final int numPartitions = this.partitions.size();
-        final int[] currIntervalIndex = new int[numPartitions];
-        final int[] currIntervalStart = new int[numPartitions];
-        final int[] currIntervalEnd = new int[numPartitions];
-        final boolean[] partitionFinished = new boolean[numPartitions];
+        // prepare for the first interval in each partition
         int intervalStart = 0;
         for (int i = 0; i < numPartitions; i++) {
             currIntervalEnd[i] = this.partitions.get(i).getIntervalLength(currIntervalIndex[i]);
         }
 
-        // to correctly update the interval indices in path details and instructions we need to keep track of how
-        // many points were removed by Douglas-Peucker in the current and previous intervals
-        final int[] removedPointsInCurrInterval = new int[numPartitions];
-        final int[] removedPointsInPrevIntervals = new int[numPartitions];
-
+        // iterate the point list and simplify and update the intervals on the go
         for (int p = 0; p < pointList.size(); p++) {
             int removed = 0;
-            // first we check if we hit an interval end for one of the partitions and run douglas peucker if so
+            // first we check if we hit the end of an interval for one of the partitions and run Douglas-Peucker if we do
             for (int s = 0; s < numPartitions; s++) {
                 if (partitionFinished[s]) {
                     continue;
@@ -150,46 +176,32 @@ public class PathSimplification {
                 if (p == currIntervalEnd[s]) {
                     // This is important for performance: we must not compress the point list after each call to
                     // simplify, otherwise a lot of data is copied, especially for long routes (e.g. many via nodes),
-                    // see #1764. Note that since the point list does not get compressed we have to keep track of the
-                    // total number of removed points to shift the indices into pointList correctly.
+                    // see #1764. Note that since the point list does not get compressed here yet we have to keep track
+                    // of the total number of removed points to calculate the new interval boundaries later
                     final boolean compress = false;
                     removed = douglasPeucker.simplify(pointList, intervalStart, currIntervalEnd[s], compress);
                     intervalStart = p;
                     break;
                 }
             }
-            // in case we hit an interval end we have to updated our indices for the next interval, also we need
-            // to keep track of the number of removed points (for all partitions)
+
+            // now we have (possibly) removed some points we need to update the current intervals in all partitions
             for (int s = 0; s < numPartitions; s++) {
                 if (partitionFinished[s]) {
                     continue;
                 }
                 removedPointsInCurrInterval[s] += removed;
-                if (p == currIntervalEnd[s]) {
-                    // we hit an interval end
-                    // update the point indices for path details and instructions
-                    final int updatedStart = currIntervalStart[s] - removedPointsInPrevIntervals[s];
-                    final int updatedEnd = currIntervalEnd[s] - removedPointsInPrevIntervals[s] - removedPointsInCurrInterval[s];
-                    this.partitions.get(s).setInterval(currIntervalIndex[s], updatedStart, updatedEnd);
-
-                    // prepare for the next interval
-                    currIntervalIndex[s]++;
-                    currIntervalStart[s] = p;
-                    if (currIntervalIndex[s] >= this.partitions.get(s).size()) {
-                        partitionFinished[s] = true;
+                // if the current interval of this partition ends at p, we update the interval boundaries. there is
+                // just a special catch: there can be multiple consecutive intervals that end with p, because there
+                // are intervals with a single point, for example p=3 and a partition=[0,3][3,3][3,3]
+                boolean nextIntervalHasOnlyOnePoint;
+                do {
+                    if (p == currIntervalEnd[s]) {
+                        nextIntervalHasOnlyOnePoint = updateInterval(p, s);
                     } else {
-                        int length = this.partitions.get(s).getIntervalLength(currIntervalIndex[s]);
-                        currIntervalEnd[s] += length;
-                        // special case at via points etc.
-                        if (length == 0) {
-                            p--;
-                        }
+                        break;
                     }
-
-                    // update the removed point counters
-                    removedPointsInPrevIntervals[s] += removedPointsInCurrInterval[s];
-                    removedPointsInCurrInterval[s] = 0;
-                }
+                } while (nextIntervalHasOnlyOnePoint);
             }
         }
 
@@ -201,6 +213,37 @@ public class PathSimplification {
         pointList.makeImmutable();
 
         assertConsistencyOfIntervals();
+    }
+
+    /**
+     * @param p point index
+     * @param s partition index
+     */
+    private boolean updateInterval(int p, int s) {
+        boolean nextIntervalHasOnlyOnePoint = false;
+        // update interval boundaries
+        final int updatedStart = currIntervalStart[s] - removedPointsInPrevIntervals[s];
+        final int updatedEnd = currIntervalEnd[s] - removedPointsInPrevIntervals[s] - removedPointsInCurrInterval[s];
+        this.partitions.get(s).setInterval(currIntervalIndex[s], updatedStart, updatedEnd);
+
+        // update the removed point counters
+        removedPointsInPrevIntervals[s] += removedPointsInCurrInterval[s];
+        removedPointsInCurrInterval[s] = 0;
+
+        // prepare for the next interval
+        currIntervalIndex[s]++;
+        currIntervalStart[s] = p;
+        if (currIntervalIndex[s] >= this.partitions.get(s).size()) {
+            partitionFinished[s] = true;
+        } else {
+            int length = this.partitions.get(s).getIntervalLength(currIntervalIndex[s]);
+            currIntervalEnd[s] += length;
+            // special case at via points etc.
+            if (length == 0) {
+                nextIntervalHasOnlyOnePoint = true;
+            }
+        }
+        return nextIntervalHasOnlyOnePoint;
     }
 
     private void assertConsistencyOfIntervals() {
@@ -234,13 +277,16 @@ public class PathSimplification {
     }
 
     private static void assertConsistencyOfInstructions(InstructionList instructions, int numPoints) {
+        // the total length of the instruction intervals must match the length of the point list.
+        // todo: it would be even better to make sure each instruction interval starts where the previous one ended, but
+        // currently instructions do not offer this
         int expected = numPoints - 1;
         int count = 0;
         for (Instruction instruction : instructions) {
             count += instruction.getLength();
         }
         if (count != expected) {
-            throw new IllegalArgumentException("inconsistent instructions: " + count + " vs. " + expected);
+            throw new IllegalArgumentException("inconsistent instructions, total interval length: " + count + " vs. point list length " + expected);
         }
     }
 
@@ -252,6 +298,8 @@ public class PathSimplification {
     interface Partition {
         int size();
 
+        // todo: it would be nice to be able to retrieve the actual start and end of each interval to make the
+        // code here more straight-forward, but currently instructions only offer the length of the interval
         int getIntervalLength(int index);
 
         void setInterval(int index, int start, int end);

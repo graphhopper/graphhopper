@@ -20,10 +20,6 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import static org.junit.Assert.*;
 
 /**
@@ -248,5 +244,4 @@ public class PointListTest {
         oneLength.add(0, 0, 0);
         assertEquals(2, oneLength.toLineString(false).getNumPoints());
     }
-
 }
