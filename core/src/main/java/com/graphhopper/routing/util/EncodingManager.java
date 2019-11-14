@@ -34,6 +34,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -48,6 +49,7 @@ import static com.graphhopper.util.Helper.toLowerCase;
  */
 public class EncodingManager implements EncodedValueLookup {
     private static final int BITS_FOR_TURN_FLAGS = 8 * 4;
+    private static final Pattern WAY_NAME_PATTERN = Pattern.compile("; *");
 
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
     private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
@@ -303,7 +305,7 @@ public class EncodingManager implements EncodedValueLookup {
     static String fixWayName(String str) {
         if (str == null)
             return "";
-        return str.replaceAll(";[ ]*", ", ");
+        return WAY_NAME_PATTERN.matcher(str).replaceAll(", ");
     }
 
     public int getIntsForFlags() {
