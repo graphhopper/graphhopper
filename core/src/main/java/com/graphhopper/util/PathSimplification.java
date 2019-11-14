@@ -35,40 +35,83 @@ import java.util.Map;
  */
 public class PathSimplification {
 
-    private PointList pointList;
-    private Map<String, List<PathDetail>> pathDetails;
-    private List<List> pathSegmentations;
-    private DouglasPeucker douglasPeucker;
+    private final PointList pointList;
+    private final DouglasPeucker douglasPeucker;
+    private final List<Partition> partitions;
 
-    public PathSimplification(PathWrapper pathWrapper, DouglasPeucker douglasPeucker, boolean enableInstructions) {
-        this.pointList = pathWrapper.getPoints();
-        pathSegmentations = new ArrayList<>();
-        if (enableInstructions)
-            pathSegmentations.add(pathWrapper.getInstructions());
+    public static PointList simplify(PathWrapper pathWrapper, DouglasPeucker douglasPeucker, boolean enableInstructions) {
+        final PointList pointList = pathWrapper.getPoints();
+        List<Partition> partitions = new ArrayList<>();
+        if (enableInstructions) {
+            final InstructionList instructions = pathWrapper.getInstructions();
+            partitions.add(new Partition() {
+                @Override
+                public int size() {
+                    return instructions.size();
+                }
 
-        this.pathDetails = pathWrapper.getPathDetails();
-        for (String name : pathDetails.keySet()) {
-            List<PathDetail> pathDetailList = pathDetails.get(name);
-            // If the pointList only contains one point, PathDetails have to be empty because 1 point => 0 edges
-            if (pathDetailList.isEmpty() && pointList.size() > 1)
-                throw new IllegalStateException("PathDetails " + name + " must not be empty");
+                @Override
+                public int getIntervalLength(int index) {
+                    return instructions.get(index).getLength();
+                }
 
-            pathSegmentations.add(pathDetailList);
+                @Override
+                public void setInterval(int index, int start, int end) {
+                    instructions.get(index).setPoints(pointList.shallowCopy(start, end, false));
+                }
+            });
         }
+
+        for (final Map.Entry<String, List<PathDetail>> entry : pathWrapper.getPathDetails().entrySet()) {
+            // If the pointList only contains one point, PathDetails have to be empty because 1 point => 0 edges
+            final List<PathDetail> detail = entry.getValue();
+            if (detail.isEmpty() && pointList.size() > 1)
+                throw new IllegalStateException("PathDetails " + entry.getKey() + " must not be empty");
+
+            partitions.add(new Partition() {
+                @Override
+                public int size() {
+                    return detail.size();
+                }
+
+                @Override
+                public int getIntervalLength(int index) {
+                    return detail.get(index).getLength();
+                }
+
+                @Override
+                public void setInterval(int index, int start, int end) {
+                    PathDetail pd = detail.get(index);
+                    pd.setFirst(start);
+                    pd.setLast(end);
+                }
+
+            });
+        }
+
+        new PathSimplification(pathWrapper.getPoints(), partitions, douglasPeucker).simplify();
+        assertConsistencyOfPathDetails(pathWrapper.getPathDetails());
+        assertConsistencyOfInstructions(pathWrapper.getInstructions(), pathWrapper.getPoints().size());
+        return pointList;
+    }
+
+    PathSimplification(PointList pointList, List<Partition> partitions, DouglasPeucker douglasPeucker) {
+        this.pointList = pointList;
+        this.partitions = partitions;
         this.douglasPeucker = douglasPeucker;
     }
 
-    public PointList simplify() {
+    void simplify() {
         if (pointList.size() <= 2) {
             pointList.makeImmutable();
-            return pointList;
+            return;
         }
 
         // no constraints
-        if (pathSegmentations.isEmpty()) {
+        if (partitions.isEmpty()) {
             douglasPeucker.simplify(pointList, 0, pointList.size() - 1);
             pointList.makeImmutable();
-            return pointList;
+            return;
         }
 
         // When there are instructions or path details we have to make sure certain points (the first and last ones
@@ -78,30 +121,30 @@ public class PathSimplification {
         // We have to make sure to update the point indices in path details and instructions as well, for example if
         // a path detail goes from point 4 to 9 and we remove points 5 and 7 we have to update the interval to [4,7].
 
-        // The basic idea is as follows: the instructions/path details we iterate through the point list and whenever we hit an interval end (q) in
-        // one of the path segmentations we run Douglas-Peucker for the interval [p,q], where p is the point where the
+        // The basic idea is as follows: we iterate through the point list and whenever we hit an interval end (q) in
+        // one of the partitions we run Douglas-Peucker for the interval [p,q], where p is the point where the
         // last interval ended. we need to keep track of the interval starts/ends and the interval indices in the different
-        // path segmentations.
-        final int pathSegmentations = this.pathSegmentations.size();
-        final int[] currIntervalIndex = new int[pathSegmentations];
-        final int[] currIntervalStart = new int[pathSegmentations];
-        final int[] currIntervalEnd = new int[pathSegmentations];
-        final boolean[] segmentsFinished = new boolean[pathSegmentations];
+        // partitions
+        final int numPartitions = this.partitions.size();
+        final int[] currIntervalIndex = new int[numPartitions];
+        final int[] currIntervalStart = new int[numPartitions];
+        final int[] currIntervalEnd = new int[numPartitions];
+        final boolean[] partitionFinished = new boolean[numPartitions];
         int intervalStart = 0;
-        for (int i = 0; i < pathSegmentations; i++) {
-            currIntervalEnd[i] = getLength(this.pathSegmentations.get(i), currIntervalIndex[i]);
+        for (int i = 0; i < numPartitions; i++) {
+            currIntervalEnd[i] = this.partitions.get(i).getIntervalLength(currIntervalIndex[i]);
         }
 
         // to correctly update the interval indices in path details and instructions we need to keep track of how
         // many points were removed by Douglas-Peucker in the current and previous intervals
-        final int[] removedPointsInCurrInterval = new int[pathSegmentations];
-        final int[] removedPointsInPrevIntervals = new int[pathSegmentations];
+        final int[] removedPointsInCurrInterval = new int[numPartitions];
+        final int[] removedPointsInPrevIntervals = new int[numPartitions];
 
         for (int p = 0; p < pointList.size(); p++) {
             int removed = 0;
-            // first we check if we hit an interval end for one of the segmenations and run douglas peucker if so
-            for (int s = 0; s < pathSegmentations; s++) {
-                if (segmentsFinished[s]) {
+            // first we check if we hit an interval end for one of the partitions and run douglas peucker if so
+            for (int s = 0; s < numPartitions; s++) {
+                if (partitionFinished[s]) {
                     continue;
                 }
                 if (p == currIntervalEnd[s]) {
@@ -116,27 +159,31 @@ public class PathSimplification {
                 }
             }
             // in case we hit an interval end we have to updated our indices for the next interval, also we need
-            // to keep track of the number of removed points (for all segmentations)
-            for (int s = 0; s < pathSegmentations; s++) {
-                if (segmentsFinished[s]) {
+            // to keep track of the number of removed points (for all partitions)
+            for (int s = 0; s < numPartitions; s++) {
+                if (partitionFinished[s]) {
                     continue;
                 }
                 removedPointsInCurrInterval[s] += removed;
-                // need to use >= instead of == here, because there can be empty intervals (e.g. at via nodes)
-                if (p >= currIntervalEnd[s]) {
+                if (p == currIntervalEnd[s]) {
                     // we hit an interval end
                     // update the point indices for path details and instructions
                     final int updatedStart = currIntervalStart[s] - removedPointsInPrevIntervals[s];
                     final int updatedEnd = currIntervalEnd[s] - removedPointsInPrevIntervals[s] - removedPointsInCurrInterval[s];
-                    reduceLength(this.pathSegmentations.get(s), currIntervalIndex[s], updatedStart, updatedEnd);
+                    this.partitions.get(s).setInterval(currIntervalIndex[s], updatedStart, updatedEnd);
 
                     // prepare for the next interval
                     currIntervalIndex[s]++;
                     currIntervalStart[s] = p;
-                    if (currIntervalIndex[s] >= this.pathSegmentations.get(s).size()) {
-                        segmentsFinished[s] = true;
+                    if (currIntervalIndex[s] >= this.partitions.get(s).size()) {
+                        partitionFinished[s] = true;
                     } else {
-                        currIntervalEnd[s] += getLength(this.pathSegmentations.get(s), currIntervalIndex[s]);
+                        int length = this.partitions.get(s).getIntervalLength(currIntervalIndex[s]);
+                        currIntervalEnd[s] += length;
+                        // special case at via points etc.
+                        if (length == 0) {
+                            p--;
+                        }
                     }
 
                     // update the removed point counters
@@ -150,13 +197,27 @@ public class PathSimplification {
         // call the (now shifted) indices in path details and instructions are correct
         DouglasPeucker.removeNaN(pointList);
 
-        assert assertConsistencyOfPathDetails();
         // Make sure that the instruction references are not broken
         pointList.makeImmutable();
-        return pointList;
+
+        assertConsistencyOfIntervals();
     }
 
-    private boolean assertConsistencyOfPathDetails() {
+    private void assertConsistencyOfIntervals() {
+        final int expected = pointList.size() - 1;
+        for (int i = 0; i < partitions.size(); i++) {
+            final Partition partition = partitions.get(i);
+            int count = 0;
+            for (int j = 0; j < partition.size(); j++) {
+                count += partition.getIntervalLength(j);
+            }
+            if (count != expected) {
+                throw new IllegalStateException("Simplified intervals are inconsistent: " + count + " vs. " + expected + " for intervals with index: " + i);
+            }
+        }
+    }
+
+    private static void assertConsistencyOfPathDetails(Map<String, List<PathDetail>> pathDetails) {
         for (Map.Entry<String, List<PathDetail>> pdEntry : pathDetails.entrySet()) {
             List<PathDetail> list = pdEntry.getValue();
             if (list.isEmpty())
@@ -170,29 +231,30 @@ public class PathSimplification {
                 prevPD = list.get(i);
             }
         }
-        return true;
     }
 
-    private int getLength(Object o, int index) {
-        if (o instanceof InstructionList) {
-            return ((InstructionList) o).get(index).getLength();
+    private static void assertConsistencyOfInstructions(InstructionList instructions, int numPoints) {
+        int expected = numPoints - 1;
+        int count = 0;
+        for (Instruction instruction : instructions) {
+            count += instruction.getLength();
         }
-        if (o instanceof List) {
-            return ((List<PathDetail>) o).get(index).getLength();
+        if (count != expected) {
+            throw new IllegalArgumentException("inconsistent instructions: " + count + " vs. " + expected);
         }
-        throw new IllegalStateException("We can only handle PathDetails or InstructionList in PathSimplification");
     }
 
-    private void reduceLength(Object o, int index, int startIndex, int newEndIndex) {
-        if (o instanceof InstructionList) {
-            ((InstructionList) o).get(index).setPoints(this.pointList.shallowCopy(startIndex, newEndIndex, false));
-        } else if (o instanceof List) {
-            PathDetail pd = ((List<PathDetail>) o).get(index);
-            pd.setFirst(startIndex);
-            pd.setLast(newEndIndex);
-        } else {
-            throw new IllegalStateException("We can only handle List<PathDetail> or InstructionList");
-        }
+    /**
+     * Represents a partition of a {@link PointList} into consecutive intervals, for example a list with six points
+     * can be partitioned into something like [0,2],[2,2],[2,3][3,5]. Note that intervals with a single point are
+     * allowed, but each interval must start where the previous one ended.
+     */
+    interface Partition {
+        int size();
+
+        int getIntervalLength(int index);
+
+        void setInterval(int index, int start, int end);
     }
 
 }

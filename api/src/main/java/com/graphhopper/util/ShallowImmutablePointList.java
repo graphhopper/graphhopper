@@ -58,6 +58,11 @@ public final class ShallowImmutablePointList extends PointList {
     }
 
     @Override
+    public String toString() {
+        return "[" + fromOffset + ", " + toOffset + "]";
+    }
+
+    @Override
     public double getLatitude(int index) {
         if (index > getSize())
             throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + getSize());

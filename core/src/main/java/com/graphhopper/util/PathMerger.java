@@ -56,7 +56,7 @@ public class PathMerger {
     private DouglasPeucker douglasPeucker = DP;
     private boolean calcPoints = true;
     private PathDetailsBuilderFactory pathBuilderFactory;
-    private List<String> requestedPathDetails = Collections.EMPTY_LIST;
+    private List<String> requestedPathDetails = Collections.emptyList();
     private double favoredHeading = Double.NaN;
 
     public PathMerger(Graph graph, Weighting weighting) {
@@ -167,8 +167,7 @@ public class PathMerger {
                 setTime(fullTimeInMillis);
 
         if (allFound && simplifyResponse && (calcPoints || enableInstructions)) {
-            PathSimplification ps = new PathSimplification(altRsp, douglasPeucker, enableInstructions);
-            ps.simplify();
+            PathSimplification.simplify(altRsp, douglasPeucker, enableInstructions);
         }
     }
 
