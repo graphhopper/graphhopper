@@ -332,6 +332,15 @@ public abstract class DataAccessTest {
     }
 
     @Test
+    public void testSet_GetByte() {
+        DataAccess da = createDataAccess(name);
+        da.create(300);
+        da.setByte(8, (byte) 120);
+        assertEquals(120, da.getByte(8));
+        da.close();
+    }
+
+    @Test
     public void testSet_Get_Short_Long() {
         DataAccess da = createDataAccess(name);
         da.create(300);
@@ -354,6 +363,10 @@ public abstract class DataAccessTest {
             assertEquals(Short.MAX_VALUE / 3, da.getShort(7));
             // should be overwritten
             assertNotEquals(Short.MAX_VALUE / 3, da.getShort(8));
+
+            long pointer = da.getSegmentSize() - 1;
+            da.setShort(pointer, (short) (Short.MAX_VALUE / 3));
+            assertEquals(Short.MAX_VALUE / 3, da.getShort(pointer));
         }
         da.close();
     }

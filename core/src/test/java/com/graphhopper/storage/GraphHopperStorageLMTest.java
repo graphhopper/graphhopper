@@ -22,8 +22,7 @@ public class GraphHopperStorageLMTest {
         Helper.removeDir(new File(defaultGraphLoc));
         CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(carFlagEncoder);
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setStore(true).
-                setLocation(defaultGraphLoc).create();
+        GraphHopperStorage graph = GraphBuilder.start(encodingManager).setRAM(defaultGraphLoc, true).create();
 
         // 0-1
         ReaderWay way_0_1 = new ReaderWay(27l);

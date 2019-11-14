@@ -53,7 +53,7 @@ public class GraphHopperStorageForDataFlagEncoderTest {
 
     @Test
     public void testStorageProperties() {
-        graph = new GraphBuilder(encodingManager).setStore(true).setLocation(defaultGraphLoc).create();
+        graph = new GraphBuilder(encodingManager).setRAM(defaultGraphLoc, true).create();
 
         // 0-1
         ReaderWay way_0_1 = new ReaderWay(27l);

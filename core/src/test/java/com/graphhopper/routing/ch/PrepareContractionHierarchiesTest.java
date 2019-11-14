@@ -47,6 +47,7 @@ public class PrepareContractionHierarchiesTest {
     private final CarFlagEncoder carEncoder = new CarFlagEncoder("speed_two_directions=true");
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
     private final Weighting weighting = new ShortestWeighting(carEncoder);
+    private final CHProfile chProfile = CHProfile.nodeBased(weighting);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private Directory dir;
 
@@ -125,11 +126,11 @@ public class PrepareContractionHierarchiesTest {
     }
 
     GraphHopperStorage createGHStorage() {
-        return createGHStorage(weighting);
+        return createGHStorage(chProfile);
     }
 
-    GraphHopperStorage createGHStorage(Weighting w) {
-        return new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(w)).create();
+    GraphHopperStorage createGHStorage(CHProfile p) {
+        return new GraphBuilder(encodingManager).setCHProfiles(p).create();
     }
 
     GraphHopperStorage createExampleGraph() {
@@ -159,8 +160,7 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testReturnsCorrectWeighting() {
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getCHGraph();
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         assertSame(weighting, prepare.getWeighting());
     }
@@ -170,7 +170,7 @@ public class PrepareContractionHierarchiesTest {
         GraphHopperStorage g = createExampleGraph();
         CHGraph lg = g.getCHGraph();
         int old = lg.getEdges();
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         assertEquals(old + 2, lg.getEdges());
     }
@@ -180,9 +180,9 @@ public class PrepareContractionHierarchiesTest {
         GraphHopperStorage g = createGHStorage();
         initShortcutsGraph(g);
         int oldCount = g.getAllEdges().length();
-        CHGraph lg = g.getCHGraph();
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
+        CHGraph lg = g.getCHGraph();
         assertEquals(oldCount, g.getEdges());
         assertEquals(oldCount + 7, lg.getEdges());
     }
@@ -190,7 +190,6 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testDirectedGraph() {
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getCHGraph();
         g.edge(5, 4, 3, false);
         g.edge(4, 5, 10, false);
         g.edge(2, 4, 1, false);
@@ -198,9 +197,10 @@ public class PrepareContractionHierarchiesTest {
         g.edge(3, 5, 1, false);
         g.edge(4, 3, 1, false);
         g.freeze();
+        CHGraph lg = g.getCHGraph();
         int oldCount = GHUtility.count(lg.getAllEdges());
         assertEquals(6, oldCount);
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
         assertEquals(oldCount + 2, GHUtility.count(lg.getAllEdges()));
@@ -213,12 +213,12 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testDirectedGraph2() {
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getCHGraph();
         initDirected2(g);
         int oldCount = GHUtility.count(g.getAllEdges());
         assertEquals(19, oldCount);
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
+        CHGraph lg = g.getCHGraph();
         // PrepareTowerNodesShortcutsTest.printEdges(g);
         assertEquals(oldCount, g.getAllEdges().length());
         assertEquals(oldCount, GHUtility.count(g.getAllEdges()));
@@ -287,11 +287,11 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testRoundaboutUnpacking() {
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getCHGraph();
         initRoundaboutGraph(g);
         int oldCount = g.getAllEdges().length();
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
+        CHGraph lg = g.getCHGraph();
         assertEquals(oldCount, g.getEdges());
         assertEquals(oldCount + 23, lg.getEdges());
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
@@ -352,7 +352,7 @@ public class PrepareContractionHierarchiesTest {
         GraphHopperStorage g = createGHStorage();
         CHGraph lg = g.getCHGraph();
         initUnpackingGraph(g, lg, weighting);
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         // do not call prepare.doWork() here
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(10, 6);
@@ -367,7 +367,7 @@ public class PrepareContractionHierarchiesTest {
         Weighting w = new FastestWeighting(carEncoder);
         initUnpackingGraph(g, lg, w);
 
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         // do not call prepare.doWork() here
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(10, 6);
@@ -378,7 +378,6 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testDisconnects() {
         final GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getCHGraph();
         //            4
         //            v
         //            0
@@ -398,7 +397,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(2, 7, 1, false);
         g.freeze();
 
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg)
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g)
                 .useFixedNodeOrdering(new NodeOrderingProvider() {
                     @Override
                     public int getNodeIdForLevel(int level) {
@@ -411,6 +410,7 @@ public class PrepareContractionHierarchiesTest {
                     }
                 });
         prepare.doWork();
+        CHGraph lg = g.getCHGraph();
         CHEdgeExplorer explorer = lg.createEdgeExplorer();
         // shortcuts (and edges) leading to or coming from lower level nodes should be disconnected
         // so far we are only disconnecting shortcuts however, see comments in CHGraphImpl.
@@ -439,8 +439,8 @@ public class PrepareContractionHierarchiesTest {
 
         // use fastest weighting in this test to be able to fine-tune some weights via the speed (see below)
         Weighting fastestWeighting = new FastestWeighting(carEncoder);
-        final GraphHopperStorage g = createGHStorage(fastestWeighting);
-        CHGraph lg = g.getCHGraph();
+        CHProfile chProfile = CHProfile.nodeBased(fastestWeighting);
+        final GraphHopperStorage g = createGHStorage(chProfile);
         // the following graph reproduces the issue. note that we will use the node ids as ch levels, so there will
         // be a shortcut 3->2 visible at node 2 and another one 3->4 visible at node 3.
         // we will fine-tune the edge-speeds such that without the fix node 4 will be stalled and node 5 will not get
@@ -484,7 +484,7 @@ public class PrepareContractionHierarchiesTest {
         edge24.setReverse(carEncoder.getAverageSpeedEnc(), 27.5);
 
         // prepare ch, use node ids as levels
-        PrepareContractionHierarchies pch = createPrepareContractionHierarchies(g, lg, fastestWeighting);
+        PrepareContractionHierarchies pch = createPrepareContractionHierarchies(g, chProfile);
         pch.useFixedNodeOrdering(new NodeOrderingProvider() {
             @Override
             public int getNodeIdForLevel(int level) {
@@ -496,6 +496,7 @@ public class PrepareContractionHierarchiesTest {
                 return g.getNodes();
             }
         }).doWork();
+        CHGraph lg = g.getCHGraph(chProfile);
         assertEquals("there should be exactly two (bidirectional) shortcuts (2-3) and (3-4)", 2, lg.getEdges() - lg.getOriginalEdges());
 
         // insert virtual node and edges
@@ -538,7 +539,6 @@ public class PrepareContractionHierarchiesTest {
     @Test
     public void testCircleBug() {
         GraphHopperStorage g = createGHStorage();
-        CHGraph lg = g.getCHGraph();
         //  /--1
         // -0--/
         //  |
@@ -546,7 +546,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(0, 1, 4, true);
         g.edge(0, 2, 10, true);
         g.edge(0, 3, 10, true);
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         assertEquals(0, prepare.getShortcuts());
     }
@@ -570,7 +570,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(3, 4, 1, true);
         g.edge(6, 3, 1, true);
 
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
     }
@@ -678,19 +678,19 @@ public class PrepareContractionHierarchiesTest {
 
         // create CH for cars
         StopWatch sw = new StopWatch().start();
-        CHGraph carCH = ghStorage.getCHGraph(carProfile);
-        PrepareContractionHierarchies carPch = new PrepareContractionHierarchies(carCH);
+        PrepareContractionHierarchies carPch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, carProfile);
         carPch.doWork();
+        CHGraph carCH = ghStorage.getCHGraph(carProfile);
         long timeCar = sw.stop().getMillis();
 
         // create CH for motorcycles, re-use car contraction order
         // this speeds up contraction significantly, but can lead to slower queries
         sw = new StopWatch().start();
-        CHGraph motorCycleCH = ghStorage.getCHGraph(motorCycleProfile);
         NodeOrderingProvider nodeOrderingProvider = carCH.getNodeOrderingProvider();
-        PrepareContractionHierarchies motorCyclePch = new PrepareContractionHierarchies(motorCycleCH)
+        PrepareContractionHierarchies motorCyclePch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, motorCycleProfile)
                 .useFixedNodeOrdering(nodeOrderingProvider);
         motorCyclePch.doWork();
+        CHGraph motorCycleCH = ghStorage.getCHGraph(motorCycleProfile);
 
         // run a few sample queries to check correctness
         for (int i = 0; i < numQueries; ++i) {
@@ -710,7 +710,7 @@ public class PrepareContractionHierarchiesTest {
 
     void checkPath(GraphHopperStorage g, CHProfile p, int expShortcuts, double expDistance, IntIndexedContainer expNodes) {
         CHGraph lg = g.getCHGraph(p);
-        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, lg, p);
+        PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g, p);
         prepare.doWork();
         assertEquals(p.toString(), expShortcuts, prepare.getShortcuts());
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, p.getWeighting(), tMode));
@@ -719,17 +719,13 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(path.toString(), expNodes, path.calcNodes());
     }
 
-    private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHGraph lg) {
-        return createPrepareContractionHierarchies(g, lg, weighting);
+    private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g) {
+        return createPrepareContractionHierarchies(g, chProfile);
     }
 
-    private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHGraph lg, Weighting w) {
-        return createPrepareContractionHierarchies(g, lg, CHProfile.nodeBased(w));
-    }
-
-    private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHGraph lg, CHProfile p) {
+    private PrepareContractionHierarchies createPrepareContractionHierarchies(GraphHopperStorage g, CHProfile p) {
         g.freeze();
-        return new PrepareContractionHierarchies(lg);
+        return PrepareContractionHierarchies.fromGraphHopperStorage(g, p);
     }
 
 }
