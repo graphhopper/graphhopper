@@ -138,7 +138,7 @@ public class RandomCHRoutingTest {
         graph.freeze();
         CHProfile chProfile = new CHProfile(weighting, traversalMode, uTurnCosts);
         CHGraph chGraph = graph.getCHGraph(chProfile);
-        PrepareContractionHierarchies pch = new PrepareContractionHierarchies(chGraph);
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
         pch.doWork();
 
         int numQueryGraph = 25;
