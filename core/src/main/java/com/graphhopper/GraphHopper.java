@@ -17,15 +17,6 @@
  */
 package com.graphhopper;
 
-import ch.poole.conditionalrestrictionparser.Condition;
-import ch.poole.conditionalrestrictionparser.ConditionalRestrictionParser;
-import ch.poole.conditionalrestrictionparser.ParseException;
-import ch.poole.conditionalrestrictionparser.Restriction;
-import ch.poole.openinghoursparser.OpeningHoursParser;
-import ch.poole.openinghoursparser.Rule;
-import ch.poole.openinghoursparser.TimeSpan;
-import com.conveyal.osmlib.OSMEntity;
-import com.conveyal.osmlib.Way;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
@@ -33,7 +24,10 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
+import com.graphhopper.routing.profiles.EncodedValueFactory;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
@@ -42,7 +36,6 @@ import com.graphhopper.routing.template.RoutingTemplate;
 import com.graphhopper.routing.template.ViaRoutingTemplate;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
-import com.graphhopper.routing.util.parsers.OSMIDParser;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.*;
@@ -63,14 +56,9 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -965,93 +953,7 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         if (hintsMap.has("block_property")) {
-            ZoneId zoneId = ZoneId.of("Europe/Berlin");
-
-            final OSMIDParser osmidParser = OSMIDParser.fromEncodingManager(ghStorage.getEncodingManager());
-            String propertyName = hintsMap.get("block_property", "");
-            final BooleanEncodedValue property = ghStorage.getEncodingManager().getBooleanEncodedValue(propertyName);
-            final Weighting finalWeighting = weighting;
-
-            return new TDWeighting() {
-
-                @Override
-                public long calcTDMillis(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId, long linkEnterTime) {
-                    return calcMillis(edge, reverse, prevOrNextEdgeId);
-                }
-
-                @Override
-                public double getMinWeight(double distance) {
-                    return finalWeighting.getMinWeight(distance);
-                }
-
-                @Override
-                public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-                    return finalWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
-                }
-
-                @Override
-                public double calcTDWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId, long linkEnterTimeMilli) {
-                    if (edgeState.get(property)) {
-                        long osmid = osmidParser.getOSMID(edgeState.getFlags());
-                        Way way = ghStorage.getOsm().ways.get(osmid);
-                        for (OSMEntity.Tag tag : way.tags) {
-                            if (tag.value.contains("yes") && tag.value.contains("@") && (tag.key.contains("access") || tag.key.contains("vehicle"))) {
-                                Instant linkEnterTime = Instant.ofEpochMilli(linkEnterTimeMilli);
-                                final ZonedDateTime zonedDateTime = linkEnterTime.atZone(zoneId);
-                                ConditionalRestrictionParser parser = new ConditionalRestrictionParser(new ByteArrayInputStream(tag.value.getBytes()));
-                                try {
-                                    for (Restriction restriction : parser.restrictions()) {
-                                        for (Condition condition : restriction.getConditions()) {
-                                            if (condition.isOpeningHours()) {
-                                                System.out.println(tag);
-                                                System.out.println(restriction);
-                                                OpeningHoursParser ohParser = new OpeningHoursParser(new ByteArrayInputStream(condition.toString().getBytes()));
-                                                ArrayList<Rule> rules = ohParser.rules(false);
-                                                for (Rule rule : rules) {
-                                                    System.out.println(rule);
-                                                    for (TimeSpan time : Optional.ofNullable(rule.getTimes()).orElse(Collections.emptyList())) {
-                                                        int startMinute = time.getStart();
-                                                        int endMinute = time.getEnd();
-                                                        int minuteOfDay = (int) ChronoUnit.MINUTES.between(zonedDateTime.toLocalDate().atStartOfDay(zoneId), zonedDateTime);
-                                                        System.out.println(startMinute + " " + endMinute + " vs. "+minuteOfDay);
-                                                        if (minuteOfDay >= startMinute && minuteOfDay <= endMinute) {
-                                                            return finalWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                } catch (ParseException | ch.poole.openinghoursparser.ParseException e) {
-                                    e.printStackTrace();
-                                }
-                                return Double.POSITIVE_INFINITY;
-                            }
-                        }
-                    }
-                    return finalWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
-                }
-
-                @Override
-                public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-                    return finalWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
-                }
-
-                @Override
-                public FlagEncoder getFlagEncoder() {
-                    return finalWeighting.getFlagEncoder();
-                }
-
-                @Override
-                public String getName() {
-                    return finalWeighting.getName();
-                }
-
-                @Override
-                public boolean matches(HintsMap map) {
-                    return finalWeighting.matches(map);
-                }
-            };
+            return new TimeDependentAccessWeighting(this, weighting);
         }
         return weighting;
     }

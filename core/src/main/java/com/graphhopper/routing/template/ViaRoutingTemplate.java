@@ -153,10 +153,12 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                 }
             } else if (algoOpts.getWeighting() instanceof TDWeighting) {
                 String departureTimeString = ghRequest.getHints().get("pt.earliest_departure_time", "");
+                final Instant departureTime;
                 if (departureTimeString.equals("")) {
-                    throw new IllegalArgumentException("Must specify pt.earliest_departure_time in request.");
+                    departureTime = Instant.now();
+                } else {
+                    departureTime = Instant.parse(departureTimeString);
                 }
-                Instant departureTime = Instant.parse(departureTimeString);
                 tmpPathList = ((AbstractRoutingAlgorithm) algo).calcTDPaths(fromQResult.getClosestNode(), toQResult.getClosestNode(), departureTime.toEpochMilli());
             } else {
                 tmpPathList = algo.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode());
