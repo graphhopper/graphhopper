@@ -138,16 +138,6 @@ public interface EdgeIteratorState {
      */
     EdgeIteratorState setFlags(IntsRef edgeFlags);
 
-    /**
-     * @return the additional field value for this edge
-     */
-    int getAdditionalField();
-
-    /**
-     * Updates the additional field value for this edge
-     */
-    EdgeIteratorState setAdditionalField(int value);
-
     boolean get(BooleanEncodedValue property);
 
     EdgeIteratorState set(BooleanEncodedValue property, boolean value);

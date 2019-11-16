@@ -81,7 +81,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
     public EdgeBasedNodeContractor(CHGraph prepareGraph,
                                    TurnWeighting turnWeighting, PMap pMap) {
-        super(prepareGraph, turnWeighting);
+        super(prepareGraph, turnWeighting.getFlagEncoder());
         this.turnWeighting = turnWeighting;
         this.encoder = turnWeighting.getFlagEncoder();
         this.pMap = pMap;
@@ -489,9 +489,10 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                             while (EdgeIterator.Edge.isValid(root.parent.edge)) {
                                 root = root.getParent();
                             }
-                            // todo: removing this 'optimization' improves contraction time significantly, but introduces 
-                            // more shortcuts (makes slower queries). why is this so ? any 'duplicate' shortcuts should be detected at time of
-                            // insertion !??
+                            // removing this 'optimization' improves contraction time, but introduces more
+                            // shortcuts (makes slower queries). note that 'duplicate' shortcuts get detected at time
+                            // of insertion when running with adding shortcut handler, but not when we are only counting.
+                            // only running this check while counting does not seem to improve contraction time a lot.
                             AddedShortcut addedShortcut = new AddedShortcut(sourceNode, root.getParent().incEdge, targetNode, entry.incEdge);
                             if (addedShortcuts.contains(addedShortcut)) {
                                 continue;

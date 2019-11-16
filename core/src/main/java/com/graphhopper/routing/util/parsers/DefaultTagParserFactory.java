@@ -58,6 +58,10 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMTollParser();
         else if (name.equals(TrackType.KEY))
             return new OSMTrackTypeParser();
+        else if (name.equals(Hazmat.KEY))
+            return new OSMHazmatParser();
+        else if (name.equals(HazmatWater.KEY))
+            return new OSMHazmatWaterParser();
         else if (name.equals("conditional"))
             return new OSMConditionalRestrictionParser();
         else if (name.equals("osmid"))

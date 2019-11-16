@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
+package com.graphhopper.routing.querygraph;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -253,11 +253,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public int getAdditionalField() {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
     public int getMergeStatus(int flags) {
         throw new UnsupportedOperationException("Not supported.");
     }
@@ -296,7 +291,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     public EdgeIteratorState detach(boolean reverse) {
         if (reverse) {
             // update properties of reverse edge
-            // TODO copy wayGeometry too
+            // TODO copy pointList (geometry) too
             reverseEdge.setFlags(getFlags());
             reverseEdge.setName(getName());
             reverseEdge.setDistance(getDistance());
@@ -304,12 +299,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         } else {
             return this;
         }
-    }
-
-
-    @Override
-    public EdgeIteratorState setAdditionalField(int value) {
-        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override

@@ -34,6 +34,7 @@ import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
 import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -625,7 +626,7 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper importOrLoad() {
         if (!load(ghLocation)) {
             printInfo();
-            process(ghLocation);
+            process(ghLocation, false);
         } else {
             printInfo();
         }
@@ -633,9 +634,23 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
+     * Imports and processes data, storing it to disk when complete.
+     */
+    public void importAndClose() {
+        if (!load(ghLocation)) {
+            printInfo();
+            process(ghLocation, true);
+        } else {
+            printInfo();
+            logger.info("Graph already imported into " + ghLocation);
+        }
+        close();
+    }
+
+    /**
      * Creates the graph from OSM data.
      */
-    private GraphHopper process(String graphHopperLocation) {
+    private GraphHopper process(String graphHopperLocation, boolean closeEarly) {
         setGraphHopperLocation(graphHopperLocation);
         GHLock lock = null;
         try {
@@ -646,23 +661,27 @@ public class GraphHopper implements GraphHopperAPI {
                     throw new RuntimeException("To avoid multiple writers we need to obtain a write lock but it failed. In " + graphHopperLocation, lock.getObtainFailedReason());
             }
 
-            try {
-                DataReader reader = importData();
-                DateFormat f = createFormatter();
-                ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
-                if (reader.getDataDate() != null)
-                    ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
-            } catch (IOException ex) {
-                throw new RuntimeException("Cannot read file " + getDataReaderFile(), ex);
-            }
+            readData();
             cleanUp();
-            postProcessing();
+            postProcessing(closeEarly);
             flush();
         } finally {
             if (lock != null)
                 lock.release();
         }
         return this;
+    }
+
+    private void readData() {
+        try {
+            DataReader reader = importData();
+            DateFormat f = createFormatter();
+            ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
+            if (reader.getDataDate() != null)
+                ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
+        } catch (IOException ex) {
+            throw new RuntimeException("Cannot read file " + getDataReaderFile(), ex);
+        }
     }
 
     protected DataReader importData() throws IOException {
@@ -737,20 +756,19 @@ public class GraphHopper implements GraphHopperAPI {
             dataAccessType = DAType.MMAP_RO;
 
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
-        GraphExtension ext = encodingManager.needsTurnCostsSupport()
-                ? new TurnCostExtension() : new GraphExtension.NoOpExtension();
 
         if (lmFactoryDecorator.isEnabled())
             initLMAlgoFactoryDecorator();
 
+        List<CHProfile> chProfiles;
         if (chFactoryDecorator.isEnabled()) {
             initCHAlgoFactoryDecorator();
-            ghStorage = new GraphHopperStorage(chFactoryDecorator.getCHProfiles(), dir, encodingManager, hasElevation(), ext);
+            chProfiles = chFactoryDecorator.getCHProfiles();
         } else {
-            ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), ext);
+            chProfiles = Collections.emptyList();
         }
 
-        ghStorage.setSegmentSize(defaultSegmentSize);
+        ghStorage = new GraphHopperStorage(chProfiles, dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
 
         if (!new File(graphHopperFolder).exists())
             return false;
@@ -846,6 +864,15 @@ public class GraphHopper implements GraphHopperAPI {
      * Does the preparation and creates the location index
      */
     public void postProcessing() {
+        postProcessing(false);
+    }
+
+    /**
+     * Does the preparation and creates the location index
+     *
+     * @param closeEarly release resources as early as possible
+     */
+    public void postProcessing(boolean closeEarly) {
         // Later: move this into the GraphStorage.optimize method
         // Or: Doing it after preparation to optimize shortcuts too. But not possible yet #12
 
@@ -865,14 +892,14 @@ public class GraphHopper implements GraphHopperAPI {
 
         initLocationIndex();
 
+        if (lmFactoryDecorator.isEnabled())
+            lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
+        loadOrPrepareLM(closeEarly);
+
         if (chFactoryDecorator.isEnabled())
             chFactoryDecorator.createPreparations(ghStorage);
         if (!isCHPrepared())
-            prepareCH();
-
-        if (lmFactoryDecorator.isEnabled())
-            lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
-        loadOrPrepareLM();
+            prepareCH(closeEarly);
     }
 
     private static final String INTERPOLATION_KEY = "prepare.elevation_interpolation.done";
@@ -1035,7 +1062,7 @@ public class GraphHopper implements GraphHopperAPI {
     public Weighting createTurnWeighting(Graph graph, Weighting weighting, TraversalMode tMode, double uTurnCosts) {
         FlagEncoder encoder = weighting.getFlagEncoder();
         if (encoder.supports(TurnWeighting.class) && tMode.isEdgeBased())
-            return new TurnWeighting(weighting, (TurnCostExtension) graph.getExtension(), uTurnCosts);
+            return new TurnWeighting(weighting, graph.getTurnCostExtension(), uTurnCosts);
         return weighting;
     }
 
@@ -1082,7 +1109,7 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException("You need a turn cost extension to make use of edge_based=true, e.g. use car|turn_costs=true");
             }
 
-            if (!tMode.isEdgeBased() && !request.getCurbSides().isEmpty()) {
+            if (!tMode.isEdgeBased() && !request.getCurbsides().isEmpty()) {
                 throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to set " + Routing.EDGE_BASED + " to true");
             }
 
@@ -1173,7 +1200,7 @@ public class GraphHopper implements GraphHopperAPI {
                 double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
 
                 DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
-                PathMerger pathMerger = new PathMerger().
+                PathMerger pathMerger = new PathMerger(queryGraph.getBaseGraph(), weighting).
                         setCalcPoints(tmpCalcPoints).
                         setDouglasPeucker(peucker).
                         setEnableInstructions(tmpEnableInstructions).
@@ -1285,13 +1312,19 @@ public class GraphHopper implements GraphHopperAPI {
         return "true".equals(ghStorage.getProperties().get(Landmark.PREPARE + "done"));
     }
 
-    protected void prepareCH() {
+    protected void prepareCH(boolean closeEarly) {
         boolean tmpPrepare = chFactoryDecorator.isEnabled();
         if (tmpPrepare) {
             ensureWriteAccess();
 
+            if (closeEarly) {
+                locationIndex.flush();
+                locationIndex.close();
+                ghStorage.flushAndCloseEarly();
+            }
+
             ghStorage.freeze();
-            chFactoryDecorator.prepare(ghStorage.getProperties());
+            chFactoryDecorator.prepare(ghStorage.getProperties(), closeEarly);
             ghStorage.getProperties().put(CH.PREPARE + "done", true);
         }
     }
@@ -1299,12 +1332,12 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * For landmarks it is required to always call this method: either it creates the landmark data or it loads it.
      */
-    protected void loadOrPrepareLM() {
+    protected void loadOrPrepareLM(boolean closeEarly) {
         boolean tmpPrepare = lmFactoryDecorator.isEnabled() && !lmFactoryDecorator.getPreparations().isEmpty();
         if (tmpPrepare) {
             ensureWriteAccess();
             ghStorage.freeze();
-            if (lmFactoryDecorator.loadOrDoWork(ghStorage.getProperties()))
+            if (lmFactoryDecorator.loadOrDoWork(ghStorage.getProperties(), closeEarly))
                 ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
         }
     }

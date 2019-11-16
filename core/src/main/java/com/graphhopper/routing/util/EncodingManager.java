@@ -34,6 +34,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -48,6 +49,7 @@ import static com.graphhopper.util.Helper.toLowerCase;
  */
 public class EncodingManager implements EncodedValueLookup {
     private static final int BITS_FOR_TURN_FLAGS = 8 * 4;
+    private static final Pattern WAY_NAME_PATTERN = Pattern.compile("; *");
 
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
     private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
@@ -303,7 +305,7 @@ public class EncodingManager implements EncodedValueLookup {
     static String fixWayName(String str) {
         if (str == null)
             return "";
-        return str.replaceAll(";[ ]*", ", ");
+        return WAY_NAME_PATTERN.matcher(str).replaceAll(", ");
     }
 
     public int getIntsForFlags() {
@@ -478,6 +480,10 @@ public class EncodingManager implements EncodedValueLookup {
         return flags;
     }
 
+    public IntsRef handleWayTags(ReaderWay way, AcceptWay acceptWay) {
+        return handleWayTags(way, acceptWay, 0);
+    }
+
     /**
      * Processes way properties of different kind to determine speed and direction. Properties are
      * directly encoded in 8 bytes.
@@ -604,6 +610,8 @@ public class EncodingManager implements EncodedValueLookup {
             edge.setName(name);
         }
 
+        if (Double.isInfinite(edge.getDistance()))
+            throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
         for (AbstractFlagEncoder encoder : edgeEncoders) {
             encoder.applyWayTags(way, edge);
         }

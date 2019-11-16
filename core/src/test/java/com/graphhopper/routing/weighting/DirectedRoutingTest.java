@@ -5,6 +5,7 @@ import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -37,6 +38,7 @@ import static org.junit.Assert.fail;
  * target edges, by comparing with {@link DijkstraBidirectionRef}
  *
  * @author easbar
+ * @see BidirectionalRoutingTest
  * @see DirectedBidirectionalDijkstraTest
  */
 @RunWith(Parameterized.class)
@@ -47,6 +49,7 @@ public class DirectedRoutingTest {
     private final boolean prepareLM;
     private Directory dir;
     private GraphHopperStorage graph;
+    private CHProfile chProfile;
     private CHGraph chGraph;
     private CarFlagEncoder encoder;
     private TurnCostExtension turnCostExtension;
@@ -65,12 +68,12 @@ public class DirectedRoutingTest {
                 {Algo.ASTAR, INFINITE_U_TURN_COSTS, false, false},
                 {Algo.CH_ASTAR, INFINITE_U_TURN_COSTS, true, false},
                 {Algo.CH_DIJKSTRA, INFINITE_U_TURN_COSTS, true, false},
-                // todo: yields warnings and fails, see #1665, #1687
+                // todo: yields warnings and fails, see #1665, #1687, #1745
 //                {Algo.LM, INFINITE_UTURN_COSTS, false, true}
                 {Algo.ASTAR, 40, false, false},
                 {Algo.CH_ASTAR, 40, true, false},
                 {Algo.CH_DIJKSTRA, 40, true, false},
-                // todo: yields warnings and fails, see #1665, 1687
+                // todo: yields warnings and fails, see #1665, 1687, #1745
 //                {Algo.LM, 40, false, true}
                 // todo: add AlternativeRoute ?
         });
@@ -98,9 +101,9 @@ public class DirectedRoutingTest {
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
-        turnCostExtension = new TurnCostExtension();
+        chProfile = CHProfile.edgeBased(weighting, uTurnCosts);
         graph = createGraph();
-        chGraph = graph.getCHGraph();
+        turnCostExtension = graph.getTurnCostExtension();
     }
 
     private void preProcessGraph() {
@@ -109,8 +112,9 @@ public class DirectedRoutingTest {
             return;
         }
         if (prepareCH) {
-            pch = new PrepareContractionHierarchies(chGraph);
+            pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
             pch.doWork();
+            chGraph = graph.getCHGraph(chProfile);
         }
         if (prepareLM) {
             lm = new PrepareLandmarks(dir, graph, weighting, 16, 8);
@@ -140,7 +144,7 @@ public class DirectedRoutingTest {
     }
 
     private TurnWeighting createTurnWeighting(Graph g) {
-        return new TurnWeighting(weighting, (TurnCostExtension) g.getExtension(), uTurnCosts);
+        return new TurnWeighting(weighting, g.getTurnCostExtension(), uTurnCosts);
     }
 
     @Test
@@ -279,8 +283,8 @@ public class DirectedRoutingTest {
     }
 
     private GraphHopperStorage createGraph() {
-        GraphHopperStorage gh = new GraphHopperStorage(Collections.singletonList(CHProfile.edgeBased(weighting, uTurnCosts)), dir, encodingManager,
-                false, turnCostExtension);
+        GraphHopperStorage gh = new GraphHopperStorage(Collections.singletonList(chProfile), dir, encodingManager,
+                false, true);
         gh.create(1000);
         return gh;
     }

@@ -83,7 +83,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             return path;
         }
 
-        Path path = new Path(graph, weighting);
+        Path path = new Path(graph);
         int node = endNode;
         while (true) {
             int edge = edgeIds[node];

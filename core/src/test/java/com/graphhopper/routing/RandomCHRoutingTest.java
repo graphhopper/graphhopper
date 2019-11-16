@@ -2,6 +2,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -83,7 +84,7 @@ public class RandomCHRoutingTest {
         double pOffset = 0;
         GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, pOffset);
         if (traversalMode.isEdgeBased()) {
-            GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
+            GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, graph.getTurnCostExtension());
         }
         runRandomTest(rnd, 20);
     }
@@ -126,7 +127,7 @@ public class RandomCHRoutingTest {
         long seed = 60643479675316L;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 50, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.0);
-        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, (TurnCostExtension) graph.getExtension());
+        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, graph.getTurnCostExtension());
         runRandomTest(rnd, 20);
     }
 
@@ -137,7 +138,7 @@ public class RandomCHRoutingTest {
         graph.freeze();
         CHProfile chProfile = new CHProfile(weighting, traversalMode, uTurnCosts);
         CHGraph chGraph = graph.getCHGraph(chProfile);
-        PrepareContractionHierarchies pch = new PrepareContractionHierarchies(chGraph);
+        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chProfile);
         pch.doWork();
 
         int numQueryGraph = 25;
@@ -156,7 +157,7 @@ public class RandomCHRoutingTest {
                 int from = rnd.nextInt(queryGraph.getNodes());
                 int to = rnd.nextInt(queryGraph.getNodes());
                 Weighting w = traversalMode.isEdgeBased()
-                        ? new TurnWeighting(weighting, (TurnCostExtension) queryGraph.getExtension(), uTurnCosts == INFINITE_U_TURN_COSTS ? Double.POSITIVE_INFINITY : uTurnCosts)
+                        ? new TurnWeighting(weighting, queryGraph.getTurnCostExtension(), uTurnCosts == INFINITE_U_TURN_COSTS ? Double.POSITIVE_INFINITY : uTurnCosts)
                         : weighting;
                 // using plain dijkstra instead of bidirectional, because of #1592
                 RoutingAlgorithm refAlgo = new Dijkstra(queryGraph, w, traversalMode);
@@ -167,7 +168,7 @@ public class RandomCHRoutingTest {
                     continue;
                 }
 
-                RoutingAlgorithm algo = pch.createAlgo(chQueryGraph, AlgorithmOptions.start().hints(new PMap().put("stall_on_demand", true)).build());
+                RoutingAlgorithm algo = pch.createAlgo(chQueryGraph, AlgorithmOptions.start().weighting(weighting).hints(new PMap().put("stall_on_demand", true)).build());
                 Path path = algo.calcPath(from, to);
                 if (!path.isFound()) {
                     fail("path not found for " + from + "->" + to + ", expected weight: " + refWeight);

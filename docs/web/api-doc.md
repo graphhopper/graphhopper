@@ -8,7 +8,17 @@ server you need to understand how to use it. There is a separate [JavaScript](ht
 
 The URL path of the local instance is [http://localhost:8989](http://localhost:8989)
 
-The endpoint to obtain the route is `/route`
+The endpoint to obtain the route is `/route` via GET.
+
+## HTTP POST
+
+The GET request has an URL length limitation, so it won't work for many locations per request. In those cases use a HTTP POST request with JSON data as input. The POST request is identical except that all singular parameter names are named as their plural for a POST request. All effected parameters are: `points`, `snap_preventions`, `curbsides` and `point_hints`. (`details` stays `details`)
+
+Please note that unlike to the GET endpoint, points are specified in `[longitude, latitude]` order. For example `point=10,11&point=20,22` will be the following JSON:
+
+```json
+{ "points": [[11,10], [22,20]] }
+```
 
 ## Parameters
 
@@ -28,6 +38,9 @@ type             | json    | Specifies the resulting format of the route, for `j
 point_hint       | -       | Optional parameter. Specifies a hint for each `point` parameter to prefer a certain street for the closest location lookup. E.g. if there is an address or house with two or more neighboring streets you can control for which street the closest location is looked up.
 snap_prevention  | -       | Optional parameter to avoid snapping to a certain road class or road environment. Current supported values: `motorway`, `trunk`, `ferry`, `tunnel`, `bridge` and `ford`. Multiple values are specified like `snap_prevention=ferry&snap_prevention=motorway`
 details          | -       | Optional parameter. You can request additional details for the route: `average_speed`, `street_name`, `edge_id`, `road_class`, `road_environment`, `max_speed` and `time` (and see which other values are configured in `graph.encoded_values`).  Multiple values are specified like `details=average_speed&details=time`. The returned format for one detail segment is `[fromRef, toRef, value]`. The `ref` references the points of the response. Value can also be `null` if the property does not exist for one detail segment.
+edge_base        | false   | Internal parameter to force edge-based algorithm.
+curbside         | any     | Optional parameter applicable to edge-based routing only. It specifies on which side a query point should be relative to the driver when she leaves/arrives at a start/target/via point. Possible values: right, left, any. Specify for every point parameter. See similar heading parameter.
+force_curbside   | false   | True if the curbside parameters should lead to an exception if they cannot be fulfilled.
 
 ### GPX
 

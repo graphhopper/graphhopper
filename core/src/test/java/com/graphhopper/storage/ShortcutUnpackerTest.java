@@ -53,7 +53,7 @@ public class ShortcutUnpackerTest {
         graph = new GraphBuilder(encodingManager).setCHProfiles(new CHProfile(weighting, edgeBased, INFINITE_U_TURN_COSTS)).create();
         chGraph = graph.getCHGraph();
         if (edgeBased) {
-            turnCostExtension = (TurnCostExtension) graph.getExtension();
+            turnCostExtension = graph.getTurnCostExtension();
         }
     }
 

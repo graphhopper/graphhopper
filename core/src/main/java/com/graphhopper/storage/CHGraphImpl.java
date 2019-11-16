@@ -22,8 +22,6 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph.AllEdgeIterator;
 import com.graphhopper.storage.BaseGraph.EdgeIterable;
 import com.graphhopper.util.*;
@@ -65,7 +63,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private int shortcutCount = 0;
     private boolean isReadyForContraction;
 
-    CHGraphImpl(CHProfile chProfile, Directory dir, final BaseGraph baseGraph) {
+    CHGraphImpl(CHProfile chProfile, Directory dir, final BaseGraph baseGraph, int segmentSize) {
         if (chProfile.getWeighting() == null)
             throw new IllegalStateException("Weighting for CHGraph cannot be null");
         this.chProfile = chProfile;
@@ -74,6 +72,10 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         this.nodesCH = dir.find("nodes_ch_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         this.shortcuts = dir.find("shortcuts_" + name, DAType.getPreferredInt(dir.getDefaultType()));
         this.chEdgeAccess = new CHEdgeAccess(name);
+        if (segmentSize >= 0) {
+            nodesCH.setSegmentSize(segmentSize);
+            shortcuts.setSegmentSize(segmentSize);
+        }
     }
 
     @Override
@@ -295,15 +297,15 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return 3;
     }
 
-    protected int setEdgesHeader() {
+    int setEdgesHeader() {
         shortcuts.setHeader(0 * 4, shortcutCount);
         shortcuts.setHeader(1 * 4, shortcutEntryBytes);
         return 3;
     }
 
     @Override
-    public GraphExtension getExtension() {
-        return baseGraph.getExtension();
+    public TurnCostExtension getTurnCostExtension() {
+        return baseGraph.getTurnCostExtension();
     }
 
     @Override
@@ -344,11 +346,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         nodeCHEntryBytes = N_CH_REF + 4;
     }
 
-    void setSegmentSize(int bytes) {
-        nodesCH.setSegmentSize(bytes);
-        shortcuts.setSegmentSize(bytes);
-    }
-
     @Override
     public CHGraph create(long bytes) {
         nodesCH.create(bytes);
@@ -368,6 +365,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
     @Override
     public void flush() {
+        setNodesHeader();
+        setEdgesHeader();
         nodesCH.flush();
         shortcuts.flush();
     }
@@ -405,7 +404,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             System.out.format(Locale.ROOT, " ... %d more nodes", baseGraph.getNodes() - printMax);
         }
         System.out.println("shortcuts:");
-        String formatShortcutsBase = "%12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s";
+        String formatShortcutsBase = "%12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s";
         String formatShortcutExt = " | %12s | %12s";
         String header = String.format(Locale.ROOT, formatShortcutsBase, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS", "S_SKIP_EDGE1", "S_SKIP_EDGE2");
         if (chProfile.isEdgeBased()) {

@@ -40,7 +40,7 @@ public class MotorcycleFlagEncoderTest {
     private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
 
     private Graph initExampleGraph() {
-        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), em, true, new GraphExtension.NoOpExtension()).create(1000);
+        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), em, true).create(1000);
         NodeAccess na = gs.getNodeAccess();
         // 50--(0.0001)-->49--(0.0004)-->55--(0.0005)-->60
         na.setNode(0, 51.1, 12.001, 50);
@@ -129,7 +129,7 @@ public class MotorcycleFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         assertTrue(encoder.getAccess(way).isWay());
-        IntsRef edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way, EncodingManager.Access.WAY, 0);
+        IntsRef edgeFlags = encoder.handleWayTags(em.createEdgeFlags(), way, EncodingManager.Access.WAY);
         assertEquals(20, encoder.getSpeed(edgeFlags), .1);
         assertEquals(20, encoder.getSpeed(true, edgeFlags), .1);
     }
@@ -168,7 +168,7 @@ public class MotorcycleFlagEncoderTest {
         way.setTag("highway", "primary");
         way.setTag("estimated_distance", estimatedDistance);
         assertTrue(encoder.getAccess(way).isWay());
-        IntsRef flags = encoder.handleWayTags(em.createEdgeFlags(), way, EncodingManager.Access.WAY, 0);
+        IntsRef flags = encoder.handleWayTags(em.createEdgeFlags(), way, EncodingManager.Access.WAY);
         edge.setFlags(flags);
         encoder.applyWayTags(way, edge);
         DecimalEncodedValue curvatureEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "curvature"));

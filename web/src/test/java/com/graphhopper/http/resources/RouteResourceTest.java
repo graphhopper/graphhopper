@@ -40,6 +40,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
@@ -81,6 +82,20 @@ public class RouteResourceTest {
     @Test
     public void testBasicQuery() {
         final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode path = json.get("paths").get(0);
+        double distance = path.get("distance").asDouble();
+        assertTrue("distance wasn't correct:" + distance, distance > 9000);
+        assertTrue("distance wasn't correct:" + distance, distance < 9500);
+    }
+
+    @Test
+    public void testBasicPostQuery() {
+        String jsonStr = "{ \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
+        final Response response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -288,6 +303,7 @@ public class RouteResourceTest {
 
         request.getHints().put("turn_description", false);
         rsp = hopper.route(request);
+        assertFalse(rsp.hasErrors());
         assertEquals("Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(3).getName());
     }
 
@@ -320,6 +336,24 @@ public class RouteResourceTest {
         request.setPointHints(Arrays.asList("Tunèl del Pont Pla", ""));
         rsp = hopper.route(request);
         assertEquals(490, rsp.getBest().getDistance(), 2);
+    }
+
+    @Test
+    public void testPostWithPointHintsAndSnapPrevention() {
+        String jsonStr = "{ \"points\": [[1.53285,42.511139], [1.532271,42.508165]], " +
+                "\"point_hints\":[\"Avinguda Fiter i Rossell\",\"\"] }";
+        Response response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonStr));
+        assertEquals(200, response.getStatus());
+        JsonNode path = response.readEntity(JsonNode.class).get("paths").get(0);
+        assertEquals(1590, path.get("distance").asDouble(), 2);
+
+        jsonStr = "{ \"points\": [[1.53285,42.511139], [1.532271,42.508165]], " +
+                "\"point_hints\":[\"Tunèl del Pont Pla\",\"\"], " +
+                "\"snap_preventions\": [\"tunnel\"] }";
+        response = app.client().target("http://localhost:8080/route").request().post(Entity.json(jsonStr));
+        assertEquals(200, response.getStatus());
+        path = response.readEntity(JsonNode.class).get("paths").get(0);
+        assertEquals(490, path.get("distance").asDouble(), 2);
     }
 
     @Test

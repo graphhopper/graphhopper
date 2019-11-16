@@ -21,7 +21,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
@@ -35,13 +34,19 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
 
     @Override
     protected GraphHopperStorage newGHStorage(Directory dir, boolean is3D) {
-        turnCostStorage = new TurnCostExtension();
-        return new GraphHopperStorage(dir, encodingManager, is3D, turnCostStorage);
+        return newGHStorage(dir, is3D, -1);
+    }
+
+    @Override
+    protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
+        GraphHopperStorage g = GraphBuilder.start(encodingManager).setDir(dir).set3D(enabled3D).withTurnCosts(true).setSegmentSize(segmentSize).build();
+        turnCostStorage = g.getTurnCostExtension();
+        return g;
     }
 
     @Override
     @Test
-    public void testSave_and_fileFormat() throws IOException {
+    public void testSave_and_fileFormat() {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
@@ -87,9 +92,8 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
     }
 
     @Test
-    public void testEnsureCapacity() throws IOException {
-        graph = newGHStorage(new MMapDirectory(defaultGraphLoc), false);
-        graph.setSegmentSize(128);
+    public void testEnsureCapacity() {
+        graph = newGHStorage(new MMapDirectory(defaultGraphLoc), false, 128);
         graph.create(100); // 100 is the minimum size
 
         // assert that turnCostStorage can hold 104 turn cost entries at the beginning
@@ -125,5 +129,19 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         turnCostStorage.addTurnInfo(0, 50, 2, 1337);
         // A new segment should be added, which will support 128 / 16 = 8 more entries.
         assertEquals(112, turnCostStorage.getCapacity() / 16);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Override
+    public void testClone() {
+        // todo: implement graph coyping in the presence of turn costs
+        super.testClone();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Override
+    public void testCopyTo() {
+        // todo: implement graph coyping in the presence of turn costs
+        super.testCopyTo();
     }
 }

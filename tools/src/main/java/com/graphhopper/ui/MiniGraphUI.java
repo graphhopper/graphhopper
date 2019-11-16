@@ -27,6 +27,7 @@ import com.graphhopper.routing.ch.PreparationWeighting;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -44,7 +45,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -324,7 +324,7 @@ public class MiniGraphUI {
                     return;
 
                 makeTransparent(g2);
-                QueryGraph qGraph = QueryGraph.lookup(routingGraph, Arrays.asList(fromRes, toRes));
+                QueryGraph qGraph = QueryGraph.lookup(routingGraph, fromRes, toRes);
                 RoutingAlgorithm algo = algoFactory.createAlgo(qGraph, algoOpts);
                 if (algo instanceof DebugAlgo) {
                     ((DebugAlgo) algo).setGraphics2D(g2);

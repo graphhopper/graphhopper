@@ -216,6 +216,12 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
 
         way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("bicycle", "use_sidepath");
+        assertEquals(18, encoder.getSpeed(way));
+        assertPriority(PREFER.getValue(), way);
+        
+        way.clearTags();
         way.setTag("highway", "steps");
         way.setTag("surface", "wood");
         assertEquals(PUSHING_SECTION_SPEED / 2, encoder.getSpeed(way));
@@ -345,51 +351,51 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     public void testOneway() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "tertiary");
-        IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
         assertTrue(encoder.getAccessEnc().getBool(true, flags));
         way.setTag("oneway", "yes");
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
         assertFalse(encoder.getAccessEnc().getBool(true, flags));
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("oneway:bicycle", "yes");
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
         assertFalse(encoder.getAccessEnc().getBool(true, flags));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
         assertTrue(encoder.getAccessEnc().getBool(true, flags));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
         way.setTag("vehicle:forward", "no");
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertFalse(encoder.getAccessEnc().getBool(false, flags));
         assertTrue(encoder.getAccessEnc().getBool(true, flags));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
         way.setTag("bicycle:forward", "no");
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertFalse(encoder.getAccessEnc().getBool(false, flags));
         assertTrue(encoder.getAccessEnc().getBool(true, flags));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
         way.setTag("vehicle:backward", "no");
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
         assertFalse(encoder.getAccessEnc().getBool(true, flags));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
         way.setTag("motor_vehicle:backward", "no");
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
         assertTrue(encoder.getAccessEnc().getBool(true, flags));
         way.clearTags();
@@ -399,20 +405,27 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("highway", "tertiary");
         way.setTag("oneway", "yes");
         way.setTag("bicycle:backward", "no");
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
         assertTrue(encoder.getAccessEnc().getBool(true, flags));
 
         way.setTag("bicycle:backward", "yes");
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
         assertTrue(encoder.getAccessEnc().getBool(true, flags));
 
         way.clearTags();
         way.setTag("highway", "tertiary");
+        way.setTag("bicycle:forward", "use_sidepath");
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        assertTrue(encoder.getAccessEnc().getBool(false, flags));
+        assertTrue(encoder.getAccessEnc().getBool(true, flags));
+        
+        way.clearTags();
+        way.setTag("highway", "tertiary");
         way.setTag("oneway", "yes");
         way.setTag("cycleway", "opposite");
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
         assertTrue(encoder.getAccessEnc().getBool(true, flags));
 
@@ -420,7 +433,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("highway", "residential");
         way.setTag("oneway", "yes");
         way.setTag("cycleway:left", "opposite_lane");
-        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertTrue(encoder.getAccessEnc().getBool(false, flags));
         assertTrue(encoder.getAccessEnc().getBool(true, flags));
     }

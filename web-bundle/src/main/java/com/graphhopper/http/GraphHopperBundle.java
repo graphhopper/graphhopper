@@ -31,7 +31,6 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.http.health.GraphHopperStorageHealthCheck;
-import com.graphhopper.isochrone.algorithm.DelaunayTriangulationIsolineBuilder;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
@@ -142,20 +141,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
-    static class RasterHullBuilderFactory implements Factory<DelaunayTriangulationIsolineBuilder> {
-
-        DelaunayTriangulationIsolineBuilder builder = new DelaunayTriangulationIsolineBuilder();
-
-        @Override
-        public DelaunayTriangulationIsolineBuilder provide() {
-            return builder;
-        }
-
-        @Override
-        public void dispose(DelaunayTriangulationIsolineBuilder delaunayTriangulationIsolineBuilder) {
-        }
-    }
-
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
         // See #1440: avoids warning regarding com.fasterxml.jackson.module.afterburner.util.MyClassLoader
@@ -226,7 +211,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(encodingManager).to(EncodingManager.class);
                 bind(graphHopperStorage).to(GraphHopperStorage.class);
                 bind(gtfsStorage).to(GtfsStorage.class);
-                bindFactory(RasterHullBuilderFactory.class).to(DelaunayTriangulationIsolineBuilder.class);
             }
         });
         environment.jersey().register(NearestResource.class);
@@ -248,11 +232,11 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         });
         environment.lifecycle().manage(new Managed() {
             @Override
-            public void start() throws Exception {
+            public void start() {
             }
 
             @Override
-            public void stop() throws Exception {
+            public void stop() {
                 locationIndex.close();
                 gtfsStorage.close();
                 graphHopperStorage.close();
@@ -277,7 +261,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
                 bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
                 bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
-                bindFactory(RasterHullBuilderFactory.class).to(DelaunayTriangulationIsolineBuilder.class);
             }
         });
 

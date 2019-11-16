@@ -134,6 +134,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         if (!prepareGraph.isReadyForContraction()) {
             throw new IllegalStateException("Given CHGraph has not been frozen yet");
         }
+        if (prepareGraph.getEdges() > prepareGraph.getBaseGraph().getEdges()) {
+            throw new IllegalStateException("Given CHGraph has been contracted already");
+        }
         allSW.start();
         initFromGraph();
         runGraphContraction();
@@ -357,7 +360,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         // Preparation works only once so we can release temporary data.
         // The preparation object itself has to be intact to create the algorithm.
-        close();
+        _close();
     }
 
     private void contractNodesUsingFixedNodeOrdering() {
@@ -424,12 +427,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         );
     }
 
-    private void close() {
-        nodeContractor.close();
-        sortedNodes = null;
-        oldPriorities = null;
-    }
-
     public long getDijkstraCount() {
         return nodeContractor.getDijkstraCount();
     }
@@ -472,6 +469,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 totalTime, periodicUpdateTime, lazyUpdateTime, neighborUpdateTime, contractionTime, otherTime, dijkstraTime / totalTime * 100);
     }
 
+    public long getTotalPrepareTime() {
+        return allSW.getMillis();
+    }
+
     private float calculatePriority(int node) {
         if (allowContraction.apply(node)) {
             return nodeContractor.calculatePriority(node);
@@ -497,12 +498,23 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private TurnWeighting createTurnWeightingForEdgeBased(Graph graph) {
         // important: do not simply take the extension from ghStorage, because we need the wrapped extension from
         // query graph!
-        GraphExtension extension = graph.getExtension();
-        if (!(extension instanceof TurnCostExtension)) {
+        TurnCostExtension turnCostExtension = graph.getTurnCostExtension();
+        if (turnCostExtension == null) {
             throw new IllegalArgumentException("For edge-based CH you need a turn cost extension");
         }
-        TurnCostExtension turnCostExtension = (TurnCostExtension) extension;
         return new TurnWeighting(prepareWeighting, turnCostExtension, chProfile.getUTurnCosts());
+    }
+
+    private void _close() {
+        nodeContractor.close();
+        sortedNodes = null;
+        oldPriorities = null;
+    }
+
+    void close() {
+        CHGraphImpl cg = (CHGraphImpl) prepareGraph;
+        cg.flush();
+        cg.close();
     }
 
     private static class Params {
@@ -536,6 +548,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         private int nodesContractedPercentage;
         /**
          * Specifies how often a log message should be printed.
+         *
          * @see #periodicUpdatesPercentage
          */
         private int logMessagesPercentage;
