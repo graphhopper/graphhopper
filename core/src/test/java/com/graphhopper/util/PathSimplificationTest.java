@@ -31,7 +31,6 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.Parameters.Details;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
@@ -43,6 +42,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -143,7 +143,8 @@ public class PathSimplificationTest {
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 10);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager.getBooleanEncodedValue(Roundabout.KEY), usTR);
-        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, weighting, Arrays.asList(Details.AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
 
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.setInstructions(wayList);

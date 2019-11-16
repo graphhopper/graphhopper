@@ -18,6 +18,7 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -54,10 +55,11 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
      * @param pathBuilderFactory Generates the relevant PathBuilders
      * @return List of PathDetails for this Path
      */
-    public static Map<String, List<PathDetail>> calcDetails(Path path, Weighting weighting, List<String> requestedPathDetails, PathDetailsBuilderFactory pathBuilderFactory, int previousIndex) {
+    public static Map<String, List<PathDetail>> calcDetails(Path path, EncodingManager encodingManager, Weighting weighting,
+                                                            List<String> requestedPathDetails, PathDetailsBuilderFactory pathBuilderFactory, int previousIndex) {
         if (!path.isFound() || requestedPathDetails.isEmpty())
             return Collections.emptyMap();
-        List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders(requestedPathDetails, weighting.getFlagEncoder(), weighting);
+        List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders(requestedPathDetails, encodingManager, weighting);
         if (pathBuilders.isEmpty())
             return Collections.emptyMap();
 
