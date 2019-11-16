@@ -55,7 +55,7 @@ public class TimeDependentAccessRestriction {
         property = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
     }
 
-    boolean accessible(EdgeIteratorState edgeState, Instant linkEnterTime) {
+    public boolean accessible(EdgeIteratorState edgeState, Instant linkEnterTime) {
         if (edgeState.get(property)) {
             long osmid = osmidParser.getOSMID(edgeState.getFlags());
             Way way = ghStorage.getOsm().ways.get(osmid);
