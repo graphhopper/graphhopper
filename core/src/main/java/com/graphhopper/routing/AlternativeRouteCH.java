@@ -170,6 +170,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
             }
 
             private boolean tTest(Path path, int vIndex) {
+                if (path.getEdgeCount() == 0) return true;
                 int fromNode = getPreviousNodeTMetersAway(path, vIndex);
                 int toNode = getNextNodeTMetersAway(path, vIndex);
                 DijkstraBidirectionCHNoSOD tRouter = new DijkstraBidirectionCHNoSOD(graph, new PreparationWeighting(weighting));
