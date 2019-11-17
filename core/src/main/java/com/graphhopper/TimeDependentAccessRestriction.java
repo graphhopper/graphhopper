@@ -68,26 +68,30 @@ public class TimeDependentAccessRestriction {
     public void printConditionalAccess(long osmid, Instant when, PrintWriter out) {
         final ZonedDateTime zonedDateTime = when.atZone(zoneId);
         Way way = ghStorage.getOsm().ways.get(osmid);
-        List<ConditionalTagData> restrictionData = getConditionalTagDataWithTimeDependentConditions(way);
-        List<ConditionalTagData> accessRestrictionData = restrictionData.stream()
-                .filter(c -> c.tag.key.contains("access") || c.tag.key.contains("vehicle"))
-                .filter(c -> !c.tag.key.contains("lanes"))
-                .collect(Collectors.toList());
-        List<ConditionalTagData> onlyWithTimeDependentConditions = accessRestrictionData.stream()
-                .filter(c -> !c.restrictionData.isEmpty())
-                .collect(Collectors.toList());
-        if (!onlyWithTimeDependentConditions.isEmpty()) {
+        List<ConditionalTagData> timeDependentAccessConditions = getTimeDependentAccessConditions(way);
+        if (!timeDependentAccessConditions.isEmpty()) {
             out.printf("%d\n", osmid);
-            for (ConditionalTagData conditionalTagData : onlyWithTimeDependentConditions) {
+            for (ConditionalTagData conditionalTagData : timeDependentAccessConditions) {
                 out.println(" "+conditionalTagData.tag);
-                for (TimeDependentRestrictionData data : conditionalTagData.restrictionData) {
-                    out.println("  "+data.restriction);
-                    for (Rule rule : data.rules) {
+                for (TimeDependentRestrictionData timeDependentRestrictionData : conditionalTagData.restrictionData) {
+                    out.println("  "+timeDependentRestrictionData.restriction);
+                    for (Rule rule : timeDependentRestrictionData.rules) {
                         out.println("   " + rule + (matches(zonedDateTime, rule) ? " <===" : ""));
                     }
                 }
             }
         }
+    }
+
+    public List<ConditionalTagData> getTimeDependentAccessConditions(Way way) {
+        List<ConditionalTagData> restrictionData = getConditionalTagDataWithTimeDependentConditions(way);
+        List<ConditionalTagData> accessRestrictionData = restrictionData.stream()
+                .filter(c -> c.tag.key.contains("access") || c.tag.key.contains("vehicle"))
+                .filter(c -> !c.tag.key.contains("lanes"))
+                .collect(Collectors.toList());
+        return accessRestrictionData.stream()
+                .filter(c -> !c.restrictionData.isEmpty())
+                .collect(Collectors.toList());
     }
 
     /**
@@ -115,8 +119,7 @@ public class TimeDependentAccessRestriction {
                                 TimeDependentRestrictionData data = new TimeDependentRestrictionData();
                                 data.restriction = restriction;
                                 OpeningHoursParser ohParser = new OpeningHoursParser(new ByteArrayInputStream(condition.toString().getBytes()));
-                                ArrayList<Rule> rules = ohParser.rules(false);
-                                data.rules = rules;
+                                data.rules = ohParser.rules(false);
                                 conditionalTagData.restrictionData.add(data);
                             }
                         }
@@ -178,34 +181,22 @@ public class TimeDependentAccessRestriction {
         if (edgeState.get(property)) {
             long osmid = osmidParser.getOSMID(edgeState.getFlags());
             Way way = ghStorage.getOsm().ways.get(osmid);
-            for (OSMEntity.Tag tag : way.tags) {
-                if (tag.value.contains("yes") && tag.value.contains("@") && (tag.key.contains("access") || tag.key.contains("vehicle"))) {
-                    final ZonedDateTime zonedDateTime = linkEnterTime.atZone(zoneId);
-                    ConditionalRestrictionParser parser = new ConditionalRestrictionParser(new ByteArrayInputStream(tag.value.getBytes()));
-                    try {
-                        for (Restriction restriction : parser.restrictions()) {
-                            for (Condition condition : restriction.getConditions()) {
-                                if (condition.isOpeningHours()) {
-                                    System.out.println(tag);
-                                    System.out.println(restriction);
-                                    OpeningHoursParser ohParser = new OpeningHoursParser(new ByteArrayInputStream(condition.toString().getBytes()));
-                                    ArrayList<Rule> rules = ohParser.rules(false);
-                                    for (Rule rule : rules) {
-                                        System.out.println(rule);
-                                        if (matchesTimes(zonedDateTime, rule)) {
-                                            return true;
-                                        }
-                                    }
-                                }
+            List<ConditionalTagData> conditionalTagDataWithTimeDependentConditions = getConditionalTagDataWithTimeDependentConditions(way);
+            if (!conditionalTagDataWithTimeDependentConditions.isEmpty()) {
+                final ZonedDateTime zonedDateTime = linkEnterTime.atZone(zoneId);
+                for (ConditionalTagData conditionalTagData : conditionalTagDataWithTimeDependentConditions) {
+                    for (TimeDependentRestrictionData timeDependentRestrictionData : conditionalTagData.restrictionData) {
+                        for (Rule rule : timeDependentRestrictionData.rules) {
+                            if (matchesTimes(zonedDateTime, rule)) {
+                                return true;
                             }
                         }
-                    } catch (ParseException | ch.poole.openinghoursparser.ParseException e) {
-                        e.printStackTrace();
                     }
-                    return false;
                 }
+                return false;
             }
         }
         return true;
     }
+
 }
