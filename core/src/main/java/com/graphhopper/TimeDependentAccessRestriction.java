@@ -22,24 +22,24 @@ import ch.poole.conditionalrestrictionparser.Condition;
 import ch.poole.conditionalrestrictionparser.ConditionalRestrictionParser;
 import ch.poole.conditionalrestrictionparser.ParseException;
 import ch.poole.conditionalrestrictionparser.Restriction;
-import ch.poole.openinghoursparser.OpeningHoursParser;
-import ch.poole.openinghoursparser.Rule;
-import ch.poole.openinghoursparser.TimeSpan;
+import ch.poole.openinghoursparser.*;
 import com.conveyal.osmlib.OSMEntity;
 import com.conveyal.osmlib.Way;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.parsers.OSMIDParser;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.io.ByteArrayInputStream;
+import java.io.PrintWriter;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Optional;
+import java.util.List;
 
 public class TimeDependentAccessRestriction {
 
@@ -53,6 +53,100 @@ public class TimeDependentAccessRestriction {
         this.ghStorage = ghStorage;
         osmidParser = OSMIDParser.fromEncodingManager(ghStorage.getEncodingManager());
         property = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
+    }
+
+    static class Data {
+        OSMEntity.Tag tag;
+        Restriction restriction;
+        List<Rule> rules;
+    }
+
+    public void printConditionalAccess(EdgeIterator edgeState, Instant when, PrintWriter out) {
+        long osmid = osmidParser.getOSMID(edgeState.getFlags());
+        final ZonedDateTime zonedDateTime = when.atZone(zoneId);
+        Way way = ghStorage.getOsm().ways.get(osmid);
+        List<Data> restrictionData = getRestrictionData(way);
+        if (!restrictionData.isEmpty()) {
+            out.printf("%d\n", osmid);
+            for (Data data : restrictionData) {
+                out.println(" "+data.tag);
+                out.println("  "+data.restriction);
+                for (Rule rule : data.rules) {
+                    out.println("   " + rule + (matches(zonedDateTime, rule) ? " <===" : ""));
+                }
+            }
+        }
+    }
+
+    List<Data> getRestrictionData(Way way) {
+        List<Data> restrictionData = new ArrayList<>();
+        for (OSMEntity.Tag tag : way.tags) {
+            if (tag.value.contains("@") && (tag.key.contains("access") || tag.key.contains("vehicle"))) {
+                ConditionalRestrictionParser parser = new ConditionalRestrictionParser(new ByteArrayInputStream(tag.value.getBytes()));
+                try {
+                    for (Restriction restriction : parser.restrictions()) {
+                        for (Condition condition : restriction.getConditions()) {
+                            if (condition.isOpeningHours()) {
+                                Data data = new Data();
+                                data.tag = tag;
+                                data.restriction = restriction;
+                                OpeningHoursParser ohParser = new OpeningHoursParser(new ByteArrayInputStream(condition.toString().getBytes()));
+                                ArrayList<Rule> rules = ohParser.rules(false);
+                                data.rules = rules;
+                                restrictionData.add(data);
+                            }
+                        }
+                    }
+                } catch (ParseException | ch.poole.openinghoursparser.ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return restrictionData;
+    }
+
+    private boolean matches(ZonedDateTime when, Rule rule) {
+        return matchesDays(when, rule) && matchesTimes(when, rule);
+    }
+
+    private boolean matchesDays(ZonedDateTime when, Rule rule) {
+        if (rule.getDays() == null) return true;
+        for (WeekDayRange weekDayRange : rule.getDays()) {
+            if (matches(when, weekDayRange)) return true;
+        }
+        return false;
+    }
+
+    private boolean matches(ZonedDateTime when, WeekDayRange weekDayRange) {
+        DayOfWeek startDay = toJavaDayOfWeek(weekDayRange.getStartDay());
+        DayOfWeek endDay = weekDayRange.getEndDay() != null ? toJavaDayOfWeek(weekDayRange.getEndDay()) : startDay;
+        if (when.getDayOfWeek().ordinal() >= startDay.ordinal() && when.getDayOfWeek().ordinal() <= endDay.ordinal()) {
+            return true;
+        }
+        return false;
+    }
+
+    private DayOfWeek toJavaDayOfWeek(WeekDay weekDay) {
+        return DayOfWeek.of(weekDay.ordinal()+1);
+    }
+
+    private boolean matchesTimes(ZonedDateTime when, Rule rule) {
+        if (rule.getTimes() == null) return true;
+        for (TimeSpan timeSpan : rule.getTimes()) {
+            if (matches(when, timeSpan)) return true;
+        }
+        return false;
+    }
+
+    private boolean matches(ZonedDateTime when, TimeSpan time) {
+        int startMinute = time.getStart();
+        int endMinute = time.getEnd();
+        int minuteOfDay = (int) ChronoUnit.MINUTES.between(when.toLocalDate().atStartOfDay(zoneId), when);
+        System.out.println(startMinute + " " + endMinute + " vs. " + minuteOfDay);
+        if (minuteOfDay >= startMinute && minuteOfDay <= endMinute) {
+            return true;
+        }
+        return false;
     }
 
     public boolean accessible(EdgeIteratorState edgeState, Instant linkEnterTime) {
@@ -73,14 +167,8 @@ public class TimeDependentAccessRestriction {
                                     ArrayList<Rule> rules = ohParser.rules(false);
                                     for (Rule rule : rules) {
                                         System.out.println(rule);
-                                        for (TimeSpan time : Optional.ofNullable(rule.getTimes()).orElse(Collections.emptyList())) {
-                                            int startMinute = time.getStart();
-                                            int endMinute = time.getEnd();
-                                            int minuteOfDay = (int) ChronoUnit.MINUTES.between(zonedDateTime.toLocalDate().atStartOfDay(zoneId), zonedDateTime);
-                                            System.out.println(startMinute + " " + endMinute + " vs. " + minuteOfDay);
-                                            if (minuteOfDay >= startMinute && minuteOfDay <= endMinute) {
-                                                return true;
-                                            }
+                                        if (matchesTimes(zonedDateTime, rule)) {
+                                            return true;
                                         }
                                     }
                                 }

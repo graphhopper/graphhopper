@@ -62,9 +62,7 @@ public class ConditionalAccessResource {
             AllEdgesIterator allEdges = storage.getAllEdges();
             while (allEdges.next()) {
                 if (allEdges.get(property)) {
-                    long osmid = osmidParser.getOSMID(allEdges.getFlags());
-                    Way way = storage.getOsm().ways.get(osmid);
-                    printWriter.printf("%d %s\n", osmid, timeDependentAccessRestriction.accessible(allEdges, linkEnterTime));
+                    timeDependentAccessRestriction.printConditionalAccess(allEdges, linkEnterTime, printWriter);
                 }
             }
             printWriter.flush();
