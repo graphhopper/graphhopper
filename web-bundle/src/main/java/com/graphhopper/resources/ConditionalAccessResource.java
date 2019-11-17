@@ -19,9 +19,6 @@
 package com.graphhopper.resources;
 
 import com.conveyal.osmlib.OSM;
-import com.conveyal.osmlib.OSMEntity;
-import com.conveyal.osmlib.Relation;
-import com.conveyal.osmlib.Way;
 import com.graphhopper.TimeDependentAccessRestriction;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -35,7 +32,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.PrintWriter;
 import java.time.Instant;
-import java.util.Map;
 
 @Path("conditional-access")
 public class ConditionalAccessResource {
@@ -58,11 +54,15 @@ public class ConditionalAccessResource {
             printWriter.println();
             final OSMIDParser osmidParser = OSMIDParser.fromEncodingManager(storage.getEncodingManager());
             final BooleanEncodedValue property = storage.getEncodingManager().getBooleanEncodedValue("conditional");
-            OSM osm = storage.getOsm();
             AllEdgesIterator allEdges = storage.getAllEdges();
+            long prevOsmId = -1;
             while (allEdges.next()) {
                 if (allEdges.get(property)) {
-                    timeDependentAccessRestriction.printConditionalAccess(allEdges, linkEnterTime, printWriter);
+                    long osmid = osmidParser.getOSMID(allEdges.getFlags());
+                    if (osmid != prevOsmId) {
+                        timeDependentAccessRestriction.printConditionalAccess(osmid, linkEnterTime, printWriter);
+                    }
+                    prevOsmId = osmid;
                 }
             }
             printWriter.flush();

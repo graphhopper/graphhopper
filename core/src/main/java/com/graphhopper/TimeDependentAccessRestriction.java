@@ -55,51 +55,58 @@ public class TimeDependentAccessRestriction {
         property = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
     }
 
-    static class Data {
+    static class ConditionalTagData {
         OSMEntity.Tag tag;
+        List<Data> restrictionData;
+    }
+    static class Data {
         Restriction restriction;
         List<Rule> rules;
     }
 
-    public void printConditionalAccess(EdgeIterator edgeState, Instant when, PrintWriter out) {
-        long osmid = osmidParser.getOSMID(edgeState.getFlags());
+    public void printConditionalAccess(long osmid, Instant when, PrintWriter out) {
         final ZonedDateTime zonedDateTime = when.atZone(zoneId);
         Way way = ghStorage.getOsm().ways.get(osmid);
-        List<Data> restrictionData = getRestrictionData(way);
+        List<ConditionalTagData> restrictionData = getRestrictionData(way);
         if (!restrictionData.isEmpty()) {
             out.printf("%d\n", osmid);
-            for (Data data : restrictionData) {
-                out.println(" "+data.tag);
-                out.println("  "+data.restriction);
-                for (Rule rule : data.rules) {
-                    out.println("   " + rule + (matches(zonedDateTime, rule) ? " <===" : ""));
+            for (ConditionalTagData conditionalTagData : restrictionData) {
+                out.println(" "+conditionalTagData.tag);
+                for (Data data : conditionalTagData.restrictionData) {
+                    out.println("  "+data.restriction);
+                    for (Rule rule : data.rules) {
+                        out.println("   " + rule + (matches(zonedDateTime, rule) ? " <===" : ""));
+                    }
                 }
             }
         }
     }
 
-    List<Data> getRestrictionData(Way way) {
-        List<Data> restrictionData = new ArrayList<>();
+    List<ConditionalTagData> getRestrictionData(Way way) {
+        List<ConditionalTagData> restrictionData = new ArrayList<>();
         for (OSMEntity.Tag tag : way.tags) {
             if (tag.value.contains("@") && (tag.key.contains("access") || tag.key.contains("vehicle"))) {
+                ConditionalTagData conditionalTagData = new ConditionalTagData();
+                conditionalTagData.tag = tag;
+                conditionalTagData.restrictionData = new ArrayList<>();
                 ConditionalRestrictionParser parser = new ConditionalRestrictionParser(new ByteArrayInputStream(tag.value.getBytes()));
                 try {
                     for (Restriction restriction : parser.restrictions()) {
                         for (Condition condition : restriction.getConditions()) {
                             if (condition.isOpeningHours()) {
                                 Data data = new Data();
-                                data.tag = tag;
                                 data.restriction = restriction;
                                 OpeningHoursParser ohParser = new OpeningHoursParser(new ByteArrayInputStream(condition.toString().getBytes()));
                                 ArrayList<Rule> rules = ohParser.rules(false);
                                 data.rules = rules;
-                                restrictionData.add(data);
+                                conditionalTagData.restrictionData.add(data);
                             }
                         }
                     }
                 } catch (ParseException | ch.poole.openinghoursparser.ParseException e) {
                     e.printStackTrace();
                 }
+                restrictionData.add(conditionalTagData);
             }
         }
         return restrictionData;
