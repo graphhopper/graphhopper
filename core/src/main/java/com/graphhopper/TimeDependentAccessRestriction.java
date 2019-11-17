@@ -25,6 +25,7 @@ import ch.poole.conditionalrestrictionparser.Restriction;
 import ch.poole.openinghoursparser.*;
 import com.conveyal.osmlib.OSMEntity;
 import com.conveyal.osmlib.Way;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.parsers.OSMIDParser;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -39,6 +40,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TimeDependentAccessRestriction {
@@ -55,7 +57,7 @@ public class TimeDependentAccessRestriction {
         property = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
     }
 
-    static class ConditionalTagData {
+    public static class ConditionalTagData {
         OSMEntity.Tag tag;
         List<TimeDependentRestrictionData> restrictionData;
     }
@@ -68,7 +70,8 @@ public class TimeDependentAccessRestriction {
     public void printConditionalAccess(long osmid, Instant when, PrintWriter out) {
         final ZonedDateTime zonedDateTime = when.atZone(zoneId);
         Way way = ghStorage.getOsm().ways.get(osmid);
-        List<ConditionalTagData> timeDependentAccessConditions = getTimeDependentAccessConditions(way);
+        ReaderWay readerWay = readerWay(osmid, way);
+        List<ConditionalTagData> timeDependentAccessConditions = getTimeDependentAccessConditions(readerWay);
         if (!timeDependentAccessConditions.isEmpty()) {
             out.printf("%d\n", osmid);
             for (ConditionalTagData conditionalTagData : timeDependentAccessConditions) {
@@ -83,7 +86,20 @@ public class TimeDependentAccessRestriction {
         }
     }
 
-    public List<ConditionalTagData> getTimeDependentAccessConditions(Way way) {
+    /**
+     *
+     * We use ReaderWay instead of Way as the domain type, because we also need these functions in the
+     * OSM import, where we don't have the separate OSM database.
+     */
+    private ReaderWay readerWay(long osmid, Way way) {
+        ReaderWay readerWay = new ReaderWay(osmid);
+        for (OSMEntity.Tag tag : way.tags) {
+            readerWay.setTag(tag.key, tag.value);
+        }
+        return readerWay;
+    }
+
+    public static List<ConditionalTagData> getTimeDependentAccessConditions(ReaderWay way) {
         List<ConditionalTagData> restrictionData = getConditionalTagDataWithTimeDependentConditions(way);
         List<ConditionalTagData> accessRestrictionData = restrictionData.stream()
                 .filter(c -> c.tag.key.contains("access") || c.tag.key.contains("vehicle"))
@@ -104,14 +120,16 @@ public class TimeDependentAccessRestriction {
      * that have empty restrictionData.
      *
      */
-    public List<ConditionalTagData> getConditionalTagDataWithTimeDependentConditions(Way way) {
+    public static List<ConditionalTagData> getConditionalTagDataWithTimeDependentConditions(ReaderWay way) {
         List<ConditionalTagData> restrictionData = new ArrayList<>();
-        for (OSMEntity.Tag tag : way.tags) {
-            if (tag.value.contains("@")) {
+        for (Map.Entry<String, Object> tag : way.getTags().entrySet()) {
+            if (!(tag.getValue() instanceof String)) continue;
+            String tagValue = (String) tag.getValue();
+            if (tagValue.contains("@")) {
                 ConditionalTagData conditionalTagData = new ConditionalTagData();
-                conditionalTagData.tag = tag;
+                conditionalTagData.tag = new OSMEntity.Tag(tag.getKey(), tagValue);
                 conditionalTagData.restrictionData = new ArrayList<>();
-                ConditionalRestrictionParser parser = new ConditionalRestrictionParser(new ByteArrayInputStream(tag.value.getBytes()));
+                ConditionalRestrictionParser parser = new ConditionalRestrictionParser(new ByteArrayInputStream(tagValue.getBytes()));
                 try {
                     for (Restriction restriction : parser.restrictions()) {
                         for (Condition condition : restriction.getConditions()) {
@@ -181,7 +199,7 @@ public class TimeDependentAccessRestriction {
         if (edgeState.get(property)) {
             long osmid = osmidParser.getOSMID(edgeState.getFlags());
             Way way = ghStorage.getOsm().ways.get(osmid);
-            List<ConditionalTagData> conditionalTagDataWithTimeDependentConditions = getConditionalTagDataWithTimeDependentConditions(way);
+            List<ConditionalTagData> conditionalTagDataWithTimeDependentConditions = getConditionalTagDataWithTimeDependentConditions(readerWay(osmid, way));
             if (!conditionalTagDataWithTimeDependentConditions.isEmpty()) {
                 final ZonedDateTime zonedDateTime = linkEnterTime.atZone(zoneId);
                 for (ConditionalTagData conditionalTagData : conditionalTagDataWithTimeDependentConditions) {

@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing.util.parsers;
 
+import com.graphhopper.TimeDependentAccessRestriction;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
@@ -26,7 +27,6 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
-import java.util.Map;
 
 public class OSMConditionalRestrictionParser implements TagParser {
 
@@ -40,10 +40,9 @@ public class OSMConditionalRestrictionParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
-        for (Map.Entry<String, Object> entry : way.getTags().entrySet()) {
-            if (entry.getKey().contains("conditional")) {
-                conditional.setBool(false, edgeFlags, true);
-            }
+        List<TimeDependentAccessRestriction.ConditionalTagData> timeDependentAccessConditions = TimeDependentAccessRestriction.getTimeDependentAccessConditions(way);
+        if (!timeDependentAccessConditions.isEmpty()) {
+            conditional.setBool(false, edgeFlags, true);
         }
         return edgeFlags;
     }
