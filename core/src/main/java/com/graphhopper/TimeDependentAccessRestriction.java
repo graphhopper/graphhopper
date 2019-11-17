@@ -69,7 +69,11 @@ public class TimeDependentAccessRestriction {
         final ZonedDateTime zonedDateTime = when.atZone(zoneId);
         Way way = ghStorage.getOsm().ways.get(osmid);
         List<ConditionalTagData> restrictionData = getConditionalTagDataWithTimeDependentConditions(way);
-        List<ConditionalTagData> onlyWithTimeDependentConditions = restrictionData.stream()
+        List<ConditionalTagData> accessRestrictionData = restrictionData.stream()
+                .filter(c -> c.tag.key.contains("access") || c.tag.key.contains("vehicle"))
+                .filter(c -> !c.tag.key.contains("lanes"))
+                .collect(Collectors.toList());
+        List<ConditionalTagData> onlyWithTimeDependentConditions = accessRestrictionData.stream()
                 .filter(c -> !c.restrictionData.isEmpty())
                 .collect(Collectors.toList());
         if (!onlyWithTimeDependentConditions.isEmpty()) {
@@ -118,7 +122,8 @@ public class TimeDependentAccessRestriction {
                         }
                     }
                 } catch (ParseException | ch.poole.openinghoursparser.ParseException e) {
-                    e.printStackTrace();
+                    System.err.println("In tag: "+tag);
+                    System.err.println(e.getMessage());
                 }
                 restrictionData.add(conditionalTagData);
             }
@@ -163,7 +168,6 @@ public class TimeDependentAccessRestriction {
         int startMinute = time.getStart();
         int endMinute = time.getEnd();
         int minuteOfDay = (int) ChronoUnit.MINUTES.between(when.toLocalDate().atStartOfDay(zoneId), when);
-        System.out.println(startMinute + " " + endMinute + " vs. " + minuteOfDay);
         if (minuteOfDay >= startMinute && minuteOfDay <= endMinute) {
             return true;
         }
