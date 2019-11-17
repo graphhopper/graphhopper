@@ -28,7 +28,6 @@ import com.conveyal.osmlib.Way;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.parsers.OSMIDParser;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.io.ByteArrayInputStream;
@@ -40,6 +39,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TimeDependentAccessRestriction {
 
@@ -57,9 +57,10 @@ public class TimeDependentAccessRestriction {
 
     static class ConditionalTagData {
         OSMEntity.Tag tag;
-        List<Data> restrictionData;
+        List<TimeDependentRestrictionData> restrictionData;
     }
-    static class Data {
+
+    static class TimeDependentRestrictionData {
         Restriction restriction;
         List<Rule> rules;
     }
@@ -67,12 +68,15 @@ public class TimeDependentAccessRestriction {
     public void printConditionalAccess(long osmid, Instant when, PrintWriter out) {
         final ZonedDateTime zonedDateTime = when.atZone(zoneId);
         Way way = ghStorage.getOsm().ways.get(osmid);
-        List<ConditionalTagData> restrictionData = getRestrictionData(way);
-        if (!restrictionData.isEmpty()) {
+        List<ConditionalTagData> restrictionData = getConditionalTagDataWithTimeDependentConditions(way);
+        List<ConditionalTagData> onlyWithTimeDependentConditions = restrictionData.stream()
+                .filter(c -> !c.restrictionData.isEmpty())
+                .collect(Collectors.toList());
+        if (!onlyWithTimeDependentConditions.isEmpty()) {
             out.printf("%d\n", osmid);
-            for (ConditionalTagData conditionalTagData : restrictionData) {
+            for (ConditionalTagData conditionalTagData : onlyWithTimeDependentConditions) {
                 out.println(" "+conditionalTagData.tag);
-                for (Data data : conditionalTagData.restrictionData) {
+                for (TimeDependentRestrictionData data : conditionalTagData.restrictionData) {
                     out.println("  "+data.restriction);
                     for (Rule rule : data.rules) {
                         out.println("   " + rule + (matches(zonedDateTime, rule) ? " <===" : ""));
@@ -82,10 +86,20 @@ public class TimeDependentAccessRestriction {
         }
     }
 
-    List<ConditionalTagData> getRestrictionData(Way way) {
+    /**
+     *
+     * For a Way, returns all tags that are conditional (with the @-notation), but already filters down
+     * the restrictions to those that are time-dependent.
+     *
+     * Can be used to explore conditional tags, to ensure that we don't filter too much and miss anything.
+     * To see only those conditional tags that have time-dependent restrictions, throw away all ConditionalTagData
+     * that have empty restrictionData.
+     *
+     */
+    public List<ConditionalTagData> getConditionalTagDataWithTimeDependentConditions(Way way) {
         List<ConditionalTagData> restrictionData = new ArrayList<>();
         for (OSMEntity.Tag tag : way.tags) {
-            if (tag.value.contains("@") && (tag.key.contains("access") || tag.key.contains("vehicle"))) {
+            if (tag.value.contains("@")) {
                 ConditionalTagData conditionalTagData = new ConditionalTagData();
                 conditionalTagData.tag = tag;
                 conditionalTagData.restrictionData = new ArrayList<>();
@@ -94,7 +108,7 @@ public class TimeDependentAccessRestriction {
                     for (Restriction restriction : parser.restrictions()) {
                         for (Condition condition : restriction.getConditions()) {
                             if (condition.isOpeningHours()) {
-                                Data data = new Data();
+                                TimeDependentRestrictionData data = new TimeDependentRestrictionData();
                                 data.restriction = restriction;
                                 OpeningHoursParser ohParser = new OpeningHoursParser(new ByteArrayInputStream(condition.toString().getBytes()));
                                 ArrayList<Rule> rules = ohParser.rules(false);
