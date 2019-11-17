@@ -92,10 +92,14 @@
     </modules>
 
     <repositories>
-    <repository>
-        <id>matsim</id>
-        <url>http://dl.bintray.com/simonpoole/osm</url>
-    </repository>
+        <repository>
+            <id>simonpoole</id>
+            <url>http://dl.bintray.com/simonpoole/osm</url>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <build>
