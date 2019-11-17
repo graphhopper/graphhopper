@@ -6,3 +6,6 @@ This web service returns JSON from the [GraphHopper routing engine](https://gith
 
 An example for an Android app that uses the Navigation SDK is provided in [this repository](https://github.com/graphhopper/graphhopper-navigation-example).
 
+# Community-Driven Alternatives
+
+maphopper: https://github.com/Gadda27/maphopper
