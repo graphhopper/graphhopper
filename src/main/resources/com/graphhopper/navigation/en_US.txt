@@ -1,7 +1,7 @@
 in_km_singular=In 1 kilometer
 in_km=In %1$s kilometers
 in_m=In %1$s meters
-for_km=for %1$s kilometer
+for_km=for %1$s kilometers
 then=then
 in_mi_singular=In 1 mile
 in_mi=In %1$s miles

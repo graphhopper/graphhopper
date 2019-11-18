@@ -145,7 +145,7 @@ public class NavigateResource {
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
                 + took + ", " + weighting + ", " + vehicleStr;
         Locale locale = Helper.getLocale(localeStr);
-        DistanceConfig config = new DistanceConfig(unit, navigateResponseConverterTranslationMap, locale);
+        DistanceConfig config = new DistanceConfig(unit, translationMap, navigateResponseConverterTranslationMap, locale);
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());

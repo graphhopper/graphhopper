@@ -1,5 +1,6 @@
 package com.graphhopper.navigation;
 
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 
 import java.util.Locale;
@@ -9,12 +10,12 @@ import static com.graphhopper.navigation.DistanceUtils.meterToMiles;
 
 abstract class VoiceInstructionConfig {
     protected final String key; // TranslationMap key
-    protected final TranslationMap translationMap;
+    protected final TranslationMap navigateResponseConverterTranslationMap;
     protected final Locale locale;
 
-    public VoiceInstructionConfig(String key, TranslationMap translationMap, Locale locale) {
+    public VoiceInstructionConfig(String key, TranslationMap navigateResponseConverterTranslationMap, Locale locale) {
         this.key = key;
-        this.translationMap = translationMap;
+        this.navigateResponseConverterTranslationMap = navigateResponseConverterTranslationMap;
         this.locale = locale;
     }
 
@@ -38,8 +39,8 @@ class ConditionalDistanceVoiceInstructionConfig extends VoiceInstructionConfig {
     private final int[] distanceAlongGeometry; // distances in meter in which the instruction should be spoken
     private final int[] distanceVoiceValue; // distances in required unit. f.e: 1km, 300m or 2mi
 
-    public ConditionalDistanceVoiceInstructionConfig(String key, TranslationMap translationMap, Locale locale, int[] distanceAlongGeometry, int[] distanceVoiceValue) {
-        super(key, translationMap, locale);
+    public ConditionalDistanceVoiceInstructionConfig(String key, TranslationMap navigateResponseConverterTranslationMap, Locale locale, int[] distanceAlongGeometry, int[] distanceVoiceValue) {
+        super(key, navigateResponseConverterTranslationMap, locale);
         this.distanceAlongGeometry = distanceAlongGeometry;
         this.distanceVoiceValue = distanceVoiceValue;
         if (distanceAlongGeometry.length != distanceVoiceValue.length) {
@@ -62,7 +63,7 @@ class ConditionalDistanceVoiceInstructionConfig extends VoiceInstructionConfig {
         if (instructionIndex < 0) {
             return null;
         }
-        String totalDescription = translationMap.getWithFallBack(locale).tr(key, distanceVoiceValue[instructionIndex]) + " " + turnDescription + thenVoiceInstruction;
+        String totalDescription = navigateResponseConverterTranslationMap.getWithFallBack(locale).tr(key, distanceVoiceValue[instructionIndex]) + " " + turnDescription + thenVoiceInstruction;
         int spokenDistance = distanceAlongGeometry[instructionIndex];
         return new VoiceInstructionValue(spokenDistance, totalDescription);
     }
@@ -72,8 +73,8 @@ class FixedDistanceVoiceInstructionConfig extends VoiceInstructionConfig {
     private final int distanceAlongGeometry; // distance in meter in which the instruction should be spoken
     private final int distanceVoiceValue; // distance in required unit. f.e: 1km, 300m or 2mi
 
-    public FixedDistanceVoiceInstructionConfig(String key, TranslationMap translationMap, Locale locale, int distanceAlongGeometry, int distanceVoiceValue) {
-        super(key, translationMap, locale);
+    public FixedDistanceVoiceInstructionConfig(String key, TranslationMap navigateResponseConverterTranslationMap, Locale locale, int distanceAlongGeometry, int distanceVoiceValue) {
+        super(key, navigateResponseConverterTranslationMap, locale);
         this.distanceAlongGeometry = distanceAlongGeometry;
         this.distanceVoiceValue = distanceVoiceValue;
     }
@@ -81,7 +82,7 @@ class FixedDistanceVoiceInstructionConfig extends VoiceInstructionConfig {
     @Override
     public VoiceInstructionValue getConfigForDistance(double distance, String turnDescription, String thenVoiceInstruction) {
         if (distance >= distanceAlongGeometry) {
-            String totalDescription = translationMap.getWithFallBack(locale).tr(key, distanceVoiceValue) + " " + turnDescription;
+            String totalDescription = navigateResponseConverterTranslationMap.getWithFallBack(locale).tr(key, distanceVoiceValue) + " " + turnDescription;
             return new VoiceInstructionValue(distanceAlongGeometry, totalDescription);
         }
         return null;
@@ -94,12 +95,14 @@ class InitialVoiceInstructionConfig extends VoiceInstructionConfig {
     private final int distanceDelay; // delay distance in meter
     private final int distanceForInitialStayInstruction; // min distance in meter for initial instruction
     private final DistanceUtils.Unit unit;
+    private final TranslationMap translationMap;
 
-    public InitialVoiceInstructionConfig(String key, TranslationMap translationMap, Locale locale, int distanceForInitialStayInstruction, int distanceDelay, DistanceUtils.Unit unit) {
-        super(key, translationMap, locale);
+    public InitialVoiceInstructionConfig(String key, TranslationMap translationMap, TranslationMap navigateResponseConverterTranslationMap, Locale locale, int distanceForInitialStayInstruction, int distanceDelay, DistanceUtils.Unit unit) {
+        super(key, navigateResponseConverterTranslationMap, locale);
         this.distanceForInitialStayInstruction = distanceForInitialStayInstruction;
         this.distanceDelay = distanceDelay;
         this.unit = unit;
+        this.translationMap = translationMap;
     }
 
     private int distanceAlongGeometry(double distanceMeter) {
@@ -126,7 +129,8 @@ class InitialVoiceInstructionConfig extends VoiceInstructionConfig {
         if (distance > distanceForInitialStayInstruction) {
             int spokenDistance = distanceAlongGeometry(distance);
             int distanceVoiceValue = distanceVoiceValue(distance);
-            String continueDescription = translationMap.getWithFallBack(locale).tr("continue") + " " + translationMap.getWithFallBack(locale).tr(key, distanceVoiceValue);
+            String continueDescription = translationMap.getWithFallBack(locale).tr("continue") + " " + navigateResponseConverterTranslationMap.getWithFallBack(locale).tr(key, distanceVoiceValue);
+            continueDescription = Helper.firstBig(continueDescription);
             return new VoiceInstructionValue(spokenDistance, continueDescription);
         }
         return null;
