@@ -250,6 +250,16 @@ class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
+    public byte getByte(long bytePos) {
+        throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
+    }
+
+    @Override
+    public void setByte(long bytePos, byte value) {
+        throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
+    }
+
+    @Override
     public void close() {
         super.close();
         segments = new int[0][];

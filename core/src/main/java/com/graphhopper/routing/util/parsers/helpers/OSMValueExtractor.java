@@ -7,12 +7,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class OSMValueExtractor {
 
     private static final Logger LOG = LoggerFactory.getLogger(OSMValueExtractor.class);
+    
+    private static final Pattern TON_PATTERN    = Pattern.compile("tons?");
+    private static final Pattern MGW_PATTERN    = Pattern.compile("mgw");
+    private static final Pattern WSPACE_PATTERN = Pattern.compile("\\s");
+    private static final Pattern METER_PATTERN  = Pattern.compile("meters?|mtrs?|mt|m\\.");
+    private static final Pattern INCH_PATTERN   = Pattern.compile("\"|\'\'");
+    private static final Pattern FEET_PATTERN   = Pattern.compile("\'|feet");
+    private static final Pattern APPROX_PATTERN = Pattern.compile("~|approx");
 
     private OSMValueExtractor() {
         // utility class
@@ -32,8 +41,8 @@ public class OSMValueExtractor {
     }
 
     public static double stringToTons(String value) {
-        value = toLowerCase(value).replaceAll("(tons|ton)", "t").
-                replace("mgw", "").trim();
+        value = TON_PATTERN.matcher(toLowerCase(value)).replaceAll("t");
+        value = MGW_PATTERN.matcher(value).replaceAll("").trim();
         if (isInvalid(value))
             throw new NumberFormatException("Cannot parse value for 'tons': " + value);
 
@@ -65,14 +74,16 @@ public class OSMValueExtractor {
     }
 
     public static double stringToMeter(String value) {
-        value = toLowerCase(value).replaceAll(" ", "").replaceAll("(meters|meter|mtrs|mtr|mt|m\\.)", "m").
-                replaceAll("(\"|\'\')", "in").replaceAll("(\'|feet)", "ft");
+        value = WSPACE_PATTERN.matcher(toLowerCase(value)).replaceAll("");
+        value = METER_PATTERN.matcher(value).replaceAll("m");
+        value = INCH_PATTERN.matcher(value).replaceAll("in");
+        value = FEET_PATTERN.matcher(value).replaceAll("ft");
         if (isInvalid(value))
             throw new NumberFormatException("Cannot parse value for 'meter': " + value);
         double factor = 1;
         double offset = 0;
         if (value.startsWith("~") || value.contains("approx")) {
-            value = value.replaceAll("(~|approx)", "").trim();
+            value = APPROX_PATTERN.matcher(value).replaceAll("").trim();
             factor = 0.8;
         }
 

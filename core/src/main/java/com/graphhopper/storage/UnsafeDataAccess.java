@@ -218,6 +218,16 @@ public class UnsafeDataAccess extends AbstractDataAccess {
     }
 
     @Override
+    public final void setByte(long bytePos, byte value) {
+        UNSAFE.putByte(address + bytePos, value);
+    }
+
+    @Override
+    public final byte getByte(long bytePos) {
+        return UNSAFE.getByte(address + bytePos);
+    }
+
+    @Override
     public final long getCapacity() {
         return capacity;
     }
