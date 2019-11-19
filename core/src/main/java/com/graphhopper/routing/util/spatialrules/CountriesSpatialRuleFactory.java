@@ -1,6 +1,7 @@
 package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
+import com.graphhopper.routing.util.spatialrules.countries.BelgiumSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.LiechtensteinSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.SwitzerlandSpatialRule;
@@ -16,6 +17,10 @@ public class CountriesSpatialRuleFactory implements SpatialRuleLookupBuilder.Spa
                 AustriaSpatialRule austriaSpatialRule = new AustriaSpatialRule();
                 austriaSpatialRule.setBorders(polygons);
                 return austriaSpatialRule;
+            case "BEL":
+                BelgiumSpatialRule belgiumSpatialRule = new BelgiumSpatialRule();
+                belgiumSpatialRule.setBorders(polygons);
+                return belgiumSpatialRule;
             case "CHE":
                 SwitzerlandSpatialRule switzerlandSpatialRule = new SwitzerlandSpatialRule();
                 switzerlandSpatialRule.setBorders(polygons);
