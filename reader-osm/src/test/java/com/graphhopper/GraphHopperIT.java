@@ -23,6 +23,7 @@ import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
@@ -1406,6 +1407,77 @@ public class GraphHopperIT {
         assertEquals(266.8, res.getBest().getRouteWeight(), 0.1);
         assertEquals(2116, res.getBest().getDistance(), 1);
         assertEquals(266800, res.getBest().getTime(), 1000);
+    }
+
+    @Test
+    public void simplifyWithInstructionsAndPathDetails() {
+        GraphHopper hopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/north-bayreuth.osm.gz").
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                forServer();
+        EncodingManager em = new EncodingManager.Builder()
+                .setEnableInstructions(true)
+                .add(new OSMMaxSpeedParser())
+                .add(new CarFlagEncoder())
+                .build();
+        hopper.setEncodingManager(em);
+        hopper.importOrLoad();
+
+        GHRequest req = new GHRequest()
+                .addPoint(new GHPoint(50.026932, 11.493201))
+                .addPoint(new GHPoint(50.016895, 11.4923))
+                .addPoint(new GHPoint(50.003464, 11.49157))
+                .setPathDetails(Arrays.asList("street_name", "max_speed"));
+        req.putHint("elevation", "true");
+
+        GHResponse rsp = hopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+
+        PathWrapper path = rsp.getBest();
+
+        // check path was simplified (without it would be more like 58)
+        assertEquals(44, path.getPoints().size());
+
+        // check instructions
+        InstructionList instructions = path.getInstructions();
+        assertInstruction(instructions.get(0), "KU 11", "[0, 4]");
+        assertInstruction(instructions.get(1), "B 85", "[4, 18]");
+        assertInstruction(instructions.get(2), "", "[18, 18]");
+        assertInstruction(instructions.get(3), "B 85", "[18, 35]");
+        assertInstruction(instructions.get(4), "", "[35, 37]");
+        assertInstruction(instructions.get(5), "KU 18", "[37, 40]");
+        assertInstruction(instructions.get(6), "St 2189", "[40, 41]");
+        assertInstruction(instructions.get(7), "", "[41, 43]");
+        assertInstruction(instructions.get(8), "", "[43, 43]");
+
+        // check max speeds
+        List<PathDetail> speeds = path.getPathDetails().get("max_speed");
+        assertDetail(speeds.get(0), "null [0, 4]");
+        assertDetail(speeds.get(1), "70.0 [4, 7]");
+        assertDetail(speeds.get(2), "100.0 [7, 34]");
+        assertDetail(speeds.get(3), "80.0 [34, 35]");
+        assertDetail(speeds.get(4), "null [35, 40]");
+        assertDetail(speeds.get(5), "50.0 [40, 41]");
+        assertDetail(speeds.get(6), "null [41, 43]");
+
+        // check street_names
+        List<PathDetail> streetNames = path.getPathDetails().get("street_name");
+        assertDetail(streetNames.get(0), "KU 11 [0, 4]");
+        assertDetail(streetNames.get(1), "B 85 [4, 35]");
+        assertDetail(streetNames.get(2), " [35, 37]");
+        assertDetail(streetNames.get(3), "KU 18 [37, 40]");
+        assertDetail(streetNames.get(4), "St 2189 [40, 41]");
+        assertDetail(streetNames.get(5), " [41, 43]");
+    }
+
+    private void assertInstruction(Instruction instruction, String expectedName, String expectedInterval) {
+        assertEquals(expectedName, instruction.getName());
+        assertEquals(expectedInterval, ((ShallowImmutablePointList) instruction.getPoints()).getIntervalString());
+    }
+
+    private void assertDetail(PathDetail detail, String expected) {
+        assertEquals(expected, detail.toString());
     }
 
 }
