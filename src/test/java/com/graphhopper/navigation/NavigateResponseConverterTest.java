@@ -144,7 +144,6 @@ public class NavigateResponseConverterTest {
 
         // Step 4 is about 240m long
         JsonNode step = steps.get(4);
-        JsonNode maneuver = step.get("maneuver");
 
         JsonNode voiceInstructions = step.get("voiceInstructions");
         assertEquals(2, voiceInstructions.size());
@@ -152,9 +151,8 @@ public class NavigateResponseConverterTest {
         assertEquals(200, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
         assertEquals("In 200 meters At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3", voiceInstruction.get("announcement").asText());
 
-        // Step 15 is over 3km long
-        step = steps.get(15);
-        maneuver = step.get("maneuver");
+        // Step 14 is over 3km long
+        step = steps.get(14);
 
         voiceInstructions = step.get("voiceInstructions");
         assertEquals(4, voiceInstructions.size());
@@ -186,8 +184,8 @@ public class NavigateResponseConverterTest {
         assertEquals(200, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
         assertEquals("In 600 feet At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3", voiceInstruction.get("announcement").asText());
 
-        // Step 15 is over 3km long
-        step = steps.get(15);
+        // Step 14 is over 3km long
+        step = steps.get(14);
         maneuver = step.get("maneuver");
 
         voiceInstructions = step.get("voiceInstructions");
@@ -226,7 +224,7 @@ public class NavigateResponseConverterTest {
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.ENGLISH, distanceConfig);
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
-        JsonNode voiceInstruction = steps.get(15).get("voiceInstructions").get(0);
+        JsonNode voiceInstruction = steps.get(14).get("voiceInstructions").get(0);
         assertEquals("In 2 kilometers keep right", voiceInstruction.get("announcement").asText());
 
         rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
@@ -237,7 +235,7 @@ public class NavigateResponseConverterTest {
         json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, mtrMap, Locale.GERMAN, distanceConfigGerman);
 
         steps = json.get("routes").get(0).get("legs").get(0).get("steps");
-        voiceInstruction = steps.get(15).get("voiceInstructions").get(0);
+        voiceInstruction = steps.get(14).get("voiceInstructions").get(0);
         assertEquals("In 2 Kilometern rechts halten", voiceInstruction.get("announcement").asText());
 
     }
