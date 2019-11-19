@@ -67,6 +67,7 @@ public class PathSimplification {
     public static PointList simplify(PathWrapper pathWrapper, DouglasPeucker douglasPeucker, boolean enableInstructions) {
         final PointList pointList = pathWrapper.getPoints();
         List<Partition> partitions = new ArrayList<>();
+        // todo: maybe this code can be simplified if path details and instructions would be merged, see #1121
         if (enableInstructions) {
             final InstructionList instructions = pathWrapper.getInstructions();
             partitions.add(new Partition() {
