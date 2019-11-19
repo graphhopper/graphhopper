@@ -17,8 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
@@ -53,12 +52,12 @@ import java.util.*;
 public class DirectionResolver {
     private final EdgeExplorer edgeExplorer;
     private final NodeAccess nodeAccess;
-    private final FlagEncoder encoder;
+    private final Weighting weighting;
 
-    public DirectionResolver(Graph graph, FlagEncoder encoder) {
+    public DirectionResolver(Graph graph, Weighting weighting) {
         edgeExplorer = graph.createEdgeExplorer();
         nodeAccess = graph.getNodeAccess();
-        this.encoder = encoder;
+        this.weighting = weighting;
     }
 
     /**
@@ -179,9 +178,9 @@ public class DirectionResolver {
             if (iter instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) iter).isShortcut()) {
                 continue;
             }
-            BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-            boolean isIn = iter.getReverse(accessEnc);
-            boolean isOut = iter.get(accessEnc);
+
+            boolean isOut = !Double.isInfinite(weighting.calcWeight(iter, false, -1));
+            boolean isIn = !Double.isInfinite(weighting.calcWeight(iter, true, -1));
             if (!isIn && !isOut) {
                 continue;
             }

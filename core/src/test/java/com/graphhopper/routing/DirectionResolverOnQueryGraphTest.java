@@ -20,6 +20,8 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
@@ -274,11 +276,12 @@ public class DirectionResolverOnQueryGraphTest {
 
     private void checkResults(ExpectedResult... expectedResults) {
         List<QueryResult> qrs = new ArrayList<>(expectedResults.length);
+        Weighting weighting = new FastestWeighting(encoder);
         for (ExpectedResult r : expectedResults) {
-            qrs.add(getQueryResult(r.lat, r.lon));
+            qrs.add(locationIndex.findClosest(r.lat, r.lon, WeightedEdgeFilter.allEdges(weighting)));
         }
         queryGraph = QueryGraph.lookup(g, qrs);
-        DirectionResolver resolver = new DirectionResolver(queryGraph, encoder);
+        DirectionResolver resolver = new DirectionResolver(queryGraph, weighting);
         for (int i = 0; i < expectedResults.length; i++) {
             assertEquals("unexpected resolved direction",
                     restrictedDirection(expectedResults[i]),
@@ -299,9 +302,10 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private void assertUnrestricted(double lat, double lon) {
-        QueryResult qr = getQueryResult(lat, lon);
+        Weighting weighting = new FastestWeighting(encoder);
+        QueryResult qr = locationIndex.findClosest(lat, lon, WeightedEdgeFilter.allEdges(weighting));
         queryGraph = QueryGraph.lookup(g, qr);
-        DirectionResolver resolver = new DirectionResolver(queryGraph, encoder);
+        DirectionResolver resolver = new DirectionResolver(queryGraph, weighting);
         assertEquals(unrestricted(), resolver.resolveDirections(qr.getClosestNode(), qr.getQueryPoint()));
     }
 
@@ -322,10 +326,6 @@ public class DirectionResolverOnQueryGraphTest {
             }
         }
         throw new IllegalStateException("Could not find edge from: " + from + ", to: " + to);
-    }
-
-    private QueryResult getQueryResult(double lat, double lon) {
-        return locationIndex.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
     }
 
     private ExpectedEdge edge(int from, int to) {

@@ -61,14 +61,14 @@ public class RoundTripRoutingTemplateTest {
     public void lookup_throwsIfNumberOfGivenPointsNotOne() {
         RoundTripRoutingTemplate routingTemplate = new RoundTripRoutingTemplate(
                 new GHRequest(Collections.singletonList(ghPoint1)), new GHResponse(), null, em, 1);
-        routingTemplate.lookup(Arrays.asList(ghPoint1, ghPoint2), carFE);
+        routingTemplate.lookup(Arrays.asList(ghPoint1, ghPoint2), new FastestWeighting(carFE));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void lookup_throwsIfNumberOfPointsInRequestNotOne() {
         RoundTripRoutingTemplate routingTemplate = new RoundTripRoutingTemplate(
                 new GHRequest(Arrays.asList(ghPoint1, ghPoint2)), new GHResponse(), null, em, 1);
-        routingTemplate.lookup(Collections.singletonList(ghPoint1), carFE);
+        routingTemplate.lookup(Collections.singletonList(ghPoint1), new FastestWeighting(carFE));
     }
 
     @Test
@@ -87,16 +87,16 @@ public class RoundTripRoutingTemplateTest {
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
         RoundTripRoutingTemplate routingTemplate =
                 new RoundTripRoutingTemplate(ghRequest, new GHResponse(), locationIndex, em, 1);
-        List<QueryResult> stagePoints = routingTemplate.lookup(ghRequest.getPoints(), carFE);
+        Weighting weighting = new FastestWeighting(carFE);
+        List<QueryResult> stagePoints = routingTemplate.lookup(ghRequest.getPoints(), weighting);
         assertEquals(3, stagePoints.size());
         assertEquals(0, stagePoints.get(0).getClosestNode());
         assertEquals(6, stagePoints.get(1).getClosestNode());
         assertEquals(0, stagePoints.get(2).getClosestNode());
 
         QueryGraph queryGraph = QueryGraph.lookup(g, stagePoints);
-        Weighting weighting = new FastestWeighting(carFE);
         List<Path> paths = routingTemplate.calcPaths(
-                queryGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode), carFE);
+                queryGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         // make sure the resulting paths are connected and form a round trip starting and ending at the start node 0
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(0, 7, 6, 5), paths.get(0).calcNodes());
@@ -122,7 +122,7 @@ public class RoundTripRoutingTemplateTest {
         QueryGraph qGraph = QueryGraph.lookup(g, Arrays.asList(qr4, qr5));
         rTripRouting.setQueryResults(Arrays.asList(qr5, qr4, qr5));
         List<Path> paths = rTripRouting.calcPaths(qGraph, new RoutingAlgorithmFactorySimple(),
-                new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode), carFE);
+                new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(5, 6, 3, 4), paths.get(0).calcNodes());
         assertEquals(IntArrayList.from(4, 8, 7, 6, 5), paths.get(1).calcNodes());
@@ -130,7 +130,7 @@ public class RoundTripRoutingTemplateTest {
         qGraph = QueryGraph.lookup(g, Arrays.asList(qr4, qr6));
         rTripRouting.setQueryResults(Arrays.asList(qr6, qr4, qr6));
         paths = rTripRouting.calcPaths(qGraph, new RoutingAlgorithmFactorySimple(),
-                new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode), carFE);
+                new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         assertEquals(2, paths.size());
         assertEquals(IntArrayList.from(6, 3, 4), paths.get(0).calcNodes());
         assertEquals(IntArrayList.from(4, 8, 7, 6), paths.get(1).calcNodes());

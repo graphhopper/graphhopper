@@ -26,6 +26,7 @@ import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Parameters.Routing;
@@ -50,20 +51,20 @@ final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
     }
 
     @Override
-    public List<QueryResult> lookup(List<GHPoint> points, FlagEncoder encoder) {
+    public List<QueryResult> lookup(List<GHPoint> points, Weighting weighting) {
         if (points.size() > 2)
             throw new IllegalArgumentException("Currently alternative routes work only with start and end point. You tried to use: " + points.size() + " points");
 
-        return super.lookup(points, encoder);
+        return super.lookup(points, weighting);
     }
 
     @Override
-    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts, FlagEncoder encoder) {
+    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
         boolean withViaTurnPenalty = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
         if (withViaTurnPenalty)
             throw new IllegalArgumentException("Alternative paths and " + PASS_THROUGH + " at the same time is currently not supported");
 
-        return super.calcPaths(queryGraph, algoFactory, algoOpts, encoder);
+        return super.calcPaths(queryGraph, algoFactory, algoOpts);
     }
 
     @Override

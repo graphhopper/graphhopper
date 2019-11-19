@@ -25,6 +25,7 @@ import com.graphhopper.routing.profiles.RoadClass;
 import com.graphhopper.routing.profiles.RoadEnvironment;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -62,14 +63,14 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     }
 
     @Override
-    public List<QueryResult> lookup(List<GHPoint> points, FlagEncoder encoder) {
+    public List<QueryResult> lookup(List<GHPoint> points, Weighting weighting) {
         if (points.size() < 2)
             throw new IllegalArgumentException("At least 2 points have to be specified, but was:" + points.size());
 
-        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
+        EdgeFilter edgeFilter = WeightedEdgeFilter.allEdges(weighting);
         EdgeFilter strictEdgeFilter = !ghRequest.hasSnapPreventions() ? edgeFilter : new SnapPreventionEdgeFilter(edgeFilter,
-                encoder.getEnumEncodedValue(RoadClass.KEY, RoadClass.class),
-                encoder.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class), ghRequest.getSnapPreventions());
+                encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class),
+                encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class), ghRequest.getSnapPreventions());
         queryResults = new ArrayList<>(points.size());
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
             GHPoint point = points.get(placeIndex);
@@ -90,7 +91,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     }
 
     @Override
-    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts, FlagEncoder encoder) {
+    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
         long visitedNodesSum = 0L;
         final boolean viaTurnPenalty = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
         final int pointsCount = ghRequest.getPoints().size();
@@ -98,7 +99,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
 
         List<DirectionResolverResult> directions = Collections.emptyList();
         if (!ghRequest.getCurbsides().isEmpty()) {
-            DirectionResolver directionResolver = new DirectionResolver(queryGraph, encoder);
+            DirectionResolver directionResolver = new DirectionResolver(queryGraph, algoOpts.getWeighting());
             directions = new ArrayList<>(queryResults.size());
             for (QueryResult qr : queryResults) {
                 directions.add(directionResolver.resolveDirections(qr.getClosestNode(), qr.getQueryPoint()));

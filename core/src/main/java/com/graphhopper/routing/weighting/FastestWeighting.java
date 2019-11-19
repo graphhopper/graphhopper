@@ -72,6 +72,10 @@ public class FastestWeighting extends AbstractWeighting {
 
     @Override
     public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
+        // TODO NOW this is required but now we calculate this twice. Once here and once in EdgeExplorer via EdgeFilter
+        if (!reverse && !edge.get(accessEnc) || reverse && !edge.getReverse(accessEnc))
+            return Double.POSITIVE_INFINITY;
+
         double speed = reverse ? edge.getReverse(avSpeedEnc) : edge.get(avSpeedEnc);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;

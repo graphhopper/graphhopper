@@ -22,6 +22,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
@@ -391,7 +392,7 @@ public class DirectionResolverTest {
     }
 
     private void checkResult(int node, double lat, double lon, DirectionResolverResult expectedResult) {
-        DirectionResolver resolver = new DirectionResolver(g, encoder);
+        DirectionResolver resolver = new DirectionResolver(g, new FastestWeighting(encoder));
         assertEquals(expectedResult, resolver.resolveDirections(node, new GHPoint(lat, lon)));
     }
 

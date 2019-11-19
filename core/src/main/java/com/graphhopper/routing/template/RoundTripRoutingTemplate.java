@@ -25,13 +25,13 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.WeightedEdgeFilter;
 import com.graphhopper.routing.util.tour.MultiPointTour;
 import com.graphhopper.routing.util.tour.TourStrategy;
 import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
@@ -73,7 +73,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
     }
 
     @Override
-    public List<QueryResult> lookup(List<GHPoint> points, FlagEncoder encoder) {
+    public List<QueryResult> lookup(List<GHPoint> points, Weighting weighting) {
         if (points.size() != 1 || ghRequest.getPoints().size() != 1)
             throw new IllegalArgumentException("For round trip calculation exactly one point is required");
         final double distanceInMeter = ghRequest.getHints().getDouble(RoundTrip.DISTANCE, 10000);
@@ -84,7 +84,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
 
         TourStrategy strategy = new MultiPointTour(new Random(seed), distanceInMeter, roundTripPointCount, initialHeading);
         queryResults = new ArrayList<>(2 + strategy.getNumberOfGeneratedPoints());
-        EdgeFilter edgeFilter = DefaultEdgeFilter.allEdges(encoder);
+        EdgeFilter edgeFilter = WeightedEdgeFilter.allEdges(weighting);
         QueryResult startQR = locationIndex.findClosest(start.lat, start.lon, edgeFilter);
         if (!startQR.isValid())
             throw new PointNotFoundException("Cannot find point 0: " + start, 0);
@@ -112,7 +112,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
     }
 
     @Override
-    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts, FlagEncoder encoder) {
+    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
         pathList = new ArrayList<>(queryResults.size() - 1);
 
         AvoidEdgesWeighting avoidPathWeighting = new AvoidEdgesWeighting(algoOpts.getWeighting());
