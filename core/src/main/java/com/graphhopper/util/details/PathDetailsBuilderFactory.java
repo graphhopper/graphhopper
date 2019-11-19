@@ -73,7 +73,7 @@ public class PathDetailsBuilderFactory {
                 new MapEntry<>(RoadEnvironment.KEY, RoadEnvironment.class), new MapEntry<>(Surface.KEY, Surface.class),
                 new MapEntry<>(RoadAccess.KEY, RoadAccess.class), new MapEntry<>(Toll.KEY, Toll.class),
                 new MapEntry<>(TrackType.KEY, TrackType.class), new MapEntry<>(Hazmat.KEY, Hazmat.class),
-                new MapEntry<>(HazmatWater.KEY, HazmatWater.class),
+                new MapEntry<>(HazmatTunnel.KEY, HazmatTunnel.class), new MapEntry<>(HazmatWater.KEY, HazmatWater.class),
                 new MapEntry<>(Country.KEY, Country.class))) {
             String key = (String) entry.getKey();
             if (requestedPathDetails.contains(key) && encoder.hasEncodedValue(key))
