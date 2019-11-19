@@ -2,6 +2,7 @@ package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.BelgiumSpatialRule;
+import com.graphhopper.routing.util.spatialrules.countries.CzechiaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.LiechtensteinSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.SwitzerlandSpatialRule;
@@ -25,6 +26,10 @@ public class CountriesSpatialRuleFactory implements SpatialRuleLookupBuilder.Spa
                 SwitzerlandSpatialRule switzerlandSpatialRule = new SwitzerlandSpatialRule();
                 switzerlandSpatialRule.setBorders(polygons);
                 return switzerlandSpatialRule;
+            case "CZE":
+                CzechiaSpatialRule czechiaSpatialRule = new CzechiaSpatialRule();
+                czechiaSpatialRule.setBorders(polygons);
+                return czechiaSpatialRule;
             case "DEU":
                 GermanySpatialRule germanySpatialRule = new GermanySpatialRule();
                 germanySpatialRule.setBorders(polygons);
