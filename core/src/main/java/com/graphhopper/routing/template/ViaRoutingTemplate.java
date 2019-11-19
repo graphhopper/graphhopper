@@ -27,11 +27,8 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.PathMerger;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.Translation;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -41,6 +38,7 @@ import java.util.List;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.util.Parameters.Curbsides.CURBSIDE_ANY;
 
 /**
  * Implementation of calculating a route with multiple via points.
@@ -141,10 +139,27 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                 if (!(algo instanceof AbstractBidirAlgo)) {
                     throw new IllegalArgumentException("To make use of the " + Routing.CURBSIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
                 } else {
-                    int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), ghRequest.getCurbsides().get(placeIndex - 1));
-                    int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), ghRequest.getCurbsides().get(placeIndex));
+                    final String fromCurbside = ghRequest.getCurbsides().get(placeIndex - 1);
+                    final String toCurbside = ghRequest.getCurbsides().get(placeIndex);
+                    int sourceOutEdge = DirectionResolverResult.getOutEdge(directions.get(placeIndex - 1), fromCurbside);
+                    int targetInEdge = DirectionResolverResult.getInEdge(directions.get(placeIndex), toCurbside);
                     sourceOutEdge = ignoreThrowOrAcceptImpossibleCurbsides(sourceOutEdge, placeIndex - 1, forceCurbsides);
                     targetInEdge = ignoreThrowOrAcceptImpossibleCurbsides(targetInEdge, placeIndex, forceCurbsides);
+
+                    if (fromQResult.getClosestNode() == toQResult.getClosestNode()) {
+                        // special case where we go from one point back to itself. for example going from a point A
+                        // with curbside right to the same point with curbside right is interpreted as 'being there
+                        // already' -> empty path. Similarly if the curbside for the start/target is not even specified
+                        // there is no need to drive a loop. However, going from point A/right to point A/left (or the
+                        // other way around) means we need to drive some kind of loop to get back to the same location
+                        // (arriving on the other side of the road).
+                        if (Helper.isEmpty(fromCurbside) || Helper.isEmpty(toCurbside) || fromCurbside.equals(CURBSIDE_ANY) ||
+                                toCurbside.equals(CURBSIDE_ANY) || fromCurbside.equals(toCurbside)) {
+                            // we just disable start/target edge constraints to get an empty path
+                            sourceOutEdge = ANY_EDGE;
+                            targetInEdge = ANY_EDGE;
+                        }
+                    }
                     // todo: enable curbside feature for alternative routes as well ?
                     tmpPathList = Collections.singletonList(((AbstractBidirAlgo) algo)
                             .calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode(), sourceOutEdge, targetInEdge));

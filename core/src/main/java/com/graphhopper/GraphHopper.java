@@ -774,7 +774,7 @@ public class GraphHopper implements GraphHopperAPI {
             if (!ghStorage.loadExisting())
                 return false;
 
-            postProcessing();
+            postProcessing(false);
             fullyLoaded = true;
             return true;
         } finally {
@@ -850,7 +850,7 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * Does the preparation and creates the location index
      */
-    public void postProcessing() {
+    public final void postProcessing() {
         postProcessing(false);
     }
 
@@ -859,7 +859,7 @@ public class GraphHopper implements GraphHopperAPI {
      *
      * @param closeEarly release resources as early as possible
      */
-    public void postProcessing(boolean closeEarly) {
+    protected void postProcessing(boolean closeEarly) {
         // Later: move this into the GraphStorage.optimize method
         // Or: Doing it after preparation to optimize shortcuts too. But not possible yet #12
 
