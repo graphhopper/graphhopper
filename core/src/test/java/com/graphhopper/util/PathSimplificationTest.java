@@ -38,7 +38,10 @@ import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -153,7 +156,8 @@ public class PathSimplificationTest {
         // Do not simplify anything
         douglasPeucker.setMaxDistance(0);
 
-        PathSimplification.simplify(pathWrapper, douglasPeucker, true);
+        PathSimplification ps = new PathSimplification(pathWrapper, douglasPeucker, true);
+        ps.simplify();
 
         assertEquals(numberOfPoints, pathWrapper.getPoints().size());
 
@@ -163,214 +167,10 @@ public class PathSimplificationTest {
         pathWrapper.setPoints(p.calcPoints());
 
         douglasPeucker.setMaxDistance(100000000);
-        PathSimplification.simplify(pathWrapper, douglasPeucker, true);
+        ps = new PathSimplification(pathWrapper, douglasPeucker, true);
+        ps.simplify();
 
         assertTrue(numberOfPoints > pathWrapper.getPoints().size());
     }
 
-    @Test
-    public void testSinglePartition() {
-        // points are chosen such that DP will remove those marked with an x
-        // todo: we could go further and replace DouglasPeucker with some abstract thing that makes this easier to test
-        PointList points = new PointList();
-        points.add(48.89107, 9.33161); // 0   -> 0
-        points.add(48.89104, 9.33102); // 1 x
-        points.add(48.89100, 9.33024); // 2 x
-        points.add(48.89099, 9.33002); // 3   -> 1
-        points.add(48.89092, 9.32853); // 4   -> 2
-        points.add(48.89101, 9.32854); // 5 x
-        points.add(48.89242, 9.32865); // 6   -> 3
-        points.add(48.89343, 9.32878); // 7   -> 4
-        PointList origPoints = points.clone(false);
-        TestPartition partition = TestPartition.start()
-                .add(0, 3)
-                .add(3, 3) // via
-                .add(3, 3) // via (just added this to make the test harder)
-                .add(3, 4)
-                .add(4, 4) // via
-                .add(4, 7)
-                .add(7, 7); // end
-        List<PathSimplification.Partition> partitions = new ArrayList<>();
-        partitions.add(partition);
-        PathSimplification.simplify(points, partitions, new DouglasPeucker());
-
-        // check points were modified correctly
-        assertEquals(5, points.size());
-        origPoints.set(1, Double.NaN, Double.NaN, Double.NaN);
-        origPoints.set(2, Double.NaN, Double.NaN, Double.NaN);
-        origPoints.set(5, Double.NaN, Double.NaN, Double.NaN);
-        DouglasPeucker.removeNaN(origPoints);
-        assertEquals(origPoints, points);
-
-        // check partition was modified correctly
-        TestPartition expected = TestPartition.start()
-                .add(0, 1)
-                .add(1, 1)
-                .add(1, 1)
-                .add(1, 2)
-                .add(2, 2)
-                .add(2, 4)
-                .add(4, 4);
-        assertEquals(expected.intervals, partition.intervals);
-    }
-
-    @Test
-    public void testMultiplePartitions() {
-        // points are chosen such that DP will remove those marked with an x
-        // got this data from running a request like this:
-        // http://localhost:8989/maps/?point=48.891273%2C9.325418&point=48.891005%2C9.322865&point=48.889877%2C9.32102&point=48.88975%2C9.31999&vehicle=car&weighting=fastest&elevation=true&debug=true&details=max_speed&details=street_name&
-        PointList points = new PointList(20, true);
-        points.add(48.89089, 9.32538, 270.0); // 0    -> 0
-        points.add(48.89090, 9.32527, 269.0); // 1 x
-        points.add(48.89091, 9.32439, 267.0); // 2 x
-        points.add(48.89091, 9.32403, 267.0); // 3    -> 1
-        points.add(48.89090, 9.32324, 267.0); // 4    -> 2
-        points.add(48.89088, 9.32296, 267.0); // 5 x
-        points.add(48.89088, 9.32288, 266.0); // 6    -> 3
-        points.add(48.89081, 9.32208, 265.0); // 7    -> 4
-        points.add(48.89056, 9.32217, 265.0); // 8    -> 5
-        points.add(48.89047, 9.32218, 265.0); // 9    -> 6
-        points.add(48.89037, 9.32215, 265.0); // 10   -> 7
-        points.add(48.89026, 9.32157, 265.0); // 11   -> 8
-        points.add(48.89023, 9.32101, 264.0); // 12   -> 9
-        points.add(48.89027, 9.32038, 261.0); // 13 x
-        points.add(48.89030, 9.32006, 261.0); // 14   -> 10
-        points.add(48.88989, 9.31965, 261.0); // 15   -> 11
-
-        PointList origPoints = points.clone(false);
-        // from instructions
-        TestPartition partition1 = TestPartition.start()
-                .add(0, 6)
-                .add(6, 6) // via
-                .add(6, 7)
-                .add(7, 10)
-                .add(10, 12)
-                .add(12, 12) // via
-                .add(12, 14)
-                .add(14, 15)
-                .add(15, 15); // end
-
-        // from max_speed detail
-        TestPartition partition2 = TestPartition.start()
-                .add(0, 3)
-                .add(3, 7)
-                .add(7, 15);
-
-        // from street_name detail
-        TestPartition partition3 = TestPartition.start()
-                .add(0, 7)
-                .add(7, 14)
-                .add(14, 15);
-
-        List<PathSimplification.Partition> partitions = new ArrayList<>();
-        partitions.add(partition1);
-        partitions.add(partition2);
-        partitions.add(partition3);
-        PathSimplification.simplify(points, partitions, new DouglasPeucker());
-
-        // check points were modified correctly
-        assertEquals(12, points.size());
-        origPoints.set(1, Double.NaN, Double.NaN, Double.NaN);
-        origPoints.set(2, Double.NaN, Double.NaN, Double.NaN);
-        origPoints.set(5, Double.NaN, Double.NaN, Double.NaN);
-        origPoints.set(13, Double.NaN, Double.NaN, Double.NaN);
-        DouglasPeucker.removeNaN(origPoints);
-        assertEquals(origPoints, points);
-
-        // check partitions were modified correctly
-        TestPartition expected1 = TestPartition.start()
-                .add(0, 3)
-                .add(3, 3) // via
-                .add(3, 4)
-                .add(4, 7)
-                .add(7, 9)
-                .add(9, 9) // via
-                .add(9, 10)
-                .add(10, 11)
-                .add(11, 11); // end
-
-        TestPartition expected2 = TestPartition.start()
-                .add(0, 1)
-                .add(1, 4)
-                .add(4, 11);
-
-        TestPartition expected3 = TestPartition.start()
-                .add(0, 4)
-                .add(4, 10)
-                .add(10, 11);
-
-        assertEquals(expected1.intervals, partition1.intervals);
-        assertEquals(expected2.intervals, partition2.intervals);
-        assertEquals(expected3.intervals, partition3.intervals);
-    }
-
-    static class TestPartition implements PathSimplification.Partition {
-        static Interval interval(int start, int end) {
-            return new Interval(start, end);
-        }
-
-        private List<Interval> intervals = new ArrayList<>();
-
-        private static TestPartition start() {
-            return new TestPartition();
-        }
-
-        private TestPartition add(int start, int end) {
-            intervals.add(interval(start, end));
-            return this;
-        }
-
-        @Override
-        public int size() {
-            return intervals.size();
-        }
-
-        @Override
-        public int getIntervalLength(int index) {
-            return intervals.get(index).length();
-        }
-
-        @Override
-        public void setInterval(int index, int start, int end) {
-            intervals.get(index).set(start, end);
-        }
-
-        static class Interval {
-            int start;
-            int end;
-
-            Interval(int start, int end) {
-                this.start = start;
-                this.end = end;
-            }
-
-            private int length() {
-                return end - start;
-            }
-
-            private void set(int start, int end) {
-                this.start = start;
-                this.end = end;
-            }
-
-            @Override
-            public boolean equals(Object o) {
-                if (this == o) return true;
-                if (o == null || getClass() != o.getClass()) return false;
-                Interval that = (Interval) o;
-                return start == that.start &&
-                        end == that.end;
-            }
-
-            @Override
-            public int hashCode() {
-                return Objects.hash(start, end);
-            }
-
-            @Override
-            public String toString() {
-                return "[" + start + ", " + end + "]";
-            }
-        }
-    }
 }
