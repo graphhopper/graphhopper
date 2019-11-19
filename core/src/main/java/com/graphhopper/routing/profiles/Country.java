@@ -21,7 +21,7 @@ package com.graphhopper.routing.profiles;
  * This enum defines a country value that can be stored per edge.
  */
 public enum Country {
-    DEFAULT("default"), DEU("deu"), AUT("aut"), CHE("che");
+    DEFAULT("default"), DEU("deu"), AUT("aut"), CHE("che"), LIE("lie");
     public static final String KEY = "country";
 
     private final String name;
