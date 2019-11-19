@@ -48,7 +48,8 @@ public class CountriesSpatialRuleFactory implements SpatialRuleLookupBuilder.Spa
                 PolandSpatialRule polandSpatialRule = new PolandSpatialRule();
                 polandSpatialRule.setBorders(polygons);
                 return polandSpatialRule;
+            default:
+                return SpatialRule.EMPTY;
         }
-        return SpatialRule.EMPTY;
     }
 }
