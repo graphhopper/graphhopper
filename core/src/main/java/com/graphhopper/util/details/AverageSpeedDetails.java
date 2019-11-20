@@ -30,8 +30,8 @@ public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
         double tmpVal = edge.getDistance() / weighting.calcMillis(edge, false, prevEdgeId) * 3600;
         prevEdgeId = edge.getEdge();
-        // too avoid creating too many path details round the speed to 0.01 precision and include it only if:
-        if (Math.abs(tmpVal - decimalValue) > 0.05) {
+        // avoid creating too many path details => round the speed to 0.01 precision and include it only if:
+        if (Math.abs(tmpVal - decimalValue) >= 0.1) {
             this.decimalValue = Helper.round2(tmpVal);
             return true;
         }

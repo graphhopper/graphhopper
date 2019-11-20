@@ -221,7 +221,7 @@ public class RouteResourceTest {
         assertTrue(pathDetails.containsKey("edge_id"));
         assertTrue(pathDetails.containsKey("time"));
         List<PathDetail> averageSpeedList = pathDetails.get("average_speed");
-        assertEquals(20, averageSpeedList.size());
+        assertEquals(13, averageSpeedList.size());
         assertEquals(30.00, averageSpeedList.get(0).getValue());
         assertEquals(14, averageSpeedList.get(0).getLength());
         assertEquals(60.06, averageSpeedList.get(1).getValue());
