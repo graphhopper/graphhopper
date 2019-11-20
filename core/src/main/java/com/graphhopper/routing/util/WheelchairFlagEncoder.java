@@ -95,7 +95,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         excludeSmoothness.add("impassable");
 
         allowedHighwayTags.addAll(safeHighwayTags);
-        allowedHighwayTags.addAll(excludeHighwayTags);
         allowedHighwayTags.add("cycleway");
         allowedHighwayTags.add("unclassified");
         allowedHighwayTags.add("road");
