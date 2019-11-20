@@ -895,42 +895,6 @@ public class CHTurnCostTest {
     }
 
     @Test
-    public void test_issue_1623_query_graph_cache() {
-        // 4-2->5-3
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 49.408550, 9.701805);
-        na.setNode(1, 49.405988, 9.706111);
-        na.setNode(2, 49.400772, 9.706245);
-        na.setNode(3, 49.403167, 9.704774);
-        na.setNode(4, 49.405817, 9.704301);
-        na.setNode(5, 49.402488, 9.707799);
-        graph.edge(2, 5, 222.771000, false);
-        graph.edge(4, 2, 583.496000, true);
-        graph.edge(3, 5, 231.495000, true);
-        graph.freeze();
-
-        RoutingAlgorithmFactory pch = automaticPrepareCH();
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
-        index.prepareIndex();
-        QueryResult qr1 = index.findClosest(49.400772, 9.706245, EdgeFilter.ALL_EDGES);
-        QueryResult qr2 = index.findClosest(49.403167, 9.704774, EdgeFilter.ALL_EDGES);
-        QueryGraph queryGraph = QueryGraph.lookup(chGraph, qr1, qr2);
-
-        // before fixing #1623 this test only worked for a disabled edge explorer cache
-        queryGraph.setUseEdgeExplorerCache(true);
-
-        assertEquals(2, qr1.getClosestNode());
-        assertEquals(3, qr2.getClosestNode());
-        RoutingAlgorithm chAlgo = pch.createAlgo(queryGraph, AlgorithmOptions.start()
-                .traversalMode(TraversalMode.EDGE_BASED)
-                .build());
-        Path path = chAlgo.calcPath(2, 3);
-        assertTrue("no path found", path.isFound());
-        assertEquals(IntArrayList.from(2, 5, 3), path.calcNodes());
-        assertEquals(454.266, path.getDistance(), 1.e-1);
-    }
-
-    @Test
     public void testRouteViaVirtualNode() {
         //   3
         // 0-x-1-2
