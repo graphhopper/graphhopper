@@ -27,6 +27,8 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.Trip;
 import com.graphhopper.http.WebHelper;
+import com.graphhopper.reader.DataReader;
+import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
@@ -35,6 +37,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
@@ -46,6 +49,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -87,6 +91,61 @@ public final class GraphHopperGtfs {
 
     public static GraphHopper createOrLoad(EncodingManager encodingManager, GtfsStorage gtfsStorage, CmdArgs cmdArgs) {
         GraphHopperOSM graphHopperOSM = new GraphHopperOSM() {
+
+            @Override
+            protected DataReader importData() throws IOException {
+                if (cmdArgs.has("datareader.file")) {
+                    return super.importData();
+                } else {
+                    getGraphHopperStorage().create(1000);
+                    return new DataReader() {
+                        @Override
+                        public DataReader setFile(File file) {
+                            return this;
+                        }
+
+                        @Override
+                        public DataReader setElevationProvider(ElevationProvider ep) {
+                            return this;
+                        }
+
+                        @Override
+                        public DataReader setWorkerThreads(int workerThreads) {
+                            return this;
+                        }
+
+                        @Override
+                        public DataReader setWayPointMaxDistance(double wayPointMaxDistance) {
+                            return this;
+                        }
+
+                        @Override
+                        public DataReader setSmoothElevation(boolean smoothElevation) {
+                            return this;
+                        }
+
+                        @Override
+                        public void readGraph() throws IOException {
+
+                        }
+
+                        @Override
+                        public Date getDataDate() {
+                            return null;
+                        }
+                    };
+                }
+            }
+
+            @Override
+            protected LocationIndex createLocationIndex(Directory dir) {
+                if (getGraphHopperStorage().getNodes() > 0) {
+                    return super.createLocationIndex(dir);
+                } else {
+                    return new EmptyLocationIndex();
+                }
+            }
+
             @Override
             protected void importPublicTransit() {
                 GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
