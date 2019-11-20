@@ -83,7 +83,16 @@ public class PathSimplification {
 
                 @Override
                 public void setInterval(int index, int start, int end) {
-                    instructions.get(index).setPoints(pointList.shallowCopy(start, end, false));
+                    Instruction instruction = instructions.get(index);
+                    if (instruction instanceof ViaInstruction || instruction instanceof FinishInstruction) {
+                        if (start != end) {
+                            throw new IllegalStateException("via- and finish-instructions are expected to have zero length");
+                        }
+                        // have to make sure that via instructions and finish instructions contain a single point
+                        // even though their 'instruction length' is zero.
+                        end++;
+                    }
+                    instruction.setPoints(pointList.shallowCopy(start, end, false));
                 }
             });
         }

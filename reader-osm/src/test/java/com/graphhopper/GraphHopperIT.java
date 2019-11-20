@@ -1467,16 +1467,14 @@ public class GraphHopperIT {
         assertInstruction(instructions.get(0), "KU 11", "[0, 4[", 4, 4);
         assertInstruction(instructions.get(1), "B 85", "[4, 18[", 14, 14);
         // via instructions have length = 0, but the point list must not be empty!
-        // todonow!
-//        assertInstruction(instructions.get(2), "", "[18, 19[", 0, 1);
+        assertInstruction(instructions.get(2), "", "[18, 19[", 0, 1);
         assertInstruction(instructions.get(3), "B 85", "[18, 35[", 17, 17);
         assertInstruction(instructions.get(4), "", "[35, 37[", 2, 2);
         assertInstruction(instructions.get(5), "KU 18", "[37, 40[", 3, 3);
         assertInstruction(instructions.get(6), "St 2189", "[40, 41[", 1, 1);
         assertInstruction(instructions.get(7), "", "[41, 43[", 2, 2);
         // finish instructions have length = 0, but the point list must not be empty!
-        // todonow!
-//        assertInstruction(instructions.get(8), "", "[43, 44[", 0, 1);
+        assertInstruction(instructions.get(8), "", "[43, 44[", 0, 1);
 
         // check max speeds
         List<PathDetail> speeds = path.getPathDetails().get("max_speed");
