@@ -12,6 +12,7 @@ import com.graphhopper.routing.util.spatialrules.countries.ItalySpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.LiechtensteinSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.LuxembourgSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.NetherlandsSpatialRule;
+import com.graphhopper.routing.util.spatialrules.countries.NorwaySpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.PolandSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.PortugalSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.SlovakiaSpatialRule;
@@ -83,6 +84,10 @@ public class CountriesSpatialRuleFactory implements SpatialRuleLookupBuilder.Spa
                 NetherlandsSpatialRule netherlandsSpatialRule = new NetherlandsSpatialRule();
                 netherlandsSpatialRule.setBorders(polygons);
                 return netherlandsSpatialRule;
+            case "NOR":
+                NorwaySpatialRule norwaySpatialRule = new NorwaySpatialRule();
+                norwaySpatialRule.setBorders(polygons);
+                return norwaySpatialRule;
             case "POL":
                 PolandSpatialRule polandSpatialRule = new PolandSpatialRule();
                 polandSpatialRule.setBorders(polygons);
