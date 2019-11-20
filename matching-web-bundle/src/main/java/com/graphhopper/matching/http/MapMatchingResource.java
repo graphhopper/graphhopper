@@ -27,9 +27,7 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.matching.*;
 import com.graphhopper.matching.gpx.Gpx;
-import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import org.slf4j.Logger;
@@ -38,9 +36,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.*;
 import java.util.*;
 
 import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
@@ -71,20 +67,21 @@ public class MapMatchingResource {
     public Response match(
             Gpx gpx,
             @Context HttpServletRequest request,
+            @Context UriInfo uriInfo,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
             @QueryParam("type") @DefaultValue("json") String outType,
             @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
-            @QueryParam("vehicle") @DefaultValue("car") String vehicleStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
-            @QueryParam(MAX_VISITED_NODES) @DefaultValue("3000") int maxVisitedNodes,
-            @QueryParam("gps_accuracy") @DefaultValue("40") double gpsAccuracy) {
+            @QueryParam("gps_accuracy") @DefaultValue("40") double gpsAccuracy,
+            @QueryParam("vehicle") @DefaultValue("car") String vehicleStr,
+            @QueryParam(MAX_VISITED_NODES) @DefaultValue("3000") int maxVisitedNodes) {
 
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
         if (gpx.trk.isEmpty()) {
@@ -98,7 +95,9 @@ public class MapMatchingResource {
 
         StopWatch sw = new StopWatch().start();
 
-        MapMatching matching = new MapMatching(graphHopper, new HintsMap());
+        MapMatching matching = new MapMatching(graphHopper,
+                // set default values from annotation for certain keys
+                createHintsMap(uriInfo.getQueryParameters()).setVehicle(vehicleStr).put(MAX_VISITED_NODES, maxVisitedNodes));
         matching.setMeasurementErrorSigma(gpsAccuracy);
 
         List<Observation> measurements = gpx.trk.get(0).getEntries();
@@ -161,6 +160,18 @@ public class MapMatchingResource {
                         build();
             }
         }
+    }
+
+    private HintsMap createHintsMap(MultivaluedMap<String, String> queryParameters) {
+        HintsMap m = new HintsMap();
+        for (Map.Entry<String, List<String>> e : queryParameters.entrySet()) {
+            if (e.getValue().size() == 1) {
+                m.put(e.getKey(), e.getValue().get(0));
+            } else {
+                // TODO ugly: ignore multi parameters like point to avoid exception. See RouteResource.initHints
+            }
+        }
+        return m;
     }
 
     static JsonNode convertToTree(MatchResult result, boolean elevation, boolean pointsEncoded) {
