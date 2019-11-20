@@ -8,10 +8,10 @@ import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
 import com.graphhopper.matching.gpx.Gpx;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.*;
 import com.graphhopper.util.gpx.GpxFromInstructions;
 import io.dropwizard.cli.Command;
@@ -26,8 +26,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
-import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
+import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
 
 public class MatchCommand extends Command {
 
@@ -70,17 +69,13 @@ public class MatchCommand extends Command {
         System.out.println("loading graph from cache");
         hopper.load(graphHopperConfiguration.get("graph.location", "graph-cache"));
 
-        FlagEncoder firstEncoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
-        AlgorithmOptions opts = AlgorithmOptions.start().
-                algorithm(Parameters.Algorithms.DIJKSTRA_BI).
-                traversalMode(hopper.getEncodingManager().needsTurnCostsSupport() ? EDGE_BASED : NODE_BASED).
-                weighting(new FastestWeighting(firstEncoder)).
-                maxVisitedNodes(args.getInt("max_visited_nodes")).
-                // Penalizing inner-link U-turns only works with fastest weighting, since
-                // shortest weighting does not apply penalties to unfavored virtual edges.
-                hints(new HintsMap().put("weighting", "fastest").put("vehicle", firstEncoder.toString())).
-                build();
-        MapMatching mapMatching = new MapMatching(hopper, new HintsMap());
+        String vehicle = args.getString("vehicle");
+        FlagEncoder encoder = Helper.isEmpty(vehicle) ? hopper.getEncodingManager().fetchEdgeEncoders().get(0) : hopper.getEncodingManager().getEncoder(vehicle);
+        // Penalizing inner-link U-turns only works with fastest weighting, since
+        // shortest weighting does not apply penalties to unfavored virtual edges.
+        HintsMap hintsMap = new HintsMap().setWeighting("fastest").setVehicle(encoder.toString()).put(MAX_VISITED_NODES, args.getInt("max_visited_nodes"));
+        Weighting weighting = new FastestWeighting(encoder);
+        MapMatching mapMatching = new MapMatching(hopper, hintsMap);
         mapMatching.setTransitionProbabilityBeta(args.getDouble("transition_probability_beta"));
         mapMatching.setMeasurementErrorSigma(args.getInt("gps_accuracy"));
 
@@ -114,8 +109,13 @@ public class MatchCommand extends Command {
                 System.out.println("\texport results to:" + outFile);
 
                 PathWrapper pathWrapper = new PathWrapper();
-                // todonow: is this right ?
-                new PathMerger(hopper.getGraphHopperStorage(), opts.getWeighting()).doWork(pathWrapper, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), tr);
+                new PathMerger(hopper.getGraphHopperStorage(), weighting).
+                        doWork(pathWrapper, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), tr);
+                if (pathWrapper.hasErrors()) {
+                    System.err.println("Problem with file " + gpxFile + ", " + pathWrapper.getErrors());
+                    continue;
+                }
+
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter(outFile))) {
                     long time = gpx.trk.get(0).getStartTime()
                             .map(Date::getTime)

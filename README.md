@@ -23,7 +23,7 @@ Our web forum is [here](https://discuss.graphhopper.com/c/graphhopper/map-matchi
 
 ### Usage
 
-Java 8 and Maven >=3.3 are required. For the 'core' module Java 7 is sufficient.
+Java 8 and Maven >=3.3 are required.
 
 Build:
 
@@ -47,7 +47,7 @@ Before re-importing, you need to delete the `graph-cache` directory, which is cr
 
 Now you can match GPX traces against the map:
 ```bash
-java -jar matching-web/target/graphhopper-map-matching-web-1.0-SNAPSHOT.jar match matching-core/src/test/resources/*.gpx
+java -jar matching-web/target/graphhopper-map-matching-web-1.0-SNAPSHOT.jar match matching-web/src/test/resources/*.gpx
 ```
 
 ### Web app
