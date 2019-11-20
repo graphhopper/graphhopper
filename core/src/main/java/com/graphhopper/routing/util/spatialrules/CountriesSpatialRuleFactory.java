@@ -20,6 +20,7 @@ import com.graphhopper.routing.util.spatialrules.countries.SloveniaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.SpainSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.SwedenSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.SwitzerlandSpatialRule;
+import com.graphhopper.routing.util.spatialrules.countries.UnitedKingdomSpatialRule;
 import com.graphhopper.util.shapes.Polygon;
 
 import java.util.List;
@@ -60,6 +61,10 @@ public class CountriesSpatialRuleFactory implements SpatialRuleLookupBuilder.Spa
                 FranceSpatialRule franceSpatialRule = new FranceSpatialRule();
                 franceSpatialRule.setBorders(polygons);
                 return franceSpatialRule;
+            case "GBR":
+                UnitedKingdomSpatialRule unitedKingdomSpatialRule = new UnitedKingdomSpatialRule();
+                unitedKingdomSpatialRule.setBorders(polygons);
+                return unitedKingdomSpatialRule;
             case "HRV":
                 CroatiaSpatialRule croatiaSpatialRule = new CroatiaSpatialRule();
                 croatiaSpatialRule.setBorders(polygons);

@@ -23,7 +23,7 @@ package com.graphhopper.routing.profiles;
 public enum Country {
     DEFAULT("default"), DEU("deu"), AUT("aut"), CHE("che"), LIE("lie"), BEL("bel"), CZE("cze"),
     NLD("nld"), POL("pol"), DNK("dnk"), LUX("lux"), SWE("swe"), FRA("fra"), HUN("hun"), HRV("hrv"),
-    ITA("ita"), SVN("svn"), SVK("svk"), ESP("esp"), PRT("prt"), NOR("nor");
+    ITA("ita"), SVN("svn"), SVK("svk"), ESP("esp"), PRT("prt"), NOR("nor"), GBR("gbr");
     public static final String KEY = "country";
 
     private final String name;
