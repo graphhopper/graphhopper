@@ -15,26 +15,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.profiles;
+package com.graphhopper.routing.util.spatialrules.countries;
+
+import com.graphhopper.routing.profiles.Country;
+import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
 
 /**
- * This enum defines a country value that can be stored per edge.
+ * Defines the default rules for Monaco roads
+ *
+ * @author Thomas Butz
  */
-public enum Country {
-    DEFAULT("default"), DEU("deu"), AUT("aut"), CHE("che"), LIE("lie"), BEL("bel"), CZE("cze"),
-    NLD("nld"), POL("pol"), DNK("dnk"), LUX("lux"), SWE("swe"), FRA("fra"), HUN("hun"), HRV("hrv"),
-    ITA("ita"), SVN("svn"), SVK("svk"), ESP("esp"), PRT("prt"), NOR("nor"), GBR("gbr"), IRL("irl"),
-    ISL("isl"), AND("and"), MCO("mco");
-    public static final String KEY = "country";
-
-    private final String name;
-
-    Country(String name) {
-        this.name = name;
-    }
+public class MonacoSpatialRule extends DefaultSpatialRule {
 
     @Override
-    public String toString() {
-        return name;
+    public double getMaxSpeed(String highwayTag, double _default) {
+        return 50;
+    }
+    
+    @Override
+    public String getId() {
+        return Country.MCO.toString();
     }
 }
