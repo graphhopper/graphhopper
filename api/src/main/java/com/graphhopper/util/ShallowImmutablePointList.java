@@ -58,7 +58,7 @@ public final class ShallowImmutablePointList extends PointList {
     }
 
     public String getIntervalString() {
-        return "[" + fromOffset + ", " + toOffset + "]";
+        return "[" + fromOffset + ", " + toOffset + "[";
     }
 
     @Override
