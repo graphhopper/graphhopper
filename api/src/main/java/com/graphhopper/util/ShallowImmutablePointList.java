@@ -57,6 +57,10 @@ public final class ShallowImmutablePointList extends PointList {
         return size() == 0;
     }
 
+    public String getIntervalString() {
+        return "[" + fromOffset + ", " + toOffset + "[";
+    }
+
     @Override
     public double getLatitude(int index) {
         if (index > getSize())

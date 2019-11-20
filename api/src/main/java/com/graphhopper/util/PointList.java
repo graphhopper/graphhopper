@@ -565,7 +565,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             if (latlon.trim().length() == 0)
                 continue;
 
-            String ll[] = latlon.split(",");
+            String[] ll = latlon.split(",");
             String lat = ll[1].replace("]", "").trim();
             add(Double.parseDouble(lat), Double.parseDouble(ll[0].trim()), Double.NaN);
         }
