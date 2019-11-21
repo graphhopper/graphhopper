@@ -18,7 +18,7 @@
 
 package com.graphhopper;
  
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
+import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtEncodedValues;
 import com.graphhopper.reader.gtfs.Request;
@@ -45,7 +45,7 @@ import static org.junit.Assert.assertFalse;
 public class ExtendedRouteTypeIT {
 
     private static final String GRAPH_LOC = "target/ExtendedRouteType";
-    private static GraphHopperGtfs graphHopper;
+    private static PtRouteResource graphHopper;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopper graphHopperStorage;
     private static LocationIndex locationIndex;
@@ -60,9 +60,9 @@ public class ExtendedRouteTypeIT {
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new FootFlagEncoder()).build();
         GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
         gtfsStorage = GtfsStorage.createOrLoad(directory);
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(encodingManager, gtfsStorage, cmdArgs);
+        graphHopperStorage = PtRouteResource.createOrLoad(encodingManager, cmdArgs);
         locationIndex = graphHopperStorage.getLocationIndex();
-        graphHopper = GraphHopperGtfs.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage)
+        graphHopper = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage)
                 .createWithoutRealtimeFeed();
     }
 

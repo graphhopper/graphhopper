@@ -18,14 +18,9 @@
 
 package com.graphhopper;
 
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.GtfsStorage;
-import com.graphhopper.reader.gtfs.PtEncodedValues;
-import com.graphhopper.reader.gtfs.Request;
+import com.graphhopper.reader.gtfs.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.storage.DAType;
-import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
@@ -44,11 +39,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class GraphHopperMultimodalIT {
 
     private static final String GRAPH_LOC = "target/GraphHopperMultimodalIT";
-    private static GraphHopperGtfs graphHopper;
+    private static PtRouteResource graphHopper;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static GraphHopper graphHopperStorage;
+    private static RealGraphHopperGtfs graphHopperStorage;
     private static LocationIndex locationIndex;
-    private static GtfsStorage gtfsStorage;
 
     @BeforeClass
     public static void init() {
@@ -58,11 +52,9 @@ public class GraphHopperMultimodalIT {
         cmdArgs.put("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new FootFlagEncoder()).build();
-        GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
-        gtfsStorage = GtfsStorage.createOrLoad(directory);
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(encodingManager, gtfsStorage, cmdArgs);
+        graphHopperStorage = PtRouteResource.createOrLoad(encodingManager, cmdArgs);
         locationIndex = graphHopperStorage.getLocationIndex();
-        graphHopper = GraphHopperGtfs.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage)
+        graphHopper = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, graphHopperStorage.gtfsStorage)
                 .createWithoutRealtimeFeed();
     }
 
@@ -70,7 +62,6 @@ public class GraphHopperMultimodalIT {
     public static void close() {
         graphHopperStorage.close();
         locationIndex.close();
-        gtfsStorage.close();
     }
 
     @Test

@@ -21,7 +21,7 @@ package com.graphhopper.http.cli;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.http.GraphHopperManaged;
 import com.graphhopper.http.GraphHopperServerConfiguration;
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
+import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtEncodedValues;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -45,7 +45,7 @@ public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfigurat
             final GHDirectory ghDirectory = new GHDirectory(configuration.getGraphHopperConfiguration().get("graph.location", "target/tmp"), DAType.RAM_STORE);
             final GtfsStorage gtfsStorage = GtfsStorage.createOrLoad(ghDirectory);
             EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-            final GraphHopper graphHopperStorage = GraphHopperGtfs.createOrLoad(encodingManager, gtfsStorage, configuration.getGraphHopperConfiguration());
+            final GraphHopper graphHopperStorage = PtRouteResource.createOrLoad(encodingManager, configuration.getGraphHopperConfiguration());
             graphHopperStorage.close();
             gtfsStorage.close();
         } else {

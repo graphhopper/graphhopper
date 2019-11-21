@@ -18,7 +18,7 @@
 
 package com.graphhopper;
 
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
+import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtEncodedValues;
 import com.graphhopper.reader.gtfs.Request;
@@ -52,7 +52,7 @@ import static org.junit.Assert.*;
 public class GraphHopperGtfsIT {
 
     private static final String GRAPH_LOC = "target/GraphHopperGtfsIT";
-    private static GraphHopperGtfs graphHopper;
+    private static PtRouteResource graphHopper;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopper graphHopperStorage;
     private static LocationIndex locationIndex;
@@ -67,9 +67,9 @@ public class GraphHopperGtfsIT {
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
         GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
         gtfsStorage = GtfsStorage.createOrLoad(directory);
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(encodingManager, gtfsStorage, cmdArgs);
+        graphHopperStorage = PtRouteResource.createOrLoad(encodingManager, cmdArgs);
         locationIndex = graphHopperStorage.getLocationIndex();
-        graphHopper = GraphHopperGtfs.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage)
+        graphHopper = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage)
                 .createWithoutRealtimeFeed();
     }
 
@@ -459,7 +459,7 @@ public class GraphHopperGtfsIT {
     }
 
 
-    private void assertTravelTimeIs(GraphHopperGtfs graphHopper, double FROM_LAT, double FROM_LON, double TO_LAT, double TO_LON, int expectedWeight) {
+    private void assertTravelTimeIs(PtRouteResource graphHopper, double FROM_LAT, double FROM_LON, double TO_LAT, double TO_LON, int expectedWeight) {
         Request ghRequest = new Request(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
@@ -472,7 +472,7 @@ public class GraphHopperGtfsIT {
         assertEquals("Expected travel time == scheduled travel time", expectedWeight, route.getBest().getTime(), 0.1);
     }
 
-    private void assertNoRoute(GraphHopperGtfs graphHopper, double from_lat, double from_lon, double to_lat, double to_lon) {
+    private void assertNoRoute(PtRouteResource graphHopper, double from_lat, double from_lon, double to_lat, double to_lon) {
         Request ghRequest = new Request(
                 from_lat, from_lon,
                 to_lat, to_lon

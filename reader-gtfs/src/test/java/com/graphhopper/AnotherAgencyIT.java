@@ -44,11 +44,10 @@ import static org.junit.Assert.assertFalse;
 public class AnotherAgencyIT {
 
     private static final String GRAPH_LOC = "target/AnotherAgencyIT";
-    private static GraphHopperGtfs graphHopper;
+    private static PtRouteResource graphHopper;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static GraphHopper graphHopperStorage;
+    private static RealGraphHopperGtfs graphHopperStorage;
     private static LocationIndex locationIndex;
-    private static GtfsStorage gtfsStorage;
 
     @BeforeClass
     public static void init() {
@@ -59,10 +58,9 @@ public class AnotherAgencyIT {
         Helper.removeDir(new File(GRAPH_LOC));
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new FootFlagEncoder()).build();
         GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
-        gtfsStorage = GtfsStorage.createOrLoad(directory);
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(encodingManager, gtfsStorage, cmdArgs);
+        graphHopperStorage = PtRouteResource.createOrLoad(encodingManager, cmdArgs);
         locationIndex = graphHopperStorage.getLocationIndex();
-        graphHopper = GraphHopperGtfs.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage)
+        graphHopper = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, graphHopperStorage.gtfsStorage)
                 .createWithoutRealtimeFeed();
     }
 
@@ -70,7 +68,6 @@ public class AnotherAgencyIT {
     public static void close() {
         graphHopperStorage.close();
         locationIndex.close();
-        gtfsStorage.close();
     }
 
     @Test
@@ -116,8 +113,8 @@ public class AnotherAgencyIT {
                 graphHopperStorage.getGraphHopperStorage(),
                 new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot")),
                 ptEncodedValues,
-                gtfsStorage,
-                RealtimeFeed.empty(gtfsStorage),
+                graphHopperStorage.gtfsStorage,
+                RealtimeFeed.empty(graphHopperStorage.gtfsStorage),
                 false,
                 false,
                 5.0,
@@ -146,8 +143,8 @@ public class AnotherAgencyIT {
                 graphHopperStorage.getGraphHopperStorage(),
                 new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot")),
                 ptEncodedValues,
-                gtfsStorage,
-                RealtimeFeed.empty(gtfsStorage),
+                graphHopperStorage.gtfsStorage,
+                RealtimeFeed.empty(graphHopperStorage.gtfsStorage),
                 true,
                 false,
                 5.0,

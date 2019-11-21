@@ -122,11 +122,11 @@ public class GtfsStorage implements GtfsStorageI {
 		}
 	}
 
-	private GtfsStorage(Directory dir) {
+	GtfsStorage(Directory dir) {
 		this.dir = dir;
 	}
 
-	private boolean loadExisting() {
+	boolean loadExisting() {
 		File file = new File(dir.getLocation() + "/transit_schedule");
 		if (!file.exists()) {
 			return false;
@@ -141,7 +141,7 @@ public class GtfsStorage implements GtfsStorageI {
 		return true;
 	}
 
-	private void create() {
+	void create() {
 		this.dir.create();
 		final File file = new File(dir.getLocation() + "/transit_schedule");
 		try {

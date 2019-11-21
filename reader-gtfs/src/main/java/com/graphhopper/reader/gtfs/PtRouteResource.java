@@ -18,7 +18,6 @@
 
 package com.graphhopper.reader.gtfs;
 
-import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Transfer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.transit.realtime.GtfsRealtime;
@@ -27,9 +26,6 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.Trip;
 import com.graphhopper.http.WebHelper;
-import com.graphhopper.reader.DataReader;
-import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -37,7 +33,6 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
@@ -49,20 +44,16 @@ import com.graphhopper.util.shapes.GHPoint;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.io.File;
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.zip.ZipFile;
 
 import static java.util.Comparator.comparingLong;
 
 @Path("route")
-public final class GraphHopperGtfs {
+public final class PtRouteResource {
 
     private final TranslationMap translationMap;
     private final PtEncodedValues ptEncodedValues;
@@ -74,7 +65,7 @@ public final class GraphHopperGtfs {
     private final TripFromLabel tripFromLabel;
 
     @Inject
-    public GraphHopperGtfs(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed) {
+    public PtRouteResource(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed) {
         this.ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
         this.accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
         this.translationMap = translationMap;
@@ -89,94 +80,8 @@ public final class GraphHopperGtfs {
         return new Factory(translationMap, graphHopperStorage.getGraphHopperStorage(), locationIndex, gtfsStorage);
     }
 
-    public static GraphHopper createOrLoad(EncodingManager encodingManager, GtfsStorage gtfsStorage, CmdArgs cmdArgs) {
-        GraphHopperOSM graphHopperOSM = new GraphHopperOSM() {
-
-            @Override
-            protected DataReader importData() throws IOException {
-                if (cmdArgs.has("datareader.file")) {
-                    return super.importData();
-                } else {
-                    getGraphHopperStorage().create(1000);
-                    return new DataReader() {
-                        @Override
-                        public DataReader setFile(File file) {
-                            return this;
-                        }
-
-                        @Override
-                        public DataReader setElevationProvider(ElevationProvider ep) {
-                            return this;
-                        }
-
-                        @Override
-                        public DataReader setWorkerThreads(int workerThreads) {
-                            return this;
-                        }
-
-                        @Override
-                        public DataReader setWayPointMaxDistance(double wayPointMaxDistance) {
-                            return this;
-                        }
-
-                        @Override
-                        public DataReader setSmoothElevation(boolean smoothElevation) {
-                            return this;
-                        }
-
-                        @Override
-                        public void readGraph() throws IOException {
-
-                        }
-
-                        @Override
-                        public Date getDataDate() {
-                            return null;
-                        }
-                    };
-                }
-            }
-
-            @Override
-            protected LocationIndex createLocationIndex(Directory dir) {
-                if (getGraphHopperStorage().getNodes() > 0) {
-                    return super.createLocationIndex(dir);
-                } else {
-                    return new EmptyLocationIndex();
-                }
-            }
-
-            @Override
-            protected void importPublicTransit() {
-                GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
-                int idx = 0;
-                List<String> gtfsFiles = cmdArgs.has("gtfs.file") ? Arrays.asList(cmdArgs.get("gtfs.file", "").split(",")) : Collections.emptyList();
-                for (String gtfsFile : gtfsFiles) {
-                    try {
-                        gtfsStorage.loadGtfsFromFile("gtfs_" + idx++, new ZipFile(gtfsFile));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                LocationIndex walkNetworkIndex = getLocationIndex();
-                GraphHopperGtfs graphHopperGtfs = new GraphHopperGtfs(new TranslationMap().doImport(), graphHopperStorage, walkNetworkIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
-                gtfsStorage.getGtfsFeeds().forEach((id, gtfsFeed) -> {
-                    GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), gtfsStorage, walkNetworkIndex);
-                    gtfsReader.connectStopsToStreetNetwork();
-                    graphHopperGtfs.getType0TransferWithTimes(gtfsFeed)
-                            .forEach(t -> {
-                                t.transfer.transfer_type = 2;
-                                t.transfer.min_transfer_time = (int) (t.time / 1000L);
-                                gtfsFeed.transfers.put(t.id, t.transfer);
-                            });
-                    try {
-                        gtfsReader.buildPtNetwork();
-                    } catch (Exception e) {
-                        throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
-                    }
-                });
-            }
-        };
+    public static RealGraphHopperGtfs createOrLoad(EncodingManager encodingManager, CmdArgs cmdArgs) {
+        RealGraphHopperGtfs graphHopperOSM = new RealGraphHopperGtfs(cmdArgs);
         graphHopperOSM.init(cmdArgs);
         graphHopperOSM.setEncodingManager(encodingManager);
         graphHopperOSM.importOrLoad();
@@ -218,46 +123,6 @@ public final class GraphHopperGtfs {
         return new RequestHandler(request).route();
     }
 
-    private Stream<TransferWithTime> getType0TransferWithTimes(GTFSFeed gtfsFeed) {
-        return gtfsFeed.transfers.entrySet()
-                .parallelStream()
-                .filter(e -> e.getValue().transfer_type == 0)
-                .map(e -> {
-                    PointList points = new PointList(2, false);
-                    final int fromnode = gtfsStorage.getStationNodes().get(e.getValue().from_stop_id);
-                    final QueryResult fromstation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
-                    fromstation.setClosestNode(fromnode);
-                    points.add(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
-
-                    final int tonode = gtfsStorage.getStationNodes().get(e.getValue().to_stop_id);
-                    final QueryResult tostation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
-                    tostation.setClosestNode(tonode);
-                    points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
-
-                    QueryGraph queryGraph = QueryGraph.lookup(graphHopperStorage, Collections.emptyList());
-                    final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, false, true, 5.0, false);
-
-                    MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
-                    Iterator<Label> iterator = router.calcLabels(fromnode, Instant.ofEpochMilli(0), 0).iterator();
-                    Label solution = null;
-                    while (iterator.hasNext()) {
-                        Label label = iterator.next();
-                        if (tonode == label.adjNode) {
-                            solution = label;
-                            break;
-                        }
-                    }
-                    if (solution == null) {
-                        throw new RuntimeException("Can't find a transfer walk route.");
-                    }
-                    TransferWithTime transferWithTime = new TransferWithTime();
-                    transferWithTime.id = e.getKey();
-                    transferWithTime.transfer = e.getValue();
-                    transferWithTime.time = solution.currentTime;
-                    return transferWithTime;
-                });
-    }
-
     public static class Factory {
         private final TranslationMap translationMap;
         private final PtEncodedValues ptEncodedValues;
@@ -273,18 +138,18 @@ public final class GraphHopperGtfs {
             this.gtfsStorage = gtfsStorage;
         }
 
-        public GraphHopperGtfs createWith(GtfsRealtime.FeedMessage realtimeFeed) {
+        public PtRouteResource createWith(GtfsRealtime.FeedMessage realtimeFeed) {
             Map<String, GtfsRealtime.FeedMessage> realtimeFeeds = new HashMap<>();
             realtimeFeeds.put("gtfs_0", realtimeFeed);
-            return new GraphHopperGtfs(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, ptEncodedValues, realtimeFeeds));
+            return new PtRouteResource(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, ptEncodedValues, realtimeFeeds));
         }
 
-        public GraphHopperGtfs createWithoutRealtimeFeed() {
-            return new GraphHopperGtfs(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
+        public PtRouteResource createWithoutRealtimeFeed() {
+            return new PtRouteResource(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
         }
     }
 
-    private static class TransferWithTime {
+    static class TransferWithTime {
         public String id;
         Transfer transfer;
         long time;

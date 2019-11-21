@@ -19,15 +19,10 @@
 package com.graphhopper;
 
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.GtfsStorage;
-import com.graphhopper.reader.gtfs.PtEncodedValues;
-import com.graphhopper.reader.gtfs.Request;
+import com.graphhopper.reader.gtfs.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.storage.DAType;
-import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
@@ -51,37 +46,31 @@ public class RealtimeIT {
     private static final String GRAPH_LOC = "target/RealtimeIT";
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static final String agencyId = "DTA";
-    private static GraphHopperGtfs.Factory graphHopperFactory;
-    private static GraphHopper graphHopperStorage;
+    private static PtRouteResource.Factory graphHopperFactory;
+    private static RealGraphHopperGtfs graphHopperStorage;
     private static LocationIndex locationIndex;
-    private static GtfsStorage gtfsStorage;
 
     @BeforeClass
     public static void init() {
         CmdArgs cmdArgs = new CmdArgs();
         cmdArgs.put("gtfs.file", "files/sample-feed.zip");
+        cmdArgs.put("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-        GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
-        gtfsStorage = GtfsStorage.createOrLoad(directory);
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(encodingManager, gtfsStorage, cmdArgs);
+        graphHopperStorage = PtRouteResource.createOrLoad(encodingManager, cmdArgs);
         locationIndex = graphHopperStorage.getLocationIndex();
         graphHopperStorage.close();
-        gtfsStorage.close();
         locationIndex.close();
         // Re-load read only
-        directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
-        gtfsStorage = GtfsStorage.createOrLoad(directory);
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(encodingManager, gtfsStorage, cmdArgs);
+        graphHopperStorage = PtRouteResource.createOrLoad(encodingManager, cmdArgs);
         locationIndex = graphHopperStorage.getLocationIndex();
-        graphHopperFactory = GraphHopperGtfs.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, gtfsStorage);
+        graphHopperFactory = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, graphHopperStorage.gtfsStorage);
     }
 
     @AfterClass
     public static void close() {
         graphHopperStorage.close();
         locationIndex.close();
-        gtfsStorage.close();
     }
 
 
@@ -691,7 +680,7 @@ public class RealtimeIT {
                 .setScheduleRelationship(SCHEDULED)
                 .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(300).build());
 
-        GraphHopperGtfs graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
+        PtRouteResource graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
         GHResponse response = graphHopper.route(ghRequest);
         assertEquals(2, response.getAll().size());
 
@@ -733,7 +722,7 @@ public class RealtimeIT {
                 .setScheduleRelationship(SCHEDULED)
                 .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(300).build());
 
-        GraphHopperGtfs graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
+        PtRouteResource graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());
