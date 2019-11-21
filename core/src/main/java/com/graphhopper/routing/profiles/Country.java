@@ -24,7 +24,7 @@ public enum Country {
     DEFAULT("default"), DEU("deu"), AUT("aut"), CHE("che"), LIE("lie"), BEL("bel"), CZE("cze"),
     NLD("nld"), POL("pol"), DNK("dnk"), LUX("lux"), SWE("swe"), FRA("fra"), HUN("hun"), HRV("hrv"),
     ITA("ita"), SVN("svn"), SVK("svk"), ESP("esp"), PRT("prt"), NOR("nor"), GBR("gbr"), IRL("irl"),
-    ISL("isl"), AND("and"), MCO("mco"), SMR("smr"), MLT("mlt"), FIN("fin"), SRB("srb");
+    ISL("isl"), AND("and"), MCO("mco"), SMR("smr"), MLT("mlt"), FIN("fin"), SRB("srb"), BIH("bih");
     public static final String KEY = "country";
 
     private final String name;
