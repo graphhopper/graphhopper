@@ -41,7 +41,7 @@ public class GraphHopperMultimodalIT {
     private static final String GRAPH_LOC = "target/GraphHopperMultimodalIT";
     private static PtRouteResource graphHopper;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static RealGraphHopperGtfs graphHopperStorage;
+    private static GraphHopperGtfs graphHopperStorage;
     private static LocationIndex locationIndex;
 
     @BeforeClass

@@ -38,12 +38,12 @@ import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
-public class RealGraphHopperGtfs extends GraphHopperOSM {
+public class GraphHopperGtfs extends GraphHopperOSM {
 
     private final CmdArgs cmdArgs;
     public GtfsStorage gtfsStorage;
 
-    public RealGraphHopperGtfs(CmdArgs cmdArgs) {
+    public GraphHopperGtfs(CmdArgs cmdArgs) {
         this.cmdArgs = cmdArgs;
     }
 

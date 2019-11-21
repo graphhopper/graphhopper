@@ -22,7 +22,7 @@ import com.graphhopper.gtfs.ws.LocationConverterProvider;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.reader.gtfs.PtEncodedValues;
-import com.graphhopper.reader.gtfs.RealGraphHopperGtfs;
+import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
@@ -45,7 +45,7 @@ public class PtRouteResourceIT {
 
     private static final String GRAPH_LOC = "target/PtRouteResourceIT";
     private static PtRouteResource graphHopper;
-    private static RealGraphHopperGtfs graphHopperStorage;
+    private static GraphHopperGtfs graphHopperStorage;
     private static LocationIndex locationIndex;
 
     static {

@@ -80,8 +80,8 @@ public final class PtRouteResource {
         return new Factory(translationMap, graphHopperStorage.getGraphHopperStorage(), locationIndex, gtfsStorage);
     }
 
-    public static RealGraphHopperGtfs createOrLoad(EncodingManager encodingManager, CmdArgs cmdArgs) {
-        RealGraphHopperGtfs graphHopperOSM = new RealGraphHopperGtfs(cmdArgs);
+    public static GraphHopperGtfs createOrLoad(EncodingManager encodingManager, CmdArgs cmdArgs) {
+        GraphHopperGtfs graphHopperOSM = new GraphHopperGtfs(cmdArgs);
         graphHopperOSM.init(cmdArgs);
         graphHopperOSM.setEncodingManager(encodingManager);
         graphHopperOSM.importOrLoad();

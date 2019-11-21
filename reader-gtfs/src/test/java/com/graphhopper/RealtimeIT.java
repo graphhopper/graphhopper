@@ -47,7 +47,7 @@ public class RealtimeIT {
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static final String agencyId = "DTA";
     private static PtRouteResource.Factory graphHopperFactory;
-    private static RealGraphHopperGtfs graphHopperStorage;
+    private static GraphHopperGtfs graphHopperStorage;
     private static LocationIndex locationIndex;
 
     @BeforeClass
