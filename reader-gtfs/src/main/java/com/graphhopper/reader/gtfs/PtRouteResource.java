@@ -18,7 +18,6 @@
 
 package com.graphhopper.reader.gtfs;
 
-import com.conveyal.gtfs.model.Transfer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
@@ -147,12 +146,6 @@ public final class PtRouteResource {
         public PtRouteResource createWithoutRealtimeFeed() {
             return new PtRouteResource(translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage));
         }
-    }
-
-    static class TransferWithTime {
-        public String id;
-        Transfer transfer;
-        long time;
     }
 
     private class RequestHandler {

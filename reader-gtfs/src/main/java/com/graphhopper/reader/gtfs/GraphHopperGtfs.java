@@ -19,6 +19,7 @@
 package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.model.Transfer;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
@@ -101,6 +102,12 @@ public class GraphHopperGtfs extends GraphHopperOSM {
         }
     }
 
+    static class TransferWithTime {
+        public String id;
+        Transfer transfer;
+        long time;
+    }
+
     @Override
     protected void importPublicTransit() {
         gtfsStorage = new GtfsStorage(getGraphHopperStorage().getDirectory());
@@ -136,7 +143,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
         }
     }
 
-    private Stream<PtRouteResource.TransferWithTime> getType0TransferWithTimes(GTFSFeed gtfsFeed) {
+    private Stream<TransferWithTime> getType0TransferWithTimes(GTFSFeed gtfsFeed) {
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         RealtimeFeed realtimeFeed = RealtimeFeed.empty(gtfsStorage);
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
@@ -172,7 +179,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                     if (solution == null) {
                         throw new RuntimeException("Can't find a transfer walk route.");
                     }
-                    PtRouteResource.TransferWithTime transferWithTime = new PtRouteResource.TransferWithTime();
+                    TransferWithTime transferWithTime = new TransferWithTime();
                     transferWithTime.id = e.getKey();
                     transferWithTime.transfer = e.getValue();
                     transferWithTime.time = solution.currentTime;
