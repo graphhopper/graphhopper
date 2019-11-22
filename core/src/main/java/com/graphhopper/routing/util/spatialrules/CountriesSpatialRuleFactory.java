@@ -4,6 +4,7 @@ import com.graphhopper.routing.util.spatialrules.countries.AndorraSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.BelgiumSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.BosniaHerzegovinaSpatialRule;
+import com.graphhopper.routing.util.spatialrules.countries.BulgariaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.CroatiaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.CzechiaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.DenmarkSpatialRule;
@@ -51,6 +52,10 @@ public class CountriesSpatialRuleFactory implements SpatialRuleLookupBuilder.Spa
                 BelgiumSpatialRule belgiumSpatialRule = new BelgiumSpatialRule();
                 belgiumSpatialRule.setBorders(polygons);
                 return belgiumSpatialRule;
+            case "BGR":
+                BulgariaSpatialRule bulgariaSpatialRule = new BulgariaSpatialRule();
+                bulgariaSpatialRule.setBorders(polygons);
+                return bulgariaSpatialRule;
             case "BIH":
                 BosniaHerzegovinaSpatialRule bosniaHerzegovinaSpatialRule = new BosniaHerzegovinaSpatialRule();
                 bosniaHerzegovinaSpatialRule.setBorders(polygons);
