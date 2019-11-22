@@ -520,7 +520,7 @@ public class DirectedBidirectionalDijkstraTest {
     private void addRestriction(int fromNode, int node, int toNode) {
         IntsRef tcFlags = TurnCost.createFlags();
         turnCostEnc.setDecimal(false, tcFlags, Double.POSITIVE_INFINITY);
-        turnCostExtension.addTurnCost(
+        turnCostExtension.setTurnCost(
                 tcFlags,
                 GHUtility.getEdge(graph, fromNode, node).getEdge(),
                 node,
@@ -531,7 +531,7 @@ public class DirectedBidirectionalDijkstraTest {
     private void addTurnCost(int fromNode, int node, int toNode, double turnCost) {
         IntsRef tcFlags = TurnCost.createFlags();
         turnCostEnc.setDecimal(false, tcFlags, turnCost);
-        turnCostExtension.addTurnCost(
+        turnCostExtension.setTurnCost(
                 tcFlags,
                 GHUtility.getEdge(graph, fromNode, node).getEdge(),
                 node,

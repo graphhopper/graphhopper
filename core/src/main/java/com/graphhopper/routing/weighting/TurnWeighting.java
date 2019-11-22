@@ -115,12 +115,8 @@ public class TurnWeighting implements Weighting {
         if (turnCostExt.isUTurn(edgeFrom, edgeTo)) {
             tCost = turnCostExt.isUTurnAllowed(nodeVia) ? uTurnCosts : Double.POSITIVE_INFINITY;
         } else {
-            // TODO NOW should we use TurnCostAccess?
-            if (turnCostEnc != null) {
-                tcFlags.ints[0] = 0;
-                turnCostExt.readFlags(tcFlags, edgeFrom, nodeVia, edgeTo);
-                tCost = turnCostEnc.getDecimal(false, tcFlags);
-            }
+            if (turnCostEnc != null)
+                tCost = turnCostExt.get(turnCostEnc, tcFlags, edgeFrom, nodeVia, edgeTo);
         }
         return tCost;
     }

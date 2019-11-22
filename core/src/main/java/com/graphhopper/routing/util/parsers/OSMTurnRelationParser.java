@@ -141,7 +141,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
                     final TCEntry entry = new TCEntry(new IntsRef(turnCostFlags.length), edgeIdFrom, viaNode, iter.getEdge());
                     getTurnCostEnc().setDecimal(false, entry.flags, Double.POSITIVE_INFINITY);
                     entries.add(entry);
-                    tcs.addTurnCost(entry.flags, edgeIdFrom, viaNode, iter.getEdge());
+                    tcs.setTurnCost(entry.flags, edgeIdFrom, viaNode, iter.getEdge());
                     if (osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT)
                         break;
                 }

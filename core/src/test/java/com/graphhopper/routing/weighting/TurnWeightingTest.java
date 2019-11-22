@@ -71,7 +71,7 @@ public class TurnWeightingTest {
         IntsRef tcFlags = TurnCost.createFlags();
         DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(encoder.toString(), EV_SUFFIX));
         turnCostEnc.setDecimal(false, tcFlags, turnCost);
-        turnCostExt.addTurnCost(tcFlags, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge());
+        turnCostExt.setTurnCost(tcFlags, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge());
     }
 
 }

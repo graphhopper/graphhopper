@@ -17,7 +17,13 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.util.EdgeIterator;
+
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 /**
  * Holds turn cost tables for each node. The additional field of a node will be used to point towards the
@@ -47,7 +53,7 @@ public class TurnCostExtension implements Storable<TurnCostExtension> {
 
     public TurnCostExtension(TurnCostExtension turnCostExtension) {
         this.nodeAccess = turnCostExtension.nodeAccess;
-        this.turnCosts =  turnCostExtension.turnCosts;
+        this.turnCosts = turnCostExtension.turnCosts;
         this.turnCostsCount = turnCostExtension.turnCostsCount;
     }
 
@@ -91,6 +97,23 @@ public class TurnCostExtension implements Storable<TurnCostExtension> {
     }
 
     /**
+     * This is a convenient setter method and should not be used in loops or where speed is important.
+     */
+    public void setExpensive(String name, EncodedValueLookup lookup, int fromEdge, int viaNode, int toEdge, double cost) {
+        set(lookup.getDecimalEncodedValue(getKey(name, EV_SUFFIX)), TurnCost.createFlags(), fromEdge, viaNode, toEdge, cost);
+    }
+
+    /**
+     * Sets the turn cost to the viaNode when going from "fromEdge" to "toEdge"
+     */
+    public void set(DecimalEncodedValue turnCostEnc, IntsRef tcFlags, int fromEdge, int viaNode, int toEdge, double cost) {
+        // reset is required as we could have read a value for other vehicles before (that was changed in the meantime) that we would overwrite
+        tcFlags.ints[0] = 0;
+        turnCostEnc.setDecimal(false, tcFlags, cost);
+        setTurnCost(tcFlags, fromEdge, viaNode, toEdge);
+    }
+
+    /**
      * Add an entry which is a turn restriction or cost information via the turnFlags. Overwrite existing information
      * if it is the same edges and node.
      *
@@ -99,16 +122,16 @@ public class TurnCostExtension implements Storable<TurnCostExtension> {
      * @param toEdge   edge ID
      * @param tcFlags  flags to be written
      */
-    public void addTurnCost(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
+    public void setTurnCost(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
         if (tcFlags.length != 1)
             throw new IllegalArgumentException("Cannot use IntsRef with length != 1");
         if (tcFlags.ints[0] == 0)
             return;
 
-        mergeOrOverwriteTurnInfo(tcFlags, fromEdge, viaNode, toEdge, true);
+        setOrMerge(tcFlags, fromEdge, viaNode, toEdge, true);
     }
 
-    void mergeOrOverwriteTurnInfo(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge, boolean merge) {
+    void setOrMerge(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge, boolean merge) {
         int newEntryIndex = turnCostsCount;
         ensureTurnCostIndex(newEntryIndex);
         boolean oldEntryFound = false;
@@ -163,6 +186,22 @@ public class TurnCostExtension implements Storable<TurnCostExtension> {
         turnCosts.setInt(costsBase + TC_TO, toEdge);
         turnCosts.setInt(costsBase + TC_FLAGS, newFlags);
         turnCosts.setInt(costsBase + TC_NEXT, next);
+    }
+
+    /**
+     * This is a convenient getter method and should not be used in loops or where speed is important.
+     */
+    public double getExpensive(String name, EncodedValueLookup lookup, int fromEdge, int viaNode, int toEdge) {
+        return get(lookup.getDecimalEncodedValue(getKey(name, EV_SUFFIX)), TurnCost.createFlags(), fromEdge, viaNode, toEdge);
+    }
+
+    /**
+     * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
+     */
+    public double get(DecimalEncodedValue turnCostEnc, IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
+        // reset is required as we could have a QueryGraph that does not set tcFlags
+        tcFlags.ints[0] = 0;
+        return turnCostEnc.getDecimal(false, readFlags(tcFlags, fromEdge, viaNode, toEdge));
     }
 
     /**

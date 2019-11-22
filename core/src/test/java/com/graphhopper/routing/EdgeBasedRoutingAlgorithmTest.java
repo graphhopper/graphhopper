@@ -26,7 +26,10 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
@@ -455,12 +458,11 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private void addTurnRestriction(GraphHopperStorage g, int from, int via, int to) {
-        new TurnCostAccess(carEncoder.toString(), g).
-                addRestriction(getEdge(g, from, via).getEdge(), via, getEdge(g, via, to).getEdge());
+        addTurnCost(g, Double.POSITIVE_INFINITY, from, via, to);
     }
 
     private void addTurnCost(GraphHopperStorage g, double costs, int from, int via, int to) {
-        new TurnCostAccess(carEncoder.toString(), g).
-                add(getEdge(g, from, via).getEdge(), via, getEdge(g, via, to).getEdge(), costs);
+        g.getTurnCostExtension().setExpensive(carEncoder.toString(), g.getEncodingManager(),
+                getEdge(g, from, via).getEdge(), via, getEdge(g, via, to).getEdge(), costs);
     }
 }

@@ -231,22 +231,22 @@ public class ShortcutUnpackerTest {
         graph.freeze();
 
         // turn costs ->
-        TurnCostAccess tcAccess = new TurnCostAccess(encoder.toString(), graph, encodingManager).
-                add(PREV_EDGE, 0, edge0.getEdge(), 2.0).
-                add(edge0.getEdge(), edge1.getEdge(), 1, 5.0).
-                add(edge1.getEdge(), edge2.getEdge(), 2, 3).
-                add(edge2.getEdge(), edge3.getEdge(), 3, 2.0).
-                add(edge3.getEdge(), edge4.getEdge(), 4, 1.0).
-                add(edge4.getEdge(), edge5.getEdge(), 5, 4.0).
-                add(edge5.getEdge(), 6, NEXT_EDGE, 6.0);
+        TurnCostExtension tce = graph.getTurnCostExtension();
+        tce.setExpensive(encoder.toString(), encodingManager, PREV_EDGE, 0, edge0.getEdge(), 2.0);
+        tce.setExpensive(encoder.toString(), encodingManager, edge0.getEdge(), edge1.getEdge(), 1, 5.0);
+        tce.setExpensive(encoder.toString(), encodingManager, edge1.getEdge(), edge2.getEdge(), 2, 3);
+        tce.setExpensive(encoder.toString(), encodingManager, edge2.getEdge(), edge3.getEdge(), 3, 2.0);
+        tce.setExpensive(encoder.toString(), encodingManager, edge3.getEdge(), edge4.getEdge(), 4, 1.0);
+        tce.setExpensive(encoder.toString(), encodingManager, edge4.getEdge(), edge5.getEdge(), 5, 4.0);
+        tce.setExpensive(encoder.toString(), encodingManager, edge5.getEdge(), 6, NEXT_EDGE, 6.0);
         // turn costs <-
-        tcAccess.add(NEXT_EDGE, 6, edge5.getEdge(), 2.0).
-                add(edge5.getEdge(), edge4.getEdge(), 5, 3.0).
-                add(edge4.getEdge(), edge3.getEdge(), 4, 2.0).
-                add(edge3.getEdge(), edge2.getEdge(), 3, 4.0).
-                add(edge2.getEdge(), edge1.getEdge(), 2, 1.0).
-                add(edge1.getEdge(), edge0.getEdge(), 1, 0.0).
-                add(edge0.getEdge(), 0, PREV_EDGE, 1.0);
+        tce.setExpensive(encoder.toString(), encodingManager, NEXT_EDGE, 6, edge5.getEdge(), 2.0);
+        tce.setExpensive(encoder.toString(), encodingManager, edge5.getEdge(), edge4.getEdge(), 5, 3.0);
+        tce.setExpensive(encoder.toString(), encodingManager, edge4.getEdge(), edge3.getEdge(), 4, 2.0);
+        tce.setExpensive(encoder.toString(), encodingManager, edge3.getEdge(), edge2.getEdge(), 3, 4.0);
+        tce.setExpensive(encoder.toString(), encodingManager, edge2.getEdge(), edge1.getEdge(), 2, 1.0);
+        tce.setExpensive(encoder.toString(), encodingManager, edge1.getEdge(), edge0.getEdge(), 1, 0.0);
+        tce.setExpensive(encoder.toString(), encodingManager, edge0.getEdge(), 0, PREV_EDGE, 1.0);
 
         shortcut(0, 2, 0, 1, 0, 1);
         shortcut(2, 4, 2, 3, 2, 3);

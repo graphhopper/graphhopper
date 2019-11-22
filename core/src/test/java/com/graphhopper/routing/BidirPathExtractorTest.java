@@ -69,7 +69,7 @@ public class BidirPathExtractorTest {
         DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(carEncoder.toString(), EV_SUFFIX));
         IntsRef tcFlags = TurnCost.createFlags();
         turnCostEnc.setDecimal(false, tcFlags, 5);
-        turnCostExtension.addTurnCost(tcFlags, 0, 2, 1);
+        turnCostExtension.setTurnCost(tcFlags, 0, 2, 1);
 
         SPTEntry fwdEntry = new SPTEntry(0, 2, 0.6);
         fwdEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);

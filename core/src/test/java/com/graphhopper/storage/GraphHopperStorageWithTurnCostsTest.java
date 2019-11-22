@@ -65,10 +65,9 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         graph.edge(9, 11, 200, true);
         graph.edge(1, 2, 120, false);
 
-        TurnCostAccess tca = new TurnCostAccess("car", graph);
-        tca.add(iter1.getEdge(), 0, iter2.getEdge(), 1337);
-        tca.add(iter2.getEdge(), 0, iter1.getEdge(), 666);
-        tca.add(iter1.getEdge(), 1, iter2.getEdge(), 815);
+        graph.getTurnCostExtension().setExpensive("car", encodingManager, iter1.getEdge(), 0, iter2.getEdge(), 1337);
+        graph.getTurnCostExtension().setExpensive("car", encodingManager, iter2.getEdge(), 0, iter1.getEdge(), 666);
+        graph.getTurnCostExtension().setExpensive("car", encodingManager, iter1.getEdge(), 1, iter2.getEdge(), 815);
 
         iter1.setName("named street1");
         iter2.setName("named street2");
@@ -86,11 +85,10 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
         assertEquals("named street2", graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName());
 
-        tca = new TurnCostAccess("car", graph);
-        assertEquals(1337, tca.get(iter1.getEdge(), 0, iter2.getEdge()), .1);
-        assertEquals(666, tca.get(iter2.getEdge(), 0, iter1.getEdge()), .1);
-        assertEquals(815, tca.get(iter1.getEdge(), 1, iter2.getEdge()), .1);
-        assertEquals(0, tca.get(iter1.getEdge(), 3, iter2.getEdge()), .1);
+        assertEquals(1337, graph.getTurnCostExtension().getExpensive("car", encodingManager, iter1.getEdge(), 0, iter2.getEdge()), .1);
+        assertEquals(666, graph.getTurnCostExtension().getExpensive("car", encodingManager, iter2.getEdge(), 0, iter1.getEdge()), .1);
+        assertEquals(815, graph.getTurnCostExtension().getExpensive("car", encodingManager, iter1.getEdge(), 1, iter2.getEdge()), .1);
+        assertEquals(0, graph.getTurnCostExtension().getExpensive("car", encodingManager, iter1.getEdge(), 3, iter2.getEdge()), .1);
 
         graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
         checkGraph(graph);
@@ -102,7 +100,6 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         graph.create(100); // 100 is the minimum size
 
         TurnCostExtension turnCostStorage = graph.getTurnCostExtension();
-        TurnCostAccess tca = new TurnCostAccess("car", graph);
         // assert that turnCostStorage can hold 104 turn cost entries at the beginning
         assertEquals(128, turnCostStorage.getCapacity());
 
@@ -126,14 +123,14 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
 
         // add 100 turn cost entries around node 50
         for (int edgeId = 0; edgeId < 50; edgeId++) {
-            tca.add(edgeId, 50, edgeId + 50, 1337);
-            tca.add(edgeId + 50, 50, edgeId, 1337);
+            graph.getTurnCostExtension().setExpensive("car", encodingManager, edgeId, 50, edgeId + 50, 1337);
+            graph.getTurnCostExtension().setExpensive("car", encodingManager, edgeId + 50, 50, edgeId, 1337);
         }
 
-        tca.add(0, 50, 1, 1337);
+        graph.getTurnCostExtension().setExpensive("car", encodingManager, 0, 50, 1, 1337);
         assertEquals(104, turnCostStorage.getCapacity() / 16); // we are still good here
 
-        tca.add(0, 50, 2, 1337);
+        graph.getTurnCostExtension().setExpensive("car", encodingManager, 0, 50, 2, 1337);
         // A new segment should be added, which will support 128 / 16 = 8 more entries.
         assertEquals(112, turnCostStorage.getCapacity() / 16);
     }
