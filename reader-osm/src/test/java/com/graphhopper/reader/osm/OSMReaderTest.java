@@ -498,7 +498,7 @@ public class OSMReaderTest {
 
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(15, graph.getNodes());
-        TurnCostExtension tcStorage = graph.getTurnCostExtension();
+        TurnCostStorage tcStorage = graph.getTurnCostStorage();
         assertNotNull(tcStorage);
 
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
@@ -743,7 +743,7 @@ public class OSMReaderTest {
         DecimalEncodedValue bikeTCEnc = manager.getDecimalEncodedValue(getKey("bike", EV_SUFFIX));
 
         Graph graph = hopper.getGraphHopperStorage();
-        TurnCostExtension tcExtension = graph.getTurnCostExtension();
+        TurnCostStorage tcExtension = graph.getTurnCostStorage();
 
         IntsRef tcFlags = TurnCost.createFlags();
         tcExtension.readFlags(tcFlags, GHUtility.getEdge(graph, 1, 0).getEdge(), 0, GHUtility.getEdge(graph, 0, 2).getEdge());
@@ -772,7 +772,7 @@ public class OSMReaderTest {
 
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(8, graph.getNodes());
-        TurnCostExtension tcStorage = graph.getTurnCostExtension();
+        TurnCostStorage tcStorage = graph.getTurnCostStorage();
         assertNotNull(tcStorage);
 
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
@@ -841,7 +841,7 @@ public class OSMReaderTest {
 
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(5, graph.getNodes());
-        TurnCostExtension tcStorage = graph.getTurnCostExtension();
+        TurnCostStorage tcStorage = graph.getTurnCostStorage();
         assertNotNull(tcStorage);
 
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);

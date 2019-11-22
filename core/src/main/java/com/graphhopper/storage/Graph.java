@@ -118,7 +118,7 @@ public interface Graph {
     Graph copyTo(Graph g);
 
     /**
-     * @return the {@link TurnCostExtension} or null if not supported
+     * @return the {@link TurnCostStorage} or null if not supported
      */
-    TurnCostExtension getTurnCostExtension();
+    TurnCostStorage getTurnCostStorage();
 }

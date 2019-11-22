@@ -22,7 +22,7 @@ import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
@@ -90,7 +90,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
         if (!turnRelation.isVehicleTypeConcernedByTurnRestriction(restrictions))
             return;
 
-        getRestrictionAsEntries(turnRelation, turnCostFlags, map, graph);
+        addRestrictionAsEntries(turnRelation, turnCostFlags, map, graph);
     }
 
     private EdgeExplorer getInExplorer(Graph graph) {
@@ -102,13 +102,13 @@ public class OSMTurnRelationParser implements TurnCostParser {
     }
 
     /**
-     * Transforms this relation into a collection of turn cost entries
+     * Add the specified relation to the TurnCostStorage
      *
-     * @return a collection of node cost entries which can be added to the graph later
+     * @return a collection of turn cost entries which can be used for testing
      */
-    Collection<TCEntry> getRestrictionAsEntries(OSMTurnRelation osmTurnRelation, IntsRef turnCostFlags,
+    Collection<TCEntry> addRestrictionAsEntries(OSMTurnRelation osmTurnRelation, IntsRef turnCostFlags,
                                                 ExternalInternalMap map, Graph graph) {
-        TurnCostExtension tcs = graph.getTurnCostExtension();
+        TurnCostStorage tcs = graph.getTurnCostStorage();
         int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
         EdgeExplorer edgeOutExplorer = getOutExplorer(graph), edgeInExplorer = getInExplorer(graph);
 

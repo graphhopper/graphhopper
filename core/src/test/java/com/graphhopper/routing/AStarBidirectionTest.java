@@ -69,7 +69,7 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
                 Weighting w = opts.getWeighting();
                 if (traversalMode.isEdgeBased()) {
                     double uTurnCost = allowUTurns ? 40 : Double.POSITIVE_INFINITY;
-                    w = new TurnWeighting(w, g.getTurnCostExtension(), uTurnCost);
+                    w = new TurnWeighting(w, g.getTurnCostStorage(), uTurnCost);
                 }
                 return new AStarBidirection(g, w, traversalMode);
             }

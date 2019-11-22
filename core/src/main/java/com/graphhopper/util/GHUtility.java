@@ -227,7 +227,7 @@ public class GHUtility {
         return Helper.DIST_PLANE.calcDist(fromLat, fromLon, toLat, toLon);
     }
 
-    public static void addRandomTurnCosts(Graph graph, long seed, EncodingManager em, FlagEncoder encoder, int maxTurnCost, TurnCostExtension turnCostExtension) {
+    public static void addRandomTurnCosts(Graph graph, long seed, EncodingManager em, FlagEncoder encoder, int maxTurnCost, TurnCostStorage turnCostStorage) {
         Random random = new Random(seed);
         double pNodeHasTurnCosts = 0.3;
         double pEdgePairHasTurnCosts = 0.6;
@@ -249,7 +249,7 @@ public class GHUtility {
                         }
                         if (random.nextDouble() < pEdgePairHasTurnCosts) {
                             double cost = random.nextDouble() < pCostIsRestriction ? Double.POSITIVE_INFINITY : random.nextDouble() * maxTurnCost;
-                            turnCostExtension.set(turnCostEnc, tcFlags, inIter.getEdge(), node, outIter.getEdge(), cost);
+                            turnCostStorage.set(turnCostEnc, tcFlags, inIter.getEdge(), node, outIter.getEdge(), cost);
                         }
                     }
                 }
@@ -299,7 +299,7 @@ public class GHUtility {
     }
 
     public static Graph shuffle(Graph g, Graph sortedGraph) {
-        if (g.getTurnCostExtension() != null) {
+        if (g.getTurnCostStorage() != null) {
             throw new IllegalArgumentException("Shuffling the graph is currently not supported in the presence of turn costs");
         }
         int nodes = g.getNodes();
@@ -326,7 +326,7 @@ public class GHUtility {
      * significant difference (bfs) for querying or are worse (z-curve).
      */
     public static Graph sortDFS(Graph g, Graph sortedGraph) {
-        if (g.getTurnCostExtension() != null) {
+        if (g.getTurnCostStorage() != null) {
             throw new IllegalArgumentException("Sorting the graph is currently not supported in the presence of turn costs");
         }
         int nodes = g.getNodes();
@@ -371,7 +371,7 @@ public class GHUtility {
     }
 
     static Graph createSortedGraph(Graph fromGraph, Graph toSortedGraph, final IntIndexedContainer oldToNewNodeList, final IntIndexedContainer newToOldEdgeList) {
-        if (fromGraph.getTurnCostExtension() != null) {
+        if (fromGraph.getTurnCostStorage() != null) {
             throw new IllegalArgumentException("Sorting the graph is currently not supported in the presence of turn costs");
         }
         int edges = fromGraph.getEdges();
@@ -412,7 +412,7 @@ public class GHUtility {
      */
     // TODO very similar to createSortedGraph -> use a 'int map(int)' interface
     public static Graph copyTo(Graph fromGraph, Graph toGraph) {
-        if (fromGraph.getTurnCostExtension() != null) {
+        if (fromGraph.getTurnCostStorage() != null) {
             throw new IllegalArgumentException("Copying a graph is currently not supported in the presence of turn costs");
         }
         AllEdgesIterator eIter = fromGraph.getAllEdges();
@@ -449,7 +449,7 @@ public class GHUtility {
     public static GraphHopperStorage newStorage(GraphHopperStorage store) {
         Directory outdir = guessDirectory(store);
         boolean is3D = store.getNodeAccess().is3D();
-        return new GraphHopperStorage(store.getCHProfiles(), outdir, store.getEncodingManager(), is3D, store.getTurnCostExtension() != null).create(store.getNodes());
+        return new GraphHopperStorage(store.getCHProfiles(), outdir, store.getEncodingManager(), is3D, store.getTurnCostStorage() != null).create(store.getNodes());
     }
 
     public static int getAdjNode(Graph g, int edge, int adjNode) {

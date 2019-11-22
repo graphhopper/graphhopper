@@ -231,7 +231,7 @@ public class ShortcutUnpackerTest {
         graph.freeze();
 
         // turn costs ->
-        TurnCostExtension tce = graph.getTurnCostExtension();
+        TurnCostStorage tce = graph.getTurnCostStorage();
         tce.setExpensive(encoder.toString(), encodingManager, PREV_EDGE, 0, edge0.getEdge(), 2.0);
         tce.setExpensive(encoder.toString(), encodingManager, edge0.getEdge(), edge1.getEdge(), 1, 5.0);
         tce.setExpensive(encoder.toString(), encodingManager, edge1.getEdge(), edge2.getEdge(), 2, 3);
@@ -319,7 +319,7 @@ public class ShortcutUnpackerTest {
     }
 
     private class TurnWeightingVisitor implements ShortcutUnpacker.Visitor {
-        private final TurnWeighting turnWeighting = new TurnWeighting(weighting, edgeBased ? graph.getTurnCostExtension() : null);
+        private final TurnWeighting turnWeighting = new TurnWeighting(weighting, edgeBased ? graph.getTurnCostStorage() : null);
         private long time = 0;
         private double weight = 0;
 

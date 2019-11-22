@@ -512,8 +512,8 @@ public class WrapperGraph implements Graph {
     }
 
     @Override
-    public TurnCostExtension getTurnCostExtension() {
-        return mainGraph.getTurnCostExtension();
+    public TurnCostStorage getTurnCostStorage() {
+        return mainGraph.getTurnCostStorage();
     }
 
     @Override

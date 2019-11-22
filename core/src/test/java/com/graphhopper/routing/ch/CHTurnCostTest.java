@@ -61,7 +61,7 @@ public class CHTurnCostTest {
     private EncodingManager encodingManager;
     private Weighting weighting;
     private GraphHopperStorage graph;
-    private TurnCostExtension turnCostExtension;
+    private TurnCostStorage turnCostStorage;
     private List<CHProfile> chProfiles;
     private CHProfile chProfile;
     private CHGraph chGraph;
@@ -82,7 +82,7 @@ public class CHTurnCostTest {
         // the default CH profile with infinite u-turn costs, can be reset in tests that should run with finite u-turn
         // costs
         chProfile = CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS);
-        turnCostExtension = graph.getTurnCostExtension();
+        turnCostStorage = graph.getTurnCostStorage();
         checkStrict = true;
     }
 
@@ -989,7 +989,7 @@ public class CHTurnCostTest {
         QueryResult qr2 = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.lookup(graph, qr2);
         assertEquals(3, qr2.getClosestEdge().getEdge());
-        Dijkstra dijkstra = new Dijkstra(queryGraph, new TurnWeighting(weighting, queryGraph.getTurnCostExtension(), chGraph.getCHProfile().getUTurnCosts()), TraversalMode.EDGE_BASED);
+        Dijkstra dijkstra = new Dijkstra(queryGraph, new TurnWeighting(weighting, queryGraph.getTurnCostStorage(), chGraph.getCHProfile().getUTurnCosts()), TraversalMode.EDGE_BASED);
         Path dijkstraPath = dijkstra.calcPath(4, 6);
         assertEquals(IntArrayList.from(4, 3, 2, 1, 7, 0, 7, 1, 5, 6), dijkstraPath.calcNodes());
         assertEquals(dijkstraPath.getWeight(), path.getWeight(), 1.e-3);
@@ -1024,7 +1024,7 @@ public class CHTurnCostTest {
         final Random rnd = new Random(seed);
         // for larger graphs preparation takes much longer the higher the degree is!
         GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostExtension);
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
         List<Integer> contractionOrder = getRandomIntegerSequence(graph.getNodes(), rnd);
@@ -1054,7 +1054,7 @@ public class CHTurnCostTest {
 
     private void compareWithDijkstraOnRandomGraph_heuristic(long seed) {
         GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostExtension);
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
         automaticCompareCHWithDijkstra(100);
@@ -1102,7 +1102,7 @@ public class CHTurnCostTest {
     }
 
     private Path findPathUsingDijkstra(int from, int to) {
-        Dijkstra dijkstra = new Dijkstra(graph, new TurnWeighting(weighting, turnCostExtension, chProfile.getUTurnCosts()), TraversalMode.EDGE_BASED);
+        Dijkstra dijkstra = new Dijkstra(graph, new TurnWeighting(weighting, turnCostStorage, chProfile.getUTurnCosts()), TraversalMode.EDGE_BASED);
         return dijkstra.calcPath(from, to);
     }
 
@@ -1211,7 +1211,7 @@ public class CHTurnCostTest {
     }
 
     private void setRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode) {
-        graph.getTurnCostExtension().setExpensive("car", encodingManager, inEdge.getEdge(), viaNode, outEdge.getEdge(), Double.POSITIVE_INFINITY);
+        graph.getTurnCostStorage().setExpensive("car", encodingManager, inEdge.getEdge(), viaNode, outEdge.getEdge(), Double.POSITIVE_INFINITY);
     }
 
     private void setTurnCost(int from, int via, int to, double cost) {
@@ -1219,7 +1219,7 @@ public class CHTurnCostTest {
     }
 
     private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double costs) {
-        graph.getTurnCostExtension().setExpensive("car", encodingManager, inEdge.getEdge(), viaNode, outEdge.getEdge(), costs);
+        graph.getTurnCostStorage().setExpensive("car", encodingManager, inEdge.getEdge(), viaNode, outEdge.getEdge(), costs);
     }
 
     private EdgeIteratorState getEdge(int from, int to) {

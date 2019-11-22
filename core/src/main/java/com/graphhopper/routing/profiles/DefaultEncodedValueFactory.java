@@ -61,7 +61,7 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
         } else if (TrackType.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(TrackType.KEY, TrackType.class);
         } else if (name.endsWith(EncodingManager.getKey("", RouteNetwork.EV_SUFFIX))) {
-            enc = new EnumEncodedValue<>(name, RouteNetwork.class);
+            enc = new EnumEncodedValue<>(EncodingManager.getKey(name, RouteNetwork.EV_SUFFIX), RouteNetwork.class);
         } else if (Hazmat.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class);
         } else if (HazmatTunnel.KEY.equals(name)) {

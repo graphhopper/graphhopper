@@ -495,7 +495,7 @@ public class QueryGraphTest {
         EncodingManager em = EncodingManager.create(encoder);
         GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(), em, false, true).
                 create(100);
-        TurnCostExtension turnExt = graphWithTurnCosts.getTurnCostExtension();
+        TurnCostStorage turnExt = graphWithTurnCosts.getTurnCostStorage();
         IntsRef tcFlags = TurnCost.createFlags();
         DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(EncodingManager.getKey(encoder.toString(), EV_SUFFIX));
         NodeAccess na = graphWithTurnCosts.getNodeAccess();
@@ -507,7 +507,7 @@ public class QueryGraphTest {
         EdgeIteratorState edge1 = graphWithTurnCosts.edge(2, 1, 10, true);
 
         FastestWeighting weighting = new FastestWeighting(encoder);
-        TurnWeighting turnWeighting = new TurnWeighting(weighting, graphWithTurnCosts.getTurnCostExtension());
+        TurnWeighting turnWeighting = new TurnWeighting(weighting, graphWithTurnCosts.getTurnCostStorage());
 
         // no turn costs initially
         assertEquals(0, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
@@ -521,7 +521,7 @@ public class QueryGraphTest {
         QueryResult res1 = createLocationResult(0.000, 0.005, edge0, 0, QueryResult.Position.EDGE);
         QueryResult res2 = createLocationResult(0.005, 0.010, edge1, 0, QueryResult.Position.EDGE);
         QueryGraph qGraph = QueryGraph.lookup(graphWithTurnCosts, res1, res2);
-        turnWeighting = new TurnWeighting(weighting, qGraph.getTurnCostExtension());
+        turnWeighting = new TurnWeighting(weighting, qGraph.getTurnCostStorage());
 
         int fromQueryEdge = GHUtility.getEdge(qGraph, res1.getClosestNode(), 1).getEdge();
         int toQueryEdge = GHUtility.getEdge(qGraph, res2.getClosestNode(), 1).getEdge();

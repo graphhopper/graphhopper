@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.querygraph;
 
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EnumEncodedValue;

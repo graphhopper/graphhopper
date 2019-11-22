@@ -46,8 +46,8 @@ public class WitnessPathSearcherTest {
         Weighting weighting = new ShortestWeighting(encoder);
         PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
         graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
-        TurnCostExtension turnCostExtension = graph.getTurnCostExtension();
-        chTurnWeighting = new TurnWeighting(preparationWeighting, turnCostExtension);
+        TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
+        chTurnWeighting = new TurnWeighting(preparationWeighting, turnCostStorage);
         chGraph = graph.getCHGraph();
     }
 

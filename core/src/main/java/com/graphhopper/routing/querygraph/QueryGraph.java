@@ -25,7 +25,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.ExtendedNodeAccess;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -53,7 +53,7 @@ public class QueryGraph implements Graph {
     private final int mainEdges;
     // todo: why do we need this and do we still need it when we stop wrapping CHGraph with QueryGraph ?
     private final QueryGraph baseGraph;
-    private final TurnCostExtension wrappedExtension;
+    private final TurnCostStorage wrappedExtension;
     private final NodeAccess nodeAccess;
     private final GraphModification graphModification;
 
@@ -82,7 +82,7 @@ public class QueryGraph implements Graph {
         graphModification = GraphModificationBuilder.build(graph, queryResults);
         nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), graphModification.getVirtualNodes(), mainNodes);
 
-        if (mainGraph.getTurnCostExtension() != null)
+        if (mainGraph.getTurnCostStorage() != null)
             wrappedExtension = new QueryGraphTurnExt(mainGraph, graphModification.getClosestEdges());
         else
             wrappedExtension = null;
@@ -361,7 +361,7 @@ public class QueryGraph implements Graph {
     }
 
     @Override
-    public TurnCostExtension getTurnCostExtension() {
+    public TurnCostStorage getTurnCostStorage() {
         return wrappedExtension;
     }
 

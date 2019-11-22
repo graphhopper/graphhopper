@@ -50,7 +50,7 @@ public class OSMTurnRelationParserTest {
 
         // TYPE == ONLY
         OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.ONLY);
-        Collection<OSMTurnRelationParser.TCEntry> result = parser.getRestrictionAsEntries(instance,
+        Collection<OSMTurnRelationParser.TCEntry> result = parser.addRestrictionAsEntries(instance,
                 TurnCost.createFlags(), map, ghStorage);
 
         assertEquals(2, result.size());
@@ -67,7 +67,7 @@ public class OSMTurnRelationParserTest {
 
         // TYPE == NOT
         instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
-        result = parser.getRestrictionAsEntries(instance, TurnCost.createFlags(), map, ghStorage);
+        result = parser.addRestrictionAsEntries(instance, TurnCost.createFlags(), map, ghStorage);
 
         assertEquals(1, result.size());
         iter = result.iterator();

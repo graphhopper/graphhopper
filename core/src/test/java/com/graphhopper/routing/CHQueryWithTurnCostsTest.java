@@ -711,7 +711,7 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
-        TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), graph.getTurnCostExtension());
+        TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), graph.getTurnCostStorage());
         AbstractBidirectionEdgeCHNoSOD algo = "astar".equals(algoString) ?
                 new AStarBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting) :
                 new DijkstraBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting);
@@ -734,7 +734,7 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private void setTurnCost(EdgeIteratorState edge1, EdgeIteratorState edge2, int viaNode, double costs) {
-        graph.getTurnCostExtension().setExpensive(encoder.toString(), encodingManager,
+        graph.getTurnCostStorage().setExpensive(encoder.toString(), encodingManager,
                 edge1.getEdge(), viaNode, edge2.getEdge(), costs);
     }
 

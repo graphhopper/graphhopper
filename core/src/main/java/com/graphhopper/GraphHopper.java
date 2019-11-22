@@ -960,7 +960,7 @@ public class GraphHopper implements GraphHopperAPI {
     public Weighting createTurnWeighting(Graph graph, Weighting weighting, TraversalMode tMode, double uTurnCosts) {
         FlagEncoder encoder = weighting.getFlagEncoder();
         if (encoder.supports(TurnWeighting.class) && tMode.isEdgeBased())
-            return new TurnWeighting(weighting, graph.getTurnCostExtension(), uTurnCosts);
+            return new TurnWeighting(weighting, graph.getTurnCostStorage(), uTurnCosts);
         return weighting;
     }
 

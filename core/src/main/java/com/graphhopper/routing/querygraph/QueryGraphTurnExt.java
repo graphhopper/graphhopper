@@ -21,20 +21,20 @@ package com.graphhopper.routing.querygraph;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.TurnCostStorage;
 
 /**
- * special {@link TurnCostExtension} that handles virtual nodes and edges
+ * special {@link TurnCostStorage} that handles virtual nodes and edges
  */
-class QueryGraphTurnExt extends TurnCostExtension {
-    private final TurnCostExtension mainTurnExtension;
+class QueryGraphTurnExt extends TurnCostStorage {
+    private final TurnCostStorage mainTurnExtension;
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
     private final IntArrayList closestEdges;
 
     QueryGraphTurnExt(Graph mainGraph, IntArrayList closestEdges) {
-        super(mainGraph.getTurnCostExtension());
-        this.mainTurnExtension = mainGraph.getTurnCostExtension();
+        super(mainGraph.getTurnCostStorage());
+        this.mainTurnExtension = mainGraph.getTurnCostStorage();
         this.firstVirtualNodeId = mainGraph.getNodes();
         this.firstVirtualEdgeId = mainGraph.getEdges();
         this.closestEdges = closestEdges;

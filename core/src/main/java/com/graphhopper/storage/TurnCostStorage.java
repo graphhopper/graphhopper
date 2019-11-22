@@ -32,7 +32,7 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
  * @author Karl Hübner
  * @author Peter Karich
  */
-public class TurnCostExtension implements Storable<TurnCostExtension> {
+public class TurnCostStorage implements Storable<TurnCostStorage> {
     static final int NO_TURN_ENTRY = -1;
     private static final int EMPTY_FLAGS = 0;
     // we store each turn cost entry in the format |from_edge|to_edge|flags|next|. each entry has 4 bytes -> 16 bytes total
@@ -46,15 +46,15 @@ public class TurnCostExtension implements Storable<TurnCostExtension> {
     private DataAccess turnCosts;
     private int turnCostsCount;
 
-    public TurnCostExtension(NodeAccess nodeAccess, DataAccess turnCosts) {
+    public TurnCostStorage(NodeAccess nodeAccess, DataAccess turnCosts) {
         this.nodeAccess = nodeAccess;
         this.turnCosts = turnCosts;
     }
 
-    public TurnCostExtension(TurnCostExtension turnCostExtension) {
-        this.nodeAccess = turnCostExtension.nodeAccess;
-        this.turnCosts = turnCostExtension.turnCosts;
-        this.turnCostsCount = turnCostExtension.turnCostsCount;
+    public TurnCostStorage(TurnCostStorage turnCostStorage) {
+        this.nodeAccess = turnCostStorage.nodeAccess;
+        this.turnCosts = turnCostStorage.turnCosts;
+        this.turnCostsCount = turnCostStorage.turnCostsCount;
     }
 
     public void setSegmentSize(int bytes) {
@@ -62,7 +62,7 @@ public class TurnCostExtension implements Storable<TurnCostExtension> {
     }
 
     @Override
-    public TurnCostExtension create(long initBytes) {
+    public TurnCostStorage create(long initBytes) {
         turnCosts.create(initBytes);
         return this;
     }
@@ -255,10 +255,10 @@ public class TurnCostExtension implements Storable<TurnCostExtension> {
         turnCosts.ensureCapacity(((long) nodeIndex + 4) * BYTES_PER_ENTRY);
     }
 
-    public TurnCostExtension copyTo(TurnCostExtension turnCostExtension) {
-        turnCosts.copyTo(turnCostExtension.turnCosts);
-        turnCostExtension.turnCostsCount = turnCostsCount;
-        return turnCostExtension;
+    public TurnCostStorage copyTo(TurnCostStorage turnCostStorage) {
+        turnCosts.copyTo(turnCostStorage.turnCosts);
+        turnCostStorage.turnCostsCount = turnCostsCount;
+        return turnCostStorage;
     }
 
     @Override

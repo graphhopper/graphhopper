@@ -61,7 +61,7 @@ class GHNodeAccess implements NodeAccess {
         }
 
         if (baseGraph.supportsTurnCosts())
-            baseGraph.nodes.setInt(tmp + baseGraph.N_TC, TurnCostExtension.NO_TURN_ENTRY);
+            baseGraph.nodes.setInt(tmp + baseGraph.N_TC, TurnCostStorage.NO_TURN_ENTRY);
     }
 
     @Override

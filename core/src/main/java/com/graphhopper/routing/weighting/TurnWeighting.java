@@ -22,7 +22,7 @@ import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -38,12 +38,12 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 public class TurnWeighting implements Weighting {
     public static final int INFINITE_U_TURN_COSTS = -1;
     private final DecimalEncodedValue turnCostEnc;
-    private final TurnCostExtension turnCostExt;
+    private final TurnCostStorage turnCostExt;
     private final Weighting superWeighting;
     private final double uTurnCosts;
     private final IntsRef tcFlags = TurnCost.createFlags();
 
-    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
+    public TurnWeighting(Weighting superWeighting, TurnCostStorage turnCostExt) {
         this(superWeighting, turnCostExt, INFINITE_U_TURN_COSTS);
     }
 
@@ -54,7 +54,7 @@ public class TurnWeighting implements Weighting {
      * @param uTurnCosts     the cost of a u-turn in seconds, this value will be applied to all u-turn costs no matter
      *                       whether or not turnCostExt contains explicit values for these turns.
      */
-    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt, double uTurnCosts) {
+    public TurnWeighting(Weighting superWeighting, TurnCostStorage turnCostExt, double uTurnCosts) {
         if (turnCostExt == null) {
             throw new RuntimeException("No storage set to calculate turn weight");
         }

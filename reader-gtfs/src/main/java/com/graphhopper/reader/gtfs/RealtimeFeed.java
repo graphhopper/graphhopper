@@ -242,7 +242,7 @@ public class RealtimeFeed {
             }
 
             @Override
-            public TurnCostExtension getTurnCostExtension() {
+            public TurnCostStorage getTurnCostStorage() {
                 throw new RuntimeException();
             }
 

@@ -1384,7 +1384,7 @@ public class EdgeBasedNodeContractorTest {
 
     private EdgeBasedNodeContractor createNodeContractor() {
         PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
-        TurnWeighting turnWeighting = new TurnWeighting(preparationWeighting, graph.getTurnCostExtension(), uTurnCosts);
+        TurnWeighting turnWeighting = new TurnWeighting(preparationWeighting, graph.getTurnCostStorage(), uTurnCosts);
         EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(chGraph, turnWeighting, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
@@ -1399,7 +1399,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double cost) {
-        graph.getTurnCostExtension().setExpensive("car", encoder, inEdge.getEdge(), viaNode, outEdge.getEdge(), cost >= maxCost ? Double.POSITIVE_INFINITY : cost);
+        graph.getTurnCostStorage().setExpensive("car", encoder, inEdge.getEdge(), viaNode, outEdge.getEdge(), cost >= maxCost ? Double.POSITIVE_INFINITY : cost);
     }
 
     private void setTurnCost(int from, int via, int to, double cost) {
