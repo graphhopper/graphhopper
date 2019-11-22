@@ -28,23 +28,26 @@ public class OSMValueExtractor {
     }
 
     public static void extractTons(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys, boolean enableLog) {
-        String value = way.getFirstPriorityTag(keys);
-        try {
-            double val = stringToTons(value);
-            if (val > valueEncoder.getMaxDecimal())
-                val = valueEncoder.getMaxDecimal();
-            valueEncoder.setDecimal(false, edgeFlags, val);
-        } catch (Exception ex) {
-            if (enableLog)
-                LOG.warn("Unable to extract tons from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId());
+        final String rawValue = way.getFirstPriorityTag(keys);
+        double value = stringToTons(rawValue);
+        
+        if (Double.isNaN(value)) {
+            if (enableLog) {
+                LOG.warn("Unable to extract tons from malformed road attribute '{}' for way (OSM_ID = {}).", rawValue, way.getId());
+            }
+            return;
         }
+        
+        if (value > valueEncoder.getMaxDecimal())
+            value = valueEncoder.getMaxDecimal();
+        valueEncoder.setDecimal(false, edgeFlags, value);
     }
 
     public static double stringToTons(String value) {
         value = TON_PATTERN.matcher(toLowerCase(value)).replaceAll("t");
         value = MGW_PATTERN.matcher(value).replaceAll("").trim();
         if (isInvalid(value))
-            throw new NumberFormatException("Cannot parse value for 'tons': " + value);
+            return Double.NaN;
 
         double factor = 1;
         if (value.endsWith("t")) {
@@ -57,20 +60,27 @@ public class OSMValueExtractor {
             factor = 0.001;
         }
 
-        return Double.parseDouble(value) * factor;
+        try {
+            return Double.parseDouble(value) * factor;
+        } catch (NumberFormatException e) {
+            return Double.NaN;
+        }
     }
 
     public static void extractMeter(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys, boolean enableLog) {
-        String value = way.getFirstPriorityTag(keys);
-        try {
-            double val = stringToMeter(value);
-            if (val > valueEncoder.getMaxDecimal())
-                val = valueEncoder.getMaxDecimal();
-            valueEncoder.setDecimal(false, edgeFlags, val);
-        } catch (Exception ex) {
-            if (enableLog)
-                LOG.warn("Unable to extract meter from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId());
+        final String rawValue = way.getFirstPriorityTag(keys);
+        double value = stringToMeter(rawValue);
+        
+        if (Double.isNaN(value)) {
+            if (enableLog) {
+                LOG.warn("Unable to extract meter from malformed road attribute '{}' for way (OSM_ID = {}).", rawValue, way.getId());
+            }
+            return;
         }
+
+        if (value > valueEncoder.getMaxDecimal())
+            value = valueEncoder.getMaxDecimal();
+        valueEncoder.setDecimal(false, edgeFlags, value);
     }
 
     public static double stringToMeter(String value) {
@@ -79,7 +89,7 @@ public class OSMValueExtractor {
         value = INCH_PATTERN.matcher(value).replaceAll("in");
         value = FEET_PATTERN.matcher(value).replaceAll("ft");
         if (isInvalid(value))
-            throw new NumberFormatException("Cannot parse value for 'meter': " + value);
+            return Double.NaN;
         double factor = 1;
         double offset = 0;
         if (value.startsWith("~") || value.contains("approx")) {
@@ -98,7 +108,11 @@ public class OSMValueExtractor {
 
             inchValue = value.substring(startIndex, value.length() - 2);
             value = value.substring(0, startIndex);
-            offset = Double.parseDouble(inchValue) * 0.0254;
+            try {
+                offset = Double.parseDouble(inchValue) * 0.0254;
+            } catch (NumberFormatException e) {
+                return Double.NaN;
+            }
         }
 
         if (value.endsWith("ft")) {
@@ -113,8 +127,12 @@ public class OSMValueExtractor {
 
         if (value.isEmpty()) {
             return offset;
-        } else {
+        }
+        
+        try {
             return Double.parseDouble(value) * factor + offset;
+        } catch (NumberFormatException e) {
+            return Double.NaN;
         }
     }
 
