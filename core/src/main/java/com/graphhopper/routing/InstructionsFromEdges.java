@@ -286,7 +286,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     prevAnnotation = annotation;
                 }
             }
-            // Updated the prevName, since we don't always create an instruction on name changes the previous
+            // Update the prevName, since we don't always create an instruction on name changes the previous
             // name can be an old name. This leads to incorrect turn instructions due to name changes
             prevName = name;
         }
@@ -420,7 +420,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         }
 
         if (!outgoingEdgesAreSlower) {
-            if (Math.abs(delta) > .4
+            if (Math.abs(delta) > .6
                     || outgoingEdges.isLeavingCurrentStreet(prevName, name)) {
                 // Leave the current road -> create instruction
                 return sign;

@@ -23,6 +23,7 @@ import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
@@ -101,7 +102,7 @@ public class GraphHopperIT {
         assertEquals(43.7495432, arsp.getWaypoints().getLat(1), 1e-7);
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(21, il.size());
+        assertEquals(20, il.size());
 
         // TODO roundabout fine tuning -> enter + leave roundabout (+ two roundabouts -> is it necessary if we do not leave the street?)
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
@@ -492,22 +493,22 @@ public class GraphHopperIT {
         assertEquals(173, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(38, il.size());
+        assertEquals(36, il.size());
         assertEquals("continue onto Avenue des Guelfes", il.get(0).getTurnDescription(tr));
         assertEquals("continue onto Avenue des Papalins", il.get(1).getTurnDescription(tr));
         assertEquals("turn sharp right onto Quai Jean-Charles Rey", il.get(4).getTurnDescription(tr));
         assertEquals("turn left", il.get(5).getTurnDescription(tr));
         assertEquals("turn right onto Avenue Albert II", il.get(6).getTurnDescription(tr));
 
-        assertEquals("waypoint 1", il.get(20).getTurnDescription(tr));
-        assertEquals(Instruction.U_TURN_UNKNOWN, il.get(21).getSign());
+        assertEquals("waypoint 1", il.get(19).getTurnDescription(tr));
+        assertEquals(Instruction.U_TURN_UNKNOWN, il.get(20).getSign());
 
-        assertEquals("continue onto Avenue Albert II", il.get(31).getTurnDescription(tr));
-        assertEquals("turn left", il.get(32).getTurnDescription(tr));
-        assertEquals("turn right onto Quai Jean-Charles Rey", il.get(33).getTurnDescription(tr));
-        assertEquals("turn sharp left onto Avenue des Papalins", il.get(34).getTurnDescription(tr));
-        assertEquals("continue onto Avenue des Guelfes", il.get(36).getTurnDescription(tr));
-        assertEquals("arrive at destination", il.get(37).getTurnDescription(tr));
+        assertEquals("continue onto Avenue Albert II", il.get(29).getTurnDescription(tr));
+        assertEquals("turn left", il.get(30).getTurnDescription(tr));
+        assertEquals("turn right onto Quai Jean-Charles Rey", il.get(31).getTurnDescription(tr));
+        assertEquals("turn sharp left onto Avenue des Papalins", il.get(32).getTurnDescription(tr));
+        assertEquals("continue onto Avenue des Guelfes", il.get(34).getTurnDescription(tr));
+        assertEquals("arrive at destination", il.get(35).getTurnDescription(tr));
 
         assertEquals(11, il.get(0).getDistance(), 1);
         assertEquals(97, il.get(1).getDistance(), 1);
@@ -706,7 +707,7 @@ public class GraphHopperIT {
         assertTrue(arsp.getPoints().is3D());
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(13, il.size());
+        assertEquals(12, il.size());
         assertTrue(il.get(0).getPoints().is3D());
 
         String str = arsp.getPoints().toString();
@@ -813,7 +814,7 @@ public class GraphHopperIT {
         assertEquals(106, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(24, il.size());
+        assertEquals(22, il.size());
 
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
         assertEquals("get off the bike", il.get(0).getAnnotation().getMessage());
@@ -830,8 +831,8 @@ public class GraphHopperIT {
         assertEquals("keep left onto Austraße", il.get(11).getTurnDescription(tr));
         assertEquals("keep left onto Rechte Kremszeile", il.get(12).getTurnDescription(tr));
         //..
-        assertEquals("turn right onto Treppelweg", il.get(19).getTurnDescription(tr));
-        assertEquals("cycleway", il.get(19).getAnnotation().getMessage());
+        assertEquals("turn right onto Treppelweg", il.get(18).getTurnDescription(tr));
+        assertEquals("cycleway", il.get(18).getAnnotation().getMessage());
     }
 
     @Test
@@ -1313,6 +1314,24 @@ public class GraphHopperIT {
         assertCurbsidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 266, asList(itz, bayreuth, rotmain));
         assertCurbsidesPath(h, p, q, asList(CURBSIDE_ANY, ""), 266, asList(itz, bayreuth, rotmain));
         assertCurbsidesPath(h, p, q, Collections.<String>emptyList(), 266, asList(itz, bayreuth, rotmain));
+
+        // when the start/target is the same its a bit unclear how to interpret the curbside parameters. here we decided
+        // to return an empty path if the curbsides of start/target are the same or one of the is not specified
+        assertCurbsidesPath(h, p, p, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 0, Collections.<String>emptyList());
+        assertCurbsidesPath(h, p, p, asList(CURBSIDE_RIGHT, CURBSIDE_ANY), 0, Collections.<String>emptyList());
+        assertCurbsidesPath(h, p, p, asList(CURBSIDE_RIGHT, ""), 0, Collections.<String>emptyList());
+        assertCurbsidesPath(h, p, p, asList(CURBSIDE_ANY, CURBSIDE_RIGHT), 0, Collections.<String>emptyList());
+        assertCurbsidesPath(h, p, p, asList("", CURBSIDE_RIGHT), 0, Collections.<String>emptyList());
+        assertCurbsidesPath(h, p, p, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 0, Collections.<String>emptyList());
+        assertCurbsidesPath(h, p, p, asList(CURBSIDE_LEFT, CURBSIDE_ANY), 0, Collections.<String>emptyList());
+        assertCurbsidesPath(h, p, p, asList(CURBSIDE_LEFT, ""), 0, Collections.<String>emptyList());
+        assertCurbsidesPath(h, p, p, asList(CURBSIDE_ANY, CURBSIDE_LEFT), 0, Collections.<String>emptyList());
+        assertCurbsidesPath(h, p, p, asList("", CURBSIDE_LEFT), 0, Collections.<String>emptyList());
+
+        // when going from p to p and one curbside is right and the other is left, we expect driving a loop back to
+        // where we came from
+        assertCurbsidesPath(h, p, p, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 1908, asList(itz, rotmain, rotmain, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, rotmain, rotmain, itz));
+        assertCurbsidesPath(h, p, p, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 855, asList(itz, bayreuth, kulmbach, adamSeiler, adamSeiler, friedhof, kulmbach, itz));
     }
 
     @Test
@@ -1336,16 +1355,16 @@ public class GraphHopperIT {
         final String avenue = "Avenue de la Costa";
         assertCurbsidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), "Impossible curbside constraint: 'curbside=right' at point 0", true);
         assertCurbsidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=right' at point 0", true);
-        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue));
         assertCurbsidesPathError(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=left' at point 1", true);
         // without restricting anything we get the shortest path
-        assertCurbsidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 463, asList(boulevard, avenue, avenue));
-        assertCurbsidesPath(h, p, q, Collections.<String>emptyList(), 463, asList(boulevard, avenue, avenue));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 463, asList(boulevard, avenue));
+        assertCurbsidesPath(h, p, q, Collections.<String>emptyList(), 463, asList(boulevard, avenue));
         // if we set force_curbside to false impossible curbside constraints will be ignored
-        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue), false);
-        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 463, asList(boulevard, avenue, avenue), false);
-        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue, avenue), false);
-        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 463, asList(boulevard, avenue, avenue), false);
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue), false);
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 463, asList(boulevard, avenue), false);
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue), false);
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 463, asList(boulevard, avenue), false);
     }
 
     private void assertCurbsidesPath(GraphHopper tmpHopper, GHPoint source, GHPoint target, List<String> curbsides, int expectedDistance, List<String> expectedStreets) {
@@ -1406,6 +1425,86 @@ public class GraphHopperIT {
         assertEquals(266.8, res.getBest().getRouteWeight(), 0.1);
         assertEquals(2116, res.getBest().getDistance(), 1);
         assertEquals(266800, res.getBest().getTime(), 1000);
+    }
+
+    @Test
+    public void simplifyWithInstructionsAndPathDetails() {
+        GraphHopper hopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/north-bayreuth.osm.gz").
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                forServer();
+        EncodingManager em = new EncodingManager.Builder()
+                .setEnableInstructions(true)
+                .add(new OSMMaxSpeedParser())
+                .add(new CarFlagEncoder())
+                .build();
+        hopper.setEncodingManager(em);
+        hopper.importOrLoad();
+
+        GHRequest req = new GHRequest()
+                .addPoint(new GHPoint(50.026932, 11.493201))
+                .addPoint(new GHPoint(50.016895, 11.4923))
+                .addPoint(new GHPoint(50.003464, 11.49157))
+                .setPathDetails(Arrays.asList("street_name", "max_speed"));
+        req.putHint("elevation", "true");
+
+        GHResponse rsp = hopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+
+        PathWrapper path = rsp.getBest();
+
+        // check path was simplified (without it would be more like 58)
+        assertEquals(44, path.getPoints().size());
+
+        // check instructions
+        InstructionList instructions = path.getInstructions();
+        int totalLength = 0;
+        for (Instruction instruction : instructions) {
+            totalLength += instruction.getLength();
+        }
+        assertEquals(43, totalLength);
+        assertInstruction(instructions.get(0), "KU 11", "[0, 4[", 4, 4);
+        assertInstruction(instructions.get(1), "B 85", "[4, 18[", 14, 14);
+        // via instructions have length = 0, but the point list must not be empty!
+        assertInstruction(instructions.get(2), "", "[18, 19[", 0, 1);
+        assertInstruction(instructions.get(3), "B 85", "[18, 35[", 17, 17);
+        assertInstruction(instructions.get(4), "", "[35, 37[", 2, 2);
+        assertInstruction(instructions.get(5), "KU 18", "[37, 40[", 3, 3);
+        assertInstruction(instructions.get(6), "St 2189", "[40, 41[", 1, 1);
+        assertInstruction(instructions.get(7), "", "[41, 43[", 2, 2);
+        // finish instructions have length = 0, but the point list must not be empty!
+        assertInstruction(instructions.get(8), "", "[43, 44[", 0, 1);
+
+        // check max speeds
+        List<PathDetail> speeds = path.getPathDetails().get("max_speed");
+        assertDetail(speeds.get(0), "null [0, 4]");
+        assertDetail(speeds.get(1), "70.0 [4, 7]");
+        assertDetail(speeds.get(2), "100.0 [7, 34]");
+        assertDetail(speeds.get(3), "80.0 [34, 35]");
+        assertDetail(speeds.get(4), "null [35, 40]");
+        assertDetail(speeds.get(5), "50.0 [40, 41]");
+        assertDetail(speeds.get(6), "null [41, 43]");
+
+        // check street_names
+        List<PathDetail> streetNames = path.getPathDetails().get("street_name");
+        assertDetail(streetNames.get(0), "KU 11 [0, 4]");
+        assertDetail(streetNames.get(1), "B 85 [4, 35]");
+        assertDetail(streetNames.get(2), " [35, 37]");
+        assertDetail(streetNames.get(3), "KU 18 [37, 40]");
+        assertDetail(streetNames.get(4), "St 2189 [40, 41]");
+        assertDetail(streetNames.get(5), " [41, 43]");
+    }
+
+    private void assertInstruction(Instruction instruction, String expectedName, String expectedInterval, int expectedLength, int expectedPoints) {
+        assertEquals(expectedName, instruction.getName());
+        assertEquals(expectedInterval, ((ShallowImmutablePointList) instruction.getPoints()).getIntervalString());
+        assertEquals(expectedLength, instruction.getLength());
+        assertEquals(expectedPoints, instruction.getPoints().size());
+    }
+
+    private void assertDetail(PathDetail detail, String expected) {
+        assertEquals(expected, detail.toString());
     }
 
 }

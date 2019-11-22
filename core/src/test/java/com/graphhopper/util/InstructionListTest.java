@@ -232,6 +232,64 @@ public class InstructionListTest {
     }
 
     @Test
+    public void testNoInstructionIfSlightTurnAndAlternativeIsSharp() {
+        Graph g = new GraphBuilder(carManager).create();
+        // Real World Example: https://graphhopper.com/maps/?point=51.734514%2C9.225571&point=51.734643%2C9.22541
+        // https://github.com/graphhopper/graphhopper/issues/1441
+        // From 1 to 3
+        //
+        //       3
+        //       |
+        //       2
+        //      /\
+        //     4  1
+
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(1, 51.734514,9.225571);
+        na.setNode(2, 51.73458,9.225442);
+        na.setNode(3, 51.734643,9.22541);
+        na.setNode(4, 51.734451,9.225436);
+        g.edge(1, 2, 10, true);
+        g.edge(2, 3, 10, true);
+        g.edge(2, 4, 10, true);
+
+        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 3);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, roundaboutEnc, usTR);
+        List<String> tmpList = getTurnDescriptions( wayList);
+        assertEquals(Arrays.asList("continue", "arrive at destination"), tmpList);
+    }
+
+    @Test
+    public void testNoInstructionIfSlightTurnAndAlternativeIsSharp2() {
+        Graph g = new GraphBuilder(carManager).create();
+        // Real World Example: https://graphhopper.com/maps/?point=48.748493%2C9.322455&point=48.748776%2C9.321889
+        // https://github.com/graphhopper/graphhopper/issues/1441
+        // From 1 to 3
+        //
+        //       3
+        //         \
+        //          2--- 1
+        //           \
+        //            4
+
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(1, 48.748493,9.322455);
+        na.setNode(2, 48.748577,9.322152);
+        na.setNode(3, 48.748776,9.321889);
+        na.setNode(4, 48.74847,9.322299);
+        g.edge(1, 2, 10, true);
+        g.edge(2, 3, 10, true);
+        g.edge(2, 4, 10, true);
+
+        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 3);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, roundaboutEnc, usTR);
+        List<String> tmpList = getTurnDescriptions( wayList);
+        assertEquals(Arrays.asList("continue", "arrive at destination"), tmpList);
+    }
+
+    @Test
     public void testEmptyList() {
         Graph g = new GraphBuilder(carManager).create();
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);
