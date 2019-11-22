@@ -11,8 +11,9 @@ import com.graphhopper.routing.util.EncodingManager.Access;
 import com.graphhopper.storage.IntsRef;
 
 public class OSMHazmatTunnelParser implements TagParser {
-    
+
     private static final String[] TUNNEL_CATEGORY_NAMES;
+
     static {
         HazmatTunnel[] categories = HazmatTunnel.values();
         TUNNEL_CATEGORY_NAMES = new String[categories.length];
@@ -20,23 +21,20 @@ public class OSMHazmatTunnelParser implements TagParser {
             TUNNEL_CATEGORY_NAMES[i] = categories[i].name();
         }
     }
-    
+
     private final EnumEncodedValue<HazmatTunnel> hazTunnelEnc;
-    
+
     public OSMHazmatTunnelParser() {
         this.hazTunnelEnc = new EnumEncodedValue<>(HazmatTunnel.KEY, HazmatTunnel.class);
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup,
-                    List<EncodedValue> registerNewEncodedValue) {
+    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
         registerNewEncodedValue.add(hazTunnelEnc);
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, Access access,
-                    long relationFlags) {
-        
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, Access access, IntsRef relationFlags) {
         if (readerWay.hasTag("hazmat:adr_tunnel_cat", TUNNEL_CATEGORY_NAMES)) {
             HazmatTunnel code = HazmatTunnel.valueOf(readerWay.getTag("hazmat:adr_tunnel_cat"));
             hazTunnelEnc.setEnum(false, edgeFlags, code);
