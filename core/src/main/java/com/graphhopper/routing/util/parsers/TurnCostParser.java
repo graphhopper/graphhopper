@@ -27,7 +27,7 @@ import java.util.List;
 
 /**
  * This interface serves the purpose of converting relation flags into turn cost information. Unlike RelationTagParser
- * it can be assumed that the graph topology is already intact when create is called.
+ * it can be assumed that the graph topology is already intact when handleTurnRelationTags is called.
  */
 public interface TurnCostParser {
     String getName();

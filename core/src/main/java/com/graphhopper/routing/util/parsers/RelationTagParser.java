@@ -25,9 +25,9 @@ import com.graphhopper.storage.IntsRef;
 import java.util.List;
 
 /**
- * This interface serves the purpose of creating relation flags (64 bits) from ReaderRelation in handleRelationTags and
- * then allows converting the relation flags into the edge flags. A direct conversion of ReaderRelation into edge flags
- * is not yet possible due to storage limitation of the 'supervisor' OSMReader.
+ * This interface serves the purpose of creating relation flags (max. 64 bits) from ReaderRelation in handleRelationTags
+ * and then allows converting the relation flags into the edge flags. A direct conversion of ReaderRelation into edge
+ * flags is not yet possible yet due to storage limitation of the 'supervisor' OSMReader. See #1775.
  */
 public interface RelationTagParser extends TagParser {
 
