@@ -231,7 +231,6 @@ public class EncodingManager implements EncodedValueLookup {
 
         public Builder add(FlagEncoder encoder) {
             check();
-            // TODO NOW workaround for now
             if (encoder instanceof BikeCommonFlagEncoder && !em.hasEncodedValue(getKey("bike", RouteNetwork.EV_SUFFIX))) {
                 addRelationTagParser(new OSMBikeNetworkTagParser());
             } else if (encoder instanceof FootFlagEncoder && !em.hasEncodedValue(getKey("foot", RouteNetwork.EV_SUFFIX))) {
@@ -279,7 +278,6 @@ public class EncodingManager implements EncodedValueLookup {
             if (em.encodedValueMap.isEmpty())
                 throw new IllegalStateException("No EncodedValues found");
 
-            // TODO NOW workaround for now
             for (AbstractFlagEncoder encoder : em.edgeEncoders) {
                 if (encoder.supports(TurnWeighting.class) && !em.turnCostParsers.containsKey(encoder.toString()))
                     addTurnCostParser(new OSMTurnRelationParser(encoder.toString(), encoder.getMaxTurnCosts()));

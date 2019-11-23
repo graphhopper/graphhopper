@@ -175,7 +175,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      */
     public abstract IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access);
 
-    // TODO NOW remove
     public int getMaxTurnCosts() {
         return maxTurnCosts;
     }
