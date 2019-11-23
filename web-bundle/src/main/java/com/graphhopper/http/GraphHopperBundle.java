@@ -32,6 +32,7 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.http.health.GraphHopperStorageHealthCheck;
 import com.graphhopper.jackson.Jackson;
+import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtEncodedValues;
@@ -194,7 +195,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         final GHDirectory ghDirectory = new GHDirectory(configuration.get("graph.location", "target/tmp"), DAType.RAM_STORE);
         final GtfsStorage gtfsStorage = GtfsStorage.createOrLoad(ghDirectory);
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-        final GraphHopper graphHopperStorage = PtRouteResource.createOrLoad(encodingManager, configuration);
+        final GraphHopper graphHopperStorage = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, configuration);
         final TranslationMap translationMap = new TranslationMap().doImport();
         final LocationIndex locationIndex = graphHopperStorage.getLocationIndex();
         environment.jersey().register(new AbstractBinder() {

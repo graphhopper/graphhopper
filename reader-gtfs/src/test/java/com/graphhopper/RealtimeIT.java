@@ -57,14 +57,14 @@ public class RealtimeIT {
         cmdArgs.put("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-        graphHopperStorage = PtRouteResource.createOrLoad(encodingManager, cmdArgs);
+        graphHopperStorage = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, cmdArgs);
         locationIndex = graphHopperStorage.getLocationIndex();
         graphHopperStorage.close();
         locationIndex.close();
         // Re-load read only
-        graphHopperStorage = PtRouteResource.createOrLoad(encodingManager, cmdArgs);
+        graphHopperStorage = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, cmdArgs);
         locationIndex = graphHopperStorage.getLocationIndex();
-        graphHopperFactory = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, graphHopperStorage.gtfsStorage);
+        graphHopperFactory = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, graphHopperStorage.getGtfsStorage());
     }
 
     @AfterClass

@@ -55,9 +55,9 @@ public class PtRouteResourceIT {
         cmdArgs.put("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-        graphHopperStorage = PtRouteResource.createOrLoad(encodingManager, cmdArgs);
+        graphHopperStorage = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, cmdArgs);
         locationIndex = graphHopperStorage.getLocationIndex();
-        graphHopper = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, graphHopperStorage.gtfsStorage)
+        graphHopper = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, graphHopperStorage.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 

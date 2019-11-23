@@ -79,14 +79,6 @@ public final class PtRouteResource {
         return new Factory(translationMap, graphHopperStorage.getGraphHopperStorage(), locationIndex, gtfsStorage);
     }
 
-    public static GraphHopperGtfs createOrLoad(EncodingManager encodingManager, CmdArgs cmdArgs) {
-        GraphHopperGtfs graphHopperOSM = new GraphHopperGtfs(cmdArgs);
-        graphHopperOSM.init(cmdArgs);
-        graphHopperOSM.setEncodingManager(encodingManager);
-        graphHopperOSM.importOrLoad();
-        return graphHopperOSM;
-    }
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public ObjectNode route(@QueryParam("point") List<GHLocation> requestPoints,

@@ -21,7 +21,7 @@ package com.graphhopper.http.isochrone;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.http.GHPointConverterProvider;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.reader.gtfs.PtRouteResource;
+import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtEncodedValues;
 import com.graphhopper.resources.PtIsochroneResource;
@@ -67,7 +67,7 @@ public class PtIsochroneResourceTest {
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
         GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
         gtfsStorage = GtfsStorage.createOrLoad(directory);
-        graphHopperStorage = PtRouteResource.createOrLoad(encodingManager, cmdArgs);
+        graphHopperStorage = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, cmdArgs);
         locationIndex = graphHopperStorage.getLocationIndex();
         isochroneResource = new PtIsochroneResource(gtfsStorage, graphHopperStorage.getEncodingManager(), graphHopperStorage.getGraphHopperStorage(), locationIndex);
     }

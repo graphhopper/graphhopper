@@ -22,9 +22,6 @@ import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.reader.gtfs.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.storage.DAType;
-import com.graphhopper.storage.GHDirectory;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -44,10 +41,9 @@ import static org.junit.Assert.assertFalse;
 public class AnotherAgencyIT {
 
     private static final String GRAPH_LOC = "target/AnotherAgencyIT";
-    private static PtRouteResource graphHopper;
+    private static PtRouteResource ptRouteResource;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static GraphHopperGtfs graphHopperStorage;
-    private static LocationIndex locationIndex;
+    private static GraphHopperGtfs graphHopperGtfs;
 
     @BeforeClass
     public static void init() {
@@ -57,17 +53,14 @@ public class AnotherAgencyIT {
         cmdArgs.put("gtfs.file", "files/sample-feed.zip,files/another-sample-feed.zip");
         Helper.removeDir(new File(GRAPH_LOC));
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new FootFlagEncoder()).build();
-        GHDirectory directory = new GHDirectory(GRAPH_LOC, DAType.RAM_STORE);
-        graphHopperStorage = PtRouteResource.createOrLoad(encodingManager, cmdArgs);
-        locationIndex = graphHopperStorage.getLocationIndex();
-        graphHopper = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, graphHopperStorage.gtfsStorage)
+        graphHopperGtfs = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, cmdArgs);
+        ptRouteResource = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
     @AfterClass
     public static void close() {
-        graphHopperStorage.close();
-        locationIndex.close();
+        graphHopperGtfs.close();
     }
 
     @Test
@@ -81,7 +74,7 @@ public class AnotherAgencyIT {
         );
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
-        GHResponse route = graphHopper.route(ghRequest);
+        GHResponse route = ptRouteResource.route(ghRequest);
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
@@ -95,8 +88,8 @@ public class AnotherAgencyIT {
         // The implementation doesn't allow it, and would produce subsequent failures, because
         // feed-specific things are encoded in edge attributes along routes.
         // We will model such transfers by going through the walk network.
-        PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
-        AllEdgesIterator allEdges = graphHopperStorage.getGraphHopperStorage().getAllEdges();
+        PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperGtfs.getEncodingManager());
+        AllEdgesIterator allEdges = graphHopperGtfs.getGraphHopperStorage().getAllEdges();
         while (allEdges.next()) {
             GtfsStorage.EdgeType edgeType = allEdges.get(ptEncodedValues.getTypeEnc());
             if (edgeType == GtfsStorage.EdgeType.TRANSFER) {
@@ -108,13 +101,13 @@ public class AnotherAgencyIT {
 
     private IntHashSet findFeedIdsReachableOnPTNetworkFrom(int adjNode) {
         // TODO: Clean up those routers, so that tests like this are way easier to implement
-        PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
+        PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperGtfs.getEncodingManager());
         GraphExplorer graphExplorer = new GraphExplorer(
-                graphHopperStorage.getGraphHopperStorage(),
-                new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot")),
+                graphHopperGtfs.getGraphHopperStorage(),
+                new FastestWeighting(graphHopperGtfs.getEncodingManager().getEncoder("foot")),
                 ptEncodedValues,
-                graphHopperStorage.gtfsStorage,
-                RealtimeFeed.empty(graphHopperStorage.gtfsStorage),
+                graphHopperGtfs.getGtfsStorage(),
+                RealtimeFeed.empty(graphHopperGtfs.getGtfsStorage()),
                 false,
                 false,
                 5.0,
@@ -133,18 +126,18 @@ public class AnotherAgencyIT {
         router.calcLabels(adjNode, Instant.now(), 0)
         .forEach(l -> {
             if (l.parent == null) return;
-            EdgeIteratorState edgeIteratorState = graphHopperStorage.getGraphHopperStorage().getEdgeIteratorState(l.edge, l.adjNode);
+            EdgeIteratorState edgeIteratorState = graphHopperGtfs.getGraphHopperStorage().getEdgeIteratorState(l.edge, l.adjNode);
             Label.EdgeLabel edgeLabel = Label.getEdgeLabel(edgeIteratorState, ptEncodedValues);
             if (edgeLabel.edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK) {
                 seenIds.add(edgeLabel.timeZoneId);
             }
         });
         graphExplorer = new GraphExplorer(
-                graphHopperStorage.getGraphHopperStorage(),
-                new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot")),
+                graphHopperGtfs.getGraphHopperStorage(),
+                new FastestWeighting(graphHopperGtfs.getEncodingManager().getEncoder("foot")),
                 ptEncodedValues,
-                graphHopperStorage.gtfsStorage,
-                RealtimeFeed.empty(graphHopperStorage.gtfsStorage),
+                graphHopperGtfs.getGtfsStorage(),
+                RealtimeFeed.empty(graphHopperGtfs.getGtfsStorage()),
                 true,
                 false,
                 5.0,
@@ -162,7 +155,7 @@ public class AnotherAgencyIT {
         router.calcLabels(adjNode, Instant.now(), 0)
                 .forEach(l -> {
                     if (l.parent == null) return;
-                    EdgeIteratorState edgeIteratorState = graphHopperStorage.getGraphHopperStorage().getEdgeIteratorState(l.edge, l.parent.adjNode);
+                    EdgeIteratorState edgeIteratorState = graphHopperGtfs.getGraphHopperStorage().getEdgeIteratorState(l.edge, l.parent.adjNode);
                     Label.EdgeLabel edgeLabel = Label.getEdgeLabel(edgeIteratorState, ptEncodedValues);
                     if (edgeLabel.edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK) {
                         seenIds.add(edgeLabel.timeZoneId);

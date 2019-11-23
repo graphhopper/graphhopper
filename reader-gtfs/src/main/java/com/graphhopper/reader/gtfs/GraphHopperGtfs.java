@@ -24,10 +24,13 @@ import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.PointList;
@@ -41,10 +44,19 @@ import java.util.zip.ZipFile;
 
 public class GraphHopperGtfs extends GraphHopperOSM {
 
-    private final CmdArgs cmdArgs;
-    public GtfsStorage gtfsStorage;
 
-    public GraphHopperGtfs(CmdArgs cmdArgs) {
+    public static GraphHopperGtfs createOrLoadGraphHopperGtfs(EncodingManager encodingManager, CmdArgs cmdArgs) {
+        GraphHopperGtfs graphHopperOSM = new GraphHopperGtfs(cmdArgs);
+        graphHopperOSM.init(cmdArgs);
+        graphHopperOSM.setEncodingManager(encodingManager);
+        graphHopperOSM.importOrLoad();
+        return graphHopperOSM;
+    }
+
+    private final CmdArgs cmdArgs;
+    private GtfsStorage gtfsStorage;
+
+    private GraphHopperGtfs(CmdArgs cmdArgs) {
         this.cmdArgs = cmdArgs;
     }
 
@@ -96,7 +108,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
     @Override
     protected LocationIndex createLocationIndex(Directory dir) {
         if (getGraphHopperStorage().getNodes() > 0) {
-            return super.createLocationIndex(dir);
+            return new LocationIndexTree(getGraphHopperStorage(), new RAMDirectory()).prepareIndex();
         } else {
             return new EmptyLocationIndex();
         }
@@ -111,22 +123,22 @@ public class GraphHopperGtfs extends GraphHopperOSM {
     @Override
     protected void importPublicTransit() {
         gtfsStorage = new GtfsStorage(getGraphHopperStorage().getDirectory());
-        if (gtfsStorage.loadExisting()) {
+        if (getGtfsStorage().loadExisting()) {
         } else {
-            gtfsStorage.create();
+            getGtfsStorage().create();
             GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
             int idx = 0;
             List<String> gtfsFiles = cmdArgs.has("gtfs.file") ? Arrays.asList(cmdArgs.get("gtfs.file", "").split(",")) : Collections.emptyList();
             for (String gtfsFile : gtfsFiles) {
                 try {
-                    gtfsStorage.loadGtfsFromFile("gtfs_" + idx++, new ZipFile(gtfsFile));
+                    getGtfsStorage().loadGtfsFromFile("gtfs_" + idx++, new ZipFile(gtfsFile));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
-            LocationIndex walkNetworkIndex = getLocationIndex();
-            gtfsStorage.getGtfsFeeds().forEach((id, gtfsFeed) -> {
-                GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), gtfsStorage, walkNetworkIndex);
+            LocationIndex streetNetworkIndex = getLocationIndex();
+            getGtfsStorage().getGtfsFeeds().forEach((id, gtfsFeed) -> {
+                GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), getGtfsStorage(), streetNetworkIndex);
                 gtfsReader.connectStopsToStreetNetwork();
                 getType0TransferWithTimes(gtfsFeed)
                         .forEach(t -> {
@@ -140,12 +152,15 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                     throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
                 }
             });
+            streetNetworkIndex.close();
+            LocationIndex locationIndex = createLocationIndex(graphHopperStorage.getDirectory());
+            setLocationIndex(locationIndex);
         }
     }
 
     private Stream<TransferWithTime> getType0TransferWithTimes(GTFSFeed gtfsFeed) {
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
-        RealtimeFeed realtimeFeed = RealtimeFeed.empty(gtfsStorage);
+        RealtimeFeed realtimeFeed = RealtimeFeed.empty(getGtfsStorage());
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
         FastestWeighting accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
         return gtfsFeed.transfers.entrySet()
@@ -153,18 +168,18 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                 .filter(e -> e.getValue().transfer_type == 0)
                 .map(e -> {
                     PointList points = new PointList(2, false);
-                    final int fromnode = gtfsStorage.getStationNodes().get(e.getValue().from_stop_id);
+                    final int fromnode = getGtfsStorage().getStationNodes().get(e.getValue().from_stop_id);
                     final QueryResult fromstation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
                     fromstation.setClosestNode(fromnode);
                     points.add(graphHopperStorage.getNodeAccess().getLat(fromnode), graphHopperStorage.getNodeAccess().getLon(fromnode));
 
-                    final int tonode = gtfsStorage.getStationNodes().get(e.getValue().to_stop_id);
+                    final int tonode = getGtfsStorage().getStationNodes().get(e.getValue().to_stop_id);
                     final QueryResult tostation = new QueryResult(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
                     tostation.setClosestNode(tonode);
                     points.add(graphHopperStorage.getNodeAccess().getLat(tonode), graphHopperStorage.getNodeAccess().getLon(tonode));
 
                     QueryGraph queryGraph = QueryGraph.lookup(graphHopperStorage, Collections.emptyList());
-                    final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, false, true, 5.0, false);
+                    final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, getGtfsStorage(), realtimeFeed, false, true, 5.0, false);
 
                     MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, false, false, false, false, Integer.MAX_VALUE, new ArrayList<>());
                     Iterator<Label> iterator = router.calcLabels(fromnode, Instant.ofEpochMilli(0), 0).iterator();
@@ -189,7 +204,12 @@ public class GraphHopperGtfs extends GraphHopperOSM {
 
     @Override
     public void close() {
-        gtfsStorage.close();
+        getGtfsStorage().close();
         super.close();
     }
+
+    public GtfsStorage getGtfsStorage() {
+        return gtfsStorage;
+    }
+
 }
