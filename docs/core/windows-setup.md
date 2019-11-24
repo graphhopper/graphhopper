@@ -1,6 +1,6 @@
 # Windows Setup from Source
 
-Either get [Babun](http://babun.github.io/) which comes preinstalled with git and more. Or download [cygwin](http://www.cygwin.com/) and click on the setup where you need to select wget, git and unzip.
+Download [cygwin](http://www.cygwin.com/) and click on the setup where you need to select wget, git and unzip.
 
 Now you can choose to either [install GraphHopper](../web/quickstart.md) or if you plan to customize the source code [install it from source](./quickstart-from-source.md).
 
