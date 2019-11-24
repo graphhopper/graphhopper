@@ -1203,7 +1203,7 @@ public class CHTurnCostTest {
     private void setRandomCost(int from, int via, int to, Random rnd) {
         int cost = (int) (rnd.nextDouble() * maxCost / 2);
         setTurnCost(from, via, to, cost);
-        LOGGER.trace("addTurnCost({}, {}, {}, {});", from, via, to, cost);
+        LOGGER.trace("setTurnCost({}, {}, {}, {});", from, via, to, cost);
     }
 
     private void setRestriction(int from, int via, int to) {
