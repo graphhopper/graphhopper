@@ -1266,7 +1266,7 @@ public class GraphHopperIT {
         req.setVehicle("foot");
         GHResponse rsp = hopper.route(req);
         assertTrue("using edge-based for encoder without turncost support should be an error, but got:\n" + rsp.getErrors(),
-                rsp.getErrors().toString().contains("You need a turn cost storage to make use of edge_based=true, e.g. use car|turn_costs=true"));
+                rsp.getErrors().toString().contains("You need to set up a turn cost storage to make use of edge_based=true, e.g. use car|turn_costs=true"));
     }
 
     @Test
