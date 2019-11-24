@@ -5,7 +5,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,7 +19,7 @@ public class TurnWeightingTest {
     private FlagEncoder encoder;
     private EncodingManager encodingManager;
     private Weighting weighting;
-    private TurnCostExtension turnCostExt;
+    private TurnCostStorage turnCostExt;
 
     @Before
     public void setup() {
@@ -27,7 +27,7 @@ public class TurnWeightingTest {
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphBuilder(encodingManager).create();
         weighting = new FastestWeighting(encoder);
-        turnCostExt = graph.getTurnCostExtension();
+        turnCostExt = graph.getTurnCostStorage();
     }
 
     @Test

@@ -498,7 +498,7 @@ public class OSMReaderTest {
 
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(15, graph.getNodes());
-        TurnCostExtension tcStorage = graph.getTurnCostExtension();
+        TurnCostStorage tcStorage = graph.getTurnCostStorage();
         assertNotNull(tcStorage);
 
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
@@ -807,7 +807,7 @@ public class OSMReaderTest {
 
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(8, graph.getNodes());
-        TurnCostExtension tcStorage = graph.getTurnCostExtension();
+        TurnCostStorage tcStorage = graph.getTurnCostStorage();
         assertNotNull(tcStorage);
 
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);
@@ -871,7 +871,7 @@ public class OSMReaderTest {
 
         Graph graph = hopper.getGraphHopperStorage();
         assertEquals(5, graph.getNodes());
-        TurnCostExtension tcStorage = graph.getTurnCostExtension();
+        TurnCostStorage tcStorage = graph.getTurnCostStorage();
         assertNotNull(tcStorage);
 
         int n1 = AbstractGraphStorageTester.getIdOf(graph, 50, 10);

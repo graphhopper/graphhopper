@@ -52,7 +52,7 @@ public class DirectedRoutingTest {
     private CHProfile chProfile;
     private CHGraph chGraph;
     private CarFlagEncoder encoder;
-    private TurnCostExtension turnCostExtension;
+    private TurnCostStorage turnCostStorage;
     private int maxTurnCosts;
     private Weighting weighting;
     private EncodingManager encodingManager;
@@ -103,7 +103,7 @@ public class DirectedRoutingTest {
         weighting = new FastestWeighting(encoder);
         chProfile = CHProfile.edgeBased(weighting, uTurnCosts);
         graph = createGraph();
-        turnCostExtension = graph.getTurnCostExtension();
+        turnCostStorage = graph.getTurnCostStorage();
     }
 
     private void preProcessGraph() {
@@ -144,7 +144,7 @@ public class DirectedRoutingTest {
     }
 
     private TurnWeighting createTurnWeighting(Graph g) {
-        return new TurnWeighting(weighting, g.getTurnCostExtension(), uTurnCosts);
+        return new TurnWeighting(weighting, g.getTurnCostStorage(), uTurnCosts);
     }
 
     @Test
@@ -155,7 +155,7 @@ public class DirectedRoutingTest {
         final int numQueries = 50;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, turnCostExtension);
+        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, turnCostStorage);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         List<String> strictViolations = new ArrayList<>();
@@ -197,7 +197,7 @@ public class DirectedRoutingTest {
         double pOffset = 0;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, pOffset);
-        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, turnCostExtension);
+        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, turnCostStorage);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         LocationIndexTree index = new LocationIndexTree(graph, dir);

@@ -25,7 +25,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.ExtendedNodeAccess;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -53,7 +53,7 @@ public class QueryGraph implements Graph {
     private final int mainEdges;
     // todo: why do we need this and do we still need it when we stop wrapping CHGraph with QueryGraph ?
     private final QueryGraph baseGraph;
-    private final TurnCostExtension wrappedExtension;
+    private final TurnCostStorage turnCostStorage;
     private final NodeAccess nodeAccess;
     private final GraphModification graphModification;
 
@@ -82,10 +82,10 @@ public class QueryGraph implements Graph {
         graphModification = GraphModificationBuilder.build(graph, queryResults);
         nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), graphModification.getVirtualNodes(), mainNodes);
 
-        if (mainGraph.getTurnCostExtension() != null)
-            wrappedExtension = new QueryGraphTurnExt(mainGraph, graphModification.getClosestEdges());
+        if (mainGraph.getTurnCostStorage() != null)
+            turnCostStorage = new QueryGraphTurnExt(mainGraph, graphModification.getClosestEdges());
         else
-            wrappedExtension = null;
+            turnCostStorage = null;
 
         // build data structures holding the virtual edges at all real/virtual nodes that are modified compared to the
         // mainGraph.
@@ -103,7 +103,7 @@ public class QueryGraph implements Graph {
     private QueryGraph(Graph graph, QueryGraph superQueryGraph) {
         mainGraph = graph;
         baseGraph = this;
-        wrappedExtension = superQueryGraph.wrappedExtension;
+        turnCostStorage = superQueryGraph.turnCostStorage;
         mainNodes = superQueryGraph.mainNodes;
         mainEdges = superQueryGraph.mainEdges;
         graphModification = superQueryGraph.graphModification;
@@ -366,8 +366,8 @@ public class QueryGraph implements Graph {
     }
 
     @Override
-    public TurnCostExtension getTurnCostExtension() {
-        return wrappedExtension;
+    public TurnCostStorage getTurnCostStorage() {
+        return turnCostStorage;
     }
 
     @Override

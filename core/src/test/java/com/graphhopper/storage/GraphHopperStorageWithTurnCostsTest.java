@@ -30,7 +30,7 @@ import static org.junit.Assert.assertTrue;
  * @author Karl Hübner
  */
 public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest {
-    private TurnCostExtension turnCostStorage;
+    private TurnCostStorage turnCostStorage;
 
     @Override
     protected GraphHopperStorage newGHStorage(Directory dir, boolean is3D) {
@@ -40,7 +40,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
     @Override
     protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
         GraphHopperStorage g = GraphBuilder.start(encodingManager).setDir(dir).set3D(enabled3D).withTurnCosts(true).setSegmentSize(segmentSize).build();
-        turnCostStorage = g.getTurnCostExtension();
+        turnCostStorage = g.getTurnCostStorage();
         return g;
     }
 

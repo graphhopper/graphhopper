@@ -54,7 +54,7 @@ public class EdgeBasedNodeContractorTest {
     private CHGraph chGraph;
     private CarFlagEncoder encoder;
     private GraphHopperStorage graph;
-    private TurnCostExtension turnCostExtension;
+    private TurnCostStorage turnCostStorage;
     private int uTurnCosts;
     private Weighting weighting;
 
@@ -73,7 +73,7 @@ public class EdgeBasedNodeContractorTest {
         weighting = new ShortestWeighting(encoder);
         uTurnCosts = INFINITE_U_TURN_COSTS;
         graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, uTurnCosts)).create();
-        turnCostExtension = graph.getTurnCostExtension();
+        turnCostStorage = graph.getTurnCostStorage();
         chGraph = graph.getCHGraph();
     }
 
@@ -1383,14 +1383,14 @@ public class EdgeBasedNodeContractorTest {
 
     private EdgeBasedNodeContractor createNodeContractor() {
         PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
-        TurnWeighting turnWeighting = new TurnWeighting(preparationWeighting, turnCostExtension, uTurnCosts);
+        TurnWeighting turnWeighting = new TurnWeighting(preparationWeighting, turnCostStorage, uTurnCosts);
         EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(chGraph, turnWeighting, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
     }
 
     private void addRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode) {
-        turnCostExtension.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(true, 0));
+        turnCostStorage.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(true, 0));
     }
 
     private void addRestriction(int from, int via, int to) {
@@ -1398,7 +1398,7 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void addTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double cost) {
-        turnCostExtension.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, cost));
+        turnCostStorage.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, cost));
     }
 
     private void addTurnCost(int from, int via, int to, int cost) {

@@ -33,7 +33,7 @@ import static org.junit.Assert.*;
  */
 public class DirectedBidirectionalDijkstraTest {
     private Directory dir;
-    private TurnCostExtension turnCostExtension;
+    private TurnCostStorage turnCostStorage;
     private int maxTurnCosts;
     private GraphHopperStorage graph;
     private FlagEncoder encoder;
@@ -50,12 +50,12 @@ public class DirectedBidirectionalDijkstraTest {
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
         encodingManager = EncodingManager.create(encoder);
         graph = new GraphHopperStorage(dir, encodingManager, false, true).create(1000);
-        turnCostExtension = graph.getTurnCostExtension();
+        turnCostStorage = graph.getTurnCostStorage();
         weighting = createWeighting(Double.POSITIVE_INFINITY);
     }
 
     private Weighting createWeighting(double defaultUTurnCosts) {
-        return new TurnWeighting(new FastestWeighting(encoder), turnCostExtension, defaultUTurnCosts);
+        return new TurnWeighting(new FastestWeighting(encoder), turnCostStorage, defaultUTurnCosts);
     }
 
     @Test
@@ -389,7 +389,7 @@ public class DirectedBidirectionalDijkstraTest {
         Random rnd = new Random(seed);
         int numNodes = 100;
         GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, turnCostExtension);
+        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, turnCostStorage);
 
         long numStrictViolations = 0;
         for (int i = 0; i < numQueries; i++) {
@@ -512,7 +512,7 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     private void addRestriction(int fromNode, int node, int toNode) {
-        turnCostExtension.addTurnInfo(
+        turnCostStorage.addTurnInfo(
                 GHUtility.getEdge(graph, fromNode, node).getEdge(),
                 node,
                 GHUtility.getEdge(graph, node, toNode).getEdge(),
@@ -521,7 +521,7 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     private void addTurnCost(int fromNode, int node, int toNode, double turnCost) {
-        turnCostExtension.addTurnInfo(
+        turnCostStorage.addTurnInfo(
                 GHUtility.getEdge(graph, fromNode, node).getEdge(),
                 node,
                 GHUtility.getEdge(graph, node, toNode).getEdge(),

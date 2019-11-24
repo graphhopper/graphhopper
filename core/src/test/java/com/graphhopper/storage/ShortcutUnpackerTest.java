@@ -30,7 +30,7 @@ public class ShortcutUnpackerTest {
     private Weighting weighting;
     private GraphHopperStorage graph;
     private CHGraph chGraph;
-    private TurnCostExtension turnCostExtension;
+    private TurnCostStorage turnCostStorage;
 
     @Parameterized.Parameters(name = "{0}")
     public static Object[] params() {
@@ -53,7 +53,7 @@ public class ShortcutUnpackerTest {
         graph = new GraphBuilder(encodingManager).setCHProfiles(new CHProfile(weighting, edgeBased, INFINITE_U_TURN_COSTS)).create();
         chGraph = graph.getCHGraph();
         if (edgeBased) {
-            turnCostExtension = graph.getTurnCostExtension();
+            turnCostStorage = graph.getTurnCostStorage();
         }
     }
 
@@ -234,21 +234,21 @@ public class ShortcutUnpackerTest {
         graph.freeze();
 
         // turn costs ->
-        turnCostExtension.addTurnInfo(PREV_EDGE, 0, edge0.getEdge(), encoder.getTurnFlags(false, 2));
+        turnCostStorage.addTurnInfo(PREV_EDGE, 0, edge0.getEdge(), encoder.getTurnFlags(false, 2));
         addTurnCost(edge0, edge1, 1, 5);
         addTurnCost(edge1, edge2, 2, 3);
         addTurnCost(edge2, edge3, 3, 2);
         addTurnCost(edge3, edge4, 4, 1);
         addTurnCost(edge4, edge5, 5, 4);
-        turnCostExtension.addTurnInfo(edge5.getEdge(), 6, NEXT_EDGE, encoder.getTurnFlags(false, 6));
+        turnCostStorage.addTurnInfo(edge5.getEdge(), 6, NEXT_EDGE, encoder.getTurnFlags(false, 6));
         // turn costs <-
-        turnCostExtension.addTurnInfo(NEXT_EDGE, 6, edge5.getEdge(), encoder.getTurnFlags(false, 2));
+        turnCostStorage.addTurnInfo(NEXT_EDGE, 6, edge5.getEdge(), encoder.getTurnFlags(false, 2));
         addTurnCost(edge5, edge4, 5, 3);
         addTurnCost(edge4, edge3, 4, 2);
         addTurnCost(edge3, edge2, 3, 4);
         addTurnCost(edge2, edge1, 2, 1);
         addTurnCost(edge1, edge0, 1, 0);
-        turnCostExtension.addTurnInfo(edge0.getEdge(), 0, PREV_EDGE, encoder.getTurnFlags(false, 1));
+        turnCostStorage.addTurnInfo(edge0.getEdge(), 0, PREV_EDGE, encoder.getTurnFlags(false, 1));
 
         shortcut(0, 2, 0, 1, 0, 1);
         shortcut(2, 4, 2, 3, 2, 3);
@@ -290,7 +290,7 @@ public class ShortcutUnpackerTest {
     }
 
     private void addTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double costs) {
-        turnCostExtension.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, costs));
+        turnCostStorage.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, costs));
     }
 
     private void shortcut(int baseNode, int adjNode, int skip1, int skip2, int origFirst, int origLast) {
@@ -325,7 +325,7 @@ public class ShortcutUnpackerTest {
     }
 
     private class TurnWeightingVisitor implements ShortcutUnpacker.Visitor {
-        private final TurnWeighting turnWeighting = new TurnWeighting(weighting, turnCostExtension);
+        private final TurnWeighting turnWeighting = new TurnWeighting(weighting, turnCostStorage);
         private long time = 0;
         private double weight = 0;
 

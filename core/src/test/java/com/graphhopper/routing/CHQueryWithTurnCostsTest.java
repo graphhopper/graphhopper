@@ -55,7 +55,7 @@ public class CHQueryWithTurnCostsTest {
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
-    private final TurnCostExtension turnCostExtension = graph.getTurnCostExtension();
+    private final TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
     private final CHGraph chGraph = graph.getCHGraph();
     private String algoString;
 
@@ -709,7 +709,7 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
-        TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension);
+        TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), turnCostStorage);
         AbstractBidirectionEdgeCHNoSOD algo = "astar".equals(algoString) ?
                 new AStarBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting) :
                 new DijkstraBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting);
@@ -728,7 +728,7 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private void addTurnCost(EdgeIteratorState edge1, EdgeIteratorState edge2, int viaNode, double costs) {
-        turnCostExtension.addTurnInfo(edge1.getEdge(), viaNode, edge2.getEdge(), encoder.getTurnFlags(false, costs));
+        turnCostStorage.addTurnInfo(edge1.getEdge(), viaNode, edge2.getEdge(), encoder.getTurnFlags(false, costs));
     }
 
     private void addTurnCost(int from, int via, int to, int cost) {
@@ -740,7 +740,7 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private void addRestriction(EdgeIteratorState edge1, EdgeIteratorState edge2, int viaNode) {
-        turnCostExtension.addTurnInfo(edge1.getEdge(), viaNode, edge2.getEdge(), encoder.getTurnFlags(true, 0));
+        turnCostStorage.addTurnInfo(edge1.getEdge(), viaNode, edge2.getEdge(), encoder.getTurnFlags(true, 0));
     }
 
     private EdgeIteratorState getEdge(int from, int to) {

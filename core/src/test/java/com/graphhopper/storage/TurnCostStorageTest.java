@@ -9,7 +9,7 @@ import org.junit.Test;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.Assert.assertEquals;
 
-public class TurnCostExtensionTest {
+public class TurnCostStorageTest {
 
     // 0---1
     // |   /
@@ -34,7 +34,7 @@ public class TurnCostExtensionTest {
         EncodingManager manager = EncodingManager.create(carEncoder, bikeEncoder);
         GraphHopperStorage g = new GraphBuilder(manager).create();
         initGraph(g);
-        TurnCostExtension tcs = g.getTurnCostExtension();
+        TurnCostStorage tcs = g.getTurnCostStorage();
 
         // introduce some turn costs
         long carRestricted = carEncoder.getTurnFlags(true, 0);
@@ -101,7 +101,7 @@ public class TurnCostExtensionTest {
         EncodingManager manager = EncodingManager.create(carEncoder, bikeEncoder);
         GraphHopperStorage g = new GraphBuilder(manager).create();
         initGraph(g);
-        TurnCostExtension tcs = g.getTurnCostExtension();
+        TurnCostStorage tcs = g.getTurnCostStorage();
 
         long carRestricted = carEncoder.getTurnFlags(true, 0);
         long bikeRestricted = bikeEncoder.getTurnFlags(true, 0);

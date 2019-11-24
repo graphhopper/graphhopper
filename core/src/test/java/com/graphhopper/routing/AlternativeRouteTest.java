@@ -52,7 +52,7 @@ public class AlternativeRouteTest {
         EncodingManager em = EncodingManager.create(carFE);
         graph = new GraphHopperStorage(new RAMDirectory(), em, false, true);
         graph.create(1000);
-        weighting = new TurnWeighting(new FastestWeighting(carFE), graph.getTurnCostExtension());
+        weighting = new TurnWeighting(new FastestWeighting(carFE), graph.getTurnCostStorage());
     }
 
     /**

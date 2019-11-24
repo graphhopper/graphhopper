@@ -469,13 +469,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private TurnWeighting createTurnWeightingForEdgeBased(Graph graph) {
-        // important: do not simply take the extension from ghStorage, because we need the wrapped extension from
+        // important: do not simply take the turn cost storage from ghStorage, because we need the wrapped extension from
         // query graph!
-        TurnCostExtension turnCostExtension = graph.getTurnCostExtension();
-        if (turnCostExtension == null) {
-            throw new IllegalArgumentException("For edge-based CH you need a turn cost extension");
+        TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
+        if (turnCostStorage == null) {
+            throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
         }
-        return new TurnWeighting(prepareWeighting, turnCostExtension, chProfile.getUTurnCosts());
+        return new TurnWeighting(prepareWeighting, turnCostStorage, chProfile.getUTurnCosts());
     }
 
     private void _close() {

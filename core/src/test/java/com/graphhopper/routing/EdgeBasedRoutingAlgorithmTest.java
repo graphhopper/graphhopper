@@ -29,7 +29,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
@@ -51,7 +51,7 @@ import static org.junit.Assert.*;
 public class EdgeBasedRoutingAlgorithmTest {
     private final String algoStr;
     private FlagEncoder carEncoder;
-    private TurnCostExtension tcs;
+    private TurnCostStorage tcs;
 
     public EdgeBasedRoutingAlgorithmTest(String algo) {
         this.algoStr = algo;
@@ -112,7 +112,7 @@ public class EdgeBasedRoutingAlgorithmTest {
 
     private GraphHopperStorage createStorage(EncodingManager em) {
         GraphHopperStorage ghStorage = new GraphBuilder(em).create();
-        tcs = ghStorage.getTurnCostExtension();
+        tcs = ghStorage.getTurnCostStorage();
         return ghStorage;
     }
 

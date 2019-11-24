@@ -414,13 +414,13 @@ public class OSMReader implements DataReader {
 
     public void processRelation(ReaderRelation relation) {
         if (relation.hasTag("type", "restriction")) {
-            TurnCostExtension turnCostExtension = graph.getTurnCostExtension();
-            if (turnCostExtension != null) {
+            TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
+            if (turnCostStorage != null) {
                 List<OSMTurnRelation> turnRelations = createTurnRelations(relation);
                 for (OSMTurnRelation turnRelation : turnRelations) {
                     Collection<TurnCostTableEntry> entries = analyzeTurnRelation(turnRelation);
                     for (TurnCostTableEntry entry : entries) {
-                        turnCostExtension.addTurnInfo(entry.edgeFrom, entry.nodeVia, entry.edgeTo, entry.flags);
+                        turnCostStorage.addTurnInfo(entry.edgeFrom, entry.nodeVia, entry.edgeTo, entry.flags);
                     }
                 }
             }

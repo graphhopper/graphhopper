@@ -20,7 +20,7 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TurnCostEncoder;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -37,11 +37,11 @@ public class TurnWeighting implements Weighting {
      * Encoder, which decodes the turn flags
      */
     private final TurnCostEncoder turnCostEncoder;
-    private final TurnCostExtension turnCostExt;
+    private final TurnCostStorage turnCostExt;
     private final Weighting superWeighting;
     private final double uTurnCosts;
 
-    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
+    public TurnWeighting(Weighting superWeighting, TurnCostStorage turnCostExt) {
         this(superWeighting, turnCostExt, INFINITE_U_TURN_COSTS);
     }
 
@@ -52,7 +52,7 @@ public class TurnWeighting implements Weighting {
      * @param uTurnCosts     the cost of a u-turn in seconds, this value will be applied to all u-turn costs no matter
      *                       whether or not turnCostExt contains explicit values for these turns.
      */
-    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt, double uTurnCosts) {
+    public TurnWeighting(Weighting superWeighting, TurnCostStorage turnCostExt, double uTurnCosts) {
         if (turnCostExt == null) {
             throw new RuntimeException("No storage set to calculate turn weight");
         }
@@ -109,7 +109,7 @@ public class TurnWeighting implements Weighting {
             return 0;
         }
         if (turnCostExt.isUTurn(edgeFrom, edgeTo)) {
-            // note that the u-turn costs overwrite any turn costs set in TurnCostExtension
+            // note that the u-turn costs overwrite any turn costs set in TurnCostStorage
             // todo:
             // also this does not allow TurnCostEncoder to set the u-turn costs to zero explicitly, like FootFlagEncoder!
             // this problem is a bit hidden, because if you do not apply any turn restrictions (like FootFlagEncoder)

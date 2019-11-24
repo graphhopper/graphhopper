@@ -26,7 +26,7 @@ public class Path4CHTest {
     private CHGraph chGraph;
     private FlagEncoder encoder;
     private Weighting weighting;
-    private TurnCostExtension turnCostExtension;
+    private TurnCostStorage turnCostStorage;
 
     @Before
     public void init() {
@@ -35,7 +35,7 @@ public class Path4CHTest {
         weighting = new FastestWeighting(encoder);
         graph = new GraphBuilder(em).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
         chGraph = graph.getCHGraph();
-        turnCostExtension = graph.getTurnCostExtension();
+        turnCostStorage = graph.getTurnCostStorage();
     }
 
     @Test
@@ -133,7 +133,7 @@ public class Path4CHTest {
     }
 
     private void addTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, int cost) {
-        turnCostExtension.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, cost));
+        turnCostStorage.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, cost));
     }
 
     private EdgeIteratorState getEdge(int from, int to) {
@@ -154,7 +154,7 @@ public class Path4CHTest {
     }
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
-        TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension);
+        TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), turnCostStorage);
         CHGraph lg = graph.getCHGraph();
         AbstractBidirectionEdgeCHNoSOD algo = new DijkstraBidirectionEdgeCHNoSOD(lg, chTurnWeighting);
         algo.setEdgeFilter(new LevelEdgeFilter(lg));

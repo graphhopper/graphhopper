@@ -84,7 +84,7 @@ public class RandomCHRoutingTest {
         double pOffset = 0;
         GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, pOffset);
         if (traversalMode.isEdgeBased()) {
-            GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, graph.getTurnCostExtension());
+            GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, graph.getTurnCostStorage());
         }
         runRandomTest(rnd, 20);
     }
@@ -127,7 +127,7 @@ public class RandomCHRoutingTest {
         long seed = 60643479675316L;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 50, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.0);
-        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, graph.getTurnCostExtension());
+        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, graph.getTurnCostStorage());
         runRandomTest(rnd, 20);
     }
 
@@ -157,7 +157,7 @@ public class RandomCHRoutingTest {
                 int from = rnd.nextInt(queryGraph.getNodes());
                 int to = rnd.nextInt(queryGraph.getNodes());
                 Weighting w = traversalMode.isEdgeBased()
-                        ? new TurnWeighting(weighting, queryGraph.getTurnCostExtension(), uTurnCosts == INFINITE_U_TURN_COSTS ? Double.POSITIVE_INFINITY : uTurnCosts)
+                        ? new TurnWeighting(weighting, queryGraph.getTurnCostStorage(), uTurnCosts == INFINITE_U_TURN_COSTS ? Double.POSITIVE_INFINITY : uTurnCosts)
                         : weighting;
                 // using plain dijkstra instead of bidirectional, because of #1592
                 RoutingAlgorithm refAlgo = new Dijkstra(queryGraph, w, traversalMode);
