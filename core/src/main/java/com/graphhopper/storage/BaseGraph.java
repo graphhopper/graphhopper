@@ -632,7 +632,7 @@ class BaseGraph implements Graph {
         wayGeometry.copyTo(clonedG.wayGeometry);
         clonedG.loadWayGeometryHeader();
 
-        // turn cost extension
+        // turn cost storage
         if (supportsTurnCosts()) {
             turnCostStorage.copyTo(clonedG.turnCostStorage);
         }

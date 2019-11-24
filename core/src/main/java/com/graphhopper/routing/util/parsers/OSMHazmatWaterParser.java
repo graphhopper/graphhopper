@@ -1,7 +1,5 @@
 package com.graphhopper.routing.util.parsers;
 
-import java.util.List;
-
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
@@ -10,11 +8,13 @@ import com.graphhopper.routing.profiles.HazmatWater;
 import com.graphhopper.routing.util.EncodingManager.Access;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.List;
+
 
 public class OSMHazmatWaterParser implements TagParser {
 
     private final EnumEncodedValue<HazmatWater> hazWaterEnc;
-    
+
     public OSMHazmatWaterParser() {
         this.hazWaterEnc = new EnumEncodedValue<>(HazmatWater.KEY, HazmatWater.class);
     }

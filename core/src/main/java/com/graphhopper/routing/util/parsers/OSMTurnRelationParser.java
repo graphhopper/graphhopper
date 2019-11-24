@@ -164,7 +164,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
     }
 
     /**
-     * Helper class to processing purposes. We could remove it if TurnCostExtension is similarly fast with merging
+     * Helper class for processing purposes. We could remove it if TurnCostStorage was similarly fast with merging
      * existing turn cost relations.
      */
     static class TCEntry {

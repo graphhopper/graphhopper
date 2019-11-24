@@ -53,7 +53,7 @@ public class QueryGraph implements Graph {
     private final int mainEdges;
     // todo: why do we need this and do we still need it when we stop wrapping CHGraph with QueryGraph ?
     private final QueryGraph baseGraph;
-    private final TurnCostStorage wrappedExtension;
+    private final TurnCostStorage turnCostStorage;
     private final NodeAccess nodeAccess;
     private final GraphModification graphModification;
 
@@ -83,9 +83,9 @@ public class QueryGraph implements Graph {
         nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), graphModification.getVirtualNodes(), mainNodes);
 
         if (mainGraph.getTurnCostStorage() != null)
-            wrappedExtension = new QueryGraphTurnExt(mainGraph, graphModification.getClosestEdges());
+            turnCostStorage = new QueryGraphTurnExt(mainGraph, graphModification.getClosestEdges());
         else
-            wrappedExtension = null;
+            turnCostStorage = null;
 
         // build data structures holding the virtual edges at all real/virtual nodes that are modified compared to the
         // mainGraph.
@@ -103,7 +103,7 @@ public class QueryGraph implements Graph {
     private QueryGraph(Graph graph, QueryGraph superQueryGraph) {
         mainGraph = graph;
         baseGraph = this;
-        wrappedExtension = superQueryGraph.wrappedExtension;
+        turnCostStorage = superQueryGraph.turnCostStorage;
         mainNodes = superQueryGraph.mainNodes;
         mainEdges = superQueryGraph.mainEdges;
         graphModification = superQueryGraph.graphModification;
@@ -362,7 +362,7 @@ public class QueryGraph implements Graph {
 
     @Override
     public TurnCostStorage getTurnCostStorage() {
-        return wrappedExtension;
+        return turnCostStorage;
     }
 
     @Override

@@ -19,7 +19,7 @@ package com.graphhopper.util.details;
 
 import com.graphhopper.coll.MapEntry;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.ArrayList;
@@ -37,11 +37,11 @@ import static com.graphhopper.util.Parameters.Details.*;
  */
 public class PathDetailsBuilderFactory {
 
-    public List<PathDetailsBuilder> createPathDetailsBuilders(List<String> requestedPathDetails, FlagEncoder encoder, Weighting weighting) {
+    public List<PathDetailsBuilder> createPathDetailsBuilders(List<String> requestedPathDetails, EncodingManager em, Weighting weighting) {
         List<PathDetailsBuilder> builders = new ArrayList<>();
 
         if (requestedPathDetails.contains(AVERAGE_SPEED))
-            builders.add(new DecimalDetails(AVERAGE_SPEED, encoder.getAverageSpeedEnc()));
+            builders.add(new AverageSpeedDetails(weighting));
 
         if (requestedPathDetails.contains(STREET_NAME))
             builders.add(new StreetNameDetails());
@@ -59,14 +59,14 @@ public class PathDetailsBuilderFactory {
             builders.add(new DistanceDetails());
 
         for (String checkSuffix : requestedPathDetails) {
-            if (checkSuffix.contains(getKey("", "priority")) && encoder.hasEncodedValue(checkSuffix))
-                builders.add(new DecimalDetails(checkSuffix, encoder.getDecimalEncodedValue(checkSuffix)));
+            if (checkSuffix.contains(getKey("", "priority")) && em.hasEncodedValue(checkSuffix))
+                builders.add(new DecimalDetails(checkSuffix, em.getDecimalEncodedValue(checkSuffix)));
         }
 
         for (String key : Arrays.asList(MaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY,
                 MaxAxleLoad.KEY, MaxLength.KEY)) {
-            if (requestedPathDetails.contains(key) && encoder.hasEncodedValue(key))
-                builders.add(new DecimalDetails(key, encoder.getDecimalEncodedValue(key)));
+            if (requestedPathDetails.contains(key) && em.hasEncodedValue(key))
+                builders.add(new DecimalDetails(key, em.getDecimalEncodedValue(key)));
         }
 
         for (Map.Entry entry : Arrays.asList(new MapEntry<>(RoadClass.KEY, RoadClass.class),
@@ -76,8 +76,8 @@ public class PathDetailsBuilderFactory {
                 new MapEntry<>(HazmatTunnel.KEY, HazmatTunnel.class), new MapEntry<>(HazmatWater.KEY, HazmatWater.class),
                 new MapEntry<>(Country.KEY, Country.class))) {
             String key = (String) entry.getKey();
-            if (requestedPathDetails.contains(key) && encoder.hasEncodedValue(key))
-                builders.add(new EnumDetails(key, encoder.getEnumEncodedValue(key, (Class<Enum>) entry.getValue())));
+            if (requestedPathDetails.contains(key) && em.hasEncodedValue(key))
+                builders.add(new EnumDetails(key, em.getEnumEncodedValue(key, (Class<Enum>) entry.getValue())));
         }
 
         if (requestedPathDetails.size() != builders.size()) {

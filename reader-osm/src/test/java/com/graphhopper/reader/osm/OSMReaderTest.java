@@ -743,22 +743,22 @@ public class OSMReaderTest {
         DecimalEncodedValue bikeTCEnc = manager.getDecimalEncodedValue(getKey("bike", EV_SUFFIX));
 
         Graph graph = hopper.getGraphHopperStorage();
-        TurnCostStorage tcExtension = graph.getTurnCostStorage();
+        TurnCostStorage tcStorage = graph.getTurnCostStorage();
 
         IntsRef tcFlags = TurnCost.createFlags();
-        tcExtension.readFlags(tcFlags, GHUtility.getEdge(graph, 1, 0).getEdge(), 0, GHUtility.getEdge(graph, 0, 2).getEdge());
+        tcStorage.readFlags(tcFlags, GHUtility.getEdge(graph, 1, 0).getEdge(), 0, GHUtility.getEdge(graph, 0, 2).getEdge());
         // the 2nd entry provides turn flags for bike only
         assertTrue(Double.isInfinite(carTCEnc.getDecimal(false, tcFlags)));
         assertTrue(Double.isInfinite(truckTCEnc.getDecimal(false, tcFlags)));
         assertEquals(0, bikeTCEnc.getDecimal(false, tcFlags), .1);
 
-        tcExtension.readFlags(tcFlags, GHUtility.getEdge(graph, 2, 0).getEdge(), 0, GHUtility.getEdge(graph, 0, 3).getEdge());
+        tcStorage.readFlags(tcFlags, GHUtility.getEdge(graph, 2, 0).getEdge(), 0, GHUtility.getEdge(graph, 0, 3).getEdge());
         // the first entry provides turn flags for car and foot only
         assertEquals(0, carTCEnc.getDecimal(false, tcFlags), .1);
         assertEquals(0, truckTCEnc.getDecimal(false, tcFlags), .1);
         assertTrue(Double.isInfinite(bikeTCEnc.getDecimal(false, tcFlags)));
 
-        tcExtension.readFlags(tcFlags, GHUtility.getEdge(graph, 3, 0).getEdge(), 0, GHUtility.getEdge(graph, 0, 2).getEdge());
+        tcStorage.readFlags(tcFlags, GHUtility.getEdge(graph, 3, 0).getEdge(), 0, GHUtility.getEdge(graph, 0, 2).getEdge());
         assertEquals(0, carTCEnc.getDecimal(false, tcFlags), .1);
         assertTrue(Double.isInfinite(truckTCEnc.getDecimal(false, tcFlags)));
         assertEquals(0, bikeTCEnc.getDecimal(false, tcFlags), .1);

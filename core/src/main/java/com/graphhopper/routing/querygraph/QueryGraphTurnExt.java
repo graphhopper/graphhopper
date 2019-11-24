@@ -27,14 +27,14 @@ import com.graphhopper.storage.TurnCostStorage;
  * special {@link TurnCostStorage} that handles virtual nodes and edges
  */
 class QueryGraphTurnExt extends TurnCostStorage {
-    private final TurnCostStorage mainTurnExtension;
+    private final TurnCostStorage mainTurnCostStorage;
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
     private final IntArrayList closestEdges;
 
     QueryGraphTurnExt(Graph mainGraph, IntArrayList closestEdges) {
         super(mainGraph.getTurnCostStorage());
-        this.mainTurnExtension = mainGraph.getTurnCostStorage();
+        this.mainTurnCostStorage = mainGraph.getTurnCostStorage();
         this.firstVirtualNodeId = mainGraph.getNodes();
         this.firstVirtualEdgeId = mainGraph.getEdges();
         this.closestEdges = closestEdges;
@@ -51,9 +51,9 @@ class QueryGraphTurnExt extends TurnCostStorage {
             if (isVirtualEdge(toEdge)) {
                 toEdge = getOriginalEdge(toEdge);
             }
-            return mainTurnExtension.readFlags(tcFlags, fromEdge, viaNode, toEdge);
+            return mainTurnCostStorage.readFlags(tcFlags, fromEdge, viaNode, toEdge);
         } else {
-            return mainTurnExtension.readFlags(tcFlags, fromEdge, viaNode, toEdge);
+            return mainTurnCostStorage.readFlags(tcFlags, fromEdge, viaNode, toEdge);
         }
     }
 
@@ -67,7 +67,7 @@ class QueryGraphTurnExt extends TurnCostStorage {
         } else if (!isVirtualEdge(edgeFrom) && isVirtualEdge(edgeTo)) {
             edgeTo = getOriginalEdge(edgeTo);
         }
-        return mainTurnExtension.isUTurn(edgeFrom, edgeTo);
+        return mainTurnCostStorage.isUTurn(edgeFrom, edgeTo);
     }
 
     @Override
