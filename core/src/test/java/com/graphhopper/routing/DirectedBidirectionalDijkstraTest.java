@@ -244,11 +244,11 @@ public class DirectedBidirectionalDijkstraTest {
         int leftNorth = graph.edge(9, 0, 1, true).getEdge();
 
         // make paths fully deterministic by applying some turn costs at junction node 2
-        addTurnCost(7, 2, 3, 1);
-        addTurnCost(7, 2, 6, 3);
-        addTurnCost(1, 2, 3, 5);
-        addTurnCost(1, 2, 6, 7);
-        addTurnCost(1, 2, 7, 9);
+        setTurnCost(7, 2, 3, 1);
+        setTurnCost(7, 2, 6, 3);
+        setTurnCost(1, 2, 3, 5);
+        setTurnCost(1, 2, 6, 7);
+        setTurnCost(1, 2, 7, 9);
 
         final double unitEdgeWeight = 0.06;
         assertPath(calcPath(9, 9, leftNorth, leftSouth),
@@ -319,7 +319,7 @@ public class DirectedBidirectionalDijkstraTest {
         graph.edge(5, 2, 1, true);
 
         addRestriction(0, 3, 4);
-        addTurnCost(4, 5, 2, 6);
+        setTurnCost(4, 5, 2, 6);
 
         // due to the restrictions we have to take the expensive path with turn costs
         assertPath(calcPath(0, 2, 0, 6), 6.24, 4, 6240, nodes(0, 1, 4, 5, 2));
@@ -520,7 +520,7 @@ public class DirectedBidirectionalDijkstraTest {
         );
     }
 
-    private void addTurnCost(int fromNode, int node, int toNode, double turnCost) {
+    private void setTurnCost(int fromNode, int node, int toNode, double turnCost) {
         turnCostStorage.addTurnInfo(
                 GHUtility.getEdge(graph, fromNode, node).getEdge(),
                 node,

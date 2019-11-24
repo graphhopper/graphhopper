@@ -113,8 +113,8 @@ public class CHTurnCostTest {
         graph.edge(0, 3, 1, true);
         graph.edge(3, 4, 3, true);
         graph.freeze();
-        addTurnCost(2, 1, 0, 2);
-        addTurnCost(0, 3, 4, 4);
+        setTurnCost(2, 1, 0, 2);
+        setTurnCost(0, 3, 4, 4);
         checkPathUsingRandomContractionOrder(IntArrayList.from(2, 1, 0, 3, 4), 9, 6, 2, 4);
     }
 
@@ -128,7 +128,7 @@ public class CHTurnCostTest {
         graph.edge(1, 2, 2, true);
         graph.edge(3, 2, 3, false);
         graph.edge(2, 4, 3, false);
-        addRestriction(3, 2, 4);
+        setRestriction(3, 2, 4);
         graph.freeze();
         compareCHWithDijkstra(10, Arrays.asList(0, 1, 2, 3, 4));
     }
@@ -176,18 +176,18 @@ public class CHTurnCostTest {
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         LOGGER.info("Seed used to generate turn costs and restrictions: {}", seed);
-        addRandomCost(2, 5, 3, rnd);
-        addRandomCost(2, 5, 6, rnd);
-        addRandomCost(4, 7, 10, rnd);
-        addRandomCost(6, 7, 10, rnd);
-        addRandomCostOrRestriction(0, 5, 3, rnd);
-        addRandomCostOrRestriction(1, 5, 3, rnd);
-        addRandomCostOrRestriction(0, 5, 6, rnd);
-        addRandomCostOrRestriction(1, 5, 6, rnd);
-        addRandomCostOrRestriction(4, 7, 8, rnd);
-        addRandomCostOrRestriction(4, 7, 9, rnd);
-        addRandomCostOrRestriction(6, 7, 8, rnd);
-        addRandomCostOrRestriction(6, 7, 9, rnd);
+        setRandomCost(2, 5, 3, rnd);
+        setRandomCost(2, 5, 6, rnd);
+        setRandomCost(4, 7, 10, rnd);
+        setRandomCost(6, 7, 10, rnd);
+        setRandomCostOrRestriction(0, 5, 3, rnd);
+        setRandomCostOrRestriction(1, 5, 3, rnd);
+        setRandomCostOrRestriction(0, 5, 6, rnd);
+        setRandomCostOrRestriction(1, 5, 6, rnd);
+        setRandomCostOrRestriction(4, 7, 8, rnd);
+        setRandomCostOrRestriction(4, 7, 9, rnd);
+        setRandomCostOrRestriction(6, 7, 8, rnd);
+        setRandomCostOrRestriction(6, 7, 9, rnd);
 
         RoutingAlgorithmFactory factory = prepareCH(Arrays.asList(6, 0, 1, 2, 8, 9, 10, 5, 3, 4, 7));
         // run queries for all cases (target/source edge possibly restricted/has costs)
@@ -215,9 +215,9 @@ public class CHTurnCostTest {
         graph.edge(7, 9, 1, false);
         graph.edge(7, 10, 1, false);
 
-        addTurnCost(2, 5, 6, 4);
-        addRestriction(1, 5, 6);
-        addRestriction(4, 7, 9);
+        setTurnCost(2, 5, 6, 4);
+        setRestriction(1, 5, 6);
+        setRestriction(4, 7, 9);
 
         RoutingAlgorithmFactory factory = prepareCH(Arrays.asList(6, 0, 1, 2, 8, 9, 10, 5, 3, 4, 7));
         compareCHQueryWithDijkstra(factory, 2, 9);
@@ -252,9 +252,9 @@ public class CHTurnCostTest {
         graph.freeze();
 
         // enforce loop (going counter-clockwise)
-        addRestriction(0, 4, 1);
-        addTurnCost(4, 2, 3, 4);
-        addTurnCost(3, 2, 4, 2);
+        setRestriction(0, 4, 1);
+        setTurnCost(4, 2, 3, 4);
+        setTurnCost(3, 2, 4, 2);
 
         checkPathUsingRandomContractionOrder(IntArrayList.from(0, 4, 3, 2, 4, 1), 7, 2, 0, 1);
     }
@@ -277,8 +277,8 @@ public class CHTurnCostTest {
         graph.edge(6, 4, 2, false);
         graph.freeze();
 
-        addRestriction(7, 5, 6);
-        addTurnCost(0, 2, 1, 2);
+        setRestriction(7, 5, 6);
+        setTurnCost(0, 2, 1, 2);
 
         final IntArrayList expectedPath = IntArrayList.from(3, 7, 5, 0, 2, 1, 5, 6, 4);
         final int roadCosts = 12;
@@ -305,9 +305,9 @@ public class CHTurnCostTest {
         graph.freeze();
 
         // enforce loop (going counter-clockwise)
-        addRestriction(1, 2, 5);
-        addTurnCost(3, 4, 2, 2);
-        addTurnCost(2, 4, 3, 4);
+        setRestriction(1, 2, 5);
+        setTurnCost(3, 4, 2, 2);
+        setTurnCost(2, 4, 3, 4);
 
         final IntArrayList expectedPath = IntArrayList.from(0, 1, 2, 3, 4, 2, 5, 6);
         final int roadCosts = 10;
@@ -353,17 +353,17 @@ public class CHTurnCostTest {
         graph.freeze();
 
         // enforce loop (going counter-clockwise)
-        addRestriction(6, 7, 12);
-        addTurnCost(8, 3, 2, 2);
-        addTurnCost(2, 3, 8, 4);
+        setRestriction(6, 7, 12);
+        setTurnCost(8, 3, 2, 2);
+        setTurnCost(2, 3, 8, 4);
 
         // make alternative paths not worth it
-        addTurnCost(1, 2, 7, 3);
-        addTurnCost(7, 8, 13, 8);
-        addTurnCost(8, 13, 14, 7);
-        addTurnCost(16, 17, 4, 4);
-        addTurnCost(4, 9, 14, 3);
-        addTurnCost(3, 4, 9, 3);
+        setTurnCost(1, 2, 7, 3);
+        setTurnCost(7, 8, 13, 8);
+        setTurnCost(8, 13, 14, 7);
+        setTurnCost(16, 17, 4, 4);
+        setTurnCost(4, 9, 14, 3);
+        setTurnCost(3, 4, 9, 3);
 
         final IntArrayList expectedPath = IntArrayList.from(0, 1, 6, 7, 8, 3, 2, 7, 12, 13, 14);
         final int roadCosts = 15;
@@ -437,25 +437,25 @@ public class CHTurnCostTest {
         graph.freeze();
 
         // enforce figure of eight curve at node 7
-        addRestriction(1, 7, 13);
-        addTurnCost(1, 7, 12, 7);
-        addTurnCost(2, 7, 13, 7);
+        setRestriction(1, 7, 13);
+        setTurnCost(1, 7, 12, 7);
+        setTurnCost(2, 7, 13, 7);
 
         // enforce p-loop at the top right (going counter-clockwise)
-        addRestriction(13, 14, 19);
-        addTurnCost(4, 5, 10, 3);
-        addTurnCost(10, 5, 4, 2);
+        setRestriction(13, 14, 19);
+        setTurnCost(4, 5, 10, 3);
+        setTurnCost(10, 5, 4, 2);
 
         // enforce big p-loop at bottom left (going clockwise)
-        addRestriction(14, 19, 20);
-        addTurnCost(17, 16, 21, 3);
+        setRestriction(14, 19, 20);
+        setTurnCost(17, 16, 21, 3);
 
         // make some alternative paths not worth it
-        addTurnCost(1, 2, 7, 8);
-        addTurnCost(20, 28, 26, 3);
+        setTurnCost(1, 2, 7, 8);
+        setTurnCost(20, 28, 26, 3);
 
         // add some more turn costs on the shortest path
-        addTurnCost(7, 13, 14, 2);
+        setTurnCost(7, 13, 14, 2);
 
         // expected costs of the shortest path
         final IntArrayList expectedPath = IntArrayList.from(
@@ -482,7 +482,7 @@ public class CHTurnCostTest {
         graph.edge(3, 2, 1, false);
         graph.edge(2, 4, 1, false);
         graph.freeze();
-        addRestriction(5, 6, 1);
+        setRestriction(5, 6, 1);
 
         final IntArrayList expectedPath = IntArrayList.from(5, 6, 4, 0, 3, 2, 4, 6, 1);
         checkPath(expectedPath, 8, 0, 5, 1, Arrays.asList(0, 1, 2, 3, 4, 5, 6));
@@ -507,7 +507,7 @@ public class CHTurnCostTest {
         graph.edge(3, 2, 1, false);
         graph.edge(2, 4, 1, false);
         graph.freeze();
-        addRestriction(5, 6, 7);
+        setRestriction(5, 6, 7);
 
         final IntArrayList expectedPath = IntArrayList.from(5, 6, 1, 4, 0, 3, 2, 4, 1, 6, 7);
         checkPath(expectedPath, 10, 0, 5, 7, Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7));
@@ -587,7 +587,7 @@ public class CHTurnCostTest {
                         continue;
                     }
                     int cost = nextCost(rnd);
-                    addCostOrRestriction(inIter, outIter, node, cost);
+                    setCostOrRestriction(inIter, outIter, node, cost);
                 }
             }
         }
@@ -604,7 +604,7 @@ public class CHTurnCostTest {
         graph.edge(0, 2, 14.554000, true);
         graph.edge(1, 4, 29.819000, true);
         graph.edge(1, 3, 29.271000, true);
-        addRestriction(3, 1, 2);
+        setRestriction(3, 1, 2);
         graph.freeze();
 
         List<Integer> contractionOrder = Arrays.asList(1, 0, 3, 2, 4);
@@ -640,7 +640,7 @@ public class CHTurnCostTest {
         graph.edge(2, 4, 1, false);
         graph.edge(4, 6, 1, false);
         graph.edge(6, 5, 1, false);
-        addRestriction(8, 4, 6);
+        setRestriction(8, 4, 6);
         graph.freeze();
 
         RoutingAlgorithmFactory factory = prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8));
@@ -661,7 +661,7 @@ public class CHTurnCostTest {
         graph.edge(4, 2, 500, false);
         graph.edge(2, 3, 200, false);
         graph.edge(3, 1, 100, false);
-        addRestriction(0, 3, 1);
+        setRestriction(0, 3, 1);
         graph.freeze();
         chProfile = CHProfile.edgeBased(weighting, 50);
         RoutingAlgorithmFactory pch = prepareCH(Arrays.asList(4, 0, 2, 3, 1));
@@ -683,8 +683,8 @@ public class CHTurnCostTest {
         EdgeIteratorState edge2 = graph.edge(4, 3, 1, true);
         EdgeIteratorState edge3 = graph.edge(1, 3, 1, true);
         EdgeIteratorState edge4 = graph.edge(1, 0, 1, true);
-        addTurnCost(edge0, edge4, 1, 8);
-        addRestriction(edge0, edge3, 1);
+        setTurnCost(edge0, edge4, 1, 8);
+        setRestriction(edge0, edge3, 1);
         graph.freeze();
         checkPath(IntArrayList.from(2, 1, 0, 4), 3, 8, 2, 4, Arrays.asList(2, 0, 1, 3, 4));
     }
@@ -698,8 +698,8 @@ public class CHTurnCostTest {
         EdgeIteratorState edge1 = graph.edge(1, 1, 1, false);
         EdgeIteratorState edge2 = graph.edge(1, 2, 1, true);
         EdgeIteratorState edge3 = graph.edge(2, 3, 1, false);
-        addTurnCost(edge0, edge1, 1, 1);
-        addRestriction(edge0, edge2, 1);
+        setTurnCost(edge0, edge1, 1, 1);
+        setRestriction(edge0, edge2, 1);
         graph.freeze();
         final IntArrayList expectedPath = IntArrayList.from(0, 1, 1, 2, 3);
         checkPath(expectedPath, 4, 1, 0, 3, Arrays.asList(0, 2, 1, 3));
@@ -749,10 +749,10 @@ public class CHTurnCostTest {
         EdgeIteratorState edge3 = graph.edge(3, 3, 0, false);
         EdgeIteratorState edge4 = graph.edge(3, 3, 0, false);
         EdgeIteratorState edge5 = graph.edge(3, 4, 1, false);
-        addTurnCost(edge2, edge3, 3, 5);
-        addTurnCost(edge2, edge4, 3, 4);
-        addTurnCost(edge3, edge4, 3, 2);
-        addRestriction(edge2, edge5, 3);
+        setTurnCost(edge2, edge3, 3, 5);
+        setTurnCost(edge2, edge4, 3, 4);
+        setTurnCost(edge3, edge4, 3, 2);
+        setRestriction(edge2, edge5, 3);
         graph.freeze();
         IntArrayList expectedPath = IntArrayList.from(0, 1, 2, 3, 3, 4);
         List<Integer> contractionOrder = Arrays.asList(2, 0, 4, 1, 3);
@@ -768,7 +768,7 @@ public class CHTurnCostTest {
         graph.edge(2, 2, 1, false);
         graph.edge(2, 3, 1, false);
         graph.edge(3, 4, 1, false);
-        addRestriction(1, 2, 3);
+        setRestriction(1, 2, 3);
         graph.freeze();
         RoutingAlgorithmFactory pch = automaticPrepareCH();
         compareCHQueryWithDijkstra(pch, 0, 3);
@@ -786,9 +786,9 @@ public class CHTurnCostTest {
         graph.edge(2, 2, 181.788000, true);
         graph.edge(0, 2, 191.996000, true);
         graph.edge(2, 4, 527.821000, false);
-        addRestriction(0, 2, 4);
-        addTurnCost(0, 2, 2, 3);
-        addTurnCost(2, 2, 4, 4);
+        setRestriction(0, 2, 4);
+        setTurnCost(0, 2, 2, 3);
+        setTurnCost(2, 2, 4, 4);
         graph.freeze();
         RoutingAlgorithmFactory pch = automaticPrepareCH();
         compareCHQueryWithDijkstra(pch, 0, 4);
@@ -814,10 +814,10 @@ public class CHTurnCostTest {
         EdgeIteratorState edge3 = graph.edge(4, 1, 703.778000, false);
         EdgeIteratorState edge4 = graph.edge(2, 4, 400.509000, true);
         // cannot go 4-2-1 and 1-2-4 (at least when using edge1, there is still edge2!)
-        addRestriction(edge4, edge1, 2);
-        addRestriction(edge1, edge4, 2);
+        setRestriction(edge4, edge1, 2);
+        setRestriction(edge1, edge4, 2);
         // cannot go 3-4-1
-        addRestriction(edge0, edge3, 4);
+        setRestriction(edge0, edge3, 4);
         graph.freeze();
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
@@ -871,7 +871,7 @@ public class CHTurnCostTest {
         graph.edge(0, 5, 10, true);
         graph.edge(5, 4, 10, true);
         // cannot go, 2-3-1
-        addRestriction(edge1, edge0, 3);
+        setRestriction(edge1, edge0, 3);
         graph.freeze();
         RoutingAlgorithmFactory pch = prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5));
         assertEquals(5, chGraph.getOriginalEdges());
@@ -968,7 +968,7 @@ public class CHTurnCostTest {
         updateDistancesFor(graph, 5, 0.0, 0.3);
         updateDistancesFor(graph, 6, 0.0, 0.4);
         // not allowed to turn right at node 1 -> we have to take a u-turn at node 0 (or at the virtual node...)
-        addRestriction(2, 1, 5);
+        setRestriction(2, 1, 5);
         graph.freeze();
         chProfile = CHProfile.edgeBased(weighting, 50);
         RoutingAlgorithmFactory pch = prepareCH(Arrays.asList(0, 1, 2, 3, 4, 5, 6));
@@ -1199,45 +1199,45 @@ public class CHTurnCostTest {
         return contractionOrder;
     }
 
-    private void addRandomCostOrRestriction(int from, int via, int to, Random rnd) {
+    private void setRandomCostOrRestriction(int from, int via, int to, Random rnd) {
         final double chance = 0.7;
         if (rnd.nextDouble() < chance) {
-            addRestriction(from, via, to);
-            LOGGER.trace("addRestriction({}, {}, {});", from, via, to);
+            setRestriction(from, via, to);
+            LOGGER.trace("setRestriction({}, {}, {});", from, via, to);
         } else {
-            addRandomCost(from, via, to, rnd);
+            setRandomCost(from, via, to, rnd);
         }
     }
 
-    private void addRandomCost(int from, int via, int to, Random rnd) {
+    private void setRandomCost(int from, int via, int to, Random rnd) {
         int cost = (int) (rnd.nextDouble() * maxCost / 2);
-        addTurnCost(from, via, to, cost);
-        LOGGER.trace("addTurnCost({}, {}, {}, {});", from, via, to, cost);
+        setTurnCost(from, via, to, cost);
+        LOGGER.trace("setTurnCost({}, {}, {}, {});", from, via, to, cost);
     }
 
-    private void addRestriction(int from, int via, int to) {
-        addRestriction(getEdge(from, via), getEdge(via, to), via);
+    private void setRestriction(int from, int via, int to) {
+        setRestriction(getEdge(from, via), getEdge(via, to), via);
     }
 
-    private void addRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode) {
+    private void setRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode) {
         turnCostStorage.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(true, 0));
     }
 
-    private void addTurnCost(int from, int via, int to, double cost) {
-        addTurnCost(getEdge(from, via), getEdge(via, to), via, cost);
+    private void setTurnCost(int from, int via, int to, double cost) {
+        setTurnCost(getEdge(from, via), getEdge(via, to), via, cost);
     }
 
-    private void addTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double costs) {
-        turnCostStorage.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, costs));
+    private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double cost) {
+        turnCostStorage.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, cost));
     }
 
-    private void addCostOrRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, int cost) {
+    private void setCostOrRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, int cost) {
         if (cost >= maxCost) {
-            addRestriction(inEdge, outEdge, viaNode);
-            LOGGER.trace("addRestriction(edge{}, edge{}, {});", inEdge.getEdge(), outEdge.getEdge(), viaNode);
+            setRestriction(inEdge, outEdge, viaNode);
+            LOGGER.trace("setRestriction(edge{}, edge{}, {});", inEdge.getEdge(), outEdge.getEdge(), viaNode);
         } else {
-            addTurnCost(inEdge, outEdge, viaNode, cost);
-            LOGGER.trace("addTurnCost(edge{}, edge{}, {}, {});", inEdge.getEdge(), outEdge.getEdge(), viaNode, cost);
+            setTurnCost(inEdge, outEdge, viaNode, cost);
+            LOGGER.trace("setTurnCost(edge{}, edge{}, {}, {});", inEdge.getEdge(), outEdge.getEdge(), viaNode, cost);
         }
     }
 

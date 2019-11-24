@@ -52,9 +52,9 @@ public class Path4CHTest {
         graph.edge(6, 7, 1, false);
         graph.edge(7, 8, 1, false);
         graph.freeze();
-        addTurnCost(1, 2, 3, 4);
-        addTurnCost(3, 4, 5, 2);
-        addTurnCost(5, 6, 7, 3);
+        setTurnCost(1, 2, 3, 4);
+        setTurnCost(3, 4, 5, 2);
+        setTurnCost(5, 6, 7, 3);
         // we 'contract' the graph such that only a few shortcuts are created and that the fwd/bwd searches for the
         // 0-8 query meet at node 4 (make sure we include all three cases where turn cost times might come to play:
         // fwd/bwd search and meeting point)
@@ -92,17 +92,17 @@ public class Path4CHTest {
         graph.freeze();
 
         // turn costs ->
-        addTurnCost(edge0, edge1, 1, 5);
-        addTurnCost(edge1, edge2, 2, 3);
-        addTurnCost(edge2, edge3, 3, 2);
-        addTurnCost(edge3, edge4, 4, 1);
-        addTurnCost(edge4, edge5, 5, 4);
+        setTurnCost(edge0, edge1, 1, 5);
+        setTurnCost(edge1, edge2, 2, 3);
+        setTurnCost(edge2, edge3, 3, 2);
+        setTurnCost(edge3, edge4, 4, 1);
+        setTurnCost(edge4, edge5, 5, 4);
         // turn costs <-
-        addTurnCost(edge5, edge4, 5, 3);
-        addTurnCost(edge4, edge3, 4, 2);
-        addTurnCost(edge3, edge2, 3, 4);
-        addTurnCost(edge2, edge1, 2, 1);
-        addTurnCost(edge1, edge0, 1, 0);
+        setTurnCost(edge5, edge4, 5, 3);
+        setTurnCost(edge4, edge3, 4, 2);
+        setTurnCost(edge3, edge2, 3, 4);
+        setTurnCost(edge2, edge1, 2, 1);
+        setTurnCost(edge1, edge0, 1, 0);
 
         // shortcuts ->
         addShortcut(0, 2, 0, 1, 0, 1, 0.12, 5);
@@ -128,11 +128,11 @@ public class Path4CHTest {
         checkPath(5, 1, 0.48, 4, 7);
     }
 
-    private void addTurnCost(int from, int via, int to, int cost) {
-        addTurnCost(getEdge(from, via), getEdge(via, to), via, cost);
+    private void setTurnCost(int from, int via, int to, int cost) {
+        setTurnCost(getEdge(from, via), getEdge(via, to), via, cost);
     }
 
-    private void addTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, int cost) {
+    private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, int cost) {
         turnCostStorage.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, cost));
     }
 

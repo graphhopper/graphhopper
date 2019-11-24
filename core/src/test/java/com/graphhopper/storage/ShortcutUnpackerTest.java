@@ -235,19 +235,19 @@ public class ShortcutUnpackerTest {
 
         // turn costs ->
         turnCostStorage.addTurnInfo(PREV_EDGE, 0, edge0.getEdge(), encoder.getTurnFlags(false, 2));
-        addTurnCost(edge0, edge1, 1, 5);
-        addTurnCost(edge1, edge2, 2, 3);
-        addTurnCost(edge2, edge3, 3, 2);
-        addTurnCost(edge3, edge4, 4, 1);
-        addTurnCost(edge4, edge5, 5, 4);
+        setTurnCost(edge0, edge1, 1, 5);
+        setTurnCost(edge1, edge2, 2, 3);
+        setTurnCost(edge2, edge3, 3, 2);
+        setTurnCost(edge3, edge4, 4, 1);
+        setTurnCost(edge4, edge5, 5, 4);
         turnCostStorage.addTurnInfo(edge5.getEdge(), 6, NEXT_EDGE, encoder.getTurnFlags(false, 6));
         // turn costs <-
         turnCostStorage.addTurnInfo(NEXT_EDGE, 6, edge5.getEdge(), encoder.getTurnFlags(false, 2));
-        addTurnCost(edge5, edge4, 5, 3);
-        addTurnCost(edge4, edge3, 4, 2);
-        addTurnCost(edge3, edge2, 3, 4);
-        addTurnCost(edge2, edge1, 2, 1);
-        addTurnCost(edge1, edge0, 1, 0);
+        setTurnCost(edge5, edge4, 5, 3);
+        setTurnCost(edge4, edge3, 4, 2);
+        setTurnCost(edge3, edge2, 3, 4);
+        setTurnCost(edge2, edge1, 2, 1);
+        setTurnCost(edge1, edge0, 1, 0);
         turnCostStorage.addTurnInfo(edge0.getEdge(), 0, PREV_EDGE, encoder.getTurnFlags(false, 1));
 
         shortcut(0, 2, 0, 1, 0, 1);
@@ -289,8 +289,8 @@ public class ShortcutUnpackerTest {
         }
     }
 
-    private void addTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double costs) {
-        turnCostStorage.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, costs));
+    private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double cost) {
+        turnCostStorage.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, cost));
     }
 
     private void shortcut(int baseNode, int adjNode, int skip1, int skip2, int origFirst, int origLast) {

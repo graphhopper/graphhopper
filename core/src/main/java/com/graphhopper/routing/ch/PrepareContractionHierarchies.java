@@ -469,7 +469,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private TurnWeighting createTurnWeightingForEdgeBased(Graph graph) {
-        // important: do not simply take the turn cost storage from ghStorage, because we need the wrapped extension from
+        // important: do not simply take the turn cost storage from ghStorage, because we need the wrapped storage from
         // query graph!
         TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
         if (turnCostStorage == null) {

@@ -277,12 +277,7 @@ public class QueryGraph implements Graph {
 
     private int getPosOfReverseEdge(int edgeId) {
         // find reverse edge via convention. see virtualEdges comment above
-        if (edgeId % 2 == 0)
-            edgeId++;
-        else
-            edgeId--;
-
-        return edgeId;
+        return edgeId % 2 == 0 ? edgeId + 1 : edgeId - 1;
     }
 
     @Override
@@ -394,5 +389,4 @@ public class QueryGraph implements Graph {
     private UnsupportedOperationException exc() {
         return new UnsupportedOperationException("QueryGraph cannot be modified.");
     }
-
 }
