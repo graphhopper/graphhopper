@@ -181,14 +181,14 @@ public class CHTurnCostTest {
         setRandomCost(2, 5, 6, rnd);
         setRandomCost(4, 7, 10, rnd);
         setRandomCost(6, 7, 10, rnd);
-        setRandomCost(0, 5, 3, rnd);
-        setRandomCost(1, 5, 3, rnd);
-        setRandomCost(0, 5, 6, rnd);
-        setRandomCost(1, 5, 6, rnd);
-        setRandomCost(4, 7, 8, rnd);
-        setRandomCost(4, 7, 9, rnd);
-        setRandomCost(6, 7, 8, rnd);
-        setRandomCost(6, 7, 9, rnd);
+        setRandomCostOrRestriction(0, 5, 3, rnd);
+        setRandomCostOrRestriction(1, 5, 3, rnd);
+        setRandomCostOrRestriction(0, 5, 6, rnd);
+        setRandomCostOrRestriction(1, 5, 6, rnd);
+        setRandomCostOrRestriction(4, 7, 8, rnd);
+        setRandomCostOrRestriction(4, 7, 9, rnd);
+        setRandomCostOrRestriction(6, 7, 8, rnd);
+        setRandomCostOrRestriction(6, 7, 9, rnd);
 
         RoutingAlgorithmFactory factory = prepareCH(Arrays.asList(6, 0, 1, 2, 8, 9, 10, 5, 3, 4, 7));
         // run queries for all cases (target/source edge possibly restricted/has costs)
@@ -588,7 +588,7 @@ public class CHTurnCostTest {
                         continue;
                     }
                     int cost = nextCost(rnd);
-                    setTurnCost(inIter, outIter, node, cost > maxCost ? Double.POSITIVE_INFINITY : cost);
+                    setCostOrRestriction(inIter, outIter, node, cost);
                 }
             }
         }
@@ -1200,6 +1200,16 @@ public class CHTurnCostTest {
         return contractionOrder;
     }
 
+    private void setRandomCostOrRestriction(int from, int via, int to, Random rnd) {
+        final double chance = 0.7;
+        if (rnd.nextDouble() < chance) {
+            setRestriction(from, via, to);
+            LOGGER.trace("setRestriction({}, {}, {});", from, via, to);
+        } else {
+            setRandomCost(from, via, to, rnd);
+        }
+    }
+
     private void setRandomCost(int from, int via, int to, Random rnd) {
         int cost = (int) (rnd.nextDouble() * maxCost / 2);
         setTurnCost(from, via, to, cost);
@@ -1220,6 +1230,16 @@ public class CHTurnCostTest {
 
     private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double costs) {
         graph.getTurnCostStorage().setExpensive("car", encodingManager, inEdge.getEdge(), viaNode, outEdge.getEdge(), costs);
+    }
+
+    private void setCostOrRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, int cost) {
+        if (cost >= maxCost) {
+            setRestriction(inEdge, outEdge, viaNode);
+            LOGGER.trace("setRestriction(edge{}, edge{}, {});", inEdge.getEdge(), outEdge.getEdge(), viaNode);
+        } else {
+            setTurnCost(inEdge, outEdge, viaNode, cost);
+            LOGGER.trace("setTurnCost(edge{}, edge{}, {}, {});", inEdge.getEdge(), outEdge.getEdge(), viaNode, cost);
+        }
     }
 
     private EdgeIteratorState getEdge(int from, int to) {
