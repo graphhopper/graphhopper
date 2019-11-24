@@ -461,8 +461,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         setTurnCost(g, Double.POSITIVE_INFINITY, from, via, to);
     }
 
-    private void setTurnCost(GraphHopperStorage g, double costs, int from, int via, int to) {
+    private void setTurnCost(GraphHopperStorage g, double cost, int from, int via, int to) {
         g.getTurnCostStorage().setExpensive(carEncoder.toString(), g.getEncodingManager(),
-                getEdge(g, from, via).getEdge(), via, getEdge(g, via, to).getEdge(), costs);
+                getEdge(g, from, via).getEdge(), via, getEdge(g, via, to).getEdge(), cost);
     }
 }

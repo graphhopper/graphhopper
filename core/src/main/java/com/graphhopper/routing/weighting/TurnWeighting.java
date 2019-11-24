@@ -43,19 +43,19 @@ public class TurnWeighting implements Weighting {
     private final double uTurnCosts;
     private final IntsRef tcFlags = TurnCost.createFlags();
 
-    public TurnWeighting(Weighting superWeighting, TurnCostStorage turnCostExt) {
-        this(superWeighting, turnCostExt, INFINITE_U_TURN_COSTS);
+    public TurnWeighting(Weighting superWeighting, TurnCostStorage turnCostStorage) {
+        this(superWeighting, turnCostStorage, INFINITE_U_TURN_COSTS);
     }
 
     /**
      * @param superWeighting the weighting that is wrapped by this {@link TurnWeighting} and used to calculate the
      *                       edge weights for example
-     * @param turnCostExt    the turn cost storage to be used
+     * @param turnCostStorage    the turn cost storage to be used
      * @param uTurnCosts     the cost of a u-turn in seconds, this value will be applied to all u-turn costs no matter
      *                       whether or not turnCostExt contains explicit values for these turns.
      */
-    public TurnWeighting(Weighting superWeighting, TurnCostStorage turnCostExt, double uTurnCosts) {
-        if (turnCostExt == null) {
+    public TurnWeighting(Weighting superWeighting, TurnCostStorage turnCostStorage, double uTurnCosts) {
+        if (turnCostStorage == null) {
             throw new RuntimeException("No storage set to calculate turn weight");
         }
         FlagEncoder encoder = superWeighting.getFlagEncoder();
@@ -63,7 +63,7 @@ public class TurnWeighting implements Weighting {
         // if null the TurnWeighting can be still useful for edge-based routing
         this.turnCostEnc = encoder.hasEncodedValue(key) ? encoder.getDecimalEncodedValue(key) : null;
         this.superWeighting = superWeighting;
-        this.turnCostExt = turnCostExt;
+        this.turnCostExt = turnCostStorage;
         this.uTurnCosts = uTurnCosts < 0 ? Double.POSITIVE_INFINITY : uTurnCosts;
     }
 

@@ -23,12 +23,23 @@ import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import org.junit.Before;
 import org.junit.Test;
 
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.Assert.assertEquals;
 
 public class TurnCostStorageTest {
+
+    private final IntsRef EMPTY = TurnCost.createFlags();
+    private EncodingManager manager;
+
+    @Before
+    public void setup() {
+        FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 3);
+        FlagEncoder bikeEncoder = new BikeFlagEncoder(5, 5, 3);
+        manager = EncodingManager.create(carEncoder, bikeEncoder);
+    }
 
     // 0---1
     // |   /
@@ -48,11 +59,6 @@ public class TurnCostStorageTest {
      */
     @Test
     public void testMultipleTurnCosts() {
-        IntsRef EMPTY = TurnCost.createFlags();
-
-        FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 3);
-        FlagEncoder bikeEncoder = new BikeFlagEncoder(5, 5, 3);
-        EncodingManager manager = EncodingManager.create(carEncoder, bikeEncoder);
         GraphHopperStorage g = new GraphBuilder(manager).create();
         initGraph(g);
 
@@ -63,59 +69,64 @@ public class TurnCostStorageTest {
         int edge02 = getEdge(g, 0, 2).getEdge();
         int edge24 = getEdge(g, 2, 4).getEdge();
 
-        g.getTurnCostStorage().setExpensive("car", manager, edge42, 2, edge23, Double.POSITIVE_INFINITY);
-        g.getTurnCostStorage().setExpensive("bike", manager, edge42, 2, edge23, Double.POSITIVE_INFINITY);
-        g.getTurnCostStorage().setExpensive("car", manager, edge23, 3, edge31, Double.POSITIVE_INFINITY);
-        g.getTurnCostStorage().setExpensive("bike", manager, edge23, 3, edge31, 2.0);
-        g.getTurnCostStorage().setExpensive("car", manager, edge31, 1, edge10, 2.0);
-        g.getTurnCostStorage().setExpensive("bike", manager, edge31, 1, edge10, Double.POSITIVE_INFINITY);
+        setTurnCost(g, edge42, edge23, "car", 2, Double.POSITIVE_INFINITY);
+        setTurnCost(g, edge42, edge23, "bike", 2, Double.POSITIVE_INFINITY);
+        setTurnCost(g, edge23, edge31, "car", 3, Double.POSITIVE_INFINITY);
+        setTurnCost(g, edge23, edge31, "bike", 3, 2.0);
+        setTurnCost(g, edge31, edge10, "car", 1, 2.0);
+        setTurnCost(g, edge31, edge10, "bike", 1, Double.POSITIVE_INFINITY);
         g.getTurnCostStorage().setOrMerge(EMPTY, edge02, 2, edge24, false);
-        g.getTurnCostStorage().setExpensive("bike", manager, edge02, 2, edge24, Double.POSITIVE_INFINITY);
+        setTurnCost(g, edge02, edge24, "bike", 2, Double.POSITIVE_INFINITY);
 
-        assertEquals(Double.POSITIVE_INFINITY, g.getTurnCostStorage().getExpensive("car", manager, edge42, 2, edge23), 0);
-        assertEquals(Double.POSITIVE_INFINITY, g.getTurnCostStorage().getExpensive("bike", manager, edge42, 2, edge23), 0);
+        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge42, edge23, "car", 2), 0);
+        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge42, edge23, "bike", 2), 0);
 
-        assertEquals(Double.POSITIVE_INFINITY, g.getTurnCostStorage().getExpensive("car", manager, edge23, 3, edge31), 0);
-        assertEquals(2.0, g.getTurnCostStorage().getExpensive("bike", manager, edge23, 3, edge31), 0);
+        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge23, edge31, "car", 3), 0);
+        assertEquals(2.0, getTurnCost(g, edge23, edge31, "bike", 3), 0);
 
-        assertEquals(2.0, g.getTurnCostStorage().getExpensive("car", manager, edge31, 1, edge10), 0);
-        assertEquals(Double.POSITIVE_INFINITY, g.getTurnCostStorage().getExpensive("bike", manager, edge31, 1, edge10), 0);
+        assertEquals(2.0, getTurnCost(g, edge31, edge10, "car", 1), 0);
+        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge31, edge10, "bike", 1), 0);
 
-        assertEquals(0.0, g.getTurnCostStorage().getExpensive("car", manager, edge02, 2, edge24), 0);
-        assertEquals(Double.POSITIVE_INFINITY, g.getTurnCostStorage().getExpensive("bike", manager, edge02, 2, edge24), 0);
+        assertEquals(0.0, getTurnCost(g, edge02, edge24, "car", 2), 0);
+        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge24, "bike", 2), 0);
 
         // merge per default
-        g.getTurnCostStorage().setExpensive("car", manager, edge02, 2, edge23, Double.POSITIVE_INFINITY);
-        g.getTurnCostStorage().setExpensive("bike", manager, edge02, 2, edge23, Double.POSITIVE_INFINITY);
-        assertEquals(Double.POSITIVE_INFINITY, g.getTurnCostStorage().getExpensive("car", manager, edge02, 2, edge23), 0);
-        assertEquals(Double.POSITIVE_INFINITY, g.getTurnCostStorage().getExpensive("bike", manager, edge02, 2, edge23), 0);
+        setTurnCost(g, edge02, edge23, "car", 2, Double.POSITIVE_INFINITY);
+        setTurnCost(g, edge02, edge23, "bike", 2, Double.POSITIVE_INFINITY);
+        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge23, "car", 2), 0);
+        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge23, "bike", 2), 0);
 
         // overwrite unrelated turn cost value
         g.getTurnCostStorage().setOrMerge(EMPTY, edge02, 2, edge23, false);
         g.getTurnCostStorage().setOrMerge(EMPTY, edge02, 2, edge23, false);
-        g.getTurnCostStorage().setExpensive("bike", manager, edge02, 2, edge23, Double.POSITIVE_INFINITY);
-        assertEquals(0, g.getTurnCostStorage().getExpensive("car", manager, edge02, 2, edge23), 0);
-        assertEquals(Double.POSITIVE_INFINITY, g.getTurnCostStorage().getExpensive("bike", manager, edge02, 2, edge23), 0);
+        setTurnCost(g, edge02, edge23, "bike", 2, Double.POSITIVE_INFINITY);
+        assertEquals(0, getTurnCost(g, edge02, edge23, "car", 2), 0);
+        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge23, "bike", 2), 0);
 
         // clear
         g.getTurnCostStorage().setOrMerge(EMPTY, edge02, 2, edge23, false);
-        assertEquals(0, g.getTurnCostStorage().getExpensive("car", manager, edge02, 2, edge23), 0);
-        assertEquals(0, g.getTurnCostStorage().getExpensive("bike", manager, edge02, 2, edge23), 0);
+        assertEquals(0, getTurnCost(g, edge02, edge23, "car", 2), 0);
+        assertEquals(0, getTurnCost(g, edge02, edge23, "bike", 2), 0);
     }
 
     @Test
     public void testMergeFlagsBeforeAdding() {
-        FlagEncoder carEncoder = new CarFlagEncoder(5, 5, 3);
-        FlagEncoder bikeEncoder = new BikeFlagEncoder(5, 5, 3);
-        EncodingManager manager = EncodingManager.create(carEncoder, bikeEncoder);
         GraphHopperStorage g = new GraphBuilder(manager).create();
         initGraph(g);
 
         int edge23 = getEdge(g, 2, 3).getEdge();
         int edge02 = getEdge(g, 0, 2).getEdge();
-        g.getTurnCostStorage().setExpensive("car", manager, edge02, 2, edge23, Double.POSITIVE_INFINITY);
-        g.getTurnCostStorage().setExpensive("bike", manager, edge02, 2, edge23, Double.POSITIVE_INFINITY);
-        assertEquals(Double.POSITIVE_INFINITY, g.getTurnCostStorage().getExpensive("car", manager, edge02, 2, edge23), 0);
-        assertEquals(Double.POSITIVE_INFINITY, g.getTurnCostStorage().getExpensive("bike", manager, edge02, 2, edge23), 0);
+        setTurnCost(g, edge02, edge23, "car", 2, Double.POSITIVE_INFINITY);
+        setTurnCost(g, edge02, edge23, "bike", 2, Double.POSITIVE_INFINITY);
+        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge23, "car", 2), 0);
+        assertEquals(Double.POSITIVE_INFINITY, getTurnCost(g, edge02, edge23, "bike", 2), 0);
+    }
+
+    private void setTurnCost(GraphHopperStorage g, int fromEdge, int toEdge, String vehicle, int viaNode, double cost) {
+        g.getTurnCostStorage().setExpensive(vehicle, manager, fromEdge, viaNode, toEdge, cost);
+    }
+
+    private double getTurnCost(GraphHopperStorage g, int fromEdge, int toEdge, String vehicle, int viaNode) {
+        return g.getTurnCostStorage().getExpensive(vehicle, manager, fromEdge, viaNode, toEdge);
     }
 }

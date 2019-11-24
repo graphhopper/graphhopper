@@ -1398,12 +1398,12 @@ public class EdgeBasedNodeContractorTest {
         setTurnCost(getEdge(from, via), getEdge(via, to), via, Double.POSITIVE_INFINITY);
     }
 
-    private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double cost) {
-        graph.getTurnCostStorage().setExpensive("car", encoder, inEdge.getEdge(), viaNode, outEdge.getEdge(), cost >= maxCost ? Double.POSITIVE_INFINITY : cost);
+    private void setTurnCost(int from, int via, int to, double cost) {
+        setTurnCost(getEdge(from, via), getEdge(via, to), via, cost);
     }
 
-    private void setTurnCost(int from, int via, int to, double cost) {
-        setTurnCost(getEdge(from, via), getEdge(via, to), via, cost >= maxCost ? Double.POSITIVE_INFINITY : cost);
+    private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double cost) {
+        graph.getTurnCostStorage().setExpensive("car", encoder, inEdge.getEdge(), viaNode, outEdge.getEdge(), cost >= maxCost ? Double.POSITIVE_INFINITY : cost);
     }
 
     private EdgeIteratorState getEdge(int from, int to) {

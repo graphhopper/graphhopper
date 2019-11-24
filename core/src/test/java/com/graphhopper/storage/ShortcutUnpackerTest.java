@@ -231,22 +231,21 @@ public class ShortcutUnpackerTest {
         graph.freeze();
 
         // turn costs ->
-        TurnCostStorage tce = graph.getTurnCostStorage();
-        tce.setExpensive(encoder.toString(), encodingManager, PREV_EDGE, 0, edge0.getEdge(), 2.0);
-        tce.setExpensive(encoder.toString(), encodingManager, edge0.getEdge(), edge1.getEdge(), 1, 5.0);
-        tce.setExpensive(encoder.toString(), encodingManager, edge1.getEdge(), edge2.getEdge(), 2, 3);
-        tce.setExpensive(encoder.toString(), encodingManager, edge2.getEdge(), edge3.getEdge(), 3, 2.0);
-        tce.setExpensive(encoder.toString(), encodingManager, edge3.getEdge(), edge4.getEdge(), 4, 1.0);
-        tce.setExpensive(encoder.toString(), encodingManager, edge4.getEdge(), edge5.getEdge(), 5, 4.0);
-        tce.setExpensive(encoder.toString(), encodingManager, edge5.getEdge(), 6, NEXT_EDGE, 6.0);
+        setTurnCost(PREV_EDGE, 0, edge0.getEdge(), 2.0);
+        setTurnCost(edge0.getEdge(), 1, edge1.getEdge(), 5.0);
+        setTurnCost(edge1.getEdge(), 2, edge2.getEdge(), 3);
+        setTurnCost(edge2.getEdge(), 3, edge3.getEdge(), 2.0);
+        setTurnCost(edge3.getEdge(), 4, edge4.getEdge(), 1.0);
+        setTurnCost(edge4.getEdge(), 5, edge5.getEdge(), 4.0);
+        setTurnCost(edge5.getEdge(), 6, NEXT_EDGE, 6.0);
         // turn costs <-
-        tce.setExpensive(encoder.toString(), encodingManager, NEXT_EDGE, 6, edge5.getEdge(), 2.0);
-        tce.setExpensive(encoder.toString(), encodingManager, edge5.getEdge(), edge4.getEdge(), 5, 3.0);
-        tce.setExpensive(encoder.toString(), encodingManager, edge4.getEdge(), edge3.getEdge(), 4, 2.0);
-        tce.setExpensive(encoder.toString(), encodingManager, edge3.getEdge(), edge2.getEdge(), 3, 4.0);
-        tce.setExpensive(encoder.toString(), encodingManager, edge2.getEdge(), edge1.getEdge(), 2, 1.0);
-        tce.setExpensive(encoder.toString(), encodingManager, edge1.getEdge(), edge0.getEdge(), 1, 0.0);
-        tce.setExpensive(encoder.toString(), encodingManager, edge0.getEdge(), 0, PREV_EDGE, 1.0);
+        setTurnCost(NEXT_EDGE, 6, edge5.getEdge(), 2.0);
+        setTurnCost(edge5.getEdge(), 5, edge4.getEdge(), 3.0);
+        setTurnCost(edge4.getEdge(), 4, edge3.getEdge(), 2.0);
+        setTurnCost(edge3.getEdge(), 3, edge2.getEdge(), 4.0);
+        setTurnCost(edge2.getEdge(), 2, edge1.getEdge(), 1.0);
+        setTurnCost(edge1.getEdge(), 1, edge0.getEdge(), 0.0);
+        setTurnCost(edge0.getEdge(), 0, PREV_EDGE, 1.0);
 
         shortcut(0, 2, 0, 1, 0, 1);
         shortcut(2, 4, 2, 3, 2, 3);
@@ -287,6 +286,10 @@ public class ShortcutUnpackerTest {
         }
     }
 
+    private void setTurnCost(int fromEdge, int viaNode, int toEdge, double cost) {
+        graph.getTurnCostStorage().setExpensive(encoder.toString(), encodingManager, fromEdge, viaNode, toEdge, cost);
+    }
+
     private void shortcut(int baseNode, int adjNode, int skip1, int skip2, int origFirst, int origLast) {
         // shortcut weight/distance is not important for us here
         double weight = 1;
@@ -319,7 +322,7 @@ public class ShortcutUnpackerTest {
     }
 
     private class TurnWeightingVisitor implements ShortcutUnpacker.Visitor {
-        private final TurnWeighting turnWeighting = new TurnWeighting(weighting, edgeBased ? graph.getTurnCostStorage() : null);
+        private final TurnWeighting turnWeighting = new TurnWeighting(weighting, graph.getTurnCostStorage());
         private long time = 0;
         private double weight = 0;
 
