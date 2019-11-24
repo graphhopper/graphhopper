@@ -5,7 +5,7 @@
 ## Try out
 
 For a start which requires only the JRE have a look [here](../web/quickstart.md). 
-Windows user can find a quick guide [here](./windows-setup.md).
+Windows users will need Cygwin - find more details [here](./windows-setup.md).
 
 To proceed install `git` and `openjdk8` or `openjdk11`. Get the a jdk from your package manager, 
 [AdoptOpenJDK](https://adoptopenjdk.net/) or [Red Hat](https://github.com/ojdkbuild/ojdkbuild/releases).
