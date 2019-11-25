@@ -38,7 +38,7 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 public class TurnWeighting implements Weighting {
     public static final int INFINITE_U_TURN_COSTS = -1;
     private final DecimalEncodedValue turnCostEnc;
-    private final TurnCostStorage turnCostExt;
+    private final TurnCostStorage turnCostStorage;
     private final Weighting superWeighting;
     private final double uTurnCosts;
     private final IntsRef tcFlags = TurnCost.createFlags();
@@ -63,7 +63,7 @@ public class TurnWeighting implements Weighting {
         // if null the TurnWeighting can be still useful for edge-based routing
         this.turnCostEnc = encoder.hasEncodedValue(key) ? encoder.getDecimalEncodedValue(key) : null;
         this.superWeighting = superWeighting;
-        this.turnCostExt = turnCostStorage;
+        this.turnCostStorage = turnCostStorage;
         this.uTurnCosts = uTurnCosts < 0 ? Double.POSITIVE_INFINITY : uTurnCosts;
     }
 
@@ -112,12 +112,12 @@ public class TurnWeighting implements Weighting {
             return 0;
         }
         double tCost = 0;
-        if (turnCostExt.isUTurn(edgeFrom, edgeTo)) {
+        if (turnCostStorage.isUTurn(edgeFrom, edgeTo)) {
             // note that the u-turn costs overwrite any turn costs set in TurnCostStorage
-            tCost = turnCostExt.isUTurnAllowed(nodeVia) ? uTurnCosts : Double.POSITIVE_INFINITY;
+            tCost = turnCostStorage.isUTurnAllowed(nodeVia) ? uTurnCosts : Double.POSITIVE_INFINITY;
         } else {
             if (turnCostEnc != null)
-                tCost = turnCostExt.get(turnCostEnc, tcFlags, edgeFrom, nodeVia, edgeTo);
+                tCost = turnCostStorage.get(turnCostEnc, tcFlags, edgeFrom, nodeVia, edgeTo);
         }
         return tCost;
     }
