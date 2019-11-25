@@ -2,18 +2,20 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.EdgeBasedRoutingAlgorithmTest;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.TurnCostStorage;
 import org.junit.Test;
 
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 public class OSMTurnRelationParserTest {
@@ -50,30 +52,18 @@ public class OSMTurnRelationParserTest {
 
         // TYPE == ONLY
         OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.ONLY);
-        Collection<OSMTurnRelationParser.TCEntry> result = parser.addRelationToTCStorage(instance,
-                TurnCost.createFlags(), map, ghStorage);
+        IntsRef tcFlags = TurnCost.createFlags();
+        parser.addRelationToTCStorage(instance, tcFlags, map, ghStorage);
 
-        assertEquals(2, result.size());
-        Iterator<OSMTurnRelationParser.TCEntry> iter = result.iterator();
-        OSMTurnRelationParser.TCEntry entry = iter.next();
-        assertEquals(4, entry.edgeFrom);
-        assertEquals(6, entry.edgeTo);
-        assertEquals(3, entry.nodeVia);
-
-        entry = iter.next();
-        assertEquals(4, entry.edgeFrom);
-        assertEquals(2, entry.edgeTo);
-        assertEquals(3, entry.nodeVia);
+        TurnCostStorage tcs = ghStorage.getTurnCostStorage();
+        DecimalEncodedValue tce = parser.getTurnCostEnc();
+        assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 6)));
+        assertEquals(0, tcs.get(tce, tcFlags, 4, 3, 3), .1);
+        assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 2)));
 
         // TYPE == NOT
         instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
-        result = parser.addRelationToTCStorage(instance, TurnCost.createFlags(), map, ghStorage);
-
-        assertEquals(1, result.size());
-        iter = result.iterator();
-        entry = iter.next();
-        assertEquals(4, entry.edgeFrom);
-        assertEquals(3, entry.edgeTo);
-        assertEquals(3, entry.nodeVia);
+        parser.addRelationToTCStorage(instance, tcFlags, map, ghStorage);
+        assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 3)));
     }
 }

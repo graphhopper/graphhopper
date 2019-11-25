@@ -106,7 +106,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
      *
      * @return a collection of turn cost entries which can be used for testing
      */
-    Collection<TCEntry> addRelationToTCStorage(OSMTurnRelation osmTurnRelation, IntsRef turnCostFlags,
+    void addRelationToTCStorage(OSMTurnRelation osmTurnRelation, IntsRef turnCostFlags,
                                                ExternalInternalMap map, Graph graph) {
         TurnCostStorage tcs = graph.getTurnCostStorage();
         int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
@@ -126,9 +126,8 @@ public class OSMTurnRelationParser implements TurnCostParser {
             }
 
             if (!EdgeIterator.Edge.isValid(edgeIdFrom))
-                return Collections.emptyList();
+                return;
 
-            final Collection<TCEntry> entries = new ArrayList<>();
             // get all outgoing edges of the via node
             iter = edgeOutExplorer.setBaseNode(viaNode);
             // for TYPE_ONLY_* we add ALL restrictions (from, via, * ) EXCEPT the given turn
@@ -138,16 +137,11 @@ public class OSMTurnRelationParser implements TurnCostParser {
                 long wayId = map.getOsmIdOfInternalEdge(edgeId);
                 if (edgeId != edgeIdFrom && osmTurnRelation.getRestriction() == OSMTurnRelation.Type.ONLY && wayId != osmTurnRelation.getOsmIdTo()
                         || osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT && wayId == osmTurnRelation.getOsmIdTo() && wayId >= 0) {
-                    final TCEntry entry = new TCEntry(edgeIdFrom, viaNode, iter.getEdge());
-                    IntsRef tcFlags = new IntsRef(turnCostFlags.length);
-                    getTurnCostEnc().setDecimal(false, tcFlags, Double.POSITIVE_INFINITY);
-                    entries.add(entry);
-                    tcs.setTurnCost(tcFlags, edgeIdFrom, viaNode, iter.getEdge());
+                    tcs.set(turnCostEnc, turnCostFlags, edgeIdFrom, viaNode, iter.getEdge(), Double.POSITIVE_INFINITY);
                     if (osmTurnRelation.getRestriction() == OSMTurnRelation.Type.NOT)
                         break;
                 }
             }
-            return entries;
         } catch (Exception e) {
             throw new IllegalStateException("Could not built turn table entry for relation of node with osmId:" + osmTurnRelation.getViaOsmNodeId(), e);
         }
@@ -161,34 +155,5 @@ public class OSMTurnRelationParser implements TurnCostParser {
     @Override
     public String toString() {
         return getName();
-    }
-
-    /**
-     * Helper class for processing purposes. We could remove it if TurnCostStorage was similarly fast with merging
-     * existing turn cost relations.
-     */
-    static class TCEntry {
-        final int edgeFrom;
-        final int nodeVia;
-        final int edgeTo;
-
-        TCEntry(int edgeFrom, int nodeVia, int edgeTo) {
-            this.edgeFrom = edgeFrom;
-            this.nodeVia = nodeVia;
-            this.edgeTo = edgeTo;
-        }
-
-        /**
-         * @return an unique id (edgeFrom, edgeTo) to avoid duplicate entries if multiple encoders
-         * are involved.
-         */
-        public long getItemId() {
-            return ((long) edgeFrom) << 32 | ((long) edgeTo);
-        }
-
-        @Override
-        public String toString() {
-            return "*-(" + edgeFrom + ")->" + nodeVia + "-(" + edgeTo + ")->*";
-        }
     }
 }
