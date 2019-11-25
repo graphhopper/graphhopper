@@ -48,11 +48,11 @@ public class TurnWeighting implements Weighting {
     }
 
     /**
-     * @param superWeighting the weighting that is wrapped by this {@link TurnWeighting} and used to calculate the
-     *                       edge weights for example
-     * @param turnCostStorage    the turn cost storage to be used
-     * @param uTurnCosts     the cost of a u-turn in seconds, this value will be applied to all u-turn costs no matter
-     *                       whether or not turnCostExt contains explicit values for these turns.
+     * @param superWeighting  the weighting that is wrapped by this {@link TurnWeighting} and used to calculate the
+     *                        edge weights for example
+     * @param turnCostStorage the turn cost storage to be used
+     * @param uTurnCosts      the cost of a u-turn in seconds, this value will be applied to all u-turn costs no matter
+     *                        whether or not turnCostExt contains explicit values for these turns.
      */
     public TurnWeighting(Weighting superWeighting, TurnCostStorage turnCostStorage, double uTurnCosts) {
         if (turnCostStorage == null) {
@@ -113,6 +113,7 @@ public class TurnWeighting implements Weighting {
         }
         double tCost = 0;
         if (turnCostExt.isUTurn(edgeFrom, edgeTo)) {
+            // note that the u-turn costs overwrite any turn costs set in TurnCostStorage
             tCost = turnCostExt.isUTurnAllowed(nodeVia) ? uTurnCosts : Double.POSITIVE_INFINITY;
         } else {
             if (turnCostEnc != null)
