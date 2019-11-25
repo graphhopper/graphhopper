@@ -16,13 +16,13 @@ public class OSMMaxAxleLoadParserTest {
     private EncodingManager em;
     private DecimalEncodedValue malEnc;
     private OSMMaxAxleLoadParser parser;
-    private long relFlags;
+    private IntsRef relFlags;
 
     @Before
     public void setUp() {
         parser = new OSMMaxAxleLoadParser();
         em = new EncodingManager.Builder().add(parser).build();
-        relFlags = 0;
+        relFlags = em.createRelationFlags();
         malEnc = em.getDecimalEncodedValue(MaxAxleLoad.KEY);
     }
 

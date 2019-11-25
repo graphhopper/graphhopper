@@ -3,6 +3,8 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.*;
@@ -21,6 +23,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
 
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.Assert.*;
@@ -39,6 +43,7 @@ public class DirectedBidirectionalDijkstraTest {
     private FlagEncoder encoder;
     private EncodingManager encodingManager;
     private Weighting weighting;
+    private DecimalEncodedValue turnCostEnc;
 
     @Rule
     public RepeatRule repeatRule = new RepeatRule();
@@ -52,6 +57,7 @@ public class DirectedBidirectionalDijkstraTest {
         graph = new GraphHopperStorage(dir, encodingManager, false, true).create(1000);
         turnCostStorage = graph.getTurnCostStorage();
         weighting = createWeighting(Double.POSITIVE_INFINITY);
+        turnCostEnc = encodingManager.getDecimalEncodedValue(getKey(encoder.toString(), EV_SUFFIX));
     }
 
     private Weighting createWeighting(double defaultUTurnCosts) {
@@ -389,7 +395,7 @@ public class DirectedBidirectionalDijkstraTest {
         Random rnd = new Random(seed);
         int numNodes = 100;
         GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, turnCostStorage);
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
 
         long numStrictViolations = 0;
         for (int i = 0; i < numQueries; i++) {
@@ -512,21 +518,24 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     private void addRestriction(int fromNode, int node, int toNode) {
-        turnCostStorage.addTurnInfo(
+        IntsRef tcFlags = TurnCost.createFlags();
+        turnCostEnc.setDecimal(false, tcFlags, Double.POSITIVE_INFINITY);
+        turnCostStorage.setTurnCost(
+                tcFlags,
                 GHUtility.getEdge(graph, fromNode, node).getEdge(),
                 node,
-                GHUtility.getEdge(graph, node, toNode).getEdge(),
-                encoder.getTurnFlags(true, 0)
+                GHUtility.getEdge(graph, node, toNode).getEdge()
         );
     }
 
     private void setTurnCost(int fromNode, int node, int toNode, double turnCost) {
-        turnCostStorage.addTurnInfo(
+        IntsRef tcFlags = TurnCost.createFlags();
+        turnCostEnc.setDecimal(false, tcFlags, turnCost);
+        turnCostStorage.setTurnCost(
+                tcFlags,
                 GHUtility.getEdge(graph, fromNode, node).getEdge(),
                 node,
-                GHUtility.getEdge(graph, node, toNode).getEdge(),
-                encoder.getTurnFlags(false, turnCost)
-        );
+                GHUtility.getEdge(graph, node, toNode).getEdge());
     }
 
     private IntArrayList nodes(int... nodes) {

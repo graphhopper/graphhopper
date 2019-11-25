@@ -15,7 +15,7 @@ import static org.junit.Assert.assertEquals;
 public class OSMRoadClassParserTest {
 
     private EncodingManager em;
-    private long relFlags;
+    private IntsRef relFlags;
     private EnumEncodedValue<RoadClass> rcEnc;
     private OSMRoadClassParser parser;
 
@@ -23,43 +23,43 @@ public class OSMRoadClassParserTest {
     public void setUp() {
         parser = new OSMRoadClassParser();
         em = new EncodingManager.Builder().add(parser).build();
-        relFlags = 0;
+        relFlags = em.createRelationFlags();
         rcEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
     }
 
     @Test
     public void testSimpleTags() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = em.createEdgeFlags();
+        IntsRef edgeFlags = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
-        assertEquals(RoadClass.PRIMARY, rcEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeFlags, readerWay, WAY, relFlags);
+        assertEquals(RoadClass.PRIMARY, rcEnc.getEnum(false, edgeFlags));
 
-        intsRef = em.createEdgeFlags();
+        edgeFlags = em.createEdgeFlags();
         readerWay.setTag("highway", "unknownstuff");
-        parser.handleWayTags(intsRef, readerWay, WAY, relFlags);
-        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeFlags, readerWay, WAY, relFlags);
+        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, edgeFlags));
 
-        intsRef = em.createEdgeFlags();
+        edgeFlags = em.createEdgeFlags();
         readerWay.setTag("highway", "motorway_link");
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
-        assertEquals(RoadClass.MOTORWAY, rcEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeFlags, readerWay, WAY, relFlags);
+        assertEquals(RoadClass.MOTORWAY, rcEnc.getEnum(false, edgeFlags));
     }
 
     @Test
     public void testIgnore() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = em.createEdgeFlags();
+        IntsRef edgeFlags = em.createEdgeFlags();
         readerWay.setTag("route", "ferry");
-        parser.handleWayTags(intsRef, readerWay, FERRY, 0);
-        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeFlags, readerWay, FERRY, relFlags);
+        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, edgeFlags));
     }
 
     @Test
     public void testNoNPE() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = em.createEdgeFlags();
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
-        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, intsRef));
+        IntsRef edgeFlags = em.createEdgeFlags();
+        parser.handleWayTags(edgeFlags, readerWay, WAY, relFlags);
+        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, edgeFlags));
     }
 }

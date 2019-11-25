@@ -26,11 +26,11 @@ public class ShortcutUnpackerTest {
     private final static int PREV_EDGE = 12;
     private final static int NEXT_EDGE = 13;
     private final boolean edgeBased;
+    private EncodingManager encodingManager;
     private FlagEncoder encoder;
     private Weighting weighting;
     private GraphHopperStorage graph;
     private CHGraph chGraph;
-    private TurnCostStorage turnCostStorage;
 
     @Parameterized.Parameters(name = "{0}")
     public static Object[] params() {
@@ -48,13 +48,10 @@ public class ShortcutUnpackerTest {
     public void init() {
         // use motorcycle to be able to set different fwd/bwd speeds
         encoder = new MotorcycleFlagEncoder(5, 5, 10);
-        EncodingManager encodingManager = EncodingManager.create(encoder);
+        encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
         graph = new GraphBuilder(encodingManager).setCHProfiles(new CHProfile(weighting, edgeBased, INFINITE_U_TURN_COSTS)).create();
         chGraph = graph.getCHGraph();
-        if (edgeBased) {
-            turnCostStorage = graph.getTurnCostStorage();
-        }
     }
 
     @Test
@@ -234,21 +231,21 @@ public class ShortcutUnpackerTest {
         graph.freeze();
 
         // turn costs ->
-        turnCostStorage.addTurnInfo(PREV_EDGE, 0, edge0.getEdge(), encoder.getTurnFlags(false, 2));
-        setTurnCost(edge0, edge1, 1, 5);
-        setTurnCost(edge1, edge2, 2, 3);
-        setTurnCost(edge2, edge3, 3, 2);
-        setTurnCost(edge3, edge4, 4, 1);
-        setTurnCost(edge4, edge5, 5, 4);
-        turnCostStorage.addTurnInfo(edge5.getEdge(), 6, NEXT_EDGE, encoder.getTurnFlags(false, 6));
+        setTurnCost(PREV_EDGE, 0, edge0.getEdge(), 2.0);
+        setTurnCost(edge0.getEdge(), 1, edge1.getEdge(), 5.0);
+        setTurnCost(edge1.getEdge(), 2, edge2.getEdge(), 3);
+        setTurnCost(edge2.getEdge(), 3, edge3.getEdge(), 2.0);
+        setTurnCost(edge3.getEdge(), 4, edge4.getEdge(), 1.0);
+        setTurnCost(edge4.getEdge(), 5, edge5.getEdge(), 4.0);
+        setTurnCost(edge5.getEdge(), 6, NEXT_EDGE, 6.0);
         // turn costs <-
-        turnCostStorage.addTurnInfo(NEXT_EDGE, 6, edge5.getEdge(), encoder.getTurnFlags(false, 2));
-        setTurnCost(edge5, edge4, 5, 3);
-        setTurnCost(edge4, edge3, 4, 2);
-        setTurnCost(edge3, edge2, 3, 4);
-        setTurnCost(edge2, edge1, 2, 1);
-        setTurnCost(edge1, edge0, 1, 0);
-        turnCostStorage.addTurnInfo(edge0.getEdge(), 0, PREV_EDGE, encoder.getTurnFlags(false, 1));
+        setTurnCost(NEXT_EDGE, 6, edge5.getEdge(), 2.0);
+        setTurnCost(edge5.getEdge(), 5, edge4.getEdge(), 3.0);
+        setTurnCost(edge4.getEdge(), 4, edge3.getEdge(), 2.0);
+        setTurnCost(edge3.getEdge(), 3, edge2.getEdge(), 4.0);
+        setTurnCost(edge2.getEdge(), 2, edge1.getEdge(), 1.0);
+        setTurnCost(edge1.getEdge(), 1, edge0.getEdge(), 0.0);
+        setTurnCost(edge0.getEdge(), 0, PREV_EDGE, 1.0);
 
         shortcut(0, 2, 0, 1, 0, 1);
         shortcut(2, 4, 2, 3, 2, 3);
@@ -289,8 +286,8 @@ public class ShortcutUnpackerTest {
         }
     }
 
-    private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double cost) {
-        turnCostStorage.addTurnInfo(inEdge.getEdge(), viaNode, outEdge.getEdge(), encoder.getTurnFlags(false, cost));
+    private void setTurnCost(int fromEdge, int viaNode, int toEdge, double cost) {
+        graph.getTurnCostStorage().setExpensive(encoder.toString(), encodingManager, fromEdge, viaNode, toEdge, cost);
     }
 
     private void shortcut(int baseNode, int adjNode, int skip1, int skip2, int origFirst, int origLast) {
@@ -325,7 +322,7 @@ public class ShortcutUnpackerTest {
     }
 
     private class TurnWeightingVisitor implements ShortcutUnpacker.Visitor {
-        private final TurnWeighting turnWeighting = new TurnWeighting(weighting, turnCostStorage);
+        private final TurnWeighting turnWeighting = new TurnWeighting(weighting, graph.getTurnCostStorage());
         private long time = 0;
         private double weight = 0;
 

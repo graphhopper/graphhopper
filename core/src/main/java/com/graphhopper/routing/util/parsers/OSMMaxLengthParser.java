@@ -50,7 +50,7 @@ public class OSMMaxLengthParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access,
-                                 long relationFlags) {
+                                 IntsRef relationFlags) {
         OSMValueExtractor.extractMeter(edgeFlags, way, lengthEncoder,
                 Collections.singletonList("maxlength"), enableLog);
         return edgeFlags;

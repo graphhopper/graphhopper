@@ -935,7 +935,7 @@ public class PathTest {
         tmpEdge = g.edge(1, 2, 5, true).setName("1-2");
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
         assertTrue(carManager.acceptWay(w, map));
-        long relFlags = 0;
+        IntsRef relFlags = carManager.createRelationFlags();
         tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
         tmpEdge = g.edge(4, 5, 5, true).setName("4-5");
         tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));

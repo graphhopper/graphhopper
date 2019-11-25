@@ -22,10 +22,7 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.coll.GHTBitSet;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.*;
@@ -36,6 +33,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.Helper.DIST_EARTH;
 
 /**
@@ -166,7 +165,7 @@ public class GHUtility {
         int from = fwd ? edge.getBaseNode() : edge.getAdjNode();
         int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
         System.out.printf(Locale.ROOT,
-                "graph.edge(%d, %d, %f, %s);\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false");
+                "graph.edge(%d, %d, %f, %s); // edgeId=%s\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false", edge.getEdge());
     }
 
     public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree, boolean allowLoops,
@@ -228,13 +227,16 @@ public class GHUtility {
         return Helper.DIST_PLANE.calcDist(fromLat, fromLon, toLat, toLon);
     }
 
-    public static void addRandomTurnCosts(Graph graph, long seed, FlagEncoder encoder, int maxTurnCost, TurnCostStorage turnCostStorage) {
+    public static void addRandomTurnCosts(Graph graph, long seed, EncodingManager em, FlagEncoder encoder, int maxTurnCost, TurnCostStorage turnCostStorage) {
         Random random = new Random(seed);
         double pNodeHasTurnCosts = 0.3;
         double pEdgePairHasTurnCosts = 0.6;
         double pCostIsRestriction = 0.1;
+
+        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(getKey(encoder.toString(), EV_SUFFIX));
         EdgeExplorer inExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
         EdgeExplorer outExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+        IntsRef tcFlags = TurnCost.createFlags();
         for (int node = 0; node < graph.getNodes(); ++node) {
             if (random.nextDouble() < pNodeHasTurnCosts) {
                 EdgeIterator inIter = inExplorer.setBaseNode(node);
@@ -246,12 +248,8 @@ public class GHUtility {
                             continue;
                         }
                         if (random.nextDouble() < pEdgePairHasTurnCosts) {
-                            boolean restricted = false;
-                            if (random.nextDouble() < pCostIsRestriction) {
-                                restricted = true;
-                            }
-                            double cost = restricted ? 0 : random.nextDouble() * maxTurnCost;
-                            turnCostStorage.addTurnInfo(inIter.getEdge(), node, outIter.getEdge(), encoder.getTurnFlags(restricted, cost));
+                            double cost = random.nextDouble() < pCostIsRestriction ? Double.POSITIVE_INFINITY : random.nextDouble() * maxTurnCost;
+                            turnCostStorage.set(turnCostEnc, tcFlags, inIter.getEdge(), node, outIter.getEdge(), cost);
                         }
                     }
                 }

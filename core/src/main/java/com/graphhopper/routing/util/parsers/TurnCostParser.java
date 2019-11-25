@@ -17,21 +17,32 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
 /**
- * This interface defines how parts of the information from 'way' is converted into IntsRef. A TagParser usually
- * has one corresponding EncodedValue but more are possible too.
+ * This interface serves the purpose of converting relation flags into turn cost information. Unlike RelationTagParser
+ * it can be assumed that the graph topology is already intact when handleTurnRelationTags is called.
  */
-public interface TagParser {
+public interface TurnCostParser {
+    String getName();
 
-    void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
+    void createTurnCostEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
 
-    IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags);
+    void handleTurnRelationTags(IntsRef turnCostFlags, OSMTurnRelation turnRelation, ExternalInternalMap map, Graph graph);
+
+    /**
+     * This map associates the internal GraphHopper nodes IDs with external IDs (OSM) and similarly for the edge IDs
+     * required to write the turn costs.
+     */
+    interface ExternalInternalMap {
+        int getInternalNodeIdOfOsmNode(long nodeOsmId);
+
+        long getOsmIdOfInternalEdge(int edgeId);
+    }
 }

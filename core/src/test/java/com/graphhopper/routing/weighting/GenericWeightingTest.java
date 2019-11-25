@@ -62,7 +62,7 @@ public class GenericWeightingTest {
         updateDistancesFor(graph, 0, 0.00, 0.00);
         updateDistancesFor(graph, 1, 0.01, 0.01);
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay().put(encoder.toString(), EncodingManager.Access.WAY);
-        graph.getEdgeIteratorState(0, 1).setFlags(em.handleWayTags(way, map, 0));
+        graph.getEdgeIteratorState(0, 1).setFlags(em.handleWayTags(way, map, em.createRelationFlags()));
     }
 
     @Test
@@ -98,7 +98,7 @@ public class GenericWeightingTest {
         updateDistancesFor(simpleGraph, 0, 0.00, 0.00);
         updateDistancesFor(simpleGraph, 1, 0.01, 0.01);
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay().put(encoder.toString(), EncodingManager.Access.WAY);
-        simpleGraph.getEdgeIteratorState(0, 1).setFlags(simpleEncodingManager.handleWayTags(way, map, 0));
+        simpleGraph.getEdgeIteratorState(0, 1).setFlags(simpleEncodingManager.handleWayTags(way, map, em.createRelationFlags()));
 
         Weighting instance = new GenericWeighting(simpleEncoder, new HintsMap().put(GenericWeighting.HEIGHT_LIMIT, 5.0));
         EdgeIteratorState edge = simpleGraph.getEdgeIteratorState(0, 1);

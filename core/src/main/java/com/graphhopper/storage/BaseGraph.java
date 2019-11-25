@@ -20,10 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -1179,14 +1176,14 @@ class BaseGraph implements Graph {
         boolean reverse = false;
         boolean freshFlags;
         int edgeId = -1;
-        private final IntsRef baseIntsRef;
+        private final IntsRef edgeFlags;
         int chFlags;
 
         public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph) {
             this.edgePointer = edgePointer;
             this.edgeAccess = edgeAccess;
             this.baseGraph = baseGraph;
-            this.baseIntsRef = new IntsRef(baseGraph.intsForFlags);
+            this.edgeFlags = new IntsRef(baseGraph.intsForFlags);
         }
 
         @Override
@@ -1213,10 +1210,10 @@ class BaseGraph implements Graph {
         @Override
         public IntsRef getFlags() {
             if (!freshFlags) {
-                edgeAccess.readFlags(edgePointer, baseIntsRef);
+                edgeAccess.readFlags(edgePointer, edgeFlags);
                 freshFlags = true;
             }
-            return baseIntsRef;
+            return edgeFlags;
         }
 
         @Override
@@ -1224,7 +1221,7 @@ class BaseGraph implements Graph {
             assert edgeId < baseGraph.edgeCount : "must be edge but was shortcut: " + edgeId + " >= " + baseGraph.edgeCount + ". Use setFlagsAndWeight";
             edgeAccess.writeFlags(edgePointer, edgeFlags);
             for (int i = 0; i < edgeFlags.ints.length; i++) {
-                baseIntsRef.ints[i] = edgeFlags.ints[i];
+                this.edgeFlags.ints[i] = edgeFlags.ints[i];
             }
             freshFlags = true;
             return this;

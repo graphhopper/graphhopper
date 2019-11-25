@@ -37,6 +37,7 @@ public class RandomCHRoutingTest {
     private final int uTurnCosts;
     private Directory dir;
     private CarFlagEncoder encoder;
+    private EncodingManager encodingManager;
     private Weighting weighting;
     private GraphHopperStorage graph;
     private LocationIndexTree locationIndex;
@@ -60,9 +61,9 @@ public class RandomCHRoutingTest {
     public void init() {
         dir = new RAMDirectory();
         encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
-        EncodingManager em = EncodingManager.create(encoder);
+        encodingManager = EncodingManager.create(encoder);
         weighting = new FastestWeighting(encoder);
-        graph = new GraphBuilder(em)
+        graph = new GraphBuilder(encodingManager)
                 .setCHProfiles(new CHProfile(weighting, traversalMode.isEdgeBased(), uTurnCosts))
                 .create();
     }
@@ -84,7 +85,7 @@ public class RandomCHRoutingTest {
         double pOffset = 0;
         GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, pOffset);
         if (traversalMode.isEdgeBased()) {
-            GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, graph.getTurnCostStorage());
+            GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, graph.getTurnCostStorage());
         }
         runRandomTest(rnd, 20);
     }
@@ -127,7 +128,7 @@ public class RandomCHRoutingTest {
         long seed = 60643479675316L;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 50, 2.5, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.9, 0.0);
-        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, graph.getTurnCostStorage());
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, graph.getTurnCostStorage());
         runRandomTest(rnd, 20);
     }
 

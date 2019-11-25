@@ -48,8 +48,8 @@ public abstract class AbstractGraphStorageTester {
     private final String locationParent = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraphLoc = "./target/graphstorage/default";
-    protected EncodingManager encodingManager = EncodingManager.create("car,foot");
-    protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
+    protected CarFlagEncoder carEncoder = createCarFlagEncoder();
+    protected EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(new FootFlagEncoder()).build();
     protected BooleanEncodedValue carAccessEnc = carEncoder.getAccessEnc();
     protected DecimalEncodedValue carAvSpeedEnc = carEncoder.getAverageSpeedEnc();
     protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
@@ -88,6 +88,10 @@ public abstract class AbstractGraphStorageTester {
             }
         }
         throw new IllegalArgumentException("did not find node with location " + (float) latitude + "," + (float) longitude);
+    }
+
+    CarFlagEncoder createCarFlagEncoder() {
+        return new CarFlagEncoder(5, 5, 0);
     }
 
     protected GraphHopperStorage createGHStorage() {

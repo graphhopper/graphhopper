@@ -62,7 +62,7 @@ public class DirectedRoutingTest {
     @Rule
     public RepeatRule repeatRule = new RepeatRule();
 
-    @Parameterized.Parameters(name = "{0}, u-turn-costs: {1}")
+    @Parameterized.Parameters(name = "{0}, u-turn-costs: {1}, prepareCH: {2}, prepareLM: {3}")
     public static Collection<Object[]> params() {
         return Arrays.asList(new Object[][]{
                 {Algo.ASTAR, INFINITE_U_TURN_COSTS, false, false},
@@ -155,7 +155,7 @@ public class DirectedRoutingTest {
         final int numQueries = 50;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, turnCostStorage);
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
 //        GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         List<String> strictViolations = new ArrayList<>();
@@ -197,8 +197,8 @@ public class DirectedRoutingTest {
         double pOffset = 0;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 50, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, pOffset);
-        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, turnCostStorage);
-//        GHUtility.printGraphForUnitTest(graph, encoder);
+        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
+        // GHUtility.printGraphForUnitTest(graph, encoder);
         preProcessGraph();
         LocationIndexTree index = new LocationIndexTree(graph, dir);
         index.prepareIndex();
@@ -221,10 +221,12 @@ public class DirectedRoutingTest {
             int chSourceOutEdge = getSourceOutEdge(tmpRnd2, source, chQueryGraph);
             int chTargetInEdge = getTargetInEdge(tmpRnd2, target, chQueryGraph);
 
-            Path refPath = new DijkstraBidirectionRef(queryGraph, createTurnWeighting(queryGraph), TraversalMode.EDGE_BASED)
+            final TurnWeighting tw = createTurnWeighting(queryGraph);
+            Path refPath = new DijkstraBidirectionRef(queryGraph, tw, TraversalMode.EDGE_BASED)
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
             Path path = createAlgo(chQueryGraph)
                     .calcPath(source, target, chSourceOutEdge, chTargetInEdge);
+
             // do not check nodes, because there can be ambiguity when there are zero weight loops
             strictViolations.addAll(comparePaths(refPath, path, source, target, false));
         }

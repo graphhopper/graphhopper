@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.weighting.GenericWeighting;
@@ -111,16 +109,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
-        return oldRelationFlags;
-    }
-
-    @Override
-    public boolean acceptsTurnRelation(OSMTurnRelation relation) {
-        return relation.isVehicleTypeConcernedByTurnRestriction(restrictions);
-    }
-
-    @Override
     public EncodingManager.Access getAccess(ReaderWay way) {
         // important to skip unsupported highways, otherwise too many have to be removed after graph creation
         // and node removal is not yet designed for that
@@ -151,7 +139,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
         if (access.canSkip())
             return edgeFlags;
 

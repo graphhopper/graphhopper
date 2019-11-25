@@ -15,33 +15,38 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.profiles;
 
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.Helper;
 
-/**
- * Defines bit layout for cars with four wheel drive
- *
- * @author zstadler
- */
-public class Car4WDFlagEncoder extends CarFlagEncoder {
+public enum RouteNetwork {
 
-    public Car4WDFlagEncoder(PMap properties) {
-        super(properties);
+    OTHER("other"), INTERNATIONAL("international"), NATIONAL("national"), REGIONAL("regional"),
+    LOCAL("local");
 
-        trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
-        trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass
+    /**
+     * You need to call EncodingManager.getKey(prefix, EV_SUFFIX) as this EncodedValue can be used for e.g. bike and hike
+     */
+    public static final String EV_SUFFIX = "network";
 
-        init();
-    }
+    private final String name;
 
-    @Override
-    public int getVersion() {
-        return 2;
+    RouteNetwork(String name) {
+        this.name = name;
     }
 
     @Override
     public String toString() {
-        return "car4wd";
+        return name;
+    }
+
+    public static RouteNetwork find(String name) {
+        if (name == null)
+            return OTHER;
+        try {
+            return RouteNetwork.valueOf(Helper.toUpperCase(name));
+        } catch (IllegalArgumentException ex) {
+            return OTHER;
+        }
     }
 }

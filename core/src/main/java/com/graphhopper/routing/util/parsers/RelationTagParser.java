@@ -17,21 +17,25 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
 /**
- * This interface defines how parts of the information from 'way' is converted into IntsRef. A TagParser usually
- * has one corresponding EncodedValue but more are possible too.
+ * This interface serves the purpose of creating relation flags (max. 64 bits) from ReaderRelation in handleRelationTags
+ * and then allows converting the relation flags into the edge flags. A direct conversion of ReaderRelation into edge
+ * flags is not yet possible yet due to storage limitation of the 'supervisor' OSMReader. See #1775.
  */
-public interface TagParser {
+public interface RelationTagParser extends TagParser {
 
-    void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
+    void createRelationEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
 
-    IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags);
+    /**
+     * Analyze the tags of a relation and create the routing flags for the second read step.
+     * In the pre-parsing step this method will be called to determine the useful relation tags.
+     */
+    IntsRef handleRelationTags(IntsRef relFlags, ReaderRelation relation);
 }

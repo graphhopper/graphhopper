@@ -38,7 +38,7 @@ public class DataFlagEncoderTest {
     private final EnumEncodedValue<Surface> surfaceEnc;
     private final DecimalEncodedValue carMaxSpeedEnc;
     private final EncodingManager encodingManager;
-    private final long relFlags;
+    private final IntsRef relFlags;
 
     public DataFlagEncoderTest() {
         properties = new PMap();
@@ -50,7 +50,7 @@ public class DataFlagEncoderTest {
                 add(new OSMSurfaceParser()).
                 add(new OSMMaxSpeedParser(carMaxSpeedEnc = MaxSpeed.create())).
                 add(encoder).build();
-        relFlags = 0;
+        relFlags = encodingManager.createRelationFlags();
         roadEnvironmentEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);

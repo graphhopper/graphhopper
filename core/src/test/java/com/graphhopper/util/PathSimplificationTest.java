@@ -30,6 +30,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
@@ -86,7 +87,7 @@ public class PathSimplificationTest {
         w.setTag("highway", "tertiary");
         w.setTag("maxspeed", "10");
 
-        long relFlags = 0;
+        IntsRef relFlags = carManager.createRelationFlags();
         EdgeIteratorState tmpEdge;
         tmpEdge = g.edge(0, 1, 10000, true).setName("0-1");
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
@@ -30,7 +31,10 @@ import static org.junit.Assert.assertTrue;
  * @author Karl Hübner
  */
 public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest {
-    private TurnCostStorage turnCostStorage;
+    @Override
+    CarFlagEncoder createCarFlagEncoder() {
+        return new CarFlagEncoder(5, 5, 1400);
+    }
 
     @Override
     protected GraphHopperStorage newGHStorage(Directory dir, boolean is3D) {
@@ -40,7 +44,6 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
     @Override
     protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
         GraphHopperStorage g = GraphBuilder.start(encodingManager).setDir(dir).set3D(enabled3D).withTurnCosts(true).setSegmentSize(segmentSize).build();
-        turnCostStorage = g.getTurnCostStorage();
         return g;
     }
 
@@ -62,9 +65,9 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         graph.edge(9, 11, 200, true);
         graph.edge(1, 2, 120, false);
 
-        turnCostStorage.addTurnInfo(iter1.getEdge(), 0, iter2.getEdge(), 1337);
-        turnCostStorage.addTurnInfo(iter2.getEdge(), 0, iter1.getEdge(), 666);
-        turnCostStorage.addTurnInfo(iter1.getEdge(), 1, iter2.getEdge(), 815);
+        setTurnCost(iter1.getEdge(), 0, iter2.getEdge(), 1337);
+        setTurnCost(iter2.getEdge(), 0, iter1.getEdge(), 666);
+        setTurnCost(iter1.getEdge(), 1, iter2.getEdge(), 815);
 
         iter1.setName("named street1");
         iter2.setName("named street2");
@@ -82,10 +85,10 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
         assertEquals("named street2", graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName());
 
-        assertEquals(1337, turnCostStorage.getTurnCostFlags(iter1.getEdge(), 0, iter2.getEdge()));
-        assertEquals(666, turnCostStorage.getTurnCostFlags(iter2.getEdge(), 0, iter1.getEdge()));
-        assertEquals(815, turnCostStorage.getTurnCostFlags(iter1.getEdge(), 1, iter2.getEdge()));
-        assertEquals(0, turnCostStorage.getTurnCostFlags(iter1.getEdge(), 3, iter2.getEdge()));
+        assertEquals(1337, getTurnCost(iter2, 0, iter1), .1);
+        assertEquals(666, getTurnCost(iter1, 0, iter2), .1);
+        assertEquals(815, getTurnCost(iter2, 1, iter1), .1);
+        assertEquals(0, getTurnCost(iter2, 3, iter1), .1);
 
         graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
         checkGraph(graph);
@@ -96,6 +99,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         graph = newGHStorage(new MMapDirectory(defaultGraphLoc), false, 128);
         graph.create(100); // 100 is the minimum size
 
+        TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
         // assert that turnCostStorage can hold 104 turn cost entries at the beginning
         assertEquals(128, turnCostStorage.getCapacity());
 
@@ -119,14 +123,14 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
 
         // add 100 turn cost entries around node 50
         for (int edgeId = 0; edgeId < 50; edgeId++) {
-            turnCostStorage.addTurnInfo(edgeId, 50, edgeId + 50, 1337);
-            turnCostStorage.addTurnInfo(edgeId + 50, 50, edgeId, 1337);
+            setTurnCost(edgeId, 50, edgeId + 50, 1337);
+            setTurnCost(edgeId + 50, 50, edgeId, 1337);
         }
 
-        turnCostStorage.addTurnInfo(0, 50, 1, 1337);
+        setTurnCost(0, 50, 1, 1337);
         assertEquals(104, turnCostStorage.getCapacity() / 16); // we are still good here
 
-        turnCostStorage.addTurnInfo(0, 50, 2, 1337);
+        setTurnCost(0, 50, 2, 1337);
         // A new segment should be added, which will support 128 / 16 = 8 more entries.
         assertEquals(112, turnCostStorage.getCapacity() / 16);
     }
@@ -143,5 +147,13 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
     public void testCopyTo() {
         // todo: implement graph coyping in the presence of turn costs
         super.testCopyTo();
+    }
+
+    private double getTurnCost(EdgeIteratorState fromEdge, int viaNode, EdgeIteratorState toEdge) {
+        return graph.getTurnCostStorage().getExpensive("car", encodingManager, toEdge.getEdge(), viaNode, fromEdge.getEdge());
+    }
+
+    private void setTurnCost(int fromEdge, int viaNode, int toEdge, int cost) {
+        graph.getTurnCostStorage().setExpensive("car", encodingManager, fromEdge, viaNode, toEdge, cost);
     }
 }

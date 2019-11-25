@@ -63,8 +63,7 @@ public class TurnWeightingTest {
     }
 
     private void setTurnCost(int from, int via, int to, double turnCost) {
-        long turnFlags = encoder.getTurnFlags(false, turnCost);
-        turnCostExt.addTurnInfo(getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), turnFlags);
+        turnCostExt.setExpensive(encoder.toString(), encodingManager, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), turnCost);
     }
 
 }

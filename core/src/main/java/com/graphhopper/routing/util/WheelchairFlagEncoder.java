@@ -192,7 +192,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
         if (access.canSkip()) {
             return edgeFlags;
         }
@@ -258,13 +258,13 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     /**
-     * First get priority from {@link FootFlagEncoder#handlePriority(ReaderWay, int)} then evaluate wheelchair specific
+     * First get priority from {@link FootFlagEncoder#handlePriority(ReaderWay, Integer)} then evaluate wheelchair specific
      * tags.
      *
      * @return a priority for the given way
      */
     @Override
-    protected int handlePriority(ReaderWay way, int priorityFromRelation) {
+    protected int handlePriority(ReaderWay way, Integer priorityFromRelation) {
         TreeMap<Double, Integer> weightToPrioMap = new TreeMap<>();
 
         weightToPrioMap.put(100d, super.handlePriority(way, priorityFromRelation));

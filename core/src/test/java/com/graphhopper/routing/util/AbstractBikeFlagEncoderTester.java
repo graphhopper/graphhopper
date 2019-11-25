@@ -18,10 +18,9 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.Roundabout;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Translation;
@@ -33,6 +32,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import static com.graphhopper.routing.util.EncodingManager.Access.WAY;
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static com.graphhopper.util.TranslationMapTest.SINGLETON;
 import static org.junit.Assert.*;
@@ -60,12 +60,16 @@ public abstract class AbstractBikeFlagEncoderTester {
 
     protected abstract BikeCommonFlagEncoder createBikeEncoder();
 
-    protected void assertPriority(int expectedPrio, ReaderWay way) {
-        assertPriority(expectedPrio, way, 0);
+    protected IntsRef assertPriority(int expectedPrio, ReaderWay way) {
+        return assertPriority(expectedPrio, way, new ReaderRelation(0));
     }
 
-    protected void assertPriority(int expectedPrio, ReaderWay way, long relationFlags) {
-        assertEquals(expectedPrio, encoder.handlePriority(way, 18, (int) encoder.relationCodeEncoder.getValue(relationFlags)));
+    protected IntsRef assertPriority(int expectedPrio, ReaderWay way, ReaderRelation rel) {
+        IntsRef relFlags = encodingManager.handleRelationTags(rel, encodingManager.createRelationFlags());
+        IntsRef edgeFlags = encodingManager.handleWayTags(way, new EncodingManager.AcceptWay().put(encoder.toString(), WAY), relFlags);
+        DecimalEncodedValue enc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder.toString(), "priority"));
+        assertEquals((double) expectedPrio / BEST.getValue(), enc.getDecimal(false, edgeFlags), 0.01);
+        return edgeFlags;
     }
 
     protected double getSpeedFromFlags(ReaderWay way) {
@@ -74,11 +78,11 @@ public abstract class AbstractBikeFlagEncoderTester {
     }
 
     protected String getWayTypeFromFlags(ReaderWay way) {
-        return getWayTypeFromFlags(way, 0);
+        return getWayTypeFromFlags(way, encodingManager.createRelationFlags());
     }
 
-    protected String getWayTypeFromFlags(ReaderWay way, long relationFlags) {
-        IntsRef flags = encodingManager.handleWayTags(way, accessMap, relationFlags);
+    protected String getWayTypeFromFlags(ReaderWay way, IntsRef relationFlags) {
+        IntsRef flags = encodingManager.handleWayTags(way, new EncodingManager.AcceptWay().put(encoder.toString(), WAY), relationFlags);
         Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
         return encoder.getAnnotation(flags, enMap).getMessage();
     }
@@ -211,6 +215,35 @@ public abstract class AbstractBikeFlagEncoderTester {
     }
 
     @Test
+    public void testBike() {
+        ReaderWay way = new ReaderWay(1);
+
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "yes");
+        way.setTag("foot", "yes");
+        way.setTag("motor_vehicle", "agricultural");
+        way.setTag("surface", "gravel");
+        way.setTag("tracktype", "grade3");
+
+        ReaderRelation rel = new ReaderRelation(0);
+        rel.setTag("type", "route");
+        rel.setTag("network", "rcn");
+        rel.setTag("route", "bicycle");
+
+        ReaderRelation rel2 = new ReaderRelation(1);
+        rel2.setTag("type", "route");
+        rel2.setTag("network", "lcn");
+        rel2.setTag("route", "bicycle");
+
+        // two relation tags => we currently cannot store a list, so pick the lower ordinal 'regional'
+        // Example https://www.openstreetmap.org/way/213492914 => two hike 84544, 2768803 and two bike relations 3162932, 5254650
+        IntsRef relFlags = encodingManager.handleRelationTags(rel2, encodingManager.handleRelationTags(rel, encodingManager.createRelationFlags()));
+        IntsRef edgeFlags = encodingManager.handleWayTags(way, new EncodingManager.AcceptWay().put(encoder.toString(), WAY), relFlags);
+        EnumEncodedValue<RouteNetwork> enc = encodingManager.getEnumEncodedValue(getKey("bike", RouteNetwork.EV_SUFFIX), RouteNetwork.class);
+        assertEquals(RouteNetwork.REGIONAL, enc.getEnum(false, edgeFlags));
+    }
+
+    @Test
     public void testTramStations() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
@@ -233,7 +266,7 @@ public abstract class AbstractBikeFlagEncoderTester {
 
         way = new ReaderWay(1);
         way.setTag("railway", "platform");
-        long relFlags = 0;
+        IntsRef relFlags = encodingManager.createRelationFlags();
         IntsRef flags = encoder.handleWayTags(encodingManager.createEdgeFlags(), way, encoder.getAccess(way));
         assertNotEquals(0, flags.ints[0]);
 

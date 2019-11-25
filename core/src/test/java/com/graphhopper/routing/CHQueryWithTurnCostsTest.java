@@ -28,7 +28,10 @@ import com.graphhopper.routing.util.MotorcycleFlagEncoder;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.Test;
@@ -55,7 +58,6 @@ public class CHQueryWithTurnCostsTest {
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
-    private final TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
     private final CHGraph chGraph = graph.getCHGraph();
     private String algoString;
 
@@ -709,7 +711,7 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
-        TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), turnCostStorage);
+        TurnWeighting chTurnWeighting = new TurnWeighting(new PreparationWeighting(weighting), graph.getTurnCostStorage());
         AbstractBidirectionEdgeCHNoSOD algo = "astar".equals(algoString) ?
                 new AStarBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting) :
                 new DijkstraBidirectionEdgeCHNoSOD(chGraph, chTurnWeighting);
@@ -727,24 +729,24 @@ public class CHQueryWithTurnCostsTest {
         }
     }
 
-    private void setTurnCost(EdgeIteratorState edge1, EdgeIteratorState edge2, int viaNode, double cost) {
-        turnCostStorage.addTurnInfo(edge1.getEdge(), viaNode, edge2.getEdge(), encoder.getTurnFlags(false, cost));
-    }
-
-    private void setTurnCost(int from, int via, int to, int cost) {
+    private void setTurnCost(int from, int via, int to, double cost) {
         setTurnCost(getEdge(from, via), getEdge(via, to), via, cost);
     }
 
+    private void setTurnCost(EdgeIteratorState edge1, EdgeIteratorState edge2, int viaNode, double costs) {
+        graph.getTurnCostStorage().setExpensive(encoder.toString(), encodingManager,
+                edge1.getEdge(), viaNode, edge2.getEdge(), costs);
+    }
+
     private void setRestriction(int from, int via, int to) {
-        setRestriction(getEdge(from, via), getEdge(via, to), via);
+        setTurnCost(getEdge(from, via), getEdge(via, to), via, Double.POSITIVE_INFINITY);
     }
 
     private void setRestriction(EdgeIteratorState edge1, EdgeIteratorState edge2, int viaNode) {
-        turnCostStorage.addTurnInfo(edge1.getEdge(), viaNode, edge2.getEdge(), encoder.getTurnFlags(true, 0));
+        setTurnCost(edge1, edge2, viaNode, Double.POSITIVE_INFINITY);
     }
 
     private EdgeIteratorState getEdge(int from, int to) {
         return GHUtility.getEdge(graph, from, to);
     }
-
 }
