@@ -79,8 +79,6 @@ public class OSMTurnRelationParser implements TurnCostParser {
     @Override
     public void createTurnCostEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
         String accessKey = getKey(name, "access");
-        if (!lookup.hasEncodedValue(accessKey))
-            throw new IllegalArgumentException("Add TurnCostParsers to EncodingManager after everything else");
         accessEnc = lookup.getEncodedValue(accessKey, BooleanEncodedValue.class);
         registerNewEncodedValue.add(turnCostEnc = TurnCost.create(name, maxTurnCosts));
     }
@@ -97,7 +95,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
         return cachedInExplorer == null ? cachedInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(accessEnc)) : cachedInExplorer;
     }
 
-    EdgeExplorer getOutExplorer(Graph graph) {
+    private EdgeExplorer getOutExplorer(Graph graph) {
         return cachedOutExplorer == null ? cachedOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc)) : cachedOutExplorer;
     }
 
