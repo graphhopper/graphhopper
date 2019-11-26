@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.PMap;
 
 /**
@@ -27,71 +26,18 @@ import com.graphhopper.util.PMap;
  */
 public class Car4WDFlagEncoder extends CarFlagEncoder {
 
-    public Car4WDFlagEncoder() {
-        this(5, 5, 0);
-    }
-
     public Car4WDFlagEncoder(PMap properties) {
         super(properties);
-    }
-
-    public Car4WDFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
-    }
-
-    public Car4WDFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super(speedBits, speedFactor, maxTurnCosts);
-
-        init();
 
         trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
         trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass
+
+        init();
     }
 
     @Override
     public int getVersion() {
         return 2;
-    }
-
-    @Override
-    public EncodingManager.Access getAccess(ReaderWay way) {
-        // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
-        String highwayValue = way.getTag("highway");
-        String firstValue = way.getFirstPriorityTag(restrictions);
-        if (highwayValue == null) {
-            if (way.hasTag("route", ferries)) {
-                if (restrictedValues.contains(firstValue))
-                    return EncodingManager.Access.CAN_SKIP;
-                if (intendedValues.contains(firstValue) ||
-                        // implied default is allowed only if foot and bicycle is not specified:
-                        firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle"))
-                    return EncodingManager.Access.FERRY;
-            }
-            return EncodingManager.Access.CAN_SKIP;
-        }
-
-        if (!defaultSpeedMap.containsKey(highwayValue))
-            return EncodingManager.Access.CAN_SKIP;
-
-        if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
-            return EncodingManager.Access.CAN_SKIP;
-
-        // multiple restrictions needs special handling compared to foot and bike, see also motorcycle
-        if (!firstValue.isEmpty()) {
-            if (restrictedValues.contains(firstValue) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-                return EncodingManager.Access.CAN_SKIP;
-            if (intendedValues.contains(firstValue))
-                return EncodingManager.Access.WAY;
-        }
-
-        // do not drive street cars into fords
-        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
-            return EncodingManager.Access.CAN_SKIP;
-
-        if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
-            return EncodingManager.Access.CAN_SKIP;
-        else
-            return EncodingManager.Access.WAY;
     }
 
     @Override

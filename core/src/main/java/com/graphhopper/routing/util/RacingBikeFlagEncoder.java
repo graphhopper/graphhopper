@@ -18,10 +18,12 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.TreeMap;
 
+import static com.graphhopper.routing.profiles.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
@@ -113,11 +115,10 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
         addPushingSection("pedestrian");
         addPushingSection("steps");
 
-        setCyclingNetworkPreference("icn", PriorityCode.BEST.getValue());
-        setCyclingNetworkPreference("ncn", PriorityCode.BEST.getValue());
-        setCyclingNetworkPreference("rcn", PriorityCode.VERY_NICE.getValue());
-        setCyclingNetworkPreference("lcn", PriorityCode.UNCHANGED.getValue());
-        setCyclingNetworkPreference("mtb", PriorityCode.UNCHANGED.getValue());
+        routeMap.put(INTERNATIONAL, BEST.getValue());
+        routeMap.put(NATIONAL, BEST.getValue());
+        routeMap.put(REGIONAL, VERY_NICE.getValue());
+        routeMap.put(LOCAL, UNCHANGED.getValue());
 
         absoluteBarriers.add("kissing_gate");
 

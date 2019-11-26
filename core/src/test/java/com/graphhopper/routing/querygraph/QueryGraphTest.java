@@ -20,6 +20,7 @@ package com.graphhopper.routing.querygraph;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
@@ -38,6 +39,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
 import static com.graphhopper.storage.index.QueryResult.Position.*;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.*;
@@ -490,11 +492,12 @@ public class QueryGraphTest {
     @Test
     public void testTurnCostsProperlyPropagated_Issue282() {
         FlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
-
-        GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(),
-                EncodingManager.create(encoder), false, true).
+        EncodingManager em = EncodingManager.create(encoder);
+        GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(), em, false, true).
                 create(100);
-        TurnCostExtension turnExt = graphWithTurnCosts.getTurnCostExtension();
+        TurnCostStorage turnExt = graphWithTurnCosts.getTurnCostStorage();
+        IntsRef tcFlags = TurnCost.createFlags();
+        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(EncodingManager.getKey(encoder.toString(), EV_SUFFIX));
         NodeAccess na = graphWithTurnCosts.getNodeAccess();
         na.setNode(0, .00, .00);
         na.setNode(1, .00, .01);
@@ -504,20 +507,21 @@ public class QueryGraphTest {
         EdgeIteratorState edge1 = graphWithTurnCosts.edge(2, 1, 10, true);
 
         FastestWeighting weighting = new FastestWeighting(encoder);
-        TurnWeighting turnWeighting = new TurnWeighting(weighting, graphWithTurnCosts.getTurnCostExtension());
+        TurnWeighting turnWeighting = new TurnWeighting(weighting, graphWithTurnCosts.getTurnCostStorage());
 
         // no turn costs initially
         assertEquals(0, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 
-        //  now use turn costs
-        turnExt.addTurnInfo(edge0.getEdge(), 1, edge1.getEdge(), encoder.getTurnFlags(false, 10));
+        // now use turn costs and QueryGraph
+        turnCostEnc.setDecimal(false, tcFlags, 10);
+        turnExt.setTurnCost(tcFlags, edge0.getEdge(), 1, edge1.getEdge());
         assertEquals(10, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 
         // now use turn costs with query graph
         QueryResult res1 = createLocationResult(0.000, 0.005, edge0, 0, QueryResult.Position.EDGE);
         QueryResult res2 = createLocationResult(0.005, 0.010, edge1, 0, QueryResult.Position.EDGE);
         QueryGraph qGraph = QueryGraph.lookup(graphWithTurnCosts, res1, res2);
-        turnWeighting = new TurnWeighting(weighting, qGraph.getTurnCostExtension());
+        turnWeighting = new TurnWeighting(weighting, qGraph.getTurnCostStorage());
 
         int fromQueryEdge = GHUtility.getEdge(qGraph, res1.getClosestNode(), 1).getEdge();
         int toQueryEdge = GHUtility.getEdge(qGraph, res2.getClosestNode(), 1).getEdge();

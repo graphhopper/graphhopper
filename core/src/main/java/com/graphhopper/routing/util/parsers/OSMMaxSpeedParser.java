@@ -53,7 +53,7 @@ public class OSMMaxSpeedParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags) {
         double maxSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
 
         if (maxSpeed < 0) {

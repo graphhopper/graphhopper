@@ -20,10 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -61,7 +58,7 @@ class BaseGraph implements Graph {
     private final static String STRING_IDX_NAME_KEY = "name";
     final StringIndex stringIndex;
     // can be null if turn costs are not supported
-    final TurnCostExtension turnCostExtension;
+    final TurnCostStorage turnCostStorage;
     final BitUtil bitUtil;
     final EncodingManager encodingManager;
     final EdgeAccess edgeAccess;
@@ -161,9 +158,9 @@ class BaseGraph implements Graph {
         this.bounds = BBox.createInverse(withElevation);
         this.nodeAccess = new GHNodeAccess(this, withElevation);
         if (withTurnCosts) {
-            turnCostExtension = new TurnCostExtension(nodeAccess, dir.find("turn_costs"));
+            turnCostStorage = new TurnCostStorage(nodeAccess, dir.find("turn_costs"));
         } else {
-            turnCostExtension = null;
+            turnCostStorage = null;
         }
         if (segmentSize >= 0) {
             setSegmentSize(segmentSize);
@@ -230,7 +227,7 @@ class BaseGraph implements Graph {
         edges.setHeader(0, edgeEntryBytes);
         edges.setHeader(1 * 4, edgeCount);
         edges.setHeader(2 * 4, encodingManager.hashCode());
-        edges.setHeader(3 * 4, supportsTurnCosts() ? turnCostExtension.hashCode() : -1);
+        edges.setHeader(3 * 4, supportsTurnCosts() ? turnCostStorage.hashCode() : -1);
         return 5;
     }
 
@@ -277,7 +274,7 @@ class BaseGraph implements Graph {
     }
 
     boolean supportsTurnCosts() {
-        return turnCostExtension != null;
+        return turnCostStorage != null;
     }
 
     /**
@@ -289,7 +286,7 @@ class BaseGraph implements Graph {
         }
         if (supportsTurnCosts()) {
             for (long pointer = oldCapacity + N_TC; pointer < newCapacity; pointer += nodeEntryBytes) {
-                nodes.setInt(pointer, TurnCostExtension.NO_TURN_ENTRY);
+                nodes.setInt(pointer, TurnCostStorage.NO_TURN_ENTRY);
             }
         }
     }
@@ -363,7 +360,7 @@ class BaseGraph implements Graph {
         wayGeometry.setSegmentSize(bytes);
         stringIndex.setSegmentSize(bytes);
         if (supportsTurnCosts()) {
-            turnCostExtension.setSegmentSize(bytes);
+            turnCostStorage.setSegmentSize(bytes);
         }
     }
 
@@ -392,7 +389,7 @@ class BaseGraph implements Graph {
         wayGeometry.create(initSize);
         stringIndex.create(initSize);
         if (supportsTurnCosts()) {
-            turnCostExtension.create(initSize);
+            turnCostStorage.create(initSize);
         }
         initStorage();
         // 0 stands for no separate geoRef
@@ -468,7 +465,7 @@ class BaseGraph implements Graph {
         edges.flush();
         nodes.flush();
         if (supportsTurnCosts()) {
-            turnCostExtension.flush();
+            turnCostStorage.flush();
         }
     }
 
@@ -480,13 +477,13 @@ class BaseGraph implements Graph {
         edges.close();
         nodes.close();
         if (supportsTurnCosts()) {
-            turnCostExtension.close();
+            turnCostStorage.close();
         }
     }
 
     long getCapacity() {
         return edges.getCapacity() + nodes.getCapacity() + stringIndex.getCapacity()
-                + wayGeometry.getCapacity() + (supportsTurnCosts() ? turnCostExtension.getCapacity() : 0);
+                + wayGeometry.getCapacity() + (supportsTurnCosts() ? turnCostStorage.getCapacity() : 0);
     }
 
     long getMaxGeoRef() {
@@ -510,7 +507,7 @@ class BaseGraph implements Graph {
         if (!stringIndex.loadExisting())
             throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
 
-        if (supportsTurnCosts() && !turnCostExtension.loadExisting())
+        if (supportsTurnCosts() && !turnCostStorage.loadExisting())
             throw new IllegalStateException("Cannot load turn cost storage. corrupt file or directory? " + dir);
 
         // first define header indices of this storage
@@ -647,9 +644,9 @@ class BaseGraph implements Graph {
         wayGeometry.copyTo(clonedG.wayGeometry);
         clonedG.loadWayGeometryHeader();
 
-        // turn cost extension
+        // turn cost storage
         if (supportsTurnCosts()) {
-            turnCostExtension.copyTo(clonedG.turnCostExtension);
+            turnCostStorage.copyTo(clonedG.turnCostStorage);
         }
 
         if (removedNodes == null)
@@ -833,8 +830,8 @@ class BaseGraph implements Graph {
     }
 
     @Override
-    public TurnCostExtension getTurnCostExtension() {
-        return turnCostExtension;
+    public TurnCostStorage getTurnCostStorage() {
+        return turnCostStorage;
     }
 
     @Override
@@ -1181,14 +1178,14 @@ class BaseGraph implements Graph {
         boolean reverse = false;
         boolean freshFlags;
         int edgeId = -1;
-        private final IntsRef baseIntsRef;
+        private final IntsRef edgeFlags;
         int chFlags;
 
         public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph) {
             this.edgePointer = edgePointer;
             this.edgeAccess = edgeAccess;
             this.baseGraph = baseGraph;
-            this.baseIntsRef = new IntsRef(baseGraph.intsForFlags);
+            this.edgeFlags = new IntsRef(baseGraph.intsForFlags);
         }
 
         @Override
@@ -1215,10 +1212,10 @@ class BaseGraph implements Graph {
         @Override
         public IntsRef getFlags() {
             if (!freshFlags) {
-                edgeAccess.readFlags(edgePointer, baseIntsRef);
+                edgeAccess.readFlags(edgePointer, edgeFlags);
                 freshFlags = true;
             }
-            return baseIntsRef;
+            return edgeFlags;
         }
 
         @Override
@@ -1226,7 +1223,7 @@ class BaseGraph implements Graph {
             assert edgeId < baseGraph.edgeCount : "must be edge but was shortcut: " + edgeId + " >= " + baseGraph.edgeCount + ". Use setFlagsAndWeight";
             edgeAccess.writeFlags(edgePointer, edgeFlags);
             for (int i = 0; i < edgeFlags.ints.length; i++) {
-                baseIntsRef.ints[i] = edgeFlags.ints[i];
+                this.edgeFlags.ints[i] = edgeFlags.ints[i];
             }
             freshFlags = true;
             return this;

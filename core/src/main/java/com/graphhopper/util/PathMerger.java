@@ -137,7 +137,7 @@ public class PathMerger {
                 }
 
                 fullPoints.add(tmpPoints);
-                altRsp.addPathDetails(PathDetailsFromEdges.calcDetails(path, weighting, requestedPathDetails, pathBuilderFactory, origPoints));
+                altRsp.addPathDetails(PathDetailsFromEdges.calcDetails(path, encodingManager, weighting, requestedPathDetails, pathBuilderFactory, origPoints));
                 origPoints = fullPoints.size();
             }
 

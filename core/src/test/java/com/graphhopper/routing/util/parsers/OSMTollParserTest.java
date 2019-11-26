@@ -26,7 +26,7 @@ public class OSMTollParserTest {
     @Test
     public void testSimpleTags() {
         ReaderWay readerWay = new ReaderWay(1);
-        long relFlags = 0;
+        IntsRef relFlags = em.createRelationFlags();
         IntsRef intsRef = em.createEdgeFlags();
         readerWay.setTag("highway", "primary");
         parser.handleWayTags(intsRef, readerWay, WAY, relFlags);

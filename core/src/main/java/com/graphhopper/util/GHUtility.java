@@ -22,10 +22,7 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.coll.GHTBitSet;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.*;
@@ -36,6 +33,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.Helper.DIST_EARTH;
 
 /**
@@ -166,7 +165,7 @@ public class GHUtility {
         int from = fwd ? edge.getBaseNode() : edge.getAdjNode();
         int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
         System.out.printf(Locale.ROOT,
-                "graph.edge(%d, %d, %f, %s);\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false");
+                "graph.edge(%d, %d, %f, %s); // edgeId=%s\n", from, to, edge.getDistance(), fwd && bwd ? "true" : "false", edge.getEdge());
     }
 
     public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree, boolean allowLoops,
@@ -228,13 +227,16 @@ public class GHUtility {
         return Helper.DIST_PLANE.calcDist(fromLat, fromLon, toLat, toLon);
     }
 
-    public static void addRandomTurnCosts(Graph graph, long seed, FlagEncoder encoder, int maxTurnCost, TurnCostExtension turnCostExtension) {
+    public static void addRandomTurnCosts(Graph graph, long seed, EncodingManager em, FlagEncoder encoder, int maxTurnCost, TurnCostStorage turnCostStorage) {
         Random random = new Random(seed);
         double pNodeHasTurnCosts = 0.3;
         double pEdgePairHasTurnCosts = 0.6;
         double pCostIsRestriction = 0.1;
+
+        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(getKey(encoder.toString(), EV_SUFFIX));
         EdgeExplorer inExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
         EdgeExplorer outExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+        IntsRef tcFlags = TurnCost.createFlags();
         for (int node = 0; node < graph.getNodes(); ++node) {
             if (random.nextDouble() < pNodeHasTurnCosts) {
                 EdgeIterator inIter = inExplorer.setBaseNode(node);
@@ -246,12 +248,8 @@ public class GHUtility {
                             continue;
                         }
                         if (random.nextDouble() < pEdgePairHasTurnCosts) {
-                            boolean restricted = false;
-                            if (random.nextDouble() < pCostIsRestriction) {
-                                restricted = true;
-                            }
-                            double cost = restricted ? 0 : random.nextDouble() * maxTurnCost;
-                            turnCostExtension.addTurnInfo(inIter.getEdge(), node, outIter.getEdge(), encoder.getTurnFlags(restricted, cost));
+                            double cost = random.nextDouble() < pCostIsRestriction ? Double.POSITIVE_INFINITY : random.nextDouble() * maxTurnCost;
+                            turnCostStorage.set(turnCostEnc, tcFlags, inIter.getEdge(), node, outIter.getEdge(), cost);
                         }
                     }
                 }
@@ -301,7 +299,7 @@ public class GHUtility {
     }
 
     public static Graph shuffle(Graph g, Graph sortedGraph) {
-        if (g.getTurnCostExtension() != null) {
+        if (g.getTurnCostStorage() != null) {
             throw new IllegalArgumentException("Shuffling the graph is currently not supported in the presence of turn costs");
         }
         int nodes = g.getNodes();
@@ -328,7 +326,7 @@ public class GHUtility {
      * significant difference (bfs) for querying or are worse (z-curve).
      */
     public static Graph sortDFS(Graph g, Graph sortedGraph) {
-        if (g.getTurnCostExtension() != null) {
+        if (g.getTurnCostStorage() != null) {
             throw new IllegalArgumentException("Sorting the graph is currently not supported in the presence of turn costs");
         }
         int nodes = g.getNodes();
@@ -373,7 +371,7 @@ public class GHUtility {
     }
 
     static Graph createSortedGraph(Graph fromGraph, Graph toSortedGraph, final IntIndexedContainer oldToNewNodeList, final IntIndexedContainer newToOldEdgeList) {
-        if (fromGraph.getTurnCostExtension() != null) {
+        if (fromGraph.getTurnCostStorage() != null) {
             throw new IllegalArgumentException("Sorting the graph is currently not supported in the presence of turn costs");
         }
         int edges = fromGraph.getEdges();
@@ -414,7 +412,7 @@ public class GHUtility {
      */
     // TODO very similar to createSortedGraph -> use a 'int map(int)' interface
     public static Graph copyTo(Graph fromGraph, Graph toGraph) {
-        if (fromGraph.getTurnCostExtension() != null) {
+        if (fromGraph.getTurnCostStorage() != null) {
             throw new IllegalArgumentException("Copying a graph is currently not supported in the presence of turn costs");
         }
         AllEdgesIterator eIter = fromGraph.getAllEdges();
@@ -451,7 +449,7 @@ public class GHUtility {
     public static GraphHopperStorage newStorage(GraphHopperStorage store) {
         Directory outdir = guessDirectory(store);
         boolean is3D = store.getNodeAccess().is3D();
-        return new GraphHopperStorage(store.getCHProfiles(), outdir, store.getEncodingManager(), is3D, store.getTurnCostExtension() != null).create(store.getNodes());
+        return new GraphHopperStorage(store.getCHProfiles(), outdir, store.getEncodingManager(), is3D, store.getTurnCostStorage() != null).create(store.getNodes());
     }
 
     public static int getAdjNode(Graph g, int edge, int adjNode) {

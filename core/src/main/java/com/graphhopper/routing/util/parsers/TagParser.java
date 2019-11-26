@@ -27,11 +27,11 @@ import java.util.List;
 
 /**
  * This interface defines how parts of the information from 'way' is converted into IntsRef. A TagParser usually
- * has one corresponding EncodedValue. Other situations like multiple tags for one EncodedValue are possible too.
+ * has one corresponding EncodedValue but more are possible too.
  */
 public interface TagParser {
 
     void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
 
-    IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags);
+    IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags);
 }

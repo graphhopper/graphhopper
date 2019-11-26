@@ -368,7 +368,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
                 + encodingManager
                 + "|" + getDirectory().getDefaultType()
                 + "|" + baseGraph.nodeAccess.getDimension() + "D"
-                + "|" + (baseGraph.supportsTurnCosts() ? baseGraph.turnCostExtension : "no_turn_cost")
+                + "|" + (baseGraph.supportsTurnCosts() ? baseGraph.turnCostStorage : "no_turn_cost")
                 + "|" + getProperties().versionsToString();
     }
 
@@ -437,8 +437,8 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     @Override
-    public TurnCostExtension getTurnCostExtension() {
-        return baseGraph.getTurnCostExtension();
+    public TurnCostStorage getTurnCostStorage() {
+        return baseGraph.getTurnCostStorage();
     }
 
     @Override

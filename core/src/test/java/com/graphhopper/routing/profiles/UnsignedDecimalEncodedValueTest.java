@@ -36,4 +36,15 @@ public class UnsignedDecimalEncodedValueTest {
         testEnc.setDecimal(false, intsRef, Double.POSITIVE_INFINITY);
         assertTrue(Double.isInfinite(testEnc.getDecimal(false, intsRef)));
     }
+
+    @Test
+    public void setMaxToInfinity() {
+        UnsignedDecimalEncodedValue testEnc = new UnsignedDecimalEncodedValue("test", 3, 1, 0, false, true);
+        testEnc.init(new EncodedValue.InitializerConfig());
+        IntsRef intsRef = new IntsRef(1);
+        assertEquals(0, testEnc.getDecimal(false, intsRef), .1);
+
+        testEnc.setDecimal(false, intsRef, Double.POSITIVE_INFINITY);
+        assertEquals(Double.POSITIVE_INFINITY, testEnc.getDecimal(false, intsRef), .1);
+    }
 }
