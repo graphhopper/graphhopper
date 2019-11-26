@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
@@ -339,6 +340,28 @@ public class GraphHopperWebIT {
         // clashing parameter will overwrite!
         req.getHints().put("vehicle", "xy");
         assertEquals("xy", req.getVehicle());
+    }
+
+    @Test
+    public void doNotIncludeEmptyCurbsidesList() {
+        final AtomicInteger counter = new AtomicInteger(0);
+        final GraphHopperMatrixWeb ghMatrix = new GraphHopperMatrixWeb(new GHMatrixBatchRequester() {
+            @Override
+            protected String postJson(String url, JsonNode data) throws IOException {
+                assertFalse(data.has("curbsides"));
+                assertTrue(data.has("points"));
+                counter.incrementAndGet();
+                return "";
+            }
+        });
+        GHMRequest req = new GHMRequest();
+        req.addPoint(new GHPoint(49.6724, 11.3494));
+        req.addPoint(new GHPoint(49.6550, 11.4180));
+        try {
+            ghMatrix.route(req);
+        } catch (Exception ex) {
+        }
+        assertEquals(1, counter.get());
     }
 
     @Test
