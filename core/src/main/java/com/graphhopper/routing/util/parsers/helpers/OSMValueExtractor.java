@@ -1,19 +1,15 @@
 package com.graphhopper.routing.util.parsers.helpers;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.storage.IntsRef;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.graphhopper.util.Helper.toLowerCase;
 
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.graphhopper.util.Helper.toLowerCase;
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.storage.IntsRef;
 
 public class OSMValueExtractor {
-
-    private static final Logger LOG = LoggerFactory.getLogger(OSMValueExtractor.class);
     
     private static final Pattern TON_PATTERN    = Pattern.compile("tons?");
     private static final Pattern MGW_PATTERN    = Pattern.compile("mgw");
@@ -27,14 +23,11 @@ public class OSMValueExtractor {
         // utility class
     }
 
-    public static void extractTons(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys, boolean enableLog) {
+    public static void extractTons(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
         final String rawValue = way.getFirstPriorityTag(keys);
         double value = stringToTons(rawValue);
         
         if (Double.isNaN(value)) {
-            if (enableLog) {
-                LOG.warn("Unable to extract tons from malformed road attribute '{}' for way (OSM_ID = {}).", rawValue, way.getId());
-            }
             return;
         }
         
@@ -67,14 +60,11 @@ public class OSMValueExtractor {
         }
     }
 
-    public static void extractMeter(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys, boolean enableLog) {
+    public static void extractMeter(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
         final String rawValue = way.getFirstPriorityTag(keys);
         double value = stringToMeter(rawValue);
         
         if (Double.isNaN(value)) {
-            if (enableLog) {
-                LOG.warn("Unable to extract meter from malformed road attribute '{}' for way (OSM_ID = {}).", rawValue, way.getId());
-            }
             return;
         }
 

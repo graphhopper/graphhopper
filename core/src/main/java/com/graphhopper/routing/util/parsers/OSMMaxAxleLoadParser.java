@@ -32,15 +32,13 @@ import java.util.List;
 public class OSMMaxAxleLoadParser implements TagParser {
 
     private final DecimalEncodedValue maxAxleLoadEncoder;
-    private final boolean enableLog;
 
     public OSMMaxAxleLoadParser() {
-        this(MaxAxleLoad.create(), false);
+        this(MaxAxleLoad.create());
     }
-
-    public OSMMaxAxleLoadParser(DecimalEncodedValue maxAxleLoadEncoder, boolean enableLog) {
+    
+    public OSMMaxAxleLoadParser(DecimalEncodedValue maxAxleLoadEncoder) {
         this.maxAxleLoadEncoder = maxAxleLoadEncoder;
-        this.enableLog = enableLog;
     }
 
     @Override
@@ -49,10 +47,8 @@ public class OSMMaxAxleLoadParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access,
-                                 IntsRef relationFlags) {
-        OSMValueExtractor.extractTons(edgeFlags, way, maxAxleLoadEncoder,
-                Collections.singletonList("maxaxleload"), enableLog);
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags) {
+        OSMValueExtractor.extractTons(edgeFlags, way, maxAxleLoadEncoder, Collections.singletonList("maxaxleload"));
         return edgeFlags;
     }
 }

@@ -32,15 +32,13 @@ import java.util.List;
 public class OSMMaxLengthParser implements TagParser {
 
     private final DecimalEncodedValue lengthEncoder;
-    private final boolean enableLog;
 
     public OSMMaxLengthParser() {
-        this(MaxLength.create(), false);
+        this(MaxLength.create());
     }
-
-    public OSMMaxLengthParser(DecimalEncodedValue lengthEncoder, boolean enableLog) {
+    
+    public OSMMaxLengthParser(DecimalEncodedValue lengthEncoder) {
         this.lengthEncoder = lengthEncoder;
-        this.enableLog = enableLog;
     }
 
     @Override
@@ -49,10 +47,8 @@ public class OSMMaxLengthParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access,
-                                 IntsRef relationFlags) {
-        OSMValueExtractor.extractMeter(edgeFlags, way, lengthEncoder,
-                Collections.singletonList("maxlength"), enableLog);
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags) {
+        OSMValueExtractor.extractMeter(edgeFlags, way, lengthEncoder, Collections.singletonList("maxlength"));
         return edgeFlags;
     }
 }
