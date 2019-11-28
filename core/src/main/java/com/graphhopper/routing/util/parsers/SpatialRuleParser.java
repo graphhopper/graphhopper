@@ -27,6 +27,11 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.List;
 
+/**
+ * This parser stores the spatialId in the edgeFlags based on previously defined areas.
+ * Currently SpatialRuleParser requires to be added as first parser to delivery the spatial_rule to other EncodedValues
+ * as there is no mechanism to define dependencies and it is probably also better that there is none.
+ */
 public class SpatialRuleParser implements TagParser {
 
     private final IntEncodedValue spatialRuleEnc;

@@ -631,12 +631,6 @@ public class GHUtility {
         return edge;
     }
 
-    public static EncodingManager.Builder addDefaultEncodedValues(EncodingManager.Builder builder) {
-        return builder.add(new OSMRoadClassParser()).add(new OSMRoadClassLinkParser()).
-                add(new OSMRoadEnvironmentParser()).add(new OSMMaxSpeedParser()).add(new OSMRoadAccessParser()).
-                add(new OSMSurfaceParser());
-    }
-
     public static void updateDistancesFor(Graph g, int node, double lat, double lon) {
         NodeAccess na = g.getNodeAccess();
         na.setNode(node, lat, lon);

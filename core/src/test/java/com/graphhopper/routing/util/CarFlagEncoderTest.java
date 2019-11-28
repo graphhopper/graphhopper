@@ -44,7 +44,6 @@ import static org.junit.Assert.*;
 public class CarFlagEncoderTest {
     final CarFlagEncoder encoder = createEncoder();
     private final EncodingManager em = new EncodingManager.Builder().
-            add(new OSMRoadAccessParser()).
             add(encoder).
             add(new BikeFlagEncoder()).add(new FootFlagEncoder()).build();
 

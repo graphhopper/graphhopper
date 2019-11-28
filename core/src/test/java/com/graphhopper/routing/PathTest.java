@@ -49,7 +49,7 @@ public class PathTest {
     private final BooleanEncodedValue carManagerRoundabout = carManager.getBooleanEncodedValue(Roundabout.KEY);
     private final BooleanEncodedValue carAccessEnc = encoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnv = encoder.getAverageSpeedEnc();
-    private final EncodingManager dataFlagManager = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).add(dataFlagEncoder).build();
+    private final EncodingManager dataFlagManager = new EncodingManager.Builder().add(dataFlagEncoder).build();
     private final IntsRef edgeFlags = dataFlagManager.createEdgeFlags();
     private final EncodingManager mixedEncoders = EncodingManager.create(new CarFlagEncoder(), new FootFlagEncoder());
     private final BooleanEncodedValue mixedManagerRoundabout = mixedEncoders.getBooleanEncodedValue(Roundabout.KEY);
