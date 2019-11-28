@@ -61,11 +61,11 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
     public void release() {
         cacheData.clear();
         if (dir != null) {
-            dir.close();
-
             // for memory mapped type we remove temporary files
             if (autoRemoveTemporary)
                 dir.clear();
+            else
+                dir.close();
         }
     }
 
