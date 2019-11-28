@@ -133,18 +133,6 @@ public class DataFlagEncoderTest {
     }
 
     @Test
-    public void testFord() {
-        ReaderWay osmWay = new ReaderWay(0);
-        osmWay.setTag("highway", "unclassified");
-        osmWay.setTag("ford", "yes");
-        IntsRef flags = encodingManager.handleWayTags(osmWay, map, relFlags);
-        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals("ford", edge.get(roadEnvironmentEnc).toString());
-        assertTrue(edge.get(roadEnvironmentEnc) == RoadEnvironment.FORD);
-        assertTrue(encoder.getAnnotation(edge.getFlags(), TranslationMapTest.SINGLETON.get("en")).getMessage().contains("ford"));
-    }
-
-    @Test
     public void testHighwaySpeed() {
         PMap map = new PMap();
         map.put("motorway", 100d);

@@ -61,11 +61,6 @@ public interface FlagEncoder extends EncodedValueLookup {
     boolean supports(Class<?> feature);
 
     /**
-     * @return additional cost or warning information for an instruction like ferry or road charges.
-     */
-    InstructionAnnotation getAnnotation(IntsRef intsRef, Translation tr);
-
-    /**
      * @return true if already registered in an EncodingManager
      */
     boolean isRegistered();

@@ -228,11 +228,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return 0;
     }
 
-    @Override
-    public InstructionAnnotation getAnnotation(IntsRef edgeFlags, Translation tr) {
-        return InstructionAnnotation.EMPTY;
-    }
-
     /**
      * Sets default flags with specified access.
      */

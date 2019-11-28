@@ -34,6 +34,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
         // creating the Country EV is done while SpatialRuleIndex is created and not here
         if (Roundabout.KEY.equals(name)) {
             enc = Roundabout.create();
+        } else if (GetOffBike.KEY.equals(name)) {
+            enc = GetOffBike.create();
         } else if (RoadClass.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
         } else if (RoadClassLink.KEY.equals(name)) {

@@ -18,8 +18,8 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.MaxSpeed;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.MaxSpeed;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
@@ -57,19 +57,14 @@ import java.util.List;
  */
 class InstructionsOutgoingEdges {
 
-    final EdgeIteratorState prevEdge;
-    final EdgeIteratorState currentEdge;
-
+    private final EdgeIteratorState prevEdge;
+    private final EdgeIteratorState currentEdge;
     // Outgoing edges that we would be allowed to turn on
-    final List<EdgeIteratorState> allowedOutgoingEdges;
-
+    private final List<EdgeIteratorState> allowedOutgoingEdges;
     // All outgoing edges, including oneways in the wrong direction
-    final List<EdgeIteratorState> allOutgoingEdges;
-
-    final FlagEncoder encoder;
-    final BooleanEncodedValue accessEnc;
-    final DecimalEncodedValue speedEnc;
-    final NodeAccess nodeAccess;
+    private final List<EdgeIteratorState> allOutgoingEdges;
+    private final DecimalEncodedValue speedEnc;
+    private final NodeAccess nodeAccess;
 
     public InstructionsOutgoingEdges(EdgeIteratorState prevEdge,
                                      EdgeIteratorState currentEdge,
@@ -81,8 +76,7 @@ class InstructionsOutgoingEdges {
                                      int adjNode) {
         this.prevEdge = prevEdge;
         this.currentEdge = currentEdge;
-        this.encoder = encoder;
-        this.accessEnc = encoder.getAccessEnc();
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         this.speedEnc = (encoder instanceof DataFlagEncoder) ? encoder.getDecimalEncodedValue(MaxSpeed.KEY) : encoder.getAverageSpeedEnc();
         this.nodeAccess = nodeAccess;
 

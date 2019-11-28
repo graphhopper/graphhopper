@@ -145,16 +145,6 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     @Override
-    boolean isPushingSection(ReaderWay way) {
-        String highway = way.getTag("highway");
-        String trackType = way.getTag("tracktype");
-        return way.hasTag("highway", pushingSectionsHighways)
-                || way.hasTag("railway", "platform")
-                || way.hasTag("bicycle", "dismount")
-                || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
-    }
-
-    @Override
     boolean isSacScaleAllowed(String sacScale) {
         // for racing bike it is only allowed if empty
         return false;
