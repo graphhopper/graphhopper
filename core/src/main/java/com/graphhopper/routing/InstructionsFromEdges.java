@@ -48,7 +48,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private final EdgeExplorer crossingExplorer;
     private final BooleanEncodedValue roundaboutEnc;
     private final BooleanEncodedValue accessEnc;
-    private final BooleanEncodedValue offBikeEnc;
+    private final BooleanEncodedValue getOffBikeEnc;
+    private final EnumEncodedValue<RouteNetwork> bikeRouteEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
 
@@ -93,7 +94,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         this.weighting = weighting;
         this.accessEnc = evLookup.getBooleanEncodedValue(getKey(encoder.toString(), "access"));
         this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
-        this.offBikeEnc = evLookup.getBooleanEncodedValue(GetOffBike.KEY);
+
+        // both EncodedValues are optional and only used when bike encoders are added
+        String key = getKey("bike", RouteNetwork.EV_SUFFIX);
+        this.bikeRouteEnc = evLookup.hasEncodedValue(key) ? evLookup.getEnumEncodedValue(key, RouteNetwork.class) : null;
+        this.getOffBikeEnc = evLookup.hasEncodedValue(GetOffBike.KEY) ? evLookup.getBooleanEncodedValue(GetOffBike.KEY) : null;
+
         this.roadClassEnc = evLookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         this.roadEnvEnc = evLookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         this.nodeAccess = graph.getNodeAccess();
@@ -152,11 +158,15 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         String name = edge.getName();
         InstructionAnnotation annotation = InstructionAnnotation.EMPTY;
-        if (edge.get(roadClassEnc) == RoadClass.CYCLEWAY) {
-            // for backward compatibility
-            annotation = new InstructionAnnotation(0, tr.tr("cycleway"));
-        } else if (edge.get(offBikeEnc)) {
-            annotation = new InstructionAnnotation(1, tr.tr("off_bike"));
+        if (getOffBikeEnc != null) {
+            // only for bikes do
+            if (edge.get(roadClassEnc) == RoadClass.CYCLEWAY
+                    || bikeRouteEnc != null && edge.get(bikeRouteEnc) != RouteNetwork.OTHER) {
+                // for backward compatibility
+                annotation = new InstructionAnnotation(0, tr.tr("cycleway"));
+            } else if (edge.get(getOffBikeEnc)) {
+                annotation = new InstructionAnnotation(1, tr.tr("off_bike"));
+            }
         } else if (edge.get(roadEnvEnc) == RoadEnvironment.FORD) {
             annotation = new InstructionAnnotation(1, tr.tr("way_contains_ford"));
         }

@@ -820,10 +820,10 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(6932.2, arsp.getDistance(), .1);
-        assertEquals(106, arsp.getPoints().getSize());
+        assertEquals(105, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(22, il.size());
+        assertEquals(21, il.size());
 
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
         assertEquals("get off the bike", il.get(0).getAnnotation().getMessage());
@@ -840,8 +840,8 @@ public class GraphHopperIT {
         assertEquals("keep left onto Austraße", il.get(11).getTurnDescription(tr));
         assertEquals("keep left onto Rechte Kremszeile", il.get(12).getTurnDescription(tr));
         //..
-        assertEquals("turn right onto Treppelweg", il.get(18).getTurnDescription(tr));
-        assertEquals("cycleway", il.get(18).getAnnotation().getMessage());
+        assertEquals("turn right onto Treppelweg", il.get(17).getTurnDescription(tr));
+        assertEquals("cycleway", il.get(17).getAnnotation().getMessage());
     }
 
     @Test
