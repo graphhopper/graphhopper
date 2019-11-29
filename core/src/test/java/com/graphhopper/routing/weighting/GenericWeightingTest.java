@@ -45,7 +45,7 @@ public class GenericWeightingTest {
 
     public GenericWeightingTest() {
         encoder = new DataFlagEncoder();
-        em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).add(new OSMMaxHeightParser()).
+        em = new EncodingManager.Builder().add(new OSMMaxHeightParser()).
                 add(encoder).build();
     }
 
@@ -85,7 +85,7 @@ public class GenericWeightingTest {
     @Test
     public void testDisabledRoadAttributes() {
         DataFlagEncoder simpleEncoder = new DataFlagEncoder();
-        EncodingManager simpleEncodingManager = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).add(simpleEncoder).build();
+        EncodingManager simpleEncodingManager = new EncodingManager.Builder().add(simpleEncoder).build();
         Graph simpleGraph = new GraphBuilder(simpleEncodingManager).create();
 
         ReaderWay way = new ReaderWay(27l);
