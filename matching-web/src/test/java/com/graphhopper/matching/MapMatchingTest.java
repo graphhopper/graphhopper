@@ -148,7 +148,7 @@ public class MapMatchingTest {
         assertEquals(route.getDistance(), mr.getMatchLength(), 0.5);
         // GraphHopper travel times aren't exactly additive
         assertThat(Math.abs(route.getTime() - mr.getMatchMillis()), is(lessThan(1000L)));
-        assertEquals(138, mr.getEdgeMatches().size());
+        assertEquals(142, mr.getEdgeMatches().size());
 
         // TODO with 20m distortion
         // TODO with 40m distortion
