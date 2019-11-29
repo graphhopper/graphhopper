@@ -91,13 +91,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         // TODO support different vehicle types, currently just roundabout and fwd&bwd for one vehicle type
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
 
-        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, RoadAccess.KEY, MaxSpeed.KEY)) {
-            if (!encodedValueLookup.hasEncodedValue(key))
-                throw new IllegalStateException("To use DataFlagEncoder and the GenericWeighting you need to add " +
-                        "the encoded value " + key + " before this '" + toString() + "' flag encoder. Order is important! " +
-                        "E.g. use the config: graph.encoded_values: " + key);
-        }
-
         // workaround to init AbstractWeighting.avSpeedEnc variable that GenericWeighting does not need
         avgSpeedEnc = new UnsignedDecimalEncodedValue("fake", 1, 1, false);
         roadEnvironmentEnc = getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);

@@ -185,6 +185,7 @@ public class EncodingManager implements EncodedValueLookup {
          * For backward compatibility provide a way to add multiple FlagEncoders
          */
         public Builder addAll(FlagEncoderFactory factory, String flagEncodersStr) {
+            check();
             for (FlagEncoder fe : parseEncoderString(factory, flagEncodersStr)) {
                 flagEncoderList.add((AbstractFlagEncoder) fe);
             }
@@ -192,21 +193,25 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         public Builder addAll(EncodedValueFactory factory, String encodedValueString) {
+            check();
             em.add(encodedValueList, factory, encodedValueString);
             return this;
         }
 
         public Builder addAll(TagParserFactory factory, String tagParserString) {
+            check();
             em.add(tagParsers, factory, tagParserString);
             return this;
         }
 
         public Builder addTurnCostParser(TurnCostParser parser) {
+            check();
             turnCostParsers.add(parser);
             return this;
         }
 
         public Builder addRelationTagParser(RelationTagParser tagParser) {
+            check();
             relationTagParsers.add(tagParser);
             return this;
         }
@@ -308,7 +313,7 @@ public class EncodingManager implements EncodedValueLookup {
             if (!em.encodedValueMap.containsKey(Roundabout.KEY))
                 _addEdgeTagParser(new OSMRoundaboutParser(), false, true);
 
-            // TODO can we avoid this hack?
+            // TODO can we avoid this hack without complex dependency management?
             // ensure that SpatialRuleParser come after required EncodedValues like max_speed or road_access
             for (SpatialRuleParser srp : insertLater) {
                 _addEdgeTagParser(srp, false, true);
@@ -333,7 +338,7 @@ public class EncodingManager implements EncodedValueLookup {
                 _addTurnCostParser(parser);
             }
 
-            // FlagEncoder can demand TurnCostParsers => add them after the explicitly added
+            // FlagEncoder can demand TurnCostParsers => add them after the explicitly added ones
             for (AbstractFlagEncoder encoder : flagEncoderList) {
                 if (encoder.supports(TurnWeighting.class) && !em.turnCostParsers.containsKey(encoder.toString()))
                     _addTurnCostParser(new OSMTurnRelationParser(encoder.toString(), encoder.getMaxTurnCosts()));
@@ -461,9 +466,9 @@ public class EncodingManager implements EncodedValueLookup {
         if (encodedValueMap.containsKey(ev.getName()))
             throw new IllegalStateException("EncodedValue " + ev.getName() + " already exists " + encodedValueMap.get(ev.getName()) + " vs " + ev);
         if (!withNamespace && ev.getName().contains(SPECIAL_SEPARATOR))
-            throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must not contain '" + SPECIAL_SEPARATOR + "'");
+            throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must not contain namespace character '" + SPECIAL_SEPARATOR + "'");
         if (withNamespace && !ev.getName().contains(SPECIAL_SEPARATOR))
-            throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must contain '" + SPECIAL_SEPARATOR + "' as reserved for a single profile");
+            throw new IllegalArgumentException("EncodedValue " + ev.getName() + " must contain namespace character '" + SPECIAL_SEPARATOR + "'");
         ev.init(edgeConfig);
         encodedValueMap.put(ev.getName(), ev);
     }
