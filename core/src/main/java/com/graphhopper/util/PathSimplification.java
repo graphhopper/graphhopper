@@ -125,7 +125,8 @@ public class PathSimplification {
 
         simplify(pathWrapper.getPoints(), partitions, douglasPeucker);
         assertConsistencyOfPathDetails(pathWrapper.getPathDetails());
-        assertConsistencyOfInstructions(pathWrapper.getInstructions(), pathWrapper.getPoints().size());
+        if (enableInstructions)
+            assertConsistencyOfInstructions(pathWrapper.getInstructions(), pathWrapper.getPoints().size());
         return pointList;
     }
 
