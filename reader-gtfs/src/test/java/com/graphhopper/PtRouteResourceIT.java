@@ -20,13 +20,12 @@ package com.graphhopper;
 
 import com.graphhopper.gtfs.ws.LocationConverterProvider;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.reader.gtfs.PtRouteResource;
-import com.graphhopper.reader.gtfs.PtEncodedValues;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
+import com.graphhopper.reader.gtfs.PtEncodedValues;
+import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
@@ -44,9 +43,8 @@ import static org.junit.Assert.assertFalse;
 public class PtRouteResourceIT {
 
     private static final String GRAPH_LOC = "target/PtRouteResourceIT";
-    private static PtRouteResource graphHopper;
-    private static GraphHopperGtfs graphHopperStorage;
-    private static LocationIndex locationIndex;
+    private static PtRouteResource ptRouteResource;
+    private static GraphHopperGtfs graphHopperGtfs;
 
     static {
         CmdArgs cmdArgs = new CmdArgs();
@@ -55,9 +53,8 @@ public class PtRouteResourceIT {
         cmdArgs.put("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-        graphHopperStorage = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, cmdArgs);
-        locationIndex = graphHopperStorage.getLocationIndex();
-        graphHopper = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, graphHopperStorage.getGtfsStorage())
+        graphHopperGtfs = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, cmdArgs);
+        ptRouteResource = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -65,7 +62,7 @@ public class PtRouteResourceIT {
     public static final ResourceTestRule resources = ResourceTestRule.builder()
             .addProvider(new LocationConverterProvider())
             .setMapper(Jackson.newObjectMapper())
-            .addResource(graphHopper)
+            .addResource(ptRouteResource)
             .build();
 
     @Test
@@ -94,8 +91,7 @@ public class PtRouteResourceIT {
 
     @AfterClass
     public static void close() {
-        graphHopperStorage.close();
-        locationIndex.close();
+        graphHopperGtfs.close();
     }
 
 }

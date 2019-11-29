@@ -40,8 +40,6 @@ import com.graphhopper.resources.*;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.storage.DAType;
-import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
@@ -192,27 +190,23 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
     }
 
     private void runPtGraphHopper(CmdArgs configuration, Environment environment) {
-        final GHDirectory ghDirectory = new GHDirectory(configuration.get("graph.location", "target/tmp"), DAType.RAM_STORE);
-        final GtfsStorage gtfsStorage = GtfsStorage.createOrLoad(ghDirectory);
         EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-        final GraphHopper graphHopperStorage = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, configuration);
-        final TranslationMap translationMap = new TranslationMap().doImport();
-        final LocationIndex locationIndex = graphHopperStorage.getLocationIndex();
+        final GraphHopperGtfs graphHopperGtfs = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, configuration);
         environment.jersey().register(new AbstractBinder() {
             @Override
             protected void configure() {
                 bind(configuration).to(CmdArgs.class);
                 bind(false).to(Boolean.class).named("hasElevation");
-                bind(locationIndex).to(LocationIndex.class);
-                bind(translationMap).to(TranslationMap.class);
+                bind(graphHopperGtfs.getLocationIndex()).to(LocationIndex.class);
+                bind(graphHopperGtfs.getTranslationMap()).to(TranslationMap.class);
                 bind(encodingManager).to(EncodingManager.class);
-                bind(graphHopperStorage.getGraphHopperStorage()).to(GraphHopperStorage.class);
-                bind(gtfsStorage).to(GtfsStorage.class);
+                bind(graphHopperGtfs.getGraphHopperStorage()).to(GraphHopperStorage.class);
+                bind(graphHopperGtfs.getGtfsStorage()).to(GtfsStorage.class);
             }
         });
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(PtRouteResource.class);
-        environment.jersey().register(new PtIsochroneResource(gtfsStorage, encodingManager, graphHopperStorage.getGraphHopperStorage(), locationIndex));
+        environment.jersey().register(new PtIsochroneResource(graphHopperGtfs.getGtfsStorage(), encodingManager, graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getLocationIndex()));
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
         // The included web client works best if we say we only support pt.
@@ -234,12 +228,10 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
             @Override
             public void stop() {
-                locationIndex.close();
-                gtfsStorage.close();
-                graphHopperStorage.close();
+                graphHopperGtfs.close();
             }
         });
-        environment.healthChecks().register("graphhopper-storage", new GraphHopperStorageHealthCheck(graphHopperStorage.getGraphHopperStorage()));
+        environment.healthChecks().register("graphhopper-storage", new GraphHopperStorageHealthCheck(graphHopperGtfs.getGraphHopperStorage()));
     }
 
     private void runRegularGraphHopper(CmdArgs configuration, Environment environment) {
