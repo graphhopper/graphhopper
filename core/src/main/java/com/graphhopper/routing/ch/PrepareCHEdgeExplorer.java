@@ -15,29 +15,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.ch.PrepareCHEdgeIterator;
-import com.graphhopper.routing.ch.PrepareCHGraph;
+package com.graphhopper.routing.ch;
 
-public class IgnoreNodeFilter {
-    private int avoidNode;
-    private PrepareCHGraph graph;
-    private int maxLevel;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.util.CHEdgeExplorer;
+import com.graphhopper.util.CHEdgeIterator;
 
-    public IgnoreNodeFilter(PrepareCHGraph chGraph, int maxLevel) {
-        this.graph = chGraph;
-        this.maxLevel = maxLevel;
+public class PrepareCHEdgeExplorer {
+    private final CHEdgeExplorer edgeExplorer;
+    private final Weighting weighting;
+
+    public PrepareCHEdgeExplorer(CHEdgeExplorer edgeExplorer, Weighting weighting) {
+        this.edgeExplorer = edgeExplorer;
+        this.weighting = weighting;
     }
 
-    public IgnoreNodeFilter setAvoidNode(int node) {
-        this.avoidNode = node;
-        return this;
-    }
-
-    public final boolean accept(PrepareCHEdgeIterator iter) {
-        // ignore if it is skipNode or adjNode is already contracted
-        int node = iter.getAdjNode();
-        return avoidNode != node && graph.getLevel(node) == maxLevel;
+    public PrepareCHEdgeIterator setBaseNode(int node) {
+        CHEdgeIterator chIterator = edgeExplorer.setBaseNode(node);
+        // todonow: reuse 'this' instead of creating new objects!
+        return new PrepareCHEdgeIterator(chIterator, weighting);
     }
 }

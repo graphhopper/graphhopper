@@ -20,6 +20,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -126,7 +127,8 @@ public class WitnessPathSearcherTest {
     }
 
     private WitnessPathSearcher createFinder() {
-        return new WitnessPathSearcher(chGraph, chTurnWeighting, new PMap());
+        PrepareCHGraph prepareGraph = new PrepareCHGraph(chGraph, chTurnWeighting, TraversalMode.EDGE_BASED);
+        return new WitnessPathSearcher(prepareGraph, new PMap());
     }
 
     private void setMaxLevelOnAllNodes() {

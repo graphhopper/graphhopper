@@ -1,0 +1,124 @@
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package com.graphhopper.routing.ch;
+
+import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.util.EdgeExplorer;
+
+
+public class PrepareCHGraph {
+    private final CHGraph chGraph;
+    private final Weighting weighting;
+    private final TurnWeighting turnWeighting;
+    private final FlagEncoder encoder;
+
+    public PrepareCHGraph(CHGraph chGraph, Weighting weighting, TraversalMode traversalMode) {
+        if (traversalMode.isEdgeBased() && !(weighting instanceof TurnWeighting)) {
+            throw new IllegalArgumentException("You need a TurnWeighting to make use of edge-based traversal mode");
+        }
+        this.chGraph = chGraph;
+        this.encoder = weighting.getFlagEncoder();
+        if (traversalMode.isEdgeBased()) {
+            this.weighting = ((TurnWeighting) weighting).getSuperWeighting();
+            this.turnWeighting = (TurnWeighting) weighting;
+        } else {
+            this.weighting = weighting;
+            this.turnWeighting = null;
+        }
+    }
+
+    public PrepareCHEdgeExplorer createInEdgeExplorer() {
+        return new PrepareCHEdgeExplorer(chGraph.createEdgeExplorer(DefaultEdgeFilter.inEdges(encoder)), weighting);
+    }
+
+    public PrepareCHEdgeExplorer createOutEdgeExplorer() {
+        return new PrepareCHEdgeExplorer(chGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder)), weighting);
+    }
+
+    public PrepareCHEdgeExplorer createAllEdgeExplorer() {
+        return new PrepareCHEdgeExplorer(chGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder)), weighting);
+    }
+
+    public PrepareCHEdgeExplorer createEdgeExplorer(EdgeFilter edgeFilter) {
+        return new PrepareCHEdgeExplorer(chGraph.createEdgeExplorer(edgeFilter), weighting);
+    }
+
+    public EdgeExplorer createOriginalInEdgeExplorer() {
+        return chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
+    }
+
+    public EdgeExplorer createOriginalOutEdgeExplorer() {
+        return chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+    }
+
+    public int getNodes() {
+        return chGraph.getNodes();
+    }
+
+    public int getEdges() {
+        return chGraph.getEdges();
+    }
+
+    public int getOriginalEdges() {
+        return chGraph.getOriginalEdges();
+    }
+
+    public int getLevel(int node) {
+        return chGraph.getLevel(node);
+    }
+
+    public void setLevel(int node, int level) {
+        chGraph.setLevel(node, level);
+    }
+
+    public NodeAccess getNodeAccess() {
+        return chGraph.getNodeAccess();
+    }
+
+    public int shortcut(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2) {
+        return chGraph.shortcut(a, b, accessFlags, weight, skippedEdge1, skippedEdge2);
+    }
+
+    public int shortcutEdgeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2, int origFirst, int origLast) {
+        return chGraph.shortcutEdgeBased(a, b, accessFlags, weight, skippedEdge1, skippedEdge2, origFirst, origLast);
+    }
+
+    public int getOtherNode(int edge, int adjNode) {
+        return chGraph.getOtherNode(edge, adjNode);
+    }
+
+    public FlagEncoder getFlagEncoder() {
+        return encoder;
+    }
+
+    public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+        if (turnWeighting == null) {
+            throw new IllegalStateException("Calculating turn weights is only allowed when using edge-based traversal mode");
+        }
+        return turnWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
+    }
+
+    public AllCHEdgesIterator getAllEdges() {
+        return chGraph.getAllEdges();
+    }
+}

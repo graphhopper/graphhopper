@@ -142,4 +142,8 @@ public class TurnWeighting implements Weighting {
     public String getName() {
         return "turn|" + superWeighting.getName();
     }
+
+    public Weighting getSuperWeighting() {
+        return superWeighting;
+    }
 }

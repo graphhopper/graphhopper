@@ -24,6 +24,7 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -1385,7 +1386,8 @@ public class EdgeBasedNodeContractorTest {
     private EdgeBasedNodeContractor createNodeContractor() {
         PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
         TurnWeighting turnWeighting = new TurnWeighting(preparationWeighting, graph.getTurnCostStorage(), uTurnCosts);
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(chGraph, turnWeighting, new PMap());
+        PrepareCHGraph prepareGraph = new PrepareCHGraph(chGraph, turnWeighting, TraversalMode.EDGE_BASED);
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(prepareGraph, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
     }

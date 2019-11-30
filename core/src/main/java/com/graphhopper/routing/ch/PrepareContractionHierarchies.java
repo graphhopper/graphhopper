@@ -461,10 +461,16 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     private NodeContractor createNodeContractor(Graph graph, TraversalMode traversalMode) {
         if (traversalMode.isEdgeBased()) {
-            TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased(graph);
-            return new EdgeBasedNodeContractor(prepareGraph, chTurnWeighting, pMap);
+            TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
+            if (turnCostStorage == null) {
+                throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
+            }
+            TurnWeighting turnWeighting = new TurnWeighting(chProfile.getWeighting(), turnCostStorage, chProfile.getUTurnCosts());
+            PrepareCHGraph prepareCHGraph = new PrepareCHGraph(prepareGraph, turnWeighting, traversalMode);
+            return new EdgeBasedNodeContractor(prepareCHGraph, pMap);
         } else {
-            return new NodeBasedNodeContractor(prepareGraph, chProfile.getWeighting(), pMap);
+            PrepareCHGraph prepareCHGraph = new PrepareCHGraph(prepareGraph, chProfile.getWeighting(), traversalMode);
+            return new NodeBasedNodeContractor(prepareCHGraph, pMap);
         }
     }
 
