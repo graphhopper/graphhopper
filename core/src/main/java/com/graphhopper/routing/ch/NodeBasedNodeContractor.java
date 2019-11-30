@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.util.IgnoreNodeFilter;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.StopWatch;
@@ -36,7 +35,6 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     private final CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
     private final Params params = new Params();
     private PrepareCHEdgeExplorer remainingEdgeExplorer;
-    private IgnoreNodeFilter ignoreNodeFilter;
     private NodeBasedWitnessPathSearcher prepareAlgo;
     private int addedShortcutsCount;
     private long dijkstraCount;
@@ -59,9 +57,8 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public void initFromGraph() {
         super.initFromGraph();
-        ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
         remainingEdgeExplorer = prepareGraph.createAllEdgeExplorer();
-        prepareAlgo = new NodeBasedWitnessPathSearcher(prepareGraph);
+        prepareAlgo = new NodeBasedWitnessPathSearcher(prepareGraph, maxLevel);
     }
 
     @Override
@@ -188,7 +185,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
 
                 prepareAlgo.setWeightLimit(existingDirectWeight);
                 prepareAlgo.setMaxVisitedNodes(maxVisitedNodes);
-                prepareAlgo.setEdgeFilter(ignoreNodeFilter.setAvoidNode(sch.getNode()));
+                prepareAlgo.ignoreNode(sch.getNode());
 
                 dijkstraSW.start();
                 dijkstraCount++;

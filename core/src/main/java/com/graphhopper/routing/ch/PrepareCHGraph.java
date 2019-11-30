@@ -18,33 +18,44 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AllCHEdgesIterator;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 
-
+/**
+ * Helper adapter api over {@link CHGraph} used for CH preparation.
+ */
 public class PrepareCHGraph {
     private final CHGraph chGraph;
     private final Weighting weighting;
     private final TurnWeighting turnWeighting;
     private final FlagEncoder encoder;
 
-    public PrepareCHGraph(CHGraph chGraph, Weighting weighting, TraversalMode traversalMode) {
-        if (traversalMode.isEdgeBased() && !(weighting instanceof TurnWeighting)) {
-            throw new IllegalArgumentException("You need a TurnWeighting to make use of edge-based traversal mode");
+    public static PrepareCHGraph nodeBased(CHGraph chGraph, Weighting weighting) {
+        if (chGraph.getCHProfile().isEdgeBased()) {
+            throw new IllegalArgumentException("Expected node-based CHGraph, but was edge-based");
         }
+        return new PrepareCHGraph(chGraph, weighting, null);
+    }
+
+    public static PrepareCHGraph edgeBased(CHGraph chGraph, Weighting weighting, TurnWeighting turnWeighting) {
+        if (!chGraph.getCHProfile().isEdgeBased()) {
+            throw new IllegalArgumentException("Expected edge-based CHGraph, but was node-based");
+        }
+        return new PrepareCHGraph(chGraph, weighting, turnWeighting);
+    }
+
+    private PrepareCHGraph(CHGraph chGraph, Weighting weighting, TurnWeighting turnWeighting) {
         this.chGraph = chGraph;
         this.encoder = weighting.getFlagEncoder();
-        if (traversalMode.isEdgeBased()) {
-            this.weighting = ((TurnWeighting) weighting).getSuperWeighting();
-            this.turnWeighting = (TurnWeighting) weighting;
-        } else {
-            this.weighting = weighting;
-            this.turnWeighting = null;
-        }
+        this.weighting = weighting;
+        this.turnWeighting = turnWeighting;
     }
 
     public PrepareCHEdgeExplorer createInEdgeExplorer() {
@@ -111,7 +122,7 @@ public class PrepareCHGraph {
         return encoder;
     }
 
-    public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+    public double getTurnWeight(int inEdge, int viaNode, int outEdge) {
         if (turnWeighting == null) {
             throw new IllegalStateException("Calculating turn weights is only allowed when using edge-based traversal mode");
         }

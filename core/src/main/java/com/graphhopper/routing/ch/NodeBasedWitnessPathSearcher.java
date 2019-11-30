@@ -19,41 +19,45 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
-import com.graphhopper.routing.util.IgnoreNodeFilter;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
 
 import java.util.Arrays;
 
-// todonow: javadocs
+/**
+ * Used to find witness paths during node-based CH preparation. Essentially this is like {@link DijkstraOneToMany},
+ * i.e. its a Dijkstra search that allows re-using the shortest path tree for different searches with the same origin
+ * node and uses large int/double arrays instead of hash maps to store the shortest path tree (higher memory consumption,
+ * but faster query times -> better for CH preparation). Main reason we use this instead of {@link DijkstraOneToMany}
+ * is that we can use this implementation with a {@link PrepareCHGraph}.
+ */
 public class NodeBasedWitnessPathSearcher {
     private static final int EMPTY_PARENT = -1;
     private static final int NOT_FOUND = -1;
-    protected final PrepareCHGraph graph;
-    private final IntArrayListWithCap changedNodes;
+    private final PrepareCHGraph graph;
+    private final PrepareCHEdgeExplorer outEdgeExplorer;
+    private final IntArrayList changedNodes;
+    private final int maxLevel;
+    private int maxVisitedNodes = Integer.MAX_VALUE;
     protected double[] weights;
-    protected NodeAccess nodeAccess;
-    protected PrepareCHEdgeExplorer inEdgeExplorer;
-    protected PrepareCHEdgeExplorer outEdgeExplorer;
-    protected int maxVisitedNodes = Integer.MAX_VALUE;
-    protected IgnoreNodeFilter additionalEdgeFilter;
     private int[] parents;
     private int[] edgeIds;
     private IntDoubleBinaryHeap heap;
+    private int ignoreNode = -1;
     private int visitedNodes;
     private boolean doClear = true;
-    private int endNode;
-    private int currNode, fromNode, to;
+    private int currNode, to;
     private double weightLimit = Double.MAX_VALUE;
-    private boolean alreadyRun;
 
     public NodeBasedWitnessPathSearcher(PrepareCHGraph graph) {
+        this(graph, graph.getNodes());
+    }
+
+    public NodeBasedWitnessPathSearcher(PrepareCHGraph graph, int maxLevel) {
         this.graph = graph;
-        this.nodeAccess = graph.getNodeAccess();
+        this.maxLevel = maxLevel;
         outEdgeExplorer = graph.createOutEdgeExplorer();
-        inEdgeExplorer = graph.createInEdgeExplorer();
 
         parents = new int[graph.getNodes()];
         Arrays.fill(parents, EMPTY_PARENT);
@@ -62,11 +66,10 @@ public class NodeBasedWitnessPathSearcher {
         Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
 
         weights = new double[graph.getNodes()];
-
         Arrays.fill(weights, Double.MAX_VALUE);
 
         heap = new IntDoubleBinaryHeap(1000);
-        changedNodes = new IntArrayListWithCap();
+        changedNodes = new IntArrayList();
     }
 
     /**
@@ -146,7 +149,6 @@ public class NodeBasedWitnessPathSearcher {
                     heap.insert_(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
                     edgeIds[adjNode] = iter.getEdge();
-
                 } else if (w > tmpWeight) {
                     parents[adjNode] = currNode;
                     weights[adjNode] = tmpWeight;
@@ -191,17 +193,13 @@ public class NodeBasedWitnessPathSearcher {
         return visitedNodes;
     }
 
-    public String getName() {
-        return Parameters.Algorithms.DIJKSTRA_ONE_TO_MANY;
-    }
-
     /**
      * List currently used memory in MB (approximately)
      */
     public String getMemoryUsageAsString() {
         long len = weights.length;
         return ((8L + 4L + 4L) * len
-                + changedNodes.getCapacity() * 4L
+                + changedNodes.buffer.length * 4L
                 + heap.getCapacity() * (4L + 4L)) / Helper.MB
                 + "MB";
     }
@@ -210,27 +208,22 @@ public class NodeBasedWitnessPathSearcher {
         this.maxVisitedNodes = numberOfNodes;
     }
 
-    public void setEdgeFilter(IgnoreNodeFilter ignoreNodeFilter) {
-        this.additionalEdgeFilter = ignoreNodeFilter;
+    public void ignoreNode(int node) {
+        ignoreNode = node;
     }
 
-    protected boolean accept(PrepareCHEdgeIterator iter, int prevOrNextEdgeId) {
+    private boolean accept(PrepareCHEdgeIterator iter, int prevOrNextEdgeId) {
         if (iter.getEdge() == prevOrNextEdgeId)
             return false;
 
-        return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
+        if (graph.getLevel(iter.getAdjNode()) != maxLevel) {
+            return false;
+        }
+
+        return ignoreNode < 0 || iter.getAdjNode() != ignoreNode;
     }
 
-    protected boolean isMaxVisitedNodesExceeded() {
+    private boolean isMaxVisitedNodesExceeded() {
         return maxVisitedNodes < getVisitedNodes();
-    }
-
-    private static class IntArrayListWithCap extends IntArrayList {
-        public IntArrayListWithCap() {
-        }
-
-        public int getCapacity() {
-            return buffer.length;
-        }
     }
 }

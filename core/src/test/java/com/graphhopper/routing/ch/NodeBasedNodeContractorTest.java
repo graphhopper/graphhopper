@@ -59,8 +59,7 @@ public class NodeBasedNodeContractorTest {
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).create();
     private final CHGraph lg = graph.getCHGraph();
-    private final TraversalMode traversalMode = TraversalMode.NODE_BASED;
-    private final PrepareCHGraph pg = new PrepareCHGraph(lg, weighting, traversalMode);
+    private final PrepareCHGraph pg = PrepareCHGraph.nodeBased(lg, weighting);
 
     private NodeContractor createNodeContractor() {
         return createNodeContractor(pg);
@@ -93,12 +92,12 @@ public class NodeBasedNodeContractorTest {
     @Test
     public void testShortestPathSkipNode() {
         createExampleGraph();
-        final double normalDist = new Dijkstra(graph, weighting, traversalMode).calcPath(4, 2).getDistance();
+        final double normalDist = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(4, 2).getDistance();
         NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(pg);
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(createIgnoreNodeFilter(3));
+        algo.ignoreNode(3);
         algo.setWeightLimit(100);
         int nodeEntry = algo.findEndNode(4, 2);
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
@@ -112,13 +111,13 @@ public class NodeBasedNodeContractorTest {
     @Test
     public void testShortestPathSkipNode2() {
         createExampleGraph();
-        final double normalDist = new Dijkstra(graph, weighting, traversalMode).calcPath(4, 2).getDistance();
+        final double normalDist = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(4, 2).getDistance();
         assertEquals(3, normalDist, 1e-5);
         NodeBasedWitnessPathSearcher algo = new NodeBasedWitnessPathSearcher(pg);
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(createIgnoreNodeFilter(3));
+        algo.ignoreNode(3);
         algo.setWeightLimit(10);
         int nodeEntry = algo.findEndNode(4, 2);
         assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
@@ -134,7 +133,7 @@ public class NodeBasedNodeContractorTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(createIgnoreNodeFilter(0));
+        algo.ignoreNode(0);
         algo.setWeightLimit(2);
         int endNode = algo.findEndNode(4, 1);
         // did not reach endNode
@@ -346,7 +345,7 @@ public class NodeBasedNodeContractorTest {
         Weighting weighting = new FastestWeighting(encoder);
         GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).create();
         CHGraph lg = graph.getCHGraph();
-        PrepareCHGraph pg = new PrepareCHGraph(lg, weighting, TraversalMode.NODE_BASED);
+        PrepareCHGraph pg = PrepareCHGraph.nodeBased(lg, weighting);
         // 0 ------------> 4
         //  \             /
         //   1 --> 2 --> 3
@@ -385,7 +384,7 @@ public class NodeBasedNodeContractorTest {
         Weighting weighting = new FastestWeighting(encoder);
         GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.nodeBased(weighting)).create();
         CHGraph lg = graph.getCHGraph();
-        PrepareCHGraph pg = new PrepareCHGraph(lg, weighting, TraversalMode.NODE_BASED);
+        PrepareCHGraph pg = PrepareCHGraph.nodeBased(lg, weighting);
         // 0 - 1 - 2 - 3
         // o           o
         graph.edge(0, 1, 1, true);
@@ -428,7 +427,7 @@ public class NodeBasedNodeContractorTest {
 
         // perform CH contraction
         Weighting weighting = new FastestWeighting(encoder, new PMap().put(HEADING_PENALTY, Double.POSITIVE_INFINITY));
-        PrepareCHGraph pg = new PrepareCHGraph(lg, weighting, TraversalMode.NODE_BASED);
+        PrepareCHGraph pg = PrepareCHGraph.nodeBased(lg, weighting);
         contractInOrder(pg, 0, 1, 2, 3, 4, 5, 6);
 
         // build query graph
@@ -537,10 +536,6 @@ public class NodeBasedNodeContractorTest {
         for (int node = 0; node < nodes; node++) {
             chGraph.setLevel(node, nodes);
         }
-    }
-
-    private IgnoreNodeFilter createIgnoreNodeFilter(int node) {
-        return new IgnoreNodeFilter(pg, graph.getNodes()).setAvoidNode(node);
     }
 
     private static class Shortcut {

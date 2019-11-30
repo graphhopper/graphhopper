@@ -471,7 +471,7 @@ public class WitnessPathSearcher {
     }
 
     private double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-        return chGraph.calcTurnWeight(inEdge, viaNode, outEdge);
+        return chGraph.getTurnWeight(inEdge, viaNode, outEdge);
     }
 
     private boolean isContracted(int node) {

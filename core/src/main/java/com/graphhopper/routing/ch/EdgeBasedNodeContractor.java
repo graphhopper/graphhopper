@@ -298,7 +298,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private double getTurnCost(int inEdge, int node, int outEdge) {
-        return prepareGraph.calcTurnWeight(inEdge, node, outEdge);
+        return prepareGraph.getTurnWeight(inEdge, node, outEdge);
     }
 
     private void resetEdgeCounters() {
