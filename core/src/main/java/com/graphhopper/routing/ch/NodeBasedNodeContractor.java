@@ -17,12 +17,8 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.IgnoreNodeFilter;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.CHEdgeIteratorState;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.StopWatch;
 
@@ -64,8 +60,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     public void initFromGraph() {
         super.initFromGraph();
         ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
-        final EdgeFilter remainingNodesFilter = new RemainingNodesFilter(prepareGraph);
-        remainingEdgeExplorer = prepareGraph.createEdgeExplorer(remainingNodesFilter);
+        remainingEdgeExplorer = prepareGraph.createAllEdgeExplorer();
         prepareAlgo = new NodeBasedWitnessPathSearcher(prepareGraph);
     }
 
@@ -111,8 +106,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         PrepareCHEdgeIterator iter = remainingEdgeExplorer.setBaseNode(node);
         while (iter.next()) {
             degree++;
-            if (iter.isShortcut())
+            if (prepareGraph.getLevel(iter.getAdjNode()) < maxLevel) {
                 contractedNeighbors++;
+            }
         }
 
         // from shortcuts we can compute the edgeDifference
@@ -432,30 +428,6 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         private float edgeDifferenceWeight = 10;
         private float originalEdgesCountWeight = 1;
         private float contractedNeighborsWeight = 1;
-    }
-
-    private static class RemainingNodesFilter implements EdgeFilter {
-        private final PrepareCHGraph chGraph;
-        private final EdgeFilter allFilter;
-
-        public RemainingNodesFilter(PrepareCHGraph prepareGraph) {
-            this.chGraph = prepareGraph;
-            this.allFilter = DefaultEdgeFilter.allEdges(prepareGraph.getFlagEncoder());
-        }
-
-        @Override
-        public boolean accept(EdgeIteratorState edgeState) {
-            if (!allFilter.accept(edgeState)) {
-                return false;
-            }
-            // minor performance improvement: shortcuts in wrong direction are disconnected, so no need to exclude them
-            if (((CHEdgeIteratorState) edgeState).isShortcut())
-                return true;
-
-            int base = edgeState.getBaseNode();
-            int adj = edgeState.getAdjNode();
-            return chGraph.getLevel(base) <= chGraph.getLevel(adj);
-        }
     }
 
 }
