@@ -74,10 +74,14 @@ public class PathDetailsBuilderFactory {
                 new MapEntry<>(RoadAccess.KEY, RoadAccess.class), new MapEntry<>(Toll.KEY, Toll.class),
                 new MapEntry<>(TrackType.KEY, TrackType.class), new MapEntry<>(Hazmat.KEY, Hazmat.class),
                 new MapEntry<>(HazmatTunnel.KEY, HazmatTunnel.class), new MapEntry<>(HazmatWater.KEY, HazmatWater.class),
-                new MapEntry<>(Country.KEY, Country.class))) {
+                new MapEntry<>(SacScale.KEY, SacScale.class), new MapEntry<>(Country.KEY, Country.class))) {
             String key = (String) entry.getKey();
             if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
                 builders.add(new EnumDetails(key, evl.getEnumEncodedValue(key, (Class<Enum>) entry.getValue())));
+        }
+
+        if (requestedPathDetails.contains(MtbScale.KEY) && evl.hasEncodedValue(MtbScale.KEY)) {
+            builders.add(new IntDetails(MtbScale.KEY, evl.getIntEncodedValue(MtbScale.KEY)));
         }
 
         if (requestedPathDetails.size() != builders.size()) {
