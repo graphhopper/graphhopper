@@ -147,7 +147,7 @@ else
    LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
 fi
 
-: "${JAVA_OPTS:=-Xmx4000m -Xms1000m}"
+: "${JAVA_OPTS:=-Xmx5000m -Xms3500m}"
 : "${JAR:=graphhopper-web-0.11-SNAPSHOT.jar}"
 : "${GRAPH:=$DATADIR/$NAME-gh}"
 

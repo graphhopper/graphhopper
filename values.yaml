@@ -19,4 +19,4 @@ resources:
     memory: 5000Mi
   requests:
     cpu: 5000m
-    memory: 2000Mi
+    memory: 3500Mi
