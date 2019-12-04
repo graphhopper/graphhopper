@@ -15,8 +15,8 @@ ingress:
       nginx.ingress.kubernetes.io/proxy-body-size: "500m"
 resources:
   limits:
-    cpu: 8000m
+    cpu: 2
     memory: 5000Mi
   requests:
-    cpu: 5000m
+    cpu: 1
     memory: 3500Mi
