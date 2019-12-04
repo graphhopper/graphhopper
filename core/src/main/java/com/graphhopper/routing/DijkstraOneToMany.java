@@ -31,7 +31,7 @@ import java.util.Arrays;
 
 /**
  * A simple dijkstra tuned to perform multiple one to many queries with the same source and different target nodes
- * more efficiently than {@link }Dijkstra}. Old data structures are cached between requests and potentially reused and
+ * more efficiently than {@link Dijkstra}. Old data structures are cached between requests and potentially reused and
  * the shortest path tree is stored in (large as the graph) arrays instead of hash maps.
  * <p>
  *
