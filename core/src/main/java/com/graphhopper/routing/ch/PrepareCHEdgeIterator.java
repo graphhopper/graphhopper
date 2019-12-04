@@ -20,77 +20,101 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIterator;
 import com.graphhopper.util.EdgeIterator;
 
-public class PrepareCHEdgeIterator {
-    private final CHEdgeIterator chIterator;
+public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
+    private final CHEdgeExplorer edgeExplorer;
     private final Weighting weighting;
     private final BooleanEncodedValue accessEnc;
+    private CHEdgeIterator chIterator;
 
-    public PrepareCHEdgeIterator(CHEdgeIterator chIterator, Weighting weighting) {
-        this.chIterator = chIterator;
+    public PrepareCHEdgeIterator(CHEdgeExplorer edgeExplorer, Weighting weighting) {
+        this.edgeExplorer = edgeExplorer;
         this.weighting = weighting;
         this.accessEnc = weighting.getFlagEncoder().getAccessEnc();
     }
 
+    @Override
+    public PrepareCHEdgeIterator setBaseNode(int node) {
+        chIterator = edgeExplorer.setBaseNode(node);
+        return this;
+    }
+
     public boolean next() {
-        return chIterator.next();
+        return iter().next();
     }
 
     public int getEdge() {
-        return chIterator.getEdge();
+        return iter().getEdge();
     }
 
     public int getBaseNode() {
-        return chIterator.getBaseNode();
+        return iter().getBaseNode();
     }
 
     public int getAdjNode() {
-        return chIterator.getAdjNode();
+        return iter().getAdjNode();
     }
 
     public boolean isForward() {
-        return chIterator.get(accessEnc);
+        return iter().get(accessEnc);
     }
 
     public boolean isBackward() {
-        return chIterator.getReverse(accessEnc);
+        return iter().getReverse(accessEnc);
     }
 
     public int getOrigEdgeFirst() {
-        return chIterator.getOrigEdgeFirst();
+        return iter().getOrigEdgeFirst();
     }
 
     public int getOrigEdgeLast() {
-        return chIterator.getOrigEdgeLast();
+        return iter().getOrigEdgeLast();
     }
 
     public boolean isShortcut() {
-        return chIterator.isShortcut();
+        return iter().isShortcut();
     }
 
     public double getWeight(boolean reverse) {
         if (isShortcut()) {
-            return chIterator.getWeight();
+            return iter().getWeight();
         } else {
-            return weighting.calcWeight(chIterator, reverse, EdgeIterator.NO_EDGE);
+            return weighting.calcWeight(iter(), reverse, EdgeIterator.NO_EDGE);
         }
     }
 
     public void setWeight(double weight) {
-        chIterator.setWeight(weight);
+        iter().setWeight(weight);
     }
 
-    public int getMergeStatus(int flags) {
-        return chIterator.getMergeStatus(flags);
+    @Override
+    public String toString() {
+        if (chIterator == null) {
+            return "not initialized";
+        } else {
+            return getBaseNode() + "->" + getAdjNode() + " (" + getEdge() + ")";
+        }
     }
 
-    public void setFlagsAndWeight(int flags, double weight) {
-        chIterator.setFlagsAndWeight(flags, weight);
+    int getMergeStatus(int flags) {
+        return iter().getMergeStatus(flags);
     }
 
-    public void setSkippedEdges(int skippedEdge1, int skippedEdge2) {
-        chIterator.setSkippedEdges(skippedEdge1, skippedEdge2);
+    void setFlagsAndWeight(int flags, double weight) {
+        iter().setFlagsAndWeight(flags, weight);
+    }
+
+    void setSkippedEdges(int skippedEdge1, int skippedEdge2) {
+        iter().setSkippedEdges(skippedEdge1, skippedEdge2);
+    }
+
+    private CHEdgeIterator iter() {
+        if (chIterator == null) {
+            throw new IllegalStateException("You need to call setBaseNode() first");
+        }
+        return chIterator;
     }
 }

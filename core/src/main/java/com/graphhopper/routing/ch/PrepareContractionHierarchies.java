@@ -141,7 +141,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         } else {
             contractNodesUsingHeuristicNodeOrdering();
         }
-
     }
 
     @Override

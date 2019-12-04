@@ -61,7 +61,7 @@ import static java.lang.Double.isInfinite;
  *
  * @author easbar
  */
-public class WitnessPathSearcher {
+public class EdgeBasedWitnessPathSearcher {
     private static final int NO_NODE = -1;
     private static final double MAX_ZERO_WEIGHT_LOOP = 1.e-3;
 
@@ -106,7 +106,7 @@ public class WitnessPathSearcher {
     private final Stats currentBatchStats = new Stats();
     private final Stats totalStats = new Stats();
 
-    public WitnessPathSearcher(PrepareCHGraph chGraph, PMap pMap) {
+    public EdgeBasedWitnessPathSearcher(PrepareCHGraph chGraph, PMap pMap) {
         this.chGraph = chGraph;
         extractParams(pMap);
 

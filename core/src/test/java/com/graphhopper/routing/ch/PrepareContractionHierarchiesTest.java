@@ -293,7 +293,7 @@ public class PrepareContractionHierarchiesTest {
         prepare.doWork();
         CHGraph lg = g.getCHGraph();
         assertEquals(oldCount, g.getEdges());
-        assertEquals(oldCount + 28, lg.getEdges());
+        assertEquals(oldCount + 23, lg.getEdges());
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(4, 7);
         assertEquals(IntArrayList.from(4, 5, 6, 7), p.calcNodes());
@@ -654,7 +654,7 @@ public class PrepareContractionHierarchiesTest {
 
         checkPath(ghStorage, carProfile, 7, 5, IntArrayList.from(3, 9, 14, 16, 13, 12));
         // detour around blocked 9,14
-        checkPath(ghStorage, bikeProfile, 7, 5, IntArrayList.from(3, 10, 14, 16, 13, 12));
+        checkPath(ghStorage, bikeProfile, 9, 5, IntArrayList.from(3, 10, 14, 16, 13, 12));
     }
 
     @Test

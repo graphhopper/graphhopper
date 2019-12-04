@@ -18,22 +18,6 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.CHEdgeExplorer;
-import com.graphhopper.util.CHEdgeIterator;
-
-public class PrepareCHEdgeExplorer {
-    private final CHEdgeExplorer edgeExplorer;
-    private final Weighting weighting;
-
-    public PrepareCHEdgeExplorer(CHEdgeExplorer edgeExplorer, Weighting weighting) {
-        this.edgeExplorer = edgeExplorer;
-        this.weighting = weighting;
-    }
-
-    public PrepareCHEdgeIterator setBaseNode(int node) {
-        CHEdgeIterator chIterator = edgeExplorer.setBaseNode(node);
-        // todonow: reuse 'this' instead of creating new objects!
-        return new PrepareCHEdgeIterator(chIterator, weighting);
-    }
+public interface PrepareCHEdgeExplorer {
+    PrepareCHEdgeIterator setBaseNode(int node);
 }
