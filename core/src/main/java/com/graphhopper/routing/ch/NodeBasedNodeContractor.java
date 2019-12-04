@@ -18,7 +18,9 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.DijkstraOneToMany;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.IgnoreNodeFilter;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
@@ -39,7 +41,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     private final AddShortcutHandler addScHandler = new AddShortcutHandler();
     private final CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
     private final Params params = new Params();
-    private CHEdgeExplorer remainingEdgeExplorer;
+    private CHEdgeExplorer allEdgeExplorer;
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany prepareAlgo;
     private int addedShortcutsCount;
@@ -65,14 +67,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     public void initFromGraph() {
         super.initFromGraph();
         ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
-        final EdgeFilter allFilter = DefaultEdgeFilter.allEdges(encoder);
-        final EdgeFilter remainingNodesFilter = new LevelEdgeFilter(prepareGraph) {
-            @Override
-            public final boolean accept(EdgeIteratorState edgeState) {
-                return super.accept(edgeState) && allFilter.accept(edgeState);
-            }
-        };
-        remainingEdgeExplorer = prepareGraph.createEdgeExplorer(remainingNodesFilter);
+        allEdgeExplorer = prepareGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder));
         prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareWeighting, TraversalMode.NODE_BASED);
     }
 
@@ -99,6 +94,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
      */
     @Override
     public float calculatePriority(int node) {
+        if (prepareGraph.getLevel(node) != maxLevel) {
+            throw new IllegalArgumentException("Priority should only be calculated for not yet contracted nodes");
+        }
         CalcShortcutsResult calcShortcutsResult = calcShortcutCount(node);
 
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
@@ -115,11 +113,19 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         // number of already contracted neighbors of v
         int contractedNeighbors = 0;
         int degree = 0;
-        CHEdgeIterator iter = remainingEdgeExplorer.setBaseNode(node);
+        CHEdgeIterator iter = allEdgeExplorer.setBaseNode(node);
         while (iter.next()) {
-            degree++;
-            if (iter.isShortcut())
+            // only increase the degree for edges going to equal level nodes (the current node is at maxLevel)
+            // todo: for historic reasons increase degree also for all shortcuts, even though its wrong, see #1810
+            if (iter.isShortcut() || prepareGraph.getLevel(iter.getAdjNode()) == maxLevel) {
+                degree++;
+            }
+            // todo: just because there is a shortcut it does not mean the neighbor is contracted AND
+            //       just because an edge is not a shortcut does not mean the neighbor is not contracted
+            //       see #1810
+            if (iter.isShortcut()) {
                 contractedNeighbors++;
+            }
         }
 
         // from shortcuts we can compute the edgeDifference
