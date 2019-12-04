@@ -102,7 +102,7 @@ public class RealtimeFeed {
         final IntLongHashMap delaysForAlightEdges = new IntLongHashMap();
         final LinkedList<VirtualEdgeIteratorState> additionalEdges = new LinkedList<>();
         final Graph overlayGraph = new Graph() {
-            int firstEdge = graphHopperStorage.getAllEdges().length();
+            int firstEdge = graphHopperStorage.getEdges();
             EncodingManager encodingManager = graphHopperStorage.getEncodingManager();
             final NodeAccess nodeAccess = new NodeAccess() {
                 IntIntHashMap turnCostIndices = new IntIntHashMap();

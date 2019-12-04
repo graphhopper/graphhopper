@@ -179,7 +179,7 @@ public class PrepareContractionHierarchiesTest {
     public void testMoreComplexGraph() {
         GraphHopperStorage g = createGHStorage();
         initShortcutsGraph(g);
-        int oldCount = g.getAllEdges().length();
+        int oldCount = g.getEdges();
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         CHGraph lg = g.getCHGraph();
@@ -198,12 +198,13 @@ public class PrepareContractionHierarchiesTest {
         g.edge(4, 3, 1, false);
         g.freeze();
         CHGraph lg = g.getCHGraph();
-        int oldCount = GHUtility.count(lg.getAllEdges());
+        int oldCount = lg.getEdges();
         assertEquals(6, oldCount);
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         assertEquals(2, prepare.getShortcuts());
-        assertEquals(oldCount + 2, GHUtility.count(lg.getAllEdges()));
+        assertEquals(oldCount, lg.getOriginalEdges());
+        assertEquals(oldCount + 2,lg.getEdges());
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(4, 2);
         assertEquals(3, p.getDistance(), 1e-6);
@@ -214,17 +215,18 @@ public class PrepareContractionHierarchiesTest {
     public void testDirectedGraph2() {
         GraphHopperStorage g = createGHStorage();
         initDirected2(g);
-        int oldCount = GHUtility.count(g.getAllEdges());
+        int oldCount = g.getEdges();
         assertEquals(19, oldCount);
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         CHGraph lg = g.getCHGraph();
         // PrepareTowerNodesShortcutsTest.printEdges(g);
-        assertEquals(oldCount, g.getAllEdges().length());
+        assertEquals(oldCount, g.getEdges());
         assertEquals(oldCount, GHUtility.count(g.getAllEdges()));
 
         long numShortcuts = 9;
         assertEquals(numShortcuts, prepare.getShortcuts());
+        assertEquals(oldCount, lg.getOriginalEdges());
         assertEquals(oldCount + numShortcuts, lg.getEdges());
         assertEquals(oldCount + numShortcuts, GHUtility.count(lg.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
@@ -288,11 +290,12 @@ public class PrepareContractionHierarchiesTest {
     public void testRoundaboutUnpacking() {
         GraphHopperStorage g = createGHStorage();
         initRoundaboutGraph(g);
-        int oldCount = g.getAllEdges().length();
+        int oldCount = g.getEdges();
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         prepare.doWork();
         CHGraph lg = g.getCHGraph();
         assertEquals(oldCount, g.getEdges());
+        assertEquals(oldCount, lg.getOriginalEdges());
         assertEquals(oldCount + 23, lg.getEdges());
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(4, 7);

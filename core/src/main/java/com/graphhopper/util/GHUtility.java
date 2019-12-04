@@ -122,7 +122,7 @@ public class GHUtility {
     }
 
     public static void printEdgeInfo(final Graph g, FlagEncoder encoder) {
-        System.out.println("-- Graph nodes:" + g.getNodes() + " edges:" + g.getAllEdges().length() + " ---");
+        System.out.println("-- Graph nodes:" + g.getNodes() + " edges:" + g.getEdges() + " ---");
         AllEdgesIterator iter = g.getAllEdges();
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         while (iter.next()) {
@@ -216,7 +216,7 @@ public class GHUtility {
         }
         LOGGER.debug(String.format(Locale.ROOT, "Finished building random graph" +
                         ", nodes: %d, edges: %d , min distance: %.2f, max distance: %.2f\n",
-                graph.getNodes(), graph.getAllEdges().length(), minDist, maxDist));
+                graph.getNodes(), graph.getEdges(), minDist, maxDist));
     }
 
     public static double getDistance(int from, int to, NodeAccess nodeAccess) {

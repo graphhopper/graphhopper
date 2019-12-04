@@ -383,7 +383,7 @@ public class GraphHopperOSMTest {
         instance.importOrLoad();
 
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
-        assertEquals(8, instance.getGraphHopperStorage().getAllEdges().length());
+        assertEquals(8, instance.getGraphHopperStorage().getEdges());
 
         // A to D
         GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle("car"));
