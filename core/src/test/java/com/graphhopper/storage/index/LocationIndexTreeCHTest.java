@@ -23,7 +23,6 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Test;
 
@@ -129,20 +128,9 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
         na.setNode(1, 0, 0);
         na.setNode(2, 0.5, 0.5);
         na.setNode(3, 0.5, 1);
-        EdgeIteratorState iter1 = g.edge(1, 0, 100, true);
+        g.edge(1, 0, 100, true);
         g.edge(2, 3, 100, true);
-
-        CHGraph lg = g.getCHGraph();
         g.freeze();
-        lg.setLevel(0, 11);
-        lg.setLevel(1, 10);
-        // disconnect higher 0 from lower 1
-        lg.disconnect(lg.createEdgeExplorer(), iter1);
-
-        lg.setLevel(2, 12);
-        lg.setLevel(3, 13);
-        // disconnect higher 3 from lower 2
-        lg.disconnect(lg.createEdgeExplorer(), iter1);
 
         LocationIndexTree index = createIndex(g, 100000);
 
