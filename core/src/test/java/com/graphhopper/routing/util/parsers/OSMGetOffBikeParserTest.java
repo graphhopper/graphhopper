@@ -1,5 +1,6 @@
 package com.graphhopper.routing.util.parsers;
 
+import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.EnumEncodedValue;
@@ -44,10 +45,10 @@ public class OSMGetOffBikeParserTest {
         assertEquals(getRoadClass(way), RoadClass.CYCLEWAY);
 
         way.setTag("highway", "footway");
-        way.setTag("bicycle", "yes");
         way.setTag("surface", "grass");
+        assertTrue(isGetOffBike(way));
+        way.setTag("bicycle", "yes");
         assertFalse(isGetOffBike(way));
-
         way.setTag("bicycle", "designated");
         assertFalse(isGetOffBike(way));
 
@@ -83,53 +84,6 @@ public class OSMGetOffBikeParserTest {
         way.setTag("highway", "track");
         assertFalse(isGetOffBike(way));
     }
-
-//    @Test
-//    public void oldTest() {
-//        // A footway is not of waytype get off the bike in case that it is part of a cycle route
-//        ReaderRelation osmRel = new ReaderRelation(1);
-//        ReaderWay osmWay = new ReaderWay(1);
-//        osmWay.setTag("highway", "footway");
-//        osmWay.setTag("surface", "grass");
-//
-//        // First tests without a cycle route relation, this is a get off the bike
-//        IntsRef relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
-//        String wayType = getWayTypeFromFlags(osmWay, relFlags);
-//        assertEquals("get off the bike, unpaved", wayType);
-//
-//        // now as part of a cycle route relation
-//        osmRel.setTag("type", "route");
-//        osmRel.setTag("route", "bicycle");
-//        osmRel.setTag("network", "lcn");
-//        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
-//        wayType = getWayTypeFromFlags(osmWay, relFlags);
-//        assertEquals("small way, unpaved", wayType);
-//
-//        // steps are still shown as get off the bike
-//        osmWay.clearTags();
-//        osmWay.setTag("highway", "steps");
-//        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
-//        wayType = getWayTypeFromFlags(osmWay, relFlags);
-//        assertEquals("get off the bike", wayType);
-//
-//        // Test for highway=platform.
-//        osmRel.clearTags();
-//        osmWay.clearTags();
-//        osmWay.setTag("highway", "platform");
-//
-//        // First tests without a cycle route relation, this is a get off the bike
-//        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
-//        wayType = getWayTypeFromFlags(osmWay, relFlags);
-//        assertEquals("get off the bike", wayType);
-//
-//        // now as part of a cycle route relation
-//        osmRel.setTag("type", "route");
-//        osmRel.setTag("route", "bicycle");
-//        osmRel.setTag("network", "lcn");
-//        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
-//        wayType = getWayTypeFromFlags(osmWay, relFlags);
-//        assertEquals("", wayType);
-//    }
 
     private RoadClass getRoadClass(ReaderWay way) {
         IntsRef edgeFlags = em.handleWayTags(way, new EncodingManager.AcceptWay().put("bike", EncodingManager.Access.WAY), em.createRelationFlags());

@@ -8,6 +8,7 @@ import com.graphhopper.routing.profiles.GetOffBike;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -16,20 +17,17 @@ import java.util.List;
  */
 public class OSMGetOffBikeParser implements TagParser {
 
-    // roads where you get off your bike and push it
-    private final HashSet<String> pushBikeTags = new HashSet<>();
-    private final HashSet<String> accepted = new HashSet<>();
+    private final HashSet<String> pushBikeHighwayTags = new HashSet<>();
+    private final List<String> accepted = Arrays.asList("designated", "yes");
     private final BooleanEncodedValue offBikeEnc;
 
     public OSMGetOffBikeParser() {
         offBikeEnc = GetOffBike.create();
-        pushBikeTags.add("path");
-        pushBikeTags.add("footway");
-        pushBikeTags.add("pedestrian");
-        pushBikeTags.add("platform");
-
-        accepted.add("designated");
-        accepted.add("yes");
+        pushBikeHighwayTags.add("path");
+        // pushBikeHighwayTags.add("steps"); special handling
+        pushBikeHighwayTags.add("footway");
+        pushBikeHighwayTags.add("pedestrian");
+        pushBikeHighwayTags.add("platform");
     }
 
     @Override
@@ -40,12 +38,10 @@ public class OSMGetOffBikeParser implements TagParser {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags) {
         String highway = way.getTag("highway");
-        // String trackType = way.getTag("tracktype");
-        if ((pushBikeTags.contains(highway) || way.hasTag("railway", "platform")) && !way.hasTag("bicycle", accepted)
-                || "steps".equals(highway)
-                || way.hasTag("bicycle", "dismount"))
-            // || "track".equals(highway) && !"grade1".equals(trackType))
+        if (!way.hasTag("bicycle", accepted) && (pushBikeHighwayTags.contains(highway) || way.hasTag("railway", "platform"))
+                || "steps".equals(highway) || way.hasTag("bicycle", "dismount")) {
             offBikeEnc.setBool(false, edgeFlags, true);
+        }
         return edgeFlags;
     }
 }
