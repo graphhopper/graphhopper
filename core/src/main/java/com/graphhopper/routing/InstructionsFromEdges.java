@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.util.BikeCommonFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
@@ -97,10 +98,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         this.accessEnc = evLookup.getBooleanEncodedValue(getKey(encoder.toString(), "access"));
         this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
 
-        // both EncodedValues are optional and only used when bike encoders are added
+        // both EncodedValues are optional; And return annotation only when instructions for bike encoder is requested
         String key = getKey("bike", RouteNetwork.EV_SUFFIX);
         this.bikeRouteEnc = evLookup.hasEncodedValue(key) ? evLookup.getEnumEncodedValue(key, RouteNetwork.class) : null;
-        this.getOffBikeEnc = evLookup.hasEncodedValue(GetOffBike.KEY) ? evLookup.getBooleanEncodedValue(GetOffBike.KEY) : null;
+        this.getOffBikeEnc = encoder instanceof BikeCommonFlagEncoder && evLookup.hasEncodedValue(GetOffBike.KEY)
+                ? evLookup.getBooleanEncodedValue(GetOffBike.KEY) : null;
         this.tollEnc = evLookup.hasEncodedValue(Toll.KEY) ? evLookup.getEnumEncodedValue(Toll.KEY, Toll.class) : null;
 
         this.roadClassEnc = evLookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
@@ -161,15 +163,14 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         String name = edge.getName();
         String info = "";
-        int importance = 0;
+        int importance = 1;
         if (getOffBikeEnc != null) {
-            // only for bikes do
             if (edge.get(roadClassEnc) == RoadClass.CYCLEWAY
                     || bikeRouteEnc != null && edge.get(bikeRouteEnc) != RouteNetwork.OTHER) {
                 // for backward compatibility
+                importance = 0;
                 info = tr.tr("cycleway");
             } else if (edge.get(getOffBikeEnc)) {
-                importance = 1;
                 info = tr.tr("off_bike");
             }
         }
@@ -179,20 +180,16 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             importance = 2; // could be dangerous
             info = tr.tr("way_contains_ford");
         } else if (re == RoadEnvironment.FERRY) {
-            importance = 1;
             info = tr.tr("way_contains_ferry");
         }
 
+        // if private access is allowed we need a warning
         RoadAccess ra = edge.get(roadAccessEnc);
-        if (ra == RoadAccess.PRIVATE) {
-            importance = 1; // if private access is allowed we need a warning
+        if (ra == RoadAccess.PRIVATE)
             info = info.isEmpty() ? tr.tr("way_contains_private") : info + ", " + tr.tr("way_contains_private");
-        }
 
-        if (tollEnc != null && edge.get(tollEnc) != Toll.NO) {
-            importance = 1;
+        if (tollEnc != null && edge.get(tollEnc) != Toll.NO)
             info = info.isEmpty() ? tr.tr("way_contains_toll") : info + ", " + tr.tr("way_contains_toll");
-        }
 
         InstructionAnnotation annotation = info.isEmpty()
                 ? InstructionAnnotation.EMPTY
