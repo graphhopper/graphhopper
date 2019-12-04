@@ -89,29 +89,24 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
             outArraysList.add("weights");
         }
 
-        ArrayNode outArrayListJson = objectMapper.createArrayNode();
-        for (String str : outArraysList) {
-            outArrayListJson.add(str);
-        }
-
         boolean hasElevation = false;
         if (ghRequest.identicalLists) {
-            requestJson.putArray("points").addAll(createPointList(ghRequest.getFromPoints()));
-            requestJson.putArray("point_hints").addAll(createStringList(ghRequest.getFromPointHints()));
-            requestJson.putArray("curbsides").addAll(createStringList(ghRequest.getFromCurbsides()));
+            createPointArray(requestJson, "points", ghRequest.getFromPoints());
+            createStringArray(requestJson, "point_hints", ghRequest.getFromPointHints());
+            createStringArray(requestJson, "curbsides", ghRequest.getFromCurbsides());
         } else {
-            ArrayNode fromPointList = createPointList(ghRequest.getFromPoints());
-            ArrayNode toPointList = createPointList(ghRequest.getToPoints());
-            requestJson.putArray("from_points").addAll(fromPointList);
-            requestJson.putArray("from_point_hints").addAll(createStringList(ghRequest.getFromPointHints()));
-            requestJson.putArray("to_points").addAll(toPointList);
-            requestJson.putArray("to_point_hints").addAll(createStringList(ghRequest.getToPointHints()));
-            requestJson.putArray("from_curbsides").addAll(createStringList(ghRequest.getFromCurbsides()));
-            requestJson.putArray("to_curbsides").addAll(createStringList(ghRequest.getToPointHints()));
+            createPointArray(requestJson, "from_points", ghRequest.getFromPoints());
+            createStringArray(requestJson, "from_point_hints", ghRequest.getFromPointHints());
+
+            createPointArray(requestJson, "to_points", ghRequest.getToPoints());
+            createStringArray(requestJson, "to_point_hints", ghRequest.getToPointHints());
+
+            createStringArray(requestJson, "from_curbsides", ghRequest.getFromCurbsides());
+            createStringArray(requestJson, "to_curbsides", ghRequest.getToCurbsides());
         }
 
-        requestJson.putArray("snap_preventions").addAll(createStringList(ghRequest.getSnapPreventions()));
-        requestJson.putArray("out_arrays").addAll(outArrayListJson);
+        createStringArray(requestJson, "snap_preventions", ghRequest.getSnapPreventions());
+        createStringArray(requestJson, "out_arrays", outArraysList);
         requestJson.put("vehicle", ghRequest.getVehicle());
         requestJson.put("elevation", hasElevation);
         requestJson.put("fail_fast", ghRequest.getFailFast());
@@ -222,22 +217,26 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         }
     }
 
-    private ArrayNode createStringList(List<String> list) {
+    private void createStringArray(ObjectNode requestJson, String name, List<String> stringList) {
+        if (stringList.isEmpty())
+            return;
         ArrayNode outList = objectMapper.createArrayNode();
-        for (String str : list) {
+        for (String str : stringList) {
             outList.add(str);
         }
-        return outList;
+        requestJson.putArray(name).addAll(outList);
     }
 
-    private ArrayNode createPointList(List<GHPoint> list) {
+    private void createPointArray(ObjectNode requestJson, String name, List<GHPoint> pList) {
+        if (pList.isEmpty())
+            return;
         ArrayNode outList = objectMapper.createArrayNode();
-        for (GHPoint p : list) {
+        for (GHPoint p : pList) {
             ArrayNode entry = objectMapper.createArrayNode();
             entry.add(p.lon);
             entry.add(p.lat);
             outList.add(entry);
         }
-        return outList;
+        requestJson.putArray(name).addAll(outList);
     }
 }

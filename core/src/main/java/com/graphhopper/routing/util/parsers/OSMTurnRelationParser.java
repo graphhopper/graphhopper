@@ -26,7 +26,10 @@ import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 
@@ -63,8 +66,8 @@ public class OSMTurnRelationParser implements TurnCostParser {
             else if (name.contains("bike") || name.contains("bicycle"))
                 this.restrictions = Arrays.asList("bicycle", "vehicle", "access");
             else
-                throw new IllegalArgumentException("restrictions collection must be specified for parser " + name
-                        + ", e.g. [\"motorcar\", \"motor_vehicle\", \"vehicle\", \"access\"]");
+                // assume default is some motor_vehicle, exception is too strict
+                this.restrictions = Arrays.asList("motor_vehicle", "vehicle", "access");
         } else {
             this.restrictions = restrictions;
         }
@@ -79,8 +82,6 @@ public class OSMTurnRelationParser implements TurnCostParser {
     @Override
     public void createTurnCostEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
         String accessKey = getKey(name, "access");
-        if (!lookup.hasEncodedValue(accessKey))
-            throw new IllegalArgumentException("Add TurnCostParsers to EncodingManager after everything else");
         accessEnc = lookup.getEncodedValue(accessKey, BooleanEncodedValue.class);
         registerNewEncodedValue.add(turnCostEnc = TurnCost.create(name, maxTurnCosts));
     }
@@ -97,7 +98,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
         return cachedInExplorer == null ? cachedInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(accessEnc)) : cachedInExplorer;
     }
 
-    EdgeExplorer getOutExplorer(Graph graph) {
+    private EdgeExplorer getOutExplorer(Graph graph) {
         return cachedOutExplorer == null ? cachedOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(accessEnc)) : cachedOutExplorer;
     }
 
@@ -107,7 +108,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
      * @return a collection of turn cost entries which can be used for testing
      */
     void addRelationToTCStorage(OSMTurnRelation osmTurnRelation, IntsRef turnCostFlags,
-                                               ExternalInternalMap map, Graph graph) {
+                                ExternalInternalMap map, Graph graph) {
         TurnCostStorage tcs = graph.getTurnCostStorage();
         int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
         EdgeExplorer edgeOutExplorer = getOutExplorer(graph), edgeInExplorer = getInExplorer(graph);

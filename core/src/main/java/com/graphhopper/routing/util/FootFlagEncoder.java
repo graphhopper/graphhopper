@@ -64,7 +64,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     public FootFlagEncoder(PMap properties) {
         this((int) properties.getLong("speed_bits", 4),
                 properties.getDouble("speed_factor", 1));
-        this.setBlockFords(properties.getBool("block_fords", true));
+        this.setBlockFords(properties.getBool("block_fords", false));
         this.speedTwoDirections = properties.getBool("speed_two_directions", false);
     }
 

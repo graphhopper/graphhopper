@@ -17,6 +17,7 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
@@ -24,6 +25,8 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
+import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
@@ -394,7 +397,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).addAll(new DefaultFlagEncoderFactory(), "car,generic").build());
+                setEncodingManager(new EncodingManager.Builder().addAll(new DefaultFlagEncoderFactory(), "car,generic").build());
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
@@ -418,7 +421,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).add(new CarFlagEncoder()).build());
+                setEncodingManager(new EncodingManager.Builder().add(new CarFlagEncoder()).build());
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202);
@@ -702,7 +705,7 @@ public class GraphHopperIT {
                 setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
         PathWrapper arsp = rsp.getBest();
-        assertEquals(1626.8, arsp.getDistance(), .1);
+        assertEquals(1625.4, arsp.getDistance(), .1);
         assertEquals(54, arsp.getPoints().getSize());
         assertTrue(arsp.getPoints().is3D());
 
@@ -741,7 +744,13 @@ public class GraphHopperIT {
     public void testSRTMWithoutTunnelInterpolation() {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
-                .setEncodingManager(EncodingManager.create(importVehicles));
+                .setEncodingManager(EncodingManager.start().add(new OSMRoadEnvironmentParser() {
+                    @Override
+                    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, IntsRef relationFlags) {
+                        // do not change RoadEnvironment to avoid triggering tunnel interpolation - is this a valid use case after #TODONOW?
+                        return edgeFlags;
+                    }
+                }).addAll(new DefaultFlagEncoderFactory(), importVehicles).build());
 
         tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();
@@ -767,7 +776,7 @@ public class GraphHopperIT {
     public void testSRTMWithTunnelInterpolation() {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
-                .setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).addAll(new DefaultFlagEncoderFactory(), genericImportVehicles).build());
+                .setEncodingManager(new EncodingManager.Builder().addAll(new DefaultFlagEncoderFactory(), genericImportVehicles).build());
 
         tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();
@@ -811,10 +820,10 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(6932.2, arsp.getDistance(), .1);
-        assertEquals(106, arsp.getPoints().getSize());
+        assertEquals(105, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(22, il.size());
+        assertEquals(21, il.size());
 
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
         assertEquals("get off the bike", il.get(0).getAnnotation().getMessage());
@@ -831,8 +840,8 @@ public class GraphHopperIT {
         assertEquals("keep left onto Austraße", il.get(11).getTurnDescription(tr));
         assertEquals("keep left onto Rechte Kremszeile", il.get(12).getTurnDescription(tr));
         //..
-        assertEquals("turn right onto Treppelweg", il.get(18).getTurnDescription(tr));
-        assertEquals("cycleway", il.get(18).getAnnotation().getMessage());
+        assertEquals("turn right onto Treppelweg", il.get(17).getTurnDescription(tr));
+        assertEquals("cycleway", il.get(17).getAnnotation().getMessage());
     }
 
     @Test

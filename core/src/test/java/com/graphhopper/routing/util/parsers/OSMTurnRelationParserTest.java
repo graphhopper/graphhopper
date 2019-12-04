@@ -66,4 +66,12 @@ public class OSMTurnRelationParserTest {
         parser.addRelationToTCStorage(instance, tcFlags, map, ghStorage);
         assertTrue(Double.isInfinite(tcs.get(tce, tcFlags, 4, 3, 3)));
     }
+
+    @Test
+    public void unknownShouldBehaveLikeMotorVehicle() {
+        OSMTurnRelationParser parser = new OSMTurnRelationParser("fatcarsomething", 1);
+        OSMTurnRelation turnRelation = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
+        turnRelation.setVehicleTypeRestricted("space");
+        parser.handleTurnRelationTags(TurnCost.createFlags(), turnRelation, null, null);
+    }
 }

@@ -32,15 +32,13 @@ import java.util.List;
 public class OSMMaxWeightParser implements TagParser {
 
     private DecimalEncodedValue weightEncoder;
-    private boolean enableLog;
 
     public OSMMaxWeightParser() {
-        this(MaxWeight.create(), false);
+        this(MaxWeight.create());
     }
-
-    public OSMMaxWeightParser(DecimalEncodedValue weightEncoder, boolean enableLog) {
+    
+    public OSMMaxWeightParser(DecimalEncodedValue weightEncoder) {
         this.weightEncoder = weightEncoder;
-        this.enableLog = enableLog;
     }
 
     @Override
@@ -52,7 +50,7 @@ public class OSMMaxWeightParser implements TagParser {
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, IntsRef relationFlags) {
         // do not include OSM tag "height" here as it has completely different meaning (height of peak)
         List<String> weightTags = Arrays.asList("maxweight", "maxgcweight");
-        OSMValueExtractor.extractTons(edgeFlags, way, weightEncoder, weightTags, enableLog);
+        OSMValueExtractor.extractTons(edgeFlags, way, weightEncoder, weightTags);
         return edgeFlags;
     }
 }

@@ -4,6 +4,7 @@ import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class OSMValueExtractorTest {
 
@@ -25,14 +26,14 @@ public class OSMValueExtractorTest {
         assertEquals(6, OSMValueExtractor.stringToTons("6t mgw"), DELTA);
     }
 
-    @Test(expected = NumberFormatException.class)
-    public void stringToTonsException() {
-        OSMValueExtractor.stringToTons("weight limit 1.5t");
+    @Test
+    public void stringToTonsNaN() {
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToTons("weight limit 1.5t")));
     }
 
-    @Test(expected = NumberFormatException.class)
-    public void stringToTonsException2() {
-        OSMValueExtractor.stringToTons("");
+    @Test
+    public void stringToTonsNaN2() {
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToTons("")));
     }
 
     @Test
@@ -63,18 +64,18 @@ public class OSMValueExtractorTest {
         assertEquals(1.5, OSMValueExtractor.stringToMeter("150 cm"), DELTA);
     }
 
-    @Test(expected = NumberFormatException.class)
-    public void stringToMeterException() {
-        OSMValueExtractor.stringToMeter("height limit 1.5m");
+    @Test
+    public void stringToMeterNaN() {
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToMeter("height limit 1.5m")));
     }
 
-    @Test(expected = NumberFormatException.class)
-    public void stringToMeterException2() {
-        OSMValueExtractor.stringToMeter("");
+    @Test
+    public void stringToMeterNaN2() {
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToMeter("")));
     }
 
-    @Test(expected = NumberFormatException.class)
-    public void stringToMeterException3() {
-        OSMValueExtractor.stringToMeter("default");
+    @Test
+    public void stringToMeterNaN3() {
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToMeter("default")));
     }
 }

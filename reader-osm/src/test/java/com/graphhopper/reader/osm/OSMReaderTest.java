@@ -563,7 +563,7 @@ public class OSMReaderTest {
         String fileRoadAttributes = "test-road-attributes.xml";
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
         DataFlagEncoder dataFlagEncoder = new DataFlagEncoder();
-        hopper.setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).
+        hopper.setEncodingManager(new EncodingManager.Builder().
                 add(new OSMMaxWidthParser()).add(new OSMMaxHeightParser()).add(new OSMMaxWeightParser()).
                 add(dataFlagEncoder).build());
         hopper.importOrLoad();
@@ -949,7 +949,7 @@ public class OSMReaderTest {
                     throw new RuntimeException(e);
                 }
             }
-        }.setEncodingManager(new EncodingManager.Builder().add(new CarFlagEncoder()).add(new OSMRoadClassParser()).build()).
+        }.setEncodingManager(new EncodingManager.Builder().add(new CarFlagEncoder()).build()).
                 setGraphHopperLocation(dir).setCHEnabled(false).
                 importOrLoad();
 
@@ -958,9 +958,9 @@ public class OSMReaderTest {
         assertEquals(3, list.size());
         assertEquals(RoadClass.MOTORWAY.toString(), list.get(0).getValue());
 
-        response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1).setPathDetails(Arrays.asList(RoadAccess.KEY)));
+        response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1).setPathDetails(Arrays.asList(Toll.KEY)));
         Throwable ex = response.getErrors().get(0);
-        assertTrue(ex.getMessage(), ex.getMessage().contains("You requested the details [road_access]"));
+        assertTrue(ex.getMessage(), ex.getMessage().contains("You requested the details [toll]"));
     }
 
     class GraphHopperFacade extends GraphHopperOSM {

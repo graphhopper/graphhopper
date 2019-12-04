@@ -41,7 +41,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
         this((int) properties.getLong("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
-        this.setBlockFords(properties.getBool("block_fords", true));
+        this.setBlockFords(properties.getBool("block_fords", false));
     }
 
     public RacingBikeFlagEncoder(String propertiesStr) {
@@ -142,16 +142,6 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
             else if (trackType == null || trackType.startsWith("grade"))
                 weightToPrioMap.put(110d, AVOID_AT_ALL_COSTS.getValue());
         }
-    }
-
-    @Override
-    boolean isPushingSection(ReaderWay way) {
-        String highway = way.getTag("highway");
-        String trackType = way.getTag("tracktype");
-        return way.hasTag("highway", pushingSectionsHighways)
-                || way.hasTag("railway", "platform")
-                || way.hasTag("bicycle", "dismount")
-                || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
     }
 
     @Override

@@ -129,6 +129,19 @@ public class RouteResourceTest {
     }
 
     @Test
+    public void testQueryWithoutInstructions() {
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&instructions=false").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode path = json.get("paths").get(0);
+        double distance = path.get("distance").asDouble();
+        assertTrue("distance wasn't correct:" + distance, distance > 9000);
+        assertTrue("distance wasn't correct:" + distance, distance < 9500);
+    }
+
+    @Test
     public void testQueryWithStraightVia() {
         // Note, in general specifying pass_through does not work with CH, but this is an example where it works
         final Response response = app.client().target("http://localhost:8080/route?point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke();

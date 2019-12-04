@@ -57,10 +57,13 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
     @Override
     public void release() {
         cacheData.clear();
-
-        // for memory mapped type we create temporary unpacked files which should be removed
-        if (autoRemoveTemporary && dir != null)
-            dir.clear();
+        if (dir != null) {
+            // for memory mapped type we remove temporary files
+            if (autoRemoveTemporary)
+                dir.clear();
+            else
+                dir.close();
+        }
     }
 
     /**
@@ -186,14 +189,4 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
             throw new RuntimeException("Problem at x:" + x + ", y:" + y, ex);
         }
     }
-
-    /**
-     * Creating temporary files can take a long time as we need to unpack tiff as well as to fill
-     * our DataAccess object, so this option can be used to disable the default clear mechanism via
-     * specifying 'false'.
-     */
-    public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
-        this.autoRemoveTemporary = autoRemoveTemporary;
-    }
-
 }

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
@@ -26,6 +26,8 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 /**
  * This class calculates instructions from the edges in a Path.
@@ -46,6 +48,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private final EdgeExplorer crossingExplorer;
     private final BooleanEncodedValue roundaboutEnc;
     private final BooleanEncodedValue accessEnc;
+    private final BooleanEncodedValue getOffBikeEnc;
+    private final EnumEncodedValue<RouteNetwork> bikeRouteEnc;
+    private final EnumEncodedValue<RoadClass> roadClassEnc;
+    private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
+
     /*
      * We need three points to make directions
      *
@@ -81,33 +88,40 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     private final int MAX_U_TURN_DISTANCE = 35;
 
-    public InstructionsFromEdges(Graph graph, Weighting weighting,
-                                 BooleanEncodedValue roundaboutEnc,
+    public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
                                  Translation tr, InstructionList ways) {
-        this.weighting = weighting;
         this.encoder = weighting.getFlagEncoder();
-        this.accessEnc = this.encoder.getAccessEnc();
-        this.roundaboutEnc = roundaboutEnc;
+        this.weighting = weighting;
+        this.accessEnc = evLookup.getBooleanEncodedValue(getKey(encoder.toString(), "access"));
+        this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
+
+        // both EncodedValues are optional and only used when bike encoders are added
+        String key = getKey("bike", RouteNetwork.EV_SUFFIX);
+        this.bikeRouteEnc = evLookup.hasEncodedValue(key) ? evLookup.getEnumEncodedValue(key, RouteNetwork.class) : null;
+        this.getOffBikeEnc = evLookup.hasEncodedValue(GetOffBike.KEY) ? evLookup.getBooleanEncodedValue(GetOffBike.KEY) : null;
+
+        this.roadClassEnc = evLookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        this.roadEnvEnc = evLookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         this.nodeAccess = graph.getNodeAccess();
         this.tr = tr;
         this.ways = ways;
         prevNode = -1;
         prevInRoundabout = false;
         prevName = null;
-        outEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(this.encoder));
-        crossingExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.allEdges(this.encoder));
+        outEdgeExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder));
+        crossingExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder));
     }
 
     /**
      * @return the list of instructions for this path.
      */
-    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, BooleanEncodedValue roundaboutEnc, final Translation tr) {
+    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, EncodedValueLookup evLookup, final Translation tr) {
         final InstructionList ways = new InstructionList(tr);
         if (path.isFound()) {
             if (path.getSize() == 0) {
                 ways.add(new FinishInstruction(graph.getNodeAccess(), path.getEndNode()));
             } else {
-                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, roundaboutEnc, tr, ways));
+                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, tr, ways));
             }
         }
         return ways;
@@ -143,7 +157,19 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         }
 
         String name = edge.getName();
-        InstructionAnnotation annotation = encoder.getAnnotation(flags, tr);
+        InstructionAnnotation annotation = InstructionAnnotation.EMPTY;
+        if (getOffBikeEnc != null) {
+            // only for bikes do
+            if (edge.get(roadClassEnc) == RoadClass.CYCLEWAY
+                    || bikeRouteEnc != null && edge.get(bikeRouteEnc) != RouteNetwork.OTHER) {
+                // for backward compatibility
+                annotation = new InstructionAnnotation(0, tr.tr("cycleway"));
+            } else if (edge.get(getOffBikeEnc)) {
+                annotation = new InstructionAnnotation(1, tr.tr("off_bike"));
+            }
+        } else if (edge.get(roadEnvEnc) == RoadEnvironment.FORD) {
+            annotation = new InstructionAnnotation(1, tr.tr("way_contains_ford"));
+        }
 
         if ((prevName == null) && (!isRoundabout)) // very first instruction (if not in Roundabout)
         {

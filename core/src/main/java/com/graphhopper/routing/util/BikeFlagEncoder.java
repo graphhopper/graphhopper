@@ -39,7 +39,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
         this(properties.getInt("speed_bits", 4),
                 properties.getInt("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
-        this.setBlockFords(properties.getBool("block_fords", true));
+        this.setBlockFords(properties.getBool("block_fords", false));
     }
 
     public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
@@ -73,13 +73,6 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     @Override
     public int getVersion() {
         return 2;
-    }
-
-    @Override
-    boolean isPushingSection(ReaderWay way) {
-        String highway = way.getTag("highway");
-        String trackType = way.getTag("tracktype");
-        return super.isPushingSection(way) || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
     }
 
     @Override

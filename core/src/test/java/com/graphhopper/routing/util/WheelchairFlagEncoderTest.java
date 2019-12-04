@@ -420,33 +420,6 @@ public class WheelchairFlagEncoderTest {
     }
 
     @Test
-    public void testFord() {
-        // by default deny access through fords!
-        ReaderNode node = new ReaderNode(1, -1, -1);
-        node.setTag("ford", "no");
-        assertTrue(wheelchairEncoder.handleNodeTags(node) == 0);
-
-        node = new ReaderNode(1, -1, -1);
-        node.setTag("ford", "yes");
-        assertTrue(wheelchairEncoder.handleNodeTags(node) > 0);
-
-        node.setTag("foot", "yes");
-        // no barrier!
-        assertTrue(wheelchairEncoder.handleNodeTags(node) == 0);
-
-        // Now let's allow fords for foot
-        wheelchairEncoder.setBlockFords(Boolean.FALSE);
-
-        node = new ReaderNode(1, -1, -1);
-        node.setTag("ford", "no");
-        assertTrue(wheelchairEncoder.handleNodeTags(node) == 0);
-
-        node = new ReaderNode(1, -1, -1);
-        node.setTag("ford", "yes");
-        assertTrue(wheelchairEncoder.handleNodeTags(node) == 0);
-    }
-
-    @Test
     public void testBlockByDefault() {
         WheelchairFlagEncoder tmpWheelchairEncoder = new WheelchairFlagEncoder();
         EncodingManager.create(tmpWheelchairEncoder);
