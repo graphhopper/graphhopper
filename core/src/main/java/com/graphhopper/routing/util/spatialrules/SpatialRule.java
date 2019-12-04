@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.profiles.Toll;
 import com.graphhopper.util.shapes.Polygon;
 
 import java.util.List;
@@ -50,6 +51,15 @@ public interface SpatialRule {
      * @param _default           The default AccessValue
      */
     RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default);
+    
+    /**
+     * Returns the {@link Toll} for a certain highway type. If nothing is
+     * defined, _default will be returned.
+     * 
+     * @param highwayTag The highway type, e.g. primary, secondary
+     * @param _default   The default toll type
+     */
+    Toll getToll(String highwayTag, Toll _default);
 
     /**
      * Returns the borders in which the SpatialRule is valid
@@ -69,6 +79,11 @@ public interface SpatialRule {
 
         @Override
         public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
+            return _default;
+        }
+
+        @Override
+        public Toll getToll(String highwayTag, Toll _default) {
             return _default;
         }
 

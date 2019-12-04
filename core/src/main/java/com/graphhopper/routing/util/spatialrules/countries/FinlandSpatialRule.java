@@ -24,20 +24,30 @@ import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
 /**
- * Defines the default rules for Austria roads
+ * Defines the default rules for Finnish roads
  *
- * @author Robin Boldt
+ * @author Thomas Butz
  */
-public class AustriaSpatialRule extends DefaultSpatialRule {
+public class FinlandSpatialRule extends DefaultSpatialRule {
 
     @Override
     public double getMaxSpeed(String highwayTag, double _default) {
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
         switch (highwayTag) {
+            case "motorway":
+                return 120;
             case "trunk":
                 return 100;
+            case "primary":
+            case "secondary":
+                return 80;
+            case "tertiary":
+                return 60;
+            case "unclassified":
             case "residential":
-                return 50;
+                return 80;
+            case "living_street":
+                return 20;
             default:
                 return super.getMaxSpeed(highwayTag, _default);
         }
@@ -46,10 +56,13 @@ public class AustriaSpatialRule extends DefaultSpatialRule {
     @Override
     public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
         if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
-            if (highwayTag.equals("living_street"))
+            if ("track".equals(highwayTag)) {
                 return RoadAccess.DESTINATION;
-            if (highwayTag.equals("track"))
-                return RoadAccess.FORESTRY;
+            }
+            
+            if ("path".equals(highwayTag)) {
+                return RoadAccess.PRIVATE;
+            }
         }
 
         return super.getAccess(highwayTag, transportationMode, _default);
@@ -57,14 +70,12 @@ public class AustriaSpatialRule extends DefaultSpatialRule {
     
     @Override
     public Toll getToll(String highwayTag, Toll _default) {
-        if ("motorway".equals(highwayTag)) {
-            return Toll.HGV;
-        }
-        return super.getToll(highwayTag, _default);
+        // https://en.wikipedia.org/wiki/Toll_roads_in_Europe#Finland
+        return Toll.NO;
     }
 
     @Override
     public String getId() {
-        return Country.AUT.toString();
+        return Country.FIN.toString();
     }
 }

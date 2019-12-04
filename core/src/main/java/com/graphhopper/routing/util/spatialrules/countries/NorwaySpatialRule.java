@@ -18,53 +18,38 @@
 package com.graphhopper.routing.util.spatialrules.countries;
 
 import com.graphhopper.routing.profiles.Country;
-import com.graphhopper.routing.profiles.RoadAccess;
-import com.graphhopper.routing.profiles.Toll;
 import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
 /**
- * Defines the default rules for Austria roads
+ * Defines the default rules for Norwegian roads
  *
- * @author Robin Boldt
+ * @author Thomas Butz
  */
-public class AustriaSpatialRule extends DefaultSpatialRule {
+public class NorwaySpatialRule extends DefaultSpatialRule {
 
     @Override
     public double getMaxSpeed(String highwayTag, double _default) {
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
         switch (highwayTag) {
+            case "motorway":
             case "trunk":
-                return 100;
+            case "primary":
+                return 80;
+            case "secondary":
+                return 70;
+            case "tertiary":
+            case "unclassified":
             case "residential":
                 return 50;
+            case "living_street":
+                return 5;
             default:
                 return super.getMaxSpeed(highwayTag, _default);
         }
     }
-
-    @Override
-    public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
-        if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
-            if (highwayTag.equals("living_street"))
-                return RoadAccess.DESTINATION;
-            if (highwayTag.equals("track"))
-                return RoadAccess.FORESTRY;
-        }
-
-        return super.getAccess(highwayTag, transportationMode, _default);
-    }
     
     @Override
-    public Toll getToll(String highwayTag, Toll _default) {
-        if ("motorway".equals(highwayTag)) {
-            return Toll.HGV;
-        }
-        return super.getToll(highwayTag, _default);
-    }
-
-    @Override
     public String getId() {
-        return Country.AUT.toString();
+        return Country.NOR.toString();
     }
 }

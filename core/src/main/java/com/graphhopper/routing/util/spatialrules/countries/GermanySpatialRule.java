@@ -19,6 +19,7 @@ package com.graphhopper.routing.util.spatialrules.countries;
 
 import com.graphhopper.routing.profiles.Country;
 import com.graphhopper.routing.profiles.RoadAccess;
+import com.graphhopper.routing.profiles.Toll;
 import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
@@ -57,6 +58,15 @@ public class GermanySpatialRule extends DefaultSpatialRule {
         }
 
         return super.getAccess(highwayTag, transportationMode, _default);
+    }
+    
+    @Override
+    public Toll getToll(String highwayTag, Toll _default) {
+        if ("motorway".equals(highwayTag) || "trunk".equals(highwayTag) || "primary".equals(highwayTag)) {
+            return Toll.HGV;
+        }
+
+        return super.getToll(highwayTag, _default);
     }
 
     @Override

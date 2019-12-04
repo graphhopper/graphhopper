@@ -18,53 +18,48 @@
 package com.graphhopper.routing.util.spatialrules.countries;
 
 import com.graphhopper.routing.profiles.Country;
-import com.graphhopper.routing.profiles.RoadAccess;
 import com.graphhopper.routing.profiles.Toll;
 import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
 /**
- * Defines the default rules for Austria roads
+ * Defines the default rules for the roads of the Czech Republic.
  *
- * @author Robin Boldt
+ * @author Thomas Butz
  */
-public class AustriaSpatialRule extends DefaultSpatialRule {
+public class CzechiaSpatialRule extends DefaultSpatialRule {
 
     @Override
     public double getMaxSpeed(String highwayTag, double _default) {
-        // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
+        // https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
         switch (highwayTag) {
-            case "trunk":
-                return 100;
-            case "residential":
-                return 50;
-            default:
-                return super.getMaxSpeed(highwayTag, _default);
+        case "motorway":
+            return 130;
+        case "trunk":
+            return 110;
+        case "primary":
+        case "secondary":
+        case "tertiary":
+        case "unclassified":
+        case "residential":
+            return 90;
+        case "living_street":
+            return 20;
+        default:
+            return super.getMaxSpeed(highwayTag, _default);
         }
-    }
-
-    @Override
-    public RoadAccess getAccess(String highwayTag, TransportationMode transportationMode, RoadAccess _default) {
-        if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
-            if (highwayTag.equals("living_street"))
-                return RoadAccess.DESTINATION;
-            if (highwayTag.equals("track"))
-                return RoadAccess.FORESTRY;
-        }
-
-        return super.getAccess(highwayTag, transportationMode, _default);
     }
     
     @Override
     public Toll getToll(String highwayTag, Toll _default) {
+        // http://www.motorway.cz/
         if ("motorway".equals(highwayTag)) {
-            return Toll.HGV;
+            return Toll.ALL;
         }
         return super.getToll(highwayTag, _default);
     }
-
+    
     @Override
     public String getId() {
-        return Country.AUT.toString();
+        return Country.CZE.toString();
     }
 }
