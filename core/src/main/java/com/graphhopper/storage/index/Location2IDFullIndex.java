@@ -19,6 +19,7 @@ package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
@@ -38,6 +39,9 @@ public class Location2IDFullIndex implements LocationIndex {
     private boolean closed = false;
 
     public Location2IDFullIndex(Graph g) {
+        if (g instanceof CHGraph)
+            throw new IllegalArgumentException("Use base graph for LocationIndex instead of CHGraph");
+
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
     }
