@@ -43,7 +43,7 @@ import static com.graphhopper.util.Helper.nf;
  * <p>
  * This class is mostly concerned with triggering the required local searches and introducing the necessary shortcuts
  * or calculating the node priority, while the actual searches for witness paths are delegated to
- * {@link WitnessPathSearcher}.
+ * {@link EdgeBasedWitnessPathSearcher}.
  *
  * @author easbar
  */
@@ -59,7 +59,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private final StopWatch dijkstraSW = new StopWatch();
     private final SearchStrategy activeStrategy = new AggressiveStrategy();
     private int[] hierarchyDepths;
-    private WitnessPathSearcher witnessPathSearcher;
+    private EdgeBasedWitnessPathSearcher witnessPathSearcher;
     private CHEdgeExplorer existingShortcutExplorer;
     private CHEdgeExplorer allEdgeExplorer;
     private EdgeExplorer sourceNodeOrigInEdgeExplorer;
@@ -97,7 +97,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public void initFromGraph() {
         super.initFromGraph();
-        witnessPathSearcher = new WitnessPathSearcher(prepareGraph, turnWeighting, pMap);
+        witnessPathSearcher = new EdgeBasedWitnessPathSearcher(prepareGraph, turnWeighting, pMap);
         DefaultEdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(encoder);
         DefaultEdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(encoder);
         DefaultEdgeFilter allEdgeFilter = DefaultEdgeFilter.allEdges(encoder);
