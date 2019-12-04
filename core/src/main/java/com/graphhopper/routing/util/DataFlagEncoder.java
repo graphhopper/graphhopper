@@ -204,15 +204,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public InstructionAnnotation getAnnotation(IntsRef flags, Translation tr) {
-        if (roadEnvironmentEnc.getEnum(false, flags) == RoadEnvironment.FORD) {
-            return new InstructionAnnotation(1, tr.tr("way_contains_ford"));
-        }
-
-        return super.getAnnotation(flags, tr);
-    }
-
-    @Override
     public int getVersion() {
         return 4;
     }

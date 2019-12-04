@@ -27,7 +27,6 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.Trip;
 import com.graphhopper.gtfs.fare.Fares;
 import com.graphhopper.routing.InstructionsFromEdges;
-import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
@@ -357,7 +356,7 @@ class TripFromLabel {
         } else {
             InstructionList instructions = new InstructionList(tr);
             InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(graph,
-                    weighting, weighting.getFlagEncoder().getBooleanEncodedValue(Roundabout.KEY), tr, instructions);
+                    weighting, weighting.getFlagEncoder(), tr, instructions);
             int prevEdgeId = -1;
             for (int i = 1; i < path.size(); i++) {
                 if (path.get(i).edge.edgeType != GtfsStorage.EdgeType.HIGHWAY) {

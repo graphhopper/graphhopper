@@ -320,10 +320,15 @@ public class EncodingManager implements EncodedValueLookup {
             }
 
             for (AbstractFlagEncoder encoder : flagEncoderList) {
-                if (encoder instanceof BikeCommonFlagEncoder && !em.hasEncodedValue(getKey("bike", RouteNetwork.EV_SUFFIX))) {
-                    _addRelationTagParser(new OSMBikeNetworkTagParser());
-                } else if (encoder instanceof FootFlagEncoder && !em.hasEncodedValue(getKey("foot", RouteNetwork.EV_SUFFIX))) {
-                    _addRelationTagParser(new OSMFootNetworkTagParser());
+                if (encoder instanceof BikeCommonFlagEncoder) {
+                    if (!em.hasEncodedValue(getKey("bike", RouteNetwork.EV_SUFFIX)))
+                        _addRelationTagParser(new OSMBikeNetworkTagParser());
+                    if (!em.encodedValueMap.containsKey(GetOffBike.KEY))
+                        _addEdgeTagParser(new OSMGetOffBikeParser(), false, false);
+
+                } else if (encoder instanceof FootFlagEncoder) {
+                    if (!em.hasEncodedValue(getKey("foot", RouteNetwork.EV_SUFFIX)))
+                        _addRelationTagParser(new OSMFootNetworkTagParser());
                 }
 
                 em.addEncoder(encoder);

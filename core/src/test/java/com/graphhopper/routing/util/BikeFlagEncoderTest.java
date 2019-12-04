@@ -283,44 +283,6 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     }
 
     @Test
-    public void testHandleWayTags() {
-        ReaderWay way = new ReaderWay(1);
-        String wayType;
-        way.setTag("highway", "track");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("small way, unpaved", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "path");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("get off the bike, unpaved", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "path");
-        way.setTag("surface", "grass");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("get off the bike, unpaved", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "path");
-        way.setTag("surface", "concrete");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("get off the bike", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "track");
-        way.setTag("foot", "yes");
-        way.setTag("surface", "paved");
-        way.setTag("tracktype", "grade1");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("", wayType);
-
-        way.setTag("tracktype", "grade2");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("get off the bike, unpaved", wayType);
-    }
-
-    @Test
     public void testWayAcceptance() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "cycleway");
@@ -478,50 +440,6 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
         assertPriority(PREFER.getValue(), osmWay, osmRel);
-
-        // A footway is not of waytype get off the bike in case that it is part of a cycle route
-        osmRel.clearTags();
-        osmWay.clearTags();
-        osmWay.setTag("highway", "footway");
-        osmWay.setTag("surface", "grass");
-
-        // First tests without a cycle route relation, this is a get off the bike
-        IntsRef relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
-        String wayType = getWayTypeFromFlags(osmWay, relFlags);
-        assertEquals("get off the bike, unpaved", wayType);
-
-        // now as part of a cycle route relation
-        osmRel.setTag("type", "route");
-        osmRel.setTag("route", "bicycle");
-        osmRel.setTag("network", "lcn");
-        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
-        wayType = getWayTypeFromFlags(osmWay, relFlags);
-        assertEquals("small way, unpaved", wayType);
-
-        // steps are still shown as get off the bike
-        osmWay.clearTags();
-        osmWay.setTag("highway", "steps");
-        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
-        wayType = getWayTypeFromFlags(osmWay, relFlags);
-        assertEquals("get off the bike", wayType);
-
-        // Test for highway=platform.
-        osmRel.clearTags();
-        osmWay.clearTags();
-        osmWay.setTag("highway", "platform");
-
-        // First tests without a cycle route relation, this is a get off the bike
-        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
-        wayType = getWayTypeFromFlags(osmWay, relFlags);
-        assertEquals("get off the bike", wayType);
-
-        // now as part of a cycle route relation
-        osmRel.setTag("type", "route");
-        osmRel.setTag("route", "bicycle");
-        osmRel.setTag("network", "lcn");
-        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
-        wayType = getWayTypeFromFlags(osmWay, relFlags);
-        assertEquals("", wayType);
     }
 
     @Test
