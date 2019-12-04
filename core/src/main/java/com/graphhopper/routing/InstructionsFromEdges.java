@@ -52,6 +52,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private final EnumEncodedValue<RouteNetwork> bikeRouteEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
+    private final EnumEncodedValue<RoadAccess> roadAccessEnc;
+    private final EnumEncodedValue<Toll> tollEnc;
 
     /*
      * We need three points to make directions
@@ -99,9 +101,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         String key = getKey("bike", RouteNetwork.EV_SUFFIX);
         this.bikeRouteEnc = evLookup.hasEncodedValue(key) ? evLookup.getEnumEncodedValue(key, RouteNetwork.class) : null;
         this.getOffBikeEnc = evLookup.hasEncodedValue(GetOffBike.KEY) ? evLookup.getBooleanEncodedValue(GetOffBike.KEY) : null;
+        this.tollEnc = evLookup.hasEncodedValue(Toll.KEY) ? evLookup.getEnumEncodedValue(Toll.KEY, Toll.class) : null;
 
         this.roadClassEnc = evLookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         this.roadEnvEnc = evLookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+        this.roadAccessEnc = evLookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         this.nodeAccess = graph.getNodeAccess();
         this.tr = tr;
         this.ways = ways;
@@ -126,7 +130,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         }
         return ways;
     }
-
 
     @Override
     public void next(EdgeIteratorState edge, int index, int prevEdgeId) {
@@ -157,19 +160,43 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         }
 
         String name = edge.getName();
-        InstructionAnnotation annotation = InstructionAnnotation.EMPTY;
+        String info = "";
+        int importance = 0;
         if (getOffBikeEnc != null) {
             // only for bikes do
             if (edge.get(roadClassEnc) == RoadClass.CYCLEWAY
                     || bikeRouteEnc != null && edge.get(bikeRouteEnc) != RouteNetwork.OTHER) {
                 // for backward compatibility
-                annotation = new InstructionAnnotation(0, tr.tr("cycleway"));
+                info = tr.tr("cycleway");
             } else if (edge.get(getOffBikeEnc)) {
-                annotation = new InstructionAnnotation(1, tr.tr("off_bike"));
+                importance = 1;
+                info = tr.tr("off_bike");
             }
-        } else if (edge.get(roadEnvEnc) == RoadEnvironment.FORD) {
-            annotation = new InstructionAnnotation(1, tr.tr("way_contains_ford"));
         }
+
+        RoadEnvironment re = edge.get(roadEnvEnc);
+        if (re == RoadEnvironment.FORD) {
+            importance = 2; // could be dangerous
+            info = tr.tr("way_contains_ford");
+        } else if (re == RoadEnvironment.FERRY) {
+            importance = 1;
+            info = tr.tr("way_contains_ferry");
+        }
+
+        RoadAccess ra = edge.get(roadAccessEnc);
+        if (ra == RoadAccess.PRIVATE) {
+            importance = 1; // if private access is allowed we need a warning
+            info = info.isEmpty() ? tr.tr("way_contains_private") : info + ", " + tr.tr("way_contains_private");
+        }
+
+        if (tollEnc != null && edge.get(tollEnc) != Toll.NO) {
+            importance = 1;
+            info = info.isEmpty() ? tr.tr("way_contains_toll") : info + ", " + tr.tr("way_contains_toll");
+        }
+
+        InstructionAnnotation annotation = info.isEmpty()
+                ? InstructionAnnotation.EMPTY
+                : new InstructionAnnotation(importance, info);
 
         if ((prevName == null) && (!isRoundabout)) // very first instruction (if not in Roundabout)
         {
