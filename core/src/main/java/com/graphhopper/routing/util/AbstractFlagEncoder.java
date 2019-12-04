@@ -18,7 +18,6 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ConditionalTagInspector;
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
@@ -217,11 +216,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
                 return encoderBit;
         }
 
-        // In case explicit flag ford=no, don't block
-        if (blockFords
-                && (node.hasTag("highway", "ford") || node.hasTag("ford"))
-                && !node.hasTag(restrictions, intendedValues)
-                && !node.hasTag("ford", "no")) {
+        if ((node.hasTag("highway", "ford") || node.hasTag("ford", "yes"))
+                && (blockFords && !node.hasTag(restrictions, intendedValues) || node.hasTag(restrictions, restrictedValues))) {
             return encoderBit;
         }
 

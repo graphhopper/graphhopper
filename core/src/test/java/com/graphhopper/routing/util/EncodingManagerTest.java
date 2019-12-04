@@ -218,16 +218,16 @@ public class EncodingManagerTest {
         String flagEncodersStr = "car,bike,foot";
         EncodingManager manager = EncodingManager.create(new DefaultFlagEncoderFactory(), flagEncodersStr);
 
-        assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
-        assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
-        assertTrue(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+        assertFalse(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
+        assertFalse(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
 
         // 2) two encoders crossing fords
-        flagEncodersStr = "car,bike|block_fords=false,foot|block_fords=false";
+        flagEncodersStr = "car,bike|block_fords=true,foot|block_fords=false";
         manager = EncodingManager.create(new DefaultFlagEncoderFactory(), flagEncodersStr);
 
-        assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
-        assertFalse(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
+        assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
         assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
 
         // 2) Try combined with another tag
@@ -235,7 +235,7 @@ public class EncodingManagerTest {
         manager = EncodingManager.create(new DefaultFlagEncoderFactory(), flagEncodersStr);
 
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
-        assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
         assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
     }
 

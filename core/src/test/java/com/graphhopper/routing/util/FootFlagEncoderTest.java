@@ -193,13 +193,6 @@ public class FootFlagEncoderTest {
         assertTrue(footEncoder.getAccess(way).isWay());
 
         way.clearTags();
-        way.setTag("highway", "track");
-        way.setTag("ford", "yes");
-        assertTrue(footEncoder.getAccess(way).canSkip());
-        way.setTag("foot", "yes");
-        assertTrue(footEncoder.getAccess(way).isWay());
-
-        way.clearTags();
         way.setTag("route", "ferry");
         assertTrue(footEncoder.getAccess(way).isFerry());
         way.setTag("foot", "no");
@@ -407,11 +400,12 @@ public class FootFlagEncoderTest {
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "yes");
-        assertTrue(footEncoder.handleNodeTags(node) > 0);
-
-        node.setTag("foot", "yes");
         // no barrier!
         assertTrue(footEncoder.handleNodeTags(node) == 0);
+
+        // barrier!
+        node.setTag("foot", "no");
+        assertTrue(footEncoder.handleNodeTags(node) > 0);
 
         // Now let's allow fords for foot
         footEncoder.setBlockFords(Boolean.FALSE);

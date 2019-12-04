@@ -52,7 +52,7 @@ public class CarFlagEncoderTest {
     private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
 
     CarFlagEncoder createEncoder() {
-        return new CarFlagEncoder(new PMap("speed_two_directions=true"));
+        return new CarFlagEncoder(new PMap("speed_two_directions=true|block_fords=true"));
     }
 
     @Test

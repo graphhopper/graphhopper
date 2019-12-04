@@ -41,7 +41,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
         this((int) properties.getLong("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
-        this.setBlockFords(properties.getBool("block_fords", true));
+        this.setBlockFords(properties.getBool("block_fords", false));
     }
 
     public RacingBikeFlagEncoder(String propertiesStr) {
