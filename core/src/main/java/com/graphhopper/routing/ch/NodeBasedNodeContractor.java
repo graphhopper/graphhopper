@@ -34,7 +34,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     private final AddShortcutHandler addScHandler = new AddShortcutHandler();
     private final CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
     private final Params params = new Params();
-    private PrepareCHEdgeExplorer remainingEdgeExplorer;
+    private PrepareCHEdgeExplorer allEdgeExplorer;
     private NodeBasedWitnessPathSearcher prepareAlgo;
     private int addedShortcutsCount;
     private long dijkstraCount;
@@ -57,7 +57,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public void initFromGraph() {
         super.initFromGraph();
-        remainingEdgeExplorer = prepareGraph.createAllEdgeExplorer();
+        allEdgeExplorer = prepareGraph.createAllEdgeExplorer();
         prepareAlgo = new NodeBasedWitnessPathSearcher(prepareGraph, maxLevel);
     }
 
@@ -84,6 +84,9 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
      */
     @Override
     public float calculatePriority(int node) {
+        if (prepareGraph.getLevel(node) != maxLevel) {
+            throw new IllegalArgumentException("Priority should only be calculated for not yet contracted nodes");
+        }
         CalcShortcutsResult calcShortcutsResult = calcShortcutCount(node);
 
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
@@ -100,10 +103,17 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         // number of already contracted neighbors of v
         int contractedNeighbors = 0;
         int degree = 0;
-        PrepareCHEdgeIterator iter = remainingEdgeExplorer.setBaseNode(node);
+        PrepareCHEdgeIterator iter = allEdgeExplorer.setBaseNode(node);
         while (iter.next()) {
-            degree++;
-            if (prepareGraph.getLevel(iter.getAdjNode()) < maxLevel) {
+            // only increase the degree for edges going to equal level nodes (the current node is at maxLevel)
+            // todo: for historic reasons increase degree also for all shortcuts, even though its wrong, see #1810
+            if (iter.isShortcut() || prepareGraph.getLevel(iter.getAdjNode()) == maxLevel) {
+                degree++;
+            }
+            // todo: just because there is a shortcut it does not mean the neighbor is contracted AND
+            //       just because an edge is not a shortcut does not mean the neighbor is not contracted
+            //       see #1810
+            if (iter.isShortcut()) {
                 contractedNeighbors++;
             }
         }
