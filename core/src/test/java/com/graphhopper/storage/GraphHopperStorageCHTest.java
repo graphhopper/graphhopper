@@ -147,7 +147,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         iter.next();
         assertEquals(3, iter.getAdjNode());
         assertEquals(1, GHUtility.count(chCarOutExplorer.setBaseNode(3)));
-        lg.disconnect(lg.createEdgeExplorer(), iter);
+        lg.disconnectEdge(iter.getEdge(), iter.getAdjNode(), -1);
         assertEquals(0, GHUtility.count(chCarOutExplorer.setBaseNode(3)));
         // no shortcuts visible
         assertEquals(0, GHUtility.count(baseCarOutExplorer.setBaseNode(3)));
@@ -156,13 +156,13 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertTrue(iter.next());
         assertEquals(0, iter.getAdjNode());
         assertEquals(1, GHUtility.count(tmpCarInExplorer.setBaseNode(0)));
-        lg.disconnect(lg.createEdgeExplorer(), iter);
+        lg.disconnectEdge(iter.getEdge(), iter.getAdjNode(), -1);
         assertEquals(0, GHUtility.count(tmpCarInExplorer.setBaseNode(0)));
 
         iter.next();
         assertEquals(2, iter.getAdjNode());
         assertEquals(1, GHUtility.count(chCarOutExplorer.setBaseNode(2)));
-        lg.disconnect(lg.createEdgeExplorer(), iter);
+        lg.disconnectEdge(iter.getEdge(), iter.getAdjNode(), -1);
         assertEquals(0, GHUtility.count(chCarOutExplorer.setBaseNode(2)));
 
         assertEquals(GHUtility.asSet(0, 2, 4), GHUtility.getNeighbors(chCarOutExplorer.setBaseNode(1)));

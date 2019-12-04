@@ -261,24 +261,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     }
 
     @Override
-    public void disconnect(CHEdgeExplorer explorer, EdgeIteratorState edgeState) {
-        // search edge with opposite direction but we need to know the previousEdge for the internalEdgeDisconnect so we cannot simply do:
-        // EdgeIteratorState tmpIter = getEdgeIteratorState(iter.getEdge(), iter.getBaseNode());
-        CHEdgeIterator tmpIter = explorer.setBaseNode(edgeState.getAdjNode());
-        int tmpPrevEdge = EdgeIterator.NO_EDGE;
-        while (tmpIter.next()) {
-            // note that we do not disconnect original edges, because we are re-using the base graph for different profiles,
-            // even though this is not optimal from a speed performance point of view.
-            if (tmpIter.isShortcut() && tmpIter.getEdge() == edgeState.getEdge()) {
-                // TODO this is ugly, move this somehow into the underlying iteration logic
-                long edgePointer = !EdgeIterator.Edge.isValid(tmpPrevEdge) ? -1
-                        : isShortcut(tmpPrevEdge) ? chEdgeAccess.toPointer(tmpPrevEdge) : baseGraph.edgeAccess.toPointer(tmpPrevEdge);
-                chEdgeAccess.internalEdgeDisconnect(edgeState.getEdge(), edgePointer, edgeState.getAdjNode());
-                break;
-            }
-
-            tmpPrevEdge = tmpIter.getEdge();
-        }
+    public void disconnectEdge(int edge, int adjNode, int prevEdge) {
+        // TODO this is ugly, move this somehow into the underlying iteration logic
+        long edgePointer = !EdgeIterator.Edge.isValid(prevEdge) ? -1
+                : isShortcut(prevEdge) ? chEdgeAccess.toPointer(prevEdge) : baseGraph.edgeAccess.toPointer(prevEdge);
+        chEdgeAccess.internalEdgeDisconnect(edge, edgePointer, adjNode);
     }
 
     @Override
@@ -770,13 +757,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         public final int getSkippedEdge2() {
             checkShortcut(true, "getSkippedEdge2");
             return shortcuts.getInt(edgeIterable.edgePointer + S_SKIP_EDGE2);
-        }
-
-        @Override
-        public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
-            checkShortcutAndEdgeBased("setFirstAndLastOrigEdges");
-            chEdgeAccess.setFirstAndLastOrigEdges(edgeIterable.edgePointer, firstOrigEdge, lastOrigEdge);
-            return this;
         }
 
         @Override

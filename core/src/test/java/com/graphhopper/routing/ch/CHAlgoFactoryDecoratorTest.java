@@ -23,8 +23,10 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortFastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RAMDirectory;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -60,7 +62,7 @@ public class CHAlgoFactoryDecoratorTest {
         profileEdge3 = CHProfile.edgeBased(new ShortFastestWeighting(encoder, 0.1), 30);
         ghStorage = new GraphHopperStorage(
                 Arrays.asList(profileNode1, profileNode2, profileNode3, profileEdge1, profileEdge2, profileEdge3),
-                dir, encodingManager, false);
+                dir, encodingManager, false, true);
     }
 
     @Test

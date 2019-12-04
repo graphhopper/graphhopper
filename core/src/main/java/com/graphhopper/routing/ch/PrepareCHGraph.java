@@ -26,6 +26,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 
 /**
  * Helper adapter api over {@link CHGraph} used for CH preparation.
@@ -122,5 +123,32 @@ public class PrepareCHGraph {
 
     public AllCHEdgesIterator getAllEdges() {
         return chGraph.getAllEdges();
+    }
+
+    boolean isReadyForContraction() {
+        return chGraph.isReadyForContraction();
+    }
+
+    /**
+     * Disconnects the edges (higher to lower node) via the specified edgeState pointing from lower to
+     * higher node.
+     * <p>
+     *
+     * @param edgeState the edge from lower to higher
+     */
+    public void disconnect(PrepareCHEdgeExplorer explorer, PrepareCHEdgeIterator edgeState) {
+        // search edge with opposite direction but we need to know the previousEdge so we cannot simply do:
+        PrepareCHEdgeIterator tmpIter = explorer.setBaseNode(edgeState.getAdjNode());
+        int prevEdge = EdgeIterator.NO_EDGE;
+        while (tmpIter.next()) {
+            // note that we do not disconnect original edges, because we are re-using the base graph for different profiles,
+            // even though this is not optimal from a speed performance point of view.
+            if (tmpIter.isShortcut() && tmpIter.getEdge() == edgeState.getEdge()) {
+                chGraph.disconnectEdge(edgeState.getEdge(), edgeState.getAdjNode(), prevEdge);
+                break;
+            }
+
+            prevEdge = tmpIter.getEdge();
+        }
     }
 }
