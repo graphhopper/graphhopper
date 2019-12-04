@@ -58,6 +58,9 @@ class Location2IDQuadtree implements LocationIndex {
     private int lonSize, latSize;
 
     public Location2IDQuadtree(Graph g, Directory dir) {
+        if (g instanceof CHGraph)
+            throw new IllegalArgumentException("Use base graph for LocationIndex instead of CHGraph");
+
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
         index = dir.find("loc2id_index");
