@@ -20,7 +20,6 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -70,10 +69,6 @@ public class PrepareCHGraph {
         return new PrepareCHEdgeIterator(chGraph.createEdgeExplorer(DefaultEdgeFilter.allEdges(encoder)), weighting);
     }
 
-    public PrepareCHEdgeExplorer createEdgeExplorer(EdgeFilter edgeFilter) {
-        return new PrepareCHEdgeIterator(chGraph.createEdgeExplorer(edgeFilter), weighting);
-    }
-
     public EdgeExplorer createOriginalInEdgeExplorer() {
         return chGraph.createOriginalEdgeExplorer(DefaultEdgeFilter.inEdges(encoder));
     }
@@ -102,10 +97,6 @@ public class PrepareCHGraph {
         chGraph.setLevel(node, level);
     }
 
-    public NodeAccess getNodeAccess() {
-        return chGraph.getNodeAccess();
-    }
-
     public int shortcut(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2) {
         return chGraph.shortcut(a, b, accessFlags, weight, skippedEdge1, skippedEdge2);
     }
@@ -118,11 +109,11 @@ public class PrepareCHGraph {
         return chGraph.getOtherNode(edge, adjNode);
     }
 
-    public FlagEncoder getFlagEncoder() {
-        return encoder;
+    public NodeAccess getNodeAccess() {
+        return chGraph.getNodeAccess();
     }
 
-    public double getTurnWeight(int inEdge, int viaNode, int outEdge) {
+    double getTurnWeight(int inEdge, int viaNode, int outEdge) {
         if (turnWeighting == null) {
             throw new IllegalStateException("Calculating turn weights is only allowed when using edge-based traversal mode");
         }
