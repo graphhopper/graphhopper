@@ -106,7 +106,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         ferries.add("ferry");
     }
 
-    public void init(DateRangeParser dateRangeParser) {
+    protected void init(DateRangeParser dateRangeParser) {
         if (conditionalTagInspector != null)
             throw new IllegalStateException("You must not register a FlagEncoder (" + toString() + ") twice or for two EncodingManagers!");
 
