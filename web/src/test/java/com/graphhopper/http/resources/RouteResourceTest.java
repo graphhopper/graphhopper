@@ -31,6 +31,7 @@ import com.graphhopper.routing.profiles.Surface;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
@@ -115,20 +116,6 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testQueryWithDirections() {
-        // Note, in general specifying directions does not work with CH, but this is an example where it works
-        final Response response = app.client().target("http://localhost:8080/route?" + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240&ch.force_heading=true").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
-        JsonNode infoJson = json.get("info");
-        assertFalse(infoJson.has("errors"));
-        JsonNode path = json.get("paths").get(0);
-        double distance = path.get("distance").asDouble();
-        assertTrue("distance wasn't correct:" + distance, distance > 960);
-        assertTrue("distance wasn't correct:" + distance, distance < 970);
-    }
-
-    @Test
     public void testQueryWithoutInstructions() {
         final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&instructions=false").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
@@ -142,17 +129,25 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testQueryWithStraightVia() {
-        // Note, in general specifying pass_through does not work with CH, but this is an example where it works
-        final Response response = app.client().target("http://localhost:8080/route?point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
+    public void testCHWithHeading_error() {
+        // There are special cases where heading works with node-based CH, but generally it leads to wrong results -> we expect an error
+        final Response response = app.client().target("http://localhost:8080/route?" + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
-        JsonNode infoJson = json.get("info");
-        assertFalse(infoJson.has("errors"));
-        JsonNode path = json.get("paths").get(0);
-        double distance = path.get("distance").asDouble();
-        assertTrue("distance wasn't correct:" + distance, distance > 320);
-        assertTrue("distance wasn't correct:" + distance, distance < 325);
+        assertTrue("There should have been an error response", json.has("message"));
+        String expected = "The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483";
+        assertTrue("There should be an error containing " + expected + ", but got: " + json.get("message"), json.get("message").asText().contains(expected));
+    }
+
+    @Test
+    public void testCHWithPassThrough_error() {
+        // There are special cases where pass_through works with node-based CH, but generally it leads to wrong results -> we expect an error
+        final Response response = app.client().target("http://localhost:8080/route?point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertTrue("There should have been an error response", json.has("message"));
+        String expected = "The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765";
+        assertTrue("There should be an error containing " + expected + ", but got: " + json.get("message"), json.get("message").asText().contains(expected));
     }
 
     @Test

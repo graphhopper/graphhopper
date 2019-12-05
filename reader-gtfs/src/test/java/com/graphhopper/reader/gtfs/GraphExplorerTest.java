@@ -107,7 +107,7 @@ public class GraphExplorerTest {
         d.set(pt.getAccessEnc(), true);
         d.set(foot.getAccessEnc(), true);
 
-        int edgeId = graph.getAllEdges().length();
+        int edgeId = graph.getEdges();
 
         GtfsStorage gtfsStorage = mock(GtfsStorage.class);
         RealtimeFeed realtimeFeed = mock(RealtimeFeed.class);
@@ -158,7 +158,7 @@ public class GraphExplorerTest {
         graph.getNodeAccess().setNode(5, 5.0, 5.0);
 
 
-        int edgeId = graph.getAllEdges().length();
+        int edgeId = graph.getEdges();
 
         GtfsStorage gtfsStorage = mock(GtfsStorage.class);
         RealtimeFeed realtimeFeed = mock(RealtimeFeed.class);

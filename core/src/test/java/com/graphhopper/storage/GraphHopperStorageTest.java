@@ -218,7 +218,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     public void testIdentical() {
         GraphHopperStorage store = new GraphHopperStorage(new RAMDirectory(), encodingManager, true);
         assertEquals(store.getNodes(), store.getBaseGraph().getNodes());
-        assertEquals(store.getAllEdges().length(), store.getBaseGraph().getAllEdges().length());
+        assertEquals(store.getEdges(), store.getBaseGraph().getEdges());
     }
 
     @Test

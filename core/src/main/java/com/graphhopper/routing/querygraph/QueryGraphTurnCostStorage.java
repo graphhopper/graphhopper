@@ -26,13 +26,13 @@ import com.graphhopper.storage.TurnCostStorage;
 /**
  * special {@link TurnCostStorage} that handles virtual nodes and edges
  */
-class QueryGraphTurnExt extends TurnCostStorage {
+class QueryGraphTurnCostStorage extends TurnCostStorage {
     private final TurnCostStorage mainTurnCostStorage;
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
     private final IntArrayList closestEdges;
 
-    QueryGraphTurnExt(Graph mainGraph, IntArrayList closestEdges) {
+    QueryGraphTurnCostStorage(Graph mainGraph, IntArrayList closestEdges) {
         super(mainGraph.getTurnCostStorage());
         this.mainTurnCostStorage = mainGraph.getTurnCostStorage();
         this.firstVirtualNodeId = mainGraph.getNodes();
