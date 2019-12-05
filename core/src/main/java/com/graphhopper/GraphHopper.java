@@ -1052,10 +1052,12 @@ public class GraphHopper implements GraphHopperAPI {
                 QueryGraph queryGraph;
 
                 if (chFactoryDecorator.isEnabled() && !disableCH) {
-                    boolean forceCHHeading = hints.getBool(CH.FORCE_HEADING, false);
-                    if (!forceCHHeading && request.hasFavoredHeading(0))
-                        throw new IllegalArgumentException("Heading is not (fully) supported for CHGraph. See issue #483");
+                    if (request.hasFavoredHeading(0))
+                        throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
 
+                    if (request.getHints().getBool(Routing.PASS_THROUGH, false)) {
+                        throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
+                    }
                     // if LM is enabled we have the LMFactory with the CH algo!
                     RoutingAlgorithmFactory chAlgoFactory = tmpAlgoFactory;
                     if (tmpAlgoFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)

@@ -5,6 +5,7 @@
     added new `curbside` feature, #1697
     moved QueryGraph to new routing.querygraph package
     removed GraphExtension, #1783, renamed TurnCostExtension to TurnCostStorage
+    removed `heading`, `pass_through` and `ch.force_heading` parameters for speed mode/CH, #1763
 
 0.13
     removed docker compose file
