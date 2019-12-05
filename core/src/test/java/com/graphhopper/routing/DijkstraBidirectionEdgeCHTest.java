@@ -56,7 +56,7 @@ public class DijkstraBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTeste
         if (chGraph.getEdges() == chGraph.getBaseGraph().getEdges()) {
             ch.doWork();
         }
-        return ch;
+        return ch.getRoutingAlgorithmFactory();
     }
 
 }

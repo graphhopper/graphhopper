@@ -65,7 +65,7 @@ public class AStarBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTester {
         if (chGraph.getEdges() == chGraph.getBaseGraph().getEdges()) {
             ch.doWork();
         }
-        return ch;
+        return ch.getRoutingAlgorithmFactory();
     }
 
 }
