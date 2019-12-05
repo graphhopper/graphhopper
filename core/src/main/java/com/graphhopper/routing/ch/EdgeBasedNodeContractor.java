@@ -180,8 +180,6 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
             numPrevEdges++;
             if (!outIter.isShortcut()) {
                 numPrevOrigEdges++;
-            } else {
-                numPrevOrigEdges += getOrigEdgeCount(outIter.getEdge());
             }
         }
 
@@ -192,8 +190,15 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
             numPrevEdges++;
             if (!inIter.isShortcut()) {
                 numPrevOrigEdges++;
-            } else {
-                numPrevOrigEdges += getOrigEdgeCount(inIter.getEdge());
+            }
+        }
+
+        PrepareCHEdgeIterator allIter = allEdgeExplorer.setBaseNode(node);
+        while (allIter.next()) {
+            if (isContracted(allIter.getAdjNode()))
+                continue;
+            if (allIter.isShortcut()) {
+                numPrevOrigEdges += getOrigEdgeCount(allIter.getEdge());
             }
         }
     }
