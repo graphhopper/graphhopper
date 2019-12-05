@@ -58,14 +58,6 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
         return iter().getAdjNode();
     }
 
-    public boolean isForward() {
-        return iter().get(accessEnc);
-    }
-
-    public boolean isBackward() {
-        return iter().getReverse(accessEnc);
-    }
-
     public int getOrigEdgeFirst() {
         return iter().getOrigEdgeFirst();
     }

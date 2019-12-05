@@ -173,25 +173,27 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private void countPreviousEdges(int node) {
-        PrepareCHEdgeIterator iter = allEdgeExplorer.setBaseNode(node);
-        while (iter.next()) {
-            if (isContracted(iter.getAdjNode()))
+        PrepareCHEdgeIterator outIter = outEdgeExplorer.setBaseNode(node);
+        while (outIter.next()) {
+            if (isContracted(outIter.getAdjNode()))
                 continue;
-            if (iter.isForward()) {
-                numPrevEdges++;
-            }
-            if (iter.isBackward()) {
-                numPrevEdges++;
-            }
-            if (!iter.isShortcut()) {
-                if (iter.isForward()) {
-                    numPrevOrigEdges++;
-                }
-                if (iter.isBackward()) {
-                    numPrevOrigEdges++;
-                }
+            numPrevEdges++;
+            if (!outIter.isShortcut()) {
+                numPrevOrigEdges++;
             } else {
-                numPrevOrigEdges += getOrigEdgeCount(iter.getEdge());
+                numPrevOrigEdges += getOrigEdgeCount(outIter.getEdge());
+            }
+        }
+
+        PrepareCHEdgeIterator inIter = inEdgeExplorer.setBaseNode(node);
+        while (inIter.next()) {
+            if (isContracted(inIter.getAdjNode()))
+                continue;
+            numPrevEdges++;
+            if (!inIter.isShortcut()) {
+                numPrevOrigEdges++;
+            } else {
+                numPrevOrigEdges += getOrigEdgeCount(inIter.getEdge());
             }
         }
     }
