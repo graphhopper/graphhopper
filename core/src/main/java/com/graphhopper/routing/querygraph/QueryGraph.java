@@ -83,7 +83,7 @@ public class QueryGraph implements Graph {
         nodeAccess = new ExtendedNodeAccess(graph.getNodeAccess(), graphModification.getVirtualNodes(), mainNodes);
 
         if (mainGraph.getTurnCostStorage() != null)
-            turnCostStorage = new QueryGraphTurnExt(mainGraph, graphModification.getClosestEdges());
+            turnCostStorage = new QueryGraphTurnCostStorage(mainGraph, graphModification.getClosestEdges());
         else
             turnCostStorage = null;
 
