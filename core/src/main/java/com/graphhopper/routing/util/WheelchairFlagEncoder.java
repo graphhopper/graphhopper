@@ -102,7 +102,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         maxPossibleSpeed = FERRY_SPEED;
         speedDefault = MEAN_SPEED;
         speedTwoDirections = true;
-        init();
     }
 
     @Override

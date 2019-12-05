@@ -124,8 +124,6 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
 
         setAvoidSpeedLimit(81);
         setSpecificClassBicycle("roadcycling");
-
-        init();
     }
 
     @Override

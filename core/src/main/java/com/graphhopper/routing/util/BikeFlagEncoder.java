@@ -66,8 +66,6 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
 
         absoluteBarriers.add("kissing_gate");
         setSpecificClassBicycle("touring");
-
-        init();
     }
 
     @Override

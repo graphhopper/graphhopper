@@ -77,7 +77,7 @@ public class EncodingManagerTest {
             EncodingManager.create(foot, foot);
             fail("There should have been an exception");
         } catch (Exception ex) {
-            assertEquals("You must not register a FlagEncoder (foot) twice!", ex.getMessage());
+            assertEquals("You must not register a FlagEncoder (foot) twice or for two EncodingManagers!", ex.getMessage());
         }
     }
 
