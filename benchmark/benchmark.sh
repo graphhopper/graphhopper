@@ -34,6 +34,7 @@ mkdir -p ${SINGLE_RESULTS_DIR}
 # 1 - small map: node- and edge-based CH + slow routing
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
 datareader.file=${SMALL_OSM_MAP} \
+datareader.date_range_parser_day=2019-11-01
 measurement.folder=${SINGLE_RESULTS_DIR} \
 measurement.clean=true \
 measurement.summaryfile=${RESULTS_DIR}summary_small.dat \
@@ -52,6 +53,7 @@ measurement.count=5000
 # 2 - big map: node-based CH + landmarks
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
+datareader.date_range_parser_day=2019-11-01
 measurement.folder=${SINGLE_RESULTS_DIR} \
 measurement.clean=true \
 measurement.summaryfile=${RESULTS_DIR}summary_big.dat \
