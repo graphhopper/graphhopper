@@ -15,44 +15,49 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
+package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
-import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
 
 import java.util.Arrays;
 
 /**
- * A simple dijkstra tuned to perform multiple one to many queries with the same source and different target nodes
- * more efficiently than {@link Dijkstra}. Old data structures are cached between requests and potentially reused and
- * the shortest path tree is stored in (large as the graph) arrays instead of hash maps.
- * <p>
- *
- * @author Peter Karich
+ * Used to find witness paths during node-based CH preparation. Essentially this is like {@link DijkstraOneToMany},
+ * i.e. its a Dijkstra search that allows re-using the shortest path tree for different searches with the same origin
+ * node and uses large int/double arrays instead of hash maps to store the shortest path tree (higher memory consumption,
+ * but faster query times -> better for CH preparation). Main reason we use this instead of {@link DijkstraOneToMany}
+ * is that we can use this implementation with a {@link PrepareCHGraph}.
  */
-public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
+public class NodeBasedWitnessPathSearcher {
     private static final int EMPTY_PARENT = -1;
     private static final int NOT_FOUND = -1;
-    private final IntArrayListWithCap changedNodes;
+    private final PrepareCHGraph graph;
+    private final PrepareCHEdgeExplorer outEdgeExplorer;
+    private final IntArrayList changedNodes;
+    private final int maxLevel;
+    private int maxVisitedNodes = Integer.MAX_VALUE;
     protected double[] weights;
     private int[] parents;
     private int[] edgeIds;
     private IntDoubleBinaryHeap heap;
+    private int ignoreNode = -1;
     private int visitedNodes;
     private boolean doClear = true;
-    private int endNode;
-    private int currNode, fromNode, to;
+    private int currNode, to;
     private double weightLimit = Double.MAX_VALUE;
 
-    public DijkstraOneToMany(Graph graph, Weighting weighting, TraversalMode tMode) {
-        super(graph, weighting, tMode);
+    public NodeBasedWitnessPathSearcher(PrepareCHGraph graph) {
+        this(graph, graph.getNodes());
+    }
+
+    public NodeBasedWitnessPathSearcher(PrepareCHGraph graph, int maxLevel) {
+        this.graph = graph;
+        this.maxLevel = maxLevel;
+        outEdgeExplorer = graph.createOutEdgeExplorer();
 
         parents = new int[graph.getNodes()];
         Arrays.fill(parents, EMPTY_PARENT);
@@ -61,54 +66,16 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
 
         weights = new double[graph.getNodes()];
-
         Arrays.fill(weights, Double.MAX_VALUE);
 
         heap = new IntDoubleBinaryHeap(1000);
-        changedNodes = new IntArrayListWithCap();
-    }
-
-    @Override
-    public Path calcPath(int from, int to) {
-        fromNode = from;
-        endNode = findEndNode(from, to);
-        return extractPath();
-    }
-
-    @Override
-    public Path extractPath() {
-        if (endNode < 0 || isWeightLimitExceeded()) {
-            Path path = createEmptyPath();
-            path.setFromNode(fromNode);
-            path.setEndNode(endNode);
-            return path;
-        }
-
-        Path path = new Path(graph);
-        int node = endNode;
-        while (true) {
-            int edge = edgeIds[node];
-            if (!EdgeIterator.Edge.isValid(edge)) {
-                break;
-            }
-            EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, node);
-            path.addDistance(edgeState.getDistance());
-            path.addTime(weighting.calcMillis(edgeState, false, EdgeIterator.NO_EDGE));
-            path.addEdge(edge);
-            node = parents[node];
-        }
-        path.reverseEdges();
-        path.setFromNode(fromNode);
-        path.setEndNode(endNode);
-        path.setFound(true);
-        path.setWeight(weights[endNode]);
-        return path;
+        changedNodes = new IntArrayList();
     }
 
     /**
      * Call clear if you have a different start node and need to clear the cache.
      */
-    public DijkstraOneToMany clear() {
+    public NodeBasedWitnessPathSearcher clear() {
         doClear = true;
         return this;
     }
@@ -138,10 +105,8 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             changedNodes.elementsCount = 0;
 
             currNode = from;
-            if (!traversalMode.isEdgeBased()) {
-                weights[currNode] = 0;
-                changedNodes.add(currNode);
-            }
+            weights[currNode] = 0;
+            changedNodes.add(currNode);
         } else {
             // Cached! Re-use existing data structures
             int parentNode = parents[to];
@@ -166,14 +131,14 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
         while (true) {
             visitedNodes++;
-            EdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
+            PrepareCHEdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
             while (iter.next()) {
                 int adjNode = iter.getAdjNode();
                 int prevEdgeId = edgeIds[adjNode];
                 if (!accept(iter, prevEdgeId))
                     continue;
 
-                double tmpWeight = weighting.calcWeight(iter, false, prevEdgeId) + weights[currNode];
+                double tmpWeight = iter.getWeight(false) + weights[currNode];
                 if (Double.isInfinite(tmpWeight))
                     continue;
 
@@ -184,7 +149,6 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
                     heap.insert_(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
                     edgeIds[adjNode] = iter.getEdge();
-
                 } else if (w > tmpWeight) {
                     parents[adjNode] = currNode;
                     weights[adjNode] = tmpWeight;
@@ -206,7 +170,6 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         }
     }
 
-    @Override
     public boolean finished() {
         return currNode == to;
     }
@@ -226,14 +189,8 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         heap = null;
     }
 
-    @Override
     public int getVisitedNodes() {
         return visitedNodes;
-    }
-
-    @Override
-    public String getName() {
-        return Parameters.Algorithms.DIJKSTRA_ONE_TO_MANY;
     }
 
     /**
@@ -242,17 +199,31 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     public String getMemoryUsageAsString() {
         long len = weights.length;
         return ((8L + 4L + 4L) * len
-                + changedNodes.getCapacity() * 4L
+                + changedNodes.buffer.length * 4L
                 + heap.getCapacity() * (4L + 4L)) / Helper.MB
                 + "MB";
     }
 
-    private static class IntArrayListWithCap extends IntArrayList {
-        public IntArrayListWithCap() {
+    public void setMaxVisitedNodes(int numberOfNodes) {
+        this.maxVisitedNodes = numberOfNodes;
+    }
+
+    public void ignoreNode(int node) {
+        ignoreNode = node;
+    }
+
+    private boolean accept(PrepareCHEdgeIterator iter, int prevOrNextEdgeId) {
+        if (iter.getEdge() == prevOrNextEdgeId)
+            return false;
+
+        if (graph.getLevel(iter.getAdjNode()) != maxLevel) {
+            return false;
         }
 
-        public int getCapacity() {
-            return buffer.length;
-        }
+        return ignoreNode < 0 || iter.getAdjNode() != ignoreNode;
+    }
+
+    private boolean isMaxVisitedNodesExceeded() {
+        return maxVisitedNodes < getVisitedNodes();
     }
 }

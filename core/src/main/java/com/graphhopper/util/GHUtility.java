@@ -24,7 +24,6 @@ import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
@@ -813,11 +812,6 @@ public class GHUtility {
 
         @Override
         public CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

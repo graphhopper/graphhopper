@@ -15,30 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
 
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.util.EdgeIteratorState;
+package com.graphhopper.routing.ch;
 
-public class IgnoreNodeFilter implements EdgeFilter {
-    private int avoidNode;
-    private CHGraph graph;
-    private int maxLevel;
-
-    public IgnoreNodeFilter(CHGraph chGraph, int maxLevel) {
-        this.graph = chGraph;
-        this.maxLevel = maxLevel;
-    }
-
-    public IgnoreNodeFilter setAvoidNode(int node) {
-        this.avoidNode = node;
-        return this;
-    }
-
-    @Override
-    public final boolean accept(EdgeIteratorState iter) {
-        // ignore if it is skipNode or adjNode is already contracted
-        int node = iter.getAdjNode();
-        return avoidNode != node && graph.getLevel(node) == maxLevel;
-    }
+public interface PrepareCHEdgeExplorer {
+    PrepareCHEdgeIterator setBaseNode(int node);
 }

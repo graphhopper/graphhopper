@@ -21,10 +21,10 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -66,9 +66,8 @@ public class EdgeBasedWitnessPathSearcher {
     private static final double MAX_ZERO_WEIGHT_LOOP = 1.e-3;
 
     // graph variables
-    private final CHGraph chGraph;
-    private final TurnWeighting turnWeighting;
-    private final EdgeExplorer outEdgeExplorer;
+    private final PrepareCHGraph chGraph;
+    private final PrepareCHEdgeExplorer outEdgeExplorer;
     private final EdgeExplorer origInEdgeExplorer;
     private final int maxLevel;
 
@@ -107,15 +106,12 @@ public class EdgeBasedWitnessPathSearcher {
     private final Stats currentBatchStats = new Stats();
     private final Stats totalStats = new Stats();
 
-    public EdgeBasedWitnessPathSearcher(CHGraph chGraph, TurnWeighting turnWeighting, PMap pMap) {
+    public EdgeBasedWitnessPathSearcher(PrepareCHGraph chGraph, PMap pMap) {
         this.chGraph = chGraph;
-        this.turnWeighting = turnWeighting;
         extractParams(pMap);
 
-        DefaultEdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(turnWeighting.getFlagEncoder());
-        DefaultEdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(turnWeighting.getFlagEncoder());
-        outEdgeExplorer = chGraph.createEdgeExplorer(outEdgeFilter);
-        origInEdgeExplorer = chGraph.createOriginalEdgeExplorer(inEdgeFilter);
+        outEdgeExplorer = chGraph.createOutEdgeExplorer();
+        origInEdgeExplorer = chGraph.createOriginalInEdgeExplorer();
         maxLevel = chGraph.getNodes();
 
         maxSettledEdges = params.minimumMaxSettledEdges;
@@ -224,12 +220,12 @@ public class EdgeBasedWitnessPathSearcher {
             }
 
             final int fromNode = adjNodes[currKey];
-            EdgeIterator iter = outEdgeExplorer.setBaseNode(fromNode);
+            PrepareCHEdgeIterator iter = outEdgeExplorer.setBaseNode(fromNode);
             while (iter.next()) {
                 if (isContracted(iter.getAdjNode())) {
                     continue;
                 }
-                double edgeWeight = turnWeighting.calcWeight(iter, false, incEdges[currKey]);
+                double edgeWeight = iter.getWeight(false) + calcTurnWeight(incEdges[currKey], iter.getBaseNode(), iter.getOrigEdgeFirst());
                 double weight = edgeWeight + weights[currKey];
                 if (isInfinite(weight)) {
                     continue;
@@ -326,7 +322,7 @@ public class EdgeBasedWitnessPathSearcher {
     }
 
     private void setInitialEntries(int sourceNode, int sourceEdge, int centerNode) {
-        EdgeIterator outIter = outEdgeExplorer.setBaseNode(sourceNode);
+        PrepareCHEdgeIterator outIter = outEdgeExplorer.setBaseNode(sourceNode);
         while (outIter.next()) {
             if (isContracted(outIter.getAdjNode())) {
                 continue;
@@ -335,7 +331,7 @@ public class EdgeBasedWitnessPathSearcher {
             if (isInfinite(turnWeight)) {
                 continue;
             }
-            double edgeWeight = turnWeighting.calcWeight(outIter, false, NO_EDGE);
+            double edgeWeight = outIter.getWeight(false);
             double weight = turnWeight + edgeWeight;
             boolean isPathToCenter = outIter.getAdjNode() == centerNode;
             int incEdge = outIter.getOrigEdgeLast();
@@ -428,7 +424,7 @@ public class EdgeBasedWitnessPathSearcher {
         }
     }
 
-    private void setEntry(int key, EdgeIteratorState edge, double weight, int parent, boolean isPathToCenter) {
+    private void setEntry(int key, PrepareCHEdgeIterator edge, double weight, int parent, boolean isPathToCenter) {
         edges[key] = edge.getEdge();
         incEdges[key] = edge.getOrigEdgeLast();
         adjNodes[key] = edge.getAdjNode();
@@ -440,7 +436,7 @@ public class EdgeBasedWitnessPathSearcher {
         }
     }
 
-    private void updateEntry(int key, EdgeIteratorState edge, double weight, int currKey, boolean isPathToCenter) {
+    private void updateEntry(int key, PrepareCHEdgeIterator edge, double weight, int currKey, boolean isPathToCenter) {
         edges[key] = edge.getEdge();
         weights[key] = weight;
         parents[key] = currKey;
@@ -475,7 +471,7 @@ public class EdgeBasedWitnessPathSearcher {
     }
 
     private double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-        return turnWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
+        return chGraph.getTurnWeight(inEdge, viaNode, outEdge);
     }
 
     private boolean isContracted(int node) {

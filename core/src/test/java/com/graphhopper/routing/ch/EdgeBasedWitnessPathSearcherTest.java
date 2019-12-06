@@ -37,17 +37,17 @@ public class EdgeBasedWitnessPathSearcherTest {
 
     private GraphHopperStorage graph;
     private CHGraph chGraph;
+    private Weighting weighting;
     private TurnWeighting chTurnWeighting;
 
     @Before
     public void setup() {
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
         EncodingManager encodingManager = EncodingManager.create(encoder);
-        Weighting weighting = new ShortestWeighting(encoder);
-        PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
+        weighting = new ShortestWeighting(encoder);
         graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
         TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
-        chTurnWeighting = new TurnWeighting(preparationWeighting, turnCostStorage);
+        chTurnWeighting = new TurnWeighting(weighting, turnCostStorage);
         chGraph = graph.getCHGraph();
     }
 
@@ -126,7 +126,8 @@ public class EdgeBasedWitnessPathSearcherTest {
     }
 
     private EdgeBasedWitnessPathSearcher createFinder() {
-        return new EdgeBasedWitnessPathSearcher(chGraph, chTurnWeighting, new PMap());
+        PrepareCHGraph prepareGraph = PrepareCHGraph.edgeBased(chGraph, weighting, chTurnWeighting);
+        return new EdgeBasedWitnessPathSearcher(prepareGraph, new PMap());
     }
 
     private void setMaxLevelOnAllNodes() {
