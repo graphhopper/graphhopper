@@ -142,8 +142,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         badSurfaceSpeed = 30;
         maxPossibleSpeed = 140;
         speedDefault = defaultSpeedMap.get("secondary");
-
-        init();
     }
 
     @Override

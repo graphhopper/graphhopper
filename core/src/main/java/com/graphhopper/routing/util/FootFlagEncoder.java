@@ -141,7 +141,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
         maxPossibleSpeed = FERRY_SPEED;
         speedDefault = MEAN_SPEED;
-        init();
     }
 
     @Override

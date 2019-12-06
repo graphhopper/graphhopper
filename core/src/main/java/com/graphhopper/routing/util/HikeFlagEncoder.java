@@ -59,8 +59,6 @@ public class HikeFlagEncoder extends FootFlagEncoder {
         allowedSacScale.add("alpine_hiking");
         allowedSacScale.add("demanding_alpine_hiking");
         allowedSacScale.add("difficult_alpine_hiking");
-
-        init();
     }
 
     @Override

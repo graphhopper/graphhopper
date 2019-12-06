@@ -803,7 +803,7 @@ public class GraphHopperIT {
     public void testKremsCyclewayInstructionsWithWayTypeInfo() {
         String tmpOsmFile = DIR + "/krems.osm.gz";
         String tmpVehicle = "bike";
-        String tmpImportVehicles = "car,bike";
+        String tmpImportVehicles = "foot,bike";
         String tmpWeightCalcStr = "fastest";
 
         GraphHopper tmpHopper = new GraphHopperOSM().
@@ -816,14 +816,14 @@ public class GraphHopperIT {
 
         Translation tr = tmpHopper.getTranslationMap().getWithFallBack(Locale.US);
         GHResponse rsp = tmpHopper.route(new GHRequest(48.410987, 15.599492, 48.383419, 15.659294).
-                setAlgorithm(ASTAR).setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
-
+                setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
+        assertFalse(rsp.hasErrors());
         PathWrapper arsp = rsp.getBest();
         assertEquals(6932.2, arsp.getDistance(), .1);
-        assertEquals(105, arsp.getPoints().getSize());
+        assertEquals(106, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(21, il.size());
+        assertEquals(22, il.size());
 
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
         assertEquals("get off the bike", il.get(0).getAnnotation().getMessage());
@@ -840,8 +840,16 @@ public class GraphHopperIT {
         assertEquals("keep left onto Austraße", il.get(11).getTurnDescription(tr));
         assertEquals("keep left onto Rechte Kremszeile", il.get(12).getTurnDescription(tr));
         //..
-        assertEquals("turn right onto Treppelweg", il.get(17).getTurnDescription(tr));
-        assertEquals("cycleway", il.get(17).getAnnotation().getMessage());
+        assertEquals("turn right onto Treppelweg", il.get(18).getTurnDescription(tr));
+        assertEquals("cycleway", il.get(18).getAnnotation().getMessage());
+
+        // do not return 'get off bike' for foot
+        rsp = tmpHopper.route(new GHRequest(48.410987, 15.599492, 48.411172, 15.600371).
+                setAlgorithm(ASTAR).setVehicle("foot").setWeighting(tmpWeightCalcStr));
+        assertFalse(rsp.hasErrors());
+        il = rsp.getBest().getInstructions();
+        assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
+        assertEquals("", il.get(0).getAnnotation().getMessage());
     }
 
     @Test

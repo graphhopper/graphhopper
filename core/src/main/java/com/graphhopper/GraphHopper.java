@@ -20,6 +20,7 @@ package com.graphhopper;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -524,6 +525,7 @@ public class GraphHopper implements GraphHopperAPI {
                 emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
             emBuilder.setEnableInstructions(args.getBool("datareader.instructions", true));
             emBuilder.setPreferredLanguage(args.get("datareader.preferred_language", ""));
+            emBuilder.setDateRangeParser(DateRangeParser.createInstance(args.get("datareader.date_range_parser_day", "")));
             // overwrite EncodingManager object from configuration file
             setEncodingManager(emBuilder.build());
         }
