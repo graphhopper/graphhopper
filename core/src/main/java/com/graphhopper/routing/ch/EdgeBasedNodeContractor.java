@@ -173,25 +173,36 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private void countPreviousEdges(int node) {
-        PrepareCHEdgeIterator iter = allEdgeExplorer.setBaseNode(node);
-        while (iter.next()) {
-            if (isContracted(iter.getAdjNode()))
+        // todo: this edge counting can probably be simplified, but we might need to re-optimize heuristic parameters then
+        PrepareCHEdgeIterator outIter = outEdgeExplorer.setBaseNode(node);
+        while (outIter.next()) {
+            if (isContracted(outIter.getAdjNode()))
                 continue;
-            if (iter.isForward()) {
-                numPrevEdges++;
+            numPrevEdges++;
+            if (!outIter.isShortcut()) {
+                numPrevOrigEdges++;
             }
-            if (iter.isBackward()) {
-                numPrevEdges++;
+        }
+
+        PrepareCHEdgeIterator inIter = inEdgeExplorer.setBaseNode(node);
+        while (inIter.next()) {
+            if (isContracted(inIter.getAdjNode()))
+                continue;
+            // do not consider loop edges a second time
+            if (inIter.getBaseNode() == inIter.getAdjNode())
+                continue;
+            numPrevEdges++;
+            if (!inIter.isShortcut()) {
+                numPrevOrigEdges++;
             }
-            if (!iter.isShortcut()) {
-                if (iter.isForward()) {
-                    numPrevOrigEdges++;
-                }
-                if (iter.isBackward()) {
-                    numPrevOrigEdges++;
-                }
-            } else {
-                numPrevOrigEdges += getOrigEdgeCount(iter.getEdge());
+        }
+
+        PrepareCHEdgeIterator allIter = allEdgeExplorer.setBaseNode(node);
+        while (allIter.next()) {
+            if (isContracted(allIter.getAdjNode()))
+                continue;
+            if (allIter.isShortcut()) {
+                numPrevOrigEdges += getOrigEdgeCount(allIter.getEdge());
             }
         }
     }

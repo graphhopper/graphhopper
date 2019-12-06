@@ -18,7 +18,6 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIterator;
@@ -27,13 +26,11 @@ import com.graphhopper.util.EdgeIterator;
 public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
     private final CHEdgeExplorer edgeExplorer;
     private final Weighting weighting;
-    private final BooleanEncodedValue accessEnc;
     private CHEdgeIterator chIterator;
 
     public PrepareCHEdgeIterator(CHEdgeExplorer edgeExplorer, Weighting weighting) {
         this.edgeExplorer = edgeExplorer;
         this.weighting = weighting;
-        this.accessEnc = weighting.getFlagEncoder().getAccessEnc();
     }
 
     @Override
@@ -56,14 +53,6 @@ public class PrepareCHEdgeIterator implements PrepareCHEdgeExplorer {
 
     public int getAdjNode() {
         return iter().getAdjNode();
-    }
-
-    public boolean isForward() {
-        return iter().get(accessEnc);
-    }
-
-    public boolean isBackward() {
-        return iter().getReverse(accessEnc);
     }
 
     public int getOrigEdgeFirst() {

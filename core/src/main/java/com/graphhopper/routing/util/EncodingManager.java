@@ -21,6 +21,7 @@ import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.routing.weighting.TurnWeighting;
@@ -144,11 +145,12 @@ public class EncodingManager implements EncodedValueLookup {
 
     public static class Builder {
         private EncodingManager em;
-        List<AbstractFlagEncoder> flagEncoderList = new ArrayList<>();
-        List<EncodedValue> encodedValueList = new ArrayList<>();
-        List<TagParser> tagParsers = new ArrayList<>();
-        List<TurnCostParser> turnCostParsers = new ArrayList<>();
-        List<RelationTagParser> relationTagParsers = new ArrayList<>();
+        private DateRangeParser dateRangeParser;
+        private List<AbstractFlagEncoder> flagEncoderList = new ArrayList<>();
+        private List<EncodedValue> encodedValueList = new ArrayList<>();
+        private List<TagParser> tagParsers = new ArrayList<>();
+        private List<TurnCostParser> turnCostParsers = new ArrayList<>();
+        private List<RelationTagParser> relationTagParsers = new ArrayList<>();
 
         public Builder() {
             em = new EncodingManager();
@@ -225,6 +227,12 @@ public class EncodingManager implements EncodedValueLookup {
         public Builder add(EncodedValue encodedValue) {
             check();
             encodedValueList.add(encodedValue);
+            return this;
+        }
+
+        public Builder setDateRangeParser(DateRangeParser dateRangeParser) {
+            check();
+            this.dateRangeParser = dateRangeParser;
             return this;
         }
 
@@ -319,6 +327,9 @@ public class EncodingManager implements EncodedValueLookup {
                 _addEdgeTagParser(srp, false, true);
             }
 
+            if (dateRangeParser == null)
+                dateRangeParser = new DateRangeParser(DateRangeParser.createCalendar());
+
             for (AbstractFlagEncoder encoder : flagEncoderList) {
                 if (encoder instanceof BikeCommonFlagEncoder) {
                     if (!em.hasEncodedValue(getKey("bike", RouteNetwork.EV_SUFFIX)))
@@ -331,6 +342,7 @@ public class EncodingManager implements EncodedValueLookup {
                         _addRelationTagParser(new OSMFootNetworkTagParser());
                 }
 
+                encoder.init(dateRangeParser);
                 em.addEncoder(encoder);
             }
 
@@ -437,15 +449,10 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private void addEncoder(AbstractFlagEncoder encoder) {
-        if (encoder.isRegistered())
-            throw new IllegalStateException("You must not register a FlagEncoder (" + encoder.toString() + ") twice!");
-
         for (FlagEncoder fe : edgeEncoders) {
             if (fe.toString().equals(encoder.toString()))
                 throw new IllegalArgumentException("Cannot register edge encoder. Name already exists: " + fe.toString());
         }
-
-        encoder.setRegistered(true);
 
         int encoderCount = edgeEncoders.size();
         int usedBits = encoder.defineNodeBits(encoderCount, nextNodeBit);

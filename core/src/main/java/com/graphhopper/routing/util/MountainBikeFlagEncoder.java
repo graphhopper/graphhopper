@@ -131,8 +131,6 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
 
         potentialBarriers.add("kissing_gate");
         setSpecificClassBicycle("mtb");
-
-        init();
     }
 
     @Override
