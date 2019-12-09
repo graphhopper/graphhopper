@@ -1,27 +1,38 @@
 package com.graphhopper.api;
 
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
+import java.util.Collection;
 
 import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
-public abstract class AbstractGraphHopperMatrixWebIntegrationTester {
+@RunWith(Parameterized.class)
+public class GraphHopperMatrixIT {
 
     protected GraphHopperMatrixWeb ghMatrix;
 
-    abstract GraphHopperMatrixWeb createMatrixWeb();
-
-    @Before
-    public void setUp() {
+    public GraphHopperMatrixIT(boolean batch, int unzippedLength) {
+        GHMatrixAbstractRequester requester = batch ? new GHMatrixSyncRequester() : new GHMatrixSyncRequester();
+        requester.unzippedLength = unzippedLength;
+        ghMatrix = new GraphHopperMatrixWeb(requester);
         String key = System.getProperty("graphhopper.key", GraphHopperWebIT.KEY);
-        ghMatrix = createMatrixWeb();
         ghMatrix.setKey(key);
+    }
+
+    @Parameterized.Parameters(name = "BATCH = {0}, unzippedLength = {1}")
+    public static Collection<Object[]> configs() {
+        return Arrays.asList(new Object[][]{
+                {true, 1000},
+                {false, 1000},
+                {false, 0}
+        });
     }
 
     @Test
