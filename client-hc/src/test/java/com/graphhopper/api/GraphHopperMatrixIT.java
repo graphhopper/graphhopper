@@ -18,18 +18,19 @@ public class GraphHopperMatrixIT {
 
     protected GraphHopperMatrixWeb ghMatrix;
 
-    public GraphHopperMatrixIT(boolean batch, int unzippedLength) {
+    public GraphHopperMatrixIT(boolean batch, int maxUnzippedLength) {
         GHMatrixAbstractRequester requester = batch ? new GHMatrixSyncRequester() : new GHMatrixSyncRequester();
-        requester.unzippedLength = unzippedLength;
+        requester.maxUnzippedLength = maxUnzippedLength;
         ghMatrix = new GraphHopperMatrixWeb(requester);
         String key = System.getProperty("graphhopper.key", GraphHopperWebIT.KEY);
         ghMatrix.setKey(key);
     }
 
-    @Parameterized.Parameters(name = "BATCH = {0}, unzippedLength = {1}")
+    @Parameterized.Parameters(name = "BATCH = {0}, maxUnzippedLength = {1}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {true, 1000},
+                {true, 0},
                 {false, 1000},
                 {false, 0}
         });

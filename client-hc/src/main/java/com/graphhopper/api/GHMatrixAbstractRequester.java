@@ -44,7 +44,7 @@ public abstract class GHMatrixAbstractRequester {
     protected final String serviceUrl;
     private final Set<String> ignoreSet = new HashSet<>();
     private OkHttpClient downloader;
-    int unzippedLength = 1000;
+    int maxUnzippedLength = 1000;
 
     public GHMatrixAbstractRequester() {
         this(MATRIX_URL);
@@ -294,7 +294,7 @@ public abstract class GHMatrixAbstractRequester {
         String stringData = data.toString();
         Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
         // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
-        if (stringData.length() < unzippedLength)
+        if (stringData.length() < maxUnzippedLength)
             builder.header("Content-Encoding", "identity");
         Request okRequest = builder.build();
         ResponseBody body = null;
