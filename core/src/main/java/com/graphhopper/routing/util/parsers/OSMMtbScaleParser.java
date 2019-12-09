@@ -57,6 +57,9 @@ public class OSMMtbScaleParser implements TagParser {
             if (val > scaleEncoder.getMaxInt()) {
                 val = scaleEncoder.getMaxInt();
             }
+            if (val < 0) {
+                val = 0;
+            }
             scaleEncoder.setInt(false, edgeFlags, val);
         } catch (NumberFormatException ex) {
         }
