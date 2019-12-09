@@ -51,6 +51,7 @@ public class PtIsochroneResourceTest {
 
     static {
         CmdArgs cmdArgs = new CmdArgs();
+        cmdArgs.put("graph.flag_encoders", "foot");
         cmdArgs.put("graph.location", GRAPH_LOC);
         cmdArgs.put("gtfs.file", "../reader-gtfs/files/sample-feed.zip");
         Helper.removeDir(new File(GRAPH_LOC));
