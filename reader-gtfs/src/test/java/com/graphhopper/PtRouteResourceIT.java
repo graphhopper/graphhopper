@@ -21,11 +21,7 @@ package com.graphhopper;
 import com.graphhopper.gtfs.ws.LocationConverterProvider;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.PtEncodedValues;
 import com.graphhopper.reader.gtfs.PtRouteResource;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
@@ -48,12 +44,12 @@ public class PtRouteResourceIT {
 
     static {
         CmdArgs cmdArgs = new CmdArgs();
+        cmdArgs.put("graph.flag_encoders", "car,foot");
         cmdArgs.put("datareader.file", "files/beatty.osm");
         cmdArgs.put("gtfs.file", "files/sample-feed.zip");
         cmdArgs.put("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
-        EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-        graphHopperGtfs = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, cmdArgs);
+        graphHopperGtfs = GraphHopperGtfs.createOrLoadGraphHopperGtfs(cmdArgs);
         ptRouteResource = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }

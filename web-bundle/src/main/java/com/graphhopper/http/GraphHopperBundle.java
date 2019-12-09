@@ -33,13 +33,10 @@ import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.http.health.GraphHopperStorageHealthCheck;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.reader.gtfs.GtfsStorage;
-import com.graphhopper.reader.gtfs.PtEncodedValues;
+import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.resources.*;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
@@ -190,8 +187,8 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
     }
 
     private void runPtGraphHopper(CmdArgs configuration, Environment environment) {
-        EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-        final GraphHopperGtfs graphHopperGtfs = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, configuration);
+        final GraphHopperGtfs graphHopperGtfs = GraphHopperGtfs.createOrLoadGraphHopperGtfs(configuration);
+        EncodingManager encodingManager = graphHopperGtfs.getEncodingManager();
         environment.jersey().register(new AbstractBinder() {
             @Override
             protected void configure() {

@@ -19,10 +19,9 @@
 package com.graphhopper;
 
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.reader.gtfs.*;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.reader.gtfs.GraphHopperGtfs;
+import com.graphhopper.reader.gtfs.PtRouteResource;
+import com.graphhopper.reader.gtfs.Request;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
@@ -53,16 +52,16 @@ public class RealtimeIT {
     @BeforeClass
     public static void init() {
         CmdArgs cmdArgs = new CmdArgs();
+        cmdArgs.put("graph.flag_encoders", "car,foot");
         cmdArgs.put("gtfs.file", "files/sample-feed.zip");
         cmdArgs.put("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
-        EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-        graphHopperStorage = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, cmdArgs);
+        graphHopperStorage = GraphHopperGtfs.createOrLoadGraphHopperGtfs(cmdArgs);
         locationIndex = graphHopperStorage.getLocationIndex();
         graphHopperStorage.close();
         locationIndex.close();
         // Re-load read only
-        graphHopperStorage = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, cmdArgs);
+        graphHopperStorage = GraphHopperGtfs.createOrLoadGraphHopperGtfs(cmdArgs);
         locationIndex = graphHopperStorage.getLocationIndex();
         graphHopperFactory = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, graphHopperStorage.getGtfsStorage());
     }

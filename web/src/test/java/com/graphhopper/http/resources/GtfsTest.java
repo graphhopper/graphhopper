@@ -45,6 +45,7 @@ public class GtfsTest {
 
     static {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
+                put("graph.flag_encoders", "foot").
                 put("datareader.file", "../reader-gtfs/files/beatty.osm").
                 put("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
                 put("graph.location", DIR));

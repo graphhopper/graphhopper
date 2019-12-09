@@ -23,6 +23,8 @@ import com.conveyal.gtfs.model.Transfer;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -45,10 +47,9 @@ import java.util.zip.ZipFile;
 public class GraphHopperGtfs extends GraphHopperOSM {
 
 
-    public static GraphHopperGtfs createOrLoadGraphHopperGtfs(EncodingManager encodingManager, CmdArgs cmdArgs) {
+    public static GraphHopperGtfs createOrLoadGraphHopperGtfs(CmdArgs cmdArgs) {
         GraphHopperGtfs graphHopperOSM = new GraphHopperGtfs(cmdArgs);
         graphHopperOSM.init(cmdArgs);
-        graphHopperOSM.setEncodingManager(encodingManager);
         graphHopperOSM.importOrLoad();
         return graphHopperOSM;
     }
@@ -58,6 +59,11 @@ public class GraphHopperGtfs extends GraphHopperOSM {
 
     private GraphHopperGtfs(CmdArgs cmdArgs) {
         this.cmdArgs = cmdArgs;
+    }
+
+    @Override
+    protected void registerCustomEncodedValues(EncodingManager.Builder emBuilder) {
+        PtEncodedValues.createAndAddEncodedValues(emBuilder);
     }
 
     @Override

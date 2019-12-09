@@ -21,11 +21,7 @@ package com.graphhopper.http.isochrone;
 import com.graphhopper.http.GHPointConverterProvider;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.PtEncodedValues;
 import com.graphhopper.resources.PtIsochroneResource;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.ResourceTestRule;
@@ -58,8 +54,7 @@ public class PtIsochroneResourceTest {
         cmdArgs.put("graph.location", GRAPH_LOC);
         cmdArgs.put("gtfs.file", "../reader-gtfs/files/sample-feed.zip");
         Helper.removeDir(new File(GRAPH_LOC));
-        EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-        graphHopperGtfs = GraphHopperGtfs.createOrLoadGraphHopperGtfs(encodingManager, cmdArgs);
+        graphHopperGtfs = GraphHopperGtfs.createOrLoadGraphHopperGtfs(cmdArgs);
         isochroneResource = new PtIsochroneResource(graphHopperGtfs.getGtfsStorage(), graphHopperGtfs.getEncodingManager(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getLocationIndex());
     }
 
