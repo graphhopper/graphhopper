@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparingLong;
 
-@Path("route")
+@Path("route-pt")
 public final class PtRouteResource {
 
     private final TranslationMap translationMap;

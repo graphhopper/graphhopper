@@ -70,6 +70,7 @@ public class PtIsochroneTest {
     public void testIsoline() {
         WebTarget webTarget = app.client()
                 .target("http://localhost:8080/isochrone")
+                .queryParam("vehicle", "pt")
                 .queryParam("point", "36.914893,-116.76821") // NADAV
                 .queryParam("pt.earliest_departure_time", LocalDateTime.of(2007, 1, 1, 0, 0, 0).atZone(zoneId).toInstant())
                 .queryParam("time_limit", 6 * 60 * 60 + 49 * 60); // exactly the time I should arrive at NANAA

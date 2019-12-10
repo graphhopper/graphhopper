@@ -216,9 +216,16 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
         environment.jersey().register(MVTResource.class);
         environment.jersey().register(NearestResource.class);
+        environment.jersey().register(RouteResource.class);
+        environment.jersey().register(IsochroneResource.class);
         if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
+            // These are pt-specific implementations of /route and /isochrone, but the same API.
+            // We serve them under different paths (/route-pt and /isochrone-pt), and forward
+            // requests for ?vehicle=pt there.
             environment.jersey().register(PtRouteResource.class);
             environment.jersey().register(PtIsochroneResource.class);
+            environment.jersey().register(PtRedirectFilter.class);
+
             // The included web client works best if we say we only support pt.
             // Does not have anything to do with FlagEncoders anymore.
             environment.jersey().register((WriterInterceptor) context -> {
@@ -231,9 +238,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 }
                 context.proceed();
             });
-        } else {
-            environment.jersey().register(RouteResource.class);
-            environment.jersey().register(IsochroneResource.class);
         }
         environment.jersey().register(SPTResource.class);
         environment.jersey().register(I18NResource.class);
