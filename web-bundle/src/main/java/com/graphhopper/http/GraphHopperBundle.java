@@ -41,7 +41,6 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
 import io.dropwizard.ConfiguredBundle;
-import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.glassfish.hk2.api.Factory;
@@ -193,23 +192,14 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(new IllegalArgumentExceptionMapper());
         environment.jersey().register(new GHPointConverterProvider());
 
-        if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
-            // switch to different API implementation when using Pt
-            runPtGraphHopper(configuration.getGraphHopperConfiguration(), environment);
-        } else {
-            runRegularGraphHopper(configuration.getGraphHopperConfiguration(), environment);
-        }
-    }
-
-    private void runPtGraphHopper(CmdArgs configuration, Environment environment) {
-        GraphHopperGtfs graphHopperGtfs = new GraphHopperGtfs(configuration);
-        graphHopperGtfs.init(configuration);
+        final GraphHopperManaged graphHopperManaged = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), environment.getObjectMapper());
+        environment.lifecycle().manage(graphHopperManaged);
         environment.jersey().register(new AbstractBinder() {
             @Override
             protected void configure() {
-                bind(configuration).to(CmdArgs.class);
-                bind(graphHopperGtfs).to(GraphHopper.class);
-                bind(graphHopperGtfs).to(GraphHopperAPI.class);
+                bind(configuration.getGraphHopperConfiguration()).to(CmdArgs.class);
+                bind(graphHopperManaged.getGraphHopper()).to(GraphHopper.class);
+                bind(graphHopperManaged.getGraphHopper()).to(GraphHopperAPI.class);
 
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
                 bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
@@ -219,67 +209,35 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bindFactory(GtfsStorageFactory.class).to(GtfsStorage.class);
             }
         });
-        environment.jersey().register(NearestResource.class);
-        environment.jersey().register(PtRouteResource.class);
-        environment.jersey().register(PtIsochroneResource.class);
-        environment.jersey().register(I18NResource.class);
-        environment.jersey().register(InfoResource.class);
-        // The included web client works best if we say we only support pt.
-        // Does not have anything to do with FlagEncoders anymore.
-        environment.jersey().register((WriterInterceptor) context -> {
-            if (context.getEntity() instanceof InfoResource.Info) {
-                InfoResource.Info info = (InfoResource.Info) context.getEntity();
-                info.supported_vehicles = new String[]{"pt"};
-                info.features.clear();
-                info.features.put("pt", new InfoResource.Info.PerVehicle());
-                context.setEntity(info);
-            }
-            context.proceed();
-        });
-        environment.lifecycle().manage(new Managed() {
-            @Override
-            public void start() {
-                graphHopperGtfs.importOrLoad();
-            }
 
-            @Override
-            public void stop() {
-                graphHopperGtfs.close();
-            }
-        });
-        environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopperGtfs));
-    }
-
-    private void runRegularGraphHopper(CmdArgs configuration, Environment environment) {
-        final GraphHopperManaged graphHopperManaged = new GraphHopperManaged(configuration, environment.getObjectMapper());
-        environment.lifecycle().manage(graphHopperManaged);
-        environment.jersey().register(new AbstractBinder() {
-            @Override
-            protected void configure() {
-                bind(configuration).to(CmdArgs.class);
-                bind(graphHopperManaged.getGraphHopper()).to(GraphHopper.class);
-                bind(graphHopperManaged.getGraphHopper()).to(GraphHopperAPI.class);
-
-                bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
-                bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
-                bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
-                bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
-                bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
-            }
-        });
-
-        if (configuration.getBool("web.change_graph.enabled", false)) {
+        if (configuration.getGraphHopperConfiguration().getBool("web.change_graph.enabled", false)) {
             environment.jersey().register(ChangeGraphResource.class);
         }
 
         environment.jersey().register(MVTResource.class);
         environment.jersey().register(NearestResource.class);
-        environment.jersey().register(RouteResource.class);
-        environment.jersey().register(IsochroneResource.class);
+        if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
+            environment.jersey().register(PtRouteResource.class);
+            environment.jersey().register(PtIsochroneResource.class);
+            // The included web client works best if we say we only support pt.
+            // Does not have anything to do with FlagEncoders anymore.
+            environment.jersey().register((WriterInterceptor) context -> {
+                if (context.getEntity() instanceof InfoResource.Info) {
+                    InfoResource.Info info = (InfoResource.Info) context.getEntity();
+                    info.supported_vehicles = new String[]{"pt"};
+                    info.features.clear();
+                    info.features.put("pt", new InfoResource.Info.PerVehicle());
+                    context.setEntity(info);
+                }
+                context.proceed();
+            });
+        } else {
+            environment.jersey().register(RouteResource.class);
+            environment.jersey().register(IsochroneResource.class);
+        }
         environment.jersey().register(SPTResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
         environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopperManaged.getGraphHopper()));
     }
-
 }

@@ -18,14 +18,14 @@
 
 package com.graphhopper.http.isochrone;
 
-import com.graphhopper.http.GHPointConverterProvider;
-import com.graphhopper.jackson.Jackson;
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
+import com.graphhopper.http.GraphHopperApplication;
+import com.graphhopper.http.GraphHopperServerConfiguration;
 import com.graphhopper.resources.PtIsochroneResource;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
-import io.dropwizard.testing.junit.ResourceTestRule;
+import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -41,36 +41,35 @@ import java.time.ZoneId;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class PtIsochroneResourceTest {
+public class PtIsochroneTest {
 
     private static final String GRAPH_LOC = "target/PtIsochroneResourceTest";
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static GraphHopperGtfs graphHopperGtfs;
-    private static PtIsochroneResource isochroneResource;
     private GeometryFactory geometryFactory = new GeometryFactory();
 
+    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
+
     static {
-        CmdArgs cmdArgs = new CmdArgs();
-        cmdArgs.put("graph.flag_encoders", "foot");
-        cmdArgs.put("graph.location", GRAPH_LOC);
-        cmdArgs.put("gtfs.file", "../reader-gtfs/files/sample-feed.zip");
+        config.getGraphHopperConfiguration().merge(new CmdArgs()
+        .put("graph.flag_encoders", "foot")
+        .put("graph.location", GRAPH_LOC)
+        .put("gtfs.file", "../reader-gtfs/files/sample-feed.zip"));
         Helper.removeDir(new File(GRAPH_LOC));
-        graphHopperGtfs = GraphHopperGtfs.createOrLoadGraphHopperGtfs(cmdArgs);
-        isochroneResource = new PtIsochroneResource(graphHopperGtfs.getGtfsStorage(), graphHopperGtfs.getEncodingManager(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getLocationIndex());
     }
 
     @ClassRule
-    public static final ResourceTestRule resources = ResourceTestRule.builder()
-            .addProvider(new GHPointConverterProvider())
-            .setMapper(Jackson.newObjectMapper())
-            .addResource(isochroneResource)
-            .build();
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule<>(GraphHopperApplication.class, config);
 
+    @BeforeClass
+    @AfterClass
+    public static void cleanUp() {
+        Helper.removeDir(new File(GRAPH_LOC));
+    }
 
     @Test
     public void testIsoline() {
-        WebTarget webTarget = resources
-                .target("/isochrone")
+        WebTarget webTarget = app.client()
+                .target("http://localhost:8080/isochrone")
                 .queryParam("point", "36.914893,-116.76821") // NADAV
                 .queryParam("pt.earliest_departure_time", LocalDateTime.of(2007, 1, 1, 0, 0, 0).atZone(zoneId).toInstant())
                 .queryParam("time_limit", 6 * 60 * 60 + 49 * 60); // exactly the time I should arrive at NANAA
@@ -93,11 +92,6 @@ public class PtIsochroneResourceTest {
     // Otherwise, we can't reliably use coordinates from input data in tests.
     private Coordinate makePrecise(Coordinate coordinate) {
         return new Coordinate(Helper.intToDegree(Helper.degreeToInt(coordinate.x)), Helper.intToDegree(Helper.degreeToInt(coordinate.y)));
-    }
-
-    @AfterClass
-    public static void close() {
-        graphHopperGtfs.close();
     }
 
 }
