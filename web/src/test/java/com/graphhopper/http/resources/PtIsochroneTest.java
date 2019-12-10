@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.http.isochrone;
+package com.graphhopper.http.resources;
 
 import com.graphhopper.http.GraphHopperApplication;
 import com.graphhopper.http.GraphHopperServerConfiguration;
