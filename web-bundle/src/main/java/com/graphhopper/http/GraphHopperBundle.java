@@ -30,7 +30,6 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.http.health.GraphHopperHealthCheck;
-import com.graphhopper.http.health.GraphHopperStorageHealthCheck;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
@@ -83,6 +82,22 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
         @Override
         public void dispose(GraphHopperStorage instance) {
+
+        }
+    }
+
+    static class GtfsStorageFactory implements Factory<GtfsStorage> {
+
+        @Inject
+        GraphHopperGtfs graphHopper;
+
+        @Override
+        public GtfsStorage provide() {
+            return graphHopper.getGtfsStorage();
+        }
+
+        @Override
+        public void dispose(GtfsStorage instance) {
 
         }
     }
@@ -187,23 +202,26 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
     }
 
     private void runPtGraphHopper(CmdArgs configuration, Environment environment) {
-        final GraphHopperGtfs graphHopperGtfs = GraphHopperGtfs.createOrLoadGraphHopperGtfs(configuration);
-        EncodingManager encodingManager = graphHopperGtfs.getEncodingManager();
+        GraphHopperGtfs graphHopperGtfs = new GraphHopperGtfs(configuration);
+        graphHopperGtfs.init(configuration);
         environment.jersey().register(new AbstractBinder() {
             @Override
             protected void configure() {
                 bind(configuration).to(CmdArgs.class);
-                bind(false).to(Boolean.class).named("hasElevation");
-                bind(graphHopperGtfs.getLocationIndex()).to(LocationIndex.class);
-                bind(graphHopperGtfs.getTranslationMap()).to(TranslationMap.class);
-                bind(encodingManager).to(EncodingManager.class);
-                bind(graphHopperGtfs.getGraphHopperStorage()).to(GraphHopperStorage.class);
-                bind(graphHopperGtfs.getGtfsStorage()).to(GtfsStorage.class);
+                bind(graphHopperGtfs).to(GraphHopper.class);
+                bind(graphHopperGtfs).to(GraphHopperAPI.class);
+
+                bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
+                bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
+                bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
+                bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
+                bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
+                bindFactory(GtfsStorageFactory.class).to(GtfsStorage.class);
             }
         });
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(PtRouteResource.class);
-        environment.jersey().register(new PtIsochroneResource(graphHopperGtfs.getGtfsStorage(), encodingManager, graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getLocationIndex()));
+        environment.jersey().register(PtIsochroneResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
         // The included web client works best if we say we only support pt.
@@ -221,6 +239,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.lifecycle().manage(new Managed() {
             @Override
             public void start() {
+                graphHopperGtfs.importOrLoad();
             }
 
             @Override
@@ -228,7 +247,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 graphHopperGtfs.close();
             }
         });
-        environment.healthChecks().register("graphhopper-storage", new GraphHopperStorageHealthCheck(graphHopperGtfs.getGraphHopperStorage()));
+        environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopperGtfs));
     }
 
     private void runRegularGraphHopper(CmdArgs configuration, Environment environment) {
@@ -238,7 +257,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             @Override
             protected void configure() {
                 bind(configuration).to(CmdArgs.class);
-                bind(graphHopperManaged).to(GraphHopperManaged.class);
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopper.class);
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopperAPI.class);
 

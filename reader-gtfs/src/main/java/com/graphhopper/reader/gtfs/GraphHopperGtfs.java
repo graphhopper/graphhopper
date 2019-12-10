@@ -57,7 +57,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
     private final CmdArgs cmdArgs;
     private GtfsStorage gtfsStorage;
 
-    private GraphHopperGtfs(CmdArgs cmdArgs) {
+    public GraphHopperGtfs(CmdArgs cmdArgs) {
         this.cmdArgs = cmdArgs;
     }
 
