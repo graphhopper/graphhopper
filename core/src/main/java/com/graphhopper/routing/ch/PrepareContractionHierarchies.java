@@ -38,8 +38,6 @@ import java.util.Random;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.Helper.nf;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 
 /**
  * This class prepares the graph for a bidirectional algorithm supporting contraction hierarchies
@@ -54,10 +52,9 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
  *
  * @author Peter Karich
  */
-public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
+public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final CHProfile chProfile;
-    private final PreparationWeighting prepareWeighting;
     private final CHGraph chGraph;
     private final PrepareCHGraph prepareGraph;
     private final Random rand = new Random(123);
@@ -79,10 +76,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private PMap pMap = new PMap();
     private int checkCounter;
 
-    public PrepareContractionHierarchies(CHGraph chGraph) {
-        this.chGraph = chGraph;
-        chProfile = chGraph.getCHProfile();
-        prepareWeighting = new PreparationWeighting(chProfile.getWeighting());
+    public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHProfile chProfile) {
+        return new PrepareContractionHierarchies(ghStorage, chProfile);
+    }
+
+    private PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHProfile chProfile) {
+        this.chGraph = ghStorage.getCHGraph(chProfile);
+        this.chProfile = chProfile;
         params = Params.forTraversalMode(chProfile.getTraversalMode());
         updatedNeighbors = new IntHashSet(50);
         if (chProfile.getTraversalMode().isEdgeBased()) {
@@ -97,10 +97,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             prepareGraph = PrepareCHGraph.nodeBased(chGraph, chProfile.getWeighting());
             nodeContractor = new NodeBasedNodeContractor(prepareGraph, pMap);
         }
-    }
-
-    public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHProfile chProfile) {
-        return new PrepareContractionHierarchies(ghStorage.getCHGraph(chProfile));
     }
 
     public PrepareContractionHierarchies setParams(PMap pMap) {
@@ -157,48 +153,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             contractNodesUsingFixedNodeOrdering();
         } else {
             contractNodesUsingHeuristicNodeOrdering();
-        }
-    }
-
-    @Override
-    public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
-        AbstractBidirAlgo algo = doCreateAlgo(graph, opts);
-        algo.setEdgeFilter(new LevelEdgeFilter(chGraph));
-        algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
-        return algo;
-    }
-
-    private AbstractBidirAlgo doCreateAlgo(Graph graph, AlgorithmOptions opts) {
-        if (chProfile.isEdgeBased()) {
-            return createAlgoEdgeBased(graph, opts);
-        } else {
-            return createAlgoNodeBased(graph, opts);
-        }
-    }
-
-    private AbstractBidirAlgo createAlgoEdgeBased(Graph graph, AlgorithmOptions opts) {
-        if (ASTAR_BI.equals(opts.getAlgorithm())) {
-            return new AStarBidirectionEdgeCHNoSOD(graph, createTurnWeightingForEdgeBased(graph))
-                    .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
-        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
-            return new DijkstraBidirectionEdgeCHNoSOD(graph, createTurnWeightingForEdgeBased(graph));
-        } else {
-            throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for edge-based Contraction Hierarchies. Try with ch.disable=true");
-        }
-    }
-
-    private AbstractBidirAlgo createAlgoNodeBased(Graph graph, AlgorithmOptions opts) {
-        if (ASTAR_BI.equals(opts.getAlgorithm())) {
-            return new AStarBidirectionCH(graph, prepareWeighting)
-                    .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
-        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
-            if (opts.getHints().getBool("stall_on_demand", true)) {
-                return new DijkstraBidirectionCH(graph, prepareWeighting);
-            } else {
-                return new DijkstraBidirectionCHNoSOD(graph, prepareWeighting);
-            }
-        } else {
-            throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for node-based Contraction Hierarchies. Try with ch.disable=true");
         }
     }
 
@@ -472,16 +426,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return chProfile.isEdgeBased() ? "prepare|dijkstrabi|edge|ch" : "prepare|dijkstrabi|ch";
     }
 
-    private TurnWeighting createTurnWeightingForEdgeBased(Graph graph) {
-        // important: do not simply take the turn cost storage from ghStorage, because we need the wrapped storage from
-        // query graph!
-        TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
-        if (turnCostStorage == null) {
-            throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
-        }
-        return new TurnWeighting(prepareWeighting, turnCostStorage, chProfile.getUTurnCosts());
-    }
-
     private void _close() {
         nodeContractor.close();
         sortedNodes = null;
@@ -492,6 +436,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         CHGraphImpl cg = (CHGraphImpl) chGraph;
         cg.flush();
         cg.close();
+    }
+
+    public RoutingAlgorithmFactory getRoutingAlgorithmFactory() {
+        return new CHRoutingAlgorithmFactory(chGraph);
     }
 
     private static class Params {

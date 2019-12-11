@@ -100,7 +100,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         int numFails = 0;
         for (int i = 0; i < numQueries; ++i) {
             Dijkstra dijkstra = new Dijkstra(ghStorage, pch.getWeighting(), TraversalMode.NODE_BASED);
-            RoutingAlgorithm chAlgo = pch.createAlgo(chGraph, AlgorithmOptions.start().weighting(pch.getWeighting()).build());
+            RoutingAlgorithm chAlgo = pch.getRoutingAlgorithmFactory().createAlgo(chGraph, AlgorithmOptions.start().weighting(pch.getWeighting()).build());
 
             int from = rnd.nextInt(ghStorage.getNodes());
             int to = rnd.nextInt(ghStorage.getNodes());
@@ -139,7 +139,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
                 int from = random.nextInt(numNodes);
                 int to = random.nextInt(numNodes);
                 long start = nanoTime();
-                RoutingAlgorithm algo = pch.createAlgo(chGraph, AlgorithmOptions.start().weighting(pch.getWeighting()).build());
+                RoutingAlgorithm algo = pch.getRoutingAlgorithmFactory().createAlgo(chGraph, AlgorithmOptions.start().weighting(pch.getWeighting()).build());
                 Path path = algo.calcPath(from, to);
                 if (!warmup && !path.isFound())
                     return 1;

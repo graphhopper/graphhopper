@@ -240,7 +240,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (preparations.isEmpty())
             throw new IllegalStateException("No preparations added to this decorator");
 
-        return getPreparation(map);
+        return getPreparation(map).getRoutingAlgorithmFactory();
     }
 
     public PrepareContractionHierarchies getPreparation(HintsMap map) {

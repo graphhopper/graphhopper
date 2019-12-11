@@ -1130,7 +1130,7 @@ public class CHTurnCostTest {
                 .useFixedNodeOrdering(nodeOrderingProvider);
         ch.doWork();
         chGraph = graph.getCHGraph(chProfile);
-        return ch;
+        return ch.getRoutingAlgorithmFactory();
     }
 
     private RoutingAlgorithmFactory automaticPrepareCH() {
@@ -1143,7 +1143,7 @@ public class CHTurnCostTest {
         ch.setParams(pMap);
         ch.doWork();
         chGraph = graph.getCHGraph(chProfile);
-        return ch;
+        return ch.getRoutingAlgorithmFactory();
     }
 
     private void automaticCompareCHWithDijkstra(int numQueries) {
