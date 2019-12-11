@@ -38,18 +38,18 @@ public class GraphHopperWebIT {
     private final GraphHopperWeb gh;
     private final GraphHopperMatrixWeb ghMatrix;
 
-    public GraphHopperWebIT(boolean postRequest, int unzippedLength) {
+    public GraphHopperWebIT(boolean postRequest, int maxUnzippedLength) {
         gh = new GraphHopperWeb().setPostRequest(postRequest).
                 setKey(KEY);
-        gh.unzippedLength = unzippedLength;
+        gh.maxUnzippedLength = maxUnzippedLength;
 
         GHMatrixBatchRequester requester = new GHMatrixBatchRequester();
-        requester.unzippedLength = unzippedLength;
+        requester.maxUnzippedLength = maxUnzippedLength;
         ghMatrix = new GraphHopperMatrixWeb(requester).
                 setKey(KEY);
     }
 
-    @Parameterized.Parameters(name = "POST = {0}, unzippedLength = {1}")
+    @Parameterized.Parameters(name = "POST = {0}, maxUnzippedLength = {1}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {false, -1},

@@ -61,19 +61,6 @@ public class GHMRequest extends GHRequest {
         return this;
     }
 
-    @Override
-    public List<GHPoint> getPoints() {
-        throw new IllegalStateException("use getFromPoints or getToPoints");
-    }
-
-    public List<GHPoint> getFromPoints() {
-        return fromPoints;
-    }
-
-    public List<GHPoint> getToPoints() {
-        return toPoints;
-    }
-
     /**
      * This methods adds the coordinate as 'from' and 'to' to the request.
      */
@@ -82,6 +69,11 @@ public class GHMRequest extends GHRequest {
         fromPoints.add(point);
         toPoints.add(point);
         return this;
+    }
+
+    @Override
+    public List<GHPoint> getPoints() {
+        throw new IllegalStateException("use getFromPoints or getToPoints");
     }
 
     public GHMRequest addFromPoint(GHPoint point) {
@@ -96,18 +88,72 @@ public class GHMRequest extends GHRequest {
         return this;
     }
 
+    public List<GHPoint> getFromPoints() {
+        return fromPoints;
+    }
+
+    public GHMRequest addToPoint(GHPoint point) {
+        toPoints.add(point);
+        identicalLists = false;
+        return this;
+    }
+
+    public GHMRequest setToPoints(List<GHPoint> points) {
+        toPoints = points;
+        identicalLists = false;
+        return this;
+    }
+
+    public List<GHPoint> getToPoints() {
+        return toPoints;
+    }
+
+    @Override
+    public GHRequest setPointHints(List<String> pointHints) {
+        setToPointHints(pointHints);
+        this.fromPointHints = this.toPointHints;
+        return this;
+    }
+
+    @Override
+    public List<String> getPointHints() {
+        throw new IllegalStateException("Use getFromPointHints or getToPointHints");
+    }
+
+    @Override
+    public boolean hasPointHints() {
+        return this.fromPointHints.size() == this.fromPoints.size() && !fromPoints.isEmpty() &&
+                this.toPointHints.size() == this.toPoints.size() && !toPoints.isEmpty();
+    }
+
     public GHRequest addFromPointHint(String pointHint) {
         this.fromPointHints.add(pointHint);
         return this;
     }
 
     public GHRequest setFromPointHints(List<String> pointHints) {
-        this.fromPointHints = pointHints;
+        // create new array as we modify pointHints in compactPointHints
+        this.fromPointHints = new ArrayList<>(pointHints);
         return this;
     }
 
     public List<String> getFromPointHints() {
         return fromPointHints;
+    }
+
+    public GHRequest addToPointHint(String pointHint) {
+        this.toPointHints.add(pointHint);
+        return this;
+    }
+
+    public GHRequest setToPointHints(List<String> pointHints) {
+        // create new array as we modify pointHints in compactPointHints
+        this.toPointHints = new ArrayList<>(pointHints);
+        return this;
+    }
+
+    public List<String> getToPointHints() {
+        return toPointHints;
     }
 
     public GHMRequest addFromCurbside(String curbside) {
@@ -124,32 +170,6 @@ public class GHMRequest extends GHRequest {
         return fromCurbsides;
     }
 
-    public GHMRequest addToPoint(GHPoint point) {
-        toPoints.add(point);
-        identicalLists = false;
-        return this;
-    }
-
-    public GHMRequest setToPoints(List<GHPoint> points) {
-        toPoints = points;
-        identicalLists = false;
-        return this;
-    }
-
-    public GHRequest addToPointHint(String pointHint) {
-        this.toPointHints.add(pointHint);
-        return this;
-    }
-
-    public GHRequest setToPointHints(List<String> pointHints) {
-        this.toPointHints = pointHints;
-        return this;
-    }
-
-    public List<String> getToPointHints() {
-        return toPointHints;
-    }
-
     public GHMRequest addToCurbside(String curbside) {
         toCurbsides.add(curbside);
         return this;
@@ -162,24 +182,6 @@ public class GHMRequest extends GHRequest {
 
     public List<String> getToCurbsides() {
         return toCurbsides;
-    }
-
-    @Override
-    public GHRequest setPointHints(List<String> pointHints) {
-        this.fromPointHints = pointHints;
-        this.toPointHints = pointHints;
-        return this;
-    }
-
-    @Override
-    public List<String> getPointHints() {
-        throw new IllegalStateException("Use getFromPointHints or getToPointHints");
-    }
-
-    @Override
-    public boolean hasPointHints() {
-        return this.fromPointHints.size() == this.fromPoints.size() && !fromPoints.isEmpty() &&
-                this.toPointHints.size() == this.toPoints.size() && !toPoints.isEmpty();
     }
 
     @Override

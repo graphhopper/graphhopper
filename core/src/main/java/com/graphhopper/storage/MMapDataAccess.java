@@ -234,9 +234,9 @@ public final class MMapDataAccess extends AbstractDataAccess {
         } catch (IOException ex) {
             // we could get an exception here if buffer is too small and area too large
             // e.g. I got an exception for the 65421th buffer (probably around 2**16 == 65536)
-            throw new RuntimeException("Couldn't map buffer " + i + " of " + segmentsToMap
-                    + " for " + name + " at position " + bufferStart + " for " + byteCount
-                    + " bytes with offset " + offset + ", new fileLength:" + newFileLength, ex);
+            throw new RuntimeException("Couldn't map buffer " + i + " of " + segmentsToMap + " with " + longSegmentSize
+                    + " for " + name + " at position " + bufferStart + " for " + byteCount + " bytes with offset " + offset
+                    + ", new fileLength:" + newFileLength + ", " + Helper.getMemInfo(), ex);
         }
     }
 
@@ -250,8 +250,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
         for (int trial = 0; trial < 1; ) {
             try {
                 buf = raFile.getChannel().map(
-                        allowWrites ? FileChannel.MapMode.READ_WRITE : FileChannel.MapMode.READ_ONLY,
-                        offset, byteCount);
+                        allowWrites ? FileChannel.MapMode.READ_WRITE : FileChannel.MapMode.READ_ONLY, offset, byteCount);
                 break;
             } catch (IOException tmpex) {
                 ioex = tmpex;

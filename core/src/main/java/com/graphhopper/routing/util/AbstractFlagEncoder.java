@@ -29,7 +29,6 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.ParseException;
 import java.util.*;
 
 /**
@@ -107,12 +106,16 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     protected void init(DateRangeParser dateRangeParser) {
+        setConditionalTagInspector(new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser),
+                restrictions, restrictedValues, intendedValues, false));
+    }
+
+    protected void setConditionalTagInspector(ConditionalTagInspector inspector) {
         if (conditionalTagInspector != null)
             throw new IllegalStateException("You must not register a FlagEncoder (" + toString() + ") twice or for two EncodingManagers!");
 
         registered = true;
-        // we should move 'OSM to object' logic into the DataReader like OSMReader, but this is a major task as we need to convert OSM format into kind of a standard/generic format
-        conditionalTagInspector = new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser), restrictions, restrictedValues, intendedValues, false);
+        conditionalTagInspector = inspector;
     }
 
     @Override
