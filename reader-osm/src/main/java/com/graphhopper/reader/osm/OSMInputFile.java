@@ -18,6 +18,9 @@
 package com.graphhopper.reader.osm;
 
 import com.graphhopper.reader.ReaderElement;
+import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.pbf.PbfReader;
 import com.graphhopper.reader.osm.pbf.Sink;
 
@@ -27,6 +30,8 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.*;
 import java.lang.reflect.Constructor;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +47,7 @@ import java.util.zip.ZipInputStream;
 public class OSMInputFile implements Sink, OSMInput {
     private final InputStream bis;
     private final BlockingQueue<ReaderElement> itemQueue;
+    private List<OSMHandler> handlers;
     Thread pbfReaderThread;
     private boolean eof;
     // for xml parsing
@@ -55,15 +61,47 @@ public class OSMInputFile implements Sink, OSMInput {
     public OSMInputFile(File file) throws IOException {
         bis = decode(file);
         itemQueue = new LinkedBlockingQueue<>(50_000);
+        this.handlers = new LinkedList<OSMHandler>();
     }
 
-    public OSMInputFile open() throws XMLStreamException {
+    public OSMInputFile addHandler(OSMHandler handler) {
+        handlers.add(handler);
+        return this;
+    }
+
+    public void open() throws XMLStreamException {
+        if (handlers.isEmpty()) {
+            throw new IllegalStateException("No handlers registered for this OSM file reader. Nothing would be done.");
+        }
         if (binary) {
             openPBFReader(bis);
         } else {
             openXMLStream(bis);
         }
-        return this;
+        ReaderElement item;
+        while ((item = getNext()) != null) {
+            for (OSMHandler h : handlers) {
+                switch (item.getType()) {
+                case ReaderElement.FILEHEADER:
+                    h.header((OSMFileHeader) item);
+                    break;
+                case ReaderElement.NODE:
+                    h.node((ReaderNode) item);
+                    break;
+                case ReaderElement.WAY:
+                    h.way((ReaderWay) item);
+                    break;
+                case ReaderElement.RELATION:
+                    h.relation((ReaderRelation) item);
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown type " + item.getType());
+                }
+            }
+        }
+        if (getUnprocessedElements() > 0) {
+            throw new IllegalStateException("Still unprocessed elements in reader queue " + getUnprocessedElements());
+        }
     }
 
     /**
@@ -156,8 +194,7 @@ public class OSMInputFile implements Sink, OSMInput {
         eof = false;
     }
 
-    @Override
-    public ReaderElement getNext() throws XMLStreamException {
+    private ReaderElement getNext() throws XMLStreamException {
         if (eof)
             throw new IllegalStateException("EOF reached");
 

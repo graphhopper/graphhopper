@@ -17,12 +17,11 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.graphhopper.reader.ReaderElement;
-
-import javax.xml.stream.XMLStreamException;
-
 public interface OSMInput extends AutoCloseable {
-    ReaderElement getNext() throws XMLStreamException;
+    /**
+     * Register a handler.
+     */
+    OSMInput addHandler(OSMHandler handler);
 
     int getUnprocessedElements();
 }
