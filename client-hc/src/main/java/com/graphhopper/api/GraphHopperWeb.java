@@ -66,7 +66,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private boolean elevation = false;
     private String optimize = "false";
     private boolean postRequest = true;
-    int unzippedLength = 1000;
+    int maxUnzippedLength = 1000;
     private final Set<String> ignoreSet;
     private final Set<String> ignoreSetForPost;
 
@@ -270,7 +270,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
         String stringData = requestJson.toString();
         Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
         // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
-        if (stringData.length() < unzippedLength)
+        if (stringData.length() < maxUnzippedLength)
             builder.header("Content-Encoding", "identity");
         return builder.build();
     }
