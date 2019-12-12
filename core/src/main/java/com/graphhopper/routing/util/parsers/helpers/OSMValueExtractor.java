@@ -39,7 +39,7 @@ public class OSMValueExtractor {
     public static double stringToTons(String value) {
         value = TON_PATTERN.matcher(toLowerCase(value)).replaceAll("t");
         value = MGW_PATTERN.matcher(value).replaceAll("").trim();
-        if (isInvalid(value))
+        if (isInvalidValue(value))
             return Double.NaN;
 
         double factor = 1;
@@ -78,7 +78,7 @@ public class OSMValueExtractor {
         value = METER_PATTERN.matcher(value).replaceAll("m");
         value = INCH_PATTERN.matcher(value).replaceAll("in");
         value = FEET_PATTERN.matcher(value).replaceAll("ft");
-        if (isInvalid(value))
+        if (isInvalidValue(value))
             return Double.NaN;
         double factor = 1;
         double offset = 0;
@@ -126,7 +126,7 @@ public class OSMValueExtractor {
         }
     }
 
-    static boolean isInvalid(String value) {
+    public static boolean isInvalidValue(String value) {
         value = toLowerCase(value);
         return value.isEmpty() || value.startsWith("default") || value.equals("none") || value.equals("unknown")
                 || value.contains("unrestricted") || value.startsWith("〜")
