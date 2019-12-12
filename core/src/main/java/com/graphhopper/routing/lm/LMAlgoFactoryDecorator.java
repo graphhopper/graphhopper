@@ -20,6 +20,7 @@ package com.graphhopper.routing.lm;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.AlgorithmOptions;
+import com.graphhopper.routing.DecoratingRoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
@@ -244,11 +245,9 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     /**
-     * TODO needs to be public to pick defaultAlgoFactory.weighting if the defaultAlgoFactory is a CH one.
-     *
      * @see com.graphhopper.GraphHopper#calcPaths(GHRequest, GHResponse)
      */
-    public static class LMRAFactory implements RoutingAlgorithmFactory {
+    private static class LMRAFactory implements DecoratingRoutingAlgorithmFactory {
         private RoutingAlgorithmFactory defaultAlgoFactory;
         private PrepareLandmarks p;
 
@@ -257,6 +256,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             this.p = p;
         }
 
+        @Override
         public RoutingAlgorithmFactory getDefaultAlgoFactory() {
             return defaultAlgoFactory;
         }

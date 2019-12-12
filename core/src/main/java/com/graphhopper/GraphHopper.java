@@ -1062,8 +1062,8 @@ public class GraphHopper implements GraphHopperAPI {
                     }
                     // if LM is enabled we have the LMFactory with the CH algo!
                     RoutingAlgorithmFactory chAlgoFactory = tmpAlgoFactory;
-                    if (tmpAlgoFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
-                        chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) tmpAlgoFactory).getDefaultAlgoFactory();
+                    if (tmpAlgoFactory instanceof DecoratingRoutingAlgorithmFactory)
+                        chAlgoFactory = ((DecoratingRoutingAlgorithmFactory) tmpAlgoFactory).getDefaultAlgoFactory();
 
                     if (chAlgoFactory instanceof CHRoutingAlgorithmFactory) {
                         CHProfile chProfile = ((CHRoutingAlgorithmFactory) chAlgoFactory).getCHProfile();
