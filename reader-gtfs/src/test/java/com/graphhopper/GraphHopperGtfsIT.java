@@ -56,7 +56,9 @@ public class GraphHopperGtfsIT {
         cmdArgs.put("graph.location", GRAPH_LOC);
         cmdArgs.put("gtfs.file", "files/sample-feed.zip");
         Helper.removeDir(new File(GRAPH_LOC));
-        graphHopperGtfs = GraphHopperGtfs.createOrLoadGraphHopperGtfs(cmdArgs);
+        graphHopperGtfs = new GraphHopperGtfs(cmdArgs);
+        graphHopperGtfs.init(cmdArgs);
+        graphHopperGtfs.importOrLoad();
         ptRouteResource = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }

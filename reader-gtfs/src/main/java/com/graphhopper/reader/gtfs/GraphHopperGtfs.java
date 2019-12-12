@@ -44,14 +44,6 @@ import java.util.zip.ZipFile;
 
 public class GraphHopperGtfs extends GraphHopperOSM {
 
-
-    public static GraphHopperGtfs createOrLoadGraphHopperGtfs(CmdArgs cmdArgs) {
-        GraphHopperGtfs graphHopperOSM = new GraphHopperGtfs(cmdArgs);
-        graphHopperOSM.init(cmdArgs);
-        graphHopperOSM.importOrLoad();
-        return graphHopperOSM;
-    }
-
     private final CmdArgs cmdArgs;
     private GtfsStorage gtfsStorage;
 

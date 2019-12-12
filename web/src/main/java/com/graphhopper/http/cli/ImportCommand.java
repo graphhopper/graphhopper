@@ -18,10 +18,8 @@
 
 package com.graphhopper.http.cli;
 
-import com.graphhopper.GraphHopper;
 import com.graphhopper.http.GraphHopperManaged;
 import com.graphhopper.http.GraphHopperServerConfiguration;
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -34,14 +32,8 @@ public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfigurat
 
     @Override
     protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace namespace, GraphHopperServerConfiguration configuration) {
-        if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
-            final GraphHopper graphHopper = GraphHopperGtfs.createOrLoadGraphHopperGtfs(configuration.getGraphHopperConfiguration());
-            graphHopper.close();
-        } else {
-            final GraphHopperManaged graphHopper = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), bootstrap.getObjectMapper());
-            graphHopper.getGraphHopper().importAndClose();
-        }
-
+        final GraphHopperManaged graphHopper = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), bootstrap.getObjectMapper());
+        graphHopper.getGraphHopper().importAndClose();
     }
 
 }

@@ -22,7 +22,6 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.PtRouteResource;
 import com.graphhopper.reader.gtfs.Request;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
@@ -44,10 +43,8 @@ public class RealtimeIT {
 
     private static final String GRAPH_LOC = "target/RealtimeIT";
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static final String agencyId = "DTA";
     private static PtRouteResource.Factory graphHopperFactory;
-    private static GraphHopperGtfs graphHopperStorage;
-    private static LocationIndex locationIndex;
+    private static GraphHopperGtfs graphHopperGtfs;
 
     @BeforeClass
     public static void init() {
@@ -56,22 +53,21 @@ public class RealtimeIT {
         cmdArgs.put("gtfs.file", "files/sample-feed.zip");
         cmdArgs.put("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
-        graphHopperStorage = GraphHopperGtfs.createOrLoadGraphHopperGtfs(cmdArgs);
-        locationIndex = graphHopperStorage.getLocationIndex();
-        graphHopperStorage.close();
-        locationIndex.close();
+        graphHopperGtfs = new GraphHopperGtfs(cmdArgs);
+        graphHopperGtfs.init(cmdArgs);
+        graphHopperGtfs.importOrLoad();
+        graphHopperGtfs.close();
         // Re-load read only
-        graphHopperStorage = GraphHopperGtfs.createOrLoadGraphHopperGtfs(cmdArgs);
-        locationIndex = graphHopperStorage.getLocationIndex();
-        graphHopperFactory = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, graphHopperStorage.getGtfsStorage());
+        graphHopperGtfs = new GraphHopperGtfs(cmdArgs);
+        graphHopperGtfs.init(cmdArgs);
+        graphHopperGtfs.importOrLoad();
+        graphHopperFactory = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage());
     }
 
     @AfterClass
     public static void close() {
-        graphHopperStorage.close();
-        locationIndex.close();
+        graphHopperGtfs.close();
     }
-
 
     @Test
     public void testSkipDepartureStop() {
@@ -387,7 +383,7 @@ public class RealtimeIT {
         Trip.PtLeg responseWithoutRealtimeUpdateBest = (Trip.PtLeg) responseWithoutRealtimeUpdate.getBest().getLegs().get(0);
         assertEquals("My planned arrival time is correct.", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), responseWithRealtimeUpdateBest.stops.get(responseWithRealtimeUpdateBest.stops.size()-1).plannedArrivalTime.toInstant());
         assertEquals("My expected arrival time is the same.", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), responseWithRealtimeUpdateBest.stops.get(responseWithRealtimeUpdateBest.stops.size()-1).predictedArrivalTime.toInstant());
-        assertEquals("The trip without realtime update does not have an expected arrival time.", null, responseWithoutRealtimeUpdateBest.stops.get(responseWithoutRealtimeUpdateBest.stops.size()-1).predictedArrivalTime);
+        assertNull("The trip without realtime update does not have an expected arrival time.", responseWithoutRealtimeUpdateBest.stops.get(responseWithoutRealtimeUpdateBest.stops.size() - 1).predictedArrivalTime);
 
 //        assertEquals(responseWithoutRealtimeUpdateBest.toString(), responseWithRealtimeUpdateBest.toString());
     }

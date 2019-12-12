@@ -41,7 +41,7 @@ public class GraphHopperMultimodalIT {
     private static final String GRAPH_LOC = "target/GraphHopperMultimodalIT";
     private static PtRouteResource graphHopper;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static GraphHopperGtfs graphHopperStorage;
+    private static GraphHopperGtfs graphHopperGtfs;
     private static LocationIndex locationIndex;
 
     @BeforeClass
@@ -52,15 +52,17 @@ public class GraphHopperMultimodalIT {
         cmdArgs.put("gtfs.file", "files/sample-feed.zip");
         cmdArgs.put("graph.location", GRAPH_LOC);
         Helper.removeDir(new File(GRAPH_LOC));
-        graphHopperStorage = GraphHopperGtfs.createOrLoadGraphHopperGtfs(cmdArgs);
-        locationIndex = graphHopperStorage.getLocationIndex();
-        graphHopper = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperStorage, locationIndex, graphHopperStorage.getGtfsStorage())
+        graphHopperGtfs = new GraphHopperGtfs(cmdArgs);
+        graphHopperGtfs.init(cmdArgs);
+        graphHopperGtfs.importOrLoad();
+        locationIndex = graphHopperGtfs.getLocationIndex();
+        graphHopper = PtRouteResource.createFactory(new TranslationMap().doImport(), graphHopperGtfs, locationIndex, graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
     @AfterClass
     public static void close() {
-        graphHopperStorage.close();
+        graphHopperGtfs.close();
         locationIndex.close();
     }
 
