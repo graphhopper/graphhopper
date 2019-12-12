@@ -47,7 +47,6 @@ import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Inject;
-import javax.ws.rs.ext.WriterInterceptor;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -225,19 +224,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             environment.jersey().register(PtRouteResource.class);
             environment.jersey().register(PtIsochroneResource.class);
             environment.jersey().register(PtRedirectFilter.class);
-
-            // The included web client works best if we say we only support pt.
-            // Does not have anything to do with FlagEncoders anymore.
-            environment.jersey().register((WriterInterceptor) context -> {
-                if (context.getEntity() instanceof InfoResource.Info) {
-                    InfoResource.Info info = (InfoResource.Info) context.getEntity();
-                    info.supported_vehicles = new String[]{"pt"};
-                    info.features.clear();
-                    info.features.put("pt", new InfoResource.Info.PerVehicle());
-                    context.setEntity(info);
-                }
-                context.proceed();
-            });
         }
         environment.jersey().register(SPTResource.class);
         environment.jersey().register(I18NResource.class);
