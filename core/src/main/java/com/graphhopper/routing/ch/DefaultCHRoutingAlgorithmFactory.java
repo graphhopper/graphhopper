@@ -30,12 +30,12 @@ import com.graphhopper.storage.TurnCostStorage;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 
-public class CHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
+public class DefaultCHRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     private final CHGraph chGraph;
     private final CHProfile chProfile;
     private final PreparationWeighting prepareWeighting;
 
-    public CHRoutingAlgorithmFactory(CHGraph chGraph) {
+    public DefaultCHRoutingAlgorithmFactory(CHGraph chGraph) {
         this.chGraph = chGraph;
         this.chProfile = chGraph.getCHProfile();
         prepareWeighting = new PreparationWeighting(chProfile.getWeighting());

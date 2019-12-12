@@ -439,7 +439,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     }
 
     public RoutingAlgorithmFactory getRoutingAlgorithmFactory() {
-        return new CHRoutingAlgorithmFactory(chGraph);
+        return new DefaultCHRoutingAlgorithmFactory(chGraph);
     }
 
     private static class Params {
