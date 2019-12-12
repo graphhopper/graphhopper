@@ -20,21 +20,9 @@ package com.graphhopper.http.cli;
 
 import com.graphhopper.http.GraphHopperManaged;
 import com.graphhopper.http.GraphHopperServerConfiguration;
-import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.reader.gtfs.GtfsStorage;
-import com.graphhopper.reader.gtfs.PtEncodedValues;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.storage.DAType;
-import com.graphhopper.storage.GHDirectory;
-import com.graphhopper.storage.GraphHopperStorage;
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
-
-import java.util.Arrays;
-import java.util.Collections;
 
 public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfiguration> {
 
@@ -43,21 +31,9 @@ public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfigurat
     }
 
     @Override
-    protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace namespace, GraphHopperServerConfiguration configuration) throws Exception {
-        if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
-            final GHDirectory ghDirectory = new GHDirectory(configuration.getGraphHopperConfiguration().get("graph.location", "target/tmp"), DAType.RAM_STORE);
-            final GtfsStorage gtfsStorage = GtfsStorage.createOrLoad(ghDirectory);
-            EncodingManager encodingManager = PtEncodedValues.createAndAddEncodedValues(EncodingManager.start()).add(new CarFlagEncoder()).add(new FootFlagEncoder()).build();
-            final GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(ghDirectory, encodingManager, gtfsStorage,
-                    configuration.getGraphHopperConfiguration().has("gtfs.file") ? Arrays.asList(configuration.getGraphHopperConfiguration().get("gtfs.file", "").split(",")) : Collections.emptyList(),
-                    configuration.getGraphHopperConfiguration().has("datareader.file") ? Arrays.asList(configuration.getGraphHopperConfiguration().get("datareader.file", "").split(",")) : Collections.emptyList());
-            graphHopperStorage.close();
-            gtfsStorage.close();
-        } else {
-            final GraphHopperManaged graphHopper = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), bootstrap.getObjectMapper());
-            graphHopper.getGraphHopper().importAndClose();
-        }
-
+    protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace namespace, GraphHopperServerConfiguration configuration) {
+        final GraphHopperManaged graphHopper = new GraphHopperManaged(configuration.getGraphHopperConfiguration(), bootstrap.getObjectMapper());
+        graphHopper.getGraphHopper().importAndClose();
     }
 
 }

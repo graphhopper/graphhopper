@@ -110,7 +110,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private File osmFile;
     private Date osmDataDate;
-    private boolean createStorage = true;
     private final IntsRef tempRelFlags;
     private final TurnCostStorage tcs;
 
@@ -249,8 +248,7 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     private void writeOsmToGraph(File osmFile) {
         int tmp = (int) Math.max(getNodeMap().getSize() / 50, 100);
         LOGGER.info("creating graph. Found nodes (pillar+tower):" + nf(getNodeMap().getSize()) + ", " + Helper.getMemInfo());
-        if (createStorage)
-            ghStorage.create(tmp);
+        ghStorage.create(tmp);
 
         long wayStart = -1;
         long relationStart = -1;
@@ -964,14 +962,6 @@ public class OSMReader implements DataReader, TurnCostParser.ExternalInternalMap
     @Override
     public Date getDataDate() {
         return osmDataDate;
-    }
-
-    /**
-     * Per default the storage used in this OSMReader is uninitialized and created i.e. createStorage is true. Specify
-     * false if you call the create method outside of OSMReader.
-     */
-    public void setCreateStorage(boolean createStorage) {
-        this.createStorage = createStorage;
     }
 
     @Override

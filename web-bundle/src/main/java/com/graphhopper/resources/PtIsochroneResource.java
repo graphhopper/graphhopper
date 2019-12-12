@@ -41,13 +41,14 @@ import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 
+import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 
-@Path("isochrone")
+@Path("isochrone-pt")
 public class PtIsochroneResource {
 
     private static final double JTS_TOLERANCE = 0.00001;
@@ -59,6 +60,7 @@ public class PtIsochroneResource {
 
     private final Function<Label, Double> z = label -> (double) label.currentTime;
 
+    @Inject
     public PtIsochroneResource(GtfsStorage gtfsStorage, EncodingManager encodingManager, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex) {
         this.gtfsStorage = gtfsStorage;
         this.encodingManager = encodingManager;

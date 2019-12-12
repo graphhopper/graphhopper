@@ -70,7 +70,6 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         // read osm
         OSMReader reader = new OSMReader(ghStorage);
         reader.setFile(new File(OSM_FILE));
-        reader.setCreateStorage(true);
         reader.readGraph();
         ghStorage.freeze();
 
