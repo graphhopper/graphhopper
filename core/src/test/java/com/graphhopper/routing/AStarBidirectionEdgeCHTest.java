@@ -21,7 +21,10 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Parameters;
 
 import java.util.ArrayList;
@@ -49,19 +52,20 @@ public class AStarBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTester {
         for (Weighting w : weightings) {
             chProfiles.add(CHProfile.edgeBased(w, INFINITE_U_TURN_COSTS));
         }
-        return new GraphHopperStorage(chProfiles, new RAMDirectory(), em, is3D, new TurnCostExtension()).create(1000);
+        return new GraphHopperStorage(chProfiles, new RAMDirectory(), em, is3D, true).create(1000);
     }
 
     @Override
     public RoutingAlgorithmFactory createFactory(GraphHopperStorage ghStorage, AlgorithmOptions opts) {
         ghStorage.freeze();
-        CHGraph chGraph = ghStorage.getCHGraph(CHProfile.edgeBased(opts.getWeighting(), INFINITE_U_TURN_COSTS));
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph);
+        CHProfile chProfile = CHProfile.edgeBased(opts.getWeighting(), INFINITE_U_TURN_COSTS);
+        CHGraph chGraph = ghStorage.getCHGraph(chProfile);
+        PrepareContractionHierarchies ch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, chProfile);
         // make sure the contraction runs only once
         if (chGraph.getEdges() == chGraph.getBaseGraph().getEdges()) {
             ch.doWork();
         }
-        return ch;
+        return ch.getRoutingAlgorithmFactory();
     }
 
 }

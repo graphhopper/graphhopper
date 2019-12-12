@@ -20,6 +20,7 @@ package com.graphhopper.routing.querygraph;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TurnCost;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
@@ -33,8 +34,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 
+import static com.graphhopper.routing.profiles.TurnCost.EV_SUFFIX;
 import static com.graphhopper.storage.index.QueryResult.Position.*;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.Assert.*;
@@ -51,7 +56,7 @@ public class QueryGraphTest {
     public void setUp() {
         carEncoder = new CarFlagEncoder();
         encodingManager = EncodingManager.create(carEncoder);
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension()).create(100);
+        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false).create(100);
     }
 
     @After
@@ -262,7 +267,7 @@ public class QueryGraphTest {
     @Test
     public void testUseMeanElevation() {
         g.close();
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension()).create(100);
+        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, true).create(100);
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0, 0);
         na.setNode(1, 0, 0.0001, 20);
@@ -486,12 +491,13 @@ public class QueryGraphTest {
 
     @Test
     public void testTurnCostsProperlyPropagated_Issue282() {
-        TurnCostExtension turnExt = new TurnCostExtension();
         FlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
-
-        GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(),
-                EncodingManager.create(encoder), false, turnExt).
+        EncodingManager em = EncodingManager.create(encoder);
+        GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(), em, false, true).
                 create(100);
+        TurnCostStorage turnExt = graphWithTurnCosts.getTurnCostStorage();
+        IntsRef tcFlags = TurnCost.createFlags();
+        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(EncodingManager.getKey(encoder.toString(), EV_SUFFIX));
         NodeAccess na = graphWithTurnCosts.getNodeAccess();
         na.setNode(0, .00, .00);
         na.setNode(1, .00, .01);
@@ -501,20 +507,21 @@ public class QueryGraphTest {
         EdgeIteratorState edge1 = graphWithTurnCosts.edge(2, 1, 10, true);
 
         FastestWeighting weighting = new FastestWeighting(encoder);
-        TurnWeighting turnWeighting = new TurnWeighting(weighting, (TurnCostExtension) graphWithTurnCosts.getExtension());
+        TurnWeighting turnWeighting = new TurnWeighting(weighting, graphWithTurnCosts.getTurnCostStorage());
 
         // no turn costs initially
         assertEquals(0, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 
-        //  now use turn costs
-        turnExt.addTurnInfo(edge0.getEdge(), 1, edge1.getEdge(), encoder.getTurnFlags(false, 10));
+        // now use turn costs and QueryGraph
+        turnCostEnc.setDecimal(false, tcFlags, 10);
+        turnExt.setTurnCost(tcFlags, edge0.getEdge(), 1, edge1.getEdge());
         assertEquals(10, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 
         // now use turn costs with query graph
         QueryResult res1 = createLocationResult(0.000, 0.005, edge0, 0, QueryResult.Position.EDGE);
         QueryResult res2 = createLocationResult(0.005, 0.010, edge1, 0, QueryResult.Position.EDGE);
         QueryGraph qGraph = QueryGraph.lookup(graphWithTurnCosts, res1, res2);
-        turnWeighting = new TurnWeighting(weighting, (TurnCostExtension) qGraph.getExtension());
+        turnWeighting = new TurnWeighting(weighting, qGraph.getTurnCostStorage());
 
         int fromQueryEdge = GHUtility.getEdge(qGraph, res1.getClosestNode(), 1).getEdge();
         int toQueryEdge = GHUtility.getEdge(qGraph, res2.getClosestNode(), 1).getEdge();
@@ -652,70 +659,6 @@ public class QueryGraphTest {
         assertEquals(1, iter.getAdjNode());
         assertEquals(GHUtility.createEdgeKey(0, 1, origEdgeId, false),
                 ((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), 1)).getOriginalEdgeKey());
-    }
-
-    @Test
-    public void useEECache() {
-        initGraph(g);
-        EdgeExplorer explorer = g.createEdgeExplorer();
-        EdgeIterator iter = explorer.setBaseNode(1);
-        assertTrue(iter.next());
-        QueryResult res = createLocationResult(2, 1.5, iter, 1, PILLAR);
-
-        QueryGraph queryGraph = lookup(res);
-        queryGraph.setUseEdgeExplorerCache(true);
-
-        EdgeExplorer edgeExplorer = queryGraph.createEdgeExplorer();
-        // using cache means same reference
-        assertSame(edgeExplorer, queryGraph.createEdgeExplorer());
-    }
-
-    @Test
-    public void useEECache_nestedLoop() {
-        //
-        // 0->3
-        // |\
-        // 1 2->6
-        //   |\
-        //   4 5
-        g.edge(0, 1, 10, false);
-        g.edge(0, 2, 10, false);
-        g.edge(0, 3, 10, false);
-        g.edge(2, 4, 10, false);
-        g.edge(2, 5, 10, false);
-        g.edge(2, 6, 10, false);
-
-        EdgeExplorer explorer = g.createEdgeExplorer();
-        EdgeIterator iter = explorer.setBaseNode(0);
-        assertTrue(iter.next());
-        QueryResult res = createLocationResult(0, 0, iter, 1, PILLAR);
-
-        QueryGraph queryGraph = lookup(Collections.singletonList(res));
-        queryGraph.setUseEdgeExplorerCache(true);
-
-        EdgeExplorer outerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
-        EdgeExplorer innerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
-
-        // without using filter id for DefaultEdgeFilter the filters are equal and using the explorers in a nested
-        // loop would fail
-        assertSame(outerEdgeExplorer, innerEdgeExplorer);
-
-        // using a different filter id for the second filter we get different explorers
-        outerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder));
-        innerEdgeExplorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(carEncoder).setFilterId(1));
-        assertNotSame(outerEdgeExplorer, innerEdgeExplorer);
-
-        // now we can safely use the two explorers in a nested loop
-        Set<String> edges = new HashSet<>();
-        EdgeIterator outerIter = outerEdgeExplorer.setBaseNode(0);
-        while (outerIter.next()) {
-            edges.add("o" + outerIter.getBaseNode() + "-" + outerIter.getAdjNode());
-            EdgeIterator innerIter = innerEdgeExplorer.setBaseNode(outerIter.getAdjNode());
-            while (innerIter.next()) {
-                edges.add("i" + innerIter.getBaseNode() + "-" + innerIter.getAdjNode());
-            }
-        }
-        assertEquals(new HashSet<>(Arrays.asList("o0-1", "o0-2", "o0-3", "i2-4", "i2-5", "i2-6")), edges);
     }
 
     @Test

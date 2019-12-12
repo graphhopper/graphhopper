@@ -40,6 +40,13 @@ public class DateRangeParserTest extends CalendarBasedTest {
     }
 
     @Test
+    public void testCreate() throws ParseException {
+        DateRangeParser dateRangeParser = DateRangeParser.createInstance("2019-10-08");
+        assertFalse(dateRangeParser.checkCondition("2014 Oct 8-2014 Dec 12").isCheckPassed());
+        assertTrue(dateRangeParser.checkCondition("2019 Oct 8-2019 Dec 12").isCheckPassed());
+    }
+
+    @Test
     public void testToString() throws ParseException {
         DateRange instance = dateRangeParser.getRange("Mar-Oct");
         assertEquals("yearless:true, dayOnly:false, reverse:false, from:1970-03-01T00:00:00Z, to:1970-10-31T23:59:59Z", instance.toString());

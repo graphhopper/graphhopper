@@ -27,6 +27,7 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
+import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
@@ -383,7 +384,7 @@ public class GraphHopperOSMTest {
         instance.importOrLoad();
 
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
-        assertEquals(8, instance.getGraphHopperStorage().getAllEdges().length());
+        assertEquals(8, instance.getGraphHopperStorage().getEdges());
 
         // A to D
         GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle("car"));
@@ -794,8 +795,8 @@ public class GraphHopperOSMTest {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = EncodingManager.create(carEncoder);
         Weighting weighting = new FastestWeighting(carEncoder);
-        GraphHopperStorage g = new GraphHopperStorage(Collections.singletonList(weighting), new RAMDirectory(), encodingManager,
-                false, new GraphExtension.NoOpExtension()).
+        GraphHopperStorage g = new GraphHopperStorage(Collections.singletonList(CHProfile.nodeBased(weighting)), new RAMDirectory(), encodingManager,
+                false).
                 create(20);
 
         //   2---3---4
@@ -914,8 +915,7 @@ public class GraphHopperOSMTest {
             tmpGH.importOrLoad();
 
             assertEquals(5, tmpGH.getCHFactoryDecorator().getPreparations().size());
-            for (RoutingAlgorithmFactory raf : tmpGH.getCHFactoryDecorator().getPreparations()) {
-                PrepareContractionHierarchies pch = (PrepareContractionHierarchies) raf;
+            for (PrepareContractionHierarchies pch : tmpGH.getCHFactoryDecorator().getPreparations()) {
                 assertTrue("Preparation wasn't run! [" + threadCount + "]", pch.isPrepared());
 
                 String name = pch.getCHProfile().toFileName();
@@ -992,7 +992,7 @@ public class GraphHopperOSMTest {
         Weighting fwSimpleTruck = new FastestWeighting(simpleTruck);
         Weighting fwTruck = new FastestWeighting(truck);
         RAMDirectory ramDir = new RAMDirectory();
-        GraphHopperStorage storage = new GraphHopperStorage(Arrays.asList(fwSimpleTruck, fwTruck), ramDir, em, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage storage = new GraphHopperStorage(CHProfile.createProfilesForWeightings(Arrays.asList(fwSimpleTruck, fwTruck)), ramDir, em, false);
         decorator.addCHProfile(CHProfile.nodeBased(fwSimpleTruck));
         decorator.addCHProfile(CHProfile.nodeBased(fwTruck));
         decorator.addPreparation(PrepareContractionHierarchies.fromGraphHopperStorage(storage, CHProfile.nodeBased(fwSimpleTruck)));
@@ -1000,9 +1000,9 @@ public class GraphHopperOSMTest {
 
         HintsMap wMap = new HintsMap("fastest");
         wMap.put("vehicle", "truck");
-        assertEquals("fastest|truck", ((PrepareContractionHierarchies) decorator.getDecoratedAlgorithmFactory(null, wMap)).getWeighting().toString());
+        assertEquals("fastest|truck", ((CHRoutingAlgorithmFactory) decorator.getDecoratedAlgorithmFactory(null, wMap)).getWeighting().toString());
         wMap.put("vehicle", "simple_truck");
-        assertEquals("fastest|simple_truck", ((PrepareContractionHierarchies) decorator.getDecoratedAlgorithmFactory(null, wMap)).getWeighting().toString());
+        assertEquals("fastest|simple_truck", ((CHRoutingAlgorithmFactory) decorator.getDecoratedAlgorithmFactory(null, wMap)).getWeighting().toString());
 
         // make sure weighting cannot be mixed
         decorator.addCHProfile(CHProfile.nodeBased(fwTruck));

@@ -30,8 +30,9 @@ import com.graphhopper.util.Parameters;
 import java.util.Arrays;
 
 /**
- * A simple dijkstra tuned to perform one to many queries more efficient than Dijkstra. Old data
- * structures are cached between requests and potentially reused. Useful for CH preparation.
+ * A simple dijkstra tuned to perform multiple one to many queries with the same source and different target nodes
+ * more efficiently than {@link Dijkstra}. Old data structures are cached between requests and potentially reused and
+ * the shortest path tree is stored in (large as the graph) arrays instead of hash maps.
  * <p>
  *
  * @author Peter Karich

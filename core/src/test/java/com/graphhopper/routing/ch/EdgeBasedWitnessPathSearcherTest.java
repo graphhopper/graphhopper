@@ -33,21 +33,21 @@ import static com.graphhopper.routing.weighting.TurnWeighting.INFINITE_U_TURN_CO
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public class WitnessPathSearcherTest {
+public class EdgeBasedWitnessPathSearcherTest {
 
     private GraphHopperStorage graph;
     private CHGraph chGraph;
+    private Weighting weighting;
     private TurnWeighting chTurnWeighting;
 
     @Before
     public void setup() {
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
         EncodingManager encodingManager = EncodingManager.create(encoder);
-        Weighting weighting = new ShortestWeighting(encoder);
-        PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
+        weighting = new ShortestWeighting(encoder);
         graph = new GraphBuilder(encodingManager).setCHProfiles(CHProfile.edgeBased(weighting, INFINITE_U_TURN_COSTS)).create();
-        TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
-        chTurnWeighting = new TurnWeighting(preparationWeighting, turnCostExtension);
+        TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
+        chTurnWeighting = new TurnWeighting(weighting, turnCostStorage);
         chGraph = graph.getCHGraph();
     }
 
@@ -60,7 +60,7 @@ public class WitnessPathSearcherTest {
         graph.edge(3, 4, 1, false);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        WitnessPathSearcher finder = createFinder();
+        EdgeBasedWitnessPathSearcher finder = createFinder();
         finder.initSearch(2, 1, 0);
         CHEntry result = finder.runSearch(3, 3);
         CHEntry expected = new ExpectedResultBuilder(3, 2, 2, 2.0)
@@ -78,7 +78,7 @@ public class WitnessPathSearcherTest {
         graph.edge(3, 4, 1, true);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        WitnessPathSearcher finder = createFinder();
+        EdgeBasedWitnessPathSearcher finder = createFinder();
         finder.initSearch(2, 1, 0);
         CHEntry result = finder.runSearch(3, 3);
         CHEntry expected = new ExpectedResultBuilder(3, 2, 2, 2.0)
@@ -100,7 +100,7 @@ public class WitnessPathSearcherTest {
         graph.edge(5, 3, 1, false);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        WitnessPathSearcher finder = createFinder();
+        EdgeBasedWitnessPathSearcher finder = createFinder();
         finder.initSearch(2, 1, 0);
         CHEntry result = finder.runSearch(3, 3);
         assertNull(result);
@@ -119,14 +119,15 @@ public class WitnessPathSearcherTest {
         graph.edge(5, 3, 1, true);
         graph.freeze();
         setMaxLevelOnAllNodes();
-        WitnessPathSearcher finder = createFinder();
+        EdgeBasedWitnessPathSearcher finder = createFinder();
         finder.initSearch(2, 1, 0);
         CHEntry result = finder.runSearch(3, 3);
         assertNull(result);
     }
 
-    private WitnessPathSearcher createFinder() {
-        return new WitnessPathSearcher(chGraph, chTurnWeighting, new PMap());
+    private EdgeBasedWitnessPathSearcher createFinder() {
+        PrepareCHGraph prepareGraph = PrepareCHGraph.edgeBased(chGraph, weighting, chTurnWeighting);
+        return new EdgeBasedWitnessPathSearcher(prepareGraph, new PMap());
     }
 
     private void setMaxLevelOnAllNodes() {

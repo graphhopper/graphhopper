@@ -51,7 +51,7 @@ public class OSMRoadAccessParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, IntsRef relationFlags) {
         RoadAccess accessValue = YES;
         RoadAccess tmpAccessValue;
         for (String restriction : restrictions) {

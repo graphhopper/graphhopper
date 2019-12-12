@@ -219,16 +219,6 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
-    public int getAdditionalField() {
-        return getCurrentEdge().getAdditionalField();
-    }
-
-    @Override
-    public EdgeIteratorState setAdditionalField(int value) {
-        return getCurrentEdge().setAdditionalField(value);
-    }
-
-    @Override
     public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState edge) {
         return getCurrentEdge().copyPropertiesFrom(edge);
     }
@@ -267,11 +257,6 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
 
     @Override
     public CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
-        throw new UnsupportedOperationException("Not supported.");
-    }
-
-    @Override
-    public CHEdgeIteratorState setFirstAndLastOrigEdges(int firstOrigEdge, int lastOrigEdge) {
         throw new UnsupportedOperationException("Not supported.");
     }
 

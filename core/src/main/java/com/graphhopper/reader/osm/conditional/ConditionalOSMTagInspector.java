@@ -35,14 +35,14 @@ public class ConditionalOSMTagInspector implements ConditionalTagInspector {
     private final List<String> tagsToCheck;
     private final ConditionalParser permitParser, restrictiveParser;
     // enabling by default makes noise but could improve OSM data
-    private boolean enabledLogs = true;
+    private boolean enabledLogs;
 
-    public ConditionalOSMTagInspector(Object value, List<String> tagsToCheck,
+    public ConditionalOSMTagInspector(Calendar value, List<String> tagsToCheck,
                                       Set<String> restrictiveValues, Set<String> permittedValues) {
-        this(tagsToCheck, Arrays.asList(new DateRangeParser((Calendar) value)), restrictiveValues, permittedValues, false);
+        this(Arrays.asList(new DateRangeParser(value)), tagsToCheck, restrictiveValues, permittedValues, false);
     }
 
-    public ConditionalOSMTagInspector(List<String> tagsToCheck, List<? extends ConditionalValueParser> valueParsers,
+    public ConditionalOSMTagInspector(List<? extends ConditionalValueParser> valueParsers, List<String> tagsToCheck,
                                       Set<String> restrictiveValues, Set<String> permittedValues, boolean enabledLogs) {
         this.tagsToCheck = new ArrayList<>(tagsToCheck.size());
         for (String tagToCheck : tagsToCheck) {

@@ -3,8 +3,8 @@
 # benchmark/benchmark.sh <data_dir> <results_dir> <small_osm_map_path> <big_osm_map_path>
 #
 # where:
-# <data_dir> = directory used to download map and store results
-# <results_dir> = name of directory where results of this run are stored
+# <data_dir> = base directory used to store results
+# <results_dir> = name of directory where results of this run are stored (inside <data_dir>)
 # <small_osm_map_path> = path to osm map the measurement is run on for slow measurements
 # <big_osm_map_path> = path to osm map the measurement is run on for fast measurements
 
@@ -34,6 +34,7 @@ mkdir -p ${SINGLE_RESULTS_DIR}
 # 1 - small map: node- and edge-based CH + slow routing
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
 datareader.file=${SMALL_OSM_MAP} \
+datareader.date_range_parser_day=2019-11-01 \
 measurement.folder=${SINGLE_RESULTS_DIR} \
 measurement.clean=true \
 measurement.summaryfile=${RESULTS_DIR}summary_small.dat \
@@ -52,6 +53,7 @@ measurement.count=5000
 # 2 - big map: node-based CH + landmarks
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
+datareader.date_range_parser_day=2019-11-01 \
 measurement.folder=${SINGLE_RESULTS_DIR} \
 measurement.clean=true \
 measurement.summaryfile=${RESULTS_DIR}summary_big.dat \

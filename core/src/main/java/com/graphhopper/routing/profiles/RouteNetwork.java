@@ -15,30 +15,38 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.profiles;
 
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 
-public class IgnoreNodeFilter implements EdgeFilter {
-    private int avoidNode;
-    private CHGraph graph;
-    private int maxLevel;
+public enum RouteNetwork {
 
-    public IgnoreNodeFilter(CHGraph chGraph, int maxLevel) {
-        this.graph = chGraph;
-        this.maxLevel = maxLevel;
-    }
+    OTHER("other"), INTERNATIONAL("international"), NATIONAL("national"), REGIONAL("regional"),
+    LOCAL("local");
 
-    public IgnoreNodeFilter setAvoidNode(int node) {
-        this.avoidNode = node;
-        return this;
+    /**
+     * You need to call EncodingManager.getKey(prefix, EV_SUFFIX) as this EncodedValue can be used for e.g. bike and hike
+     */
+    public static final String EV_SUFFIX = "network";
+
+    private final String name;
+
+    RouteNetwork(String name) {
+        this.name = name;
     }
 
     @Override
-    public final boolean accept(EdgeIteratorState iter) {
-        // ignore if it is skipNode or adjNode is already contracted
-        int node = iter.getAdjNode();
-        return avoidNode != node && graph.getLevel(node) == maxLevel;
+    public String toString() {
+        return name;
+    }
+
+    public static RouteNetwork find(String name) {
+        if (name == null)
+            return OTHER;
+        try {
+            return RouteNetwork.valueOf(Helper.toUpperCase(name));
+        } catch (IllegalArgumentException ex) {
+            return OTHER;
+        }
     }
 }

@@ -24,8 +24,6 @@ public interface GraphStorage extends Storable<GraphStorage> {
 
     EncodingManager getEncodingManager();
 
-    void setSegmentSize(int bytes);
-
     String toDetailsString();
 
     StorableProperties getProperties();

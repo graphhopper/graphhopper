@@ -22,7 +22,7 @@ public class GHMatrixSyncTest extends AbstractGHMatrixWebTester {
         return new GraphHopperMatrixWeb(new GHMatrixSyncRequester("") {
 
             @Override
-            protected String getJson(String url) throws IOException {
+            protected String postJson(String url, JsonNode data) throws IOException {
                 return finalJsonStr;
             }
         });

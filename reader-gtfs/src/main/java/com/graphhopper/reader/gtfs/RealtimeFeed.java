@@ -32,9 +32,9 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
@@ -102,19 +102,19 @@ public class RealtimeFeed {
         final IntLongHashMap delaysForAlightEdges = new IntLongHashMap();
         final LinkedList<VirtualEdgeIteratorState> additionalEdges = new LinkedList<>();
         final Graph overlayGraph = new Graph() {
-            int firstEdge = graphHopperStorage.getAllEdges().length();
+            int firstEdge = graphHopperStorage.getEdges();
             EncodingManager encodingManager = graphHopperStorage.getEncodingManager();
             final NodeAccess nodeAccess = new NodeAccess() {
-                IntIntHashMap additionalNodeFields = new IntIntHashMap();
+                IntIntHashMap turnCostIndices = new IntIntHashMap();
 
                 @Override
-                public int getAdditionalNodeField(int nodeId) {
+                public int getTurnCostIndex(int nodeId) {
                     return 0;
                 }
 
                 @Override
-                public void setAdditionalNodeField(int nodeId, int additionalValue) {
-                    additionalNodeFields.put(nodeId, additionalValue);
+                public void setTurnCostIndex(int nodeId, int additionalValue) {
+                    turnCostIndices.put(nodeId, additionalValue);
                 }
 
                 @Override
@@ -245,7 +245,7 @@ public class RealtimeFeed {
             }
 
             @Override
-            public GraphExtension getExtension() {
+            public TurnCostStorage getTurnCostStorage() {
                 throw new RuntimeException();
             }
 

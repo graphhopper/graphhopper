@@ -23,7 +23,6 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Extended graph interface which supports Contraction Hierarchies. Ie. storing and retrieving the
@@ -60,6 +59,11 @@ public interface CHGraph extends Graph {
 
     /**
      * like shortcut(), but for edge-based CH
+     *
+     * @param origFirst The first original edge that is skipped by this shortcut. For example for the following shortcut
+     *                  edge from x to y, which itself skips the shortcuts x->v and v->y the first original edge would
+     *                  be x->u: x->u->v->w->y
+     * @param origLast  like origFirst, but the last orig edge, i.e w->y in above example
      */
     int shortcutEdgeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2, int origFirst, int origLast);
 
@@ -79,14 +83,8 @@ public interface CHGraph extends Graph {
     @Override
     AllCHEdgesIterator getAllEdges();
 
-    /**
-     * Disconnects the edges (higher to lower node) via the specified edgeState pointing from lower to
-     * higher node.
-     * <p>
-     *
-     * @param edgeState the edge from lower to higher
-     */
-    void disconnect(CHEdgeExplorer edgeExplorer, EdgeIteratorState edgeState);
+
+    void disconnectEdge(int edge, int adjNode, int prevEdge);
 
     /**
      * @return the number of original edges in this graph (without shortcuts)

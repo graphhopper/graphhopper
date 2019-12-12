@@ -20,7 +20,6 @@ package com.graphhopper.reader.gtfs;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import org.junit.Test;
@@ -39,12 +38,12 @@ public class WrapperGraphTest {
 
     @Test
     public void testEternalOffByOneError() {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory("wurst"), encodingManager, false);
         assertEquals(0, graph.getNodes());
-        assertEquals(0, graph.getAllEdges().length());
+        assertEquals(0, graph.getEdges());
         WrapperGraph wrapperGraph = new WrapperGraph(graph, Collections.emptyList());
         assertEquals(0, wrapperGraph.getNodes());
-        assertEquals(0, wrapperGraph.getAllEdges().length());
+        assertEquals(0, wrapperGraph.getEdges());
     }
 
 }

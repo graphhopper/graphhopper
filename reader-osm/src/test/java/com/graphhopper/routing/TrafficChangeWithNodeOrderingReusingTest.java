@@ -42,9 +42,9 @@ public class TrafficChangeWithNodeOrderingReusingTest {
     private static final String OSM_FILE = "../local/maps/berlin-latest.osm.pbf";
 
     private final GraphHopperStorage ghStorage;
-    private final CHGraph baseCHGraph;
-    private final CHGraph trafficCHGraph;
     private int maxDeviationPercentage;
+    private final CHProfile baseProfile;
+    private final CHProfile trafficProfile;
 
     @Parameters(name = "maxDeviationPercentage = {0}")
     public static Object[] data() {
@@ -55,12 +55,10 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         this.maxDeviationPercentage = maxDeviationPercentage;
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = EncodingManager.create(encoder);
-        CHProfile baseProfile = CHProfile.nodeBased(new FastestWeighting(encoder));
-        CHProfile trafficProfile = CHProfile.nodeBased(new RandomDeviationWeighting(baseProfile.getWeighting(), maxDeviationPercentage));
+        baseProfile = CHProfile.nodeBased(new FastestWeighting(encoder));
+        trafficProfile = CHProfile.nodeBased(new RandomDeviationWeighting(baseProfile.getWeighting(), maxDeviationPercentage));
         Directory dir = new RAMDirectory("traffic-change-test");
-        ghStorage = new GraphHopperStorage(Arrays.asList(baseProfile, trafficProfile), dir, em, false, new GraphExtension.NoOpExtension());
-        baseCHGraph = ghStorage.getCHGraph(baseProfile);
-        trafficCHGraph = ghStorage.getCHGraph(trafficProfile);
+        ghStorage = new GraphHopperStorage(Arrays.asList(baseProfile, trafficProfile), dir, em, false);
     }
 
     @Test
@@ -76,17 +74,19 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         ghStorage.freeze();
 
         // create CH
-        PrepareContractionHierarchies basePch = new PrepareContractionHierarchies(baseCHGraph);
+        PrepareContractionHierarchies basePch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, baseProfile);
         basePch.doWork();
+        CHGraph baseCHGraph = ghStorage.getCHGraph(baseProfile);
 
         // check correctness & performance
         checkCorrectness(ghStorage, baseCHGraph, basePch, seed, 100);
         runPerformanceTest(ghStorage, baseCHGraph, basePch, seed, numQueries);
 
         // now we re-use the contraction order from the previous contraction and re-run it with the traffic weighting
-        PrepareContractionHierarchies trafficPch = new PrepareContractionHierarchies(trafficCHGraph)
+        PrepareContractionHierarchies trafficPch = PrepareContractionHierarchies.fromGraphHopperStorage(ghStorage, trafficProfile)
                 .useFixedNodeOrdering(baseCHGraph.getNodeOrderingProvider());
         trafficPch.doWork();
+        CHGraph trafficCHGraph = ghStorage.getCHGraph(trafficProfile);
 
         // check correctness & performance
         checkCorrectness(ghStorage, trafficCHGraph, trafficPch, seed, 100);
@@ -99,7 +99,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         int numFails = 0;
         for (int i = 0; i < numQueries; ++i) {
             Dijkstra dijkstra = new Dijkstra(ghStorage, pch.getWeighting(), TraversalMode.NODE_BASED);
-            RoutingAlgorithm chAlgo = pch.createAlgo(chGraph, AlgorithmOptions.start().weighting(pch.getWeighting()).build());
+            RoutingAlgorithm chAlgo = pch.getRoutingAlgorithmFactory().createAlgo(chGraph, AlgorithmOptions.start().weighting(pch.getWeighting()).build());
 
             int from = rnd.nextInt(ghStorage.getNodes());
             int to = rnd.nextInt(ghStorage.getNodes());
@@ -138,7 +138,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
                 int from = random.nextInt(numNodes);
                 int to = random.nextInt(numNodes);
                 long start = nanoTime();
-                RoutingAlgorithm algo = pch.createAlgo(chGraph, AlgorithmOptions.start().weighting(pch.getWeighting()).build());
+                RoutingAlgorithm algo = pch.getRoutingAlgorithmFactory().createAlgo(chGraph, AlgorithmOptions.start().weighting(pch.getWeighting()).build());
                 Path path = algo.calcPath(from, to);
                 if (!warmup && !path.isFound())
                     return 1;

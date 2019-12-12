@@ -22,7 +22,6 @@ import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostExtension;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -47,7 +46,7 @@ public class AStarTest extends AbstractRoutingAlgorithmTester {
     /**
      * Runs the same test with each of the supported traversal modes
      */
-    @Parameters(name = "{0}")
+    @Parameters(name = "{0} {1}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
                 {TraversalMode.NODE_BASED, false},
@@ -64,7 +63,7 @@ public class AStarTest extends AbstractRoutingAlgorithmTester {
                 Weighting w = opts.getWeighting();
                 if (traversalMode.isEdgeBased()) {
                     double uTurnCost = allowUTurns ? 40 : Double.POSITIVE_INFINITY;
-                    w = new TurnWeighting(w, (TurnCostExtension) g.getExtension(), uTurnCost);
+                    w = new TurnWeighting(w, g.getTurnCostStorage(), uTurnCost);
                 }
                 return new AStar(g, w, traversalMode);
             }

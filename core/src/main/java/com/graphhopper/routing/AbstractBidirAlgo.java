@@ -40,7 +40,7 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
  * @author Peter Karich
  * @author easbar
  */
-public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
+public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm implements BidirRoutingAlgorithm {
     protected int from;
     protected int to;
     protected int fromOutEdge;
@@ -102,15 +102,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         return calcPath(from, to, ANY_EDGE, ANY_EDGE);
     }
 
-    /**
-     * like {@link #calcPath(int, int)}, but this method also allows to strictly restrict the edge the
-     * path will begin with and the edge it will end with.
-     *
-     * @param fromOutEdge the edge id of the first edge of the path. using {@link EdgeIterator#ANY_EDGE} means
-     *                    not enforcing the first edge of the path
-     * @param toInEdge    the edge id of the last edge of the path. using {@link EdgeIterator#ANY_EDGE} means
-     *                    not enforcing the last edge of the path
-     */
+    @Override
     public Path calcPath(int from, int to, int fromOutEdge, int toInEdge) {
         if ((fromOutEdge != ANY_EDGE || toInEdge != ANY_EDGE) && !traversalMode.isEdgeBased()) {
             throw new IllegalArgumentException("Restricting the start/target edges is only possible for edge-based graph traversal");

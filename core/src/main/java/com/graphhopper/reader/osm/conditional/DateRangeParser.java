@@ -42,9 +42,7 @@ public class DateRangeParser implements ConditionalValueParser {
     private static final DateFormat MONTH_DAY2_DF = createFormatter("dd.MM");
     private static final DateFormat YEAR_MONTH_DF = createFormatter("yyyy MMM");
     private static final DateFormat MONTH_DF = createFormatter("MMM");
-    private static final List<String> DAY_NAMES = Arrays.asList(new String[]{
-            "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"
-    });
+    private static final List<String> DAY_NAMES = Arrays.asList("Su", "Mo", "Tu", "We", "Th", "Fr", "Sa");
 
     private Calendar date;
 
@@ -135,5 +133,16 @@ public class DateRangeParser implements ConditionalValueParser {
             return ConditionState.TRUE;
         else
             return ConditionState.FALSE;
+    }
+
+    public static DateRangeParser createInstance(String day) {
+        Calendar calendar = createCalendar();
+        try {
+            if (!day.isEmpty())
+                calendar.setTime(Helper.createFormatter("yyyy-MM-dd").parse(day));
+        } catch (ParseException e) {
+            throw new IllegalArgumentException(e);
+        }
+        return new DateRangeParser(calendar);
     }
 }

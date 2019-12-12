@@ -23,8 +23,6 @@ import com.conveyal.gtfs.model.Transfer;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueFactory;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -99,7 +97,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
                 }
 
                 @Override
-                public void readGraph() throws IOException {
+                public void readGraph() {
 
                 }
 
@@ -129,8 +127,7 @@ public class GraphHopperGtfs extends GraphHopperOSM {
     @Override
     protected void importPublicTransit() {
         gtfsStorage = new GtfsStorage(getGraphHopperStorage().getDirectory());
-        if (getGtfsStorage().loadExisting()) {
-        } else {
+        if (!getGtfsStorage().loadExisting()) {
             getGtfsStorage().create();
             GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
             int idx = 0;

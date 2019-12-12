@@ -31,6 +31,7 @@ import com.graphhopper.routing.profiles.Surface;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
@@ -115,31 +116,38 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testQueryWithDirections() {
-        // Note, in general specifying directions does not work with CH, but this is an example where it works
-        final Response response = app.client().target("http://localhost:8080/route?" + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240&ch.force_heading=true").request().buildGet().invoke();
+    public void testQueryWithoutInstructions() {
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&instructions=false").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
-        assertTrue("distance wasn't correct:" + distance, distance > 960);
-        assertTrue("distance wasn't correct:" + distance, distance < 970);
+        assertTrue("distance wasn't correct:" + distance, distance > 9000);
+        assertTrue("distance wasn't correct:" + distance, distance < 9500);
     }
 
     @Test
-    public void testQueryWithStraightVia() {
-        // Note, in general specifying pass_through does not work with CH, but this is an example where it works
-        final Response response = app.client().target("http://localhost:8080/route?point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
+    public void testCHWithHeading_error() {
+        // There are special cases where heading works with node-based CH, but generally it leads to wrong results -> we expect an error
+        final Response response = app.client().target("http://localhost:8080/route?" + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
-        JsonNode infoJson = json.get("info");
-        assertFalse(infoJson.has("errors"));
-        JsonNode path = json.get("paths").get(0);
-        double distance = path.get("distance").asDouble();
-        assertTrue("distance wasn't correct:" + distance, distance > 320);
-        assertTrue("distance wasn't correct:" + distance, distance < 325);
+        assertTrue("There should have been an error response", json.has("message"));
+        String expected = "The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483";
+        assertTrue("There should be an error containing " + expected + ", but got: " + json.get("message"), json.get("message").asText().contains(expected));
+    }
+
+    @Test
+    public void testCHWithPassThrough_error() {
+        // There are special cases where pass_through works with node-based CH, but generally it leads to wrong results -> we expect an error
+        final Response response = app.client().target("http://localhost:8080/route?point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertTrue("There should have been an error response", json.has("message"));
+        String expected = "The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765";
+        assertTrue("There should be an error containing " + expected + ", but got: " + json.get("message"), json.get("message").asText().contains(expected));
     }
 
     @Test
@@ -182,11 +190,11 @@ public class RouteResourceTest {
         assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() < 21000);
 
         InstructionList instructions = arsp.getInstructions();
-        assertEquals(26, instructions.size());
+        assertEquals(25, instructions.size());
         assertEquals("Continue onto la Callisa", instructions.get(0).getTurnDescription(null));
         assertEquals("At roundabout, take exit 2", instructions.get(4).getTurnDescription(null));
         assertEquals(true, instructions.get(4).getExtraInfoJSON().get("exited"));
-        assertEquals(false, instructions.get(24).getExtraInfoJSON().get("exited"));
+        assertEquals(false, instructions.get(23).getExtraInfoJSON().get("exited"));
     }
 
     @Test
@@ -221,10 +229,10 @@ public class RouteResourceTest {
         assertTrue(pathDetails.containsKey("edge_id"));
         assertTrue(pathDetails.containsKey("time"));
         List<PathDetail> averageSpeedList = pathDetails.get("average_speed");
-        assertEquals(9, averageSpeedList.size());
+        assertEquals(14, averageSpeedList.size());
         assertEquals(30.0, averageSpeedList.get(0).getValue());
         assertEquals(14, averageSpeedList.get(0).getLength());
-        assertEquals(60.0, averageSpeedList.get(1).getValue());
+        assertEquals(60.1, averageSpeedList.get(1).getValue());
         assertEquals(5, averageSpeedList.get(1).getLength());
 
         List<PathDetail> edgeIdDetails = pathDetails.get("edge_id");
@@ -277,9 +285,9 @@ public class RouteResourceTest {
         JsonNode details = path.get("details");
         assertTrue(details.has("average_speed"));
         JsonNode averageSpeed = details.get("average_speed");
-        assertEquals(30.0, averageSpeed.get(0).get(2).asDouble(), .01);
-        assertEquals(14, averageSpeed.get(0).get(1).asInt());
-        assertEquals(60.0, averageSpeed.get(1).get(2).asDouble(), .01);
+        assertEquals(30.0, averageSpeed.get(0).get(2).asDouble(), .1);
+        assertEquals(14, averageSpeed.get(0).get(1).asInt(), .1);
+        assertEquals(60.1, averageSpeed.get(1).get(2).asDouble(), .1);
         assertEquals(19, averageSpeed.get(1).get(1).asInt());
         assertTrue(details.has("edge_id"));
         JsonNode edgeIds = details.get("edge_id");
