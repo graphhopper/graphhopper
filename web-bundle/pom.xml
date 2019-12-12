@@ -70,12 +70,6 @@
             <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>directions-api-client</artifactId>
-            <version>${directions-api-client.version}</version>
-            <scope>test</scope>
-        </dependency>
 
     </dependencies>
 
