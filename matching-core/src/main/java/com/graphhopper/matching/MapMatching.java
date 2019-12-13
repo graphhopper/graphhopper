@@ -60,7 +60,6 @@ import java.util.*;
 public class MapMatching {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final GraphHopper graphHopper;
 
     // Penalty in m for each U-turn performed at the beginning or end of a path between two
     // subsequent candidates.
@@ -77,7 +76,6 @@ public class MapMatching {
     private QueryGraph queryGraph;
 
     public MapMatching(GraphHopper graphHopper, HintsMap hints) {
-        this.graphHopper = graphHopper;
         this.locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
 
         if (!hints.has("vehicle")) hints.put("vehicle", "car");
@@ -678,6 +676,10 @@ public class MapMatching {
                     + gpxe.getQueryResult().getSnappedPoint();
         }
         return "[" + str + "]";
+    }
+
+    public Graph getQueryGraph() {
+        return queryGraph;
     }
 
     private static class MapMatchedPath extends Path {
