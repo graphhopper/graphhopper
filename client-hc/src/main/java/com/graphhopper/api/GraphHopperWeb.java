@@ -45,7 +45,6 @@ import java.util.concurrent.TimeUnit;
 import static com.graphhopper.api.GraphHopperMatrixWeb.*;
 import static com.graphhopper.util.Helper.round6;
 import static com.graphhopper.util.Helper.toLowerCase;
-import static com.graphhopper.util.Parameters.Curbsides.CURBSIDE_ANY;
 import static com.graphhopper.util.Parameters.Routing.CALC_POINTS;
 import static com.graphhopper.util.Parameters.Routing.INSTRUCTIONS;
 
@@ -324,9 +323,9 @@ public class GraphHopperWeb implements GraphHopperAPI {
             }
         }
 
-        // append *all* curbsides only if at least *one* is not CURBSIDE_ANY
+        // append *all* curbsides only if at least *one* is not empty
         for (String checkEitherSide : ghRequest.getCurbsides()) {
-            if (!checkEitherSide.equals(CURBSIDE_ANY)) {
+            if (!checkEitherSide.isEmpty()) {
                 for (String curbside : ghRequest.getCurbsides()) {
                     url += "&" + Parameters.Routing.CURBSIDE + "=" + WebHelper.encodeURL(curbside);
                 }
