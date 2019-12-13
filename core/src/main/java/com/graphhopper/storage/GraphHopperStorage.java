@@ -83,6 +83,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         chGraphs = new ArrayList<>();
     }
 
+    /**
+     * Adds a {@link CHGraph} for the given {@link CHProfile}. You need to call this method before calling {@link #create(long)}
+     * or {@link #loadExisting()}.
+     */
     public void addCHGraph(CHProfile chProfile) {
         baseGraph.checkNotInitialized();
         if (getCHProfiles().contains(chProfile)) {
@@ -91,6 +95,9 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         chGraphs.add(new CHGraphImpl(chProfile, dir, baseGraph, segmentSize));
     }
 
+    /**
+     * @see #addCHGraph(CHProfile)
+     */
     public void addCHGraphs(List<CHProfile> chProfiles) {
         for (CHProfile chProfile : chProfiles) {
             addCHGraph(chProfile);
