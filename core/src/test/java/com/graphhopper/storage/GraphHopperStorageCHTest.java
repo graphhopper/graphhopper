@@ -64,7 +64,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
     private GraphHopperStorage newGHStorage(Directory dir, boolean is3D, boolean forEdgeBasedTraversal, int segmentSize) {
         CHProfile chProfile = new CHProfile(new FastestWeighting(carEncoder), forEdgeBasedTraversal, INFINITE_U_TURN_COSTS);
-        return new GraphHopperStorage(Collections.singletonList(chProfile), dir, encodingManager, is3D, false, segmentSize);
+        return new GraphBuilder(encodingManager).setCHProfiles(chProfile).setDir(dir).set3D(is3D).setSegmentSize(segmentSize).build();
     }
 
     @Test
@@ -472,7 +472,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
                 CHProfile.nodeBased(new FastestWeighting(tmpBike)));
         BooleanEncodedValue tmpCarAccessEnc = tmpCar.getAccessEnc();
 
-        graph = new GraphHopperStorage(chProfiles, new RAMDirectory(), em, false).create(1000);
+        graph = new GraphBuilder(em).setCHProfiles(chProfiles).create();
         IntsRef edgeFlags = GHUtility.setProperties(em.createEdgeFlags(), tmpCar, 100, true, false);
         graph.edge(0, 1).setDistance(10).setFlags(GHUtility.setProperties(edgeFlags, tmpBike, 10, true, true));
         graph.edge(1, 2).setDistance(10).setFlags(edgeFlags);
@@ -621,7 +621,6 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         for (Weighting edgeBasedCHWeighting : edgeBasedCHWeightings) {
             profiles.add(CHProfile.edgeBased(edgeBasedCHWeighting, INFINITE_U_TURN_COSTS));
         }
-        return new GraphHopperStorage(profiles,
-                new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), encodingManager, false);
+        return new GraphBuilder(encodingManager).setCHProfiles(profiles).setDir(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE)).build();
     }
 }

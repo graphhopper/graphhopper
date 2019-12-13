@@ -9,7 +9,10 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.MiniPerfTest;
@@ -22,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.Random;
 
@@ -57,8 +59,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         EncodingManager em = EncodingManager.create(encoder);
         baseProfile = CHProfile.nodeBased(new FastestWeighting(encoder));
         trafficProfile = CHProfile.nodeBased(new RandomDeviationWeighting(baseProfile.getWeighting(), maxDeviationPercentage));
-        Directory dir = new RAMDirectory("traffic-change-test");
-        ghStorage = new GraphHopperStorage(Arrays.asList(baseProfile, trafficProfile), dir, em, false);
+        ghStorage = new GraphBuilder(em).setCHProfiles(baseProfile, trafficProfile).build();
     }
 
     @Test
@@ -66,7 +67,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         final long seed = 2139960664L;
         final int numQueries = 50_000;
 
-        LOGGER.info("Running performance test, max deviation percentage: " + this.maxDeviationPercentage);
+        LOGGER.info("Running performance test, max deviation percentage: " + maxDeviationPercentage);
         // read osm
         OSMReader reader = new OSMReader(ghStorage);
         reader.setFile(new File(OSM_FILE));

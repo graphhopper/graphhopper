@@ -285,10 +285,7 @@ public class DirectedRoutingTest {
     }
 
     private GraphHopperStorage createGraph() {
-        GraphHopperStorage gh = new GraphHopperStorage(Collections.singletonList(chProfile), dir, encodingManager,
-                false, true);
-        gh.create(1000);
-        return gh;
+        return new GraphBuilder(encodingManager).setDir(dir).setCHProfiles(chProfile).withTurnCosts(true).create();
     }
 
     private int getTargetInEdge(Random rnd, int node, Graph graph) {

@@ -341,9 +341,7 @@ public class BidirectionalRoutingTest {
     }
 
     private GraphHopperStorage createGraph() {
-        GraphHopperStorage gh = new GraphHopperStorage(chProfiles, dir, encodingManager, false, true);
-        gh.create(1000);
-        return gh;
+        return new GraphBuilder(encodingManager).setCHProfiles(chProfiles).setDir(dir).withTurnCosts(true).create();
     }
 
     private int getRandom(Random rnd) {

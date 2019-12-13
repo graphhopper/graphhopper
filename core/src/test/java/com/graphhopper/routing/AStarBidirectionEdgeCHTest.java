@@ -23,8 +23,8 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Parameters;
 
 import java.util.ArrayList;
@@ -52,7 +52,7 @@ public class AStarBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTester {
         for (Weighting w : weightings) {
             chProfiles.add(CHProfile.edgeBased(w, INFINITE_U_TURN_COSTS));
         }
-        return new GraphHopperStorage(chProfiles, new RAMDirectory(), em, is3D, true).create(1000);
+        return new GraphBuilder(em).setCHProfiles(chProfiles).set3D(is3D).withTurnCosts(true).create();
     }
 
     @Override

@@ -43,8 +43,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
 
     @Override
     protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
-        GraphHopperStorage g = GraphBuilder.start(encodingManager).setDir(dir).set3D(enabled3D).withTurnCosts(true).setSegmentSize(segmentSize).build();
-        return g;
+        return GraphBuilder.start(encodingManager).setDir(dir).set3D(enabled3D).withTurnCosts(true).setSegmentSize(segmentSize).build();
     }
 
     @Override
@@ -138,7 +137,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
     @Test(expected = IllegalArgumentException.class)
     @Override
     public void testClone() {
-        // todo: implement graph coyping in the presence of turn costs
+        // todo: implement graph copying in the presence of turn costs
         super.testClone();
     }
 
