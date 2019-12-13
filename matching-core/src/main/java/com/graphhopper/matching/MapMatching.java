@@ -678,10 +678,6 @@ public class MapMatching {
         return "[" + str + "]";
     }
 
-    public Graph getQueryGraph() {
-        return queryGraph;
-    }
-
     private static class MapMatchedPath extends Path {
         MapMatchedPath(Graph graph, Weighting weighting, List<EdgeIteratorState> edges) {
             super(graph);
