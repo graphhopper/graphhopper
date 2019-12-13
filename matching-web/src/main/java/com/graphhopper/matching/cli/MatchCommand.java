@@ -109,7 +109,7 @@ public class MatchCommand extends Command {
                 System.out.println("\texport results to:" + outFile);
 
                 PathWrapper pathWrapper = new PathWrapper();
-                new PathMerger(hopper.getGraphHopperStorage(), weighting).
+                new PathMerger(mr.getGraph(), weighting).
                         doWork(pathWrapper, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), tr);
                 if (pathWrapper.hasErrors()) {
                     System.err.println("Problem with file " + gpxFile + ", " + pathWrapper.getErrors());
