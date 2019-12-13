@@ -74,14 +74,14 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         InternalGraphEventListener listener = new InternalGraphEventListener() {
             @Override
             public void initStorage() {
-                for (CHGraphImpl cg : getAllCHGraphs()) {
+                for (CHGraphImpl cg : chGraphs) {
                     cg.initStorage();
                 }
             }
 
             @Override
             public void freeze() {
-                for (CHGraphImpl cg : getAllCHGraphs()) {
+                for (CHGraphImpl cg : chGraphs) {
                     cg._prepareForContraction();
                 }
             }
@@ -95,7 +95,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     public CHGraph getCHGraph() {
-        Collection<CHGraphImpl> chGraphs = getAllCHGraphs();
         if (chGraphs.isEmpty()) {
             throw new IllegalStateException("There is no CHGraph");
         } else if (chGraphs.size() > 1) {
@@ -109,7 +108,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
      * @return the {@link CHGraph} for the specified {@link CHProfile}
      */
     public CHGraph getCHGraph(CHProfile profile) {
-        Collection<CHGraphImpl> chGraphs = getAllCHGraphs();
         if (chGraphs.isEmpty())
             throw new IllegalStateException("There is no CHGraph");
 
@@ -127,7 +125,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     public boolean isCHPossible() {
-        return !getAllCHGraphs().isEmpty();
+        return !chGraphs.isEmpty();
     }
 
     public List<CHProfile> getCHProfiles() {
@@ -162,7 +160,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
      */
     @Override
     public GraphHopperStorage create(long byteCount) {
-        baseGraph.checkInit();
+        baseGraph.checkNotInitialized();
         if (encodingManager == null)
             throw new IllegalStateException("EncodingManager can only be null if you call loadExisting");
 
@@ -179,7 +177,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
         baseGraph.create(initSize);
 
-        for (CHGraphImpl cg : getAllCHGraphs()) {
+        for (CHGraphImpl cg : chGraphs) {
             cg.create(byteCount);
         }
 
@@ -226,7 +224,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     @Override
     public boolean loadExisting() {
-        baseGraph.checkInit();
+        baseGraph.checkNotInitialized();
         if (properties.loadExisting()) {
             properties.checkVersions(false);
             // check encoding for compatibility
@@ -256,7 +254,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
             checkIfConfiguredAndLoadedWeightingsCompatible();
 
-            for (CHGraphImpl cg : getAllCHGraphs()) {
+            for (CHGraphImpl cg : chGraphs) {
                 if (!cg.loadExisting())
                     throw new IllegalStateException("Cannot load " + cg);
             }
@@ -304,7 +302,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     @Override
     public void flush() {
-        for (CHGraphImpl cg : getAllCHGraphs()) {
+        for (CHGraphImpl cg : chGraphs) {
             if (!cg.isClosed())
                 cg.flush();
         }
@@ -318,7 +316,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         properties.close();
         baseGraph.close();
 
-        for (CHGraphImpl cg : getAllCHGraphs()) {
+        for (CHGraphImpl cg : chGraphs) {
             if (!cg.isClosed())
                 cg.close();
         }
@@ -333,7 +331,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     public long getCapacity() {
         long cnt = baseGraph.getCapacity() + properties.getCapacity();
 
-        for (CHGraphImpl cg : getAllCHGraphs()) {
+        for (CHGraphImpl cg : chGraphs) {
             cnt += cg.getCapacity();
         }
         return cnt;
@@ -355,7 +353,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public String toDetailsString() {
         String str = baseGraph.toDetailsString();
-        for (CHGraphImpl cg : getAllCHGraphs()) {
+        for (CHGraphImpl cg : chGraphs) {
             str += ", " + cg.toDetailsString();
         }
 
@@ -449,10 +447,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public boolean isAdjacentToNode(int edge, int node) {
         return baseGraph.isAdjacentToNode(edge, node);
-    }
-
-    private Collection<CHGraphImpl> getAllCHGraphs() {
-        return chGraphs;
     }
 
     /**

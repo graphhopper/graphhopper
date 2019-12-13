@@ -20,7 +20,10 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EnumEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -178,10 +181,15 @@ class BaseGraph implements Graph {
         return this;
     }
 
-    void checkInit() {
+    void checkNotInitialized() {
         if (initialized)
             throw new IllegalStateException("You cannot configure this GraphStorage "
                     + "after calling create or loadExisting. Calling one of the methods twice is also not allowed.");
+    }
+
+    void checkInitialized() {
+        if (!initialized)
+            throw new IllegalStateException("The graph has not yet been initialized.");
     }
 
     protected int loadNodesHeader() {
@@ -313,8 +321,7 @@ class BaseGraph implements Graph {
      * extend byte capacity
      */
     final void ensureNodeIndex(int nodeIndex) {
-        if (!initialized)
-            throw new AssertionError("The graph has not yet been initialized.");
+        checkInitialized();
 
         if (nodeIndex < nodeCount)
             return;
@@ -354,7 +361,7 @@ class BaseGraph implements Graph {
     }
 
     private void setSegmentSize(int bytes) {
-        checkInit();
+        checkNotInitialized();
         nodes.setSegmentSize(bytes);
         edges.setSegmentSize(bytes);
         wayGeometry.setSegmentSize(bytes);

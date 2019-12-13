@@ -50,11 +50,11 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     public void testNoCreateCalled() {
         try (GraphHopperStorage gs = GraphBuilder.start(encodingManager).build()) {
             ((BaseGraph) gs.getBaseGraph()).ensureNodeIndex(123);
-            fail("AssertionError should be raised");
-        } catch (AssertionError err) {
+            fail("IllegalStateException should be raised");
+        } catch (IllegalStateException err) {
             // ok
         } catch (Exception ex) {
-            fail("AssertionError should be raised, but was " + ex.toString());
+            fail("IllegalStateException should be raised, but was " + ex.toString());
         }
     }
 
