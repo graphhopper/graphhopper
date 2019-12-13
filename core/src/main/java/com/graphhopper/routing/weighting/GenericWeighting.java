@@ -50,9 +50,9 @@ public class GenericWeighting extends AbstractWeighting {
 
     private final DecimalEncodedValue carMaxSpeedEnc;
     private final EnumEncodedValue<RoadAccess> roadAccessEnc;
-    private DecimalEncodedValue maxWeightEnc;
-    private DecimalEncodedValue maxHeightEnc;
-    private DecimalEncodedValue maxWidthEnc;
+    private final DecimalEncodedValue maxWeightEnc;
+    private final DecimalEncodedValue maxHeightEnc;
+    private final DecimalEncodedValue maxWidthEnc;
 
     public GenericWeighting(DataFlagEncoder encoder, PMap hintsMap) {
         super(encoder);
@@ -72,12 +72,9 @@ public class GenericWeighting extends AbstractWeighting {
         roadAccessEnc = encoder.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         carMaxSpeedEnc = encoder.getDecimalEncodedValue(MaxSpeed.KEY);
 
-        if (encoder.hasEncodedValue(MaxWeight.KEY))
-            maxWeightEnc = encoder.getDecimalEncodedValue(MaxWeight.KEY);
-        if (encoder.hasEncodedValue(MaxWidth.KEY))
-            maxWidthEnc = encoder.getDecimalEncodedValue(MaxWidth.KEY);
-        if (encoder.hasEncodedValue(MaxHeight.KEY))
-            maxHeightEnc = encoder.getDecimalEncodedValue(MaxHeight.KEY);
+        maxWeightEnc = encoder.hasEncodedValue(MaxWeight.KEY) ? encoder.getDecimalEncodedValue(MaxWeight.KEY) : null;
+        maxWidthEnc = encoder.hasEncodedValue(MaxWidth.KEY) ? encoder.getDecimalEncodedValue(MaxWidth.KEY) : null;
+        maxHeightEnc = encoder.hasEncodedValue(MaxHeight.KEY) ? encoder.getDecimalEncodedValue(MaxHeight.KEY) : null;
     }
 
     @Override
