@@ -750,6 +750,8 @@ public class GraphHopper implements GraphHopperAPI {
         if (lmFactoryDecorator.isEnabled())
             initLMAlgoFactoryDecorator();
 
+        ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
+
         List<CHProfile> chProfiles;
         if (chFactoryDecorator.isEnabled()) {
             initCHAlgoFactoryDecorator();
@@ -758,7 +760,8 @@ public class GraphHopper implements GraphHopperAPI {
             chProfiles = Collections.emptyList();
         }
 
-        ghStorage = new GraphHopperStorage(chProfiles, dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
+        ghStorage.addCHGraphs(chProfiles);
+
 
         if (!new File(graphHopperFolder).exists())
             return false;
