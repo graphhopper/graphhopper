@@ -1,4 +1,5 @@
 1.0
+    removed GenericWeighting and DataFlagEncoder as a normal CarFlagEncoder does the job too
     add required EncodedValues like road_class to EncodingManager if not added from user
     removed PathNative,PathBidirRef,Path4CH,EdgeBasedPathCH and moved path extraction code out of Path class, added PathExtractor,BidirPathExtractor(+subclasses for CH) instead, #1730
     conditional turn restrictions now supported, #1683
