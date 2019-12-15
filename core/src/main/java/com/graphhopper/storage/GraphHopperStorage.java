@@ -104,8 +104,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         for (CHProfile chProfile : chProfiles) {
             addCHGraph(chProfile);
         }
-        dir.create();
-        osm = new OSM(dir.getDefaultType().isStoring() ? dir.getLocation()+"/osm.db" : null);
     }
 
     public CHGraph getCHGraph() {
@@ -196,6 +194,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         }
 
         properties.put("graph.ch.profiles", getCHProfiles().toString());
+        osm = new OSM(dir.getDefaultType().isStoring() ? dir.getLocation()+"/osm.db" : null);
         return this;
     }
 
