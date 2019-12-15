@@ -45,6 +45,7 @@ public class GtfsTest {
 
     static {
         config.getGraphHopperConfiguration().merge(new CmdArgs().
+                put("graph.flag_encoders", "foot").
                 put("datareader.file", "../reader-gtfs/files/beatty.osm").
                 put("gtfs.file", "../reader-gtfs/files/sample-feed.zip").
                 put("graph.location", DIR));
@@ -64,7 +65,33 @@ public class GtfsTest {
         final Response response = app.client().target("http://localhost:8080/route")
                 .queryParam("point", "Stop(NADAV)")
                 .queryParam("point", "Stop(NANAA)")
+                .queryParam("vehicle", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
+                .request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        GHResponse ghResponse = response.readEntity(GHResponse.class);
+        assertFalse(ghResponse.hasErrors());
+    }
+
+    @Test
+    public void testPointPointQuery() {
+        final Response response = app.client().target("http://localhost:8080/route")
+                .queryParam("point","36.914893,-116.76821") // NADAV stop
+                .queryParam("point","36.914944,-116.761472") //NANAA stop
+                .queryParam("vehicle", "pt")
+                .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
+                .request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        GHResponse ghResponse = response.readEntity(GHResponse.class);
+        assertFalse(ghResponse.hasErrors());
+    }
+
+    @Test
+    public void testWalkQuery() {
+        final Response response = app.client().target("http://localhost:8080/route")
+                .queryParam("point", "36.914893,-116.76821")
+                .queryParam("point", "36.914944,-116.761472")
+                .queryParam("vehicle", "foot")
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         GHResponse ghResponse = response.readEntity(GHResponse.class);

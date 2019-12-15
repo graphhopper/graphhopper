@@ -74,9 +74,9 @@ public class MotorcycleFlagEncoderTest {
         way.clearTags();
         way.setTag("highway", "unclassified");
         way.setTag("ford", "yes");
-        assertTrue(encoder.getAccess(way).canSkip());
-        way.setTag("motorcycle", "yes");
         assertTrue(encoder.getAccess(way).isWay());
+        way.setTag("motorcycle", "no");
+        assertTrue(encoder.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("route", "ferry");

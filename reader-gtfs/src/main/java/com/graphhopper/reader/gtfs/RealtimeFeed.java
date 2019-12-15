@@ -31,7 +31,10 @@ import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
@@ -99,7 +102,7 @@ public class RealtimeFeed {
         final IntLongHashMap delaysForAlightEdges = new IntLongHashMap();
         final LinkedList<VirtualEdgeIteratorState> additionalEdges = new LinkedList<>();
         final Graph overlayGraph = new Graph() {
-            int firstEdge = graphHopperStorage.getAllEdges().length();
+            int firstEdge = graphHopperStorage.getEdges();
             EncodingManager encodingManager = graphHopperStorage.getEncodingManager();
             final NodeAccess nodeAccess = new NodeAccess() {
                 IntIntHashMap turnCostIndices = new IntIntHashMap();
@@ -242,7 +245,7 @@ public class RealtimeFeed {
             }
 
             @Override
-            public TurnCostExtension getTurnCostExtension() {
+            public TurnCostStorage getTurnCostStorage() {
                 throw new RuntimeException();
             }
 

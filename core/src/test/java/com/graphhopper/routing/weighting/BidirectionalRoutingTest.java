@@ -111,21 +111,21 @@ public class BidirectionalRoutingTest {
         }
     }
 
-    private AbstractBidirAlgo createAlgo() {
+    private BidirRoutingAlgorithm createAlgo() {
         return createAlgo(prepareCH ? chGraph : graph);
     }
 
-    private AbstractBidirAlgo createAlgo(Graph graph) {
+    private BidirRoutingAlgorithm createAlgo(Graph graph) {
         switch (algo) {
             case ASTAR:
                 return new AStarBidirection(graph, weighting, traversalMode);
             case CH_DIJKSTRA:
-                return (AbstractBidirAlgo) pch.createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
+                return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(DIJKSTRA_BI).build());
             case CH_ASTAR:
-                return (AbstractBidirAlgo) pch.createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
+                return (BidirRoutingAlgorithm) pch.getRoutingAlgorithmFactory().createAlgo(graph, AlgorithmOptions.start().weighting(weighting).algorithm(ASTAR_BI).build());
             case LM:
                 AStarBidirection astarbi = new AStarBidirection(graph, weighting, traversalMode);
-                return (AbstractBidirAlgo) lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
+                return (BidirRoutingAlgorithm) lm.getDecoratedAlgorithm(graph, astarbi, AlgorithmOptions.start().build());
             default:
                 throw new IllegalArgumentException("unknown algo " + algo);
         }
@@ -341,9 +341,7 @@ public class BidirectionalRoutingTest {
     }
 
     private GraphHopperStorage createGraph() {
-        GraphHopperStorage gh = new GraphHopperStorage(chProfiles, dir, encodingManager, false, true);
-        gh.create(1000);
-        return gh;
+        return new GraphBuilder(encodingManager).setCHProfiles(chProfiles).setDir(dir).withTurnCosts(true).create();
     }
 
     private int getRandom(Random rnd) {

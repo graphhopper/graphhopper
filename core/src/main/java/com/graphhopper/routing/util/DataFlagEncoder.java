@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.weighting.GenericWeighting;
@@ -93,13 +91,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         // TODO support different vehicle types, currently just roundabout and fwd&bwd for one vehicle type
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
 
-        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, RoadAccess.KEY, MaxSpeed.KEY)) {
-            if (!encodedValueLookup.hasEncodedValue(key))
-                throw new IllegalStateException("To use DataFlagEncoder and the GenericWeighting you need to add " +
-                        "the encoded value " + key + " before this '" + toString() + "' flag encoder. Order is important! " +
-                        "E.g. use the config: graph.encoded_values: " + key);
-        }
-
         // workaround to init AbstractWeighting.avSpeedEnc variable that GenericWeighting does not need
         avgSpeedEnc = new UnsignedDecimalEncodedValue("fake", 1, 1, false);
         roadEnvironmentEnc = getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
@@ -108,16 +99,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     protected void flagsDefault(IntsRef edgeFlags, boolean forward, boolean backward) {
         accessEnc.setBool(false, edgeFlags, forward);
         accessEnc.setBool(true, edgeFlags, backward);
-    }
-
-    @Override
-    public long handleRelationTags(long oldRelationFlags, ReaderRelation relation) {
-        return oldRelationFlags;
-    }
-
-    @Override
-    public boolean acceptsTurnRelation(OSMTurnRelation relation) {
-        return relation.isVehicleTypeConcernedByTurnRestriction(restrictions);
     }
 
     @Override
@@ -151,7 +132,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
         if (access.canSkip())
             return edgeFlags;
 
@@ -220,15 +201,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             return true;
 
         return GenericWeighting.class.isAssignableFrom(feature);
-    }
-
-    @Override
-    public InstructionAnnotation getAnnotation(IntsRef flags, Translation tr) {
-        if (roadEnvironmentEnc.getEnum(false, flags) == RoadEnvironment.FORD) {
-            return new InstructionAnnotation(1, tr.tr("way_contains_ford"));
-        }
-
-        return super.getAnnotation(flags, tr);
     }
 
     @Override

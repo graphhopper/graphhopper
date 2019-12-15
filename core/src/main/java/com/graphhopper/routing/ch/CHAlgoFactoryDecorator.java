@@ -248,7 +248,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (preparations.isEmpty())
             throw new IllegalStateException("No preparations added to this decorator");
 
-        return getPreparation(map);
+        return getPreparation(map).getRoutingAlgorithmFactory();
     }
 
     public PrepareContractionHierarchies getPreparation(HintsMap map) {
@@ -343,9 +343,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         System.out.println(conditional);
         System.out.println(nConditional + " of " + ghStorage.getEdges() + " are tagged with a conditional.");
 
-        CHGraph chGraph = ghStorage.getCHGraph(chProfile);
         final Weighting weighting = chProfile.getWeighting();
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(chGraph);
         AllEdgesIterator edgeCursor = ghStorage.getAllEdges();
         final IntHashSet blockedNodes = new IntHashSet();
         final IntHashSet blockedEdges = new IntHashSet();
@@ -356,13 +354,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                 blockedEdges.add(edgeCursor.getEdge());
             }
         }
-        prepare.useNodeFilter(new IntPredicate() {
-            @Override
-            public boolean apply(int node) {
-                return !blockedNodes.contains(node);
-            }
-        });
-        prepare.useWeightingForNodeBasedWitnessSearch(new Weighting() {
+        Weighting weightingForNodeBasedWitnessSearch = new Weighting() {
             @Override
             public double getMinWeight(double distance) {
                 return weighting.getMinWeight(distance);
@@ -395,9 +387,16 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             public boolean matches(HintsMap map) {
                 return weighting.matches(map);
             }
+        };
+        PrepareContractionHierarchies tmpPrepareCH = PrepareContractionHierarchies.fromGraphHopperStorageWithWeightingForNodeBasedWitnessSearch(ghStorage, chProfile, weightingForNodeBasedWitnessSearch);
+        tmpPrepareCH.useNodeFilter(new IntPredicate() {
+            @Override
+            public boolean apply(int node) {
+                return !blockedNodes.contains(node);
+            }
         });
-        prepare.setParams(pMap);
-        return prepare;
+        tmpPrepareCH.setParams(pMap);
+        return tmpPrepareCH;
     }
 
     /**

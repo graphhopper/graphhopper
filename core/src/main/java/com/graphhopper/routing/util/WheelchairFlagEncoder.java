@@ -51,7 +51,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     public WheelchairFlagEncoder(PMap properties) {
         this((int) properties.getLong("speed_bits", 4),
                 properties.getDouble("speed_factor", 1));
-        this.setBlockFords(properties.getBool("block_fords", true));
+        this.setBlockFords(properties.getBool("block_fords", false));
     }
 
     public WheelchairFlagEncoder(int speedBits, double speedFactor) {
@@ -102,7 +102,6 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
         maxPossibleSpeed = FERRY_SPEED;
         speedDefault = MEAN_SPEED;
         speedTwoDirections = true;
-        init();
     }
 
     @Override
@@ -192,7 +191,7 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
         if (access.canSkip()) {
             return edgeFlags;
         }
@@ -258,13 +257,13 @@ public class WheelchairFlagEncoder extends FootFlagEncoder {
     }
 
     /**
-     * First get priority from {@link FootFlagEncoder#handlePriority(ReaderWay, int)} then evaluate wheelchair specific
+     * First get priority from {@link FootFlagEncoder#handlePriority(ReaderWay, Integer)} then evaluate wheelchair specific
      * tags.
      *
      * @return a priority for the given way
      */
     @Override
-    protected int handlePriority(ReaderWay way, int priorityFromRelation) {
+    protected int handlePriority(ReaderWay way, Integer priorityFromRelation) {
         TreeMap<Double, Integer> weightToPrioMap = new TreeMap<>();
 
         weightToPrioMap.put(100d, super.handlePriority(way, priorityFromRelation));

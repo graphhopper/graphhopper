@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.NotThreadSafe;
 
 import java.io.File;
@@ -92,9 +93,16 @@ public class UnsafeDataAccess extends AbstractDataAccess {
 
         try {
             address = UNSAFE.reallocateMemory(address, capacity);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException(ex.getMessage() + " - problem when allocating new memory. "
+                    + "address:" + address + "capacity:" + capacity + ", old capacity:" + oldCap + ", new bytes:" + newBytes
+                    + ", allSegments:" + allSegments + ", segmentSizeInBytes:" + segmentSizeInBytes
+                    + ", segmentSizePower:" + segmentSizePower + ", " + Helper.getMemInfo());
         } catch (OutOfMemoryError err) {
-            throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
-                    + oldCap + ", new bytes:" + newBytes + ", segmentSizeIntsPower:" + segmentSizePower);
+            throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. "
+                    + "address:" + address + "capacity:" + capacity + ", old capacity:" + oldCap + ", new bytes:" + newBytes
+                    + ", allSegments:" + allSegments + ", segmentSizeInBytes:" + segmentSizeInBytes
+                    + ", segmentSizePower:" + segmentSizePower + ", " + Helper.getMemInfo());
         }
 
         if (clearNewMem)

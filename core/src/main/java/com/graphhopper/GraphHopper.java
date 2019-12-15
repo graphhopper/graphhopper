@@ -20,9 +20,10 @@ package com.graphhopper;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
-import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
 import com.graphhopper.routing.profiles.DefaultEncodedValueFactory;
 import com.graphhopper.routing.profiles.EncodedValueFactory;
@@ -520,10 +521,12 @@ public class GraphHopper implements GraphHopperAPI {
         if (!flagEncodersStr.isEmpty() || !encodedValueStr.isEmpty()) {
             if (!encodedValueStr.isEmpty())
                 emBuilder.addAll(tagParserFactory, encodedValueStr);
+            registerCustomEncodedValues(emBuilder);
             if (!flagEncodersStr.isEmpty())
                 emBuilder.addAll(flagEncoderFactory, flagEncodersStr);
             emBuilder.setEnableInstructions(args.getBool("datareader.instructions", true));
             emBuilder.setPreferredLanguage(args.get("datareader.preferred_language", ""));
+            emBuilder.setDateRangeParser(DateRangeParser.createInstance(args.get("datareader.date_range_parser_day", "")));
             // overwrite EncodingManager object from configuration file
             setEncodingManager(emBuilder.build());
         }
@@ -748,6 +751,8 @@ public class GraphHopper implements GraphHopperAPI {
         if (lmFactoryDecorator.isEnabled())
             initLMAlgoFactoryDecorator();
 
+        ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
+
         List<CHProfile> chProfiles;
         if (chFactoryDecorator.isEnabled()) {
             initCHAlgoFactoryDecorator();
@@ -756,7 +761,8 @@ public class GraphHopper implements GraphHopperAPI {
             chProfiles = Collections.emptyList();
         }
 
-        ghStorage = new GraphHopperStorage(chProfiles, dir, encodingManager, hasElevation(), encodingManager.needsTurnCostsSupport(), defaultSegmentSize);
+        ghStorage.addCHGraphs(chProfiles);
+
 
         if (!new File(graphHopperFolder).exists())
             return false;
@@ -775,7 +781,7 @@ public class GraphHopper implements GraphHopperAPI {
             if (!ghStorage.loadExisting())
                 return false;
 
-            postProcessing();
+            postProcessing(false);
             fullyLoaded = true;
             return true;
         } finally {
@@ -851,7 +857,7 @@ public class GraphHopper implements GraphHopperAPI {
     /**
      * Does the preparation and creates the location index
      */
-    public void postProcessing() {
+    public final void postProcessing() {
         postProcessing(false);
     }
 
@@ -860,7 +866,7 @@ public class GraphHopper implements GraphHopperAPI {
      *
      * @param closeEarly release resources as early as possible
      */
-    public void postProcessing(boolean closeEarly) {
+    protected void postProcessing(boolean closeEarly) {
         // Later: move this into the GraphStorage.optimize method
         // Or: Doing it after preparation to optimize shortcuts too. But not possible yet #12
 
@@ -880,6 +886,8 @@ public class GraphHopper implements GraphHopperAPI {
 
         initLocationIndex();
 
+        importPublicTransit();
+
         if (lmFactoryDecorator.isEnabled())
             lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
         loadOrPrepareLM(closeEarly);
@@ -888,6 +896,14 @@ public class GraphHopper implements GraphHopperAPI {
             chFactoryDecorator.createPreparations(ghStorage);
         if (!isCHPrepared())
             prepareCH(closeEarly);
+    }
+
+    protected void registerCustomEncodedValues(EncodingManager.Builder emBuilder) {
+
+    }
+
+    protected void importPublicTransit() {
+
     }
 
     private static final String INTERPOLATION_KEY = "prepare.elevation_interpolation.done";
@@ -964,7 +980,7 @@ public class GraphHopper implements GraphHopperAPI {
     public Weighting createTurnWeighting(Graph graph, Weighting weighting, TraversalMode tMode, double uTurnCosts) {
         FlagEncoder encoder = weighting.getFlagEncoder();
         if (encoder.supports(TurnWeighting.class) && tMode.isEdgeBased())
-            return new TurnWeighting(weighting, graph.getTurnCostExtension(), uTurnCosts);
+            return new TurnWeighting(weighting, graph.getTurnCostStorage(), uTurnCosts);
         return weighting;
     }
 
@@ -1008,7 +1024,7 @@ public class GraphHopper implements GraphHopperAPI {
                 tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED;
 
             if (tMode.isEdgeBased() && !encoder.supports(TurnWeighting.class)) {
-                throw new IllegalArgumentException("You need a turn cost extension to make use of edge_based=true, e.g. use car|turn_costs=true");
+                throw new IllegalArgumentException("You need to set up a turn cost storage to make use of edge_based=true, e.g. use car|turn_costs=true");
             }
 
             if (!tMode.isEdgeBased() && !request.getCurbsides().isEmpty()) {
@@ -1055,17 +1071,19 @@ public class GraphHopper implements GraphHopperAPI {
                 QueryGraph queryGraph;
 
                 if (chFactoryDecorator.isEnabled() && !disableCH) {
-                    boolean forceCHHeading = hints.getBool(CH.FORCE_HEADING, false);
-                    if (!forceCHHeading && request.hasFavoredHeading(0))
-                        throw new IllegalArgumentException("Heading is not (fully) supported for CHGraph. See issue #483");
+                    if (request.hasFavoredHeading(0))
+                        throw new IllegalArgumentException("The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483");
 
+                    if (request.getHints().getBool(Routing.PASS_THROUGH, false)) {
+                        throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
+                    }
                     // if LM is enabled we have the LMFactory with the CH algo!
                     RoutingAlgorithmFactory chAlgoFactory = tmpAlgoFactory;
                     if (tmpAlgoFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
                         chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) tmpAlgoFactory).getDefaultAlgoFactory();
 
-                    if (chAlgoFactory instanceof PrepareContractionHierarchies) {
-                        CHProfile chProfile = ((PrepareContractionHierarchies) chAlgoFactory).getCHProfile();
+                    if (chAlgoFactory instanceof CHRoutingAlgorithmFactory) {
+                        CHProfile chProfile = ((CHRoutingAlgorithmFactory) chAlgoFactory).getCHProfile();
                         queryGraph = QueryGraph.lookup(ghStorage.getCHGraph(chProfile), qResults);
                     } else {
                         throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
@@ -1254,7 +1272,7 @@ public class GraphHopper implements GraphHopperAPI {
         preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
         preparation.doWork();
         int currNodeCount = ghStorage.getNodes();
-        logger.info("edges: " + Helper.nf(ghStorage.getAllEdges().length()) + ", nodes " + Helper.nf(currNodeCount)
+        logger.info("edges: " + Helper.nf(ghStorage.getEdges()) + ", nodes " + Helper.nf(currNodeCount)
                 + ", there were " + Helper.nf(preparation.getMaxSubnetworks())
                 + " subnetworks. removed them => " + Helper.nf(prevNodeCount - currNodeCount)
                 + " less nodes");

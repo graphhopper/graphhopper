@@ -103,7 +103,9 @@ public class GraphBuilder {
      * {@link #create} directly.
      */
     public GraphHopperStorage build() {
-        return new GraphHopperStorage(chProfiles, dir, encodingManager, elevation, turnCosts, segmentSize);
+        GraphHopperStorage ghStorage = new GraphHopperStorage(dir, encodingManager, elevation, turnCosts, segmentSize);
+        ghStorage.addCHGraphs(chProfiles);
+        return ghStorage;
     }
 
     /**

@@ -293,7 +293,7 @@ class GraphSupport {
             }
 
             @Override
-            public TurnCostExtension getTurnCostExtension() {
+            public TurnCostStorage getTurnCostStorage() {
                 throw new UnsupportedOperationException();
             }
 

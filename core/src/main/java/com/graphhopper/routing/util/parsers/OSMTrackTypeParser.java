@@ -44,7 +44,7 @@ public class OSMTrackTypeParser implements TagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, Access access,
-                                 long relationFlags) {
+                                 IntsRef relationFlags) {
         if (!access.isWay())
             return edgeFlags;
 

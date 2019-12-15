@@ -25,7 +25,10 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This class manages all storage related methods and delegates the calls to the associated graphs.
@@ -44,6 +47,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     private final BaseGraph baseGraph;
     // same flush order etc
     private final Collection<CHGraphImpl> chGraphs;
+    private final int segmentSize;
     private OSM osm;
 
     public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation) {
@@ -51,55 +55,60 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, boolean withTurnCosts) {
-        this(Collections.<CHProfile>emptyList(), dir, encodingManager, withElevation, withTurnCosts);
+        this(dir, encodingManager, withElevation, withTurnCosts, -1);
     }
 
-    public GraphHopperStorage(List<CHProfile> chProfiles, Directory dir, EncodingManager encodingManager, boolean withElevation) {
-        this(chProfiles, dir, encodingManager, withElevation, false);
-    }
-
-    public GraphHopperStorage(List<CHProfile> chProfiles, Directory dir, EncodingManager encodingManager, boolean withElevation, boolean withTurnCosts) {
-        this(chProfiles, dir, encodingManager, withElevation, withTurnCosts, -1);
-    }
-
-    public GraphHopperStorage(List<CHProfile> chProfiles, Directory dir, EncodingManager encodingManager, boolean withElevation, boolean withTurnCosts, int segmentSize) {
+    public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, boolean withTurnCosts, int segmentSize) {
         if (encodingManager == null)
             throw new IllegalArgumentException("EncodingManager needs to be non-null since 0.7. Create one using EncodingManager.create or EncodingManager.create(flagEncoderFactory, ghLocation)");
-
-        if (chProfiles.size() != new HashSet<>(chProfiles).size()) {
-            throw new IllegalArgumentException("Given CH profiles contain duplicates, given: " + chProfiles);
-        }
 
         this.encodingManager = encodingManager;
         this.dir = dir;
         this.properties = new StorableProperties(dir);
+        this.segmentSize = segmentSize;
         InternalGraphEventListener listener = new InternalGraphEventListener() {
             @Override
             public void initStorage() {
-                for (CHGraphImpl cg : getAllCHGraphs()) {
+                for (CHGraphImpl cg : chGraphs) {
                     cg.initStorage();
                 }
             }
 
             @Override
             public void freeze() {
-                for (CHGraphImpl cg : getAllCHGraphs()) {
+                for (CHGraphImpl cg : chGraphs) {
                     cg._prepareForContraction();
                 }
             }
         };
-
         baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, withTurnCosts, segmentSize);
-        this.chGraphs = new ArrayList<>(chProfiles.size());
+        chGraphs = new ArrayList<>();
+    }
+
+    /**
+     * Adds a {@link CHGraph} for the given {@link CHProfile}. You need to call this method before calling {@link #create(long)}
+     * or {@link #loadExisting()}.
+     */
+    public void addCHGraph(CHProfile chProfile) {
+        baseGraph.checkNotInitialized();
+        if (getCHProfiles().contains(chProfile)) {
+            throw new IllegalArgumentException("For the given CH profile a CHGraph already exists: " + chProfile);
+        }
+        chGraphs.add(new CHGraphImpl(chProfile, dir, baseGraph, segmentSize));
+    }
+
+    /**
+     * @see #addCHGraph(CHProfile)
+     */
+    public void addCHGraphs(List<CHProfile> chProfiles) {
         for (CHProfile chProfile : chProfiles) {
-            chGraphs.add(new CHGraphImpl(chProfile, dir, baseGraph, segmentSize));
+            addCHGraph(chProfile);
         }
         dir.create();
         osm = new OSM(dir.getDefaultType().isStoring() ? dir.getLocation()+"/osm.db" : null);
     }
 
     public CHGraph getCHGraph() {
-        Collection<CHGraphImpl> chGraphs = getAllCHGraphs();
         if (chGraphs.isEmpty()) {
             throw new IllegalStateException("There is no CHGraph");
         } else if (chGraphs.size() > 1) {
@@ -113,7 +122,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
      * @return the {@link CHGraph} for the specified {@link CHProfile}
      */
     public CHGraph getCHGraph(CHProfile profile) {
-        Collection<CHGraphImpl> chGraphs = getAllCHGraphs();
         if (chGraphs.isEmpty())
             throw new IllegalStateException("There is no CHGraph");
 
@@ -131,7 +139,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     public boolean isCHPossible() {
-        return !getAllCHGraphs().isEmpty();
+        return !chGraphs.isEmpty();
     }
 
     public List<CHProfile> getCHProfiles() {
@@ -166,7 +174,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
      */
     @Override
     public GraphHopperStorage create(long byteCount) {
-        baseGraph.checkInit();
+        baseGraph.checkNotInitialized();
         if (encodingManager == null)
             throw new IllegalStateException("EncodingManager can only be null if you call loadExisting");
 
@@ -183,7 +191,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
         baseGraph.create(initSize);
 
-        for (CHGraphImpl cg : getAllCHGraphs()) {
+        for (CHGraphImpl cg : chGraphs) {
             cg.create(byteCount);
         }
 
@@ -230,7 +238,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     @Override
     public boolean loadExisting() {
-        baseGraph.checkInit();
+        baseGraph.checkNotInitialized();
         if (properties.loadExisting()) {
             properties.checkVersions(false);
             // check encoding for compatibility
@@ -260,7 +268,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
             checkIfConfiguredAndLoadedWeightingsCompatible();
 
-            for (CHGraphImpl cg : getAllCHGraphs()) {
+            for (CHGraphImpl cg : chGraphs) {
                 if (!cg.loadExisting())
                     throw new IllegalStateException("Cannot load " + cg);
             }
@@ -308,7 +316,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     @Override
     public void flush() {
-        for (CHGraphImpl cg : getAllCHGraphs()) {
+        for (CHGraphImpl cg : chGraphs) {
             if (!cg.isClosed())
                 cg.flush();
         }
@@ -324,7 +332,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         properties.close();
         baseGraph.close();
 
-        for (CHGraphImpl cg : getAllCHGraphs()) {
+        for (CHGraphImpl cg : chGraphs) {
             if (!cg.isClosed())
                 cg.close();
         }
@@ -341,7 +349,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     public long getCapacity() {
         long cnt = baseGraph.getCapacity() + properties.getCapacity();
 
-        for (CHGraphImpl cg : getAllCHGraphs()) {
+        for (CHGraphImpl cg : chGraphs) {
             cnt += cg.getCapacity();
         }
         return cnt;
@@ -363,7 +371,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public String toDetailsString() {
         String str = baseGraph.toDetailsString();
-        for (CHGraphImpl cg : getAllCHGraphs()) {
+        for (CHGraphImpl cg : chGraphs) {
             str += ", " + cg.toDetailsString();
         }
 
@@ -376,7 +384,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
                 + encodingManager
                 + "|" + getDirectory().getDefaultType()
                 + "|" + baseGraph.nodeAccess.getDimension() + "D"
-                + "|" + (baseGraph.supportsTurnCosts() ? baseGraph.turnCostExtension : "no_turn_cost")
+                + "|" + (baseGraph.supportsTurnCosts() ? baseGraph.turnCostStorage : "no_turn_cost")
                 + "|" + getProperties().versionsToString();
     }
 
@@ -396,7 +404,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     @Override
     public int getEdges() {
-        return getAllEdges().length();
+        return baseGraph.getEdges();
     }
 
     @Override
@@ -445,8 +453,8 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     @Override
-    public TurnCostExtension getTurnCostExtension() {
-        return baseGraph.getTurnCostExtension();
+    public TurnCostStorage getTurnCostStorage() {
+        return baseGraph.getTurnCostStorage();
     }
 
     @Override
@@ -457,10 +465,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     @Override
     public boolean isAdjacentToNode(int edge, int node) {
         return baseGraph.isAdjacentToNode(edge, node);
-    }
-
-    private Collection<CHGraphImpl> getAllCHGraphs() {
-        return chGraphs;
     }
 
     /**

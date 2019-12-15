@@ -15,7 +15,7 @@ import com.graphhopper.storage.IntsRef;
 public class OSMTrackTypeParserTest {
 
     private EncodingManager em;
-    private long relFlags;
+    private IntsRef relFlags;
     private EnumEncodedValue<TrackType> ttEnc;
     private OSMTrackTypeParser parser;
 
@@ -24,7 +24,7 @@ public class OSMTrackTypeParserTest {
         parser = new OSMTrackTypeParser();
         em = new EncodingManager.Builder().add(parser).build();
         ttEnc = em.getEnumEncodedValue(TrackType.KEY, TrackType.class);
-        relFlags = 0;
+        relFlags = em.createRelationFlags();
     }
 
     @Test

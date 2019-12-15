@@ -17,7 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.*;
+import com.graphhopper.reader.ConditionalTagInspector;
+import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.profiles.*;
@@ -27,10 +29,7 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
@@ -66,8 +65,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     /* Edge Flag Encoder fields */
     private long nodeBitMask;
     private long relBitMask;
-    private EncodedValueOld turnCostEncoder;
-    private long turnRestrictionBit;
     private boolean blockByDefault = true;
     private boolean blockFords = true;
     private boolean registered;
@@ -108,19 +105,22 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         ferries.add("ferry");
     }
 
-    // should be called as last method in constructor, move out of the flag encoder somehow
-    protected void init() {
-        // we should move 'OSM to object' logic into the DataReader like OSMReader, but this is a major task as we need to convert OSM format into kind of a standard/generic format
-        conditionalTagInspector = new ConditionalOSMTagInspector(DateRangeParser.createCalendar(), restrictions, restrictedValues, intendedValues);
+    protected void init(DateRangeParser dateRangeParser) {
+        setConditionalTagInspector(new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser),
+                restrictions, restrictedValues, intendedValues, false));
+    }
+
+    protected void setConditionalTagInspector(ConditionalTagInspector inspector) {
+        if (conditionalTagInspector != null)
+            throw new IllegalStateException("You must not register a FlagEncoder (" + toString() + ") twice or for two EncodingManagers!");
+
+        registered = true;
+        conditionalTagInspector = inspector;
     }
 
     @Override
     public boolean isRegistered() {
         return registered;
-    }
-
-    public void setRegistered(boolean registered) {
-        this.registered = registered;
     }
 
     /**
@@ -140,10 +140,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     public ConditionalTagInspector getConditionalTagInspector() {
         return conditionalTagInspector;
-    }
-
-    protected void setConditionalTagInspector(ConditionalTagInspector conditionalTagInspector) {
-        this.conditionalTagInspector = conditionalTagInspector;
     }
 
     /**
@@ -169,23 +165,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     }
 
     /**
-     * Defines the bits which are used for relation flags.
-     *
-     * @return incremented shift value pointing behind the last used bit
+     * Analyze properties of a way and create the edge flags. This method is called in the second
+     * parsing step.
      */
-    public int defineRelationBits(int index, int shift) {
-        return shift;
-    }
+    public abstract IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access);
 
-    public boolean acceptsTurnRelation(OSMTurnRelation relation) {
-        return true;
+    public int getMaxTurnCosts() {
+        return maxTurnCosts;
     }
-
-    /**
-     * Analyze the properties of a relation and create the routing flags for the second read step.
-     * In the pre-parsing step this method will be called to determine the useful relation tags.
-     */
-    public abstract long handleRelationTags(long oldRelation, ReaderRelation relation);
 
     /**
      * Decide whether a way is routable for a given mode of travel. This skips some ways before
@@ -194,16 +181,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
      * @return the encoded value to indicate if this encoder allows travel or not.
      */
     public abstract EncodingManager.Access getAccess(ReaderWay way);
-
-    /**
-     * Analyze properties of a way and create the edge flags. This method is called in the second
-     * parsing step.
-     */
-    public abstract IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags);
-
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access) {
-        return handleWayTags(edgeFlags, way, access, 0);
-    }
 
     /**
      * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
@@ -235,20 +212,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
                 return encoderBit;
         }
 
-        // In case explicit flag ford=no, don't block
-        if (blockFords
-                && (node.hasTag("highway", "ford") || node.hasTag("ford"))
-                && !node.hasTag(restrictions, intendedValues)
-                && !node.hasTag("ford", "no")) {
+        if ((node.hasTag("highway", "ford") || node.hasTag("ford", "yes"))
+                && (blockFords && !node.hasTag(restrictions, intendedValues) || node.hasTag(restrictions, restrictedValues))) {
             return encoderBit;
         }
 
         return 0;
-    }
-
-    @Override
-    public InstructionAnnotation getAnnotation(IntsRef edgeFlags, Translation tr) {
-        return InstructionAnnotation.EMPTY;
     }
 
     /**
@@ -422,15 +391,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         }
     }
 
-    void setRelBitMask(int usedBits, int shift) {
-        relBitMask = (1L << usedBits) - 1;
-        relBitMask <<= shift;
-    }
-
-    long getRelBitMask() {
-        return relBitMask;
-    }
-
     void setNodeBitMask(int usedBits, int shift) {
         nodeBitMask = (1L << usedBits) - 1;
         nodeBitMask <<= shift;
@@ -438,89 +398,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
 
     long getNodeBitMask() {
         return nodeBitMask;
-    }
-
-    /**
-     * Defines the bits reserved for storing turn restriction and turn cost
-     * <p>
-     *
-     * @param shift bit offset for the first bit used by this encoder
-     * @return incremented shift value pointing behind the last used bit
-     */
-    public int defineTurnBits(int index, int shift) {
-        if (maxTurnCosts == 0)
-            return shift;
-
-            // optimization for turn restrictions only
-        else if (maxTurnCosts == 1) {
-            turnRestrictionBit = 1L << shift;
-            return shift + 1;
-        }
-
-        int turnBits = Helper.countBitValue(maxTurnCosts);
-        turnCostEncoder = new EncodedValueOld("TurnCost", shift, turnBits, 1, 0, maxTurnCosts) {
-            // override to avoid expensive Math.round
-            @Override
-            public final long getValue(long flags) {
-                // find value
-                flags &= mask;
-                flags >>>= shift;
-                return flags;
-            }
-        };
-        return shift + turnBits;
-    }
-
-    @Override
-    public boolean isTurnRestricted(long flags) {
-        if (maxTurnCosts == 0)
-            return false;
-
-        else if (maxTurnCosts == 1)
-            return (flags & turnRestrictionBit) != 0;
-
-        return turnCostEncoder.getValue(flags) == maxTurnCosts;
-    }
-
-    @Override
-    public double getTurnCost(long flags) {
-        if (maxTurnCosts == 0)
-            return 0;
-
-        else if (maxTurnCosts == 1)
-            return ((flags & turnRestrictionBit) == 0) ? 0 : Double.POSITIVE_INFINITY;
-
-        long cost = turnCostEncoder.getValue(flags);
-        if (cost == maxTurnCosts)
-            return Double.POSITIVE_INFINITY;
-
-        return cost;
-    }
-
-    @Override
-    public long getTurnFlags(boolean restricted, double costs) {
-        if (maxTurnCosts == 0)
-            return 0;
-
-        else if (maxTurnCosts == 1) {
-            if (costs != 0)
-                throw new IllegalArgumentException("Only restrictions are supported");
-
-            return restricted ? turnRestrictionBit : 0;
-        }
-
-        if (restricted) {
-            if (costs != 0 || Double.isInfinite(costs))
-                throw new IllegalArgumentException("Restricted turn can only have infinite costs (or use 0)");
-        } else if (costs >= maxTurnCosts)
-            throw new IllegalArgumentException("Cost is too high. Or specify restricted == true");
-
-        if (costs < 0)
-            throw new IllegalArgumentException("Turn costs cannot be negative");
-
-        if (costs >= maxTurnCosts || restricted)
-            costs = maxTurnCosts;
-        return turnCostEncoder.setValue(0L, (int) costs);
     }
 
     public final DecimalEncodedValue getAverageSpeedEnc() {

@@ -18,26 +18,18 @@
 package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.jackson.PathWrapperDeserializer;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
-
-import static com.graphhopper.api.GraphHopperMatrixWeb.MT_JSON;
 
 /**
  * @author Peter Karich
@@ -46,7 +38,6 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private int maxIterations = 100;
     private long sleepAfterGET = 1000;
-    int unzippedLength = 1000;
 
     public GHMatrixBatchRequester() {
         this(MATRIX_URL);
@@ -82,48 +73,8 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
 
     @Override
     public MatrixResponse route(GHMRequest ghRequest) {
-        ObjectNode requestJson = objectMapper.createObjectNode();
-
-        List<String> outArraysList = new ArrayList<>(ghRequest.getOutArrays());
-        if (outArraysList.isEmpty()) {
-            outArraysList.add("weights");
-        }
-
-        ArrayNode outArrayListJson = objectMapper.createArrayNode();
-        for (String str : outArraysList) {
-            outArrayListJson.add(str);
-        }
-
-        boolean hasElevation = false;
-        if (ghRequest.identicalLists) {
-            requestJson.putArray("points").addAll(createPointList(ghRequest.getFromPoints()));
-            requestJson.putArray("point_hints").addAll(createStringList(ghRequest.getFromPointHints()));
-            requestJson.putArray("curbsides").addAll(createStringList(ghRequest.getFromCurbsides()));
-        } else {
-            ArrayNode fromPointList = createPointList(ghRequest.getFromPoints());
-            ArrayNode toPointList = createPointList(ghRequest.getToPoints());
-            requestJson.putArray("from_points").addAll(fromPointList);
-            requestJson.putArray("from_point_hints").addAll(createStringList(ghRequest.getFromPointHints()));
-            requestJson.putArray("to_points").addAll(toPointList);
-            requestJson.putArray("to_point_hints").addAll(createStringList(ghRequest.getToPointHints()));
-            requestJson.putArray("from_curbsides").addAll(createStringList(ghRequest.getFromCurbsides()));
-            requestJson.putArray("to_curbsides").addAll(createStringList(ghRequest.getToPointHints()));
-        }
-
-        requestJson.putArray("snap_preventions").addAll(createStringList(ghRequest.getSnapPreventions()));
-        requestJson.putArray("out_arrays").addAll(outArrayListJson);
-        requestJson.put("vehicle", ghRequest.getVehicle());
-        requestJson.put("elevation", hasElevation);
-        requestJson.put("fail_fast", ghRequest.getFailFast());
-
-        Map<String, String> hintsMap = ghRequest.getHints().toMap();
-        for (String hintKey : hintsMap.keySet()) {
-            if (ignoreSet.contains(hintKey))
-                continue;
-
-            String hint = hintsMap.get(hintKey);
-            requestJson.put(hintKey, hint);
-        }
+        Collection<String> outArraysList = createOutArrayList(ghRequest);
+        JsonNode requestJson = createPostRequest(ghRequest, outArraysList);
 
         boolean withTimes = outArraysList.contains("times");
         boolean withDistances = outArraysList.contains("distances");
@@ -131,17 +82,15 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         final MatrixResponse matrixResponse = new MatrixResponse(
                 ghRequest.getFromPoints().size(),
                 ghRequest.getToPoints().size(), withTimes, withDistances, withWeights);
-
-        String postUrl = buildURLNoHints("/calculate", ghRequest);
-
         try {
+            String postUrl = buildURLNoHints("/calculate", ghRequest);
             String postResponseStr = postJson(postUrl, requestJson);
             boolean debug = ghRequest.getHints().getBool("debug", false);
             if (debug) {
                 logger.info("POST URL:" + postUrl + ", request:" + requestJson + ", response: " + postResponseStr);
             }
 
-            JsonNode responseJson = toJSON(postUrl, postResponseStr);
+            JsonNode responseJson = fromStringToJSON(postUrl, postResponseStr);
             if (responseJson.has("message")) {
                 matrixResponse.addErrors(PathWrapperDeserializer.readErrors(objectMapper, responseJson));
                 return matrixResponse;
@@ -168,7 +117,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
                     getResponseStr = getJson(getUrl);
                 }
 
-                JsonNode getResponseJson = toJSON(getUrl, getResponseStr);
+                JsonNode getResponseJson = fromStringToJSON(getUrl, getResponseStr);
                 if (debug) {
                     logger.info(i + " GET URL:" + getUrl + ", response: " + getResponseStr);
                 }
@@ -206,13 +155,8 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         return matrixResponse;
     }
 
-    protected String postJson(String url, JsonNode data) throws IOException {
-        String stringData = data.toString();
-        Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
-        // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
-        if (stringData.length() < unzippedLength)
-            builder.header("Content-Encoding", "identity");
-        Request okRequest = builder.build();
+    protected String getJson(String url) throws IOException {
+        Request okRequest = new Request.Builder().url(url).build();
         ResponseBody body = null;
         try {
             body = getDownloader().newCall(okRequest).execute().body();
@@ -220,24 +164,5 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         } finally {
             Helper.close(body);
         }
-    }
-
-    private ArrayNode createStringList(List<String> list) {
-        ArrayNode outList = objectMapper.createArrayNode();
-        for (String str : list) {
-            outList.add(str);
-        }
-        return outList;
-    }
-
-    private ArrayNode createPointList(List<GHPoint> list) {
-        ArrayNode outList = objectMapper.createArrayNode();
-        for (GHPoint p : list) {
-            ArrayNode entry = objectMapper.createArrayNode();
-            entry.add(p.lon);
-            entry.add(p.lat);
-            outList.add(entry);
-        }
-        return outList;
     }
 }

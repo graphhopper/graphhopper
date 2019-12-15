@@ -102,86 +102,36 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     }
 
     @Test
-    public void testHandleWayTags() {
-        ReaderWay way = new ReaderWay(1);
-        String wayType;
-
-        way.setTag("highway", "track");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("small way, unpaved", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "path");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("small way, unpaved", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "path");
-        way.setTag("surface", "grass");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("small way, unpaved", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "path");
-        way.setTag("surface", "concrete");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "track");
-        way.setTag("foot", "yes");
-        way.setTag("surface", "paved");
-        way.setTag("tracktype", "grade1");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "track");
-        way.setTag("foot", "yes");
-        way.setTag("surface", "paved");
-        way.setTag("tracktype", "grade2");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("small way, unpaved", wayType);
-
-        way.clearTags();
-        way.setTag("highway", "pedestrian");
-        wayType = getWayTypeFromFlags(way);
-        assertEquals("get off the bike", wayType);
-    }
-
-    @Test
     public void testHandleWayTagsInfluencedByRelation() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
 
         ReaderRelation osmRel = new ReaderRelation(1);
-        long relFlags = encodingManager.handleRelationTags(0, osmRel);
+        IntsRef relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         // unchanged
         IntsRef flags = encodingManager.handleWayTags(osmWay, accessMap, relFlags);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
-        assertEquals("small way, unpaved", getWayTypeFromFlags(osmWay));
 
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        relFlags = encoder.handleRelationTags(0, osmRel);
+        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         flags = encodingManager.handleWayTags(osmWay, accessMap, relFlags);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
-        assertEquals("small way, unpaved", getWayTypeFromFlags(osmWay));
 
         // relation code is PREFER
         osmRel.setTag("network", "rcn");
 
-        relFlags = encoder.handleRelationTags(0, osmRel);
+        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         flags = encodingManager.handleWayTags(osmWay, accessMap, relFlags);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
 
         // relation code is PREFER
         osmRel.setTag("network", "ncn");
-        relFlags = encoder.handleRelationTags(0, osmRel);
+        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         flags = encodingManager.handleWayTags(osmWay, accessMap, relFlags);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
@@ -193,14 +143,13 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        relFlags = encoder.handleRelationTags(0, osmRel);
+        relFlags = encodingManager.handleRelationTags(osmRel, encodingManager.createRelationFlags());
         flags = encodingManager.handleWayTags(osmWay, accessMap, relFlags);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
-        assertEquals("", getWayTypeFromFlags(osmWay));
     }
 
-    // Issue 407 : Always block kissing_gate except for mountainbikes
+    // Issue 407 : Always block kissing_gate execpt for mountainbikes
     @Test
     @Override
     public void testBarrierAccess() {

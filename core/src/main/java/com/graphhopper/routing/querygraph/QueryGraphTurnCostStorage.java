@@ -20,39 +20,40 @@ package com.graphhopper.routing.querygraph;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.TurnCostStorage;
 
 /**
- * special {@link TurnCostExtension} that handles virtual nodes and edges
+ * special {@link TurnCostStorage} that handles virtual nodes and edges
  */
-class QueryGraphTurnExt extends TurnCostExtension {
-    private final TurnCostExtension mainTurnExtension;
+class QueryGraphTurnCostStorage extends TurnCostStorage {
+    private final TurnCostStorage mainTurnCostStorage;
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
     private final IntArrayList closestEdges;
 
-    QueryGraphTurnExt(Graph mainGraph, IntArrayList closestEdges) {
-        super(mainGraph.getTurnCostExtension());
-        this.mainTurnExtension = mainGraph.getTurnCostExtension();
+    QueryGraphTurnCostStorage(Graph mainGraph, IntArrayList closestEdges) {
+        super(mainGraph.getTurnCostStorage());
+        this.mainTurnCostStorage = mainGraph.getTurnCostStorage();
         this.firstVirtualNodeId = mainGraph.getNodes();
         this.firstVirtualEdgeId = mainGraph.getEdges();
         this.closestEdges = closestEdges;
     }
 
     @Override
-    public long getTurnCostFlags(int edgeFrom, int nodeVia, int edgeTo) {
-        if (isVirtualNode(nodeVia)) {
-            return 0;
-        } else if (isVirtualEdge(edgeFrom) || isVirtualEdge(edgeTo)) {
-            if (isVirtualEdge(edgeFrom)) {
-                edgeFrom = getOriginalEdge(edgeFrom);
+    public IntsRef readFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
+        if (isVirtualNode(viaNode)) {
+            return tcFlags;
+        } else if (isVirtualEdge(fromEdge) || isVirtualEdge(toEdge)) {
+            if (isVirtualEdge(fromEdge)) {
+                fromEdge = getOriginalEdge(fromEdge);
             }
-            if (isVirtualEdge(edgeTo)) {
-                edgeTo = getOriginalEdge(edgeTo);
+            if (isVirtualEdge(toEdge)) {
+                toEdge = getOriginalEdge(toEdge);
             }
-            return mainTurnExtension.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
+            return mainTurnCostStorage.readFlags(tcFlags, fromEdge, viaNode, toEdge);
         } else {
-            return mainTurnExtension.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
+            return mainTurnCostStorage.readFlags(tcFlags, fromEdge, viaNode, toEdge);
         }
     }
 
@@ -66,7 +67,7 @@ class QueryGraphTurnExt extends TurnCostExtension {
         } else if (!isVirtualEdge(edgeFrom) && isVirtualEdge(edgeTo)) {
             edgeTo = getOriginalEdge(edgeTo);
         }
-        return mainTurnExtension.isUTurn(edgeFrom, edgeTo);
+        return mainTurnCostStorage.isUTurn(edgeFrom, edgeTo);
     }
 
     @Override

@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -27,8 +28,8 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.CHProfile;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Parameters;
@@ -52,10 +53,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Override
-    protected GraphHopperStorage createGHStorage(EncodingManager em,
-                                                 List<? extends Weighting> weightings, boolean is3D) {
-        return new GraphHopperStorage(CHProfile.createProfilesForWeightings(weightings), new RAMDirectory(), em, is3D).
-                create(1000);
+    protected GraphHopperStorage createGHStorage(EncodingManager em, List<? extends Weighting> weightings, boolean is3D) {
+        return new GraphBuilder(em).setCHProfiles(CHProfile.createProfilesForWeightings(weightings)).set3D(is3D).create();
     }
 
     @Override
@@ -68,7 +67,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         if (ghStorage.getCHGraph(chProfile).getEdges() == ghStorage.getEdges()) {
             ch.doWork();
         }
-        return ch;
+        return ch.getRoutingAlgorithmFactory();
     }
 
     @Test
@@ -108,7 +107,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         lg.setLevel(0, 7);
 
         AlgorithmOptions opts = new AlgorithmOptions(Parameters.Algorithms.DIJKSTRA_BI, weighting);
-        Path p = new PrepareContractionHierarchies(lg).createAlgo(lg, opts).calcPath(0, 7);
+        Path p = new CHRoutingAlgorithmFactory(lg).createAlgo(lg, opts).calcPath(0, 7);
 
         assertEquals(IntArrayList.from(0, 2, 5, 7), p.calcNodes());
         assertEquals(1064, p.getTime());
@@ -260,10 +259,9 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     }
 
     private RoutingAlgorithm createCHAlgo(CHGraph chGraph, boolean withSOD, AlgorithmOptions algorithmOptions) {
-        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(chGraph);
         if (!withSOD) {
             algorithmOptions.getHints().put("stall_on_demand", false);
         }
-        return ch.createAlgo(chGraph, algorithmOptions);
+        return new CHRoutingAlgorithmFactory(chGraph).createAlgo(chGraph, algorithmOptions);
     }
 }
