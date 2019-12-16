@@ -51,6 +51,7 @@ public class InfoResource {
     public static class Info {
         public static class PerVehicle {
             public boolean elevation;
+            public boolean time_dependent = true;
         }
 
         public BBox bbox;

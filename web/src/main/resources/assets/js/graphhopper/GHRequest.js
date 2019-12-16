@@ -146,7 +146,7 @@ GHRequest.prototype.getVehicle = function () {
 };
 
 GHRequest.prototype.isPublicTransit = function () {
-    return this.getVehicle() === "pt";
+    return this.features[this.getVehicle()].time_dependent;
 };
 
 GHRequest.prototype.createGeocodeURL = function (host, prevIndex) {
