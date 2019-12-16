@@ -76,7 +76,7 @@ public class SpatialRuleLookupBuilder {
 
         SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, resolution, true, calculatedBounds);
 
-        logger.info("Created the SpatialRuleLookup with the following rules: " + Arrays.toString(spatialRules.toArray()));
+        logger.info("Created the SpatialRuleLookup with the following rules: {}", Arrays.toString(spatialRules.toArray()));
 
         return spatialRuleLookup;
     }
