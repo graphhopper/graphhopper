@@ -33,10 +33,18 @@ import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.graphhopper.util.Helper.UTF_CS;
 
@@ -61,15 +69,22 @@ public class GraphHopperManaged implements Managed {
         } else {
             graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection).forServer();
         }
-        String spatialRuleLocation = configuration.get("spatial_rules.location", "");
-        if (!spatialRuleLocation.isEmpty()) {
+        String spatialRuleBordersDirLocation = configuration.get("spatial_rules.borders_directory", "");
+        if (!spatialRuleBordersDirLocation.isEmpty()) {
             final BBox maxBounds = BBox.parseBBoxString(configuration.get("spatial_rules.max_bbox", "-180, 180, -90, 90"));
-            try (final InputStreamReader reader = new InputStreamReader(new FileInputStream(spatialRuleLocation), UTF_CS)) {
-                JsonFeatureCollection jsonFeatureCollection = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
-                SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, maxBounds, jsonFeatureCollection);
+            final Path bordersDirectory = Paths.get(spatialRuleBordersDirLocation);
+            List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
+                for (Path borderFile : stream) {
+                    try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
+                        JsonFeatureCollection jsonFeatureCollection = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
+                        jsonFeatureCollections.add(jsonFeatureCollection);
+                    }
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, maxBounds, jsonFeatureCollections);
         }
         graphHopper.init(configuration);
     }

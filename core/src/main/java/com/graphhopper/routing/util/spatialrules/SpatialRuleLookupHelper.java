@@ -25,6 +25,9 @@ import com.graphhopper.routing.util.parsers.SpatialRuleParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
+
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,8 +41,8 @@ public class SpatialRuleLookupHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(SpatialRuleLookupHelper.class);
 
-    public static void buildAndInjectSpatialRuleIntoGH(GraphHopper graphHopper, BBox maxBounds, JsonFeatureCollection jsonFeatureCollection) {
-        final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollection, "ISO_A3", new CountriesSpatialRuleFactory(), .1, maxBounds);
+    public static void buildAndInjectSpatialRuleIntoGH(GraphHopper graphHopper, BBox maxBounds, List<JsonFeatureCollection> jsonFeatureCollections) {
+        final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollections, "ISO_A3", new CountriesSpatialRuleFactory(), .1, maxBounds);
         logger.info("Set spatial rule lookup with {} rules", index.size());
         final TagParserFactory oldTPF = graphHopper.getTagParserFactory();
         graphHopper.setTagParserFactory(new TagParserFactory() {
