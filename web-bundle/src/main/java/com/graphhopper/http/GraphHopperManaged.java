@@ -77,10 +77,10 @@ public class GraphHopperManaged implements Managed {
     @Override
     public void start() {
         graphHopper.importOrLoad();
-        logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
-                + ", data_reader_file:" + graphHopper.getDataReaderFile()
-                + ", encoded values:" + graphHopper.getEncodingManager().toEncodedValuesAsString()
-                + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
+        logger.info("loaded graph at:{}, data_reader_file:{}, encoded values:{}, {}",
+                        graphHopper.getGraphHopperLocation(), graphHopper.getDataReaderFile(),
+                        graphHopper.getEncodingManager().toEncodedValuesAsString(),
+                        graphHopper.getGraphHopperStorage().toDetailsString());
     }
 
     public GraphHopper getGraphHopper() {

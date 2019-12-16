@@ -40,7 +40,7 @@ public class SpatialRuleLookupHelper {
 
     public static void buildAndInjectSpatialRuleIntoGH(GraphHopper graphHopper, BBox maxBounds, JsonFeatureCollection jsonFeatureCollection) {
         final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollection, "ISO_A3", new CountriesSpatialRuleFactory(), .1, maxBounds);
-        logger.info("Set spatial rule lookup with " + index.size() + " rules");
+        logger.info("Set spatial rule lookup with {} rules", index.size());
         final TagParserFactory oldTPF = graphHopper.getTagParserFactory();
         graphHopper.setTagParserFactory(new TagParserFactory() {
 
