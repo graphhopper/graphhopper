@@ -17,7 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import com.conveyal.osmlib.OSM;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -48,7 +47,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     // same flush order etc
     private final Collection<CHGraphImpl> chGraphs;
     private final int segmentSize;
-    private OSM osm;
 
     public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation) {
         this(dir, encodingManager, withElevation, false);
@@ -194,7 +192,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         }
 
         properties.put("graph.ch.profiles", getCHProfiles().toString());
-        osm = new OSM(dir.getDefaultType().isStoring() ? dir.getLocation()+"/osm.db" : null);
         return this;
     }
 
@@ -271,7 +268,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
                 if (!cg.loadExisting())
                     throw new IllegalStateException("Cannot load " + cg);
             }
-            osm = new OSM(dir.getLocation()+"/osm.db");
+
             return true;
         }
         return false;
@@ -322,8 +319,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
         baseGraph.flush();
         properties.flush();
-        osm.close();
-        osm = new OSM(dir.getDefaultType().isStoring() ? dir.getLocation()+"/osm.db" : null);
     }
 
     @Override
@@ -335,8 +330,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
             if (!cg.isClosed())
                 cg.close();
         }
-        if (!isClosed())
-            osm.close();
     }
 
     @Override
@@ -471,9 +464,5 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
      */
     public void flushAndCloseEarly() {
         baseGraph.flushAndCloseGeometryAndNameStorage();
-    }
-
-    public OSM getOsm() {
-        return osm;
     }
 }

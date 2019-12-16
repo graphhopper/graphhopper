@@ -18,6 +18,7 @@
 
 package com.graphhopper;
 
+import com.conveyal.osmlib.OSM;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.TDWeighting;
@@ -26,14 +27,14 @@ import com.graphhopper.util.EdgeIteratorState;
 
 import java.time.Instant;
 
-class TimeDependentAccessWeighting implements TDWeighting {
+public class TimeDependentAccessWeighting implements TDWeighting {
 
     private final TimeDependentAccessRestriction timeDependentAccessRestriction;
     private final Weighting finalWeighting;
 
-    public TimeDependentAccessWeighting(GraphHopper graphHopper, Weighting finalWeighting) {
+    public TimeDependentAccessWeighting(OSM osm, GraphHopper graphHopper, Weighting finalWeighting) {
         this.finalWeighting = finalWeighting;
-        timeDependentAccessRestriction = new TimeDependentAccessRestriction(graphHopper.getGraphHopperStorage());
+        timeDependentAccessRestriction = new TimeDependentAccessRestriction(graphHopper.getGraphHopperStorage(), osm);
     }
 
     @Override

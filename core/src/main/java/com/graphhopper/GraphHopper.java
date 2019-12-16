@@ -687,7 +687,6 @@ public class GraphHopper implements GraphHopperAPI {
         DataReader reader = createReader(ghStorage);
         logger.info("using " + ghStorage.toString() + ", memory:" + getMemInfo());
         reader.readGraph();
-        ghStorage.getOsm().readFromFile(dataReaderFile);
         return reader;
     }
 
@@ -968,9 +967,6 @@ public class GraphHopper implements GraphHopperAPI {
             return new BlockAreaWeighting(weighting, blockArea);
         }
 
-        if (hintsMap.has("block_property")) {
-            return new TimeDependentAccessWeighting(this, weighting);
-        }
         return weighting;
     }
 

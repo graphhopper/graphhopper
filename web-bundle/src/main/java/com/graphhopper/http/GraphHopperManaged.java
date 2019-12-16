@@ -18,14 +18,20 @@
 
 package com.graphhopper.http;
 
+import com.conveyal.osmlib.OSM;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.TimeDependentAccessWeighting;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.BBox;
@@ -44,6 +50,7 @@ public class GraphHopperManaged implements Managed {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GraphHopper graphHopper;
+    private OSM osm;
 
     public GraphHopperManaged(CmdArgs configuration, ObjectMapper objectMapper) {
         ObjectMapper localObjectMapper = objectMapper.copy();
@@ -59,7 +66,17 @@ public class GraphHopperManaged implements Managed {
         if (configuration.has("gtfs.file")) {
             graphHopper = new GraphHopperGtfs(configuration);
         } else {
-            graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection).forServer();
+            graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection) {
+                @Override
+                public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
+                    Weighting weighting = super.createWeighting(hintsMap, encoder, graph);
+                    if (hintsMap.has("block_property")) {
+                        return getTimeDependentAccessWeighting(weighting);
+                    }
+                    return weighting;
+                }
+
+            }.forServer();
         }
         String spatialRuleLocation = configuration.get("spatial_rules.location", "");
         if (!spatialRuleLocation.isEmpty()) {
@@ -74,6 +91,10 @@ public class GraphHopperManaged implements Managed {
         graphHopper.init(configuration);
     }
 
+    private TimeDependentAccessWeighting getTimeDependentAccessWeighting(Weighting weighting) {
+        return new TimeDependentAccessWeighting(osm, graphHopper, weighting);
+    }
+
     @Override
     public void start() {
         graphHopper.importOrLoad();
@@ -81,14 +102,20 @@ public class GraphHopperManaged implements Managed {
                 + ", data_reader_file:" + graphHopper.getDataReaderFile()
                 + ", encoded values:" + graphHopper.getEncodingManager().toEncodedValuesAsString()
                 + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
+        osm = new OSM(graphHopper.getGraphHopperStorage().getDirectory().getDefaultType().isStoring() ? graphHopper.getGraphHopperStorage().getDirectory().getLocation()+"/osm.db" : null);
     }
 
     public GraphHopper getGraphHopper() {
         return graphHopper;
     }
 
+    public OSM getOsm() {
+        return osm;
+    }
+
     @Override
     public void stop() {
+        osm.close();
         graphHopper.close();
     }
 

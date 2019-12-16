@@ -21,7 +21,6 @@ package com.graphhopper.resources;
 import com.conveyal.osmlib.OSM;
 import com.conveyal.osmlib.OSMEntity;
 import com.conveyal.osmlib.Relation;
-import com.graphhopper.storage.GraphHopperStorage;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -34,11 +33,11 @@ import java.util.Map;
 @Path("restrictions")
 public class RestrictionsResource {
 
-    private final GraphHopperStorage storage;
+    private final OSM osm;
 
     @Inject
-    public RestrictionsResource(GraphHopperStorage storage) {
-        this.storage = storage;
+    public RestrictionsResource(OSM osm) {
+        this.osm = osm;
     }
 
     @GET
@@ -46,7 +45,6 @@ public class RestrictionsResource {
     public StreamingOutput conditionalRelations() {
         return output -> {
             PrintWriter printWriter = new PrintWriter(output);
-            OSM osm = storage.getOsm();
             for (Map.Entry<Long, Relation> entry : osm.relations.entrySet()) {
                 if (entry.getValue().hasTag("type", "restriction")) {
                     for (OSMEntity.Tag tag : entry.getValue().tags) {

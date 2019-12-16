@@ -37,17 +37,19 @@ import java.time.Instant;
 public class ConditionalAccessResource {
 
     private final GraphHopperStorage storage;
+    private final OSM osm;
 
     @Inject
-    public ConditionalAccessResource(GraphHopperStorage storage) {
+    public ConditionalAccessResource(GraphHopperStorage storage, OSM osm) {
         this.storage = storage;
+        this.osm = osm;
     }
 
     @GET
     @Produces("text/plain")
     public StreamingOutput conditionalRelations() {
         Instant linkEnterTime = Instant.now();
-        TimeDependentAccessRestriction timeDependentAccessRestriction = new TimeDependentAccessRestriction(storage);
+        TimeDependentAccessRestriction timeDependentAccessRestriction = new TimeDependentAccessRestriction(storage, osm);
         return output -> {
             PrintWriter printWriter = new PrintWriter(output);
             printWriter.println(linkEnterTime);

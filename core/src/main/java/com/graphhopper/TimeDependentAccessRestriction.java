@@ -23,6 +23,7 @@ import ch.poole.conditionalrestrictionparser.ConditionalRestrictionParser;
 import ch.poole.conditionalrestrictionparser.ParseException;
 import ch.poole.conditionalrestrictionparser.Restriction;
 import ch.poole.openinghoursparser.*;
+import com.conveyal.osmlib.OSM;
 import com.conveyal.osmlib.OSMEntity;
 import com.conveyal.osmlib.Way;
 import com.graphhopper.reader.ReaderWay;
@@ -47,12 +48,12 @@ public class TimeDependentAccessRestriction {
 
     private final BooleanEncodedValue property;
     private final OSMIDParser osmidParser;
-    private final GraphHopperStorage ghStorage;
+    private final OSM osm;
     private final ZoneId zoneId;
 
-    public TimeDependentAccessRestriction(GraphHopperStorage ghStorage) {
+    public TimeDependentAccessRestriction(GraphHopperStorage ghStorage, OSM osm) {
         zoneId = ZoneId.of("Europe/Berlin");
-        this.ghStorage = ghStorage;
+        this.osm = osm;
         osmidParser = OSMIDParser.fromEncodingManager(ghStorage.getEncodingManager());
         property = ghStorage.getEncodingManager().getBooleanEncodedValue("conditional");
     }
@@ -69,7 +70,7 @@ public class TimeDependentAccessRestriction {
 
     public void printConditionalAccess(long osmid, Instant when, PrintWriter out) {
         final ZonedDateTime zonedDateTime = when.atZone(zoneId);
-        Way way = ghStorage.getOsm().ways.get(osmid);
+        Way way = osm.ways.get(osmid);
         ReaderWay readerWay = readerWay(osmid, way);
         List<ConditionalTagData> timeDependentAccessConditions = getTimeDependentAccessConditions(readerWay);
         if (!timeDependentAccessConditions.isEmpty()) {
@@ -198,7 +199,7 @@ public class TimeDependentAccessRestriction {
     public boolean accessible(EdgeIteratorState edgeState, Instant linkEnterTime) {
         if (edgeState.get(property)) {
             long osmid = osmidParser.getOSMID(edgeState.getFlags());
-            Way way = ghStorage.getOsm().ways.get(osmid);
+            Way way = osm.ways.get(osmid);
             List<ConditionalTagData> conditionalTagDataWithTimeDependentConditions = getConditionalTagDataWithTimeDependentConditions(readerWay(osmid, way));
             if (!conditionalTagDataWithTimeDependentConditions.isEmpty()) {
                 final ZonedDateTime zonedDateTime = linkEnterTime.atZone(zoneId);
