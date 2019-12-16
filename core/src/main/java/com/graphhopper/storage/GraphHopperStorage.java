@@ -271,7 +271,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
                 if (!cg.loadExisting())
                     throw new IllegalStateException("Cannot load " + cg);
             }
-
+            osm = new OSM(dir.getLocation()+"/osm.db");
             return true;
         }
         return false;
